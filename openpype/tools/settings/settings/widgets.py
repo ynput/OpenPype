@@ -616,7 +616,7 @@ class ProjectListWidget(QtWidgets.QWidget):
     default = "< Default >"
     project_changed = QtCore.Signal()
 
-    def __init__(self, parent):
+    def __init__(self, parent, no_archived=False):
         self._parent = parent
 
         self.current_project = None
@@ -645,6 +645,7 @@ class ProjectListWidget(QtWidgets.QWidget):
         self.project_list = project_list
 
         self.dbcon = None
+        self._no_archived = no_archived
 
     def on_item_clicked(self, new_index):
         new_project_name = new_index.data(QtCore.Qt.DisplayRole)
@@ -731,14 +732,13 @@ class ProjectListWidget(QtWidgets.QWidget):
                 self.current_project = None
 
         if self.dbcon:
-            database = self.dbcon.database
-            for project_name in database.collection_names():
-                project_doc = database[project_name].find_one(
-                    {"type": "project"},
-                    {"name": 1}
-                )
-                if project_doc:
-                    items.append(project_doc["name"])
+            for doc in sorted(
+                    self.dbcon.projects(projection={"name": 1},
+                                        no_archived=self._no_archived),
+                    key=lambda x: x["name"]
+            ):
+                items.append(doc["name"])
+
         for item in items:
             model.appendRow(QtGui.QStandardItem(item))
 
