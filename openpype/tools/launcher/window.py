@@ -271,7 +271,6 @@ class LauncherWindow(QtWidgets.QDialog):
         )
 
         project_model = ProjectModel(self.dbcon)
-        project_model.hide_invisible = True
         project_handler = ProjectHandler(self.dbcon, project_model)
 
         project_panel = ProjectsPanel(project_handler)
