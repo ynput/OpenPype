@@ -379,6 +379,11 @@ class NumberEntity(InputEntity):
 
         # UI specific attributes
         self.show_slider = self.schema_data.get("show_slider", False)
+        steps = self.schema_data.get("steps", None)
+        # Make sure that steps are not set to `0`
+        if steps == 0:
+            steps = None
+        self.steps = steps
 
     def _convert_to_valid_type(self, value):
         if isinstance(value, str):
