@@ -623,7 +623,10 @@ class ProjectListSortFilterProxy(QtCore.QSortFilterProxyModel):
             return True
 
         index = self.sourceModel().index(source_row, 0, source_parent)
-        return bool(index.data(self.filterRole()))
+        is_active = bool(index.data(self.filterRole()))
+        is_selected = bool(index.data(ProjectListWidget.ProjectSelectedRole))
+
+        return is_active or is_selected
 
     def is_filter_enabled(self):
         return self._enable_filter
@@ -639,6 +642,7 @@ class ProjectListWidget(QtWidgets.QWidget):
 
     ProjectSortRole = QtCore.Qt.UserRole + 10
     ProjectFilterRole = QtCore.Qt.UserRole + 11
+    ProjectSelectedRole = QtCore.Qt.UserRole + 12
 
     def __init__(self, parent, no_archived=False):
         self._parent = parent
@@ -756,6 +760,8 @@ class ProjectListWidget(QtWidgets.QWidget):
             found_items = model.findItems(self.default)
 
         index = model.indexFromItem(found_items[0])
+        model.setData(index, True, self.ProjectSelectedRole)
+
         index = proxy.mapFromSource(index)
 
         self.project_list.selectionModel().clear()
@@ -806,6 +812,7 @@ class ProjectListWidget(QtWidgets.QWidget):
 
             row = QtGui.QStandardItem(project_name)
             row.setData(visible, self.ProjectFilterRole)
+            row.setData(False, self.ProjectSelectedRole)
 
             if is_archived:
                 row.setData("~" + project_name, self.ProjectSortRole)
