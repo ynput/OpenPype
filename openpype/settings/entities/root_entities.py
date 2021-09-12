@@ -778,6 +778,10 @@ class ProjectSettings(RootEntity):
                 anatomy["attributes"]["archive_confirm"] = ""
                 anatomy["attributes"]["archived"] = False
 
+        else:
+            if anatomy and "attributes" in anatomy:
+                anatomy["attributes"]["archived"] = False
+
         return output
 
     def _save_studio_values(self):
