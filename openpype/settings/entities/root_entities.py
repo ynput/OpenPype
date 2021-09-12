@@ -755,6 +755,31 @@ class ProjectSettings(RootEntity):
         """
         return DEFAULTS_DIR
 
+    def settings_value(self):
+        output = super(ProjectSettings, self).settings_value()
+
+        anatomy = output.get(PROJECT_ANATOMY_KEY) or {}
+
+        # Evaluate project archiving flag
+        #
+        archive_confirm = anatomy.get("attributes", {}).get("archive_confirm")
+        if archive_confirm:
+            # set flag
+            if archive_confirm == self.project_name:
+                self.log.debug(
+                    "Project archiving."
+                )
+                anatomy["attributes"]["archived"] = True
+
+            else:
+                self.log.debug(
+                    "Project archiving confirmation string not matched."
+                )
+                anatomy["attributes"]["archive_confirm"] = ""
+                anatomy["attributes"]["archived"] = False
+
+        return output
+
     def _save_studio_values(self):
         settings_value = self.settings_value()
 
