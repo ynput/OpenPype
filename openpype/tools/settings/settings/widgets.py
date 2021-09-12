@@ -612,9 +612,33 @@ class ProjectListView(QtWidgets.QListView):
         super(ProjectListView, self).mouseReleaseEvent(event)
 
 
+class ProjectListSortFilterProxy(QtCore.QSortFilterProxyModel):
+
+    def __init__(self, *args, **kwargs):
+        super(ProjectListSortFilterProxy, self).__init__(*args, **kwargs)
+        self._enable_filter = True
+
+    def filterAcceptsRow(self, source_row, source_parent):
+        if not self._enable_filter:
+            return True
+
+        index = self.sourceModel().index(source_row, 0, source_parent)
+        return bool(index.data(self.filterRole()))
+
+    def is_filter_enabled(self):
+        return self._enable_filter
+
+    def set_filter_enabled(self, value):
+        self._enable_filter = value
+        self.invalidateFilter()
+
+
 class ProjectListWidget(QtWidgets.QWidget):
     default = "< Default >"
     project_changed = QtCore.Signal()
+
+    ProjectSortRole = QtCore.Qt.UserRole + 10
+    ProjectFilterRole = QtCore.Qt.UserRole + 11
 
     def __init__(self, parent, no_archived=False):
         self._parent = parent
@@ -625,8 +649,17 @@ class ProjectListWidget(QtWidgets.QWidget):
         self.setObjectName("ProjectListWidget")
 
         label_widget = QtWidgets.QLabel("Projects")
+
         project_list = ProjectListView(self)
-        project_list.setModel(QtGui.QStandardItemModel())
+        project_model = QtGui.QStandardItemModel()
+        project_proxy = ProjectListSortFilterProxy()
+
+        project_proxy.setFilterRole(self.ProjectFilterRole)
+        project_proxy.setSortRole(self.ProjectSortRole)
+        project_proxy.setSortCaseSensitivity(QtCore.Qt.CaseInsensitive)
+
+        project_proxy.setSourceModel(project_model)
+        project_list.setModel(project_proxy)
 
         # Do not allow editing
         project_list.setEditTriggers(
@@ -640,9 +673,24 @@ class ProjectListWidget(QtWidgets.QWidget):
         layout.addWidget(label_widget, 0)
         layout.addWidget(project_list, 1)
 
+        if no_archived:
+            archived_chk = None
+        else:
+            archived_chk = QtWidgets.QCheckBox(" Show Archived Project ")
+            archived_chk.setChecked(not project_proxy.is_filter_enabled())
+
+            layout.addSpacing(5)
+            layout.addWidget(archived_chk, 0)
+            layout.addSpacing(5)
+
+            archived_chk.stateChanged.connect(self.on_archive_vis_changed)
+
         project_list.left_mouse_released_at.connect(self.on_item_clicked)
 
         self.project_list = project_list
+        self.project_proxy = project_proxy
+        self.project_model = project_model
+        self.archived_chk = archived_chk
 
         self.dbcon = None
         self._no_archived = no_archived
@@ -680,6 +728,14 @@ class ProjectListWidget(QtWidgets.QWidget):
         else:
             self.select_project(self.current_project)
 
+    def on_archive_vis_changed(self):
+        if self.archived_chk is None:
+            # should not happen.
+            return
+
+        enable_filter = not self.archived_chk.isChecked()
+        self.project_proxy.set_filter_enabled(enable_filter)
+
     def validate_context_change(self):
         return not self._parent.entity.has_unsaved_changes
 
@@ -692,12 +748,16 @@ class ProjectListWidget(QtWidgets.QWidget):
         self.select_project(self.default)
 
     def select_project(self, project_name):
-        model = self.project_list.model()
+        model = self.project_model
+        proxy = self.project_proxy
+
         found_items = model.findItems(project_name)
         if not found_items:
             found_items = model.findItems(self.default)
 
         index = model.indexFromItem(found_items[0])
+        index = proxy.mapFromSource(index)
+
         self.project_list.selectionModel().clear()
         self.project_list.selectionModel().setCurrentIndex(
             index, QtCore.QItemSelectionModel.SelectionFlag.SelectCurrent
@@ -709,10 +769,10 @@ class ProjectListWidget(QtWidgets.QWidget):
             selected_project = index.data(QtCore.Qt.DisplayRole)
             break
 
-        model = self.project_list.model()
+        model = self.project_model
         model.clear()
 
-        items = [self.default]
+        items = [(self.default, None)]
 
         mongo_url = os.environ["OPENPYPE_MONGO"]
 
@@ -732,15 +792,34 @@ class ProjectListWidget(QtWidgets.QWidget):
                 self.current_project = None
 
         if self.dbcon:
-            for doc in sorted(
-                    self.dbcon.projects(projection={"name": 1},
-                                        no_archived=self._no_archived),
-                    key=lambda x: x["name"]
-            ):
-                items.append(doc["name"])
 
-        for item in items:
-            model.appendRow(QtGui.QStandardItem(item))
+            for doc in self.dbcon.projects(
+                    projection={"name": 1, "data.archived": 1},
+                    no_archived=self._no_archived
+            ):
+                items.append(
+                    (doc["name"], doc.get("data", {}).get("archived"))
+                )
+
+        for project_name, is_archived in items:
+            visible = not is_archived
+
+            row = QtGui.QStandardItem(project_name)
+            row.setData(visible, self.ProjectFilterRole)
+
+            if is_archived:
+                row.setData("~" + project_name, self.ProjectSortRole)
+
+                font = row.font()
+                font.setItalic(True)
+                row.setFont(font)
+
+            else:
+                row.setData(project_name, self.ProjectSortRole)
+
+            model.appendRow(row)
+
+        self.project_proxy.sort(0)
 
         self.select_project(selected_project)
 
