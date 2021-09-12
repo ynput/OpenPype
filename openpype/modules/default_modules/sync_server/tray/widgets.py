@@ -34,7 +34,7 @@ class SyncProjectListWidget(ProjectListWidget):
     """
 
     def __init__(self, sync_server, parent):
-        super(SyncProjectListWidget, self).__init__(parent)
+        super(SyncProjectListWidget, self).__init__(parent, no_archived=True)
         self.sync_server = sync_server
         self.project_list.setContextMenuPolicy(QtCore.Qt.CustomContextMenu)
         self.project_list.customContextMenuRequested.connect(
@@ -49,7 +49,7 @@ class SyncProjectListWidget(ProjectListWidget):
         return True
 
     def refresh(self):
-        model = self.project_list.model()
+        model = self.project_model
         model.clear()
 
         project_name = None
@@ -70,8 +70,7 @@ class SyncProjectListWidget(ProjectListWidget):
             QtCore.Qt.DisplayRole
         )
         if not self.current_project:
-            self.current_project = self.project_list.model().item(0). \
-                data(QtCore.Qt.DisplayRole)
+            self.current_project = model.item(0).data(QtCore.Qt.DisplayRole)
 
         if project_name:
             self.local_site = self.sync_server.get_active_site(project_name)
