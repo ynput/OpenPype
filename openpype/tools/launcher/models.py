@@ -378,4 +378,5 @@ class ProjectModel(QtGui.QStandardItemModel):
             self.invisibleRootItem().insertRows(row, items)
 
     def get_projects(self):
-        return sorted(self.dbcon.projects(no_archived=True), key=lambda x: x["name"])
+        return sorted(self.dbcon.projects(no_archived=True),
+                      key=lambda x: x["name"])

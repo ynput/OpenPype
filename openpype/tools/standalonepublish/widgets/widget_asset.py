@@ -274,7 +274,8 @@ class AssetWidget(QtWidgets.QWidget):
     def _set_projects(self):
         project_names = list()
 
-        for doc in self.dbcon.projects(projection={"name": 1}, no_archived=True):
+        for doc in self.dbcon.projects(projection={"name": 1},
+                                       no_archived=True):
 
             project_name = doc.get("name")
             if project_name:
@@ -302,7 +303,8 @@ class AssetWidget(QtWidgets.QWidget):
     def on_project_change(self):
         projects = list()
 
-        for project in self.dbcon.projects(projection={"name": 1}, no_archived=True):
+        for project in self.dbcon.projects(projection={"name": 1},
+                                           no_archived=True):
             projects.append(project['name'])
         project_name = self.combo_projects.currentText()
         if project_name in projects:
