@@ -23,5 +23,6 @@
         "unreal/4-26"
     ],
     "tools_env": [],
-    "archive_confirm": ""
+    "archive_confirm": "",
+    "archived": false
 }

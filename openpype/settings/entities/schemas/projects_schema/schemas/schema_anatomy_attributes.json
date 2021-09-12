@@ -75,6 +75,11 @@
             "key": "archive_confirm",
             "label": "Archive Project",
             "placeholder": "Input project name to confirm archiving."
+        },
+        {
+            "type": "boolean",
+            "key": "archived",
+            "label": "Is Archived"
         }
     ]
 }
