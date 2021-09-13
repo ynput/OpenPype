@@ -273,6 +273,7 @@ class InstanceListView(AbstractInstanceView):
             widget = self._group_widgets.pop(family)
             widget.deleteLater()
 
+        expand_families = set()
         for family, group_item in self._group_items.items():
             to_remove = set()
             existing_mapping = {}
@@ -320,6 +321,8 @@ class InstanceListView(AbstractInstanceView):
                 group_item.appendRows(new_items)
 
                 for item, instance in new_items_with_instance:
+                    if not instance.has_valid_context:
+                        expand_families.add(family)
                     item_index = self.instance_model.index(
                         item.row(),
                         item.column(),
@@ -336,6 +339,12 @@ class InstanceListView(AbstractInstanceView):
             # Trigger sort at the end of refresh
             if sort_at_the_end:
                 self.proxy_model.sort(0)
+
+        for family in expand_families:
+            family_item = self._group_items[family]
+            proxy_index = self.proxy_model.mapFromSource(family_item.index())
+
+            self.instance_view.expand(proxy_index)
 
     def refresh_instance_states(self):
         for widget in self._widgets_by_id.values():
