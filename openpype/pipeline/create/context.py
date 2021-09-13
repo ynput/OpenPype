@@ -15,6 +15,7 @@ from openpype.api import (
 
 
 class HostMissRequiredMethod(Exception):
+    """Host does not have implemented required functions for creation."""
     def __init__(self, host, missing_methods):
         self.missing_methods = missing_methods
         self.host = host
@@ -52,6 +53,16 @@ class InstanceMember:
 
 
 class AttributeValues:
+    """Container which keep values of Attribute definitions.
+
+    Goal is to have one object which hold values of attribute definitions for
+    single instance.
+
+    Args:
+        attr_defs(AbtractAttrDef): Defintions of value type and properties.
+        values(dict): Values after possible conversion.
+        origin_data(dict): Values loaded from host before conversion.
+    """
     def __init__(self, attr_defs, values, origin_data=None):
         if origin_data is None:
             origin_data = copy.deepcopy(values)
@@ -143,12 +154,26 @@ class AttributeValues:
 
 
 class FamilyAttributeValues(AttributeValues):
+    """Family specific attribute values of an instance.
+
+    Args:
+        instance (CreatedInstance): Instance for which are values hold.
+    """
     def __init__(self, instance, *args, **kwargs):
         self.instance = instance
         super(FamilyAttributeValues, self).__init__(*args, **kwargs)
 
 
 class PublishAttributeValues(AttributeValues):
+    """Publish plugin specific attribute values.
+
+    Values are for single plugin which can be on `CreatedInstance`
+    or context values stored on `CreateContext`.
+
+    Args:
+        publish_attributes(PublishAttributes): Wrapper for multiple publish
+            attributes is used as parent object.
+    """
     def __init__(self, publish_attributes, *args, **kwargs):
         self.publish_attributes = publish_attributes
         super(PublishAttributeValues, self).__init__(*args, **kwargs)
@@ -159,6 +184,17 @@ class PublishAttributeValues(AttributeValues):
 
 
 class PublishAttributes:
+    """Wrapper for publish plugin attribute definitions.
+
+    Cares about handling attribute definitions of multiple publish plugins.
+
+    Args:
+        parent(CreatedInstance, CreateContext): Parent for which will be
+            data stored and from which are data loaded.
+        origin_data(dict): Loaded data by plugin class name.
+        attr_plugins(list): List of publish plugins that may have defined
+            attribute definitions.
+    """
     def __init__(self, parent, origin_data, attr_plugins=None):
         self.parent = parent
         self._origin_data = copy.deepcopy(origin_data)
@@ -210,6 +246,15 @@ class PublishAttributes:
         return self._data.items()
 
     def pop(self, key, default=None):
+        """Remove or reset value for plugin.
+
+        Plugin values are reset to defaults if plugin is available but
+        data of plugin which was not found are removed.
+
+        Args:
+            key(str): Plugin name.
+            default: Default value if plugin was not found.
+        """
         if key not in self._data:
             return default
 
@@ -345,43 +390,58 @@ class CreatedInstance:
 
     @property
     def has_set_asset(self):
+        """Asset name is set in data."""
         return "asset" in self._data
 
     @property
     def has_set_task(self):
+        """Task name is set in data."""
         return "task" in self._data
 
     @property
     def has_valid_context(self):
+        """Context data are valid for publishing."""
         return self.has_valid_asset and self.has_valid_task
 
     @property
     def has_valid_asset(self):
+        """Asset set in context exists in project."""
         if not self.has_set_asset:
             return False
         return self._asset_is_valid
 
     @property
     def has_valid_task(self):
+        """Task set in context exists in project."""
         if not self.has_set_task:
             return False
         return self._task_is_valid
 
     def set_asset_invalid(self, invalid):
+        # TODO replace with `set_asset_name`
         self._asset_is_valid = not invalid
 
     def set_task_invalid(self, invalid):
+        # TODO replace with `set_task_name`
         self._task_is_valid = not invalid
 
     @property
     def id(self):
+        """Instance identifier."""
         return self._data["uuid"]
 
     @property
     def data(self):
+        """Pointer to data.
+
+        TODO:
+        Define class handling which keys are change to what.
+        - this is dangerous as it is possible to modify any key (e.g. `uuid`)
+        """
         return self._data
 
     def changes(self):
+        """Calculate and return changes."""
         changes = {}
         new_keys = set()
         for key, new_value in self._data.items():
