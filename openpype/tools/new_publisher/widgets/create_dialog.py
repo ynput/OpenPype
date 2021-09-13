@@ -329,7 +329,7 @@ class CreateDialog(QtWidgets.QDialog):
 
         # Add new families
         new_families = set()
-        for family in self.controller.creators.keys():
+        for family in self.controller.ui_creators.keys():
             # TODO add details about creator
             new_families.add(family)
             if family not in existing_items:
@@ -363,7 +363,7 @@ class CreateDialog(QtWidgets.QDialog):
         if new_index.isValid():
             family = new_index.data(QtCore.Qt.DisplayRole)
 
-        creator = self.controller.creators.get(family)
+        creator = self.controller.ui_creators.get(family)
 
         self.creator_description_widget.set_plugin(creator)
 
