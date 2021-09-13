@@ -680,9 +680,6 @@ class SyncServerModule(OpenPypeModule, ITrayModule):
 
         return sites
 
-    def connect_with_modules(self, *_a, **kw):
-        return
-
     def tray_init(self):
         """
             Actual initialization of Sync Server.

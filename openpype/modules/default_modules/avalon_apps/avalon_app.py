@@ -71,9 +71,6 @@ class AvalonModule(OpenPypeModule, ITrayModule, IWebServerRoutes):
                 exc_info=True
             )
 
-    def connect_with_modules(self, _enabled_modules):
-        return
-
     def webserver_initialization(self, server_manager):
         """Implementation of IWebServerRoutes interface."""
 

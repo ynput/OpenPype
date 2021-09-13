@@ -26,9 +26,6 @@ class DeadlineModule(OpenPypeModule, IPluginPaths):
                               "not specified. Disabling module."))
             return
 
-    def connect_with_modules(self, *_a, **_kw):
-        return
-
     def get_plugin_paths(self):
         """Deadline plugin paths."""
         current_dir = os.path.dirname(os.path.abspath(__file__))
