@@ -9,7 +9,7 @@ OpenPype modules should contain separated logic of specific kind of implementati
 ### TODOs
 - add module/addon manifest
  - definition of module (not 100% defined content e.g. minimum required OpenPype version etc.)
- - defying that folder is content of a module or an addon
+ - defining a folder as a content of a module or an addon
 
 ## Base class `OpenPypeModule`
 - abstract class as base for each module
