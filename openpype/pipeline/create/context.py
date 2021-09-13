@@ -758,14 +758,19 @@ class CreateContext:
         self.instances = instances
 
     def execute_autocreators(self):
+        any_processed = False
         for family, creator in self.autocreators.items():
             try:
                 creator.create()
+                any_processed = True
             except Exception:
                 msg = (
                     "Failed to run AutoCreator with family \"{}\" ({})."
                 ).format(family, inspect.getfile(creator.__class__))
                 self.log.warning(msg, exc_info=True)
+
+        if any_processed:
+            self.reset_instances()
 
     def save_changes(self):
         if not self.host_is_valid:
