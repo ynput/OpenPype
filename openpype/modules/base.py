@@ -495,6 +495,7 @@ class ModulesManager:
                 if (
                     not inspect.isclass(modules_item)
                     or modules_item is OpenPypeModule
+                    or modules_item is OpenPypeAddOn
                     or not issubclass(modules_item, OpenPypeModule)
                 ):
                     continue
