@@ -116,6 +116,9 @@ class AttributeValues:
     def pop(self, key, default=None):
         return self._data.pop(key, default)
 
+    def reset_values(self):
+        self._data = []
+
     @property
     def attr_defs(self):
         return self._attr_defs
@@ -165,6 +168,7 @@ class PublishAttributes:
 
         self._data = {}
         self._plugin_names_order = []
+        self._missing_plugins = []
         data = copy.deepcopy(origin_data)
         added_keys = set()
         for plugin in attr_plugins:
@@ -185,6 +189,7 @@ class PublishAttributes:
 
         for key, value in data.items():
             if key not in added_keys:
+                self._missing_plugins.append(key)
                 self._data[key] = PublishAttributeValues(
                     self, [], value, value
                 )
@@ -205,11 +210,20 @@ class PublishAttributes:
         return self._data.items()
 
     def pop(self, key, default=None):
-        # TODO implement
         if key not in self._data:
             return default
 
-        # if key not in self._plugin_keys:
+        if key in self._missing_plugins:
+            self._missing_plugins.remove(key)
+            removed_item = self._data.pop(key)
+            return removed_item.data_to_store()
+
+        value_item = self._data[key]
+        # Prepare value to return
+        output = value_item.data_to_store()
+        # Reset values
+        value_item.reset_values()
+        return output
 
     def plugin_names_order(self):
         for name in self._plugin_names_order:
