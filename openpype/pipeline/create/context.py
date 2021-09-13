@@ -8,6 +8,7 @@ from uuid import uuid4
 from ..lib import UnknownDef
 from .creator_plugins import (
     BaseCreator,
+    Creator,
     AutoCreator
 )
 
@@ -558,7 +559,12 @@ class CreateContext:
 
         self.instances = []
 
+        # Discovered creators
         self.creators = {}
+        # Prepare categories of creators
+        self.autocreators = {}
+        self.ui_creators = {}
+
         self.publish_discover_result = None
         self.publish_plugins = []
         self.plugins_with_defs = []
@@ -630,18 +636,30 @@ class CreateContext:
 
         # Discover and prepare creators
         creators = {}
-        for creator in avalon.api.discover(BaseCreator):
-            if inspect.isabstract(creator):
+        autocreators = {}
+        ui_creators = {}
+        for creator_class in avalon.api.discover(BaseCreator):
+            if inspect.isabstract(creator_class):
                 self.log.info(
-                    "Skipping abstract Creator {}".format(str(creator))
+                    "Skipping abstract Creator {}".format(str(creator_class))
                 )
                 continue
-            creators[creator.family] = creator(
+
+            family = creator_class.family
+            creator = creator_class(
                 self,
                 system_settings,
                 project_settings,
                 self.headless
             )
+            creators[family] = creator
+            if isinstance(creator, AutoCreator):
+                autocreators[family] = creator
+            elif isinstance(creator, Creator):
+                ui_creators[family] = creator
+
+        self.autocreators = autocreators
+        self.ui_creators = ui_creators
 
         self.creators = creators
 
@@ -740,21 +758,14 @@ class CreateContext:
         self.instances = instances
 
     def execute_autocreators(self):
-        for creator in self.get_autocreators():
+        for family, creator in self.autocreators.items():
             try:
                 creator.create()
             except Exception:
                 msg = (
                     "Failed to run AutoCreator with family \"{}\" ({})."
-                ).format(creator.family, inspect.getfile(creator.__class__))
+                ).format(family, inspect.getfile(creator.__class__))
                 self.log.warning(msg, exc_info=True)
-
-    def get_autocreators(self):
-        autocreators = []
-        for creator in self.creators.values():
-            if isinstance(creator, AutoCreator):
-                autocreators.append(creator)
-        return autocreators
 
     def save_changes(self):
         if not self.host_is_valid:

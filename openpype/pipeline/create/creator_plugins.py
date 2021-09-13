@@ -195,7 +195,7 @@ class BaseCreator:
 
 
 class Creator(BaseCreator):
-    """Creator that has more information for artist.
+    """Creator that has more information for artist to show in UI.
 
     Creation requires prepared subset name and instance data.
     """
