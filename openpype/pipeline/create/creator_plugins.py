@@ -39,10 +39,6 @@ class BaseCreator:
     # Creator is enabled (Probably does not have reason of existence?)
     enabled = True
 
-    # GUI Purposes
-    # - default_variants may not be used if `get_default_variants` is overriden
-    default_variants = []
-
     # Creator (and family) icon
     # - may not be used if `get_icon` is reimplemented
     icon = None
@@ -84,31 +80,6 @@ class BaseCreator:
         Can return path to image file or awesome icon name.
         """
         return self.icon
-
-    def get_default_variants(self):
-        """Default variant values for UI tooltips.
-
-        Replacement of `defatults` attribute. Using method gives ability to
-        have some "logic" other than attribute values.
-
-        By default returns `default_variants` value.
-
-        Returns:
-            list<str>: Whisper variants for user input.
-        """
-        return copy.deepcopy(self.default_variants)
-
-    def get_default_variant(self):
-        """Default variant value that will be used to prefill variant input.
-
-        This is for user input and value may not be content of result from
-        `get_default_variants`.
-
-        Can return `None`. In that case first element from
-        `get_default_variants` should be used.
-        """
-
-        return None
 
     def get_dynamic_data(
         self, variant, task_name, asset_doc, project_name, host_name
@@ -202,6 +173,10 @@ class Creator(BaseCreator):
     # Label shown in UI
     label = None
 
+    # GUI Purposes
+    # - default_variants may not be used if `get_default_variants` is overriden
+    default_variants = []
+
     # Short description of family
     # - may not be used if `get_description` is overriden
     description = None
@@ -243,6 +218,31 @@ class Creator(BaseCreator):
             str: Detailed description of family for artist.
         """
         return self.detailed_description
+
+    def get_default_variants(self):
+        """Default variant values for UI tooltips.
+
+        Replacement of `defatults` attribute. Using method gives ability to
+        have some "logic" other than attribute values.
+
+        By default returns `default_variants` value.
+
+        Returns:
+            list<str>: Whisper variants for user input.
+        """
+        return copy.deepcopy(self.default_variants)
+
+    def get_default_variant(self):
+        """Default variant value that will be used to prefill variant input.
+
+        This is for user input and value may not be content of result from
+        `get_default_variants`.
+
+        Can return `None`. In that case first element from
+        `get_default_variants` should be used.
+        """
+
+        return None
 
 
 class AutoCreator(BaseCreator):
