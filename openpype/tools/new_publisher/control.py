@@ -484,6 +484,7 @@ class PublisherController:
         # Publish part must be resetted after plugins
         self._reset_publish()
         self._reset_instances()
+        self.create_context.execute_autocreators()
 
     def _reset_plugins(self):
         """Reset to initial state."""

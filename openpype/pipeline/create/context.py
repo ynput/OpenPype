@@ -6,7 +6,10 @@ import inspect
 from uuid import uuid4
 
 from ..lib import UnknownDef
-from .creator_plugins import BaseCreator
+from .creator_plugins import (
+    BaseCreator,
+    AutoCreator
+)
 
 from openpype.api import (
     get_system_settings,
@@ -591,6 +594,8 @@ class CreateContext:
         self.reset_context_data()
         self.reset_instances()
 
+        self.execute_autocreators()
+
     def reset_plugins(self):
         import avalon.api
         import pyblish.logic
@@ -733,6 +738,23 @@ class CreateContext:
                 instance.set_task_invalid(True)
 
         self.instances = instances
+
+    def execute_autocreators(self):
+        for creator in self.get_autocreators():
+            try:
+                creator.create()
+            except Exception:
+                msg = (
+                    "Failed to run AutoCreator with family \"{}\" ({})."
+                ).format(creator.family, inspect.getfile(creator.__class__))
+                self.log.warning(msg, exc_info=True)
+
+    def get_autocreators(self):
+        autocreators = []
+        for creator in self.creators.values():
+            if isinstance(creator, AutoCreator):
+                autocreators.append(creator)
+        return autocreators
 
     def save_changes(self):
         if not self.host_is_valid:
