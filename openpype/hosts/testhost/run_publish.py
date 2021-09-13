@@ -58,8 +58,8 @@ def main():
 
     avalon.api.install(testhost)
 
+    QtWidgets.QApplication.setAttribute(QtCore.Qt.AA_EnableHighDpiScaling)
     app = QtWidgets.QApplication([])
-    app.setAttribute(QtCore.Qt.AA_EnableHighDpiScaling)
     window = PublisherWindow()
     window.show()
     app.exec_()
