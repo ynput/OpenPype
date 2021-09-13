@@ -21,6 +21,8 @@ class InstanceListItemWidget(QtWidgets.QWidget):
         self.instance = instance
 
         subset_name_label = QtWidgets.QLabel(instance.data["subset"], self)
+        subset_name_label.setObjectName("ListViewSubsetName")
+
         active_checkbox = NiceCheckbox(parent=self)
         active_checkbox.setChecked(instance.data["active"])
 
@@ -40,6 +42,20 @@ class InstanceListItemWidget(QtWidgets.QWidget):
         self.subset_name_label = subset_name_label
         self.active_checkbox = active_checkbox
 
+        self._has_valid_context = None
+
+        self._set_valid_property(instance.has_valid_context)
+
+    def _set_valid_property(self, valid):
+        if self._has_valid_context == valid:
+            return
+        self._has_valid_context = valid
+        state = ""
+        if not valid:
+            state = "invalid"
+        self.subset_name_label.setProperty("state", state)
+        self.subset_name_label.style().polish(self.subset_name_label)
+
     def set_active(self, new_value):
         checkbox_value = self.active_checkbox.isChecked()
         instance_value = self.instance.data["active"]
@@ -58,6 +74,7 @@ class InstanceListItemWidget(QtWidgets.QWidget):
 
     def update_instance_values(self):
         self.set_active(self.instance.data["active"])
+        self._set_valid_property(self.instance.has_valid_context)
 
     def _on_active_change(self):
         new_value = self.active_checkbox.isChecked()

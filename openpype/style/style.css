@@ -695,6 +695,10 @@ QScrollBar::add-page:vertical, QScrollBar::sub-page:vertical {
     background: {color:bg-view-selection};
 }
 
+#ListViewSubsetName[state="invalid"] {
+    color: {color:publish-error};
+}
+
 #PublishFrame {
     background: rgba(0, 0, 0, 127);
 }
