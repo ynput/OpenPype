@@ -18,10 +18,13 @@ Running OpenPype without any commands will default to `tray`.
 ```shell
 openpype_console --use-version=3.0.0-foo+bar
 ```
+`--headless` - to run OpenPype in headless mode (without using graphical UI)
 
 `--use-staging` - to use staging versions of OpenPype.
 
 `--list-versions [--use-staging]` - to list available versions.
+
+`--validate-version` to validate integrity of given version
 
 For more information [see here](admin_use#run-openpype).
 

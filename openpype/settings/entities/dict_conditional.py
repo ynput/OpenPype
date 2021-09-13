@@ -469,6 +469,10 @@ class DictConditionalEntity(ItemEntity):
                     return True
         return False
 
+    def collect_dynamic_schema_entities(self, collector):
+        if self.is_dynamic_schema_node:
+            collector.add_entity(self)
+
     def settings_value(self):
         if self._override_state is OverrideState.NOT_DEFINED:
             return NOT_SET
@@ -482,13 +486,7 @@ class DictConditionalEntity(ItemEntity):
 
             output = {}
             for key, child_obj in children_items:
-                child_value = child_obj.settings_value()
-                if not child_obj.is_file and not child_obj.file_item:
-                    for _key, _value in child_value.items():
-                        new_key = "/".join([key, _key])
-                        output[new_key] = _value
-                else:
-                    output[key] = child_value
+                output[key] = child_obj.settings_value()
             return output
 
         if self.is_group:
@@ -726,3 +724,49 @@ class DictConditionalEntity(ItemEntity):
         for children in self.children.values():
             for child_entity in children:
                 child_entity.reset_callbacks()
+
+
+class SyncServerProviders(DictConditionalEntity):
+    schema_types = ["sync-server-providers"]
+
+    def _add_children(self):
+        self.enum_key = "provider"
+        self.enum_label = "Provider"
+
+        enum_children = self._get_enum_children()
+        if not enum_children:
+            enum_children.append({
+                "key": None,
+                "label": "< Nothing >"
+            })
+        self.enum_children = enum_children
+
+        super(SyncServerProviders, self)._add_children()
+
+    def _get_enum_children(self):
+        from openpype_modules import sync_server
+
+        from openpype_modules.sync_server.providers import lib as lib_providers
+
+        provider_code_to_label = {}
+        providers = lib_providers.factory.providers
+        for provider_code, provider_info in providers.items():
+            provider, _ = provider_info
+            provider_code_to_label[provider_code] = provider.LABEL
+
+        system_settings_schema = (
+            sync_server
+            .SyncServerModule
+            .get_system_settings_schema()
+        )
+
+        enum_children = []
+        for provider_code, configurables in system_settings_schema.items():
+            label = provider_code_to_label.get(provider_code) or provider_code
+
+            enum_children.append({
+                "key": provider_code,
+                "label": label,
+                "children": configurables
+            })
+        return enum_children

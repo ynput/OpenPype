@@ -8,7 +8,7 @@ import platform
 from openpype.api import Logger
 from openpype.api import get_system_settings
 from .abstract_provider import AbstractProvider
-from ..utils import time_function, ResumableError, EditableScopes
+from ..utils import time_function, ResumableError
 
 log = Logger().get_logger("SyncServer")
 
@@ -96,30 +96,61 @@ class GDriveHandler(AbstractProvider):
         return self.service is not None
 
     @classmethod
-    def get_configurable_items(cls):
+    def get_system_settings_schema(cls):
         """
-            Returns filtered dict of editable properties.
+            Returns dict for editable properties on system settings level
+
+
+            Returns:
+                (list) of dict
+        """
+        return []
+
+    @classmethod
+    def get_project_settings_schema(cls):
+        """
+            Returns dict for editable properties on project settings level
+
+
+            Returns:
+                (list) of dict
+        """
+        # {platform} tells that value is multiplatform and only specific OS
+        # should be returned
+        editable = [
+            # credentials could be overriden on Project or User level
+            {
+                'key': "credentials_url",
+                'label': "Credentials url",
+                'type': 'text'
+            },
+            # roots could be overriden only on Project leve, User cannot
+            {
+                 'key': "roots",
+                 'label': "Roots",
+                 'type': 'dict'
+            }
+        ]
+        return editable
+
+    @classmethod
+    def get_local_settings_schema(cls):
+        """
+            Returns dict for editable properties on local settings level
 
 
             Returns:
                 (dict)
         """
-        # {platform} tells that value is multiplatform and only specific OS
-        # should be returned
-        editable = {
+        editable = [
             # credentials could be override on Project or User level
-            'credentials_url': {
-                'scope': [EditableScopes.PROJECT,
-                          EditableScopes.LOCAL],
+            {
+                'key': "credentials_url",
                 'label': "Credentials url",
                 'type': 'text',
                 'namespace': '{project_settings}/global/sync_server/sites/{site}/credentials_url/{platform}'  # noqa: E501
-            },
-            # roots could be override only on Project leve, User cannot
-            'root': {'scope': [EditableScopes.PROJECT],
-                     'label': "Roots",
-                     'type': 'dict'}
-        }
+            }
+        ]
         return editable
 
     def get_roots_config(self, anatomy=None):

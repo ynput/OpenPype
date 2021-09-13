@@ -21,6 +21,7 @@ from .base import (
     BaseWidget,
     InputWidget
 )
+from openpype.widgets.sliders import NiceSlider
 from openpype.tools.settings import CHILD_OFFSET
 
 
@@ -404,20 +405,52 @@ class TextWidget(InputWidget):
 
 
 class NumberWidget(InputWidget):
+    _slider_widget = None
+
     def _add_inputs_to_layout(self):
         kwargs = {
             "minimum": self.entity.minimum,
             "maximum": self.entity.maximum,
-            "decimal": self.entity.decimal
+            "decimal": self.entity.decimal,
+            "steps": self.entity.steps
         }
         self.input_field = NumberSpinBox(self.content_widget, **kwargs)
+        input_field_stretch = 1
+
+        slider_multiplier = 1
+        if self.entity.show_slider:
+            # Slider can't handle float numbers so all decimals are converted
+            #   to integer range.
+            slider_multiplier = 10 ** self.entity.decimal
+            slider_widget = NiceSlider(QtCore.Qt.Horizontal, self)
+            slider_widget.setRange(
+                int(self.entity.minimum * slider_multiplier),
+                int(self.entity.maximum * slider_multiplier)
+            )
+            if self.entity.steps is not None:
+                slider_widget.setSingleStep(
+                    self.entity.steps * slider_multiplier
+                )
+
+            self.content_layout.addWidget(slider_widget, 1)
+
+            slider_widget.valueChanged.connect(self._on_slider_change)
+
+            self._slider_widget = slider_widget
+
+            input_field_stretch = 0
+
+        self._slider_multiplier = slider_multiplier
 
         self.setFocusProxy(self.input_field)
 
-        self.content_layout.addWidget(self.input_field, 1)
+        self.content_layout.addWidget(self.input_field, input_field_stretch)
 
         self.input_field.valueChanged.connect(self._on_value_change)
         self.input_field.focused_in.connect(self._on_input_focus)
+
+        self._ignore_slider_change = False
+        self._ignore_input_change = False
 
     def _on_input_focus(self):
         self.focused_in()
@@ -429,10 +462,25 @@ class NumberWidget(InputWidget):
     def set_entity_value(self):
         self.input_field.setValue(self.entity.value)
 
+    def _on_slider_change(self, new_value):
+        if self._ignore_slider_change:
+            return
+
+        self._ignore_input_change = True
+        self.input_field.setValue(new_value / self._slider_multiplier)
+        self._ignore_input_change = False
+
     def _on_value_change(self):
         if self.ignore_input_changes:
             return
-        self.entity.set(self.input_field.value())
+
+        value = self.input_field.value()
+        if self._slider_widget is not None and not self._ignore_input_change:
+            self._ignore_slider_change = True
+            self._slider_widget.setValue(value * self._slider_multiplier)
+            self._ignore_slider_change = False
+
+        self.entity.set(value)
 
 
 class RawJsonInput(SettingsPlainTextEdit):
