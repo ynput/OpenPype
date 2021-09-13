@@ -25,3 +25,5 @@ class ImportReference(api.InventoryAction):
                 ref_file = cmds.referenceQuery(reference_name, f=True)
 
                 cmds.file(ref_file, importReference=True)
+
+        return "refresh"
