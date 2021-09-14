@@ -783,6 +783,9 @@ def boot():
 
     use_version, use_staging, commands = _process_arguments()
 
+    if use_staging:
+        os.environ["OPENPYPE_DEV"] = 'True'
+
     if os.getenv("OPENPYPE_VERSION"):
         if use_version:
             _print(("*** environment variable OPENPYPE_VERSION"
