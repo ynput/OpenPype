@@ -600,7 +600,8 @@ class PublisherController:
         self._reset_instances()
 
     def save_changes(self):
-        self.create_context.save_changes()
+        if self.create_context.host_is_valid:
+            self.create_context.save_changes()
 
     def remove_instances(self, instances):
         # QUESTION Expect that instaces are really removed? In that case save
