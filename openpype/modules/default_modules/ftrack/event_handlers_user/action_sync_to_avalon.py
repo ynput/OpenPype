@@ -1,4 +1,6 @@
 import time
+import sys
+import json
 import traceback
 
 from openpype_modules.ftrack.lib import BaseAction, statics_icon
@@ -63,6 +65,20 @@ class SyncToAvalonLocal(BaseAction):
         return is_valid
 
     def launch(self, session, in_entities, event):
+        self.log.debug("{}: Creating job".format(self.label))
+
+        user_entity = session.query(
+            "User where id is {}".format(event["source"]["user"]["id"])
+        ).one()
+        job_entity = session.create("Job", {
+            "user": user_entity,
+            "status": "running",
+            "data": json.dumps({
+                "description": "Sync to avalon is running..."
+            })
+        })
+        session.commit()
+
         project_entity = self.get_project_from_entity(in_entities[0])
         project_name = project_entity["full_name"]
 
@@ -73,12 +89,24 @@ class SyncToAvalonLocal(BaseAction):
             self.log.error(
                 "Synchronization failed due to code error", exc_info=True
             )
+
+            description = "Sync to avalon Crashed (Download traceback)"
+            self.add_traceback_to_job(
+                job_entity, session, sys.exc_info(), description
+            )
+
             msg = "An error has happened during synchronization"
             title = "Synchronization report ({}):".format(project_name)
             items = []
             items.append({
                 "type": "label",
                 "value": "# {}".format(msg)
+            })
+            items.append({
+                "type": "label",
+                "value": (
+                    "<p>Download report from job for more information.</p>"
+                )
             })
 
             report = {}
@@ -95,6 +123,12 @@ class SyncToAvalonLocal(BaseAction):
             self.show_interface(items, title, event, submit_btn_label="Ok")
 
             return {"success": True, "message": msg}
+
+        job_entity["status"] = "done"
+        job_entity["data"] = json.dumps({
+            "description": "Sync to avalon finished."
+        })
+        session.commit()
 
         return result
 
