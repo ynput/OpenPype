@@ -16,6 +16,12 @@ def get_pype_version():
     return openpype.version.__version__
 
 
+def is_running_staging():
+    if "staging" in get_pype_version():
+        return True
+    return False
+
+
 def get_pype_info():
     """Information about currently used Pype process."""
     executable_args = get_pype_execute_args()
