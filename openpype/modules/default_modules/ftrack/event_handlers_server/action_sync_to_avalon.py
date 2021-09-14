@@ -74,7 +74,7 @@ class SyncToAvalonServer(ServerAction):
         try:
             result = self.synchronization(event, project_name)
 
-        except Exception as exc:
+        except Exception:
             self.log.error(
                 "Synchronization failed due to code error", exc_info=True
             )
