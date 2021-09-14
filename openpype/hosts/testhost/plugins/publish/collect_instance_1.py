@@ -1,8 +1,6 @@
 import json
 import pyblish.api
-from avalon import io
 
-from openpype.hosts.testhost import api
 from openpype.pipeline import (
     OpenPypePyblishPluginMixin,
     attribute_definitions

@@ -1,4 +1,3 @@
-from openpype import resources
 from openpype.hosts.testhost import api
 from openpype.pipeline import (
     AutoCreator,
