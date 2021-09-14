@@ -14,7 +14,11 @@ from openpype_modules.ftrack.ftrack_server.lib import (
     TOPIC_STATUS_SERVER_RESULT
 )
 from openpype_modules.ftrack.lib import get_ftrack_event_mongo_info
-from openpype.lib import OpenPypeMongoConnection
+from openpype.lib import (
+    OpenPypeMongoConnection,
+    get_openpype_version,
+    get_build_version
+)
 from openpype.api import Logger
 
 log = Logger.get_logger("Event storer")
@@ -153,9 +157,11 @@ def send_status(event):
     new_event_data = {
         "subprocess_id": os.environ["FTRACK_EVENT_SUB_ID"],
         "source": "storer",
-        "status_info": {
-            "created_at": subprocess_started.strftime("%Y.%m.%d %H:%M:%S")
-        }
+        "status_info": [
+            ["created_at", subprocess_started.strftime("%Y.%m.%d %H:%M:%S")],
+            ["OpenPype version", get_openpype_version() or "N/A"],
+            ["OpenPype build version", get_build_version() or "N/A"]
+        ]
     }
 
     new_event = ftrack_api.event.base.Event(

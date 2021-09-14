@@ -6,7 +6,6 @@ import subprocess
 import socket
 import json
 import platform
-import argparse
 import getpass
 import atexit
 import time
@@ -16,7 +15,9 @@ import ftrack_api
 import pymongo
 from openpype.lib import (
     get_pype_execute_args,
-    OpenPypeMongoConnection
+    OpenPypeMongoConnection,
+    get_openpype_version,
+    get_build_version
 )
 from openpype_modules.ftrack import FTRACK_MODULE_DIR
 from openpype_modules.ftrack.lib import credentials
@@ -238,12 +239,14 @@ def main_loop(ftrack_url):
 
     system_name, pc_name = platform.uname()[:2]
     host_name = socket.gethostname()
-    main_info = {
-        "created_at": datetime.datetime.now().strftime("%Y.%m.%d %H:%M:%S"),
-        "Username": getpass.getuser(),
-        "Host Name": host_name,
-        "Host IP": socket.gethostbyname(host_name)
-    }
+    main_info = [
+        ["created_at", datetime.datetime.now().strftime("%Y.%m.%d %H:%M:%S")],
+        ["Username", getpass.getuser()],
+        ["Host Name", host_name],
+        ["Host IP", socket.gethostbyname(host_name)],
+        ["OpenPype version", get_openpype_version() or "N/A"],
+        ["OpenPype build version", get_build_version() or "N/A"]
+    ]
     main_info_str = json.dumps(main_info)
     # Main loop
     while True:
