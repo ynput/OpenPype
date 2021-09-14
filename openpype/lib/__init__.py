@@ -160,6 +160,11 @@ from .editorial import (
     make_sequence_collection
 )
 
+from .pype_info import (
+    get_openpype_version,
+    get_build_version
+)
+
 terminal = Terminal
 
 __all__ = [
@@ -280,5 +285,8 @@ __all__ = [
     "frames_to_timecode",
     "make_sequence_collection",
     "create_project_folders",
-    "get_project_basic_paths"
+    "get_project_basic_paths",
+
+    "get_openpype_version",
+    "get_build_version",
 ]
