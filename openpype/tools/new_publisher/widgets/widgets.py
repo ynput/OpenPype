@@ -188,7 +188,7 @@ class PublishIconBtn(IconButton):
             height - (2 * part_h)
         )
         alpha_mask = scaled_image.createAlphaMask()
-        alpha_region = QtGui.QRegion(QtGui.QBitmap(alpha_mask))
+        alpha_region = QtGui.QRegion(QtGui.QBitmap.fromImage(alpha_mask))
         alpha_region.translate(part_w, part_h)
 
         pixmap = QtGui.QPixmap(width, height)
