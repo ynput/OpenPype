@@ -237,13 +237,13 @@ def main_loop(ftrack_url):
         statuser_thread=statuser_thread
     )
 
-    system_name, pc_name = platform.uname()[:2]
     host_name = socket.gethostname()
     main_info = [
         ["created_at", datetime.datetime.now().strftime("%Y.%m.%d %H:%M:%S")],
         ["Username", getpass.getuser()],
         ["Host Name", host_name],
         ["Host IP", socket.gethostbyname(host_name)],
+        ["OpenPype executable", get_pype_execute_args()[-1]],
         ["OpenPype version", get_openpype_version() or "N/A"],
         ["OpenPype build version", get_build_version() or "N/A"]
     ]
