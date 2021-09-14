@@ -324,7 +324,7 @@ class CreatedInstance:
         self, family, subset_name, data=None, creator=None, host=None,
         attr_plugins=None, new=True
     ):
-        if not host:
+        if host is None:
             import avalon.api
 
             host = avalon.api.registered_host()
