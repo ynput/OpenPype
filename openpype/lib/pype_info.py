@@ -25,10 +25,23 @@ def get_pype_version():
     return get_openpype_version()
 
 
+def is_running_from_build():
+    """Determine if current process is running from build or code.
+
+    Returns:
+        bool: True if running from build.
+    """
+    executable_path = os.environ["OPENPYPE_EXECUTABLE"]
+    executable_filename = os.path.basename(executable_path)
+    if "python" in executable_filename.lower():
+        return False
+    return True
+
+
 def get_pype_info():
     """Information about currently used Pype process."""
     executable_args = get_pype_execute_args()
-    if len(executable_args) == 1:
+    if is_running_from_build():
         version_type = "build"
     else:
         version_type = "code"
