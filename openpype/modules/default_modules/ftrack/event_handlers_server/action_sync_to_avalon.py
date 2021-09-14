@@ -54,13 +54,40 @@ class SyncToAvalonServer(ServerAction):
     def launch(self, session, in_entities, event):
         project_entity = self.get_project_from_entity(in_entities[0])
         project_name = project_entity["full_name"]
-        result = self.synchronization(
-            session, in_entities, event, project_name
-        )
+
+        try:
+            result = self.synchronization(event, project_name)
+
+        except Exception as exc:
+            self.log.error(
+                "Synchronization failed due to code error", exc_info=True
+            )
+            msg = "An error has happened during synchronization"
+            title = "Synchronization report ({}):".format(project_name)
+            items = []
+            items.append({
+                "type": "label",
+                "value": "# {}".format(msg)
+            })
+
+            report = {}
+            try:
+                report = self.entities_factory.report()
+            except Exception:
+                pass
+
+            _items = report.get("items") or []
+            if _items:
+                items.append(self.entities_factory.report_splitter)
+                items.extend(_items)
+
+            self.show_interface(items, title, event, submit_btn_label="Ok")
+
+            return {"success": True, "message": msg}
 
         return result
 
-    def synchronization(self, session, in_entities, event, project_name):
+    def synchronization(self, event, project_name):
         time_start = time.time()
 
         self.show_message(event, "Synchronization - Preparing data", True)
@@ -133,46 +160,6 @@ class SyncToAvalonServer(ServerAction):
                 "success": True,
                 "message": "Synchronization Finished"
             }
-
-        except Exception:
-            self.log.error(
-                "Synchronization failed due to code error", exc_info=True
-            )
-            msg = "An error has happened during synchronization"
-            items = []
-            items.append({
-                "type": "label",
-                "value": "# {}".format(msg)
-            })
-            items.append({
-                "type": "label",
-                "value": "## Traceback of the error"
-            })
-            items.append({
-                "type": "label",
-                "value": "<p>{}</p>".format(
-                    str(traceback.format_exc()).replace(
-                        "\n", "<br>").replace(
-                        " ", "&nbsp;"
-                    )
-                )
-            })
-
-            report = {"items": []}
-            try:
-                report = self.entities_factory.report()
-            except Exception:
-                pass
-            title = "Synchronization report ({}):".format(project_name)
-
-            _items = report.get("items", [])
-            if _items:
-                items.append(self.entities_factory.report_splitter)
-                items.extend(_items)
-
-            self.show_interface(items, title, event)
-
-            return {"success": True, "message": msg}
 
         finally:
             try:
