@@ -60,7 +60,7 @@ class AvalonModule(OpenPypeModule, ITrayModule, IWebServerRoutes):
             from Qt import QtGui
 
             self.libraryloader = app.Window(
-                icon=QtGui.QIcon(resources.pype_icon_filepath()),
+                icon=QtGui.QIcon(resources.get_openpype_icon_filepath()),
                 show_projects=True,
                 show_libraries=True
             )
