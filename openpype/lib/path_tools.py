@@ -178,7 +178,9 @@ def _list_path_items(folder_structure):
                 if not isinstance(path, (list, tuple)):
                     path = [path]
 
-                output.append([key, *path])
+                item = [key]
+                item.extend(path)
+                output.append(item)
 
     return output
 
