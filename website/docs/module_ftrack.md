@@ -98,10 +98,12 @@ Event server should **not** run more than once! It may cause major issues.
     `sudo vi /opt/openpype/run_event_server.sh`
 -   add content to the file:
 ```sh
-#!/usr/bin/env
-export OPENPYPE_DEBUG=3
-pushd /mnt/pipeline/prod/openpype-setup
-. openpype_console eventserver --ftrack-user <openpype-admin-user> --ftrack-api-key <api-key>
+#!/usr/bin/env bash
+export OPENPYPE_DEBUG=1
+export OPENPYPE_MONGO=<openpype-mongo-url>
+
+pushd /mnt/path/to/openpype
+./openpype_console eventserver --ftrack-user <openpype-admin-user> --ftrack-api-key <api-key>
 ```
 -   change file permission:
     `sudo chmod 0755 /opt/openpype/run_event_server.sh`
@@ -141,9 +143,11 @@ WantedBy=multi-user.target
 -   add content to the service file: 
 ```sh
 @echo off
-set OPENPYPE_DEBUG=3
-pushd \\path\to\file\
-openpype_console.exe eventserver --ftrack-user <openpype-admin-user> --ftrack-api-key <api-key> 
+set OPENPYPE_DEBUG=1
+set OPENPYPE_MONGO=<openpype-mongo-url>
+
+pushd \\path\to\openpype
+openpype_console.exe eventserver --ftrack-user <openpype-admin-user> --ftrack-api-key <api-key>
 ```
 -   download and install `nssm.cc`
 -   create Windows service according to nssm.cc manual
