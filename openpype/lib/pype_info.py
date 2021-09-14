@@ -11,9 +11,18 @@ from .execute import get_pype_execute_args
 from .local_settings import get_local_site_id
 
 
-def get_pype_version():
+def get_openpype_version():
     """Version of pype that is currently used."""
     return openpype.version.__version__
+
+
+def get_pype_version():
+    """Backwards compatibility. Remove when 100% not used."""
+    print((
+        "Using deprecated function 'openpype.lib.pype_info.get_pype_version'"
+        " replace with 'openpype.lib.pype_info.get_openpype_version'."
+    ))
+    return get_openpype_version()
 
 
 def get_pype_info():
@@ -25,7 +34,7 @@ def get_pype_info():
         version_type = "code"
 
     return {
-        "version": get_pype_version(),
+        "version": get_openpype_version(),
         "version_type": version_type,
         "executable": executable_args[-1],
         "pype_root": os.environ["OPENPYPE_REPOS_ROOT"],
@@ -73,7 +82,7 @@ def extract_pype_info_to_file(dirpath):
         filepath (str): Full path to file where data were extracted.
     """
     filename = "{}_{}_{}.json".format(
-        get_pype_version(),
+        get_openpype_version(),
         get_local_site_id(),
         datetime.datetime.now().strftime("%y%m%d%H%M%S")
     )
