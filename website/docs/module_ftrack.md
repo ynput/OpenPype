@@ -51,10 +51,7 @@ There are specific launch arguments for event server. With `openpype_console eve
 
 -  **`--ftrack-user "your.username"`** : Ftrack Username
 -   **`--ftrack-api-key "00000aaa-11bb-22cc-33dd-444444eeeee"`** : User's API key
--   **`--store-crededentials`** : Entered credentials will be stored for next launch with this argument _(It is not needed to enter **ftrackuser** and **ftrackapikey** args on next launch)_
--   **`--no-stored-credentials`** : Stored credentials are loaded first so if you want to change credentials use this argument
 -   `--ftrack-url "https://yourdomain.ftrackapp.com/"` : Ftrack server URL _(it is not needed to enter if you have set `FTRACK_SERVER` in OpenPype' environments)_
--   `--ftrack-events-path "//Paths/To/Events/"` : Paths to events folder. May contain multiple paths separated by `;`. _(it is not needed to enter if you have set `FTRACK_EVENTS_PATH` in OpenPype' environments)_
 
 So if you want to use OpenPype's environments then you can launch event server for first time with these arguments `openpype_console.exe eventserver --ftrack-user "my.username" --ftrack-api-key "00000aaa-11bb-22cc-33dd-444444eeeee" --store-credentials`. Since that time, if everything was entered correctly, you can launch event server with `openpype_console.exe eventserver`.
 
@@ -64,8 +61,6 @@ So if you want to use OpenPype's environments then you can launch event server f
 - `FTRACK_API_USER` - Username _("your.username")_
 - `FTRACK_API_KEY` - User's API key _("00000aaa-11bb-22cc-33dd-444444eeeee")_
 - `FTRACK_SERVER` - Ftrack server url _("<https://yourdomain.ftrackapp.com/">)_
-- `FTRACK_EVENTS_PATH` - Paths to events _("//Paths/To/Events/")_
-    We do not recommend you this way.
 
 </TabItem>
 </Tabs>
