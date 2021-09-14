@@ -2,28 +2,28 @@ from maya import cmds
 
 from avalon import api
 
+from openpype.hosts.maya.api.plugin import get_reference_node
+
 
 class ImportReference(api.InventoryAction):
-    """Imports selected reference inside the file."""
+    """Imports selected reference to inside of the file."""
 
     label = "Import Reference"
-    icon = "mouse-pointer"
+    icon = "download"
     color = "#d8d8d8"
 
     def process(self, containers):
         references = cmds.ls(type="reference")
-
         for container in containers:
             if container["loader"] != "ReferenceLoader":
                 print("Not a reference, skipping")
                 continue
 
-            reference_name = container["namespace"] + "RN"
-            if reference_name in references:
-                print("Importing {}".format(reference_name))
+            node = container["objectName"]
+            members = cmds.sets(node, query=True, nodesOnly=True)
+            ref_node = get_reference_node(members)
 
-                ref_file = cmds.referenceQuery(reference_name, f=True)
+            ref_file = cmds.referenceQuery(ref_node, f=True)
+            cmds.file(ref_file, importReference=True)
 
-                cmds.file(ref_file, importReference=True)
-
-        return "refresh"
+        return True  # return anything to trigger model refresh
