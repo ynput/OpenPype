@@ -32,17 +32,10 @@ class SyncToAvalonLocal(BaseAction):
         - or do it manually (Not recommended)
     """
 
-    #: Action identifier.
     identifier = "sync.to.avalon.local"
-    #: Action label.
     label = "OpenPype Admin"
-    #: Action variant
     variant = "- Sync To Avalon (Local)"
-    #: Action description.
-    description = "Send data from Ftrack to Avalon"
-    #: priority
     priority = 200
-    #: roles that are allowed to register this action
     icon = statics_icon("ftrack", "action_icons", "OpenPypeAdmin.svg")
 
     settings_key = "sync_to_avalon_local"
