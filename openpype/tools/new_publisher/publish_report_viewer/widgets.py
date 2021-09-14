@@ -3,6 +3,8 @@ import uuid
 
 from Qt import QtWidgets, QtCore
 
+from openpype.widgets.nice_checkbox import NiceCheckbox
+
 from .constants import (
     ITEM_ID_ROLE,
     ITEM_IS_GROUP_ROLE
@@ -158,10 +160,16 @@ class PublishReportViewerWidget(QtWidgets.QWidget):
         plugins_proxy = PluginProxyModel()
         plugins_proxy.setSourceModel(plugins_model)
 
-        removed_instances_check = QtWidgets.QCheckBox(
+        removed_instances_check = NiceCheckbox(parent=self)
+        removed_instances_check.setChecked(instances_proxy.ignore_removed)
+        removed_instances_label = QtWidgets.QLabel(
             "Hide removed instances", self
         )
-        removed_instances_check.setChecked(instances_proxy.ignore_removed)
+
+        removed_instances_layout = QtWidgets.QHBoxLayout()
+        removed_instances_layout.setContentsMargins(0, 0, 0, 0)
+        removed_instances_layout.addWidget(removed_instances_check, 0)
+        removed_instances_layout.addWidget(removed_instances_label, 1)
 
         instances_view = QtWidgets.QTreeView(self)
         instances_view.setObjectName("PublishDetailViews")
@@ -174,10 +182,14 @@ class PublishReportViewerWidget(QtWidgets.QWidget):
         instances_delegate = GroupItemDelegate(instances_view)
         instances_view.setItemDelegate(instances_delegate)
 
-        skipped_plugins_check = QtWidgets.QCheckBox(
-            "Hide skipped plugins", self
-        )
+        skipped_plugins_check = NiceCheckbox(parent=self)
         skipped_plugins_check.setChecked(plugins_proxy.ignore_skipped)
+        skipped_plugins_label = QtWidgets.QLabel("Hide skipped plugins", self)
+
+        skipped_plugins_layout = QtWidgets.QHBoxLayout()
+        skipped_plugins_layout.setContentsMargins(0, 0, 0, 0)
+        skipped_plugins_layout.addWidget(skipped_plugins_check, 0)
+        skipped_plugins_layout.addWidget(skipped_plugins_label, 1)
 
         plugins_view = QtWidgets.QTreeView(self)
         plugins_view.setObjectName("PublishDetailViews")
@@ -194,8 +206,8 @@ class PublishReportViewerWidget(QtWidgets.QWidget):
 
         layout = QtWidgets.QGridLayout(self)
         # Row 1
-        layout.addWidget(removed_instances_check, 0, 0)
-        layout.addWidget(skipped_plugins_check, 0, 1)
+        layout.addLayout(removed_instances_layout, 0, 0)
+        layout.addLayout(skipped_plugins_layout, 0, 1)
         # Row 2
         layout.addWidget(instances_view, 1, 0)
         layout.addWidget(plugins_view, 1, 1)
