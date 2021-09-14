@@ -52,17 +52,21 @@ class SyncToAvalonServer(ServerAction):
         return False
 
     def launch(self, session, in_entities, event):
+        project_entity = self.get_project_from_entity(in_entities[0])
+        project_name = project_entity["full_name"]
+        result = self.synchronization(
+            session, in_entities, event, project_name
+        )
+
+        return result
+
+    def synchronization(self, session, in_entities, event, project_name):
         time_start = time.time()
 
         self.show_message(event, "Synchronization - Preparing data", True)
-        # Get ftrack project
-        if in_entities[0].entity_type.lower() == "project":
-            ft_project_name = in_entities[0]["full_name"]
-        else:
-            ft_project_name = in_entities[0]["project"]["full_name"]
 
         try:
-            output = self.entities_factory.launch_setup(ft_project_name)
+            output = self.entities_factory.launch_setup(project_name)
             if output is not None:
                 return output
 
@@ -72,7 +76,7 @@ class SyncToAvalonServer(ServerAction):
             time_2 = time.time()
 
             # This must happen before all filtering!!!
-            self.entities_factory.prepare_avalon_entities(ft_project_name)
+            self.entities_factory.prepare_avalon_entities(project_name)
             time_3 = time.time()
 
             self.entities_factory.filter_by_ignore_sync()
@@ -118,7 +122,7 @@ class SyncToAvalonServer(ServerAction):
             report = self.entities_factory.report()
             if report and report.get("items"):
                 default_title = "Synchronization report ({}):".format(
-                    ft_project_name
+                    project_name
                 )
                 self.show_interface(
                     items=report["items"],
@@ -135,7 +139,6 @@ class SyncToAvalonServer(ServerAction):
                 "Synchronization failed due to code error", exc_info=True
             )
             msg = "An error has happened during synchronization"
-            title = "Synchronization report ({}):".format(ft_project_name)
             items = []
             items.append({
                 "type": "label",
@@ -160,6 +163,7 @@ class SyncToAvalonServer(ServerAction):
                 report = self.entities_factory.report()
             except Exception:
                 pass
+            title = "Synchronization report ({}):".format(project_name)
 
             _items = report.get("items", [])
             if _items:
