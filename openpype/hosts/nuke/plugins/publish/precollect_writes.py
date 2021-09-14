@@ -11,7 +11,7 @@ from avalon import io, api
 class CollectNukeWrites(pyblish.api.InstancePlugin):
     """Collect all write nodes."""
 
-    order = pyblish.api.CollectorOrder - 0.58
+    order = pyblish.api.CollectorOrder - 0.48
     label = "Pre-collect Writes"
     hosts = ["nuke", "nukeassist"]
     families = ["write"]

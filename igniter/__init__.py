@@ -12,6 +12,9 @@ from .version import __version__ as version
 
 def open_dialog():
     """Show Igniter dialog."""
+    if os.getenv("OPENPYPE_HEADLESS_MODE"):
+        print("!!! Can't open dialog in headless mode. Exiting.")
+        sys.exit(1)
     from Qt import QtWidgets, QtCore
     from .install_dialog import InstallDialog
 
@@ -28,8 +31,31 @@ def open_dialog():
     return d.result()
 
 
+def open_update_window(openpype_version):
+    """Open update window."""
+    if os.getenv("OPENPYPE_HEADLESS_MODE"):
+        print("!!! Can't open dialog in headless mode. Exiting.")
+        sys.exit(1)
+    from Qt import QtWidgets, QtCore
+    from .update_window import UpdateWindow
+
+    scale_attr = getattr(QtCore.Qt, "AA_EnableHighDpiScaling", None)
+    if scale_attr is not None:
+        QtWidgets.QApplication.setAttribute(scale_attr)
+
+    app = QtWidgets.QApplication(sys.argv)
+
+    d = UpdateWindow(version=openpype_version)
+    d.open()
+
+    app.exec_()
+    version_path = d.get_version_path()
+    return version_path
+
+
 __all__ = [
     "BootstrapRepos",
     "open_dialog",
+    "open_update_window",
     "version"
 ]

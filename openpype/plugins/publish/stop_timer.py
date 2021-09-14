@@ -8,7 +8,7 @@ from openpype.api import get_system_settings
 
 class StopTimer(pyblish.api.ContextPlugin):
     label = "Stop Timer"
-    order = pyblish.api.ExtractorOrder - 0.5
+    order = pyblish.api.ExtractorOrder - 0.49
     hosts = ["*"]
 
     def process(self, context):

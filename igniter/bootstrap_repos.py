@@ -9,6 +9,7 @@ import sys
 import tempfile
 from pathlib import Path
 from typing import Union, Callable, List, Tuple
+import hashlib
 
 from zipfile import ZipFile, BadZipFile
 
@@ -26,6 +27,25 @@ from .tools import get_openpype_path_from_db
 LOG_INFO = 0
 LOG_WARNING = 1
 LOG_ERROR = 3
+
+
+def sha256sum(filename):
+    """Calculate sha256 for content of the file.
+
+    Args:
+         filename (str): Path to file.
+
+    Returns:
+        str: hex encoded sha256
+
+    """
+    h = hashlib.sha256()
+    b = bytearray(128 * 1024)
+    mv = memoryview(b)
+    with open(filename, 'rb', buffering=0) as f:
+        for n in iter(lambda: f.readinto(mv), 0):
+            h.update(mv[:n])
+    return h.hexdigest()
 
 
 class OpenPypeVersion(semver.VersionInfo):
@@ -261,7 +281,8 @@ class BootstrapRepos:
             self.live_repo_dir = Path(Path(__file__).parent / ".." / "repos")
 
     @staticmethod
-    def get_version_path_from_list(version: str, version_list: list) -> Path:
+    def get_version_path_from_list(
+            version: str, version_list: list) -> Union[Path, None]:
         """Get path for specific version in list of OpenPype versions.
 
         Args:
@@ -275,6 +296,7 @@ class BootstrapRepos:
         for v in version_list:
             if str(v) == version:
                 return v.path
+        return None
 
     @staticmethod
     def get_local_live_version() -> str:
@@ -487,6 +509,7 @@ class BootstrapRepos:
             openpype_root = openpype_path.resolve()
             # generate list of filtered paths
             dir_filter = [openpype_root / f for f in self.openpype_filter]
+            checksums = []
 
             file: Path
             for file in openpype_list:
@@ -508,11 +531,118 @@ class BootstrapRepos:
                 processed_path = file
                 self._print(f"- processing {processed_path}")
 
-                zip_file.write(file, file.resolve().relative_to(openpype_root))
+                checksums.append(
+                    (
+                        sha256sum(file.as_posix()),
+                        file.resolve().relative_to(openpype_root)
+                    )
+                )
+                zip_file.write(
+                    file, file.resolve().relative_to(openpype_root))
 
+            checksums_str = ""
+            for c in checksums:
+                checksums_str += "{}:{}\n".format(c[0], c[1])
+            zip_file.writestr("checksums", checksums_str)
             # test if zip is ok
             zip_file.testzip()
             self._progress_callback(100)
+
+    def validate_openpype_version(self, path: Path) -> tuple:
+        """Validate version directory or zip file.
+
+        This will load `checksums` file if present, calculate checksums
+        of existing files in given path and compare. It will also compare
+        lists of files together for missing files.
+
+        Args:
+            path (Path): Path to OpenPype version to validate.
+
+        Returns:
+            tuple(bool, str): with version validity as first item
+                and string with reason as second.
+
+        """
+        if not path.exists():
+            return False, "Path doesn't exist"
+
+        if path.is_file():
+            return self._validate_zip(path)
+        return self._validate_dir(path)
+
+    @staticmethod
+    def _validate_zip(path: Path) -> tuple:
+        """Validate content of zip file."""
+        with ZipFile(path, "r") as zip_file:
+            # read checksums
+            try:
+                checksums_data = str(zip_file.read("checksums"))
+            except IOError:
+                # FIXME: This should be set to False sometimes in the future
+                return True, "Cannot read checksums for archive."
+
+            # split it to the list of tuples
+            checksums = [
+                tuple(line.split(":"))
+                for line in checksums_data.split("\n") if line
+            ]
+
+            # calculate and compare checksums in the zip file
+            for file in checksums:
+                h = hashlib.sha256()
+                try:
+                    h.update(zip_file.read(file[1]))
+                except FileNotFoundError:
+                    return False, f"Missing file [ {file[1]} ]"
+                if h.hexdigest() != file[0]:
+                    return False, f"Invalid checksum on {file[1]}"
+
+            # get list of files in zip minus `checksums` file itself
+            # and turn in to set to compare against list of files
+            # from checksum file. If difference exists, something is
+            # wrong
+            files_in_zip = zip_file.namelist()
+            files_in_zip.remove("checksums")
+            files_in_zip = set(files_in_zip)
+        files_in_checksum = set([file[1] for file in checksums])
+        diff = files_in_zip.difference(files_in_checksum)
+        if diff:
+            return False, f"Missing files {diff}"
+
+        return True, "All ok"
+
+    @staticmethod
+    def _validate_dir(path: Path) -> tuple:
+        checksums_file = Path(path / "checksums")
+        if not checksums_file.exists():
+            # FIXME: This should be set to False sometimes in the future
+            return True, "Cannot read checksums for archive."
+        checksums_data = checksums_file.read_text()
+        checksums = [
+            tuple(line.split(":"))
+            for line in checksums_data.split("\n") if line
+        ]
+        files_in_dir = [
+            file.relative_to(path).as_posix()
+            for file in path.iterdir() if file.is_file()
+        ]
+        files_in_dir.remove("checksums")
+        files_in_dir = set(files_in_dir)
+        files_in_checksum = set([file[1] for file in checksums])
+
+        for file in checksums:
+            try:
+                current = sha256sum((path / file[1]).as_posix())
+            except FileNotFoundError:
+                return False, f"Missing file [ {file[1]} ]"
+
+            if file[0] != current:
+                return False, f"Invalid checksum on {file[1]}"
+        diff = files_in_dir.difference(files_in_checksum)
+        if diff:
+            return False, f"Missing files {diff}"
+
+        return True, "All ok"
 
     @staticmethod
     def add_paths_from_archive(archive: Path) -> None:
@@ -837,6 +967,7 @@ class BootstrapRepos:
 
         # test if destination directory already exist, if so lets delete it.
         if destination.exists() and force:
+            self._print("removing existing directory")
             try:
                 shutil.rmtree(destination)
             except OSError as e:
@@ -846,6 +977,7 @@ class BootstrapRepos:
                 raise OpenPypeVersionIOError(
                     f"cannot remove existing {destination}") from e
         elif destination.exists() and not force:
+            self._print("destination directory already exists")
             raise OpenPypeVersionExists(f"{destination} already exist.")
         else:
             # create destination parent directories even if they don't exist.
@@ -855,6 +987,7 @@ class BootstrapRepos:
         if openpype_version.path.is_dir():
             # create zip inside temporary directory.
             self._print("Creating zip from directory ...")
+            self._progress_callback(0)
             with tempfile.TemporaryDirectory() as temp_dir:
                 temp_zip = \
                     Path(temp_dir) / f"openpype-v{openpype_version}.zip"
@@ -880,13 +1013,16 @@ class BootstrapRepos:
                 raise OpenPypeVersionInvalid("Invalid file format")
 
             if not self.is_inside_user_data(openpype_version.path):
+                self._progress_callback(35)
                 openpype_version.path = self._copy_zip(
                     openpype_version.path, destination)
 
         # extract zip there
         self._print("extracting zip to destination ...")
         with ZipFile(openpype_version.path, "r") as zip_ref:
+            self._progress_callback(75)
             zip_ref.extractall(destination)
+            self._progress_callback(100)
 
         return destination
 
