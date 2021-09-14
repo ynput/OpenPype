@@ -21,7 +21,7 @@ from ..constants import (
 class FamilyWidget(QtWidgets.QWidget):
     selected = QtCore.Signal(str, str)
     active_changed = QtCore.Signal()
-    removed = QtCore.Signal(str)
+    removed_selected = QtCore.Signal()
 
     def __init__(self, family, family_icon, parent):
         super(FamilyWidget, self).__init__(parent)
@@ -59,6 +59,12 @@ class FamilyWidget(QtWidgets.QWidget):
         for widget in self._widgets_by_id.values():
             widget.update_instance_values()
 
+    def confirm_remove_instance_id(self, instance_id):
+        widget = self._widgets_by_id.pop(instance_id)
+        widget.setVisible(False)
+        self._content_layout.removeWidget(widget)
+        widget.deleteLater()
+
     def update_instances(self, instances):
         instances_by_id = {}
         instances_by_subset_name = collections.defaultdict(list)
@@ -72,8 +78,10 @@ class FamilyWidget(QtWidgets.QWidget):
                 continue
 
             widget = self._widgets_by_id.pop(instance_id)
+            if widget.is_selected:
+                self.removed_selected.emit()
+
             widget.setVisible(False)
-            self.removed.emit(instance_id)
             self._content_layout.removeWidget(widget)
             widget.deleteLater()
 
@@ -104,6 +112,10 @@ class CardWidget(ClickableFrame):
 
         self._selected = False
         self._id = None
+
+    @property
+    def is_selected(self):
+        return self._selected
 
     def set_selected(self, selected):
         if selected == self._selected:
@@ -292,11 +304,10 @@ class InstanceCardView(AbstractInstanceView):
         self._content_widget = content_widget
 
         self._widgets_by_family = {}
-        self._family_widgets_by_name = {}
         self._context_widget = None
 
-        self._selected_widget = None
-        self._selected_widget_id = None
+        self._selected_instance_family = None
+        self._selected_instance_id = None
 
         self.setSizePolicy(
             QtWidgets.QSizePolicy.Minimum,
@@ -315,16 +326,33 @@ class InstanceCardView(AbstractInstanceView):
         result.setWidth(width)
         return result
 
+    def _get_selected_widget(self):
+        if self._selected_instance_id == CONTEXT_ID:
+            return self._context_widget
+
+        family_widget = self._widgets_by_family.get(
+            self._selected_instance_family
+        )
+        if family_widget is not None:
+            widget = family_widget.get_widget_by_instance_id(
+                self._selected_instance_id
+            )
+            if widget is not None:
+                return widget
+
+        return None
+
     def refresh(self):
-        if not self._context_widget:
+        if self._context_widget is None:
             widget = ContextCardWidget(self._content_widget)
             widget.selected.connect(self._on_widget_selection)
-            widget.set_selected(True)
+
+            self._context_widget = widget
+
             self.selection_changed.emit()
             self._content_layout.insertWidget(0, widget)
-            self._context_widget = widget
-            self._selected_widget = widget
-            self._selected_widget_id = CONTEXT_ID
+
+            self.select_item(CONTEXT_ID, None)
 
         instances_by_family = collections.defaultdict(list)
         for instance in self.controller.instances:
@@ -335,6 +363,8 @@ class InstanceCardView(AbstractInstanceView):
             if family in instances_by_family:
                 continue
 
+            if family == self._selected_instance_family:
+                self._on_remove_selected()
             widget = self._widgets_by_family.pop(family)
             widget.setVisible(False)
             self._content_layout.removeWidget(widget)
@@ -350,7 +380,9 @@ class InstanceCardView(AbstractInstanceView):
                 )
                 family_widget.active_changed.connect(self._on_active_changed)
                 family_widget.selected.connect(self._on_widget_selection)
-                family_widget.removed.connect(self._on_remove)
+                family_widget.removed_selected.connect(
+                    self._on_remove_selected
+                )
                 self._content_layout.insertWidget(widget_idx, family_widget)
                 self._widgets_by_family[family] = family_widget
             else:
@@ -365,42 +397,44 @@ class InstanceCardView(AbstractInstanceView):
     def _on_active_changed(self):
         self.active_changed.emit()
 
-    def _on_widget_selection(self, widget_id, family):
-        if widget_id == CONTEXT_ID:
+    def _on_widget_selection(self, instance_id, family):
+        self.select_item(instance_id, family)
+
+    def select_item(self, instance_id, family):
+        if instance_id == CONTEXT_ID:
             new_widget = self._context_widget
         else:
             family_widget = self._widgets_by_family[family]
-            new_widget = family_widget.get_widget_by_instance_id(widget_id)
+            new_widget = family_widget.get_widget_by_instance_id(instance_id)
 
-        if new_widget is self._selected_widget:
+        selected_widget = self._get_selected_widget()
+        if new_widget is selected_widget:
             return
 
-        if self._selected_widget is not None:
-            self._selected_widget.set_selected(False)
+        if selected_widget is not None:
+            selected_widget.set_selected(False)
 
-        self._selected_widget_id = widget_id
-        self._selected_widget = new_widget
+        self._selected_instance_id = instance_id
+        self._selected_instance_family = family
         if new_widget is not None:
             new_widget.set_selected(True)
 
         self.selection_changed.emit()
 
-    def _on_remove(self, widget_id):
-        if widget_id != self._selected_widget_id:
-            return
-
-        self._selected_widget = self._context_widget
-        self._selected_widget_id = CONTEXT_ID
-        self._context_widget.set_selected(True)
+    def _on_remove_selected(self):
+        selected_widget = self._get_selected_widget()
+        if selected_widget is None:
+            self._on_widget_selection(CONTEXT_ID, None)
 
     def get_selected_items(self):
         instances = []
         context_selected = False
-        if self._selected_widget is self._context_widget:
+        selected_widget = self._get_selected_widget()
+        if selected_widget is self._context_widget:
             context_selected = True
 
-        elif self._selected_widget is not None:
-            instances.append(self._selected_widget.instance)
+        elif selected_widget is not None:
+            instances.append(selected_widget.instance)
 
         return instances, context_selected
 
