@@ -17,6 +17,11 @@ def get_pype_version():
 
 
 def is_running_staging():
+    """Currently used OpenPype is staging version.
+
+    Returns:
+        bool: True if openpype version containt 'staging'.
+    """
     if "staging" in get_pype_version():
         return True
     return False
