@@ -100,9 +100,14 @@
     "flame": {
         "enabled": true,
         "label": "Flame",
-        "icon": "{}/app_icons/maya.png",
+        "icon": "{}/app_icons/flame.png",
         "host_name": "flame",
         "environment": {
+            "FLAME_SCRIPT_DIR": {
+                "windows": "",
+                "darvin": "",
+                "linux": ""
+            }
         },
         "variants": {
             "2021": {
@@ -110,17 +115,18 @@
                 "executables": {
                     "windows": [],
                     "darwin": [
-                        "/opt/Autodesk/flame_2021/bin/flame.app/Contents/MacOS/flame"],
+                        "/opt/Autodesk/flame_2021/bin/flame.app/Contents/MacOS/flame"
+                    ],
                     "linux": [
-                        "/opt/Autodesk/flame_2021/bin/flame"]
+                        "/opt/Autodesk/flame_2021/bin/flame"
+                    ]
                 },
                 "arguments": {
                     "windows": [],
                     "darwin": [],
                     "linux": []
                 },
-                "environment": {
-                }
+                "environment": {}
             },
             "__dynamic_keys_labels__": {
                 "2021": "2021 (Testing Only)"

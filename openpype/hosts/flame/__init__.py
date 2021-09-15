@@ -1,6 +1,5 @@
 from .api.utils import (
-    setup,
-    get_resolve_module
+    setup
 )
 
 from .api.pipeline import (
@@ -13,44 +12,19 @@ from .api.pipeline import (
     launch_workfiles_app,
     maintained_selection,
     remove_instance,
-    list_instances
+    list_instances,
+    imprint
 )
 
 from .api.lib import (
     maintain_current_timeline,
-    publish_clip_color,
     get_project_manager,
     get_current_project,
     get_current_timeline,
     create_bin,
-    get_media_pool_item,
-    create_media_pool_item,
-    create_timeline_item,
-    get_timeline_item,
-    get_video_track_names,
-    get_current_timeline_items,
-    get_pype_timeline_item_by_name,
-    get_timeline_item_pype_tag,
-    set_timeline_item_pype_tag,
-    imprint,
-    set_publish_attribute,
-    get_publish_attribute,
-    create_compound_clip,
-    swap_clips,
-    get_pype_clip_metadata,
-    set_project_manager_to_folder_name,
-    get_otio_clip_instance_data,
-    get_reformated_path
 )
 
-from .api.menu import launch_pype_menu
-
-from .api.plugin import (
-    ClipLoader,
-    TimelineItemLoader,
-    Creator,
-    PublishClip
-)
+from .api.menu import start_menu
 
 from .api.workio import (
     open_file,
@@ -60,8 +34,6 @@ from .api.workio import (
     file_extensions,
     work_root
 )
-
-from .api.testing_utils import TestGUI
 
 
 __all__ = [
@@ -77,45 +49,22 @@ __all__ = [
     "maintained_selection",
     "remove_instance",
     "list_instances",
+    "imprint",
 
     # utils
     "setup",
-    "get_resolve_module",
 
     # lib
     "maintain_current_timeline",
-    "publish_clip_color",
     "get_project_manager",
     "get_current_project",
     "get_current_timeline",
     "create_bin",
-    "get_media_pool_item",
-    "create_media_pool_item",
-    "create_timeline_item",
-    "get_timeline_item",
-    "get_video_track_names",
-    "get_current_timeline_items",
-    "get_pype_timeline_item_by_name",
-    "get_timeline_item_pype_tag",
-    "set_timeline_item_pype_tag",
-    "imprint",
-    "set_publish_attribute",
-    "get_publish_attribute",
-    "create_compound_clip",
-    "swap_clips",
-    "get_pype_clip_metadata",
-    "set_project_manager_to_folder_name",
-    "get_otio_clip_instance_data",
-    "get_reformated_path",
 
     # menu
-    "launch_pype_menu",
+    "start_menu",
 
     # plugin
-    "ClipLoader",
-    "TimelineItemLoader",
-    "Creator",
-    "PublishClip",
 
     # workio
     "open_file",
@@ -123,7 +72,5 @@ __all__ = [
     "current_file",
     "has_unsaved_changes",
     "file_extensions",
-    "work_root",
-
-    "TestGUI"
+    "work_root"
 ]
