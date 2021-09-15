@@ -680,23 +680,23 @@ class ProjectListWidget(QtWidgets.QWidget):
         layout.addWidget(project_list, 1)
 
         if only_active:
-            archived_chk = None
+            inactive_chk = None
         else:
-            archived_chk = QtWidgets.QCheckBox(" Show Archived Project ")
-            archived_chk.setChecked(not project_proxy.is_filter_enabled())
+            inactive_chk = QtWidgets.QCheckBox(" Show Inactive Projects ")
+            inactive_chk.setChecked(not project_proxy.is_filter_enabled())
 
             layout.addSpacing(5)
-            layout.addWidget(archived_chk, 0)
+            layout.addWidget(inactive_chk, 0)
             layout.addSpacing(5)
 
-            archived_chk.stateChanged.connect(self.on_archive_vis_changed)
+            inactive_chk.stateChanged.connect(self.on_inactive_vis_changed)
 
         project_list.left_mouse_released_at.connect(self.on_item_clicked)
 
         self.project_list = project_list
         self.project_proxy = project_proxy
         self.project_model = project_model
-        self.archived_chk = archived_chk
+        self.inactive_chk = inactive_chk
 
         self.dbcon = None
         self._only_active = only_active
@@ -734,12 +734,12 @@ class ProjectListWidget(QtWidgets.QWidget):
         else:
             self.select_project(self.current_project)
 
-    def on_archive_vis_changed(self):
-        if self.archived_chk is None:
+    def on_inactive_vis_changed(self):
+        if self.inactive_chk is None:
             # should not happen.
             return
 
-        enable_filter = not self.archived_chk.isChecked()
+        enable_filter = not self.inactive_chk.isChecked()
         self.project_proxy.set_filter_enabled(enable_filter)
 
     def validate_context_change(self):
