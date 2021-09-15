@@ -28,8 +28,15 @@ class WebServerModule(OpenPypeModule, ITrayService):
             return
 
         for module in enabled_modules:
-            if isinstance(module, IWebServerRoutes):
+            if not hasattr(module, "webserver_initialization"):
+                continue
+
+            try:
                 module.webserver_initialization(self.server_manager)
+            except Exception:
+                self.log.warning((
+                    "Failed to connect module \"{}\" to webserver."
+                ).format(module.name))
 
     def tray_init(self):
         self.create_server_manager()
