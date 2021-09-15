@@ -71,12 +71,6 @@
             "label": "Tools"
         },
         {
-            "type": "text",
-            "key": "archive_confirm",
-            "label": "Archive Project",
-            "placeholder": "Input project name to confirm archiving."
-        },
-        {
             "type": "boolean",
             "key": "active",
             "label": "Is Project Active"
