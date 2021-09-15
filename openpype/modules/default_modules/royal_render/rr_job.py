@@ -140,7 +140,7 @@ class RRJob:
 
 
 class SubmitterParameter:
-
+    """Wrapper for Submitter Parameters."""
     def __init__(self, parameter, *args):
         # type: (str, list) -> None
         self._parameter = parameter
@@ -148,6 +148,14 @@ class SubmitterParameter:
 
     def serialize(self):
         # type: () -> str
+        """Serialize submitter parameter as a string value.
+
+        This can be later on used as text node in job xml file.
+
+        Returns:
+            str: concatenated string of parameter values.
+
+        """
         return '"{param}={val}"'.format(
             param=self._parameter, val="~".join(self._values))
 
@@ -172,7 +180,7 @@ class SubmitFile:
 
     @staticmethod
     def _process_submitter_parameters(parameters, dom, append_to):
-        # type: (list, md.Document, md.Element) -> None
+        # type: (list[SubmitterParameter], md.Document, md.Element) -> None
         """Take list of :class:`SubmitterParameter` and process it as XML.
 
         This will take :class:`SubmitterParameter`, create XML element
@@ -202,6 +210,7 @@ class SubmitFile:
 
         """
         def filter_data(a, v):
+            """Skip private attributes."""
             if a.name.startswith("_"):
                 return False
             if v is None:
@@ -209,10 +218,12 @@ class SubmitFile:
             return True
 
         root = md.Document()
+        # root element: <RR_Job_File syntax_version="6.0">
         job_file = root.createElement('RR_Job_File')
         job_file.setAttribute("syntax_version", self.syntax_version)
 
         # handle Submitter Parameters for batch
+        # <SubmitterParameter>foo=bar~baz~goo</SubmitterParameter>
         self._process_submitter_parameters(
             self.SubmitterParameters, root, job_file)
 
