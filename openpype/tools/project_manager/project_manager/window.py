@@ -89,7 +89,10 @@ class ProjectManagerWindow(QtWidgets.QWidget):
         add_asset_btn.setObjectName("IconBtn")
         add_task_btn.setObjectName("IconBtn")
 
-        add_misc_folders_label = QtWidgets.QLabel("Create misc. folders:", helper_btns_widget)
+        add_misc_folders_label = QtWidgets.QLabel(
+            "Create misc. folders:",
+            helper_btns_widget
+        )
         add_misc_folders_btn = QtWidgets.QPushButton(
             ResourceCache.get_icon("asset", "default"),
             "Create Misc. Folders",
@@ -218,7 +221,10 @@ class ProjectManagerWindow(QtWidgets.QWidget):
             return
 
         qm = QtWidgets.QMessageBox
-        ans = qm.question(self, '', "Confirm to create misc. project folders?", qm.Yes | qm.No)
+        ans = qm.question(self,
+                          "",
+                          "Confirm to create misc. project folders?",
+                          qm.Yes | qm.No)
         if ans == qm.Yes:
             try:
                 # Get paths based on presets
@@ -228,7 +234,8 @@ class ProjectManagerWindow(QtWidgets.QWidget):
                 # Invoking OpenPype API to create the project folders
                 create_project_folders(basic_paths, self._current_project)
             except Exception as exc:
-                log.warning("Error creating.", exc_info=True)
+                log.warning("Failed to create misc folders: {}".format(exc),
+                            exc_info=True)
 
     def show_message(self, message):
         # TODO add nicer message pop
@@ -241,7 +248,9 @@ class ProjectManagerWindow(QtWidgets.QWidget):
             return
 
         self._current_project = dialog.project_name
-        self.show_message("Created project \"{}\"".format(self._current_project))
+        self.show_message(
+            "Created project \"{}\"".format(self._current_project)
+        )
         self.refresh_projects(self._current_project)
 
     def _show_password_dialog(self):
