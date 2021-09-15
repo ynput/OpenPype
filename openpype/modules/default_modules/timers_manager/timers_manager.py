@@ -4,15 +4,12 @@ from openpype.modules import OpenPypeModule
 from openpype_interfaces import (
     ITimersManager,
     ITrayService,
-    IIdleManager,
-    IWebServerRoutes
+    IIdleManager
 )
 from avalon.api import AvalonMongoDB
 
 
-class TimersManager(
-    OpenPypeModule, ITrayService, IIdleManager, IWebServerRoutes
-):
+class TimersManager(OpenPypeModule, ITrayService, IIdleManager):
     """ Handles about Timers.
 
     Should be able to start/stop all timers at once.
@@ -57,13 +54,6 @@ class TimersManager(
     def tray_exit(self):
         """Nothing special for TimersManager."""
         return
-
-    def webserver_initialization(self, server_manager):
-        """Implementation of IWebServerRoutes interface."""
-        if self.tray_initialized:
-            from .rest_api import TimersManagerModuleRestApi
-            self.rest_api_obj = TimersManagerModuleRestApi(self,
-                                                           server_manager)
 
     def start_timer(self, project_name, asset_name, task_name, hierarchy):
         """
@@ -204,6 +194,15 @@ class TimersManager(
             return
         if self.widget_user_idle.bool_is_showed is False:
             self.widget_user_idle.show()
+
+    # Webserver module implementation
+    def webserver_initialization(self, server_manager):
+        """Add routes for timers to be able start/stop with rest api."""
+        if self.tray_initialized:
+            from .rest_api import TimersManagerModuleRestApi
+            self.rest_api_obj = TimersManagerModuleRestApi(
+                self, server_manager
+            )
 
     def change_timer_from_host(self, project_name, asset_name, task_name):
         """Prepared method for calling change timers on REST api"""

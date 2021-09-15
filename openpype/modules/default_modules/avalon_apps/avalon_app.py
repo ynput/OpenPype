@@ -2,13 +2,10 @@ import os
 import openpype
 from openpype import resources
 from openpype.modules import OpenPypeModule
-from openpype_interfaces import (
-    ITrayModule,
-    IWebServerRoutes
-)
+from openpype_interfaces import ITrayModule
 
 
-class AvalonModule(OpenPypeModule, ITrayModule, IWebServerRoutes):
+class AvalonModule(OpenPypeModule, ITrayModule):
     name = "avalon"
 
     def initialize(self, modules_settings):
@@ -74,13 +71,6 @@ class AvalonModule(OpenPypeModule, ITrayModule, IWebServerRoutes):
     def connect_with_modules(self, _enabled_modules):
         return
 
-    def webserver_initialization(self, server_manager):
-        """Implementation of IWebServerRoutes interface."""
-
-        if self.tray_initialized:
-            from .rest_api import AvalonRestApiResource
-            self.rest_api_obj = AvalonRestApiResource(self, server_manager)
-
     # Definition of Tray menu
     def tray_menu(self, tray_menu):
         from Qt import QtWidgets
@@ -108,3 +98,10 @@ class AvalonModule(OpenPypeModule, ITrayModule, IWebServerRoutes):
         # for Windows
         self.libraryloader.activateWindow()
         self.libraryloader.refresh()
+
+    # Webserver module implementation
+    def webserver_initialization(self, server_manager):
+        """Add routes for webserver."""
+        if self.tray_initialized:
+            from .rest_api import AvalonRestApiResource
+            self.rest_api_obj = AvalonRestApiResource(self, server_manager)

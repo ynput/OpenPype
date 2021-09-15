@@ -3,10 +3,7 @@ import socket
 
 from openpype import resources
 from openpype.modules import OpenPypeModule
-from openpype_interfaces import (
-    ITrayService,
-    IWebServerRoutes
-)
+from openpype_interfaces import ITrayService
 
 
 class WebServerModule(OpenPypeModule, ITrayService):
