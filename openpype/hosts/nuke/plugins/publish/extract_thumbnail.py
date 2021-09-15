@@ -1,8 +1,13 @@
+import sys
 import os
 import nuke
 from avalon.nuke import lib as anlib
 import pyblish.api
 import openpype
+
+
+if sys.version_info[0] >= 3:
+    unicode = str
 
 
 class ExtractThumbnail(openpype.api.Extractor):
