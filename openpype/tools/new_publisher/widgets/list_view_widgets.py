@@ -7,6 +7,7 @@ from .widgets import AbstractInstanceView
 from ..constants import (
     INSTANCE_ID_ROLE,
     SORT_VALUE_ROLE,
+    IS_GROUP_ROLE,
     CONTEXT_ID,
     CONTEXT_LABEL
 )
@@ -59,6 +60,8 @@ class InstanceListItemWidget(QtWidgets.QWidget):
     def set_active(self, new_value):
         checkbox_value = self.active_checkbox.isChecked()
         instance_value = self.instance.data["active"]
+        if new_value is None:
+            new_value = not instance_value
 
         # First change instance value and them change checkbox
         # - prevent to trigger `active_changed` signal
@@ -151,20 +154,63 @@ class InstanceListGroupWidget(QtWidgets.QFrame):
             self.expand_btn.setArrowType(QtCore.Qt.RightArrow)
 
 
+class InstanceTreeView(QtWidgets.QTreeView):
+    toggle_requested = QtCore.Signal(int)
+
+    def __init__(self, *args, **kwargs):
+        super(InstanceTreeView, self).__init__(*args, **kwargs)
+
+        self.setObjectName("InstanceListView")
+        self.setHeaderHidden(True)
+        self.setIndentation(0)
+        self.setExpandsOnDoubleClick(False)
+        self.setSelectionMode(
+            QtWidgets.QAbstractItemView.ExtendedSelection
+        )
+
+        self.clicked.connect(self._expand_item)
+
+    def _expand_item(self, index):
+        if index.data(IS_GROUP_ROLE):
+            if self.isExpanded(index):
+                self.collapse(index)
+            else:
+                self.expand(index)
+
+    def get_selected_instance_ids(self):
+        instance_ids = set()
+        for index in self.selectionModel().selectedIndexes():
+            instance_id = index.data(INSTANCE_ID_ROLE)
+            if instance_id is not None:
+                instance_ids.add(instance_id)
+        return instance_ids
+
+    def event(self, event):
+        if not event.type() == QtCore.QEvent.KeyPress:
+            pass
+
+        elif event.key() == QtCore.Qt.Key_Space:
+            self.toggle_requested.emit(-1)
+            return True
+
+        elif event.key() == QtCore.Qt.Key_Backspace:
+            self.toggle_requested.emit(0)
+            return True
+
+        elif event.key() == QtCore.Qt.Key_Return:
+            self.toggle_requested.emit(1)
+            return True
+
+        return super(InstanceTreeView, self).event(event)
+
+
 class InstanceListView(AbstractInstanceView):
     def __init__(self, controller, parent):
         super(InstanceListView, self).__init__(parent)
 
         self.controller = controller
 
-        instance_view = QtWidgets.QTreeView(self)
-        instance_view.setObjectName("InstanceListView")
-        instance_view.setHeaderHidden(True)
-        instance_view.setIndentation(0)
-        instance_view.setSelectionMode(
-            QtWidgets.QAbstractItemView.ExtendedSelection
-        )
-
+        instance_view = InstanceTreeView(self)
         instance_model = QtGui.QStandardItemModel()
 
         proxy_model = QtCore.QSortFilterProxyModel()
@@ -185,6 +231,7 @@ class InstanceListView(AbstractInstanceView):
         )
         instance_view.collapsed.connect(self._on_collapse)
         instance_view.expanded.connect(self._on_expand)
+        instance_view.toggle_requested.connect(self._on_toggle_request)
 
         self._group_items = {}
         self._group_widgets = {}
@@ -207,6 +254,20 @@ class InstanceListView(AbstractInstanceView):
         group_widget = self._group_widgets.get(family)
         if group_widget:
             group_widget.set_expanded(False)
+
+    def _on_toggle_request(self, toggle):
+        selected_instance_ids = self.instance_view.get_selected_instance_ids()
+        if toggle == -1:
+            active = None
+        elif toggle == 1:
+            active = True
+        else:
+            active = False
+
+        for instance_id in selected_instance_ids:
+            widget = self._widgets_by_id.get(instance_id)
+            if widget is not None:
+                widget.set_active(active)
 
     def refresh(self):
         instances_by_family = collections.defaultdict(list)
@@ -245,6 +306,7 @@ class InstanceListView(AbstractInstanceView):
 
             group_item = QtGui.QStandardItem()
             group_item.setData(family, SORT_VALUE_ROLE)
+            group_item.setData(True, IS_GROUP_ROLE)
             group_item.setFlags(QtCore.Qt.ItemIsEnabled)
             self._group_items[family] = group_item
             new_group_items.append(group_item)

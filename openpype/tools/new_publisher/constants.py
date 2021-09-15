@@ -15,6 +15,7 @@ VARIANT_TOOLTIP = (
 # Roles for instance views
 INSTANCE_ID_ROLE = QtCore.Qt.UserRole + 1
 SORT_VALUE_ROLE = QtCore.Qt.UserRole + 2
+IS_GROUP_ROLE = QtCore.Qt.UserRole + 3
 
 
 __all__ = (
@@ -24,5 +25,6 @@ __all__ = (
     "VARIANT_TOOLTIP",
 
     "INSTANCE_ID_ROLE",
-    "SORT_VALUE_ROLE"
+    "SORT_VALUE_ROLE",
+    "IS_GROUP_ROLE"
 )
