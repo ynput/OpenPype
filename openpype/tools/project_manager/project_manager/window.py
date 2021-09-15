@@ -1,3 +1,4 @@
+import logging
 from Qt import QtWidgets, QtCore, QtGui
 
 from . import (
@@ -15,7 +16,10 @@ from openpype.lib import is_admin_password_required
 from openpype.widgets import PasswordDialog
 
 from openpype import resources
+from openpype.api import get_project_basic_paths, create_project_folders
 from avalon.api import AvalonMongoDB
+
+log = logging.getLogger(__name__)
 
 
 class ProjectManagerWindow(QtWidgets.QWidget):
@@ -27,6 +31,9 @@ class ProjectManagerWindow(QtWidgets.QWidget):
         self._initial_reset = False
         self._password_dialog = None
         self._user_passed = False
+
+        # keep track of the current project PM is viewing
+        self._current_project = None
 
         self.setWindowTitle("OpenPype Project Manager")
         self.setWindowIcon(QtGui.QIcon(resources.pype_icon_filepath()))
@@ -82,11 +89,20 @@ class ProjectManagerWindow(QtWidgets.QWidget):
         add_asset_btn.setObjectName("IconBtn")
         add_task_btn.setObjectName("IconBtn")
 
+        add_misc_folders_label = QtWidgets.QLabel("Create misc. folders:", helper_btns_widget)
+        add_misc_folders_btn = QtWidgets.QPushButton(
+            ResourceCache.get_icon("asset", "default"),
+            "Create Misc. Folders",
+            helper_btns_widget
+        )
+
         helper_btns_layout = QtWidgets.QHBoxLayout(helper_btns_widget)
         helper_btns_layout.setContentsMargins(0, 0, 0, 0)
         helper_btns_layout.addWidget(helper_label)
         helper_btns_layout.addWidget(add_asset_btn)
         helper_btns_layout.addWidget(add_task_btn)
+        helper_btns_layout.addWidget(add_misc_folders_label)
+        helper_btns_layout.addWidget(add_misc_folders_btn)
         helper_btns_layout.addStretch(1)
 
         # Add widgets to top widget layout
@@ -128,6 +144,7 @@ class ProjectManagerWindow(QtWidgets.QWidget):
         save_btn.clicked.connect(self._on_save_click)
         add_asset_btn.clicked.connect(self._on_add_asset)
         add_task_btn.clicked.connect(self._on_add_task)
+        add_misc_folders_btn.clicked.connect(self._on_add_misc_folders)
 
         self._project_model = project_model
 
@@ -142,6 +159,7 @@ class ProjectManagerWindow(QtWidgets.QWidget):
 
         self._add_asset_btn = add_asset_btn
         self._add_task_btn = add_task_btn
+        self._add_misc_folders_btn = add_misc_folders_btn
 
         self.resize(1200, 600)
         self.setStyleSheet(load_stylesheet())
@@ -179,7 +197,9 @@ class ProjectManagerWindow(QtWidgets.QWidget):
         self._set_project(self._project_combobox.currentText())
 
     def _on_project_change(self):
-        self._set_project(self._project_combobox.currentText())
+        if self._project_combobox.currentIndex() != 0:
+            self._current_project = self._project_combobox.currentText()
+            self._set_project(self._current_project)
 
     def _on_project_refresh(self):
         self.refresh_projects()
@@ -193,6 +213,23 @@ class ProjectManagerWindow(QtWidgets.QWidget):
     def _on_add_task(self):
         self.hierarchy_view.add_task()
 
+    def _on_add_misc_folders(self):
+        if not self._current_project:
+            return
+
+        qm = QtWidgets.QMessageBox
+        ans = qm.question(self, '', "Confirm to create misc. project folders?", qm.Yes | qm.No)
+        if ans == qm.Yes:
+            try:
+                # Get paths based on presets
+                basic_paths = get_project_basic_paths(self._current_project)
+                if not basic_paths:
+                    pass
+                # Invoking OpenPype API to create the project folders
+                create_project_folders(basic_paths, self._current_project)
+            except Exception as exc:
+                log.warning("Error creating.", exc_info=True)
+
     def show_message(self, message):
         # TODO add nicer message pop
         self.message_label.setText(message)
@@ -203,9 +240,9 @@ class ProjectManagerWindow(QtWidgets.QWidget):
         if dialog.result() != 1:
             return
 
-        project_name = dialog.project_name
-        self.show_message("Created project \"{}\"".format(project_name))
-        self.refresh_projects(project_name)
+        self._current_project = dialog.project_name
+        self.show_message("Created project \"{}\"".format(self._current_project))
+        self.refresh_projects(self._current_project)
 
     def _show_password_dialog(self):
         if self._password_dialog:
