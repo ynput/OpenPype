@@ -1,6 +1,7 @@
 import sys
 from Qt import QtWidgets, QtCore
 from pprint import pprint, pformat
+import atexit
 
 app_framework = None
 apps = []
@@ -38,7 +39,7 @@ def cleanup(apps, app_framework):
         app_framework.save_prefs()
         del app_framework
 
-atexit.register(cleanup, apps, app_framework, shotgunConnector)
+atexit.register(cleanup, apps, app_framework)
 
 def load_apps(apps, app_framework):
     apps.append(flameMenuProjectconnect(app_framework))

@@ -24,19 +24,25 @@ def _sync_utility_scripts(env=None):
 
     # initiate inputs
     scripts = {}
-    fsd_env = env.get("FLAME_SCRIPT_DIR")
+    fsd_env = env.get("FLAME_SCRIPT_DIR", "")
     flame_shared_dir = "/opt/Autodesk/shared/python"
 
-    us_paths = [os.path.join(
+    fsd_paths = [os.path.join(
         HOST_DIR,
         "utility_scripts"
     )]
 
     # collect script dirs
-    if fsd_env:
-        log.info(f"FLAME_SCRIPT_DIR: `{fsd_env}`")
-        fsd_paths = fsd_env.split(
-            os.pathsep) + us_paths
+    log.info(f"FLAME_SCRIPT_DIR: `{fsd_env}`")
+    log.info(f"fsd_paths: `{fsd_paths}`")
+
+    # add application environment setting for FLAME_SCRIPT_DIR
+    # to script path search
+    for _dirpath in fsd_env.split(os.pathsep):
+        if not os.path.isdir(_dirpath):
+            log.warning(f"Path is not a valid dir: `{_dirpath}`")
+            continue
+        fsd_paths.append(_dirpath)
 
     # collect scripts from dirs
     for path in fsd_paths:
