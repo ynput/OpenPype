@@ -602,6 +602,12 @@ class NiceCheckbox(QtWidgets.QFrame):
         return super(NiceCheckbox, self).mouseReleaseEvent(event)
 
 
+class ProjectListModel(QtGui.QStandardItemModel):
+    sort_role = QtCore.Qt.UserRole + 10
+    filter_role = QtCore.Qt.UserRole + 11
+    selected_role = QtCore.Qt.UserRole + 12
+
+
 class ProjectListView(QtWidgets.QListView):
     left_mouse_released_at = QtCore.Signal(QtCore.QModelIndex)
 
@@ -624,7 +630,7 @@ class ProjectListSortFilterProxy(QtCore.QSortFilterProxyModel):
 
         index = self.sourceModel().index(source_row, 0, source_parent)
         is_active = bool(index.data(self.filterRole()))
-        is_selected = bool(index.data(ProjectListWidget.ProjectSelectedRole))
+        is_selected = bool(index.data(ProjectListModel.selected_role))
 
         return is_active or is_selected
 
@@ -640,10 +646,6 @@ class ProjectListWidget(QtWidgets.QWidget):
     default = "< Default >"
     project_changed = QtCore.Signal()
 
-    ProjectSortRole = QtCore.Qt.UserRole + 10
-    ProjectFilterRole = QtCore.Qt.UserRole + 11
-    ProjectSelectedRole = QtCore.Qt.UserRole + 12
-
     def __init__(self, parent, only_active=False):
         self._parent = parent
 
@@ -655,11 +657,11 @@ class ProjectListWidget(QtWidgets.QWidget):
         label_widget = QtWidgets.QLabel("Projects")
 
         project_list = ProjectListView(self)
-        project_model = QtGui.QStandardItemModel()
+        project_model = ProjectListModel()
         project_proxy = ProjectListSortFilterProxy()
 
-        project_proxy.setFilterRole(self.ProjectFilterRole)
-        project_proxy.setSortRole(self.ProjectSortRole)
+        project_proxy.setFilterRole(ProjectListModel.filter_role)
+        project_proxy.setSortRole(ProjectListModel.sort_role)
         project_proxy.setSortCaseSensitivity(QtCore.Qt.CaseInsensitive)
 
         project_proxy.setSourceModel(project_model)
@@ -760,7 +762,7 @@ class ProjectListWidget(QtWidgets.QWidget):
             found_items = model.findItems(self.default)
 
         index = model.indexFromItem(found_items[0])
-        model.setData(index, True, self.ProjectSelectedRole)
+        model.setData(index, True, ProjectListModel.selected_role)
 
         index = proxy.mapFromSource(index)
 
@@ -810,14 +812,14 @@ class ProjectListWidget(QtWidgets.QWidget):
         for project_name, is_active in items:
 
             row = QtGui.QStandardItem(project_name)
-            row.setData(is_active, self.ProjectFilterRole)
-            row.setData(False, self.ProjectSelectedRole)
+            row.setData(is_active, ProjectListModel.filter_role)
+            row.setData(False, ProjectListModel.selected_role)
 
             if is_active:
-                row.setData(project_name, self.ProjectSortRole)
+                row.setData(project_name, ProjectListModel.sort_role)
 
             else:
-                row.setData("~" + project_name, self.ProjectSortRole)
+                row.setData("~" + project_name, ProjectListModel.sort_role)
 
                 font = row.font()
                 font.setItalic(True)
