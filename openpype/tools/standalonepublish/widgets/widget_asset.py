@@ -275,7 +275,7 @@ class AssetWidget(QtWidgets.QWidget):
         project_names = list()
 
         for doc in self.dbcon.projects(projection={"name": 1},
-                                       no_archived=True):
+                                       only_active=True):
 
             project_name = doc.get("name")
             if project_name:
@@ -304,7 +304,7 @@ class AssetWidget(QtWidgets.QWidget):
         projects = list()
 
         for project in self.dbcon.projects(projection={"name": 1},
-                                           no_archived=True):
+                                           only_active=True):
             projects.append(project['name'])
         project_name = self.combo_projects.currentText()
         if project_name in projects:

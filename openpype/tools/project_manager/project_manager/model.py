@@ -46,7 +46,7 @@ class ProjectModel(QtGui.QStandardItemModel):
         project_names = set()
 
         for doc in sorted(
-                self.dbcon.projects(projection={"name": 1}, no_archived=True),
+                self.dbcon.projects(projection={"name": 1}, only_active=True),
                 key=lambda x: x["name"]
         ):
 

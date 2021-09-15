@@ -34,7 +34,7 @@ class SyncProjectListWidget(ProjectListWidget):
     """
 
     def __init__(self, sync_server, parent):
-        super(SyncProjectListWidget, self).__init__(parent, no_archived=True)
+        super(SyncProjectListWidget, self).__init__(parent, only_active=True)
         self.sync_server = sync_server
         self.project_list.setContextMenuPolicy(QtCore.Qt.CustomContextMenu)
         self.project_list.customContextMenuRequested.connect(

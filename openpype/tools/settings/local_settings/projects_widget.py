@@ -809,7 +809,7 @@ class ProjectSettingsWidget(QtWidgets.QWidget):
 
         self.modules_manager = modules_manager
 
-        projects_widget = _ProjectListWidget(self, no_archived=True)
+        projects_widget = _ProjectListWidget(self, only_active=True)
         roos_site_widget = RootSiteWidget(
             modules_manager, project_settings, self
         )

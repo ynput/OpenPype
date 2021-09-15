@@ -644,7 +644,7 @@ class ProjectListWidget(QtWidgets.QWidget):
     ProjectFilterRole = QtCore.Qt.UserRole + 11
     ProjectSelectedRole = QtCore.Qt.UserRole + 12
 
-    def __init__(self, parent, no_archived=False):
+    def __init__(self, parent, only_active=False):
         self._parent = parent
 
         self.current_project = None
@@ -677,7 +677,7 @@ class ProjectListWidget(QtWidgets.QWidget):
         layout.addWidget(label_widget, 0)
         layout.addWidget(project_list, 1)
 
-        if no_archived:
+        if only_active:
             archived_chk = None
         else:
             archived_chk = QtWidgets.QCheckBox(" Show Archived Project ")
@@ -697,7 +697,7 @@ class ProjectListWidget(QtWidgets.QWidget):
         self.archived_chk = archived_chk
 
         self.dbcon = None
-        self._no_archived = no_archived
+        self._only_active = only_active
 
     def on_item_clicked(self, new_index):
         new_project_name = new_index.data(QtCore.Qt.DisplayRole)
@@ -778,8 +778,6 @@ class ProjectListWidget(QtWidgets.QWidget):
         model = self.project_model
         model.clear()
 
-        items = [(self.default, None)]
-
         mongo_url = os.environ["OPENPYPE_MONGO"]
 
         # Force uninstall of whole avalon connection if url does not match
@@ -797,32 +795,33 @@ class ProjectListWidget(QtWidgets.QWidget):
                 self.dbcon = None
                 self.current_project = None
 
+        items = [(self.default, True)]
+
         if self.dbcon:
 
             for doc in self.dbcon.projects(
-                    projection={"name": 1, "data.archived": 1},
-                    no_archived=self._no_archived
+                    projection={"name": 1, "data.active": 1},
+                    only_active=self._only_active
             ):
                 items.append(
-                    (doc["name"], doc.get("data", {}).get("archived"))
+                    (doc["name"], doc.get("data", {}).get("active", True))
                 )
 
-        for project_name, is_archived in items:
-            visible = not is_archived
+        for project_name, is_active in items:
 
             row = QtGui.QStandardItem(project_name)
-            row.setData(visible, self.ProjectFilterRole)
+            row.setData(is_active, self.ProjectFilterRole)
             row.setData(False, self.ProjectSelectedRole)
 
-            if is_archived:
+            if is_active:
+                row.setData(project_name, self.ProjectSortRole)
+
+            else:
                 row.setData("~" + project_name, self.ProjectSortRole)
 
                 font = row.font()
                 font.setItalic(True)
                 row.setFont(font)
-
-            else:
-                row.setData(project_name, self.ProjectSortRole)
 
             model.appendRow(row)
 
