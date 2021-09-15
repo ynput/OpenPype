@@ -2,6 +2,7 @@ import nuke
 import pyblish.api
 from avalon.nuke import maintained_selection
 
+
 class CreateOutputNode(pyblish.api.ContextPlugin):
     """Adding output node for each ouput write node
     So when latly user will want to Load .nk as LifeGroup or Precomp
@@ -15,8 +16,8 @@ class CreateOutputNode(pyblish.api.ContextPlugin):
     def process(self, context):
         # capture selection state
         with maintained_selection():
-            active_node = [node for inst in context[:]
-                           for node in inst[:]
+            active_node = [node for inst in context
+                           for node in inst
                            if "ak:family" in node.knobs()]
 
             if active_node:
