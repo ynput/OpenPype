@@ -22,6 +22,7 @@ from .pipeline import (
 )
 
 from .lib import (
+    pype_tag_name,
     get_track_items,
     get_current_project,
     get_current_sequence,
@@ -73,6 +74,7 @@ __all__ = [
     "work_root",
 
     # Lib functions
+    "pype_tag_name",
     "get_track_items",
     "get_current_project",
     "get_current_sequence",

@@ -3,6 +3,7 @@ import os
 import json
 import re
 import copy
+import platform
 import logging
 import collections
 import functools
@@ -15,6 +16,99 @@ from .anatomy import Anatomy
 avalon = None
 
 log = logging.getLogger("AvalonContext")
+
+
+CURRENT_DOC_SCHEMAS = {
+    "project": "openpype:project-3.0",
+    "asset": "openpype:asset-3.0",
+    "config": "openpype:config-2.0"
+}
+PROJECT_NAME_ALLOWED_SYMBOLS = "a-zA-Z0-9_"
+PROJECT_NAME_REGEX = re.compile(
+    "^[{}]+$".format(PROJECT_NAME_ALLOWED_SYMBOLS)
+)
+
+
+def create_project(
+    project_name, project_code, library_project=False, dbcon=None
+):
+    """Create project using OpenPype settings.
+
+    This project creation function is not validating project document on
+    creation. It is because project document is created blindly with only
+    minimum required information about project which is it's name, code, type
+    and schema.
+
+    Entered project name must be unique and project must not exist yet.
+
+    Args:
+        project_name(str): New project name. Should be unique.
+        project_code(str): Project's code should be unique too.
+        library_project(bool): Project is library project.
+        dbcon(AvalonMongoDB): Object of connection to MongoDB.
+
+    Raises:
+        ValueError: When project name already exists in MongoDB.
+
+    Returns:
+        dict: Created project document.
+    """
+
+    from openpype.settings import ProjectSettings, SaveWarningExc
+    from avalon.api import AvalonMongoDB
+    from avalon.schema import validate
+
+    if dbcon is None:
+        dbcon = AvalonMongoDB()
+
+    if not PROJECT_NAME_REGEX.match(project_name):
+        raise ValueError((
+            "Project name \"{}\" contain invalid characters"
+        ).format(project_name))
+
+    database = dbcon.database
+    project_doc = database[project_name].find_one(
+        {"type": "project"},
+        {"name": 1}
+    )
+    if project_doc:
+        raise ValueError("Project with name \"{}\" already exists".format(
+            project_name
+        ))
+
+    project_doc = {
+        "type": "project",
+        "name": project_name,
+        "data": {
+            "code": project_code,
+            "library_project": library_project
+        },
+        "schema": CURRENT_DOC_SCHEMAS["project"]
+    }
+    # Insert document with basic data
+    database[project_name].insert_one(project_doc)
+    # Load ProjectSettings for the project and save it to store all attributes
+    #   and Anatomy
+    try:
+        project_settings_entity = ProjectSettings(project_name)
+        project_settings_entity.save()
+    except SaveWarningExc as exc:
+        print(str(exc))
+    except Exception:
+        database[project_name].delete_one({"type": "project"})
+        raise
+
+    project_doc = database[project_name].find_one({"type": "project"})
+
+    try:
+        # Validate created project document
+        validate(project_doc)
+    except Exception:
+        # Remove project if is not valid
+        database[project_name].delete_one({"type": "project"})
+        raise
+
+    return project_doc
 
 
 def with_avalon(func):
@@ -250,6 +344,127 @@ def get_latest_version(asset_name, subset_name, dbcon=None, project_name=None):
     return version_doc
 
 
+def get_workfile_template_key_from_context(
+    asset_name, task_name, host_name, project_name=None,
+    dbcon=None, project_settings=None
+):
+    """Helper function to get template key for workfile template.
+
+    Do the same as `get_workfile_template_key` but returns value for "session
+    context".
+
+    It is required to pass one of 'dbcon' with already set project name or
+    'project_name' arguments.
+
+    Args:
+        asset_name(str): Name of asset document.
+        task_name(str): Task name for which is template key retrieved.
+            Must be available on asset document under `data.tasks`.
+        host_name(str): Name of host implementation for which is workfile
+            used.
+        project_name(str): Project name where asset and task is. Not required
+            when 'dbcon' is passed.
+        dbcon(AvalonMongoDB): Connection to mongo with already set project
+            under `AVALON_PROJECT`. Not required when 'project_name' is passed.
+        project_settings(dict): Project settings for passed 'project_name'.
+            Not required at all but makes function faster.
+    Raises:
+        ValueError: When both 'dbcon' and 'project_name' were not
+            passed.
+    """
+    if not dbcon:
+        if not project_name:
+            raise ValueError((
+                "`get_workfile_template_key_from_context` requires to pass"
+                " one of 'dbcon' or 'project_name' arguments."
+            ))
+        from avalon.api import AvalonMongoDB
+
+        dbcon = AvalonMongoDB()
+        dbcon.Session["AVALON_PROJECT"] = project_name
+
+    elif not project_name:
+        project_name = dbcon.Session["AVALON_PROJECT"]
+
+    asset_doc = dbcon.find_one(
+        {
+            "type": "asset",
+            "name": asset_name
+        },
+        {
+            "data.tasks": 1
+        }
+    )
+    asset_tasks = asset_doc.get("data", {}).get("tasks") or {}
+    task_info = asset_tasks.get(task_name) or {}
+    task_type = task_info.get("type")
+
+    return get_workfile_template_key(
+        task_type, host_name, project_name, project_settings
+    )
+
+
+def get_workfile_template_key(
+    task_type, host_name, project_name=None, project_settings=None
+):
+    """Workfile template key which should be used to get workfile template.
+
+    Function is using profiles from project settings to return right template
+    for passet task type and host name.
+
+    One of 'project_name' or 'project_settings' must be passed it is preffered
+    to pass settings if are already available.
+
+    Args:
+        task_type(str): Name of task type.
+        host_name(str): Name of host implementation (e.g. "maya", "nuke", ...)
+        project_name(str): Name of project in which context should look for
+            settings. Not required if `project_settings` are passed.
+        project_settings(dict): Prepare project settings for project name.
+            Not needed if `project_name` is passed.
+
+    Raises:
+        ValueError: When both 'project_name' and 'project_settings' were not
+            passed.
+    """
+    default = "work"
+    if not task_type or not host_name:
+        return default
+
+    if not project_settings:
+        if not project_name:
+            raise ValueError((
+                "`get_workfile_template_key` requires to pass"
+                " one of 'project_name' or 'project_settings' arguments."
+            ))
+        project_settings = get_project_settings(project_name)
+
+    try:
+        profiles = (
+            project_settings
+            ["global"]
+            ["tools"]
+            ["Workfiles"]
+            ["workfile_template_profiles"]
+        )
+    except Exception:
+        profiles = []
+
+    if not profiles:
+        return default
+
+    from .profiles_filtering import filter_profiles
+
+    profile_filter = {
+        "task_types": task_type,
+        "hosts": host_name
+    }
+    profile = filter_profiles(profiles, profile_filter)
+    if profile:
+        return profile["workfile_template"] or default
+    return default
+
+
 def get_workdir_data(project_doc, asset_doc, task_name, host_name):
     """Prepare data for workdir template filling from entered information.
 
@@ -279,7 +494,8 @@ def get_workdir_data(project_doc, asset_doc, task_name, host_name):
 
 
 def get_workdir_with_workdir_data(
-    workdir_data, anatomy=None, project_name=None, template_key=None
+    workdir_data, anatomy=None, project_name=None,
+    template_key=None, dbcon=None
 ):
     """Fill workdir path from entered data and project's anatomy.
 
@@ -293,8 +509,10 @@ def get_workdir_with_workdir_data(
             `project_name` is entered.
         project_name (str): Project's name. Optional if `anatomy` is entered
             otherwise Anatomy object is created with using the project name.
-        template_key (str): Key of work templates in anatomy templates. By
-            default is seto to `"work"`.
+        template_key (str): Key of work templates in anatomy templates. If not
+            passed `get_workfile_template_key_from_context` is used to get it.
+        dbcon(AvalonMongoDB): Mongo connection. Required only if 'template_key'
+            and 'project_name' are not passed.
 
     Returns:
         TemplateResult: Workdir path.
@@ -312,7 +530,13 @@ def get_workdir_with_workdir_data(
         anatomy = Anatomy(project_name)
 
     if not template_key:
-        template_key = "work"
+        template_key = get_workfile_template_key_from_context(
+            workdir_data["asset"],
+            workdir_data["task"],
+            workdir_data["app"],
+            project_name=workdir_data["project"]["name"],
+            dbcon=dbcon
+        )
 
     anatomy_filled = anatomy.format(workdir_data)
     # Output is TemplateResult object which contain usefull data
@@ -353,7 +577,9 @@ def get_workdir(
         project_doc, asset_doc, task_name, host_name
     )
     # Output is TemplateResult object which contain usefull data
-    return get_workdir_with_workdir_data(workdir_data, anatomy, template_key)
+    return get_workdir_with_workdir_data(
+        workdir_data, anatomy, template_key=template_key
+    )
 
 
 @with_avalon
@@ -422,7 +648,9 @@ def create_workfile_doc(asset_doc, task_name, filename, workdir, dbcon=None):
     # Prepare anatomy
     anatomy = Anatomy(project_doc["name"])
     # Get workdir path (result is anatomy.TemplateResult)
-    template_workdir = get_workdir_with_workdir_data(workdir_data, anatomy)
+    template_workdir = get_workdir_with_workdir_data(
+        workdir_data, anatomy, dbcon=dbcon
+    )
     template_workdir_path = str(template_workdir).replace("\\", "/")
 
     # Replace slashses in workdir path where workfile is located
@@ -662,18 +890,22 @@ class BuildWorkfile:
         """
         host_name = avalon.api.registered_host().__name__.rsplit(".", 1)[-1]
         presets = get_project_settings(avalon.io.Session["AVALON_PROJECT"])
+
         # Get presets for host
-        build_presets = (
-            presets.get(host_name, {})
-            .get("workfile_build")
-            .get("profiles")
-        )
-        if not build_presets:
+        wb_settings = presets.get(host_name, {}).get("workfile_builder")
+
+        if not wb_settings:
+            # backward compatibility
+            wb_settings = presets.get(host_name, {}).get("workfile_build")
+
+        builder_presets = wb_settings.get("profiles")
+
+        if not builder_presets:
             return
 
         task_name_low = task_name.lower()
         per_task_preset = None
-        for preset in build_presets:
+        for preset in builder_presets:
             preset_tasks = preset.get("tasks") or []
             preset_tasks_low = [task.lower() for task in preset_tasks]
             if task_name_low in preset_tasks_low:
@@ -1173,3 +1405,201 @@ def change_timer_to_current_context():
     }
 
     requests.post(rest_api_url, json=data)
+
+
+def _get_task_context_data_for_anatomy(
+    project_doc, asset_doc, task_name, anatomy=None
+):
+    """Prepare Task context for anatomy data.
+
+    WARNING: this data structure is currently used only in workfile templates.
+        Key "task" is currently in rest of pipeline used as string with task
+        name.
+
+    Args:
+        project_doc (dict): Project document with available "name" and
+            "data.code" keys.
+        asset_doc (dict): Asset document from MongoDB.
+        task_name (str): Name of context task.
+        anatomy (Anatomy): Optionally Anatomy for passed project name can be
+            passed as Anatomy creation may be slow.
+
+    Returns:
+        dict: With Anatomy context data.
+    """
+
+    if anatomy is None:
+        anatomy = Anatomy(project_doc["name"])
+
+    asset_name = asset_doc["name"]
+    project_task_types = anatomy["tasks"]
+
+    # get relevant task type from asset doc
+    assert task_name in asset_doc["data"]["tasks"], (
+        "Task name \"{}\" not found on asset \"{}\"".format(
+            task_name, asset_name
+        )
+    )
+
+    task_type = asset_doc["data"]["tasks"][task_name].get("type")
+
+    assert task_type, (
+        "Task name \"{}\" on asset \"{}\" does not have specified task type."
+    ).format(asset_name, task_name)
+
+    # get short name for task type defined in default anatomy settings
+    project_task_type_data = project_task_types.get(task_type)
+    assert project_task_type_data, (
+        "Something went wrong. Default anatomy tasks are not holding"
+        "requested task type: `{}`".format(task_type)
+    )
+
+    return {
+        "project": {
+            "name": project_doc["name"],
+            "code": project_doc["data"].get("code")
+        },
+        "asset": asset_name,
+        "task": {
+            "name": task_name,
+            "type": task_type,
+            "short_name": project_task_type_data["short_name"]
+        }
+    }
+
+
+def get_custom_workfile_template_by_context(
+    template_profiles, project_doc, asset_doc, task_name, anatomy=None
+):
+    """Filter and fill workfile template profiles by passed context.
+
+    It is expected that passed argument are already queried documents of
+    project and asset as parents of processing task name.
+
+    Existence of formatted path is not validated.
+
+    Args:
+        template_profiles(list): Template profiles from settings.
+        project_doc(dict): Project document from MongoDB.
+        asset_doc(dict): Asset document from MongoDB.
+        task_name(str): Name of task for which templates are filtered.
+        anatomy(Anatomy): Optionally passed anatomy object for passed project
+            name.
+
+    Returns:
+        str: Path to template or None if none of profiles match current
+            context. (Existence of formatted path is not validated.)
+    """
+
+    from openpype.lib import filter_profiles
+
+    if anatomy is None:
+        anatomy = Anatomy(project_doc["name"])
+
+    # get project, asset, task anatomy context data
+    anatomy_context_data = _get_task_context_data_for_anatomy(
+        project_doc, asset_doc, task_name, anatomy
+    )
+    # add root dict
+    anatomy_context_data["root"] = anatomy.roots
+
+    # get task type for the task in context
+    current_task_type = anatomy_context_data["task"]["type"]
+
+    # get path from matching profile
+    matching_item = filter_profiles(
+        template_profiles,
+        {"task_type": current_task_type}
+    )
+    # when path is available try to format it in case
+    # there are some anatomy template strings
+    if matching_item:
+        template = matching_item["path"][platform.system().lower()]
+        return template.format(**anatomy_context_data)
+
+    return None
+
+
+def get_custom_workfile_template_by_string_context(
+    template_profiles, project_name, asset_name, task_name,
+    dbcon=None, anatomy=None
+):
+    """Filter and fill workfile template profiles by passed context.
+
+    Passed context are string representations of project, asset and task.
+    Function will query documents of project and asset to be able use
+    `get_custom_workfile_template_by_context` for rest of logic.
+
+    Args:
+        template_profiles(list): Loaded workfile template profiles.
+        project_name(str): Project name.
+        asset_name(str): Asset name.
+        task_name(str): Task name.
+        dbcon(AvalonMongoDB): Optional avalon implementation of mongo
+            connection with context Session.
+        anatomy(Anatomy): Optionally prepared anatomy object for passed
+            project.
+
+    Returns:
+        str: Path to template or None if none of profiles match current
+            context. (Existence of formatted path is not validated.)
+    """
+
+    if dbcon is None:
+        from avalon.api import AvalonMongoDB
+
+        dbcon = AvalonMongoDB()
+
+    dbcon.install()
+
+    if dbcon.Session["AVALON_PROJECT"] != project_name:
+        dbcon.Session["AVALON_PROJECT"] = project_name
+
+    project_doc = dbcon.find_one(
+        {"type": "project"},
+        # All we need is "name" and "data.code" keys
+        {
+            "name": 1,
+            "data.code": 1
+        }
+    )
+    asset_doc = dbcon.find_one(
+        {
+            "type": "asset",
+            "name": asset_name
+        },
+        # All we need is "name" and "data.tasks" keys
+        {
+            "name": 1,
+            "data.tasks": 1
+        }
+    )
+
+    return get_custom_workfile_template_by_context(
+        template_profiles, project_doc, asset_doc, task_name, anatomy
+    )
+
+
+def get_custom_workfile_template(template_profiles):
+    """Filter and fill workfile template profiles by current context.
+
+    Current context is defined by `avalon.api.Session`. That's why this
+    function should be used only inside host where context is set and stable.
+
+    Args:
+        template_profiles(list): Template profiles from settings.
+
+    Returns:
+        str: Path to template or None if none of profiles match current
+            context. (Existence of formatted path is not validated.)
+    """
+    # Use `avalon.io` as Mongo connection
+    from avalon import io
+
+    return get_custom_workfile_template_by_string_context(
+        template_profiles,
+        io.Session["AVALON_PROJECT"],
+        io.Session["AVALON_ASSET"],
+        io.Session["AVALON_TASK"],
+        io
+    )

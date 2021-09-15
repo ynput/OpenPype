@@ -2,16 +2,17 @@ import copy
 import logging
 
 from Qt import QtWidgets, QtCore, QtGui
-from avalon import style
 
 from avalon.api import AvalonMongoDB
+
+from openpype import style
 from openpype.api import resources
 
 from avalon.tools import lib as tools_lib
 from avalon.tools.widgets import AssetWidget
 from avalon.vendor import qtawesome
 from .models import ProjectModel
-from .lib import get_action_label
+from .lib import get_action_label, ProjectHandler
 from .widgets import (
     ProjectBar,
     ActionBar,
@@ -23,7 +24,7 @@ from .widgets import (
 from .flickcharm import FlickCharm
 
 
-class IconListView(QtWidgets.QListView):
+class ProjectIconView(QtWidgets.QListView):
     """Styled ListView that allows to toggle between icon and list mode.
 
     Toggling between the two modes is done by Right Mouse Click.
@@ -34,7 +35,7 @@ class IconListView(QtWidgets.QListView):
     ListMode = 1
 
     def __init__(self, parent=None, mode=ListMode):
-        super(IconListView, self).__init__(parent=parent)
+        super(ProjectIconView, self).__init__(parent=parent)
 
         # Workaround for scrolling being super slow or fast when
         # toggling between the two visual modes
@@ -83,42 +84,34 @@ class IconListView(QtWidgets.QListView):
     def mousePressEvent(self, event):
         if event.button() == QtCore.Qt.RightButton:
             self.set_mode(int(not self._mode))
-        return super(IconListView, self).mousePressEvent(event)
+        return super(ProjectIconView, self).mousePressEvent(event)
 
 
 class ProjectsPanel(QtWidgets.QWidget):
     """Projects Page"""
-
-    project_clicked = QtCore.Signal(str)
-
-    def __init__(self, dbcon, parent=None):
+    def __init__(self, project_handler, parent=None):
         super(ProjectsPanel, self).__init__(parent=parent)
 
         layout = QtWidgets.QVBoxLayout(self)
 
-        self.dbcon = dbcon
-        self.dbcon.install()
-
-        view = IconListView(parent=self)
+        view = ProjectIconView(parent=self)
         view.setSelectionMode(QtWidgets.QListView.NoSelection)
         flick = FlickCharm(parent=self)
         flick.activateOn(view)
-        model = ProjectModel(self.dbcon)
-        model.hide_invisible = True
-        model.refresh()
-        view.setModel(model)
+
+        view.setModel(project_handler.model)
 
         layout.addWidget(view)
 
         view.clicked.connect(self.on_clicked)
 
-        self.model = model
         self.view = view
+        self.project_handler = project_handler
 
     def on_clicked(self, index):
         if index.isValid():
             project_name = index.data(QtCore.Qt.DisplayRole)
-            self.project_clicked.emit(project_name)
+            self.project_handler.set_project(project_name)
 
 
 class AssetsPanel(QtWidgets.QWidget):
@@ -126,7 +119,7 @@ class AssetsPanel(QtWidgets.QWidget):
     back_clicked = QtCore.Signal()
     session_changed = QtCore.Signal()
 
-    def __init__(self, dbcon, parent=None):
+    def __init__(self, project_handler, dbcon, parent=None):
         super(AssetsPanel, self).__init__(parent=parent)
 
         self.dbcon = dbcon
@@ -140,10 +133,8 @@ class AssetsPanel(QtWidgets.QWidget):
         btn_back_icon = qtawesome.icon("fa.angle-left", color="white")
         btn_back = QtWidgets.QPushButton(project_bar_widget)
         btn_back.setIcon(btn_back_icon)
-        btn_back.setFixedWidth(23)
-        btn_back.setFixedHeight(23)
 
-        project_bar = ProjectBar(self.dbcon, project_bar_widget)
+        project_bar = ProjectBar(project_handler, project_bar_widget)
 
         layout.addWidget(btn_back)
         layout.addWidget(project_bar)
@@ -185,37 +176,29 @@ class AssetsPanel(QtWidgets.QWidget):
         layout.addWidget(project_bar_widget)
         layout.addWidget(body)
 
-        self.project_bar = project_bar
-        self.assets_widget = assets_widget
-        self.tasks_widget = tasks_widget
-
         # signals
-        project_bar.project_changed.connect(self.on_project_changed)
+        project_handler.project_changed.connect(self.on_project_changed)
         assets_widget.selection_changed.connect(self.on_asset_changed)
         assets_widget.refreshed.connect(self.on_asset_changed)
         tasks_widget.task_changed.connect(self.on_task_change)
 
         btn_back.clicked.connect(self.back_clicked)
 
-        # Force initial refresh for the assets since we might not be
-        # trigging a Project switch if we click the project that was set
-        # prior to launching the Launcher
-        # todo: remove this behavior when AVALON_PROJECT is not required
-        assets_widget.refresh()
+        self.project_handler = project_handler
+        self.project_bar = project_bar
+        self.assets_widget = assets_widget
+        self.tasks_widget = tasks_widget
+        self._btn_back = btn_back
 
-    def set_project(self, project):
-        before = self.project_bar.get_current_project()
-        if before == project:
-            self.assets_widget.refresh()
-            return
+    def showEvent(self, event):
+        super(AssetsPanel, self).showEvent(event)
 
-        self.project_bar.set_project(project)
-        self.on_project_changed()
+        # Change size of a btn
+        # WARNING does not handle situation if combobox is bigger
+        btn_size = self.project_bar.height()
+        self._btn_back.setFixedSize(QtCore.QSize(btn_size, btn_size))
 
     def on_project_changed(self):
-        project_name = self.project_bar.get_current_project()
-        self.dbcon.Session["AVALON_PROJECT"] = project_name
-
         self.session_changed.emit()
 
         self.assets_widget.refresh()
@@ -224,10 +207,7 @@ class AssetsPanel(QtWidgets.QWidget):
         """Callback on asset selection changed
 
         This updates the task view.
-
         """
-
-        print("Asset changed..")
 
         asset_name = None
         asset_silo = None
@@ -290,15 +270,19 @@ class LauncherWindow(QtWidgets.QDialog):
             self.windowFlags() | QtCore.Qt.WindowMinimizeButtonHint
         )
 
-        project_panel = ProjectsPanel(self.dbcon)
-        asset_panel = AssetsPanel(self.dbcon)
+        project_model = ProjectModel(self.dbcon)
+        project_model.hide_invisible = True
+        project_handler = ProjectHandler(self.dbcon, project_model)
+
+        project_panel = ProjectsPanel(project_handler)
+        asset_panel = AssetsPanel(project_handler, self.dbcon)
 
         page_slider = SlidePageWidget()
         page_slider.addWidget(project_panel)
         page_slider.addWidget(asset_panel)
 
         # actions
-        actions_bar = ActionBar(self.dbcon, self)
+        actions_bar = ActionBar(project_handler, self.dbcon, self)
 
         # statusbar
         statusbar = QtWidgets.QWidget()
@@ -336,6 +320,8 @@ class LauncherWindow(QtWidgets.QDialog):
         layout.setSpacing(0)
         layout.setContentsMargins(0, 0, 0, 0)
 
+        self.project_handler = project_handler
+
         self.message_label = message_label
         self.project_panel = project_panel
         self.asset_panel = asset_panel
@@ -347,21 +333,28 @@ class LauncherWindow(QtWidgets.QDialog):
         # signals
         actions_bar.action_clicked.connect(self.on_action_clicked)
         action_history.trigger_history.connect(self.on_history_action)
-        project_panel.project_clicked.connect(self.on_project_clicked)
+        project_handler.project_changed.connect(self.on_project_change)
+        project_handler.timer_timeout.connect(self._on_refresh_timeout)
         asset_panel.back_clicked.connect(self.on_back_clicked)
         asset_panel.session_changed.connect(self.on_session_changed)
-
-        # todo: Simplify this callback connection
-        asset_panel.project_bar.project_changed.connect(
-            self.on_project_changed
-        )
 
         self.resize(520, 740)
 
     def showEvent(self, event):
-        super().showEvent(event)
-        # TODO implement refresh/reset which will trigger updating
-        self.discover_actions()
+        self.project_handler.set_active(True)
+        self.project_handler.start_timer(True)
+
+        super(LauncherWindow, self).showEvent(event)
+
+    def _on_refresh_timeout(self):
+        # Stop timer if widget is not visible
+        if not self.isVisible():
+            self.project_handler.stop_timer()
+
+    def changeEvent(self, event):
+        if event.type() == QtCore.QEvent.ActivationChange:
+            self.project_handler.set_active(self.isActiveWindow())
+        super(LauncherWindow, self).changeEvent(event)
 
     def set_page(self, page):
         current = self.page_slider.currentIndex()
@@ -377,34 +370,23 @@ class LauncherWindow(QtWidgets.QDialog):
         QtCore.QTimer.singleShot(5000, lambda: self.message_label.setText(""))
         self.log.debug(message)
 
-    def on_project_changed(self):
-        project_name = self.asset_panel.project_bar.get_current_project()
-        self.dbcon.Session["AVALON_PROJECT"] = project_name
-
-        # Update the Action plug-ins available for the current project
-        self.discover_actions()
-
     def on_session_changed(self):
         self.filter_actions()
 
     def discover_actions(self):
         self.actions_bar.discover_actions()
-        self.filter_actions()
 
     def filter_actions(self):
         self.actions_bar.filter_actions()
 
-    def on_project_clicked(self, project_name):
-        self.dbcon.Session["AVALON_PROJECT"] = project_name
-        # Refresh projects
-        self.asset_panel.set_project(project_name)
+    def on_project_change(self, project_name):
+        # Update the Action plug-ins available for the current project
         self.set_page(1)
         self.discover_actions()
 
     def on_back_clicked(self):
-        self.dbcon.Session["AVALON_PROJECT"] = None
+        self.project_handler.set_project(None)
         self.set_page(0)
-        self.project_panel.model.refresh()    # Refresh projects
         self.discover_actions()
 
     def on_action_clicked(self, action):

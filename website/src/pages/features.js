@@ -37,15 +37,21 @@ const key_features = [
         docs: "/docs/artist_tools#publisher",
     },
     {
-        label: "Inventory",
+        label: "Scene manager",
         description:
             "Universal GUI for managing versions of assets loaded into your working scene.",
         docs: "docs/artist_tools#inventory",
-    },
-    {
+      },
+      {
+          label: "Project manager",
+          docs: "",
+          description:
+              "Tools for creating shots, assets and task within your project if you don't use third party project management",
+      },
+      {
         label: "Library Loader",
         description:
-            "A loader GUI that allows yo to load content from dedicated cross project asset library",
+        "A loader GUI that allows yo to load content from dedicated cross project asset library",
         docs: "docs/artist_tools#library-loader",
         image: "",
     },
@@ -57,26 +63,32 @@ const key_features = [
         image: "",
     },
     {
-        label: "Pype Tray",
-        link: "",
-        description:
-            "Cross platform wrapper app, which is the central point of pype. All other tools are ran from here.",
-    },
-    {
         label: "App Launcher",
         link: "",
         description:
             "Standalone GUI for launching application in the chosen context directly from tray",
     },
     {
-        label: "Timer Manager",
+        label: "Configuration GUI",
         link: "",
+        description:
+            "All settings and configuration are done via openPype Settings tool. No need to dig around .json and .yaml",
+    },
+    {
+        label: "Site Sync",
+        docs: "docs/module_site_sync",
+        description:
+            "Built in file synchronization between your central storage (cloud or physical) and all your freelancers",
+    },
+    {
+        label: "Timers Manager",
+        link: "docs/admin_settings_system#timers-manager",
         description:
             "Service for monitoring the user activity to start, stop and synchronise time tracking.",
     },
     {
         label: "Farm rendering",
-        link: "",
+        docs: "docs/module_deadline",
         description:
             "Integrations with Deadline and Muster render managers. Render, publish and generate reviews on the farm.",
     },
@@ -93,10 +105,10 @@ const key_features = [
             "System for simple scene building. Loads pre-defined publishes to scene with single click, speeding up scene preparation.",
     },
     {
-        label: "Configuration GUI",
-        link: "",
+        label: "Reviewables",
+        docs: "docs/project_settings/settings_project_global#extract-review",
         description:
-            "All settings and configuration are done via openPype Settings tool. No need to dig around .json and .yaml",
+            "Generate automated reviewable quicktimes and sequences in any format, with metadata burnins.",
     },
 ];
 
@@ -110,6 +122,10 @@ const ftrack = [
     label: "Project Setup",
     description: "Quickly sets up project with customisable pre-defined structure and attributes."
   }, {
+    docs: "docs/module_ftrack#update-status-on-task-action",
+    label: "Automate statuses",
+    description: "Quickly sets up project with customisable pre-defined structure and attributes."
+  }, {
     docs: "docs/admin_ftrack#event-server",
     label: "Event Server",
     description: "Built-in ftrack event server takes care of all automation on your ftrack."
@@ -118,7 +134,7 @@ const ftrack = [
     label: "Review publishing",
     description: "All reviewables from all DCC aps, including farm renders are pushed to ftrack online review."
   }, {
-    docs: "",
+    docs: "docs/admin_settings_system#timers-manager",
     label: "Auto Time Tracker",
     description: "Automatically starts and stops ftrack time tracker, base on artist activity."
   }
@@ -185,8 +201,8 @@ const maya_features = [
     description:"Makes all your playblasts consistent, with burnins and correct viewport settings"
   },
   {
-    label: "Model > Render",
-    description:"We cover full project data flow from model through animation, till final render.",
+    label: "Renderlayers and AOVs",
+    description:"Full support of rendersetup layers and AOVs in all major renderers.",
     docs: "docs/artist_hosts_maya#working-with-pype-in-maya"
   },
   {
@@ -211,6 +227,7 @@ const maya_families = [
     {label:"VDB Cache"},
     {label:"Assembly"},
     {label:"Camera"},
+    {label:"CameraRig"},
     {label:"RenderSetup"},
     {label:"Render"},
     {label:"Plate"},
@@ -231,7 +248,7 @@ const nuke_features = [
     docs: "docs/artist_hosts_nuke#set-colorspace"
   }, {
     label: "Script Building",
-    description:"Automatically build first workfiles from published plates or renders",
+    description:"Automatically build initial workfiles from published plates or renders",
     docs: "docs/artist_hosts_nuke#build-first-work-file"
   },
   {
@@ -254,10 +271,8 @@ const nuke_families = [
     {label: "Render"},
     {label: "Plate"},
     {label: "Review"},
-    {label: "Group"},
     {label: "Workfile"},
     {label: "LUT"},
-    {label: "Cache"},
     {label: "Gizmo"},
     {label: "Prerender"},
 ]
@@ -294,6 +309,26 @@ const deadline_families = [
 ]
 
 const hiero_features = [
+  {
+    label: "Project setup",
+    description:"Automatic colour, timeline and fps setup of you hiero project."
+  },
+  {
+    label: "Create shots",
+    description:"Populate project with shots based on your conformed edit."
+  },
+  {
+    label: "Publish plates",
+    description:"Publish multiple tracks with plates to you shots from a single timeline."
+  },
+  {
+    label: "Retimes",
+    description:"Publish retime information for individual plates."
+  },
+  {
+    label: "LUTS and fx",
+    description:"Publish soft effects from your timeline to be used on shots."
+  },
 ]
 
 const hiero_families = [
@@ -330,7 +365,6 @@ const houdini_families = [
     {label:"Point Cache"},
     {label:"VDB Cache"},
     {label:"Camera"},
-    {label:"Review"},
     {label:"Workfile"},
 ]
 
@@ -355,11 +389,29 @@ const harmony_families = [
     {label: "Workfile"}
 ]
 
+const tvpaint_families = [
+    {label: "Render"},
+    {label: "Review"},
+    {label: "Image"},
+    {label: "Audio"},
+    {label: "Workfile"}
+]
+
 const photoshop_families = [
     {label: "Render"},
     {label: "Plate"},
     {label: "Image"},
     {label: "LayeredImage"},
+    {label: "Background"},
+    {label: "Workfile"}
+]
+
+const aftereffects_families = [
+    {label: "Render"},
+    {label: "Plate"},
+    {label: "Image"},
+    {label: "Audio"},
+    {label: "Background"},
     {label: "Workfile"}
 ]
 
@@ -512,8 +564,14 @@ function Home() {
       <section className={classnames("section lightBackground")}>
         <div className={classnames(styles.card_container, "container")}>
 
-          <h2 id="maya">Autodesk Maya</h2>
+          <h2 id="maya"><a href="docs/artist_hosts_blender">Autodesk Maya</a></h2>
           <p className="sectionDescription">versions 2017 and higher</p>
+
+          <p>
+            OpenPype includes very robust Maya implementation that can handle full CG workflow from model, 
+            through animation till final renders. Scene settings, Your artists won't need to touch file browser at all and OpenPype will
+            take care of all the file management. Most of maya workflows are supported including gpucaches, referencing, nested references and render proxies.
+            </p>
 
           {maya_features && maya_features.length && (
             <div className={styles.card_box}>
@@ -537,7 +595,7 @@ function Home() {
 
       <section className={classnames("section darkBackground")}>
         <div className={classnames(styles.card_container, "container")}>
-          <h2 id="nuke">Foundry Nuke | NukeX</h2>
+          <h2 id="nuke"><a href="docs/artist_hosts_nuke">Foundry Nuke | NukeX</a></h2>
 
           <p className="sectionDescription">versions 11.0 and higher</p>
 
@@ -563,15 +621,95 @@ function Home() {
 
       <section className={classnames("section lightBackground")}>
         <div className={classnames(styles.card_container, "container")}>
-          <h2 id="hiero">Foundry Hiero | Nuke Studio</h2>
+          <h2 id="hiero"><a href="docs/artist_hosts_blender">Foundry Hiero | Nuke Studio</a></h2>
 
           <p className="sectionDescription">versions 11.0 and higher</p>
+
+          {hiero_features && hiero_features.length && (
+            <div className={styles.card_box}>
+              {hiero_features.map((props, idx) => (
+                <FeatureMedium key={idx} {...props} />
+              ))}
+            </div>
+          )}
 
           <h3 className=""> Supported Families </h3>
 
           {hiero_families && hiero_families.length && (
             <div className={styles.card_box}>
               {hiero_families.map((props, idx) => (
+                <FamilyCard key={idx} {...props} />
+              ))}
+            </div>
+          )}
+        </div>
+      </section>
+
+      <section className={classnames("section darkBackground")}>
+        <div className={classnames(styles.card_container, "container")}>
+          <h2><a href="docs/artist_hosts_photoshop">After Effects</a></h2>
+
+          <p className="sectionDescription">versions 2020 and higher</p>
+
+          <h3 className=""> Supported Families </h3>
+
+          {aftereffects_families && aftereffects_families.length && (
+            <div className={styles.card_box}>
+              {aftereffects_families.map((props, idx) => (
+                <FamilyCard key={idx} {...props} />
+              ))}
+            </div>
+          )}
+        </div>
+      </section>
+
+      <section className={classnames("section lightBackground")}>
+        <div className={classnames(styles.card_container, "container")}>
+          <h2><a href="docs/artist_hosts_photoshop">Photoshop</a></h2>
+
+          <p className="sectionDescription">versions 2020 and higher</p>
+
+          <h3 className=""> Supported Families </h3>
+
+          {photoshop_families && photoshop_families.length && (
+            <div className={styles.card_box}>
+              {photoshop_families.map((props, idx) => (
+                <FamilyCard key={idx} {...props} />
+              ))}
+            </div>
+          )}
+        </div>
+      </section>
+
+      <section className={classnames("section darkBackground")}>
+        <div className={classnames(styles.card_container, "container")}>
+          <h2><a href="docs/artist_hosts_harmony">Harmony</a></h2>
+
+          <p className="sectionDescription">versions 17 and higher</p>
+
+          <h3 className=""> Supported Families </h3>
+
+          {harmony_families && harmony_families.length && (
+            <div className={styles.card_box}>
+              {harmony_families.map((props, idx) => (
+                <FamilyCard key={idx} {...props} />
+              ))}
+            </div>
+          )}
+        </div>
+      </section>
+
+      <section className={classnames("section lightBackground")}>
+        <div className={classnames(styles.card_container, "container")}>
+          <h2><a href="docs/artist_hosts_tvpaint">TV Paint</a></h2>
+
+          <p className="sectionDescription">versions 11</p>
+
+          <h3 className=""> Supported Families </h3>
+
+          {tvpaint_families && tvpaint_families.length && (
+            <div className={styles.card_box}>
+              {tvpaint_families.map((props, idx) => (
                 <FamilyCard key={idx} {...props} />
               ))}
             </div>
@@ -600,9 +738,9 @@ function Home() {
 
       <section className={classnames("section lightBackground")}>
         <div className={classnames(styles.card_container, "container")}>
-          <h2>Blender</h2>
+          <h2><a href="docs/artist_hosts_blender">Blender</a></h2>
 
-          <p className="sectionDescription">versions 2.80 and higher</p>
+          <p className="sectionDescription">versions 2.83 and higher</p>
 
           <h3 className=""> Supported Families </h3>
 
@@ -628,44 +766,6 @@ function Home() {
           {fusion_families && fusion_families.length && (
             <div className={styles.card_box}>
               {fusion_families.map((props, idx) => (
-                <FamilyCard key={idx} {...props} />
-              ))}
-            </div>
-          )}
-        </div>
-      </section>
-
-
-      <section className={classnames("section lightBackground")}>
-        <div className={classnames(styles.card_container, "container")}>
-          <h2>Harmony</h2>
-
-          <p className="sectionDescription">versions 17 and higher</p>
-
-          <h3 className=""> Supported Families </h3>
-
-          {harmony_families && harmony_families.length && (
-            <div className={styles.card_box}>
-              {harmony_families.map((props, idx) => (
-                <FamilyCard key={idx} {...props} />
-              ))}
-            </div>
-          )}
-        </div>
-      </section>
-
-
-      <section className={classnames("section darkBackground")}>
-        <div className={classnames(styles.card_container, "container")}>
-          <h2>Photoshop</h2>
-
-          <p className="sectionDescription">versions 2020 and higher</p>
-
-          <h3 className=""> Supported Families </h3>
-
-          {photoshop_families && photoshop_families.length && (
-            <div className={styles.card_box}>
-              {photoshop_families.map((props, idx) => (
                 <FamilyCard key={idx} {...props} />
               ))}
             </div>

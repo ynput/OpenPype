@@ -1,12 +1,20 @@
 [
     {
+        "type": "boolean",
+        "key": "use_python_2",
+        "label": "Use Python 2",
+        "default": false
+    },
+    {
         "type": "path",
         "key": "executables",
         "label": "Executables",
         "multiplatform": true,
-        "multipath": true
+        "multipath": true,
+        "placeholder": "Executable path"
     },
     {
+        "key": "separator",
         "type":"separator"
     },
     {

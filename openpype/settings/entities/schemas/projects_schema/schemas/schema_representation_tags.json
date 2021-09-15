@@ -1,0 +1,29 @@
+{
+    "key": "tags",
+    "label": "Tags",
+    "type": "enum",
+    "multiselection": true,
+    "enum_items": [
+        {
+            "burnin": "Add burnins"
+        },
+        {
+            "review": "Create review"
+        },
+        {
+            "ftrackreview": "Add review to Ftrack"
+        },
+        {
+            "delete": "Delete output"
+        },
+        {
+            "slate-frame": "Add slate frame"
+        },
+        {
+            "no-handles": "Skip handle frames"
+        },
+        {
+            "sequence": "Output as image sequence"
+        }
+    ]
+}

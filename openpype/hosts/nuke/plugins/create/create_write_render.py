@@ -80,9 +80,13 @@ class CreateWriteRender(plugin.PypeCreator):
         write_data = {
             "nodeclass": self.n_class,
             "families": [self.family],
-            "avalon": self.data,
-            "creator": self.__class__.__name__
+            "avalon": self.data
         }
+
+        # add creator data
+        creator_data = {"creator": self.__class__.__name__}
+        self.data.update(creator_data)
+        write_data.update(creator_data)
 
         if self.presets.get('fpath_template'):
             self.log.info("Adding template path from preset")
@@ -95,10 +99,35 @@ class CreateWriteRender(plugin.PypeCreator):
                 "fpath_template": ("{work}/renders/nuke/{subset}"
                                    "/{subset}.{frame}.{ext}")})
 
+        # add crop node to cut off all outside of format bounding box
+        # get width and height
+        try:
+            width, height = (selected_node.width(), selected_node.height())
+        except AttributeError:
+            actual_format = nuke.root().knob('format').value()
+            width, height = (actual_format.width(), actual_format.height())
+
+        _prenodes = [
+            {
+                "name": "Crop01",
+                "class": "Crop",
+                "knobs": [
+                    ("box", [
+                        0.0,
+                        0.0,
+                        width,
+                        height
+                    ])
+                ],
+                "dependent": None
+            }
+        ]
+
         write_node = lib.create_write_node(
             self.data["subset"],
             write_data,
-            input=selected_node)
+            input=selected_node,
+            prenodes=_prenodes)
 
         # relinking to collected connections
         for i, input in enumerate(inputs):

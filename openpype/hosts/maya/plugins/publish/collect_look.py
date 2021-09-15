@@ -167,6 +167,8 @@ def get_file_node_path(node):
 
     if cmds.nodeType(node) == 'aiImage':
         return cmds.getAttr('{0}.filename'.format(node))
+    if cmds.nodeType(node) == 'RedshiftNormalMap':
+        return cmds.getAttr('{}.tex0'.format(node))
 
     # otherwise use fileTextureName
     return cmds.getAttr('{0}.fileTextureName'.format(node))
@@ -348,8 +350,16 @@ class CollectLook(pyblish.api.InstancePlugin):
             history = []
             for material in materials:
                 history.extend(cmds.listHistory(material))
+
+            # handle VrayPluginNodeMtl node - see #1397
+            vray_plugin_nodes = cmds.ls(
+                history, type="VRayPluginNodeMtl", long=True)
+            for vray_node in vray_plugin_nodes:
+                history.extend(cmds.listHistory(vray_node))
+
             files = cmds.ls(history, type="file", long=True)
             files.extend(cmds.ls(history, type="aiImage", long=True))
+            files.extend(cmds.ls(history, type="RedshiftNormalMap", long=True))
 
         self.log.info("Collected file nodes:\n{}".format(files))
         # Collect textures if any file nodes are found
@@ -480,7 +490,7 @@ class CollectLook(pyblish.api.InstancePlugin):
         """
 
         self.log.debug("processing: {}".format(node))
-        if cmds.nodeType(node) not in ["file", "aiImage"]:
+        if cmds.nodeType(node) not in ["file", "aiImage", "RedshiftNormalMap"]:
             self.log.error(
                 "Unsupported file node: {}".format(cmds.nodeType(node)))
             raise AssertionError("Unsupported file node")
@@ -493,11 +503,19 @@ class CollectLook(pyblish.api.InstancePlugin):
             self.log.debug("aiImage node")
             attribute = "{}.filename".format(node)
             computed_attribute = attribute
+        elif cmds.nodeType(node) == 'RedshiftNormalMap':
+            self.log.debug("RedshiftNormalMap node")
+            attribute = "{}.tex0".format(node)
+            computed_attribute = attribute
 
         source = cmds.getAttr(attribute)
         self.log.info("  - file source: {}".format(source))
         color_space_attr = "{}.colorSpace".format(node)
-        color_space = cmds.getAttr(color_space_attr)
+        try:
+            color_space = cmds.getAttr(color_space_attr)
+        except ValueError:
+            # node doesn't have colorspace attribute
+            color_space = "raw"
         # Compare with the computed file path, e.g. the one with the <UDIM>
         # pattern in it, to generate some logging information about this
         # difference

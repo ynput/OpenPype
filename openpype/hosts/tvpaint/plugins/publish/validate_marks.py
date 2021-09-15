@@ -14,37 +14,54 @@ class ValidateMarksRepair(pyblish.api.Action):
     def process(self, context, plugin):
         expected_data = ValidateMarks.get_expected_data(context)
 
-        expected_data["markIn"] -= 1
-        expected_data["markOut"] -= 1
-
-        lib.execute_george("tv_markin {} set".format(expected_data["markIn"]))
+        lib.execute_george(
+            "tv_markin {} set".format(expected_data["markIn"])
+        )
         lib.execute_george(
             "tv_markout {} set".format(expected_data["markOut"])
         )
 
 
 class ValidateMarks(pyblish.api.ContextPlugin):
-    """Validate mark in and out are enabled."""
+    """Validate mark in and out are enabled and it's duration.
 
-    label = "Validate Marks"
+    Mark In/Out does not have to match frameStart and frameEnd but duration is
+    important.
+    """
+
+    label = "Validate Mark In/Out"
     order = pyblish.api.ValidatorOrder
     optional = True
     actions = [ValidateMarksRepair]
 
     @staticmethod
     def get_expected_data(context):
+        scene_mark_in = context.data["sceneMarkIn"]
+
+        # Data collected in `CollectAvalonEntities`
+        frame_end = context.data["frameEnd"]
+        frame_start = context.data["frameStart"]
+        handle_start = context.data["handleStart"]
+        handle_end = context.data["handleEnd"]
+
+        # Calculate expeted Mark out (Mark In + duration - 1)
+        expected_mark_out = (
+            scene_mark_in
+            + (frame_end - frame_start)
+            + handle_start + handle_end
+        )
         return {
-            "markIn": int(context.data["frameStart"]),
+            "markIn": scene_mark_in,
             "markInState": True,
-            "markOut": int(context.data["frameEnd"]),
+            "markOut": expected_mark_out,
             "markOutState": True
         }
 
     def process(self, context):
         current_data = {
-            "markIn": context.data["sceneMarkIn"] + 1,
+            "markIn": context.data["sceneMarkIn"],
             "markInState": context.data["sceneMarkInState"],
-            "markOut": context.data["sceneMarkOut"] + 1,
+            "markOut": context.data["sceneMarkOut"],
             "markOutState": context.data["sceneMarkOutState"]
         }
         expected_data = self.get_expected_data(context)

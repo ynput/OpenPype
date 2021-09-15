@@ -20,6 +20,7 @@ class CreatePointCache(plugin.Creator):
         self.data.update(lib.collect_animation_data())
 
         self.data["writeColorSets"] = False  # Vertex colors with the geometry.
+        self.data["writeFaceSets"] = False  # Vertex colors with the geometry.
         self.data["renderableOnly"] = False  # Only renderable visible shapes
         self.data["visibleOnly"] = False     # only nodes that are visible
         self.data["includeParentHierarchy"] = False  # Include parent groups

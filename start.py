@@ -6,10 +6,11 @@ Bootstrapping process of OpenPype is as follows:
 `OPENPYPE_PATH` is checked for existence - either one from environment or
 from user settings. Precedence takes the one set by environment.
 
-On this path we try to find OpenPype in directories version string in their names.
-For example: `openpype-v3.0.1-foo` is valid name, or even `foo_3.0.2` - as long
-as version can be determined from its name _AND_ file `openpype/openpype/version.py`
-can be found inside, it is considered OpenPype installation.
+On this path we try to find OpenPype in directories version string in their
+names. For example: `openpype-v3.0.1-foo` is valid name, or
+even `foo_3.0.2` - as long as version can be determined from its name
+_AND_ file `openpype/openpype/version.py` can be found inside, it is
+considered OpenPype installation.
 
 If no OpenPype repositories are found in `OPENPYPE_PATH` (user data dir)
 then **Igniter** (OpenPype setup tool) will launch its GUI.
@@ -20,65 +21,65 @@ appdata dir in user home and extract it there. Version will be determined by
 version specified in OpenPype module.
 
 If OpenPype repository directories are found in default install location
-(user data dir) or in `OPENPYPE_PATH`, it will get list of those dirs there and
-use latest one or the one specified with optional `--use-version` command
-line argument. If the one specified doesn't exist then latest available
-version will be used. All repositories in that dir will be added
+(user data dir) or in `OPENPYPE_PATH`, it will get list of those dirs
+there and use latest one or the one specified with optional `--use-version`
+command line argument. If the one specified doesn't exist then latest
+available version will be used. All repositories in that dir will be added
 to `sys.path` and `PYTHONPATH`.
 
-If OpenPype is live (not frozen) then current version of OpenPype module will be
-used. All directories under `repos` will be added to `sys.path` and
+If OpenPype is live (not frozen) then current version of OpenPype module
+will be used. All directories under `repos` will be added to `sys.path` and
 `PYTHONPATH`.
 
-OpenPype depends on connection to `MongoDB`_. You can specify MongoDB connection
-string via `OPENPYPE_MONGO` set in environment or it can be set in user
-settings or via **Igniter** GUI.
+OpenPype depends on connection to `MongoDB`_. You can specify MongoDB
+connection string via `OPENPYPE_MONGO` set in environment or it can be set
+in user settings or via **Igniter** GUI.
 
 So, bootstrapping OpenPype looks like this::
 
 .. code-block:: bash
 
-+-------------------------------------------------------+
-| Determine MongoDB connection:                         |
-| Use `OPENPYPE_MONGO`, system keyring `openPypeMongo`  |
-+--------------------------|----------------------------+
-                   .--- Found? --.
+┌───────────────────────────────────────────────────────┐
+│ Determine MongoDB connection:                         │
+│ Use `OPENPYPE_MONGO`, system keyring `openPypeMongo`  │
+└──────────────────────────┬────────────────────────────┘
+                  ┌───- Found? -─┐
                  YES             NO
-                  |              |
-                  |       +------v--------------+
-                  |       | Fire up Igniter GUI |<---------+
-                  |       | and ask User        |          |
-                  |       +---------------------+          |
-                  |                                        |
-                  |                                        |
-+-----------------v------------------------------------+   |
-| Get location of OpenPype:                            |   |
-|   1) Test for `OPENPYPE_PATH` environment variable   |   |
-|   2) Test `openPypePath` in registry setting         |   |
-|   3) Test user data directory                        |   |
-| ...................................................  |   |
-| If running from frozen code:                         |   |
-|   - Use latest one found in user data dir            |   |
-| If running from live code:                           |   |
-|   - Use live code and install it to user data dir    |   |
-| * can be overridden with `--use-version` argument    |   |
-+-------------------------|----------------------------+   |
-             .-- Is OpenPype found? --.                    |
-             YES                     NO                    |
-              |                      |                     |
-              |      +---------------v-----------------+   |
-              |      | Look in `OPENPYPE_PATH`, find   |   |
-              |      | latest version and install it   |   |
-              |      | to user data dir.               |   |
-              |      +--------------|------------------+   |
-              |         .-- Is OpenPype found? --.         |
-              |         YES                     NO --------+
-              |          |
-              |<---------+
-              |
-+-------------v------------+
-|      Run OpenPype        |
-+--------------------------+
+                  │              │
+                  │       ┌──────┴──────────────┐
+                  │       │ Fire up Igniter GUI ├<-────────┐
+                  │       │ and ask User        │          │
+                  │       └─────────────────────┘          │
+                  │                                        │
+                  │                                        │
+┌─────────────────┴─────────────────────────────────────┐  │
+│ Get location of OpenPype:                             │  │
+│   1) Test for `OPENPYPE_PATH` environment variable    │  │
+│   2) Test `openPypePath` in registry setting          │  │
+│   3) Test user data directory                         │  │
+│ ····················································· │  │
+│ If running from frozen code:                          │  │
+│   - Use latest one found in user data dir             │  │
+│ If running from live code:                            │  │
+│   - Use live code and install it to user data dir     │  │
+│ * can be overridden with `--use-version` argument     │  │
+└──────────────────────────┬────────────────────────────┘  │
+              ┌─- Is OpenPype found? -─┐                   │
+             YES                       NO                  │
+              │                        │                   │
+              │      ┌─────────────────┴─────────────┐     │
+              │      │ Look in `OPENPYPE_PATH`, find │     │
+              │      │ latest version and install it │     │
+              │      │ to user data dir.             │     │
+              │      └──────────────┬────────────────┘     │
+              │         ┌─- Is OpenPype found? -─┐         │
+              │        YES                       NO -──────┘
+              │         │
+              ├<-───────┘
+              │
+┌─────────────┴────────────┐
+│      Run OpenPype        │
+└─────═══════════════──────┘
 
 
 Todo:
@@ -100,6 +101,7 @@ import subprocess
 import site
 from pathlib import Path
 
+
 # OPENPYPE_ROOT is variable pointing to build (or code) directory
 # WARNING `OPENPYPE_ROOT` must be defined before igniter import
 # - igniter changes cwd which cause that filepath of this script won't lead
@@ -115,15 +117,81 @@ else:
         os.path.join(OPENPYPE_ROOT, "dependencies")
     )
     sys.path.append(frozen_libs)
+    sys.path.insert(0, OPENPYPE_ROOT)
     # add stuff from `<frozen>/dependencies` to PYTHONPATH.
     pythonpath = os.getenv("PYTHONPATH", "")
     paths = pythonpath.split(os.pathsep)
     paths.append(frozen_libs)
     os.environ["PYTHONPATH"] = os.pathsep.join(paths)
 
+
+import blessed  # noqa: E402
+import certifi  # noqa: E402
+
+
+if sys.__stdout__:
+    term = blessed.Terminal()
+
+    def _print(message: str):
+        if message.startswith("!!! "):
+            print("{}{}".format(term.orangered2("!!! "), message[4:]))
+            return
+        if message.startswith(">>> "):
+            print("{}{}".format(term.aquamarine3(">>> "), message[4:]))
+            return
+        if message.startswith("--- "):
+            print("{}{}".format(term.darkolivegreen3("--- "), message[4:]))
+            return
+        if message.startswith("*** "):
+            print("{}{}".format(term.gold("*** "), message[4:]))
+            return
+        if message.startswith("  - "):
+            print("{}{}".format(term.wheat("  - "), message[4:]))
+            return
+        if message.startswith("  . "):
+            print("{}{}".format(term.tan("  . "), message[4:]))
+            return
+        if message.startswith("     - "):
+            print("{}{}".format(term.seagreen3("     - "), message[7:]))
+            return
+        if message.startswith("     ! "):
+            print("{}{}".format(term.goldenrod("     ! "), message[7:]))
+            return
+        if message.startswith("     * "):
+            print("{}{}".format(term.aquamarine1("     * "), message[7:]))
+            return
+        if message.startswith("    "):
+            print("{}{}".format(term.darkseagreen3("    "), message[4:]))
+            return
+
+        print(message)
+else:
+    def _print(message: str):
+        print(message)
+
+
+# if SSL_CERT_FILE is not set prior to OpenPype launch, we set it to point
+# to certifi bundle to make sure we have reasonably new CA certificates.
+if os.getenv("SSL_CERT_FILE") and \
+        os.getenv("SSL_CERT_FILE") != certifi.where():
+    _print("--- your system is set to use custom CA certificate bundle.")
+else:
+    ssl_cert_file = certifi.where()
+    os.environ["SSL_CERT_FILE"] = ssl_cert_file
+
+if "--headless" in sys.argv:
+    os.environ["OPENPYPE_HEADLESS_MODE"] = "1"
+    sys.argv.remove("--headless")
+else:
+    if os.getenv("OPENPYPE_HEADLESS_MODE") != "1":
+        os.environ.pop("OPENPYPE_HEADLESS_MODE", None)
+
 import igniter  # noqa: E402
 from igniter import BootstrapRepos  # noqa: E402
-from igniter.tools import get_openpype_path_from_db  # noqa
+from igniter.tools import (
+    get_openpype_path_from_db,
+    validate_mongo_connection
+)  # noqa
 from igniter.bootstrap_repos import OpenPypeVersion  # noqa: E402
 
 bootstrap = BootstrapRepos()
@@ -131,19 +199,41 @@ silent_commands = ["run", "igniter", "standalonepublisher",
                    "extractenvironments"]
 
 
+def list_versions(openpype_versions: list, local_version=None) -> None:
+    """Print list of detected versions."""
+    _print("  - Detected versions:")
+    for v in sorted(openpype_versions):
+        _print(f"     - {v}: {v.path}")
+    if not openpype_versions:
+        _print("     ! none in repository detected")
+    if local_version:
+        _print(f"     * local version {local_version}")
+
+
 def set_openpype_global_environments() -> None:
     """Set global OpenPype's environments."""
     import acre
 
-    from openpype.settings import get_environments
+    try:
+        from openpype.settings import get_general_environments
 
-    all_env = get_environments()
+        general_env = get_general_environments()
 
-    # TODO Global environments will be stored in "general" settings so loading
-    #   will be modified and can be done in igniter.
-    env = acre.merge(
-        acre.parse(all_env["global"]),
+    except Exception:
+        # Backwards compatibility for OpenPype versions where
+        #   `get_general_environments` does not exists yet
+        from openpype.settings import get_environments
+
+        all_env = get_environments()
+        general_env = all_env["global"]
+
+    merged_env = acre.merge(
+        acre.parse(general_env),
         dict(os.environ)
+    )
+    env = acre.compute(
+        merged_env,
+        cleanup=False
     )
     os.environ.clear()
     os.environ.update(env)
@@ -180,7 +270,7 @@ def run(arguments: list, env: dict = None) -> int:
 
     p = subprocess.Popen(interpreter, env=env)
     p.wait()
-    print(f">>> done [{p.returncode}]")
+    _print(f">>> done [{p.returncode}]")
     return p.returncode
 
 
@@ -259,24 +349,61 @@ def _process_arguments() -> tuple:
     # check for `--use-version=3.0.0` argument and `--use-staging`
     use_version = None
     use_staging = False
+    commands = []
     for arg in sys.argv:
         if arg == "--use-version":
-            print("!!! Please use option --use-version like:")
-            print("    --use-version=3.0.0")
+            _print("!!! Please use option --use-version like:")
+            _print("    --use-version=3.0.0")
             sys.exit(1)
 
-        m = re.search(r"--use-version=(?P<version>\d+\.\d+\.\d*.+?)", arg)
-        if m and m.group('version'):
-            use_version = m.group('version')
-            sys.argv.remove(arg)
-            break
+        if arg.startswith("--use-version="):
+            m = re.search(
+                r"--use-version=(?P<version>\d+\.\d+\.\d+(?:\S*)?)", arg)
+            if m and m.group('version'):
+                use_version = m.group('version')
+                _print(">>> Requested version [ {} ]".format(use_version))
+                sys.argv.remove(arg)
+                if "+staging" in use_version:
+                    use_staging = True
+                break
+            else:
+                _print("!!! Requested version isn't in correct format.")
+                _print(("    Use --list-versions to find out"
+                       " proper version string."))
+                sys.exit(1)
+
+        if arg == "--validate-version":
+            _print("!!! Please use option --validate-version like:")
+            _print("    --validate-version=3.0.0")
+            sys.exit(1)
+
+        if arg.startswith("--validate-version="):
+            m = re.search(
+                r"--validate-version=(?P<version>\d+\.\d+\.\d+(?:\S*)?)", arg)
+            if m and m.group('version'):
+                use_version = m.group('version')
+                sys.argv.remove(arg)
+                commands.append("validate")
+            else:
+                _print("!!! Requested version isn't in correct format.")
+                _print(("    Use --list-versions to find out"
+                        " proper version string."))
+                sys.exit(1)
+
     if "--use-staging" in sys.argv:
         use_staging = True
         sys.argv.remove("--use-staging")
 
+    if "--list-versions" in sys.argv:
+        commands.append("print_versions")
+        sys.argv.remove("--list-versions")
+
     # handle igniter
     # this is helper to run igniter before anything else
     if "igniter" in sys.argv:
+        if os.getenv("OPENPYPE_HEADLESS_MODE") == "1":
+            _print("!!! Cannot open Igniter dialog in headless mode.")
+            sys.exit(1)
         import igniter
         return_code = igniter.open_dialog()
 
@@ -285,7 +412,11 @@ def _process_arguments() -> tuple:
         if return_code not in [2, 3]:
             sys.exit(return_code)
 
-    return use_version, use_staging
+        idx = sys.argv.index("igniter")
+        sys.argv.pop(idx)
+        sys.argv.insert(idx, "tray")
+
+    return use_version, use_staging, commands
 
 
 def _determine_mongodb() -> str:
@@ -307,31 +438,50 @@ def _determine_mongodb() -> str:
         # try system keyring
         try:
             openpype_mongo = bootstrap.secure_registry.get_item(
-                "openPypeMongo")
+                "openPypeMongo"
+            )
         except ValueError:
-            print("*** No DB connection string specified.")
-            print("--- launching setup UI ...")
-            import igniter
-            igniter.open_dialog()
+            pass
 
+    if openpype_mongo:
+        result, msg = validate_mongo_connection(openpype_mongo)
+        if not result:
+            _print(msg)
+            openpype_mongo = None
+
+    if not openpype_mongo:
+        _print("*** No DB connection string specified.")
+        if os.getenv("OPENPYPE_HEADLESS_MODE") == "1":
+            _print("!!! Cannot open Igniter dialog in headless mode.")
+            _print(
+                "!!! Please use `OPENPYPE_MONGO` to specify server address.")
+            sys.exit(1)
+        _print("--- launching setup UI ...")
+
+        result = igniter.open_dialog()
+        if result == 0:
+            raise RuntimeError("MongoDB URL was not defined")
+
+        openpype_mongo = os.getenv("OPENPYPE_MONGO")
+        if not openpype_mongo:
             try:
                 openpype_mongo = bootstrap.secure_registry.get_item(
                     "openPypeMongo")
             except ValueError:
-                raise RuntimeError("missing mongodb url")
+                raise RuntimeError("Missing MongoDB url")
 
     return openpype_mongo
 
 
 def _initialize_environment(openpype_version: OpenPypeVersion) -> None:
     version_path = openpype_version.path
-    os.environ["OPENPYPE_VERSION"] = openpype_version.version
+    os.environ["OPENPYPE_VERSION"] = str(openpype_version)
     # set OPENPYPE_REPOS_ROOT to point to currently used OpenPype version.
     os.environ["OPENPYPE_REPOS_ROOT"] = os.path.normpath(
         version_path.as_posix()
     )
     # inject version to Python environment (sys.path, ...)
-    print(">>> Injecting OpenPype version to running environment  ...")
+    _print(">>> Injecting OpenPype version to running environment  ...")
     bootstrap.add_paths_from_directory(version_path)
 
     # Additional sys paths related to OPENPYPE_REPOS_ROOT directory
@@ -379,17 +529,40 @@ def _find_frozen_openpype(use_version: str = None,
             (if requested).
 
     """
+    version_path = None
     openpype_version = None
     openpype_versions = bootstrap.find_openpype(include_zips=True,
                                                 staging=use_staging)
+    # get local frozen version and add it to detected version so if it is
+    # newer it will be used instead.
+    local_version_str = bootstrap.get_version(
+        Path(os.environ["OPENPYPE_ROOT"]))
+    if local_version_str:
+        local_version = OpenPypeVersion(
+            version=local_version_str,
+            path=Path(os.environ["OPENPYPE_ROOT"]))
+        if local_version not in openpype_versions:
+            openpype_versions.append(local_version)
+        openpype_versions.sort()
+        # if latest is currently running, ditch whole list
+        # and run from current without installing it.
+        if local_version == openpype_versions[-1]:
+            os.environ["OPENPYPE_TRYOUT"] = "1"
+            openpype_versions = []
+    else:
+        _print("!!! Warning: cannot determine current running version.")
+
     if not os.getenv("OPENPYPE_TRYOUT"):
         try:
             # use latest one found (last in the list is latest)
             openpype_version = openpype_versions[-1]
         except IndexError:
             # no OpenPype version found, run Igniter and ask for them.
-            print('*** No OpenPype versions found.')
-            print("--- launching setup UI ...")
+            _print('*** No OpenPype versions found.')
+            if os.getenv("OPENPYPE_HEADLESS_MODE") == "1":
+                _print("!!! Cannot open Igniter dialog in headless mode.")
+                sys.exit(1)
+            _print("--- launching setup UI ...")
             import igniter
             return_code = igniter.open_dialog()
             if return_code == 2:
@@ -397,27 +570,27 @@ def _find_frozen_openpype(use_version: str = None,
             if return_code == 3:
                 # run OpenPype after installation
 
-                print('>>> Finding OpenPype again ...')
+                _print('>>> Finding OpenPype again ...')
                 openpype_versions = bootstrap.find_openpype(
                     staging=use_staging)
                 try:
                     openpype_version = openpype_versions[-1]
                 except IndexError:
-                    print(("!!! Something is wrong and we didn't "
-                          "found it again."))
+                    _print(("!!! Something is wrong and we didn't "
+                            "found it again."))
                     sys.exit(1)
             elif return_code != 2:
-                print(f"  . finished ({return_code})")
+                _print(f"  . finished ({return_code})")
                 sys.exit(return_code)
 
     if not openpype_versions:
         # no openpype versions found anyway, lets use then the one
         # shipped with frozen OpenPype
         if not os.getenv("OPENPYPE_TRYOUT"):
-            print("*** Still no luck finding OpenPype.")
-            print(("*** We'll try to use the one coming "
+            _print("*** Still no luck finding OpenPype.")
+            _print(("*** We'll try to use the one coming "
                    "with OpenPype installation."))
-        version_path = _bootstrap_from_code(use_version)
+        version_path = _bootstrap_from_code(use_version, use_staging)
         openpype_version = OpenPypeVersion(
             version=BootstrapRepos.get_version(version_path),
             path=version_path)
@@ -425,20 +598,20 @@ def _find_frozen_openpype(use_version: str = None,
         return version_path
 
     # get path of version specified in `--use-version`
-    version_path = BootstrapRepos.get_version_path_from_list(
-        use_version, openpype_versions)
-
-    if not version_path:
-        if use_version is not None:
-            if not openpype_version:
-                ...
-            else:
-                print(("!!! Specified version was not found, using "
-                       "latest available"))
-        # specified version was not found so use latest detected.
-        version_path = openpype_version.path
-        print(f">>> Using version [ {openpype_version} ]")
-        print(f"    From {version_path}")
+    local_version = bootstrap.get_version(OPENPYPE_ROOT)
+    if use_version and use_version != local_version:
+        # force the one user has selected
+        openpype_version = None
+        openpype_versions = bootstrap.find_openpype(include_zips=True,
+                                                    staging=use_staging)
+        v: OpenPypeVersion
+        found = [v for v in openpype_versions if str(v) == use_version]
+        if found:
+            openpype_version = sorted(found)[-1]
+        if not openpype_version:
+            _print(f"!!! Requested version {use_version} was not found.")
+            list_versions(openpype_versions, local_version)
+            sys.exit(1)
 
     # test if latest detected is installed (in user data dir)
     is_inside = False
@@ -452,19 +625,35 @@ def _find_frozen_openpype(use_version: str = None,
 
     if not is_inside:
         # install latest version to user data dir
-        version_path = bootstrap.install_version(
-            openpype_version, force=True)
+        if os.getenv("OPENPYPE_HEADLESS_MODE", "0") != "1":
+            import igniter
+            version_path = igniter.open_update_window(openpype_version)
+        else:
+            version_path = bootstrap.install_version(
+                openpype_version, force=True)
+
+        openpype_version.path = version_path
+        _initialize_environment(openpype_version)
+        return openpype_version.path
 
     if openpype_version.path.is_file():
-        print(">>> Extracting zip file ...")
-        version_path = bootstrap.extract_openpype(openpype_version)
+        _print(">>> Extracting zip file ...")
+        try:
+            version_path = bootstrap.extract_openpype(openpype_version)
+        except OSError as e:
+            _print("!!! failed: {}".format(str(e)))
+            sys.exit(1)
+        else:
+            # cleanup zip after extraction
+            os.unlink(openpype_version.path)
+
         openpype_version.path = version_path
 
     _initialize_environment(openpype_version)
-    return version_path
+    return openpype_version.path
 
 
-def _bootstrap_from_code(use_version):
+def _bootstrap_from_code(use_version, use_staging):
     """Bootstrap live code (or the one coming with frozen OpenPype.
 
     Args:
@@ -476,36 +665,66 @@ def _bootstrap_from_code(use_version):
     """
     # run through repos and add them to `sys.path` and `PYTHONPATH`
     # set root
+    _openpype_root = OPENPYPE_ROOT
     if getattr(sys, 'frozen', False):
-        local_version = bootstrap.get_version(Path(OPENPYPE_ROOT))
-        print(f"  - running version: {local_version}")
+        local_version = bootstrap.get_version(Path(_openpype_root))
+        switch_str = f" - will switch to {use_version}" if use_version else ""
+        _print(f"  - booting version: {local_version}{switch_str}")
         assert local_version
     else:
         # get current version of OpenPype
         local_version = bootstrap.get_local_live_version()
 
-    os.environ["OPENPYPE_VERSION"] = local_version
-    if use_version and use_version != local_version:
-        openpype_versions = bootstrap.find_openpype(include_zips=True)
-        version_path = BootstrapRepos.get_version_path_from_list(
-            use_version, openpype_versions)
-        if version_path:
-            # use specified
-            bootstrap.add_paths_from_directory(version_path)
-            os.environ["OPENPYPE_VERSION"] = use_version
-    else:
-        version_path = OPENPYPE_ROOT
+    version_to_use = None
+    openpype_versions = bootstrap.find_openpype(
+        include_zips=True, staging=use_staging)
+    if use_staging and not use_version:
+        try:
+            version_to_use = openpype_versions[-1]
+        except IndexError:
+            _print("!!! No staging versions are found.")
+            list_versions(openpype_versions, local_version)
+            sys.exit(1)
+        if version_to_use.path.is_file():
+            version_to_use.path = bootstrap.extract_openpype(
+                version_to_use)
+        bootstrap.add_paths_from_directory(version_to_use.path)
+        os.environ["OPENPYPE_VERSION"] = str(version_to_use)
+        version_path = version_to_use.path
+        os.environ["OPENPYPE_REPOS_ROOT"] = (version_path / "openpype").as_posix()  # noqa: E501
+        _openpype_root = version_to_use.path.as_posix()
 
-    repos = os.listdir(os.path.join(OPENPYPE_ROOT, "repos"))
-    repos = [os.path.join(OPENPYPE_ROOT, "repos", repo) for repo in repos]
+    elif use_version and use_version != local_version:
+        v: OpenPypeVersion
+        found = [v for v in openpype_versions if str(v) == use_version]
+        if found:
+            version_to_use = sorted(found)[-1]
+
+        if version_to_use:
+            # use specified
+            if version_to_use.path.is_file():
+                version_to_use.path = bootstrap.extract_openpype(
+                    version_to_use)
+            bootstrap.add_paths_from_directory(version_to_use.path)
+            os.environ["OPENPYPE_VERSION"] = use_version
+            version_path = version_to_use.path
+            os.environ["OPENPYPE_REPOS_ROOT"] = (version_path / "openpype").as_posix()  # noqa: E501
+            _openpype_root = version_to_use.path.as_posix()
+        else:
+            _print(f"!!! Requested version {use_version} was not found.")
+            list_versions(openpype_versions, local_version)
+            sys.exit(1)
+    else:
+        os.environ["OPENPYPE_VERSION"] = local_version
+        version_path = Path(_openpype_root)
+        os.environ["OPENPYPE_REPOS_ROOT"] = _openpype_root
+
+    repos = os.listdir(os.path.join(_openpype_root, "repos"))
+    repos = [os.path.join(_openpype_root, "repos", repo) for repo in repos]
     # add self to python paths
-    repos.insert(0, OPENPYPE_ROOT)
+    repos.insert(0, _openpype_root)
     for repo in repos:
         sys.path.insert(0, repo)
-
-    # Set OPENPYPE_REPOS_ROOT to code root
-    os.environ["OPENPYPE_REPOS_ROOT"] = OPENPYPE_ROOT
-
     # add venv 'site-packages' to PYTHONPATH
     python_path = os.getenv("PYTHONPATH", "")
     split_paths = python_path.split(os.pathsep)
@@ -520,11 +739,11 @@ def _bootstrap_from_code(use_version):
         # point to same hierarchy from code and from frozen OpenPype
         additional_paths = [
             # add OpenPype tools
-            os.path.join(OPENPYPE_ROOT, "openpype", "tools"),
+            os.path.join(_openpype_root, "openpype", "tools"),
             # add common OpenPype vendor
             # (common for multiple Python interpreter versions)
             os.path.join(
-                OPENPYPE_ROOT,
+                _openpype_root,
                 "openpype",
                 "vendor",
                 "python",
@@ -537,7 +756,7 @@ def _bootstrap_from_code(use_version):
 
     os.environ["PYTHONPATH"] = os.pathsep.join(split_paths)
 
-    return Path(version_path)
+    return version_path
 
 
 def boot():
@@ -562,7 +781,16 @@ def boot():
     # Process arguments
     # ------------------------------------------------------------------------
 
-    use_version, use_staging = _process_arguments()
+    use_version, use_staging, commands = _process_arguments()
+
+    if os.getenv("OPENPYPE_VERSION"):
+        if use_version:
+            _print(("*** environment variable OPENPYPE_VERSION"
+                    "is overridden by command line argument."))
+        else:
+            _print(">>> version set by environment variable")
+            use_staging = "staging" in os.getenv("OPENPYPE_VERSION")
+            use_version = os.getenv("OPENPYPE_VERSION")
 
     # ------------------------------------------------------------------------
     # Determine mongodb connection
@@ -572,7 +800,7 @@ def boot():
         openpype_mongo = _determine_mongodb()
     except RuntimeError as e:
         # without mongodb url we are done for.
-        print(f"!!! {e}")
+        _print(f"!!! {e}")
         sys.exit(1)
 
     os.environ["OPENPYPE_MONGO"] = openpype_mongo
@@ -581,11 +809,63 @@ def boot():
     # Get openpype path from database and set it to environment so openpype can
     # find its versions there and bootstrap them.
     openpype_path = get_openpype_path_from_db(openpype_mongo)
+
+    if getattr(sys, 'frozen', False):
+        local_version = bootstrap.get_version(Path(OPENPYPE_ROOT))
+    else:
+        local_version = bootstrap.get_local_live_version()
+
+    if "validate" in commands:
+        _print(f">>> Validating version [ {use_version} ]")
+        openpype_versions = bootstrap.find_openpype(include_zips=True,
+                                                    staging=True)
+        openpype_versions += bootstrap.find_openpype(include_zips=True,
+                                                     staging=False)
+        v: OpenPypeVersion
+        found = [v for v in openpype_versions if str(v) == use_version]
+        if not found:
+            _print(f"!!! Version [ {use_version} ] not found.")
+            list_versions(openpype_versions, local_version)
+            sys.exit(1)
+
+        # print result
+        result = bootstrap.validate_openpype_version(
+            bootstrap.get_version_path_from_list(
+                use_version, openpype_versions))
+
+        _print("{}{}".format(
+            ">>> " if result[0] else "!!! ",
+            bootstrap.validate_openpype_version(
+                bootstrap.get_version_path_from_list(
+                    use_version, openpype_versions)
+            )[1])
+        )
+        sys.exit(1)
+
+
     if not openpype_path:
-        print("*** Cannot get OpenPype path from database.")
+        _print("*** Cannot get OpenPype path from database.")
 
     if not os.getenv("OPENPYPE_PATH") and openpype_path:
         os.environ["OPENPYPE_PATH"] = openpype_path
+
+    if "print_versions" in commands:
+        if not use_staging:
+            _print("--- This will list only non-staging versions detected.")
+            _print("    To see staging versions, use --use-staging argument.")
+        else:
+            _print("--- This will list only staging versions detected.")
+            _print("    To see other version, omit --use-staging argument.")
+        _openpype_root = OPENPYPE_ROOT
+        openpype_versions = bootstrap.find_openpype(include_zips=True,
+                                                    staging=use_staging)
+        if getattr(sys, 'frozen', False):
+            local_version = bootstrap.get_version(Path(_openpype_root))
+        else:
+            local_version = bootstrap.get_local_live_version()
+
+        list_versions(openpype_versions, local_version)
+        sys.exit(1)
 
     # ------------------------------------------------------------------------
     # Find OpenPype versions
@@ -598,10 +878,17 @@ def boot():
             version_path = _find_frozen_openpype(use_version, use_staging)
         except RuntimeError as e:
             # no version to run
-            print(f"!!! {e}")
+            _print(f"!!! {e}")
             sys.exit(1)
+        # validate version
+        _print(f">>> Validating version [ {str(version_path)} ]")
+        result = bootstrap.validate_openpype_version(version_path)
+        if not result[0]:
+            _print(f"!!! Invalid version: {result[1]}")
+            sys.exit(1)
+        _print(f"--- version is valid")
     else:
-        version_path = _bootstrap_from_code(use_version)
+        version_path = _bootstrap_from_code(use_version, use_staging)
 
     # set this to point either to `python` from venv in case of live code
     # or to `openpype` or `openpype_console` in case of frozen code
@@ -623,13 +910,13 @@ def boot():
     except KeyError:
         pass
 
-    print(">>> loading environments ...")
+    _print(">>> loading environments ...")
     # Avalon environments must be set before avalon module is imported
-    print("  - for Avalon ...")
+    _print("  - for Avalon ...")
     set_avalon_environments()
-    print("  - global OpenPype ...")
+    _print("  - global OpenPype ...")
     set_openpype_global_environments()
-    print("  - for modules ...")
+    _print("  - for modules ...")
     set_modules_environments()
 
     from openpype import cli
@@ -637,7 +924,7 @@ def boot():
     from openpype.version import __version__
 
     assert version_path, "Version path not defined."
-    info = get_info()
+    info = get_info(use_staging)
     info.insert(0, f">>> Using OpenPype from [ {version_path} ]")
 
     t_width = 20
@@ -659,12 +946,12 @@ def boot():
         cli.main(obj={}, prog_name="openpype")
     except Exception:  # noqa
         exc_info = sys.exc_info()
-        print("!!! OpenPype crashed:")
+        _print("!!! OpenPype crashed:")
         traceback.print_exception(*exc_info)
         sys.exit(1)
 
 
-def get_info() -> list:
+def get_info(use_staging=None) -> list:
     """Print additional information to console."""
     from openpype.lib.mongo import get_default_components
     from openpype.lib.log import PypeLogger
@@ -672,7 +959,7 @@ def get_info() -> list:
     components = get_default_components()
 
     inf = []
-    if not getattr(sys, 'frozen', False):
+    if use_staging:
         inf.append(("OpenPype variant", "staging"))
     else:
         inf.append(("OpenPype variant", "production"))

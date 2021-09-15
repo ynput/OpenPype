@@ -72,6 +72,8 @@ class PypeStreamHandler(logging.StreamHandler):
             msg = self.format(record)
             msg = Terminal.log(msg)
             stream = self.stream
+            if stream is None:
+                return
             fs = "%s\n"
             # if no unicode support...
             if not USE_UNICODE:
@@ -123,6 +125,8 @@ class PypeFormatter(logging.Formatter):
 
         if record.exc_info is not None:
             line_len = len(str(record.exc_info[1]))
+            if line_len > 30:
+                line_len = 30
             out = "{}\n{}\n{}\n{}\n{}".format(
                 out,
                 line_len * "=",

@@ -1,46 +1,10 @@
 import nuke
-import contextlib
-
+from avalon.vendor import qargparse
 from avalon import api, io
 from openpype.api import get_current_project_settings
 from openpype.hosts.nuke.api.lib import (
     get_imageio_input_colorspace
 )
-
-
-@contextlib.contextmanager
-def preserve_trim(node):
-    """Preserve the relative trim of the Loader tool.
-
-    This tries to preserve the loader's trim (trim in and trim out) after
-    the context by reapplying the "amount" it trims on the clip's length at
-    start and end.
-
-    """
-    # working script frame range
-    script_start = nuke.root()["first_frame"].value()
-
-    start_at_frame = None
-    offset_frame = None
-    if node['frame_mode'].value() == "start at":
-        start_at_frame = node['frame'].value()
-    if node['frame_mode'].value() == "offset":
-        offset_frame = node['frame'].value()
-
-    try:
-        yield
-    finally:
-        if start_at_frame:
-            node['frame_mode'].setValue("start at")
-            node['frame'].setValue(str(script_start))
-            print("start frame of Read was set to"
-                  "{}".format(script_start))
-
-        if offset_frame:
-            node['frame_mode'].setValue("offset")
-            node['frame'].setValue(str((script_start + offset_frame)))
-            print("start frame of Read was set to"
-                  "{}".format(script_start))
 
 
 def add_review_presets_config():
@@ -77,19 +41,38 @@ class LoadMov(api.Loader):
     icon = "code-fork"
     color = "orange"
 
-    script_start = nuke.root()["first_frame"].value()
+    first_frame = nuke.root()["first_frame"].value()
+
+    # options gui
+    defaults = {
+        "start_at_workfile": True
+    }
+
+    options = [
+        qargparse.Boolean(
+            "start_at_workfile",
+            help="Load at workfile start frame",
+            default=True
+        )
+    ]
 
     node_name_template = "{class_name}_{ext}"
 
-    def load(self, context, name, namespace, data):
+    def load(self, context, name, namespace, options):
         from avalon.nuke import (
             containerise,
             viewer_update_and_undo_stop
         )
 
+        start_at_workfile = options.get(
+            "start_at_workfile", self.defaults["start_at_workfile"])
+
         version = context['version']
         version_data = version.get("data", {})
         repr_id = context["representation"]["_id"]
+
+        self.handle_start = version_data.get("handleStart", 0)
+        self.handle_end = version_data.get("handleEnd", 0)
 
         orig_first = version_data.get("frameStart")
         orig_last = version_data.get("frameEnd")
@@ -97,9 +80,6 @@ class LoadMov(api.Loader):
 
         first = orig_first - diff
         last = orig_last - diff
-
-        handle_start = version_data.get("handleStart", 0)
-        handle_end = version_data.get("handleEnd", 0)
 
         colorspace = version_data.get("colorspace")
         repr_cont = context["representation"]["context"]
@@ -109,7 +89,7 @@ class LoadMov(api.Loader):
 
         context["representation"]["_id"]
         # create handles offset (only to last, because of mov)
-        last += handle_start + handle_end
+        last += self.handle_start + self.handle_end
 
         # Fallback to asset name when namespace is None
         if namespace is None:
@@ -135,22 +115,29 @@ class LoadMov(api.Loader):
 
         read_name = self.node_name_template.format(**name_data)
 
-        # Create the Loader with the filename path set
+        read_node = nuke.createNode(
+            "Read",
+            "name {}".format(read_name)
+        )
+
+        # to avoid multiple undo steps for rest of process
+        # we will switch off undo-ing
         with viewer_update_and_undo_stop():
-            read_node = nuke.createNode(
-                "Read",
-                "name {}".format(read_name)
-            )
             read_node["file"].setValue(file)
 
             read_node["origfirst"].setValue(first)
             read_node["first"].setValue(first)
             read_node["origlast"].setValue(last)
             read_node["last"].setValue(last)
-
-            # start at script start
             read_node['frame_mode'].setValue("start at")
-            read_node['frame'].setValue(str(self.script_start))
+
+            if start_at_workfile:
+                # start at workfile start
+                read_node['frame'].setValue(str(self.first_frame))
+            else:
+                # start at version frame start
+                read_node['frame'].setValue(
+                    str(orig_first - self.handle_start))
 
             if colorspace:
                 read_node["colorspace"].setValue(str(colorspace))
@@ -180,6 +167,11 @@ class LoadMov(api.Loader):
             data_imprint.update({"objectName": read_name})
 
             read_node["tile_color"].setValue(int("0x4ecd25ff", 16))
+
+            if version_data.get("retime", None):
+                speed = version_data.get("speed", 1)
+                time_warp_nodes = version_data.get("timewarps", [])
+                self.make_retimes(speed, time_warp_nodes)
 
             return containerise(
                 read_node,
@@ -243,9 +235,8 @@ class LoadMov(api.Loader):
         # set first to 1
         first = orig_first - diff
         last = orig_last - diff
-        handles = version_data.get("handles", 0)
-        handle_start = version_data.get("handleStart", 0)
-        handle_end = version_data.get("handleEnd", 0)
+        self.handle_start = version_data.get("handleStart", 0)
+        self.handle_end = version_data.get("handleEnd", 0)
         colorspace = version_data.get("colorspace")
 
         if first is None:
@@ -256,37 +247,33 @@ class LoadMov(api.Loader):
                     read_node['name'].value(), representation))
             first = 0
 
-        # fix handle start and end if none are available
-        if not handle_start and not handle_end:
-            handle_start = handles
-            handle_end = handles
-
         # create handles offset (only to last, because of mov)
-        last += handle_start + handle_end
+        last += self.handle_start + self.handle_end
 
-        # Update the loader's path whilst preserving some values
-        with preserve_trim(read_node):
-            read_node["file"].setValue(file)
-            self.log.info("__ node['file']: {}".format(
-                read_node["file"].value()))
+        read_node["file"].setValue(file)
 
-            # Set the global in to the start frame of the sequence
-            read_node["origfirst"].setValue(first)
-            read_node["first"].setValue(first)
-            read_node["origlast"].setValue(last)
-            read_node["last"].setValue(last)
+        # Set the global in to the start frame of the sequence
+        read_node["origfirst"].setValue(first)
+        read_node["first"].setValue(first)
+        read_node["origlast"].setValue(last)
+        read_node["last"].setValue(last)
+        read_node['frame_mode'].setValue("start at")
 
-            # start at script start
-            read_node['frame_mode'].setValue("start at")
-            read_node['frame'].setValue(str(self.script_start))
+        if int(float(self.first_frame)) == int(
+                float(read_node['frame'].value())):
+            # start at workfile start
+            read_node['frame'].setValue(str(self.first_frame))
+        else:
+            # start at version frame start
+            read_node['frame'].setValue(str(orig_first - self.handle_start))
 
-            if colorspace:
-                read_node["colorspace"].setValue(str(colorspace))
+        if colorspace:
+            read_node["colorspace"].setValue(str(colorspace))
 
-            preset_clrsp = get_imageio_input_colorspace(file)
+        preset_clrsp = get_imageio_input_colorspace(file)
 
-            if preset_clrsp is not None:
-                read_node["colorspace"].setValue(preset_clrsp)
+        if preset_clrsp is not None:
+            read_node["colorspace"].setValue(preset_clrsp)
 
         updated_dict = {}
         updated_dict.update({
@@ -296,8 +283,8 @@ class LoadMov(api.Loader):
             "version": str(version.get("name")),
             "colorspace": version_data.get("colorspace"),
             "source": version_data.get("source"),
-            "handleStart": str(handle_start),
-            "handleEnd": str(handle_end),
+            "handleStart": str(self.handle_start),
+            "handleEnd": str(self.handle_end),
             "fps": str(version_data.get("fps")),
             "author": version_data.get("author"),
             "outputDir": version_data.get("outputDir")
@@ -309,6 +296,11 @@ class LoadMov(api.Loader):
         else:
             read_node["tile_color"].setValue(int("0x4ecd25ff", 16))
 
+        if version_data.get("retime", None):
+            speed = version_data.get("speed", 1)
+            time_warp_nodes = version_data.get("timewarps", [])
+            self.make_retimes(speed, time_warp_nodes)
+
         # Update the imprinted representation
         update_container(
             read_node, updated_dict
@@ -319,8 +311,37 @@ class LoadMov(api.Loader):
 
         from avalon.nuke import viewer_update_and_undo_stop
 
-        node = nuke.toNode(container['objectName'])
-        assert node.Class() == "Read", "Must be Read"
+        read_node = nuke.toNode(container['objectName'])
+        assert read_node.Class() == "Read", "Must be Read"
 
         with viewer_update_and_undo_stop():
-            nuke.delete(node)
+            nuke.delete(read_node)
+
+    def make_retimes(self, speed, time_warp_nodes):
+        ''' Create all retime and timewarping nodes with coppied animation '''
+        if speed != 1:
+            rtn = nuke.createNode(
+                "Retime",
+                "speed {}".format(speed))
+            rtn["before"].setValue("continue")
+            rtn["after"].setValue("continue")
+            rtn["input.first_lock"].setValue(True)
+            rtn["input.first"].setValue(
+                self.first_frame
+            )
+
+        if time_warp_nodes != []:
+            start_anim = self.first_frame + (self.handle_start / speed)
+            for timewarp in time_warp_nodes:
+                twn = nuke.createNode(timewarp["Class"],
+                                      "name {}".format(timewarp["name"]))
+                if isinstance(timewarp["lookup"], list):
+                    # if array for animation
+                    twn["lookup"].setAnimated()
+                    for i, value in enumerate(timewarp["lookup"]):
+                        twn["lookup"].setValueAt(
+                            (start_anim + i) + value,
+                            (start_anim + i))
+                else:
+                    # if static value `int`
+                    twn["lookup"].setValue(timewarp["lookup"])

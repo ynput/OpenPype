@@ -2,14 +2,9 @@ import pyblish.api
 
 
 class CollectRemoveMarked(pyblish.api.ContextPlugin):
-    """Collect model data
+    """Remove marked data
 
-    Ensures always only a single frame is extracted (current frame).
-
-    Note:
-        This is a workaround so that the `pype.model` family can use the
-        same pointcache extractor implementation as animation and pointcaches.
-        This always enforces the "current" frame to be published.
+    Remove instances that have 'remove' in their instance.data
 
     """
 

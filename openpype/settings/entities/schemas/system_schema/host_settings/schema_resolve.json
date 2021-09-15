@@ -28,8 +28,8 @@
                     "name": "template_host_variant",
                     "template_data": [
                         {
-                            "app_variant_label": "16",
-                            "app_variant": "16"
+                            "app_variant_label": "stable",
+                            "app_variant": "stable"
                         }
                     ]
                 }

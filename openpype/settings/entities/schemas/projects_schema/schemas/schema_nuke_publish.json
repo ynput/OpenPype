@@ -30,6 +30,16 @@
             "label": "Validators"
         },
         {
+            "type": "schema_template",
+            "name": "template_publish_plugin",
+            "template_data": [
+                {
+                    "key": "ValidateContainers",
+                    "label": "ValidateContainers"
+                }
+            ]
+        },
+        {
             "type": "dict",
             "collapsible": true,
             "checkbox_key": "enabled",
@@ -64,10 +74,6 @@
                 {
                     "key": "ValidateScript",
                     "label": "Validate script settings"
-                },
-                {
-                    "key": "ValidateNukeWriteBoundingBox",
-                    "label": "Validate and Write Bounding Box"
                 }
             ]
         },
@@ -144,35 +150,6 @@
                     "type": "boolean",
                     "key": "viewer_lut_raw",
                     "label": "Viewer LUT raw"
-                }
-            ]
-        },
-        {
-            "type": "dict",
-            "collapsible": true,
-            "key": "NukeSubmitDeadline",
-            "label": "NukeSubmitDeadline",
-            "is_group": true,
-            "children": [
-                {
-                    "type": "number",
-                    "key": "deadline_priority",
-                    "label": "deadline_priority"
-                },
-                {
-                    "type": "text",
-                    "key": "deadline_pool",
-                    "label": "deadline_pool"
-                },
-                {
-                    "type": "text",
-                    "key": "deadline_pool_secondary",
-                    "label": "deadline_pool_secondary"
-                },
-                {
-                    "type": "number",
-                    "key": "deadline_chunk_size",
-                    "label": "deadline_chunk_size"
                 }
             ]
         }

@@ -8,7 +8,7 @@ import openpype.api
 class ValidateUnrealMeshTriangulated(pyblish.api.InstancePlugin):
     """Validate if mesh is made of triangles for Unreal Engine"""
 
-    order = openpype.api.ValidateMeshOder
+    order = openpype.api.ValidateMeshOrder
     hosts = ["maya"]
     families = ["unrealStaticMesh"]
     category = "geometry"

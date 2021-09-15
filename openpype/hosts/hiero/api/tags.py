@@ -84,6 +84,13 @@ def update_tag(tag, data):
     mtd = tag.metadata()
     # get metadata key from data
     data_mtd = data.get("metadata", {})
+
+    # due to hiero bug we have to make sure keys which are not existent in
+    # data are cleared of value by `None`
+    for _mk in mtd.keys():
+        if _mk.replace("tag.", "") not in data_mtd.keys():
+            mtd.setValue(_mk, str(None))
+
     # set all data metadata to tag metadata
     for k, v in data_mtd.items():
         mtd.setValue(

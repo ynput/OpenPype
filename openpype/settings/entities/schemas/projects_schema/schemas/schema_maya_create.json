@@ -30,6 +30,26 @@
             ]
         },
         {
+            "type": "dict",
+            "collapsible": true,
+            "key": "CreateRender",
+            "label": "Create Render",
+            "checkbox_key": "enabled",
+            "children": [
+                {
+                    "type": "boolean",
+                    "key": "enabled",
+                    "label": "Enabled"
+                },
+                {
+                    "type": "list",
+                    "key": "defaults",
+                    "label": "Default Subsets",
+                    "object_type": "text"
+                }
+            ]
+        },
+        {
             "type": "schema_template",
             "name": "template_create_plugin",
             "template_data": [
@@ -64,10 +84,6 @@
                 {
                     "key": "CreatePointCache",
                     "label": "Create Cache"
-                },
-                {
-                    "key": "CreateRender",
-                    "label": "Create Render"
                 },
                 {
                     "key": "CreateRenderSetup",

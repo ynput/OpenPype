@@ -31,6 +31,13 @@ class CollectInstances(pyblish.api.ContextPlugin):
     def process(self, context):
 
         nodes = hou.node("/out").children()
+
+        # Include instances in USD stage only when it exists so it
+        # remains backwards compatible with version before houdini 18
+        stage = hou.node("/stage")
+        if stage:
+            nodes += stage.recursiveGlob("*", filter=hou.nodeTypeFilter.Rop)
+
         for node in nodes:
 
             if not node.parm("id"):
@@ -55,8 +62,10 @@ class CollectInstances(pyblish.api.ContextPlugin):
 
             # Create nice name if the instance has a frame range.
             label = data.get("name", node.name())
+            label += " (%s)" % data["asset"]  # include asset in name
+
             if "frameStart" in data and "frameEnd" in data:
-                frames = "[{startFrame} - {endFrame}]".format(**data)
+                frames = "[{frameStart} - {frameEnd}]".format(**data)
                 label = "{} {}".format(label, frames)
 
             instance = context.create_instance(label)

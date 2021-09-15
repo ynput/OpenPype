@@ -1,10 +1,14 @@
-from openpype.lib import abstract_collect_render
-from openpype.lib.abstract_collect_render import RenderInstance
-import pyblish.api
-import attr
 import os
+import re
+import attr
+import tempfile
 
 from avalon import aftereffects
+import pyblish.api
+
+from openpype.settings import get_project_settings
+from openpype.lib import abstract_collect_render
+from openpype.lib.abstract_collect_render import RenderInstance
 
 
 @attr.s
@@ -12,6 +16,9 @@ class AERenderInstance(RenderInstance):
     # extend generic, composition name is needed
     comp_name = attr.ib(default=None)
     comp_id = attr.ib(default=None)
+    fps = attr.ib(default=None)
+    projectEntity = attr.ib(default=None)
+    stagingDir = attr.ib(default=None)
 
 
 class CollectAERender(abstract_collect_render.AbstractCollectRender):
@@ -20,6 +27,11 @@ class CollectAERender(abstract_collect_render.AbstractCollectRender):
     label = "Collect After Effects Render Layers"
     hosts = ["aftereffects"]
 
+    # internal
+    family_remapping = {
+        "render": ("render.farm", "farm"),   # (family, label)
+        "renderLocal": ("render", "local")
+    }
     padding_width = 6
     rendered_extension = 'png'
 
@@ -45,6 +57,7 @@ class CollectAERender(abstract_collect_render.AbstractCollectRender):
                 raise ValueError("Couldn't find id, unable to publish. " +
                                  "Please recreate instance.")
             item_id = inst["members"][0]
+
             work_area_info = self.stub.get_work_area(int(item_id))
 
             if not work_area_info:
@@ -57,15 +70,19 @@ class CollectAERender(abstract_collect_render.AbstractCollectRender):
             frameEnd = round(work_area_info.workAreaStart +
                              float(work_area_info.workAreaDuration) *
                              float(work_area_info.frameRate)) - 1
+            fps = work_area_info.frameRate
+            # TODO add resolution when supported by extension
 
-            if inst["family"] == "render" and inst["active"]:
+            if inst["family"] in self.family_remapping.keys() \
+                    and inst["active"]:
+                remapped_family = self.family_remapping[inst["family"]]
                 instance = AERenderInstance(
-                    family="render.farm",  # other way integrate would catch it
-                    families=["render.farm"],
+                    family=remapped_family[0],
+                    families=[remapped_family[0]],
                     version=version,
                     time="",
                     source=current_file,
-                    label="{} - farm".format(inst["subset"]),
+                    label="{} - {}".format(inst["subset"], remapped_family[1]),
                     subset=inst["subset"],
                     asset=context.data["assetEntity"]["name"],
                     attachTo=False,
@@ -86,7 +103,8 @@ class CollectAERender(abstract_collect_render.AbstractCollectRender):
                     frameStart=frameStart,
                     frameEnd=frameEnd,
                     frameStep=1,
-                    toBeRenderedOn='deadline'
+                    toBeRenderedOn='deadline',
+                    fps=fps
                 )
 
                 comp = compositions_by_id.get(int(item_id))
@@ -100,9 +118,32 @@ class CollectAERender(abstract_collect_render.AbstractCollectRender):
 
                 instance.outputDir = self._get_output_dir(instance)
 
+                settings = get_project_settings(os.getenv("AVALON_PROJECT"))
+                reviewable_subset_filter = \
+                    (settings["deadline"]
+                             ["publish"]
+                             ["ProcessSubmittedJobOnFarm"]
+                             ["aov_filter"])
+
+                if inst["family"] == "renderLocal":
+                    # for local renders
+                    instance.anatomyData["version"] = instance.version
+                    instance.anatomyData["subset"] = instance.subset
+                    instance.stagingDir = tempfile.mkdtemp()
+                    instance.projectEntity = project_entity
+
+                    if self.hosts[0] in reviewable_subset_filter.keys():
+                        for aov_pattern in \
+                                reviewable_subset_filter[self.hosts[0]]:
+                            if re.match(aov_pattern, instance.subset):
+                                instance.families.append("review")
+                                instance.review = True
+                                break
+
+                self.log.info("New instance:: {}".format(instance))
+
                 instances.append(instance)
 
-        self.log.debug("instances::{}".format(instances))
         return instances
 
     def get_expected_files(self, render_instance):

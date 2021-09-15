@@ -4,6 +4,9 @@ import functools
 import logging
 import platform
 import copy
+from .exceptions import (
+    SaveWarningExc
+)
 from .constants import (
     M_OVERRIDEN_KEY,
     M_ENVIRONMENT_KEY,
@@ -101,24 +104,41 @@ def save_studio_settings(data):
 
     For saving of data cares registered Settings handler.
 
+    Warning messages are not logged as module raising them should log it within
+    it's logger.
+
     Args:
         data(dict): Overrides data with metadata defying studio overrides.
+
+    Raises:
+        SaveWarningExc: If any module raises the exception.
     """
     # Notify Pype modules
-    from openpype.modules import ModulesManager, ISettingsChangeListener
+    from openpype.modules import ModulesManager
+    from openpype_interfaces import ISettingsChangeListener
 
     old_data = get_system_settings()
     default_values = get_default_settings()[SYSTEM_SETTINGS_KEY]
     new_data = apply_overrides(default_values, copy.deepcopy(data))
+    new_data_with_metadata = copy.deepcopy(new_data)
     clear_metadata_from_settings(new_data)
 
     changes = calculate_changes(old_data, new_data)
     modules_manager = ModulesManager(_system_settings=new_data)
+
+    warnings = []
     for module in modules_manager.get_enabled_modules():
         if isinstance(module, ISettingsChangeListener):
-            module.on_system_settings_save(old_data, new_data, changes)
+            try:
+                module.on_system_settings_save(
+                    old_data, new_data, changes, new_data_with_metadata
+                )
+            except SaveWarningExc as exc:
+                warnings.extend(exc.warnings)
 
-    return _SETTINGS_HANDLER.save_studio_settings(data)
+    _SETTINGS_HANDLER.save_studio_settings(data)
+    if warnings:
+        raise SaveWarningExc(warnings)
 
 
 @require_handler
@@ -130,13 +150,20 @@ def save_project_settings(project_name, overrides):
 
     For saving of data cares registered Settings handler.
 
+    Warning messages are not logged as module raising them should log it within
+    it's logger.
+
     Args:
         project_name (str): Project name for which overrides are passed.
             Default project's value is None.
         overrides(dict): Overrides data with metadata defying studio overrides.
+
+    Raises:
+        SaveWarningExc: If any module raises the exception.
     """
     # Notify Pype modules
-    from openpype.modules import ModulesManager, ISettingsChangeListener
+    from openpype.modules import ModulesManager
+    from openpype_interfaces import ISettingsChangeListener
 
     default_values = get_default_settings()[PROJECT_SETTINGS_KEY]
     if project_name:
@@ -151,17 +178,29 @@ def save_project_settings(project_name, overrides):
         old_data = get_default_project_settings(exclude_locals=True)
         new_data = apply_overrides(default_values, copy.deepcopy(overrides))
 
+    new_data_with_metadata = copy.deepcopy(new_data)
     clear_metadata_from_settings(new_data)
 
     changes = calculate_changes(old_data, new_data)
     modules_manager = ModulesManager()
+    warnings = []
     for module in modules_manager.get_enabled_modules():
         if isinstance(module, ISettingsChangeListener):
-            module.on_project_settings_save(
-                old_data, new_data, project_name, changes
-            )
+            try:
+                module.on_project_settings_save(
+                    old_data,
+                    new_data,
+                    project_name,
+                    changes,
+                    new_data_with_metadata
+                )
+            except SaveWarningExc as exc:
+                warnings.extend(exc.warnings)
 
-    return _SETTINGS_HANDLER.save_project_settings(project_name, overrides)
+    _SETTINGS_HANDLER.save_project_settings(project_name, overrides)
+
+    if warnings:
+        raise SaveWarningExc(warnings)
 
 
 @require_handler
@@ -173,13 +212,20 @@ def save_project_anatomy(project_name, anatomy_data):
 
     For saving of data cares registered Settings handler.
 
+    Warning messages are not logged as module raising them should log it within
+    it's logger.
+
     Args:
         project_name (str): Project name for which overrides are passed.
             Default project's value is None.
         overrides(dict): Overrides data with metadata defying studio overrides.
+
+    Raises:
+        SaveWarningExc: If any module raises the exception.
     """
     # Notify Pype modules
-    from openpype.modules import ModulesManager, ISettingsChangeListener
+    from openpype.modules import ModulesManager
+    from openpype_interfaces import ISettingsChangeListener
 
     default_values = get_default_settings()[PROJECT_ANATOMY_KEY]
     if project_name:
@@ -194,17 +240,29 @@ def save_project_anatomy(project_name, anatomy_data):
         old_data = get_default_anatomy_settings(exclude_locals=True)
         new_data = apply_overrides(default_values, copy.deepcopy(anatomy_data))
 
+    new_data_with_metadata = copy.deepcopy(new_data)
     clear_metadata_from_settings(new_data)
 
     changes = calculate_changes(old_data, new_data)
     modules_manager = ModulesManager()
+    warnings = []
     for module in modules_manager.get_enabled_modules():
         if isinstance(module, ISettingsChangeListener):
-            module.on_project_anatomy_save(
-                old_data, new_data, changes, project_name
-            )
+            try:
+                module.on_project_anatomy_save(
+                    old_data,
+                    new_data,
+                    changes,
+                    project_name,
+                    new_data_with_metadata
+                )
+            except SaveWarningExc as exc:
+                warnings.extend(exc.warnings)
 
-    return _SETTINGS_HANDLER.save_project_anatomy(project_name, anatomy_data)
+    _SETTINGS_HANDLER.save_project_anatomy(project_name, anatomy_data)
+
+    if warnings:
+        raise SaveWarningExc(warnings)
 
 
 @require_handler
@@ -260,18 +318,69 @@ class DuplicatedEnvGroups(Exception):
         super(DuplicatedEnvGroups, self).__init__(msg)
 
 
+def load_openpype_default_settings():
+    """Load openpype default settings."""
+    return load_jsons_from_dir(DEFAULTS_DIR)
+
+
 def reset_default_settings():
+    """Reset cache of default settings. Can't be used now."""
     global _DEFAULT_SETTINGS
     _DEFAULT_SETTINGS = None
 
 
+def _get_default_settings():
+    from openpype.modules import get_module_settings_defs
+
+    defaults = load_openpype_default_settings()
+
+    module_settings_defs = get_module_settings_defs()
+    for module_settings_def_cls in module_settings_defs:
+        module_settings_def = module_settings_def_cls()
+        system_defaults = module_settings_def.get_defaults(
+            SYSTEM_SETTINGS_KEY
+        ) or {}
+        for path, value in system_defaults.items():
+            if not path:
+                continue
+
+            subdict = defaults["system_settings"]
+            path_items = list(path.split("/"))
+            last_key = path_items.pop(-1)
+            for key in path_items:
+                subdict = subdict[key]
+            subdict[last_key] = value
+
+        project_defaults = module_settings_def.get_defaults(
+            PROJECT_SETTINGS_KEY
+        ) or {}
+        for path, value in project_defaults.items():
+            if not path:
+                continue
+
+            subdict = defaults
+            path_items = list(path.split("/"))
+            last_key = path_items.pop(-1)
+            for key in path_items:
+                subdict = subdict[key]
+            subdict[last_key] = value
+
+    return defaults
+
+
 def get_default_settings():
-    # TODO add cacher
-    return load_jsons_from_dir(DEFAULTS_DIR)
-    # global _DEFAULT_SETTINGS
-    # if _DEFAULT_SETTINGS is None:
-    #     _DEFAULT_SETTINGS = load_jsons_from_dir(DEFAULTS_DIR)
-    # return copy.deepcopy(_DEFAULT_SETTINGS)
+    """Get default settings.
+
+    Todo:
+        Cache loaded defaults.
+
+    Returns:
+        dict: Loaded default settings.
+    """
+    global _DEFAULT_SETTINGS
+    if _DEFAULT_SETTINGS is None:
+        _DEFAULT_SETTINGS = _get_default_settings()
+    return copy.deepcopy(_DEFAULT_SETTINGS)
 
 
 def load_json_file(fpath):
@@ -308,8 +417,8 @@ def load_jsons_from_dir(path, *args, **kwargs):
             "data1": "CONTENT OF FILE"
         },
         "folder2": {
-            "data1": {
-                "subfolder1": "CONTENT OF FILE"
+            "subfolder1": {
+                "data2": "CONTENT OF FILE"
             }
         }
     }
@@ -477,7 +586,11 @@ def apply_local_settings_on_system_settings(system_settings, local_settings):
 
         variants = system_settings["applications"][app_group_name]["variants"]
         for app_name, app_value in value.items():
-            if not app_value or app_name not in variants:
+            if (
+                not app_value
+                or app_name not in variants
+                or "executables" not in variants[app_name]
+            ):
                 continue
 
             executable = app_value.get("executable")
@@ -807,6 +920,25 @@ def get_environments():
     """
 
     return find_environments(get_system_settings(False))
+
+
+def get_general_environments():
+    """Get general environments.
+
+    Function is implemented to be able load general environments without using
+    `get_default_settings`.
+    """
+    # Use only openpype defaults.
+    # - prevent to use `get_system_settings` where `get_default_settings`
+    #   is used
+    default_values = load_openpype_default_settings()
+    studio_overrides = get_studio_system_settings_overrides()
+    result = apply_overrides(default_values, studio_overrides)
+    environments = result["general"]["environment"]
+
+    clear_metadata_from_settings(environments)
+
+    return environments
 
 
 def clear_metadata_from_settings(values):

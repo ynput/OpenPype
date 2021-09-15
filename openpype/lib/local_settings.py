@@ -1,9 +1,11 @@
 # -*- coding: utf-8 -*-
 """Package to deal with saving and retrieving user specific settings."""
 import os
+import json
+import getpass
+import platform
 from datetime import datetime
 from abc import ABCMeta, abstractmethod
-import json
 
 # TODO Use pype igniter logic instead of using duplicated code
 # disable lru cache in Python 2
@@ -24,10 +26,13 @@ try:
 except ImportError:
     import ConfigParser as configparser
 
-import platform
-
 import six
 import appdirs
+
+from openpype.settings import (
+    get_local_settings,
+    get_system_settings
+)
 
 from .import validate_mongo_connection
 
@@ -538,3 +543,38 @@ def change_openpype_mongo_url(new_mongo_url):
     if existing_value is not None:
         registry.delete_item(key)
     registry.set_item(key, new_mongo_url)
+
+
+def get_openpype_username():
+    """OpenPype username used for templates and publishing.
+
+    May be different than machine's username.
+
+    Always returns "OPENPYPE_USERNAME" environment if is set then tries local
+    settings and last option is to use `getpass.getuser()` which returns
+    machine username.
+    """
+    username = os.environ.get("OPENPYPE_USERNAME")
+    if not username:
+        local_settings = get_local_settings()
+        username = (
+            local_settings
+            .get("general", {})
+            .get("username")
+        )
+        if not username:
+            username = getpass.getuser()
+    return username
+
+
+def is_admin_password_required():
+    system_settings = get_system_settings()
+    password = system_settings["general"].get("admin_password")
+    if not password:
+        return False
+
+    local_settings = get_local_settings()
+    is_admin = local_settings.get("general", {}).get("is_admin", False)
+    if is_admin:
+        return False
+    return True

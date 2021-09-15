@@ -6,16 +6,30 @@
     "is_file": true,
     "children": [
         {
+            "type": "path",
+            "key": "addon_paths",
+            "label": "OpenPype AddOn Paths",
+            "use_label_wrap": true,
+            "multiplatform": true,
+            "multipath": true,
+            "require_restart": true
+        },
+        {
+            "type": "separator"
+        },
+        {
             "type": "dict",
             "key": "avalon",
             "label": "Avalon",
             "collapsible": true,
+            "require_restart": true,
             "children": [
                 {
                     "type": "number",
                     "key": "AVALON_TIMEOUT",
                     "minimum": 0,
-                    "label": "Avalon Mongo Timeout (ms)"
+                    "label": "Avalon Mongo Timeout (ms)",
+                    "steps": 100
                 },
                 {
                     "type": "path",
@@ -35,6 +49,7 @@
             "key": "timers_manager",
             "label": "Timers Manager",
             "collapsible": true,
+            "require_restart": true,
             "checkbox_key": "enabled",
             "children": [
                 {
@@ -58,6 +73,11 @@
                     "decimal": 2,
                     "key": "message_time",
                     "label": "When dialog will show"
+                },
+                {
+                    "type": "boolean",
+                    "key": "disregard_publishing",
+                    "label": "Disregard Publishing"
                 }
             ]
         },
@@ -66,6 +86,7 @@
             "key": "clockify",
             "label": "Clockify",
             "collapsible": true,
+            "require_restart": true,
             "checkbox_key": "enabled",
             "children": [
                 {
@@ -79,21 +100,38 @@
                     "label": "Workspace name"
                 }
             ]
-        },  {
+        },
+        {
             "type": "dict",
             "key": "sync_server",
             "label": "Site Sync",
             "collapsible": true,
+            "require_restart": true,
             "checkbox_key": "enabled",
-            "children": [{
-                  "type": "boolean",
-                  "key": "enabled",
-                  "label": "Enabled"
-            }]
-        },{
+            "children": [
+                {
+                    "type": "boolean",
+                    "key": "enabled",
+                    "label": "Enabled"
+                },
+                {
+                    "type": "dict-modifiable",
+                    "collapsible": true,
+                    "key": "sites",
+                    "label": "Sites",
+                    "collapsible_key": false,
+                    "object_type":
+                    {
+                        "type": "sync-server-providers"
+                    }
+                }
+            ]
+        },
+        {
             "type": "dict",
             "key": "deadline",
             "label": "Deadline",
+            "require_restart": true,
             "collapsible": true,
             "checkbox_key": "enabled",
             "children": [
@@ -103,9 +141,11 @@
                     "label": "Enabled"
                 },
                 {
-                    "type": "text",
-                    "key": "DEADLINE_REST_URL",
-                    "label": "Deadline Resl URL"
+                    "type": "dict-modifiable",
+                    "object_type": "text",
+                    "key": "deadline_urls",
+                    "required_keys": ["default"],
+                    "label": "Deadline Webservice URLs"
                 }
             ]
         },
@@ -113,6 +153,7 @@
             "type": "dict",
             "key": "muster",
             "label": "Muster",
+            "require_restart": true,
             "collapsible": true,
             "checkbox_key": "enabled",
             "children": [
@@ -135,8 +176,7 @@
                     },
                     "is_group": true,
                     "key": "templates_mapping",
-                    "label": "Templates mapping",
-                    "is_file": true
+                    "label": "Templates mapping"
                 }
             ]
         },
@@ -144,20 +184,6 @@
             "type": "dict",
             "key": "log_viewer",
             "label": "Logging",
-            "collapsible": true,
-            "checkbox_key": "enabled",
-            "children": [
-                {
-                    "type": "boolean",
-                    "key": "enabled",
-                    "label": "Enabled"
-                }
-            ]
-        },
-        {
-            "type": "dict",
-            "key": "user",
-            "label": "User setting",
             "collapsible": true,
             "checkbox_key": "enabled",
             "children": [
@@ -181,6 +207,39 @@
                     "label": "Enabled"
                 }
             ]
+        },
+        {
+            "type": "dict",
+            "key": "project_manager",
+            "label": "Project Manager (beta)",
+            "collapsible": true,
+            "checkbox_key": "enabled",
+            "children": [
+                {
+                    "type": "boolean",
+                    "key": "enabled",
+                    "label": "Enabled"
+                }
+            ]
+        },
+        {
+            "type": "dict",
+            "key": "slack",
+            "label": "Slack Notifications",
+            "collapsible": true,
+            "require_restart": true,
+            "checkbox_key": "enabled",
+            "children": [
+                {
+                    "type": "boolean",
+                    "key": "enabled",
+                    "label": "Enabled"
+                }
+            ]
+        },
+        {
+            "type": "dynamic_schema",
+            "name": "system_settings/modules"
         }
     ]
 }

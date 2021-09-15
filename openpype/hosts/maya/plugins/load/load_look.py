@@ -1,3 +1,5 @@
+# -*- coding: utf-8 -*-
+"""Look loader."""
 import openpype.hosts.maya.api.plugin
 from avalon import api, io
 import json

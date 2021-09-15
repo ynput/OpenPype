@@ -1127,16 +1127,14 @@ def get_id_required_nodes(referenced_nodes=False, nodes=None):
 
 
 def get_id(node):
-    """
-    Get the `cbId` attribute of the given node
+    """Get the `cbId` attribute of the given node.
+
     Args:
         node (str): the name of the node to retrieve the attribute from
-
     Returns:
         str
 
     """
-
     if node is None:
         return
 
@@ -1875,7 +1873,7 @@ def set_context_settings():
 
     # Set project fps
     fps = asset_data.get("fps", project_data.get("fps", 25))
-    api.Session["AVALON_FPS"] = fps
+    api.Session["AVALON_FPS"] = str(fps)
     set_scene_fps(fps)
 
     # Set project resolution
@@ -2129,7 +2127,7 @@ def bake_to_world_space(nodes,
     return world_space_nodes
 
 
-def load_capture_preset(path=None, data=None):
+def load_capture_preset(data=None):
     import capture
 
     preset = data
@@ -2144,11 +2142,7 @@ def load_capture_preset(path=None, data=None):
     # GENERIC
     id = 'Generic'
     for key in preset[id]:
-        if key.startswith('isolate'):
-            pass
-            # options['isolate'] = preset[id][key]
-        else:
-            options[str(key)] = preset[id][key]
+        options[str(key)] = preset[id][key]
 
     # RESOLUTION
     id = 'Resolution'
@@ -2161,6 +2155,10 @@ def load_capture_preset(path=None, data=None):
     for key in preset['Display Options']:
         if key.startswith('background'):
             disp_options[key] = preset['Display Options'][key]
+            disp_options[key][0] = (float(disp_options[key][0])/255)
+            disp_options[key][1] = (float(disp_options[key][1])/255)
+            disp_options[key][2] = (float(disp_options[key][2])/255)
+            disp_options[key].pop()
         else:
             disp_options['displayGradient'] = True
 
@@ -2225,16 +2223,6 @@ def load_capture_preset(path=None, data=None):
     # use active sound track
     scene = capture.parse_active_scene()
     options['sound'] = scene['sound']
-    cam_options = dict()
-    cam_options['overscan'] = 1.0
-    cam_options['displayFieldChart'] = False
-    cam_options['displayFilmGate'] = False
-    cam_options['displayFilmOrigin'] = False
-    cam_options['displayFilmPivot'] = False
-    cam_options['displayGateMask'] = False
-    cam_options['displayResolution'] = False
-    cam_options['displaySafeAction'] = False
-    cam_options['displaySafeTitle'] = False
 
     # options['display_options'] = temp_options
 
@@ -2267,10 +2255,8 @@ def get_attr_in_layer(attr, layer):
 
     try:
         if cmds.mayaHasRenderSetup():
-            log.debug("lib.get_attr_in_layer is not "
-                      "optimized for render setup")
-            with renderlayer(layer):
-                return cmds.getAttr(attr)
+            from . import lib_rendersetup
+            return lib_rendersetup.get_attr_in_layer(attr, layer)
     except AttributeError:
         pass
 
@@ -2691,3 +2677,69 @@ def show_message(title, msg):
         pass
     else:
         message_window.message(title=title, message=msg, parent=parent)
+
+
+def iter_shader_edits(relationships, shader_nodes, nodes_by_id, label=None):
+    """Yield edits as a set of actions."""
+
+    attributes = relationships.get("attributes", [])
+    shader_data = relationships.get("relationships", {})
+
+    shading_engines = cmds.ls(shader_nodes, type="objectSet", long=True)
+    assert shading_engines, "Error in retrieving objectSets from reference"
+
+    # region compute lookup
+    shading_engines_by_id = defaultdict(list)
+    for shad in shading_engines:
+        shading_engines_by_id[get_id(shad)].append(shad)
+    # endregion
+
+    # region assign shading engines and other sets
+    for data in shader_data.values():
+        # collect all unique IDs of the set members
+        shader_uuid = data["uuid"]
+        member_uuids = [
+            (member["uuid"], member.get("components"))
+            for member in data["members"]]
+
+        filtered_nodes = list()
+        for _uuid, components in member_uuids:
+            nodes = nodes_by_id.get(_uuid, None)
+            if nodes is None:
+                continue
+
+            if components:
+                # Assign to the components
+                nodes = [".".join([node, components]) for node in nodes]
+
+            filtered_nodes.extend(nodes)
+
+        id_shading_engines = shading_engines_by_id[shader_uuid]
+        if not id_shading_engines:
+            log.error("{} - No shader found with cbId "
+                      "'{}'".format(label, shader_uuid))
+            continue
+        elif len(id_shading_engines) > 1:
+            log.error("{} - Skipping shader assignment. "
+                      "More than one shader found with cbId "
+                      "'{}'. (found: {})".format(label, shader_uuid,
+                                                 id_shading_engines))
+            continue
+
+        if not filtered_nodes:
+            log.warning("{} - No nodes found for shading engine "
+                        "'{}'".format(label, id_shading_engines[0]))
+            continue
+
+        yield {"action": "assign",
+               "uuid": data["uuid"],
+               "nodes": filtered_nodes,
+               "shader": id_shading_engines[0]}
+
+    for data in attributes:
+        nodes = nodes_by_id.get(data["uuid"], [])
+        attr_value = data["attributes"]
+        yield {"action": "setattr",
+               "uuid": data["uuid"],
+               "nodes": nodes,
+               "attributes": attr_value}

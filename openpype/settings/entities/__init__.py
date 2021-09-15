@@ -57,6 +57,7 @@ from .exceptions import (
     SchemaError,
     DefaultsNotDefined,
     StudioDefaultsNotDefined,
+    BaseInvalidValueType,
     InvalidValueType,
     InvalidKeySymbols,
     SchemaMissingFileInfo,
@@ -96,17 +97,25 @@ from .input_entities import (
     PathInput,
     RawJsonEntity
 )
-
+from .color_entity import ColorEntity
 from .enum_entity import (
     BaseEnumEntity,
     EnumEntity,
+    HostsEnumEntity,
     AppsEnumEntity,
-    ToolsEnumEntity
+    ToolsEnumEntity,
+    TaskTypeEnumEntity,
+    DeadlineUrlEnumEntity,
+    AnatomyTemplatesEnumEntity
 )
 
 from .list_entity import ListEntity
 from .dict_immutable_keys_entity import DictImmutableKeysEntity
 from .dict_mutable_keys_entity import DictMutableKeysEntity
+from .dict_conditional import (
+    DictConditionalEntity,
+    SyncServerProviders
+)
 
 from .anatomy_entities import AnatomyEntity
 
@@ -114,6 +123,7 @@ from .anatomy_entities import AnatomyEntity
 __all__ = (
     "DefaultsNotDefined",
     "StudioDefaultsNotDefined",
+    "BaseInvalidValueType",
     "InvalidValueType",
     "InvalidKeySymbols",
     "SchemaMissingFileInfo",
@@ -145,16 +155,25 @@ __all__ = (
     "PathInput",
     "RawJsonEntity",
 
+    "ColorEntity",
+
     "BaseEnumEntity",
     "EnumEntity",
+    "HostsEnumEntity",
     "AppsEnumEntity",
     "ToolsEnumEntity",
+    "TaskTypeEnumEntity",
+    "DeadlineUrlEnumEntity",
+    "AnatomyTemplatesEnumEntity",
 
     "ListEntity",
 
     "DictImmutableKeysEntity",
 
     "DictMutableKeysEntity",
+
+    "DictConditionalEntity",
+    "SyncServerProviders",
 
     "AnatomyEntity"
 )

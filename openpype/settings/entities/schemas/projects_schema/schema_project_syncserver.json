@@ -4,7 +4,6 @@
     "label": "Site Sync (beta testing)",
     "collapsible": true,
     "checkbox_key": "enabled",
-    "is_file": true,
     "children": [
     {
         "type": "boolean",
@@ -44,20 +43,15 @@
         "key": "sites",
         "label": "Sites",
         "collapsible_key": false,
-        "is_file": true,
         "object_type":
         {
             "type": "dict",
             "children": [
             {
-                "type": "text",
-                "key": "provider",
-                "label": "Provider"
-            },
-            {
-                "type": "text",
+                "type": "path",
                 "key": "credentials_url",
-                "label": "Credentials url"
+                "label": "Credentials url",
+                "multiplatform": true
             },
             {
                 "type": "dict-modifiable",

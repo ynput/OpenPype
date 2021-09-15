@@ -12,10 +12,10 @@ import pymel.core as pm
 
 
 class ExtractThumbnail(openpype.api.Extractor):
-    """Extract a Camera as Alembic.
+    """Extract viewport thumbnail.
 
-    The cameras gets baked to world space by default. Only when the instance's
-    `bakeToWorldSpace` is set to False it will include its full hierarchy.
+    Takes review camera and creates a thumbnail based on viewport
+    capture.
 
     """
 
@@ -26,32 +26,25 @@ class ExtractThumbnail(openpype.api.Extractor):
     def process(self, instance):
         self.log.info("Extracting capture..")
 
-        start = cmds.currentTime(query=True)
-        end = cmds.currentTime(query=True)
-        self.log.info("start: {}, end: {}".format(start, end))
-
         camera = instance.data['review_camera']
 
         capture_preset = ""
         capture_preset = (
-            instance.context.data["project_settings"]['maya']['publish']['ExtractPlayblast']
+            instance.context.data["project_settings"]['maya']['publish']['ExtractPlayblast']['capture_preset']
         )
 
         try:
             preset = lib.load_capture_preset(data=capture_preset)
-        except:
+        except KeyError as ke:
+            self.log.error('Error loading capture presets: {}'.format(str(ke)))
             preset = {}
-        self.log.info('using viewport preset: {}'.format(capture_preset))
+        self.log.info('Using viewport preset: {}'.format(preset))
 
         # preset["off_screen"] =  False
 
         preset['camera'] = camera
-        preset['format'] = "image"
-        # preset['compression'] = "qt"
-        preset['quality'] = 50
-        preset['compression'] = "jpg"
-        preset['start_frame'] = start
-        preset['end_frame'] = end
+        preset['start_frame'] = instance.data["frameStart"]
+        preset['end_frame'] = instance.data["frameStart"]
         preset['camera_options'] = {
             "displayGateMask": False,
             "displayResolution": False,
@@ -82,7 +75,7 @@ class ExtractThumbnail(openpype.api.Extractor):
 
         # Isolate view is requested by having objects in the set besides a
         # camera.
-        if instance.data.get("isolate"):
+        if preset.pop("isolate_view", False) and instance.data.get("isolate"):
             preset["isolate"] = instance.data["setMembers"]
 
         with maintained_time():
@@ -92,9 +85,6 @@ class ExtractThumbnail(openpype.api.Extractor):
             # viewer opening call to allow a signal to trigger between
             # playblast and viewer
             preset['viewer'] = False
-
-            # Remove panel key since it's internal value to capture_gui
-            preset.pop("panel", None)
 
             path = capture.capture(**preset)
             playblast = self._fix_playblast_output_path(path)

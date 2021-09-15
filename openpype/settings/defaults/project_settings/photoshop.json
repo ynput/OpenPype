@@ -1,0 +1,26 @@
+{
+    "create": {
+        "CreateImage": {
+            "defaults": [
+                "Main"
+            ]
+        }
+    },
+    "publish": {
+        "ValidateContainers": {
+            "enabled": true,
+            "optional": true,
+            "active": true
+        },
+        "ExtractImage": {
+            "formats": [
+                "png",
+                "jpg"
+            ]
+        }
+    },
+    "workfile_builder": {
+        "create_first_version": false,
+        "custom_templates": []
+    }
+}

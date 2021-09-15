@@ -1,0 +1,29 @@
+name: Dev -> Main
+
+on:
+  schedule:
+    - cron:  '21 3 * * 3,6'
+  workflow_dispatch:
+
+jobs:
+  develop-to-main:
+
+    runs-on: ubuntu-latest
+
+    steps:
+    - name: 🚛 Checkout Code
+      uses: actions/checkout@v2
+
+    - name: 🔨 Merge develop to main    
+      uses: everlytic/branch-merge@1.1.0
+      with:
+        github_token: ${{ secrets.ADMIN_TOKEN }}
+        source_ref: 'develop'
+        target_branch: 'main'
+        commit_message_template: '[Automated] Merged {source_ref} into {target_branch}'
+
+    - name: Invoke pre-release workflow
+      uses: benc-uk/workflow-dispatch@v1
+      with:
+        workflow: Nightly Prerelease
+        token: ${{ secrets.ADMIN_TOKEN }}

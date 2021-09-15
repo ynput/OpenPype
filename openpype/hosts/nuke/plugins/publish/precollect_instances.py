@@ -8,7 +8,7 @@ from avalon.nuke import lib as anlib
 class PreCollectNukeInstances(pyblish.api.ContextPlugin):
     """Collect all nodes with Avalon knob."""
 
-    order = pyblish.api.CollectorOrder - 0.59
+    order = pyblish.api.CollectorOrder - 0.49
     label = "Pre-collect Instances"
     hosts = ["nuke", "nukeassist"]
 
@@ -70,8 +70,9 @@ class PreCollectNukeInstances(pyblish.api.ContextPlugin):
             review = False
             if "review" in node.knobs():
                 review = node["review"].value()
+
+            if review:
                 families.append("review")
-                families.append("ftrack")
 
             # Add all nodes in group instances.
             if node.Class() == "Group":
@@ -81,6 +82,7 @@ class PreCollectNukeInstances(pyblish.api.ContextPlugin):
                     if target == "Use existing frames":
                         # Local rendering
                         self.log.info("flagged for no render")
+                        families.append(families_ak.lower())
                     elif target == "Local":
                         # Local rendering
                         self.log.info("flagged for local render")

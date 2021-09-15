@@ -4,7 +4,6 @@
     "key": "filters",
     "label": "Publish GUI Filters",
     "object_type": {
-        "type": "raw-json",
-        "label": "Plugins"
+        "type": "raw-json"
     }
 }

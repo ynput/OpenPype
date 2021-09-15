@@ -2,7 +2,6 @@ import pyblish.api
 from avalon import io
 from copy import deepcopy
 
-
 class ExtractHierarchyToAvalon(pyblish.api.ContextPlugin):
     """Create entities in Avalon based on collected data."""
 
@@ -100,13 +99,20 @@ class ExtractHierarchyToAvalon(pyblish.api.ContextPlugin):
                 if entity:
                     # Do not override data, only update
                     cur_entity_data = entity.get("data") or {}
+                    entity_tasks = cur_entity_data["tasks"] or {}
+
+                    # create tasks as dict by default
+                    if not entity_tasks:
+                        cur_entity_data["tasks"] = entity_tasks
+
                     new_tasks = data.pop("tasks", {})
                     if "tasks" not in cur_entity_data and not new_tasks:
                         continue
                     for task_name in new_tasks:
-                        if task_name in cur_entity_data["tasks"].keys():
+                        if task_name in entity_tasks.keys():
                             continue
-                        cur_entity_data["tasks"][task_name] = new_tasks[task_name]
+                        cur_entity_data["tasks"][task_name] = new_tasks[
+                            task_name]
                     cur_entity_data.update(data)
                     data = cur_entity_data
                 else:

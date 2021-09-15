@@ -6,7 +6,12 @@ from avalon import photoshop
 
 
 class ExtractReview(openpype.api.Extractor):
-    """Produce a flattened image file from all instances."""
+    """
+        Produce a flattened image file from all 'image' instances.
+
+        If no 'image' instance is created, it produces flattened image from
+        all visible layers.
+    """
 
     label = "Extract Review"
     hosts = ["photoshop"]
@@ -30,14 +35,15 @@ class ExtractReview(openpype.api.Extractor):
         )
         output_image_path = os.path.join(staging_dir, output_image)
         with photoshop.maintained_visibility():
-            # Hide all other layers.
-            extract_ids = set([ll.id for ll in stub.
-                               get_layers_in_layers(layers)])
-            self.log.info("extract_ids {}".format(extract_ids))
-            for layer in stub.get_layers():
-                # limit unnecessary calls to client
-                if layer.visible and layer.id not in extract_ids:
-                    stub.set_visible(layer.id, False)
+            if layers:
+                # Hide all other layers.
+                extract_ids = set([ll.id for ll in stub.
+                                   get_layers_in_layers(layers)])
+                self.log.debug("extract_ids {}".format(extract_ids))
+                for layer in stub.get_layers():
+                    # limit unnecessary calls to client
+                    if layer.visible and layer.id not in extract_ids:
+                        stub.set_visible(layer.id, False)
 
             stub.saveAs(output_image_path, 'jpg', True)
 

@@ -34,7 +34,6 @@ class CollectContextDataSAPublish(pyblish.api.ContextPlugin):
 
     # presets
     batch_extensions = ["edl", "xml", "psd"]
-    default_families = ["ftrack"]
 
     def process(self, context):
         # get json paths from os and load them
@@ -213,10 +212,6 @@ class CollectContextDataSAPublish(pyblish.api.ContextPlugin):
         subset = in_data["subset"]
         # If instance data already contain families then use it
         instance_families = in_data.get("families") or []
-        # Make sure default families are in instance
-        for default_family in self.default_families or []:
-            if default_family not in instance_families:
-                instance_families.append(default_family)
 
         instance = context.create_instance(subset)
         instance.data.update(

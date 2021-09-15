@@ -1,4 +1,9 @@
 {
+    "addon_paths": {
+        "windows": [],
+        "darwin": [],
+        "linux": []
+    },
     "avalon": {
         "AVALON_TIMEOUT": 1000,
         "AVALON_THUMBNAIL_ROOT": {
@@ -128,18 +133,22 @@
         "enabled": true,
         "auto_stop": true,
         "full_time": 15.0,
-        "message_time": 0.5
+        "message_time": 0.5,
+        "disregard_publishing": false
     },
     "clockify": {
         "enabled": false,
         "workspace_name": ""
     },
     "sync_server": {
-        "enabled": false
+        "enabled": false,
+        "sites": {}
     },
     "deadline": {
         "enabled": true,
-        "DEADLINE_REST_URL": "http://localhost:8082"
+        "deadline_urls": {
+            "default": "http://127.0.0.1:8082"
+        }
     },
     "muster": {
         "enabled": false,
@@ -161,10 +170,13 @@
     "log_viewer": {
         "enabled": true
     },
-    "user": {
-        "enabled": true
-    },
     "standalonepublish_tool": {
         "enabled": true
+    },
+    "project_manager": {
+        "enabled": true
+    },
+    "slack": {
+        "enabled": false
     }
 }

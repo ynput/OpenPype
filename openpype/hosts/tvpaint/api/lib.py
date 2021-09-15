@@ -77,8 +77,9 @@ def set_context_settings(asset_doc=None):
         handle_start = handles
         handle_end = handles
 
-    frame_start -= int(handle_start)
-    frame_end += int(handle_end)
+    # Always start from 0 Mark In and set only Mark Out
+    mark_in = 0
+    mark_out = mark_in + (frame_end - frame_start) + handle_start + handle_end
 
-    execute_george("tv_markin {} set".format(frame_start - 1))
-    execute_george("tv_markout {} set".format(frame_end - 1))
+    execute_george("tv_markin {} set".format(mark_in))
+    execute_george("tv_markout {} set".format(mark_out))

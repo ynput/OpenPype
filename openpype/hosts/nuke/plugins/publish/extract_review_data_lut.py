@@ -3,6 +3,12 @@ import pyblish.api
 from avalon.nuke import lib as anlib
 from openpype.hosts.nuke.api import lib as pnlib
 import openpype
+
+try:
+    from __builtin__ import reload
+except ImportError:
+    from importlib import reload
+
 reload(pnlib)
 
 
@@ -51,7 +57,6 @@ class ExtractReviewDataLut(openpype.api.Extractor):
 
         if "render.farm" in families:
             instance.data["families"].remove("review")
-            instance.data["families"].remove("ftrack")
 
         self.log.debug(
             "_ lutPath: {}".format(instance.data["lutPath"]))

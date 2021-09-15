@@ -80,7 +80,7 @@ def install():
     # Set context settings.
     nuke.addOnCreate(workfile_settings.set_context_settings, nodeClass="Root")
     nuke.addOnCreate(workfile_settings.set_favorites, nodeClass="Root")
-    nuke.addOnCreate(lib.open_last_workfile, nodeClass="Root")
+    nuke.addOnCreate(lib.process_workfile_builder, nodeClass="Root")
     nuke.addOnCreate(lib.launch_workfiles_app, nodeClass="Root")
     menu.install()
 
@@ -106,7 +106,7 @@ def on_pyblish_instance_toggled(instance, old_value, new_value):
     log.info("instance toggle: {}, old_value: {}, new_value:{} ".format(
         instance, old_value, new_value))
 
-    from avalon.api.nuke import (
+    from avalon.nuke import (
         viewer_update_and_undo_stop,
         add_publish_knob
     )

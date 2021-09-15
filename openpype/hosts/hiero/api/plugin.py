@@ -4,10 +4,10 @@ import hiero
 from Qt import QtWidgets, QtCore
 from avalon.vendor import qargparse
 import avalon.api as avalon
-import openpype.api as pype
+import openpype.api as openpype
 from . import lib
 
-log = pype.Logger().get_logger(__name__)
+log = openpype.Logger().get_logger(__name__)
 
 
 def load_stylesheet():
@@ -266,7 +266,8 @@ class CreatorWidget(QtWidgets.QDialog):
             elif v["type"] == "QSpinBox":
                 data[k]["value"] = self.create_row(
                     content_layout, "QSpinBox", v["label"],
-                    setValue=v["value"], setMaximum=10000, setToolTip=tool_tip)
+                    setValue=v["value"], setMinimum=0,
+                    setMaximum=100000, setToolTip=tool_tip)
         return data
 
 
@@ -387,7 +388,8 @@ class ClipLoader:
         # try to get value from options or evaluate key value for `load_to`
         self.new_sequence = options.get("newSequence") or bool(
             "New timeline" in options.get("load_to", ""))
-
+        self.clip_name_template = options.get(
+            "clipNameTemplate") or "{asset}_{subset}_{representation}"
         assert self._populate_data(), str(
             "Cannot Load selected data, look into database "
             "or call your supervisor")
@@ -432,7 +434,7 @@ class ClipLoader:
         asset = str(repr_cntx["asset"])
         subset = str(repr_cntx["subset"])
         representation = str(repr_cntx["representation"])
-        self.data["clip_name"] = "_".join([asset, subset, representation])
+        self.data["clip_name"] = self.clip_name_template.format(**repr_cntx)
         self.data["track_name"] = "_".join([subset, representation])
         self.data["versionData"] = self.context["version"]["data"]
         # gets file path
@@ -476,7 +478,7 @@ class ClipLoader:
 
         """
         asset_name = self.context["representation"]["context"]["asset"]
-        self.data["assetData"] = pype.get_asset(asset_name)["data"]
+        self.data["assetData"] = openpype.get_asset(asset_name)["data"]
 
     def _make_track_item(self, source_bin_item, audio=False):
         """ Create track item with """
@@ -543,15 +545,9 @@ class ClipLoader:
              if "slate" in f),
             # if nothing was found then use default None
             # so other bool could be used
-            None) or bool(((
-                # put together duration of clip attributes
-                self.timeline_out - self.timeline_in + 1) \
-                + self.handle_start \
-                + self.handle_end
-                # and compare it with meda duration
-            ) > self.media_duration)
-
-        print("__ slate_on: `{}`".format(slate_on))
+            None) or bool(int(
+                (self.timeline_out - self.timeline_in + 1)
+                + self.handle_start + self.handle_end) < self.media_duration)
 
         # if slate is on then remove the slate frame from begining
         if slate_on:
@@ -592,7 +588,7 @@ class ClipLoader:
         return track_item
 
 
-class Creator(pype.Creator):
+class Creator(openpype.Creator):
     """Creator class wrapper
     """
     clip_color = "Purple"
@@ -601,7 +597,7 @@ class Creator(pype.Creator):
     def __init__(self, *args, **kwargs):
         import openpype.hosts.hiero.api as phiero
         super(Creator, self).__init__(*args, **kwargs)
-        self.presets = pype.get_current_project_settings()[
+        self.presets = openpype.get_current_project_settings()[
             "hiero"]["create"].get(self.__class__.__name__, {})
 
         # adding basic current context resolve objects
@@ -674,6 +670,9 @@ class PublishClip:
         if kwargs.get("avalon"):
             self.tag_data.update(kwargs["avalon"])
 
+        # add publish attribute to tag data
+        self.tag_data.update({"publish": True})
+
         # adding ui inputs if any
         self.ui_inputs = kwargs.get("ui_inputs", {})
 
@@ -687,6 +686,7 @@ class PublishClip:
         self._create_parents()
 
     def convert(self):
+
         # solve track item data and add them to tag data
         self._convert_to_tag_data()
 
@@ -705,6 +705,12 @@ class PublishClip:
             self.tag_data["asset"] = new_name
         else:
             self.tag_data["asset"] = self.ti_name
+            self.tag_data["hierarchyData"]["shot"] = self.ti_name
+
+        if self.tag_data["heroTrack"] and self.review_layer:
+            self.tag_data.update({"reviewTrack": self.review_layer})
+        else:
+            self.tag_data.update({"reviewTrack": None})
 
         # create pype tag on track_item and add data
         lib.imprint(self.track_item, self.tag_data)
@@ -773,8 +779,8 @@ class PublishClip:
         _spl = text.split("#")
         _len = (len(_spl) - 1)
         _repl = "{{{0}:0>{1}}}".format(name, _len)
-        new_text = text.replace(("#" * _len), _repl)
-        return new_text
+        return text.replace(("#" * _len), _repl)
+
 
     def _convert_to_tag_data(self):
         """ Convert internal data to tag data.
@@ -782,13 +788,13 @@ class PublishClip:
         Populating the tag data into internal variable self.tag_data
         """
         # define vertical sync attributes
-        master_layer = True
+        hero_track = True
         self.review_layer = ""
         if self.vertical_sync:
             # check if track name is not in driving layer
             if self.track_name not in self.driving_layer:
                 # if it is not then define vertical sync as None
-                master_layer = False
+                hero_track = False
 
         # increasing steps by index of rename iteration
         self.count_steps *= self.rename_index
@@ -802,7 +808,7 @@ class PublishClip:
                     self.tag_data[_k] = _v["value"]
 
             # driving layer is set as positive match
-            if master_layer or self.vertical_sync:
+            if hero_track or self.vertical_sync:
                 # mark review layer
                 if self.review_track and (
                         self.review_track not in self.review_track_default):
@@ -836,39 +842,39 @@ class PublishClip:
             hierarchy_formating_data
         )
 
-        tag_hierarchy_data.update({"masterLayer": True})
-        if master_layer and self.vertical_sync:
+        tag_hierarchy_data.update({"heroTrack": True})
+        if hero_track and self.vertical_sync:
             self.vertical_clip_match.update({
                 (self.clip_in, self.clip_out): tag_hierarchy_data
             })
 
-        if not master_layer and self.vertical_sync:
+        if not hero_track and self.vertical_sync:
             # driving layer is set as negative match
-            for (_in, _out), master_data in self.vertical_clip_match.items():
-                master_data.update({"masterLayer": False})
+            for (_in, _out), hero_data in self.vertical_clip_match.items():
+                hero_data.update({"heroTrack": False})
                 if _in == self.clip_in and _out == self.clip_out:
-                    data_subset = master_data["subset"]
-                    # add track index in case duplicity of names in master data
+                    data_subset = hero_data["subset"]
+                    # add track index in case duplicity of names in hero data
                     if self.subset in data_subset:
-                        master_data["subset"] = self.subset + str(
+                        hero_data["subset"] = self.subset + str(
                             self.track_index)
                     # in case track name and subset name is the same then add
                     if self.subset_name == self.track_name:
-                        master_data["subset"] = self.subset
+                        hero_data["subset"] = self.subset
                     # assing data to return hierarchy data to tag
-                    tag_hierarchy_data = master_data
+                    tag_hierarchy_data = hero_data
 
         # add data to return data dict
         self.tag_data.update(tag_hierarchy_data)
-
-        if master_layer and self.review_layer:
-            self.tag_data.update({"reviewTrack": self.review_layer})
 
     def _solve_tag_hierarchy_data(self, hierarchy_formating_data):
         """ Solve tag data from hierarchy data and templates. """
         # fill up clip name and hierarchy keys
         hierarchy_filled = self.hierarchy.format(**hierarchy_formating_data)
         clip_name_filled = self.clip_name.format(**hierarchy_formating_data)
+
+        # remove shot from hierarchy data: is not needed anymore
+        hierarchy_formating_data.pop("shot")
 
         return {
             "newClipName": clip_name_filled,

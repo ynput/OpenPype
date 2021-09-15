@@ -1,13 +1,32 @@
 {
     "publish": {
+        "ValidateEditorialAssetName": {
+            "enabled": true,
+            "optional": false
+        },
+        "ValidateVersion": {
+            "enabled": true,
+            "optional": false
+        },
         "IntegrateHeroVersion": {
-            "enabled": true
+            "enabled": true,
+            "optional": true,
+            "families": [
+                "model",
+                "rig",
+                "look",
+                "pointcache",
+                "animation",
+                "setdress",
+                "layout",
+                "mayaAscii"
+            ]
         },
         "ExtractJpegEXR": {
             "enabled": true,
             "ffmpeg_args": {
                 "input": [
-                    "-gamma 2.2"
+                    "-apply_trc gamma22"
                 ],
                 "output": []
             }
@@ -29,7 +48,7 @@
                                 "video_filters": [],
                                 "audio_filters": [],
                                 "input": [
-                                    "-gamma 2.2"
+                                    "-apply_trc gamma22"
                                 ],
                                 "output": [
                                     "-pix_fmt yuv420p",
@@ -44,8 +63,39 @@
                                     "ftrack"
                                 ]
                             },
+                            "overscan_crop": "",
+                            "overscan_color": [
+                                0,
+                                0,
+                                0,
+                                255
+                            ],
                             "width": 0,
-                            "height": 0
+                            "height": 0,
+                            "bg_color": [
+                                0,
+                                0,
+                                0,
+                                0
+                            ],
+                            "letter_box": {
+                                "enabled": false,
+                                "ratio": 0.0,
+                                "state": "letterbox",
+                                "fill_color": [
+                                    0,
+                                    0,
+                                    0,
+                                    255
+                                ],
+                                "line_thickness": 0,
+                                "line_color": [
+                                    255,
+                                    0,
+                                    0,
+                                    255
+                                ]
+                            }
                         }
                     }
                 }
@@ -55,11 +105,26 @@
             "enabled": true,
             "options": {
                 "font_size": 42,
-                "opacity": 1.0,
-                "bg_opacity": 0.5,
+                "font_color": [
+                    255,
+                    255,
+                    255,
+                    255
+                ],
+                "bg_color": [
+                    0,
+                    0,
+                    0,
+                    127
+                ],
                 "x_offset": 5,
                 "y_offset": 5,
-                "bg_padding": 5
+                "bg_padding": 5,
+                "font_filepath": {
+                    "windows": "",
+                    "darwin": "",
+                    "linux": ""
+                }
             },
             "profiles": [
                 {
@@ -72,46 +137,47 @@
                             "TOP_RIGHT": "{anatomy[version]}",
                             "BOTTOM_LEFT": "{username}",
                             "BOTTOM_CENTERED": "{asset}",
-                            "BOTTOM_RIGHT": "{frame_start}-{current_frame}-{frame_end}"
+                            "BOTTOM_RIGHT": "{frame_start}-{current_frame}-{frame_end}",
+                            "filter": {
+                                "families": [],
+                                "tags": []
+                            }
                         }
                     }
                 }
             ]
         },
         "IntegrateAssetNew": {
-            "template_name_profiles": {
-                "publish": {
+            "template_name_profiles": [
+                {
                     "families": [],
-                    "tasks": []
+                    "hosts": [],
+                    "tasks": [],
+                    "template_name": "publish"
                 },
-                "render": {
+                {
                     "families": [
                         "review",
                         "render",
                         "prerender"
-                    ]
+                    ],
+                    "hosts": [],
+                    "tasks": [],
+                    "template_name": "render"
                 }
-            }
+            ],
+            "subset_grouping_profiles": [
+                {
+                    "families": [],
+                    "hosts": [],
+                    "tasks": [],
+                    "template": ""
+                }
+            ]
         },
-        "ProcessSubmittedJobOnFarm": {
-            "enabled": true,
-            "deadline_department": "",
-            "deadline_pool": "",
-            "deadline_group": "",
-            "deadline_chunk_size": 1,
-            "deadline_priority": 50,
-            "aov_filter": {
-                "maya": [
-                    ".+(?:\\.|_)([Bb]eauty)(?:\\.|_).*"
-                ],
-                "nuke": [],
-                "aftereffects": [
-                    ".*"
-                ],
-                "celaction": [
-                    ".*"
-                ]
-            }
+        "CleanUp": {
+            "paterns": [],
+            "remove_temp_renders": false
         }
     },
     "tools": {
@@ -149,15 +215,61 @@
                     "hosts": [],
                     "tasks": [],
                     "template": "{family}{Task}{Variant}"
+                },
+                {
+                    "families": [
+                        "renderLayer",
+                        "renderPass"
+                    ],
+                    "hosts": [
+                        "tvpaint"
+                    ],
+                    "tasks": [],
+                    "template": "{family}{Task}_{Render_layer}_{Render_pass}"
+                },
+                {
+                    "families": [
+                        "review",
+                        "workfile"
+                    ],
+                    "hosts": [
+                        "tvpaint"
+                    ],
+                    "tasks": [],
+                    "template": "{family}{Task}"
+                },
+                {
+                    "families": [
+                        "renderLocal"
+                    ],
+                    "hosts": [
+                        "aftereffects"
+                    ],
+                    "tasks": [],
+                    "template": "render{Task}{Variant}"
                 }
             ]
         },
         "Workfiles": {
+            "workfile_template_profiles": [
+                {
+                    "task_types": [],
+                    "hosts": [],
+                    "workfile_template": "work"
+                }
+            ],
             "last_workfile_on_startup": [
                 {
                     "hosts": [],
                     "tasks": [],
                     "enabled": true
+                }
+            ],
+            "open_workfile_tool_on_startup": [
+                {
+                    "hosts": [],
+                    "tasks": [],
+                    "enabled": false
                 }
             ],
             "sw_folders": {
@@ -177,28 +289,7 @@
             }
         }
     },
-    "project_folder_structure": {
-        "__project_root__": {
-            "prod": {},
-            "resources": {
-                "footage": {
-                    "plates": {},
-                    "offline": {}
-                },
-                "audio": {},
-                "art_dept": {}
-            },
-            "editorial": {},
-            "assets[ftrack.Library]": {
-                "characters[ftrack]": {},
-                "locations[ftrack]": {}
-            },
-            "shots[ftrack.Sequence]": {
-                "scripts": {},
-                "editorial[ftrack.Folder]": {}
-            }
-        }
-    },
+    "project_folder_structure": "{\"__project_root__\": {\"prod\": {}, \"resources\": {\"footage\": {\"plates\": {}, \"offline\": {}}, \"audio\": {}, \"art_dept\": {}}, \"editorial\": {}, \"assets[ftrack.Library]\": {\"characters[ftrack]\": {}, \"locations[ftrack]\": {}}, \"shots[ftrack.Sequence]\": {\"scripts\": {}, \"editorial[ftrack.Folder]\": {}}}}",
     "sync_server": {
         "enabled": true,
         "config": {
@@ -207,15 +298,7 @@
             "active_site": "studio",
             "remote_site": "studio"
         },
-        "sites": {
-            "gdrive": {
-                "provider": "gdrive",
-                "credentials_url": "",
-                "root": {
-                    "work": ""
-                }
-            }
-        }
+        "sites": {}
     },
     "project_plugins": {
         "windows": [],

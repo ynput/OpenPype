@@ -15,6 +15,8 @@ import maya.api.OpenMaya as om
 
 from . import widgets
 from . import commands
+from . vray_proxies import vrayproxy_assign_look
+
 
 module = sys.modules[__name__]
 module.window = None
@@ -190,7 +192,7 @@ class App(QtWidgets.QWidget):
         for i, (asset, item) in enumerate(asset_nodes.items()):
 
             # Label prefix
-            prefix = "({}/{})".format(i+1, len(asset_nodes))
+            prefix = "({}/{})".format(i + 1, len(asset_nodes))
 
             # Assign the first matching look relevant for this asset
             # (since assigning multiple to the same nodes makes no sense)
@@ -210,10 +212,19 @@ class App(QtWidgets.QWidget):
             self.echo("{} Assigning {} to {}\t".format(prefix,
                                                        subset_name,
                                                        asset))
+            nodes = item["nodes"]
 
-            # Assign look
-            assign_look_by_version(nodes=item["nodes"],
-                                   version_id=version["_id"])
+            if cmds.pluginInfo('vrayformaya', query=True, loaded=True):
+                self.echo("Getting vray proxy nodes ...")
+                vray_proxies = set(cmds.ls(type="VRayProxy"))
+                nodes = list(set(item["nodes"]).difference(vray_proxies))
+                if vray_proxies:
+                    for vp in vray_proxies:
+                        vrayproxy_assign_look(vp, subset_name)
+
+                # Assign look
+            if nodes:
+                assign_look_by_version(nodes, version_id=version["_id"])
 
         end = time.time()
 

@@ -5,7 +5,7 @@ import re
 
 import avalon.maya
 import openpype.api
-from openpype.hosts.maya.render_setup_tools import export_in_rs_layer
+from openpype.hosts.maya.api.render_setup_tools import export_in_rs_layer
 
 from maya import cmds
 

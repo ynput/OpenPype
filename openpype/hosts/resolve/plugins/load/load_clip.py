@@ -1,7 +1,10 @@
 from avalon import io, api
 from openpype.hosts import resolve
 from copy import deepcopy
-
+from importlib import reload
+from openpype.hosts.resolve.api import lib, plugin
+reload(plugin)
+reload(lib)
 
 class LoadClip(resolve.TimelineItemLoader):
     """Load a subset to timeline as clip

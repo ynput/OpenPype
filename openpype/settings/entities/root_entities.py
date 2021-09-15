@@ -1,7 +1,7 @@
 import os
 import json
 import copy
-import inspect
+import collections
 
 from abc import abstractmethod
 
@@ -9,9 +9,11 @@ from .base_entity import BaseItemEntity
 from .lib import (
     NOT_SET,
     WRAPPER_TYPES,
+    SCHEMA_KEY_SYSTEM_SETTINGS,
+    SCHEMA_KEY_PROJECT_SETTINGS,
     OverrideState,
-    get_studio_settings_schema,
-    get_project_settings_schema
+    SchemasHub,
+    DynamicSchemaValueCollector
 )
 from .exceptions import (
     SchemaError,
@@ -23,11 +25,13 @@ from openpype.settings.constants import (
     PROJECT_ANATOMY_KEY,
     KEY_REGEX
 )
+from openpype.settings.exceptions import SaveWarningExc
 
 from openpype.settings.lib import (
     DEFAULTS_DIR,
 
     get_default_settings,
+    reset_default_settings,
 
     get_studio_system_settings_overrides,
     save_studio_settings,
@@ -52,8 +56,15 @@ class RootEntity(BaseItemEntity):
     """
     schema_types = ["root"]
 
-    def __init__(self, schema_data, reset):
+    def __init__(self, schema_hub, reset, main_schema_name=None):
+        self.schema_hub = schema_hub
+        if not main_schema_name:
+            main_schema_name = "schema_main"
+        schema_data = schema_hub.get_schema(main_schema_name)
+
         super(RootEntity, self).__init__(schema_data)
+        self._require_restart_callbacks = []
+        self._item_ids_require_restart = set()
         self._item_initalization()
         if reset:
             self.reset()
@@ -62,6 +73,31 @@ class RootEntity(BaseItemEntity):
     def override_state(self):
         """Current OverrideState."""
         return self._override_state
+
+    @property
+    def require_restart(self):
+        return bool(self._item_ids_require_restart)
+
+    def add_require_restart_change_callback(self, callback):
+        self._require_restart_callbacks.append(callback)
+
+    def _on_require_restart_change(self):
+        for callback in self._require_restart_callbacks:
+            callback()
+
+    def add_item_require_restart(self, item):
+        was_empty = len(self._item_ids_require_restart) == 0
+        self._item_ids_require_restart.add(item.id)
+        if was_empty:
+            self._on_require_restart_change()
+
+    def remove_item_require_restart(self, item):
+        if item.id not in self._item_ids_require_restart:
+            return
+
+        self._item_ids_require_restart.remove(item.id)
+        if not self._item_ids_require_restart:
+            self._on_require_restart_change()
 
     @abstractmethod
     def reset(self):
@@ -102,7 +138,17 @@ class RootEntity(BaseItemEntity):
 
     def _add_children(self, schema_data, first=True):
         added_children = []
-        for children_schema in schema_data["children"]:
+        children_deque = collections.deque()
+        for _children_schema in schema_data["children"]:
+            children_schemas = self.schema_hub.resolve_schema_data(
+                _children_schema
+            )
+            for children_schema in children_schemas:
+                children_deque.append(children_schema)
+
+        while children_deque:
+            children_schema = children_deque.popleft()
+
             if children_schema["type"] in WRAPPER_TYPES:
                 _children_schema = copy.deepcopy(children_schema)
                 wrapper_children = self._add_children(
@@ -115,11 +161,13 @@ class RootEntity(BaseItemEntity):
             child_obj = self.create_schema_object(children_schema, self)
             self.children.append(child_obj)
             added_children.append(child_obj)
-            if isinstance(child_obj, self._gui_types):
+            if isinstance(child_obj, self.schema_hub.gui_types):
                 continue
 
             if child_obj.key in self.non_gui_children:
-                raise KeyError("Duplicated key \"{}\"".format(child_obj.key))
+                raise KeyError(
+                    "Duplicated key \"{}\"".format(child_obj.key)
+                )
             self.non_gui_children[child_obj.key] = child_obj
 
         if not first:
@@ -131,9 +179,6 @@ class RootEntity(BaseItemEntity):
     def _item_initalization(self):
         # Store `self` to `root_item` for children entities
         self.root_item = self
-
-        self._loaded_types = None
-        self._gui_types = None
 
         # Children are stored by key as keys are immutable and are defined by
         # schema
@@ -161,11 +206,10 @@ class RootEntity(BaseItemEntity):
             if not KEY_REGEX.match(key):
                 raise InvalidKeySymbols(self.path, key)
 
+    @abstractmethod
     def get_entity_from_path(self, path):
-        """Return system settings entity."""
-        raise NotImplementedError((
-            "Method `get_entity_from_path` not available for \"{}\""
-        ).format(self.__class__.__name__))
+        """Return entity matching passed path."""
+        pass
 
     def create_schema_object(self, schema_data, *args, **kwargs):
         """Create entity by entered schema data.
@@ -173,56 +217,11 @@ class RootEntity(BaseItemEntity):
         Available entities are loaded on first run. Children entities can call
         this method.
         """
-        if self._loaded_types is None:
-            # Load available entities
-            from openpype.settings import entities
+        return self.schema_hub.create_schema_object(
+            schema_data, *args, **kwargs
+        )
 
-            # Define known abstract classes
-            known_abstract_classes = (
-                entities.BaseEntity,
-                entities.BaseItemEntity,
-                entities.ItemEntity,
-                entities.EndpointEntity,
-                entities.InputEntity,
-                entities.BaseEnumEntity
-            )
-
-            self._loaded_types = {}
-            _gui_types = []
-            for attr in dir(entities):
-                item = getattr(entities, attr)
-                # Filter classes
-                if not inspect.isclass(item):
-                    continue
-
-                # Skip classes that do not inherit from BaseEntity
-                if not issubclass(item, entities.BaseEntity):
-                    continue
-
-                # Skip class that is abstract by design
-                if item in known_abstract_classes:
-                    continue
-
-                if inspect.isabstract(item):
-                    # Create an object to get crash and get traceback
-                    item()
-
-                # Backwards compatibility
-                # Single entity may have multiple schema types
-                for schema_type in item.schema_types:
-                    self._loaded_types[schema_type] = item
-
-                if item.gui_type:
-                    _gui_types.append(item)
-            self._gui_types = tuple(_gui_types)
-
-        klass = self._loaded_types.get(schema_data["type"])
-        if not klass:
-            raise KeyError("Unknown type \"{}\"".format(schema_data["type"]))
-
-        return klass(schema_data, *args, **kwargs)
-
-    def set_override_state(self, state):
+    def set_override_state(self, state, ignore_missing_defaults=None):
         """Set override state and trigger it on children.
 
         Method will discard all changes in hierarchy and use values, metadata
@@ -231,9 +230,12 @@ class RootEntity(BaseItemEntity):
         Args:
             state (OverrideState): State to which should be data changed.
         """
+        if not ignore_missing_defaults:
+            ignore_missing_defaults = False
+
         self._override_state = state
         for child_obj in self.non_gui_children.values():
-            child_obj.set_override_state(state)
+            child_obj.set_override_state(state, ignore_missing_defaults)
 
     def on_change(self):
         """Trigger callbacks on change."""
@@ -243,6 +245,14 @@ class RootEntity(BaseItemEntity):
     def on_child_change(self, _child_entity):
         """Whan any children has changed."""
         self.on_change()
+
+    def collect_static_entities_by_path(self):
+        output = {}
+        for child_obj in self.non_gui_children.values():
+            result = child_obj.collect_static_entities_by_path()
+            if result:
+                output.update(result)
+        return output
 
     def get_child_path(self, child_entity):
         """Return path of children entity"""
@@ -259,6 +269,16 @@ class RootEntity(BaseItemEntity):
             output[key] = child_obj.value
         return output
 
+    def collect_dynamic_schema_entities(self):
+        output = DynamicSchemaValueCollector(self.schema_hub)
+        if self._override_state is not OverrideState.DEFAULTS:
+            return output
+
+        for child_obj in self.non_gui_children.values():
+            child_obj.collect_dynamic_schema_entities(output)
+
+        return output
+
     def settings_value(self):
         """Value for current override state with metadata.
 
@@ -270,6 +290,8 @@ class RootEntity(BaseItemEntity):
         if self._override_state is not OverrideState.DEFAULTS:
             output = {}
             for key, child_obj in self.non_gui_children.items():
+                if child_obj.is_dynamic_schema_node:
+                    continue
                 value = child_obj.settings_value()
                 if value is not NOT_SET:
                     output[key] = value
@@ -368,6 +390,7 @@ class RootEntity(BaseItemEntity):
 
         if self._override_state is OverrideState.DEFAULTS:
             self._save_default_values()
+            reset_default_settings()
 
         elif self._override_state is OverrideState.STUDIO:
             self._save_studio_values()
@@ -414,6 +437,9 @@ class RootEntity(BaseItemEntity):
             self.log.debug("Saving data to: {}\n{}".format(subpath, value))
             with open(output_path, "w") as file_stream:
                 json.dump(value, file_stream, indent=4)
+
+        dynamic_values_item = self.collect_dynamic_schema_entities()
+        dynamic_values_item.save_values()
 
     @abstractmethod
     def _save_studio_values(self):
@@ -463,17 +489,31 @@ class SystemSettings(RootEntity):
         schema_data (dict): Pass schema data to entity. This is for development
             and debugging purposes.
     """
-    def __init__(
-        self, set_studio_state=True, reset=True, schema_data=None
-    ):
-        if schema_data is None:
-            # Load system schemas
-            schema_data = get_studio_settings_schema()
+    root_key = SYSTEM_SETTINGS_KEY
 
-        super(SystemSettings, self).__init__(schema_data, reset)
+    def __init__(
+        self, set_studio_state=True, reset=True, schema_hub=None
+    ):
+        if schema_hub is None:
+            # Load system schemas
+            schema_hub = SchemasHub(SCHEMA_KEY_SYSTEM_SETTINGS)
+
+        super(SystemSettings, self).__init__(schema_hub, reset)
 
         if set_studio_state:
             self.set_studio_state()
+
+    def get_entity_from_path(self, path):
+        """Return system settings entity."""
+        path_parts = path.split("/")
+        first_part = path_parts[0]
+        output = self
+        if first_part == self.root_key:
+            path_parts.pop(0)
+
+        for path_part in path_parts:
+            output = output[path_part]
+        return output
 
     def _reset_values(self):
         default_value = get_default_settings()[SYSTEM_SETTINGS_KEY]
@@ -572,22 +612,24 @@ class ProjectSettings(RootEntity):
         schema_data (dict): Pass schema data to entity. This is for development
             and debugging purposes.
     """
+    root_key = PROJECT_SETTINGS_KEY
+
     def __init__(
         self,
         project_name=None,
         change_state=True,
         reset=True,
-        schema_data=None
+        schema_hub=None
     ):
         self._project_name = project_name
 
         self._system_settings_entity = None
 
-        if schema_data is None:
+        if schema_hub is None:
             # Load system schemas
-            schema_data = get_project_settings_schema()
+            schema_hub = SchemasHub(SCHEMA_KEY_PROJECT_SETTINGS)
 
-        super(ProjectSettings, self).__init__(schema_data, reset)
+        super(ProjectSettings, self).__init__(schema_hub, reset)
 
         if change_state:
             if self.project_name is None:
@@ -724,8 +766,19 @@ class ProjectSettings(RootEntity):
         project_settings = settings_value.get(PROJECT_SETTINGS_KEY) or {}
         project_anatomy = settings_value.get(PROJECT_ANATOMY_KEY) or {}
 
-        save_project_settings(self.project_name, project_settings)
-        save_project_anatomy(self.project_name, project_anatomy)
+        warnings = []
+        try:
+            save_project_settings(self.project_name, project_settings)
+        except SaveWarningExc as exc:
+            warnings.extend(exc.warnings)
+
+        try:
+            save_project_anatomy(self.project_name, project_anatomy)
+        except SaveWarningExc as exc:
+            warnings.extend(exc.warnings)
+
+        if warnings:
+            raise SaveWarningExc(warnings)
 
     def _validate_defaults_to_save(self, value):
         """Valiations of default values before save."""

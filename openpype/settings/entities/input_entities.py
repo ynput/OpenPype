@@ -1,5 +1,6 @@
 import re
 import copy
+import json
 from abc import abstractmethod
 
 from .base_entity import ItemEntity
@@ -32,7 +33,7 @@ class EndpointEntity(ItemEntity):
         super(EndpointEntity, self).__init__(*args, **kwargs)
 
         if (
-            not (self.group_item or self.is_group)
+            not (self.group_item is not None or self.is_group)
             and not (self.is_dynamic_item or self.is_in_dynamic_item)
         ):
             self.is_group = True
@@ -48,9 +49,18 @@ class EndpointEntity(ItemEntity):
 
         super(EndpointEntity, self).schema_validations()
 
+    def collect_dynamic_schema_entities(self, collector):
+        if self.is_dynamic_schema_node:
+            collector.add_entity(self)
+
     @abstractmethod
     def _settings_value(self):
         pass
+
+    def collect_static_entities_by_path(self):
+        if self.is_dynamic_item or self.is_in_dynamic_item:
+            return {}
+        return {self.path: self}
 
     def settings_value(self):
         if self._override_state is OverrideState.NOT_DEFINED:
@@ -68,7 +78,17 @@ class EndpointEntity(ItemEntity):
     def on_change(self):
         for callback in self.on_change_callbacks:
             callback()
+
+        if self.require_restart_on_change:
+            if self.require_restart:
+                self.root_item.add_item_require_restart(self)
+            else:
+                self.root_item.remove_item_require_restart(self)
         self.parent.on_child_change(self)
+
+    @property
+    def require_restart(self):
+        return self.has_unsaved_changes
 
     def update_default_value(self, value):
         value = self._check_update_value(value, "default")
@@ -105,7 +125,11 @@ class InputEntity(EndpointEntity):
 
     def schema_validations(self):
         # Input entity must have file parent.
-        if not self.file_item:
+        if (
+            not self.is_dynamic_schema_node
+            and not self.is_in_dynamic_schema_node
+            and self.file_item is None
+        ):
             raise EntitySchemaError(self, "Missing parent file entity.")
 
         super(InputEntity, self).schema_validations()
@@ -114,6 +138,10 @@ class InputEntity(EndpointEntity):
     def value(self):
         """Entity's value without metadata."""
         return self._current_value
+
+    @property
+    def require_restart(self):
+        return self._value_is_modified
 
     def _settings_value(self):
         return copy.deepcopy(self.value)
@@ -203,21 +231,28 @@ class InputEntity(EndpointEntity):
                 return True
         return False
 
-    def set_override_state(self, state):
+    def set_override_state(self, state, ignore_missing_defaults):
         # Trigger override state change of root if is not same
         if self.root_item.override_state is not state:
             self.root_item.set_override_state(state)
             return
 
         self._override_state = state
+        self._ignore_missing_defaults = ignore_missing_defaults
         # Ignore if is dynamic item and use default in that case
         if not self.is_dynamic_item and not self.is_in_dynamic_item:
             if state > OverrideState.DEFAULTS:
-                if not self.has_default_value:
+                if (
+                    not self.has_default_value
+                    and not ignore_missing_defaults
+                ):
                     raise DefaultsNotDefined(self)
 
             elif state > OverrideState.STUDIO:
-                if not self.had_studio_override:
+                if (
+                    not self.had_studio_override
+                    and not ignore_missing_defaults
+                ):
                     raise StudioDefaultsNotDefined(self)
 
         if state is OverrideState.STUDIO:
@@ -251,6 +286,9 @@ class InputEntity(EndpointEntity):
         self._current_value = copy.deepcopy(value)
 
     def _discard_changes(self, on_change_trigger=None):
+        if not self._can_discard_changes:
+            return
+
         self._value_is_modified = False
         if self._override_state >= OverrideState.PROJECT:
             self._has_project_override = self.had_project_override
@@ -286,6 +324,9 @@ class InputEntity(EndpointEntity):
         self.on_change()
 
     def _remove_from_studio_default(self, on_change_trigger):
+        if not self._can_remove_from_studio_default:
+            return
+
         value = self._default_value
         if value is NOT_SET:
             value = self.value_on_not_set
@@ -301,10 +342,7 @@ class InputEntity(EndpointEntity):
         self.on_change()
 
     def _remove_from_project_override(self, on_change_trigger):
-        if self._override_state is not OverrideState.PROJECT:
-            return
-
-        if not self._has_project_override:
+        if not self._can_remove_from_project_override:
             return
 
         self._has_project_override = False
@@ -338,6 +376,14 @@ class NumberEntity(InputEntity):
             value_on_not_set = int(value_on_not_set)
         self.valid_value_types = valid_value_types
         self.value_on_not_set = value_on_not_set
+
+        # UI specific attributes
+        self.show_slider = self.schema_data.get("show_slider", False)
+        steps = self.schema_data.get("steps", None)
+        # Make sure that steps are not set to `0`
+        if steps == 0:
+            steps = None
+        self.steps = steps
 
     def _convert_to_valid_type(self, value):
         if isinstance(value, str):
@@ -376,7 +422,10 @@ class BoolEntity(InputEntity):
 
     def _item_initalization(self):
         self.valid_value_types = (bool, )
-        self.value_on_not_set = True
+        value_on_not_set = self.convert_to_valid_type(
+            self.schema_data.get("default", True)
+        )
+        self.value_on_not_set = value_on_not_set
 
 
 class TextEntity(InputEntity):
@@ -404,12 +453,16 @@ class PathInput(InputEntity):
         self.valid_value_types = (STRING_TYPE, )
         self.value_on_not_set = ""
 
+        # GUI attributes
+        self.placeholder_text = self.schema_data.get("placeholder")
+
 
 class RawJsonEntity(InputEntity):
     schema_types = ["raw-json"]
 
     def _item_initalization(self):
         # Schema must define if valid value is dict or list
+        store_as_string = self.schema_data.get("store_as_string", False)
         is_list = self.schema_data.get("is_list", False)
         if is_list:
             valid_value_types = (list, )
@@ -417,6 +470,8 @@ class RawJsonEntity(InputEntity):
         else:
             valid_value_types = (dict, )
             value_on_not_set = {}
+
+        self.store_as_string = store_as_string
 
         self._is_list = is_list
         self.valid_value_types = valid_value_types
@@ -461,6 +516,23 @@ class RawJsonEntity(InputEntity):
             result = self.metadata != self._metadata_for_current_state()
         return result
 
+    def schema_validations(self):
+        if self.store_as_string and self.is_env_group:
+            reason = (
+                "RawJson entity can't store environment group metadata"
+                " as string."
+            )
+            raise EntitySchemaError(self, reason)
+        super(RawJsonEntity, self).schema_validations()
+
+    def _convert_to_valid_type(self, value):
+        if isinstance(value, STRING_TYPE):
+            try:
+                return json.loads(value)
+            except Exception:
+                pass
+        return super(RawJsonEntity, self)._convert_to_valid_type(value)
+
     def _metadata_for_current_state(self):
         if (
             self._override_state is OverrideState.PROJECT
@@ -480,6 +552,9 @@ class RawJsonEntity(InputEntity):
         value = super(RawJsonEntity, self)._settings_value()
         if self.is_env_group and isinstance(value, dict):
             value.update(self.metadata)
+
+        if self.store_as_string:
+            return json.dumps(value)
         return value
 
     def _prepare_value(self, value):

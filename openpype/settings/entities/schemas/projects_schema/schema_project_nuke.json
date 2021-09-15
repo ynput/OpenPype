@@ -43,16 +43,6 @@
                             "label": "Build Workfile"
                         }
                     ]
-                },
-                {
-                    "type": "boolean",
-                    "key": "open_workfile_at_start",
-                    "label": "Open Workfile window at start of a Nuke session"
-                },
-                {
-                    "type": "boolean",
-                    "key": "create_initial_workfile",
-                    "label": "Create initial workfile version if none available"
                 }
             ]
         },
@@ -73,6 +63,14 @@
                             "type": "text",
                             "key": "fpath_template",
                             "label": "Path template"
+                        },
+                        {
+                            "type": "list",
+                            "key": "defaults",
+                            "label": "Subset name defaults",
+                            "object_type": {
+                                "type": "text"
+                            }
                         }
                     ]
                 },
@@ -87,6 +85,19 @@
                             "type": "text",
                             "key": "fpath_template",
                             "label": "Path template"
+                        },
+                        {
+                            "type": "boolean",
+                            "key": "use_range_limit",
+                            "label": "Use Frame range limit by default"
+                        },
+                        {
+                            "type": "list",
+                            "key": "defaults",
+                            "label": "Subset name defaults",
+                            "object_type": {
+                                "type": "text"
+                            }
                         }
                     ]
                 }
@@ -103,8 +114,8 @@
             "template_data": []
         },
         {
-            "type": "schema",
-            "name": "schema_workfile_build"
+            "type": "schema_template",
+            "name": "template_workfile_options"
         },
         {
             "type": "schema",

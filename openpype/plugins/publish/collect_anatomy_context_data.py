@@ -62,15 +62,9 @@ class CollectAnatomyContextData(pyblish.api.ContextPlugin):
             "asset": asset_entity["name"],
             "hierarchy": hierarchy.replace("\\", "/"),
             "task": task_name,
-            "username": context.data["user"]
+            "username": context.data["user"],
+            "app": context.data["hostName"]
         }
-
-        app_manager = ApplicationManager()
-        app_name = os.environ.get("AVALON_APP_NAME")
-        if app_name:
-            app = app_manager.applications.get(app_name)
-            if app:
-                context_data["app"] = app.host_name
 
         datetime_data = context.data.get("datetimeData") or {}
         context_data.update(datetime_data)

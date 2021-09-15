@@ -9,7 +9,7 @@ class CollectHoudiniCurrentFile(pyblish.api.ContextPlugin):
 
     order = pyblish.api.CollectorOrder - 0.5
     label = "Houdini Current File"
-    hosts = ['houdini']
+    hosts = ["houdini"]
 
     def process(self, context):
         """Inject the current working file"""
@@ -27,8 +27,10 @@ class CollectHoudiniCurrentFile(pyblish.api.ContextPlugin):
             # could have existed already. We will allow it if the file exists,
             # but show a warning for this edge case to clarify the potential
             # false positive.
-            self.log.warning("Current file is 'untitled.hip' and we are "
-                             "unable to detect whether the current scene is "
-                             "saved correctly.")
+            self.log.warning(
+                "Current file is 'untitled.hip' and we are "
+                "unable to detect whether the current scene is "
+                "saved correctly."
+            )
 
-        context.data['currentFile'] = filepath
+        context.data["currentFile"] = filepath

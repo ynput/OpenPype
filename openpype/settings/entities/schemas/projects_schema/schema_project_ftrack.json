@@ -14,13 +14,7 @@
                     "type": "dict",
                     "key": "sync_to_avalon",
                     "label": "Sync to avalon",
-                    "checkbox_key": "enabled",
                     "children": [
-                        {
-                            "type": "boolean",
-                            "key": "enabled",
-                            "label": "Enabled"
-                        },
                         {
                             "type": "label",
                             "label": "Allow name and hierarchy change only if following statuses are on all children tasks"
@@ -447,6 +441,18 @@
                             "key": "role_list",
                             "label": "Roles",
                             "object_type": "text"
+                        },
+                        {
+                          "type": "separator"
+                        },
+                        {
+                          "type": "label",
+                          "label": "Check \"Create project structure\" by default"
+                        },
+                        {
+                            "type": "boolean",
+                            "key": "create_project_structure_checked",
+                            "label": "Checked"
                         }
                     ]
                 },
@@ -609,8 +615,83 @@
             "collapsible": true,
             "key": "publish",
             "label": "Publish plugins",
-            "is_file": true,
             "children": [
+                {
+                    "type": "dict",
+                    "collapsible": true,
+                    "checkbox_key": "enabled",
+                    "key": "CollectFtrackFamily",
+                    "label": "Collect Ftrack Family",
+                    "is_group": true,
+                    "children": [
+                        {
+                            "type": "boolean",
+                            "key": "enabled",
+                            "label": "Enabled"
+                        },
+                        {
+                            "type": "list",
+                            "collapsible": true,
+                            "key": "profiles",
+                            "label": "Profiles",
+                            "use_label_wrap": true,
+                            "object_type": {
+                                "type": "dict",
+                                "children": [
+                                    {
+                                        "key": "hosts",
+                                        "label": "Host names",
+                                        "type": "list",
+                                        "object_type": "text"
+                                    },
+                                    {
+                                        "key": "families",
+                                        "label": "Families",
+                                        "type": "list",
+                                        "object_type": "text"
+                                    },
+                                    {
+                                        "key": "tasks",
+                                        "label": "Task names",
+                                        "type": "list",
+                                        "object_type": "text"
+                                    },
+                                    {
+                                        "type": "separator"
+                                    },
+                                    {
+                                        "key": "add_ftrack_family",
+                                        "label": "Add Ftrack Family",
+                                        "type": "boolean"
+                                    },
+                                    {
+                                        "type": "list",
+                                        "collapsible": true,
+                                        "key": "advanced_filtering",
+                                        "label": "Advanced adding if additional families present",
+                                        "use_label_wrap": true,
+                                        "object_type": {
+                                            "type": "dict",
+                                            "children": [
+                                                {
+                                                    "key": "families",
+                                                    "label": "Additional Families",
+                                                    "type": "list",
+                                                    "object_type": "text"
+                                                },
+                                                {
+                                                    "key": "add_ftrack_family",
+                                                    "label": "Add Ftrack Family",
+                                                    "type": "boolean"
+                                                }
+                                            ]
+                                        }
+                                    }
+                                ]
+                            }
+                        }
+                    ]
+                },
                 {
                     "type": "dict",
                     "collapsible": true,

@@ -1,21 +1,381 @@
 # -*- coding: utf-8 -*-
 """Base class for Pype Modules."""
+import os
+import sys
+import json
 import time
 import inspect
 import logging
+import platform
+import threading
 import collections
 from uuid import uuid4
 from abc import ABCMeta, abstractmethod
 import six
 
 import openpype
-from openpype.settings import get_system_settings
+from openpype.settings import (
+    get_system_settings,
+    SYSTEM_SETTINGS_KEY,
+    PROJECT_SETTINGS_KEY,
+    SCHEMA_KEY_SYSTEM_SETTINGS,
+    SCHEMA_KEY_PROJECT_SETTINGS
+)
+
+from openpype.settings.lib import (
+    get_studio_system_settings_overrides,
+    load_json_file
+)
 from openpype.lib import PypeLogger
-from openpype import resources
+
+
+# Inherit from `object` for Python 2 hosts
+class _ModuleClass(object):
+    """Fake module class for storing OpenPype modules.
+
+    Object of this class can be stored to `sys.modules` and used for storing
+    dynamically imported modules.
+    """
+    def __init__(self, name):
+        # Call setattr on super class
+        super(_ModuleClass, self).__setattr__("name", name)
+
+        # Where modules and interfaces are stored
+        super(_ModuleClass, self).__setattr__("__attributes__", dict())
+        super(_ModuleClass, self).__setattr__("__defaults__", set())
+
+        super(_ModuleClass, self).__setattr__("_log", None)
+
+    def __getattr__(self, attr_name):
+        if attr_name not in self.__attributes__:
+            if attr_name in ("__path__"):
+                return None
+            raise ImportError("No module named {}.{}".format(
+                self.name, attr_name
+            ))
+        return self.__attributes__[attr_name]
+
+    def __iter__(self):
+        for module in self.values():
+            yield module
+
+    def __setattr__(self, attr_name, value):
+        if attr_name in self.__attributes__:
+            self.log.warning(
+                "Duplicated name \"{}\" in {}. Overriding.".format(
+                    self.name, attr_name
+                )
+            )
+        self.__attributes__[attr_name] = value
+
+    def __setitem__(self, key, value):
+        self.__setattr__(key, value)
+
+    def __getitem__(self, key):
+        return getattr(self, key)
+
+    @property
+    def log(self):
+        if self._log is None:
+            super(_ModuleClass, self).__setattr__(
+                "_log", PypeLogger.get_logger(self.name)
+            )
+        return self._log
+
+    def get(self, key, default=None):
+        return self.__attributes__.get(key, default)
+
+    def keys(self):
+        return self.__attributes__.keys()
+
+    def values(self):
+        return self.__attributes__.values()
+
+    def items(self):
+        return self.__attributes__.items()
+
+
+class _InterfacesClass(_ModuleClass):
+    """Fake module class for storing OpenPype interfaces.
+
+    MissingInterface object is returned if interfaces does not exists.
+    - this is because interfaces must be available even if are missing
+        implementation
+    """
+    def __getattr__(self, attr_name):
+        if attr_name not in self.__attributes__:
+            # Fake Interface if is not missing
+            self.__attributes__[attr_name] = type(
+                attr_name,
+                (MissingInteface, ),
+                {}
+            )
+
+        return self.__attributes__[attr_name]
+
+
+class _LoadCache:
+    interfaces_lock = threading.Lock()
+    modules_lock = threading.Lock()
+    interfaces_loaded = False
+    modules_loaded = False
+
+
+def get_default_modules_dir():
+    """Path to default OpenPype modules."""
+    current_dir = os.path.abspath(os.path.dirname(__file__))
+
+    return os.path.join(current_dir, "default_modules")
+
+
+def get_dynamic_modules_dirs():
+    """Possible paths to OpenPype Addons of Modules.
+
+    Paths are loaded from studio settings under:
+        `modules -> addon_paths -> {platform name}`
+
+    Path may contain environment variable as a formatting string.
+
+    They are not validated or checked their existence.
+
+    Returns:
+        list: Paths loaded from studio overrides.
+    """
+    output = []
+    value = get_studio_system_settings_overrides()
+    for key in ("modules", "addon_paths", platform.system().lower()):
+        if key not in value:
+            return output
+        value = value[key]
+
+    for path in value:
+        if not path:
+            continue
+
+        try:
+            path = path.format(**os.environ)
+        except Exception:
+            pass
+        output.append(path)
+    return output
+
+
+def get_module_dirs():
+    """List of paths where OpenPype modules can be found."""
+    _dirpaths = []
+    _dirpaths.append(get_default_modules_dir())
+    _dirpaths.extend(get_dynamic_modules_dirs())
+
+    dirpaths = []
+    for path in _dirpaths:
+        if not path:
+            continue
+        normalized = os.path.normpath(path)
+        if normalized not in dirpaths:
+            dirpaths.append(normalized)
+    return dirpaths
+
+
+def load_interfaces(force=False):
+    """Load interfaces from modules into `openpype_interfaces`.
+
+    Only classes which inherit from `OpenPypeInterface` are loaded and stored.
+
+    Args:
+        force(bool): Force to load interfaces even if are already loaded.
+            This won't update already loaded and used (cached) interfaces.
+    """
+
+    if _LoadCache.interfaces_loaded and not force:
+        return
+
+    if not _LoadCache.interfaces_lock.locked():
+        with _LoadCache.interfaces_lock:
+            _load_interfaces()
+            _LoadCache.interfaces_loaded = True
+    else:
+        # If lock is locked wait until is finished
+        while _LoadCache.interfaces_lock.locked():
+            time.sleep(0.1)
+
+
+def _load_interfaces():
+    # Key under which will be modules imported in `sys.modules`
+    from openpype.lib import import_filepath
+
+    modules_key = "openpype_interfaces"
+
+    sys.modules[modules_key] = openpype_interfaces = (
+        _InterfacesClass(modules_key)
+    )
+
+    log = PypeLogger.get_logger("InterfacesLoader")
+
+    dirpaths = get_module_dirs()
+
+    interface_paths = []
+    interface_paths.append(
+        os.path.join(get_default_modules_dir(), "interfaces.py")
+    )
+    for dirpath in dirpaths:
+        if not os.path.exists(dirpath):
+            continue
+
+        for filename in os.listdir(dirpath):
+            if filename in ("__pycache__", ):
+                continue
+
+            full_path = os.path.join(dirpath, filename)
+            if not os.path.isdir(full_path):
+                continue
+
+            interfaces_path = os.path.join(full_path, "interfaces.py")
+            if os.path.exists(interfaces_path):
+                interface_paths.append(interfaces_path)
+
+    for full_path in interface_paths:
+        if not os.path.exists(full_path):
+            continue
+
+        try:
+            # Prepare module object where content of file will be parsed
+            module = import_filepath(full_path)
+
+        except Exception:
+            log.warning(
+                "Failed to load path: \"{0}\"".format(full_path),
+                exc_info=True
+            )
+            continue
+
+        for attr_name in dir(module):
+            attr = getattr(module, attr_name)
+            if (
+                not inspect.isclass(attr)
+                or attr is OpenPypeInterface
+                or not issubclass(attr, OpenPypeInterface)
+            ):
+                continue
+            setattr(openpype_interfaces, attr_name, attr)
+
+
+def load_modules(force=False):
+    """Load OpenPype modules as python modules.
+
+    Modules does not load only classes (like in Interfaces) because there must
+    be ability to use inner code of module and be able to import it from one
+    defined place.
+
+    With this it is possible to import module's content from predefined module.
+
+    Function makes sure that `load_interfaces` was triggered. Modules import
+    has specific order which can't be changed.
+
+    Args:
+        force(bool): Force to load modules even if are already loaded.
+            This won't update already loaded and used (cached) modules.
+    """
+
+    if _LoadCache.modules_loaded and not force:
+        return
+
+    # First load interfaces
+    # - modules must not be imported before interfaces
+    load_interfaces(force)
+
+    if not _LoadCache.modules_lock.locked():
+        with _LoadCache.modules_lock:
+            _load_modules()
+            _LoadCache.modules_loaded = True
+    else:
+        # If lock is locked wait until is finished
+        while _LoadCache.modules_lock.locked():
+            time.sleep(0.1)
+
+
+def _load_modules():
+    # Import helper functions from lib
+    from openpype.lib import (
+        import_filepath,
+        import_module_from_dirpath
+    )
+
+    # Key under which will be modules imported in `sys.modules`
+    modules_key = "openpype_modules"
+
+    # Change `sys.modules`
+    sys.modules[modules_key] = openpype_modules = _ModuleClass(modules_key)
+
+    log = PypeLogger.get_logger("ModulesLoader")
+
+    # Look for OpenPype modules in paths defined with `get_module_dirs`
+    dirpaths = get_module_dirs()
+
+    for dirpath in dirpaths:
+        if not os.path.exists(dirpath):
+            log.warning((
+                "Could not find path when loading OpenPype modules \"{}\""
+            ).format(dirpath))
+            continue
+
+        for filename in os.listdir(dirpath):
+            # Ignore filenames
+            if filename in ("__pycache__", ):
+                continue
+
+            fullpath = os.path.join(dirpath, filename)
+            basename, ext = os.path.splitext(filename)
+
+            # TODO add more logic how to define if folder is module or not
+            # - check manifest and content of manifest
+            try:
+                if os.path.isdir(fullpath):
+                    import_module_from_dirpath(dirpath, filename, modules_key)
+
+                elif ext in (".py", ):
+                    module = import_filepath(fullpath)
+                    setattr(openpype_modules, basename, module)
+
+            except Exception:
+                log.error(
+                    "Failed to import '{}'.".format(fullpath),
+                    exc_info=True
+                )
+
+
+class _OpenPypeInterfaceMeta(ABCMeta):
+    """OpenPypeInterface meta class to print proper string."""
+    def __str__(self):
+        return "<'OpenPypeInterface.{}'>".format(self.__name__)
+
+    def __repr__(self):
+        return str(self)
+
+
+@six.add_metaclass(_OpenPypeInterfaceMeta)
+class OpenPypeInterface:
+    """Base class of Interface that can be used as Mixin with abstract parts.
+
+    This is way how OpenPype module or addon can tell that has implementation
+    for specific part or for other module/addon.
+
+    Child classes of OpenPypeInterface may be used as mixin in different
+    OpenPype modules which means they have to have implemented methods defined
+    in the interface. By default interface does not have any abstract parts.
+    """
+    pass
+
+
+class MissingInteface(OpenPypeInterface):
+    """Class representing missing interface class.
+
+    Used when interface is not available from currently registered paths.
+    """
+    pass
 
 
 @six.add_metaclass(ABCMeta)
-class PypeModule:
+class OpenPypeModule:
     """Base class of pype module.
 
     Attributes:
@@ -38,7 +398,7 @@ class PypeModule:
     def __init__(self, manager, settings):
         self.manager = manager
 
-        self.log = PypeLogger().get_logger(self.name)
+        self.log = PypeLogger.get_logger(self.name)
 
         self.initialize(settings)
 
@@ -70,218 +430,17 @@ class PypeModule:
         return {}
 
 
-@six.add_metaclass(ABCMeta)
-class IPluginPaths:
-    """Module has plugin paths to return.
+class OpenPypeAddOn(OpenPypeModule):
+    # Enable Addon by default
+    enabled = True
 
-    Expected result is dictionary with keys "publish", "create", "load" or
-    "actions" and values as list or string.
-    {
-        "publish": ["path/to/publish_plugins"]
-    }
-    """
-    # TODO validation of an output
-    @abstractmethod
-    def get_plugin_paths(self):
+    def initialize(self, module_settings):
+        """Initialization is not be required for most of addons."""
         pass
 
-
-@six.add_metaclass(ABCMeta)
-class ILaunchHookPaths:
-    """Module has launch hook paths to return.
-
-    Expected result is list of paths.
-    ["path/to/launch_hooks_dir"]
-    """
-
-    @abstractmethod
-    def get_launch_hook_paths(self):
+    def connect_with_modules(self, enabled_modules):
+        """Do not require to implement connection with modules for addon."""
         pass
-
-
-@six.add_metaclass(ABCMeta)
-class ITrayModule:
-    """Module has special procedures when used in Pype Tray.
-
-    IMPORTANT:
-    The module still must be usable if is not used in tray even if
-    would do nothing.
-    """
-    tray_initialized = False
-    _tray_manager = None
-
-    @abstractmethod
-    def tray_init(self):
-        """Initialization part of tray implementation.
-
-        Triggered between `initialization` and `connect_with_modules`.
-
-        This is where GUIs should be loaded or tray specific parts should be
-        prepared.
-        """
-        pass
-
-    @abstractmethod
-    def tray_menu(self, tray_menu):
-        """Add module's action to tray menu."""
-        pass
-
-    @abstractmethod
-    def tray_start(self):
-        """Start procedure in Pype tray."""
-        pass
-
-    @abstractmethod
-    def tray_exit(self):
-        """Cleanup method which is executed on tray shutdown.
-
-        This is place where all threads should be shut.
-        """
-        pass
-
-    def show_tray_message(self, title, message, icon=None, msecs=None):
-        """Show tray message.
-
-        Args:
-            title (str): Title of message.
-            message (str): Content of message.
-            icon (QSystemTrayIcon.MessageIcon): Message's icon. Default is
-                Information icon, may differ by Qt version.
-            msecs (int): Duration of message visibility in miliseconds.
-                Default is 10000 msecs, may differ by Qt version.
-        """
-        if self._tray_manager:
-            self._tray_manager.show_tray_message(title, message, icon, msecs)
-
-
-class ITrayAction(ITrayModule):
-    """Implementation of Tray action.
-
-    Add action to tray menu which will trigger `on_action_trigger`.
-    It is expected to be used for showing tools.
-
-    Methods `tray_start`, `tray_exit` and `connect_with_modules` are overriden
-    as it's not expected that action will use them. But it is possible if
-    necessary.
-    """
-
-    @property
-    @abstractmethod
-    def label(self):
-        """Service label showed in menu."""
-        pass
-
-    @abstractmethod
-    def on_action_trigger(self):
-        """What happens on actions click."""
-        pass
-
-    def tray_menu(self, tray_menu):
-        from Qt import QtWidgets
-        action = QtWidgets.QAction(self.label, tray_menu)
-        action.triggered.connect(self.on_action_trigger)
-        tray_menu.addAction(action)
-
-    def tray_start(self):
-        return
-
-    def tray_exit(self):
-        return
-
-
-class ITrayService(ITrayModule):
-    # Module's property
-    menu_action = None
-
-    # Class properties
-    _services_submenu = None
-    _icon_failed = None
-    _icon_running = None
-    _icon_idle = None
-
-    @property
-    @abstractmethod
-    def label(self):
-        """Service label showed in menu."""
-        pass
-
-    # TODO be able to get any sort of information to show/print
-    # @abstractmethod
-    # def get_service_info(self):
-    #     pass
-
-    @staticmethod
-    def services_submenu(tray_menu):
-        if ITrayService._services_submenu is None:
-            from Qt import QtWidgets
-            services_submenu = QtWidgets.QMenu("Services", tray_menu)
-            services_submenu.menuAction().setVisible(False)
-            ITrayService._services_submenu = services_submenu
-        return ITrayService._services_submenu
-
-    @staticmethod
-    def add_service_action(action):
-        ITrayService._services_submenu.addAction(action)
-        if not ITrayService._services_submenu.menuAction().isVisible():
-            ITrayService._services_submenu.menuAction().setVisible(True)
-
-    @staticmethod
-    def _load_service_icons():
-        from Qt import QtGui
-        ITrayService._failed_icon = QtGui.QIcon(
-            resources.get_resource("icons", "circle_red.png")
-        )
-        ITrayService._icon_running = QtGui.QIcon(
-            resources.get_resource("icons", "circle_green.png")
-        )
-        ITrayService._icon_idle = QtGui.QIcon(
-            resources.get_resource("icons", "circle_orange.png")
-        )
-
-    @staticmethod
-    def get_icon_running():
-        if ITrayService._icon_running is None:
-            ITrayService._load_service_icons()
-        return ITrayService._icon_running
-
-    @staticmethod
-    def get_icon_idle():
-        if ITrayService._icon_idle is None:
-            ITrayService._load_service_icons()
-        return ITrayService._icon_idle
-
-    @staticmethod
-    def get_icon_failed():
-        if ITrayService._failed_icon is None:
-            ITrayService._load_service_icons()
-        return ITrayService._failed_icon
-
-    def tray_menu(self, tray_menu):
-        from Qt import QtWidgets
-        action = QtWidgets.QAction(
-            self.label,
-            self.services_submenu(tray_menu)
-        )
-        self.menu_action = action
-
-        self.add_service_action(action)
-
-        self.set_service_running_icon()
-
-    def set_service_running_icon(self):
-        """Change icon of an QAction to green circle."""
-        if self.menu_action:
-            self.menu_action.setIcon(self.get_icon_running())
-
-    def set_service_failed_icon(self):
-        """Change icon of an QAction to red circle."""
-        if self.menu_action:
-            self.menu_action.setIcon(self.get_icon_failed())
-
-    def set_service_idle_icon(self):
-        """Change icon of an QAction to orange circle."""
-        if self.menu_action:
-            self.menu_action.setIcon(self.get_icon_idle())
 
 
 class ModulesManager:
@@ -310,6 +469,11 @@ class ModulesManager:
 
     def initialize_modules(self):
         """Import and initialize modules."""
+        # Make sure modules are loaded
+        load_modules()
+
+        import openpype_modules
+
         self.log.debug("*** Pype modules initialization.")
         # Prepare settings for modules
         system_settings = getattr(self, "_system_settings", None)
@@ -321,33 +485,44 @@ class ModulesManager:
         time_start = time.time()
         prev_start_time = time_start
 
-        # Go through globals in `pype.modules`
-        for name in dir(openpype.modules):
-            modules_item = getattr(openpype.modules, name, None)
-            # Filter globals that are not classes which inherit from PypeModule
-            if (
-                not inspect.isclass(modules_item)
-                or modules_item is openpype.modules.PypeModule
-                or not issubclass(modules_item, openpype.modules.PypeModule)
-            ):
-                continue
+        module_classes = []
+        for module in openpype_modules:
+            # Go through globals in `pype.modules`
+            for name in dir(module):
+                modules_item = getattr(module, name, None)
+                # Filter globals that are not classes which inherit from
+                #   OpenPypeModule
+                if (
+                    not inspect.isclass(modules_item)
+                    or modules_item is OpenPypeModule
+                    or modules_item is OpenPypeAddOn
+                    or not issubclass(modules_item, OpenPypeModule)
+                ):
+                    continue
 
-            # Check if class is abstract (Developing purpose)
-            if inspect.isabstract(modules_item):
-                # Find missing implementations by convetion on `abc` module
-                not_implemented = []
-                for attr_name in dir(modules_item):
-                    attr = getattr(modules_item, attr_name, None)
-                    if attr and getattr(attr, "__isabstractmethod__", None):
-                        not_implemented.append(attr_name)
+                # Check if class is abstract (Developing purpose)
+                if inspect.isabstract(modules_item):
+                    # Find missing implementations by convetion on `abc` module
+                    not_implemented = []
+                    for attr_name in dir(modules_item):
+                        attr = getattr(modules_item, attr_name, None)
+                        abs_method = getattr(
+                            attr, "__isabstractmethod__", None
+                        )
+                        if attr and abs_method:
+                            not_implemented.append(attr_name)
 
-                # Log missing implementations
-                self.log.warning((
-                    "Skipping abstract Class: {}. Missing implementations: {}"
-                ).format(name, ", ".join(not_implemented)))
-                continue
+                    # Log missing implementations
+                    self.log.warning((
+                        "Skipping abstract Class: {}."
+                        " Missing implementations: {}"
+                    ).format(name, ", ".join(not_implemented)))
+                    continue
+                module_classes.append(modules_item)
 
+        for modules_item in module_classes:
             try:
+                name = modules_item.__name__
                 # Try initialize module
                 module = modules_item(self, modules_settings)
                 # Store initialized object
@@ -445,6 +620,8 @@ class ModulesManager:
                 and "actions" each containing list of paths.
         """
         # Output structure
+        from openpype_interfaces import IPluginPaths
+
         output = {
             "publish": [],
             "create": [],
@@ -497,6 +674,8 @@ class ModulesManager:
         Returns:
             list: Paths to launch hook directories.
         """
+        from openpype_interfaces import ILaunchHookPaths
+
         str_type = type("")
         expected_types = (list, tuple, set)
 
@@ -658,13 +837,36 @@ class TrayModulesManager(ModulesManager):
     )
 
     def __init__(self):
-        self.log = PypeLogger().get_logger(self.__class__.__name__)
+        self.log = PypeLogger.get_logger(self.__class__.__name__)
 
         self.modules = []
         self.modules_by_id = {}
         self.modules_by_name = {}
         self._report = {}
+
         self.tray_manager = None
+
+        self.doubleclick_callbacks = {}
+        self.doubleclick_callback = None
+
+    def add_doubleclick_callback(self, module, callback):
+        """Register doubleclick callbacks on tray icon.
+
+        Currently there is no way how to determine which is launched. Name of
+        callback can be defined with `doubleclick_callback` attribute.
+
+        Missing feature how to define default callback.
+        """
+        callback_name = "_".join([module.name, callback.__name__])
+        if callback_name not in self.doubleclick_callbacks:
+            self.doubleclick_callbacks[callback_name] = callback
+            if self.doubleclick_callback is None:
+                self.doubleclick_callback = callback_name
+            return
+
+        self.log.warning((
+            "Callback with name \"{}\" is already registered."
+        ).format(callback_name))
 
     def initialize(self, tray_manager, tray_menu):
         self.tray_manager = tray_manager
@@ -674,11 +876,17 @@ class TrayModulesManager(ModulesManager):
         self.tray_menu(tray_menu)
 
     def get_enabled_tray_modules(self):
+        from openpype_interfaces import ITrayModule
+
         output = []
         for module in self.modules:
             if module.enabled and isinstance(module, ITrayModule):
                 output.append(module)
         return output
+
+    def restart_tray(self):
+        if self.tray_manager:
+            self.tray_manager.restart()
 
     def tray_init(self):
         report = {}
@@ -745,6 +953,8 @@ class TrayModulesManager(ModulesManager):
             self._report["Tray menu"] = report
 
     def start_modules(self):
+        from openpype_interfaces import ITrayService
+
         report = {}
         time_start = time.time()
         prev_start_time = time_start
@@ -783,3 +993,424 @@ class TrayModulesManager(ModulesManager):
                         ),
                         exc_info=True
                     )
+
+
+def get_module_settings_defs():
+    """Check loaded addons/modules for existence of thei settings definition.
+
+    Check if OpenPype addon/module as python module has class that inherit
+    from `ModuleSettingsDef` in python module variables (imported
+    in `__init__py`).
+
+    Returns:
+        list: All valid and not abstract settings definitions from imported
+            openpype addons and modules.
+    """
+    # Make sure modules are loaded
+    load_modules()
+
+    import openpype_modules
+
+    settings_defs = []
+
+    log = PypeLogger.get_logger("ModuleSettingsLoad")
+
+    for raw_module in openpype_modules:
+        for attr_name in dir(raw_module):
+            attr = getattr(raw_module, attr_name)
+            if (
+                not inspect.isclass(attr)
+                or attr is ModuleSettingsDef
+                or not issubclass(attr, ModuleSettingsDef)
+            ):
+                continue
+
+            if inspect.isabstract(attr):
+                # Find missing implementations by convetion on `abc` module
+                not_implemented = []
+                for attr_name in dir(attr):
+                    attr = getattr(attr, attr_name, None)
+                    abs_method = getattr(
+                        attr, "__isabstractmethod__", None
+                    )
+                    if attr and abs_method:
+                        not_implemented.append(attr_name)
+
+                # Log missing implementations
+                log.warning((
+                    "Skipping abstract Class: {} in module {}."
+                    " Missing implementations: {}"
+                ).format(
+                    attr_name, raw_module.__name__, ", ".join(not_implemented)
+                ))
+                continue
+
+            settings_defs.append(attr)
+
+    return settings_defs
+
+
+@six.add_metaclass(ABCMeta)
+class BaseModuleSettingsDef:
+    """Definition of settings for OpenPype module or AddOn."""
+    _id = None
+
+    @property
+    def id(self):
+        """ID created on initialization.
+
+        ID should be per created object. Helps to store objects.
+        """
+        if self._id is None:
+            self._id = uuid4()
+        return self._id
+
+    @abstractmethod
+    def get_settings_schemas(self, schema_type):
+        """Setting schemas for passed schema type.
+
+        These are main schemas by dynamic schema keys. If they're using
+        sub schemas or templates they should be loaded with
+        `get_dynamic_schemas`.
+
+        Returns:
+            dict: Schema by `dynamic_schema` keys.
+        """
+        pass
+
+    @abstractmethod
+    def get_dynamic_schemas(self, schema_type):
+        """Settings schemas and templates that can be used anywhere.
+
+        It is recommended to add prefix specific for addon/module to keys
+        (e.g. "my_addon/real_schema_name").
+
+        Returns:
+            dict: Schemas and templates by their keys.
+        """
+        pass
+
+    @abstractmethod
+    def get_defaults(self, top_key):
+        """Default values for passed top key.
+
+        Top keys are (currently) "system_settings" or "project_settings".
+
+        Should return exactly what was passed with `save_defaults`.
+
+        Returns:
+            dict: Default values by path to first key in OpenPype defaults.
+        """
+        pass
+
+    @abstractmethod
+    def save_defaults(self, top_key, data):
+        """Save default values for passed top key.
+
+        Top keys are (currently) "system_settings" or "project_settings".
+
+        Passed data are by path to first key defined in main schemas.
+        """
+        pass
+
+
+class ModuleSettingsDef(BaseModuleSettingsDef):
+    """Settings definiton with separated system and procect settings parts.
+
+    Reduce conditions that must be checked and adds predefined methods for
+    each case.
+    """
+    def get_defaults(self, top_key):
+        """Split method into 2 methods by top key."""
+        if top_key == SYSTEM_SETTINGS_KEY:
+            return self.get_default_system_settings() or {}
+        elif top_key == PROJECT_SETTINGS_KEY:
+            return self.get_default_project_settings() or {}
+        return {}
+
+    def save_defaults(self, top_key, data):
+        """Split method into 2 methods by top key."""
+        if top_key == SYSTEM_SETTINGS_KEY:
+            self.save_system_defaults(data)
+        elif top_key == PROJECT_SETTINGS_KEY:
+            self.save_project_defaults(data)
+
+    def get_settings_schemas(self, schema_type):
+        """Split method into 2 methods by schema type."""
+        if schema_type == SCHEMA_KEY_SYSTEM_SETTINGS:
+            return self.get_system_settings_schemas() or {}
+        elif schema_type == SCHEMA_KEY_PROJECT_SETTINGS:
+            return self.get_project_settings_schemas() or {}
+        return {}
+
+    def get_dynamic_schemas(self, schema_type):
+        """Split method into 2 methods by schema type."""
+        if schema_type == SCHEMA_KEY_SYSTEM_SETTINGS:
+            return self.get_system_dynamic_schemas() or {}
+        elif schema_type == SCHEMA_KEY_PROJECT_SETTINGS:
+            return self.get_project_dynamic_schemas() or {}
+        return {}
+
+    @abstractmethod
+    def get_system_settings_schemas(self):
+        """Schemas and templates usable in system settings schemas.
+
+        Returns:
+            dict: Schemas and templates by it's names. Names must be unique
+                across whole OpenPype.
+        """
+        pass
+
+    @abstractmethod
+    def get_project_settings_schemas(self):
+        """Schemas and templates usable in project settings schemas.
+
+        Returns:
+            dict: Schemas and templates by it's names. Names must be unique
+                across whole OpenPype.
+        """
+        pass
+
+    @abstractmethod
+    def get_system_dynamic_schemas(self):
+        """System schemas by dynamic schema name.
+
+        If dynamic schema name is not available in then schema will not used.
+
+        Returns:
+            dict: Schemas or list of schemas by dynamic schema name.
+        """
+        pass
+
+    @abstractmethod
+    def get_project_dynamic_schemas(self):
+        """Project schemas by dynamic schema name.
+
+        If dynamic schema name is not available in then schema will not used.
+
+        Returns:
+            dict: Schemas or list of schemas by dynamic schema name.
+        """
+        pass
+
+    @abstractmethod
+    def get_default_system_settings(self):
+        """Default system settings values.
+
+        Returns:
+            dict: Default values by path to first key.
+        """
+        pass
+
+    @abstractmethod
+    def get_default_project_settings(self):
+        """Default project settings values.
+
+        Returns:
+            dict: Default values by path to first key.
+        """
+        pass
+
+    @abstractmethod
+    def save_system_defaults(self, data):
+        """Save default system settings values.
+
+        Passed data are by path to first key defined in main schemas.
+        """
+        pass
+
+    @abstractmethod
+    def save_project_defaults(self, data):
+        """Save default project settings values.
+
+        Passed data are by path to first key defined in main schemas.
+        """
+        pass
+
+
+class JsonFilesSettingsDef(ModuleSettingsDef):
+    """Preimplemented settings definition using json files and file structure.
+
+    Expected file structure:
+    ┕ root
+      │
+      │ # Default values
+      ┝ defaults
+      │ ┝ system_settings.json
+      │ ┕ project_settings.json
+      │
+      │ # Schemas for `dynamic_template` type
+      ┝ dynamic_schemas
+      │ ┝ system_dynamic_schemas.json
+      │ ┕ project_dynamic_schemas.json
+      │
+      │ # Schemas that can be used anywhere (enhancement for `dynamic_schemas`)
+      ┕ schemas
+        ┝ system_schemas
+        │ ┝ <system schema.json> # Any schema or template files
+        │ ┕ ...
+        ┕ project_schemas
+          ┝ <system schema.json> # Any schema or template files
+          ┕ ...
+
+    Schemas can be loaded with prefix to avoid duplicated schema/template names
+    across all OpenPype addons/modules. Prefix can be defined with class
+    attribute `schema_prefix`.
+
+    Only think which must be implemented in `get_settings_root_path` which
+    should return directory path to `root` (in structure graph above).
+    """
+    # Possible way how to define `schemas` prefix
+    schema_prefix = ""
+
+    @abstractmethod
+    def get_settings_root_path(self):
+        """Directory path where settings and it's schemas are located."""
+        pass
+
+    def __init__(self):
+        settings_root_dir = self.get_settings_root_path()
+        defaults_dir = os.path.join(
+            settings_root_dir, "defaults"
+        )
+        dynamic_schemas_dir = os.path.join(
+            settings_root_dir, "dynamic_schemas"
+        )
+        schemas_dir = os.path.join(
+            settings_root_dir, "schemas"
+        )
+
+        self.system_defaults_filepath = os.path.join(
+            defaults_dir, "system_settings.json"
+        )
+        self.project_defaults_filepath = os.path.join(
+            defaults_dir, "project_settings.json"
+        )
+
+        self.system_dynamic_schemas_filepath = os.path.join(
+            dynamic_schemas_dir, "system_dynamic_schemas.json"
+        )
+        self.project_dynamic_schemas_filepath = os.path.join(
+            dynamic_schemas_dir, "project_dynamic_schemas.json"
+        )
+
+        self.system_schemas_dir = os.path.join(
+            schemas_dir, "system_schemas"
+        )
+        self.project_schemas_dir = os.path.join(
+            schemas_dir, "project_schemas"
+        )
+
+    def _load_json_file_data(self, path):
+        if os.path.exists(path):
+            return load_json_file(path)
+        return {}
+
+    def get_default_system_settings(self):
+        """Default system settings values.
+
+        Returns:
+            dict: Default values by path to first key.
+        """
+        return self._load_json_file_data(self.system_defaults_filepath)
+
+    def get_default_project_settings(self):
+        """Default project settings values.
+
+        Returns:
+            dict: Default values by path to first key.
+        """
+        return self._load_json_file_data(self.project_defaults_filepath)
+
+    def _save_data_to_filepath(self, path, data):
+        dirpath = os.path.dirname(path)
+        if not os.path.exists(dirpath):
+            os.makedirs(dirpath)
+
+        with open(path, "w") as file_stream:
+            json.dump(data, file_stream, indent=4)
+
+    def save_system_defaults(self, data):
+        """Save default system settings values.
+
+        Passed data are by path to first key defined in main schemas.
+        """
+        self._save_data_to_filepath(self.system_defaults_filepath, data)
+
+    def save_project_defaults(self, data):
+        """Save default project settings values.
+
+        Passed data are by path to first key defined in main schemas.
+        """
+        self._save_data_to_filepath(self.project_defaults_filepath, data)
+
+    def get_system_dynamic_schemas(self):
+        """System schemas by dynamic schema name.
+
+        If dynamic schema name is not available in then schema will not used.
+
+        Returns:
+            dict: Schemas or list of schemas by dynamic schema name.
+        """
+        return self._load_json_file_data(self.system_dynamic_schemas_filepath)
+
+    def get_project_dynamic_schemas(self):
+        """Project schemas by dynamic schema name.
+
+        If dynamic schema name is not available in then schema will not used.
+
+        Returns:
+            dict: Schemas or list of schemas by dynamic schema name.
+        """
+        return self._load_json_file_data(self.project_dynamic_schemas_filepath)
+
+    def _load_files_from_path(self, path):
+        output = {}
+        if not path or not os.path.exists(path):
+            return output
+
+        if os.path.isfile(path):
+            filename = os.path.basename(path)
+            basename, ext = os.path.splitext(filename)
+            if ext == ".json":
+                if self.schema_prefix:
+                    key = "{}/{}".format(self.schema_prefix, basename)
+                else:
+                    key = basename
+                output[key] = self._load_json_file_data(path)
+            return output
+
+        path = os.path.normpath(path)
+        for root, _, files in os.walk(path, topdown=False):
+            for filename in files:
+                basename, ext = os.path.splitext(filename)
+                if ext != ".json":
+                    continue
+
+                json_path = os.path.join(root, filename)
+                store_key = os.path.join(
+                    root.replace(path, ""), basename
+                ).replace("\\", "/")
+                if self.schema_prefix:
+                    store_key = "{}/{}".format(self.schema_prefix, store_key)
+                output[store_key] = self._load_json_file_data(json_path)
+
+        return output
+
+    def get_system_settings_schemas(self):
+        """Schemas and templates usable in system settings schemas.
+
+        Returns:
+            dict: Schemas and templates by it's names. Names must be unique
+                across whole OpenPype.
+        """
+        return self._load_files_from_path(self.system_schemas_dir)
+
+    def get_project_settings_schemas(self):
+        """Schemas and templates usable in project settings schemas.
+
+        Returns:
+            dict: Schemas and templates by it's names. Names must be unique
+                across whole OpenPype.
+        """
+        return self._load_files_from_path(self.project_schemas_dir)

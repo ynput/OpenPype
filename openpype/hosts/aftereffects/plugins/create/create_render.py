@@ -47,6 +47,10 @@ class CreateRender(openpype.api.Creator):
 
         self.data["members"] = [item.id]
         self.data["uuid"] = item.id  # for SubsetManager
+        self.data["subset"] = self.data["subset"]\
+            .replace(stub.PUBLISH_ICON, '')\
+            .replace(stub.LOADED_ICON, '')
+
         stub.imprint(item, self.data)
         stub.set_label_color(item.id, 14)  # Cyan options 0 - 16
         stub.rename_item(item.id, stub.PUBLISH_ICON + self.data["subset"])

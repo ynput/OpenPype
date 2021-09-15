@@ -14,12 +14,16 @@ METADATA_KEYS = (
     M_DYNAMIC_KEY_LABEL
 )
 
-# File where studio's system overrides are stored
+# Keys where studio's system overrides are stored
 GLOBAL_SETTINGS_KEY = "global_settings"
 SYSTEM_SETTINGS_KEY = "system_settings"
 PROJECT_SETTINGS_KEY = "project_settings"
 PROJECT_ANATOMY_KEY = "project_anatomy"
 LOCAL_SETTING_KEY = "local_settings"
+
+# Schema hub names
+SCHEMA_KEY_SYSTEM_SETTINGS = "system_schema"
+SCHEMA_KEY_PROJECT_SETTINGS = "projects_schema"
 
 DEFAULT_PROJECT_KEY = "__default_project__"
 
@@ -38,6 +42,9 @@ __all__ = (
     "PROJECT_SETTINGS_KEY",
     "PROJECT_ANATOMY_KEY",
     "LOCAL_SETTING_KEY",
+
+    "SCHEMA_KEY_SYSTEM_SETTINGS",
+    "SCHEMA_KEY_PROJECT_SETTINGS",
 
     "DEFAULT_PROJECT_KEY",
 

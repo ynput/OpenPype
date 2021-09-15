@@ -1,7 +1,6 @@
 import os
 
 from avalon import api, pipeline
-from avalon import unreal as avalon_unreal
 from avalon.unreal import lib
 from avalon.unreal import pipeline as unreal_pipeline
 import unreal
@@ -15,6 +14,31 @@ class StaticMeshFBXLoader(api.Loader):
     representations = ["fbx"]
     icon = "cube"
     color = "orange"
+
+    def get_task(self, filename, asset_dir, asset_name, replace):
+        task = unreal.AssetImportTask()
+        options = unreal.FbxImportUI()
+        import_data = unreal.FbxStaticMeshImportData()
+
+        task.set_editor_property('filename', filename)
+        task.set_editor_property('destination_path', asset_dir)
+        task.set_editor_property('destination_name', asset_name)
+        task.set_editor_property('replace_existing', replace)
+        task.set_editor_property('automated', True)
+        task.set_editor_property('save', True)
+
+        # set import options here
+        options.set_editor_property(
+            'automated_import_should_detect_type', False)
+        options.set_editor_property('import_animations', False)
+
+        import_data.set_editor_property('combine_meshes', True)
+        import_data.set_editor_property('remove_degenerates', False)
+
+        options.static_mesh_import_data = import_data
+        task.options = options
+
+        return task
 
     def load(self, context, name, namespace, data):
         """
@@ -56,22 +80,8 @@ class StaticMeshFBXLoader(api.Loader):
 
         unreal.EditorAssetLibrary.make_directory(asset_dir)
 
-        task = unreal.AssetImportTask()
+        task = self.get_task(self.fname, asset_dir, asset_name, False)
 
-        task.set_editor_property('filename', self.fname)
-        task.set_editor_property('destination_path', asset_dir)
-        task.set_editor_property('destination_name', asset_name)
-        task.set_editor_property('replace_existing', False)
-        task.set_editor_property('automated', True)
-        task.set_editor_property('save', True)
-
-        # set import options here
-        options = unreal.FbxImportUI()
-        options.set_editor_property(
-            'automated_import_should_detect_type', False)
-        options.set_editor_property('import_animations', False)
-
-        task.options = options
         unreal.AssetToolsHelpers.get_asset_tools().import_asset_tasks([task])  # noqa: E501
 
         # Create Asset Container
@@ -103,29 +113,15 @@ class StaticMeshFBXLoader(api.Loader):
         return asset_content
 
     def update(self, container, representation):
-        name = container["name"]
+        name = container["asset_name"]
         source_path = api.get_representation_path(representation)
         destination_path = container["namespace"]
 
-        task = unreal.AssetImportTask()
+        task = self.get_task(source_path, destination_path, name, True)
 
-        task.set_editor_property('filename', source_path)
-        task.set_editor_property('destination_path', destination_path)
-        # strip suffix
-        task.set_editor_property('destination_name', name)
-        task.set_editor_property('replace_existing', True)
-        task.set_editor_property('automated', True)
-        task.set_editor_property('save', True)
-
-        # set import options here
-        options = unreal.FbxImportUI()
-        options.set_editor_property(
-            'automated_import_should_detect_type', False)
-        options.set_editor_property('import_animations', False)
-
-        task.options = options
         # do import fbx and replace existing data
         unreal.AssetToolsHelpers.get_asset_tools().import_asset_tasks([task])
+
         container_path = "{}/{}".format(container["namespace"],
                                         container["objectName"])
         # update metadata

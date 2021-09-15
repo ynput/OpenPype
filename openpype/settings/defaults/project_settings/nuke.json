@@ -6,21 +6,36 @@
             "load": "ctrl+alt+l",
             "manage": "ctrl+alt+m",
             "build_workfile": "ctrl+alt+b"
-        },
-        "open_workfile_at_start": false,
-        "create_initial_workfile": true
+        }
     },
     "create": {
         "CreateWriteRender": {
-            "fpath_template": "{work}/renders/nuke/{subset}/{subset}.{frame}.{ext}"
+            "fpath_template": "{work}/renders/nuke/{subset}/{subset}.{frame}.{ext}",
+            "defaults": [
+                "Main",
+                "Mask"
+            ]
         },
         "CreateWritePrerender": {
-            "fpath_template": "{work}/prerenders/nuke/{subset}/{subset}.{frame}.{ext}"
+            "fpath_template": "{work}/prerenders/nuke/{subset}/{subset}.{frame}.{ext}",
+            "use_range_limit": true,
+            "defaults": [
+                "Key01",
+                "Bg01",
+                "Fg01",
+                "Branch01",
+                "Part01"
+            ]
         }
     },
     "publish": {
         "PreCollectNukeInstances": {
             "sync_workfile_version": true
+        },
+        "ValidateContainers": {
+            "enabled": true,
+            "optional": true,
+            "active": true
         },
         "ValidateKnobs": {
             "enabled": false,
@@ -41,11 +56,6 @@
             "active": true
         },
         "ValidateScript": {
-            "enabled": true,
-            "optional": true,
-            "active": true
-        },
-        "ValidateNukeWriteBoundingBox": {
             "enabled": true,
             "optional": true,
             "active": true
@@ -86,12 +96,6 @@
         },
         "ExtractSlateFrame": {
             "viewer_lut_raw": false
-        },
-        "NukeSubmitDeadline": {
-            "deadline_priority": 50,
-            "deadline_pool": "",
-            "deadline_pool_secondary": "",
-            "deadline_chunk_size": 1
         }
     },
     "load": {
@@ -153,12 +157,13 @@
             "node_name_template": "{class_name}_{ext}"
         }
     },
-    "workfile_build": {
+    "workfile_builder": {
+        "create_first_version": false,
+        "custom_templates": [],
+        "builder_on_start": false,
         "profiles": [
             {
-                "tasks": [
-                    "compositing"
-                ],
+                "tasks": [],
                 "current_context": [
                     {
                         "subset_name_filters": [],
@@ -168,10 +173,12 @@
                         ],
                         "repre_names": [
                             "exr",
-                            "dpx"
+                            "dpx",
+                            "mov"
                         ],
                         "loaders": [
-                            "LoadSequence"
+                            "LoadSequence",
+                            "LoadMov"
                         ]
                     }
                 ],

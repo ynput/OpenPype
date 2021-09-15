@@ -33,8 +33,11 @@ def create_otio_time_range(start_frame, frame_duration, fps):
 
 def create_otio_reference(media_pool_item):
     metadata = _get_metadata_media_pool_item(media_pool_item)
-    mp_clip_property = media_pool_item.GetClipProperty()
-    path = mp_clip_property["File Path"]
+    print("media pool item: {}".format(media_pool_item.GetName()))
+
+    _mp_clip_property = media_pool_item.GetClipProperty
+
+    path = _mp_clip_property("File Path")
     reformat_path = utils.get_reformated_path(path, padded=True)
     padding = utils.get_padding_from_path(path)
 
@@ -45,13 +48,12 @@ def create_otio_reference(media_pool_item):
         })
 
     # get clip property regarding to type
-    mp_clip_property = media_pool_item.GetClipProperty()
-    fps = float(mp_clip_property["FPS"])
-    if mp_clip_property["Type"] == "Video":
-        frame_start = int(mp_clip_property["Start"])
-        frame_duration = int(mp_clip_property["Frames"])
+    fps = float(_mp_clip_property("FPS"))
+    if _mp_clip_property("Type") == "Video":
+        frame_start = int(_mp_clip_property("Start"))
+        frame_duration = int(_mp_clip_property("Frames"))
     else:
-        audio_duration = str(mp_clip_property["Duration"])
+        audio_duration = str(_mp_clip_property("Duration"))
         frame_start = 0
         frame_duration = int(utils.timecode_to_frames(
             audio_duration, float(fps)))
@@ -124,10 +126,10 @@ def create_otio_markers(track_item, fps):
 
 def create_otio_clip(track_item):
     media_pool_item = track_item.GetMediaPoolItem()
-    mp_clip_property = media_pool_item.GetClipProperty()
+    _mp_clip_property = media_pool_item.GetClipProperty
 
     if not self.project_fps:
-        fps = mp_clip_property["FPS"]
+        fps = float(_mp_clip_property("FPS"))
     else:
         fps = self.project_fps
 
@@ -140,9 +142,9 @@ def create_otio_clip(track_item):
         fps
     )
 
-    if mp_clip_property["Type"] == "Audio":
+    if _mp_clip_property("Type") == "Audio":
         return_clips = list()
-        audio_chanels = mp_clip_property["Audio Ch"]
+        audio_chanels = _mp_clip_property("Audio Ch")
         for channel in range(0, int(audio_chanels)):
             clip = otio.schema.Clip(
                 name=f"{name}_{channel}",

@@ -49,18 +49,21 @@ class PathEntity(ItemEntity):
         return self.child_obj.items()
 
     def _item_initalization(self):
-        if not self.group_item and not self.is_group:
+        if self.group_item is None and not self.is_group:
             self.is_group = True
 
         self.multiplatform = self.schema_data.get("multiplatform", False)
         self.multipath = self.schema_data.get("multipath", False)
+
+        placeholder_text = self.schema_data.get("placeholder")
 
         # Create child object
         if not self.multiplatform and not self.multipath:
             valid_value_types = (STRING_TYPE, )
             item_schema = {
                 "type": "path-input",
-                "key": self.key
+                "key": self.key,
+                "placeholder": placeholder_text
             }
 
         elif not self.multiplatform:
@@ -68,7 +71,10 @@ class PathEntity(ItemEntity):
             item_schema = {
                 "type": "list",
                 "key": self.key,
-                "object_type": "path-input"
+                "object_type": {
+                    "type": "path-input",
+                    "placeholder": placeholder_text
+                }
             }
 
         else:
@@ -87,20 +93,30 @@ class PathEntity(ItemEntity):
                 }
                 if self.multipath:
                     child_item["type"] = "list"
-                    child_item["object_type"] = "path-input"
+                    child_item["object_type"] = {
+                        "type": "path-input",
+                        "placeholder": placeholder_text
+                    }
                 else:
                     child_item["type"] = "path-input"
+                    child_item["placeholder"] = placeholder_text
 
                 item_schema["children"].append(child_item)
 
         self.valid_value_types = valid_value_types
         self.child_obj = self.create_schema_object(item_schema, self)
 
+    def collect_static_entities_by_path(self):
+        return self.child_obj.collect_static_entities_by_path()
+
     def get_child_path(self, _child_obj):
         return self.path
 
     def set(self, value):
         self.child_obj.set(value)
+
+    def collect_dynamic_schema_entities(self, *args, **kwargs):
+        self.child_obj.collect_dynamic_schema_entities(*args, **kwargs)
 
     def settings_value(self):
         if self._override_state is OverrideState.NOT_DEFINED:
@@ -140,14 +156,15 @@ class PathEntity(ItemEntity):
     def value(self):
         return self.child_obj.value
 
-    def set_override_state(self, state):
+    def set_override_state(self, state, ignore_missing_defaults):
         # Trigger override state change of root if is not same
         if self.root_item.override_state is not state:
             self.root_item.set_override_state(state)
             return
 
         self._override_state = state
-        self.child_obj.set_override_state(state)
+        self._ignore_missing_defaults = ignore_missing_defaults
+        self.child_obj.set_override_state(state, ignore_missing_defaults)
 
     def update_default_value(self, value):
         self.child_obj.update_default_value(value)
@@ -181,6 +198,24 @@ class PathEntity(ItemEntity):
 class ListStrictEntity(ItemEntity):
     schema_types = ["list-strict"]
 
+    def __getitem__(self, idx):
+        if not isinstance(idx, int):
+            idx = int(idx)
+        return self.children[idx]
+
+    def __setitem__(self, idx, value):
+        if not isinstance(idx, int):
+            idx = int(idx)
+        self.children[idx].set(value)
+
+    def get(self, idx, default=None):
+        if not isinstance(idx, int):
+            idx = int(idx)
+
+        if idx < len(self.children):
+            return self.children[idx]
+        return default
+
     def _item_initalization(self):
         self.valid_value_types = (list, )
         self.require_key = True
@@ -199,17 +234,34 @@ class ListStrictEntity(ItemEntity):
 
         # GUI attribute
         self.is_horizontal = self.schema_data.get("horizontal", True)
-        if not self.group_item and not self.is_group:
+        if self.group_item is None and not self.is_group:
             self.is_group = True
 
     def schema_validations(self):
         # List entity must have file parent.
-        if not self.file_item and not self.is_file:
+        if (
+            not self.is_dynamic_schema_node
+            and not self.is_in_dynamic_schema_node
+            and not self.is_file
+            and self.file_item is None
+        ):
             raise EntitySchemaError(
                 self, "Missing file entity in hierarchy."
             )
 
         super(ListStrictEntity, self).schema_validations()
+
+    def collect_static_entities_by_path(self):
+        output = {}
+        if self.is_dynamic_item or self.is_in_dynamic_item:
+            return output
+
+        output[self.path] = self
+        for child_obj in self.children:
+            result = child_obj.collect_static_entities_by_path()
+            if result:
+                output.update(result)
+        return output
 
     def get_child_path(self, child_obj):
         result_idx = None
@@ -234,6 +286,10 @@ class ListStrictEntity(ItemEntity):
         new_value = self.convert_to_valid_type(value)
         for idx, item in enumerate(new_value):
             self.children[idx].set(item)
+
+    def collect_dynamic_schema_entities(self, collector):
+        if self.is_dynamic_schema_node:
+            collector.add_entity(self)
 
     def settings_value(self):
         if self._override_state is OverrideState.NOT_DEFINED:
@@ -334,25 +390,32 @@ class ListStrictEntity(ItemEntity):
                 return True
         return False
 
-    def set_override_state(self, state):
+    def set_override_state(self, state, ignore_missing_defaults):
         # Trigger override state change of root if is not same
         if self.root_item.override_state is not state:
             self.root_item.set_override_state(state)
             return
 
         self._override_state = state
+        self._ignore_missing_defaults = ignore_missing_defaults
         # Ignore if is dynamic item and use default in that case
         if not self.is_dynamic_item and not self.is_in_dynamic_item:
             if state > OverrideState.DEFAULTS:
-                if not self.has_default_value:
+                if (
+                    not self.has_default_value
+                    and not ignore_missing_defaults
+                ):
                     raise DefaultsNotDefined(self)
 
             elif state > OverrideState.STUDIO:
-                if not self.had_studio_override:
+                if (
+                    not self.had_studio_override
+                    and not ignore_missing_defaults
+                ):
                     raise StudioDefaultsNotDefined(self)
 
         for child_entity in self.children:
-            child_entity.set_override_state(state)
+            child_entity.set_override_state(state, ignore_missing_defaults)
 
         self.initial_value = self.settings_value()
 
@@ -453,4 +516,5 @@ class ListStrictEntity(ItemEntity):
 
     def reset_callbacks(self):
         super(ListStrictEntity, self).reset_callbacks()
-        self.child_obj.reset_callbacks()
+        for child_obj in self.children:
+            child_obj.reset_callbacks()

@@ -114,6 +114,30 @@ QPushButton[btn-type="expand-toggle"] {
     background: #21252B;
 }
 
+/* SLider */
+QSlider::groove {
+    border: 1px solid #464b54;
+    border-radius: 0.3em;
+}
+QSlider::groove:horizontal {
+    height: 8px;
+}
+QSlider::groove:vertical {
+    width: 8px;
+}
+QSlider::handle {
+    width: 10px;
+    height: 10px;
+
+    border-radius: 5px;
+}
+QSlider::handle:horizontal {
+    margin: -2px 0;
+}
+QSlider::handle:vertical {
+    margin: 0 -2px;
+}
+
 #GroupWidget {
     border-bottom: 1px solid #21252B;
 }
@@ -388,4 +412,32 @@ QTableView::item:pressed, QListView::item:pressed, QTreeView::item:pressed  {
 
 QTableView::item:selected:active, QTreeView::item:selected:active, QListView::item:selected:active  {
     background: #3d8ec9;
+}
+
+#BreadcrumbsPathInput {
+    padding: 2px;
+    font-size: 9pt;
+}
+
+#BreadcrumbsButton {
+    padding-right: 12px;
+    font-size: 9pt;
+}
+
+#BreadcrumbsButton[empty="1"] {
+    padding-right: 0px;
+}
+
+#BreadcrumbsButton::menu-button {
+    width: 12px;
+    background: rgba(127, 127, 127, 60);
+}
+#BreadcrumbsButton::menu-button:hover {
+    background: rgba(127, 127, 127, 90);
+}
+
+#BreadcrumbsPanel {
+    border: 1px solid #4e5254;
+    border-radius: 5px;
+    background: #21252B;;
 }

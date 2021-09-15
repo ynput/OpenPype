@@ -9,6 +9,7 @@ from .lib import (
 )
 
 from .exceptions import (
+    BaseInvalidValueType,
     InvalidValueType,
     SchemeGroupHierarchyBug,
     EntitySchemaError
@@ -103,6 +104,12 @@ class BaseItemEntity(BaseEntity):
         self.is_group = False
         # Entity's value will be stored into file with name of it's key
         self.is_file = False
+        # Default values are not stored to an openpype file
+        # - these must not be set through schemas directly
+        self.dynamic_schema_id = None
+        self.is_dynamic_schema_node = False
+        self.is_in_dynamic_schema_node = False
+
         # Reference to parent entity which has `is_group` == True
         #   - stays as None if none of parents is group
         self.group_item = None
@@ -110,6 +117,8 @@ class BaseItemEntity(BaseEntity):
         self.file_item = None
         # Reference to `RootEntity`
         self.root_item = None
+        # Change of value requires restart of OpenPype
+        self._require_restart_on_change = False
 
         # Entity is in hierarchy of dynamically created entity
         self.is_in_dynamic_item = False
@@ -133,6 +142,7 @@ class BaseItemEntity(BaseEntity):
         # Override state defines which values are used, saved and how.
         # TODO convert to private attribute
         self._override_state = OverrideState.NOT_DEFINED
+        self._ignore_missing_defaults = None
 
         # These attributes may change values during existence of an object
         # Default value, studio override values and project override values
@@ -169,6 +179,22 @@ class BaseItemEntity(BaseEntity):
         elif not isinstance(roles, list):
             roles = [roles]
         self.roles = roles
+
+    @abstractmethod
+    def collect_static_entities_by_path(self):
+        """Collect all paths of all static path entities.
+
+        Static path is entity which is not dynamic or under dynamic entity.
+        """
+        pass
+
+    @property
+    def require_restart_on_change(self):
+        return self._require_restart_on_change
+
+    @property
+    def require_restart(self):
+        return False
 
     @property
     def has_studio_override(self):
@@ -235,13 +261,22 @@ class BaseItemEntity(BaseEntity):
             )
 
         # Group item can be only once in on hierarchy branch.
-        if self.is_group and self.group_item:
+        if self.is_group and self.group_item is not None:
             raise SchemeGroupHierarchyBug(self)
+
+        # Group item can be only once in on hierarchy branch.
+        if self.group_item is not None and self.is_dynamic_schema_node:
+            reason = (
+                "Dynamic schema is inside grouped item {}."
+                " Change group hierarchy or remove dynamic"
+                " schema to be able work properly."
+            ).format(self.group_item.path)
+            raise EntitySchemaError(self, reason)
 
         # Validate that env group entities will be stored into file.
         #   - env group entities must store metadata which is not possible if
         #       metadata would be outside of file
-        if not self.file_item and self.is_env_group:
+        if self.file_item is None and self.is_env_group:
             reason = (
                 "Environment item is not inside file"
                 " item so can't store metadata for defaults."
@@ -260,8 +295,21 @@ class BaseItemEntity(BaseEntity):
                 self, "Dynamic entity has set `is_group` to true."
             )
 
+        if (
+            self.require_restart_on_change
+            and (self.is_dynamic_item or self.is_in_dynamic_item)
+        ):
+            raise EntitySchemaError(
+                self, "Dynamic entity can't require restart."
+            )
+
+    @abstractproperty
+    def root_key(self):
+        """Root is represented as this dictionary key."""
+        pass
+
     @abstractmethod
-    def set_override_state(self, state):
+    def set_override_state(self, state, ignore_missing_defaults):
         """Set override state and trigger it on children.
 
         Method discard all changes in hierarchy and use values, metadata
@@ -271,8 +319,15 @@ class BaseItemEntity(BaseEntity):
         Should start on root entity and when triggered then must be called on
         all entities in hierarchy.
 
+        Argument `ignore_missing_defaults` should be used when entity has
+        children that are not saved or used all the time but override statu
+        must be changed and children must have any default value.
+
         Args:
             state (OverrideState): State to which should be data changed.
+            ignore_missing_defaults (bool): Ignore missing default values.
+                Entity won't raise `DefaultsNotDefined` and
+                `StudioDefaultsNotDefined`.
         """
         pass
 
@@ -377,7 +432,7 @@ class BaseItemEntity(BaseEntity):
 
         try:
             new_value = self.convert_to_valid_type(value)
-        except InvalidValueType:
+        except BaseInvalidValueType:
             new_value = NOT_SET
 
         if new_value is not NOT_SET:
@@ -438,7 +493,15 @@ class BaseItemEntity(BaseEntity):
 
     @abstractmethod
     def settings_value(self):
-        """Value of an item without key."""
+        """Value of an item without key without dynamic items."""
+        pass
+
+    @abstractmethod
+    def collect_dynamic_schema_entities(self):
+        """Collect entities that are on top of dynamically added schemas.
+
+        This method make sence only when defaults are saved.
+        """
         pass
 
     @abstractmethod
@@ -457,27 +520,18 @@ class BaseItemEntity(BaseEntity):
         pass
 
     @property
-    def can_discard_changes(self):
-        """Result defines if `discard_changes` will be processed.
-
-        Also can be used as validation before the method is called.
-        """
+    def _can_discard_changes(self):
+        """Defines if `discard_changes` will be processed."""
         return self.has_unsaved_changes
 
     @property
-    def can_add_to_studio_default(self):
-        """Result defines if `add_to_studio_default` will be processed.
-
-        Also can be used as validation before the method is called.
-        """
+    def _can_add_to_studio_default(self):
+        """Defines if `add_to_studio_default` will be processed."""
         if self._override_state is not OverrideState.STUDIO:
             return False
 
-        if self.is_dynamic_item or self.is_in_dynamic_item:
-            return False
-
         # Skip if entity is under group
-        if self.group_item:
+        if self.group_item is not None:
             return False
 
         # Skip if is group and any children is already marked with studio
@@ -487,15 +541,9 @@ class BaseItemEntity(BaseEntity):
         return True
 
     @property
-    def can_remove_from_studio_default(self):
-        """Result defines if `remove_from_studio_default` can be triggered.
-
-        This can be also used as validation before the method is called.
-        """
+    def _can_remove_from_studio_default(self):
+        """Defines if `remove_from_studio_default` can be processed."""
         if self._override_state is not OverrideState.STUDIO:
-            return False
-
-        if self.is_dynamic_item or self.is_in_dynamic_item:
             return False
 
         if not self.has_studio_override:
@@ -503,20 +551,14 @@ class BaseItemEntity(BaseEntity):
         return True
 
     @property
-    def can_add_to_project_override(self):
-        """Result defines if `add_to_project_override` can be triggered.
-
-        Also can be used as validation before the method is called.
-        """
-        if self.is_dynamic_item or self.is_in_dynamic_item:
-            return False
-
+    def _can_add_to_project_override(self):
+        """Defines if `add_to_project_override` can be processed."""
         # Show only when project overrides are set
         if self._override_state is not OverrideState.PROJECT:
             return False
 
         # Do not show on items under group item
-        if self.group_item:
+        if self.group_item is not None:
             return False
 
         # Skip if already is marked to save project overrides
@@ -525,14 +567,8 @@ class BaseItemEntity(BaseEntity):
         return True
 
     @property
-    def can_remove_from_project_override(self):
-        """Result defines if `remove_from_project_override` can be triggered.
-
-        This can be also used as validation before the method is called.
-        """
-        if self.is_dynamic_item or self.is_in_dynamic_item:
-            return False
-
+    def _can_remove_from_project_override(self):
+        """Defines if `remove_from_project_override` can be processed."""
         if self._override_state is not OverrideState.PROJECT:
             return False
 
@@ -543,6 +579,54 @@ class BaseItemEntity(BaseEntity):
         if not self.has_project_override:
             return False
         return True
+
+    @property
+    def can_trigger_discard_changes(self):
+        """Defines if can trigger `discard_changes`.
+
+        Also can be used as validation before the method is called.
+        """
+        return self._can_discard_changes
+
+    @property
+    def can_trigger_add_to_studio_default(self):
+        """Defines if can trigger `add_to_studio_default`.
+
+        Also can be used as validation before the method is called.
+        """
+        if self.is_dynamic_item or self.is_in_dynamic_item:
+            return False
+        return self._can_add_to_studio_default
+
+    @property
+    def can_trigger_remove_from_studio_default(self):
+        """Defines if can trigger `remove_from_studio_default`.
+
+        Also can be used as validation before the method is called.
+        """
+        if self.is_dynamic_item or self.is_in_dynamic_item:
+            return False
+        return self._can_remove_from_studio_default
+
+    @property
+    def can_trigger_add_to_project_override(self):
+        """Defines if can trigger `add_to_project_override`.
+
+        Also can be used as validation before the method is called.
+        """
+        if self.is_dynamic_item or self.is_in_dynamic_item:
+            return False
+        return self._can_add_to_project_override
+
+    @property
+    def can_trigger_remove_from_project_override(self):
+        """Defines if can trigger `remove_from_project_override`.
+
+        Also can be used as validation before the method is called.
+        """
+        if self.is_dynamic_item or self.is_in_dynamic_item:
+            return False
+        return self._can_remove_from_project_override
 
     def discard_changes(self, on_change_trigger=None):
         """Discard changes on entity and it's children.
@@ -568,7 +652,7 @@ class BaseItemEntity(BaseEntity):
         """
         initialized = False
         if on_change_trigger is None:
-            if not self.can_discard_changes:
+            if not self.can_trigger_discard_changes:
                 return
 
             initialized = True
@@ -588,7 +672,7 @@ class BaseItemEntity(BaseEntity):
     def add_to_studio_default(self, on_change_trigger=None):
         initialized = False
         if on_change_trigger is None:
-            if not self.can_add_to_studio_default:
+            if not self.can_trigger_add_to_studio_default:
                 return
 
             initialized = True
@@ -625,7 +709,7 @@ class BaseItemEntity(BaseEntity):
         """
         initialized = False
         if on_change_trigger is None:
-            if not self.can_remove_from_studio_default:
+            if not self.can_trigger_remove_from_studio_default:
                 return
 
             initialized = True
@@ -649,7 +733,7 @@ class BaseItemEntity(BaseEntity):
     def add_to_project_override(self, on_change_trigger=None):
         initialized = False
         if on_change_trigger is None:
-            if not self.can_add_to_project_override:
+            if not self.can_trigger_add_to_project_override:
                 return
 
             initialized = True
@@ -689,7 +773,7 @@ class BaseItemEntity(BaseEntity):
 
         initialized = False
         if on_change_trigger is None:
-            if not self.can_remove_from_project_override:
+            if not self.can_trigger_remove_from_project_override:
                 return
             initialized = True
             on_change_trigger = []
@@ -747,6 +831,12 @@ class ItemEntity(BaseItemEntity):
         self.is_dynamic_item = is_dynamic_item
 
         self.is_file = self.schema_data.get("is_file", False)
+        # These keys have underscore as they must not be set in schemas
+        self.dynamic_schema_id = self.schema_data.get(
+            "_dynamic_schema_id", None
+        )
+        self.is_dynamic_schema_node = self.dynamic_schema_id is not None
+
         self.is_group = self.schema_data.get("is_group", False)
         self.is_in_dynamic_item = bool(
             not self.is_dynamic_item
@@ -766,16 +856,36 @@ class ItemEntity(BaseItemEntity):
         # Root item reference
         self.root_item = self.parent.root_item
 
+        # Item require restart on value change
+        require_restart_on_change = self.schema_data.get("require_restart")
+        if (
+            require_restart_on_change is None
+            and not (self.is_dynamic_item or self.is_in_dynamic_item)
+        ):
+            require_restart_on_change = self.parent.require_restart_on_change
+        self._require_restart_on_change = require_restart_on_change
+
         # File item reference
-        if self.parent.is_file:
-            self.file_item = self.parent
-        elif self.parent.file_item:
-            self.file_item = self.parent.file_item
+        if not self.is_dynamic_schema_node:
+            self.is_in_dynamic_schema_node = (
+                self.parent.is_dynamic_schema_node
+                or self.parent.is_in_dynamic_schema_node
+            )
+
+        if (
+            not self.is_dynamic_schema_node
+            and not self.is_in_dynamic_schema_node
+        ):
+            if self.parent.is_file:
+                self.file_item = self.parent
+            elif self.parent.file_item:
+                self.file_item = self.parent.file_item
 
         # Group item reference
         if self.parent.is_group:
             self.group_item = self.parent
-        elif self.parent.group_item:
+
+        elif self.parent.group_item is not None:
             self.group_item = self.parent.group_item
 
         self.key = self.schema_data.get("key")
@@ -816,6 +926,22 @@ class ItemEntity(BaseItemEntity):
         """Call save on root item."""
         self.root_item.save()
 
+    @property
+    def root_key(self):
+        return self.root_item.root_key
+
+    @abstractmethod
+    def collect_dynamic_schema_entities(self, collector):
+        """Collect entities that are on top of dynamically added schemas.
+
+        This method make sence only when defaults are saved.
+
+        Args:
+            collector(DynamicSchemaValueCollector): Object where dynamic
+                entities are stored.
+        """
+        pass
+
     def schema_validations(self):
         if not self.label and self.use_label_wrap:
             reason = (
@@ -824,11 +950,27 @@ class ItemEntity(BaseItemEntity):
             )
             raise EntitySchemaError(self, reason)
 
+        if (
+            not self.is_dynamic_schema_node
+            and not self.is_in_dynamic_schema_node
+            and self.is_file
+            and self.file_item is not None
+        ):
+            reason = (
+                "Entity has set `is_file` to true but"
+                " it's parent is already marked as file item."
+            )
+            raise EntitySchemaError(self, reason)
+
         super(ItemEntity, self).schema_validations()
 
     def create_schema_object(self, *args, **kwargs):
         """Reference method for creation of entities defined in RootEntity."""
-        return self.root_item.create_schema_object(*args, **kwargs)
+        return self.schema_hub.create_schema_object(*args, **kwargs)
+
+    @property
+    def schema_hub(self):
+        return self.root_item.schema_hub
 
     def get_entity_from_path(self, path):
         return self.root_item.get_entity_from_path(path)

@@ -1,4 +1,5 @@
 import copy
+import collections
 
 from .lib import (
     WRAPPER_TYPES,
@@ -138,7 +139,16 @@ class DictImmutableKeysEntity(ItemEntity):
                 method when handling gui wrappers.
         """
         added_children = []
-        for children_schema in schema_data["children"]:
+        children_deque = collections.deque()
+        for _children_schema in schema_data["children"]:
+            children_schemas = self.schema_hub.resolve_schema_data(
+                _children_schema
+            )
+            for children_schema in children_schemas:
+                children_deque.append(children_schema)
+
+        while children_deque:
+            children_schema = children_deque.popleft()
             if children_schema["type"] in WRAPPER_TYPES:
                 _children_schema = copy.deepcopy(children_schema)
                 wrapper_children = self._add_children(
@@ -192,6 +202,18 @@ class DictImmutableKeysEntity(ItemEntity):
             "highlight_content", False
         )
         self.show_borders = self.schema_data.get("show_borders", True)
+
+    def collect_static_entities_by_path(self):
+        output = {}
+        if self.is_dynamic_item or self.is_in_dynamic_item:
+            return output
+
+        output[self.path] = self
+        for children in self.non_gui_children.values():
+            result = children.collect_static_entities_by_path()
+            if result:
+                output.update(result)
+        return output
 
     def get_child_path(self, child_obj):
         """Get hierarchical path of child entity.
@@ -248,7 +270,7 @@ class DictImmutableKeysEntity(ItemEntity):
         self._metadata_are_modified = current_metadata != metadata
         self._current_metadata = current_metadata
 
-    def set_override_state(self, state):
+    def set_override_state(self, state, ignore_missing_defaults):
         # Trigger override state change of root if is not same
         if self.root_item.override_state is not state:
             self.root_item.set_override_state(state)
@@ -256,9 +278,10 @@ class DictImmutableKeysEntity(ItemEntity):
 
         # Change has/had override states
         self._override_state = state
+        self._ignore_missing_defaults = ignore_missing_defaults
 
         for child_obj in self.non_gui_children.values():
-            child_obj.set_override_state(state)
+            child_obj.set_override_state(state, ignore_missing_defaults)
 
         self._update_current_metadata()
 
@@ -307,15 +330,32 @@ class DictImmutableKeysEntity(ItemEntity):
                     return True
         return False
 
+    def collect_dynamic_schema_entities(self, collector):
+        for child_obj in self.non_gui_children.values():
+            child_obj.collect_dynamic_schema_entities(collector)
+
+        if self.is_dynamic_schema_node:
+            collector.add_entity(self)
+
     def settings_value(self):
         if self._override_state is OverrideState.NOT_DEFINED:
             return NOT_SET
 
         if self._override_state is OverrideState.DEFAULTS:
+            is_dynamic_schema_node = (
+                self.is_dynamic_schema_node or self.is_in_dynamic_schema_node
+            )
             output = {}
             for key, child_obj in self.non_gui_children.items():
+                if child_obj.is_dynamic_schema_node:
+                    continue
+
                 child_value = child_obj.settings_value()
-                if not child_obj.is_file and not child_obj.file_item:
+                if (
+                    not is_dynamic_schema_node
+                    and not child_obj.is_file
+                    and not child_obj.file_item
+                ):
                     for _key, _value in child_value.items():
                         new_key = "/".join([key, _key])
                         output[new_key] = _value
@@ -353,6 +393,20 @@ class DictImmutableKeysEntity(ItemEntity):
         for key in METADATA_KEYS:
             if key in value:
                 metadata[key] = value.pop(key)
+
+        old_metadata = metadata.get(M_OVERRIDEN_KEY)
+        if old_metadata:
+            old_metadata_set = set(old_metadata)
+            new_metadata = []
+            for key in self.non_gui_children.keys():
+                if key in old_metadata:
+                    new_metadata.append(key)
+                    old_metadata_set.remove(key)
+
+            for key in old_metadata_set:
+                new_metadata.append(key)
+            metadata[M_OVERRIDEN_KEY] = new_metadata
+
         return value, metadata
 
     def update_default_value(self, value):
@@ -458,6 +512,9 @@ class DictImmutableKeysEntity(ItemEntity):
         for child_obj in self.non_gui_children.values():
             child_obj.add_to_studio_default(on_change_trigger)
         self._ignore_child_changes = False
+
+        self._update_current_metadata()
+
         self.parent.on_child_change(self)
 
     def _remove_from_studio_default(self, on_change_trigger):
@@ -471,6 +528,9 @@ class DictImmutableKeysEntity(ItemEntity):
         for child_obj in self.non_gui_children.values():
             child_obj.add_to_project_override(_on_change_trigger)
         self._ignore_child_changes = False
+
+        self._update_current_metadata()
+
         self.parent.on_child_change(self)
 
     def _remove_from_project_override(self, on_change_trigger):

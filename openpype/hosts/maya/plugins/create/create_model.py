@@ -15,6 +15,7 @@ class CreateModel(plugin.Creator):
 
         # Vertex colors with the geometry
         self.data["writeColorSets"] = False
+        self.data["writeFaceSets"] = False
 
         # Include attributes by attribute name or prefix
         self.data["attr"] = ""

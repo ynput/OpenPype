@@ -15,6 +15,11 @@ from .pype_commands import PypeCommands
               expose_value=False, help="use specified version")
 @click.option("--use-staging", is_flag=True,
               expose_value=False, help="use staging variants")
+@click.option("--list-versions", is_flag=True, expose_value=False,
+              help=("list all detected versions. Use With `--use-staging "
+                    "to list staging versions."))
+@click.option("--validate-version", expose_value=False,
+              help="validate given version integrity")
 def main(ctx):
     """Pype is main command serving as entry point to pipeline system.
 
@@ -26,7 +31,7 @@ def main(ctx):
 
 @main.command()
 @click.option("-d", "--dev", is_flag=True, help="Settings in Dev mode")
-def settings(dev=False):
+def settings(dev):
     """Show Pype Settings UI."""
     PypeCommands().launch_settings_gui(dev)
 
@@ -60,13 +65,6 @@ def tray(debug=False):
               help="Ftrack api user")
 @click.option("--ftrack-api-key", envvar="FTRACK_API_KEY",
               help="Ftrack api key")
-@click.option("--ftrack-events-path",
-              envvar="FTRACK_EVENTS_PATH",
-              help=("path to ftrack event handlers"))
-@click.option("--no-stored-credentials", is_flag=True,
-              help="don't use stored credentials")
-@click.option("--store-credentials", is_flag=True,
-              help="store provided credentials")
 @click.option("--legacy", is_flag=True,
               help="run event server without mongo storing")
 @click.option("--clockify-api-key", envvar="CLOCKIFY_API_KEY",
@@ -77,9 +75,6 @@ def eventserver(debug,
                 ftrack_url,
                 ftrack_user,
                 ftrack_api_key,
-                ftrack_events_path,
-                no_stored_credentials,
-                store_credentials,
                 legacy,
                 clockify_api_key,
                 clockify_workspace):
@@ -87,10 +82,6 @@ def eventserver(debug,
 
     This should be ideally used by system service (such us systemd or upstart
     on linux and window service).
-
-    You have to set either proper environment variables to provide URL and
-    credentials or use option to specify them. If you use --store_credentials
-    provided credentials will be stored for later use.
     """
     if debug:
         os.environ['OPENPYPE_DEBUG'] = "3"
@@ -99,12 +90,34 @@ def eventserver(debug,
         ftrack_url,
         ftrack_user,
         ftrack_api_key,
-        ftrack_events_path,
-        no_stored_credentials,
-        store_credentials,
         legacy,
         clockify_api_key,
         clockify_workspace
+    )
+
+
+@main.command()
+@click.option("-d", "--debug", is_flag=True, help="Print debug messages")
+@click.option("-h", "--host", help="Host", default=None)
+@click.option("-p", "--port", help="Port", default=None)
+@click.option("-e", "--executable", help="Executable")
+@click.option("-u", "--upload_dir", help="Upload dir")
+def webpublisherwebserver(debug, executable, upload_dir, host=None, port=None):
+    """Starts webserver for communication with Webpublish FR via command line
+
+        OP must be congigured on a machine, eg. OPENPYPE_MONGO filled AND
+        FTRACK_BOT_API_KEY provided with api key from Ftrack.
+
+        Expect "pype.club" user created on Ftrack.
+    """
+    if debug:
+        os.environ['OPENPYPE_DEBUG'] = "3"
+
+    PypeCommands().launch_webpublisher_webservercli(
+        upload_dir=upload_dir,
+        executable=executable,
+        host=host,
+        port=port
     )
 
 
@@ -132,7 +145,9 @@ def extractenvironments(output_json_path, project, asset, task, app):
 @main.command()
 @click.argument("paths", nargs=-1)
 @click.option("-d", "--debug", is_flag=True, help="Print debug messages")
-def publish(debug, paths):
+@click.option("-t", "--targets", help="Targets module", default=None,
+              multiple=True)
+def publish(debug, paths, targets):
     """Start CLI publishing.
 
     Publish collects json from paths provided as an argument.
@@ -140,7 +155,26 @@ def publish(debug, paths):
     """
     if debug:
         os.environ['OPENPYPE_DEBUG'] = '3'
-    PypeCommands.publish(list(paths))
+    PypeCommands.publish(list(paths), targets)
+
+
+@main.command()
+@click.argument("path")
+@click.option("-d", "--debug", is_flag=True, help="Print debug messages")
+@click.option("-h", "--host", help="Host")
+@click.option("-u", "--user", help="User email address")
+@click.option("-p", "--project", help="Project")
+@click.option("-t", "--targets", help="Targets", default=None,
+              multiple=True)
+def remotepublish(debug, project, path, host, targets=None, user=None):
+    """Start CLI publishing.
+
+    Publish collects json from paths provided as an argument.
+    More than one path is allowed.
+    """
+    if debug:
+        os.environ['OPENPYPE_DEBUG'] = '3'
+    PypeCommands.remotepublish(project, path, host, user, targets=targets)
 
 
 @main.command()
@@ -224,15 +258,9 @@ def launch(app, project, asset, task,
     PypeCommands().run_application(app, project, asset, task, tools, arguments)
 
 
-@main.command()
-@click.option("-p", "--path", help="Path to zip file", default=None)
-def generate_zip(path):
-    """Generate Pype zip from current sources.
-
-    If PATH is not provided, it will create zip file in user data dir.
-
-    """
-    PypeCommands().generate_zip(path)
+@main.command(context_settings={"ignore_unknown_options": True})
+def projectmanager():
+    PypeCommands().launch_project_manager()
 
 
 @main.command(

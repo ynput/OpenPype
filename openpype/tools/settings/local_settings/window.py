@@ -7,6 +7,7 @@ from openpype.settings.lib import (
     get_local_settings,
     save_local_settings
 )
+from openpype.tools.settings import CHILD_OFFSET
 from openpype.api import (
     SystemSettings,
     ProjectSettings
@@ -23,7 +24,6 @@ from .apps_widget import LocalApplicationsWidgets
 from .projects_widget import ProjectSettingsWidget
 
 from .constants import (
-    CHILD_OFFSET,
     LOCAL_GENERAL_KEY,
     LOCAL_PROJECTS_KEY,
     LOCAL_APPS_KEY
@@ -80,7 +80,6 @@ class LocalSettingsWidget(QtWidgets.QWidget):
 
         general_widget = LocalGeneralWidgets(general_content)
         general_layout.addWidget(general_widget)
-        general_expand_widget.hide()
 
         self.main_layout.addWidget(general_expand_widget)
 
@@ -127,9 +126,9 @@ class LocalSettingsWidget(QtWidgets.QWidget):
         self.system_settings.reset()
         self.project_settings.reset()
 
-        # self.general_widget.update_local_settings(
-        #     value.get(LOCAL_GENERAL_KEY)
-        # )
+        self.general_widget.update_local_settings(
+            value.get(LOCAL_GENERAL_KEY)
+        )
         self.app_widget.update_local_settings(
             value.get(LOCAL_APPS_KEY)
         )
@@ -139,9 +138,9 @@ class LocalSettingsWidget(QtWidgets.QWidget):
 
     def settings_value(self):
         output = {}
-        # general_value = self.general_widget.settings_value()
-        # if general_value:
-        #     output[LOCAL_GENERAL_KEY] = general_value
+        general_value = self.general_widget.settings_value()
+        if general_value:
+            output[LOCAL_GENERAL_KEY] = general_value
 
         app_value = self.app_widget.settings_value()
         if app_value:
@@ -157,6 +156,8 @@ class LocalSettingsWindow(QtWidgets.QWidget):
     def __init__(self, parent=None):
         super(LocalSettingsWindow, self).__init__(parent)
 
+        self._reset_on_show = True
+
         self.resize(1000, 600)
 
         self.setWindowTitle("OpenPype Local settings")
@@ -167,9 +168,6 @@ class LocalSettingsWindow(QtWidgets.QWidget):
 
         scroll_widget = QtWidgets.QScrollArea(self)
         scroll_widget.setObjectName("GroupWidget")
-        settings_widget = LocalSettingsWidget(scroll_widget)
-
-        scroll_widget.setWidget(settings_widget)
         scroll_widget.setWidgetResizable(True)
 
         footer = QtWidgets.QWidget(self)
@@ -190,20 +188,70 @@ class LocalSettingsWindow(QtWidgets.QWidget):
         save_btn.clicked.connect(self._on_save_clicked)
         reset_btn.clicked.connect(self._on_reset_clicked)
 
-        self.settings_widget = settings_widget
+        # Do not create local settings widget in init phase as it's using
+        #   settings objects that must be OK to be able create this widget
+        #   - we want to show dialog if anything goes wrong
+        #   - without reseting nothing is shown
+        self._settings_widget = None
+        self._scroll_widget = scroll_widget
         self.reset_btn = reset_btn
         self.save_btn = save_btn
 
-        self.reset()
+    def showEvent(self, event):
+        super(LocalSettingsWindow, self).showEvent(event)
+        if self._reset_on_show:
+            self.reset()
 
     def reset(self):
-        value = get_local_settings()
-        self.settings_widget.update_local_settings(value)
+        if self._reset_on_show:
+            self._reset_on_show = False
+
+        error_msg = None
+        try:
+            # Create settings widget if is not created yet
+            if self._settings_widget is None:
+                self._settings_widget = LocalSettingsWidget(
+                    self._scroll_widget
+                )
+                self._scroll_widget.setWidget(self._settings_widget)
+
+            value = get_local_settings()
+            self._settings_widget.update_local_settings(value)
+
+        except Exception as exc:
+            error_msg = str(exc)
+
+        crashed = error_msg is not None
+        # Enable/Disable save button if crashed or not
+        self.save_btn.setEnabled(not crashed)
+        # Show/Hide settings widget if crashed or not
+        if self._settings_widget:
+            self._settings_widget.setVisible(not crashed)
+
+        if not crashed:
+            return
+
+        # Show message with error
+        title = "Something went wrong"
+        msg = (
+            "Bug: Loading of settings failed."
+            " Please contact your project manager or OpenPype team."
+            "\n\nError message:\n{}"
+        ).format(error_msg)
+
+        dialog = QtWidgets.QMessageBox(
+            QtWidgets.QMessageBox.Critical,
+            title,
+            msg,
+            QtWidgets.QMessageBox.Ok,
+            self
+        )
+        dialog.exec_()
 
     def _on_reset_clicked(self):
         self.reset()
 
     def _on_save_clicked(self):
-        value = self.settings_widget.settings_value()
+        value = self._settings_widget.settings_value()
         save_local_settings(value)
         self.reset()

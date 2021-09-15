@@ -2,8 +2,9 @@ import os
 import json
 import collections
 
-from avalon import style
 from Qt import QtCore, QtGui, QtWidgets
+
+from openpype import style
 from openpype.api import resources
 from openpype.settings.lib import get_local_settings
 from openpype.lib.pype_info import (
@@ -26,6 +27,8 @@ class EnvironmentValueDelegate(QtWidgets.QStyledItemDelegate):
 class EnvironmentsView(QtWidgets.QTreeView):
     def __init__(self, parent=None):
         super(EnvironmentsView, self).__init__(parent)
+
+        self._scroll_enabled = False
 
         model = QtGui.QStandardItemModel()
 
@@ -111,12 +114,14 @@ class EnvironmentsView(QtWidgets.QTreeView):
         else:
             return super(EnvironmentsView, self).keyPressEvent(event)
 
+    def set_scroll_enabled(self, value):
+        self._scroll_enabled = value
+
     def wheelEvent(self, event):
-        if not self.hasFocus():
+        if not self._scroll_enabled:
             event.ignore()
             return
         return super(EnvironmentsView, self).wheelEvent(event)
-
 
 
 class ClickableWidget(QtWidgets.QWidget):
@@ -144,16 +149,14 @@ class CollapsibleWidget(QtWidgets.QWidget):
         button_toggle.setChecked(False)
 
         label_widget = QtWidgets.QLabel(label, parent=top_part)
-        spacer_widget = QtWidgets.QWidget(top_part)
 
         top_part_layout = QtWidgets.QHBoxLayout(top_part)
         top_part_layout.setContentsMargins(0, 0, 0, 5)
         top_part_layout.addWidget(button_toggle)
         top_part_layout.addWidget(label_widget)
-        top_part_layout.addWidget(spacer_widget, 1)
+        top_part_layout.addStretch(1)
 
         label_widget.setAttribute(QtCore.Qt.WA_TranslucentBackground)
-        spacer_widget.setAttribute(QtCore.Qt.WA_TranslucentBackground)
         self.setAttribute(QtCore.Qt.WA_TranslucentBackground)
 
         self.button_toggle = button_toggle
@@ -202,8 +205,12 @@ class CollapsibleWidget(QtWidgets.QWidget):
 
 
 class PypeInfoWidget(QtWidgets.QWidget):
+    _resized = QtCore.Signal()
+
     def __init__(self, parent=None):
         super(PypeInfoWidget, self).__init__(parent)
+
+        self._scroll_at_bottom = False
 
         self.setStyleSheet(style.load_stylesheet())
 
@@ -221,10 +228,38 @@ class PypeInfoWidget(QtWidgets.QWidget):
         main_layout.addWidget(scroll_area, 1)
         main_layout.addWidget(self._create_btns_section(), 0)
 
+        scroll_area.verticalScrollBar().valueChanged.connect(
+            self._on_area_scroll
+        )
+        self._resized.connect(self._on_resize)
         self.resize(740, 540)
 
         self.scroll_area = scroll_area
         self.info_widget = info_widget
+
+    def _on_area_scroll(self, value):
+        vertical_bar = self.scroll_area.verticalScrollBar()
+        self._scroll_at_bottom = vertical_bar.maximum() == vertical_bar.value()
+        self.info_widget.set_scroll_enabled(self._scroll_at_bottom)
+
+    def _on_resize(self):
+        if not self._scroll_at_bottom:
+            return
+        vertical_bar = self.scroll_area.verticalScrollBar()
+        vertical_bar.setValue(vertical_bar.maximum())
+
+    def resizeEvent(self, event):
+        super(PypeInfoWidget, self).resizeEvent(event)
+        self._resized.emit()
+        self.info_widget.set_content_height(
+            self.scroll_area.height()
+        )
+
+    def showEvent(self, event):
+        super(PypeInfoWidget, self).showEvent(event)
+        self.info_widget.set_content_height(
+            self.scroll_area.height()
+        )
 
     def _create_btns_section(self):
         btns_widget = QtWidgets.QWidget(self)
@@ -284,6 +319,8 @@ class PypeInfoSubWidget(QtWidgets.QWidget):
     def __init__(self, parent=None):
         super(PypeInfoSubWidget, self).__init__(parent)
 
+        self.env_view = None
+
         main_layout = QtWidgets.QVBoxLayout(self)
         main_layout.setContentsMargins(0, 0, 0, 0)
         main_layout.setAlignment(QtCore.Qt.AlignTop)
@@ -295,9 +332,17 @@ class PypeInfoSubWidget(QtWidgets.QWidget):
         main_layout.addWidget(self._create_separator(), 0)
         main_layout.addWidget(self._create_environ_widget(), 1)
 
+    def set_content_height(self, height):
+        if self.env_view:
+            self.env_view.setMinimumHeight(height)
+
+    def set_scroll_enabled(self, value):
+        if self.env_view:
+            self.env_view.set_scroll_enabled(value)
+
     def _create_separator(self):
         separator_widget = QtWidgets.QWidget(self)
-        separator_widget.setStyleSheet("background: #222222;")
+        separator_widget.setObjectName("Separator")
         separator_widget.setMinimumHeight(2)
         separator_widget.setMaximumHeight(2)
         return separator_widget
@@ -371,8 +416,9 @@ class PypeInfoSubWidget(QtWidgets.QWidget):
 
         env_view = EnvironmentsView(env_widget)
         env_view.setMinimumHeight(300)
-
         env_widget.set_content_widget(env_view)
+
+        self.env_view = env_view
 
         return env_widget
 

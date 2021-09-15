@@ -45,6 +45,24 @@ class ListEntity(EndpointEntity):
                 return True
         return False
 
+    def __getitem__(self, idx):
+        if not isinstance(idx, int):
+            idx = int(idx)
+        return self.children[idx]
+
+    def __setitem__(self, idx, value):
+        if not isinstance(idx, int):
+            idx = int(idx)
+        self.children[idx].set(value)
+
+    def get(self, idx, default=None):
+        if not isinstance(idx, int):
+            idx = int(idx)
+
+        if idx < len(self.children):
+            return self.children[idx]
+        return default
+
     def index(self, item):
         if isinstance(item, BaseEntity):
             for idx, child_entity in enumerate(self.children):
@@ -59,43 +77,38 @@ class ListEntity(EndpointEntity):
         )
 
     def append(self, item):
-        child_obj = self._add_new_item()
-        child_obj.set_override_state(self._override_state)
+        child_obj = self.add_new_item(trigger_change=False)
         child_obj.set(item)
-        self.on_change()
+        self.on_child_change(child_obj)
 
     def extend(self, items):
         for item in items:
             self.append(item)
 
     def clear(self):
-        self.children.clear()
-        self.on_change()
+        if not self.children:
+            return
+
+        first_item = self.children.pop(0)
+        while self.children:
+            self.children.pop(0)
+        self.on_child_change(first_item)
 
     def pop(self, idx):
         item = self.children.pop(idx)
-        self.on_change()
+        self.on_child_change(item)
         return item
 
     def remove(self, item):
-        for idx, child_obj in enumerate(self.children):
-            found = False
-            if isinstance(item, BaseEntity):
-                if child_obj is item:
-                    found = True
-            elif child_obj.value == item:
-                found = True
-
-            if found:
-                self.pop(idx)
-                return
-        raise ValueError("ListEntity.remove(x): x not in ListEntity")
+        try:
+            self.pop(self.index(item))
+        except ValueError:
+            raise ValueError("ListEntity.remove(x): x not in ListEntity")
 
     def insert(self, idx, item):
-        child_obj = self._add_new_item(idx)
-        child_obj.set_override_state(self._override_state)
+        child_obj = self.add_new_item(idx, trigger_change=False)
         child_obj.set(item)
-        self.on_change()
+        self.on_child_change(child_obj)
 
     def _add_new_item(self, idx=None):
         child_obj = self.create_schema_object(self.item_schema, self, True)
@@ -105,10 +118,14 @@ class ListEntity(EndpointEntity):
             self.children.insert(idx, child_obj)
         return child_obj
 
-    def add_new_item(self, idx=None):
+    def add_new_item(self, idx=None, trigger_change=True):
         child_obj = self._add_new_item(idx)
-        child_obj.set_override_state(self._override_state)
-        self.on_change()
+        child_obj.set_override_state(
+            self._override_state, self._ignore_missing_defaults
+        )
+
+        if trigger_change:
+            self.on_child_change(child_obj)
         return child_obj
 
     def swap_items(self, item_1, item_2):
@@ -142,15 +159,34 @@ class ListEntity(EndpointEntity):
         item_schema = self.schema_data["object_type"]
         if not isinstance(item_schema, dict):
             item_schema = {"type": item_schema}
-        self.item_schema = item_schema
 
-        if not self.group_item:
+        obj_template_name = self.schema_hub.get_template_name(item_schema)
+        _item_schemas = self.schema_hub.resolve_schema_data(item_schema)
+        if len(_item_schemas) == 1:
+            self.item_schema = _item_schemas[0]
+            if self.item_schema != item_schema:
+                if "label" in self.item_schema:
+                    self.item_schema.pop("label")
+                self.item_schema["use_label_wrap"] = False
+        else:
+            self.item_schema = _item_schemas
+
+        # Store if was used template or schema
+        self._obj_template_name = obj_template_name
+
+        if self.group_item is None:
             self.is_group = True
 
         # Value that was set on set_override_state
         self.initial_value = []
 
     def schema_validations(self):
+        if isinstance(self.item_schema, list):
+            reason = (
+                "`ListWidget` has multiple items as object type."
+            )
+            raise EntitySchemaError(self, reason)
+
         super(ListEntity, self).schema_validations()
 
         if self.is_dynamic_item and self.use_label_wrap:
@@ -167,8 +203,36 @@ class ListEntity(EndpointEntity):
             )
             raise EntitySchemaError(self, reason)
 
-        for child_obj in self.children:
-            child_obj.schema_validations()
+        # Validate object type schema
+        validate_children = True
+        for child_entity in self.children:
+            child_entity.schema_validations()
+            validate_children = False
+            break
+
+        if validate_children and self._obj_template_name:
+            _validated = self.schema_hub.is_dynamic_template_validated(
+                self._obj_template_name
+            )
+            _validating = self.schema_hub.is_dynamic_template_validating(
+                self._obj_template_name
+            )
+            validate_children = not _validated and not _validating
+
+        if not validate_children:
+            return
+
+        def _validate():
+            idx = 0
+            tmp_child = self._add_new_item(idx)
+            tmp_child.schema_validations()
+            self.children.pop(idx)
+
+        if self._obj_template_name:
+            with self.schema_hub.validating_dynamic(self._obj_template_name):
+                _validate()
+        else:
+            _validate()
 
     def get_child_path(self, child_obj):
         result_idx = None
@@ -198,13 +262,14 @@ class ListEntity(EndpointEntity):
             self._has_project_override = True
         self.on_change()
 
-    def set_override_state(self, state):
+    def set_override_state(self, state, ignore_missing_defaults):
         # Trigger override state change of root if is not same
         if self.root_item.override_state is not state:
             self.root_item.set_override_state(state)
             return
 
         self._override_state = state
+        self._ignore_missing_defaults = ignore_missing_defaults
 
         while self.children:
             self.children.pop(0)
@@ -212,11 +277,17 @@ class ListEntity(EndpointEntity):
         # Ignore if is dynamic item and use default in that case
         if not self.is_dynamic_item and not self.is_in_dynamic_item:
             if state > OverrideState.DEFAULTS:
-                if not self.has_default_value:
+                if (
+                    not self.has_default_value
+                    and not ignore_missing_defaults
+                ):
                     raise DefaultsNotDefined(self)
 
             elif state > OverrideState.STUDIO:
-                if not self.had_studio_override:
+                if (
+                    not self.had_studio_override
+                    and not ignore_missing_defaults
+                ):
                     raise StudioDefaultsNotDefined(self)
 
         value = NOT_SET
@@ -250,7 +321,9 @@ class ListEntity(EndpointEntity):
                     child_obj.update_studio_value(item)
 
         for child_obj in self.children:
-            child_obj.set_override_state(self._override_state)
+            child_obj.set_override_state(
+                self._override_state, ignore_missing_defaults
+            )
 
         self.initial_value = self.settings_value()
 
@@ -343,7 +416,7 @@ class ListEntity(EndpointEntity):
         return output
 
     def _discard_changes(self, on_change_trigger):
-        if self._override_state is OverrideState.NOT_DEFINED:
+        if not self._can_discard_changes:
             return
 
         not_set = object()
@@ -388,7 +461,9 @@ class ListEntity(EndpointEntity):
                 if self.had_studio_override:
                     child_obj.update_studio_value(item)
 
-            child_obj.set_override_state(self._override_state)
+            child_obj.set_override_state(
+                self._override_state, self._ignore_missing_defaults
+            )
 
         if self._override_state >= OverrideState.PROJECT:
             self._has_project_override = self.had_project_override
@@ -405,7 +480,7 @@ class ListEntity(EndpointEntity):
         self.on_change()
 
     def _remove_from_studio_default(self, on_change_trigger):
-        if self._override_state is not OverrideState.STUDIO:
+        if not self._can_remove_from_studio_default:
             return
 
         value = self._default_value
@@ -420,7 +495,9 @@ class ListEntity(EndpointEntity):
         for item in value:
             child_obj = self._add_new_item()
             child_obj.update_default_value(item)
-            child_obj.set_override_state(self._override_state)
+            child_obj.set_override_state(
+                self._override_state, self._ignore_missing_defaults
+            )
 
         self._ignore_child_changes = False
 
@@ -433,10 +510,7 @@ class ListEntity(EndpointEntity):
         self.on_change()
 
     def _remove_from_project_override(self, on_change_trigger):
-        if self._override_state is not OverrideState.PROJECT:
-            return
-
-        if not self.has_project_override:
+        if not self._can_remove_from_project_override:
             return
 
         if self._has_studio_override:
@@ -456,7 +530,10 @@ class ListEntity(EndpointEntity):
             child_obj.update_default_value(item)
             if self._has_studio_override:
                 child_obj.update_studio_value(item)
-            child_obj.set_override_state(self._override_state)
+            child_obj.set_override_state(
+                self._override_state,
+                self._ignore_missing_defaults
+            )
 
         self._ignore_child_changes = False
 

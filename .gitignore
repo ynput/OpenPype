@@ -36,6 +36,7 @@ Temporary Items
 # CX_Freeze
 ###########
 /build
+/dist/
 
 /vendor/bin/*
 /.venv
@@ -63,7 +64,6 @@ coverage.xml
 *.cover
 .hypothesis/
 .pytest_cache/
-
 
 # Node JS packages
 ##################
@@ -93,3 +93,9 @@ website/i18n/*
 website/debug.log
 
 website/.docusaurus
+
+# Poetry
+########
+
+.poetry/
+.python-version

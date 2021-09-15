@@ -26,7 +26,8 @@ from .terminal import Terminal
 from .execute import (
     get_pype_execute_args,
     execute,
-    run_subprocess
+    run_subprocess,
+    CREATE_NO_WINDOW
 )
 from .log import PypeLogger, timeit
 from .mongo import (
@@ -51,12 +52,18 @@ from .vendor_bin_utils import (
 )
 
 from .python_module_tools import (
+    import_filepath,
     modules_from_path,
     recursive_bases_from_class,
-    classes_from_module
+    classes_from_module,
+    import_module_from_dirpath
 )
 
 from .avalon_context import (
+    CURRENT_DOC_SCHEMAS,
+    PROJECT_NAME_ALLOWED_SYMBOLS,
+    PROJECT_NAME_REGEX,
+    create_project,
     is_latest,
     any_outdated,
     get_asset,
@@ -64,6 +71,8 @@ from .avalon_context import (
     get_linked_assets,
     get_latest_version,
 
+    get_workfile_template_key,
+    get_workfile_template_key_from_context,
     get_workdir_data,
     get_workdir,
     get_workdir_with_workdir_data,
@@ -76,7 +85,24 @@ from .avalon_context import (
 
     get_creator_by_name,
 
-    change_timer_to_current_context
+    get_custom_workfile_template,
+
+    change_timer_to_current_context,
+
+    get_custom_workfile_template_by_context,
+    get_custom_workfile_template_by_string_context,
+    get_custom_workfile_template
+)
+
+from .local_settings import (
+    IniSettingRegistry,
+    JSONSettingRegistry,
+    OpenPypeSecureRegistry,
+    OpenPypeSettingsRegistry,
+    get_local_site_id,
+    change_openpype_mongo_url,
+    get_openpype_username,
+    is_admin_password_required
 )
 
 from .applications import (
@@ -102,7 +128,9 @@ from .profiles_filtering import filter_profiles
 from .plugin_tools import (
     TaskNotSetError,
     get_subset_name,
+    prepare_template_data,
     filter_pyblish_plugins,
+    set_plugin_attributes_from_settings,
     source_hash,
     get_unique_layer_name,
     get_background_layers,
@@ -112,19 +140,12 @@ from .plugin_tools import (
     should_decompress
 )
 
-from .local_settings import (
-    IniSettingRegistry,
-    JSONSettingRegistry,
-    OpenPypeSecureRegistry,
-    OpenPypeSettingsRegistry,
-    get_local_site_id,
-    change_openpype_mongo_url
-)
-
 from .path_tools import (
     version_up,
     get_version_from_path,
-    get_last_version_from_path
+    get_last_version_from_path,
+    create_project_folders,
+    get_project_basic_paths
 )
 
 from .editorial import (
@@ -135,7 +156,13 @@ from .editorial import (
     trim_media_range,
     range_from_frames,
     frames_to_secons,
+    frames_to_timecode,
     make_sequence_collection
+)
+
+from .pype_info import (
+    get_openpype_version,
+    get_build_version
 )
 
 terminal = Terminal
@@ -154,10 +181,16 @@ __all__ = [
     "get_ffmpeg_tool_path",
     "ffprobe_streams",
 
+    "import_filepath",
     "modules_from_path",
     "recursive_bases_from_class",
     "classes_from_module",
+    "import_module_from_dirpath",
 
+    "CURRENT_DOC_SCHEMAS",
+    "PROJECT_NAME_ALLOWED_SYMBOLS",
+    "PROJECT_NAME_REGEX",
+    "create_project",
     "is_latest",
     "any_outdated",
     "get_asset",
@@ -165,6 +198,8 @@ __all__ = [
     "get_linked_assets",
     "get_latest_version",
 
+    "get_workfile_template_key",
+    "get_workfile_template_key_from_context",
     "get_workdir_data",
     "get_workdir",
     "get_workdir_with_workdir_data",
@@ -178,6 +213,19 @@ __all__ = [
     "get_creator_by_name",
 
     "change_timer_to_current_context",
+
+    "get_custom_workfile_template_by_context",
+    "get_custom_workfile_template_by_string_context",
+    "get_custom_workfile_template",
+
+    "IniSettingRegistry",
+    "JSONSettingRegistry",
+    "OpenPypeSecureRegistry",
+    "OpenPypeSettingsRegistry",
+    "get_local_site_id",
+    "change_openpype_mongo_url",
+    "get_openpype_username",
+    "is_admin_password_required",
 
     "ApplicationLaunchFailed",
     "ApplictionExecutableNotFound",
@@ -198,6 +246,7 @@ __all__ = [
     "TaskNotSetError",
     "get_subset_name",
     "filter_pyblish_plugins",
+    "set_plugin_attributes_from_settings",
     "source_hash",
     "get_unique_layer_name",
     "get_background_layers",
@@ -224,13 +273,6 @@ __all__ = [
     "validate_mongo_connection",
     "OpenPypeMongoConnection",
 
-    "IniSettingRegistry",
-    "JSONSettingRegistry",
-    "OpenPypeSecureRegistry",
-    "OpenPypeSettingsRegistry",
-    "get_local_site_id",
-    "change_openpype_mongo_url",
-
     "timeit",
 
     "is_overlapping_otio_ranges",
@@ -240,5 +282,11 @@ __all__ = [
     "trim_media_range",
     "range_from_frames",
     "frames_to_secons",
-    "make_sequence_collection"
+    "frames_to_timecode",
+    "make_sequence_collection",
+    "create_project_folders",
+    "get_project_basic_paths",
+
+    "get_openpype_version",
+    "get_build_version",
 ]

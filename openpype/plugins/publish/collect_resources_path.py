@@ -39,7 +39,6 @@ class CollectResourcesPath(pyblish.api.InstancePlugin):
                 "rig",
                 "plate",
                 "look",
-                "lut",
                 "yetiRig",
                 "yeticache",
                 "nukenodes",
@@ -52,7 +51,8 @@ class CollectResourcesPath(pyblish.api.InstancePlugin):
                 "fbx",
                 "textures",
                 "action",
-                "background"
+                "background",
+                "effect"
                 ]
 
     def process(self, instance):

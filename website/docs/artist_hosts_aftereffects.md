@@ -22,7 +22,7 @@ Drag extension.zxp and drop it to Anastasyi's Extension Manager. The extension w
 ## Implemented functionality
 
 AfterEffects implementation currently allows you to import and add various media to composition (image plates, renders, audio files, video files etc.)
-and send prepared composition for rendering to Deadline. 
+and send prepared composition for rendering to Deadline or render locally. 
 
 ## Usage
 
@@ -52,6 +52,12 @@ will be changed.
 ![Higlights](assets/aftereffects_creator_after.png)
 
 ### Publish
+
+#### RenderQueue
+
+AE's Render Queue is required for publishing locally or on a farm. Artist needs to configure expected result format (extension, resolution) in the Render Queue in an Output module. Currently its expected to have only single render item and single output module in the Render Queue.
+
+AE might throw some warning windows during publishing locally, so please pay attention to them in a case publishing seems to be stuck in a `Extract Local Render`.
 
 When you are ready to share your work, you will need to publish it. This is done by opening the `Publish` by clicking the corresponding button in the OpenPype Panel.
 

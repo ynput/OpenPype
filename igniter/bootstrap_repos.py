@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 """Bootstrap OpenPype repositories."""
-import functools
+from __future__ import annotations
 import logging as log
 import os
 import re
@@ -9,10 +9,13 @@ import sys
 import tempfile
 from pathlib import Path
 from typing import Union, Callable, List, Tuple
+import hashlib
+
 from zipfile import ZipFile, BadZipFile
 
 from appdirs import user_data_dir
 from speedcopy import copyfile
+import semver
 
 from .user_settings import (
     OpenPypeSecureRegistry,
@@ -26,159 +29,157 @@ LOG_WARNING = 1
 LOG_ERROR = 3
 
 
-@functools.total_ordering
-class OpenPypeVersion:
+def sha256sum(filename):
+    """Calculate sha256 for content of the file.
+
+    Args:
+         filename (str): Path to file.
+
+    Returns:
+        str: hex encoded sha256
+
+    """
+    h = hashlib.sha256()
+    b = bytearray(128 * 1024)
+    mv = memoryview(b)
+    with open(filename, 'rb', buffering=0) as f:
+        for n in iter(lambda: f.readinto(mv), 0):
+            h.update(mv[:n])
+    return h.hexdigest()
+
+
+class OpenPypeVersion(semver.VersionInfo):
     """Class for storing information about OpenPype version.
 
     Attributes:
-        major (int): [1].2.3-client-variant
-        minor (int): 1.[2].3-client-variant
-        subversion (int): 1.2.[3]-client-variant
-        client (str): 1.2.3-[client]-variant
-        variant (str): 1.2.3-client-[variant]
+        staging (bool): True if it is staging version
         path (str): path to OpenPype
 
     """
-    major = 0
-    minor = 0
-    subversion = 0
-    variant = ""
-    client = None
+    staging = False
     path = None
+    _VERSION_REGEX = re.compile(r"(?P<major>0|[1-9]\d*)\.(?P<minor>0|[1-9]\d*)\.(?P<patch>0|[1-9]\d*)(?:-(?P<prerelease>(?:0|[1-9]\d*|\d*[a-zA-Z-][0-9a-zA-Z-]*)(?:\.(?:0|[1-9]\d*|\d*[a-zA-Z-][0-9a-zA-Z-]*))*))?(?:\+(?P<buildmetadata>[0-9a-zA-Z-]+(?:\.[0-9a-zA-Z-]+)*))?$")  # noqa: E501
 
-    _version_regex = re.compile(
-        r"(?P<major>\d+)\.(?P<minor>\d+)\.(?P<sub>\d+)(-(?P<var1>staging)|-(?P<client>.+)(-(?P<var2>staging)))?")  # noqa: E501
+    def __init__(self, *args, **kwargs):
+        """Create OpenPype version.
 
-    @property
-    def version(self):
-        """return formatted version string."""
-        return self._compose_version()
+        .. deprecated:: 3.0.0-rc.2
+            `client` and `variant` are removed.
 
-    @version.setter
-    def version(self, val):
-        decomposed = self._decompose_version(val)
-        self.major = decomposed[0]
-        self.minor = decomposed[1]
-        self.subversion = decomposed[2]
-        self.variant = decomposed[3]
-        self.client = decomposed[4]
 
-    def __init__(self, major: int = None, minor: int = None,
-                 subversion: int = None, version: str = None,
-                 variant: str = "", client: str = None,
-                 path: Path = None):
-        self.path = path
+        Args:
+            major (int): version when you make incompatible API changes.
+            minor (int): version when you add functionality in a
+                backwards-compatible manner.
+            patch (int): version when you make backwards-compatible bug fixes.
+            prerelease (str): an optional prerelease string
+            build (str): an optional build string
+            version (str): if set, it will be parsed and will override
+                parameters like `major`, `minor` and so on.
+            staging (bool): set to True if version is staging.
+            path (Path): path to version location.
 
-        if (
-                major is None or minor is None or subversion is None
-        ) and version is None:
-            raise ValueError("Need version specified in some way.")
-        if version:
-            values = self._decompose_version(version)
-            self.major = values[0]
-            self.minor = values[1]
-            self.subversion = values[2]
-            self.variant = values[3]
-            self.client = values[4]
-        else:
-            self.major = major
-            self.minor = minor
-            self.subversion = subversion
-            # variant is set only if it is "staging", otherwise "production" is
-            # implied and no need to mention it in version string.
-            if variant == "staging":
-                self.variant = variant
-            self.client = client
+        """
+        self.path = None
+        self.staging = False
 
-    def _compose_version(self):
-        version = "{}.{}.{}".format(self.major, self.minor, self.subversion)
+        if "version" in kwargs.keys():
+            if not kwargs.get("version"):
+                raise ValueError("Invalid version specified")
+            v = OpenPypeVersion.parse(kwargs.get("version"))
+            kwargs["major"] = v.major
+            kwargs["minor"] = v.minor
+            kwargs["patch"] = v.patch
+            kwargs["prerelease"] = v.prerelease
+            kwargs["build"] = v.build
+            kwargs.pop("version")
 
-        if self.client:
-            version = "{}-{}".format(version, self.client)
+        if kwargs.get("path"):
+            if isinstance(kwargs.get("path"), str):
+                self.path = Path(kwargs.get("path"))
+            elif isinstance(kwargs.get("path"), Path):
+                self.path = kwargs.get("path")
+            else:
+                raise TypeError("Path must be str or Path")
+            kwargs.pop("path")
 
-        if self.variant == "staging":
-            version = "{}-{}".format(version, self.variant)
+        if "path" in kwargs.keys():
+            kwargs.pop("path")
 
-        return version
+        if kwargs.get("staging"):
+            self.staging = kwargs.get("staging", False)
+            kwargs.pop("staging")
 
-    @classmethod
-    def _decompose_version(cls, version_string: str) -> tuple:
-        m = re.search(cls._version_regex, version_string)
-        if not m:
-            raise ValueError(
-                "Cannot parse version string: {}".format(version_string))
+        if "staging" in kwargs.keys():
+            kwargs.pop("staging")
 
-        variant = None
-        if m.group("var1") == "staging" or m.group("var2") == "staging":
-            variant = "staging"
+        if self.staging:
+            if kwargs.get("build"):
+                if "staging" not in kwargs.get("build"):
+                    kwargs["build"] = "{}-staging".format(kwargs.get("build"))
+            else:
+                kwargs["build"] = "staging"
 
-        client = m.group("client")
+        if kwargs.get("build") and "staging" in kwargs.get("build", ""):
+            self.staging = True
 
-        return (int(m.group("major")), int(m.group("minor")),
-                int(m.group("sub")), variant, client)
+        super().__init__(*args, **kwargs)
 
     def __eq__(self, other):
-        if not isinstance(other, self.__class__):
-            return False
-        return self.version == other.version
-
-    def __str__(self):
-        return self.version
+        result = super().__eq__(other)
+        return bool(result and self.staging == other.staging)
 
     def __repr__(self):
-        return "{}, {}: {}".format(
-            self.__class__.__name__, self.version, self.path)
+        return "<{}: {} - path={}>".format(
+            self.__class__.__name__, str(self), self.path)
 
-    def __hash__(self):
-        return hash(self.version)
-
-    def __lt__(self, other):
-        if (self.major, self.minor, self.subversion) < \
-                (other.major, other.minor, other.subversion):
-            return True
-
-        # 1.2.3-staging < 1.2.3-client-staging
-        if self.get_main_version() == other.get_main_version() and \
-                not self.client and self.variant and \
-                other.client and other.variant:
-            return True
-
-        # 1.2.3 < 1.2.3-staging
-        if self.get_main_version() == other.get_main_version() and \
-                not self.client and self.variant and \
-                not other.client and not other.variant:
-            return True
-
-        # 1.2.3 < 1.2.3-client
-        if self.get_main_version() == other.get_main_version() and \
-                not self.client and not self.variant and \
-                other.client and not other.variant:
-            return True
-
-        # 1.2.3 < 1.2.3-client-staging
-        if self.get_main_version() == other.get_main_version() and \
-                not self.client and not self.variant and other.client:
-            return True
-
-        # 1.2.3-client-staging < 1.2.3-client
-        if self.get_main_version() == other.get_main_version() and \
-                self.client and self.variant and \
-                other.client and not other.variant:
-            return True
-
+    def __lt__(self, other: OpenPypeVersion):
+        result = super().__lt__(other)
         # prefer path over no path
-        if self.version == other.version and \
-                not self.path and other.path:
+        if self == other and not self.path and other.path:
             return True
 
-        # prefer path with dir over path with file
-        return self.version == other.version and self.path and \
-            other.path and self.path.is_file() and \
-            other.path.is_dir()
+        if self == other and self.path and other.path and \
+                other.path.is_dir() and self.path.is_file():
+            return True
+
+        if self.finalize_version() == other.finalize_version() and \
+                self.prerelease == other.prerelease and \
+                self.is_staging() and not other.is_staging():
+            return True
+
+        return result
+
+    def set_staging(self) -> OpenPypeVersion:
+        """Set version as staging and return it.
+
+        This will preserve current one.
+
+        Returns:
+            OpenPypeVersion: Set as staging.
+
+        """
+        if self.staging:
+            return self
+        return self.replace(parts={"build": f"{self.build}-staging"})
+
+    def set_production(self) -> OpenPypeVersion:
+        """Set version as production and return it.
+
+        This will preserve current one.
+
+        Returns:
+            OpenPypeVersion: Set as production.
+
+        """
+        if not self.staging:
+            return self
+        return self.replace(
+            parts={"build": self.build.replace("-staging", "")})
 
     def is_staging(self) -> bool:
         """Test if current version is staging one."""
-        return self.variant == "staging"
+        return self.staging
 
     def get_main_version(self) -> str:
         """Return main version component.
@@ -186,11 +187,13 @@ class OpenPypeVersion:
         This returns x.x.x part of version from possibly more complex one
         like x.x.x-foo-bar.
 
+        .. deprecated:: 3.0.0-rc.2
+            use `finalize_version()` instead.
         Returns:
             str: main version component
 
         """
-        return "{}.{}.{}".format(self.major, self.minor, self.subversion)
+        return str(self.finalize_version())
 
     @staticmethod
     def version_in_str(string: str) -> Tuple:
@@ -203,15 +206,28 @@ class OpenPypeVersion:
             tuple: True/False and OpenPypeVersion if found.
 
         """
-        try:
-            result = OpenPypeVersion._decompose_version(string)
-        except ValueError:
+        m = re.search(OpenPypeVersion._VERSION_REGEX, string)
+        if not m:
             return False, None
-        return True, OpenPypeVersion(major=result[0],
-                                     minor=result[1],
-                                     subversion=result[2],
-                                     variant=result[3],
-                                     client=result[4])
+        version = OpenPypeVersion.parse(string[m.start():m.end()])
+        return True, version
+
+    @classmethod
+    def parse(cls, version):
+        """Extends parse to handle ta handle staging variant."""
+        v = super().parse(version)
+        openpype_version = cls(major=v.major, minor=v.minor,
+                               patch=v.patch, prerelease=v.prerelease,
+                               build=v.build)
+        if v.build and "staging" in v.build:
+            openpype_version.staging = True
+        return openpype_version
+
+    def __hash__(self):
+        if self.path:
+            return hash(self.path)
+        else:
+            return hash(str(self))
 
 
 class BootstrapRepos:
@@ -223,7 +239,7 @@ class BootstrapRepos:
             otherwise `None`.
         registry (OpenPypeSettingsRegistry): OpenPype registry object.
         zip_filter (list): List of files to exclude from zip
-        openpype_filter (list): list of top level directories not to
+        openpype_filter (list): list of top level directories to
             include in zip in OpenPype repository.
 
     """
@@ -246,7 +262,7 @@ class BootstrapRepos:
         self.registry = OpenPypeSettingsRegistry()
         self.zip_filter = [".pyc", "__pycache__"]
         self.openpype_filter = [
-            "build", "docs", "tests", "tools", "venv", "coverage"
+            "openpype", "repos", "schema", "LICENSE"
         ]
         self._message = message
 
@@ -265,11 +281,12 @@ class BootstrapRepos:
             self.live_repo_dir = Path(Path(__file__).parent / ".." / "repos")
 
     @staticmethod
-    def get_version_path_from_list(version: str, version_list: list) -> Path:
+    def get_version_path_from_list(
+            version: str, version_list: list) -> Union[Path, None]:
         """Get path for specific version in list of OpenPype versions.
 
         Args:
-            version (str): Version string to look for (1.2.4-staging)
+            version (str): Version string to look for (1.2.4+staging)
             version_list (list of OpenPypeVersion): list of version to search.
 
         Returns:
@@ -279,13 +296,14 @@ class BootstrapRepos:
         for v in version_list:
             if str(v) == version:
                 return v.path
+        return None
 
     @staticmethod
     def get_local_live_version() -> str:
         """Get version of local OpenPype."""
 
         version = {}
-        path = Path(os.path.dirname(__file__)).parent / "openpype" / "version.py"
+        path = Path(os.environ["OPENPYPE_ROOT"]) / "openpype" / "version.py"
         with open(path, "r") as fp:
             exec(fp.read(), version)
         return version["__version__"]
@@ -423,18 +441,13 @@ class BootstrapRepos:
         """
         frozen_root = Path(sys.executable).parent
 
-        # from frozen code we need igniter, openpype, schema vendor
-        openpype_list = self._filter_dir(
-            frozen_root / "openpype", self.zip_filter)
-        openpype_list += self._filter_dir(
-            frozen_root / "igniter", self.zip_filter)
-        openpype_list += self._filter_dir(
-            frozen_root / "repos", self.zip_filter)
-        openpype_list += self._filter_dir(
-            frozen_root / "schema", self.zip_filter)
-        openpype_list += self._filter_dir(
-            frozen_root / "vendor", self.zip_filter)
-        openpype_list.append(frozen_root / "LICENSE")
+        openpype_list = []
+        for f in self.openpype_filter:
+            if (frozen_root / f).is_dir():
+                openpype_list += self._filter_dir(
+                    frozen_root / f, self.zip_filter)
+            else:
+                openpype_list.append(frozen_root / f)
 
         version = self.get_version(frozen_root)
 
@@ -477,11 +490,16 @@ class BootstrapRepos:
             openpype_path (Path): Path to OpenPype sources.
 
         """
-        openpype_list = []
-        openpype_inc = 0
-
         # get filtered list of file in Pype repository
-        openpype_list = self._filter_dir(openpype_path, self.zip_filter)
+        # openpype_list = self._filter_dir(openpype_path, self.zip_filter)
+        openpype_list = []
+        for f in self.openpype_filter:
+            if (openpype_path / f).is_dir():
+                openpype_list += self._filter_dir(
+                    openpype_path / f, self.zip_filter)
+            else:
+                openpype_list.append(openpype_path / f)
+
         openpype_files = len(openpype_list)
 
         openpype_inc = 98.0 / float(openpype_files)
@@ -491,6 +509,7 @@ class BootstrapRepos:
             openpype_root = openpype_path.resolve()
             # generate list of filtered paths
             dir_filter = [openpype_root / f for f in self.openpype_filter]
+            checksums = []
 
             file: Path
             for file in openpype_list:
@@ -506,17 +525,124 @@ class BootstrapRepos:
                     except ValueError:
                         pass
 
-                if is_inside:
+                if not is_inside:
                     continue
 
                 processed_path = file
                 self._print(f"- processing {processed_path}")
 
-                zip_file.write(file, file.relative_to(openpype_root))
+                checksums.append(
+                    (
+                        sha256sum(file.as_posix()),
+                        file.resolve().relative_to(openpype_root)
+                    )
+                )
+                zip_file.write(
+                    file, file.resolve().relative_to(openpype_root))
 
+            checksums_str = ""
+            for c in checksums:
+                checksums_str += "{}:{}\n".format(c[0], c[1])
+            zip_file.writestr("checksums", checksums_str)
             # test if zip is ok
             zip_file.testzip()
             self._progress_callback(100)
+
+    def validate_openpype_version(self, path: Path) -> tuple:
+        """Validate version directory or zip file.
+
+        This will load `checksums` file if present, calculate checksums
+        of existing files in given path and compare. It will also compare
+        lists of files together for missing files.
+
+        Args:
+            path (Path): Path to OpenPype version to validate.
+
+        Returns:
+            tuple(bool, str): with version validity as first item
+                and string with reason as second.
+
+        """
+        if not path.exists():
+            return False, "Path doesn't exist"
+
+        if path.is_file():
+            return self._validate_zip(path)
+        return self._validate_dir(path)
+
+    @staticmethod
+    def _validate_zip(path: Path) -> tuple:
+        """Validate content of zip file."""
+        with ZipFile(path, "r") as zip_file:
+            # read checksums
+            try:
+                checksums_data = str(zip_file.read("checksums"))
+            except IOError:
+                # FIXME: This should be set to False sometimes in the future
+                return True, "Cannot read checksums for archive."
+
+            # split it to the list of tuples
+            checksums = [
+                tuple(line.split(":"))
+                for line in checksums_data.split("\n") if line
+            ]
+
+            # calculate and compare checksums in the zip file
+            for file in checksums:
+                h = hashlib.sha256()
+                try:
+                    h.update(zip_file.read(file[1]))
+                except FileNotFoundError:
+                    return False, f"Missing file [ {file[1]} ]"
+                if h.hexdigest() != file[0]:
+                    return False, f"Invalid checksum on {file[1]}"
+
+            # get list of files in zip minus `checksums` file itself
+            # and turn in to set to compare against list of files
+            # from checksum file. If difference exists, something is
+            # wrong
+            files_in_zip = zip_file.namelist()
+            files_in_zip.remove("checksums")
+            files_in_zip = set(files_in_zip)
+        files_in_checksum = set([file[1] for file in checksums])
+        diff = files_in_zip.difference(files_in_checksum)
+        if diff:
+            return False, f"Missing files {diff}"
+
+        return True, "All ok"
+
+    @staticmethod
+    def _validate_dir(path: Path) -> tuple:
+        checksums_file = Path(path / "checksums")
+        if not checksums_file.exists():
+            # FIXME: This should be set to False sometimes in the future
+            return True, "Cannot read checksums for archive."
+        checksums_data = checksums_file.read_text()
+        checksums = [
+            tuple(line.split(":"))
+            for line in checksums_data.split("\n") if line
+        ]
+        files_in_dir = [
+            file.relative_to(path).as_posix()
+            for file in path.iterdir() if file.is_file()
+        ]
+        files_in_dir.remove("checksums")
+        files_in_dir = set(files_in_dir)
+        files_in_checksum = set([file[1] for file in checksums])
+
+        for file in checksums:
+            try:
+                current = sha256sum((path / file[1]).as_posix())
+            except FileNotFoundError:
+                return False, f"Missing file [ {file[1]} ]"
+
+            if file[0] != current:
+                return False, f"Invalid checksum on {file[1]}"
+        diff = files_in_dir.difference(files_in_checksum)
+        if diff:
+            return False, f"Missing files {diff}"
+
+        return True, "All ok"
 
     @staticmethod
     def add_paths_from_archive(archive: Path) -> None:
@@ -575,7 +701,7 @@ class BootstrapRepos:
 
         """
         sys.path.insert(0, directory.as_posix())
-        directory = directory / "repos"
+        directory /= "repos"
         if not directory.exists() and not directory.is_dir():
             raise ValueError("directory is invalid")
 
@@ -632,7 +758,7 @@ class BootstrapRepos:
                  " not implemented yet."))
 
         dir_to_search = self.data_dir
-
+        user_versions = self.get_openpype_versions(self.data_dir, staging)
         # if we have openpype_path specified, search only there.
         if openpype_path:
             dir_to_search = openpype_path
@@ -652,12 +778,16 @@ class BootstrapRepos:
                     pass
 
         openpype_versions = self.get_openpype_versions(dir_to_search, staging)
+        openpype_versions += user_versions
 
         # remove zip file version if needed.
         if not include_zips:
             openpype_versions = [
                 v for v in openpype_versions if v.path.suffix != ".zip"
             ]
+
+        # remove duplicates
+        openpype_versions = sorted(list(set(openpype_versions)))
 
         return openpype_versions
 
@@ -681,7 +811,7 @@ class BootstrapRepos:
         openpype_path = None
         # try to get OpenPype path from mongo.
         if location.startswith("mongodb"):
-            pype_path = get_openpype_path_from_db(location)
+            openpype_path = get_openpype_path_from_db(location)
             if not openpype_path:
                 self._print("cannot find OPENPYPE_PATH in settings.")
                 return None
@@ -764,12 +894,13 @@ class BootstrapRepos:
 
         destination = self.data_dir / version.path.stem
         if destination.exists():
+            assert destination.is_dir()
             try:
-                destination.unlink()
-            except OSError:
+                shutil.rmtree(destination)
+            except OSError as e:
                 msg = f"!!! Cannot remove already existing {destination}"
                 self._print(msg, LOG_ERROR, exc_info=True)
-                return None
+                raise e
 
         destination.mkdir(parents=True)
 
@@ -808,7 +939,7 @@ class BootstrapRepos:
         """Install OpenPype version to user data directory.
 
         Args:
-            oepnpype_version (OpenPypeVersion): OpenPype version to install.
+            openpype_version (OpenPypeVersion): OpenPype version to install.
             force (bool, optional): Force overwrite existing version.
 
         Returns:
@@ -821,7 +952,6 @@ class BootstrapRepos:
             OpenPypeVersionIOError: If copying or zipping fail.
 
         """
-
         if self.is_inside_user_data(openpype_version.path) and not openpype_version.path.is_file():  # noqa
             raise OpenPypeVersionExists(
                 "OpenPype already inside user data dir")
@@ -837,6 +967,7 @@ class BootstrapRepos:
 
         # test if destination directory already exist, if so lets delete it.
         if destination.exists() and force:
+            self._print("removing existing directory")
             try:
                 shutil.rmtree(destination)
             except OSError as e:
@@ -846,6 +977,7 @@ class BootstrapRepos:
                 raise OpenPypeVersionIOError(
                     f"cannot remove existing {destination}") from e
         elif destination.exists() and not force:
+            self._print("destination directory already exists")
             raise OpenPypeVersionExists(f"{destination} already exist.")
         else:
             # create destination parent directories even if they don't exist.
@@ -855,6 +987,7 @@ class BootstrapRepos:
         if openpype_version.path.is_dir():
             # create zip inside temporary directory.
             self._print("Creating zip from directory ...")
+            self._progress_callback(0)
             with tempfile.TemporaryDirectory() as temp_dir:
                 temp_zip = \
                     Path(temp_dir) / f"openpype-v{openpype_version}.zip"
@@ -868,33 +1001,47 @@ class BootstrapRepos:
                 # set zip as version source
                 openpype_version.path = temp_zip
 
+                if self.is_inside_user_data(openpype_version.path):
+                    raise OpenPypeVersionInvalid(
+                        "Version is in user data dir.")
+                openpype_version.path = self._copy_zip(
+                    openpype_version.path, destination)
+
         elif openpype_version.path.is_file():
             # check if file is zip (by extension)
             if openpype_version.path.suffix.lower() != ".zip":
                 raise OpenPypeVersionInvalid("Invalid file format")
 
-        if not self.is_inside_user_data(openpype_version.path):
-            try:
-                # copy file to destination
-                self._print("Copying zip to destination ...")
-                _destination_zip = destination.parent / openpype_version.path.name  # noqa: E501
-                copyfile(
-                    openpype_version.path.as_posix(),
-                    _destination_zip.as_posix())
-            except OSError as e:
-                self._print(
-                    "cannot copy version to user data directory", LOG_ERROR,
-                    exc_info=True)
-                raise OpenPypeVersionIOError((
-                    f"can't copy version {openpype_version.path.as_posix()} "
-                    f"to destination {destination.parent.as_posix()}")) from e
+            if not self.is_inside_user_data(openpype_version.path):
+                self._progress_callback(35)
+                openpype_version.path = self._copy_zip(
+                    openpype_version.path, destination)
 
         # extract zip there
         self._print("extracting zip to destination ...")
         with ZipFile(openpype_version.path, "r") as zip_ref:
+            self._progress_callback(75)
             zip_ref.extractall(destination)
+            self._progress_callback(100)
 
         return destination
+
+    def _copy_zip(self, source: Path, destination: Path) -> Path:
+        try:
+            # copy file to destination
+            self._print("Copying zip to destination ...")
+            _destination_zip = destination.parent / source.name  # noqa: E501
+            copyfile(
+                source.as_posix(),
+                _destination_zip.as_posix())
+        except OSError as e:
+            self._print(
+                "cannot copy version to user data directory", LOG_ERROR,
+                exc_info=True)
+            raise OpenPypeVersionIOError((
+                f"can't copy version {source.as_posix()} "
+                f"to destination {destination.parent.as_posix()}")) from e
+        return _destination_zip
 
     def _is_openpype_in_dir(self,
                             dir_item: Path,
@@ -961,8 +1108,12 @@ class BootstrapRepos:
                         "openpype/version.py") as version_file:
                     zip_version = {}
                     exec(version_file.read(), zip_version)
-                    version_check = OpenPypeVersion(
-                        version=zip_version["__version__"])
+                    try:
+                        version_check = OpenPypeVersion(
+                            version=zip_version["__version__"])
+                    except ValueError as e:
+                        self._print(str(e), True)
+                        return False
 
                     version_main = version_check.get_main_version()  # noqa: E501
                     detected_main = detected_version.get_main_version()  # noqa: E501

@@ -4,6 +4,13 @@ from avalon.nuke import lib as anlib
 from openpype.hosts.nuke.api import lib as pnlib
 import openpype
 
+try:
+    from __builtin__ import reload
+except ImportError:
+    from importlib import reload
+
+reload(pnlib)
+
 
 class ExtractReviewDataMov(openpype.api.Extractor):
     """Extracts movie and thumbnail with baked in luts
@@ -45,7 +52,6 @@ class ExtractReviewDataMov(openpype.api.Extractor):
 
             if "render.farm" in families:
                 instance.data["families"].remove("review")
-                instance.data["families"].remove("ftrack")
                 data = exporter.generate_mov(farm=True)
 
                 self.log.debug(

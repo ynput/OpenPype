@@ -1,7 +1,7 @@
 [tool.poetry]
 name = "OpenPype"
-version = "3.0.0-beta2"
-description = "Multi-platform open-source pipeline built around the Avalon platform, expanding it with extra features and integrations."
+version = "3.0.0"
+description = "Open VFX and Animation pipeline with support."
 authors = ["OpenPype Team <info@openpype.io>"]
 license = "MIT License"
 homepage = "https://openpype.io"
@@ -9,6 +9,23 @@ documentation = "https://openpype.io/docs/artist_getting_started"
 repository = "https://github.com/pypeclub/openpype"
 readme = "README.md"
 keywords = ["Pipeline", "Avalon", "VFX", "animation", "automation", "tracking", "asset management"]
+packages = [
+    {include = "igniter"},
+    {include = "repos"},
+    {include = "tools"},
+    {include = "tests"},
+    {include = "docs"},
+    {include = "openpype"},
+    {include = "start.py"},
+    {include = "LICENSE"},
+    {include = "README.md"},
+    {include = "setup.py"},
+    {include = "pyproject.toml"},
+    {include = "poetry.lock"}
+]
+
+[tool.poetry.scripts]
+openpype = 'start:boot'
 
 [tool.poetry.dependencies]
 python = "3.7.*"
@@ -36,6 +53,7 @@ pyqt5 = "^5.12.2" # ideally should be replaced with PySide2
 "Qt.py" = "^1.3.3"
 speedcopy = "^2.1"
 six = "^1.15"
+semver = "^2.13.0" # for version resolution
 wsrpc_aiohttp = "^3.1.1" # websocket server
 pywin32 = { version = "300", markers = "sys_platform == 'win32'" }
 jinxed = [
@@ -44,12 +62,14 @@ jinxed = [
 ]
 python3-xlib = { version="*", markers = "sys_platform == 'linux'"}
 enlighten = "^1.9.0"
+slack-sdk = "^3.6.0"
 
 [tool.poetry.dev-dependencies]
 flake8 = "^3.7"
 autopep8 = "^1.4"
 coverage = "*"
 cx_freeze = "^6.6"
+GitPython = "^3.1.17"
 jedi = "^0.13"
 Jinja2 = "^2.11"
 pycodestyle = "^2.5.0"
@@ -65,6 +85,8 @@ sphinx-qt-documentation = "*"
 recommonmark = "*"
 wheel = "*"
 enlighten = "*"  # cool terminal progress bars
+toml = "^0.10.2" # for parsing pyproject.toml
+
 
 [tool.poetry.urls]
 "Bug Tracker" = "https://github.com/pypeclub/openpype/issues"
@@ -97,8 +119,8 @@ url = "https://distribute.openpype.io/thirdparty/oiio_tools-2.2.0-windows.zip"
 hash = "fd2e00278e01e85dcee7b4a6969d1a16f13016ec16700fb0366dbb1b1f3c37ad"
 
 [openpype.thirdparty.oiio.linux]
-url = "https://distribute.openpype.io/thirdparty/oiio-2.2.0-linux.tgz"
-hash = "sha256:..."
+url = "https://distribute.openpype.io/thirdparty/oiio_tools-2.2.12-linux.tgz"
+hash = "de63a8bf7f6c45ff59ecafeba13123f710c2cbc1783ec9e0b938e980d4f5c37f"
 
 [openpype.thirdparty.oiio.darwin]
 url = "https://distribute.openpype.io/thirdparty/oiio-2.2.0-darwin.tgz"
