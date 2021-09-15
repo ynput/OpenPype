@@ -31,6 +31,7 @@ class TimersManager(
         timers_settings = modules_settings[self.name]
 
         self.enabled = timers_settings["enabled"]
+
         auto_stop = timers_settings["auto_stop"]
         # When timer will stop if idle manager is running (minutes)
         full_time = int(timers_settings["full_time"] * 60)
@@ -68,8 +69,9 @@ class TimersManager(
         """Implementation of IWebServerRoutes interface."""
         if self.tray_initialized:
             from .rest_api import TimersManagerModuleRestApi
-            self.rest_api_obj = TimersManagerModuleRestApi(self,
-                                                           server_manager)
+            self.rest_api_obj = TimersManagerModuleRestApi(
+                self, server_manager
+            )
 
     def start_timer(self, project_name, asset_name, task_name, hierarchy):
         """
@@ -112,17 +114,35 @@ class TimersManager(
         self.timer_started(None, data)
 
     def timer_started(self, source_id, data):
-        for module in self.modules:
-            if module.id != source_id:
-                module.start_timer(data)
+        for module_id, connector in self._connectors_by_module_id.items():
+            if module_id == source_id:
+                continue
+
+            try:
+                connector.start_timer(data)
+            except Exception:
+                self.log.info(
+                    "Failed to start timer on connector {}".format(
+                        str(connector)
+                    )
+                )
 
         self.last_task = data
         self.is_running = True
 
     def timer_stopped(self, source_id):
-        for module in self.modules:
-            if module.id != source_id:
-                module.stop_timer()
+        for module_id, connector in self._connectors_by_module_id.items():
+            if module_id == source_id:
+                continue
+
+            try:
+                connector.stop_timer()
+            except Exception:
+                self.log.info(
+                    "Failed to stop timer on connector {}".format(
+                        str(connector)
+                    )
+                )
 
     def restart_timers(self):
         if self.last_task is not None:
@@ -136,8 +156,7 @@ class TimersManager(
         self.widget_user_idle.refresh_context()
         self.is_running = False
 
-        for module in self.modules:
-            module.stop_timer()
+        self.timer_stopper(None)
 
     def connect_with_modules(self, enabled_modules):
         for module in enabled_modules:
