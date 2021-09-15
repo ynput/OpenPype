@@ -22,6 +22,11 @@ class TimersManager(
     name = "timers_manager"
     label = "Timers Service"
 
+    _required_methods = (
+        "stop_timer",
+        "start_timer"
+    )
+
     def initialize(self, modules_settings):
         timers_settings = modules_settings[self.name]
 
@@ -44,7 +49,8 @@ class TimersManager(
         self.widget_user_idle = None
         self.signal_handler = None
 
-        self.modules = []
+        self._connectors_by_module_id = {}
+        self._modules_by_id = {}
 
     def tray_init(self):
         from .widget_user_idle import WidgetUserIdle, SignalHandler
@@ -135,10 +141,36 @@ class TimersManager(
 
     def connect_with_modules(self, enabled_modules):
         for module in enabled_modules:
-            if not isinstance(module, ITimersManager):
+            connector = getattr(module, "timers_manager_connector", None)
+            if connector is None:
                 continue
-            module.timer_manager_module = self
-            self.modules.append(module)
+
+            missing_methods = set()
+            for method_name in self._required_methods:
+                if not hasattr(connector, method_name):
+                    missing_methods.add(method_name)
+
+            if missing_methods:
+                joined = ", ".join(
+                    ['"{}"'.format(name for name in missing_methods)]
+                )
+                self.log.info((
+                    "Module \"{}\" has missing required methods {}."
+                ).format(module.name, joined))
+                continue
+
+            self._connectors_by_module_id[module.id] = connector
+            self._modules_by_id[module.id] = module
+
+            # Optional method
+            if hasattr(connector, "register_timers_manager"):
+                try:
+                    connector.register_timers_manager(self)
+                except Exception:
+                    self.log.info((
+                        "Failed to register timers manager"
+                        " for connector of module \"{}\"."
+                    ).format(module.name))
 
     def callbacks_by_idle_time(self):
         """Implementation of IIdleManager interface."""
