@@ -384,8 +384,8 @@ class BaseHandler(object):
         )
 
     def show_interface(
-        self, items, title='',
-        event=None, user=None, username=None, user_id=None
+        self, items, title="", event=None, user=None,
+        username=None, user_id=None, submit_btn_label=None
     ):
         """
         Shows interface to user
@@ -428,14 +428,18 @@ class BaseHandler(object):
             'applicationId=ftrack.client.web and user.id="{0}"'
         ).format(user_id)
 
+        event_data = {
+            "type": "widget",
+            "items": items,
+            "title": title
+        }
+        if submit_btn_label:
+            event_data["submit_button_label"] = submit_btn_label
+
         self.session.event_hub.publish(
             ftrack_api.event.base.Event(
                 topic='ftrack.action.trigger-user-interface',
-                data=dict(
-                    type='widget',
-                    items=items,
-                    title=title
-                ),
+                data=event_data,
                 target=target
             ),
             on_error='ignore'
@@ -443,7 +447,7 @@ class BaseHandler(object):
 
     def show_interface_from_dict(
         self, messages, title="", event=None,
-        user=None, username=None, user_id=None
+        user=None, username=None, user_id=None, submit_btn_label=None
     ):
         if not messages:
             self.log.debug("No messages to show! (messages dict is empty)")
@@ -469,7 +473,9 @@ class BaseHandler(object):
                 message = {'type': 'label', 'value': '<p>{}</p>'.format(value)}
                 items.append(message)
 
-        self.show_interface(items, title, event, user, username, user_id)
+        self.show_interface(
+            items, title, event, user, username, user_id, submit_btn_label
+        )
 
     def trigger_action(
         self, action_name, event=None, session=None,

@@ -5,7 +5,7 @@ import pyblish.api
 class PreCollectClipEffects(pyblish.api.InstancePlugin):
     """Collect soft effects instances."""
 
-    order = pyblish.api.CollectorOrder - 0.579
+    order = pyblish.api.CollectorOrder - 0.479
     label = "Precollect Clip Effects Instances"
     families = ["clip"]
 

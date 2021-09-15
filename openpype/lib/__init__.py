@@ -143,7 +143,9 @@ from .plugin_tools import (
 from .path_tools import (
     version_up,
     get_version_from_path,
-    get_last_version_from_path
+    get_last_version_from_path,
+    create_project_folders,
+    get_project_basic_paths
 )
 
 from .editorial import (
@@ -156,6 +158,11 @@ from .editorial import (
     frames_to_secons,
     frames_to_timecode,
     make_sequence_collection
+)
+
+from .pype_info import (
+    get_openpype_version,
+    get_build_version
 )
 
 terminal = Terminal
@@ -276,5 +283,10 @@ __all__ = [
     "range_from_frames",
     "frames_to_secons",
     "frames_to_timecode",
-    "make_sequence_collection"
+    "make_sequence_collection",
+    "create_project_folders",
+    "get_project_basic_paths",
+
+    "get_openpype_version",
+    "get_build_version",
 ]

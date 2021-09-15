@@ -376,11 +376,16 @@ class TaskTypeEnumEntity(BaseEnumEntity):
     schema_types = ["task-types-enum"]
 
     def _item_initalization(self):
-        self.multiselection = True
-        self.value_on_not_set = []
+        self.multiselection = self.schema_data.get("multiselection", True)
+        if self.multiselection:
+            self.valid_value_types = (list, )
+            self.value_on_not_set = []
+        else:
+            self.valid_value_types = (STRING_TYPE, )
+            self.value_on_not_set = ""
+
         self.enum_items = []
         self.valid_keys = set()
-        self.valid_value_types = (list, )
         self.placeholder = None
 
     def _get_enum_values(self):
@@ -396,15 +401,51 @@ class TaskTypeEnumEntity(BaseEnumEntity):
 
         return enum_items, valid_keys
 
+    def _convert_value_for_current_state(self, source_value):
+        if self.multiselection:
+            output = []
+            for key in source_value:
+                if key in self.valid_keys:
+                    output.append(key)
+            return output
+
+        if source_value not in self.valid_keys:
+            # Take first item from enum items
+            for item in self.enum_items:
+                for key in item.keys():
+                    source_value = key
+                break
+        return source_value
+
     def set_override_state(self, *args, **kwargs):
         super(TaskTypeEnumEntity, self).set_override_state(*args, **kwargs)
 
         self.enum_items, self.valid_keys = self._get_enum_values()
-        new_value = []
-        for key in self._current_value:
-            if key in self.valid_keys:
-                new_value.append(key)
-        self._current_value = new_value
+
+        if self.multiselection:
+            new_value = []
+            for key in self._current_value:
+                if key in self.valid_keys:
+                    new_value.append(key)
+
+            if self._current_value != new_value:
+                self.set(new_value)
+        else:
+            if not self.enum_items:
+                self.valid_keys.add("")
+                self.enum_items.append({"": "< Empty >"})
+
+            for item in self.enum_items:
+                for key in item.keys():
+                    value_on_not_set = key
+                break
+
+            self.value_on_not_set = value_on_not_set
+            if (
+                self._current_value is NOT_SET
+                or self._current_value not in self.valid_keys
+            ):
+                self.set(value_on_not_set)
 
 
 class DeadlineUrlEnumEntity(BaseEnumEntity):

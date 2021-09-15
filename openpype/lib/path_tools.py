@@ -1,6 +1,11 @@
+import json
+import logging
 import os
 import re
-import logging
+
+
+from .anatomy import Anatomy
+from openpype.settings import get_project_settings
 
 log = logging.getLogger(__name__)
 
@@ -119,3 +124,75 @@ def get_last_version_from_path(path_dir, filter):
         return filtred_files[-1]
 
     return None
+
+
+def compute_paths(basic_paths_items, project_root):
+    pattern_array = re.compile(r"\[.*\]")
+    project_root_key = "__project_root__"
+    output = []
+    for path_items in basic_paths_items:
+        clean_items = []
+        for path_item in path_items:
+            matches = re.findall(pattern_array, path_item)
+            if len(matches) > 0:
+                path_item = path_item.replace(matches[0], "")
+            if path_item == project_root_key:
+                path_item = project_root
+            clean_items.append(path_item)
+        output.append(os.path.normpath(os.path.sep.join(clean_items)))
+    return output
+
+
+def create_project_folders(basic_paths, project_name):
+    anatomy = Anatomy(project_name)
+    roots_paths = []
+    if isinstance(anatomy.roots, dict):
+        for root in anatomy.roots.values():
+            roots_paths.append(root.value)
+    else:
+        roots_paths.append(anatomy.roots.value)
+
+    for root_path in roots_paths:
+        project_root = os.path.join(root_path, project_name)
+        full_paths = compute_paths(basic_paths, project_root)
+        # Create folders
+        for path in full_paths:
+            full_path = path.format(project_root=project_root)
+            if os.path.exists(full_path):
+                log.debug(
+                    "Folder already exists: {}".format(full_path)
+                )
+            else:
+                log.debug("Creating folder: {}".format(full_path))
+                os.makedirs(full_path)
+
+
+def _list_path_items(folder_structure):
+    output = []
+    for key, value in folder_structure.items():
+        if not value:
+            output.append(key)
+        else:
+            paths = _list_path_items(value)
+            for path in paths:
+                if not isinstance(path, (list, tuple)):
+                    path = [path]
+
+                item = [key]
+                item.extend(path)
+                output.append(item)
+
+    return output
+
+
+def get_project_basic_paths(project_name):
+    project_settings = get_project_settings(project_name)
+    folder_structure = (
+        project_settings["global"]["project_folder_structure"]
+    )
+    if not folder_structure:
+        return []
+
+    if isinstance(folder_structure, str):
+        folder_structure = json.loads(folder_structure)
+    return _list_path_items(folder_structure)
