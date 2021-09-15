@@ -1,4 +1,6 @@
 import time
+import sys
+import json
 import traceback
 
 from openpype_modules.ftrack.lib import BaseAction, statics_icon
@@ -30,17 +32,10 @@ class SyncToAvalonLocal(BaseAction):
         - or do it manually (Not recommended)
     """
 
-    #: Action identifier.
     identifier = "sync.to.avalon.local"
-    #: Action label.
     label = "OpenPype Admin"
-    #: Action variant
     variant = "- Sync To Avalon (Local)"
-    #: Action description.
-    description = "Send data from Ftrack to Avalon"
-    #: priority
     priority = 200
-    #: roles that are allowed to register this action
     icon = statics_icon("ftrack", "action_icons", "OpenPypeAdmin.svg")
 
     settings_key = "sync_to_avalon_local"
@@ -63,17 +58,80 @@ class SyncToAvalonLocal(BaseAction):
         return is_valid
 
     def launch(self, session, in_entities, event):
+        self.log.debug("{}: Creating job".format(self.label))
+
+        user_entity = session.query(
+            "User where id is {}".format(event["source"]["user"]["id"])
+        ).one()
+        job_entity = session.create("Job", {
+            "user": user_entity,
+            "status": "running",
+            "data": json.dumps({
+                "description": "Sync to avalon is running..."
+            })
+        })
+        session.commit()
+
+        project_entity = self.get_project_from_entity(in_entities[0])
+        project_name = project_entity["full_name"]
+
+        try:
+            result = self.synchronization(event, project_name)
+
+        except Exception:
+            self.log.error(
+                "Synchronization failed due to code error", exc_info=True
+            )
+
+            description = "Sync to avalon Crashed (Download traceback)"
+            self.add_traceback_to_job(
+                job_entity, session, sys.exc_info(), description
+            )
+
+            msg = "An error has happened during synchronization"
+            title = "Synchronization report ({}):".format(project_name)
+            items = []
+            items.append({
+                "type": "label",
+                "value": "# {}".format(msg)
+            })
+            items.append({
+                "type": "label",
+                "value": (
+                    "<p>Download report from job for more information.</p>"
+                )
+            })
+
+            report = {}
+            try:
+                report = self.entities_factory.report()
+            except Exception:
+                pass
+
+            _items = report.get("items") or []
+            if _items:
+                items.append(self.entities_factory.report_splitter)
+                items.extend(_items)
+
+            self.show_interface(items, title, event, submit_btn_label="Ok")
+
+            return {"success": True, "message": msg}
+
+        job_entity["status"] = "done"
+        job_entity["data"] = json.dumps({
+            "description": "Sync to avalon finished."
+        })
+        session.commit()
+
+        return result
+
+    def synchronization(self, event, project_name):
         time_start = time.time()
 
         self.show_message(event, "Synchronization - Preparing data", True)
-        # Get ftrack project
-        if in_entities[0].entity_type.lower() == "project":
-            ft_project_name = in_entities[0]["full_name"]
-        else:
-            ft_project_name = in_entities[0]["project"]["full_name"]
 
         try:
-            output = self.entities_factory.launch_setup(ft_project_name)
+            output = self.entities_factory.launch_setup(project_name)
             if output is not None:
                 return output
 
@@ -83,7 +141,7 @@ class SyncToAvalonLocal(BaseAction):
             time_2 = time.time()
 
             # This must happen before all filtering!!!
-            self.entities_factory.prepare_avalon_entities(ft_project_name)
+            self.entities_factory.prepare_avalon_entities(project_name)
             time_3 = time.time()
 
             self.entities_factory.filter_by_ignore_sync()
@@ -129,7 +187,7 @@ class SyncToAvalonLocal(BaseAction):
             report = self.entities_factory.report()
             if report and report.get("items"):
                 default_title = "Synchronization report ({}):".format(
-                    ft_project_name
+                    project_name
                 )
                 self.show_interface(
                     items=report["items"],
@@ -140,46 +198,6 @@ class SyncToAvalonLocal(BaseAction):
                 "success": True,
                 "message": "Synchronization Finished"
             }
-
-        except Exception:
-            self.log.error(
-                "Synchronization failed due to code error", exc_info=True
-            )
-            msg = "An error occurred during synchronization"
-            title = "Synchronization report ({}):".format(ft_project_name)
-            items = []
-            items.append({
-                "type": "label",
-                "value": "# {}".format(msg)
-            })
-            items.append({
-                "type": "label",
-                "value": "## Traceback of the error"
-            })
-            items.append({
-                "type": "label",
-                "value": "<p>{}</p>".format(
-                    str(traceback.format_exc()).replace(
-                        "\n", "<br>").replace(
-                        " ", "&nbsp;"
-                    )
-                )
-            })
-
-            report = {"items": []}
-            try:
-                report = self.entities_factory.report()
-            except Exception:
-                pass
-
-            _items = report.get("items", [])
-            if _items:
-                items.append(self.entities_factory.report_splitter)
-                items.extend(_items)
-
-            self.show_interface(items, title, event)
-
-            return {"success": True, "message": msg}
 
         finally:
             try:

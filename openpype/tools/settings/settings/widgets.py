@@ -92,11 +92,15 @@ class NumberSpinBox(QtWidgets.QDoubleSpinBox):
         min_value = kwargs.pop("minimum", -99999)
         max_value = kwargs.pop("maximum", 99999)
         decimals = kwargs.pop("decimal", 0)
+        steps = kwargs.pop("steps", None)
+
         super(NumberSpinBox, self).__init__(*args, **kwargs)
         self.setFocusPolicy(QtCore.Qt.StrongFocus)
         self.setDecimals(decimals)
         self.setMinimum(min_value)
         self.setMaximum(max_value)
+        if steps is not None:
+            self.setSingleStep(steps)
 
     def focusInEvent(self, event):
         super(NumberSpinBox, self).focusInEvent(event)

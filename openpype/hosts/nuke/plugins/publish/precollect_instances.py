@@ -8,7 +8,7 @@ from avalon.nuke import lib as anlib
 class PreCollectNukeInstances(pyblish.api.ContextPlugin):
     """Collect all nodes with Avalon knob."""
 
-    order = pyblish.api.CollectorOrder - 0.59
+    order = pyblish.api.CollectorOrder - 0.49
     label = "Pre-collect Instances"
     hosts = ["nuke", "nukeassist"]
 

@@ -76,6 +76,14 @@ class ProviderFactory:
 
         return provider_info[0].get_configurable_items()
 
+    def get_provider_cls(self, provider_code):
+        """
+            Returns class object for 'provider_code' to run class methods on.
+        """
+        provider_info = self._get_creator_info(provider_code)
+
+        return provider_info[0]
+
     def _get_creator_info(self, provider):
         """
             Collect all necessary info for provider. Currently only creator

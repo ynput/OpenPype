@@ -82,7 +82,7 @@ def get_version_from_path(file):
     """
     pattern = re.compile(r"[\._]v([0-9]+)", re.IGNORECASE)
     try:
-        return pattern.findall(file)[0]
+        return pattern.findall(file)[-1]
     except IndexError:
         log.error(
             "templates:get_version_from_workfile:"
@@ -178,7 +178,9 @@ def _list_path_items(folder_structure):
                 if not isinstance(path, (list, tuple)):
                     path = [path]
 
-                output.append([key, *path])
+                item = [key]
+                item.extend(path)
+                output.append(item)
 
     return output
 
