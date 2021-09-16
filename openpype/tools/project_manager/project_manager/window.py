@@ -140,7 +140,7 @@ class ProjectManagerWindow(QtWidgets.QWidget):
 
         refresh_projects_btn.clicked.connect(self._on_project_refresh)
         create_project_btn.clicked.connect(self._on_project_create)
-        create_folders_btn.clicked.connect(self._on_add_misc_folders)
+        create_folders_btn.clicked.connect(self._on_create_folders)
         project_combobox.currentIndexChanged.connect(self._on_project_change)
         save_btn.clicked.connect(self._on_save_click)
         add_asset_btn.clicked.connect(self._on_add_asset)
@@ -213,7 +213,7 @@ class ProjectManagerWindow(QtWidgets.QWidget):
     def _on_add_task(self):
         self.hierarchy_view.add_task()
 
-    def _on_add_misc_folders(self):
+    def _on_create_folders(self):
         if not self._current_project:
             return
 
