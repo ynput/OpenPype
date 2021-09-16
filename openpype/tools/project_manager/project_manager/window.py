@@ -1,4 +1,3 @@
-import logging
 from Qt import QtWidgets, QtCore, QtGui
 
 from . import (
@@ -16,7 +15,11 @@ from openpype.lib import is_admin_password_required
 from openpype.widgets import PasswordDialog
 
 from openpype import resources
-from openpype.api import get_project_basic_paths, create_project_folders, Logger
+from openpype.api import (
+    get_project_basic_paths,
+    create_project_folders,
+    Logger
+)
 from avalon.api import AvalonMongoDB
 
 
@@ -228,8 +231,10 @@ class ProjectManagerWindow(QtWidgets.QWidget):
                 # Invoking OpenPype API to create the project folders
                 create_project_folders(basic_paths, self._current_project)
             except Exception as exc:
-                self.log.warning("Cannot create starting folders: {}".format(exc),
-                                 exc_info=True)
+                self.log.warning(
+                    "Cannot create starting folders: {}".format(exc),
+                    exc_info=True
+                )
 
     def show_message(self, message):
         # TODO add nicer message pop
