@@ -87,7 +87,7 @@ class ExtractTrimVideoAudio(openpype.api.Extractor):
                 ffmpeg_args, shell=True, logger=self.log
             )
 
-            repr = {
+            repre = {
                 "name": ext[1:],
                 "ext": ext[1:],
                 "files": os.path.basename(clip_trimed_path),
@@ -100,10 +100,10 @@ class ExtractTrimVideoAudio(openpype.api.Extractor):
             }
 
             if ext in [".mov", ".mp4"]:
-                repr.update({
+                repre.update({
                     "thumbnail": True,
                     "tags": ["review", "ftrackreview", "delete"]})
 
-            instance.data["representations"].append(repr)
+            instance.data["representations"].append(repre)
 
             self.log.debug(f"Instance data: {pformat(instance.data)}")
