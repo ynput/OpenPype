@@ -159,9 +159,11 @@ def split_command_to_list(string_command):
     Returns:
         list: Command separated into individual arguments.
     """
+    kwargs = {}
+    # Use 'posix' argument only on windows
     if platform.system().lower() == "windows":
-        posix = False
-    return shlex.split(string_command, posix=posix)
+        kwargs["posix"] = False
+    return shlex.split(string_command, **kwargs)
 
 
 def get_pype_execute_args(*args):
