@@ -28,6 +28,7 @@ from .execute import (
     execute,
     run_subprocess,
     split_command_to_list,
+    path_to_subprocess_arg,
     CREATE_NO_WINDOW
 )
 from .log import PypeLogger, timeit
@@ -173,6 +174,7 @@ __all__ = [
     "execute",
     "run_subprocess",
     "split_command_to_list",
+    "path_to_subprocess_arg",
     "CREATE_NO_WINDOW",
 
     "env_value_to_bool",

@@ -139,6 +139,14 @@ def run_subprocess(*args, **kwargs):
     return full_output
 
 
+def path_to_subprocess_arg(path):
+    """Prepare path for subprocess arguments.
+
+    Returned path can be wrapped with quotes or kept as is.
+    """
+    return subprocess.list2cmdline([path])
+
+
 def split_command_to_list(string_command):
     """Split string subprocess command to list.
 
@@ -159,6 +167,9 @@ def split_command_to_list(string_command):
     Returns:
         list: Command separated into individual arguments.
     """
+    if not string_command:
+        return []
+
     kwargs = {}
     # Use 'posix' argument only on windows
     if platform.system().lower() == "windows":
