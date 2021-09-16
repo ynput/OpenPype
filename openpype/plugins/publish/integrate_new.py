@@ -177,6 +177,14 @@ class IntegrateAssetNew(pyblish.api.InstancePlugin):
             # Just set 'task_name' variable to context task
             task_name = anatomy_data["task"]
 
+        # Find task type for current task name
+        # - this should be already prepared on instance
+        asset_tasks = (
+            asset_entity.get("data", {}).get("tasks")
+        ) or {}
+        task_info = asset_tasks.get(task_name) or {}
+        task_type = task_info.get("type")
+
         # Fill family in anatomy data
         anatomy_data["family"] = instance.data.get("family")
 
