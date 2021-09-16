@@ -140,8 +140,25 @@ def run_subprocess(*args, **kwargs):
 
 
 def split_command_to_list(string_command):
-    """Split string subprocess command to list."""
-    posix = True
+    """Split string subprocess command to list.
+
+    Should be able to split complex subprocess command to separated arguments:
+    `"C:\\ffmpeg folder\\ffmpeg.exe" -i \"D:\\input.mp4\\" \"D:\\output.mp4\"`
+
+    Should result into list:
+    `["C:\ffmpeg folder\ffmpeg.exe", "-i", "D:\input.mp4", "D:\output.mp4"]`
+
+    This may be required on few versions of python where subprocess can handle
+    only list of arguments.
+
+    To be able do that is using `shlex` python module.
+
+    Args:
+        string_command(str): Full subprocess command.
+
+    Returns:
+        list: Command separated into individual arguments.
+    """
     if platform.system().lower() == "windows":
         posix = False
     return shlex.split(string_command, posix=posix)
