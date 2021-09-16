@@ -73,7 +73,7 @@
         {
             "type": "boolean",
             "key": "active",
-            "label": "Is Project Active"
+            "label": "Active Project"
         }
     ]
 }
