@@ -94,9 +94,6 @@ class ClockifyModule(
             "server": [CLOCKIFY_FTRACK_SERVER_PATH]
         }
 
-    def connect_with_modules(self, *_a, **_kw):
-        return
-
     def clockify_timer_stopped(self):
         self.bool_timer_run = False
         # Call `ITimersManager` method
