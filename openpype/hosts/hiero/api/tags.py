@@ -10,16 +10,16 @@ log = Logger().get_logger(__name__)
 
 def tag_data():
     return {
-        "Retiming": {
-            "editable": "1",
-            "note": "Clip has retime or TimeWarp effects (or multiple effects stacked on the clip)",  # noqa
-            "icon": "retiming.png",
-            "metadata": {
-                "family": "retiming",
-                "marginIn": 1,
-                "marginOut": 1
-            }
-        },
+        # "Retiming": {
+        #     "editable": "1",
+        #     "note": "Clip has retime or TimeWarp effects (or multiple effects stacked on the clip)",  # noqa
+        #     "icon": "retiming.png",
+        #     "metadata": {
+        #         "family": "retiming",
+        #         "marginIn": 1,
+        #         "marginOut": 1
+        #     }
+        # },
         "[Lenses]": {
             "Set lense here": {
                 "editable": "1",
@@ -31,15 +31,15 @@ def tag_data():
                 }
             }
         },
-        "NukeScript": {
-            "editable": "1",
-            "note": "Collecting track items to Nuke scripts.",
-            "icon": "icons:TagNuke.png",
-            "metadata": {
-                "family": "nukescript",
-                "subset": "main"
-            }
-        },
+        # "NukeScript": {
+        #     "editable": "1",
+        #     "note": "Collecting track items to Nuke scripts.",
+        #     "icon": "icons:TagNuke.png",
+        #     "metadata": {
+        #         "family": "nukescript",
+        #         "subset": "main"
+        #     }
+        # },
         "Comment": {
             "editable": "1",
             "note": "Comment on a shot.",
