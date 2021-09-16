@@ -223,23 +223,22 @@ class ExtractReviewSlate(openpype.api.Extractor):
                 ])
 
             # concat slate and videos together
-            conc_input_args = ["-y", "-f concat", "-safe 0"]
-            conc_input_args.append("-i {}".format(conc_text_path))
-
-            conc_output_args = ["-c copy"]
-            conc_output_args.append(output_path)
-
             concat_args = [
                 ffmpeg_path,
-                " ".join(conc_input_args),
-                " ".join(conc_output_args)
+                "-y",
+                "-f", "concat",
+                "-safe", "0",
+                "-i", conc_text_path,
+                "-c", "copy",
+                output_path
             ]
-            concat_subprcs_cmd = " ".join(concat_args)
 
             # ffmpeg concat subprocess
-            self.log.debug("Executing concat: {}".format(concat_subprcs_cmd))
+            self.log.debug(
+                "Executing concat: {}".format(" ".join(concat_args))
+            )
             openpype.api.run_subprocess(
-                concat_subprcs_cmd, shell=True, logger=self.log
+                concat_args, shell=True, logger=self.log
             )
 
             self.log.debug("__ repre[tags]: {}".format(repre["tags"]))
