@@ -29,7 +29,7 @@ class ProjectManagerWindow(QtWidgets.QWidget):
         self._user_passed = False
 
         self.setWindowTitle("OpenPype Project Manager")
-        self.setWindowIcon(QtGui.QIcon(resources.pype_icon_filepath()))
+        self.setWindowIcon(QtGui.QIcon(resources.get_openpype_icon_filepath()))
 
         # Top part of window
         top_part_widget = QtWidgets.QWidget(self)
