@@ -62,7 +62,7 @@
                     },
                     {
                         "key": "tasks",
-                        "label": "Tasks",
+                        "label": "Task names",
                         "type": "list",
                         "object_type": "text"
                     },
