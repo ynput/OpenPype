@@ -106,12 +106,15 @@ class IntegrateAssetNew(pyblish.api.InstancePlugin):
         "family", "hierarchy", "task", "username"
     ]
     default_template_name = "publish"
-    template_name_profiles = None
+
+    # suffix to denote temporary files, use without '.'
+    TMP_FILE_EXT = 'tmp'
 
     # file_url : file_size of all published and uploaded files
     integrated_file_sizes = {}
 
-    TMP_FILE_EXT = 'tmp'  # suffix to denote temporary files, use without '.'
+    # Attributes set by settings
+    template_name_profiles = None
     subset_grouping_profiles = None
 
     def process(self, instance):
