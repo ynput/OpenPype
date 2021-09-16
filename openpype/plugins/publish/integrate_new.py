@@ -112,6 +112,7 @@ class IntegrateAssetNew(pyblish.api.InstancePlugin):
     integrated_file_sizes = {}
 
     TMP_FILE_EXT = 'tmp'  # suffix to denote temporary files, use without '.'
+    subset_grouping_profiles = None
 
     def process(self, instance):
         self.integrated_file_sizes = {}
