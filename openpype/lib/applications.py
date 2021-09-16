@@ -1245,6 +1245,9 @@ def prepare_context_environments(data):
     asset_tasks = asset_doc.get("data", {}).get("tasks") or {}
     task_info = asset_tasks.get(task_name) or {}
     task_type = task_info.get("type")
+    # Temp solution how to pass task type to `_prepare_last_workfile`
+    data["task_type"] = task_type
+
     workfile_template_key = get_workfile_template_key(
         task_type,
         app.host_name,
@@ -1321,6 +1324,7 @@ def _prepare_last_workfile(data, workdir, workfile_template_key):
     workdir_data = copy.deepcopy(_workdir_data)
     project_name = data["project_name"]
     task_name = data["task_name"]
+    task_type = data["task_type"]
     start_last_workfile = should_start_last_workfile(
         project_name, app.host_name, task_name
     )
