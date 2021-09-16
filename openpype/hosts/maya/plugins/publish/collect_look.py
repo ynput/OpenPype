@@ -360,6 +360,8 @@ class CollectLook(pyblish.api.InstancePlugin):
             # handling render attribute sets
             render_set_types = [
                 "VRayDisplacement",
+                "VRayLightMesh",
+                "VRayObjectProperties",
             ]
             render_sets = cmds.ls(look_sets, type=render_set_types)
             if render_sets:
