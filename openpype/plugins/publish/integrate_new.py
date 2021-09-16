@@ -165,10 +165,15 @@ class IntegrateAssetNew(pyblish.api.InstancePlugin):
                 hierarchy = "/".join(parents)
             anatomy_data["hierarchy"] = hierarchy
 
+        # Make sure task name in anatomy data is same as on instance.data
         task_name = instance.data.get("task")
         if task_name:
             anatomy_data["task"] = task_name
+        else:
+            # Just set 'task_name' variable to context task
+            task_name = anatomy_data["task"]
 
+        # Fill family in anatomy data
         anatomy_data["family"] = instance.data.get("family")
 
         stagingdir = instance.data.get("stagingDir")
@@ -298,7 +303,6 @@ class IntegrateAssetNew(pyblish.api.InstancePlugin):
         else:
             orig_transfers = list(instance.data['transfers'])
 
-        task_name = io.Session.get("AVALON_TASK")
         family = self.main_family_from_instance(instance)
 
         key_values = {"families": family,
