@@ -815,17 +815,22 @@ class SyncServerModule(OpenPypeModule, ITrayModule):
     def _prepare_sync_project_settings(self, exclude_locals):
         sync_project_settings = {}
         system_sites = self.get_all_site_configs()
-        for collection in self.connection.database.collection_names(False):
+        project_docs = self.connection.projects(
+            projection={"name": 1},
+            only_active=True
+        )
+        for project_doc in project_docs:
+            project_name = project_doc["name"]
             sites = copy.deepcopy(system_sites)  # get all configured sites
             proj_settings = self._parse_sync_settings_from_settings(
-                get_project_settings(collection,
+                get_project_settings(project_name,
                                      exclude_locals=exclude_locals))
             sites.update(self._get_default_site_configs(
-                proj_settings["enabled"], collection))
+                proj_settings["enabled"], project_name))
             sites.update(proj_settings['sites'])
             proj_settings["sites"] = sites
 
-            sync_project_settings[collection] = proj_settings
+            sync_project_settings[project_name] = proj_settings
         if not sync_project_settings:
             log.info("No enabled and configured projects for sync.")
         return sync_project_settings

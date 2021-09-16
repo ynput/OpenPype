@@ -6,10 +6,7 @@ from functools import partial
 from Qt import QtWidgets, QtCore, QtGui
 from Qt.QtCore import Qt
 
-from openpype.tools.settings import (
-    ProjectListWidget,
-    style
-)
+from openpype.tools.settings import style
 
 from openpype.api import get_local_site_id
 from openpype.lib import PypeLogger
@@ -28,25 +25,53 @@ from . import delegates
 log = PypeLogger().get_logger("SyncServer")
 
 
-class SyncProjectListWidget(ProjectListWidget):
+class SyncProjectListWidget(QtWidgets.QWidget):
     """
         Lists all projects that are synchronized to choose from
     """
+    project_changed = QtCore.Signal()
 
     def __init__(self, sync_server, parent):
-        super(SyncProjectListWidget, self).__init__(parent, only_active=True)
+        super(SyncProjectListWidget, self).__init__(parent)
+        self.setObjectName("ProjectListWidget")
+
+        self._parent = parent
+
+        label_widget = QtWidgets.QLabel("Projects", self)
+        project_list = QtWidgets.QListView(self)
+        project_model = QtGui.QStandardItemModel()
+        project_list.setModel(project_model)
+        project_list.setContextMenuPolicy(QtCore.Qt.CustomContextMenu)
+
+        # Do not allow editing
+        project_list.setEditTriggers(
+            QtWidgets.QAbstractItemView.EditTrigger.NoEditTriggers
+        )
+
+        layout = QtWidgets.QVBoxLayout(self)
+        layout.setContentsMargins(0, 0, 0, 0)
+        layout.setSpacing(3)
+        layout.addWidget(label_widget, 0)
+        layout.addWidget(project_list, 1)
+
+        project_list.customContextMenuRequested.connect(self._on_context_menu)
+        project_list.selectionModel().currentChanged.connect(
+            self._on_index_change
+        )
+
+        self.project_model = project_model
+        self.project_list = project_list
         self.sync_server = sync_server
-        self.project_list.setContextMenuPolicy(QtCore.Qt.CustomContextMenu)
-        self.project_list.customContextMenuRequested.connect(
-            self._on_context_menu)
+        self.current_project = None
         self.project_name = None
         self.local_site = None
         self.icons = {}
 
-        self.layout().setContentsMargins(0, 0, 0, 0)
+    def _on_index_change(self, new_idx, _old_idx):
+        project_name = new_idx.data(QtCore.Qt.DisplayRole)
 
-    def validate_context_change(self):
-        return True
+        self.current_project = project_name
+        self.project_changed.emit()
 
     def refresh(self):
         model = self.project_model
