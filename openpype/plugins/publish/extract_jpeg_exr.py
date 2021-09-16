@@ -1,10 +1,16 @@
 import os
 
 import pyblish.api
-import openpype.api
-import openpype.lib
-from openpype.lib import should_decompress, \
-    get_decompress_dir, decompress
+from openpype.lib import (
+    get_ffmpeg_tool_path,
+
+    run_subprocess,
+    split_command_to_list,
+
+    should_decompress,
+    get_decompress_dir,
+    decompress
+)
 import shutil
 
 
@@ -85,7 +91,7 @@ class ExtractJpegEXR(pyblish.api.InstancePlugin):
 
             self.log.info("output {}".format(full_output_path))
 
-            ffmpeg_path = openpype.lib.get_ffmpeg_tool_path("ffmpeg")
+            ffmpeg_path = get_ffmpeg_tool_path("ffmpeg")
             ffmpeg_args = self.ffmpeg_args or {}
 
             jpeg_items = []
@@ -106,13 +112,14 @@ class ExtractJpegEXR(pyblish.api.InstancePlugin):
             # output file
             jpeg_items.append("\"{}\"".format(full_output_path))
 
-            subprocess_jpeg = " ".join(jpeg_items)
+            subprocess_command = " ".join(jpeg_items)
+            subprocess_args = split_command_to_list(subprocess_command)
 
             # run subprocess
-            self.log.debug("{}".format(subprocess_jpeg))
+            self.log.debug("{}".format(subprocess_command))
             try:  # temporary until oiiotool is supported cross platform
-                openpype.api.run_subprocess(
-                    subprocess_jpeg, shell=True, logger=self.log
+                run_subprocess(
+                    subprocess_args, shell=True, logger=self.log
                 )
             except RuntimeError as exp:
                 if "Compression" in str(exp):
