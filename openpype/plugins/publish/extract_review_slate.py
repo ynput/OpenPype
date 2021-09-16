@@ -197,11 +197,13 @@ class ExtractReviewSlate(openpype.api.Extractor):
                 " ".join(output_args)
             ]
             slate_subprcs_cmd = " ".join(slate_args)
-
+            slate_subprocess_args = openpype.lib.split_command_to_list(
+                slate_subprcs_cmd
+            )
             # run slate generation subprocess
             self.log.debug("Slate Executing: {}".format(slate_subprcs_cmd))
             openpype.api.run_subprocess(
-                slate_subprcs_cmd, shell=True, logger=self.log
+                slate_subprocess_args, shell=True, logger=self.log
             )
 
             # create ffmpeg concat text file path
