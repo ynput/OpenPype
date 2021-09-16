@@ -99,16 +99,16 @@ class ExtractOtioAudioTracks(pyblish.api.ContextPlugin):
                 # temp audio file
                 audio_fpath = self.create_temp_file(name)
 
-                cmd = " ".join([
-                    '"{}"'.format(self.ffmpeg_path),
-                    "-ss {}".format(start_sec),
-                    "-t {}".format(duration_sec),
-                    "-i \"{}\"".format(audio_file),
+                cmd = [
+                    self.ffmpeg_path,
+                    "-ss", str(start_sec),
+                    "-t", str(duration_sec),
+                    "-i", audio_file,
                     audio_fpath
-                ])
+                ]
 
                 # run subprocess
-                self.log.debug("Executing: {}".format(cmd))
+                self.log.debug("Executing: {}".format(" ".join(cmd)))
                 openpype.api.run_subprocess(
                     cmd, logger=self.log
                 )
@@ -220,17 +220,17 @@ class ExtractOtioAudioTracks(pyblish.api.ContextPlugin):
         max_duration_sec = max(end_secs)
 
         # create empty cmd
-        cmd = " ".join([
-            '"{}"'.format(self.ffmpeg_path),
-            "-f lavfi",
-            "-i anullsrc=channel_layout=stereo:sample_rate=48000",
-            "-t {}".format(max_duration_sec),
-            "\"{}\"".format(empty_fpath)
-        ])
+        cmd = [
+            self.ffmpeg_path,
+            "-f", "lavfi",
+            "-i", "anullsrc=channel_layout=stereo:sample_rate=48000",
+            "-t", str(max_duration_sec),
+            empty_fpath
+        ]
 
         # generate empty with ffmpeg
         # run subprocess
-        self.log.debug("Executing: {}".format(cmd))
+        self.log.debug("Executing: {}".format(" ".join(cmd)))
 
         openpype.api.run_subprocess(
             cmd, logger=self.log
