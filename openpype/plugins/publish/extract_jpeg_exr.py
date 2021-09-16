@@ -6,6 +6,7 @@ from openpype.lib import (
 
     run_subprocess,
     split_command_to_list,
+    path_to_subprocess_arg,
 
     should_decompress,
     get_decompress_dir,
@@ -95,13 +96,15 @@ class ExtractJpegEXR(pyblish.api.InstancePlugin):
             ffmpeg_args = self.ffmpeg_args or {}
 
             jpeg_items = []
-            jpeg_items.append("\"{}\"".format(ffmpeg_path))
+            jpeg_items.append(path_to_subprocess_arg(ffmpeg_path))
             # override file if already exists
             jpeg_items.append("-y")
             # use same input args like with mov
             jpeg_items.extend(ffmpeg_args.get("input") or [])
             # input file
-            jpeg_items.append("-i \"{}\"".format(full_input_path))
+            jpeg_items.append("-i {}".format(
+                path_to_subprocess_arg(full_input_path)
+            ))
             # output arguments from presets
             jpeg_items.extend(ffmpeg_args.get("output") or [])
 
@@ -110,7 +113,7 @@ class ExtractJpegEXR(pyblish.api.InstancePlugin):
                 jpeg_items.append("-vframes 1")
 
             # output file
-            jpeg_items.append("\"{}\"".format(full_output_path))
+            jpeg_items.append(path_to_subprocess_arg(full_output_path))
 
             subprocess_command = " ".join(jpeg_items)
             subprocess_args = split_command_to_list(subprocess_command)

@@ -117,11 +117,13 @@ class ExtractReviewSlate(openpype.api.Extractor):
                 input_args.extend(repre["_profile"].get('input', []))
             else:
                 input_args.extend(repre["outputDef"].get('input', []))
-            input_args.append("-loop 1 -i {}".format(slate_path))
+            input_args.append("-loop 1 -i {}".format(
+                openpype.lib.path_to_subprocess_arg(slate_path)
+            ))
             input_args.extend([
                 "-r {}".format(fps),
-                "-t 0.04"]
-            )
+                "-t 0.04"
+            ])
 
             if use_legacy_code:
                 codec_args = repre["_profile"].get('codec', [])
@@ -188,20 +190,24 @@ class ExtractReviewSlate(openpype.api.Extractor):
             output_args.append("-y")
 
             slate_v_path = slate_path.replace(".png", ext)
-            output_args.append(slate_v_path)
+            output_args.append(
+                openpype.lib.path_to_subprocess_arg(slate_v_path)
+            )
             _remove_at_end.append(slate_v_path)
 
             slate_args = [
-                "\"{}\"".format(ffmpeg_path),
+                openpype.lib.path_to_subprocess_arg(ffmpeg_path),
                 " ".join(input_args),
                 " ".join(output_args)
             ]
-            slate_subprcs_cmd = " ".join(slate_args)
             slate_subprocess_args = openpype.lib.split_command_to_list(
-                slate_subprcs_cmd
+                " ".join(slate_args)
             )
+
             # run slate generation subprocess
-            self.log.debug("Slate Executing: {}".format(slate_subprcs_cmd))
+            self.log.debug(
+                "Slate Executing: {}".format(" ".join(slate_subprocess_args))
+            )
             openpype.api.run_subprocess(
                 slate_subprocess_args, shell=True, logger=self.log
             )
