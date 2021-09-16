@@ -16,10 +16,8 @@ from openpype.lib import is_admin_password_required
 from openpype.widgets import PasswordDialog
 
 from openpype import resources
-from openpype.api import get_project_basic_paths, create_project_folders
+from openpype.api import get_project_basic_paths, create_project_folders, Logger
 from avalon.api import AvalonMongoDB
-
-log = logging.getLogger(__name__)
 
 
 class ProjectManagerWindow(QtWidgets.QWidget):
@@ -27,6 +25,8 @@ class ProjectManagerWindow(QtWidgets.QWidget):
 
     def __init__(self, parent=None):
         super(ProjectManagerWindow, self).__init__(parent)
+
+        self.log = Logger.get_logger(self.__class__.__name__)
 
         self._initial_reset = False
         self._password_dialog = None
@@ -64,12 +64,18 @@ class ProjectManagerWindow(QtWidgets.QWidget):
         create_project_btn = QtWidgets.QPushButton(
             "Create project...", project_widget
         )
+        create_folders_btn = QtWidgets.QPushButton(
+            ResourceCache.get_icon("asset", "default"),
+            "Create Starting Folders",
+            project_widget
+        )
 
         project_layout = QtWidgets.QHBoxLayout(project_widget)
         project_layout.setContentsMargins(0, 0, 0, 0)
         project_layout.addWidget(project_combobox, 0)
         project_layout.addWidget(refresh_projects_btn, 0)
         project_layout.addWidget(create_project_btn, 0)
+        project_layout.addWidget(create_folders_btn)
         project_layout.addStretch(1)
 
         # Helper buttons
@@ -89,23 +95,11 @@ class ProjectManagerWindow(QtWidgets.QWidget):
         add_asset_btn.setObjectName("IconBtn")
         add_task_btn.setObjectName("IconBtn")
 
-        add_misc_folders_label = QtWidgets.QLabel(
-            "Create misc. folders:",
-            helper_btns_widget
-        )
-        add_misc_folders_btn = QtWidgets.QPushButton(
-            ResourceCache.get_icon("asset", "default"),
-            "Create Misc. Folders",
-            helper_btns_widget
-        )
-
         helper_btns_layout = QtWidgets.QHBoxLayout(helper_btns_widget)
         helper_btns_layout.setContentsMargins(0, 0, 0, 0)
         helper_btns_layout.addWidget(helper_label)
         helper_btns_layout.addWidget(add_asset_btn)
         helper_btns_layout.addWidget(add_task_btn)
-        helper_btns_layout.addWidget(add_misc_folders_label)
-        helper_btns_layout.addWidget(add_misc_folders_btn)
         helper_btns_layout.addStretch(1)
 
         # Add widgets to top widget layout
@@ -143,11 +137,11 @@ class ProjectManagerWindow(QtWidgets.QWidget):
 
         refresh_projects_btn.clicked.connect(self._on_project_refresh)
         create_project_btn.clicked.connect(self._on_project_create)
+        create_folders_btn.clicked.connect(self._on_add_misc_folders)
         project_combobox.currentIndexChanged.connect(self._on_project_change)
         save_btn.clicked.connect(self._on_save_click)
         add_asset_btn.clicked.connect(self._on_add_asset)
         add_task_btn.clicked.connect(self._on_add_task)
-        add_misc_folders_btn.clicked.connect(self._on_add_misc_folders)
 
         self._project_model = project_model
 
@@ -159,10 +153,10 @@ class ProjectManagerWindow(QtWidgets.QWidget):
         self._refresh_projects_btn = refresh_projects_btn
         self._project_combobox = project_combobox
         self._create_project_btn = create_project_btn
+        self._create_folders_btn = create_folders_btn
 
         self._add_asset_btn = add_asset_btn
         self._add_task_btn = add_task_btn
-        self._add_misc_folders_btn = add_misc_folders_btn
 
         self.resize(1200, 600)
         self.setStyleSheet(load_stylesheet())
@@ -222,8 +216,8 @@ class ProjectManagerWindow(QtWidgets.QWidget):
 
         qm = QtWidgets.QMessageBox
         ans = qm.question(self,
-                          "",
-                          "Confirm to create misc. project folders?",
+                          "OpenPype Project Manager",
+                          "Confirm to create starting project folders?",
                           qm.Yes | qm.No)
         if ans == qm.Yes:
             try:
@@ -234,8 +228,8 @@ class ProjectManagerWindow(QtWidgets.QWidget):
                 # Invoking OpenPype API to create the project folders
                 create_project_folders(basic_paths, self._current_project)
             except Exception as exc:
-                log.warning("Failed to create misc folders: {}".format(exc),
-                            exc_info=True)
+                self.log.warning("Cannot create starting folders: {}".format(exc),
+                                 exc_info=True)
 
     def show_message(self, message):
         # TODO add nicer message pop
