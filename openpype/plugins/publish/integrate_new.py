@@ -738,6 +738,8 @@ class IntegrateAssetNew(pyblish.api.InstancePlugin):
 
             subset = io.find_one({"_id": _id})
 
+        # QUESTION Why is changing of group and updating it's
+        #   families in 'get_subset'?
         self._set_subset_group(instance, subset["_id"])
 
         # Update families on subset.
@@ -761,53 +763,71 @@ class IntegrateAssetNew(pyblish.api.InstancePlugin):
                 subset_id (str): DB's subset _id
 
         """
-        # add group if available
-        integrate_new_sett = (instance.context.data["project_settings"]
-                                                   ["global"]
-                                                   ["publish"]
-                                                   ["IntegrateAssetNew"])
+        # Fist look into instance data
+        subset_group = instance.data.get("subsetGroup")
+        if not subset_group:
+            subset_group = self._get_subset_group(instance)
 
-        profiles = integrate_new_sett["subset_grouping_profiles"]
-
-        filtering_criteria = {
-            "families": instance.data["family"],
-            "hosts": instance.data["anatomyData"]["app"],
-            "tasks": instance.data["anatomyData"]["task"] or
-                io.Session["AVALON_TASK"]
-        }
-        matching_profile = filter_profiles(profiles, filtering_criteria)
-
-        filled_template = None
-        if matching_profile:
-            template = matching_profile["template"]
-            fill_pairs = (
-                ("family", filtering_criteria["families"]),
-                ("task", filtering_criteria["tasks"]),
-                ("host", filtering_criteria["hosts"]),
-                ("subset", instance.data["subset"]),
-                ("renderlayer", instance.data.get("renderlayer"))
-            )
-            fill_pairs = prepare_template_data(fill_pairs)
-
-            try:
-                filled_template = \
-                    format_template_with_optional_keys(fill_pairs, template)
-            except KeyError:
-                keys = []
-                if fill_pairs:
-                    keys = fill_pairs.keys()
-
-                msg = "Subset grouping failed. " \
-                      "Only {} are expected in Settings".format(','.join(keys))
-                self.log.warning(msg)
-
-        if instance.data.get("subsetGroup") or filled_template:
-            subset_group = instance.data.get('subsetGroup') or filled_template
-
+        if subset_group:
             io.update_many({
                 'type': 'subset',
                 '_id': io.ObjectId(subset_id)
             }, {'$set': {'data.subsetGroup': subset_group}})
+
+    def _get_subset_group(self, instance):
+        """Look into subset group profiles set by settings.
+
+        Attribute 'subset_grouping_profiles' is defined by OpenPype settings.
+        """
+        # Skip if 'subset_grouping_profiles' is empty
+        if not self.subset_grouping_profiles:
+            return None
+
+        # QUESTION
+        #   - is there a chance that task name is not filled in anatomy
+        #       data?
+        #   - should we use context task in that case?
+        task_name = (
+            instance.data["anatomyData"]["task"]
+            or io.Session["AVALON_TASK"]
+        )
+        filtering_criteria = {
+            "families": instance.data["family"],
+            "hosts": instance.context.data["hostName"],
+            "tasks": task_name
+        }
+        matching_profile = filter_profiles(
+            self.subset_grouping_profiles,
+            filtering_criteria
+        )
+        # Skip if there is not matchin profile
+        if not matching_profile:
+            return None
+
+        filled_template = None
+        template = matching_profile["template"]
+        fill_pairs = (
+            ("family", filtering_criteria["families"]),
+            ("task", filtering_criteria["tasks"]),
+            ("host", filtering_criteria["hosts"]),
+            ("subset", instance.data["subset"]),
+            ("renderlayer", instance.data.get("renderlayer"))
+        )
+        fill_pairs = prepare_template_data(fill_pairs)
+
+        try:
+            filled_template = \
+                format_template_with_optional_keys(fill_pairs, template)
+        except KeyError:
+            keys = []
+            if fill_pairs:
+                keys = fill_pairs.keys()
+
+            msg = "Subset grouping failed. " \
+                  "Only {} are expected in Settings".format(','.join(keys))
+            self.log.warning(msg)
+
+        return filled_template
 
     def create_version(self, subset, version_number, data=None):
         """ Copy given source to destination
