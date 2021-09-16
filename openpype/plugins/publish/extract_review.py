@@ -13,6 +13,9 @@ import openpype.api
 from openpype.lib import (
     get_ffmpeg_tool_path,
     ffprobe_streams,
+
+    split_command_to_list,
+
     should_decompress,
     get_decompress_dir,
     decompress
@@ -216,12 +219,15 @@ class ExtractReview(pyblish.api.InstancePlugin):
                     raise NotImplementedError
 
                 subprcs_cmd = " ".join(ffmpeg_args)
+                subprocess_args = split_command_to_list(subprcs_cmd)
 
                 # run subprocess
-                self.log.debug("Executing: {}".format(subprcs_cmd))
+                self.log.debug(
+                    "Executing: {}".format(" ".join(subprocess_args))
+                )
 
                 openpype.api.run_subprocess(
-                    subprcs_cmd, shell=True, logger=self.log
+                    subprocess_args, shell=True, logger=self.log
                 )
 
                 # delete files added to fill gaps
