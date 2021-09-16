@@ -184,6 +184,7 @@ class IntegrateAssetNew(pyblish.api.InstancePlugin):
         ) or {}
         task_info = asset_tasks.get(task_name) or {}
         task_type = task_info.get("type")
+        instance.data["task_type"] = task_type
 
         # Fill family in anatomy data
         anatomy_data["family"] = instance.data.get("family")
@@ -805,10 +806,12 @@ class IntegrateAssetNew(pyblish.api.InstancePlugin):
             instance.data["anatomyData"]["task"]
             or io.Session["AVALON_TASK"]
         )
+        task_type = instance.data["task_type"]
         filtering_criteria = {
             "families": instance.data["family"],
             "hosts": instance.context.data["hostName"],
-            "tasks": task_name
+            "tasks": task_name,
+            "task_types": task_type
         }
         matching_profile = filter_profiles(
             self.subset_grouping_profiles,
