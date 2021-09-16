@@ -59,27 +59,30 @@ class ExtractTrimVideoAudio(openpype.api.Extractor):
                     if "trimming" not in fml
                 ]
 
-            args = [
-                f"\"{ffmpeg_path}\"",
+            ffmpeg_args = [
+                ffmpeg_path,
                 "-ss", str(start / fps),
-                "-i", f"\"{video_file_path}\"",
+                "-i", video_file_path,
                 "-t", str(dur / fps)
             ]
             if ext in [".mov", ".mp4"]:
-                args.extend([
+                ffmpeg_args.extend([
                     "-crf", "18",
-                    "-pix_fmt", "yuv420p"])
+                    "-pix_fmt", "yuv420p"
+                ])
             elif ext in ".wav":
-                args.extend([
-                    "-vn -acodec pcm_s16le",
-                    "-ar 48000 -ac 2"
+                ffmpeg_args.extend([
+                    "-vn",
+                    "-acodec", "pcm_s16le",
+                    "-ar", "48000",
+                    "-ac", "2"
                 ])
 
             # add output path
-            args.append(f"\"{clip_trimed_path}\"")
+            ffmpeg_args.append(clip_trimed_path)
 
-            self.log.info(f"Processing: {args}")
-            ffmpeg_args = " ".join(args)
+            joined_args = " ".join(ffmpeg_args)
+            self.log.info(f"Processing: {joined_args}")
             openpype.api.run_subprocess(
                 ffmpeg_args, shell=True, logger=self.log
             )
