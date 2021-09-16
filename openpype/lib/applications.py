@@ -25,6 +25,7 @@ from . import (
     PypeLogger,
     Anatomy
 )
+from .profiles_filtering import compile_list_of_regexes
 from .local_settings import get_openpype_username
 from .avalon_context import (
     get_workdir_data,
@@ -1495,22 +1496,3 @@ def should_workfile_tool_start(
 
     return get_option_from_settings(
         startup_presets, host_name, task_name, default_output)
-
-
-def compile_list_of_regexes(in_list):
-    """Convert strings in entered list to compiled regex objects."""
-    regexes = list()
-    if not in_list:
-        return regexes
-
-    for item in in_list:
-        if not item:
-            continue
-        try:
-            regexes.append(re.compile(item))
-        except TypeError:
-            print((
-                "Invalid type \"{}\" value \"{}\"."
-                " Expected string based object. Skipping."
-            ).format(str(type(item)), str(item)))
-    return regexes
