@@ -25,7 +25,7 @@ from . import (
     PypeLogger,
     Anatomy
 )
-from .profiles_filtering import compile_list_of_regexes
+from .profiles_filtering import filter_profiles
 from .local_settings import get_openpype_username
 from .avalon_context import (
     get_workdir_data,
@@ -1326,12 +1326,12 @@ def _prepare_last_workfile(data, workdir, workfile_template_key):
     task_name = data["task_name"]
     task_type = data["task_type"]
     start_last_workfile = should_start_last_workfile(
-        project_name, app.host_name, task_name
+        project_name, app.host_name, task_name, task_type
     )
     data["start_last_workfile"] = start_last_workfile
 
     workfile_startup = should_workfile_tool_start(
-        project_name, app.host_name, task_name
+        project_name, app.host_name, task_name, task_type
     )
     data["workfile_startup"] = workfile_startup
 
@@ -1380,54 +1380,8 @@ def _prepare_last_workfile(data, workdir, workfile_template_key):
     data["last_workfile_path"] = last_workfile_path
 
 
-def get_option_from_settings(
-    startup_presets, host_name, task_name, default_output
-):
-    host_name_lowered = host_name.lower()
-    task_name_lowered = task_name.lower()
-
-    max_points = 2
-    matching_points = -1
-    matching_item = None
-    for item in startup_presets:
-        hosts = item.get("hosts") or tuple()
-        tasks = item.get("tasks") or tuple()
-
-        hosts_lowered = tuple(_host_name.lower() for _host_name in hosts)
-        # Skip item if has set hosts and current host is not in
-        if hosts_lowered and host_name_lowered not in hosts_lowered:
-            continue
-
-        tasks_lowered = tuple(_task_name.lower() for _task_name in tasks)
-        # Skip item if has set tasks and current task is not in
-        if tasks_lowered:
-            task_match = False
-            for task_regex in compile_list_of_regexes(tasks_lowered):
-                if re.match(task_regex, task_name_lowered):
-                    task_match = True
-                    break
-
-            if not task_match:
-                continue
-
-        points = int(bool(hosts_lowered)) + int(bool(tasks_lowered))
-        if points > matching_points:
-            matching_item = item
-            matching_points = points
-
-        if matching_points == max_points:
-            break
-
-    if matching_item is not None:
-        output = matching_item.get("enabled")
-        if output is None:
-            output = default_output
-        return output
-    return default_output
-
-
 def should_start_last_workfile(
-    project_name, host_name, task_name, default_output=False
+    project_name, host_name, task_name, task_type, default_output=False
 ):
     """Define if host should start last version workfile if possible.
 
@@ -1449,7 +1403,7 @@ def should_start_last_workfile(
     """
 
     project_settings = get_project_settings(project_name)
-    startup_presets = (
+    profiles = (
         project_settings
         ["global"]
         ["tools"]
@@ -1457,15 +1411,27 @@ def should_start_last_workfile(
         ["last_workfile_on_startup"]
     )
 
-    if not startup_presets:
+    if not profiles:
         return default_output
 
-    return get_option_from_settings(
-        startup_presets, host_name, task_name, default_output)
+    filter_data = {
+        "tasks": task_name,
+        "task_types": task_type,
+        "hosts": host_name
+    }
+    matching_item = filter_profiles(profiles, filter_data)
+
+    output = None
+    if matching_item:
+        output = matching_item.get("enabled")
+
+    if output is None:
+        return default_output
+    return output
 
 
 def should_workfile_tool_start(
-    project_name, host_name, task_name, default_output=False
+    project_name, host_name, task_name, task_type, default_output=False
 ):
     """Define if host should start workfile tool at host launch.
 
@@ -1487,7 +1453,7 @@ def should_workfile_tool_start(
     """
 
     project_settings = get_project_settings(project_name)
-    startup_presets = (
+    profiles = (
         project_settings
         ["global"]
         ["tools"]
@@ -1495,8 +1461,20 @@ def should_workfile_tool_start(
         ["open_workfile_tool_on_startup"]
     )
 
-    if not startup_presets:
+    if not profiles:
         return default_output
 
-    return get_option_from_settings(
-        startup_presets, host_name, task_name, default_output)
+    filter_data = {
+        "tasks": task_name,
+        "task_types": task_type,
+        "hosts": host_name
+    }
+    matching_item = filter_profiles(profiles, filter_data)
+
+    output = None
+    if matching_item:
+        output = matching_item.get("enabled")
+
+    if output is None:
+        return default_output
+    return output
