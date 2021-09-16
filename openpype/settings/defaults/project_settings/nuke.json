@@ -163,6 +163,7 @@
         "builder_on_start": false,
         "profiles": [
             {
+                "task_types": [],
                 "tasks": [],
                 "current_context": [
                     {

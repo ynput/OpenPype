@@ -41,6 +41,11 @@
                                 "multiselection": true
                             },
                             {
+                                "key": "task_types",
+                                "label": "Task types",
+                                "type": "task-types-enum"
+                            },
+                            {
                                 "key": "tasks",
                                 "label": "Task names",
                                 "type": "list",
@@ -127,6 +132,11 @@
                                   ]
                             },
                             {
+                                "key": "task_types",
+                                "label": "Task types",
+                                "type": "task-types-enum"
+                            },
+                            {
                                 "key": "tasks",
                                 "label": "Tasks",
                                 "type": "list",
@@ -160,6 +170,12 @@
                                 "hosts_filter": [
                                     "nuke"
                                 ]
+                            },
+                            {
+                                "key": "task_types",
+                                "label": "Task types",
+                                "type": "list",
+                                "object_type": "task-types-enum"
                             },
                             {
                                 "key": "tasks",

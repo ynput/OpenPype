@@ -56,6 +56,11 @@
                 "type": "dict",
                 "children": [
                     {
+                        "key": "task_types",
+                        "label": "Task types",
+                        "type": "task-types-enum"
+                    },
+                    {
                         "key": "tasks",
                         "label": "Tasks",
                         "type": "list",
