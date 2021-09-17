@@ -915,6 +915,7 @@ class FamilyModel(QtGui.QStandardItemModel):
                 item.setIcon(icon)
 
             new_items.append(item)
+            self._items_by_family[family] = item
 
         if new_items:
             root_item.appendRows(new_items)
