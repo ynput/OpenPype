@@ -28,7 +28,7 @@ class _FlameMenuApp(object):
     def __init__(self, framework):
         self.name = self.__class__.__name__
         self.framework = framework
-        self.connector = None
+        self.log = framework.log
         self.menu_group_name = menu_group_name
         self.dynamic_menu_data = {}
 
@@ -52,9 +52,6 @@ class _FlameMenuApp(object):
             print ('calling %s' % name)
         return method
 
-    def log(self, message):
-        self.framework.log('[' + self.name + '] ' + message)
-
     def rescan(self, *args, **kwargs):
         if not self.flame:
             try:
@@ -71,21 +68,8 @@ class FlameMenuProjectconnect(_FlameMenuApp):
 
     # flameMenuProjectconnect app takes care of the preferences dialog as well
 
-    def __init__(self, framework, connector):
+    def __init__(self, framework):
         _FlameMenuApp.__init__(self, framework)
-        self.connector = connector
-
-        # register async cache query
-        self.active_projects_uid = self.connector.cache_register({
-                    'entity': 'Project',
-                    'filters': [['archived', 'is', False], ['is_template', 'is', False]],
-                    'fields': ['name', 'tank_name']
-                    }, perform_query = True)
-
-        if self.connector.sg_linked_project and (not self.connector.sg_linked_project_id):
-            self.log.info("project '%s' can not be found" % self.connector.sg_linked_project)
-            self.log.info("unlinking project: '%s'" % self.connector.sg_linked_project)
-            self.unlink_project()
 
     def __getattr__(self, name):
         def method(*args, **kwargs):
@@ -99,119 +83,42 @@ class FlameMenuProjectconnect(_FlameMenuApp):
             return []
 
         flame_project_name = self.flame.project.current_project.name
-        self.connector.sg_linked_project = self.flame.project.current_project.shotgun_project_name.get_value()
+        self.log.info("______ {} ______".format(flame_project_name))
 
         menu = {'actions': []}
 
-        if not self.connector.sg_user:
-            menu['name'] = self.menu_group_name
+        menu['name'] = self.menu_group_name
 
-            menu_item = {}
-            menu_item['name'] = 'Sign in to ShotGrid'
-            menu_item['execute'] = self.sign_in
-            menu['actions'].append(menu_item)
-        elif self.connector.sg_linked_project:
-            menu['name'] = self.menu_group_name
-
-            menu_item = {}
-            menu_item['name'] = 'Unlink from ShotGris project `' + self.connector.sg_linked_project + '`'
-            menu_item['execute'] = self.unlink_project
-            menu['actions'].append(menu_item)
-
-            menu_item = {}
-            menu_item['name'] = 'Sign Out: ' + str(self.connector.sg_user_name)
-            menu_item['execute'] = self.sign_out
-            menu['actions'].append(menu_item)
-
-            menu_item = {}
-            menu_item['name'] = 'Preferences'
-            menu_item['execute'] = self.preferences_window
-            menu_item['waitCursor'] = False
-            menu['actions'].append(menu_item)
-
-        else:
-            # menu['name'] = self.menu_group_name + ': Link `' + flame_project_name + '` to Shotgun'
-            menu['name'] = self.menu_group_name + ': Link to ShotGrid'
-
-            menu_item = {}
-            menu_item['name'] = '~ Rescan ShotGrid Projects'
-            menu_item['execute'] = self.rescan
-            menu['actions'].append(menu_item)
-
-            menu_item = {}
-            menu_item['name'] = '---'
-            menu_item['execute'] = self.rescan
-            menu['actions'].append(menu_item)
-
-            projects = self.get_projects()
-            projects_by_name = {}
-            for project in projects:
-                projects_by_name[project.get('name')] = project
-
-            for project_name in sorted(projects_by_name.keys()):
-                project = projects_by_name.get(project_name)
-                self.dynamic_menu_data[str(id(project))] = project
-
-                menu_item = {}
-                menu_item['name'] = project_name
-                menu_item['execute'] = getattr(self, str(id(project)))
-                menu['actions'].append(menu_item)
-
-            menu_item = {}
-            menu_item['name'] = '--'
-            menu_item['execute'] = self.rescan
-            menu['actions'].append(menu_item)
-
-            menu_item = {}
-            menu_item['name'] = 'Sign Out: ' + str(self.connector.sg_user_name)
-            menu_item['execute'] = self.sign_out
-            menu['actions'].append(menu_item)
-
+        menu['actions'].append({
+            "name": "Workfiles ...",
+            "execute": launch_workfiles_app
+        })
+        menu['actions'].append({
+            "name": "Create ...",
+            "execute": creator
+        })
+        menu['actions'].append({
+            "name": "Publish ...",
+            "execute": publish
+        })
+        menu['actions'].append({
+            "name": "Load ...",
+            "execute": loader
+        })
+        menu['actions'].append({
+            "name": "Manage ...",
+            "execute": sceneinventory
+        })
+        menu['actions'].append({
+            "name": "Library ...",
+            "execute": libraryloader
+        })
         return menu
 
     def get_projects(self, *args, **kwargs):
-        return self.connector.cache_retrive_result(self.active_projects_uid)
-
-    def unlink_project(self, *args, **kwargs):
-        self.connector.destroy_toolkit_engine()
-        self.connector.unregister_common_queries()
-        self.flame.project.current_project.shotgun_project_name = ''
-        self.connector.sg_linked_project = None
-        self.connector.sg_linked_project_id = None
-        self.rescan()
-        self.connector.bootstrap_toolkit()
-
-    def link_project(self, project):
-        self.connector.destroy_toolkit_engine()
-        project_name = project.get('name')
-        if project_name:
-            self.flame.project.current_project.shotgun_project_name = project_name
-            self.connector.sg_linked_project = project_name
-            if 'id' in project.keys():
-                self.connector.sg_linked_project_id = project.get('id')
-        self.rescan()
-        self.connector.register_common_queries()
-        self.connector.bootstrap_toolkit()
+        pass
 
     def refresh(self, *args, **kwargs):
-        self.connector.cache_retrive_result(self.active_projects_uid, True)
-        self.rescan()
-
-    def sign_in(self, *args, **kwargs):
-        self.connector.destroy_toolkit_engine()
-        self.connector.prefs_global['user signed out'] = False
-        self.connector.get_user()
-        self.framework.save_prefs()
-        self.rescan()
-        self.connector.register_common_queries()
-        self.connector.bootstrap_toolkit()
-
-    def sign_out(self, *args, **kwargs):
-        self.connector.destroy_toolkit_engine()
-        self.connector.unregister_common_queries()
-        self.connector.prefs_global['user signed out'] = True
-        self.connector.clear_user()
-        self.framework.save_prefs()
         self.rescan()
 
     def rescan(self, *args, **kwargs):
@@ -221,8 +128,6 @@ class FlameMenuProjectconnect(_FlameMenuApp):
                 self.flame = flame
             except:
                 self.flame = None
-
-        self.connector.cache_retrive_result(self.active_projects_uid, True)
 
         if self.flame:
             self.flame.execute_shortcut('Rescan Python Hooks')

@@ -33,14 +33,14 @@ def _sync_utility_scripts(env=None):
     )]
 
     # collect script dirs
-    log.info(f"FLAME_SCRIPT_DIR: `{fsd_env}`")
-    log.info(f"fsd_paths: `{fsd_paths}`")
+    log.info("FLAME_SCRIPT_DIR: `{fsd_env}`".format(**locals()))
+    log.info("fsd_paths: `{fsd_paths}`".format(**locals()))
 
     # add application environment setting for FLAME_SCRIPT_DIR
     # to script path search
     for _dirpath in fsd_env.split(os.pathsep):
         if not os.path.isdir(_dirpath):
-            log.warning(f"Path is not a valid dir: `{_dirpath}`")
+            log.warning("Path is not a valid dir: `{_dirpath}`".format(**locals()))
             continue
         fsd_paths.append(_dirpath)
 
@@ -48,14 +48,14 @@ def _sync_utility_scripts(env=None):
     for path in fsd_paths:
         scripts.update({path: os.listdir(path)})
 
-    log.info(f"Additional Flame script paths: `{fsd_paths}`")
-    log.info(f"Flame Scripts: `{scripts}`")
+    log.info("Additional Flame script paths: `{fsd_paths}`".format(**locals()))
+    log.info("Flame Scripts: `{scripts}`".format(**locals))
 
     # make sure no script file is in folder
     if next(iter(os.listdir(flame_shared_dir)), None):
         for s in os.listdir(flame_shared_dir):
             path = os.path.join(flame_shared_dir, s)
-            log.info(f"Removing `{path}`...")
+            log.info("Removing `{path}`...".format(**locals()))
             if os.path.isdir(path):
                 shutil.rmtree(path, onerror=None)
             else:
@@ -68,7 +68,7 @@ def _sync_utility_scripts(env=None):
             # script in script list
             src = os.path.join(dirpath, _script)
             dst = os.path.join(flame_shared_dir, _script)
-            log.info(f"Copying `{src}` to `{dst}`...")
+            log.info("Copying `{src}` to `{dst}`...".format(**locals()))
             if os.path.isdir(src):
                 shutil.copytree(
                     src, dst, symlinks=False,

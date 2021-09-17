@@ -128,12 +128,12 @@ class FlameAppFramework(object):
                 os.path.expanduser("~"),
                     "Library",
                     "Caches",
-                    "Shotgun",
+                    "OpenPype",
                     self.bundle_name)
         elif sys.platform.startswith("linux"):
             self.prefs_folder = os.path.join(
                 os.path.expanduser("~"),
-                ".shotgun",
+                ".OpenPype",
                 self.bundle_name)
 
         self.prefs_folder = os.path.join(
@@ -148,9 +148,9 @@ class FlameAppFramework(object):
 
         if not self.prefs_global.get("menu_auto_refresh"):
             self.prefs_global["menu_auto_refresh"] = {
-                "media_panel": True,
-                "batch": True,
-                "main_menu": True
+                "media_panel": False,
+                "batch": False,
+                "main_menu": False
             }
 
         self.apps = []
@@ -237,8 +237,7 @@ class FlameAppFramework(object):
 
 
 @contextlib.contextmanager
-def maintain_current_timeline(to_timeline: object,
-                              from_timeline: object = None):
+def maintain_current_timeline(to_timeline, from_timeline=None):
     """Maintain current timeline selection during context
 
     Attributes:
@@ -290,6 +289,6 @@ def get_current_timeline(new=False):
     return
 
 
-def create_bin(name: str, root: object = None) -> object:
+def create_bin(name, root=None):
     # TODO: create_bin
     return

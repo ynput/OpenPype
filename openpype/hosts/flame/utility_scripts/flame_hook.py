@@ -5,6 +5,9 @@ import time
 import atexit
 import openpype.hosts.flame as opflame
 
+flh = sys.modules[__name__]
+flh._project = None
+
 # Exception handler
 def exeption_handler(exctype, value, tb):
     import traceback
@@ -24,10 +27,10 @@ sys.excepthook = exeption_handler
 # register clean up logic to be called at Flame exit
 def cleanup():
     if opflame.apps:
-        print('[DEBUG %s] unloading apps:\n%s' % ('flameMenuSG', pformat(opflame.apps)))
+        print('<<<< `{}` cleaning up apps:\n {}\n'.format(__file__, pformat(opflame.apps)))
         while len(opflame.apps):
             app = opflame.apps.pop()
-            print('[DEBUG %s] unloading: %s' % ('flameMenuSG', app.name))
+            print('<<<< `{}` removing : {}'.format(__file__,  app.name))
             del app
         opflame.apps = []
 
@@ -36,7 +39,7 @@ def cleanup():
         opflame.app_framework.save_prefs()
         opflame.app_framework = None
 
-atexit.register(cleanup, opflame.apps, opflame.app_framework)
+atexit.register(cleanup)
 
 def load_apps():
     opflame.apps.append(opflame.FlameMenuProjectconnect(opflame.app_framework))
@@ -54,9 +57,10 @@ def project_changed_dict(info):
 
 def app_initialized(project_name):
     opflame.app_framework = opflame.FlameAppFramework()
+    flh._project = project_name
     print ('PYTHON\t: %s initializing' % opflame.app_framework.bundle_name)
     print("*" * 100)
-    print(project_name)
+    print(flh._project)
     print("*" * 100)
     load_apps()
 
@@ -76,12 +80,13 @@ def get_main_menu_custom_ui_actions():
     menu = []
     flameMenuProjectconnectApp = None
     for app in opflame.apps:
-        if app.__class__.__name__ == 'flameMenuProjectconnect':
+        if app.__class__.__name__ == 'FlameMenuProjectconnect':
             flameMenuProjectconnectApp = app
     if flameMenuProjectconnectApp:
         menu.append(flameMenuProjectconnectApp.build_menu())
     if menu:
-        menu[0]['actions'].append({'name': "openpype_version_3", 'isEnabled': False})
+        menu[0]['actions'].append({'name': flh._project, 'isEnabled': False})
+        print(">>_> menu was build: {}".format(pformat(menu)))
 
     if opflame.app_framework:
         menu_auto_refresh = opflame.app_framework.prefs_global.get(
