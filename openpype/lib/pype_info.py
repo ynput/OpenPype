@@ -64,7 +64,7 @@ def is_running_staging():
     Returns:
         bool: True if openpype version containt 'staging'.
     """
-    if "staging" in get_pype_version():
+    if "staging" in get_openpype_version():
         return True
     return False
 
