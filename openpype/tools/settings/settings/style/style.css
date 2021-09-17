@@ -412,12 +412,15 @@ QHeaderView::section  {
     font-weight: bold;
 }
 
-QTableView::item:pressed, QListView::item:pressed, QTreeView::item:pressed  {
+QAbstractItemView::item:pressed {
     background: #78879b;
     color: #FFFFFF;
 }
 
-QTableView::item:selected:active, QTreeView::item:selected:active, QListView::item:selected:active  {
+QAbstractItemView::item:selected:active {
+    background: #3d8ec9;
+}
+QAbstractItemView::item:selected:!active {
     background: #3d8ec9;
 }
 
