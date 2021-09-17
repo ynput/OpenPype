@@ -10,11 +10,23 @@
         "multiselection": "{multiselection}",
         "type": "enum",
         "enum_items": [
-            {"family1": "family1"},
-            {"family2": "family2"},
-            {"family3": "family3"},
-            {"family4": "family4"},
-            {"family5": "family5"}
+            {"action": "action"},
+            {"animation": "animation"},
+            {"audio": "audio"},
+            {"camera": "camera"},
+            {"editorial": "editorial"},
+            {"layout": "layout"},
+            {"look": "look"},
+            {"mayaAscii": "mayaAscii"},
+            {"model": "model"},
+            {"pointcache": "pointcache"},
+            {"reference": "reference"},
+            {"render": "render"},
+            {"review": "review"},
+            {"rig": "rig"},
+            {"setdress": "setdress"},
+            {"workfile": "workfile"},
+            {"xgen": "xgen"}
         ]
     }
 ]
