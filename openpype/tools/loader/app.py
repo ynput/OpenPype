@@ -34,13 +34,13 @@ def on_context_task_change(*args, **kwargs):
 pipeline.on("taskChanged", on_context_task_change)
 
 
-class LoaderWidow(QtWidgets.QDialog):
+class LoaderWindow(QtWidgets.QDialog):
     """Asset loader interface"""
 
     tool_name = "loader"
 
     def __init__(self, parent=None):
-        super(LoaderWidow, self).__init__(parent)
+        super(LoaderWindow, self).__init__(parent)
         title = "Asset Loader 2.1"
         project_name = api.Session.get("AVALON_PROJECT")
         if project_name:
@@ -170,11 +170,11 @@ class LoaderWidow(QtWidgets.QDialog):
             self.resize(1300, 700)
 
     def resizeEvent(self, event):
-        super(LoaderWidow, self).resizeEvent(event)
+        super(LoaderWindow, self).resizeEvent(event)
         self._overlay_frame.resize(self.size())
 
     def moveEvent(self, event):
-        super(LoaderWidow, self).moveEvent(event)
+        super(LoaderWindow, self).moveEvent(event)
         self._overlay_frame.move(0, 0)
 
     # -------------------------------
@@ -457,7 +457,7 @@ class LoaderWidow(QtWidgets.QDialog):
             self.setAttribute(QtCore.Qt.WA_DeleteOnClose)
 
         print("Good bye")
-        return super(LoaderWidow, self).closeEvent(event)
+        return super(LoaderWindow, self).closeEvent(event)
 
     def keyPressEvent(self, event):
         modifiers = event.modifiers()
@@ -469,7 +469,7 @@ class LoaderWidow(QtWidgets.QDialog):
             self.show_grouping_dialog()
             return
 
-        super(LoaderWidow, self).keyPressEvent(event)
+        super(LoaderWindow, self).keyPressEvent(event)
         event.setAccepted(True)  # Avoid interfering other widgets
 
     def show_grouping_dialog(self):
@@ -630,7 +630,7 @@ def show(debug=False, parent=None, use_context=False):
         module.project = any_project["name"]
 
     with lib.application():
-        window = LoaderWidow(parent)
+        window = LoaderWindow(parent)
         window.setStyleSheet(style.load_stylesheet())
         window.show()
 

@@ -1,11 +1,11 @@
 from .app import (
-    LoaderWidow,
+    LoaderWindow,
     show,
     cli,
 )
 
 __all__ = (
-    "LoaderWidow",
+    "LoaderWindow",
     "show",
     "cli",
 )
