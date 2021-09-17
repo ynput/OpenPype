@@ -5,8 +5,12 @@ import collections
 
 from Qt import QtWidgets, QtCore, QtGui
 
-from avalon import io, api, style
+import avalon.api
+from avalon import style
 from avalon.vendor import qtawesome
+
+from openpype.api import get_project_settings
+from openpype.lib import filter_profiles
 
 self = sys.modules[__name__]
 self._jobs = dict()
@@ -277,11 +281,12 @@ def preserve_selection(tree_view, column=0, role=None, current_index=True):
 class FamilyConfigCache:
     default_color = "#0091B2"
     _default_icon = None
-    _default_item = None
 
     def __init__(self, dbcon):
         self.dbcon = dbcon
         self.family_configs = {}
+        self._family_filters_set = False
+        self._require_refresh = True
 
     @classmethod
     def default_icon(cls):
@@ -293,15 +298,29 @@ class FamilyConfigCache:
 
     @classmethod
     def default_item(cls):
-        if cls._default_item is None:
-            cls._default_item = {"icon": cls.default_icon()}
-        return cls._default_item
+        return {
+            "icon": cls.default_icon()
+        }
 
     def family_config(self, family_name):
         """Get value from config with fallback to default"""
-        return self.family_configs.get(family_name, self.default_item())
+        if self._require_refresh:
+            self._refresh()
 
-    def refresh(self):
+        item = self.family_configs.get(family_name)
+        if not item:
+            item = self.default_item()
+            if self._family_filters_set:
+                item["state"] = False
+        return item
+
+    def refresh(self, force=False):
+        self._require_refresh = True
+
+        if force:
+            self._refresh()
+
+    def _refresh(self):
         """Get the family configurations from the database
 
         The configuration must be stored on the project under `config`.
@@ -317,62 +336,62 @@ class FamilyConfigCache:
         It is possible to override the default behavior and set specific
         families checked. For example we only want the families imagesequence
         and camera to be visible in the Loader.
-
-        # This will turn every item off
-        api.data["familyStateDefault"] = False
-
-        # Only allow the imagesequence and camera
-        api.data["familyStateToggled"] = ["imagesequence", "camera"]
-
         """
+        self._require_refresh = False
+        self._family_filters_set = False
 
         self.family_configs.clear()
-
-        families = []
+        # Skip if we're not in host context
+        if not avalon.api.registered_host():
+            return
 
         # Update the icons from the project configuration
         project_name = self.dbcon.Session.get("AVALON_PROJECT")
-        if project_name:
-            project_doc = self.dbcon.find_one(
-                {"type": "project"},
-                projection={"config.families": True}
+        asset_name = self.dbcon.Session.get("AVALON_ASSET")
+        task_name = self.dbcon.Session.get("AVALON_TASK")
+        if not all((project_name, asset_name, task_name)):
+            return
+
+        matching_item = None
+        project_settings = get_project_settings(project_name)
+        profiles = (
+            project_settings
+            ["global"]
+            ["tools"]
+            ["loader"]
+            ["family_filter_profiles"]
+        )
+        if profiles:
+            asset_doc = self.dbcon.find_one(
+                {"type": "asset", "name": asset_name},
+                {"data.tasks": True}
             )
+            tasks_info = asset_doc.get("data", {}).get("tasks") or {}
+            task_type = tasks_info.get(task_name, {}).get("type")
+            profiles_filter = {
+                "task_types": task_type,
+                "hosts": os.environ["AVALON_APP"]
+            }
+            matching_item = filter_profiles(profiles, profiles_filter)
 
-            if not project_doc:
-                print((
-                    "Project \"{}\" not found!"
-                    " Can't refresh family icons cache."
-                ).format(project_name))
-            else:
-                families = project_doc["config"].get("families") or []
+        families = []
+        if matching_item:
+            families = matching_item["filter_families"]
 
-        # Check if any family state are being overwritten by the configuration
-        default_state = api.data.get("familiesStateDefault", True)
-        toggled = set(api.data.get("familiesStateToggled") or [])
+        if not families:
+            return
+
+        self._family_filters_set = True
 
         # Replace icons with a Qt icon we can use in the user interfaces
         for family in families:
-            name = family["name"]
-            # Set family icon
-            icon = family.get("icon", None)
-            if icon:
-                family["icon"] = qtawesome.icon(
-                    "fa.{}".format(icon),
-                    color=self.default_color
-                )
-            else:
-                family["icon"] = self.default_icon()
+            family_info = {
+                "name": family,
+                "icon": self.default_icon(),
+                "state": True
+            }
 
-            # Update state
-            if name in toggled:
-                state = True
-            else:
-                state = default_state
-            family["state"] = state
-
-            self.family_configs[name] = family
-
-        return self.family_configs
+            self.family_configs[family] = family_info
 
 
 class GroupsConfig:
