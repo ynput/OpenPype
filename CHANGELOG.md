@@ -1,6 +1,6 @@
 # Changelog
 
-## [3.4.0-nightly.5](https://github.com/pypeclub/OpenPype/tree/HEAD)
+## [3.4.0-nightly.6](https://github.com/pypeclub/OpenPype/tree/HEAD)
 
 [Full Changelog](https://github.com/pypeclub/OpenPype/compare/3.3.1...HEAD)
 
@@ -8,7 +8,10 @@
 
 - Documentation: Ftrack launch argsuments update [\#2014](https://github.com/pypeclub/OpenPype/pull/2014)
 - Nuke Quick Start / Tutorial [\#1952](https://github.com/pypeclub/OpenPype/pull/1952)
-- OpenPype: Add version validation and `--headless` mode and update progress 🔄 [\#1939](https://github.com/pypeclub/OpenPype/pull/1939)
+
+**🆕 New features**
+
+- Nuke: Compatibility with Nuke 13 [\#2003](https://github.com/pypeclub/OpenPype/pull/2003)
 
 **🚀 Enhancements**
 
@@ -19,7 +22,6 @@
 - General: Staging icon [\#2017](https://github.com/pypeclub/OpenPype/pull/2017)
 - Ftrack: Sync to avalon actions have jobs [\#2015](https://github.com/pypeclub/OpenPype/pull/2015)
 - Modules: Connect method is not required [\#2009](https://github.com/pypeclub/OpenPype/pull/2009)
-- Nuke: Compatibility with Nuke 13 [\#2003](https://github.com/pypeclub/OpenPype/pull/2003)
 - Settings UI: Number with configurable steps [\#2001](https://github.com/pypeclub/OpenPype/pull/2001)
 - Moving project folder structure creation out of ftrack module \#1989 [\#1996](https://github.com/pypeclub/OpenPype/pull/1996)
 - Configurable items for providers without Settings [\#1987](https://github.com/pypeclub/OpenPype/pull/1987)
@@ -31,6 +33,7 @@
 - Blender: Toggle system console works on windows [\#1962](https://github.com/pypeclub/OpenPype/pull/1962)
 - Global: Settings defined by Addons/Modules [\#1959](https://github.com/pypeclub/OpenPype/pull/1959)
 - Global: Avalon Host name collector [\#1949](https://github.com/pypeclub/OpenPype/pull/1949)
+- OpenPype: Add version validation and `--headless` mode and update progress 🔄 [\#1939](https://github.com/pypeclub/OpenPype/pull/1939)
 
 **🐛 Bug fixes**
 
@@ -38,6 +41,7 @@
 - Ftrack: Delete old versions missing settings key [\#2037](https://github.com/pypeclub/OpenPype/pull/2037)
 - Nuke: typo on a button [\#2034](https://github.com/pypeclub/OpenPype/pull/2034)
 - Hiero: Fix "none" named tags [\#2033](https://github.com/pypeclub/OpenPype/pull/2033)
+- FFmpeg: Subprocess arguments as list [\#2032](https://github.com/pypeclub/OpenPype/pull/2032)
 - General: Fix Python 2 breaking line [\#2016](https://github.com/pypeclub/OpenPype/pull/2016)
 - Bugfix/webpublisher task type [\#2006](https://github.com/pypeclub/OpenPype/pull/2006)
 - Nuke thumbnails generated from middle of the sequence [\#1992](https://github.com/pypeclub/OpenPype/pull/1992)
@@ -55,7 +59,6 @@
 
 - Standalone Publisher: Extract harmony zip handle workfile template [\#1982](https://github.com/pypeclub/OpenPype/pull/1982)
 - Ftrack: arrow submodule has https url source [\#1974](https://github.com/pypeclub/OpenPype/pull/1974)
-- Bump url-parse from 1.5.1 to 1.5.3 in /website [\#1958](https://github.com/pypeclub/OpenPype/pull/1958)
 - CI: change release numbering triggers [\#1954](https://github.com/pypeclub/OpenPype/pull/1954)
 
 ## [3.3.1](https://github.com/pypeclub/OpenPype/tree/3.3.1) (2021-08-20)
@@ -77,14 +80,11 @@
 
 [Full Changelog](https://github.com/pypeclub/OpenPype/compare/CI/3.3.0-nightly.11...3.3.0)
 
-### 📖 Documentation
-
-- Maya: Scene patching 🩹on submission to Deadline [\#1923](https://github.com/pypeclub/OpenPype/pull/1923)
-- Feature AE local render [\#1901](https://github.com/pypeclub/OpenPype/pull/1901)
-
 **🆕 New features**
 
 - Settings UI: Breadcrumbs in settings [\#1932](https://github.com/pypeclub/OpenPype/pull/1932)
+- Maya: Scene patching 🩹on submission to Deadline [\#1923](https://github.com/pypeclub/OpenPype/pull/1923)
+- Feature AE local render [\#1901](https://github.com/pypeclub/OpenPype/pull/1901)
 
 **🚀 Enhancements**
 
