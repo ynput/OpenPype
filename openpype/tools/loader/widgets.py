@@ -846,36 +846,17 @@ class VersionWidget(QtWidgets.QWidget):
         self.data.set_version(version_doc)
 
 
-class FamilyListWidget(QtWidgets.QListWidget):
-    """A Widget that lists all available families"""
+class FamilyModel(QtGui.QStandardItemModel):
+    def __init__(self, dbcon, family_config_cache):
+        super(FamilyModel, self).__init__()
 
-    NameRole = QtCore.Qt.UserRole + 1
-    active_changed = QtCore.Signal(list)
-
-    def __init__(self, dbcon, family_config_cache, parent=None):
-        super(FamilyListWidget, self).__init__(parent=parent)
-
-        self.family_config_cache = family_config_cache
         self.dbcon = dbcon
+        self.family_config_cache = family_config_cache
 
-        multi_select = QtWidgets.QAbstractItemView.ExtendedSelection
-        self.setSelectionMode(multi_select)
-        self.setAlternatingRowColors(True)
-        # Enable RMB menu
-        self.setContextMenuPolicy(QtCore.Qt.CustomContextMenu)
-        self.customContextMenuRequested.connect(self.show_right_mouse_menu)
-
-        self.itemChanged.connect(self._on_item_changed)
+        self._items_by_family = {}
 
     def refresh(self):
-        """Refresh the listed families.
-
-        This gets all unique families and adds them as checkable items to
-        the list.
-
-        """
-
-        families = []
+        families = set()
         if self.dbcon.Session.get("AVALON_PROJECT"):
             result = list(self.dbcon.aggregate([
                 {"$match": {
@@ -890,81 +871,136 @@ class FamilyListWidget(QtWidgets.QListWidget):
                 }}
             ]))
             if result:
-                families = result[0]["families"]
+                families = set(result[0]["families"])
 
-        # Rebuild list
+        root_item = self.invisibleRootItem()
         self.blockSignals(True)
-        self.clear()
-        for name in sorted(families):
-            family = self.family_config_cache.family_config(name)
-            if family.get("hideFilter"):
+        for family in tuple(self._items_by_family.keys()):
+            if family not in families:
+                item = self._items_by_family.pop(family)
+                root_item.removeRow(item.row())
+        self.blockSignals(False)
+
+        new_items = []
+        for family in families:
+            if family in self._items_by_family:
                 continue
 
-            label = family.get("label", name)
-            icon = family.get("icon", None)
+            family_config = self.family_config_cache.family_config(family)
+            if family_config.get("hideFilter"):
+                continue
 
-            # TODO: This should be more managable by the artist
-            # Temporarily implement support for a default state in the project
-            # configuration
-            state = family.get("state", True)
-            state = QtCore.Qt.Checked if state else QtCore.Qt.Unchecked
+            label = family_config.get("label", family)
+            icon = family_config.get("icon", None)
 
-            item = QtWidgets.QListWidgetItem(parent=self)
-            item.setText(label)
-            item.setFlags(item.flags() | QtCore.Qt.ItemIsUserCheckable)
-            item.setData(self.NameRole, name)
+            if family_config.get("state", True):
+                state = QtCore.Qt.Checked
+            else:
+                state = QtCore.Qt.Unchecked
+
+            item = QtGui.QStandardItem(label)
+            item.setFlags(
+                QtCore.Qt.ItemIsEnabled
+                | QtCore.Qt.ItemIsSelectable
+                | QtCore.Qt.ItemIsUserCheckable
+            )
             item.setCheckState(state)
 
             if icon:
                 item.setIcon(icon)
 
-            self.addItem(item)
-        self.blockSignals(False)
+            new_items.append(item)
 
-        self.active_changed.emit(self.get_filters())
+        if new_items:
+            root_item.appendRows(new_items)
 
-    def get_filters(self):
+
+class FamilyListView(QtWidgets.QListView):
+    active_changed = QtCore.Signal(list)
+
+    def __init__(self, dbcon, family_config_cache, parent=None):
+        super(FamilyListView, self).__init__(parent=parent)
+
+        self.setSelectionMode(QtWidgets.QAbstractItemView.ExtendedSelection)
+        self.setAlternatingRowColors(True)
+        self.setContextMenuPolicy(QtCore.Qt.CustomContextMenu)
+
+        family_model = FamilyModel(dbcon, family_config_cache)
+        proxy_model = QtCore.QSortFilterProxyModel()
+        proxy_model.setDynamicSortFilter(True)
+        proxy_model.setSourceModel(family_model)
+
+        self.setModel(proxy_model)
+
+        family_model.dataChanged.connect(self._on_data_change)
+        self.customContextMenuRequested.connect(self._on_context_menu)
+
+        self._family_model = family_model
+        self._proxy_model = proxy_model
+
+    def refresh(self):
+        self._family_model.refresh()
+
+        self.active_changed.emit(self.get_enabled_families())
+
+    def get_enabled_families(self):
         """Return the checked family items"""
+        model = self.model()
+        checked_families = []
+        for row in range(model.rowCount()):
+            index = model.index(row, 0)
+            if index.data(QtCore.Qt.CheckStateRole) == QtCore.Qt.Checked:
+                family = index.data(QtCore.Qt.DisplayRole)
+                checked_families.append(family)
 
-        items = [self.item(i) for i in
-                 range(self.count())]
+        return checked_families
 
-        return [item.data(self.NameRole) for item in items if
-                item.checkState() == QtCore.Qt.Checked]
+    def set_all_unchecked(self):
+        self._set_all_checkstate(False)
 
-    def _on_item_changed(self):
-        self.active_changed.emit(self.get_filters())
+    def set_all_checked(self):
+        self._set_all_checkstate(True)
 
-    def _set_checkstate_all(self, state):
-        _state = QtCore.Qt.Checked if state is True else QtCore.Qt.Unchecked
+    def _set_all_checkstate(self, checked):
+        if checked:
+            state = QtCore.Qt.Checked
+        else:
+            state = QtCore.Qt.Unchecked
+
         self.blockSignals(True)
-        for i in range(self.count()):
-            item = self.item(i)
-            item.setCheckState(_state)
+
+        model = self._family_model
+        for row in range(model.rowCount()):
+            index = model.index(row, 0)
+            if index.data(QtCore.Qt.CheckStateRole) != state:
+                model.setData(index, state, QtCore.Qt.CheckStateRole)
+
         self.blockSignals(False)
-        self.active_changed.emit(self.get_filters())
 
-    def show_right_mouse_menu(self, pos):
+        self.active_changed.emit(self.get_enabled_families())
+
+    def _on_data_change(self, *_args):
+        self.active_changed.emit(self.get_enabled_families())
+
+    def _on_context_menu(self, pos):
         """Build RMB menu under mouse at current position (within widget)"""
-
-        # Get mouse position
-        globalpos = self.viewport().mapToGlobal(pos)
-
         menu = QtWidgets.QMenu(self)
 
         # Add enable all action
-        state_checked = QtWidgets.QAction(menu, text="Enable All")
-        state_checked.triggered.connect(
-            lambda: self._set_checkstate_all(True))
+        action_check_all = QtWidgets.QAction(menu)
+        action_check_all.setText("Enable All")
+        action_check_all.triggered.connect(self.set_all_checked)
         # Add disable all action
-        state_unchecked = QtWidgets.QAction(menu, text="Disable All")
-        state_unchecked.triggered.connect(
-            lambda: self._set_checkstate_all(False))
+        action_uncheck_all = QtWidgets.QAction(menu)
+        action_uncheck_all.setText("Disable All")
+        action_uncheck_all.triggered.connect(self.set_all_unchecked)
 
-        menu.addAction(state_checked)
-        menu.addAction(state_unchecked)
+        menu.addAction(action_check_all)
+        menu.addAction(action_uncheck_all)
 
-        menu.exec_(globalpos)
+        # Get mouse position
+        global_pos = self.viewport().mapToGlobal(pos)
+        menu.exec_(global_pos)
 
 
 class RepresentationWidget(QtWidgets.QWidget):

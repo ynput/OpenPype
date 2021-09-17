@@ -9,7 +9,7 @@ from openpype.tools.utils import lib as tools_lib
 from openpype.tools.loader.widgets import (
     ThumbnailWidget,
     VersionWidget,
-    FamilyListWidget,
+    FamilyListView,
     RepresentationWidget
 )
 from openpype.tools.utils.widgets import AssetWidget
@@ -65,7 +65,7 @@ class LibraryLoaderWindow(QtWidgets.QDialog):
         assets = AssetWidget(
             self.dbcon, multiselection=True, parent=self
         )
-        families = FamilyListWidget(
+        families = FamilyListView(
             self.dbcon, self.family_config_cache, parent=self
         )
         subsets = LibrarySubsetWidget(
