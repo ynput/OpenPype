@@ -298,8 +298,8 @@ class PypeTrayApplication(QtWidgets.QApplication):
         super(PypeTrayApplication, self).__init__(sys.argv)
         # Allows to close widgets without exiting app
         self.setQuitOnLastWindowClosed(False)
-        
-        icon = QtGui.QIcon(resources.pype_icon_filepath())
+
+        icon = QtGui.QIcon(resources.get_openpype_icon_filepath())
         self.setWindowIcon(icon)
 
         # Sets up splash
