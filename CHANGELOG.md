@@ -1,13 +1,8 @@
 # Changelog
 
-## [3.4.0-nightly.6](https://github.com/pypeclub/OpenPype/tree/HEAD)
+## [3.4.0](https://github.com/pypeclub/OpenPype/tree/3.4.0) (2021-09-17)
 
-[Full Changelog](https://github.com/pypeclub/OpenPype/compare/3.3.1...HEAD)
-
-### 📖 Documentation
-
-- Documentation: Ftrack launch argsuments update [\#2014](https://github.com/pypeclub/OpenPype/pull/2014)
-- Nuke Quick Start / Tutorial [\#1952](https://github.com/pypeclub/OpenPype/pull/1952)
+[Full Changelog](https://github.com/pypeclub/OpenPype/compare/3.3.1...3.4.0)
 
 **🆕 New features**
 
@@ -26,12 +21,14 @@
 - Moving project folder structure creation out of ftrack module \#1989 [\#1996](https://github.com/pypeclub/OpenPype/pull/1996)
 - Configurable items for providers without Settings [\#1987](https://github.com/pypeclub/OpenPype/pull/1987)
 - Global: Example addons [\#1986](https://github.com/pypeclub/OpenPype/pull/1986)
+- Standalone Publisher: Extract harmony zip handle workfile template [\#1982](https://github.com/pypeclub/OpenPype/pull/1982)
 - Settings UI: Number sliders [\#1978](https://github.com/pypeclub/OpenPype/pull/1978)
 - Workfiles: Support more workfile templates [\#1966](https://github.com/pypeclub/OpenPype/pull/1966)
 - Launcher: Fix crashes on action click [\#1964](https://github.com/pypeclub/OpenPype/pull/1964)
 - Settings: Minor fixes in UI and missing default values [\#1963](https://github.com/pypeclub/OpenPype/pull/1963)
 - Blender: Toggle system console works on windows [\#1962](https://github.com/pypeclub/OpenPype/pull/1962)
 - Global: Settings defined by Addons/Modules [\#1959](https://github.com/pypeclub/OpenPype/pull/1959)
+- CI: change release numbering triggers [\#1954](https://github.com/pypeclub/OpenPype/pull/1954)
 - Global: Avalon Host name collector [\#1949](https://github.com/pypeclub/OpenPype/pull/1949)
 - OpenPype: Add version validation and `--headless` mode and update progress 🔄 [\#1939](https://github.com/pypeclub/OpenPype/pull/1939)
 
@@ -50,24 +47,20 @@
 - Last workfile with multiple work templates [\#1981](https://github.com/pypeclub/OpenPype/pull/1981)
 - Collectors order [\#1977](https://github.com/pypeclub/OpenPype/pull/1977)
 - Stop timer was within validator order range. [\#1975](https://github.com/pypeclub/OpenPype/pull/1975)
+- Ftrack: arrow submodule has https url source [\#1974](https://github.com/pypeclub/OpenPype/pull/1974)
 - Ftrack: Fix hosts attribute in collect ftrack username [\#1972](https://github.com/pypeclub/OpenPype/pull/1972)
 - Deadline: Houdini plugins in different hierarchy [\#1970](https://github.com/pypeclub/OpenPype/pull/1970)
 - Removed deprecated submodules [\#1967](https://github.com/pypeclub/OpenPype/pull/1967)
 - Global: ExtractJpeg can handle filepaths with spaces [\#1961](https://github.com/pypeclub/OpenPype/pull/1961)
 
-**Merged pull requests:**
+### 📖 Documentation
 
-- Standalone Publisher: Extract harmony zip handle workfile template [\#1982](https://github.com/pypeclub/OpenPype/pull/1982)
-- Ftrack: arrow submodule has https url source [\#1974](https://github.com/pypeclub/OpenPype/pull/1974)
-- CI: change release numbering triggers [\#1954](https://github.com/pypeclub/OpenPype/pull/1954)
+- Documentation: Ftrack launch argsuments update [\#2014](https://github.com/pypeclub/OpenPype/pull/2014)
+- Nuke Quick Start / Tutorial [\#1952](https://github.com/pypeclub/OpenPype/pull/1952)
 
 ## [3.3.1](https://github.com/pypeclub/OpenPype/tree/3.3.1) (2021-08-20)
 
 [Full Changelog](https://github.com/pypeclub/OpenPype/compare/CI/3.3.1-nightly.1...3.3.1)
-
-**🚀 Enhancements**
-
-- Global: Define hosts in CollectSceneVersion [\#1948](https://github.com/pypeclub/OpenPype/pull/1948)
 
 **🐛 Bug fixes**
 
