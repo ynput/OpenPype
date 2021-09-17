@@ -503,6 +503,11 @@
                                 "multiselection": true
                             },
                             {
+                                "key": "task_types",
+                                "label": "Task types",
+                                "type": "task-types-enum"
+                            },
+                            {
                                 "key": "tasks",
                                 "label": "Task names",
                                 "type": "list",
@@ -542,6 +547,11 @@
                                 "key": "hosts",
                                 "label": "Hosts",
                                 "multiselection": true
+                            },
+                            {
+                                "key": "task_types",
+                                "label": "Task types",
+                                "type": "task-types-enum"
                             },
                             {
                                 "key": "tasks",

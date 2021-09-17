@@ -209,6 +209,7 @@
                         "standalonepublisher"
                     ],
                     "families": [],
+                    "task_types": [],
                     "tasks": [],
                     "add_ftrack_family": true,
                     "advanced_filtering": []
@@ -221,6 +222,7 @@
                         "matchmove",
                         "shot"
                     ],
+                    "task_types": [],
                     "tasks": [],
                     "add_ftrack_family": false,
                     "advanced_filtering": []
@@ -232,6 +234,7 @@
                     "families": [
                         "plate"
                     ],
+                    "task_types": [],
                     "tasks": [],
                     "add_ftrack_family": false,
                     "advanced_filtering": [
@@ -256,6 +259,7 @@
                         "rig",
                         "camera"
                     ],
+                    "task_types": [],
                     "tasks": [],
                     "add_ftrack_family": true,
                     "advanced_filtering": []
@@ -267,6 +271,7 @@
                     "families": [
                         "renderPass"
                     ],
+                    "task_types": [],
                     "tasks": [],
                     "add_ftrack_family": false,
                     "advanced_filtering": []
@@ -276,6 +281,7 @@
                         "tvpaint"
                     ],
                     "families": [],
+                    "task_types": [],
                     "tasks": [],
                     "add_ftrack_family": true,
                     "advanced_filtering": []
@@ -288,6 +294,7 @@
                         "write",
                         "render"
                     ],
+                    "task_types": [],
                     "tasks": [],
                     "add_ftrack_family": false,
                     "advanced_filtering": [
@@ -307,6 +314,7 @@
                         "render",
                         "workfile"
                     ],
+                    "task_types": [],
                     "tasks": [],
                     "add_ftrack_family": true,
                     "advanced_filtering": []
