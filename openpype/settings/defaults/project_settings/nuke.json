@@ -96,6 +96,16 @@
         },
         "ExtractSlateFrame": {
             "viewer_lut_raw": false
+        },
+        "IncrementScriptVersion": {
+            "optional": true,
+            "active": true,
+            "families": [
+                "workfile",
+                "render",
+                "render.local",
+                "render.farm"
+            ]
         }
     },
     "load": {

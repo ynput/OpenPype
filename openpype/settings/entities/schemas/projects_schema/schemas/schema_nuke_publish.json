@@ -152,6 +152,38 @@
                     "label": "Viewer LUT raw"
                 }
             ]
+        },
+        {
+            "type": "splitter"
+        },
+        {
+            "type": "label",
+            "label": "Integrators"
+        },
+        {
+            "type": "dict",
+            "collapsible": false,
+            "key": "IncrementScriptVersion",
+            "label": "IncrementScriptVersion",
+            "is_group": true,
+            "children": [
+                {
+                    "type": "boolean",
+                    "key": "optional",
+                    "label": "Optional"
+                },
+                {
+                    "type": "boolean",
+                    "key": "active",
+                    "label": "Active"
+                },
+                {
+                    "type": "list",
+                    "key": "families",
+                    "object_type": "text",
+                    "label": "Trigger on families"
+                }
+            ]
         }
     ]
 }
