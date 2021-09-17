@@ -122,6 +122,7 @@ class SubsetWidget(QtWidgets.QWidget):
     version_changed = QtCore.Signal()   # version state changed for a subset
     load_started = QtCore.Signal()
     load_ended = QtCore.Signal()
+    refreshed = QtCore.Signal(bool)
 
     default_widths = (
         ("subset", 200),
@@ -242,6 +243,7 @@ class SubsetWidget(QtWidgets.QWidget):
 
         self.filter.textChanged.connect(self.proxy.setFilterRegExp)
         self.filter.textChanged.connect(self.view.expandAll)
+        model.refreshed.connect(self.refreshed)
 
         self.model.refresh()
 

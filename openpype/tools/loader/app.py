@@ -146,6 +146,7 @@ class LoaderWidow(QtWidgets.QDialog):
         assets.view.clicked.connect(self.on_assetview_click)
         subsets.active_changed.connect(self.on_subsetschanged)
         subsets.version_changed.connect(self.on_versionschanged)
+        subsets.refreshed.connect(self._on_subset_refresh)
 
         subsets.load_started.connect(self._on_load_start)
         subsets.load_ended.connect(self._on_load_end)
@@ -215,6 +216,12 @@ class LoaderWidow(QtWidgets.QDialog):
     def _hide_overlay(self):
         self._overlay_frame.setVisible(False)
 
+    def _on_subset_refresh(self, has_item):
+        subsets_widget = self.data["widgets"]["subsets"]
+        familis_widget = self.data["widgets"]["families"]
+
+        subsets_widget.set_loading_state(loading=False, empty=not has_item)
+
     def _on_load_end(self):
         # Delay hiding as click events happened during loading should be
         #   blocked
@@ -264,8 +271,6 @@ class LoaderWidow(QtWidgets.QDialog):
 
     def _assetschanged(self):
         """Selected assets have changed"""
-        t1 = time.time()
-
         assets_widget = self.data["widgets"]["assets"]
         subsets_widget = self.data["widgets"]["subsets"]
         subsets_model = subsets_widget.model
@@ -282,14 +287,6 @@ class LoaderWidow(QtWidgets.QDialog):
             loading=bool(asset_ids),
             empty=True
         )
-
-        def on_refreshed(has_item):
-            empty = not has_item
-            subsets_widget.set_loading_state(loading=False, empty=empty)
-            subsets_model.refreshed.disconnect()
-            self.echo("Duration: %.3fs" % (time.time() - t1))
-
-        subsets_model.refreshed.connect(on_refreshed)
 
         subsets_model.set_assets(asset_ids)
         subsets_widget.view.setColumnHidden(
