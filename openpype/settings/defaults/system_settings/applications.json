@@ -115,7 +115,7 @@
                 "executables": {
                     "windows": [],
                     "darwin": [
-                        "/opt/Autodesk/flame_2021/bin/flame.app/Contents/MacOS/flame"
+                        "/opt/Autodesk/flame_2021/bin/flame.app/Contents/MacOS/startApp"
                     ],
                     "linux": [
                         "/opt/Autodesk/flame_2021/bin/flame"

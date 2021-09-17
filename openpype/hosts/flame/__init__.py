@@ -1,3 +1,6 @@
+app_framework = None
+apps = []
+
 from .api.utils import (
     setup
 )
@@ -17,6 +20,7 @@ from .api.pipeline import (
 )
 
 from .api.lib import (
+    FlameAppFramework,
     maintain_current_timeline,
     get_project_manager,
     get_current_project,
@@ -24,7 +28,7 @@ from .api.lib import (
     create_bin,
 )
 
-from .api.menu import start_menu
+from .api.menu import FlameMenuProjectconnect
 
 from .api.workio import (
     open_file,
@@ -37,6 +41,9 @@ from .api.workio import (
 
 
 __all__ = [
+    "app_framework",
+    "apps",
+
     # pipeline
     "install",
     "uninstall",
@@ -55,6 +62,7 @@ __all__ = [
     "setup",
 
     # lib
+    "FlameAppFramework",
     "maintain_current_timeline",
     "get_project_manager",
     "get_current_project",
@@ -62,7 +70,7 @@ __all__ = [
     "create_bin",
 
     # menu
-    "start_menu",
+    "FlameMenuProjectconnect",
 
     # plugin
 
