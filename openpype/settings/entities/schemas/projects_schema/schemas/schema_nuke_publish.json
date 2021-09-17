@@ -16,9 +16,30 @@
             "is_group": true,
             "children": [
                 {
-                    "type": "boolean",
-                    "key": "sync_workfile_version",
-                    "label": "Sync Version from workfile"
+                    "type": "enum",
+                    "key": "sync_workfile_version_on_families",
+                    "label": "Sync workfile version for families",
+                    "multiselection": true,
+                    "enum_items": [
+                        {
+                            "nukenodes": "nukenodes"
+                        },
+                        {
+                            "camera": "camera"
+                        },
+                        {
+                            "gizmo": "gizmo"
+                        },
+                        {
+                            "source": "source"
+                        },
+                        {
+                            "prerender": "prerender"
+                        },
+                        {
+                            "render": "render"
+                        }
+                    ]
                 }
             ]
         },

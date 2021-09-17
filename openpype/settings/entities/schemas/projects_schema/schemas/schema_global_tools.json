@@ -41,6 +41,11 @@
                                 "multiselection": true
                             },
                             {
+                                "key": "task_types",
+                                "label": "Task types",
+                                "type": "task-types-enum"
+                            },
+                            {
                                 "key": "tasks",
                                 "label": "Task names",
                                 "type": "list",
@@ -127,8 +132,13 @@
                                   ]
                             },
                             {
+                                "key": "task_types",
+                                "label": "Task types",
+                                "type": "task-types-enum"
+                            },
+                            {
                                 "key": "tasks",
-                                "label": "Tasks",
+                                "label": "Task names",
                                 "type": "list",
                                 "object_type": "text"
                             },
@@ -162,8 +172,14 @@
                                 ]
                             },
                             {
+                                "key": "task_types",
+                                "label": "Task types",
+                                "type": "list",
+                                "object_type": "task-types-enum"
+                            },
+                            {
                                 "key": "tasks",
-                                "label": "Tasks",
+                                "label": "Task names",
                                 "type": "list",
                                 "object_type": "text"
                             },
