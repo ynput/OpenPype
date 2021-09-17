@@ -218,11 +218,11 @@ class LoaderWidow(QtWidgets.QDialog):
 
     def _on_subset_refresh(self, has_item):
         subsets_widget = self.data["widgets"]["subsets"]
-        familis_widget = self.data["widgets"]["families"]
+        families_view = self.data["widgets"]["families"]
 
         subsets_widget.set_loading_state(loading=False, empty=not has_item)
         families = subsets_widget.get_subsets_families()
-        familis_widget.set_enabled_families(families)
+        families_view.set_enabled_families(families)
 
     def _on_load_end(self):
         # Delay hiding as click events happened during loading should be
@@ -247,8 +247,8 @@ class LoaderWidow(QtWidgets.QDialog):
         assets_widget.refresh()
         assets_widget.setFocus()
 
-        families = self.data["widgets"]["families"]
-        families.refresh()
+        families_view = self.data["widgets"]["families"]
+        families_view.refresh()
 
     def clear_assets_underlines(self):
         """Clear colors from asset data to remove colored underlines
@@ -303,7 +303,8 @@ class LoaderWidow(QtWidgets.QDialog):
         self.data["state"]["assetIds"] = asset_ids
 
         representations = self.data["widgets"]["representations"]
-        representations.set_version_ids([])  # reset repre list
+        # reset repre list
+        representations.set_version_ids([])
 
     def _subsetschanged(self):
         asset_ids = self.data["state"]["assetIds"]
