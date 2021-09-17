@@ -879,12 +879,13 @@ class FamilyModel(QtGui.QStandardItemModel):
                 families = set(result[0]["families"])
 
         root_item = self.invisibleRootItem()
-        self.blockSignals(True)
+
         for family in tuple(self._items_by_family.keys()):
             if family not in families:
                 item = self._items_by_family.pop(family)
                 root_item.removeRow(item.row())
-        self.blockSignals(False)
+
+        self.family_config_cache.refresh()
 
         new_items = []
         for family in families:
@@ -892,8 +893,6 @@ class FamilyModel(QtGui.QStandardItemModel):
                 continue
 
             family_config = self.family_config_cache.family_config(family)
-            if family_config.get("hideFilter"):
-                continue
 
             label = family_config.get("label", family)
             icon = family_config.get("icon", None)
