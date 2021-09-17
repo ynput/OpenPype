@@ -31,7 +31,7 @@ class ShaderDefinitionsEditor(QtWidgets.QWidget):
 
         self.setObjectName("shaderDefinitionEditor")
         self.setWindowTitle("OpenPype shader name definition editor")
-        icon = QtGui.QIcon(resources.pype_icon_filepath())
+        icon = QtGui.QIcon(resources.get_openpype_icon_filepath())
         self.setWindowIcon(icon)
         self.setWindowFlags(QtCore.Qt.Window)
         self.setParent(parent)

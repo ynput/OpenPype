@@ -261,7 +261,7 @@ class LauncherWindow(QtWidgets.QDialog):
         self.setFocusPolicy(QtCore.Qt.StrongFocus)
         self.setAttribute(QtCore.Qt.WA_DeleteOnClose, False)
 
-        icon = QtGui.QIcon(resources.pype_icon_filepath())
+        icon = QtGui.QIcon(resources.get_openpype_icon_filepath())
         self.setWindowIcon(icon)
         self.setStyleSheet(style.load_stylesheet())
 

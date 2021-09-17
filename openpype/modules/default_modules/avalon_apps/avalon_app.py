@@ -60,7 +60,7 @@ class AvalonModule(OpenPypeModule, ITrayModule, IWebServerRoutes):
             from Qt import QtGui
 
             self.libraryloader = app.Window(
-                icon=QtGui.QIcon(resources.pype_icon_filepath()),
+                icon=QtGui.QIcon(resources.get_openpype_icon_filepath()),
                 show_projects=True,
                 show_libraries=True
             )
@@ -70,9 +70,6 @@ class AvalonModule(OpenPypeModule, ITrayModule, IWebServerRoutes):
                 "Couldn't load Library loader tool for tray.",
                 exc_info=True
             )
-
-    def connect_with_modules(self, _enabled_modules):
-        return
 
     def webserver_initialization(self, server_manager):
         """Implementation of IWebServerRoutes interface."""
