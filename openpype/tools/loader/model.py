@@ -190,6 +190,9 @@ class SubsetsModel(TreeModel, BaseRepresentationModel):
         self._grouping = state
         self.on_doc_fetched()
 
+    def get_subsets_families(self):
+        return self._doc_payload.get("subset_families") or set()
+
     def setData(self, index, value, role=QtCore.Qt.EditRole):
         # Trigger additional edit when `version` column changed
         # because it also updates the information in other columns

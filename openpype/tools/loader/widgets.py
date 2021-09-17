@@ -247,6 +247,9 @@ class SubsetWidget(QtWidgets.QWidget):
 
         self.model.refresh()
 
+    def get_subsets_families(self):
+        return self.model.get_subsets_families()
+
     def set_family_filters(self, families):
         self.family_proxy.setFamiliesFilter(families)
 

@@ -221,6 +221,8 @@ class LoaderWidow(QtWidgets.QDialog):
         familis_widget = self.data["widgets"]["families"]
 
         subsets_widget.set_loading_state(loading=False, empty=not has_item)
+        families = subsets_widget.get_subsets_families()
+        familis_widget.set_enabled_families(families)
 
     def _on_load_end(self):
         # Delay hiding as click events happened during loading should be
