@@ -12,9 +12,6 @@ from avalon.vendor import qtawesome
 from openpype.api import get_project_settings
 from openpype.lib import filter_profiles
 
-self = sys.modules[__name__]
-self._jobs = dict()
-
 
 def format_version(value, hero_version=False):
     """Formats integer to displayable version name"""
@@ -58,6 +55,10 @@ def defer(delay, func):
         return func()
 
 
+class SharedObjects:
+    jobs = {}
+
+
 def schedule(func, time, channel="default"):
     """Run `func` at a later `time` in a dedicated `channel`
 
@@ -69,7 +70,7 @@ def schedule(func, time, channel="default"):
     """
 
     try:
-        self._jobs[channel].stop()
+        SharedObjects.jobs[channel].stop()
     except (AttributeError, KeyError, RuntimeError):
         pass
 
@@ -78,7 +79,7 @@ def schedule(func, time, channel="default"):
     timer.timeout.connect(func)
     timer.start(time)
 
-    self._jobs[channel] = timer
+    SharedObjects.jobs[channel] = timer
 
 
 @contextlib.contextmanager
