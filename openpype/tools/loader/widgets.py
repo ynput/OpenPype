@@ -945,7 +945,7 @@ class FamilyListView(QtWidgets.QListView):
 
     def get_enabled_families(self):
         """Return the checked family items"""
-        model = self.model()
+        model = self._family_model
         checked_families = []
         for row in range(model.rowCount()):
             index = model.index(row, 0)
@@ -956,28 +956,53 @@ class FamilyListView(QtWidgets.QListView):
         return checked_families
 
     def set_all_unchecked(self):
-        self._set_all_checkstate(False)
+        self._set_checkstates(False, self._get_all_indexes())
 
     def set_all_checked(self):
-        self._set_all_checkstate(True)
+        self._set_checkstates(True, self._get_all_indexes())
 
-    def _set_all_checkstate(self, checked):
-        if checked:
+    def _get_all_indexes(self):
+        indexes = []
+        model = self._family_model
+        for row in range(model.rowCount()):
+            index = model.index(row, 0)
+            indexes.append(index)
+        return indexes
+
+    def _set_checkstates(self, checked, indexes):
+        if not indexes:
+            return
+
+        if checked is None:
+            state = None
+        elif checked:
             state = QtCore.Qt.Checked
         else:
             state = QtCore.Qt.Unchecked
 
         self.blockSignals(True)
 
-        model = self._family_model
-        for row in range(model.rowCount()):
-            index = model.index(row, 0)
-            if index.data(QtCore.Qt.CheckStateRole) != state:
-                model.setData(index, state, QtCore.Qt.CheckStateRole)
+        for index in indexes:
+            index_state = index.data(QtCore.Qt.CheckStateRole)
+            if index_state == state:
+                continue
+
+            new_state = state
+            if new_state is None:
+                if index_state == QtCore.Qt.Checked:
+                    new_state = QtCore.Qt.Unchecked
+                else:
+                    new_state = QtCore.Qt.Checked
+
+            index.model().setData(index, new_state, QtCore.Qt.CheckStateRole)
 
         self.blockSignals(False)
 
         self.active_changed.emit(self.get_enabled_families())
+
+    def _change_selection_state(self, checked):
+        indexes = self.selectionModel().selectedIndexes()
+        self._set_checkstates(checked, indexes)
 
     def _on_data_change(self, *_args):
         self.active_changed.emit(self.get_enabled_families())
@@ -1001,6 +1026,24 @@ class FamilyListView(QtWidgets.QListView):
         # Get mouse position
         global_pos = self.viewport().mapToGlobal(pos)
         menu.exec_(global_pos)
+
+    def event(self, event):
+        if not event.type() == QtCore.QEvent.KeyPress:
+            pass
+
+        elif event.key() == QtCore.Qt.Key_Space:
+            self._change_selection_state(None)
+            return True
+
+        elif event.key() == QtCore.Qt.Key_Backspace:
+            self._change_selection_state(False)
+            return True
+
+        elif event.key() == QtCore.Qt.Key_Return:
+            self._change_selection_state(True)
+            return True
+
+        return super(FamilyListView, self).event(event)
 
 
 class RepresentationWidget(QtWidgets.QWidget):
