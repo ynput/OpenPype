@@ -232,8 +232,11 @@ class LoaderWidow(QtWidgets.QDialog):
     # ------------------------------
 
     def on_context_task_change(self, *args, **kwargs):
-        # Change to context asset on context change
         assets_widget = self.data["widgets"]["assets"]
+        families_view = self.data["widgets"]["families"]
+        # Refresh families config
+        families_view.refresh()
+        # Change to context asset on context change
         assets_widget.select_assets(io.Session["AVALON_ASSET"])
 
     def _refresh(self):

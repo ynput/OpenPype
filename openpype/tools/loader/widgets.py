@@ -889,11 +889,7 @@ class FamilyModel(QtGui.QStandardItemModel):
 
         new_items = []
         for family in families:
-            if family in self._items_by_family:
-                continue
-
             family_config = self.family_config_cache.family_config(family)
-
             label = family_config.get("label", family)
             icon = family_config.get("icon", None)
 
@@ -902,19 +898,24 @@ class FamilyModel(QtGui.QStandardItemModel):
             else:
                 state = QtCore.Qt.Unchecked
 
-            item = QtGui.QStandardItem(label)
-            item.setFlags(
-                QtCore.Qt.ItemIsEnabled
-                | QtCore.Qt.ItemIsSelectable
-                | QtCore.Qt.ItemIsUserCheckable
-            )
+            if family not in self._items_by_family:
+                item = QtGui.QStandardItem(label)
+                item.setFlags(
+                    QtCore.Qt.ItemIsEnabled
+                    | QtCore.Qt.ItemIsSelectable
+                    | QtCore.Qt.ItemIsUserCheckable
+                )
+
+            else:
+                item = self._items_by_family[label]
+                item.setData(QtCore.Qt.DisplayRole, label)
+                new_items.append(item)
+                self._items_by_family[family] = item
+                
             item.setCheckState(state)
 
             if icon:
                 item.setIcon(icon)
-
-            new_items.append(item)
-            self._items_by_family[family] = item
 
         if new_items:
             root_item.appendRows(new_items)

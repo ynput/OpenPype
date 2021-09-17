@@ -296,7 +296,6 @@ class FamilyConfigCache:
             )
         return cls._default_icon
 
-
     def family_config(self, family_name):
         """Get value from config with fallback to default"""
         if self._require_refresh:
@@ -343,9 +342,9 @@ class FamilyConfigCache:
             return
 
         # Update the icons from the project configuration
-        project_name = self.dbcon.Session.get("AVALON_PROJECT")
-        asset_name = self.dbcon.Session.get("AVALON_ASSET")
-        task_name = self.dbcon.Session.get("AVALON_TASK")
+        project_name = os.environ.get("AVALON_PROJECT")
+        asset_name = os.environ.get("AVALON_ASSET")
+        task_name = os.environ.get("AVALON_TASK")
         if not all((project_name, asset_name, task_name)):
             return
 
