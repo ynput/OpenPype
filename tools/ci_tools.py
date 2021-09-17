@@ -12,7 +12,7 @@ def get_release_type_github(Log, github_token):
     patch_labels = ["type: enhancement", "type: bug"]
 
     g = Github(github_token)
-    repo = g.get_repo("pypeclub/ci-testing")
+    repo = g.get_repo("pypeclub/OpenPype")
 
     for line in Log.splitlines():
         print(line)
