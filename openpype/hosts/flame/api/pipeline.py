@@ -98,6 +98,8 @@ def update_container(tl_segment, data=None):
 
 
 def launch_workfiles_app(*args):
+    log.info("______________Launching workfile app_________")
+    print("______________Launching workfile app_________")
     workdir = os.environ["AVALON_WORKDIR"]
     workfiles.show(workdir)
 

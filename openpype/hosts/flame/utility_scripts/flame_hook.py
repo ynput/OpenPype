@@ -3,6 +3,8 @@ from Qt import QtWidgets, QtCore
 from pprint import pprint, pformat
 import time
 import atexit
+import openpype
+import avalon
 import openpype.hosts.flame as opflame
 
 flh = sys.modules[__name__]
@@ -76,6 +78,9 @@ def project_saved(project_name, save_time, is_auto_save):
 
 
 def get_main_menu_custom_ui_actions():
+    # install openpype and the host
+    openpype_install()
+
     start = time.time()
     menu = []
     flameMenuProjectconnectApp = None
@@ -85,7 +90,7 @@ def get_main_menu_custom_ui_actions():
     if flameMenuProjectconnectApp:
         menu.append(flameMenuProjectconnectApp.build_menu())
     if menu:
-        menu[0]['actions'].append({'name': flh._project, 'isEnabled': False})
+        menu[0]['actions'].insert(0, {'name': flh._project, 'isEnabled': False})
         print(">>_> menu was build: {}".format(pformat(menu)))
 
     if opflame.app_framework:
@@ -101,3 +106,8 @@ def get_main_menu_custom_ui_actions():
     print('main menu update took %s' % (time.time() - start))
 
     return menu
+
+def openpype_install():
+    openpype.install()
+    avalon.api.install(opflame)
+    print("<<<<<<< Avalon registred hosts: {}".format(avalon.api.registered_host()))
