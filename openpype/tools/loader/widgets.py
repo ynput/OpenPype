@@ -915,6 +915,46 @@ class FamilyModel(QtGui.QStandardItemModel):
             root_item.appendRows(new_items)
 
 
+class FamilyProxyFiler(QtCore.QSortFilterProxyModel):
+    def __init__(self, *args, **kwargs):
+        super(FamilyProxyFiler, self).__init__(*args, **kwargs)
+
+        self._filtering_enabled = False
+        self._enabled_families = set()
+
+    def set_enabled_families(self, families):
+        if self._enabled_families == families:
+            return
+
+        self._enabled_families = families
+        if self._filtering_enabled:
+            self.invalidateFilter()
+
+    def is_filter_enabled(self):
+        return self._filtering_enabled
+
+    def set_filter_enabled(self, enabled=None):
+        if enabled is None:
+            enabled = not self._filtering_enabled
+        if self._filtering_enabled == enabled:
+            return
+
+        self._filtering_enabled = enabled
+        self.invalidateFilter()
+
+    def filterAcceptsRow(self, row, parent):
+        if not self._filtering_enabled:
+            return True
+
+        if not self._enabled_families:
+            return False
+
+        index = self.sourceModel().index(row, self.filterKeyColumn(), parent)
+        if index.data(QtCore.Qt.DisplayRole) in self._enabled_families:
+            return True
+        return False
+
+
 class FamilyListView(QtWidgets.QListView):
     active_changed = QtCore.Signal(list)
 
@@ -926,7 +966,7 @@ class FamilyListView(QtWidgets.QListView):
         self.setContextMenuPolicy(QtCore.Qt.CustomContextMenu)
 
         family_model = FamilyModel(dbcon, family_config_cache)
-        proxy_model = QtCore.QSortFilterProxyModel()
+        proxy_model = FamilyProxyFiler()
         proxy_model.setDynamicSortFilter(True)
         proxy_model.setSourceModel(family_model)
 
@@ -937,6 +977,14 @@ class FamilyListView(QtWidgets.QListView):
 
         self._family_model = family_model
         self._proxy_model = proxy_model
+
+    def set_enabled_families(self, families):
+        self._proxy_model.set_enabled_families(families)
+
+        self.set_enabled_family_filtering(True)
+
+    def set_enabled_family_filtering(self, enabled=None):
+        self._proxy_model.set_filter_enabled(enabled)
 
     def refresh(self):
         self._family_model.refresh()
