@@ -911,7 +911,7 @@ class FamilyModel(QtGui.QStandardItemModel):
                 item.setData(QtCore.Qt.DisplayRole, label)
                 new_items.append(item)
                 self._items_by_family[family] = item
-                
+
             item.setCheckState(state)
 
             if icon:

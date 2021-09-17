@@ -1,5 +1,4 @@
 import sys
-import time
 
 from Qt import QtWidgets, QtCore, QtGui
 
