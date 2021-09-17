@@ -79,7 +79,8 @@ class AssetDelegate(QtWidgets.QItemDelegate):
             else:
                 bg_color.setAlpha(0)
 
-        # # -- When not needed to do a rounded corners (easier and without painter restore):
+        # When not needed to do a rounded corners (easier and without
+        #   painter restore):
         # painter.fillRect(
         #     item_rect,
         #     QtGui.QBrush(bg_color)

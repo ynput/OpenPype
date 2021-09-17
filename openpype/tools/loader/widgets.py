@@ -8,7 +8,7 @@ import collections
 
 from Qt import QtWidgets, QtCore, QtGui
 
-from avalon import api, io, pipeline
+from avalon import api, pipeline
 from avalon.lib import HeroVersionType
 
 from openpype.tools.utils import lib as tools_lib
@@ -1173,8 +1173,10 @@ class RepresentationWidget(QtWidgets.QWidget):
                 repre_context
             ):
                 if tools_lib.is_sync_loader(loader):
-                    both_unavailable = item["active_site_progress"] <= 0 and \
-                                       item["remote_site_progress"] <= 0
+                    both_unavailable = (
+                        item["active_site_progress"] <= 0
+                        and item["remote_site_progress"] <= 0
+                    )
                     if both_unavailable:
                         continue
 

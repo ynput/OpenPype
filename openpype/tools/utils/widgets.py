@@ -6,7 +6,7 @@ from . import lib
 from Qt import QtWidgets, QtCore, QtGui
 from avalon.vendor import qtawesome, qargparse
 
-from avalon import style, io
+from avalon import style
 
 from .models import AssetModel, RecursiveSortFilterProxyModel
 from .views import AssetsView
