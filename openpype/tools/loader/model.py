@@ -860,10 +860,9 @@ class SubsetFilterProxyModel(GroupMemberFilterProxyModel):
 class FamiliesFilterProxyModel(GroupMemberFilterProxyModel):
     """Filters to specified families"""
 
-    def __init__(self, family_config_cache, *args, **kwargs):
+    def __init__(self, *args, **kwargs):
         super(FamiliesFilterProxyModel, self).__init__(*args, **kwargs)
         self._families = set()
-        self.family_config_cache = family_config_cache
 
     def familyFilter(self):
         return self._families
@@ -894,10 +893,6 @@ class FamiliesFilterProxyModel(GroupMemberFilterProxyModel):
         family = item.get("family")
         if not family:
             return True
-
-        family_config = self.family_config_cache.family_config(family)
-        if family_config.get("hideFilter"):
-            return False
 
         # We want to keep the families which are not in the list
         return family in self._families

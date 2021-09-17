@@ -159,7 +159,7 @@ class SubsetWidget(QtWidgets.QWidget):
             grouping=enable_grouping
         )
         proxy = SubsetFilterProxyModel()
-        family_proxy = FamiliesFilterProxyModel(family_config_cache)
+        family_proxy = FamiliesFilterProxyModel()
         family_proxy.setSourceModel(proxy)
 
         subset_filter = QtWidgets.QLineEdit()
