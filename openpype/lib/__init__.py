@@ -59,6 +59,11 @@ from .python_module_tools import (
     import_module_from_dirpath
 )
 
+from .profiles_filtering import (
+    compile_list_of_regexes,
+    filter_profiles
+)
+
 from .avalon_context import (
     CURRENT_DOC_SCHEMAS,
     PROJECT_NAME_ALLOWED_SYMBOLS,
@@ -118,12 +123,8 @@ from .applications import (
     prepare_host_environments,
     prepare_context_environments,
     get_app_environments_for_context,
-    apply_project_environments_value,
-
-    compile_list_of_regexes
+    apply_project_environments_value
 )
-
-from .profiles_filtering import filter_profiles
 
 from .plugin_tools import (
     TaskNotSetError,

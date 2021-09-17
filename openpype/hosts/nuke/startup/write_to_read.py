@@ -69,7 +69,8 @@ def evaluate_filepath_new(k_value, k_eval, project_dir, first_frame):
     frames = sorted(frames)
     firstframe = frames[0]
     lastframe = frames[len(frames) - 1]
-    if lastframe < 0:
+
+    if int(lastframe) < 0:
         lastframe = firstframe
 
     return filepath, firstframe, lastframe

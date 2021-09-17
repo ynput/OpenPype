@@ -7,8 +7,9 @@
             "profiles": [
                 {
                     "families": [],
-                    "tasks": [],
                     "hosts": [],
+                    "task_types": [],
+                    "tasks": [],
                     "channel_messages": []
                 }
             ]

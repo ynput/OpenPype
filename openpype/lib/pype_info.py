@@ -58,6 +58,17 @@ def is_running_from_build():
     return True
 
 
+def is_running_staging():
+    """Currently used OpenPype is staging version.
+
+    Returns:
+        bool: True if openpype version containt 'staging'.
+    """
+    if "staging" in get_openpype_version():
+        return True
+    return False
+
+
 def get_pype_info():
     """Information about currently used Pype process."""
     executable_args = get_pype_execute_args()
