@@ -60,7 +60,8 @@ class ExtractReview(openpype.api.Extractor):
         # Generate thumbnail.
         thumbnail_path = os.path.join(staging_dir, "thumbnail.jpg")
         args = [
-            "{}".format(ffmpeg_path), "-y",
+            ffmpeg_path,
+            "-y",
             "-i", output_image_path,
             "-vf", "scale=300:-1",
             "-vframes", "1",
@@ -78,7 +79,8 @@ class ExtractReview(openpype.api.Extractor):
         # Generate mov.
         mov_path = os.path.join(staging_dir, "review.mov")
         args = [
-            ffmpeg_path, "-y",
+            ffmpeg_path,
+            "-y",
             "-i", output_image_path,
             "-vf", "pad=ceil(iw/2)*2:ceil(ih/2)*2",
             "-vframes", "1",
