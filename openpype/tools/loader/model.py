@@ -70,7 +70,6 @@ class BaseRepresentationModel(object):
 
 
 class SubsetsModel(TreeModel, BaseRepresentationModel):
-
     doc_fetched = QtCore.Signal()
     refreshed = QtCore.Signal(bool)
 
@@ -354,10 +353,16 @@ class SubsetsModel(TreeModel, BaseRepresentationModel):
             },
             self.subset_doc_projection
         )
-        for subset in subset_docs:
+        subset_families = set()
+        for subset_doc in subset_docs:
             if self._doc_fetching_stop:
                 return
-            subset_docs_by_id[subset["_id"]] = subset
+
+            families = subset_doc.get("data", {}).get("families")
+            if families:
+                subset_families.add(families[0])
+
+            subset_docs_by_id[subset_doc["_id"]] = subset_doc
 
         subset_ids = list(subset_docs_by_id.keys())
         _pipeline = [
@@ -428,6 +433,7 @@ class SubsetsModel(TreeModel, BaseRepresentationModel):
         self._doc_payload = {
             "asset_docs_by_id": asset_docs_by_id,
             "subset_docs_by_id": subset_docs_by_id,
+            "subset_families": subset_families,
             "last_versions_by_subset_id": last_versions_by_subset_id
         }
 
