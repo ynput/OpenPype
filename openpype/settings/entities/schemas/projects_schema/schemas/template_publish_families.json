@@ -1,0 +1,20 @@
+[
+    {
+        "__default_values__": {
+            "multiselection": true
+        }
+    },
+    {
+        "key": "{key}",
+        "label": "{label}",
+        "multiselection": "{multiselection}",
+        "type": "enum",
+        "enum_items": [
+            {"family1": "family1"},
+            {"family2": "family2"},
+            {"family3": "family3"},
+            {"family4": "family4"},
+            {"family5": "family5"}
+        ]
+    }
+]
