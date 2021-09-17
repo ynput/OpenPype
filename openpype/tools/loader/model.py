@@ -128,7 +128,7 @@ class SubsetsModel(TreeModel, BaseRepresentationModel):
         "name": 1,
         "parent": 1,
         "schema": 1,
-        "families": 1,
+        "data.families": 1,
         "data.subsetGroup": 1
     }
 
