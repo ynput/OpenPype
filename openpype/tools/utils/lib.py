@@ -91,7 +91,6 @@ def dummy():
         ..   pass
 
     """
-
     yield
 
 
@@ -297,11 +296,6 @@ class FamilyConfigCache:
             )
         return cls._default_icon
 
-    @classmethod
-    def default_item(cls):
-        return {
-            "icon": cls.default_icon()
-        }
 
     def family_config(self, family_name):
         """Get value from config with fallback to default"""
@@ -310,7 +304,9 @@ class FamilyConfigCache:
 
         item = self.family_configs.get(family_name)
         if not item:
-            item = self.default_item()
+            item = {
+                "icon": self.default_icon()
+            }
             if self._family_filters_set:
                 item["state"] = False
         return item
