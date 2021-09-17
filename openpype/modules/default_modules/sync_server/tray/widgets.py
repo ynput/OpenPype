@@ -14,7 +14,7 @@ from openpype.tools.settings import (
 from openpype.api import get_local_site_id
 from openpype.lib import PypeLogger
 
-from avalon.tools.delegates import pretty_timestamp
+from openpype.tools.utils.delegates import pretty_timestamp
 from avalon.vendor import qtawesome
 
 from .models import (

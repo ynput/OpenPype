@@ -55,11 +55,11 @@ class AvalonModule(OpenPypeModule, ITrayModule, IWebServerRoutes):
     def tray_init(self):
         # Add library tool
         try:
-            from avalon.tools.libraryloader import app
-            from avalon import style
             from Qt import QtGui
+            from avalon import style
+            from openpype.tools.libraryloader import LibraryLoaderWindow
 
-            self.libraryloader = app.Window(
+            self.libraryloader = LibraryLoaderWindow(
                 icon=QtGui.QIcon(resources.get_openpype_icon_filepath()),
                 show_projects=True,
                 show_libraries=True

@@ -7,7 +7,7 @@ from collections import OrderedDict
 
 
 from avalon import api, io, lib
-from avalon.tools import workfiles
+from openpype.tools import workfiles
 import avalon.nuke
 from avalon.nuke import lib as anlib
 from avalon.nuke import (

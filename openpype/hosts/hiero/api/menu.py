@@ -41,7 +41,8 @@ def menu_install():
         apply_colorspace_project, apply_colorspace_clips
     )
     # here is the best place to add menu
-    from avalon.tools import cbloader, creator, sceneinventory
+    from avalon.tools import creator, sceneinventory
+    from openpype.tools import loader
     from avalon.vendor.Qt import QtGui
 
     menu_name = os.environ['AVALON_LABEL']
@@ -90,7 +91,7 @@ def menu_install():
 
     loader_action = menu.addAction("Load ...")
     loader_action.setIcon(QtGui.QIcon("icons:CopyRectangle.png"))
-    loader_action.triggered.connect(cbloader.show)
+    loader_action.triggered.connect(loader.show)
 
     sceneinventory_action = menu.addAction("Manage ...")
     sceneinventory_action.setIcon(QtGui.QIcon("icons:CopyRectangle.png"))
