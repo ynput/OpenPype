@@ -12,18 +12,6 @@ self = sys.modules[__name__]
 self._jobs = dict()
 
 
-class SharedObjects:
-    # Variable for family cache in global context
-    # QUESTION is this safe? More than one tool can refresh at the same time.
-    family_cache = None
-
-
-def global_family_cache():
-    if SharedObjects.family_cache is None:
-        SharedObjects.family_cache = FamilyConfigCache(io)
-    return SharedObjects.family_cache
-
-
 def format_version(value, hero_version=False):
     """Formats integer to displayable version name"""
     label = "v{0:03d}".format(value)
