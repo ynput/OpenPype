@@ -744,11 +744,10 @@ class ThumbnailWidget(QtWidgets.QLabel):
         self.setAlignment(QtCore.Qt.AlignCenter)
 
         # TODO get res path much better way
-        loader_path = os.path.dirname(os.path.abspath(__file__))
-        avalon_path = os.path.dirname(os.path.dirname(loader_path))
         default_pix_path = os.path.join(
-            os.path.dirname(avalon_path),
-            "res", "tools", "images", "default_thumbnail.png"
+            os.path.dirname(os.path.abspath(__file__)),
+            "images",
+            "default_thumbnail.png"
         )
         self.default_pix = QtGui.QPixmap(default_pix_path)
 
