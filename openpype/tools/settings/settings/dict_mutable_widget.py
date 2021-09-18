@@ -285,7 +285,9 @@ class ModifiableDictItem(QtWidgets.QWidget):
 
         self.confirm_btn = None
 
-        self._key_change_timer = create_deffered_value_change_timer(self._on_timeout)
+        self._key_change_timer = create_deffered_value_change_timer(
+            self._on_timeout
+        )
 
         if collapsible_key:
             self.create_collapsible_ui()
