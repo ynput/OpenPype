@@ -905,12 +905,12 @@ class FamilyModel(QtGui.QStandardItemModel):
                     | QtCore.Qt.ItemIsSelectable
                     | QtCore.Qt.ItemIsUserCheckable
                 )
+                new_items.append(item)
+                self._items_by_family[family] = item
 
             else:
                 item = self._items_by_family[label]
                 item.setData(QtCore.Qt.DisplayRole, label)
-                new_items.append(item)
-                self._items_by_family[family] = item
 
             item.setCheckState(state)
 
@@ -942,7 +942,7 @@ class FamilyProxyFiler(QtCore.QSortFilterProxyModel):
     def set_filter_enabled(self, enabled=None):
         if enabled is None:
             enabled = not self._filtering_enabled
-        if self._filtering_enabled == enabled:
+        elif self._filtering_enabled == enabled:
             return
 
         self._filtering_enabled = enabled
