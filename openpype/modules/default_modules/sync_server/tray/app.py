@@ -26,7 +26,7 @@ class SyncServerWindow(QtWidgets.QDialog):
         self.setFocusPolicy(QtCore.Qt.StrongFocus)
 
         self.setStyleSheet(style.load_stylesheet())
-        self.setWindowIcon(QtGui.QIcon(resources.pype_icon_filepath()))
+        self.setWindowIcon(QtGui.QIcon(resources.get_openpype_icon_filepath()))
         self.resize(1450, 700)
 
         self.timer = QtCore.QTimer()
