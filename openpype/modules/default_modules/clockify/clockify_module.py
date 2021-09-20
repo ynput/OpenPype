@@ -10,16 +10,14 @@ from .constants import (
 from openpype.modules import OpenPypeModule
 from openpype_interfaces import (
     ITrayModule,
-    IPluginPaths,
-    IFtrackEventHandlerPaths
+    IPluginPaths
 )
 
 
 class ClockifyModule(
     OpenPypeModule,
     ITrayModule,
-    IPluginPaths,
-    IFtrackEventHandlerPaths
+    IPluginPaths
 ):
     name = "clockify"
 
@@ -94,7 +92,7 @@ class ClockifyModule(
         }
 
     def get_event_handler_paths(self):
-        """Implementaton of IFtrackEventHandlerPaths to get plugin paths."""
+        """Function for Ftrack module to add ftrack event handler paths."""
         return {
             "user": [CLOCKIFY_FTRACK_USER_PATH],
             "server": [CLOCKIFY_FTRACK_SERVER_PATH]
