@@ -83,7 +83,7 @@ class ExtractLayout(openpype.api.Extractor):
                         "z": transform.translation.z
                     },
                     "rotation": {
-                        "x": math.radians(transform.rotation.euler().x + 90.0),
+                        "x": math.radians(transform.rotation.euler().x),
                         "y": math.radians(transform.rotation.euler().y),
                         "z": math.radians(180.0 - transform.rotation.euler().z)
                     },

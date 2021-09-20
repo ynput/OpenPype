@@ -151,6 +151,7 @@
             "template_name_profiles": [
                 {
                     "families": [],
+                    "hosts": [],
                     "tasks": [],
                     "template_name": "publish"
                 },
@@ -160,6 +161,7 @@
                         "render",
                         "prerender"
                     ],
+                    "hosts": [],
                     "tasks": [],
                     "template_name": "render"
                 }
@@ -249,6 +251,13 @@
             ]
         },
         "Workfiles": {
+            "workfile_template_profiles": [
+                {
+                    "task_types": [],
+                    "hosts": [],
+                    "workfile_template": "work"
+                }
+            ],
             "last_workfile_on_startup": [
                 {
                     "hosts": [],

@@ -3,7 +3,7 @@ import hou
 
 
 class CollectWorksceneFPS(pyblish.api.ContextPlugin):
-    """Get the FPS of the work scene"""
+    """Get the FPS of the work scene."""
 
     label = "Workscene FPS"
     order = pyblish.api.CollectorOrder

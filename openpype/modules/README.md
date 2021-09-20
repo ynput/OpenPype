@@ -1,7 +1,19 @@
-# Pype modules
-Pype modules should contain separated logic of specific kind of implementation, like Ftrack connection and usage code or Deadline farm rendering.
+# OpenPype modules/addons
+OpenPype modules should contain separated logic of specific kind of implementation, like Ftrack connection and usage code or Deadline farm rendering or may contain only special plugins. Addons work the same way currently there is no difference in module and addon.
 
-## Base class `PypeModule`
+## Modules concept
+- modules and addons are dynamically imported to virtual python module `openpype_modules` from which it is possible to import them no matter where is the modulo located
+- modules or addons should never be imported directly even if you know possible full import path
+    - it is because all of their content must be imported in specific order and should not be imported without defined functions as it may also break few implementation parts
+
+### TODOs
+- add module/addon manifest
+    - definition of module (not 100% defined content e.g. minimum require OpenPype version etc.)
+    - defying that folder is content of a module or an addon
+- module/addon have it's settings schemas and default values outside OpenPype
+- add general setting of paths to modules
+
+## Base class `OpenPypeModule`
 - abstract class as base for each module
 - implementation should be module's api withou GUI parts
 - may implement `get_global_environments` method which should return dictionary of environments that are globally appliable and value is the same for whole studio if launched at any workstation (except os specific paths)
@@ -17,6 +29,16 @@ Pype modules should contain separated logic of specific kind of implementation, 
 - interface is class that has defined abstract methods to implement and may contain preimplemented helper methods
 - module that inherit from an interface must implement those abstract methods otherwise won't be initialized
 - it is easy to find which module object inherited from which interfaces withh 100% chance they have implemented required methods
+- interfaces can be defined in `interfaces.py` inside module directory
+    - the file can't use relative imports or import anything from other parts
+        of module itself at the header of file
+    - this is one of reasons why modules/addons can't be imported directly without using defined functions in OpenPype modules implementation
+
+## Base class `OpenPypeInterface`
+- has nothing implemented
+- has ABCMeta as metaclass
+- is defined to be able find out classes which inherit from this base to be
+    able tell this is an Interface
 
 ## Global interfaces
 - few interfaces are implemented for global usage
@@ -70,7 +92,7 @@ Pype modules should contain separated logic of specific kind of implementation, 
 - Clockify has more inharitance it's class definition looks like
 ```
 class ClockifyModule(
-    PypeModule, # Says it's Pype module so ModulesManager will try to initialize.
+    OpenPypeModule, # Says it's Pype module so ModulesManager will try to initialize.
     ITrayModule, # Says has special implementation when used in tray.
     IPluginPaths, # Says has plugin paths that want to register (paths to clockify actions for launcher).
     IFtrackEventHandlerPaths, # Says has Ftrack actions/events for user/server.

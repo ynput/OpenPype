@@ -11,14 +11,22 @@ class CollectSceneVersion(pyblish.api.ContextPlugin):
 
     order = pyblish.api.CollectorOrder
     label = 'Collect Version'
+    hosts = [
+        "aftereffects",
+        "blender",
+        "celaction",
+        "fusion",
+        "harmony",
+        "hiero",
+        "houdini",
+        "maya",
+        "nuke",
+        "photoshop",
+        "resolve",
+        "tvpaint"
+    ]
 
     def process(self, context):
-        if "standalonepublisher" in context.data.get("host", []):
-            return
-
-        if "unreal" in pyblish.api.registered_hosts():
-            return
-
         assert context.data.get('currentFile'), "Cannot get current file"
         filename = os.path.basename(context.data.get('currentFile'))
 

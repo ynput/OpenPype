@@ -47,7 +47,7 @@ jobs:
         enhancementLabel: '**🚀 Enhancements**'
         bugsLabel: '**🐛 Bug fixes**'
         deprecatedLabel: '**⚠️ Deprecations**'
-        addSections: '{"documentation":{"prefix":"### 📖 Documentation","labels":["documentation"]},"tests":{"prefix":"### ✅ Testing","labels":["tests"]}}'
+        addSections: '{"documentation":{"prefix":"### 📖 Documentation","labels":["documentation"]},"tests":{"prefix":"### ✅ Testing","labels":["tests"]},"feature":{"prefix":"### 🆕 New features","labels":["feature"]},}'
         issues: false
         issuesWoLabels: false
         sinceTag: "3.0.0"
