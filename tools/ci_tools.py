@@ -93,7 +93,7 @@ def bump_file_versions(version):
     file_regex_replace(filename, regex, pyproject_version)
 
 
-def calculate_next_nightly(token="nightly"):
+def calculate_next_nightly(type="nightly", github_token=None):
     last_prerelease, last_pre_tag = get_last_version("CI")
     last_pre_v = VersionInfo.parse(last_prerelease)
     last_pre_v_finalized = last_pre_v.finalize_version()
@@ -102,7 +102,10 @@ def calculate_next_nightly(token="nightly"):
     last_release, last_release_tag = get_last_version("release")
 
     last_release_v = VersionInfo.parse(last_release)
-    bump_type = release_type(get_log_since_tag(last_release))
+    bump_type = get_release_type_github(
+        get_log_since_tag(last_release_tag),
+        github_token
+        )
     if not bump_type:
         return None
 
@@ -110,10 +113,10 @@ def calculate_next_nightly(token="nightly"):
     # print(next_release_v)
 
     if next_release_v > last_pre_v_finalized:
-        next_tag = next_release_v.bump_prerelease(token=token).__str__()
+        next_tag = next_release_v.bump_prerelease(token=type).__str__()
         return next_tag
     elif next_release_v == last_pre_v_finalized:
-        next_tag = last_pre_v.bump_prerelease(token=token).__str__()
+        next_tag = last_pre_v.bump_prerelease(token=type).__str__()
         return next_tag
 
 def finalize_latest_nightly():
@@ -149,10 +152,10 @@ def main():
                       help="finalize latest prerelease to a release")
     parser.add_option("-p", "--prerelease",
                       dest="prerelease", action="store",
-                      help="define prerelease token")
+                      help="define prerelease type")
     parser.add_option("-f", "--finalize",
                       dest="finalize", action="store",
-                      help="define prerelease token")
+                      help="define prerelease type")
     parser.add_option("-v", "--version",
                       dest="version", action="store",
                       help="work with explicit version")
@@ -178,7 +181,7 @@ def main():
             print(bump_type_release)
 
     if options.nightly:
-        next_tag_v = calculate_next_nightly()
+        next_tag_v = calculate_next_nightly(github_token=options.github_token)
         print(next_tag_v)
         bump_file_versions(next_tag_v)
 
