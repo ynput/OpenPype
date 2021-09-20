@@ -101,14 +101,11 @@ class ExtractThumbnailSP(pyblish.api.InstancePlugin):
             jpeg_items.append("\"{}\"".format(full_thumbnail_path))
 
             subprocess_jpeg = " ".join(jpeg_items)
-            subprocess_args = openpype.lib.split_command_to_list(
-                subprocess_jpeg
-            )
 
             # run subprocess
             self.log.debug("Executing: {}".format(" ".join(subprocess_args)))
             openpype.api.run_subprocess(
-                subprocess_args, shell=True, logger=self.log
+                subprocess_jpeg, shell=True, logger=self.log
             )
 
         # remove thumbnail key from origin repre
