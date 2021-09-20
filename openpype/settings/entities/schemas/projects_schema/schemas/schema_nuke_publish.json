@@ -176,12 +176,6 @@
                     "type": "boolean",
                     "key": "active",
                     "label": "Active"
-                },
-                {
-                    "type": "list",
-                    "key": "families",
-                    "object_type": "text",
-                    "label": "Trigger on families"
                 }
             ]
         }
