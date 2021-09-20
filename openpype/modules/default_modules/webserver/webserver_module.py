@@ -1,12 +1,31 @@
+"""WebServerModule spawns aiohttp server in asyncio loop.
+
+Main usage of the module is in OpenPype tray where make sense to add ability
+of other modules to add theirs routes. Module which would want use that
+option must have implemented method `webserver_initialization` which must
+expect `WebServerManager` object where is possible to add routes or paths
+with handlers.
+
+WebServerManager is by default created only in tray.
+
+It is possible to create server manager without using module logic at all
+using `create_new_server_manager`. That can be handy for standalone scripts
+with predefined host and port and separated routes and logic.
+
+Running multiple servers in one process is not recommended and probably won't
+work as expected. It is because of few limitations connected to asyncio module.
+
+When module's `create_server_manager` is called it is also set environment
+variable "OPENPYPE_WEBSERVER_URL". Which should lead to root access point
+of server.
+"""
+
 import os
 import socket
 
 from openpype import resources
 from openpype.modules import OpenPypeModule
-from openpype_interfaces import (
-    ITrayService,
-    IWebServerRoutes
-)
+from openpype_interfaces import ITrayService
 
 
 class WebServerModule(OpenPypeModule, ITrayService):
@@ -28,8 +47,15 @@ class WebServerModule(OpenPypeModule, ITrayService):
             return
 
         for module in enabled_modules:
-            if isinstance(module, IWebServerRoutes):
+            if not hasattr(module, "webserver_initialization"):
+                continue
+
+            try:
                 module.webserver_initialization(self.server_manager)
+            except Exception:
+                self.log.warning((
+                    "Failed to connect module \"{}\" to webserver."
+                ).format(module.name))
 
     def tray_init(self):
         self.create_server_manager()

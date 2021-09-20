@@ -3,13 +3,10 @@ import json
 import appdirs
 import requests
 from openpype.modules import OpenPypeModule
-from openpype_interfaces import (
-    ITrayModule,
-    IWebServerRoutes
-)
+from openpype_interfaces import ITrayModule
 
 
-class MusterModule(OpenPypeModule, ITrayModule, IWebServerRoutes):
+class MusterModule(OpenPypeModule, ITrayModule):
     """
     Module handling Muster Render credentials. This will display dialog
     asking for user credentials for Muster if not already specified.
@@ -73,13 +70,6 @@ class MusterModule(OpenPypeModule, ITrayModule, IWebServerRoutes):
 
         parent.addMenu(menu)
 
-    def webserver_initialization(self, server_manager):
-        """Implementation of IWebServerRoutes interface."""
-        if self.tray_initialized:
-            from .rest_api import MusterModuleRestApi
-
-            self.rest_api_obj = MusterModuleRestApi(self, server_manager)
-
     def load_credentials(self):
         """
         Get credentials from JSON file
@@ -138,6 +128,14 @@ class MusterModule(OpenPypeModule, ITrayModule, IWebServerRoutes):
         """
         if self.widget_login:
             self.widget_login.show()
+
+    # Webserver module implementation
+    def webserver_initialization(self, server_manager):
+        """Add routes for Muster login."""
+        if self.tray_initialized:
+            from .rest_api import MusterModuleRestApi
+
+            self.rest_api_obj = MusterModuleRestApi(self, server_manager)
 
     def _requests_post(self, *args, **kwargs):
         """ Wrapper for requests, disabling SSL certificate validation if
