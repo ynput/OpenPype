@@ -910,7 +910,7 @@ class FamilyModel(QtGui.QStandardItemModel):
 
             else:
                 item = self._items_by_family[label]
-                item.setData(QtCore.Qt.DisplayRole, label)
+                item.setData(label, QtCore.Qt.DisplayRole)
 
             item.setCheckState(state)
 
