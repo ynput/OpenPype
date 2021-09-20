@@ -84,7 +84,7 @@ class ExtractTrimVideoAudio(openpype.api.Extractor):
             joined_args = " ".join(ffmpeg_args)
             self.log.info(f"Processing: {joined_args}")
             openpype.api.run_subprocess(
-                ffmpeg_args, shell=True, logger=self.log
+                ffmpeg_args, logger=self.log
             )
 
             repre = {

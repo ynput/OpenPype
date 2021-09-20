@@ -58,7 +58,7 @@ class ExtractThumbnailSP(pyblish.api.InstancePlugin):
             # use first frame as thumbnail if is sequence of jpegs
             full_thumbnail_path = os.path.join(
                 thumbnail_repre["stagingDir"], file
-                )
+            )
             self.log.info(
                 "For thumbnail is used file: {}".format(full_thumbnail_path)
             )
@@ -103,9 +103,9 @@ class ExtractThumbnailSP(pyblish.api.InstancePlugin):
             subprocess_jpeg = " ".join(jpeg_items)
 
             # run subprocess
-            self.log.debug("Executing: {}".format(" ".join(subprocess_args)))
+            self.log.debug("Executing: {}".format(subprocess_jpeg))
             openpype.api.run_subprocess(
-                subprocess_jpeg, shell=True, logger=self.log
+                subprocess_jpeg, logger=self.log
             )
 
         # remove thumbnail key from origin repre
