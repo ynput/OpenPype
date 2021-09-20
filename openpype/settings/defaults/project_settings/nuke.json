@@ -30,7 +30,13 @@
     },
     "publish": {
         "PreCollectNukeInstances": {
-            "sync_workfile_version": true
+            "sync_workfile_version_on_families": [
+                "nukenodes",
+                "camera",
+                "gizmo",
+                "source",
+                "render"
+            ]
         },
         "ValidateContainers": {
             "enabled": true,
@@ -163,6 +169,7 @@
         "builder_on_start": false,
         "profiles": [
             {
+                "task_types": [],
                 "tasks": [],
                 "current_context": [
                     {

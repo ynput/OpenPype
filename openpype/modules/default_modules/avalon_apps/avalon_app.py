@@ -52,12 +52,12 @@ class AvalonModule(OpenPypeModule, ITrayModule):
     def tray_init(self):
         # Add library tool
         try:
-            from avalon.tools.libraryloader import app
-            from avalon import style
             from Qt import QtGui
+            from avalon import style
+            from openpype.tools.libraryloader import LibraryLoaderWindow
 
-            self.libraryloader = app.Window(
-                icon=QtGui.QIcon(resources.pype_icon_filepath()),
+            self.libraryloader = LibraryLoaderWindow(
+                icon=QtGui.QIcon(resources.get_openpype_icon_filepath()),
                 show_projects=True,
                 show_libraries=True
             )
@@ -67,9 +67,6 @@ class AvalonModule(OpenPypeModule, ITrayModule):
                 "Couldn't load Library loader tool for tray.",
                 exc_info=True
             )
-
-    def connect_with_modules(self, _enabled_modules):
-        return
 
     # Definition of Tray menu
     def tray_menu(self, tray_menu):

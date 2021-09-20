@@ -51,9 +51,6 @@ class MusterModule(OpenPypeModule, ITrayModule):
         """Nothing special for Muster."""
         return
 
-    def connect_with_modules(self, *_a, **_kw):
-        return
-
     # Definition of Tray menu
     def tray_menu(self, parent):
         """Add **change credentials** option to tray menu."""

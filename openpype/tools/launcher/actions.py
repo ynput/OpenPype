@@ -84,7 +84,7 @@ class ApplicationAction(api.Action):
 
     def _show_message_box(self, title, message, details=None):
         dialog = QtWidgets.QMessageBox()
-        icon = QtGui.QIcon(resources.pype_icon_filepath())
+        icon = QtGui.QIcon(resources.get_openpype_icon_filepath())
         dialog.setWindowIcon(icon)
         dialog.setStyleSheet(style.load_stylesheet())
         dialog.setWindowTitle(title)

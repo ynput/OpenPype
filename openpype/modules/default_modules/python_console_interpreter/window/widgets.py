@@ -331,7 +331,7 @@ class PythonInterpreterWidget(QtWidgets.QWidget):
         super(PythonInterpreterWidget, self).__init__(parent)
 
         self.setWindowTitle("OpenPype Console")
-        self.setWindowIcon(QtGui.QIcon(resources.pype_icon_filepath()))
+        self.setWindowIcon(QtGui.QIcon(resources.get_openpype_icon_filepath()))
 
         self.ansi_escape = re.compile(
             r"(?:\x1B[@-_]|[\x80-\x9F])[0-?]*[ -/]*[@-~]"
@@ -387,8 +387,6 @@ class PythonInterpreterWidget(QtWidgets.QWidget):
 
         self.setStyleSheet(load_stylesheet())
 
-        self.resize(self.default_width, self.default_height)
-
         self._init_from_registry()
 
         if self._tab_widget.count() < 1:
@@ -396,15 +394,22 @@ class PythonInterpreterWidget(QtWidgets.QWidget):
 
     def _init_from_registry(self):
         setting_registry = PythonInterpreterRegistry()
-
+        width = None
+        height = None
         try:
             width = setting_registry.get_item("width")
             height = setting_registry.get_item("height")
-            if width is not None and height is not None:
-                self.resize(width, height)
 
         except ValueError:
             pass
+
+        if width is None or width < 200:
+            width = self.default_width
+
+        if height is None or height < 200:
+            height = self.default_height
+
+        self.resize(width, height)
 
         try:
             sizes = setting_registry.get_item("splitter_sizes")

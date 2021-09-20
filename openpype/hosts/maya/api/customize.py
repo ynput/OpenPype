@@ -79,7 +79,7 @@ def override_toolbox_ui():
         log.warning("Could not import SceneInventory tool")
 
     try:
-        import avalon.tools.loader as loader
+        import openpype.tools.loader as loader
     except Exception:
         log.warning("Could not import Loader tool")
 

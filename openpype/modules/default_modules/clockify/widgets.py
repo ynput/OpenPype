@@ -13,7 +13,7 @@ class MessageWidget(QtWidgets.QWidget):
         super(MessageWidget, self).__init__()
 
         # Icon
-        icon = QtGui.QIcon(resources.pype_icon_filepath())
+        icon = QtGui.QIcon(resources.get_openpype_icon_filepath())
         self.setWindowIcon(icon)
 
         self.setWindowFlags(
@@ -90,7 +90,7 @@ class ClockifySettings(QtWidgets.QWidget):
         self.validated = False
 
         # Icon
-        icon = QtGui.QIcon(resources.pype_icon_filepath())
+        icon = QtGui.QIcon(resources.get_openpype_icon_filepath())
         self.setWindowIcon(icon)
 
         self.setWindowTitle("Clockify settings")

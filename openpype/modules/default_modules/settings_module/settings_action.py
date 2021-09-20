@@ -19,9 +19,6 @@ class SettingsAction(OpenPypeModule, ITrayAction):
         # Tray attributes
         self.settings_window = None
 
-    def connect_with_modules(self, *_a, **_kw):
-        return
-
     def tray_init(self):
         """Initialization in tray implementation of ITrayAction."""
         self.create_settings_window()
@@ -83,9 +80,6 @@ class LocalSettingsAction(OpenPypeModule, ITrayAction):
         # Tray attributes
         self.settings_window = None
         self._first_trigger = True
-
-    def connect_with_modules(self, *_a, **_kw):
-        return
 
     def tray_init(self):
         """Initialization in tray implementation of ITrayAction."""

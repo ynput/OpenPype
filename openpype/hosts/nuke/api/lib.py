@@ -7,7 +7,7 @@ from collections import OrderedDict
 
 
 from avalon import api, io, lib
-from avalon.tools import workfiles
+from openpype.tools import workfiles
 import avalon.nuke
 from avalon.nuke import lib as anlib
 from avalon.nuke import (
@@ -287,7 +287,7 @@ def script_name():
 
 def add_button_write_to_read(node):
     name = "createReadNode"
-    label = "Cread Read From Rendered"
+    label = "Create Read From Rendered"
     value = "import write_to_read;write_to_read.write_to_read(nuke.thisNode())"
     knob = nuke.PyScript_Knob(name, label, value)
     knob.clearFlag(nuke.STARTLINE)
