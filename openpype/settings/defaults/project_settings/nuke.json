@@ -98,6 +98,7 @@
             "viewer_lut_raw": false
         },
         "IncrementScriptVersion": {
+            "enabled": true,
             "optional": true,
             "active": true
         }

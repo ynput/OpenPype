@@ -162,11 +162,17 @@
         },
         {
             "type": "dict",
-            "collapsible": false,
+            "collapsible": true,
+            "checkbox_key": "enabled",
             "key": "IncrementScriptVersion",
             "label": "IncrementScriptVersion",
             "is_group": true,
             "children": [
+                {
+                    "type": "boolean",
+                    "key": "enabled",
+                    "label": "Enabled"
+                },
                 {
                     "type": "boolean",
                     "key": "optional",
