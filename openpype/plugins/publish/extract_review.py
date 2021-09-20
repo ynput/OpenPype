@@ -228,7 +228,7 @@ class ExtractReview(pyblish.api.InstancePlugin):
                 )
 
                 openpype.api.run_subprocess(
-                    subprocess_args, shell=True, logger=self.log
+                    subprocess_args, logger=self.log
                 )
 
                 # delete files added to fill gaps
