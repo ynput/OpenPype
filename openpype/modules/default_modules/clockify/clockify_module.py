@@ -91,7 +91,7 @@ class ClockifyModule(
             "actions": [actions_path]
         }
 
-    def get_event_handler_paths(self):
+    def get_ftrack_event_handler_paths(self):
         """Function for Ftrack module to add ftrack event handler paths."""
         return {
             "user": [CLOCKIFY_FTRACK_USER_PATH],

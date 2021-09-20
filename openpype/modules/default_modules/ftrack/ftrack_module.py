@@ -80,11 +80,11 @@ class FtrackModule(
 
     def connect_with_modules(self, enabled_modules):
         for module in enabled_modules:
-            if not hasattr(module, "get_event_handler_paths"):
+            if not hasattr(module, "get_ftrack_event_handler_paths"):
                 continue
 
             try:
-                paths_by_type = module.get_event_handler_paths()
+                paths_by_type = module.get_ftrack_event_handler_paths()
             except Exception:
                 continue
 
