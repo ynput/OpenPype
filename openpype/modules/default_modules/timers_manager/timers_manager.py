@@ -9,20 +9,90 @@ from openpype_interfaces import (
 from avalon.api import AvalonMongoDB
 
 
+class ExampleTimersManagerConnector:
+    """Timers manager can handle timers of multiple modules/addons.
+
+    Module must have object under `timers_manager_connector` attribute with
+    few methods. This is example class of the object that could be stored under
+    module.
+
+    Required methods are 'stop_timer' and 'start_timer'.
+
+    # TODO pass asset document instead of `hierarchy`
+    Example of `data` that are passed during changing timer:
+    ```
+    data = {
+        "project_name": project_name,
+        "task_name": task_name,
+        "task_type": task_type,
+        "hierarchy": hierarchy
+    }
+    ```
+    """
+    # Not needed at all
+    def __init__(self, module):
+        # Store timer manager module to be able call it's methods when needed
+        self._timers_manager_module = None
+
+        # Store module which want to use timers manager to have access
+        self._module = module
+
+    # Required
+    def stop_timer(self):
+        """Called by timers manager when module should stop timer."""
+        self._module.stop_timer()
+
+    # Required
+    def start_timer(self, data):
+        """Method called by timers manager when should start timer."""
+        self._module.start_timer(data)
+
+    # Optional
+    def register_timers_manager(self, timer_manager_module):
+        """Method called by timers manager where it's object is passed.
+
+        This is moment when timers manager module can be store to be able
+        call it's callbacks (e.g. timer started).
+        """
+        self._timers_manager_module = timer_manager_module
+
+    # Custom implementation
+    def timer_started(self, data):
+        """This is example of possibility to trigger callbacks on manager."""
+        if self._timers_manager_module is not None:
+            self._timers_manager_module.timer_started(self._module.id, data)
+
+    # Custom implementation
+    def timer_stopped(self):
+        if self._timers_manager_module is not None:
+            self._timers_manager_module.timer_stopped(self._module.id)
+
+
 class TimersManager(OpenPypeModule, ITrayService, IIdleManager):
     """ Handles about Timers.
 
     Should be able to start/stop all timers at once.
-    If IdleManager is imported then is able to handle about stop timers
-        when user idles for a long time (set in presets).
+
+    To be able use this advantage module has to have attribute with name
+    `timers_manager_connector` which has two methods 'stop_timer'
+    and 'start_timer'. Optionally may have `register_timers_manager` where
+    object of TimersManager module is passed to be able call it's callbacks.
+
+    See `ExampleTimersManagerConnector`.
     """
     name = "timers_manager"
     label = "Timers Service"
+
+    _required_methods = (
+        "stop_timer",
+        "start_timer"
+    )
 
     def initialize(self, modules_settings):
         timers_settings = modules_settings[self.name]
 
         self.enabled = timers_settings["enabled"]
+
         auto_stop = timers_settings["auto_stop"]
         # When timer will stop if idle manager is running (minutes)
         full_time = int(timers_settings["full_time"] * 60)
@@ -41,7 +111,8 @@ class TimersManager(OpenPypeModule, ITrayService, IIdleManager):
         self.widget_user_idle = None
         self.signal_handler = None
 
-        self.modules = []
+        self._connectors_by_module_id = {}
+        self._modules_by_id = {}
 
     def tray_init(self):
         from .widget_user_idle import WidgetUserIdle, SignalHandler
@@ -96,17 +167,35 @@ class TimersManager(OpenPypeModule, ITrayService, IIdleManager):
         self.timer_started(None, data)
 
     def timer_started(self, source_id, data):
-        for module in self.modules:
-            if module.id != source_id:
-                module.start_timer(data)
+        for module_id, connector in self._connectors_by_module_id.items():
+            if module_id == source_id:
+                continue
+
+            try:
+                connector.start_timer(data)
+            except Exception:
+                self.log.info(
+                    "Failed to start timer on connector {}".format(
+                        str(connector)
+                    )
+                )
 
         self.last_task = data
         self.is_running = True
 
     def timer_stopped(self, source_id):
-        for module in self.modules:
-            if module.id != source_id:
-                module.stop_timer()
+        for module_id, connector in self._connectors_by_module_id.items():
+            if module_id == source_id:
+                continue
+
+            try:
+                connector.stop_timer()
+            except Exception:
+                self.log.info(
+                    "Failed to stop timer on connector {}".format(
+                        str(connector)
+                    )
+                )
 
     def restart_timers(self):
         if self.last_task is not None:
@@ -120,15 +209,40 @@ class TimersManager(OpenPypeModule, ITrayService, IIdleManager):
         self.widget_user_idle.refresh_context()
         self.is_running = False
 
-        for module in self.modules:
-            module.stop_timer()
+        self.timer_stopper(None)
 
     def connect_with_modules(self, enabled_modules):
         for module in enabled_modules:
-            if not isinstance(module, ITimersManager):
+            connector = getattr(module, "timers_manager_connector", None)
+            if connector is None:
                 continue
-            module.timer_manager_module = self
-            self.modules.append(module)
+
+            missing_methods = set()
+            for method_name in self._required_methods:
+                if not hasattr(connector, method_name):
+                    missing_methods.add(method_name)
+
+            if missing_methods:
+                joined = ", ".join(
+                    ['"{}"'.format(name for name in missing_methods)]
+                )
+                self.log.info((
+                    "Module \"{}\" has missing required methods {}."
+                ).format(module.name, joined))
+                continue
+
+            self._connectors_by_module_id[module.id] = connector
+            self._modules_by_id[module.id] = module
+
+            # Optional method
+            if hasattr(connector, "register_timers_manager"):
+                try:
+                    connector.register_timers_manager(self)
+                except Exception:
+                    self.log.info((
+                        "Failed to register timers manager"
+                        " for connector of module \"{}\"."
+                    ).format(module.name))
 
     def callbacks_by_idle_time(self):
         """Implementation of IIdleManager interface."""

@@ -11,8 +11,7 @@ from openpype.modules import OpenPypeModule
 from openpype_interfaces import (
     ITrayModule,
     IPluginPaths,
-    IFtrackEventHandlerPaths,
-    ITimersManager
+    IFtrackEventHandlerPaths
 )
 
 
@@ -20,8 +19,7 @@ class ClockifyModule(
     OpenPypeModule,
     ITrayModule,
     IPluginPaths,
-    IFtrackEventHandlerPaths,
-    ITimersManager
+    IFtrackEventHandlerPaths
 ):
     name = "clockify"
 
@@ -38,6 +36,11 @@ class ClockifyModule(
         self.message_widget = None
 
         self.clockapi = ClockifyAPI(master_parent=self)
+
+        # TimersManager attributes
+        # - set `timers_manager_connector` only in `tray_init`
+        self.timers_manager_connector = None
+        self._timers_manager_module = None
 
     def get_global_environments(self):
         return {
@@ -60,6 +63,9 @@ class ClockifyModule(
         self.bool_workspace_set = False
         self.bool_timer_run = False
         self.bool_api_key_set = self.clockapi.set_api()
+
+        # Define itself as TimersManager connector
+        self.timers_manager_connector = self
 
     def tray_start(self):
         if self.bool_api_key_set is False:
@@ -162,10 +168,6 @@ class ClockifyModule(
                 self.set_menu_visibility()
             time.sleep(5)
 
-    def stop_timer(self):
-        """Implementation of ITimersManager."""
-        self.clockapi.finish_time_entry()
-
     def signed_in(self):
         if not self.timer_manager:
             return
@@ -176,8 +178,60 @@ class ClockifyModule(
         if self.timer_manager.is_running:
             self.start_timer_manager(self.timer_manager.last_task)
 
+    def on_message_widget_close(self):
+        self.message_widget = None
+
+    # Definition of Tray menu
+    def tray_menu(self, parent_menu):
+        # Menu for Tray App
+        from Qt import QtWidgets
+        menu = QtWidgets.QMenu("Clockify", parent_menu)
+        menu.setProperty("submenu", "on")
+
+        # Actions
+        action_show_settings = QtWidgets.QAction("Settings", menu)
+        action_stop_timer = QtWidgets.QAction("Stop timer", menu)
+
+        menu.addAction(action_show_settings)
+        menu.addAction(action_stop_timer)
+
+        action_show_settings.triggered.connect(self.show_settings)
+        action_stop_timer.triggered.connect(self.stop_timer)
+
+        self.action_stop_timer = action_stop_timer
+
+        self.set_menu_visibility()
+
+        parent_menu.addMenu(menu)
+
+    def show_settings(self):
+        self.widget_settings.input_api_key.setText(self.clockapi.get_api_key())
+        self.widget_settings.show()
+
+    def set_menu_visibility(self):
+        self.action_stop_timer.setVisible(self.bool_timer_run)
+
+    # --- TimersManager connection methods ---
+    def register_timers_manager(self, timer_manager_module):
+        """Store TimersManager for future use."""
+        self._timers_manager_module = timer_manager_module
+
+    def timer_started(self, data):
+        """Tell TimersManager that timer started."""
+        if self._timers_manager_module is not None:
+            self._timers_manager_module.timer_started(self._module.id, data)
+
+    def timer_stopped(self):
+        """Tell TimersManager that timer stopped."""
+        if self._timers_manager_module is not None:
+            self._timers_manager_module.timer_stopped(self._module.id)
+
+    def stop_timer(self):
+        """Called from TimersManager to stop timer."""
+        self.clockapi.finish_time_entry()
+
     def start_timer(self, input_data):
-        """Implementation of ITimersManager."""
+        """Called from TimersManager to start timer."""
         # If not api key is not entered then skip
         if not self.clockapi.get_api_key():
             return
@@ -234,36 +288,3 @@ class ClockifyModule(
         self.clockapi.start_time_entry(
             description, project_id, tag_ids=tag_ids
         )
-
-    def on_message_widget_close(self):
-        self.message_widget = None
-
-    # Definition of Tray menu
-    def tray_menu(self, parent_menu):
-        # Menu for Tray App
-        from Qt import QtWidgets
-        menu = QtWidgets.QMenu("Clockify", parent_menu)
-        menu.setProperty("submenu", "on")
-
-        # Actions
-        action_show_settings = QtWidgets.QAction("Settings", menu)
-        action_stop_timer = QtWidgets.QAction("Stop timer", menu)
-
-        menu.addAction(action_show_settings)
-        menu.addAction(action_stop_timer)
-
-        action_show_settings.triggered.connect(self.show_settings)
-        action_stop_timer.triggered.connect(self.stop_timer)
-
-        self.action_stop_timer = action_stop_timer
-
-        self.set_menu_visibility()
-
-        parent_menu.addMenu(menu)
-
-    def show_settings(self):
-        self.widget_settings.input_api_key.setText(self.clockapi.get_api_key())
-        self.widget_settings.show()
-
-    def set_menu_visibility(self):
-        self.action_stop_timer.setVisible(self.bool_timer_run)
