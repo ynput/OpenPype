@@ -27,7 +27,6 @@ from .execute import (
     get_pype_execute_args,
     execute,
     run_subprocess,
-    split_command_to_list,
     path_to_subprocess_arg,
     CREATE_NO_WINDOW
 )
@@ -174,7 +173,6 @@ __all__ = [
     "get_pype_execute_args",
     "execute",
     "run_subprocess",
-    "split_command_to_list",
     "path_to_subprocess_arg",
     "CREATE_NO_WINDOW",
 

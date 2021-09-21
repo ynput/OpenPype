@@ -3,7 +3,6 @@ import pyblish
 import openpype.api
 from openpype.lib import (
     get_ffmpeg_tool_path,
-    split_command_to_list,
     path_to_subprocess_arg
 )
 import tempfile
@@ -62,13 +61,10 @@ class ExtractOtioAudioTracks(pyblish.api.ContextPlugin):
         cmd += self.create_cmd(audio_inputs)
         cmd += path_to_subprocess_arg(audio_temp_fpath)
 
-        # Split command to list for subprocess
-        cmd_list = split_command_to_list(cmd)
-
         # run subprocess
         self.log.debug("Executing: {}".format(cmd))
         openpype.api.run_subprocess(
-            cmd_list, logger=self.log
+            cmd, shell=True, logger=self.log
         )
 
         # remove empty
