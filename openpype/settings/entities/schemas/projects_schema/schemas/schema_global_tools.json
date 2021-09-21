@@ -206,6 +206,48 @@
                     }
                 }
             ]
+        },
+        {
+            "type": "dict",
+            "collapsible": true,
+            "key": "loader",
+            "label": "Loader",
+            "children": [
+                {
+                    "type": "list",
+                    "key": "family_filter_profiles",
+                    "label": "Family filtering",
+                    "use_label_wrap": true,
+                    "object_type": {
+                        "type": "dict",
+                        "children": [
+                            {
+                                "type": "hosts-enum",
+                                "key": "hosts",
+                                "label": "Hosts",
+                                "multiselection": true
+                            },
+                            {
+                                "type": "task-types-enum",
+                                "key": "task_types",
+                                "label": "Task types"
+                            },
+                            {
+                                "type": "splitter"
+                            },
+                            {
+                                "type": "template",
+                                "name": "template_publish_families",
+                                "template_data": {
+                                    "key": "filter_families",
+                                    "label": "Filter families",
+                                    "multiselection": true
+                                }
+                            }
+                        ]
+                    }
+                }
+            ]
         }
     ]
 }

@@ -1,5 +1,4 @@
 import sys
-import time
 
 from Qt import QtWidgets, QtCore
 from avalon import api, io, style, pipeline
@@ -11,7 +10,7 @@ from openpype.tools.utils import lib
 from .widgets import (
     SubsetWidget,
     VersionWidget,
-    FamilyListWidget,
+    FamilyListView,
     ThumbnailWidget,
     RepresentationWidget,
     OverlayFrame
@@ -64,7 +63,7 @@ class LoaderWindow(QtWidgets.QDialog):
         assets = AssetWidget(io, multiselection=True, parent=self)
         assets.set_current_asset_btn_visibility(True)
 
-        families = FamilyListWidget(io, self.family_config_cache, self)
+        families = FamilyListView(io, self.family_config_cache, self)
         subsets = SubsetWidget(
             io,
             self.groups_config,
@@ -146,6 +145,7 @@ class LoaderWindow(QtWidgets.QDialog):
         assets.view.clicked.connect(self.on_assetview_click)
         subsets.active_changed.connect(self.on_subsetschanged)
         subsets.version_changed.connect(self.on_versionschanged)
+        subsets.refreshed.connect(self._on_subset_refresh)
 
         subsets.load_started.connect(self._on_load_start)
         subsets.load_ended.connect(self._on_load_end)
@@ -215,6 +215,14 @@ class LoaderWindow(QtWidgets.QDialog):
     def _hide_overlay(self):
         self._overlay_frame.setVisible(False)
 
+    def _on_subset_refresh(self, has_item):
+        subsets_widget = self.data["widgets"]["subsets"]
+        families_view = self.data["widgets"]["families"]
+
+        subsets_widget.set_loading_state(loading=False, empty=not has_item)
+        families = subsets_widget.get_subsets_families()
+        families_view.set_enabled_families(families)
+
     def _on_load_end(self):
         # Delay hiding as click events happened during loading should be
         #   blocked
@@ -223,8 +231,11 @@ class LoaderWindow(QtWidgets.QDialog):
     # ------------------------------
 
     def on_context_task_change(self, *args, **kwargs):
-        # Change to context asset on context change
         assets_widget = self.data["widgets"]["assets"]
+        families_view = self.data["widgets"]["families"]
+        # Refresh families config
+        families_view.refresh()
+        # Change to context asset on context change
         assets_widget.select_assets(io.Session["AVALON_ASSET"])
 
     def _refresh(self):
@@ -238,8 +249,8 @@ class LoaderWindow(QtWidgets.QDialog):
         assets_widget.refresh()
         assets_widget.setFocus()
 
-        families = self.data["widgets"]["families"]
-        families.refresh()
+        families_view = self.data["widgets"]["families"]
+        families_view.refresh()
 
     def clear_assets_underlines(self):
         """Clear colors from asset data to remove colored underlines
@@ -264,8 +275,6 @@ class LoaderWindow(QtWidgets.QDialog):
 
     def _assetschanged(self):
         """Selected assets have changed"""
-        t1 = time.time()
-
         assets_widget = self.data["widgets"]["assets"]
         subsets_widget = self.data["widgets"]["subsets"]
         subsets_model = subsets_widget.model
@@ -283,14 +292,6 @@ class LoaderWindow(QtWidgets.QDialog):
             empty=True
         )
 
-        def on_refreshed(has_item):
-            empty = not has_item
-            subsets_widget.set_loading_state(loading=False, empty=empty)
-            subsets_model.refreshed.disconnect()
-            self.echo("Duration: %.3fs" % (time.time() - t1))
-
-        subsets_model.refreshed.connect(on_refreshed)
-
         subsets_model.set_assets(asset_ids)
         subsets_widget.view.setColumnHidden(
             subsets_model.Columns.index("asset"),
@@ -304,7 +305,8 @@ class LoaderWindow(QtWidgets.QDialog):
         self.data["state"]["assetIds"] = asset_ids
 
         representations = self.data["widgets"]["representations"]
-        representations.set_version_ids([])  # reset repre list
+        # reset repre list
+        representations.set_version_ids([])
 
     def _subsetschanged(self):
         asset_ids = self.data["state"]["assetIds"]

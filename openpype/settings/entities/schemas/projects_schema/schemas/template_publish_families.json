@@ -1,0 +1,32 @@
+[
+    {
+        "__default_values__": {
+            "multiselection": true
+        }
+    },
+    {
+        "key": "{key}",
+        "label": "{label}",
+        "multiselection": "{multiselection}",
+        "type": "enum",
+        "enum_items": [
+            {"action": "action"},
+            {"animation": "animation"},
+            {"audio": "audio"},
+            {"camera": "camera"},
+            {"editorial": "editorial"},
+            {"layout": "layout"},
+            {"look": "look"},
+            {"mayaAscii": "mayaAscii"},
+            {"model": "model"},
+            {"pointcache": "pointcache"},
+            {"reference": "reference"},
+            {"render": "render"},
+            {"review": "review"},
+            {"rig": "rig"},
+            {"setdress": "setdress"},
+            {"workfile": "workfile"},
+            {"xgen": "xgen"}
+        ]
+    }
+]

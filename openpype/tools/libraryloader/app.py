@@ -1,5 +1,4 @@
 import sys
-import time
 
 from Qt import QtWidgets, QtCore, QtGui
 
@@ -9,7 +8,7 @@ from openpype.tools.utils import lib as tools_lib
 from openpype.tools.loader.widgets import (
     ThumbnailWidget,
     VersionWidget,
-    FamilyListWidget,
+    FamilyListView,
     RepresentationWidget
 )
 from openpype.tools.utils.widgets import AssetWidget
@@ -65,7 +64,7 @@ class LibraryLoaderWindow(QtWidgets.QDialog):
         assets = AssetWidget(
             self.dbcon, multiselection=True, parent=self
         )
-        families = FamilyListWidget(
+        families = FamilyListView(
             self.dbcon, self.family_config_cache, parent=self
         )
         subsets = LibrarySubsetWidget(
@@ -151,6 +150,7 @@ class LibraryLoaderWindow(QtWidgets.QDialog):
         assets.view.clicked.connect(self.on_assetview_click)
         subsets.active_changed.connect(self.on_subsetschanged)
         subsets.version_changed.connect(self.on_versionschanged)
+        subsets.refreshed.connect(self._on_subset_refresh)
         self.combo_projects.currentTextChanged.connect(self.on_project_change)
 
         self.sync_server = sync_server
@@ -242,6 +242,12 @@ class LibraryLoaderWindow(QtWidgets.QDialog):
                 "Config `%s` has no function `install`" % _config.__name__
             )
 
+        subsets = self.data["widgets"]["subsets"]
+        representations = self.data["widgets"]["representations"]
+
+        subsets.on_project_change(self.dbcon.Session["AVALON_PROJECT"])
+        representations.on_project_change(self.dbcon.Session["AVALON_PROJECT"])
+
         self.family_config_cache.refresh()
         self.groups_config.refresh()
 
@@ -251,12 +257,6 @@ class LibraryLoaderWindow(QtWidgets.QDialog):
         project_name = self.dbcon.active_project() or "No project selected"
         title = "{} - {}".format(self.tool_title, project_name)
         self.setWindowTitle(title)
-
-        subsets = self.data["widgets"]["subsets"]
-        subsets.on_project_change(self.dbcon.Session["AVALON_PROJECT"])
-
-        representations = self.data["widgets"]["representations"]
-        representations.on_project_change(self.dbcon.Session["AVALON_PROJECT"])
 
     @property
     def current_project(self):
@@ -288,6 +288,14 @@ class LibraryLoaderWindow(QtWidgets.QDialog):
         self.echo("Fetching version..")
         tools_lib.schedule(self._versionschanged, 150, channel="mongo")
 
+    def _on_subset_refresh(self, has_item):
+        subsets_widget = self.data["widgets"]["subsets"]
+        families_view = self.data["widgets"]["families"]
+
+        subsets_widget.set_loading_state(loading=False, empty=not has_item)
+        families = subsets_widget.get_subsets_families()
+        families_view.set_enabled_families(families)
+
     def set_context(self, context, refresh=True):
         self.echo("Setting context: {}".format(context))
         lib.schedule(
@@ -312,12 +320,13 @@ class LibraryLoaderWindow(QtWidgets.QDialog):
             assert project_doc, "This is a bug"
 
         assets_widget = self.data["widgets"]["assets"]
+        families_view = self.data["widgets"]["families"]
+        families_view.set_enabled_families(set())
+        families_view.refresh()
+
         assets_widget.model.stop_fetch_thread()
         assets_widget.refresh()
         assets_widget.setFocus()
-
-        families = self.data["widgets"]["families"]
-        families.refresh()
 
     def clear_assets_underlines(self):
         last_asset_ids = self.data["state"]["assetIds"]
@@ -337,8 +346,6 @@ class LibraryLoaderWindow(QtWidgets.QDialog):
 
     def _assetschanged(self):
         """Selected assets have changed"""
-        t1 = time.time()
-
         assets_widget = self.data["widgets"]["assets"]
         subsets_widget = self.data["widgets"]["subsets"]
         subsets_model = subsets_widget.model
@@ -365,14 +372,6 @@ class LibraryLoaderWindow(QtWidgets.QDialog):
             empty=True
         )
 
-        def on_refreshed(has_item):
-            empty = not has_item
-            subsets_widget.set_loading_state(loading=False, empty=empty)
-            subsets_model.refreshed.disconnect()
-            self.echo("Duration: %.3fs" % (time.time() - t1))
-
-        subsets_model.refreshed.connect(on_refreshed)
-
         subsets_model.set_assets(asset_ids)
         subsets_widget.view.setColumnHidden(
             subsets_model.Columns.index("asset"),
@@ -386,9 +385,8 @@ class LibraryLoaderWindow(QtWidgets.QDialog):
         self.data["state"]["assetIds"] = asset_ids
 
         representations = self.data["widgets"]["representations"]
-        representations.set_version_ids([])  # reset repre list
-
-        self.echo("Duration: %.3fs" % (time.time() - t1))
+        # reset repre list
+        representations.set_version_ids([])
 
     def _subsetschanged(self):
         asset_ids = self.data["state"]["assetIds"]
