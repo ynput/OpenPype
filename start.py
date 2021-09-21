@@ -359,7 +359,23 @@ def is_tool(name):
 
 def _startup_validations():
     """Validations before OpenPype starts."""
-    _validate_thirdparty_binaries()
+    try:
+        _validate_thirdparty_binaries()
+    except Exception as exc:
+        if os.environ.get("OPENPYPE_HEADLESS_MODE"):
+            raise
+
+        from tkinter import Tk
+        from tkinter.messagebox import showerror
+
+        root = Tk()
+        root.withdraw()
+        showerror(
+            "Startup validations didn't pass",
+            str(exc)
+        )
+        root.destroy()
+        sys.exit(1)
 
 
 def _validate_thirdparty_binaries():
