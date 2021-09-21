@@ -64,7 +64,7 @@ class ExtractOtioAudioTracks(pyblish.api.ContextPlugin):
         # run subprocess
         self.log.debug("Executing: {}".format(cmd))
         openpype.api.run_subprocess(
-            cmd, logger=self.log
+            cmd, shell=True, logger=self.log
         )
 
         # remove empty

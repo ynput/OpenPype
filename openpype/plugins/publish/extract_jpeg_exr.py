@@ -120,7 +120,7 @@ class ExtractJpegEXR(pyblish.api.InstancePlugin):
             self.log.debug("{}".format(subprocess_command))
             try:  # temporary until oiiotool is supported cross platform
                 run_subprocess(
-                    subprocess_command, logger=self.log
+                    subprocess_command, shell=True, logger=self.log
                 )
             except RuntimeError as exp:
                 if "Compression" in str(exp):
