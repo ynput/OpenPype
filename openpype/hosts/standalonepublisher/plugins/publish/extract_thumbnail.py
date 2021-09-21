@@ -116,7 +116,7 @@ class ExtractThumbnailSP(pyblish.api.InstancePlugin):
 
         # create new thumbnail representation
         representation = {
-            'name': 'jpg',
+            'name': 'thumbnail',
             'ext': 'jpg',
             'files': filename,
             "stagingDir": staging_dir,
