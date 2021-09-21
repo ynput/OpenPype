@@ -7,7 +7,6 @@ from pprint import pformat
 from openpype.hosts.hiero.otio import hiero_export
 from Qt.QtGui import QPixmap
 import tempfile
-reload(hiero_export)
 
 
 class PrecollectWorkfile(pyblish.api.ContextPlugin):
