@@ -104,10 +104,10 @@ def launch_workfiles_app(*args):
     workfiles.show(workdir)
 
 
-def publish(parent):
+def publish():
     """Shorthand to publish from within host"""
     from avalon.tools import publish
-    return publish.show(parent)
+    return publish.show()
 
 
 @contextlib.contextmanager
