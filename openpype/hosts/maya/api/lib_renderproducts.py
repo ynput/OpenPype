@@ -114,6 +114,8 @@ class RenderProduct(object):
     aov = attr.ib(default=None)                 # source aov
     driver = attr.ib(default=None)              # source driver
     multipart = attr.ib(default=False)          # multichannel file
+    camera = attr.ib(default=None)              # used only when rendering
+    #                                             from multiple cameras
 
 
 def get(layer, render_instance=None):
@@ -307,7 +309,7 @@ class ARenderProducts:
         #       Deadline allows submitting renders with a custom frame list
         #       to support those cases we might want to allow 'custom frames'
         #       to be overridden to `ExpectFiles` class?
-        layer_data = LayerMetadata(
+        return LayerMetadata(
             frameStart=int(self.get_render_attribute("startFrame")),
             frameEnd=int(self.get_render_attribute("endFrame")),
             frameStep=int(self.get_render_attribute("byFrameStep")),
@@ -321,7 +323,6 @@ class ARenderProducts:
             defaultExt=self._get_attr("defaultRenderGlobals.imfPluginKey"),
             filePrefix=file_prefix
         )
-        return layer_data
 
     def _generate_file_sequence(
             self, layer_data,
@@ -330,7 +331,7 @@ class ARenderProducts:
             force_cameras=None):
         # type: (LayerMetadata, str, str, list) -> list
         expected_files = []
-        cameras = force_cameras if force_cameras else layer_data.cameras
+        cameras = force_cameras or layer_data.cameras
         ext = force_ext or layer_data.defaultExt
         for cam in cameras:
             file_prefix = layer_data.filePrefix
@@ -460,15 +461,19 @@ class RenderProductsArnold(ARenderProducts):
 
         return prefix
 
-    def _get_aov_render_products(self, aov):
+    def _get_aov_render_products(self, aov, cameras=None):
         """Return all render products for the AOV"""
 
-        products = list()
+        products = []
         aov_name = self._get_attr(aov, "name")
         ai_drivers = cmds.listConnections("{}.outputs".format(aov),
                                           source=True,
                                           destination=False,
                                           type="aiAOVDriver") or []
+        use_single_camera = False
+        if not cameras:
+            cameras = ["__default__"]
+            use_single_camera = True
 
         for ai_driver in ai_drivers:
             # todo: check aiAOVDriver.prefix as it could have
@@ -497,30 +502,43 @@ class RenderProductsArnold(ARenderProducts):
                 name = "beauty"
 
             # Support Arnold light groups for AOVs
-            # Global AOV: When disabled the main layer is not written: `{pass}`
+            # Global AOV: When disabled the main layer is
+            #             not written: `{pass}`
             # All Light Groups: When enabled, a `{pass}_lgroups` file is
-            #                   written and is always merged into a single file
-            # Light Groups List: When set, a product per light group is written
+            #                   written and is always merged into a
+            #                   single file
+            # Light Groups List: When set, a product per light
+            #                    group is written
             #                    e.g. {pass}_front, {pass}_rim
             global_aov = self._get_attr(aov, "globalAov")
             if global_aov:
-                product = RenderProduct(productName=name,
-                                        ext=ext,
-                                        aov=aov_name,
-                                        driver=ai_driver)
-                products.append(product)
+                for camera in cameras:
+                    c = camera
+                    if use_single_camera:
+                        c = None
+                    product = RenderProduct(productName=name,
+                                            ext=ext,
+                                            aov=aov_name,
+                                            driver=ai_driver,
+                                            camera=c)
+                    products.append(product)
 
             all_light_groups = self._get_attr(aov, "lightGroups")
             if all_light_groups:
                 # All light groups is enabled. A single multipart
                 # Render Product
-                product = RenderProduct(productName=name + "_lgroups",
-                                        ext=ext,
-                                        aov=aov_name,
-                                        driver=ai_driver,
-                                        # Always multichannel output
-                                        multipart=True)
-                products.append(product)
+                for camera in cameras:
+                    c = camera
+                    if use_single_camera:
+                        c = None
+                    product = RenderProduct(productName=name + "_lgroups",
+                                            ext=ext,
+                                            aov=aov_name,
+                                            driver=ai_driver,
+                                            # Always multichannel output
+                                            multipart=True,
+                                            camera=c)
+                    products.append(product)
             else:
                 value = self._get_attr(aov, "lightGroupsList")
                 if not value:
@@ -529,11 +547,16 @@ class RenderProductsArnold(ARenderProducts):
                 for light_group in selected_light_groups:
                     # Render Product per selected light group
                     aov_light_group_name = "{}_{}".format(name, light_group)
-                    product = RenderProduct(productName=aov_light_group_name,
-                                            aov=aov_name,
-                                            driver=ai_driver,
-                                            ext=ext)
-                    products.append(product)
+                    for camera in cameras:
+                        c = camera
+                        if use_single_camera:
+                            c = None
+                        product = RenderProduct(productName=aov_light_group_name,
+                                                aov=aov_name,
+                                                driver=ai_driver,
+                                                ext=ext,
+                                                camera=c)
+                        products.append(product)
 
         return products
 
@@ -556,17 +579,31 @@ class RenderProductsArnold(ARenderProducts):
             # anyway.
             return []
 
-        default_ext = self._get_attr("defaultRenderGlobals.imfPluginKey")
-        beauty_product = RenderProduct(productName="beauty",
-                                       ext=default_ext,
-                                       driver="defaultArnoldDriver")
+        # check if camera token is in prefix. If so, and we have list of
+        # renderable cameras, generate render product for each and every
+        # of them.
+        has_camera_token = (
+                "<camera>" in self.layer_data.filePrefix.lower()
+        )
+        cameras = []
+        if has_camera_token:
+            cameras = [
+                self.sanitize_camera_name(c)
+                for c in self.get_renderable_cameras()
+            ]
 
+        default_ext = self._get_attr("defaultRenderGlobals.imfPluginKey")
+        beauty_products = [RenderProduct(
+            productName="beauty",
+            ext=default_ext,
+            driver="defaultArnoldDriver",
+            camera=camera) for camera in cameras]
         # AOVs > Legacy > Maya Render View > Mode
         aovs_enabled = bool(
             self._get_attr("defaultArnoldRenderOptions.aovMode")
         )
         if not aovs_enabled:
-            return [beauty_product]
+            return beauty_products
 
         # Common > File Output > Merge AOVs or <RenderPass>
         # We don't need to check for Merge AOVs due to overridden
@@ -575,8 +612,7 @@ class RenderProductsArnold(ARenderProducts):
             "<renderpass>" in self.layer_data.filePrefix.lower()
         )
         if not has_renderpass_token:
-            beauty_product.multipart = True
-            return [beauty_product]
+            return [setattr(bp, "multipart", True) for bp in beauty_products]
 
         # AOVs are set to be rendered separately. We should expect
         # <RenderPass> token in path.
@@ -598,14 +634,14 @@ class RenderProductsArnold(ARenderProducts):
                 continue
 
             # For now stick to the legacy output format.
-            aov_products = self._get_aov_render_products(aov)
+            aov_products = self._get_aov_render_products(aov, cameras)
             products.extend(aov_products)
 
-        if not any(product.aov == "RGBA" for product in products):
+        if all(product.aov != "RGBA" for product in products):
             # Append default 'beauty' as this is arnolds default.
             # However, it is excluded whenever a RGBA pass is enabled.
             # For legibility add the beauty layer as first entry
-            products.insert(0, beauty_product)
+            products += beauty_products
 
         # TODO: Output Denoising AOVs?
 
