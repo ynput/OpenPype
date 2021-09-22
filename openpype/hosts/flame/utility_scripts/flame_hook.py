@@ -67,6 +67,7 @@ def app_initialized(parent=None):
     opflame.app_framework = opflame.FlameAppFramework()
     print(">> flame_hook.py: {} initializing".format(
         opflame.app_framework.bundle_name))
+    load_apps()
 
 
 try:

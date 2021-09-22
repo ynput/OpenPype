@@ -4,24 +4,8 @@ from Qt import QtWidgets, QtCore
 from pprint import pprint, pformat
 from copy import deepcopy
 
-
-from .pipeline import (
-    launch_workfiles_app
-)
-
 from .lib import rescan_hooks
-
 from openpype.tools.utils.tools_helper import AvalonToolsHelper
-
-
-from avalon.tools import (
-    publish,
-    creator,
-    loader,
-    sceneinventory,
-    libraryloader,
-    subsetmanager
-)
 
 
 menu_group_name = 'OpenPype'
@@ -100,6 +84,8 @@ class FlameMenuProjectconnect(_FlameMenuApp):
         return method
 
     def build_menu(self):
+        from avalon.tools import publish
+
         # todo: load all active projects from db and offer link
 
         if not self.flame:

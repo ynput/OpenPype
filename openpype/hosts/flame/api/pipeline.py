@@ -96,20 +96,6 @@ def update_container(tl_segment, data=None):
     # TODO: update_container
     pass
 
-
-def launch_workfiles_app(*args):
-    log.info("______________Launching workfile app_________")
-    print("______________Launching workfile app_________")
-    workdir = os.environ["AVALON_WORKDIR"]
-    workfiles.show(workdir)
-
-
-def publish():
-    """Shorthand to publish from within host"""
-    from avalon.tools import publish
-    return publish.show()
-
-
 @contextlib.contextmanager
 def maintained_selection():
     """Maintain selection during context
