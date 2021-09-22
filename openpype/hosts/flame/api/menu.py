@@ -1,11 +1,16 @@
 import os
 import sys
 from Qt import QtWidgets, QtCore
+from pprint import pprint, pformat
+from copy import deepcopy
+
 
 from .pipeline import (
     publish,
     launch_workfiles_app
 )
+
+from .lib import rescan_hooks
 
 from avalon.tools import (
     creator,
@@ -41,15 +46,26 @@ class _FlameMenuApp(object):
         except:
             self.flame = None
 
+        self.flame_project_name = flame.project.current_project.name
         self.prefs = self.framework.prefs_dict(self.framework.prefs, self.name)
-        self.prefs_user = self.framework.prefs_dict(self.framework.prefs_user, self.name)
-        self.prefs_global = self.framework.prefs_dict(self.framework.prefs_global, self.name)
+        self.prefs_user = self.framework.prefs_dict(
+            self.framework.prefs_user, self.name)
+        self.prefs_global = self.framework.prefs_dict(
+            self.framework.prefs_global, self.name)
 
         self.mbox = QtWidgets.QMessageBox()
 
+        self.menu = {
+            "actions": [{
+                'name': os.getenv("AVALON_PROJECT", "project"),
+                'isEnabled': False
+            }],
+            "name": self.menu_group_name
+        }
+
     def __getattr__(self, name):
         def method(*args, **kwargs):
-            print ('calling %s' % name)
+            print('calling %s' % name)
         return method
 
     def rescan(self, *args, **kwargs):
@@ -63,6 +79,7 @@ class _FlameMenuApp(object):
         if self.flame:
             self.flame.execute_shortcut('Rescan Python Hooks')
             self.log.info('Rescan Python Hooks')
+
 
 class FlameMenuProjectconnect(_FlameMenuApp):
 
@@ -82,12 +99,10 @@ class FlameMenuProjectconnect(_FlameMenuApp):
         if not self.flame:
             return []
 
-        flame_project_name = self.flame.project.current_project.name
+        flame_project_name = self.flame_project_name
         self.log.info("______ {} ______".format(flame_project_name))
 
-        menu = {'actions': []}
-
-        menu['name'] = self.menu_group_name
+        menu = deepcopy(self.menu)
 
         menu['actions'].append({
             "name": "Workfiles ...",
@@ -132,3 +147,27 @@ class FlameMenuProjectconnect(_FlameMenuApp):
         if self.flame:
             self.flame.execute_shortcut('Rescan Python Hooks')
             self.log.info('Rescan Python Hooks')
+
+
+def main_menu_build(apps, framework):
+    menu = []
+    flameMenuProjectconnectApp = None
+    for app in apps:
+        if app.__class__.__name__ == 'FlameMenuProjectconnect':
+            flameMenuProjectconnectApp = app
+    if flameMenuProjectconnectApp:
+        menu.append(flameMenuProjectconnectApp.build_menu())
+
+    print(">>_> menu was build: {}".format(pformat(menu)))
+
+    if framework:
+        menu_auto_refresh = framework.prefs_global.get(
+            'menu_auto_refresh', {})
+        if menu_auto_refresh.get('main_menu', True):
+            try:
+                import flame
+                flame.schedule_idle_event(rescan_hooks)
+            except:
+                pass
+
+    return menu

@@ -28,7 +28,10 @@ from .api.lib import (
     create_bin,
 )
 
-from .api.menu import FlameMenuProjectconnect
+from .api.menu import (
+    FlameMenuProjectconnect,
+    main_menu_build
+)
 
 from .api.workio import (
     open_file,
@@ -71,6 +74,7 @@ __all__ = [
 
     # menu
     "FlameMenuProjectconnect",
+    "main_menu_build",
 
     # plugin
 

@@ -7,6 +7,7 @@ import contextlib
 from pprint import pprint, pformat
 from opentimelineio import opentime
 import openpype
+import flame
 
 # from ..otio import davinci_export as otio_export
 
@@ -292,3 +293,9 @@ def get_current_timeline(new=False):
 def create_bin(name, root=None):
     # TODO: create_bin
     return
+
+def rescan_hooks():
+    try:
+        flame.execute_shortcut('Rescan Python Hooks')
+    except:
+        pass

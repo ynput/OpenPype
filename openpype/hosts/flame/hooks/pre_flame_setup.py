@@ -3,6 +3,7 @@ from openpype.lib import PreLaunchHook
 from openpype.hosts.flame.api import utils
 from pprint import pformat
 
+
 class FlamePrelaunch(PreLaunchHook):
     """ Flame prelaunch hook
 
