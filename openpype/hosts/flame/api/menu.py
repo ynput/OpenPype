@@ -11,6 +11,9 @@ from .pipeline import (
 
 from .lib import rescan_hooks
 
+from openpype.tools.utils.tools_helper import AvalonToolsHelper
+
+
 from avalon.tools import (
     publish,
     creator,
@@ -62,6 +65,7 @@ class _FlameMenuApp(object):
             }],
             "name": self.menu_group_name
         }
+        self.tools_helper = AvalonToolsHelper()
 
     def __getattr__(self, name):
         def method(*args, **kwargs):
@@ -107,11 +111,11 @@ class FlameMenuProjectconnect(_FlameMenuApp):
 
         menu['actions'].append({
             "name": "Workfiles ...",
-            "execute": launch_workfiles_app
+            "execute": lambda x: self.tools_helper.show_workfiles_tool()
         })
         menu['actions'].append({
             "name": "Create ...",
-            "execute": lambda x: creator.show()
+            "execute": lambda x: self.tools_helper.show_creator_tool()
         })
         menu['actions'].append({
             "name": "Publish ...",

@@ -1,3 +1,6 @@
+from avalon import api
+from Qt import QtCore
+
 
 class AvalonToolsHelper:
     def __init__(self):
@@ -50,9 +53,9 @@ class AvalonToolsHelper:
         if self._loader_tool is not None:
             return self._loader_tool
 
-        from ..tools.loader.app import Window
+        from openpype.tools.loader import LoaderWindow
 
-        window = Window()
+        window = LoaderWindow()
         window.setWindowFlags(
             window.windowFlags() | QtCore.Qt.WindowStaysOnTopHint
         )
@@ -75,7 +78,7 @@ class AvalonToolsHelper:
         if self._creator_tool is not None:
             return self._creator_tool
 
-        from ..tools.creator.app import Window
+        from avalon.tools.creator.app import Window
         window = Window()
         window.setWindowFlags(
             window.windowFlags() | QtCore.Qt.WindowStaysOnTopHint
@@ -98,7 +101,7 @@ class AvalonToolsHelper:
         if self._subset_manager_tool is not None:
             return self._subset_manager_tool
 
-        from ..tools.subsetmanager import Window
+        from avalon.tools.subsetmanager import Window
         # from ..tools.sceneinventory.app import Window
         window = Window()
         window.setWindowFlags(
@@ -121,7 +124,7 @@ class AvalonToolsHelper:
         if self._scene_inventory_tool is not None:
             return self._scene_inventory_tool
 
-        from ..tools.sceneinventory.app import Window
+        from avalon.tools.sceneinventory.app import Window
         window = Window()
         window.setWindowFlags(
             window.windowFlags() | QtCore.Qt.WindowStaysOnTopHint
@@ -144,9 +147,9 @@ class AvalonToolsHelper:
         if self._library_loader_tool is not None:
             return self._library_loader_tool
 
-        from ..tools.libraryloader.app import Window
+        from openpype.tools.libraryloader import LibraryLoaderWindow
 
-        window = Window()
+        window = LibraryLoaderWindow()
         window.setWindowFlags(
             window.windowFlags() | QtCore.Qt.WindowStaysOnTopHint
         )
