@@ -96,6 +96,7 @@ Attributes:
 import os
 import re
 import sys
+import platform
 import traceback
 import subprocess
 import site
@@ -337,6 +338,80 @@ def set_modules_environments():
         env = acre.merge(parsed_envs, dict(os.environ))
         os.environ.clear()
         os.environ.update(env)
+
+
+def is_tool(name):
+    try:
+        import os.errno as errno
+    except ImportError:
+        import errno
+
+    try:
+        devnull = open(os.devnull, "w")
+        subprocess.Popen(
+            [name], stdout=devnull, stderr=devnull
+        ).communicate()
+    except OSError as exc:
+        if exc.errno == errno.ENOENT:
+            return False
+    return True
+
+
+def _startup_validations():
+    """Validations before OpenPype starts."""
+    try:
+        _validate_thirdparty_binaries()
+    except Exception as exc:
+        if os.environ.get("OPENPYPE_HEADLESS_MODE"):
+            raise
+
+        import tkinter
+        from tkinter.messagebox import showerror
+
+        root = tkinter.Tk()
+        root.attributes("-alpha", 0.0)
+        root.wm_state("iconic")
+        if platform.system().lower() != "windows":
+            root.withdraw()
+
+        showerror(
+            "Startup validations didn't pass",
+            str(exc)
+        )
+        root.withdraw()
+        sys.exit(1)
+
+
+def _validate_thirdparty_binaries():
+    """Check existence of thirdpart executables."""
+    low_platform = platform.system().lower()
+    binary_vendors_dir = os.path.join(
+        os.environ["OPENPYPE_ROOT"],
+        "vendor",
+        "bin"
+    )
+
+    error_msg = (
+        "Missing binary dependency {}. Please fetch thirdparty dependencies."
+    )
+    # Validate existence of FFmpeg
+    ffmpeg_dir = os.path.join(binary_vendors_dir, "ffmpeg", low_platform)
+    if low_platform == "windows":
+        ffmpeg_dir = os.path.join(ffmpeg_dir, "bin")
+    ffmpeg_executable = os.path.join(ffmpeg_dir, "ffmpeg")
+    if not is_tool(ffmpeg_executable):
+        raise RuntimeError(error_msg.format("FFmpeg"))
+
+    # Validate existence of OpenImageIO (not on MacOs)
+    if low_platform != "darwin":
+        oiio_tool_path = os.path.join(
+            binary_vendors_dir,
+            "oiio",
+            low_platform,
+            "oiiotool"
+        )
+        if not is_tool(oiio_tool_path):
+            raise RuntimeError(error_msg.format("OpenImageIO"))
 
 
 def _process_arguments() -> tuple:
@@ -766,6 +841,11 @@ def boot():
     # Set environment to OpenPype root path
     # ------------------------------------------------------------------------
     os.environ["OPENPYPE_ROOT"] = OPENPYPE_ROOT
+
+    # ------------------------------------------------------------------------
+    # Do necessary startup validations
+    # ------------------------------------------------------------------------
+    _startup_validations()
 
     # ------------------------------------------------------------------------
     # Play animation
