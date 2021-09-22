@@ -404,7 +404,7 @@ def _validate_thirdparty_binaries():
             binary_vendors_dir,
             "oiio",
             low_platform,
-            "oiio_tool"
+            "oiiotool"
         )
         if not is_tool(oiio_tool_path):
             raise RuntimeError(error_msg.format("OpenImageIO"))
