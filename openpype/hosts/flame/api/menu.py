@@ -6,13 +6,13 @@ from copy import deepcopy
 
 
 from .pipeline import (
-    publish,
     launch_workfiles_app
 )
 
 from .lib import rescan_hooks
 
 from avalon.tools import (
+    publish,
     creator,
     loader,
     sceneinventory,
@@ -96,6 +96,7 @@ class FlameMenuProjectconnect(_FlameMenuApp):
         return method
 
     def build_menu(self):
+
         if not self.flame:
             return []
 
@@ -114,7 +115,7 @@ class FlameMenuProjectconnect(_FlameMenuApp):
         })
         menu['actions'].append({
             "name": "Publish ...",
-            "execute": publish
+            "execute": lambda: publish.show()
         })
         menu['actions'].append({
             "name": "Load ...",
