@@ -8,7 +8,7 @@ from avalon import api as avalon
 from avalon import pipeline
 from avalon.maya import suspended_refresh
 from avalon.maya.pipeline import IS_HEADLESS
-from avalon.tools import workfiles
+from openpype.tools import workfiles
 from pyblish import api as pyblish
 from openpype.lib import any_outdated
 import openpype.hosts.maya

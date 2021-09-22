@@ -400,7 +400,9 @@ class TextWidget(InputWidget):
     def _on_value_change(self):
         if self.ignore_input_changes:
             return
+        self.start_value_timer()
 
+    def _on_value_change_timer(self):
         self.entity.set(self.input_value())
 
 
@@ -474,6 +476,9 @@ class NumberWidget(InputWidget):
         if self.ignore_input_changes:
             return
 
+        self.start_value_timer()
+
+    def _on_value_change_timer(self):
         value = self.input_field.value()
         if self._slider_widget is not None and not self._ignore_input_change:
             self._ignore_slider_change = True
@@ -571,7 +576,9 @@ class RawJsonWidget(InputWidget):
     def _on_value_change(self):
         if self.ignore_input_changes:
             return
+        self.start_value_timer()
 
+    def _on_value_change_timer(self):
         self._is_invalid = self.input_field.has_invalid_value()
         if not self.is_invalid:
             self.entity.set(self.input_field.json_value())
@@ -786,4 +793,7 @@ class PathInputWidget(InputWidget):
     def _on_value_change(self):
         if self.ignore_input_changes:
             return
+        self.start_value_timer()
+
+    def _on_value_change_timer(self):
         self.entity.set(self.input_value())

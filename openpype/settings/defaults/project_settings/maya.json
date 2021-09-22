@@ -520,6 +520,7 @@
     "workfile_build": {
         "profiles": [
             {
+                "task_types": [],
                 "tasks": [
                     "Lighting"
                 ],
