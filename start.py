@@ -365,16 +365,20 @@ def _startup_validations():
         if os.environ.get("OPENPYPE_HEADLESS_MODE"):
             raise
 
-        from tkinter import Tk
+        import tkinter
         from tkinter.messagebox import showerror
 
-        root = Tk()
-        root.withdraw()
+        root = tkinter.Tk()
+        root.attributes("-alpha", 0.0)
+        root.wm_state("iconic")
+        if platform.system().lower() != "windows":
+            root.withdraw()
+
         showerror(
             "Startup validations didn't pass",
             str(exc)
         )
-        root.destroy()
+        root.withdraw()
         sys.exit(1)
 
 
