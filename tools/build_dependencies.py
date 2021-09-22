@@ -23,6 +23,7 @@ import sys
 import site
 from distutils.util import get_platform
 import platform
+import subprocess
 from pathlib import Path
 import shutil
 import blessed
@@ -144,6 +145,29 @@ if platform.system().lower() == "windows":
     else:
         _print("Could not find {}".format(src), 1)
         sys.exit(1)
+
+# On Linux use rpath from source libraries in destination libraries
+if platform.system().lower() == "linux":
+    src_pyside_dir = openpype_root / "vendor" / "python" / "PySide2"
+    dst_pyside_dir = build_dir / "vendor" / "python" / "PySide2"
+    src_rpath_per_so_file = {}
+    for filepath in src_pyside_dir.glob("*.so"):
+        filename = filepath.name
+        rpath = (
+            subprocess.check_output(["patchelf", "--print-rpath", filepath])
+            .decode("utf-8")
+            .strip()
+        )
+        src_rpath_per_so_file[filename] = rpath
+
+    for filepath in dst_pyside_dir.glob("*.so"):
+        filename = filepath.name
+        if filename not in src_rpath_per_so_file:
+            continue
+        src_rpath = src_rpath_per_so_file[filename]
+        subprocess.check_call(
+            ["patchelf", "--set-rpath", src_rpath, filepath]
+        )
 
 to_delete = []
 # _print("Finding duplicates ...")
