@@ -93,18 +93,18 @@ _print("Getting venv site-packages ...")
 assert site_pkg, "No venv site-packages are found."
 _print(f"Working with: {site_pkg}", 2)
 
-
-build_dir = "exe.{}-{}".format(get_platform(), sys.version[0:3])
+openpype_root = Path(os.path.dirname(__file__)).parent
 
 # create full path
 if platform.system().lower() == "darwin":
-    build_dir = Path(os.path.dirname(__file__)).parent.joinpath(
+    build_dir = openpype_root.joinpath(
         "build",
         "OpenPype.app",
         "Contents",
         "MacOS")
 else:
-    build_dir = Path(os.path.dirname(__file__)).parent / "build" / build_dir
+    build_subdir = "exe.{}-{}".format(get_platform(), sys.version[0:3])
+    build_dir = openpype_root / "build" / build_subdir
 
 _print(f"Using build at {build_dir}", 2)
 if not build_dir.exists():
