@@ -49,7 +49,7 @@ def _sync_utility_scripts(env=None):
         scripts.update({path: os.listdir(path)})
 
     log.info("Additional Flame script paths: `{fsd_paths}`".format(**locals()))
-    log.info("Flame Scripts: `{scripts}`".format(**locals))
+    log.info("Flame Scripts: `{scripts}`".format(**locals()))
 
     # make sure no script file is in folder
     if next(iter(os.listdir(flame_shared_dir)), None):

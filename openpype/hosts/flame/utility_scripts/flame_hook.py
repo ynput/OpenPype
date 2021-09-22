@@ -14,7 +14,7 @@ flh._project = None
 def openpype_install():
     openpype.install()
     avalon.api.install(opflame)
-    print("<<<<<<< Avalon registred hosts: {}".format(
+    print("<<<<<<<<<<< Avalon registred hosts: {} >>>>>>>>>>>>>>>".format(
         avalon.api.registered_host()))
 
 
@@ -64,7 +64,7 @@ def project_changed_dict(info):
     cleanup()
 
 
-def app_initialized():
+def app_initialized(parent=None):
     opflame.app_framework = opflame.FlameAppFramework()
     print('PYTHON\t: %s initializing' % opflame.app_framework.bundle_name)
     load_apps()
@@ -72,8 +72,7 @@ def app_initialized():
 
 try:
     import flame
-    openpype_install()
-    app_initialized()
+    app_initialized(parent=None)
 except:
     pass
 
@@ -85,6 +84,7 @@ def project_saved(project_name, save_time, is_auto_save):
 
 def get_main_menu_custom_ui_actions():
     # install openpype and the host
-
+    openpype_install()
+    
     return opflame.main_menu_build(
         opflame.apps, opflame.app_framework)

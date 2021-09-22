@@ -111,15 +111,15 @@ class FlameMenuProjectconnect(_FlameMenuApp):
         })
         menu['actions'].append({
             "name": "Create ...",
-            "execute": creator
+            "execute": lambda x: creator.show()
         })
         menu['actions'].append({
             "name": "Publish ...",
-            "execute": lambda: publish.show()
+            "execute": lambda x: publish.show()
         })
         menu['actions'].append({
             "name": "Load ...",
-            "execute": loader
+            "execute": lambda x: loader.show()
         })
         menu['actions'].append({
             "name": "Manage ...",
