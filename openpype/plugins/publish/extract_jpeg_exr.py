@@ -5,7 +5,6 @@ from openpype.lib import (
     get_ffmpeg_tool_path,
 
     run_subprocess,
-    split_command_to_list,
     path_to_subprocess_arg,
 
     should_decompress,
@@ -116,19 +115,19 @@ class ExtractJpegEXR(pyblish.api.InstancePlugin):
             jpeg_items.append(path_to_subprocess_arg(full_output_path))
 
             subprocess_command = " ".join(jpeg_items)
-            subprocess_args = split_command_to_list(subprocess_command)
 
             # run subprocess
             self.log.debug("{}".format(subprocess_command))
             try:  # temporary until oiiotool is supported cross platform
                 run_subprocess(
-                    subprocess_args, shell=True, logger=self.log
+                    subprocess_command, shell=True, logger=self.log
                 )
             except RuntimeError as exp:
                 if "Compression" in str(exp):
                     self.log.debug("Unsupported compression on input files. " +
                                    "Skipping!!!")
                     return
+                self.log.warning("Conversion crashed", exc_info=True)
                 raise
 
             if "representations" not in instance.data:

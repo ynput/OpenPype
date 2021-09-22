@@ -76,6 +76,8 @@ class LoadSequence(api.Loader):
         file = file.replace("\\", "/")
 
         repr_cont = context["representation"]["context"]
+        assert repr_cont.get("frame"), "Representation is not sequence"
+
         if "#" not in file:
             frame = repr_cont.get("frame")
             if frame:
@@ -170,6 +172,7 @@ class LoadSequence(api.Loader):
         assert read_node.Class() == "Read", "Must be Read"
 
         repr_cont = representation["context"]
+        assert repr_cont.get("frame"), "Representation is not sequence"
 
         file = api.get_representation_path(representation)
 
