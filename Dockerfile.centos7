@@ -35,12 +35,15 @@ RUN yum -y install https://dl.fedoraproject.org/pub/epel/epel-release-latest-7.n
         openssl-devel \
         openssl-libs \
         tk-devel libffi-devel \
-        qt5-qtbase-devel \
         patchelf \
         automake \
         autoconf \
 	    ncurses \
 	    ncurses-devel \
+        qt5-qtbase-devel \
+        libxcb libxcb-devel \
+        xcb-util xcb-util-devel \
+        libxkbcommon-devel libxkbcommon-x11-devel
     && yum clean all
 
 # we need to build our own patchelf
