@@ -28,8 +28,7 @@ from .api.lib import (
 
 from .api.menu import (
     FlameMenuProjectconnect,
-    FlameMenuTimeline,
-    main_menu_build
+    FlameMenuTimeline
 )
 
 from .api.workio import (

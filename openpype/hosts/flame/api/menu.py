@@ -169,10 +169,6 @@ class FlameMenuTimeline(_FlameMenuApp):
         menu = deepcopy(self.menu)
 
         menu['actions'].append({
-            "name": "Workfiles ...",
-            "execute": lambda x: self.tools_helper.show_workfiles_tool()
-        })
-        menu['actions'].append({
             "name": "Create ...",
             "execute": lambda x: self.tools_helper.show_creator_tool()
         })
@@ -188,10 +184,7 @@ class FlameMenuTimeline(_FlameMenuApp):
             "name": "Manage ...",
             "execute": lambda x: self.tools_helper.show_scene_inventory_tool()
         })
-        menu['actions'].append({
-            "name": "Library ...",
-            "execute": lambda x: self.tools_helper.show_library_loader_tool()
-        })
+
         return menu
 
     def get_projects(self, *args, **kwargs):
@@ -211,27 +204,3 @@ class FlameMenuTimeline(_FlameMenuApp):
         if self.flame:
             self.flame.execute_shortcut('Rescan Python Hooks')
             self.log.info('Rescan Python Hooks')
-
-def main_menu_build(apps, framework):
-    menu = []
-    flameMenuProjectconnectApp = None
-    for app in apps:
-        if app.__class__.__name__ == 'FlameMenuProjectconnect':
-            flameMenuProjectconnectApp = app
-
-    if flameMenuProjectconnectApp:
-        menu.append(flameMenuProjectconnectApp.build_menu())
-
-    print(">>_> menu was build: {}".format(pformat(menu)))
-
-    if framework:
-        menu_auto_refresh = framework.prefs_global.get(
-            'menu_auto_refresh', {})
-        if menu_auto_refresh.get('main_menu', True):
-            try:
-                import flame
-                flame.schedule_idle_event(rescan_hooks)
-            except ImportError:
-                print("!!!! not able to import flame module !!!!")
-
-    return menu

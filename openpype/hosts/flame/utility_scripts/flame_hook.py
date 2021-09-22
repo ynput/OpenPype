@@ -97,8 +97,29 @@ def get_main_menu_custom_ui_actions():
     # install openpype and the host
     openpype_install()
 
-    return opflame.main_menu_build(
-        opflame.apps, opflame.app_framework)
+    menu = []
+    app = None
+    for _app in opflame.apps:
+        if _app.__class__.__name__ == 'FlameMenuProjectconnect':
+            app = _app
+
+    if app:
+        menu.append(app.build_menu())
+
+    print(">>_> timeline menu was build: {}".format(pformat(menu)))
+
+    if opflame.app_framework:
+        menu_auto_refresh = opflame.app_framework.prefs_global.get(
+            'menu_auto_refresh', {})
+        if menu_auto_refresh.get('timeline_menu', True):
+            try:
+                import flame
+                flame.schedule_idle_event(rescan_hooks)
+            except ImportError:
+                print("!-!!! not able to import flame module !!!!")
+
+    return menu
+
 
 
 def get_timeline_custom_ui_actions():
