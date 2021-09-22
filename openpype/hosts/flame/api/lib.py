@@ -149,46 +149,52 @@ class FlameAppFramework(object):
 
         if not self.prefs_global.get("menu_auto_refresh"):
             self.prefs_global["menu_auto_refresh"] = {
-                "media_panel": False,
-                "batch": False,
-                "main_menu": False
+                "media_panel": True,
+                "batch": True,
+                "main_menu": True,
+                "timeline_menu": True
             }
 
         self.apps = []
 
     def load_prefs(self):
         prefix = self.prefs_folder + os.path.sep + self.bundle_name
-        prefs_file_path = prefix + "." + self.flame_user_name + "." + self.flame_project_name + ".prefs"
-        prefs_user_file_path = prefix + "." + self.flame_user_name  + ".prefs"
+        prefs_file_path = (prefix + "." + self.flame_user_name + "."
+                           + self.flame_project_name + ".prefs")
+        prefs_user_file_path = (prefix + "." + self.flame_user_name
+                                + ".prefs")
         prefs_global_file_path = prefix + ".prefs"
 
         try:
-            prefs_file = open(prefs_file_path, "r")
-            self.prefs = pickle.load(prefs_file)
-            prefs_file.close()
+            with open(prefs_file_path, "r") as prefs_file:
+                self.prefs = pickle.load(prefs_file)
+
             self.log.info("preferences loaded from {}".format(prefs_file_path))
             self.log.info("preferences contents:\n" + pformat(self.prefs))
         except:
-            self.log.info("unable to load preferences from {}".format(prefs_file_path))
+            self.log.info("unable to load preferences from {}".format(
+                prefs_file_path))
 
         try:
-            prefs_file = open(prefs_user_file_path, "r")
-            self.prefs_user = pickle.load(prefs_file)
-            prefs_file.close()
-            self.log.info("preferences loaded from {}".format(prefs_user_file_path))
+            with open(prefs_user_file_path, "r") as prefs_file:
+                self.prefs_user = pickle.load(prefs_file)
+            self.log.info("preferences loaded from {}".format(
+                prefs_user_file_path))
             self.log.info("preferences contents:\n" + pformat(self.prefs_user))
         except:
-            self.log.info("unable to load preferences from {}".format(prefs_user_file_path))
+            self.log.info("unable to load preferences from {}".format(
+                prefs_user_file_path))
 
         try:
-            prefs_file = open(prefs_global_file_path, "r")
-            self.prefs_global = pickle.load(prefs_file)
-            prefs_file.close()
-            self.log.info("preferences loaded from {}".format(prefs_global_file_path))
+            with open(prefs_global_file_path, "r") as prefs_file:
+                self.prefs_global = pickle.load(prefs_file)
+            self.log.info("preferences loaded from {}".format(
+                prefs_global_file_path))
             self.log.info("preferences contents:\n" + pformat(self.prefs_global))
 
         except:
-            self.log.info("unable to load preferences from {}".format(prefs_global_file_path))
+            self.log.info("unable to load preferences from {}".format(
+                prefs_global_file_path))
 
         return True
 
@@ -199,7 +205,8 @@ class FlameAppFramework(object):
             try:
                 os.makedirs(self.prefs_folder)
             except:
-                self.log.info("unable to create folder {}".format(self.prefs_folder))
+                self.log.info("unable to create folder {}".format(
+                    self.prefs_folder))
                 return False
 
         prefix = self.prefs_folder + os.path.sep + self.bundle_name
@@ -293,6 +300,7 @@ def get_current_timeline(new=False):
 def create_bin(name, root=None):
     # TODO: create_bin
     return
+
 
 def rescan_hooks():
     import flame

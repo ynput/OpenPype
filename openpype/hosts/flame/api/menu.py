@@ -141,12 +141,84 @@ class FlameMenuProjectconnect(_FlameMenuApp):
             self.log.info('Rescan Python Hooks')
 
 
+class FlameMenuTimeline(_FlameMenuApp):
+
+    # flameMenuProjectconnect app takes care of the preferences dialog as well
+
+    def __init__(self, framework):
+        _FlameMenuApp.__init__(self, framework)
+
+    def __getattr__(self, name):
+        def method(*args, **kwargs):
+            project = self.dynamic_menu_data.get(name)
+            if project:
+                self.link_project(project)
+        return method
+
+    def build_menu(self):
+        from avalon.tools import publish
+
+        # todo: load all active projects from db and offer link
+
+        if not self.flame:
+            return []
+
+        flame_project_name = self.flame_project_name
+        self.log.info("______ {} ______".format(flame_project_name))
+
+        menu = deepcopy(self.menu)
+
+        menu['actions'].append({
+            "name": "Workfiles ...",
+            "execute": lambda x: self.tools_helper.show_workfiles_tool()
+        })
+        menu['actions'].append({
+            "name": "Create ...",
+            "execute": lambda x: self.tools_helper.show_creator_tool()
+        })
+        menu['actions'].append({
+            "name": "Publish ...",
+            "execute": lambda x: publish.show()
+        })
+        menu['actions'].append({
+            "name": "Load ...",
+            "execute": lambda x: self.tools_helper.show_loader_tool()
+        })
+        menu['actions'].append({
+            "name": "Manage ...",
+            "execute": lambda x: self.tools_helper.show_scene_inventory_tool()
+        })
+        menu['actions'].append({
+            "name": "Library ...",
+            "execute": lambda x: self.tools_helper.show_library_loader_tool()
+        })
+        return menu
+
+    def get_projects(self, *args, **kwargs):
+        pass
+
+    def refresh(self, *args, **kwargs):
+        self.rescan()
+
+    def rescan(self, *args, **kwargs):
+        if not self.flame:
+            try:
+                import flame
+                self.flame = flame
+            except:
+                self.flame = None
+
+        if self.flame:
+            self.flame.execute_shortcut('Rescan Python Hooks')
+            self.log.info('Rescan Python Hooks')
+
 def main_menu_build(apps, framework):
     menu = []
     flameMenuProjectconnectApp = None
     for app in apps:
         if app.__class__.__name__ == 'FlameMenuProjectconnect':
             flameMenuProjectconnectApp = app
+
     if flameMenuProjectconnectApp:
         menu.append(flameMenuProjectconnectApp.build_menu())
 
