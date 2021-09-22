@@ -65,6 +65,7 @@ class SyncProjectListWidget(QtWidgets.QWidget):
         self.current_project = None
         self.project_name = None
         self.local_site = None
+        self.remote_site = None
         self.icons = {}
 
     def _on_index_change(self, new_idx, _old_idx):
@@ -99,6 +100,11 @@ class SyncProjectListWidget(QtWidgets.QWidget):
 
         if project_name:
             self.local_site = self.sync_server.get_active_site(project_name)
+            self.remote_site = self.sync_server.get_remote_site(project_name)
+
+    def _can_edit(self):
+        """Returns true if some site is user local site, eg. could edit"""
+        return get_local_site_id() in (self.local_site, self.remote_site)
 
     def _get_icon(self, status):
         if not self.icons.get(status):
@@ -122,9 +128,7 @@ class SyncProjectListWidget(QtWidgets.QWidget):
         menu = QtWidgets.QMenu(self)
         actions_mapping = {}
 
-        can_edit = self.model.can_edit
-
-        if can_edit:
+        if self._can_edit():
             if self.sync_server.is_project_paused(self.project_name):
                 action = QtWidgets.QAction("Unpause")
                 actions_mapping[action] = self._unpause

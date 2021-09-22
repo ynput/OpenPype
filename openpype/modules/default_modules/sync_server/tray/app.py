@@ -97,6 +97,7 @@ class SyncServerWindow(QtWidgets.QDialog):
     def showEvent(self, event):
         self.representationWidget.model.set_project(
             self.projects.current_project)
+        self.projects.refresh()
         self._set_running(True)
         super().showEvent(event)
 
