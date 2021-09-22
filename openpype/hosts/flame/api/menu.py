@@ -100,6 +100,7 @@ class FlameMenuProjectconnect(_FlameMenuApp):
         return method
 
     def build_menu(self):
+        # todo: load all active projects from db and offer link
 
         if not self.flame:
             return []
@@ -123,15 +124,15 @@ class FlameMenuProjectconnect(_FlameMenuApp):
         })
         menu['actions'].append({
             "name": "Load ...",
-            "execute": lambda x: loader.show()
+            "execute": lambda x: self.tools_helper.show_loader_tool()
         })
         menu['actions'].append({
             "name": "Manage ...",
-            "execute": sceneinventory
+            "execute": lambda x: self.tools_helper.show_scene_inventory_tool()
         })
         menu['actions'].append({
             "name": "Library ...",
-            "execute": libraryloader
+            "execute": lambda x: self.tools_helper.show_library_loader_tool()
         })
         return menu
 
@@ -172,7 +173,7 @@ def main_menu_build(apps, framework):
             try:
                 import flame
                 flame.schedule_idle_event(rescan_hooks)
-            except:
-                pass
+            except ImportError:
+                print("!!!! not able to import flame module !!!!")
 
     return menu

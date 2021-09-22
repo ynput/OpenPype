@@ -1,7 +1,6 @@
 import sys
 from Qt import QtWidgets, QtCore
 from pprint import pprint, pformat
-import time
 import atexit
 import openpype
 import avalon
@@ -66,15 +65,15 @@ def project_changed_dict(info):
 
 def app_initialized(parent=None):
     opflame.app_framework = opflame.FlameAppFramework()
-    print('PYTHON\t: %s initializing' % opflame.app_framework.bundle_name)
-    load_apps()
+    print(">> flame_hook.py: {} initializing".format(
+        opflame.app_framework.bundle_name))
 
 
 try:
     import flame
     app_initialized(parent=None)
-except:
-    pass
+except ImportError:
+    print("!!!! not able to import flame module !!!!")
 
 
 def project_saved(project_name, save_time, is_auto_save):
