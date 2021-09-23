@@ -253,8 +253,10 @@ class CollectMayaRender(pyblish.api.ContextPlugin):
                     common_publish_meta_path, part)
                 if part == expected_layer_name:
                     break
-            common_publish_meta_path = common_publish_meta_path.replace("\\", "/")
-            self.log.info("Publish meta path: {}".format(common_publish_meta_path))
+            common_publish_meta_path = common_publish_meta_path.replace(
+                "\\", "/")
+            self.log.info(
+                "Publish meta path: {}".format(common_publish_meta_path))
 
             self.log.info(full_exp_files)
             self.log.info("collecting layer: {}".format(layer_name))

@@ -355,8 +355,7 @@ class MayaSubmitDeadline(pyblish.api.InstancePlugin):
                 if instance.data.get("publishRenderMetadataFolder"):
                     instance.data["publishRenderMetadataFolder"] = \
                         instance.data["publishRenderMetadataFolder"].replace(
-                            orig_scene, new_scene
-                        )
+                            orig_scene, new_scene)
                 self.log.info("Scene name was switched {} -> {}".format(
                     orig_scene, new_scene
                 ))

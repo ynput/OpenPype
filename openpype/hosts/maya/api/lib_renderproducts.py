@@ -482,8 +482,9 @@ class RenderProductsArnold(ARenderProducts):
         if not cameras:
             cameras = [
                 self.sanitize_camera_name(
-                            self.get_renderable_cameras()[0])
-                ]
+                            self.get_renderable_cameras()[0]
+                )
+            ]
 
         for ai_driver in ai_drivers:
             # todo: check aiAOVDriver.prefix as it could have
@@ -552,11 +553,13 @@ class RenderProductsArnold(ARenderProducts):
                     # Render Product per selected light group
                     aov_light_group_name = "{}_{}".format(name, light_group)
                     for camera in cameras:
-                        product = RenderProduct(productName=aov_light_group_name,
-                                                aov=aov_name,
-                                                driver=ai_driver,
-                                                ext=ext,
-                                                camera=camera)
+                        product = RenderProduct(
+                            productName=aov_light_group_name,
+                            aov=aov_name,
+                            driver=ai_driver,
+                            ext=ext,
+                            camera=camera
+                        )
                         products.append(product)
 
         return products
@@ -608,7 +611,9 @@ class RenderProductsArnold(ARenderProducts):
             "<renderpass>" in self.layer_data.filePrefix.lower()
         )
         if not has_renderpass_token:
-            return [setattr(bp, "multipart", True) for bp in beauty_products]
+            for product in beauty_products:
+                product.multipart = True
+            return beauty_products
 
         # AOVs are set to be rendered separately. We should expect
         # <RenderPass> token in path.
@@ -988,11 +993,12 @@ class RenderProductsRedshift(ARenderProducts):
                     aov_light_group_name = "{}_{}".format(aov_name,
                                                           light_group)
                     for camera in cameras:
-                        product = RenderProduct(productName=aov_light_group_name,
-                                                aov=aov_name,
-                                                ext=ext,
-                                                multipart=aov_multipart,
-                                                camera=camera)
+                        product = RenderProduct(
+                            productName=aov_light_group_name,
+                            aov=aov_name,
+                            ext=ext,
+                            multipart=aov_multipart,
+                            camera=camera)
                         products.append(product)
 
             if light_groups:
