@@ -482,7 +482,7 @@ class RenderProductsArnold(ARenderProducts):
         if not cameras:
             cameras = [
                 self.sanitize_camera_name(
-                            self.get_renderable_cameras()[0]
+                    self.get_renderable_cameras()[0]
                 )
             ]
 
