@@ -74,6 +74,26 @@ class ProjectModel(QtGui.QStandardItemModel):
             root_item.appendRows(new_project_items)
 
 
+class ProjectProxyFilter(QtCore.QSortFilterProxyModel):
+    """Filters default project item."""
+    def __init__(self, *args, **kwargs):
+        super(ProjectProxyFilter, self).__init__(*args, **kwargs)
+        self._filter_default = False
+
+    def set_filter_default(self, enabled=True):
+        """Set if filtering of default item is enabled."""
+        if enabled == self._filter_default:
+            return
+        self._filter_default = enabled
+        self.invalidateFilter()
+
+    def filterAcceptsRow(self, row, parent):
+        if not self._filter_default:
+            return True
+
+        model = self.sourceModel()
+        source_index = model.index(row, self.filterKeyColumn(), parent)
+        return source_index.data(PROJECT_NAME_ROLE) is not None
 
 
 class HierarchySelectionModel(QtCore.QItemSelectionModel):

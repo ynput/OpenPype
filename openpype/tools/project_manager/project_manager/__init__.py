@@ -5,6 +5,7 @@ __all__ = (
     "HierarchyView",
 
     "ProjectModel",
+    "ProjectProxyFilter",
     "CreateProjectDialog",
 
     "HierarchyModel",
@@ -28,6 +29,7 @@ from .widgets import CreateProjectDialog
 from .view import HierarchyView
 from .model import (
     ProjectModel,
+    ProjectProxyFilter,
 
     HierarchyModel,
     HierarchySelectionModel,
