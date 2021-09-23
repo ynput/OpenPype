@@ -209,7 +209,7 @@ class TimersManager(OpenPypeModule, ITrayService, IIdleManager):
         self.widget_user_idle.refresh_context()
         self.is_running = False
 
-        self.timer_stopper(None)
+        self.timer_stopped(None)
 
     def connect_with_modules(self, enabled_modules):
         for module in enabled_modules:
