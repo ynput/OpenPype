@@ -85,6 +85,27 @@
         {
             "type": "dict",
             "collapsible": true,
+            "key": "ValidateLoadedPlugin",
+            "label": "Validate Loaded Plugin",
+            "checkbox_key": "enabled",
+            "children": [
+                {
+                    "type": "boolean",
+                    "key": "enabled",
+                    "label": "Enabled"
+                },
+                {
+                    "type": "list",
+                    "key": "authorized_plugins",
+                    "label": "Authorized plugins",
+                    "object_type": "text"
+                }
+            ]
+        },
+
+        {
+            "type": "dict",
+            "collapsible": true,
             "key": "ValidateRenderSettings",
             "label": "ValidateRenderSettings",
             "children": [
