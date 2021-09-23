@@ -2,6 +2,7 @@ import pyblish.api
 import maya.cmds as cmds
 import openpype.api
 
+
 class ValidateLoadedPlugin(pyblish.api.ContextPlugin):
     """Ensure there are no unauthorized loaded plugins"""
 
