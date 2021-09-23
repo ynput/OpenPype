@@ -2,6 +2,7 @@ from Qt import QtWidgets, QtCore, QtGui
 
 from . import (
     ProjectModel,
+    ProjectProxyFilter,
 
     HierarchyModel,
     HierarchySelectionModel,
@@ -10,8 +11,8 @@ from . import (
     CreateProjectDialog,
     PROJECT_NAME_ROLE
 )
-from openpype.style import load_stylesheet
 from .style import ResourceCache
+from openpype.style import load_stylesheet
 from openpype.lib import is_admin_password_required
 from openpype.widgets import PasswordDialog
 
@@ -48,11 +49,15 @@ class ProjectManagerWindow(QtWidgets.QWidget):
         dbcon = AvalonMongoDB()
 
         project_model = ProjectModel(dbcon)
+        project_proxy = ProjectProxyFilter()
+        project_proxy.setSourceModel(project_model)
+        project_proxy.setDynamicSortFilter(True)
+
         project_combobox = QtWidgets.QComboBox(project_widget)
         project_combobox.setSizeAdjustPolicy(
             QtWidgets.QComboBox.AdjustToContents
         )
-        project_combobox.setModel(project_model)
+        project_combobox.setModel(project_proxy)
         project_combobox.setRootModelIndex(QtCore.QModelIndex())
         style_delegate = QtWidgets.QStyledItemDelegate()
         project_combobox.setItemDelegate(style_delegate)
@@ -146,6 +151,7 @@ class ProjectManagerWindow(QtWidgets.QWidget):
         add_task_btn.clicked.connect(self._on_add_task)
 
         self._project_model = project_model
+        self._project_proxy_model = project_proxy
 
         self.hierarchy_view = hierarchy_view
         self.hierarchy_model = hierarchy_model
@@ -165,6 +171,7 @@ class ProjectManagerWindow(QtWidgets.QWidget):
 
     def _set_project(self, project_name=None):
         self._create_folders_btn.setEnabled(project_name is not None)
+        self._project_proxy_model.set_filter_default(project_name is not None)
         self.hierarchy_view.set_project(project_name)
 
     def _current_project(self):
@@ -192,6 +199,7 @@ class ProjectManagerWindow(QtWidgets.QWidget):
                 project_name = self._project_combobox.currentText()
 
         self._project_model.refresh()
+        self._project_proxy_model.sort(0, QtCore.Qt.AscendingOrder)
 
         if self._project_combobox.count() == 0:
             return self._set_project()
@@ -202,7 +210,6 @@ class ProjectManagerWindow(QtWidgets.QWidget):
                 self._project_combobox.setCurrentIndex(row)
 
         selected_project = self._current_project()
-
         self._set_project(selected_project)
 
     def _on_project_change(self):
