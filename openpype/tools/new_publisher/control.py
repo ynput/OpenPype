@@ -22,6 +22,7 @@ PLUGIN_ORDER_OFFSET = 0.5
 
 
 class MainThreadItem:
+    """Callback with args and kwargs."""
     def __init__(self, callback, *args, **kwargs):
         self.callback = callback
         self.args = args
@@ -32,6 +33,12 @@ class MainThreadItem:
 
 
 class MainThreadProcess(QtCore.QObject):
+    """Qt based main thread process executor.
+
+    Has timer which controls each 50ms if there is new item to process.
+
+    This approach gives ability to update UI meanwhile plugin is in progress.
+    """
     def __init__(self):
         super(MainThreadProcess, self).__init__()
         self._items_to_process = collections.deque()
@@ -68,6 +75,7 @@ class MainThreadProcess(QtCore.QObject):
 
 
 class AssetDocsCache:
+    """Cache asset documents for creation part."""
     projection = {
         "_id": True,
         "name": True,
@@ -112,6 +120,7 @@ class AssetDocsCache:
 
 
 class PublishReport:
+    """Report for single publishing process."""
     def __init__(self, controller):
         self.controller = controller
         self._publish_discover_result = None
@@ -178,6 +187,7 @@ class PublishReport:
         self._current_plugin_data["skipped"] = True
 
     def add_result(self, result):
+        """Handle result of one plugin and it's instance."""
         instance = result["instance"]
         instance_id = None
         if instance is not None:
@@ -188,6 +198,7 @@ class PublishReport:
         })
 
     def add_action_result(self, action, result):
+        """Add result of single action."""
         plugin = result["plugin"]
 
         store_item = self._get_plugin_data_item(plugin)
@@ -205,6 +216,7 @@ class PublishReport:
         })
 
     def get_report(self, publish_plugins=None):
+        """Report data with all details of current state."""
         instances_details = {}
         for instance in self._all_instances_by_id.values():
             instances_details[instance.id] = self._extract_instance_data(
@@ -334,6 +346,8 @@ class PublisherController:
         self._publish_finished = False
         self._publish_max_progress = 0
         self._publish_progress = 0
+        # This information is not much important for controller but for widget
+        #   which can change (and set) the comment.
         self._publish_comment_is_set = False
 
         # Validation order

@@ -110,6 +110,16 @@ class _HCornerLineWidget(QtWidgets.QWidget):
 
 
 class BorderedLabelWidget(QtWidgets.QFrame):
+    """Draws borders around widget with label in the middle of top.
+
+    +------- Label --------+
+    |                      |
+    |                      |
+    |       CONTENT        |
+    |                      |
+    |                      |
+    +----------------------+
+    """
     def __init__(self, label, parent):
         super(BorderedLabelWidget, self).__init__(parent)
         colors_data = get_colors_data()
@@ -179,6 +189,9 @@ class BorderedLabelWidget(QtWidgets.QFrame):
         self._radius = radius
 
         side_width = 1 + radius
+        # Dont't use fixed width/height as that would set also set
+        #   the other size (When fixed width is set then is also set
+        #   fixed height).
         self._left_w.setMinimumWidth(side_width)
         self._left_w.setMaximumWidth(side_width)
         self._right_w.setMinimumWidth(side_width)
