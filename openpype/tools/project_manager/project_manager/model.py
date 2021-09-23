@@ -58,6 +58,7 @@ class ProjectModel(QtGui.QStandardItemModel):
             project_names.add(project_name)
             if project_name not in self._items_by_name:
                 project_item = QtGui.QStandardItem(project_name)
+                project_item.setData(project_name, PROJECT_NAME_ROLE)
 
                 self._items_by_name[project_name] = project_item
                 new_project_items.append(project_item)
