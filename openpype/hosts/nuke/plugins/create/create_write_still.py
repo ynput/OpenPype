@@ -17,7 +17,7 @@ class CreateWriteStill(plugin.PypeCreator):
         "ImageFrame{:0>4}".format(nuke.frame()),
         "MPFrame{:0>4}".format(nuke.frame()),
         "LayoutFrame{:0>4}".format(nuke.frame())
-        ]
+    ]
 
     def __init__(self, *args, **kwargs):
         super(CreateWriteStill, self).__init__(*args, **kwargs)
@@ -92,11 +92,10 @@ class CreateWriteStill(plugin.PypeCreator):
         self.data.update(creator_data)
         write_data.update(creator_data)
 
-
         self.log.info("Adding template path from plugin")
         write_data.update({
-            "fpath_template": ("{work}/renders/nuke/{subset}"
-                                "/{subset}.{ext}")})
+            "fpath_template": (
+                "{work}/renders/nuke/{subset}/{subset}.{ext}")})
 
         _prenodes = [
             {
