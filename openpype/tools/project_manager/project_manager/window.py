@@ -70,6 +70,7 @@ class ProjectManagerWindow(QtWidgets.QWidget):
             "Create Starting Folders",
             project_widget
         )
+        create_folders_btn.setEnabled(False)
 
         project_layout = QtWidgets.QHBoxLayout(project_widget)
         project_layout.setContentsMargins(0, 0, 0, 0)
@@ -163,6 +164,7 @@ class ProjectManagerWindow(QtWidgets.QWidget):
         self.setStyleSheet(load_stylesheet())
 
     def _set_project(self, project_name=None):
+        self._create_folders_btn.setEnabled(project_name is not None)
         self.hierarchy_view.set_project(project_name)
 
     def _current_project(self):
