@@ -15,13 +15,11 @@ def get_release_type_github(Log, github_token):
     repo = g.get_repo("pypeclub/OpenPype")
 
     for line in Log.splitlines():
-        print(line)
         match = re.search("pull request #(\d+)", line)
         if match:
             pr_number = match.group(1)
             pr = repo.get_pull(int(pr_number))
             for label in pr.labels:
-                print(label.name)
                 if label.name in minor_labels:
                     return ("minor")
                 elif label.name in patch_labels: 

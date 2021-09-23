@@ -77,8 +77,8 @@ class SyncServerWindow(QtWidgets.QDialog):
         self.setWindowTitle("Sync Queue")
 
         self.projects.project_changed.connect(
-            lambda: repres.table_view.model().set_project(
-                self.projects.current_project))
+            self._on_project_change
+        )
 
         self.pause_btn.clicked.connect(self._pause)
         self.pause_btn.setAutoDefault(False)
@@ -86,6 +86,13 @@ class SyncServerWindow(QtWidgets.QDialog):
         repres.message_generated.connect(self._update_message)
 
         self.representationWidget = repres
+
+    def _on_project_change(self):
+        if self.projects.current_project is None:
+            return
+        self.representationWidget.table_view.model().set_project(
+            self.projects.current_project
+        )
 
     def showEvent(self, event):
         self.representationWidget.model.set_project(

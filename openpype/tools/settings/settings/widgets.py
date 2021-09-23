@@ -602,6 +602,12 @@ class NiceCheckbox(QtWidgets.QFrame):
         return super(NiceCheckbox, self).mouseReleaseEvent(event)
 
 
+class ProjectListModel(QtGui.QStandardItemModel):
+    sort_role = QtCore.Qt.UserRole + 10
+    filter_role = QtCore.Qt.UserRole + 11
+    selected_role = QtCore.Qt.UserRole + 12
+
+
 class ProjectListView(QtWidgets.QListView):
     left_mouse_released_at = QtCore.Signal(QtCore.QModelIndex)
 
@@ -612,11 +618,35 @@ class ProjectListView(QtWidgets.QListView):
         super(ProjectListView, self).mouseReleaseEvent(event)
 
 
+class ProjectListSortFilterProxy(QtCore.QSortFilterProxyModel):
+
+    def __init__(self, *args, **kwargs):
+        super(ProjectListSortFilterProxy, self).__init__(*args, **kwargs)
+        self._enable_filter = True
+
+    def filterAcceptsRow(self, source_row, source_parent):
+        if not self._enable_filter:
+            return True
+
+        index = self.sourceModel().index(source_row, 0, source_parent)
+        is_active = bool(index.data(self.filterRole()))
+        is_selected = bool(index.data(ProjectListModel.selected_role))
+
+        return is_active or is_selected
+
+    def is_filter_enabled(self):
+        return self._enable_filter
+
+    def set_filter_enabled(self, value):
+        self._enable_filter = value
+        self.invalidateFilter()
+
+
 class ProjectListWidget(QtWidgets.QWidget):
     default = "< Default >"
     project_changed = QtCore.Signal()
 
-    def __init__(self, parent):
+    def __init__(self, parent, only_active=False):
         self._parent = parent
 
         self.current_project = None
@@ -625,8 +655,17 @@ class ProjectListWidget(QtWidgets.QWidget):
         self.setObjectName("ProjectListWidget")
 
         label_widget = QtWidgets.QLabel("Projects")
+
         project_list = ProjectListView(self)
-        project_list.setModel(QtGui.QStandardItemModel())
+        project_model = ProjectListModel()
+        project_proxy = ProjectListSortFilterProxy()
+
+        project_proxy.setFilterRole(ProjectListModel.filter_role)
+        project_proxy.setSortRole(ProjectListModel.sort_role)
+        project_proxy.setSortCaseSensitivity(QtCore.Qt.CaseInsensitive)
+
+        project_proxy.setSourceModel(project_model)
+        project_list.setModel(project_proxy)
 
         # Do not allow editing
         project_list.setEditTriggers(
@@ -640,11 +679,27 @@ class ProjectListWidget(QtWidgets.QWidget):
         layout.addWidget(label_widget, 0)
         layout.addWidget(project_list, 1)
 
+        if only_active:
+            inactive_chk = None
+        else:
+            inactive_chk = QtWidgets.QCheckBox(" Show Inactive Projects ")
+            inactive_chk.setChecked(not project_proxy.is_filter_enabled())
+
+            layout.addSpacing(5)
+            layout.addWidget(inactive_chk, 0)
+            layout.addSpacing(5)
+
+            inactive_chk.stateChanged.connect(self.on_inactive_vis_changed)
+
         project_list.left_mouse_released_at.connect(self.on_item_clicked)
 
         self.project_list = project_list
+        self.project_proxy = project_proxy
+        self.project_model = project_model
+        self.inactive_chk = inactive_chk
 
         self.dbcon = None
+        self._only_active = only_active
 
     def on_item_clicked(self, new_index):
         new_project_name = new_index.data(QtCore.Qt.DisplayRole)
@@ -679,6 +734,14 @@ class ProjectListWidget(QtWidgets.QWidget):
         else:
             self.select_project(self.current_project)
 
+    def on_inactive_vis_changed(self):
+        if self.inactive_chk is None:
+            # should not happen.
+            return
+
+        enable_filter = not self.inactive_chk.isChecked()
+        self.project_proxy.set_filter_enabled(enable_filter)
+
     def validate_context_change(self):
         return not self._parent.entity.has_unsaved_changes
 
@@ -691,12 +754,18 @@ class ProjectListWidget(QtWidgets.QWidget):
         self.select_project(self.default)
 
     def select_project(self, project_name):
-        model = self.project_list.model()
+        model = self.project_model
+        proxy = self.project_proxy
+
         found_items = model.findItems(project_name)
         if not found_items:
             found_items = model.findItems(self.default)
 
         index = model.indexFromItem(found_items[0])
+        model.setData(index, True, ProjectListModel.selected_role)
+
+        index = proxy.mapFromSource(index)
+
         self.project_list.selectionModel().clear()
         self.project_list.selectionModel().setCurrentIndex(
             index, QtCore.QItemSelectionModel.SelectionFlag.SelectCurrent
@@ -708,10 +777,8 @@ class ProjectListWidget(QtWidgets.QWidget):
             selected_project = index.data(QtCore.Qt.DisplayRole)
             break
 
-        model = self.project_list.model()
+        model = self.project_model
         model.clear()
-
-        items = [self.default]
 
         mongo_url = os.environ["OPENPYPE_MONGO"]
 
@@ -730,17 +797,37 @@ class ProjectListWidget(QtWidgets.QWidget):
                 self.dbcon = None
                 self.current_project = None
 
+        items = [(self.default, True)]
+
         if self.dbcon:
-            database = self.dbcon.database
-            for project_name in database.collection_names():
-                project_doc = database[project_name].find_one(
-                    {"type": "project"},
-                    {"name": 1}
+
+            for doc in self.dbcon.projects(
+                    projection={"name": 1, "data.active": 1},
+                    only_active=self._only_active
+            ):
+                items.append(
+                    (doc["name"], doc.get("data", {}).get("active", True))
                 )
-                if project_doc:
-                    items.append(project_doc["name"])
-        for item in items:
-            model.appendRow(QtGui.QStandardItem(item))
+
+        for project_name, is_active in items:
+
+            row = QtGui.QStandardItem(project_name)
+            row.setData(is_active, ProjectListModel.filter_role)
+            row.setData(False, ProjectListModel.selected_role)
+
+            if is_active:
+                row.setData(project_name, ProjectListModel.sort_role)
+
+            else:
+                row.setData("~" + project_name, ProjectListModel.sort_role)
+
+                font = row.font()
+                font.setItalic(True)
+                row.setFont(font)
+
+            model.appendRow(row)
+
+        self.project_proxy.sort(0)
 
         self.select_project(selected_project)
 
