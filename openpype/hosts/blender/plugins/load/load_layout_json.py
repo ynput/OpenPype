@@ -110,7 +110,7 @@ class JsonLayoutLoader(plugin.AssetLoader):
         creator_plugin = lib.get_creator_by_name("CreateCamera")
         if not creator_plugin:
             raise ValueError("Creator plugin \"CreateCamera\" was "
-                                "not found.")
+                             "not found.")
 
         api.create(
             creator_plugin,

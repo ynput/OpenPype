@@ -5,7 +5,6 @@ from unreal import EditorAssetLibrary as eal
 from unreal import EditorLevelLibrary as ell
 
 import openpype.api
-from avalon import io
 
 
 class ExtractCamera(openpype.api.Extractor):

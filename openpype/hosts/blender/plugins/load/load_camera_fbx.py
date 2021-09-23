@@ -185,7 +185,7 @@ class FbxCameraLoader(plugin.AssetLoader):
         mat = asset_group.matrix_basis.copy()
 
         self._remove(asset_group)
-        self._process(str(libpath), asset_group, object_name, action)
+        self._process(str(libpath), asset_group, object_name)
 
         asset_group.matrix_basis = mat
 
