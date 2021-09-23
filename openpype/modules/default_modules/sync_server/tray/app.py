@@ -91,9 +91,17 @@ class SyncServerWindow(QtWidgets.QDialog):
     def _on_project_change(self):
         if self.projects.current_project is None:
             return
+
         self.representationWidget.table_view.model().set_project(
             self.projects.current_project
         )
+
+        project_name = self.projects.current_project
+        if not self.sync_server.get_sync_project_setting(project_name):
+            self.projects.message_generated.emit(
+                "Project {} not active anymore".format(project_name))
+            self.projects.refresh()
+            return
 
     def showEvent(self, event):
         self.representationWidget.model.set_project(
