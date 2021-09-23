@@ -18,7 +18,7 @@ class CollectOcioFrameRanges(pyblish.api.InstancePlugin):
     Adding timeline and source ranges to instance data"""
 
     label = "Collect OTIO Frame Ranges"
-    order = pyblish.api.CollectorOrder - 0.58
+    order = pyblish.api.CollectorOrder - 0.48
     families = ["shot", "clip"]
     hosts = ["resolve", "hiero"]
 

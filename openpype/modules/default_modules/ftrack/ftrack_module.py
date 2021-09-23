@@ -8,8 +8,7 @@ from openpype_interfaces import (
     ITrayModule,
     IPluginPaths,
     ILaunchHookPaths,
-    ISettingsChangeListener,
-    IFtrackEventHandlerPaths
+    ISettingsChangeListener
 )
 from openpype.settings import SaveWarningExc
 
@@ -81,9 +80,17 @@ class FtrackModule(
 
     def connect_with_modules(self, enabled_modules):
         for module in enabled_modules:
-            if not isinstance(module, IFtrackEventHandlerPaths):
+            if not hasattr(module, "get_ftrack_event_handler_paths"):
                 continue
-            paths_by_type = module.get_event_handler_paths() or {}
+
+            try:
+                paths_by_type = module.get_ftrack_event_handler_paths()
+            except Exception:
+                continue
+
+            if not isinstance(paths_by_type, dict):
+                continue
+
             for key, value in paths_by_type.items():
                 if not value:
                     continue
