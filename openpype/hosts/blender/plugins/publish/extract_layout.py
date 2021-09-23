@@ -42,9 +42,18 @@ class ExtractLayout(openpype.api.Extractor):
                 },
                 projection={"_id": True})
             blend_id = blend["_id"]
+            fbx = io.find_one(
+                {
+                    "type": "representation",
+                    "parent": io.ObjectId(parent),
+                    "name": "fbx"
+                },
+                projection={"_id": True})
+            fbx_id = fbx["_id"]
 
             json_element = {}
             json_element["reference"] = str(blend_id)
+            json_element["reference_fbx"] = str(fbx_id)
             json_element["family"] = family
             json_element["instance_name"] = asset.name
             json_element["asset_name"] = metadata["asset_name"]
