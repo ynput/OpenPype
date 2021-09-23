@@ -1,4 +1,6 @@
+import os
 import json
+import time
 
 from Qt import QtWidgets, QtCore, QtGui
 
@@ -12,6 +14,55 @@ from .widgets import (
     ValidateBtn,
     PublishBtn
 )
+
+
+class ActionsButton(QtWidgets.QToolButton):
+    def __init__(self, parent=None):
+        super(ActionsButton, self).__init__(parent)
+
+        self.setText("< No action >")
+        self.setPopupMode(self.MenuButtonPopup)
+        menu = QtWidgets.QMenu(self)
+
+        self.setMenu(menu)
+
+        self._menu = menu
+        self._actions = []
+        self._current_action = None
+
+        self.clicked.connect(self._on_click)
+
+    def current_action(self):
+        return self._current_action
+
+    def add_action(self, action):
+        self._actions.append(action)
+        action.triggered.connect(self._on_action_trigger)
+        self._menu.addAction(action)
+        if self._current_action is None:
+            self._set_action(action)
+
+    def set_action(self, action):
+        if action not in self._actions:
+            self.add_action(action)
+        self._set_action(action)
+
+    def _set_action(self, action):
+        if action is self._current_action:
+            return
+        self._current_action = action
+        self.setText(action.text())
+        self.setIcon(action.icon())
+
+    def _on_click(self):
+        self._current_action.trigger()
+
+    def _on_action_trigger(self):
+        action = self.sender()
+        if action not in self._actions:
+            return
+
+        self._set_action(action)
 
 
 class PublishFrame(QtWidgets.QFrame):
@@ -57,8 +108,17 @@ class PublishFrame(QtWidgets.QFrame):
         progress_widget = QtWidgets.QProgressBar(content_widget)
         progress_widget.setObjectName("PublishProgressBar")
 
-        copy_log_btn = QtWidgets.QPushButton("Copy log", content_widget)
-        copy_log_btn.setVisible(False)
+        report_btn = ActionsButton(content_widget)
+        report_btn.setVisible(False)
+
+        export_report_action = QtWidgets.QAction(
+            "Export report", report_btn.menu()
+        )
+        copy_report_action = QtWidgets.QAction(
+            "Copy report", report_btn.menu()
+        )
+        report_btn.add_action(export_report_action)
+        report_btn.add_action(copy_report_action)
 
         show_details_btn = QtWidgets.QPushButton(
             "Show details", content_widget
@@ -71,7 +131,7 @@ class PublishFrame(QtWidgets.QFrame):
         publish_btn = PublishBtn(content_widget)
 
         footer_layout = QtWidgets.QHBoxLayout()
-        footer_layout.addWidget(copy_log_btn, 0)
+        footer_layout.addWidget(report_btn, 0)
         footer_layout.addWidget(show_details_btn, 0)
         footer_layout.addWidget(message_label_bottom, 1)
         footer_layout.addWidget(reset_btn, 0)
@@ -117,8 +177,10 @@ class PublishFrame(QtWidgets.QFrame):
 
         main_layout.setCurrentWidget(publish_widget)
 
-        copy_log_btn.clicked.connect(self._on_copy_log)
         show_details_btn.clicked.connect(self._on_show_details)
+
+        copy_report_action.triggered.connect(self._on_copy_report)
+        export_report_action.triggered.connect(self._on_export_report)
 
         reset_btn.clicked.connect(self._on_reset_clicked)
         stop_btn.clicked.connect(self._on_stop_clicked)
@@ -151,7 +213,7 @@ class PublishFrame(QtWidgets.QFrame):
         self.plugin_label = plugin_label
         self.progress_widget = progress_widget
 
-        self.copy_log_btn = copy_log_btn
+        self.report_btn = report_btn
         self.show_details_btn = show_details_btn
         self.message_label_bottom = message_label_bottom
         self.reset_btn = reset_btn
@@ -196,7 +258,7 @@ class PublishFrame(QtWidgets.QFrame):
         self.main_label.setText("Hit publish (play button)! If you want")
         self.message_label.setText("")
         self.message_label_bottom.setText("")
-        self.copy_log_btn.setVisible(False)
+        self.report_btn.setVisible(False)
         self.show_details_btn.setVisible(False)
 
         self.reset_btn.setEnabled(True)
@@ -214,7 +276,7 @@ class PublishFrame(QtWidgets.QFrame):
         self._change_bg_property()
         self._set_progress_visibility(True)
         self.main_label.setText("Publishing...")
-        self.copy_log_btn.setVisible(False)
+        self.report_btn.setVisible(False)
         self.show_details_btn.setVisible(False)
 
         self.reset_btn.setEnabled(False)
@@ -256,7 +318,7 @@ class PublishFrame(QtWidgets.QFrame):
 
     def _on_publish_stop(self):
         self.progress_widget.setValue(self.controller.publish_progress)
-        self.copy_log_btn.setVisible(True)
+        self.report_btn.setVisible(True)
         self.show_details_btn.setVisible(True)
 
         self.reset_btn.setEnabled(True)
@@ -354,7 +416,7 @@ class PublishFrame(QtWidgets.QFrame):
                 widget.setProperty("state", state)
                 widget.style().polish(widget)
 
-    def _on_copy_log(self):
+    def _on_copy_report(self):
         logs = self.controller.get_publish_report()
         logs_string = json.dumps(logs, indent=4)
 
@@ -363,6 +425,29 @@ class PublishFrame(QtWidgets.QFrame):
         QtWidgets.QApplication.instance().clipboard().setMimeData(
             mime_data
         )
+
+    def _on_export_report(self):
+        default_filename = "publish-report-{}".format(
+            time.strftime("%y%m%d-%H-%M")
+        )
+        default_filepath = os.path.join(
+            os.path.expanduser("~"),
+            default_filename
+        )
+        new_filepath, ext = QtWidgets.QFileDialog.getSaveFileName(
+            self, "Save report", default_filepath, ".json"
+        )
+        if not ext or not new_filepath:
+            return
+
+        logs = self.controller.get_publish_report()
+        full_path = new_filepath + ext
+        dir_path = os.path.dirname(full_path)
+        if not os.path.exists(dir_path):
+            os.makedirs(dir_path)
+
+        with open(full_path, "w") as file_stream:
+            json.dump(logs, file_stream)
 
     def _on_show_details(self):
         self._change_bg_property(2)
