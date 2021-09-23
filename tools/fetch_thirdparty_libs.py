@@ -78,18 +78,28 @@ except AttributeError:
     _print("No PySide2 version was specified, using latest available.", 2)
 
 pyside2_arg = "PySide2" if not pyside2_version else "PySide2{}".format(pyside2_version)  # noqa: E501
+python_vendor_dir = openpype_root / "vendor" / "python"
 try:
     subprocess.run(
         [sys.executable, "-m", "pip", "install", "--upgrade",
-         pyside2_arg, "-t", str(openpype_root / "vendor/python")],
+         pyside2_arg, "-t", str(python_vendor_dir)],
         check=True, stdout=subprocess.DEVNULL)
 except subprocess.CalledProcessError as e:
     _print("Error during PySide2 installation.", 1)
     _print(str(e), 1)
     sys.exit(1)
 
-_print("Processing third-party dependencies ...")
+# Remove libraries for QtSql which don't have available libraries
+#   by default and Postgre library would require to modify rpath of dependency
 platform_name = platform.system().lower()
+if platform_name == "darwin":
+    pyside2_sqldrivers_dir = (
+        python_vendor_dir / "PySide2" / "Qt" / "plugins" / "sqldrivers"
+    )
+    for filepath in pyside2_sqldrivers_dir.iterdir():
+        os.remove(str(filepath))
+
+_print("Processing third-party dependencies ...")
 
 try:
     thirdparty = pyproject["openpype"]["thirdparty"]
