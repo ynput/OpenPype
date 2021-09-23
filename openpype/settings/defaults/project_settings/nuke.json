@@ -119,7 +119,8 @@
                 "render",
                 "prerender",
                 "review",
-                "image"
+                "image",
+                "still"
             ],
             "representations": [
                 "exr",
@@ -127,7 +128,8 @@
                 "jpg",
                 "jpeg",
                 "png",
-                "psd"
+                "psd",
+                "tiff"
             ],
             "node_name_template": "{class_name}_{ext}"
         },

@@ -86,6 +86,7 @@ class IntegrateAssetNew(pyblish.api.InstancePlugin):
                 "source",
                 "matchmove",
                 "image",
+                "still",
                 "source",
                 "assembly",
                 "fbx",
