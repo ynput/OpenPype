@@ -6,10 +6,10 @@ from openpype.hosts.blender.api import plugin
 import bpy
 
 
-class ExtractFBX(api.Extractor):
-    """Extract as FBX."""
+class ExtractCamera(api.Extractor):
+    """Extract as the camera as FBX."""
 
-    label = "Extract FBX"
+    label = "Extract Camera"
     hosts = ["blender"]
     families = ["camera"]
     optional = True

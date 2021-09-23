@@ -23,7 +23,7 @@ class BlendCameraLoader(openpype.hosts.blender.api.plugin.AssetLoader):
     families = ["camera"]
     representations = ["blend"]
 
-    label = "Link Camera"
+    label = "Link Camera (Blend)"
     icon = "code-fork"
     color = "orange"
 
