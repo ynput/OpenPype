@@ -1,12 +1,38 @@
 # Changelog
 
-## [3.5.0-nightly.1](https://github.com/pypeclub/OpenPype/tree/HEAD)
+## [3.4.1-nightly.1](https://github.com/pypeclub/OpenPype/tree/HEAD)
 
 [Full Changelog](https://github.com/pypeclub/OpenPype/compare/3.4.0...HEAD)
 
+**🆕 New features**
+
+- Settings: Flag project as deactivated and hide from tools' view [\#2008](https://github.com/pypeclub/OpenPype/pull/2008)
+
 **🚀 Enhancements**
 
+- General: Startup validations [\#2054](https://github.com/pypeclub/OpenPype/pull/2054)
+- Nuke: proxy mode validator [\#2052](https://github.com/pypeclub/OpenPype/pull/2052)
+- Ftrack: Removed ftrack interface [\#2049](https://github.com/pypeclub/OpenPype/pull/2049)
+- Settings UI: Deffered set value on entity [\#2044](https://github.com/pypeclub/OpenPype/pull/2044)
+- Loader: Families filtering [\#2043](https://github.com/pypeclub/OpenPype/pull/2043)
+- Settings UI: Project view enhancements [\#2042](https://github.com/pypeclub/OpenPype/pull/2042)
+- Settings for Nuke IncrementScriptVersion [\#2039](https://github.com/pypeclub/OpenPype/pull/2039)
 - Loader & Library loader: Use tools from OpenPype [\#2038](https://github.com/pypeclub/OpenPype/pull/2038)
+- Adding predefined project folders creation in PM [\#2030](https://github.com/pypeclub/OpenPype/pull/2030)
+- TimersManager: Removed interface of timers manager [\#2024](https://github.com/pypeclub/OpenPype/pull/2024)
+- Feature Maya import asset from scene inventory [\#2018](https://github.com/pypeclub/OpenPype/pull/2018)
+
+**🐛 Bug fixes**
+
+- Timers manger: Typo fix [\#2058](https://github.com/pypeclub/OpenPype/pull/2058)
+- Hiero: Editorial fixes [\#2057](https://github.com/pypeclub/OpenPype/pull/2057)
+- Differentiate jpg sequences from thumbnail [\#2056](https://github.com/pypeclub/OpenPype/pull/2056)
+- FFmpeg: Split command to list does not work [\#2046](https://github.com/pypeclub/OpenPype/pull/2046)
+- Removed shell flag in subprocess call [\#2045](https://github.com/pypeclub/OpenPype/pull/2045)
+
+**Merged pull requests:**
+
+- Bump prismjs from 1.24.0 to 1.25.0 in /website [\#2050](https://github.com/pypeclub/OpenPype/pull/2050)
 
 ## [3.4.0](https://github.com/pypeclub/OpenPype/tree/3.4.0) (2021-09-17)
 
@@ -25,6 +51,7 @@
 
 - Added possibility to configure of synchronization of workfile version… [\#2041](https://github.com/pypeclub/OpenPype/pull/2041)
 - General: Task types in profiles [\#2036](https://github.com/pypeclub/OpenPype/pull/2036)
+- WebserverModule: Removed interface of webserver module [\#2028](https://github.com/pypeclub/OpenPype/pull/2028)
 - Console interpreter: Handle invalid sizes on initialization [\#2022](https://github.com/pypeclub/OpenPype/pull/2022)
 - Ftrack: Show OpenPype versions in event server status [\#2019](https://github.com/pypeclub/OpenPype/pull/2019)
 - General: Staging icon [\#2017](https://github.com/pypeclub/OpenPype/pull/2017)
@@ -70,10 +97,6 @@
 
 [Full Changelog](https://github.com/pypeclub/OpenPype/compare/CI/3.3.1-nightly.1...3.3.1)
 
-**🚀 Enhancements**
-
-- Global: Updated logos and Default settings [\#1927](https://github.com/pypeclub/OpenPype/pull/1927)
-
 **🐛 Bug fixes**
 
 - TVPaint: Fixed rendered frame indexes [\#1946](https://github.com/pypeclub/OpenPype/pull/1946)
@@ -89,37 +112,23 @@
 
 - Settings UI: Breadcrumbs in settings [\#1932](https://github.com/pypeclub/OpenPype/pull/1932)
 - Maya: Scene patching 🩹on submission to Deadline [\#1923](https://github.com/pypeclub/OpenPype/pull/1923)
-- Feature AE local render [\#1901](https://github.com/pypeclub/OpenPype/pull/1901)
 
 **🚀 Enhancements**
 
 - Python console interpreter [\#1940](https://github.com/pypeclub/OpenPype/pull/1940)
+- Global: Updated logos and Default settings [\#1927](https://github.com/pypeclub/OpenPype/pull/1927)
 - Check for missing ✨ Python when using `pyenv` [\#1925](https://github.com/pypeclub/OpenPype/pull/1925)
-- Settings: Default values for enum [\#1920](https://github.com/pypeclub/OpenPype/pull/1920)
-- Settings UI: Modifiable dict view enhance [\#1919](https://github.com/pypeclub/OpenPype/pull/1919)
-- submodules: avalon-core update [\#1911](https://github.com/pypeclub/OpenPype/pull/1911)
-- Ftrack: Where I run action enhancement [\#1900](https://github.com/pypeclub/OpenPype/pull/1900)
-- Ftrack: Private project server actions [\#1899](https://github.com/pypeclub/OpenPype/pull/1899)
-- Support nested studio plugins paths. [\#1898](https://github.com/pypeclub/OpenPype/pull/1898)
 
 **🐛 Bug fixes**
 
 - Fix - ftrack family was added incorrectly in some cases [\#1935](https://github.com/pypeclub/OpenPype/pull/1935)
+- Fix - Deadline publish on Linux started Tray instead of headless publishing [\#1930](https://github.com/pypeclub/OpenPype/pull/1930)
 - Maya: Validate Model Name - repair accident deletion in settings defaults [\#1929](https://github.com/pypeclub/OpenPype/pull/1929)
 - Nuke: submit to farm failed due `ftrack` family remove [\#1926](https://github.com/pypeclub/OpenPype/pull/1926)
-- Fix - validate takes repre\["files"\] as list all the time [\#1922](https://github.com/pypeclub/OpenPype/pull/1922)
-- standalone: validator asset parents [\#1917](https://github.com/pypeclub/OpenPype/pull/1917)
-- Nuke: update video file crassing [\#1916](https://github.com/pypeclub/OpenPype/pull/1916)
-- Fix - texture validators for workfiles triggers only for textures workfiles [\#1914](https://github.com/pypeclub/OpenPype/pull/1914)
-- Settings UI: List order works as expected [\#1906](https://github.com/pypeclub/OpenPype/pull/1906)
-- Hiero: loaded clip was not set colorspace from version data [\#1904](https://github.com/pypeclub/OpenPype/pull/1904)
-- Pyblish UI: Fix collecting stage processing [\#1903](https://github.com/pypeclub/OpenPype/pull/1903)
-- Burnins: Use input's bitrate in h624 [\#1902](https://github.com/pypeclub/OpenPype/pull/1902)
 
 **Merged pull requests:**
 
 - Fix - make AE workfile publish to Ftrack configurable [\#1937](https://github.com/pypeclub/OpenPype/pull/1937)
-- Add support for multiple Deadline ☠️➖ servers [\#1905](https://github.com/pypeclub/OpenPype/pull/1905)
 
 ## [3.2.0](https://github.com/pypeclub/OpenPype/tree/3.2.0) (2021-07-13)
 
