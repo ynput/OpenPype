@@ -29,9 +29,10 @@ class UnrealPrelaunchHook(PreLaunchHook):
 
     def _get_work_filename(self):
         # Use last workfile if was found
-        last_workfile = self.data.get("last_workfile_path")
-        if last_workfile and os.path.exists(last_workfile):
-            return os.path.basename(last_workfile)
+        if self.data.get("last_workfile_path"):
+            last_workfile = Path(self.data.get("last_workfile_path"))
+            if last_workfile and last_workfile.exists():
+                return last_workfile.name
 
         # Prepare data for fill data and for getting workfile template key
         task_name = self.data["task_name"]
@@ -91,7 +92,7 @@ class UnrealPrelaunchHook(PreLaunchHook):
         # of the project name. This is because project name is then used
         # in various places inside c++ code and there variable names cannot
         # start with non-alpha. We append 'P' before project name to solve it.
-        # ðŸ˜±
+        # 😱
         if not unreal_project_name[:1].isalpha():
             self.log.warning((
                 "Project name doesn't start with alphabet "
