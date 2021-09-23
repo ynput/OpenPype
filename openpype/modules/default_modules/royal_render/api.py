@@ -2,7 +2,6 @@
 """Wrapper around Royal Render API."""
 import sys
 import os
-from xml.dom import minidom
 
 from openpype.settings import get_project_settings
 from openpype.lib.local_settings import OpenPypeSettingsRegistry

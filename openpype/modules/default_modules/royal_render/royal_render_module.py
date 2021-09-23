@@ -45,4 +45,3 @@ class RoyalRenderModule(OpenPypeModule, IPluginPaths):
         return {
             "publish": [os.path.join(current_dir, "plugins", "publish")]
         }
-
