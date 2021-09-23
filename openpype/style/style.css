@@ -91,15 +91,15 @@ QPushButton::menu-indicator  {
 }
 
 QToolButton {
-    border: none;
-    background: transparent;
+    border: 1px solid transparent;
+    background: {color:bg-buttons};
     border-radius: 0.2em;
     padding: 2px;
 }
 
 QToolButton:hover {
-    background: #333840;
-    border-color: {color:border-hover};
+    background: {color:bg-button-hover};
+    color: {color:font-hover};
 }
 
 QToolButton:disabled {
@@ -109,14 +109,15 @@ QToolButton:disabled {
 QToolButton[popupMode="1"], QToolButton[popupMode="MenuButtonPopup"] {
     /* make way for the popup button */
     padding-right: 20px;
-    border: 1px solid {color:bg-buttons};
 }
 
 QToolButton::menu-button {
     width: 16px;
-    /* Set border only of left side. */
+    background: transparent;
     border: 1px solid transparent;
-    border-left: 1px solid {color:bg-buttons};
+    border-left: 1px solid qlineargradient(x1:0, y1:0, x2:0, y2:1, stop: 0 transparent, stop:0.2 {color:font}, stop:0.8 {color:font}, stop: 1 transparent);
+    padding: 3px 0px 3px 0px;
+    border-radius: 0;
 }
 
 QToolButton::menu-arrow {
