@@ -30,6 +30,7 @@ class SyncProjectListWidget(QtWidgets.QWidget):
         Lists all projects that are synchronized to choose from
     """
     project_changed = QtCore.Signal()
+    message_generated = QtCore.Signal(str)
 
     def __init__(self, sync_server, parent):
         super(SyncProjectListWidget, self).__init__(parent)
@@ -70,6 +71,12 @@ class SyncProjectListWidget(QtWidgets.QWidget):
 
     def _on_index_change(self, new_idx, _old_idx):
         project_name = new_idx.data(QtCore.Qt.DisplayRole)
+
+        if not self.sync_server.get_sync_project_setting(project_name):
+            self.message_generated.emit(
+                "Project {} not active anymore".format(project_name))
+            self.refresh()
+            return
 
         self.current_project = project_name
         self.project_changed.emit()

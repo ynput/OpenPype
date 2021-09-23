@@ -84,6 +84,7 @@ class SyncServerWindow(QtWidgets.QDialog):
         self.pause_btn.setAutoDefault(False)
         self.pause_btn.setDefault(False)
         repres.message_generated.connect(self._update_message)
+        self.projects.message_generated.connect(self._update_message)
 
         self.representationWidget = repres
 
