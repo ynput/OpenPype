@@ -9,7 +9,8 @@ from .constants import (
     DUPLICATED_ROLE,
     HIERARCHY_CHANGE_ABLE_ROLE,
     REMOVED_ROLE,
-    EDITOR_OPENED_ROLE
+    EDITOR_OPENED_ROLE,
+    PROJECT_NAME_ROLE
 )
 from .style import ResourceCache
 
@@ -29,7 +30,7 @@ class ProjectModel(QtGui.QStandardItemModel):
     def __init__(self, dbcon, *args, **kwargs):
         self.dbcon = dbcon
 
-        self._project_names = set()
+        self._items_by_name = {}
 
         super(ProjectModel, self).__init__(*args, **kwargs)
 
@@ -37,29 +38,41 @@ class ProjectModel(QtGui.QStandardItemModel):
         """Reload projects."""
         self.dbcon.Session["AVALON_PROJECT"] = None
 
-        project_items = []
+        new_project_items = []
 
-        none_project = QtGui.QStandardItem("< Select Project >")
-        none_project.setData(None)
-        project_items.append(none_project)
+        if None not in self._items_by_name:
+            none_project = QtGui.QStandardItem("< Select Project >")
+            self._items_by_name[None] = none_project
+            new_project_items.append(none_project)
 
+        project_docs = self.dbcon.projects(
+            projection={"name": 1},
+            only_active=True
+        )
         project_names = set()
+        for project_doc in project_docs:
+            project_name = project_doc.get("name")
+            if not project_name:
+                continue
 
-        for doc in sorted(
-                self.dbcon.projects(projection={"name": 1}, only_active=True),
-                key=lambda x: x["name"]
-        ):
+            project_names.add(project_name)
+            if project_name not in self._items_by_name:
+                project_item = QtGui.QStandardItem(project_name)
 
-            project_name = doc.get("name")
-            if project_name:
-                project_names.add(project_name)
-                project_items.append(QtGui.QStandardItem(project_name))
+                self._items_by_name[project_name] = project_item
+                new_project_items.append(project_item)
 
-        self.clear()
+        root_item = self.invisibleRootItem()
+        for project_name in tuple(self._items_by_name.keys()):
+            if project_name is None or project_name in project_names:
+                continue
+            project_item = self._items_by_name.pop(project_name)
+            root_item.removeRow(project_item.row())
 
-        self._project_names = project_names
+        if new_project_items:
+            root_item.appendRows(new_project_items)
 
-        self.invisibleRootItem().appendRows(project_items)
+
 
 
 class HierarchySelectionModel(QtCore.QItemSelectionModel):
