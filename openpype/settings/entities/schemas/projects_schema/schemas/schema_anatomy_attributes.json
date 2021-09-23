@@ -69,6 +69,11 @@
             "type": "tools-enum",
             "key": "tools_env",
             "label": "Tools"
+        },
+        {
+            "type": "boolean",
+            "key": "active",
+            "label": "Active Project"
         }
     ]
 }
