@@ -75,13 +75,14 @@ class LayoutLoader(api.Loader):
                 ), False)
                 actor.set_actor_scale3d(transform.get('scale'))
 
-    def _process(self, libpath, asset_dir, loaded = []):
+    def _process(self, libpath, asset_dir, loaded=None):
         with open(libpath, "r") as fp:
             data = json.load(fp)
 
         all_loaders = api.discover(api.Loader)
 
-        # loaded = []
+        if not loaded:
+            loaded = []
 
         for element in data:
             reference = element.get('reference_fbx')
@@ -113,7 +114,7 @@ class LayoutLoader(api.Loader):
             )
 
             instances = [
-                item for item in data 
+                item for item in data
                 if item.get('reference_fbx') == reference]
 
             for instance in instances:
@@ -143,10 +144,10 @@ class LayoutLoader(api.Loader):
         # Get all the static and skeletal meshes components in the level
         components = EditorLevelLibrary.get_all_level_actors_components()
         static_meshes_comp = [
-            c for c in components 
+            c for c in components
             if c.get_class().get_name() == 'StaticMeshComponent']
         skel_meshes_comp = [
-            c for c in components 
+            c for c in components
             if c.get_class().get_name() == 'SkeletalMeshComponent']
 
         # For all the asset containers, get the static and skeletal meshes.
@@ -246,12 +247,12 @@ class LayoutLoader(api.Loader):
         asset_containers = self._get_asset_containers(destination_path)
         loaded = []
 
-        # Delete all the assets imported with the previous version of the 
+        # Delete all the assets imported with the previous version of the
         # layout, if they're not in the new layout.
         for asset_container in asset_containers:
             if asset_container.get_editor_property(
-                'asset_name') == container["objectName"]:
-                    continue
+                    'asset_name') == container["objectName"]:
+                continue
             ref = EditorAssetLibrary.get_metadata_tag(
                 asset_container.get_asset(), 'representation')
             ppath = asset_container.get_editor_property('package_path')
@@ -270,7 +271,7 @@ class LayoutLoader(api.Loader):
                 if len(parent_content) == 0:
                     EditorAssetLibrary.delete_directory(parent)
             else:
-                # If the asset is in the new layout, search the instances in 
+                # If the asset is in the new layout, search the instances in
                 # the JSON file, and create actors for them.
                 for element in data:
                     if element.get('reference_fbx') == ref:
