@@ -122,7 +122,7 @@ def no_workspace_dir():
 
 
 class ExtractLook(openpype.api.Extractor):
-    """Extract Look (Maya Ascii + JSON)
+    """Extract Look (Maya Scene + JSON)
 
     Only extracts the sets (shadingEngines and alike) alongside a .json file
     that stores it relationships for the sets and "attribute" data for the
@@ -130,7 +130,7 @@ class ExtractLook(openpype.api.Extractor):
 
     """
 
-    label = "Extract Look (Maya ASCII + JSON)"
+    label = "Extract Look (Maya Scene + JSON)"
     hosts = ["maya"]
     families = ["look"]
     order = pyblish.api.ExtractorOrder + 0.2
@@ -177,6 +177,8 @@ class ExtractLook(openpype.api.Extractor):
                     # no preset found
                     pass
 
+        return "mayaAscii" if self.scene_type == "ma" else "mayaBinary"
+
     def process(self, instance):
         """Plugin entry point.
 
@@ -184,6 +186,8 @@ class ExtractLook(openpype.api.Extractor):
             instance: Instance to process.
 
         """
+        _scene_type = self.get_maya_scene_type(instance)
+
         # Define extract output file path
         dir_path = self.staging_dir(instance)
         maya_fname = "{0}.{1}".format(instance.name, self.scene_type)
@@ -197,7 +201,7 @@ class ExtractLook(openpype.api.Extractor):
 
         # Remove all members of the sets so they are not included in the
         # exported file by accident
-        self.log.info("Extract sets (Maya ASCII) ...")
+        self.log.info("Extract sets (%s) ..." % _scene_type)
         lookdata = instance.data["lookData"]
         relationships = lookdata["relationships"]
         sets = relationships.keys()
@@ -224,7 +228,7 @@ class ExtractLook(openpype.api.Extractor):
                             cmds.file(
                                 maya_path,
                                 force=True,
-                                typ="mayaAscii",
+                                typ=_scene_type,
                                 exportSelected=True,
                                 preserveReferences=False,
                                 channels=True,
@@ -498,5 +502,12 @@ class ExtractModelRenderSets(ExtractLook):
     label = "Model Render Sets"
     hosts = ["maya"]
     families = ["model"]
-    scene_type = "meta.render.ma"
+    scene_type_prefix = "meta.render."
     look_data_type = "meta.render.json"
+
+    def get_maya_scene_type(self, instance):
+        typ = super(ExtractModelRenderSets, self).get_maya_scene_type(instance)
+        # add prefix
+        self.scene_type = self.scene_type_prefix + self.scene_type
+
+        return typ

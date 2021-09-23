@@ -7,7 +7,7 @@ class ImportModelRender(api.InventoryAction):
     icon = "industry"
     color = "#55DDAA"
 
-    scene_type = "meta.render.ma"
+    scene_type_regex = "meta.render.m[ab]"
     look_data_type = "meta.render.json"
 
     @staticmethod
@@ -58,7 +58,7 @@ class ImportModelRender(api.InventoryAction):
         look_repr = io.find_one({
             "type": "representation",
             "parent": version_id,
-            "name": self.scene_type,
+            "name": {"$regex": self.scene_type_regex},
         })
         if not look_repr:
             print("No model render sets for this model version..")
