@@ -1,5 +1,4 @@
 import pyblish.api
-import avalon.api
 from maya import cmds
 
 
@@ -12,4 +11,7 @@ class CollectLoadedPlugin(pyblish.api.ContextPlugin):
 
     def process(self, context):
 
-        context.data["loadedPlugins"] = cmds.pluginInfo(query=True, listPlugins=True)
+        context.data["loadedPlugins"] = cmds.pluginInfo(
+            query=True,
+            listPlugins=True,
+        )
