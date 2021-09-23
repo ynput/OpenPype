@@ -320,6 +320,7 @@ class BlendRigLoader(plugin.AssetLoader):
 
         metadata["libpath"] = str(libpath)
         metadata["representation"] = str(representation["_id"])
+        metadata["parent"] = str(representation["parent"])
 
     def exec_remove(self, container: Dict) -> bool:
         """Remove an existing asset group from a Blender scene.
