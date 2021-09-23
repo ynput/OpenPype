@@ -1,12 +1,8 @@
 # Changelog
 
-## [3.4.1-nightly.1](https://github.com/pypeclub/OpenPype/tree/HEAD)
+## [3.4.1](https://github.com/pypeclub/OpenPype/tree/3.4.1) (2021-09-23)
 
-[Full Changelog](https://github.com/pypeclub/OpenPype/compare/3.4.0...HEAD)
-
-**🆕 New features**
-
-- Settings: Flag project as deactivated and hide from tools' view [\#2008](https://github.com/pypeclub/OpenPype/pull/2008)
+[Full Changelog](https://github.com/pypeclub/OpenPype/compare/3.4.0...3.4.1)
 
 **🚀 Enhancements**
 
@@ -17,10 +13,11 @@
 - Loader: Families filtering [\#2043](https://github.com/pypeclub/OpenPype/pull/2043)
 - Settings UI: Project view enhancements [\#2042](https://github.com/pypeclub/OpenPype/pull/2042)
 - Settings for Nuke IncrementScriptVersion [\#2039](https://github.com/pypeclub/OpenPype/pull/2039)
-- Loader & Library loader: Use tools from OpenPype [\#2038](https://github.com/pypeclub/OpenPype/pull/2038)
 - Adding predefined project folders creation in PM [\#2030](https://github.com/pypeclub/OpenPype/pull/2030)
+- WebserverModule: Removed interface of webserver module [\#2028](https://github.com/pypeclub/OpenPype/pull/2028)
 - TimersManager: Removed interface of timers manager [\#2024](https://github.com/pypeclub/OpenPype/pull/2024)
 - Feature Maya import asset from scene inventory [\#2018](https://github.com/pypeclub/OpenPype/pull/2018)
+- Settings: Flag project as deactivated and hide from tools' view [\#2008](https://github.com/pypeclub/OpenPype/pull/2008)
 
 **🐛 Bug fixes**
 
@@ -38,11 +35,6 @@
 
 [Full Changelog](https://github.com/pypeclub/OpenPype/compare/CI/3.4.0-nightly.6...3.4.0)
 
-### 📖 Documentation
-
-- Documentation: Ftrack launch argsuments update [\#2014](https://github.com/pypeclub/OpenPype/pull/2014)
-- Nuke Quick Start / Tutorial [\#1952](https://github.com/pypeclub/OpenPype/pull/1952)
-
 **🆕 New features**
 
 - Nuke: Compatibility with Nuke 13 [\#2003](https://github.com/pypeclub/OpenPype/pull/2003)
@@ -50,8 +42,8 @@
 **🚀 Enhancements**
 
 - Added possibility to configure of synchronization of workfile version… [\#2041](https://github.com/pypeclub/OpenPype/pull/2041)
+- Loader & Library loader: Use tools from OpenPype [\#2038](https://github.com/pypeclub/OpenPype/pull/2038)
 - General: Task types in profiles [\#2036](https://github.com/pypeclub/OpenPype/pull/2036)
-- WebserverModule: Removed interface of webserver module [\#2028](https://github.com/pypeclub/OpenPype/pull/2028)
 - Console interpreter: Handle invalid sizes on initialization [\#2022](https://github.com/pypeclub/OpenPype/pull/2022)
 - Ftrack: Show OpenPype versions in event server status [\#2019](https://github.com/pypeclub/OpenPype/pull/2019)
 - General: Staging icon [\#2017](https://github.com/pypeclub/OpenPype/pull/2017)
@@ -93,6 +85,11 @@
 - Removed deprecated submodules [\#1967](https://github.com/pypeclub/OpenPype/pull/1967)
 - Global: ExtractJpeg can handle filepaths with spaces [\#1961](https://github.com/pypeclub/OpenPype/pull/1961)
 
+### 📖 Documentation
+
+- Documentation: Ftrack launch argsuments update [\#2014](https://github.com/pypeclub/OpenPype/pull/2014)
+- Nuke Quick Start / Tutorial [\#1952](https://github.com/pypeclub/OpenPype/pull/1952)
+
 ## [3.3.1](https://github.com/pypeclub/OpenPype/tree/3.3.1) (2021-08-20)
 
 [Full Changelog](https://github.com/pypeclub/OpenPype/compare/CI/3.3.1-nightly.1...3.3.1)
@@ -111,7 +108,6 @@
 **🆕 New features**
 
 - Settings UI: Breadcrumbs in settings [\#1932](https://github.com/pypeclub/OpenPype/pull/1932)
-- Maya: Scene patching 🩹on submission to Deadline [\#1923](https://github.com/pypeclub/OpenPype/pull/1923)
 
 **🚀 Enhancements**
 
