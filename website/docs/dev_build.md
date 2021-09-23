@@ -19,6 +19,7 @@ We use [CX_Freeze](https://cx-freeze.readthedocs.io/en/latest) to freeze the cod
 
 This is outline of build steps. Most of them are done automatically via scripts:
 - Virtual environment is created using **Poetry** in `.venv`
+- Necessary python modules outside of `.venv` are stored to `./vendor/python` (like `PySide2`)
 - Necessary third-party tools (like [ffmpeg](https://www.ffmpeg.org/), [OpenImageIO](https://github.com/OpenImageIO/oiio)
   and [usd libraries](https://developer.nvidia.com/usd)) are downloaded to `./vendor/bin`
 - OpenPype code is frozen with **cx_freeze** to `./build`
@@ -55,14 +56,14 @@ For development purposes it is possible to run OpenPype directly from the source
 To start OpenPype from source you need to 
 
 1. Run `.\tools\create_env.ps1` to create virtual environment in `.venv`
-2. Run `.\tools\fetch_thirdparty_libs.ps1` to get **ffmpeg**, **oiio** and other tools needed.
+2. Run `.\tools\fetch_thirdparty_libs.ps1` to get **PySide2**, **ffmpeg**, **oiio** and other tools needed.
 3. Run `.\tools\run_tray.ps1` if you have all required dependencies on your machine you should be greeted with OpenPype igniter window and once you give it your Mongo URL, with OpenPype icon in the system tray.
 
 Step 1 and 2 needs to be run only once (or when something was changed).
 
 #### To build OpenPype:
 1. Run `.\tools\create_env.ps1` to create virtual environment in `.venv`
-2. Run `.\tools\fetch_thirdparty_libs.ps1` to get **ffmpeg**, **oiio** and other tools needed.
+2. Run `.\tools\fetch_thirdparty_libs.ps1` to get **PySide2**, **ffmpeg**, **oiio** and other tools needed.
 3. `.\tools\build.ps1` to build OpenPype to `.\build`
 
 
@@ -185,7 +186,7 @@ For more information about setting your build environment please refer to [pyenv
 
 #### To build Pype:
 1. Run `./tools/create_env.sh` to create virtual environment in `./venv`
-2. Run `./tools/fetch_thirdparty_libs.sh` to get **ffmpeg**, **oiio** and other tools needed.
+2. Run `./tools/fetch_thirdparty_libs.sh` to get **PySide2**, **ffmpeg**, **oiio** and other tools needed.
 3. Run `./tools/build.sh` to build pype executables in `.\build\`
 
 </TabItem>
@@ -272,6 +273,19 @@ pywin32 = { version = "300", markers = "sys_platform == 'win32'" }
 ```
 
 For more information see [Poetry documentation](https://python-poetry.org/docs/dependency-specification/).
+
+### Python modules as thirdparty
+There are some python modules that can be available only in OpenPype and should not be propagated to any subprocess.
+Best example is **PySide2** which is required to run OpenPype but can be used only in OpenPype and should not be in PYTHONPATH for most of host applications.
+We've decided to separate these breaking dependencies to be able run OpenPype from code and from build the same way.
+
+:::warning
+**PySide2** has handled special cases related to it's build process.
+### Linux
+- We're fixing rpath of shared objects on linux which is modified during cx freeze processing.
+### MacOS
+- **QtSql** libraries are removed on MacOS because their dependencies are not available and would require to modify rpath of Postgre library.
+:::
 
 ### Binary dependencies
 To add some binary tool or something that doesn't fit standard Python distribution methods, you
