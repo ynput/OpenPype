@@ -90,6 +90,21 @@ class BaseCreator:
         """
         pass
 
+    def remove_instance(self, instance):
+        """Method called on instance removement.
+
+        Can also remove instance metadata from context but should return
+        'True' if did so.
+
+        Args:
+            instance(CreatedInstance): Instance object which will be removed.
+
+        Returns:
+            bool: Instance was removed completely and is not required to call
+                host's implementation of removement.
+        """
+        return False
+
     def get_icon(self):
         """Icon of creator (family).
 

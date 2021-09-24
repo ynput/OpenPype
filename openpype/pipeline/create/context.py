@@ -837,11 +837,33 @@ class CreateContext:
             self.host.update_instances(update_list)
 
     def remove_instances(self, instances):
+        """Remove instances from context.
+
+        Args:
+            instances(list<CreatedInstance>): Instances that should be removed
+                from context.
+        """
         if not self.host_is_valid:
             missing_methods = self.get_host_misssing_methods(self.host)
             raise HostMissRequiredMethod(self.host, missing_methods)
 
-        self.host.remove_instances(instances)
+        instances_by_family = collections.defaultdict(list)
+        for instance in instances:
+            instances_by_family[instance.family].append(instance)
+
+        instances_to_remove = []
+        for family, family_instances in instances_by_family.items():
+            creator = self.creators.get(family)
+            if not creator:
+                instances_to_remove.extend(family_instances)
+                continue
+
+            for instance in family_instances:
+                if not creator.remove_instance(instance):
+                    instances_to_remove.append(instances_to_remove)
+
+        if instances_to_remove:
+            self.host.remove_instances(instances_to_remove)
 
     def _get_publish_plugins_with_attr_for_family(self, family):
         if family not in self._attr_plugins_by_family:
