@@ -40,6 +40,7 @@ class ExtractSequenceEXR(pyblish.api.InstancePlugin):
                 args = [
                     "oiiotool", f,
                     "--compression", "DWAA",
+                    "--powc", "2.2,2.2,2.2,1.0",
                     "-o", output_path
                 ]
                 pype.api.subprocess(args)
