@@ -527,7 +527,10 @@ class CreateContext:
         "update_context_data"
     )
 
-    def __init__(self, host, dbcon=None, headless=False, reset=True):
+    def __init__(
+        self, host, dbcon=None, headless=False, reset=True,
+        discover_publish_plugins=True
+    ):
         if dbcon is None:
             import avalon.api
 
@@ -571,7 +574,7 @@ class CreateContext:
         self._attr_plugins_by_family = {}
 
         if reset:
-            self.reset()
+            self.reset(discover_publish_plugins)
 
     @property
     def publish_attributes(self):
@@ -595,38 +598,44 @@ class CreateContext:
             self._log = logging.getLogger(self.__class__.__name__)
         return self._log
 
-    def reset(self):
-        self.reset_plugins()
+    def reset(self, discover_publish_plugins=True):
+        self.reset_plugins(discover_publish_plugins)
         self.reset_context_data()
         self.reset_instances()
 
         self.execute_autocreators()
 
-    def reset_plugins(self):
+    def reset_plugins(self, discover_publish_plugins=True):
         import avalon.api
         import pyblish.logic
 
         from openpype.pipeline import OpenPypePyblishPluginMixin
-        from openpype.pipeline.publish import publish_plugins_discover
+        from openpype.pipeline.publish import (
+            publish_plugins_discover,
+            DiscoverResult
+        )
 
         # Reset publish plugins
         self._attr_plugins_by_family = {}
 
-        discover_result = publish_plugins_discover()
-        publish_plugins = discover_result.plugins
+        discover_result = DiscoverResult()
+        plugins_with_defs = []
+        plugins_by_targets = []
+        if discover_publish_plugins:
+            discover_result = publish_plugins_discover()
+            publish_plugins = discover_result.plugins
 
-        targets = pyblish.logic.registered_targets() or ["default"]
-        plugins_by_targets = pyblish.logic.plugins_by_targets(
-            publish_plugins, targets
-        )
+            targets = pyblish.logic.registered_targets() or ["default"]
+            plugins_by_targets = pyblish.logic.plugins_by_targets(
+                publish_plugins, targets
+            )
+            # Collect plugins that can have attribute definitions
+            for plugin in publish_plugins:
+                if OpenPypePyblishPluginMixin in inspect.getmro(plugin):
+                    plugins_with_defs.append(plugin)
+
         self.publish_discover_result = discover_result
         self.publish_plugins = plugins_by_targets
-
-        # Collect plugins that can have attribute definitions
-        plugins_with_defs = []
-        for plugin in publish_plugins:
-            if OpenPypePyblishPluginMixin in inspect.getmro(plugin):
-                plugins_with_defs.append(plugin)
         self.plugins_with_defs = plugins_with_defs
 
         # Prepare settings
