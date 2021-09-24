@@ -2,6 +2,7 @@ import collections
 
 from Qt import QtWidgets, QtCore, QtGui
 
+from openpype.style import get_objected_colors
 from openpype.widgets.nice_checkbox import NiceCheckbox
 from .widgets import AbstractInstanceView
 from ..constants import (
@@ -11,6 +12,179 @@ from ..constants import (
     CONTEXT_ID,
     CONTEXT_LABEL
 )
+
+
+class ListItemDelegate(QtWidgets.QStyledItemDelegate):
+    """Generic delegate for instance header"""
+
+    radius = 8.0
+
+    def __init__(self, parent):
+        super(ListItemDelegate, self).__init__(parent)
+
+        colors_data = get_objected_colors()
+        group_color_info = colors_data["publisher"]["list-view-group"]
+
+        self._group_colors = {
+            key: value.get_qcolor()
+            for key, value in group_color_info.items()
+        }
+
+    def paint(self, painter, option, index):
+        if index.data(IS_GROUP_ROLE):
+            self.group_item_paint(painter, option, index)
+        else:
+            super(ListItemDelegate, self).paint(painter, option, index)
+
+    def group_item_paint(self, painter, option, index):
+        body_rect = QtCore.QRectF(option.rect)
+        bg_rect = QtCore.QRectF(
+            body_rect.left(), body_rect.top() + 1,
+            body_rect.width() - 5, body_rect.height() - 2
+        )
+
+        expander_rect = QtCore.QRectF(bg_rect)
+        expander_rect.setWidth(expander_rect.height())
+
+        remainder_rect = QtCore.QRectF(
+            expander_rect.x() + expander_rect.width(),
+            expander_rect.y(),
+            bg_rect.width() - expander_rect.width(),
+            expander_rect.height()
+        )
+
+        width = float(expander_rect.width())
+        height = float(expander_rect.height())
+
+        x_pos = expander_rect.x()
+        y_pos = expander_rect.y()
+
+        x_radius = min(self.radius, width / 2)
+        y_radius = min(self.radius, height / 2)
+        x_radius2 = x_radius * 2
+        y_radius2 = y_radius * 2
+
+        expander_path = QtGui.QPainterPath()
+        expander_path.moveTo(x_pos, y_pos + y_radius)
+        expander_path.arcTo(
+            x_pos, y_pos,
+            x_radius2, y_radius2,
+            180.0, -90.0
+        )
+        expander_path.lineTo(x_pos + width, y_pos)
+        expander_path.lineTo(x_pos + width, y_pos + height)
+        expander_path.lineTo(x_pos + x_radius, y_pos + height)
+        expander_path.arcTo(
+            x_pos, y_pos + height - y_radius2,
+            x_radius2, y_radius2,
+            270.0, -90.0
+        )
+        expander_path.closeSubpath()
+
+        width = float(remainder_rect.width())
+        height = float(remainder_rect.height())
+        x_pos = remainder_rect.x()
+        y_pos = remainder_rect.y()
+
+        x_radius = min(self.radius, width / 2)
+        y_radius = min(self.radius, height / 2)
+        x_radius2 = x_radius * 2
+        y_radius2 = y_radius * 2
+
+        remainder_path = QtGui.QPainterPath()
+        remainder_path.moveTo(x_pos + width, y_pos + height - y_radius)
+        remainder_path.arcTo(
+            x_pos + width - x_radius2, y_pos + height - y_radius2,
+            x_radius2, y_radius2,
+            0.0, -90.0
+        )
+        remainder_path.lineTo(x_pos, y_pos + height)
+        remainder_path.lineTo(x_pos, y_pos)
+        remainder_path.lineTo(x_pos + width - x_radius, y_pos)
+        remainder_path.arcTo(
+            x_pos + width - x_radius2, y_pos,
+            x_radius2, y_radius2,
+            90.0, -90.0
+        )
+        remainder_path.closeSubpath()
+
+        painter.fillPath(expander_path, self._group_colors["bg-expander"])
+        painter.fillPath(remainder_path, self._group_colors["bg"])
+
+        mouse_pos = option.widget.mapFromGlobal(QtGui.QCursor.pos())
+        selected = option.state & QtWidgets.QStyle.State_Selected
+        hovered = option.state & QtWidgets.QStyle.State_MouseOver
+
+        if selected and hovered:
+            if expander_rect.contains(mouse_pos):
+                painter.fillPath(
+                    expander_path,
+                    self._group_colors["bg-expander-selected-hover"]
+                )
+            else:
+                painter.fillPath(
+                    remainder_path,
+                    self._group_colors["bg-selected-hover"]
+                )
+
+        elif hovered:
+            if expander_rect.contains(mouse_pos):
+                painter.fillPath(
+                    expander_path,
+                    self._group_colors["bg-expander-hover"]
+                )
+            else:
+                painter.fillPath(
+                    remainder_path,
+                    self._group_colors["bg-hover"]
+                )
+
+        widget = option.widget
+        if widget:
+            style = widget.style()
+        else:
+            style = QtWidgets.QApplication.style()
+        font = index.data(QtCore.Qt.FontRole)
+        if not font:
+            font = option.font
+
+        font_metrics = QtGui.QFontMetrics(font)
+
+        text_height = expander_rect.height()
+        adjust_value = (expander_rect.height() - text_height) / 2
+        expander_rect.adjust(
+            adjust_value + 1.5, adjust_value - 0.5,
+            -adjust_value + 1.5, -adjust_value - 0.5
+        )
+
+        offset = (remainder_rect.height() - font_metrics.height()) / 2
+        label_rect = QtCore.QRectF(remainder_rect.adjusted(
+            5, offset - 1, 0, 0
+        ))
+
+        # if self.parent().isExpanded(index):
+        #     expander_icon = icons["minus-sign"]
+        # else:
+        #     expander_icon = icons["plus-sign"]
+        label = index.data(QtCore.Qt.DisplayRole)
+
+        label = font_metrics.elidedText(
+            label, QtCore.Qt.ElideRight, label_rect.width()
+        )
+
+        # Maintain reference to state, so we can restore it once we're done
+        painter.save()
+
+        # painter.setFont(fonts["awesome6"])
+        # painter.setPen(QtGui.QPen(colors["idle"]))
+        # painter.drawText(expander_rect, QtCore.Qt.AlignCenter, expander_icon)
+
+        # Draw label
+        painter.setFont(font)
+        painter.drawText(label_rect, label)
+
+        # Ok, we're done, tidy up.
+        painter.restore()
 
 
 class InstanceListItemWidget(QtWidgets.QWidget):
@@ -56,6 +230,9 @@ class InstanceListItemWidget(QtWidgets.QWidget):
             state = "invalid"
         self.subset_name_label.setProperty("state", state)
         self.subset_name_label.style().polish(self.subset_name_label)
+
+    def is_active(self):
+        return self.instance.data["active"]
 
     def set_active(self, new_value):
         checkbox_value = self.active_checkbox.isChecked()
@@ -156,6 +333,7 @@ class InstanceListGroupWidget(QtWidgets.QFrame):
 
 class InstanceTreeView(QtWidgets.QTreeView):
     toggle_requested = QtCore.Signal(int)
+    family_toggle_requested = QtCore.Signal(str)
 
     def __init__(self, *args, **kwargs):
         super(InstanceTreeView, self).__init__(*args, **kwargs)
@@ -167,15 +345,26 @@ class InstanceTreeView(QtWidgets.QTreeView):
         self.setSelectionMode(
             QtWidgets.QAbstractItemView.ExtendedSelection
         )
+        self.viewport().setMouseTracking(True)
+        self._pressed_group_index = None
+        self._pressed_expander = None
 
-        self.clicked.connect(self._expand_item)
+    def _expand_item(self, index, expand=None):
+        is_expanded = self.isExpanded(index)
+        if expand is None:
+            expand = not is_expanded
 
-    def _expand_item(self, index):
-        if index.data(IS_GROUP_ROLE):
-            if self.isExpanded(index):
-                self.collapse(index)
-            else:
+        if expand != is_expanded:
+            if expand:
                 self.expand(index)
+            else:
+                self.collapse(index)
+
+    def _toggle_item(self, index):
+        if index.data(IS_GROUP_ROLE):
+            self.family_toggle_requested.emit(
+                index.data(QtCore.Qt.DisplayRole)
+            )
 
     def get_selected_instance_ids(self):
         instance_ids = set()
@@ -203,6 +392,64 @@ class InstanceTreeView(QtWidgets.QTreeView):
 
         return super(InstanceTreeView, self).event(event)
 
+    def mouseMoveEvent(self, event):
+        index = self.indexAt(event.pos())
+        if index.data(IS_GROUP_ROLE):
+            self.update(index)
+        super(InstanceTreeView, self).mouseMoveEvent(event)
+
+    def _mouse_press(self, event):
+        if event.button() != QtCore.Qt.LeftButton:
+            return
+
+        pos_index = self.indexAt(event.pos())
+        if not pos_index.data(IS_GROUP_ROLE):
+            pressed_group_index = None
+            pressed_expander = None
+        else:
+            height = self.indexRowSizeHint(pos_index)
+            pressed_group_index = pos_index
+            pressed_expander = event.pos().x() < height
+
+        self._pressed_group_index = pressed_group_index
+        self._pressed_expander = pressed_expander
+
+    def mousePressEvent(self, event):
+        if not self._mouse_press(event):
+            super(InstanceTreeView, self).mousePressEvent(event)
+
+    def _mouse_release(self, event, pressed_expander, pressed_index):
+        if event.button() != QtCore.Qt.LeftButton:
+            return False
+
+        pos_index = self.indexAt(event.pos())
+        if not pos_index.data(IS_GROUP_ROLE) or pressed_index != pos_index:
+            return False
+
+        if self.state() == QtWidgets.QTreeView.State.DragSelectingState:
+            indexes = self.selectionModel().selectedIndexes()
+            if len(indexes) != 1 or indexes[0] != pos_index:
+                return False
+
+        height = self.indexRowSizeHint(pos_index)
+        if event.pos().x() < height:
+            if pressed_expander:
+                self._expand_item(pos_index)
+                return True
+        elif not pressed_expander:
+            self._toggle_item(pos_index)
+            self._expand_item(pos_index, True)
+            return True
+
+    def mouseReleaseEvent(self, event):
+        pressed_index = self._pressed_group_index
+        pressed_expander = self._pressed_expander is True
+        self._pressed_group_index = None
+        self._pressed_expander = None
+        result = self._mouse_release(event, pressed_expander, pressed_index)
+        if not result:
+            super(InstanceTreeView, self).mouseReleaseEvent(event)
+
 
 class InstanceListView(AbstractInstanceView):
     def __init__(self, controller, parent):
@@ -211,6 +458,8 @@ class InstanceListView(AbstractInstanceView):
         self.controller = controller
 
         instance_view = InstanceTreeView(self)
+        instance_delegate = ListItemDelegate(instance_view)
+        instance_view.setItemDelegate(instance_delegate)
         instance_model = QtGui.QStandardItemModel()
 
         proxy_model = QtCore.QSortFilterProxyModel()
@@ -232,6 +481,9 @@ class InstanceListView(AbstractInstanceView):
         instance_view.collapsed.connect(self._on_collapse)
         instance_view.expanded.connect(self._on_expand)
         instance_view.toggle_requested.connect(self._on_toggle_request)
+        instance_view.family_toggle_requested.connect(
+            self._on_family_toggle_request
+        )
 
         self._group_items = {}
         self._group_widgets = {}
@@ -265,6 +517,30 @@ class InstanceListView(AbstractInstanceView):
             active = False
 
         for instance_id in selected_instance_ids:
+            widget = self._widgets_by_id.get(instance_id)
+            if widget is not None:
+                widget.set_active(active)
+
+    def _on_family_toggle_request(self, family):
+        family_item = self._group_items.get(family)
+        if not family_item:
+            return
+
+        instance_ids = []
+        all_active = True
+        for row in range(family_item.rowCount()):
+            item = family_item.child(row, family_item.column())
+            instance_id = item.data(INSTANCE_ID_ROLE)
+            instance_ids.append(instance_id)
+            if not all_active:
+                continue
+
+            widget = self._widgets_by_id.get(instance_id)
+            if widget is not None and not widget.is_active():
+                all_active = False
+
+        active = not all_active
+        for instance_id in instance_ids:
             widget = self._widgets_by_id.get(instance_id)
             if widget is not None:
                 widget.set_active(active)
@@ -304,7 +580,7 @@ class InstanceListView(AbstractInstanceView):
             if family in self._group_items:
                 continue
 
-            group_item = QtGui.QStandardItem()
+            group_item = QtGui.QStandardItem(family)
             group_item.setData(family, SORT_VALUE_ROLE)
             group_item.setData(True, IS_GROUP_ROLE)
             group_item.setFlags(QtCore.Qt.ItemIsEnabled)
@@ -315,25 +591,12 @@ class InstanceListView(AbstractInstanceView):
             sort_at_the_end = True
             root_item.appendRows(new_group_items)
 
-        for group_item in new_group_items:
-            index = self.instance_model.index(
-                group_item.row(), group_item.column()
-            )
-            proxy_index = self.proxy_model.mapFromSource(index)
-            family = group_item.data(SORT_VALUE_ROLE)
-            widget = InstanceListGroupWidget(family, self.instance_view)
-            widget.expand_changed.connect(self._on_group_expand_request)
-            self._group_widgets[family] = widget
-            self.instance_view.setIndexWidget(proxy_index, widget)
-
         for family in tuple(self._group_items.keys()):
             if family in families:
                 continue
 
             group_item = self._group_items.pop(family)
             root_item.removeRow(group_item.row())
-            widget = self._group_widgets.pop(family)
-            widget.deleteLater()
 
         expand_families = set()
         for family, group_item in self._group_items.items():
