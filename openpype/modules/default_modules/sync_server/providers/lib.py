@@ -1,5 +1,6 @@
 from .gdrive import GDriveHandler
 from .local_drive import LocalDriveHandler
+from .sftp import SFTPHandler
 
 
 class ProviderFactory:
@@ -112,3 +113,4 @@ factory = ProviderFactory()
 # trial and error
 factory.register_provider(GDriveHandler.CODE, GDriveHandler, 7)
 factory.register_provider(LocalDriveHandler.CODE, LocalDriveHandler, 50)
+factory.register_provider(SFTPHandler.CODE, SFTPHandler, 20)
