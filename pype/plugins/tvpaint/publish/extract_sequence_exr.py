@@ -33,12 +33,13 @@ class ExtractSequenceEXR(pyblish.api.InstancePlugin):
             )
 
             files = []
+            oiio_path = os.environ.get("PYPE_OIIO_PATH", "oiiotool")
             for f in representation["files"]:
                 f = os.path.join(representation["stagingDir"], f)
                 path, ext = os.path.splitext(f)
                 output_path = path + ".exr"
                 args = [
-                    "oiiotool", f,
+                    oiio_path, f,
                     "--compression", "DWAA",
                     "--powc", "2.2,2.2,2.2,1.0",
                     "-o", output_path
