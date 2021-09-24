@@ -22,22 +22,20 @@ def get_icon_path(icon_name=None, filename=None):
 
 def get_image(icon_name=None, filename=None):
     path = get_icon_path(icon_name, filename)
-    if not path:
-        return None
-
-    return QtGui.QImage(path)
+    if path:
+        return QtGui.QImage(path)
+    return None
 
 
 def get_pixmap(icon_name=None, filename=None):
     path = get_icon_path(icon_name, filename)
-    if not path:
-        return None
-
-    return QtGui.QPixmap(path)
+    if path:
+        return QtGui.QPixmap(path)
+    return None
 
 
 def get_icon(icon_name=None, filename=None):
     pix = get_pixmap(icon_name, filename)
-    if not pix:
-        return None
-    return QtGui.QIcon(pix)
+    if pix:
+        return QtGui.QIcon(pix)
+    return None
