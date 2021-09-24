@@ -19,7 +19,7 @@ class ExtractSequenceEXR(pyblish.api.InstancePlugin):
         ignore_extensions = ["mp4"]
         old_representations = instance.data["representations"]
         new_representations = []
-        for count, representation in enumerate(old_representations):
+        for _, representation in enumerate(old_representations):
             if representation["name"] in ignore_names:
                 continue
 
