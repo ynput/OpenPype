@@ -4,6 +4,7 @@ from .ftrack_base_handler import BaseHandler
 from .ftrack_event_handler import BaseEvent
 from .ftrack_action_handler import BaseAction, ServerAction, statics_icon
 from .ftrack_app_handler import AppAction
+from .custom_attributes import query_custom_attributes
 
 __all__ = (
     "avalon_sync",
@@ -13,5 +14,6 @@ __all__ = (
     "BaseAction",
     "ServerAction",
     "statics_icon",
-    "AppAction"
+    "AppAction",
+    "query_custom_attributes"
 )
