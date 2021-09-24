@@ -47,20 +47,67 @@
         {
             "type": "dict",
             "children": [
-            {
-                "type": "path",
-                "key": "credentials_url",
-                "label": "Credentials url",
-                "multiplatform": true
-            },
-            {
-                "type": "dict-modifiable",
-                "key": "root",
-                "label": "Roots",
-                "collapsable": false,
-                "collapsable_key": false,
-                "object_type": "text"
-            }
+                {
+                    "type": "dict",
+                    "key": "gdrive",
+                    "label": "Google Drive",
+                    "collapsible": true,
+                    "children": [
+                        {
+                          "type": "path",
+                          "key": "credentials_url",
+                          "label": "Credentials url",
+                          "multiplatform": true
+                        }
+                    ]
+                },
+                {
+                    "type": "dict",
+                    "key": "sftp",
+                    "label": "SFTP",
+                    "collapsible": true,
+                    "children": [
+                        {
+                            "type": "text",
+                            "key": "sftp_host",
+                            "label": "SFTP host"
+                        },
+                        {
+                            "type": "number",
+                            "key": "sftp_port",
+                            "label": "SFTP port"
+                        },
+                        {
+                            "type": "text",
+                            "key": "sftp_user",
+                            "label": "SFTP user"
+                        },
+                        {
+                            "type": "text",
+                            "key": "sftp_pass",
+                            "label": "SFTP pass"
+                        },
+                                                {
+                            "type": "path",
+                            "key": "sftp_key",
+                            "label": "SFTP user ssh key",
+                            "multiplatform": true
+                        },
+                        {
+                            "type": "text",
+                            "key": "sftp_key_pass",
+                            "label": "SFTP user ssh key password"
+                        }
+                    ]
+                },
+                {
+                    "type": "dict-modifiable",
+                    "key": "root",
+                    "label": "Roots",
+                    "collapsable": false,
+                    "collapsable_key": false,
+                    "object_type": "text"
+                }
             ]
         }
     }
