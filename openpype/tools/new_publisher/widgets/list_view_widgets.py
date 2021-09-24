@@ -17,7 +17,7 @@ from ..constants import (
 class ListItemDelegate(QtWidgets.QStyledItemDelegate):
     """Generic delegate for instance header"""
 
-    radius = 8.0
+    radius_ratio = 0.3
 
     def __init__(self, parent):
         super(ListItemDelegate, self).__init__(parent)
@@ -53,63 +53,14 @@ class ListItemDelegate(QtWidgets.QStyledItemDelegate):
             expander_rect.height()
         )
 
-        width = float(expander_rect.width())
-        height = float(expander_rect.height())
-
-        x_pos = expander_rect.x()
-        y_pos = expander_rect.y()
-
-        x_radius = min(self.radius, width / 2)
-        y_radius = min(self.radius, height / 2)
-        x_radius2 = x_radius * 2
-        y_radius2 = y_radius * 2
-
-        expander_path = QtGui.QPainterPath()
-        expander_path.moveTo(x_pos, y_pos + y_radius)
-        expander_path.arcTo(
-            x_pos, y_pos,
-            x_radius2, y_radius2,
-            180.0, -90.0
+        ratio = bg_rect.height() * self.radius_ratio
+        bg_path = QtGui.QPainterPath()
+        bg_path.addRoundedRect(
+            QtCore.QRectF(bg_rect), ratio, ratio
         )
-        expander_path.lineTo(x_pos + width, y_pos)
-        expander_path.lineTo(x_pos + width, y_pos + height)
-        expander_path.lineTo(x_pos + x_radius, y_pos + height)
-        expander_path.arcTo(
-            x_pos, y_pos + height - y_radius2,
-            x_radius2, y_radius2,
-            270.0, -90.0
-        )
-        expander_path.closeSubpath()
 
-        width = float(remainder_rect.width())
-        height = float(remainder_rect.height())
-        x_pos = remainder_rect.x()
-        y_pos = remainder_rect.y()
-
-        x_radius = min(self.radius, width / 2)
-        y_radius = min(self.radius, height / 2)
-        x_radius2 = x_radius * 2
-        y_radius2 = y_radius * 2
-
-        remainder_path = QtGui.QPainterPath()
-        remainder_path.moveTo(x_pos + width, y_pos + height - y_radius)
-        remainder_path.arcTo(
-            x_pos + width - x_radius2, y_pos + height - y_radius2,
-            x_radius2, y_radius2,
-            0.0, -90.0
-        )
-        remainder_path.lineTo(x_pos, y_pos + height)
-        remainder_path.lineTo(x_pos, y_pos)
-        remainder_path.lineTo(x_pos + width - x_radius, y_pos)
-        remainder_path.arcTo(
-            x_pos + width - x_radius2, y_pos,
-            x_radius2, y_radius2,
-            90.0, -90.0
-        )
-        remainder_path.closeSubpath()
-
-        painter.fillPath(expander_path, self._group_colors["bg-expander"])
-        painter.fillPath(remainder_path, self._group_colors["bg"])
+        expander_colors = [self._group_colors["bg-expander"]]
+        remainder_colors = [self._group_colors["bg"]]
 
         mouse_pos = option.widget.mapFromGlobal(QtGui.QCursor.pos())
         selected = option.state & QtWidgets.QStyle.State_Selected
@@ -117,28 +68,38 @@ class ListItemDelegate(QtWidgets.QStyledItemDelegate):
 
         if selected and hovered:
             if expander_rect.contains(mouse_pos):
-                painter.fillPath(
-                    expander_path,
+                expander_colors.append(
                     self._group_colors["bg-expander-selected-hover"]
                 )
+
             else:
-                painter.fillPath(
-                    remainder_path,
+                remainder_colors.append(
                     self._group_colors["bg-selected-hover"]
                 )
 
         elif hovered:
             if expander_rect.contains(mouse_pos):
-                painter.fillPath(
-                    expander_path,
+                expander_colors.append(
                     self._group_colors["bg-expander-hover"]
                 )
+
             else:
-                painter.fillPath(
-                    remainder_path,
+                remainder_colors.append(
                     self._group_colors["bg-hover"]
                 )
 
+        # Draw backgrounds
+        painter.save()
+        painter.setClipRect(expander_rect)
+        for color in expander_colors:
+            painter.fillPath(bg_path, color)
+
+        painter.setClipRect(remainder_rect)
+        for color in remainder_colors:
+            painter.fillPath(bg_path, color)
+        painter.restore()
+
+        # Draw text and icon
         widget = option.widget
         if widget:
             style = widget.style()
