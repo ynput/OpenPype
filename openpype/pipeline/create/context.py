@@ -42,6 +42,11 @@ class HostMissRequiredMethod(Exception):
 
 
 class InstanceMember:
+    """Representation of instance member.
+
+    TODO:
+    Implement and use!
+    """
     def __init__(self, instance, name):
         self.instance = instance
 
@@ -62,6 +67,8 @@ class AttributeValues:
 
     Goal is to have one object which hold values of attribute definitions for
     single instance.
+
+    Has dictionary like methods. Not all of them are allowed all the time.
 
     Args:
         attr_defs(AbtractAttrDef): Defintions of value type and properties.
@@ -137,9 +144,11 @@ class AttributeValues:
 
     @property
     def attr_defs(self):
+        """Pointer to attribute definitions."""
         return self._attr_defs
 
     def data_to_store(self):
+        """Create new dictionary with data to store."""
         output = {}
         for key in self._data:
             output[key] = self[key]
@@ -147,6 +156,7 @@ class AttributeValues:
 
     @staticmethod
     def calculate_changes(new_data, old_data):
+        """Calculate changes of 2 dictionary objects."""
         changes = {}
         for key, new_value in new_data.items():
             old_value = old_data.get(key)
@@ -353,6 +363,7 @@ class CreatedInstance:
         orig_family_attributes = data.pop("family_attributes", None) or {}
         orig_publish_attributes = data.pop("publish_attributes", None) or {}
 
+        # QUESTION Does it make sense to have data stored as ordered dict?
         self._data = collections.OrderedDict()
         self._data["id"] = "pyblish.avalon.instance"
         self._data["family"] = family
@@ -520,6 +531,13 @@ class CreatedInstance:
 
 
 class CreateContext:
+    """Context of instance creation.
+
+    Context itself also can store data related to whole creation (workfile).
+    - those are mainly for Context publish plugins
+    """
+    # Methods required in host implementaion to be able create instances
+    #   or change context data.
     required_methods = (
         "list_instances",
         "remove_instances",
@@ -768,6 +786,14 @@ class CreateContext:
         self.instances = instances
 
     def execute_autocreators(self):
+        """Execute discovered AutoCreator plugins.
+
+        Reset instances if any autocreator executed properly.
+
+        Autocreatos should raise 'AutoCreationSkipped' if has nothing to do.
+        - execution of autocreator requires to reset instances (can be time
+            time consuming)
+        """
         any_processed = False
         for family, creator in self.autocreators.items():
             try:
