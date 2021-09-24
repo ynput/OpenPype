@@ -1,6 +1,6 @@
 from Qt import QtWidgets, QtCore, QtGui
 
-from openpype.style import get_colors_data
+from openpype.style import get_objected_colors
 
 
 class _VLineWidget(QtWidgets.QWidget):
@@ -122,12 +122,11 @@ class BorderedLabelWidget(QtWidgets.QFrame):
     """
     def __init__(self, label, parent):
         super(BorderedLabelWidget, self).__init__(parent)
-        colors_data = get_colors_data()
+        colors_data = get_objected_colors()
         color_value = colors_data.get("border")
-        try:
-            color = QtGui.QColor(color_value)
-        except Exception:
-            color = None
+        color = None
+        if color_value:
+            color = color_value.get_qcolor()
 
         top_left_w = _HCornerLineWidget(color, True, self)
         top_right_w = _HCornerLineWidget(color, False, self)
