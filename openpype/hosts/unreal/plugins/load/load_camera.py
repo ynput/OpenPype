@@ -65,7 +65,10 @@ class CameraLoader(api.Loader):
                 # removes the last element (which is a "/").
                 f_numbers.append(int(f.split("_")[-1][:-1]))
             f_numbers.sort()
-            unique_number = f_numbers[-1] + 1
+            if not f_numbers:
+                unique_number = 1
+            else:
+                unique_number = f_numbers[-1] + 1
 
         asset_dir, container_name = tools.create_unique_asset_name(
             f"{root}/{asset}/{name}_{unique_number:02d}", suffix="")
