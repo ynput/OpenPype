@@ -132,16 +132,11 @@ class ListItemDelegate(QtWidgets.QStyledItemDelegate):
 
         font_metrics = QtGui.QFontMetrics(font)
 
-        text_height = expander_rect.height()
-        adjust_value = (expander_rect.height() - text_height) / 2
-        expander_rect.adjust(
-            adjust_value + 1.5, adjust_value - 0.5,
-            -adjust_value + 1.5, -adjust_value - 0.5
-        )
-
-        offset = (remainder_rect.height() - font_metrics.height()) / 2
+        # Center label horizontally
+        diff = remainder_rect.height() - font_metrics.height()
+        offset = (diff + (diff % 2)) / 2
         label_rect = QtCore.QRectF(remainder_rect.adjusted(
-            5, offset - 1, 0, 0
+            5, offset, 0, 0
         ))
 
         # if self.parent().isExpanded(index):
