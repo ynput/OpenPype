@@ -7,6 +7,7 @@ from uuid import uuid4
 
 from ..lib import UnknownDef
 from .creator_plugins import (
+    AutoCreationSkipped,
     BaseCreator,
     Creator,
     AutoCreator
@@ -772,6 +773,10 @@ class CreateContext:
             try:
                 creator.create()
                 any_processed = True
+
+            except AutoCreationSkipped as exc:
+                self.log.debug(str(exc))
+
             except Exception:
                 msg = (
                     "Failed to run AutoCreator with family \"{}\" ({})."
