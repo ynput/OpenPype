@@ -5,6 +5,7 @@ from .publish_plugins import (
 )
 
 from .lib import (
+    DiscoverResult,
     publish_plugins_discover
 )
 
@@ -14,5 +15,6 @@ __all__ = (
     "KnownPublishError",
     "OpenPypePyblishPluginMixin",
 
+    "DiscoverResult",
     "publish_plugins_discover"
 )
