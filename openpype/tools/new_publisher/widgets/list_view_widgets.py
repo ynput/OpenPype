@@ -5,6 +5,7 @@ from Qt import QtWidgets, QtCore, QtGui
 from openpype.style import get_objected_colors
 from openpype.widgets.nice_checkbox import NiceCheckbox
 from .widgets import AbstractInstanceView
+from .icons import get_image
 from ..constants import (
     INSTANCE_ID_ROLE,
     SORT_VALUE_ROLE,
@@ -18,6 +19,8 @@ class ListItemDelegate(QtWidgets.QStyledItemDelegate):
     """Generic delegate for instance header"""
 
     radius_ratio = 0.3
+    expand_image = None
+    collapse_image = None
 
     def __init__(self, parent):
         super(ListItemDelegate, self).__init__(parent)
@@ -29,6 +32,20 @@ class ListItemDelegate(QtWidgets.QStyledItemDelegate):
             key: value.get_qcolor()
             for key, value in group_color_info.items()
         }
+
+    @classmethod
+    def get_expand_image(cls):
+        if cls.expand_image is None:
+            image = get_image("branch_open")
+
+            cls.expand_image = image
+        return cls.expand_image
+
+    @classmethod
+    def get_collapse_image(cls):
+        if cls.collapse_image is None:
+            cls.collapse_image = get_image("branch_closed")
+        return cls.collapse_image
 
     def paint(self, painter, option, index):
         if index.data(IS_GROUP_ROLE):

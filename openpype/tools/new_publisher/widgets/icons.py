@@ -20,6 +20,14 @@ def get_icon_path(icon_name=None, filename=None):
     return None
 
 
+def get_image(icon_name=None, filename=None):
+    path = get_icon_path(icon_name, filename)
+    if not path:
+        return None
+
+    return QtGui.QImage(path)
+
+
 def get_pixmap(icon_name=None, filename=None):
     path = get_icon_path(icon_name, filename)
     if not path:
