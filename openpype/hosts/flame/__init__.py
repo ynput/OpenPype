@@ -1,6 +1,3 @@
-app_framework = None
-apps = []
-
 from .api.utils import (
     setup
 )
@@ -40,8 +37,32 @@ from .api.workio import (
     work_root
 )
 
+import os
+
+HOST_DIR = os.path.dirname(
+    os.path.abspath(__file__)
+)
+API_DIR = os.path.join(HOST_DIR, "api")
+PLUGINS_DIR = os.path.join(HOST_DIR, "plugins")
+PUBLISH_PATH = os.path.join(PLUGINS_DIR, "publish")
+LOAD_PATH = os.path.join(PLUGINS_DIR, "load")
+CREATE_PATH = os.path.join(PLUGINS_DIR, "create")
+INVENTORY_PATH = os.path.join(PLUGINS_DIR, "inventory")
+
+app_framework = None
+apps = []
+
 
 __all__ = [
+    "HOST_DIR",
+    "API_DIR",
+    "PLUGINS_DIR",
+    "PUBLISH_PATH",
+    "LOAD_PATH",
+    "CREATE_PATH",
+    "INVENTORY_PATH",
+    "INVENTORY_PATH",
+
     "app_framework",
     "apps",
 
@@ -70,7 +91,7 @@ __all__ = [
 
     # menu
     "FlameMenuProjectconnect",
-    "main_menu_build",
+    "FlameMenuTimeline",
 
     # plugin
 

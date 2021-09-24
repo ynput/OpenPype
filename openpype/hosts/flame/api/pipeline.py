@@ -11,19 +11,20 @@ from avalon.pipeline import AVALON_CONTAINER_ID
 from pyblish import api as pyblish
 from openpype.api import Logger
 from . import lib
-from . import PLUGINS_DIR
+
+AVALON_CONTAINERS = "AVALON_CONTAINERS"
 
 log = Logger().get_logger(__name__)
 
-PUBLISH_PATH = os.path.join(PLUGINS_DIR, "publish")
-LOAD_PATH = os.path.join(PLUGINS_DIR, "load")
-CREATE_PATH = os.path.join(PLUGINS_DIR, "create")
-INVENTORY_PATH = os.path.join(PLUGINS_DIR, "inventory")
-
-AVALON_CONTAINERS = ":AVALON_CONTAINERS"
 
 
 def install():
+    from .. import (
+        PUBLISH_PATH,
+        LOAD_PATH,
+        CREATE_PATH,
+        INVENTORY_PATH
+    )
     # TODO: install
 
     # Disable all families except for the ones we explicitly want to see
@@ -53,6 +54,13 @@ def install():
 
 
 def uninstall():
+    from .. import (
+        PUBLISH_PATH,
+        LOAD_PATH,
+        CREATE_PATH,
+        INVENTORY_PATH
+    )
+
     # TODO: uninstall
     pyblish.deregister_host("flame")
     pyblish.deregister_plugin_path(PUBLISH_PATH)
@@ -95,6 +103,7 @@ def update_container(tl_segment, data=None):
     """
     # TODO: update_container
     pass
+
 
 @contextlib.contextmanager
 def maintained_selection():

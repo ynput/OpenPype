@@ -6,7 +6,6 @@ Resolve's tools for setting environment
 
 import os
 import shutil
-from . import HOST_DIR
 from openpype.api import Logger
 log = Logger().get_logger(__name__)
 
@@ -19,6 +18,8 @@ def _sync_utility_scripts(env=None):
     `/opt/Autodesk/shared/python`. This will be always synchronizing those
     folders.
     """
+    from .. import HOST_DIR
+
     if not env:
         env = os.environ
 
