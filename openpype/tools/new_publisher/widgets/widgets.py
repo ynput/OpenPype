@@ -278,11 +278,6 @@ class AbstractInstanceView(QtWidgets.QWidget):
             "{} Method 'get_selected_items' is not implemented."
         ).format(self.__class__.__name__))
 
-    def set_selected_items(self, instances, context_selected):
-        raise NotImplementedError((
-            "{} Method 'set_selected_items' is not implemented."
-        ).format(self.__class__.__name__))
-
 
 class ClickableFrame(QtWidgets.QFrame):
     def __init__(self, parent):

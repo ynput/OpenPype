@@ -714,49 +714,6 @@ class InstanceListView(AbstractInstanceView):
 
         return instances, context_selected
 
-    def set_selected_items(self, instances, context_selected):
-        instance_ids_by_family = collections.defaultdict(set)
-        for instance in instances:
-            family = instance.data["family"]
-            instance_id = instance.data["uuid"]
-            instance_ids_by_family[family].add(instance_id)
-
-        indexes = []
-        if context_selected and self._context_item is not None:
-            index = self.instance_model.index(self._context_item.row(), 0)
-            proxy_index = self.proxy_model.mapFromSource(index)
-            indexes.append(proxy_index)
-
-        for family, group_item in self._group_items.items():
-            selected_ids = instance_ids_by_family[family]
-            if not selected_ids:
-                continue
-
-            group_index = self.instance_model.index(
-                group_item.row(), group_item.column()
-            )
-            proxy_group_index = self.proxy_model.mapFromSource(group_index)
-            has_indexes = False
-            for row in range(group_item.rowCount()):
-                index = self.proxy_model.index(row, 0, proxy_group_index)
-                instance_id = index.data(INSTANCE_ID_ROLE)
-                if instance_id in selected_ids:
-                    indexes.append(index)
-                    has_indexes = True
-
-            if has_indexes:
-                self.instance_view.setExpanded(proxy_group_index, True)
-
-        selection_model = self.instance_view.selectionModel()
-        first_item = True
-        for index in indexes:
-            if first_item:
-                first_item = False
-                select_type = QtCore.QItemSelectionModel.ClearAndSelect
-            else:
-                select_type = QtCore.QItemSelectionModel.Select
-            selection_model.select(index, select_type)
-
     def _on_selection_change(self, *_args):
         self.selection_changed.emit()
 

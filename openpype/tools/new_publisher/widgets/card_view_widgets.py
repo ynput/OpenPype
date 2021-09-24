@@ -437,6 +437,3 @@ class InstanceCardView(AbstractInstanceView):
             instances.append(selected_widget.instance)
 
         return instances, context_selected
-
-    def set_selected_items(self, instances, context_selected):
-        pass
