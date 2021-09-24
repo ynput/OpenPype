@@ -69,7 +69,7 @@ def get_fps(str_value):
     return str(fps)
 
 
-def _prores_codec_args(ffprobe_data):
+def _prores_codec_args(ffprobe_data, ffmpeg_cmd):
     output = []
 
     tags = ffprobe_data.get("tags") or {}
@@ -108,13 +108,22 @@ def _prores_codec_args(ffprobe_data):
     return output
 
 
-def _h264_codec_args(ffprobe_data):
+def _h264_codec_args(ffprobe_data, ffmpeg_cmd):
     output = []
 
     output.extend(["-codec:v", "h264"])
 
+    args = ffmpeg_cmd.split(" ")
+    crf = ""
+    for count, arg in enumerate(args):
+        if arg == "-crf":
+            crf = args[count + 1]
+            break
+    if crf:
+        output.extend(["-crf", crf])
+
     bit_rate = ffprobe_data.get("bit_rate")
-    if bit_rate:
+    if bit_rate and not crf:
         output.extend(["-b:v", bit_rate])
 
     pix_fmt = ffprobe_data.get("pix_fmt")
@@ -127,15 +136,15 @@ def _h264_codec_args(ffprobe_data):
     return output
 
 
-def get_codec_args(ffprobe_data):
+def get_codec_args(ffprobe_data, ffmpeg_cmd):
     codec_name = ffprobe_data.get("codec_name")
     # Codec "prores"
     if codec_name == "prores":
-        return _prores_codec_args(ffprobe_data)
+        return _prores_codec_args(ffprobe_data, ffmpeg_cmd)
 
     # Codec "h264"
     if codec_name == "h264":
-        return _h264_codec_args(ffprobe_data)
+        return _h264_codec_args(ffprobe_data, ffmpeg_cmd)
 
     output = []
     if codec_name:
@@ -469,7 +478,7 @@ def example(input_path, output_path):
 def burnins_from_data(
     input_path, output_path, data,
     codec_data=None, options=None, burnin_values=None, overwrite=True,
-    full_input_path=None, first_frame=None
+    full_input_path=None, first_frame=None, ffmpeg_cmd=None
 ):
     """This method adds burnins to video/image file based on presets setting.
 
@@ -647,7 +656,7 @@ def burnins_from_data(
 
     else:
         ffprobe_data = burnin._streams[0]
-        ffmpeg_args.extend(get_codec_args(ffprobe_data))
+        ffmpeg_args.extend(get_codec_args(ffprobe_data, ffmpeg_cmd))
 
     # Use group one (same as `-intra` argument, which is deprecated)
     ffmpeg_args_str = " ".join(ffmpeg_args)
@@ -670,6 +679,7 @@ if __name__ == "__main__":
         options=in_data.get("options"),
         burnin_values=in_data.get("values"),
         full_input_path=in_data.get("full_input_path"),
-        first_frame=in_data.get("first_frame")
+        first_frame=in_data.get("first_frame"),
+        ffmpeg_cmd=in_data.get("ffmpeg_cmd")
     )
     print("* Burnin script has finished")

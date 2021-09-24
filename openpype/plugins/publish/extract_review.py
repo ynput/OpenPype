@@ -241,7 +241,8 @@ class ExtractReview(pyblish.api.InstancePlugin):
                     "outputName": output_name,
                     "outputDef": output_def,
                     "frameStartFtrack": temp_data["output_frame_start"],
-                    "frameEndFtrack": temp_data["output_frame_end"]
+                    "frameEndFtrack": temp_data["output_frame_end"],
+                    "ffmpeg_cmd": subprcs_cmd
                 })
 
                 # Force to pop these key if are in new repre
