@@ -110,6 +110,7 @@ class ListItemDelegate(QtWidgets.QStyledItemDelegate):
         painter.setRenderHints(
             painter.Antialiasing
             | painter.SmoothPixmapTransform
+            | painter.TextAntialiasing
         )
         painter.save()
         painter.setClipRect(expander_rect)
@@ -122,11 +123,6 @@ class ListItemDelegate(QtWidgets.QStyledItemDelegate):
         painter.restore()
 
         # Draw text and icon
-        widget = option.widget
-        if widget:
-            style = widget.style()
-        else:
-            style = QtWidgets.QApplication.style()
         font = index.data(QtCore.Qt.FontRole)
         if not font:
             font = option.font
