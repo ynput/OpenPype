@@ -54,6 +54,7 @@ class ListItemDelegate(QtWidgets.QStyledItemDelegate):
             super(ListItemDelegate, self).paint(painter, option, index)
 
     def group_item_paint(self, painter, option, index):
+        self.initStyleOption(option, index)
         body_rect = QtCore.QRectF(option.rect)
         bg_rect = QtCore.QRectF(
             body_rect.left(), body_rect.top() + 1,
@@ -139,10 +140,10 @@ class ListItemDelegate(QtWidgets.QStyledItemDelegate):
             5, offset, 0, 0
         ))
 
-        # if self.parent().isExpanded(index):
-        #     expander_icon = icons["minus-sign"]
-        # else:
-        #     expander_icon = icons["plus-sign"]
+        if self.parent().isExpanded(index):
+            expander_icon = self.get_expand_image()
+        else:
+            expander_icon = self.get_collapse_image()
         label = index.data(QtCore.Qt.DisplayRole)
 
         label = font_metrics.elidedText(
@@ -152,9 +153,30 @@ class ListItemDelegate(QtWidgets.QStyledItemDelegate):
         # Maintain reference to state, so we can restore it once we're done
         painter.save()
 
-        # painter.setFont(fonts["awesome6"])
-        # painter.setPen(QtGui.QPen(colors["idle"]))
-        # painter.drawText(expander_rect, QtCore.Qt.AlignCenter, expander_icon)
+        width = expander_rect.width()
+        height = expander_rect.height()
+        if height < width:
+            size = height
+        else:
+            size = width
+
+        icon_size = int(size / 2)
+        offset = (size - icon_size) / 2
+
+        icon_width = expander_icon.width()
+        icon_height = expander_icon.height()
+        pos_x = expander_rect.x() + offset
+        pos_y = expander_rect.y() + offset
+        if icon_width < icon_height:
+            icon_width = (icon_size / icon_height) * icon_width
+            pos_x += (icon_size - icon_width) / 2
+        elif icon_height < icon_width:
+            icon_height = (icon_size / icon_width) * icon_height
+            pos_y += (icon_size - icon_height) / 2
+
+        expander_icon_rect = QtCore.QRectF(pos_x, pos_y, icon_size, icon_size)
+        expander_icon_rect.moveCenter(expander_rect.center())
+        painter.drawImage(expander_icon_rect, expander_icon)
 
         # Draw label
         painter.setFont(font)
