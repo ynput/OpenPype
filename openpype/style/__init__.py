@@ -2,6 +2,8 @@ import os
 import json
 import collections
 from openpype import resources
+import six
+from .color_defs import parse_color
 
 
 _STYLESHEET_CACHE = None
@@ -13,6 +15,28 @@ current_dir = os.path.dirname(os.path.abspath(__file__))
 def get_colors_data():
     data = _get_colors_raw_data()
     return data.get("color") or {}
+
+
+def _convert_color_values_to_objects(value):
+    if isinstance(value, dict):
+        output = {}
+        for _key, _value in value.items():
+            output[_key] = _convert_color_values_to_objects(_value)
+        return output
+
+    if not isinstance(value, six.string_types):
+        raise TypeError((
+            "Unexpected type in colors data '{}'. Expected 'str' or 'dict'."
+        ).format(str(type(value))))
+    return parse_color(value)
+
+
+def get_objected_colors():
+    colors_data = get_colors_data()
+    output = {}
+    for key, value in colors_data.items():
+        output[key] = _convert_color_values_to_objects(value)
+    return output
 
 
 def _get_colors_raw_data():
