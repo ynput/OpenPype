@@ -651,10 +651,10 @@ QScrollBar::add-page:vertical, QScrollBar::sub-page:vertical {
 }
 
 #VariantInput[state="new"], #VariantInput[state="new"]:focus, #VariantInput[state="new"]:hover {
-    border-color: {color:publish-success};
+    border-color: {color:publisher:success};
 }
 #VariantInput[state="invalid"], #VariantInput[state="invalid"]:focus, #VariantInput[state="invalid"]:hover {
-    border-color: {color:publish-error};
+    border-color: {color:publisher:error};
 }
 
 #VariantInput[state="empty"], #VariantInput[state="empty"]:focus, #VariantInput[state="empty"]:hover {
@@ -697,7 +697,7 @@ QScrollBar::add-page:vertical, QScrollBar::sub-page:vertical {
 }
 
 #ListViewSubsetName[state="invalid"] {
-    color: {color:publish-error};
+    color: {color:publisher:error};
 }
 
 #PublishFrame {
@@ -721,15 +721,15 @@ QScrollBar::add-page:vertical, QScrollBar::sub-page:vertical {
 }
 
 #PublishInfoFrame[state="0"] {
-	background: {color:publish-error};
+	background: {color:publisher:error};
 }
 
 #PublishInfoFrame[state="1"] {
-	background: {color:publish-success};
+	background: {color:publisher:success};
 }
 
 #PublishInfoFrame[state="2"] {
-	background: {color:publish-warning};
+	background: {color:publisher:warning};
 }
 
 #PublishInfoFrame QLabel {
@@ -785,7 +785,7 @@ QScrollBar::add-page:vertical, QScrollBar::sub-page:vertical {
 }
 
 #TasksCombobox[state="invalid"], #AssetNameInput[state="invalid"] {
-    border-color: {color:publish-error};
+    border-color: {color:publisher:error};
 }
 
 #PublishProgressBar[state="0"]::chunk {

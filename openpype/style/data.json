@@ -49,8 +49,18 @@
         "border-hover": "hsla(220, 14%, 70%, .3)",
         "border-focus": "hsl(200, 60%, 60%)",
 
-        "publish-error": "#AA5050",
-        "publish-success": "#458056",
-        "publish-warning": "#ffc671"
+        "publisher": {
+            "error": "#AA5050",
+            "success": "#458056",
+            "warning": "#ffc671",
+            "list-view-group": {
+                "bg": "#434a56",
+                "bg-hover": "hsla(220, 14%, 70%, .3)",
+                "bg-selected-hover": "hsla(200, 60%, 60%, .4)",
+                "bg-expander": "#222222",
+                "bg-expander-hover": "#2d6c9f",
+                "bg-expander-selected-hover": "#3784c5"
+            }
+        }
     }
 }
