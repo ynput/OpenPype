@@ -57,7 +57,7 @@
                 "bg": "#434a56",
                 "bg-hover": "hsla(220, 14%, 70%, .3)",
                 "bg-selected-hover": "hsla(200, 60%, 60%, .4)",
-                "bg-expander": "#222222",
+                "bg-expander": "#2C313A",
                 "bg-expander-hover": "#2d6c9f",
                 "bg-expander-selected-hover": "#3784c5"
             }
