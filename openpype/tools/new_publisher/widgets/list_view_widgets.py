@@ -40,7 +40,7 @@ class ListItemDelegate(QtWidgets.QStyledItemDelegate):
         body_rect = QtCore.QRectF(option.rect)
         bg_rect = QtCore.QRectF(
             body_rect.left(), body_rect.top() + 1,
-            body_rect.width() - 5, body_rect.height() - 2
+            body_rect.width(), body_rect.height() - 2
         )
 
         expander_rect = QtCore.QRectF(bg_rect)
@@ -89,6 +89,10 @@ class ListItemDelegate(QtWidgets.QStyledItemDelegate):
                 )
 
         # Draw backgrounds
+        painter.setRenderHints(
+            painter.Antialiasing
+            | painter.SmoothPixmapTransform
+        )
         painter.save()
         painter.setClipRect(expander_rect)
         for color in expander_colors:
