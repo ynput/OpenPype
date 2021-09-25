@@ -1,10 +1,9 @@
 import getpass
 import os
 
-from avalon.tvpaint import lib, pipeline
+from avalon.tvpaint import lib, pipeline, get_current_workfile_context
 from avalon import api, io
-
-from openpype import Anatomy
+import openpype
 
 
 class LoadWorkfile(pipeline.Loader):
@@ -34,19 +33,29 @@ class LoadWorkfile(pipeline.Loader):
         project = io.find_one({
             "type": "project"
         })
-        session = api.Session
+        context = get_current_workfile_context()
+        template_key = openpype.lib.get_workfile_template_key_from_context(
+            context["asset"],
+            context["task"],
+            host,
+            project_name=project["name"]
+        )
+        anatomy = openpype.Anatomy(project["name"])
         data = {
             "project": {
                 "name": project["name"],
                 "code": project["data"].get("code")
             },
-            "asset": session["AVALON_ASSET"],
-            "task": session["AVALON_TASK"],
+            "asset": context["asset"],
+            "task": context["task"],
             "version": 1,
-            "user": getpass.getuser()
+            "user": getpass.getuser(),
+            "root": {
+                template_key: anatomy.roots[template_key]
+            },
+            "hierarchy": openpype.lib.get_hierarchy()
         }
-        anatomy = Anatomy(project["name"])
-        template = anatomy.templates["work"]["file"]
+        template = anatomy.templates[template_key]["file"]
 
         # Define saving file extension
         current_file = host.current_file()
@@ -59,8 +68,11 @@ class LoadWorkfile(pipeline.Loader):
 
         data["ext"] = extension
 
+        work_root = api.format_template_with_optional_keys(
+            data, anatomy.templates[template_key]["folder"]
+        )
         version = api.last_workfile_with_version(
-            host.work_root(session), template, data, [data["ext"]]
+            work_root, template, data, [data["ext"]]
         )[1]
 
         if version is None:
@@ -71,7 +83,7 @@ class LoadWorkfile(pipeline.Loader):
         data["version"] = version
 
         path = os.path.join(
-            host.work_root(session),
+            work_root,
             api.format_template_with_optional_keys(data, template)
         )
         host.save_file(path)
