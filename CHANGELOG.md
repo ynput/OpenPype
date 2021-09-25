@@ -1,8 +1,31 @@
 # Changelog
 
+## [3.5.0-nightly.1](https://github.com/pypeclub/OpenPype/tree/HEAD)
+
+[Full Changelog](https://github.com/pypeclub/OpenPype/compare/3.4.1...HEAD)
+
+**🆕 New features**
+
+- Maya: Validate setdress top group [\#2068](https://github.com/pypeclub/OpenPype/pull/2068)
+- Maya: Enable publishing render attrib sets \(e.g. V-Ray Displacement\) with model [\#1955](https://github.com/pypeclub/OpenPype/pull/1955)
+
+**🚀 Enhancements**
+
+- Project manager: Filter first item after selection of project [\#2069](https://github.com/pypeclub/OpenPype/pull/2069)
+- Tools: add support for pyenv on windows [\#2051](https://github.com/pypeclub/OpenPype/pull/2051)
+
+**🐛 Bug fixes**
+
+- Fix Sync Queue when project disabled [\#2063](https://github.com/pypeclub/OpenPype/pull/2063)
+- TVPaint: Fixed rendered frame indexes [\#1946](https://github.com/pypeclub/OpenPype/pull/1946)
+
 ## [3.4.1](https://github.com/pypeclub/OpenPype/tree/3.4.1) (2021-09-23)
 
-[Full Changelog](https://github.com/pypeclub/OpenPype/compare/3.4.0...3.4.1)
+[Full Changelog](https://github.com/pypeclub/OpenPype/compare/CI/3.4.1-nightly.1...3.4.1)
+
+**🆕 New features**
+
+- Settings: Flag project as deactivated and hide from tools' view [\#2008](https://github.com/pypeclub/OpenPype/pull/2008)
 
 **🚀 Enhancements**
 
@@ -13,11 +36,11 @@
 - Loader: Families filtering [\#2043](https://github.com/pypeclub/OpenPype/pull/2043)
 - Settings UI: Project view enhancements [\#2042](https://github.com/pypeclub/OpenPype/pull/2042)
 - Settings for Nuke IncrementScriptVersion [\#2039](https://github.com/pypeclub/OpenPype/pull/2039)
+- Loader & Library loader: Use tools from OpenPype [\#2038](https://github.com/pypeclub/OpenPype/pull/2038)
 - Adding predefined project folders creation in PM [\#2030](https://github.com/pypeclub/OpenPype/pull/2030)
 - WebserverModule: Removed interface of webserver module [\#2028](https://github.com/pypeclub/OpenPype/pull/2028)
 - TimersManager: Removed interface of timers manager [\#2024](https://github.com/pypeclub/OpenPype/pull/2024)
 - Feature Maya import asset from scene inventory [\#2018](https://github.com/pypeclub/OpenPype/pull/2018)
-- Settings: Flag project as deactivated and hide from tools' view [\#2008](https://github.com/pypeclub/OpenPype/pull/2008)
 
 **🐛 Bug fixes**
 
@@ -35,6 +58,11 @@
 
 [Full Changelog](https://github.com/pypeclub/OpenPype/compare/CI/3.4.0-nightly.6...3.4.0)
 
+### 📖 Documentation
+
+- Documentation: Ftrack launch argsuments update [\#2014](https://github.com/pypeclub/OpenPype/pull/2014)
+- Nuke Quick Start / Tutorial [\#1952](https://github.com/pypeclub/OpenPype/pull/1952)
+
 **🆕 New features**
 
 - Nuke: Compatibility with Nuke 13 [\#2003](https://github.com/pypeclub/OpenPype/pull/2003)
@@ -42,7 +70,6 @@
 **🚀 Enhancements**
 
 - Added possibility to configure of synchronization of workfile version… [\#2041](https://github.com/pypeclub/OpenPype/pull/2041)
-- Loader & Library loader: Use tools from OpenPype [\#2038](https://github.com/pypeclub/OpenPype/pull/2038)
 - General: Task types in profiles [\#2036](https://github.com/pypeclub/OpenPype/pull/2036)
 - Console interpreter: Handle invalid sizes on initialization [\#2022](https://github.com/pypeclub/OpenPype/pull/2022)
 - Ftrack: Show OpenPype versions in event server status [\#2019](https://github.com/pypeclub/OpenPype/pull/2019)
@@ -62,7 +89,6 @@
 - Global: Settings defined by Addons/Modules [\#1959](https://github.com/pypeclub/OpenPype/pull/1959)
 - CI: change release numbering triggers [\#1954](https://github.com/pypeclub/OpenPype/pull/1954)
 - Global: Avalon Host name collector [\#1949](https://github.com/pypeclub/OpenPype/pull/1949)
-- OpenPype: Add version validation and `--headless` mode and update progress 🔄 [\#1939](https://github.com/pypeclub/OpenPype/pull/1939)
 
 **🐛 Bug fixes**
 
@@ -85,21 +111,18 @@
 - Removed deprecated submodules [\#1967](https://github.com/pypeclub/OpenPype/pull/1967)
 - Global: ExtractJpeg can handle filepaths with spaces [\#1961](https://github.com/pypeclub/OpenPype/pull/1961)
 
-### 📖 Documentation
-
-- Documentation: Ftrack launch argsuments update [\#2014](https://github.com/pypeclub/OpenPype/pull/2014)
-- Nuke Quick Start / Tutorial [\#1952](https://github.com/pypeclub/OpenPype/pull/1952)
-
 ## [3.3.1](https://github.com/pypeclub/OpenPype/tree/3.3.1) (2021-08-20)
 
 [Full Changelog](https://github.com/pypeclub/OpenPype/compare/CI/3.3.1-nightly.1...3.3.1)
 
+**🚀 Enhancements**
+
+- OpenPype: Add version validation and `--headless` mode and update progress 🔄 [\#1939](https://github.com/pypeclub/OpenPype/pull/1939)
+
 **🐛 Bug fixes**
 
-- TVPaint: Fixed rendered frame indexes [\#1946](https://github.com/pypeclub/OpenPype/pull/1946)
 - Maya: Menu actions fix [\#1945](https://github.com/pypeclub/OpenPype/pull/1945)
 - standalone: editorial shared object problem [\#1941](https://github.com/pypeclub/OpenPype/pull/1941)
-- Bugfix nuke deadline app name [\#1928](https://github.com/pypeclub/OpenPype/pull/1928)
 
 ## [3.3.0](https://github.com/pypeclub/OpenPype/tree/3.3.0) (2021-08-17)
 
@@ -112,15 +135,12 @@
 **🚀 Enhancements**
 
 - Python console interpreter [\#1940](https://github.com/pypeclub/OpenPype/pull/1940)
-- Global: Updated logos and Default settings [\#1927](https://github.com/pypeclub/OpenPype/pull/1927)
-- Check for missing ✨ Python when using `pyenv` [\#1925](https://github.com/pypeclub/OpenPype/pull/1925)
 
 **🐛 Bug fixes**
 
 - Fix - ftrack family was added incorrectly in some cases [\#1935](https://github.com/pypeclub/OpenPype/pull/1935)
 - Fix - Deadline publish on Linux started Tray instead of headless publishing [\#1930](https://github.com/pypeclub/OpenPype/pull/1930)
 - Maya: Validate Model Name - repair accident deletion in settings defaults [\#1929](https://github.com/pypeclub/OpenPype/pull/1929)
-- Nuke: submit to farm failed due `ftrack` family remove [\#1926](https://github.com/pypeclub/OpenPype/pull/1926)
 
 **Merged pull requests:**
 
