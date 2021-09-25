@@ -609,13 +609,22 @@ class ProjectWidget(SettingsCategoryWidget):
         self.project_list_widget.refresh()
 
     def _on_reset_crash(self):
-        self.project_list_widget.setEnabled(False)
+        self._set_enabled_project_list(False)
         super(ProjectWidget, self)._on_reset_crash()
 
     def _on_reset_success(self):
-        if not self.project_list_widget.isEnabled():
-            self.project_list_widget.setEnabled(True)
+        self._set_enabled_project_list(True)
         super(ProjectWidget, self)._on_reset_success()
+
+    def _set_enabled_project_list(self, enabled):
+        if (
+            enabled
+            and self.modify_defaults_checkbox
+            and self.modify_defaults_checkbox.isChecked()
+        ):
+            enabled = False
+        if self.project_list_widget.isEnabled() != enabled:
+            self.project_list_widget.setEnabled(enabled)
 
     def _create_root_entity(self):
         self.entity = ProjectSettings(change_state=False)
@@ -637,7 +646,8 @@ class ProjectWidget(SettingsCategoryWidget):
 
             if self.modify_defaults_checkbox:
                 self.modify_defaults_checkbox.setEnabled(True)
-            self.project_list_widget.setEnabled(True)
+
+            self._set_enabled_project_list(True)
 
         except DefaultsNotDefined:
             if not self.modify_defaults_checkbox:
@@ -646,7 +656,7 @@ class ProjectWidget(SettingsCategoryWidget):
             self.entity.set_defaults_state()
             self.modify_defaults_checkbox.setChecked(True)
             self.modify_defaults_checkbox.setEnabled(False)
-            self.project_list_widget.setEnabled(False)
+            self._set_enabled_project_list(False)
 
         except StudioDefaultsNotDefined:
             self.select_default_project()
@@ -666,8 +676,10 @@ class ProjectWidget(SettingsCategoryWidget):
 
     def _on_modify_defaults(self):
         if self.modify_defaults_checkbox.isChecked():
+            self._set_enabled_project_list(False)
             if not self.entity.is_in_defaults_state():
                 self.reset()
         else:
+            self._set_enabled_project_list(True)
             if not self.entity.is_in_studio_state():
                 self.reset()

@@ -1,8 +1,26 @@
 import re
 import logging
-from .applications import compile_list_of_regexes
 
 log = logging.getLogger(__name__)
+
+
+def compile_list_of_regexes(in_list):
+    """Convert strings in entered list to compiled regex objects."""
+    regexes = list()
+    if not in_list:
+        return regexes
+
+    for item in in_list:
+        if not item:
+            continue
+        try:
+            regexes.append(re.compile(item))
+        except TypeError:
+            print((
+                "Invalid type \"{}\" value \"{}\"."
+                " Expected string based object. Skipping."
+            ).format(str(type(item)), str(item)))
+    return regexes
 
 
 def _profile_exclusion(matching_profiles, logger):
@@ -165,7 +183,8 @@ def filter_profiles(profiles_data, key_values, keys_order=None, logger=None):
             if match == -1:
                 profile_value = profile.get(key) or []
                 logger.debug(
-                    "\"{}\" not found in {}".format(key, profile_value)
+                    "\"{}\" not found in \"{}\": {}".format(value, key,
+                                                            profile_value)
                 )
                 profile_points = -1
                 break
@@ -192,13 +211,13 @@ def filter_profiles(profiles_data, key_values, keys_order=None, logger=None):
     ])
 
     if not matching_profiles:
-        logger.warning(
+        logger.info(
             "None of profiles match your setup. {}".format(log_parts)
         )
         return None
 
     if len(matching_profiles) > 1:
-        logger.warning(
+        logger.info(
             "More than one profile match your setup. {}".format(log_parts)
         )
 

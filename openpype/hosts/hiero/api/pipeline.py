@@ -4,10 +4,8 @@ Basic avalon integration
 import os
 import contextlib
 from collections import OrderedDict
-from avalon.tools import (
-    workfiles,
-    publish as _publish
-)
+from avalon.tools import publish as _publish
+from openpype.tools import workfiles
 from avalon.pipeline import AVALON_CONTAINER_ID
 from avalon import api as avalon
 from avalon import schema

@@ -3,7 +3,7 @@ import re
 import json
 
 from openpype_modules.ftrack.lib import BaseAction, statics_icon
-from openpype.api import Anatomy, get_project_settings
+from openpype.api import get_project_basic_paths, create_project_folders
 
 
 class CreateProjectFolders(BaseAction):
@@ -72,25 +72,18 @@ class CreateProjectFolders(BaseAction):
     def launch(self, session, entities, event):
         # Get project entity
         project_entity = self.get_project_from_entity(entities[0])
-        # Load settings for project
         project_name = project_entity["full_name"]
-        project_settings = get_project_settings(project_name)
-        project_folder_structure = (
-            project_settings["global"]["project_folder_structure"]
-        )
-        if not project_folder_structure:
-            return {
-                "success": False,
-                "message": "Project structure is not set."
-            }
-
         try:
-            if isinstance(project_folder_structure, str):
-                project_folder_structure = json.loads(project_folder_structure)
-
             # Get paths based on presets
-            basic_paths = self.get_path_items(project_folder_structure)
-            self.create_folders(basic_paths, project_entity)
+            basic_paths = get_project_basic_paths(project_name)
+            if not basic_paths:
+                return {
+                    "success": False,
+                    "message": "Project structure is not set."
+                }
+
+            # Invoking OpenPype API to create the project folders
+            create_project_folders(basic_paths, project_name)
             self.create_ftrack_entities(basic_paths, project_entity)
 
         except Exception as exc:
@@ -194,58 +187,6 @@ class CreateProjectFolders(BaseAction):
         new_ent = self.session.create(ent_type, data)
         self.session.commit()
         return new_ent
-
-    def get_path_items(self, in_dict):
-        output = []
-        for key, value in in_dict.items():
-            if not value:
-                output.append(key)
-            else:
-                paths = self.get_path_items(value)
-                for path in paths:
-                    if not isinstance(path, (list, tuple)):
-                        path = [path]
-
-                    output.append([key, *path])
-
-        return output
-
-    def compute_paths(self, basic_paths_items, project_root):
-        output = []
-        for path_items in basic_paths_items:
-            clean_items = []
-            for path_item in path_items:
-                matches = re.findall(self.pattern_array, path_item)
-                if len(matches) > 0:
-                    path_item = path_item.replace(matches[0], "")
-                if path_item == self.project_root_key:
-                    path_item = project_root
-                clean_items.append(path_item)
-            output.append(os.path.normpath(os.path.sep.join(clean_items)))
-        return output
-
-    def create_folders(self, basic_paths, project):
-        anatomy = Anatomy(project["full_name"])
-        roots_paths = []
-        if isinstance(anatomy.roots, dict):
-            for root in anatomy.roots.values():
-                roots_paths.append(root.value)
-        else:
-            roots_paths.append(anatomy.roots.value)
-
-        for root_path in roots_paths:
-            project_root = os.path.join(root_path, project["full_name"])
-            full_paths = self.compute_paths(basic_paths, project_root)
-            # Create folders
-            for path in full_paths:
-                full_path = path.format(project_root=project_root)
-                if os.path.exists(full_path):
-                    self.log.debug(
-                        "Folder already exists: {}".format(full_path)
-                    )
-                else:
-                    self.log.debug("Creating folder: {}".format(full_path))
-                    os.makedirs(full_path)
 
 
 def register(session):

@@ -10,10 +10,12 @@ from .pipeline import (
 
 from avalon.tools import (
     creator,
-    loader,
     sceneinventory,
-    libraryloader,
     subsetmanager
+)
+from openpype.tools import (
+    loader,
+    libraryloader,
 )
 
 

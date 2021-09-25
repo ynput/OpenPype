@@ -7,7 +7,7 @@ from collections import OrderedDict
 
 
 from avalon import api, io, lib
-from avalon.tools import workfiles
+from openpype.tools import workfiles
 import avalon.nuke
 from avalon.nuke import lib as anlib
 from avalon.nuke import (
@@ -287,7 +287,7 @@ def script_name():
 
 def add_button_write_to_read(node):
     name = "createReadNode"
-    label = "Cread Read From Rendered"
+    label = "Create Read From Rendered"
     value = "import write_to_read;write_to_read.write_to_read(nuke.thisNode())"
     knob = nuke.PyScript_Knob(name, label, value)
     knob.clearFlag(nuke.STARTLINE)
@@ -727,7 +727,7 @@ class WorkfileSettings(object):
             log.error(msg)
             nuke.message(msg)
 
-        log.warning(">> root_dict: {}".format(root_dict))
+        log.debug(">> root_dict: {}".format(root_dict))
 
         # first set OCIO
         if self._root_node["colorManagement"].value() \
@@ -1277,6 +1277,7 @@ class ExporterReview:
     def clean_nodes(self):
         for node in self._temp_nodes:
             nuke.delete(node)
+        self._temp_nodes = []
         self.log.info("Deleted nodes...")
 
 
@@ -1301,6 +1302,7 @@ class ExporterReviewLut(ExporterReview):
                  lut_style=None):
         # initialize parent class
         ExporterReview.__init__(self, klass, instance)
+        self._temp_nodes = []
 
         # deal with now lut defined in viewer lut
         if hasattr(klass, "viewer_lut_raw"):

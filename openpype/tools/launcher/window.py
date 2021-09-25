@@ -261,7 +261,7 @@ class LauncherWindow(QtWidgets.QDialog):
         self.setFocusPolicy(QtCore.Qt.StrongFocus)
         self.setAttribute(QtCore.Qt.WA_DeleteOnClose, False)
 
-        icon = QtGui.QIcon(resources.pype_icon_filepath())
+        icon = QtGui.QIcon(resources.get_openpype_icon_filepath())
         self.setWindowIcon(icon)
         self.setStyleSheet(style.load_stylesheet())
 
@@ -271,7 +271,6 @@ class LauncherWindow(QtWidgets.QDialog):
         )
 
         project_model = ProjectModel(self.dbcon)
-        project_model.hide_invisible = True
         project_handler = ProjectHandler(self.dbcon, project_model)
 
         project_panel = ProjectsPanel(project_handler)
