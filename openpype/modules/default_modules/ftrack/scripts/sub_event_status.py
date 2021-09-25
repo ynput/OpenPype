@@ -2,6 +2,7 @@ import os
 import sys
 import json
 import threading
+import collections
 import signal
 import socket
 import datetime
@@ -165,7 +166,7 @@ class StatusFactory:
             return
 
         source = event["data"]["source"]
-        data = event["data"]["status_info"]
+        data = collections.OrderedDict(event["data"]["status_info"])
 
         self.update_status_info(source, data)
 
@@ -348,7 +349,7 @@ def heartbeat():
 
 def main(args):
     port = int(args[-1])
-    server_info = json.loads(args[-2])
+    server_info = collections.OrderedDict(json.loads(args[-2]))
 
     # Create a TCP/IP socket
     sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)

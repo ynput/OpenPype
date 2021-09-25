@@ -114,6 +114,30 @@ QPushButton[btn-type="expand-toggle"] {
     background: #21252B;
 }
 
+/* SLider */
+QSlider::groove {
+    border: 1px solid #464b54;
+    border-radius: 0.3em;
+}
+QSlider::groove:horizontal {
+    height: 8px;
+}
+QSlider::groove:vertical {
+    width: 8px;
+}
+QSlider::handle {
+    width: 10px;
+    height: 10px;
+
+    border-radius: 5px;
+}
+QSlider::handle:horizontal {
+    margin: -2px 0;
+}
+QSlider::handle:vertical {
+    margin: 0 -2px;
+}
+
 #GroupWidget {
     border-bottom: 1px solid #21252B;
 }
@@ -122,6 +146,15 @@ QPushButton[btn-type="expand-toggle"] {
     border: 1px solid #464b54;
     background: #21252B;
 }
+
+#ProjectListWidget QListView:disabled {
+    background: #282C34;
+}
+
+#ProjectListWidget QListView::item:disabled {
+    color: #4e5254;
+}
+
 #ProjectListWidget QLabel {
     background: transparent;
     font-weight: bold;
@@ -224,8 +257,6 @@ QTabBar::tab:!selected {
 QTabBar::tab:!selected:hover {
     background: #333840;
 }
-
-
 
 QTabBar::tab:first:selected {
     margin-left: 0;
@@ -381,12 +412,15 @@ QHeaderView::section  {
     font-weight: bold;
 }
 
-QTableView::item:pressed, QListView::item:pressed, QTreeView::item:pressed  {
+QAbstractItemView::item:pressed {
     background: #78879b;
     color: #FFFFFF;
 }
 
-QTableView::item:selected:active, QTreeView::item:selected:active, QListView::item:selected:active  {
+QAbstractItemView::item:selected:active {
+    background: #3d8ec9;
+}
+QAbstractItemView::item:selected:!active {
     background: #3d8ec9;
 }
 

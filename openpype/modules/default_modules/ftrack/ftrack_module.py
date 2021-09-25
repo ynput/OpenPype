@@ -7,10 +7,8 @@ from openpype.modules import OpenPypeModule
 from openpype_interfaces import (
     ITrayModule,
     IPluginPaths,
-    ITimersManager,
     ILaunchHookPaths,
-    ISettingsChangeListener,
-    IFtrackEventHandlerPaths
+    ISettingsChangeListener
 )
 from openpype.settings import SaveWarningExc
 
@@ -21,7 +19,6 @@ class FtrackModule(
     OpenPypeModule,
     ITrayModule,
     IPluginPaths,
-    ITimersManager,
     ILaunchHookPaths,
     ISettingsChangeListener
 ):
@@ -61,6 +58,10 @@ class FtrackModule(
         self.user_event_handlers_paths = user_event_handlers_paths
         self.tray_module = None
 
+        # TimersManager connection
+        self.timers_manager_connector = None
+        self._timers_manager_module = None
+
     def get_global_environments(self):
         """Ftrack's global environments."""
         return {
@@ -79,9 +80,17 @@ class FtrackModule(
 
     def connect_with_modules(self, enabled_modules):
         for module in enabled_modules:
-            if not isinstance(module, IFtrackEventHandlerPaths):
+            if not hasattr(module, "get_ftrack_event_handler_paths"):
                 continue
-            paths_by_type = module.get_event_handler_paths() or {}
+
+            try:
+                paths_by_type = module.get_ftrack_event_handler_paths()
+            except Exception:
+                continue
+
+            if not isinstance(paths_by_type, dict):
+                continue
+
             for key, value in paths_by_type.items():
                 if not value:
                     continue
@@ -101,16 +110,6 @@ class FtrackModule(
                     self.server_event_handlers_paths.extend(value)
                 elif key == "user":
                     self.user_event_handlers_paths.extend(value)
-
-    def start_timer(self, data):
-        """Implementation of ITimersManager interface."""
-        if self.tray_module:
-            self.tray_module.start_timer_manager(data)
-
-    def stop_timer(self):
-        """Implementation of ITimersManager interface."""
-        if self.tray_module:
-            self.tray_module.stop_timer_manager()
 
     def on_system_settings_save(
         self, old_value, new_value, changes, new_value_metadata
@@ -343,7 +342,10 @@ class FtrackModule(
 
     def tray_init(self):
         from .tray import FtrackTrayWrapper
+
         self.tray_module = FtrackTrayWrapper(self)
+        # Module is it's own connector to TimersManager
+        self.timers_manager_connector = self
 
     def tray_menu(self, parent_menu):
         return self.tray_module.tray_menu(parent_menu)
@@ -357,3 +359,23 @@ class FtrackModule(
     def set_credentials_to_env(self, username, api_key):
         os.environ["FTRACK_API_USER"] = username or ""
         os.environ["FTRACK_API_KEY"] = api_key or ""
+
+    # --- TimersManager connection methods ---
+    def start_timer(self, data):
+        if self.tray_module:
+            self.tray_module.start_timer_manager(data)
+
+    def stop_timer(self):
+        if self.tray_module:
+            self.tray_module.stop_timer_manager()
+
+    def register_timers_manager(self, timer_manager_module):
+        self._timers_manager_module = timer_manager_module
+
+    def timer_started(self, data):
+        if self._timers_manager_module is not None:
+            self._timers_manager_module.timer_started(self.id, data)
+
+    def timer_stopped(self):
+        if self._timers_manager_module is not None:
+            self._timers_manager_module.timer_stopped(self.id)

@@ -18,6 +18,8 @@ from .pype_commands import PypeCommands
 @click.option("--list-versions", is_flag=True, expose_value=False,
               help=("list all detected versions. Use With `--use-staging "
                     "to list staging versions."))
+@click.option("--validate-version", expose_value=False,
+              help="validate given version integrity")
 def main(ctx):
     """Pype is main command serving as entry point to pipeline system.
 

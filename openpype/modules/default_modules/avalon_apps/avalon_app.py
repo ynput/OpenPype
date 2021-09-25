@@ -2,13 +2,10 @@ import os
 import openpype
 from openpype import resources
 from openpype.modules import OpenPypeModule
-from openpype_interfaces import (
-    ITrayModule,
-    IWebServerRoutes
-)
+from openpype_interfaces import ITrayModule
 
 
-class AvalonModule(OpenPypeModule, ITrayModule, IWebServerRoutes):
+class AvalonModule(OpenPypeModule, ITrayModule):
     name = "avalon"
 
     def initialize(self, modules_settings):
@@ -55,12 +52,12 @@ class AvalonModule(OpenPypeModule, ITrayModule, IWebServerRoutes):
     def tray_init(self):
         # Add library tool
         try:
-            from avalon.tools.libraryloader import app
-            from avalon import style
             from Qt import QtGui
+            from avalon import style
+            from openpype.tools.libraryloader import LibraryLoaderWindow
 
-            self.libraryloader = app.Window(
-                icon=QtGui.QIcon(resources.pype_icon_filepath()),
+            self.libraryloader = LibraryLoaderWindow(
+                icon=QtGui.QIcon(resources.get_openpype_icon_filepath()),
                 show_projects=True,
                 show_libraries=True
             )
@@ -70,16 +67,6 @@ class AvalonModule(OpenPypeModule, ITrayModule, IWebServerRoutes):
                 "Couldn't load Library loader tool for tray.",
                 exc_info=True
             )
-
-    def connect_with_modules(self, _enabled_modules):
-        return
-
-    def webserver_initialization(self, server_manager):
-        """Implementation of IWebServerRoutes interface."""
-
-        if self.tray_initialized:
-            from .rest_api import AvalonRestApiResource
-            self.rest_api_obj = AvalonRestApiResource(self, server_manager)
 
     # Definition of Tray menu
     def tray_menu(self, tray_menu):
@@ -108,3 +95,10 @@ class AvalonModule(OpenPypeModule, ITrayModule, IWebServerRoutes):
         # for Windows
         self.libraryloader.activateWindow()
         self.libraryloader.refresh()
+
+    # Webserver module implementation
+    def webserver_initialization(self, server_manager):
+        """Add routes for webserver."""
+        if self.tray_initialized:
+            from .rest_api import AvalonRestApiResource
+            self.rest_api_obj = AvalonRestApiResource(self, server_manager)

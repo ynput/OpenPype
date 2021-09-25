@@ -13,7 +13,7 @@ class PrecollectWorkfile(pyblish.api.ContextPlugin):
     """Precollect the current working file into context"""
 
     label = "Precollect Workfile"
-    order = pyblish.api.CollectorOrder - 0.6
+    order = pyblish.api.CollectorOrder - 0.5
 
     def process(self, context):
 
