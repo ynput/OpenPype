@@ -41,6 +41,9 @@ class CreateHDA(plugin.Creator):
         hda_node.setName(self.name)
         hou.moveNodesTo(self.nodes, hda_node)
         hda_node.layoutChildren()
+        # delete node created by Avalon in /out
+        # this needs to be addressed in future Houdini workflow refactor.
+        hou.node("/out/{}".format(self.name)).destroy()
 
         lib.imprint(hda_node, self.data)
 

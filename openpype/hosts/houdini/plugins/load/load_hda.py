@@ -15,7 +15,6 @@ class HdaLoader(api.Loader):
     color = "orange"
 
     def load(self, context, name=None, namespace=None, data=None):
-
         import os
         import hou
 
@@ -33,7 +32,6 @@ class HdaLoader(api.Loader):
         node_name = "{0}_{1:03d}".format(formatted, counter)
 
         hou.hda.installFile(file_path)
-        print("installing {}".format(name))
         hda_node = obj.createNode(name, node_name)
 
         self[:] = [hda_node]
@@ -48,9 +46,17 @@ class HdaLoader(api.Loader):
         )
 
     def update(self, container, representation):
-        hda_node = container["node"]
-        hda_def = hda_node.type().definition()
+        import hou
 
+        hda_node = container["node"]
+        file_path = api.get_representation_path(representation)
+        file_path = file_path.replace("\\", "/")
+        hou.hda.installFile(file_path)
+        defs = hda_node.type().allInstalledDefinitions()
+        def_paths = [d.libraryFilePath() for d in defs]
+        new = def_paths.index(file_path)
+        defs[new].setIsPreferred(True)
 
     def remove(self, container):
-        pass
+        node = container["node"]
+        node.destroy()
