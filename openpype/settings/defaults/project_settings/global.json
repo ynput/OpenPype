@@ -8,6 +8,10 @@
             "enabled": true,
             "optional": false
         },
+        "ValidateIntent": {
+            "enabled": false,
+            "profiles": []
+        },
         "IntegrateHeroVersion": {
             "enabled": true,
             "optional": true,
