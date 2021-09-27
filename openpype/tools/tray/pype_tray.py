@@ -119,6 +119,13 @@ class TrayManager:
 
         self.main_thread_timer = main_thread_timer
 
+
+        self.execute_in_main_thread(self._startup_validations)
+
+    def _startup_validations(self):
+        """Run possible startup validations."""
+        self._validate_settings_defaults()
+
     def _validate_settings_defaults(self):
         valid = True
         try:
