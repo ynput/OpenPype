@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 from avalon import api
 
-from avalon.houdini import pipeline, lib
+from avalon.houdini import pipeline
 
 
 class HdaLoader(api.Loader):
