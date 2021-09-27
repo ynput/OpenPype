@@ -271,13 +271,15 @@ class DropboxClient(Client):
             try:
                 self.client.files_list_folder(path=cloud_path.path)
                 return True
-            except dropbox.exceptions.AuthError:
+            except Exception as e:
+                print("Could not access dropbox: {}".format(e))
                 return False
 
         try:
             self.client.files_get_metadata(cloud_path.path)
             return True
-        except dropbox.exceptions.ApiError:
+        except Exception as e:
+            print("Could not access dropbox: {}".format(e))
             return False
 
     def _list_dir(
