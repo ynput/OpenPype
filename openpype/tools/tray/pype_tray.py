@@ -17,6 +17,11 @@ from openpype.api import (
 from openpype.lib import get_pype_execute_args
 from openpype.modules import TrayModulesManager
 from openpype import style
+from openpype.settings import (
+    SystemSettings,
+    ProjectSettings,
+    DefaultsNotDefined
+)
 
 from .pype_info_widget import PypeInfoWidget
 
@@ -113,6 +118,18 @@ class TrayManager:
         main_thread_timer.start()
 
         self.main_thread_timer = main_thread_timer
+
+    def _validate_settings_defaults(self):
+        valid = True
+        try:
+            SystemSettings()
+            ProjectSettings()
+
+        except DefaultsNotDefined:
+            valid = False
+
+        if valid:
+            return
 
     def show_tray_message(self, title, message, icon=None, msecs=None):
         """Show tray message.
