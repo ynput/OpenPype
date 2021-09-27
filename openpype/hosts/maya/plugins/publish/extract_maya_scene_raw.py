@@ -16,7 +16,7 @@ class ExtractMayaSceneRaw(openpype.api.Extractor):
 
     label = "Maya Scene (Raw)"
     hosts = ["maya"]
-    families = ["mayaAscii",
+    families = ["mayaScene",
                 "setdress",
                 "layout",
                 "camerarig",
