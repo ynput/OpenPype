@@ -236,21 +236,14 @@ class ExtractBurnin(pype.api.Extractor):
                         decompressed_dir,
                         input_file)
 
-                # Passing crf data to burnin script.
-                cmd = new_repre.get("ffmpeg_cmd", "")
-                args = cmd.split(" ")
-                for count, arg in enumerate(args):
-                    if arg == "-crf":
-                        burnin_data["crf"] = int(args[count + 1])
-                        break
-
                 # Data for burnin script
                 script_data = {
                     "input": temp_data["full_input_path"],
                     "output": temp_data["full_output_path"],
                     "burnin_data": burnin_data,
                     "options": burnin_options,
-                    "values": burnin_values
+                    "values": burnin_values,
+                    "ffmpeg_cmd": new_repre.get("ffmpeg_cmd", "")
                 }
 
                 self.log.debug(
