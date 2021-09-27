@@ -21,6 +21,7 @@ def add_implementation_envs(env, _app):
             new_nuke_paths.append(norm_path)
 
     env["NUKE_PATH"] = os.pathsep.join(new_nuke_paths)
+    env.pop("QT_AUTO_SCREEN_SCALE_FACTOR", None)
 
     # Try to add QuickTime to PATH
     quick_time_path = "C:/Program Files (x86)/QuickTime/QTSystem"
