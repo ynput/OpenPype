@@ -119,6 +119,8 @@ class TrayManager:
 
         self.main_thread_timer = main_thread_timer
 
+        # For storing missing settings dialog
+        self._settings_validation_dialog = None
 
         self.execute_in_main_thread(self._startup_validations)
 
@@ -137,6 +139,32 @@ class TrayManager:
 
         if valid:
             return
+
+        title = "Settings miss default values"
+        msg = (
+            "Your OpenPype may not work as expected because have missing"
+            " default settings values. Please contact OpenPype team."
+        )
+        msg_box = QtWidgets.QMessageBox(
+            QtWidgets.QMessageBox.Warning,
+            title,
+            msg,
+            QtWidgets.QMessageBox.Ok,
+            flags=QtCore.Qt.Dialog
+        )
+        icon = QtGui.QIcon(resources.get_openpype_icon_filepath())
+        msg_box.setWindowIcon(icon)
+        msg_box.setStyleSheet(style.load_stylesheet())
+        msg_box.buttonClicked.connect(self._post_validate_settings_defaults)
+
+        self._settings_validation_dialog = msg_box
+
+        msg_box.show()
+
+    def _post_validate_settings_defaults(self):
+        widget = self._settings_validation_dialog
+        self._settings_validation_dialog = None
+        widget.deleteLater()
 
     def show_tray_message(self, title, message, icon=None, msecs=None):
         """Show tray message.
