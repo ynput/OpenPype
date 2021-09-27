@@ -6,6 +6,18 @@
     "is_file": true,
     "children": [
         {
+            "type": "path",
+            "key": "addon_paths",
+            "label": "OpenPype AddOn Paths",
+            "use_label_wrap": true,
+            "multiplatform": true,
+            "multipath": true,
+            "require_restart": true
+        },
+        {
+            "type": "separator"
+        },
+        {
             "type": "dict",
             "key": "avalon",
             "label": "Avalon",
@@ -16,7 +28,8 @@
                     "type": "number",
                     "key": "AVALON_TIMEOUT",
                     "minimum": 0,
-                    "label": "Avalon Mongo Timeout (ms)"
+                    "label": "Avalon Mongo Timeout (ms)",
+                    "steps": 100
                 },
                 {
                     "type": "path",
@@ -60,6 +73,11 @@
                     "decimal": 2,
                     "key": "message_time",
                     "label": "When dialog will show"
+                },
+                {
+                    "type": "boolean",
+                    "key": "disregard_publishing",
+                    "label": "Disregard Publishing"
                 }
             ]
         },
@@ -104,14 +122,7 @@
                     "collapsible_key": false,
                     "object_type":
                     {
-                        "type": "dict",
-                        "children": [
-                            {
-                                "type": "providers-enum",
-                                "key": "provider",
-                                "label": "Provider"
-                            }
-                        ]
+                        "type": "sync-server-providers"
                     }
                 }
             ]
@@ -227,24 +238,28 @@
             ]
         },
         {
-            "type": "dict",
-            "key": "dropbox",
-            "label": "Dropbox",
-            "collapsible": true,
-            "require_restart": true,
-            "checkbox_key": "enabled",
-            "children": [
-                {
-                    "type": "boolean",
-                    "key": "enabled",
-                    "label": "Enabled"
-                },
-                {
-                    "type": "text",
-                    "key": "token",
-                    "label": "Token"
-                }
-            ]
+            "type": "dynamic_schema",
+            "name": "system_settings/modules"
+        },
+        {
+          "type": "dict",
+          "key": "dropbox",
+          "label": "Dropbox",
+          "collapsible": true,
+          "require_restart": true,
+          "checkbox_key": "enabled",
+          "children": [
+              {
+                  "type": "boolean",
+                  "key": "enabled",
+                  "label": "Enabled"
+              },
+              {
+                  "type": "text",
+                  "key": "token",
+                  "label": "Token"
+              }
+          ]
         }
     ]
 }

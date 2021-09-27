@@ -13,6 +13,9 @@ import openpype.api
 from openpype.lib import (
     get_ffmpeg_tool_path,
     ffprobe_streams,
+
+    path_to_subprocess_arg,
+
     should_decompress,
     get_decompress_dir,
     decompress
@@ -45,6 +48,7 @@ class ExtractReview(pyblish.api.InstancePlugin):
         "fusion",
         "tvpaint",
         "resolve",
+        "webpublisher",
         "aftereffects"
     ]
 
@@ -89,7 +93,7 @@ class ExtractReview(pyblish.api.InstancePlugin):
                 instance.data["representations"].remove(repre)
 
     def main_process(self, instance):
-        host_name = os.environ["AVALON_APP"]
+        host_name = instance.context.data["hostName"]
         task_name = os.environ["AVALON_TASK"]
         family = self.main_family_from_instance(instance)
 
@@ -479,7 +483,9 @@ class ExtractReview(pyblish.api.InstancePlugin):
 
         # Add video/image input path
         ffmpeg_input_args.append(
-            "-i \"{}\"".format(temp_data["full_input_path"])
+            "-i {}".format(
+                path_to_subprocess_arg(temp_data["full_input_path"])
+            )
         )
 
         # Add audio arguments if there are any. Skipped when output are images.
@@ -537,7 +543,7 @@ class ExtractReview(pyblish.api.InstancePlugin):
 
         # NOTE This must be latest added item to output arguments.
         ffmpeg_output_args.append(
-            "\"{}\"".format(temp_data["full_output_path"])
+            path_to_subprocess_arg(temp_data["full_output_path"])
         )
 
         return self.ffmpeg_full_args(
@@ -606,7 +612,7 @@ class ExtractReview(pyblish.api.InstancePlugin):
                     audio_filters.append(arg)
 
         all_args = []
-        all_args.append("\"{}\"".format(self.ffmpeg_path))
+        all_args.append(path_to_subprocess_arg(self.ffmpeg_path))
         all_args.extend(input_args)
         if video_filters:
             all_args.append("-filter:v")
@@ -853,7 +859,9 @@ class ExtractReview(pyblish.api.InstancePlugin):
             audio_in_args.append("-to {:0.10f}".format(audio_duration))
 
             # Add audio input path
-            audio_in_args.append("-i \"{}\"".format(audio["filename"]))
+            audio_in_args.append("-i {}".format(
+                path_to_subprocess_arg(audio["filename"])
+            ))
 
         # NOTE: These were changed from input to output arguments.
         # NOTE: value in "-ac" was hardcoded to 2, changed to audio inputs len.

@@ -9,7 +9,8 @@ from .constants import (
     DUPLICATED_ROLE,
     HIERARCHY_CHANGE_ABLE_ROLE,
     REMOVED_ROLE,
-    EDITOR_OPENED_ROLE
+    EDITOR_OPENED_ROLE,
+    PROJECT_NAME_ROLE
 )
 from .style import ResourceCache
 
@@ -29,7 +30,7 @@ class ProjectModel(QtGui.QStandardItemModel):
     def __init__(self, dbcon, *args, **kwargs):
         self.dbcon = dbcon
 
-        self._project_names = set()
+        self._items_by_name = {}
 
         super(ProjectModel, self).__init__(*args, **kwargs)
 
@@ -37,33 +38,62 @@ class ProjectModel(QtGui.QStandardItemModel):
         """Reload projects."""
         self.dbcon.Session["AVALON_PROJECT"] = None
 
-        project_items = []
+        new_project_items = []
 
-        none_project = QtGui.QStandardItem("< Select Project >")
-        none_project.setData(None)
-        project_items.append(none_project)
+        if None not in self._items_by_name:
+            none_project = QtGui.QStandardItem("< Select Project >")
+            self._items_by_name[None] = none_project
+            new_project_items.append(none_project)
 
-        database = self.dbcon.database
+        project_docs = self.dbcon.projects(
+            projection={"name": 1},
+            only_active=True
+        )
         project_names = set()
-        for project_name in database.collection_names():
-            # Each collection will have exactly one project document
-            project_doc = database[project_name].find_one(
-                {"type": "project"},
-                {"name": 1}
-            )
-            if not project_doc:
+        for project_doc in project_docs:
+            project_name = project_doc.get("name")
+            if not project_name:
                 continue
 
-            project_name = project_doc.get("name")
-            if project_name:
-                project_names.add(project_name)
-                project_items.append(QtGui.QStandardItem(project_name))
+            project_names.add(project_name)
+            if project_name not in self._items_by_name:
+                project_item = QtGui.QStandardItem(project_name)
+                project_item.setData(project_name, PROJECT_NAME_ROLE)
 
-        self.clear()
+                self._items_by_name[project_name] = project_item
+                new_project_items.append(project_item)
 
-        self._project_names = project_names
+        root_item = self.invisibleRootItem()
+        for project_name in tuple(self._items_by_name.keys()):
+            if project_name is None or project_name in project_names:
+                continue
+            project_item = self._items_by_name.pop(project_name)
+            root_item.removeRow(project_item.row())
 
-        self.invisibleRootItem().appendRows(project_items)
+        if new_project_items:
+            root_item.appendRows(new_project_items)
+
+
+class ProjectProxyFilter(QtCore.QSortFilterProxyModel):
+    """Filters default project item."""
+    def __init__(self, *args, **kwargs):
+        super(ProjectProxyFilter, self).__init__(*args, **kwargs)
+        self._filter_default = False
+
+    def set_filter_default(self, enabled=True):
+        """Set if filtering of default item is enabled."""
+        if enabled == self._filter_default:
+            return
+        self._filter_default = enabled
+        self.invalidateFilter()
+
+    def filterAcceptsRow(self, row, parent):
+        if not self._filter_default:
+            return True
+
+        model = self.sourceModel()
+        source_index = model.index(row, self.filterKeyColumn(), parent)
+        return source_index.data(PROJECT_NAME_ROLE) is not None
 
 
 class HierarchySelectionModel(QtCore.QItemSelectionModel):

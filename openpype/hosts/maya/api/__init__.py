@@ -8,7 +8,7 @@ from avalon import api as avalon
 from avalon import pipeline
 from avalon.maya import suspended_refresh
 from avalon.maya.pipeline import IS_HEADLESS
-from avalon.tools import workfiles
+from openpype.tools import workfiles
 from pyblish import api as pyblish
 from openpype.lib import any_outdated
 import openpype.hosts.maya
@@ -35,6 +35,7 @@ def install():
     pyblish.register_plugin_path(PUBLISH_PATH)
     avalon.register_plugin_path(avalon.Loader, LOAD_PATH)
     avalon.register_plugin_path(avalon.Creator, CREATE_PATH)
+    avalon.register_plugin_path(avalon.InventoryAction, INVENTORY_PATH)
     log.info(PUBLISH_PATH)
     menu.install()
 
@@ -97,6 +98,7 @@ def uninstall():
     pyblish.deregister_plugin_path(PUBLISH_PATH)
     avalon.deregister_plugin_path(avalon.Loader, LOAD_PATH)
     avalon.deregister_plugin_path(avalon.Creator, CREATE_PATH)
+    avalon.deregister_plugin_path(avalon.InventoryAction, INVENTORY_PATH)
 
     menu.uninstall()
 

@@ -376,11 +376,16 @@ class TaskTypeEnumEntity(BaseEnumEntity):
     schema_types = ["task-types-enum"]
 
     def _item_initalization(self):
-        self.multiselection = True
-        self.value_on_not_set = []
+        self.multiselection = self.schema_data.get("multiselection", True)
+        if self.multiselection:
+            self.valid_value_types = (list, )
+            self.value_on_not_set = []
+        else:
+            self.valid_value_types = (STRING_TYPE, )
+            self.value_on_not_set = ""
+
         self.enum_items = []
         self.valid_keys = set()
-        self.valid_value_types = (list, )
         self.placeholder = None
 
     def _get_enum_values(self):
@@ -396,53 +401,51 @@ class TaskTypeEnumEntity(BaseEnumEntity):
 
         return enum_items, valid_keys
 
+    def _convert_value_for_current_state(self, source_value):
+        if self.multiselection:
+            output = []
+            for key in source_value:
+                if key in self.valid_keys:
+                    output.append(key)
+            return output
+
+        if source_value not in self.valid_keys:
+            # Take first item from enum items
+            for item in self.enum_items:
+                for key in item.keys():
+                    source_value = key
+                break
+        return source_value
+
     def set_override_state(self, *args, **kwargs):
         super(TaskTypeEnumEntity, self).set_override_state(*args, **kwargs)
 
         self.enum_items, self.valid_keys = self._get_enum_values()
-        new_value = []
-        for key in self._current_value:
-            if key in self.valid_keys:
-                new_value.append(key)
-        self._current_value = new_value
 
+        if self.multiselection:
+            new_value = []
+            for key in self._current_value:
+                if key in self.valid_keys:
+                    new_value.append(key)
 
-class ProvidersEnum(BaseEnumEntity):
-    schema_types = ["providers-enum"]
+            if self._current_value != new_value:
+                self.set(new_value)
+        else:
+            if not self.enum_items:
+                self.valid_keys.add("")
+                self.enum_items.append({"": "< Empty >"})
 
-    def _item_initalization(self):
-        self.multiselection = False
-        self.value_on_not_set = ""
-        self.enum_items = []
-        self.valid_keys = set()
-        self.valid_value_types = (str, )
-        self.placeholder = None
+            for item in self.enum_items:
+                for key in item.keys():
+                    value_on_not_set = key
+                break
 
-    def _get_enum_values(self):
-        from openpype.modules.sync_server.providers import lib as lib_providers
-
-        providers = lib_providers.factory.providers
-
-        valid_keys = set()
-        valid_keys.add('')
-        enum_items = [{'': 'Choose Provider'}]
-        for provider_code, provider_info in providers.items():
-            provider, _ = provider_info
-            enum_items.append({provider_code: provider.LABEL})
-            valid_keys.add(provider_code)
-
-        return enum_items, valid_keys
-
-    def set_override_state(self, *args, **kwargs):
-        super(ProvidersEnum, self).set_override_state(*args, **kwargs)
-
-        self.enum_items, self.valid_keys = self._get_enum_values()
-
-        value_on_not_set = list(self.valid_keys)[0]
-        if self._current_value is NOT_SET:
-            self._current_value = value_on_not_set
-
-        self.value_on_not_set = value_on_not_set
+            self.value_on_not_set = value_on_not_set
+            if (
+                self._current_value is NOT_SET
+                or self._current_value not in self.valid_keys
+            ):
+                self.set(value_on_not_set)
 
 
 class DeadlineUrlEnumEntity(BaseEnumEntity):
@@ -458,27 +461,19 @@ class DeadlineUrlEnumEntity(BaseEnumEntity):
             self.valid_value_types = (list,)
             self.value_on_not_set = []
         else:
-            for key in self.valid_keys:
-                if self.value_on_not_set is NOT_SET:
-                    self.value_on_not_set = key
-                    break
-
             self.valid_value_types = (STRING_TYPE,)
+            self.value_on_not_set = ""
 
         # GUI attribute
         self.placeholder = self.schema_data.get("placeholder")
 
     def _get_enum_values(self):
-        system_settings_entity = self.get_entity_from_path("system_settings")
+        deadline_urls_entity = self.get_entity_from_path(
+            "system_settings/modules/deadline/deadline_urls"
+        )
 
         valid_keys = set()
         enum_items_list = []
-        deadline_urls_entity = (
-            system_settings_entity
-            ["modules"]
-            ["deadline"]
-            ["deadline_urls"]
-        )
         for server_name, url_entity in deadline_urls_entity.items():
             enum_items_list.append(
                 {server_name: "{}: {}".format(server_name, url_entity.value)})
@@ -489,8 +484,82 @@ class DeadlineUrlEnumEntity(BaseEnumEntity):
         super(DeadlineUrlEnumEntity, self).set_override_state(*args, **kwargs)
 
         self.enum_items, self.valid_keys = self._get_enum_values()
-        new_value = []
-        for key in self._current_value:
-            if key in self.valid_keys:
-                new_value.append(key)
-        self._current_value = new_value
+        if self.multiselection:
+            new_value = []
+            for key in self._current_value:
+                if key in self.valid_keys:
+                    new_value.append(key)
+            self._current_value = new_value
+
+        else:
+            if not self.valid_keys:
+                self._current_value = ""
+
+            elif self._current_value not in self.valid_keys:
+                self._current_value = tuple(self.valid_keys)[0]
+
+
+class AnatomyTemplatesEnumEntity(BaseEnumEntity):
+    schema_types = ["anatomy-templates-enum"]
+
+    def _item_initalization(self):
+        self.multiselection = False
+
+        self.enum_items = []
+        self.valid_keys = set()
+
+        enum_default = self.schema_data.get("default") or "work"
+
+        self.value_on_not_set = enum_default
+        self.valid_value_types = (STRING_TYPE,)
+
+        # GUI attribute
+        self.placeholder = self.schema_data.get("placeholder")
+
+    def _get_enum_values(self):
+        templates_entity = self.get_entity_from_path(
+            "project_anatomy/templates"
+        )
+
+        valid_keys = set()
+        enum_items_list = []
+
+        others_entity = None
+        for key, entity in templates_entity.items():
+            # Skip defaults key
+            if key == "defaults":
+                continue
+
+            if key == "others":
+                others_entity = entity
+                continue
+
+            label = key
+            if hasattr(entity, "label"):
+                label = entity.label or label
+
+            enum_items_list.append({key: label})
+            valid_keys.add(key)
+
+        if others_entity is not None:
+            get_child_label_func = getattr(
+                others_entity, "get_child_label", None
+            )
+            for key, child_entity in others_entity.items():
+                label = key
+                if callable(get_child_label_func):
+                    label = get_child_label_func(child_entity) or label
+
+                enum_items_list.append({key: label})
+                valid_keys.add(key)
+
+        return enum_items_list, valid_keys
+
+    def set_override_state(self, *args, **kwargs):
+        super(AnatomyTemplatesEnumEntity, self).set_override_state(
+            *args, **kwargs
+        )
+
+        self.enum_items, self.valid_keys = self._get_enum_values()
+        if self._current_value not in self.valid_keys:
+            self._current_value = self.value_on_not_set

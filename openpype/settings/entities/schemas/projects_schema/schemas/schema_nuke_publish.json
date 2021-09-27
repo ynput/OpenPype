@@ -16,9 +16,30 @@
             "is_group": true,
             "children": [
                 {
-                    "type": "boolean",
-                    "key": "sync_workfile_version",
-                    "label": "Sync Version from workfile"
+                    "type": "enum",
+                    "key": "sync_workfile_version_on_families",
+                    "label": "Sync workfile version for families",
+                    "multiselection": true,
+                    "enum_items": [
+                        {
+                            "nukenodes": "nukenodes"
+                        },
+                        {
+                            "camera": "camera"
+                        },
+                        {
+                            "gizmo": "gizmo"
+                        },
+                        {
+                            "source": "source"
+                        },
+                        {
+                            "prerender": "prerender"
+                        },
+                        {
+                            "render": "render"
+                        }
+                    ]
                 }
             ]
         },
@@ -150,6 +171,38 @@
                     "type": "boolean",
                     "key": "viewer_lut_raw",
                     "label": "Viewer LUT raw"
+                }
+            ]
+        },
+        {
+            "type": "splitter"
+        },
+        {
+            "type": "label",
+            "label": "Integrators"
+        },
+        {
+            "type": "dict",
+            "collapsible": true,
+            "checkbox_key": "enabled",
+            "key": "IncrementScriptVersion",
+            "label": "IncrementScriptVersion",
+            "is_group": true,
+            "children": [
+                {
+                    "type": "boolean",
+                    "key": "enabled",
+                    "label": "Enabled"
+                },
+                {
+                    "type": "boolean",
+                    "key": "optional",
+                    "label": "Optional"
+                },
+                {
+                    "type": "boolean",
+                    "key": "active",
+                    "label": "Active"
                 }
             ]
         }

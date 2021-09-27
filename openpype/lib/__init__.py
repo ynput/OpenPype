@@ -27,6 +27,7 @@ from .execute import (
     get_pype_execute_args,
     execute,
     run_subprocess,
+    path_to_subprocess_arg,
     CREATE_NO_WINDOW
 )
 from .log import PypeLogger, timeit
@@ -52,9 +53,16 @@ from .vendor_bin_utils import (
 )
 
 from .python_module_tools import (
+    import_filepath,
     modules_from_path,
     recursive_bases_from_class,
-    classes_from_module
+    classes_from_module,
+    import_module_from_dirpath
+)
+
+from .profiles_filtering import (
+    compile_list_of_regexes,
+    filter_profiles
 )
 
 from .avalon_context import (
@@ -69,6 +77,8 @@ from .avalon_context import (
     get_linked_assets,
     get_latest_version,
 
+    get_workfile_template_key,
+    get_workfile_template_key_from_context,
     get_workdir_data,
     get_workdir,
     get_workdir_with_workdir_data,
@@ -114,12 +124,8 @@ from .applications import (
     prepare_host_environments,
     prepare_context_environments,
     get_app_environments_for_context,
-    apply_project_environments_value,
-
-    compile_list_of_regexes
+    apply_project_environments_value
 )
-
-from .profiles_filtering import filter_profiles
 
 from .plugin_tools import (
     TaskNotSetError,
@@ -139,7 +145,9 @@ from .plugin_tools import (
 from .path_tools import (
     version_up,
     get_version_from_path,
-    get_last_version_from_path
+    get_last_version_from_path,
+    create_project_folders,
+    get_project_basic_paths
 )
 
 from .editorial import (
@@ -154,12 +162,19 @@ from .editorial import (
     make_sequence_collection
 )
 
+from .pype_info import (
+    get_openpype_version,
+    get_build_version
+)
+
 terminal = Terminal
 
 __all__ = [
     "get_pype_execute_args",
     "execute",
     "run_subprocess",
+    "path_to_subprocess_arg",
+    "CREATE_NO_WINDOW",
 
     "env_value_to_bool",
     "get_paths_from_environ",
@@ -170,9 +185,11 @@ __all__ = [
     "get_ffmpeg_tool_path",
     "ffprobe_streams",
 
+    "import_filepath",
     "modules_from_path",
     "recursive_bases_from_class",
     "classes_from_module",
+    "import_module_from_dirpath",
 
     "CURRENT_DOC_SCHEMAS",
     "PROJECT_NAME_ALLOWED_SYMBOLS",
@@ -185,6 +202,8 @@ __all__ = [
     "get_linked_assets",
     "get_latest_version",
 
+    "get_workfile_template_key",
+    "get_workfile_template_key_from_context",
     "get_workdir_data",
     "get_workdir",
     "get_workdir_with_workdir_data",
@@ -268,5 +287,10 @@ __all__ = [
     "range_from_frames",
     "frames_to_secons",
     "frames_to_timecode",
-    "make_sequence_collection"
+    "make_sequence_collection",
+    "create_project_folders",
+    "get_project_basic_paths",
+
+    "get_openpype_version",
+    "get_build_version",
 ]

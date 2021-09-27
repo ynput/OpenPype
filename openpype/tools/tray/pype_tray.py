@@ -15,11 +15,7 @@ from openpype.api import (
     get_system_settings
 )
 from openpype.lib import get_pype_execute_args
-from openpype.modules import (
-    TrayModulesManager,
-    ITrayAction,
-    ITrayService
-)
+from openpype.modules import TrayModulesManager
 from openpype import style
 
 from .pype_info_widget import PypeInfoWidget
@@ -80,6 +76,10 @@ class TrayManager:
 
     def initialize_modules(self):
         """Add modules to tray."""
+        from openpype_interfaces import (
+            ITrayAction,
+            ITrayService
+        )
 
         self.modules_manager.initialize(self, self.tray_widget.menu)
 
@@ -200,7 +200,7 @@ class SystemTrayIcon(QtWidgets.QSystemTrayIcon):
     doubleclick_time_ms = 100
 
     def __init__(self, parent):
-        icon = QtGui.QIcon(resources.pype_icon_filepath())
+        icon = QtGui.QIcon(resources.get_openpype_icon_filepath())
 
         super(SystemTrayIcon, self).__init__(icon, parent)
 
@@ -308,7 +308,7 @@ class PypeTrayApplication(QtWidgets.QApplication):
         splash_widget.hide()
 
     def set_splash(self):
-        splash_pix = QtGui.QPixmap(resources.pype_splash_filepath())
+        splash_pix = QtGui.QPixmap(resources.get_openpype_splash_filepath())
         splash = QtWidgets.QSplashScreen(splash_pix)
         splash.setMask(splash_pix.mask())
         splash.setEnabled(False)

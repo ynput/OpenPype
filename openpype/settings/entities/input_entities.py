@@ -49,6 +49,10 @@ class EndpointEntity(ItemEntity):
 
         super(EndpointEntity, self).schema_validations()
 
+    def collect_dynamic_schema_entities(self, collector):
+        if self.is_dynamic_schema_node:
+            collector.add_entity(self)
+
     @abstractmethod
     def _settings_value(self):
         pass
@@ -121,7 +125,11 @@ class InputEntity(EndpointEntity):
 
     def schema_validations(self):
         # Input entity must have file parent.
-        if not self.file_item:
+        if (
+            not self.is_dynamic_schema_node
+            and not self.is_in_dynamic_schema_node
+            and self.file_item is None
+        ):
             raise EntitySchemaError(self, "Missing parent file entity.")
 
         super(InputEntity, self).schema_validations()
@@ -368,6 +376,14 @@ class NumberEntity(InputEntity):
             value_on_not_set = int(value_on_not_set)
         self.valid_value_types = valid_value_types
         self.value_on_not_set = value_on_not_set
+
+        # UI specific attributes
+        self.show_slider = self.schema_data.get("show_slider", False)
+        steps = self.schema_data.get("steps", None)
+        # Make sure that steps are not set to `0`
+        if steps == 0:
+            steps = None
+        self.steps = steps
 
     def _convert_to_valid_type(self, value):
         if isinstance(value, str):

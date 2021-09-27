@@ -105,14 +105,17 @@ from .enum_entity import (
     AppsEnumEntity,
     ToolsEnumEntity,
     TaskTypeEnumEntity,
-    ProvidersEnum,
-    DeadlineUrlEnumEntity
+    DeadlineUrlEnumEntity,
+    AnatomyTemplatesEnumEntity
 )
 
 from .list_entity import ListEntity
 from .dict_immutable_keys_entity import DictImmutableKeysEntity
 from .dict_mutable_keys_entity import DictMutableKeysEntity
-from .dict_conditional import DictConditionalEntity
+from .dict_conditional import (
+    DictConditionalEntity,
+    SyncServerProviders
+)
 
 from .anatomy_entities import AnatomyEntity
 
@@ -160,8 +163,8 @@ __all__ = (
     "AppsEnumEntity",
     "ToolsEnumEntity",
     "TaskTypeEnumEntity",
-    "ProvidersEnum",
     "DeadlineUrlEnumEntity",
+    "AnatomyTemplatesEnumEntity",
 
     "ListEntity",
 
@@ -170,6 +173,7 @@ __all__ = (
     "DictMutableKeysEntity",
 
     "DictConditionalEntity",
+    "SyncServerProviders",
 
     "AnatomyEntity"
 )

@@ -594,6 +594,18 @@ def get_openpype_path_from_db(url: str) -> Union[str, None]:
     return None
 
 
+def load_stylesheet() -> str:
+    """Load css style sheet.
+
+    Returns:
+        str: content of the stylesheet
+
+    """
+    stylesheet_path = Path(__file__).parent.resolve() / "stylesheet.css"
+
+    return stylesheet_path.read_text()
+
+
 def get_user_data_dir():
     """Convenience method for centralize the user data directory path"""
 

@@ -1,10 +1,9 @@
-import logging
 import os
+import shlex
 import subprocess
+import platform
 
 from .log import PypeLogger as Logger
-
-log = logging.getLogger(__name__)
 
 # MSDN process creation flag (Windows only)
 CREATE_NO_WINDOW = 0x08000000
@@ -100,7 +99,9 @@ def run_subprocess(*args, **kwargs):
     filtered_env = {str(k): str(v) for k, v in env.items()}
 
     # Use lib's logger if was not passed with kwargs.
-    logger = kwargs.pop("logger", log)
+    logger = kwargs.pop("logger", None)
+    if logger is None:
+        logger = Logger.get_logger("run_subprocess")
 
     # set overrides
     kwargs['stdout'] = kwargs.get('stdout', subprocess.PIPE)
@@ -136,6 +137,14 @@ def run_subprocess(*args, **kwargs):
         raise RuntimeError(exc_msg)
 
     return full_output
+
+
+def path_to_subprocess_arg(path):
+    """Prepare path for subprocess arguments.
+
+    Returned path can be wrapped with quotes or kept as is.
+    """
+    return subprocess.list2cmdline([path])
 
 
 def get_pype_execute_args(*args):

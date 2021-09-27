@@ -1,0 +1,14 @@
+{
+    "type": "dict",
+    "key": "example_addon",
+    "label": "Example addon",
+    "collapsible": true,
+    "checkbox_key": "enabled",
+    "children": [
+        {
+            "type": "boolean",
+            "key": "enabled",
+            "label": "Enabled"
+        }
+    ]
+}

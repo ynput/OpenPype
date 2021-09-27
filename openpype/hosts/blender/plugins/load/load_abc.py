@@ -4,9 +4,14 @@ from pathlib import Path
 from pprint import pformat
 from typing import Dict, List, Optional
 
-from avalon import api, blender
 import bpy
-import openpype.hosts.blender.api.plugin as plugin
+
+from avalon import api
+from avalon.blender import lib
+from avalon.blender.pipeline import AVALON_CONTAINERS
+from avalon.blender.pipeline import AVALON_CONTAINER_ID
+from avalon.blender.pipeline import AVALON_PROPERTY
+from openpype.hosts.blender.api import plugin
 
 
 class CacheModelLoader(plugin.AssetLoader):
@@ -21,24 +26,30 @@ class CacheModelLoader(plugin.AssetLoader):
     families = ["model", "pointcache"]
     representations = ["abc"]
 
-    label = "Link Alembic"
+    label = "Load Alembic"
     icon = "code-fork"
     color = "orange"
 
-    def _remove(self, objects, container):
-        for obj in list(objects):
+    def _remove(self, asset_group):
+        objects = list(asset_group.children)
+        empties = []
+
+        for obj in objects:
             if obj.type == 'MESH':
+                for material_slot in list(obj.material_slots):
+                    bpy.data.materials.remove(material_slot.material)
                 bpy.data.meshes.remove(obj.data)
             elif obj.type == 'EMPTY':
-                bpy.data.objects.remove(obj)
+                objects.extend(obj.children)
+                empties.append(obj)
 
-        bpy.data.collections.remove(container)
+        for empty in empties:
+            bpy.data.objects.remove(empty)
 
-    def _process(self, libpath, container_name, parent_collection):
+    def _process(self, libpath, asset_group, group_name):
         bpy.ops.object.select_all(action='DESELECT')
 
-        view_layer = bpy.context.view_layer
-        view_layer_collection = view_layer.active_layer_collection.collection
+        collection = bpy.context.view_layer.active_layer_collection.collection
 
         relative = bpy.context.preferences.filepaths.use_relative_paths
         bpy.ops.wm.alembic_import(
@@ -46,34 +57,61 @@ class CacheModelLoader(plugin.AssetLoader):
             relative_path=relative
         )
 
-        parent = parent_collection
+        parent = bpy.context.scene.collection
 
-        if parent is None:
-            parent = bpy.context.scene.collection
+        imported = lib.get_selection()
 
-        model_container = bpy.data.collections.new(container_name)
-        parent.children.link(model_container)
-        for obj in bpy.context.selected_objects:
-            model_container.objects.link(obj)
-            view_layer_collection.objects.unlink(obj)
+        empties = [obj for obj in imported if obj.type == 'EMPTY']
 
+        container = None
+
+        for empty in empties:
+            if not empty.parent:
+                container = empty
+                break
+
+        assert container, "No asset group found"
+
+        # Children must be linked before parents,
+        # otherwise the hierarchy will break
+        objects = []
+        nodes = list(container.children)
+
+        for obj in nodes:
+            obj.parent = asset_group
+
+        bpy.data.objects.remove(container)
+
+        for obj in nodes:
+            objects.append(obj)
+            nodes.extend(list(obj.children))
+
+        objects.reverse()
+
+        for obj in objects:
+            parent.objects.link(obj)
+            collection.objects.unlink(obj)
+
+        for obj in objects:
             name = obj.name
-            obj.name = f"{name}:{container_name}"
+            obj.name = f"{group_name}:{name}"
+            if obj.type != 'EMPTY':
+                name_data = obj.data.name
+                obj.data.name = f"{group_name}:{name_data}"
 
-            # Groups are imported as Empty objects in Blender
-            if obj.type == 'MESH':
-                data_name = obj.data.name
-                obj.data.name = f"{data_name}:{container_name}"
+                for material_slot in obj.material_slots:
+                    name_mat = material_slot.material.name
+                    material_slot.material.name = f"{group_name}:{name_mat}"
 
-            if not obj.get(blender.pipeline.AVALON_PROPERTY):
-                obj[blender.pipeline.AVALON_PROPERTY] = dict()
+            if not obj.get(AVALON_PROPERTY):
+                obj[AVALON_PROPERTY] = dict()
 
-            avalon_info = obj[blender.pipeline.AVALON_PROPERTY]
-            avalon_info.update({"container_name": container_name})
+            avalon_info = obj[AVALON_PROPERTY]
+            avalon_info.update({"container_name": group_name})
 
         bpy.ops.object.select_all(action='DESELECT')
 
-        return model_container
+        return objects
 
     def process_asset(
         self, context: dict, name: str, namespace: Optional[str] = None,
@@ -91,47 +129,41 @@ class CacheModelLoader(plugin.AssetLoader):
         asset = context["asset"]["name"]
         subset = context["subset"]["name"]
 
-        lib_container = plugin.asset_name(
-            asset, subset
-        )
-        unique_number = plugin.get_unique_number(
-            asset, subset
-        )
+        asset_name = plugin.asset_name(asset, subset)
+        unique_number = plugin.get_unique_number(asset, subset)
+        group_name = plugin.asset_name(asset, subset, unique_number)
         namespace = namespace or f"{asset}_{unique_number}"
-        container_name = plugin.asset_name(
-            asset, subset, unique_number
-        )
 
-        container = bpy.data.collections.new(lib_container)
-        container.name = container_name
-        blender.pipeline.containerise_existing(
-            container,
-            name,
-            namespace,
-            context,
-            self.__class__.__name__,
-        )
+        avalon_container = bpy.data.collections.get(AVALON_CONTAINERS)
+        if not avalon_container:
+            avalon_container = bpy.data.collections.new(name=AVALON_CONTAINERS)
+            bpy.context.scene.collection.children.link(avalon_container)
 
-        container_metadata = container.get(
-            blender.pipeline.AVALON_PROPERTY)
+        asset_group = bpy.data.objects.new(group_name, object_data=None)
+        avalon_container.objects.link(asset_group)
 
-        container_metadata["libpath"] = libpath
-        container_metadata["lib_container"] = lib_container
+        objects = self._process(libpath, asset_group, group_name)
 
-        obj_container = self._process(
-            libpath, container_name, None)
+        bpy.context.scene.collection.objects.link(asset_group)
 
-        container_metadata["obj_container"] = obj_container
+        asset_group[AVALON_PROPERTY] = {
+            "schema": "openpype:container-2.0",
+            "id": AVALON_CONTAINER_ID,
+            "name": name,
+            "namespace": namespace or '',
+            "loader": str(self.__class__.__name__),
+            "representation": str(context["representation"]["_id"]),
+            "libpath": libpath,
+            "asset_name": asset_name,
+            "parent": str(context["representation"]["parent"]),
+            "family": context["representation"]["context"]["family"],
+            "objectName": group_name
+        }
 
-        # Save the list of objects in the metadata container
-        container_metadata["objects"] = obj_container.all_objects
+        self[:] = objects
+        return objects
 
-        nodes = list(container.objects)
-        nodes.append(container)
-        self[:] = nodes
-        return nodes
-
-    def update(self, container: Dict, representation: Dict):
+    def exec_update(self, container: Dict, representation: Dict):
         """Update the loaded asset.
 
         This will remove all objects of the current collection, load the new
@@ -143,9 +175,8 @@ class CacheModelLoader(plugin.AssetLoader):
         Warning:
             No nested collections are supported at the moment!
         """
-        collection = bpy.data.collections.get(
-            container["objectName"]
-        )
+        object_name = container["objectName"]
+        asset_group = bpy.data.objects.get(object_name)
         libpath = Path(api.get_representation_path(representation))
         extension = libpath.suffix.lower()
 
@@ -155,11 +186,8 @@ class CacheModelLoader(plugin.AssetLoader):
             pformat(representation, indent=2),
         )
 
-        assert collection, (
+        assert asset_group, (
             f"The asset is not loaded: {container['objectName']}"
-        )
-        assert not (collection.children), (
-            "Nested collections are not supported."
         )
         assert libpath, (
             "No existing library file found for {container['objectName']}"
@@ -171,45 +199,34 @@ class CacheModelLoader(plugin.AssetLoader):
             f"Unsupported file: {libpath}"
         )
 
-        collection_metadata = collection.get(
-            blender.pipeline.AVALON_PROPERTY)
-        collection_libpath = collection_metadata["libpath"]
+        metadata = asset_group.get(AVALON_PROPERTY)
+        group_libpath = metadata["libpath"]
 
-        obj_container = plugin.get_local_collection_with_name(
-            collection_metadata["obj_container"].name
-        )
-        objects = obj_container.all_objects
-
-        container_name = obj_container.name
-
-        normalized_collection_libpath = (
-            str(Path(bpy.path.abspath(collection_libpath)).resolve())
+        normalized_group_libpath = (
+            str(Path(bpy.path.abspath(group_libpath)).resolve())
         )
         normalized_libpath = (
             str(Path(bpy.path.abspath(str(libpath))).resolve())
         )
         self.log.debug(
-            "normalized_collection_libpath:\n  %s\nnormalized_libpath:\n  %s",
-            normalized_collection_libpath,
+            "normalized_group_libpath:\n  %s\nnormalized_libpath:\n  %s",
+            normalized_group_libpath,
             normalized_libpath,
         )
-        if normalized_collection_libpath == normalized_libpath:
+        if normalized_group_libpath == normalized_libpath:
             self.log.info("Library already loaded, not updating...")
             return
 
-        parent = plugin.get_parent_collection(obj_container)
+        mat = asset_group.matrix_basis.copy()
+        self._remove(asset_group)
 
-        self._remove(objects, obj_container)
+        self._process(str(libpath), asset_group, object_name)
+        asset_group.matrix_basis = mat
 
-        obj_container = self._process(
-            str(libpath), container_name, parent)
+        metadata["libpath"] = str(libpath)
+        metadata["representation"] = str(representation["_id"])
 
-        collection_metadata["obj_container"] = obj_container
-        collection_metadata["objects"] = obj_container.all_objects
-        collection_metadata["libpath"] = str(libpath)
-        collection_metadata["representation"] = str(representation["_id"])
-
-    def remove(self, container: Dict) -> bool:
+    def exec_remove(self, container: Dict) -> bool:
         """Remove an existing container from a Blender scene.
 
         Arguments:
@@ -222,25 +239,14 @@ class CacheModelLoader(plugin.AssetLoader):
         Warning:
             No nested collections are supported at the moment!
         """
-        collection = bpy.data.collections.get(
-            container["objectName"]
-        )
-        if not collection:
+        object_name = container["objectName"]
+        asset_group = bpy.data.objects.get(object_name)
+
+        if not asset_group:
             return False
-        assert not (collection.children), (
-            "Nested collections are not supported."
-        )
 
-        collection_metadata = collection.get(
-            blender.pipeline.AVALON_PROPERTY)
+        self._remove(asset_group)
 
-        obj_container = plugin.get_local_collection_with_name(
-            collection_metadata["obj_container"].name
-        )
-        objects = obj_container.all_objects
-
-        self._remove(objects, obj_container)
-
-        bpy.data.collections.remove(collection)
+        bpy.data.objects.remove(asset_group)
 
         return True
