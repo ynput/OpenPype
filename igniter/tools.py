@@ -591,6 +591,32 @@ def get_openpype_path_from_db(url: str) -> Union[str, None]:
     for path in paths:
         if AnyPath(path).exists():
             return path
+
+    # If no paths exist then the user might be using an outdated version, so
+    # we need to inform them.
+    if paths:
+        if os.getenv("OPENPYPE_HEADLESS_MODE"):
+            print(
+                "Could not find any paths that in exsits in: {}".format(paths)
+            )
+            sys.exit(1)
+
+        from Qt import QtWidgets
+
+        app = QtWidgets.QApplication(sys.argv)
+        message_box = QtWidgets.QMessageBox()
+        message_box.setText(
+            "Could not fetch updates from {}.\nFalling back to local version."
+            "\nPlease contact support.".format(paths)
+        )
+        message_box.setStandardButtons(QtWidgets.QMessageBox.Ok)
+        message_box.setDefaultButton(QtWidgets.QMessageBox.Ok)
+        message_box.setIcon(message_box.Icon.Critical)
+        message_box.setWindowTitle("Error!")
+        message_box.setStyleSheet(load_stylesheet())
+        message_box.show()
+        app.exec_()
+
     return None
 
 
