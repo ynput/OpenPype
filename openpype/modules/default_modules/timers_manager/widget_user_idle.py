@@ -86,6 +86,7 @@ class WidgetUserIdle(QtWidgets.QWidget):
         count_timer.setInterval(1000)
 
         btn_stop.clicked.connect(self._on_stop_clicked)
+        btn_continue.clicked.connect(self._on_continue_clicked)
 
         self.lbl_info = lbl_info
         self.lbl_question = lbl_question
@@ -120,6 +121,9 @@ class WidgetUserIdle(QtWidgets.QWidget):
 
     def _on_stop_clicked(self):
         self._stop_timers()
+        self._close_widget()
+
+    def _on_continue_clicked(self):
         self._close_widget()
 
     def _close_widget(self):
