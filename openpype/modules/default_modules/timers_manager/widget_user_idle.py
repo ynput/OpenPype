@@ -25,6 +25,9 @@ class WidgetUserIdle(QtWidgets.QWidget):
 
         self._is_showed = False
         self._timer_stopped = False
+        self._countdown = 0
+        self._countdown_start = 0
+
         msg_info = "You didn't work for a long time."
         msg_question = "Would you like to stop Timers?"
         msg_stopped = (
@@ -79,6 +82,9 @@ class WidgetUserIdle(QtWidgets.QWidget):
         layout.addLayout(form)
         layout.addLayout(group_layout)
 
+        count_timer = QtCore.QTimer()
+        count_timer.setInterval(1000)
+
         self.lbl_info = lbl_info
         self.lbl_question = lbl_question
         self.lbl_stopped = lbl_stopped
@@ -88,6 +94,8 @@ class WidgetUserIdle(QtWidgets.QWidget):
         self.btn_continue = btn_continue
         self.btn_close = btn_close
         self.btn_restart = btn_restart
+
+        self._count_timer = count_timer
 
         self.resize(self.SIZE_W, self.SIZE_H)
         self.setMinimumSize(QtCore.QSize(self.SIZE_W, self.SIZE_H))
