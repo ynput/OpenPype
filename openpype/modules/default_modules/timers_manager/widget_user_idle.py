@@ -92,16 +92,6 @@ class WidgetUserIdle(QtWidgets.QWidget):
         self.setMaximumSize(QtCore.QSize(self.SIZE_W+100, self.SIZE_H+100))
         self.setStyleSheet(style.load_stylesheet())
 
-    def refresh_context(self):
-        self.lbl_question.setVisible(self.bool_not_stopped)
-        self.lbl_rest_time.setVisible(self.bool_not_stopped)
-        self.lbl_stopped.setVisible(not self.bool_not_stopped)
-
-        self.btn_continue.setVisible(self.bool_not_stopped)
-        self.btn_stop.setVisible(self.bool_not_stopped)
-        self.btn_restart.setVisible(not self.bool_not_stopped)
-        self.btn_close.setVisible(not self.bool_not_stopped)
-
     def change_count_widget(self, time):
         str_time = str(time)
         self.lbl_rest_time.setText(str_time)
@@ -127,11 +117,21 @@ class WidgetUserIdle(QtWidgets.QWidget):
     def close_widget(self):
         self.bool_is_showed = False
         self.bool_not_stopped = True
-        self.refresh_context()
+        self._refresh_context()
         self.hide()
 
     def showEvent(self, event):
         self.bool_is_showed = True
+
+    def _refresh_context(self):
+        self.lbl_question.setVisible(not self._timer_stopped)
+        self.lbl_rest_time.setVisible(not self._timer_stopped)
+        self.lbl_stopped.setVisible(self._timer_stopped)
+
+        self.btn_continue.setVisible(not self._timer_stopped)
+        self.btn_stop.setVisible(not self._timer_stopped)
+        self.btn_restart.setVisible(self._timer_stopped)
+        self.btn_close.setVisible(self._timer_stopped)
 
 
 class SignalHandler(QtCore.QObject):
