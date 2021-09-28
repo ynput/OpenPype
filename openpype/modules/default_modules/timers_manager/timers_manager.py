@@ -3,8 +3,7 @@ import collections
 from openpype.modules import OpenPypeModule
 from openpype_interfaces import (
     ITimersManager,
-    ITrayService,
-    IIdleManager
+    ITrayService
 )
 from avalon.api import AvalonMongoDB
 
@@ -68,7 +67,7 @@ class ExampleTimersManagerConnector:
             self._timers_manager_module.timer_stopped(self._module.id)
 
 
-class TimersManager(OpenPypeModule, ITrayService, IIdleManager):
+class TimersManager(OpenPypeModule, ITrayService):
     """ Handles about Timers.
 
     Should be able to start/stop all timers at once.
