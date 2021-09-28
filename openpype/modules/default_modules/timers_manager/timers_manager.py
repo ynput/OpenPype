@@ -1,5 +1,6 @@
 import os
 import collections
+import platform
 from openpype.modules import OpenPypeModule
 from openpype_interfaces import (
     ITimersManager,
@@ -93,6 +94,10 @@ class TimersManager(OpenPypeModule, ITrayService):
         self.enabled = timers_settings["enabled"]
 
         auto_stop = timers_settings["auto_stop"]
+        # Turn of auto stop on MacOs because pynput requires root permissions
+        if platform.system().lower() == "darwin":
+            auto_stop = False
+
         # When timer will stop if idle manager is running (minutes)
         full_time = int(timers_settings["full_time"] * 60)
         # How many minutes before the timer is stopped will popup the message
