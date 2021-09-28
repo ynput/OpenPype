@@ -9,10 +9,6 @@ class WidgetUserIdle(QtWidgets.QWidget):
     def __init__(self, module):
         super(WidgetUserIdle, self).__init__()
 
-        self.bool_is_showed = False
-        self.bool_not_stopped = True
-
-        self.module = module
         self.setWindowTitle("OpenPype - Stop timers")
 
         icon = QtGui.QIcon(resources.get_openpype_icon_filepath())
@@ -27,6 +23,8 @@ class WidgetUserIdle(QtWidgets.QWidget):
         self._timer_stopped = False
         self._countdown = 0
         self._countdown_start = 0
+
+        self.module = module
 
         msg_info = "You didn't work for a long time."
         msg_question = "Would you like to stop Timers?"
