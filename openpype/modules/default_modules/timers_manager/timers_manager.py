@@ -93,15 +93,15 @@ class TimersManager(OpenPypeModule, ITrayService):
 
         self.enabled = timers_settings["enabled"]
 
-        auto_stop = timers_settings["auto_stop"]
-        # Turn of auto stop on MacOs because pynput requires root permissions
-        if platform.system().lower() == "darwin":
-            auto_stop = False
-
         # When timer will stop if idle manager is running (minutes)
         full_time = int(timers_settings["full_time"] * 60)
         # How many minutes before the timer is stopped will popup the message
         message_time = int(timers_settings["message_time"] * 60)
+
+        auto_stop = timers_settings["auto_stop"]
+        # Turn of auto stop on MacOs because pynput requires root permissions
+        if platform.system().lower() == "darwin" or full_time <= 0:
+            auto_stop = False
 
         self.auto_stop = auto_stop
         self.time_show_message = full_time - message_time
