@@ -3,117 +3,94 @@ from openpype import resources, style
 
 
 class WidgetUserIdle(QtWidgets.QWidget):
-
     SIZE_W = 300
     SIZE_H = 160
 
     def __init__(self, module):
-
         super(WidgetUserIdle, self).__init__()
 
         self.bool_is_showed = False
         self.bool_not_stopped = True
 
         self.module = module
+        self.setWindowTitle("OpenPype - Stop timers")
 
         icon = QtGui.QIcon(resources.get_openpype_icon_filepath())
         self.setWindowIcon(icon)
+
         self.setWindowFlags(
             QtCore.Qt.WindowCloseButtonHint
             | QtCore.Qt.WindowMinimizeButtonHint
         )
 
-        self._translate = QtCore.QCoreApplication.translate
+        msg_info = "You didn't work for a long time."
+        msg_question = "Would you like to stop Timers?"
+        msg_stopped = (
+            "Your Timers were stopped. Do you want to start them again?"
+        )
 
-        self.font = QtGui.QFont()
-        self.font.setFamily("DejaVu Sans Condensed")
-        self.font.setPointSize(9)
-        self.font.setBold(True)
-        self.font.setWeight(50)
-        self.font.setKerning(True)
+        lbl_info = QtWidgets.QLabel(msg_info, self)
+        lbl_info.setTextFormat(QtCore.Qt.RichText)
+        lbl_info.setWordWrap(True)
+
+        lbl_question = QtWidgets.QLabel(msg_question, self)
+        lbl_question.setTextFormat(QtCore.Qt.RichText)
+        lbl_question.setWordWrap(True)
+
+        lbl_stopped = QtWidgets.QLabel(msg_stopped, self)
+        lbl_stopped.setTextFormat(QtCore.Qt.RichText)
+        lbl_stopped.setWordWrap(True)
+
+        lbl_rest_time = QtWidgets.QLabel(self)
+        lbl_rest_time.setTextFormat(QtCore.Qt.RichText)
+        lbl_rest_time.setWordWrap(True)
+        lbl_rest_time.setAlignment(QtCore.Qt.AlignCenter)
+
+        form = QtWidgets.QFormLayout()
+        form.setContentsMargins(10, 15, 10, 5)
+
+        form.addRow(lbl_info)
+        form.addRow(lbl_question)
+        form.addRow(lbl_stopped)
+        form.addRow(lbl_rest_time)
+
+        btn_stop = QtWidgets.QPushButton("Stop timer", self)
+        btn_stop.setToolTip("Stop's All timers")
+
+        btn_continue = QtWidgets.QPushButton("Continue", self)
+        btn_continue.setToolTip("Timer won't stop")
+
+        btn_close = QtWidgets.QPushButton("Close", self)
+        btn_close.setToolTip("Close window")
+
+        btn_restart = QtWidgets.QPushButton("Start timers", self)
+        btn_restart.setToolTip("Timer will be started again")
+
+        group_layout = QtWidgets.QHBoxLayout()
+        group_layout.addStretch(1)
+        group_layout.addWidget(btn_continue)
+        group_layout.addWidget(btn_stop)
+        group_layout.addWidget(btn_restart)
+        group_layout.addWidget(btn_close)
+
+        layout = QtWidgets.QVBoxLayout(self)
+        layout.addLayout(form)
+        layout.addLayout(group_layout)
+
+        self.lbl_info = lbl_info
+        self.lbl_question = lbl_question
+        self.lbl_stopped = lbl_stopped
+        self.lbl_rest_time = lbl_rest_time
+
+        self.btn_stop = btn_stop
+        self.btn_continue = btn_continue
+        self.btn_close = btn_close
+        self.btn_restart = btn_restart
 
         self.resize(self.SIZE_W, self.SIZE_H)
         self.setMinimumSize(QtCore.QSize(self.SIZE_W, self.SIZE_H))
         self.setMaximumSize(QtCore.QSize(self.SIZE_W+100, self.SIZE_H+100))
         self.setStyleSheet(style.load_stylesheet())
-
-        self.setLayout(self._main())
-        self.refresh_context()
-        self.setWindowTitle('Pype - Stop timers')
-
-    def _main(self):
-        self.main = QtWidgets.QVBoxLayout()
-        self.main.setObjectName('main')
-
-        self.form = QtWidgets.QFormLayout()
-        self.form.setContentsMargins(10, 15, 10, 5)
-        self.form.setObjectName('form')
-
-        msg_info = 'You didn\'t work for a long time.'
-        msg_question = 'Would you like to stop Timers?'
-        msg_stopped = (
-            'Your Timers were stopped. Do you want to start them again?'
-        )
-
-        self.lbl_info = QtWidgets.QLabel(msg_info)
-        self.lbl_info.setFont(self.font)
-        self.lbl_info.setTextFormat(QtCore.Qt.RichText)
-        self.lbl_info.setObjectName("lbl_info")
-        self.lbl_info.setWordWrap(True)
-
-        self.lbl_question = QtWidgets.QLabel(msg_question)
-        self.lbl_question.setFont(self.font)
-        self.lbl_question.setTextFormat(QtCore.Qt.RichText)
-        self.lbl_question.setObjectName("lbl_question")
-        self.lbl_question.setWordWrap(True)
-
-        self.lbl_stopped = QtWidgets.QLabel(msg_stopped)
-        self.lbl_stopped.setFont(self.font)
-        self.lbl_stopped.setTextFormat(QtCore.Qt.RichText)
-        self.lbl_stopped.setObjectName("lbl_stopped")
-        self.lbl_stopped.setWordWrap(True)
-
-        self.lbl_rest_time = QtWidgets.QLabel("")
-        self.lbl_rest_time.setFont(self.font)
-        self.lbl_rest_time.setTextFormat(QtCore.Qt.RichText)
-        self.lbl_rest_time.setObjectName("lbl_rest_time")
-        self.lbl_rest_time.setWordWrap(True)
-        self.lbl_rest_time.setAlignment(QtCore.Qt.AlignCenter)
-
-        self.form.addRow(self.lbl_info)
-        self.form.addRow(self.lbl_question)
-        self.form.addRow(self.lbl_stopped)
-        self.form.addRow(self.lbl_rest_time)
-
-        self.group_btn = QtWidgets.QHBoxLayout()
-        self.group_btn.addStretch(1)
-        self.group_btn.setObjectName("group_btn")
-
-        self.btn_stop = QtWidgets.QPushButton("Stop timer")
-        self.btn_stop.setToolTip('Stop\'s All timers')
-        self.btn_stop.clicked.connect(self.stop_timer)
-
-        self.btn_continue = QtWidgets.QPushButton("Continue")
-        self.btn_continue.setToolTip('Timer won\'t stop')
-        self.btn_continue.clicked.connect(self.continue_timer)
-
-        self.btn_close = QtWidgets.QPushButton("Close")
-        self.btn_close.setToolTip('Close window')
-        self.btn_close.clicked.connect(self.close_widget)
-
-        self.btn_restart = QtWidgets.QPushButton("Start timers")
-        self.btn_restart.setToolTip('Timer will be started again')
-        self.btn_restart.clicked.connect(self.restart_timer)
-
-        self.group_btn.addWidget(self.btn_continue)
-        self.group_btn.addWidget(self.btn_stop)
-        self.group_btn.addWidget(self.btn_restart)
-        self.group_btn.addWidget(self.btn_close)
-
-        self.main.addLayout(self.form)
-        self.main.addLayout(self.group_btn)
-
-        return self.main
 
     def refresh_context(self):
         self.lbl_question.setVisible(self.bool_not_stopped)
