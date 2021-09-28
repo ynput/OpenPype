@@ -94,8 +94,6 @@ class WidgetUserIdle(QtWidgets.QWidget):
         self.setMaximumSize(QtCore.QSize(self.SIZE_W+100, self.SIZE_H+100))
         self.setStyleSheet(style.load_stylesheet())
 
-    def showEvent(self, event):
-        self.bool_is_showed = True
 
     def _refresh_context(self):
         self.lbl_question.setVisible(not self._timer_stopped)
@@ -112,6 +110,12 @@ class WidgetUserIdle(QtWidgets.QWidget):
         self._timer_stopped = False
         self._refresh_context()
         self.hide()
+
+    def showEvent(self, event):
+        if not self._is_showed:
+            self._is_showed = True
+            self._refresh_context()
+        super(WidgetUserIdle, self).showEvent(event)
 
     def closeEvent(self, event):
         event.ignore()
