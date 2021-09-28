@@ -1,5 +1,4 @@
 import os
-import collections
 import platform
 from openpype.modules import OpenPypeModule
 from openpype_interfaces import (
