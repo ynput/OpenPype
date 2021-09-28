@@ -107,9 +107,8 @@ class TimersManager(OpenPypeModule, ITrayService, IIdleManager):
         self.last_task = None
 
         # Tray attributes
-        self.signal_handler = None
-        self.widget_user_idle = None
-        self.signal_handler = None
+        self._signal_handler = None
+        self._widget_user_idle = None
         self._idle_manager = None
 
         self._connectors_by_module_id = {}
@@ -118,10 +117,14 @@ class TimersManager(OpenPypeModule, ITrayService, IIdleManager):
     def tray_init(self):
         from .idle_threads import IdleManager
         from .widget_user_idle import WidgetUserIdle, SignalHandler
-        self.widget_user_idle = WidgetUserIdle(self)
-        self.signal_handler = SignalHandler(self)
-        idle_manager = IdleManager()
 
+        signal_handler = SignalHandler(self)
+        idle_manager = IdleManager()
+        widget_user_idle = WidgetUserIdle(self)
+        widget_user_idle.set_countdown_start(self.time_show_message)
+
+        self._signal_handler = signal_handler
+        self._widget_user_idle = widget_user_idle
         self._idle_manager = idle_manager
 
     def tray_start(self, *_a, **_kw):
@@ -210,8 +213,8 @@ class TimersManager(OpenPypeModule, ITrayService, IIdleManager):
         if self.is_running is False:
             return
 
-        self.widget_user_idle.bool_not_stopped = False
-        self.widget_user_idle.refresh_context()
+        if self._widget_user_idle is not None:
+            self._widget_user_idle.set_timer_stopped()
         self.is_running = False
 
         self.timer_stopped(None)
@@ -311,8 +314,9 @@ class TimersManager(OpenPypeModule, ITrayService, IIdleManager):
     def show_message(self):
         if self.is_running is False:
             return
-        if self.widget_user_idle.bool_is_showed is False:
-            self.widget_user_idle.show()
+        if not self._widget_user_idle.is_showed():
+            self._widget_user_idle.reset_countdown()
+            self._widget_user_idle.show()
 
     # Webserver module implementation
     def webserver_initialization(self, server_manager):
