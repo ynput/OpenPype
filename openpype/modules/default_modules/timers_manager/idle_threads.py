@@ -97,6 +97,10 @@ class IdleManager(QtCore.QThread):
                     signal.emit()
             time.sleep(1)
 
+        self._post_run()
+        self.log.info('IdleManager has stopped')
+
+    def _post_run(self):
         # Stop threads if still exist
         if self._mouse_thread is not None:
             self._mouse_thread.signal_stop.emit()
@@ -107,8 +111,6 @@ class IdleManager(QtCore.QThread):
             self._keyboard_thread.signal_stop.emit()
             self._keyboard_thread.terminate()
             self._keyboard_thread.wait()
-
-        self.log.info('IdleManager has stopped')
 
 
 class MouseThread(QtCore.QThread):
