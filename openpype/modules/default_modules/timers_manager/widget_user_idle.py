@@ -87,6 +87,7 @@ class WidgetUserIdle(QtWidgets.QWidget):
 
         btn_stop.clicked.connect(self._on_stop_clicked)
         btn_continue.clicked.connect(self._on_continue_clicked)
+        btn_close.clicked.connect(self._close_widget)
 
         self.lbl_info = lbl_info
         self.lbl_question = lbl_question
