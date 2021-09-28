@@ -92,21 +92,6 @@ class WidgetUserIdle(QtWidgets.QWidget):
         self.setMaximumSize(QtCore.QSize(self.SIZE_W+100, self.SIZE_H+100))
         self.setStyleSheet(style.load_stylesheet())
 
-    def change_count_widget(self, time):
-        str_time = str(time)
-        self.lbl_rest_time.setText(str_time)
-
-    def stop_timer(self):
-        self.module.stop_timers()
-        self.close_widget()
-
-    def restart_timer(self):
-        self.module.restart_timers()
-        self.close_widget()
-
-    def continue_timer(self):
-        self.close_widget()
-
     def closeEvent(self, event):
         event.ignore()
         if self.bool_not_stopped is True:
