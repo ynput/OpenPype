@@ -128,11 +128,12 @@ class TimersManager(OpenPypeModule, ITrayService, IIdleManager):
         self._idle_manager = idle_manager
 
     def tray_start(self, *_a, **_kw):
-        return
+        if self._idle_manager:
+            self._idle_manager.start()
 
     def tray_exit(self):
-        """Nothing special for TimersManager."""
-        return
+        if self._idle_manager:
+            self._idle_manager.stop()
 
     def start_timer(self, project_name, asset_name, task_name, hierarchy):
         """
