@@ -123,6 +123,16 @@ class TimersManager(OpenPypeModule, ITrayService, IIdleManager):
         widget_user_idle = WidgetUserIdle(self)
         widget_user_idle.set_countdown_start(self.time_show_message)
 
+        idle_manager.signal_reset_timer.connect(
+            widget_user_idle.reset_countdown
+        )
+        idle_manager.add_time_signal(
+            self.time_show_message, signal_handler.signal_show_message
+        )
+        idle_manager.add_time_signal(
+            self.time_stop_timer, signal_handler.signal_stop_timers
+        )
+
         self._signal_handler = signal_handler
         self._widget_user_idle = widget_user_idle
         self._idle_manager = idle_manager
