@@ -110,7 +110,7 @@ class WidgetUserIdle(QtWidgets.QWidget):
         self._countdown_start = countdown
         if not self.is_showed():
             self.reset_countdown()
-    
+
     def reset_countdown(self):
         self._countdown = self._countdown_start
         self._update_countdown_label()
