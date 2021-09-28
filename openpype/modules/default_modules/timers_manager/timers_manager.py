@@ -110,14 +110,19 @@ class TimersManager(OpenPypeModule, ITrayService, IIdleManager):
         self.signal_handler = None
         self.widget_user_idle = None
         self.signal_handler = None
+        self._idle_manager = None
 
         self._connectors_by_module_id = {}
         self._modules_by_id = {}
 
     def tray_init(self):
+        from .idle_threads import IdleManager
         from .widget_user_idle import WidgetUserIdle, SignalHandler
         self.widget_user_idle = WidgetUserIdle(self)
         self.signal_handler = SignalHandler(self)
+        idle_manager = IdleManager()
+
+        self._idle_manager = idle_manager
 
     def tray_start(self, *_a, **_kw):
         return
