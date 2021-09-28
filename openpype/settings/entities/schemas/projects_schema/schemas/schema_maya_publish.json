@@ -95,6 +95,11 @@
                     "label": "Enabled"
                 },
                 {
+                    "type": "boolean",
+                    "key": "whitelist_native_plugins",
+                    "label": "Whitelist Maya Native Plugins"
+                },
+                {
                     "type": "list",
                     "key": "authorized_plugins",
                     "label": "Authorized plugins",
