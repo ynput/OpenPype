@@ -113,18 +113,19 @@ def _h264_codec_args(ffprobe_data, source_ffmpeg_cmd):
 
     output.extend(["-codec:v", "h264"])
 
-    args = source_ffmpeg_cmd.split(" ")
-    crf = ""
-    for count, arg in enumerate(args):
-        if arg == "-crf":
-            crf = args[count + 1]
-            break
-    if crf:
-        output.extend(["-crf", crf])
-
-    bit_rate = ffprobe_data.get("bit_rate")
-    if bit_rate and not crf:
-        output.extend(["-b:v", bit_rate])
+    # Use arguments from source if are available source arguments
+    if source_ffmpeg_cmd:
+        copy_args = (
+            "-crf",
+            "-b:v", "-vb",
+            "-minrate", "-minrate:",
+            "-maxrate", "-maxrate:",
+            "-bufsize", "-bufsize:"
+        )
+        args = source_ffmpeg_cmd.split(" ")
+        for idx, arg in enumerate(args):
+            if arg in copy_args:
+                output.extend([arg, args[idx + 1]])
 
     pix_fmt = ffprobe_data.get("pix_fmt")
     if pix_fmt:
