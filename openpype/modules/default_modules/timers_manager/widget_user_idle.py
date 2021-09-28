@@ -92,19 +92,6 @@ class WidgetUserIdle(QtWidgets.QWidget):
         self.setMaximumSize(QtCore.QSize(self.SIZE_W+100, self.SIZE_H+100))
         self.setStyleSheet(style.load_stylesheet())
 
-    def closeEvent(self, event):
-        event.ignore()
-        if self.bool_not_stopped is True:
-            self.continue_timer()
-        else:
-            self.close_widget()
-
-    def close_widget(self):
-        self.bool_is_showed = False
-        self.bool_not_stopped = True
-        self._refresh_context()
-        self.hide()
-
     def showEvent(self, event):
         self.bool_is_showed = True
 
@@ -117,6 +104,19 @@ class WidgetUserIdle(QtWidgets.QWidget):
         self.btn_stop.setVisible(not self._timer_stopped)
         self.btn_restart.setVisible(self._timer_stopped)
         self.btn_close.setVisible(self._timer_stopped)
+
+    def _close_widget(self):
+        self._is_showed = False
+        self._timer_stopped = False
+        self._refresh_context()
+        self.hide()
+
+    def closeEvent(self, event):
+        event.ignore()
+        if self._timer_stopped:
+            self._close_widget()
+        else:
+            self._on_continue_clicked()
 
 
 class SignalHandler(QtCore.QObject):
