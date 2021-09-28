@@ -23,6 +23,8 @@ class WidgetUserIdle(QtWidgets.QWidget):
             | QtCore.Qt.WindowMinimizeButtonHint
         )
 
+        self._is_showed = False
+        self._timer_stopped = False
         msg_info = "You didn't work for a long time."
         msg_question = "Would you like to stop Timers?"
         msg_stopped = (
