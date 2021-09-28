@@ -89,6 +89,7 @@ class WidgetUserIdle(QtWidgets.QWidget):
         btn_continue.clicked.connect(self._on_continue_clicked)
         btn_close.clicked.connect(self._close_widget)
         btn_restart.clicked.connect(self._on_restart_clicked)
+        count_timer.timeout.connect(self._on_count_timeout)
 
         self.lbl_info = lbl_info
         self.lbl_question = lbl_question
@@ -113,6 +114,18 @@ class WidgetUserIdle(QtWidgets.QWidget):
 
     def _update_countdown_label(self):
         self.lbl_rest_time.setText(str(self._countdown))
+
+    def _on_count_timeout(self):
+        if self._timer_stopped or not self._is_showed:
+            self._count_timer.stop()
+            return
+
+        if self._countdown <= 0:
+            self._stop_timers()
+            self.set_timer_stopped()
+        else:
+            self._countdown -= 1
+            self._update_countdown_label()
 
     def _refresh_context(self):
         self.lbl_question.setVisible(not self._timer_stopped)
@@ -148,6 +161,9 @@ class WidgetUserIdle(QtWidgets.QWidget):
         if not self._is_showed:
             self._is_showed = True
             self._refresh_context()
+
+        if not self._count_timer.isActive():
+            self._count_timer.start()
         super(WidgetUserIdle, self).showEvent(event)
 
     def closeEvent(self, event):
