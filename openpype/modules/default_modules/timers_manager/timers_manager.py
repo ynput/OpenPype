@@ -115,6 +115,9 @@ class TimersManager(OpenPypeModule, ITrayService, IIdleManager):
         self._modules_by_id = {}
 
     def tray_init(self):
+        if not self.auto_stop:
+            return
+
         from .idle_threads import IdleManager
         from .widget_user_idle import WidgetUserIdle, SignalHandler
 
