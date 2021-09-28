@@ -108,6 +108,18 @@ class WidgetUserIdle(QtWidgets.QWidget):
         self.setMaximumSize(QtCore.QSize(self.SIZE_W+100, self.SIZE_H+100))
         self.setStyleSheet(style.load_stylesheet())
 
+    def set_countdown_start(self, countdown):
+        self._countdown_start = countdown
+        if not self.is_showed():
+            self.reset_countdown()
+    
+    def reset_countdown(self):
+        self._countdown = self._countdown_start
+        self._update_countdown_label()
+
+    def is_showed(self):
+        return self._is_showed
+
     def set_timer_stopped(self):
         self._timer_stopped = True
         self._refresh_context()
