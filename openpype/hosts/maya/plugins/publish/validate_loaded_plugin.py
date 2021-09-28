@@ -23,7 +23,7 @@ class ValidateLoadedPlugin(pyblish.api.ContextPlugin):
 
         for plugin in loaded_plugin:
             if not whitelist_native_plugins and os.getenv('MAYA_LOCATION') \
-                in cmds.pluginInfo(plugin, query=True, path=True):
+                    in cmds.pluginInfo(plugin, query=True, path=True):
                 continue
             if plugin not in authorized_plugins:
                 invalid.append(plugin)
