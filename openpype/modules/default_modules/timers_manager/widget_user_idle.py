@@ -107,6 +107,8 @@ class WidgetUserIdle(QtWidgets.QWidget):
         self.setMaximumSize(QtCore.QSize(self.SIZE_W+100, self.SIZE_H+100))
         self.setStyleSheet(style.load_stylesheet())
 
+    def _update_countdown_label(self):
+        self.lbl_rest_time.setText(str(self._countdown))
 
     def _refresh_context(self):
         self.lbl_question.setVisible(not self._timer_stopped)
