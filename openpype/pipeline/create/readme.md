@@ -76,3 +76,6 @@ There are data that are not specific for any instance but are specific for whole
 
 ### Update global context data (`update_context_data`)
 Update global context data.
+
+### Get context title (`get_context_title`)
+This is optional but is recommended. String returned from this function will be shown in UI.
