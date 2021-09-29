@@ -296,7 +296,7 @@ def run_disk_mapping_commands(mongo_url):
     _print("disk mapping args:: {}".format(args))
     try:
         output = subprocess.Popen(args)
-        if output.returncode != 0:
+        if output.returncode and output.returncode != 0:
             exc_msg = "Executing arguments was not successful: \"{}\"".format(
                 args)
 
