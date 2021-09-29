@@ -20,6 +20,10 @@ class PublishValidationError(Exception):
 
 
 class KnownPublishError(Exception):
+    """Publishing crashed because of known error.
+
+    Message will be shown in UI for artist.
+    """
     pass
 
 
