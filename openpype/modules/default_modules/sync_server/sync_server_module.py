@@ -398,6 +398,18 @@ class SyncServerModule(OpenPypeModule, ITrayModule):
 
         return remote_site
 
+    def get_local_normalized_site(self, site_name):
+        """
+            Return 'site_name' or 'local' if 'site_name' is local id.
+
+            In some places Settings or Local Settings require 'local' instead
+            of real site name.
+        """
+        if site_name == get_local_site_id():
+            site_name = self.LOCAL_SITE
+
+        return site_name
+
     # Methods for Settings UI to draw appropriate forms
     @classmethod
     def get_system_settings_schema(cls):
