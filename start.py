@@ -102,6 +102,8 @@ import subprocess
 import site
 from pathlib import Path
 
+from igniter.tools import get_openpype_global_settings
+
 
 # OPENPYPE_ROOT is variable pointing to build (or code) directory
 # WARNING `OPENPYPE_ROOT` must be defined before igniter import
@@ -273,6 +275,35 @@ def run(arguments: list, env: dict = None) -> int:
     p.wait()
     _print(f">>> done [{p.returncode}]")
     return p.returncode
+
+
+def run_disk_mapping_commands(mongo_url):
+    """ Run disk mapping command
+
+        Used to map shared disk for OP to pull codebase.
+    """
+    settings = get_openpype_global_settings(mongo_url)
+
+    low_platform = platform.system().lower()
+    disk_mapping = settings.get("disk_mapping")
+    if not disk_mapping:
+        return
+
+    for mapping in disk_mapping.get(low_platform):
+        source, destination = mapping
+
+    args = ["subst", destination.rstrip('/'), source.rstrip('/')]
+    _print("disk mapping args:: {}".format(args))
+    try:
+        output = subprocess.Popen(args)
+        if output.returncode != 0:
+            exc_msg = "Executing arguments was not successful: \"{}\"".format(
+                args)
+
+            raise RuntimeError(exc_msg)
+    except TypeError:
+        _print("Error in mapping drive")
+        raise
 
 
 def set_avalon_environments():
@@ -885,6 +916,9 @@ def boot():
 
     os.environ["OPENPYPE_MONGO"] = openpype_mongo
     os.environ["OPENPYPE_DATABASE_NAME"] = "openpype"  # name of Pype database
+
+    _print(">>> run disk mapping command ...")
+    run_disk_mapping_commands(openpype_mongo)
 
     # Get openpype path from database and set it to environment so openpype can
     # find its versions there and bootstrap them.
