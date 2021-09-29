@@ -1,6 +1,6 @@
 # Changelog
 
-## [3.5.0-nightly.1](https://github.com/pypeclub/OpenPype/tree/HEAD)
+## [3.5.0-nightly.2](https://github.com/pypeclub/OpenPype/tree/HEAD)
 
 [Full Changelog](https://github.com/pypeclub/OpenPype/compare/3.4.1...HEAD)
 
@@ -17,7 +17,10 @@
 **🐛 Bug fixes**
 
 - Fix Sync Queue when project disabled [\#2063](https://github.com/pypeclub/OpenPype/pull/2063)
-- TVPaint: Fixed rendered frame indexes [\#1946](https://github.com/pypeclub/OpenPype/pull/1946)
+
+**Merged pull requests:**
+
+- Nuke UI scaling [\#2077](https://github.com/pypeclub/OpenPype/pull/2077)
 
 ## [3.4.1](https://github.com/pypeclub/OpenPype/tree/3.4.1) (2021-09-23)
 
@@ -35,6 +38,7 @@
 - Settings UI: Deffered set value on entity [\#2044](https://github.com/pypeclub/OpenPype/pull/2044)
 - Loader: Families filtering [\#2043](https://github.com/pypeclub/OpenPype/pull/2043)
 - Settings UI: Project view enhancements [\#2042](https://github.com/pypeclub/OpenPype/pull/2042)
+- Added possibility to configure of synchronization of workfile version… [\#2041](https://github.com/pypeclub/OpenPype/pull/2041)
 - Settings for Nuke IncrementScriptVersion [\#2039](https://github.com/pypeclub/OpenPype/pull/2039)
 - Loader & Library loader: Use tools from OpenPype [\#2038](https://github.com/pypeclub/OpenPype/pull/2038)
 - Adding predefined project folders creation in PM [\#2030](https://github.com/pypeclub/OpenPype/pull/2030)
@@ -69,7 +73,6 @@
 
 **🚀 Enhancements**
 
-- Added possibility to configure of synchronization of workfile version… [\#2041](https://github.com/pypeclub/OpenPype/pull/2041)
 - General: Task types in profiles [\#2036](https://github.com/pypeclub/OpenPype/pull/2036)
 - Console interpreter: Handle invalid sizes on initialization [\#2022](https://github.com/pypeclub/OpenPype/pull/2022)
 - Ftrack: Show OpenPype versions in event server status [\#2019](https://github.com/pypeclub/OpenPype/pull/2019)
@@ -89,6 +92,7 @@
 - Global: Settings defined by Addons/Modules [\#1959](https://github.com/pypeclub/OpenPype/pull/1959)
 - CI: change release numbering triggers [\#1954](https://github.com/pypeclub/OpenPype/pull/1954)
 - Global: Avalon Host name collector [\#1949](https://github.com/pypeclub/OpenPype/pull/1949)
+- OpenPype: Add version validation and `--headless` mode and update progress 🔄 [\#1939](https://github.com/pypeclub/OpenPype/pull/1939)
 
 **🐛 Bug fixes**
 
@@ -115,13 +119,9 @@
 
 [Full Changelog](https://github.com/pypeclub/OpenPype/compare/CI/3.3.1-nightly.1...3.3.1)
 
-**🚀 Enhancements**
-
-- OpenPype: Add version validation and `--headless` mode and update progress 🔄 [\#1939](https://github.com/pypeclub/OpenPype/pull/1939)
-
 **🐛 Bug fixes**
 
-- Maya: Menu actions fix [\#1945](https://github.com/pypeclub/OpenPype/pull/1945)
+- TVPaint: Fixed rendered frame indexes [\#1946](https://github.com/pypeclub/OpenPype/pull/1946)
 - standalone: editorial shared object problem [\#1941](https://github.com/pypeclub/OpenPype/pull/1941)
 
 ## [3.3.0](https://github.com/pypeclub/OpenPype/tree/3.3.0) (2021-08-17)
@@ -138,9 +138,9 @@
 
 **🐛 Bug fixes**
 
+- Maya: Menu actions fix [\#1945](https://github.com/pypeclub/OpenPype/pull/1945)
 - Fix - ftrack family was added incorrectly in some cases [\#1935](https://github.com/pypeclub/OpenPype/pull/1935)
 - Fix - Deadline publish on Linux started Tray instead of headless publishing [\#1930](https://github.com/pypeclub/OpenPype/pull/1930)
-- Maya: Validate Model Name - repair accident deletion in settings defaults [\#1929](https://github.com/pypeclub/OpenPype/pull/1929)
 
 **Merged pull requests:**
 
