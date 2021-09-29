@@ -142,8 +142,9 @@ class TrayManager:
 
         title = "Settings miss default values"
         msg = (
-            "Your OpenPype may not work as expected because have missing"
-            " default settings values. Please contact OpenPype team."
+            "Your OpenPype will not work as expected! \n"
+            "Some default values in settigs are missing. \n\n"
+            "Please contact OpenPype team."
         )
         msg_box = QtWidgets.QMessageBox(
             QtWidgets.QMessageBox.Warning,
