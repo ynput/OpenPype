@@ -292,18 +292,18 @@ def run_disk_mapping_commands(mongo_url):
     for mapping in disk_mapping.get(low_platform):
         source, destination = mapping
 
-    args = ["subst", destination.rstrip('/'), source.rstrip('/')]
-    _print("disk mapping args:: {}".format(args))
-    try:
-        output = subprocess.Popen(args)
-        if output.returncode and output.returncode != 0:
-            exc_msg = "Executing arguments was not successful: \"{}\"".format(
-                args)
+        args = ["subst", destination.rstrip('/'), source.rstrip('/')]
+        _print("disk mapping args:: {}".format(args))
+        try:
+            output = subprocess.Popen(args)
+            if output.returncode and output.returncode != 0:
+                exc_msg = "Executing args was not successful: \"{}\"".format(
+                    args)
 
-            raise RuntimeError(exc_msg)
-    except TypeError:
-        _print("Error in mapping drive")
-        raise
+                raise RuntimeError(exc_msg)
+        except TypeError:
+            _print("Error in mapping drive")
+            raise
 
 
 def set_avalon_environments():
