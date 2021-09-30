@@ -42,17 +42,18 @@ class SFTPHandler(AbstractProvider):
         self.project_name = project_name
         self.site_name = site_name
         self.root = None
+        self.conn = None
 
         self.presets = presets
         if not self.presets:
-            log.info("Sync Server: There are no presets for {}.".
-                     format(site_name))
+            log.warning("Sync Server: There are no presets for {}.".
+                        format(site_name))
             return
 
         provider_presets = self.presets.get(self.CODE)
         if not provider_presets:
             msg = "Sync Server: No provider presets for {}".format(self.CODE)
-            log.info(msg)
+            log.warning(msg)
             return
 
         # store to instance for reconnect
