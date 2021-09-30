@@ -44,6 +44,7 @@
             "type": "dict",
             "key": "disk_mapping",
             "label": "Disk mapping",
+            "use_label_wrap": false,
             "collapsible": false,
             "children": [
                 {
