@@ -221,6 +221,7 @@ def _get_configured_sites_from_setting(module, project_name, project_setting):
 
     return configured_sites
 
+
 class SyncServerThread(threading.Thread):
     """
         Separate thread running synchronization server with asyncio loop.

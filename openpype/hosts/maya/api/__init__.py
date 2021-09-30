@@ -64,14 +64,23 @@ def process_dirmap(project_settings):
     # type: (dict) -> None
     """Go through all paths in Settings and set them using `dirmap`.
 
+        If artists has Site Sync enabled, take dirmap mapping directly from
+        Local Settings when artist is syncing workfile locally.
+
     Args:
         project_settings (dict): Settings for current project.
 
     """
-    if not project_settings["maya"].get("maya-dirmap"):
+    local_mapping = _get_local_sync_dirmap(project_settings)
+    if not project_settings["maya"].get("maya-dirmap") and not local_mapping:
         return
-    mapping = project_settings["maya"]["maya-dirmap"]["paths"] or {}
-    mapping_enabled = project_settings["maya"]["maya-dirmap"]["enabled"]
+
+    mapping = local_mapping or \
+        project_settings["maya"]["maya-dirmap"]["paths"] \
+        or {}
+    mapping_enabled = project_settings["maya"]["maya-dirmap"]["enabled"] \
+        or bool(local_mapping)
+
     if not mapping or not mapping_enabled:
         return
     if mapping.get("source-path") and mapping_enabled is True:
@@ -94,10 +103,72 @@ def process_dirmap(project_settings):
             continue
 
 
+def _get_local_sync_dirmap(project_settings):
+    """
+        Returns dirmap if synch to local project is enabled.
+
+        Only valid mapping is from roots of remote site to local site set in
+        Local Settings.
+
+        Args:
+            project_settings (dict)
+        Returns:
+            dict : { "source-path": [XXX], "destination-path": [YYYY]}
+    """
+    import json
+    mapping = {}
+
+    if not project_settings["global"]["sync_server"]["enabled"]:
+        log.debug("Site Sync not enabled")
+        return mapping
+
+    from openpype.settings.lib import get_site_local_overrides
+    from openpype.modules import ModulesManager
+
+    manager = ModulesManager()
+    sync_module = manager.modules_by_name["sync_server"]
+
+    project_name = os.getenv("AVALON_PROJECT")
+    sync_settings = sync_module.get_sync_project_setting(
+        os.getenv("AVALON_PROJECT"), exclude_locals=False, cached=False)
+    log.debug(json.dumps(sync_settings, indent=4))
+
+    active_site = sync_module.get_local_normalized_site(
+        sync_module.get_active_site(project_name))
+    remote_site = sync_module.get_local_normalized_site(
+        sync_module.get_remote_site(project_name))
+    log.debug("active {} - remote {}".format(active_site, remote_site))
+
+    if active_site == "local" \
+            and project_name in sync_module.get_enabled_projects()\
+            and active_site != remote_site:
+        overrides = get_site_local_overrides(os.getenv("AVALON_PROJECT"),
+                                             active_site)
+        for root_name, value in overrides.items():
+            if os.path.isdir(value):
+                try:
+                    mapping["destination-path"] = [value]
+                    mapping["source-path"] = [sync_settings["sites"]\
+                                                           [remote_site]\
+                                                           ["root"]\
+                                                           [root_name]]
+                except IndexError:
+                    # missing corresponding destination path
+                    log.debug("overrides".format(overrides))
+                    log.error(
+                        ("invalid dirmap mapping, missing corresponding"
+                         " destination directory."))
+                    break
+
+        log.debug("local sync mapping:: {}".format(mapping))
+    return mapping
+
+
 def uninstall():
     pyblish.deregister_plugin_path(PUBLISH_PATH)
     avalon.deregister_plugin_path(avalon.Loader, LOAD_PATH)
     avalon.deregister_plugin_path(avalon.Creator, CREATE_PATH)
+    avalon.deregister_plugin_path(avalon.InventoryAction, INVENTORY_PATH)
 
     menu.uninstall()
 
