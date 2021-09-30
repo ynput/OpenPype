@@ -289,6 +289,7 @@ class SystemTrayIcon(QtWidgets.QSystemTrayIcon):
 
         self._click_timer = click_timer
         self._doubleclick = False
+        self._click_pos = None
 
     def _click_timer_timeout(self):
         self._click_timer.stop()
@@ -301,13 +302,17 @@ class SystemTrayIcon(QtWidgets.QSystemTrayIcon):
             self._show_context_menu()
 
     def _show_context_menu(self):
-        pos = QtGui.QCursor().pos()
+        pos = self._click_pos
+        self._click_pos = None
+        if pos is None:
+            pos = QtGui.QCursor().pos()
         self.contextMenu().popup(pos)
 
     def on_systray_activated(self, reason):
         # show contextMenu if left click
         if reason == QtWidgets.QSystemTrayIcon.Trigger:
             if self.tray_man.doubleclick_callback:
+                self._click_pos = QtGui.QCursor().pos()
                 self._click_timer.start()
             else:
                 self._show_context_menu()
