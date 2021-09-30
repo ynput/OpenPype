@@ -403,15 +403,24 @@ def _validate_thirdparty_binaries():
         raise RuntimeError(error_msg.format("FFmpeg"))
 
     # Validate existence of OpenImageIO (not on MacOs)
-    if low_platform != "darwin":
+    oiio_tool_path = None
+    if low_platform == "linux":
+        oiio_tool_path = os.path.join(
+            binary_vendors_dir,
+            "oiio",
+            low_platform,
+            "bin",
+            "oiiotool"
+        )
+    elif low_platform == "windows":
         oiio_tool_path = os.path.join(
             binary_vendors_dir,
             "oiio",
             low_platform,
             "oiiotool"
         )
-        if not is_tool(oiio_tool_path):
-            raise RuntimeError(error_msg.format("OpenImageIO"))
+    if oiio_tool_path is not None and not is_tool(oiio_tool_path):
+        raise RuntimeError(error_msg.format("OpenImageIO"))
 
 
 def _process_arguments() -> tuple:

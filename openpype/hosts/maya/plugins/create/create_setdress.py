@@ -9,3 +9,8 @@ class CreateSetDress(plugin.Creator):
     family = "setdress"
     icon = "cubes"
     defaults = ["Main", "Anim"]
+
+    def __init__(self, *args, **kwargs):
+        super(CreateSetDress, self).__init__(*args, **kwargs)
+
+        self.data["exactSetMembersOnly"] = True

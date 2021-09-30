@@ -1162,8 +1162,12 @@ def prepare_host_environments(data, implementation_envs=True):
     if final_env is None:
         final_env = loaded_env
 
+    keys_to_remove = set(data["env"].keys()) - set(final_env.keys())
+
     # Update env
     data["env"].update(final_env)
+    for key in keys_to_remove:
+        data["env"].pop(key, None)
 
 
 def apply_project_environments_value(project_name, env, project_settings=None):

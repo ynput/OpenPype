@@ -1,4 +1,5 @@
 from .gdrive import GDriveHandler
+from .dropbox import DropboxHandler
 from .local_drive import LocalDriveHandler
 
 
@@ -111,4 +112,5 @@ factory = ProviderFactory()
 # 7 denotes number of files that could be synced in single loop - learned by
 # trial and error
 factory.register_provider(GDriveHandler.CODE, GDriveHandler, 7)
+factory.register_provider(DropboxHandler.CODE, DropboxHandler, 10)
 factory.register_provider(LocalDriveHandler.CODE, LocalDriveHandler, 50)

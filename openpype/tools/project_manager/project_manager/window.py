@@ -2,15 +2,17 @@ from Qt import QtWidgets, QtCore, QtGui
 
 from . import (
     ProjectModel,
+    ProjectProxyFilter,
 
     HierarchyModel,
     HierarchySelectionModel,
     HierarchyView,
 
-    CreateProjectDialog
+    CreateProjectDialog,
+    PROJECT_NAME_ROLE
 )
-from openpype.style import load_stylesheet
 from .style import ResourceCache
+from openpype.style import load_stylesheet
 from openpype.lib import is_admin_password_required
 from openpype.widgets import PasswordDialog
 
@@ -35,9 +37,6 @@ class ProjectManagerWindow(QtWidgets.QWidget):
         self._password_dialog = None
         self._user_passed = False
 
-        # keep track of the current project PM is viewing
-        self._current_project = None
-
         self.setWindowTitle("OpenPype Project Manager")
         self.setWindowIcon(QtGui.QIcon(resources.get_openpype_icon_filepath()))
 
@@ -50,11 +49,15 @@ class ProjectManagerWindow(QtWidgets.QWidget):
         dbcon = AvalonMongoDB()
 
         project_model = ProjectModel(dbcon)
+        project_proxy = ProjectProxyFilter()
+        project_proxy.setSourceModel(project_model)
+        project_proxy.setDynamicSortFilter(True)
+
         project_combobox = QtWidgets.QComboBox(project_widget)
         project_combobox.setSizeAdjustPolicy(
             QtWidgets.QComboBox.AdjustToContents
         )
-        project_combobox.setModel(project_model)
+        project_combobox.setModel(project_proxy)
         project_combobox.setRootModelIndex(QtCore.QModelIndex())
         style_delegate = QtWidgets.QStyledItemDelegate()
         project_combobox.setItemDelegate(style_delegate)
@@ -72,6 +75,7 @@ class ProjectManagerWindow(QtWidgets.QWidget):
             "Create Starting Folders",
             project_widget
         )
+        create_folders_btn.setEnabled(False)
 
         project_layout = QtWidgets.QHBoxLayout(project_widget)
         project_layout.setContentsMargins(0, 0, 0, 0)
@@ -147,6 +151,7 @@ class ProjectManagerWindow(QtWidgets.QWidget):
         add_task_btn.clicked.connect(self._on_add_task)
 
         self._project_model = project_model
+        self._project_proxy_model = project_proxy
 
         self.hierarchy_view = hierarchy_view
         self.hierarchy_model = hierarchy_model
@@ -165,7 +170,16 @@ class ProjectManagerWindow(QtWidgets.QWidget):
         self.setStyleSheet(load_stylesheet())
 
     def _set_project(self, project_name=None):
+        self._create_folders_btn.setEnabled(project_name is not None)
+        self._project_proxy_model.set_filter_default(project_name is not None)
         self.hierarchy_view.set_project(project_name)
+
+    def _current_project(self):
+        row = self._project_combobox.currentIndex()
+        if row < 0:
+            return None
+        index = self._project_proxy_model.index(row, 0)
+        return index.data(PROJECT_NAME_ROLE)
 
     def showEvent(self, event):
         super(ProjectManagerWindow, self).showEvent(event)
@@ -185,6 +199,7 @@ class ProjectManagerWindow(QtWidgets.QWidget):
                 project_name = self._project_combobox.currentText()
 
         self._project_model.refresh()
+        self._project_proxy_model.sort(0, QtCore.Qt.AscendingOrder)
 
         if self._project_combobox.count() == 0:
             return self._set_project()
@@ -194,12 +209,12 @@ class ProjectManagerWindow(QtWidgets.QWidget):
             if row >= 0:
                 self._project_combobox.setCurrentIndex(row)
 
-        self._set_project(self._project_combobox.currentText())
+        selected_project = self._current_project()
+        self._set_project(selected_project)
 
     def _on_project_change(self):
-        if self._project_combobox.currentIndex() != 0:
-            self._current_project = self._project_combobox.currentText()
-            self._set_project(self._current_project)
+        selected_project = self._current_project()
+        self._set_project(selected_project)
 
     def _on_project_refresh(self):
         self.refresh_projects()
@@ -214,7 +229,8 @@ class ProjectManagerWindow(QtWidgets.QWidget):
         self.hierarchy_view.add_task()
 
     def _on_create_folders(self):
-        if not self._current_project:
+        project_name = self._current_project()
+        if not project_name:
             return
 
         qm = QtWidgets.QMessageBox
@@ -225,11 +241,11 @@ class ProjectManagerWindow(QtWidgets.QWidget):
         if ans == qm.Yes:
             try:
                 # Get paths based on presets
-                basic_paths = get_project_basic_paths(self._current_project)
+                basic_paths = get_project_basic_paths(project_name)
                 if not basic_paths:
                     pass
                 # Invoking OpenPype API to create the project folders
-                create_project_folders(basic_paths, self._current_project)
+                create_project_folders(basic_paths, project_name)
             except Exception as exc:
                 self.log.warning(
                     "Cannot create starting folders: {}".format(exc),
@@ -246,11 +262,9 @@ class ProjectManagerWindow(QtWidgets.QWidget):
         if dialog.result() != 1:
             return
 
-        self._current_project = dialog.project_name
-        self.show_message(
-            "Created project \"{}\"".format(self._current_project)
-        )
-        self.refresh_projects(self._current_project)
+        project_name = dialog.project_name
+        self.show_message("Created project \"{}\"".format(project_name))
+        self.refresh_projects(project_name)
 
     def _show_password_dialog(self):
         if self._password_dialog:
