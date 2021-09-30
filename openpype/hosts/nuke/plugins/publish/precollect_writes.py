@@ -102,6 +102,9 @@ class CollectNukeWrites(pyblish.api.InstancePlugin):
 
                 if collected_frames_len == 1:
                     representation['files'] = collected_frames.pop()
+                    if "still" in _families_test:
+                        instance.data['family'] = 'image'
+                        instance.data["families"].remove('still')
                 else:
                     representation['files'] = collected_frames
                 instance.data["representations"].append(representation)

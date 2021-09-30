@@ -119,8 +119,7 @@
                 "render",
                 "prerender",
                 "review",
-                "image",
-                "still"
+                "image"
             ],
             "representations": [
                 "exr",

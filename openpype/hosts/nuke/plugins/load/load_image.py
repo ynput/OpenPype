@@ -12,7 +12,7 @@ from openpype.hosts.nuke.api.lib import (
 class LoadImage(api.Loader):
     """Load still image into Nuke"""
 
-    families = ["render", "source", "plate", "review", "image", "still"]
+    families = ["render", "source", "plate", "review", "image"]
     representations = ["exr", "dpx", "jpg", "jpeg", "png", "psd", "tiff"]
 
     label = "Load Image"

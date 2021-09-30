@@ -100,7 +100,7 @@ class NukeRenderLocal(openpype.api.Extractor):
             families.remove('prerender.local')
             families.insert(0, "prerender")
         elif "still.local" in families:
-            instance.data['family'] = 'still'
+            instance.data['family'] = 'image'
             families.remove('still.local')
         instance.data["families"] = families
 
