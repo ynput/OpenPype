@@ -10,7 +10,7 @@ class NiceCheckbox(QtWidgets.QFrame):
         super(NiceCheckbox, self).__init__(parent)
 
         self.setObjectName("NiceCheckbox")
-
+        self.setAttribute(QtCore.Qt.WA_TranslucentBackground)
         self.setSizePolicy(
             QtWidgets.QSizePolicy.Fixed,
             QtWidgets.QSizePolicy.Fixed
