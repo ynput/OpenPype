@@ -314,6 +314,8 @@ class InstanceListGroupWidget(QtWidgets.QFrame):
         expand_btn.clicked.connect(self._on_expand_clicked)
         toggle_checkbox.stateChanged.connect(self._on_checkbox_change)
 
+        self._ignore_state_change = False
+
         self._expected_checkstate = None
 
         self.subset_name_label = subset_name_label
@@ -323,14 +325,16 @@ class InstanceListGroupWidget(QtWidgets.QFrame):
     def set_checkstate(self, state):
         if self.checkstate() == state:
             return
-
+        self._ignore_state_change = True
         self.toggle_checkbox.setCheckState(state)
+        self._ignore_state_change = False
 
     def checkstate(self):
         return self.toggle_checkbox.checkState()
 
     def _on_checkbox_change(self, state):
-        self.toggle_requested.emit(self.family, state)
+        if not self._ignore_state_change:
+            self.toggle_requested.emit(self.family, state)
 
     def _on_expand_clicked(self):
         self.expand_changed.emit(self.family, not self._expanded)
@@ -361,7 +365,6 @@ class InstanceTreeView(QtWidgets.QTreeView):
         )
         self.viewport().setMouseTracking(True)
         self._pressed_group_index = None
-        self._pressed_expander = None
 
     def _expand_item(self, index, expand=None):
         is_expanded = self.isExpanded(index)
@@ -404,23 +407,22 @@ class InstanceTreeView(QtWidgets.QTreeView):
         if event.button() != QtCore.Qt.LeftButton:
             return
 
+        pressed_group_index = None
         pos_index = self.indexAt(event.pos())
-        if not pos_index.data(IS_GROUP_ROLE):
-            pressed_group_index = None
-            pressed_expander = None
-        else:
-            height = self.indexRowSizeHint(pos_index)
+        if pos_index.data(IS_GROUP_ROLE):
             pressed_group_index = pos_index
-            pressed_expander = event.pos().x() < height
 
         self._pressed_group_index = pressed_group_index
-        self._pressed_expander = pressed_expander
 
     def mousePressEvent(self, event):
         if not self._mouse_press(event):
             super(InstanceTreeView, self).mousePressEvent(event)
 
-    def _mouse_release(self, event, pressed_expander, pressed_index):
+    def mouseDoubleClickEvent(self, event):
+        if not self._mouse_press(event):
+            super(InstanceTreeView, self).mouseDoubleClickEvent(event)
+
+    def _mouse_release(self, event, pressed_index):
         if event.button() != QtCore.Qt.LeftButton:
             return False
 
@@ -433,21 +435,13 @@ class InstanceTreeView(QtWidgets.QTreeView):
             if len(indexes) != 1 or indexes[0] != pos_index:
                 return False
 
-        height = self.indexRowSizeHint(pos_index)
-        if event.pos().x() < height:
-            if pressed_expander:
-                self._expand_item(pos_index)
-                return True
-        elif not pressed_expander:
-            self._expand_item(pos_index, True)
-            return True
+        self._expand_item(pos_index)
+        return True
 
     def mouseReleaseEvent(self, event):
         pressed_index = self._pressed_group_index
-        pressed_expander = self._pressed_expander is True
         self._pressed_group_index = None
-        self._pressed_expander = None
-        result = self._mouse_release(event, pressed_expander, pressed_index)
+        result = self._mouse_release(event, pressed_index)
         if not result:
             super(InstanceTreeView, self).mouseReleaseEvent(event)
 
@@ -805,3 +799,7 @@ class InstanceListView(AbstractInstanceView):
                 instance_ids.add(instance_id)
 
         self._change_active_instances(instance_ids, active)
+
+        proxy_index = self.proxy_model.mapFromSource(group_item.index())
+        if not self.instance_view.isExpanded(proxy_index):
+            self.instance_view.expand(proxy_index)
