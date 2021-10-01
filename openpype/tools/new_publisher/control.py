@@ -624,7 +624,7 @@ class PublisherController:
         creator = self.creators[family]
         creator.create(subset_name, instance_data, options)
 
-        self._reset_instances()
+        self._trigger_callbacks(self._instances_refresh_callback_refs)
 
     def save_changes(self):
         if self.create_context.host_is_valid:
@@ -637,7 +637,7 @@ class PublisherController:
 
         self.create_context.remove_instances(instances)
 
-        self._reset_instances()
+        self._trigger_callbacks(self._instances_refresh_callback_refs)
 
     # --- Publish specific implementations ---
     @property
