@@ -288,7 +288,8 @@ def script_name():
 def add_button_write_to_read(node):
     name = "createReadNode"
     label = "Create Read From Rendered"
-    value = "import write_to_read;write_to_read.write_to_read(nuke.thisNode())"
+    value = "import write_to_read;\
+        write_to_read.write_to_read(nuke.thisNode(), allow_relative=False)"
     knob = nuke.PyScript_Knob(name, label, value)
     knob.clearFlag(nuke.STARTLINE)
     node.addKnob(knob)
