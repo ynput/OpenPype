@@ -17,20 +17,21 @@ class TestCreatorOne(Creator):
 
     def collect_instances(self, attr_plugins):
         for instance_data in pipeline.list_instances():
+            instance = None
             creator_id = instance_data.get("creator_identifier")
             if creator_id is not None:
                 if creator_id == self.identifier:
-                    subset_name = instance_data["subset"]
-                    instance = CreatedInstance(
-                        self.family, subset_name, instance_data, self
+                    instance = CreatedInstance.from_existing(
+                        instance_data, self, attr_plugins
                     )
-                    self._add_instance_to_context(instance)
 
             elif instance_data["family"] == self.identifier:
                 instance_data["creator_identifier"] = self.identifier
                 instance = CreatedInstance.from_existing(
                     instance_data, self, attr_plugins
                 )
+
+            if instance is not None:
                 self._add_instance_to_context(instance)
 
     def update_instances(self, update_list):
