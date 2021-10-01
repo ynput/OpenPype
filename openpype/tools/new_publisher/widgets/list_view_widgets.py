@@ -5,7 +5,6 @@ from Qt import QtWidgets, QtCore, QtGui
 from openpype.style import get_objected_colors
 from openpype.widgets.nice_checkbox import NiceCheckbox
 from .widgets import AbstractInstanceView
-from .icons import get_image
 from ..constants import (
     INSTANCE_ID_ROLE,
     SORT_VALUE_ROLE,
