@@ -55,7 +55,7 @@ speedcopy = "^2.1"
 six = "^1.15"
 semver = "^2.13.0" # for version resolution
 wsrpc_aiohttp = "^3.1.1" # websocket server
-pywin32 = { version = "300", markers = "sys_platform == 'win32'" }
+pywin32 = { version = "301", markers = "sys_platform == 'win32'" }
 jinxed = [
     { version = "^1.0.1", markers = "sys_platform == 'darwin'" },
     { version = "^1.0.1", markers = "sys_platform == 'linux'" }

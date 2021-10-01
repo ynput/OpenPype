@@ -6,7 +6,12 @@
         },
         "ValidateVersion": {
             "enabled": true,
-            "optional": false
+            "optional": false,
+            "active": true
+        },
+        "ValidateIntent": {
+            "enabled": false,
+            "profiles": []
         },
         "IntegrateHeroVersion": {
             "enabled": true,
