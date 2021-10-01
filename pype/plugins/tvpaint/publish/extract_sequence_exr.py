@@ -11,7 +11,7 @@ class ExtractSequenceEXR(pyblish.api.InstancePlugin):
     order = pyblish.api.ExtractorOrder + 0.1
     label = "Extract Sequence EXR"
     hosts = ["tvpaint"]
-    families = ["renderPass", "renderLayer"]
+    families = ["review", "renderPass", "renderLayer"]
     active = False
 
     def process(self, instance):
@@ -27,7 +27,7 @@ class ExtractSequenceEXR(pyblish.api.InstancePlugin):
                 continue
 
             self.log.info(
-                "Processeing representation: {}".format(
+                "Processing representation: {}".format(
                     json.dumps(representation, sort_keys=True, indent=4)
                 )
             )
@@ -61,7 +61,9 @@ class ExtractSequenceEXR(pyblish.api.InstancePlugin):
 
         instance.data["representations"].extend(new_representations)
         self.log.info(
-            json.dumps(
-                instance.data["representations"], sort_keys=True, indent=4
+            "Representations: {}".format(
+                json.dumps(
+                    instance.data["representations"], sort_keys=True, indent=4
+                )
             )
         )
