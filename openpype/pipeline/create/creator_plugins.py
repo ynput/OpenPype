@@ -290,6 +290,7 @@ class AutoCreator(BaseCreator):
     """Creator which is automatically triggered without user interaction.
 
     Can be used e.g. for `workfile`.
-
-    Should raise 'AutoCreationSkipped' if has nothing to do.
     """
+    def remove_instances(self, instances):
+        """Skip removement."""
+        pass
