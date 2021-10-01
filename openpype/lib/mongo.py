@@ -86,14 +86,6 @@ def get_default_components():
     return decompose_url(mongo_url)
 
 
-def extract_port_from_url(url):
-    parsed_url = urlparse(url)
-    if parsed_url.scheme is None:
-        _url = "mongodb://{}".format(url)
-        parsed_url = urlparse(_url)
-    return parsed_url.port
-
-
 def should_add_certificate_path_to_mongo_url(mongo_url):
     """Check if should add ca certificate to mongo url.
 
@@ -201,9 +193,6 @@ class OpenPypeMongoConnection:
             "serverSelectionTimeoutMS": timeout
         }
 
-        port = extract_port_from_url(mongo_url)
-        if port is not None:
-            kwargs["port"] = int(port)
 
         mongo_client = pymongo.MongoClient(**kwargs)
         if retry_attempts is None:
