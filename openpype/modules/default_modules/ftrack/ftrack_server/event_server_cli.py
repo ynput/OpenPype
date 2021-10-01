@@ -40,6 +40,8 @@ def check_mongo_url(mongo_uri, log_error=False):
         # Force connection on a request as the connect=True parameter of
         # MongoClient seems to be useless here
         client.server_info()
+        with client.start_session():
+            pass
         client.close()
     except pymongo.errors.ServerSelectionTimeoutError as err:
         if log_error:
