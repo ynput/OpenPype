@@ -192,7 +192,7 @@ class OpenPypeMongoConnection:
         return connection
 
     @classmethod
-    def create_connection(cls, mongo_url, timeout=None):
+    def create_connection(cls, mongo_url, timeout=None, retry_attempts=None):
         if timeout is None:
             timeout = int(os.environ.get("AVALON_TIMEOUT") or 1000)
 
@@ -206,8 +206,13 @@ class OpenPypeMongoConnection:
             kwargs["port"] = int(port)
 
         mongo_client = pymongo.MongoClient(**kwargs)
+        if retry_attempts is None:
+            retry_attempts = 3
 
-        for _retry in range(3):
+        elif not retry_attempts:
+            retry_attempts = 1
+
+        for _retry in range(retry_attempts):
             try:
                 t1 = time.time()
                 mongo_client.server_info()
