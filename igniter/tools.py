@@ -22,89 +22,6 @@ from pymongo.errors import (
 )
 
 
-def decompose_url(url: str) -> Dict:
-    """Decompose mongodb url to its separate components.
-
-    Args:
-        url (str): Mongodb url.
-
-    Returns:
-        dict: Dictionary of components.
-
-    """
-    components = {
-        "scheme": None,
-        "host": None,
-        "port": None,
-        "username": None,
-        "password": None,
-        "auth_db": None
-    }
-
-    result = urlparse(url)
-    if result.scheme is None:
-        _url = "mongodb://{}".format(url)
-        result = urlparse(_url)
-
-    components["scheme"] = result.scheme
-    components["host"] = result.hostname
-    try:
-        components["port"] = result.port
-    except ValueError:
-        raise RuntimeError("invalid port specified")
-    components["username"] = result.username
-    components["password"] = result.password
-
-    try:
-        components["auth_db"] = parse_qs(result.query)['authSource'][0]
-    except KeyError:
-        # no auth db provided, mongo will use the one we are connecting to
-        pass
-
-    return components
-
-
-def compose_url(scheme: str = None,
-                host: str = None,
-                username: str = None,
-                password: str = None,
-                port: int = None,
-                auth_db: str = None) -> str:
-    """Compose mongodb url from its individual components.
-
-    Args:
-        scheme (str, optional):
-        host (str, optional):
-        username (str, optional):
-        password (str, optional):
-        port (str, optional):
-        auth_db (str, optional):
-
-    Returns:
-        str: mongodb url
-
-    """
-
-    url = "{scheme}://"
-
-    if username and password:
-        url += "{username}:{password}@"
-
-    url += "{host}"
-    if port:
-        url += ":{port}"
-
-    if auth_db:
-        url += "?authSource={auth_db}"
-
-    return url.format(**{
-        "scheme": scheme,
-        "host": host,
-        "username": username,
-        "password": password,
-        "port": port,
-        "auth_db": auth_db
-    })
 
 
 def validate_mongo_connection(cnx: str) -> (bool, str):
@@ -121,12 +38,14 @@ def validate_mongo_connection(cnx: str) -> (bool, str):
     if parsed.scheme not in ["mongodb", "mongodb+srv"]:
         return False, "Not mongodb schema"
 
+    kwargs = {
+        "serverSelectionTimeoutMS": 2000
+    }
     try:
-        client = MongoClient(
-            cnx,
-            serverSelectionTimeoutMS=2000
-        )
+        client = MongoClient(cnx, **kwargs)
         client.server_info()
+        with client.start_session():
+            pass
         client.close()
     except ServerSelectionTimeoutError as e:
         return False, f"Cannot connect to server {cnx} - {e}"
@@ -196,20 +115,8 @@ def get_openpype_global_settings(url: str) -> dict:
         dict: With settings data. Empty dictionary is returned if not found.
     """
     try:
-        components = decompose_url(url)
-    except RuntimeError:
-        return {}
-    mongo_kwargs = {
-        "host": compose_url(**components),
-        "serverSelectionTimeoutMS": 2000
-    }
-    port = components.get("port")
-    if port is not None:
-        mongo_kwargs["port"] = int(port)
-
-    try:
         # Create mongo connection
-        client = MongoClient(**mongo_kwargs)
+        client = MongoClient(url)
         # Access settings collection
         col = client["openpype"]["settings"]
         # Query global settings
