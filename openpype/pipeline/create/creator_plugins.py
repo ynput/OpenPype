@@ -90,14 +90,24 @@ class BaseCreator:
         """
         pass
 
-    def remove_instance(self, instance):
+    @abstractmethod
+    def collect_instances(self, attr_plugins=None):
+        pass
+
+    @abstractmethod
+    def update_instances(self, update_list):
+        pass
+
+    @abstractmethod
+    def remove_instances(self, instances):
         """Method called on instance removement.
 
         Can also remove instance metadata from context but should return
         'True' if did so.
 
         Args:
-            instance(CreatedInstance): Instance object which will be removed.
+            instance(list<CreatedInstance>): Instance objects which should be
+                removed.
 
         Returns:
             bool: Instance was removed completely and is not required to call
