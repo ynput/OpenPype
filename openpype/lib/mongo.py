@@ -197,12 +197,11 @@ class OpenPypeMongoConnection:
             timeout = int(os.environ.get("AVALON_TIMEOUT") or 1000)
 
         kwargs = {
-            "host": mongo_url,
             "serverSelectionTimeoutMS": timeout
         }
 
+        mongo_client = pymongo.MongoClient(mongo_url, **kwargs)
 
-        mongo_client = pymongo.MongoClient(**kwargs)
         if retry_attempts is None:
             retry_attempts = 3
 
