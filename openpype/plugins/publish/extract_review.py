@@ -30,8 +30,8 @@ class ExtractReview(pyblish.api.InstancePlugin):
     otherwise the representation is ignored.
 
     All new representations are created and encoded by ffmpeg following
-    presets found in `pype-config/presets/plugins/global/
-    publish.json:ExtractReview:outputs`.
+    presets found in OpenPype Settings interface at
+    `project_settings/global/publish/ExtractReview/profiles:outputs`.
     """
 
     label = "Extract Review"
