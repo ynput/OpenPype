@@ -732,10 +732,13 @@ class CreateContext:
             changes["publish_attributes"] = publish_attribute_changes
         return changes
 
-    def add_instance(self, instance):
+    def creator_adds_instance(self, instance):
         self.instances.append(instance)
         if not self._reseting:
             self.validate_instances_context([instance])
+
+    def creator_removed_instance(self, instance):
+        self.instances.remove(instance)
 
     def reset_instances(self):
         self.instances = []
