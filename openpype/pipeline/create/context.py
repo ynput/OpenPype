@@ -633,7 +633,7 @@ class CreateContext:
         self.reset_instances()
         self.execute_autocreators()
 
-        self._validate_instances_context(self.instances)
+        self.validate_instances_context()
 
         self._reseting = False
 
@@ -735,7 +735,7 @@ class CreateContext:
     def add_instance(self, instance):
         self.instances.append(instance)
         if not self._reseting:
-            self._validate_instances_context([instance])
+            self.validate_instances_context([instance])
 
     def reset_instances(self):
         self.instances = []
@@ -764,7 +764,9 @@ class CreateContext:
                 ).format(family, inspect.getfile(creator.__class__))
                 self.log.warning(msg, exc_info=True)
 
-    def _validate_instances_context(self, instances):
+    def validate_instances_context(self, instances=None):
+        if instances is None:
+            instances = self.instances
         task_names_by_asset_name = collections.defaultdict(set)
         for instance in instances:
             task_name = instance.data.get("task")
