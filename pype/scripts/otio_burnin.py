@@ -370,7 +370,8 @@ def example(input_path, output_path):
 
 def burnins_from_data(
     input_path, output_path, data,
-    codec_data=None, options=None, burnin_values=None, overwrite=True
+    codec_data=None, options=None, burnin_values=None, overwrite=True,
+    ffmpeg_cmd=None
 ):
     """This method adds burnins to video/image file based on presets setting.
 
@@ -543,6 +544,14 @@ def burnins_from_data(
         text = value.format(**data)
         burnin.add_text(text, align, frame_start, frame_end)
 
+    # Extract CRF data.
+    args = ffmpeg_cmd.split(" ")
+    crf = ""
+    for count, arg in enumerate(args):
+        if arg == "-crf":
+            crf = args[count + 1]
+            break
+
     ffmpeg_args = []
     if codec_data:
         # Use codec definition from method arguments
@@ -569,12 +578,16 @@ def burnins_from_data(
             ffmpeg_args.append("-profile:v {}".format(profile_name))
 
         bit_rate = ffprobe_data.get("bit_rate")
-        if bit_rate:
+        if bit_rate and not crf:
             ffmpeg_args.append("-b:v {}".format(bit_rate))
 
         pix_fmt = ffprobe_data.get("pix_fmt")
         if pix_fmt:
             ffmpeg_args.append("-pix_fmt {}".format(pix_fmt))
+
+    # Getting crf from data if available.
+    if crf:
+        ffmpeg_args.append("-crf {}".format(crf))
 
     # Use group one (same as `-intra` argument, which is deprecated)
     ffmpeg_args.append("-g 1")
@@ -597,6 +610,7 @@ if __name__ == "__main__":
         in_data["burnin_data"],
         codec_data=in_data.get("codec"),
         options=in_data.get("options"),
-        burnin_values=in_data.get("values")
+        burnin_values=in_data.get("values"),
+        ffmpeg_cmd=in_data.get("ffmpeg_cmd")
     )
     print("* Burnin script has finished")
