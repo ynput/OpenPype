@@ -72,6 +72,9 @@ class ValidationErrorTitleWidget(QtWidgets.QWidget):
             for instance in instances:
                 label = instance.data.get("label") or instance.data.get("name")
                 item = QtGui.QStandardItem(label)
+                item.setFlags(
+                    QtCore.Qt.ItemIsEnabled | QtCore.Qt.ItemIsSelectable
+                )
                 item.setData(instance.id)
                 items.append(item)
 
