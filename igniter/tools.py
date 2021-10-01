@@ -16,7 +16,7 @@ from pymongo.errors import (
 )
 
 
-def add_certificate_path_to_mongo_url(mongo_url):
+def should_add_certificate_path_to_mongo_url(mongo_url):
     """Check if should add ca certificate to mongo url.
 
     Since 30.9.2021 cloud mongo requires newer certificates that are not
@@ -41,25 +41,7 @@ def add_certificate_path_to_mongo_url(mongo_url):
     # Check if url does already contain certificate path
     if add_certificate and "tlscafile" in lowered_query_keys:
         add_certificate = False
-
-    # Add certificate path to mongo url
-    if add_certificate:
-        path = parsed.path
-        if not path:
-            path = "/admin"
-        query = parsed.query
-        tls_query = "tlscafile={}".format(certifi.where())
-        if not query:
-            query = tls_query
-        else:
-            query = "&".join((query, tls_query))
-        new_url = ParseResult(
-            parsed.scheme, parsed.netloc, path,
-            parsed.params, query, parsed.fragment
-        )
-        mongo_url = new_url.geturl()
-
-    return mongo_url
+    return add_certificate
 
 
 def validate_mongo_connection(cnx: str) -> (bool, str):
@@ -80,7 +62,8 @@ def validate_mongo_connection(cnx: str) -> (bool, str):
         "serverSelectionTimeoutMS": 2000
     }
     # Add certificate path if should be required
-    cnx = add_certificate_path_to_mongo_url(cnx)
+    if should_add_certificate_path_to_mongo_url(cnx):
+        kwargs["ssl_ca_certs"] = certifi.where()
 
     try:
         client = MongoClient(cnx, **kwargs)
@@ -152,9 +135,13 @@ def get_openpype_global_settings(url: str) -> dict:
     Returns:
         dict: With settings data. Empty dictionary is returned if not found.
     """
+    kwargs = {}
+    if should_add_certificate_path_to_mongo_url(url):
+        kwargs["ssl_ca_certs"] = certifi.where()
+
     try:
         # Create mongo connection
-        client = MongoClient(url)
+        client = MongoClient(url, **kwargs)
         # Access settings collection
         col = client["openpype"]["settings"]
         # Query global settings
