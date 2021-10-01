@@ -17,7 +17,8 @@
             "CollectFtrackApi": {
                 "add_ftrack_family": false
             }
-        }
+        },
+        "creator_identifier": "test_one"
     },
     {
         "id": "pyblish.avalon.instance",
@@ -34,7 +35,8 @@
             "CollectFtrackApi": {
                 "add_ftrack_family": true
             }
-        }
+        },
+        "creator_identifier": "test_one"
     },
     {
         "id": "pyblish.avalon.instance",
@@ -51,7 +53,8 @@
             "CollectFtrackApi": {
                 "add_ftrack_family": true
             }
-        }
+        },
+        "creator_identifier": "test_two"
     },
     {
         "id": "pyblish.avalon.instance",
@@ -68,7 +71,8 @@
             "CollectFtrackApi": {
                 "add_ftrack_family": true
             }
-        }
+        },
+        "creator_identifier": "test_two"
     },
     {
         "id": "pyblish.avalon.instance",
@@ -86,5 +90,19 @@
                 "add_ftrack_family": true
             }
         }
+    },
+    {
+        "id": "pyblish.avalon.instance",
+        "family": "workfile",
+        "subset": "workfileMain",
+        "active": true,
+        "creator_identifier": "workfile",
+        "version": 1,
+        "asset": "Alpaca_01",
+        "task": "modeling",
+        "variant": "Main",
+        "uuid": "7c9ddfc7-9f9c-4c1c-b233-38c966735fb6",
+        "family_attributes": {},
+        "publish_attributes": {}
     }
 ]
