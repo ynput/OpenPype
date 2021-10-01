@@ -21,22 +21,6 @@ class CreatorError(Exception):
         super(CreatorError, self).__init__(message)
 
 
-class AutoCreationSkipped(Exception):
-    """Should be raised when AutoCreator has nothing to do.
-
-    When all instances that would autocreator create already exists.
-
-    Message won't be shown in UI.
-    """
-
-    def __init__(self, message):
-        self._message = message
-        super(AutoCreationSkipped, self).__init__(message)
-
-    def __str__(self):
-        return "<{}> {}".format(self.__class__.__name__, self._message)
-
-
 @six.add_metaclass(ABCMeta)
 class BaseCreator:
     """Plugin that create and modify instance data before publishing process.
