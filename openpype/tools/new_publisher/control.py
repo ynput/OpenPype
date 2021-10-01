@@ -1,13 +1,15 @@
 import os
 import copy
+import inspect
 import logging
 import traceback
 import collections
 
+import weakref
 try:
     from weakref import WeakMethod
 except Exception:
-    from ._python2_comp import WeakMethod
+    from openpype.lib.python2_comp import WeakMethod
 
 import avalon.api
 import pyblish.api
@@ -413,37 +415,48 @@ class PublisherController:
     def plugins_with_defs(self):
         return self.create_context.plugins_with_defs
 
+    def _create_reference(self, callback):
+        if inspect.ismethod(callback):
+            ref = WeakMethod(callback)
+        elif callable(callback):
+            ref = weakref.ref(callback)
+        else:
+            raise TypeError("Expected function or method got {}".format(
+                str(type(callback))
+            ))
+        return ref
+
     def add_instances_refresh_callback(self, callback):
-        ref = WeakMethod(callback)
+        ref = self._create_reference(callback)
         self._instances_refresh_callback_refs.add(ref)
 
     def add_plugins_refresh_callback(self, callback):
-        ref = WeakMethod(callback)
+        ref = self._create_reference(callback)
         self._plugins_refresh_callback_refs.add(ref)
 
     # --- Publish specific callbacks ---
     def add_publish_reset_callback(self, callback):
-        ref = WeakMethod(callback)
+        ref = self._create_reference(callback)
         self._publish_reset_callback_refs.add(ref)
 
     def add_publish_started_callback(self, callback):
-        ref = WeakMethod(callback)
+        ref = self._create_reference(callback)
         self._publish_started_callback_refs.add(ref)
 
     def add_publish_validated_callback(self, callback):
-        ref = WeakMethod(callback)
+        ref = self._create_reference(callback)
         self._publish_validated_callback_refs.add(ref)
 
     def add_instance_change_callback(self, callback):
-        ref = WeakMethod(callback)
+        ref = self._create_reference(callback)
         self._publish_instance_changed_callback_refs.add(ref)
 
     def add_plugin_change_callback(self, callback):
-        ref = WeakMethod(callback)
+        ref = self._create_reference(callback)
         self._publish_plugin_changed_callback_refs.add(ref)
 
     def add_publish_stopped_callback(self, callback):
-        ref = WeakMethod(callback)
+        ref = self._create_reference(callback)
         self._publish_stopped_callback_refs.add(ref)
 
     def get_asset_docs(self):
