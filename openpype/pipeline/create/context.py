@@ -4,6 +4,7 @@ import logging
 import collections
 import inspect
 from uuid import uuid4
+from contextlib import contextmanager
 
 from ..lib import UnknownDef
 from .creator_plugins import (
@@ -598,7 +599,7 @@ class CreateContext:
         self.plugins_with_defs = []
         self._attr_plugins_by_family = {}
 
-        self._reseting = False
+        self._ignore_added_instances = False
 
         if reset:
             self.reset(discover_publish_plugins)
@@ -626,16 +627,14 @@ class CreateContext:
         return self._log
 
     def reset(self, discover_publish_plugins=True):
-        self._reseting = True
-
         self.reset_plugins(discover_publish_plugins)
         self.reset_context_data()
-        self.reset_instances()
-        self.execute_autocreators()
+
+        with self.ignore_added_instances():
+            self.reset_instances()
+            self.execute_autocreators()
 
         self.validate_instances_context()
-
-        self._reseting = False
 
     def reset_plugins(self, discover_publish_plugins=True):
         import avalon.api
@@ -734,11 +733,19 @@ class CreateContext:
 
     def creator_adds_instance(self, instance):
         self.instances.append(instance)
-        if not self._reseting:
+        if not self._ignore_added_instances:
             self.validate_instances_context([instance])
 
     def creator_removed_instance(self, instance):
         self.instances.remove(instance)
+
+    @contextmanager
+    def ignore_added_instances(self):
+        self._ignore_added_instances = True
+        try:
+            yield
+        finally:
+            self._ignore_added_instances = False
 
     def reset_instances(self):
         self.instances = []
