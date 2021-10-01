@@ -2,7 +2,7 @@
 """Tools used in **Igniter** GUI."""
 import os
 from typing import Union
-from urllib.parse import urlparse, parse_qs, ParseResult
+from urllib.parse import urlparse, parse_qs
 from pathlib import Path
 import platform
 
