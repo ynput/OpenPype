@@ -185,6 +185,14 @@ class OpenPypeMongoConnection:
 
     @classmethod
     def create_connection(cls, mongo_url, timeout=None, retry_attempts=None):
+        parsed = urlparse(mongo_url)
+        # Force validation of scheme
+        if parsed.scheme not in ["mongodb", "mongodb+srv"]:
+            raise pymongo.errors.InvalidURI((
+                "Invalid URI scheme:"
+                " URI must begin with 'mongodb://' or 'mongodb+srv://'"
+            ))
+
         if timeout is None:
             timeout = int(os.environ.get("AVALON_TIMEOUT") or 1000)
 
