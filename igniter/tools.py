@@ -1,18 +1,12 @@
 # -*- coding: utf-8 -*-
-"""Tools used in **Igniter** GUI.
-
-Functions ``compose_url()`` and ``decompose_url()`` are the same as in
-``openpype.lib`` and they are here to avoid importing OpenPype module before its
-version is decided.
-
-"""
-import sys
+"""Tools used in **Igniter** GUI."""
 import os
-from typing import Dict, Union
-from urllib.parse import urlparse, parse_qs
+from typing import Union
+from urllib.parse import urlparse, parse_qs, ParseResult
 from pathlib import Path
 import platform
 
+import certifi
 from pymongo import MongoClient
 from pymongo.errors import (
     ServerSelectionTimeoutError,
@@ -22,6 +16,50 @@ from pymongo.errors import (
 )
 
 
+def add_certificate_path_to_mongo_url(mongo_url):
+    """Check if should add ca certificate to mongo url.
+
+    Since 30.9.2021 cloud mongo requires newer certificates that are not
+    available on most of workstation. This adds path to certifi certificate
+    which is valid for it. To add the certificate path url must have scheme
+    'mongodb+srv' or has 'ssl=true' or 'tls=true' in url query.
+    """
+    parsed = urlparse(mongo_url)
+    query = parse_qs(parsed.query)
+    lowered_query_keys = set(key.lower() for key in query.keys())
+    add_certificate = False
+    # Check if url 'ssl' or 'tls' are set to 'true'
+    for key in ("ssl", "tls"):
+        if key in query and "true" in query["ssl"]:
+            add_certificate = True
+            break
+
+    # Check if url contains 'mongodb+srv'
+    if not add_certificate and parsed.scheme == "mongodb+srv":
+        add_certificate = True
+
+    # Check if url does already contain certificate path
+    if add_certificate and "tlscafile" in lowered_query_keys:
+        add_certificate = False
+
+    # Add certificate path to mongo url
+    if add_certificate:
+        path = parsed.path
+        if not path:
+            path = "/admin"
+        query = parsed.query
+        tls_query = "tlscafile={}".format(certifi.where())
+        if not query:
+            query = tls_query
+        else:
+            query = "&".join((query, tls_query))
+        new_url = ParseResult(
+            parsed.scheme, parsed.netloc, path,
+            parsed.params, query, parsed.fragment
+        )
+        mongo_url = new_url.geturl()
+
+    return mongo_url
 
 
 def validate_mongo_connection(cnx: str) -> (bool, str):
