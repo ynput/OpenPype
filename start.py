@@ -193,6 +193,7 @@ import igniter  # noqa: E402
 from igniter import BootstrapRepos  # noqa: E402
 from igniter.tools import (
     get_openpype_path_from_db,
+    add_certificate_path_to_mongo_url,
     validate_mongo_connection
 )  # noqa
 from igniter.bootstrap_repos import OpenPypeVersion  # noqa: E402
@@ -585,7 +586,7 @@ def _determine_mongodb() -> str:
             except ValueError:
                 raise RuntimeError("Missing MongoDB url")
 
-    return openpype_mongo
+    return add_certificate_path_to_mongo_url(openpype_mongo)
 
 
 def _initialize_environment(openpype_version: OpenPypeVersion) -> None:

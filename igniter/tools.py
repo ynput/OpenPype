@@ -79,6 +79,9 @@ def validate_mongo_connection(cnx: str) -> (bool, str):
     kwargs = {
         "serverSelectionTimeoutMS": 2000
     }
+    # Add certificate path if should be required
+    cnx = add_certificate_path_to_mongo_url(cnx)
+
     try:
         client = MongoClient(cnx, **kwargs)
         client.server_info()
