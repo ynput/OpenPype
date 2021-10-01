@@ -70,6 +70,11 @@ class BaseCreator:
         self.headless = headless
 
     @abstractproperty
+    def identifier(self):
+        """Family that plugin represents."""
+        pass
+
+    @abstractproperty
     def family(self):
         """Family that plugin represents."""
         pass
