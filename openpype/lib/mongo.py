@@ -128,26 +128,9 @@ def validate_mongo_connection(mongo_uri):
             passed so probably couldn't connect to mongo server.
 
     """
-    parsed = urlparse(mongo_uri)
-    # Force validation of scheme
-    if parsed.scheme not in ["mongodb", "mongodb+srv"]:
-        raise pymongo.errors.InvalidURI((
-            "Invalid URI scheme:"
-            " URI must begin with 'mongodb://' or 'mongodb+srv://'"
-        ))
-    # we have mongo connection string. Let's try if we can connect.
-    components = decompose_url(mongo_uri)
-    mongo_args = {
-        "host": compose_url(**components),
-        "serverSelectionTimeoutMS": 1000
-    }
-    port = components.get("port")
-    if port is not None:
-        mongo_args["port"] = int(port)
-
-    # Create connection
-    client = pymongo.MongoClient(**mongo_args)
-    client.server_info()
+    client = OpenPypeMongoConnection.create_connection(
+        mongo_uri, retry_attempts=1
+    )
     client.close()
 
 
