@@ -208,23 +208,27 @@ class OpenPypeMongoConnection:
         elif not retry_attempts:
             retry_attempts = 1
 
+        last_exc = None
+        valid = False
         t1 = time.time()
-        for _retry in range(retry_attempts):
+        for attempt in range(1, retry_attempts + 1):
             try:
                 mongo_client.server_info()
-
-            except Exception:
-                cls.log.warning("Retrying...")
-                time.sleep(1)
-                timeout *= 1.5
-
-            else:
+                with mongo_client.start_session():
+                    pass
+                valid = True
                 break
 
-        else:
-            raise IOError((
-                "ERROR: Couldn't connect to {} in less than {:.3f}ms"
-            ).format(mongo_url, timeout))
+            except Exception as exc:
+                last_exc = exc
+                if attempt < retry_attempts:
+                    cls.log.warning(
+                        "Attempt {} failed. Retrying... ".format(attempt)
+                    )
+                    time.sleep(1)
+
+        if not valid:
+            raise last_exc
 
         cls.log.info("Connected to {}, delay {:.3f}s".format(
             mongo_url, time.time() - t1
