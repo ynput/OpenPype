@@ -71,10 +71,7 @@ def validate_mongo_string(mongo: str) -> (bool, str):
     """
     if not mongo:
         return True, "empty string"
-    parsed = urlparse(mongo)
-    if parsed.scheme in ["mongodb", "mongodb+srv"]:
-        return validate_mongo_connection(mongo)
-    return False, "not valid mongodb schema"
+    return validate_mongo_connection(mongo)
 
 
 def validate_path_string(path: str) -> (bool, str):
