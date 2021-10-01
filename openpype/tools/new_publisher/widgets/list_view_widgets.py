@@ -17,10 +17,7 @@ from ..constants import (
 
 class ListItemDelegate(QtWidgets.QStyledItemDelegate):
     """Generic delegate for instance header"""
-
     radius_ratio = 0.3
-    expand_image = None
-    collapse_image = None
 
     def __init__(self, parent):
         super(ListItemDelegate, self).__init__(parent)
@@ -33,20 +30,6 @@ class ListItemDelegate(QtWidgets.QStyledItemDelegate):
             for key, value in group_color_info.items()
         }
 
-    @classmethod
-    def get_expand_image(cls):
-        if cls.expand_image is None:
-            image = get_image("branch_open")
-
-            cls.expand_image = image
-        return cls.expand_image
-
-    @classmethod
-    def get_collapse_image(cls):
-        if cls.collapse_image is None:
-            cls.collapse_image = get_image("branch_closed")
-        return cls.collapse_image
-
     def paint(self, painter, option, index):
         if index.data(IS_GROUP_ROLE):
             self.group_item_paint(painter, option, index)
@@ -55,130 +38,34 @@ class ListItemDelegate(QtWidgets.QStyledItemDelegate):
 
     def group_item_paint(self, painter, option, index):
         self.initStyleOption(option, index)
-        body_rect = QtCore.QRectF(option.rect)
+
         bg_rect = QtCore.QRectF(
-            body_rect.left(), body_rect.top() + 1,
-            body_rect.width(), body_rect.height() - 2
+            option.rect.left(), option.rect.top() + 1,
+            option.rect.width(), option.rect.height() - 2
         )
-
-        expander_rect = QtCore.QRectF(bg_rect)
-        expander_rect.setWidth(expander_rect.height())
-
-        remainder_rect = QtCore.QRectF(
-            expander_rect.x() + expander_rect.width(),
-            expander_rect.y(),
-            bg_rect.width() - expander_rect.width(),
-            expander_rect.height()
-        )
-
         ratio = bg_rect.height() * self.radius_ratio
         bg_path = QtGui.QPainterPath()
         bg_path.addRoundedRect(
             QtCore.QRectF(bg_rect), ratio, ratio
         )
 
-        expander_colors = [self._group_colors["bg-expander"]]
-        remainder_colors = [self._group_colors["bg"]]
-
-        mouse_pos = option.widget.mapFromGlobal(QtGui.QCursor.pos())
-        selected = option.state & QtWidgets.QStyle.State_Selected
-        hovered = option.state & QtWidgets.QStyle.State_MouseOver
-
-        if selected and hovered:
-            if expander_rect.contains(mouse_pos):
-                expander_colors.append(
-                    self._group_colors["bg-expander-selected-hover"]
-                )
-
-            else:
-                remainder_colors.append(
-                    self._group_colors["bg-selected-hover"]
-                )
-
-        elif hovered:
-            if expander_rect.contains(mouse_pos):
-                expander_colors.append(
-                    self._group_colors["bg-expander-hover"]
-                )
-
-            else:
-                remainder_colors.append(
-                    self._group_colors["bg-hover"]
-                )
-
-        # Draw backgrounds
+        painter.save()
         painter.setRenderHints(
             painter.Antialiasing
             | painter.SmoothPixmapTransform
             | painter.TextAntialiasing
         )
-        painter.save()
-        painter.setClipRect(expander_rect)
-        for color in expander_colors:
-            painter.fillPath(bg_path, color)
 
-        painter.setClipRect(remainder_rect)
-        for color in remainder_colors:
-            painter.fillPath(bg_path, color)
-        painter.restore()
+        # Draw backgrounds
+        painter.fillPath(bg_path, self._group_colors["bg"])
+        selected = option.state & QtWidgets.QStyle.State_Selected
+        hovered = option.state & QtWidgets.QStyle.State_MouseOver
+        if selected and hovered:
+            painter.fillPath(bg_path, self._group_colors["bg-selected-hover"])
 
-        # Draw text and icon
-        font = index.data(QtCore.Qt.FontRole)
-        if not font:
-            font = option.font
+        elif hovered:
+            painter.fillPath(bg_path, self._group_colors["bg-hover"])
 
-        font_metrics = QtGui.QFontMetrics(font)
-
-        # Center label horizontally
-        diff = remainder_rect.height() - font_metrics.height()
-        offset = (diff + (diff % 2)) / 2
-        label_rect = QtCore.QRectF(remainder_rect.adjusted(
-            5, offset, 0, 0
-        ))
-
-        if self.parent().isExpanded(index):
-            expander_icon = self.get_expand_image()
-        else:
-            expander_icon = self.get_collapse_image()
-        label = index.data(QtCore.Qt.DisplayRole)
-
-        label = font_metrics.elidedText(
-            label, QtCore.Qt.ElideRight, label_rect.width()
-        )
-
-        # Maintain reference to state, so we can restore it once we're done
-        painter.save()
-
-        width = expander_rect.width()
-        height = expander_rect.height()
-        if height < width:
-            size = height
-        else:
-            size = width
-
-        icon_size = int(size / 2)
-        offset = (size - icon_size) / 2
-
-        icon_width = expander_icon.width()
-        icon_height = expander_icon.height()
-        pos_x = expander_rect.x() + offset
-        pos_y = expander_rect.y() + offset
-        if icon_width < icon_height:
-            icon_width = (icon_size / icon_height) * icon_width
-            pos_x += (icon_size - icon_width) / 2
-        elif icon_height < icon_width:
-            icon_height = (icon_size / icon_width) * icon_height
-            pos_y += (icon_size - icon_height) / 2
-
-        expander_icon_rect = QtCore.QRectF(pos_x, pos_y, icon_size, icon_size)
-        expander_icon_rect.moveCenter(expander_rect.center())
-        painter.drawImage(expander_icon_rect, expander_icon)
-
-        # Draw label
-        painter.setFont(font)
-        painter.drawText(label_rect, label)
-
-        # Ok, we're done, tidy up.
         painter.restore()
 
 
@@ -453,6 +340,8 @@ class InstanceListView(AbstractInstanceView):
         self.controller = controller
 
         instance_view = InstanceTreeView(self)
+        instance_delegate = ListItemDelegate(instance_view)
+        instance_view.setItemDelegate(instance_delegate)
         instance_model = QtGui.QStandardItemModel()
 
         proxy_model = QtCore.QSortFilterProxyModel()
@@ -483,6 +372,7 @@ class InstanceListView(AbstractInstanceView):
         self._context_widget = None
 
         self.instance_view = instance_view
+        self._instance_delegate = instance_delegate
         self.instance_model = instance_model
         self.proxy_model = proxy_model
 
