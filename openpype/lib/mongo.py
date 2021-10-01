@@ -209,9 +209,9 @@ class OpenPypeMongoConnection:
         elif not retry_attempts:
             retry_attempts = 1
 
+        t1 = time.time()
         for _retry in range(retry_attempts):
             try:
-                t1 = time.time()
                 mongo_client.server_info()
 
             except Exception:
