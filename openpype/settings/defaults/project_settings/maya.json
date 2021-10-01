@@ -169,6 +169,11 @@
             "enabled": false,
             "attributes": {}
         },
+        "ValidateLoadedPlugin": {
+            "enabled": false,
+            "whitelist_native_plugins": false,
+            "authorized_plugins": []
+        },
         "ValidateRenderSettings": {
             "arnold_render_attributes": [],
             "vray_render_attributes": [],
