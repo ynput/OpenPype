@@ -7,7 +7,6 @@ from uuid import uuid4
 
 from ..lib import UnknownDef
 from .creator_plugins import (
-    AutoCreationSkipped,
     BaseCreator,
     Creator,
     AutoCreator
@@ -332,7 +331,7 @@ class CreatedInstance:
             already existing instance.
     """
     def __init__(
-        self, family, subset_name, data=None, creator=None, host=None,
+        self, family, subset_name, data, creator, host=None,
         attr_plugins=None, new=True
     ):
         if host is None:
@@ -517,7 +516,7 @@ class CreatedInstance:
 
     @classmethod
     def from_existing(
-        cls, instance_data, creator=None, host=None, attr_plugins=None
+        cls, instance_data, creator, attr_plugins=None, host=None
     ):
         """Convert instance data from workfile to CreatedInstance."""
         instance_data = copy.deepcopy(instance_data)
@@ -548,9 +547,6 @@ class CreateContext:
     # Methods required in host implementaion to be able create instances
     #   or change context data.
     required_methods = (
-        "list_instances",
-        "remove_instances",
-        "update_instances",
         "get_context_data",
         "update_context_data"
     )
@@ -588,6 +584,7 @@ class CreateContext:
         self._host_is_valid = host_is_valid
         self.headless = headless
 
+        # TODO convert to dictionary instance by id to validate duplicates
         self.instances = []
 
         # Discovered creators
@@ -600,6 +597,8 @@ class CreateContext:
         self.publish_plugins = []
         self.plugins_with_defs = []
         self._attr_plugins_by_family = {}
+
+        self._reseting = False
 
         if reset:
             self.reset(discover_publish_plugins)
@@ -627,11 +626,16 @@ class CreateContext:
         return self._log
 
     def reset(self, discover_publish_plugins=True):
+        self._reseting = True
+
         self.reset_plugins(discover_publish_plugins)
         self.reset_context_data()
         self.reset_instances()
-
         self.execute_autocreators()
+
+        self._validate_instances_context(self.instances)
+
+        self._reseting = False
 
     def reset_plugins(self, discover_publish_plugins=True):
         import avalon.api
@@ -682,18 +686,18 @@ class CreateContext:
                 )
                 continue
 
-            family = creator_class.family
+            creator_identifier = creator_class.identifier
             creator = creator_class(
                 self,
                 system_settings,
                 project_settings,
                 self.headless
             )
-            creators[family] = creator
+            creators[creator_identifier] = creator
             if isinstance(creator, AutoCreator):
-                autocreators[family] = creator
+                autocreators[creator_identifier] = creator
             elif isinstance(creator, Creator):
-                ui_creators[family] = creator
+                ui_creators[creator_identifier] = creator
 
         self.autocreators = autocreators
         self.ui_creators = ui_creators
@@ -728,29 +732,43 @@ class CreateContext:
             changes["publish_attributes"] = publish_attribute_changes
         return changes
 
+    def add_instance(self, instance):
+        self.instances.append(instance)
+        if not self._reseting:
+            self._validate_instances_context([instance])
+
     def reset_instances(self):
-        instances = []
-        if not self.host_is_valid:
-            self.instances = instances
-            return
+        self.instances = []
 
         # Collect instances
-        host_instances = self.host.list_instances()
-        task_names_by_asset_name = collections.defaultdict(set)
-        for instance_data in host_instances:
-            family = instance_data["family"]
-            # Prepare publish plugins with attribute definitions
-            creator = self.creators.get(family)
+        for creator in self.creators.values():
+            family = creator.family
             attr_plugins = self._get_publish_plugins_with_attr_for_family(
                 family
             )
-            instance = CreatedInstance.from_existing(
-                instance_data, creator, self.host, attr_plugins
-            )
-            instances.append(instance)
+            creator.collect_instances(attr_plugins)
 
-            task_name = instance_data.get("task")
-            asset_name = instance_data.get("asset")
+    def execute_autocreators(self):
+        """Execute discovered AutoCreator plugins.
+
+        Reset instances if any autocreator executed properly.
+        """
+        for family, creator in self.autocreators.items():
+            try:
+                creator.create()
+
+            except Exception:
+                # TODO raise report exception if any crashed
+                msg = (
+                    "Failed to run AutoCreator with family \"{}\" ({})."
+                ).format(family, inspect.getfile(creator.__class__))
+                self.log.warning(msg, exc_info=True)
+
+    def _validate_instances_context(self, instances):
+        task_names_by_asset_name = collections.defaultdict(set)
+        for instance in instances:
+            task_name = instance.data.get("task")
+            asset_name = instance.data.get("asset")
             if asset_name and task_name:
                 task_names_by_asset_name[asset_name].add(task_name)
 
@@ -792,35 +810,6 @@ class CreateContext:
             if task_name not in task_names_by_asset_name[asset_name]:
                 instance.set_task_invalid(True)
 
-        self.instances = instances
-
-    def execute_autocreators(self):
-        """Execute discovered AutoCreator plugins.
-
-        Reset instances if any autocreator executed properly.
-
-        Autocreatos should raise 'AutoCreationSkipped' if has nothing to do.
-        - execution of autocreator requires to reset instances (can be time
-            time consuming)
-        """
-        any_processed = False
-        for family, creator in self.autocreators.items():
-            try:
-                creator.create()
-                any_processed = True
-
-            except AutoCreationSkipped as exc:
-                self.log.debug(str(exc))
-
-            except Exception:
-                msg = (
-                    "Failed to run AutoCreator with family \"{}\" ({})."
-                ).format(family, inspect.getfile(creator.__class__))
-                self.log.warning(msg, exc_info=True)
-
-        if any_processed:
-            self.reset_instances()
-
     def save_changes(self):
         if not self.host_is_valid:
             missing_methods = self.get_host_misssing_methods(self.host)
@@ -836,14 +825,21 @@ class CreateContext:
             self.host.update_context_data(data, changes)
 
     def _save_instance_changes(self):
-        update_list = []
+        instances_by_identifier = collections.defaultdict(list)
         for instance in self.instances:
-            instance_changes = instance.changes()
-            if instance_changes:
-                update_list.append((instance, instance_changes))
+            identifier = instance.creator_identifier
+            instances_by_identifier[identifier].append(instance)
 
-        if update_list:
-            self.host.update_instances(update_list)
+        for identifier, cretor_instances in instances_by_identifier.items():
+            update_list = []
+            for instance in cretor_instances:
+                instance_changes = instance.changes()
+                if instance_changes:
+                    update_list.append((instance, instance_changes))
+
+            creator = self.creators[identifier]
+            if update_list:
+                creator.update_instances(update_list)
 
     def remove_instances(self, instances):
         """Remove instances from context.
@@ -852,27 +848,16 @@ class CreateContext:
             instances(list<CreatedInstance>): Instances that should be removed
                 from context.
         """
-        if not self.host_is_valid:
-            missing_methods = self.get_host_misssing_methods(self.host)
-            raise HostMissRequiredMethod(self.host, missing_methods)
-
-        instances_by_family = collections.defaultdict(list)
+        instances_by_identifier = collections.defaultdict(list)
         for instance in instances:
-            instances_by_family[instance.family].append(instance)
+            identifier = instance.creator_identifier
+            instances_by_identifier[identifier].append(instance)
 
         instances_to_remove = []
-        for family, family_instances in instances_by_family.items():
-            creator = self.creators.get(family)
-            if not creator:
-                instances_to_remove.extend(family_instances)
-                continue
-
-            for instance in family_instances:
-                if not creator.remove_instance(instance):
-                    instances_to_remove.append(instances_to_remove)
-
-        if instances_to_remove:
-            self.host.remove_instances(instances_to_remove)
+        for identifier, creator_instances in instances_by_identifier.items():
+            creator = self.creators.get(identifier)
+            creator.remove_instances(creator_instances)
+            instances_to_remove.append(instances_to_remove)
 
     def _get_publish_plugins_with_attr_for_family(self, family):
         if family not in self._attr_plugins_by_family:
