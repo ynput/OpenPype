@@ -4,6 +4,7 @@ import time
 import sys
 import six
 import threading
+import platform
 
 from openpype.api import Logger
 from openpype.api import get_system_settings
@@ -406,8 +407,9 @@ class SFTPHandler(AbstractProvider):
         }
         if self.sftp_pass and self.sftp_pass.strip():
             conn_params['password'] = self.sftp_pass
-        if self.sftp_key:
-            conn_params['private_key'] = self.sftp_key
+        if self.sftp_key:  # expects .pem format, not .ppk!
+            conn_params['private_key'] = \
+                self.sftp_key[platform.system().lower()]
         if self.sftp_key_pass:
             conn_params['private_key_pass'] = self.sftp_key_pass
 
