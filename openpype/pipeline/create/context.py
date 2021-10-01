@@ -858,11 +858,9 @@ class CreateContext:
             identifier = instance.creator_identifier
             instances_by_identifier[identifier].append(instance)
 
-        instances_to_remove = []
         for identifier, creator_instances in instances_by_identifier.items():
             creator = self.creators.get(identifier)
             creator.remove_instances(creator_instances)
-            instances_to_remove.append(instances_to_remove)
 
     def _get_publish_plugins_with_attr_for_family(self, family):
         if family not in self._attr_plugins_by_family:
