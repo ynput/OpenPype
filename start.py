@@ -102,9 +102,6 @@ import subprocess
 import site
 from pathlib import Path
 
-from igniter.tools import get_openpype_global_settings
-
-
 # OPENPYPE_ROOT is variable pointing to build (or code) directory
 # WARNING `OPENPYPE_ROOT` must be defined before igniter import
 # - igniter changes cwd which cause that filepath of this script won't lead
@@ -192,6 +189,7 @@ else:
 import igniter  # noqa: E402
 from igniter import BootstrapRepos  # noqa: E402
 from igniter.tools import (
+    get_openpype_global_settings,
     get_openpype_path_from_db,
     add_certificate_path_to_mongo_url,
     validate_mongo_connection
