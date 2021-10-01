@@ -156,6 +156,11 @@
         "CollectMayaRender": {
             "sync_workfile_version": false
         },
+        "ValidateInstanceInContext": {
+            "enabled": true,
+            "optional": true,
+            "active": true
+        },
         "ValidateContainers": {
             "enabled": true,
             "optional": true,

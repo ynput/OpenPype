@@ -33,6 +33,16 @@
             "name": "template_publish_plugin",
             "template_data": [
                 {
+                    "key": "ValidateInstanceInContext",
+                    "label": "Validate Instance In Context"
+                }
+            ]
+        },
+        {
+            "type": "schema_template",
+            "name": "template_publish_plugin",
+            "template_data": [
+                {
                     "key": "ValidateContainers",
                     "label": "ValidateContainers"
                 }
