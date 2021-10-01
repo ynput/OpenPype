@@ -156,6 +156,8 @@ class OpenPypeMongoConnection:
             # Naive validation of existing connection
             try:
                 connection.server_info()
+                with connection.start_session():
+                    pass
             except Exception:
                 connection = None
 
