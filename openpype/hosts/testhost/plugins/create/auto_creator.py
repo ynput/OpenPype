@@ -1,4 +1,4 @@
-from openpype.hosts.testhost import api
+from openpype.hosts.testhost.api import pipeline
 from openpype.pipeline import (
     AutoCreator,
     CreatedInstance,
@@ -8,7 +8,35 @@ from avalon import io
 
 
 class MyAutoCreator(AutoCreator):
+    identifier = "workfile"
     family = "workfile"
+
+    def get_attribute_defs(self):
+        output = [
+            lib.NumberDef("number_key", label="Number")
+        ]
+        return output
+
+    def collect_instances(self, attr_plugins=None):
+        for instance_data in pipeline.list_instances():
+            creator_id = instance_data.get("creator_identifier")
+            if creator_id is not None:
+                if creator_id == self.identifier:
+                    subset_name = instance_data["subset"]
+                    instance = CreatedInstance(
+                        self.family, subset_name, instance_data, self
+                    )
+                    self.create_context.add_instance(instance)
+
+            elif instance_data["family"] == self.identifier:
+                instance_data["creator_identifier"] = self.identifier
+                instance = CreatedInstance.from_existing(
+                    instance_data, self, attr_plugins
+                )
+                self.create_context.add_instance(instance)
+
+    def update_instances(self, update_list):
+        pipeline.update_instances(update_list)
 
     def create(self, options=None):
         existing_instance = None
@@ -40,7 +68,7 @@ class MyAutoCreator(AutoCreator):
             existing_instance = CreatedInstance(
                 self.family, subset_name, data, self
             )
-            api.pipeline.HostContext.add_instance(
+            pipeline.HostContext.add_instance(
                 existing_instance.data_to_store()
             )
 
@@ -56,9 +84,3 @@ class MyAutoCreator(AutoCreator):
             existing_instance.data["task"] = task_name
 
         return existing_instance
-
-    def get_attribute_defs(self):
-        output = [
-            lib.NumberDef("number_key", label="Number")
-        ]
-        return output

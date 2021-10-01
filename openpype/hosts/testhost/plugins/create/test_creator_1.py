@@ -1,5 +1,5 @@
 from openpype import resources
-from openpype.hosts.testhost import api
+from openpype.hosts.testhost.api import pipeline
 from openpype.pipeline import (
     Creator,
     CreatedInstance,
@@ -8,15 +8,40 @@ from openpype.pipeline import (
 
 
 class TestCreatorOne(Creator):
-    family = "test_one"
+    identifier = "test_one"
+    family = "test"
     description = "Testing creator of testhost"
 
     def get_icon(self):
         return resources.get_openpype_splash_filepath()
 
+    def collect_instances(self, attr_plugins):
+        for instance_data in pipeline.list_instances():
+            creator_id = instance_data.get("creator_identifier")
+            if creator_id is not None:
+                if creator_id == self.identifier:
+                    subset_name = instance_data["subset"]
+                    instance = CreatedInstance(
+                        self.family, subset_name, instance_data, self
+                    )
+                    self.create_context.add_instance(instance)
+
+            elif instance_data["family"] == self.identifier:
+                instance_data["creator_identifier"] = self.identifier
+                instance = CreatedInstance.from_existing(
+                    instance_data, self, attr_plugins
+                )
+                self.create_context.add_instance(instance)
+
+    def update_instances(self, update_list):
+        pipeline.update_instances(update_list)
+
+    def remove_instances(self, instances):
+        pipeline.remove_instances(instances)
+
     def create(self, subset_name, data, options=None):
         avalon_instance = CreatedInstance(self.family, subset_name, data, self)
-        api.pipeline.HostContext.add_instance(avalon_instance.data_to_store())
+        pipeline.HostContext.add_instance(avalon_instance.data_to_store())
         self.log.info(avalon_instance.data)
         return avalon_instance
 
