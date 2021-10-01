@@ -26,14 +26,14 @@ class MyAutoCreator(AutoCreator):
                     instance = CreatedInstance(
                         self.family, subset_name, instance_data, self
                     )
-                    self.create_context.add_instance(instance)
+                    self._add_instance_to_context(instance)
 
             elif instance_data["family"] == self.identifier:
                 instance_data["creator_identifier"] = self.identifier
                 instance = CreatedInstance.from_existing(
                     instance_data, self, attr_plugins
                 )
-                self.create_context.add_instance(instance)
+                self._add_instance_to_context(instance)
 
     def update_instances(self, update_list):
         pipeline.update_instances(update_list)
@@ -83,4 +83,4 @@ class MyAutoCreator(AutoCreator):
             existing_instance.data["asset"] = asset_name
             existing_instance.data["task"] = task_name
 
-        return existing_instance
+        self._add_instance_to_context(existing_instance)

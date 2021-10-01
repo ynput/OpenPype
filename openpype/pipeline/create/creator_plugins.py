@@ -69,6 +69,12 @@ class BaseCreator:
             self._log = logging.getLogger(self.__class__.__name__)
         return self._log
 
+    def _add_instance_to_context(self, instance):
+        self.create_context.creator_adds_instance(instance)
+
+    def _remove_instance_from_context(self, instance):
+        self.create_context.creator_removed_instance(instance)
+
     @abstractmethod
     def create(self, options=None):
         """Create new instance.
@@ -97,12 +103,8 @@ class BaseCreator:
         Args:
             instance(list<CreatedInstance>): Instance objects which should be
                 removed.
-
-        Returns:
-            bool: Instance was removed completely and is not required to call
-                host's implementation of removement.
         """
-        return False
+        pass
 
     def get_icon(self):
         """Icon of creator (family).
