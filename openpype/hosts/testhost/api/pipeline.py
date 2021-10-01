@@ -108,22 +108,22 @@ def list_instances():
 
 
 def update_instances(update_list):
-    current_instances = HostContext.get_instances()
-
+    updated_instances = {}
     for instance, _changes in update_list:
-        instance_id = instance.data["uuid"]
+        updated_instances[instance.id] = instance.data_to_store()
 
-        found_idx = None
-        for idx, current_instance in enumerate(current_instances):
-            if instance_id == current_instance["uuid"]:
-                found_idx = idx
-                break
+    instances = HostContext.get_instances()
+    for instance_data in instances:
+        instance_id = instance_data["uuid"]
+        if instance_id in updated_instances:
+            new_instance_data = updated_instances[instance_id]
+            old_keys = set(instance_data.keys())
+            new_keys = set(new_instance_data.keys())
+            instance_data.update(new_instance_data)
+            for key in (old_keys - new_keys):
+                instance_data.pop(key)
 
-        if found_idx is None:
-            return
-
-        current_instances[found_idx] = instance.data_to_store()
-    HostContext.save_instances(current_instances)
+    HostContext.save_instances(instances)
 
 
 def remove_instances(instances):
