@@ -342,10 +342,6 @@ class CreatedInstance:
         self.host = host
         self.creator = creator
 
-        # Family of instance
-        self.family = family
-        # Subset name
-        self.subset_name = subset_name
         # Instance members may have actions on them
         self._members = []
 
@@ -369,6 +365,7 @@ class CreatedInstance:
         self._data["family"] = family
         self._data["subset"] = subset_name
         self._data["active"] = data.get("active", True)
+        self._data["creator_identifier"] = creator.identifier
 
         # QUESTION handle version of instance here or in creator?
         if new:
@@ -403,6 +400,18 @@ class CreatedInstance:
 
         self._asset_is_valid = self.has_set_asset
         self._task_is_valid = self.has_set_task
+
+    @property
+    def family(self):
+        return self._data["family"]
+
+    @property
+    def subset_name(self):
+        return self._data["subset"]
+
+    @property
+    def creator_identifier(self):
+        return self.creator.identifier
 
     @property
     def has_set_asset(self):
