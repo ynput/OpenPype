@@ -8,9 +8,7 @@ import platform
 
 from openpype.api import Logger
 from openpype.api import get_system_settings
-from openpype.modules.default_modules.sync_server.providers.abstract_provider \
-    import AbstractProvider
-
+from .abstract_provider import AbstractProvider
 log = Logger().get_logger("SyncServer")
 
 try:
