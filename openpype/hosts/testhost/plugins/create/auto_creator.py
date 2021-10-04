@@ -65,12 +65,10 @@ class MyAutoCreator(AutoCreator):
                 variant, task_name, asset_doc, project_name, host_name
             ))
 
-            existing_instance = CreatedInstance(
+            new_instance = CreatedInstance(
                 self.family, subset_name, data, self
             )
-            pipeline.HostContext.add_instance(
-                existing_instance.data_to_store()
-            )
+            self._add_instance_to_context(new_instance)
 
         elif (
             existing_instance.data["asset"] != asset_name
@@ -82,5 +80,3 @@ class MyAutoCreator(AutoCreator):
             )
             existing_instance.data["asset"] = asset_name
             existing_instance.data["task"] = task_name
-
-        self._add_instance_to_context(existing_instance)
