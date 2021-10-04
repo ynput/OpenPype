@@ -18,15 +18,15 @@ from ..constants import (
 )
 
 
-class FamilyWidget(QtWidgets.QWidget):
+class GroupWidget(QtWidgets.QWidget):
     selected = QtCore.Signal(str, str)
     active_changed = QtCore.Signal()
     removed_selected = QtCore.Signal()
 
-    def __init__(self, family, family_icon, parent):
-        super(FamilyWidget, self).__init__(parent)
+    def __init__(self, group_name, group_icon, parent):
+        super(GroupWidget, self).__init__(parent)
 
-        label_widget = QtWidgets.QLabel(family, self)
+        label_widget = QtWidgets.QLabel(group_name, self)
 
         line_widget = QtWidgets.QWidget(self)
         line_widget.setObjectName("Separator")
@@ -44,8 +44,8 @@ class FamilyWidget(QtWidgets.QWidget):
         layout.setContentsMargins(0, 0, 0, 0)
         layout.addLayout(label_layout, 0)
 
-        self._family = family
-        self._family_icon = family_icon
+        self._group = group_name
+        self._group_icon = group_icon
 
         self._widgets_by_id = {}
 
@@ -94,7 +94,7 @@ class FamilyWidget(QtWidgets.QWidget):
                     widget.update_instance(instance)
                 else:
                     widget = InstanceCardWidget(
-                        instance, self._family_icon, self
+                        instance, self._group_icon, self
                     )
                     widget.selected.connect(self.selected)
                     widget.active_changed.connect(self.active_changed)
@@ -105,6 +105,8 @@ class FamilyWidget(QtWidgets.QWidget):
 
 class CardWidget(ClickableFrame):
     selected = QtCore.Signal(str, str)
+    # This must be set
+    _group_identifier = None
 
     def __init__(self, parent):
         super(CardWidget, self).__init__(parent)
@@ -126,7 +128,7 @@ class CardWidget(ClickableFrame):
         self.style().polish(self)
 
     def _mouse_release_callback(self):
-        self.selected.emit(self._id, self._family)
+        self.selected.emit(self._id, self._group_identifier)
 
 
 class ContextCardWidget(CardWidget):
@@ -134,7 +136,7 @@ class ContextCardWidget(CardWidget):
         super(ContextCardWidget, self).__init__(parent)
 
         self._id = CONTEXT_ID
-        self._family = ""
+        self._group_identifier = ""
 
         icon_widget = TransparentPixmapLabel(self)
         icon_widget.setObjectName("FamilyIconLabel")
@@ -157,16 +159,16 @@ class ContextCardWidget(CardWidget):
 class InstanceCardWidget(CardWidget):
     active_changed = QtCore.Signal()
 
-    def __init__(self, instance, family_icon, parent):
+    def __init__(self, instance, group_icon, parent):
         super(InstanceCardWidget, self).__init__(parent)
 
         self._id = instance.id
-        self._family = instance.data["family"]
-        self._family_icon = family_icon
+        self._group_identifier = instance.creator_identifier
+        self._group_icon = group_icon
 
         self.instance = instance
 
-        icon_widget = IconValuePixmapLabel(family_icon, self)
+        icon_widget = IconValuePixmapLabel(group_icon, self)
         icon_widget.setObjectName("FamilyIconLabel")
         context_warning = ContextWarningLabel(self)
 
@@ -303,10 +305,10 @@ class InstanceCardView(AbstractInstanceView):
         self._content_layout = content_layout
         self._content_widget = content_widget
 
-        self._widgets_by_family = {}
+        self._widgets_by_group = {}
         self._context_widget = None
 
-        self._selected_instance_family = None
+        self._selected_group = None
         self._selected_instance_id = None
 
         self.setSizePolicy(
@@ -330,11 +332,11 @@ class InstanceCardView(AbstractInstanceView):
         if self._selected_instance_id == CONTEXT_ID:
             return self._context_widget
 
-        family_widget = self._widgets_by_family.get(
-            self._selected_instance_family
+        group_widget = self._widgets_by_group.get(
+            self._selected_group
         )
-        if family_widget is not None:
-            widget = family_widget.get_widget_by_instance_id(
+        if group_widget is not None:
+            widget = group_widget.get_widget_by_instance_id(
                 self._selected_instance_id
             )
             if widget is not None:
@@ -354,58 +356,63 @@ class InstanceCardView(AbstractInstanceView):
 
             self.select_item(CONTEXT_ID, None)
 
-        instances_by_family = collections.defaultdict(list)
+        instances_by_creator = collections.defaultdict(list)
         for instance in self.controller.instances:
-            family = instance.data["family"]
-            instances_by_family[family].append(instance)
+            identifier = instance.creator_identifier
+            instances_by_creator[identifier].append(instance)
 
-        for family in tuple(self._widgets_by_family.keys()):
-            if family in instances_by_family:
+        for identifier in tuple(self._widgets_by_group.keys()):
+            if identifier in instances_by_creator:
                 continue
 
-            if family == self._selected_instance_family:
+            if identifier == self._selected_group:
                 self._on_remove_selected()
-            widget = self._widgets_by_family.pop(family)
+            widget = self._widgets_by_group.pop(identifier)
             widget.setVisible(False)
             self._content_layout.removeWidget(widget)
             widget.deleteLater()
 
-        sorted_families = list(sorted(instances_by_family.keys()))
+        sorted_identifiers = list(sorted(instances_by_creator.keys()))
         widget_idx = 1
-        for family in sorted_families:
-            if family not in self._widgets_by_family:
-                family_icon = self.controller.get_icon_for_family(family)
-                family_widget = FamilyWidget(
-                    family, family_icon, self._content_widget
+        for creator_identifier in sorted_identifiers:
+            if creator_identifier in self._widgets_by_group:
+                group_widget = self._widgets_by_group[creator_identifier]
+            else:
+                group_icon = self.controller.get_icon_for_family(
+                    creator_identifier
                 )
-                family_widget.active_changed.connect(self._on_active_changed)
-                family_widget.selected.connect(self._on_widget_selection)
-                family_widget.removed_selected.connect(
+                group_widget = GroupWidget(
+                    creator_identifier, group_icon, self._content_widget
+                )
+                group_widget.active_changed.connect(self._on_active_changed)
+                group_widget.selected.connect(self._on_widget_selection)
+                group_widget.removed_selected.connect(
                     self._on_remove_selected
                 )
-                self._content_layout.insertWidget(widget_idx, family_widget)
-                self._widgets_by_family[family] = family_widget
-            else:
-                family_widget = self._widgets_by_family[family]
+                self._content_layout.insertWidget(widget_idx, group_widget)
+                self._widgets_by_group[creator_identifier] = group_widget
+
             widget_idx += 1
-            family_widget.update_instances(instances_by_family[family])
+            group_widget.update_instances(
+                instances_by_creator[creator_identifier]
+            )
 
     def refresh_instance_states(self):
-        for widget in self._widgets_by_family.values():
+        for widget in self._widgets_by_group.values():
             widget.update_instance_values()
 
     def _on_active_changed(self):
         self.active_changed.emit()
 
-    def _on_widget_selection(self, instance_id, family):
-        self.select_item(instance_id, family)
+    def _on_widget_selection(self, instance_id, group_name):
+        self.select_item(instance_id, group_name)
 
-    def select_item(self, instance_id, family):
+    def select_item(self, instance_id, group_name):
         if instance_id == CONTEXT_ID:
             new_widget = self._context_widget
         else:
-            family_widget = self._widgets_by_family[family]
-            new_widget = family_widget.get_widget_by_instance_id(instance_id)
+            group_widget = self._widgets_by_group[group_name]
+            new_widget = group_widget.get_widget_by_instance_id(instance_id)
 
         selected_widget = self._get_selected_widget()
         if new_widget is selected_widget:
@@ -415,7 +422,7 @@ class InstanceCardView(AbstractInstanceView):
             selected_widget.set_selected(False)
 
         self._selected_instance_id = instance_id
-        self._selected_instance_family = family
+        self._selected_group = group_name
         if new_widget is not None:
             new_widget.set_selected(True)
 

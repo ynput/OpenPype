@@ -16,6 +16,8 @@ VARIANT_TOOLTIP = (
 INSTANCE_ID_ROLE = QtCore.Qt.UserRole + 1
 SORT_VALUE_ROLE = QtCore.Qt.UserRole + 2
 IS_GROUP_ROLE = QtCore.Qt.UserRole + 3
+CREATOR_IDENTIFIER_ROLE = QtCore.Qt.UserRole + 4
+FAMILY_ROLE = QtCore.Qt.UserRole + 5
 
 
 __all__ = (
@@ -26,5 +28,7 @@ __all__ = (
 
     "INSTANCE_ID_ROLE",
     "SORT_VALUE_ROLE",
-    "IS_GROUP_ROLE"
+    "IS_GROUP_ROLE",
+    "CREATOR_IDENTIFIER_ROLE",
+    "FAMILY_ROLE"
 )

@@ -169,11 +169,11 @@ class InstanceListGroupWidget(QtWidgets.QFrame):
     expand_changed = QtCore.Signal(str, bool)
     toggle_requested = QtCore.Signal(str, int)
 
-    def __init__(self, family, parent):
+    def __init__(self, group_name, parent):
         super(InstanceListGroupWidget, self).__init__(parent)
         self.setObjectName("InstanceListGroupWidget")
 
-        self.family = family
+        self.group_name = group_name
         self._expanded = False
 
         expand_btn = QtWidgets.QToolButton(self)
@@ -181,7 +181,7 @@ class InstanceListGroupWidget(QtWidgets.QFrame):
         expand_btn.setArrowType(QtCore.Qt.RightArrow)
         expand_btn.setMaximumWidth(14)
 
-        subset_name_label = QtWidgets.QLabel(family, self)
+        name_label = QtWidgets.QLabel(group_name, self)
 
         toggle_checkbox = NiceCheckbox(parent=self)
 
@@ -189,12 +189,12 @@ class InstanceListGroupWidget(QtWidgets.QFrame):
         layout.setContentsMargins(5, 0, 2, 0)
         layout.addWidget(expand_btn)
         layout.addWidget(
-            subset_name_label, 1, QtCore.Qt.AlignLeft | QtCore.Qt.AlignVCenter
+            name_label, 1, QtCore.Qt.AlignLeft | QtCore.Qt.AlignVCenter
         )
         layout.addWidget(toggle_checkbox, 0)
 
         # self.setAttribute(QtCore.Qt.WA_TranslucentBackground)
-        subset_name_label.setAttribute(QtCore.Qt.WA_TranslucentBackground)
+        name_label.setAttribute(QtCore.Qt.WA_TranslucentBackground)
         expand_btn.setAttribute(QtCore.Qt.WA_TranslucentBackground)
 
         expand_btn.clicked.connect(self._on_expand_clicked)
@@ -204,7 +204,7 @@ class InstanceListGroupWidget(QtWidgets.QFrame):
 
         self._expected_checkstate = None
 
-        self.subset_name_label = subset_name_label
+        self.name_label = name_label
         self.expand_btn = expand_btn
         self.toggle_checkbox = toggle_checkbox
 
@@ -220,10 +220,10 @@ class InstanceListGroupWidget(QtWidgets.QFrame):
 
     def _on_checkbox_change(self, state):
         if not self._ignore_state_change:
-            self.toggle_requested.emit(self.family, state)
+            self.toggle_requested.emit(self.group_name, state)
 
     def _on_expand_clicked(self):
-        self.expand_changed.emit(self.family, not self._expanded)
+        self.expand_changed.emit(self.group_name, not self._expanded)
 
     def set_expanded(self, expanded):
         if self._expanded == expanded:
@@ -366,7 +366,7 @@ class InstanceListView(AbstractInstanceView):
         self._group_items = {}
         self._group_widgets = {}
         self._widgets_by_id = {}
-        self._family_by_instance_id = {}
+        self._group_by_instance_id = {}
         self._context_item = None
         self._context_widget = None
 
@@ -376,14 +376,14 @@ class InstanceListView(AbstractInstanceView):
         self.proxy_model = proxy_model
 
     def _on_expand(self, index):
-        family = index.data(SORT_VALUE_ROLE)
-        group_widget = self._group_widgets.get(family)
+        group_name = index.data(SORT_VALUE_ROLE)
+        group_widget = self._group_widgets.get(group_name)
         if group_widget:
             group_widget.set_expanded(True)
 
     def _on_collapse(self, index):
-        family = index.data(SORT_VALUE_ROLE)
-        group_widget = self._group_widgets.get(family)
+        group_name = index.data(SORT_VALUE_ROLE)
+        group_widget = self._group_widgets.get(group_name)
         if group_widget:
             group_widget.set_expanded(False)
 
@@ -401,14 +401,14 @@ class InstanceListView(AbstractInstanceView):
             if widget is not None:
                 widget.set_active(active)
 
-    def _update_family_checkstate(self, family):
-        widget = self._group_widgets.get(family)
+    def _update_group_checkstate(self, group_name):
+        widget = self._group_widgets.get(group_name)
         if widget is None:
             return
 
         activity = None
-        for instance_id, _family in self._family_by_instance_id.items():
-            if _family != family:
+        for instance_id, _group_name in self._group_by_instance_id.items():
+            if _group_name != group_name:
                 continue
 
             instance_widget = self._widgets_by_id.get(instance_id)
@@ -433,12 +433,12 @@ class InstanceListView(AbstractInstanceView):
         widget.set_checkstate(state)
 
     def refresh(self):
-        instances_by_family = collections.defaultdict(list)
-        families = set()
+        instances_by_group_name = collections.defaultdict(list)
+        group_names = set()
         for instance in self.controller.instances:
-            family = instance.data["family"]
-            families.add(family)
-            instances_by_family[family].append(instance)
+            identifier = instance.creator_identifier
+            group_names.add(identifier)
+            instances_by_group_name[identifier].append(instance)
 
         sort_at_the_end = False
         root_item = self.instance_model.invisibleRootItem()
@@ -463,15 +463,15 @@ class InstanceListView(AbstractInstanceView):
             self._context_item = context_item
 
         new_group_items = []
-        for family in families:
-            if family in self._group_items:
+        for group_name in group_names:
+            if group_name in self._group_items:
                 continue
 
             group_item = QtGui.QStandardItem()
-            group_item.setData(family, SORT_VALUE_ROLE)
+            group_item.setData(group_name, SORT_VALUE_ROLE)
             group_item.setData(True, IS_GROUP_ROLE)
             group_item.setFlags(QtCore.Qt.ItemIsEnabled)
-            self._group_items[family] = group_item
+            self._group_items[group_name] = group_item
             new_group_items.append(group_item)
 
         if new_group_items:
@@ -483,24 +483,24 @@ class InstanceListView(AbstractInstanceView):
                 group_item.row(), group_item.column()
             )
             proxy_index = self.proxy_model.mapFromSource(index)
-            family = group_item.data(SORT_VALUE_ROLE)
-            widget = InstanceListGroupWidget(family, self.instance_view)
+            group_name = group_item.data(SORT_VALUE_ROLE)
+            widget = InstanceListGroupWidget(group_name, self.instance_view)
             widget.expand_changed.connect(self._on_group_expand_request)
             widget.toggle_requested.connect(self._on_group_toggle_request)
-            self._group_widgets[family] = widget
+            self._group_widgets[group_name] = widget
             self.instance_view.setIndexWidget(proxy_index, widget)
 
-        for family in tuple(self._group_items.keys()):
-            if family in families:
+        for group_name in tuple(self._group_items.keys()):
+            if group_name in group_names:
                 continue
 
-            group_item = self._group_items.pop(family)
+            group_item = self._group_items.pop(group_name)
             root_item.removeRow(group_item.row())
-            widget = self._group_widgets.pop(family)
+            widget = self._group_widgets.pop(group_name)
             widget.deleteLater()
 
-        expand_families = set()
-        for family, group_item in self._group_items.items():
+        expand_groups = set()
+        for group_name, group_item in self._group_items.items():
             to_remove = set()
             existing_mapping = {}
 
@@ -517,7 +517,7 @@ class InstanceListView(AbstractInstanceView):
             new_items = []
             new_items_with_instance = []
             activity = None
-            for instance in instances_by_family[family]:
+            for instance in instances_by_group_name[group_name]:
                 instance_id = instance.data["uuid"]
                 if activity is None:
                     activity = int(instance.data["active"])
@@ -526,7 +526,7 @@ class InstanceListView(AbstractInstanceView):
                 elif activity != instance.data["active"]:
                     activity = -1
 
-                self._family_by_instance_id[instance_id] = family
+                self._group_by_instance_id[instance_id] = group_name
                 if instance_id in to_remove:
                     to_remove.remove(instance_id)
                     widget = self._widgets_by_id[instance_id]
@@ -545,7 +545,7 @@ class InstanceListView(AbstractInstanceView):
             elif activity == 1:
                 state = QtCore.Qt.Checked
 
-            widget = self._group_widgets[family]
+            widget = self._group_widgets[group_name]
             widget.set_checkstate(state)
 
             idx_to_remove = []
@@ -556,7 +556,7 @@ class InstanceListView(AbstractInstanceView):
                 group_item.removeRows(idx, 1)
 
             for instance_id in to_remove:
-                self._family_by_instance_id.pop(instance_id)
+                self._group_by_instance_id.pop(instance_id)
                 widget = self._widgets_by_id.pop(instance_id)
                 widget.deleteLater()
 
@@ -567,7 +567,7 @@ class InstanceListView(AbstractInstanceView):
 
                 for item, instance in new_items_with_instance:
                     if not instance.has_valid_context:
-                        expand_families.add(family)
+                        expand_groups.add(group_name)
                     item_index = self.instance_model.index(
                         item.row(),
                         item.column(),
@@ -585,9 +585,9 @@ class InstanceListView(AbstractInstanceView):
             if sort_at_the_end:
                 self.proxy_model.sort(0)
 
-        for family in expand_families:
-            family_item = self._group_items[family]
-            proxy_index = self.proxy_model.mapFromSource(family_item.index())
+        for group_name in expand_groups:
+            group_item = self._group_items[group_name]
+            proxy_index = self.proxy_model.mapFromSource(group_item.index())
 
             self.instance_view.expand(proxy_index)
 
@@ -610,14 +610,14 @@ class InstanceListView(AbstractInstanceView):
             selected_ids.add(changed_instance_id)
 
         self._change_active_instances(selected_ids, new_value)
-        families = set()
+        group_names = set()
         for instance_id in selected_ids:
-            family = self._family_by_instance_id.get(instance_id)
-            if family is not None:
-                families.add(family)
+            group_name = self._group_by_instance_id.get(instance_id)
+            if group_name is not None:
+                group_names.add(group_name)
 
-        for family in families:
-            self._update_family_checkstate(family)
+        for group_name in group_names:
+            self._update_group_checkstate(group_name)
 
     def _change_active_instances(self, instance_ids, new_value):
         if not instance_ids:
@@ -656,8 +656,8 @@ class InstanceListView(AbstractInstanceView):
     def _on_selection_change(self, *_args):
         self.selection_changed.emit()
 
-    def _on_group_expand_request(self, family, expanded):
-        group_item = self._group_items.get(family)
+    def _on_group_expand_request(self, group_name, expanded):
+        group_item = self._group_items.get(group_name)
         if not group_item:
             return
 
@@ -667,7 +667,7 @@ class InstanceListView(AbstractInstanceView):
         proxy_index = self.proxy_model.mapFromSource(group_index)
         self.instance_view.setExpanded(proxy_index, expanded)
 
-    def _on_group_toggle_request(self, family, state):
+    def _on_group_toggle_request(self, group_name, state):
         if state == QtCore.Qt.PartiallyChecked:
             return
 
@@ -676,7 +676,7 @@ class InstanceListView(AbstractInstanceView):
         else:
             active = False
 
-        group_item = self._group_items.get(family)
+        group_item = self._group_items.get(group_name)
         if not group_item:
             return
 

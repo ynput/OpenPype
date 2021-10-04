@@ -14,7 +14,9 @@ from openpype.pipeline.create import CreatorError
 from .widgets import IconValuePixmapLabel
 from ..constants import (
     SUBSET_NAME_ALLOWED_SYMBOLS,
-    VARIANT_TOOLTIP
+    VARIANT_TOOLTIP,
+    CREATOR_IDENTIFIER_ROLE,
+    FAMILY_ROLE
 )
 
 SEPARATORS = ("---separator---", "---")
@@ -23,7 +25,7 @@ SEPARATORS = ("---separator---", "---")
 class CreateErrorMessageBox(QtWidgets.QDialog):
     def __init__(
         self,
-        family,
+        creator_label,
         subset_name,
         asset_name,
         exc_msg,
@@ -47,7 +49,7 @@ class CreateErrorMessageBox(QtWidgets.QDialog):
         body_layout.addWidget(main_label_widget)
 
         item_name_template = (
-            "<span style='font-weight:bold;'>Family:</span> {}<br>"
+            "<span style='font-weight:bold;'>Creator:</span> {}<br>"
             "<span style='font-weight:bold;'>Subset:</span> {}<br>"
             "<span style='font-weight:bold;'>Asset:</span> {}<br>"
         )
@@ -56,7 +58,9 @@ class CreateErrorMessageBox(QtWidgets.QDialog):
         line = self._create_line()
         body_layout.addWidget(line)
 
-        item_name = item_name_template.format(family, subset_name, asset_name)
+        item_name = item_name_template.format(
+            creator_label, subset_name, asset_name
+        )
         item_name_widget = QtWidgets.QLabel(
             item_name.replace("\n", "<br>"), self
         )
@@ -96,9 +100,10 @@ class CreateErrorMessageBox(QtWidgets.QDialog):
         return line
 
 
-class FamilyDescriptionWidget(QtWidgets.QWidget):
+# TODO add creator identifier/label to details
+class CreatorDescriptionWidget(QtWidgets.QWidget):
     def __init__(self, parent=None):
-        super(FamilyDescriptionWidget, self).__init__(parent=parent)
+        super(CreatorDescriptionWidget, self).__init__(parent=parent)
 
         icon_widget = IconValuePixmapLabel(None, self)
         icon_widget.setObjectName("FamilyIconLabel")
@@ -195,11 +200,11 @@ class CreateDialog(QtWidgets.QDialog):
         self._name_pattern = name_pattern
         self._compiled_name_pattern = re.compile(name_pattern)
 
-        creator_description_widget = FamilyDescriptionWidget(self)
+        creator_description_widget = CreatorDescriptionWidget(self)
 
-        family_view = QtWidgets.QListView(self)
-        family_model = QtGui.QStandardItemModel()
-        family_view.setModel(family_model)
+        creators_view = QtWidgets.QListView(self)
+        creators_model = QtGui.QStandardItemModel()
+        creators_view.setModel(creators_model)
 
         variant_input = QtWidgets.QLineEdit(self)
         variant_input.setObjectName("VariantInput")
@@ -230,7 +235,7 @@ class CreateDialog(QtWidgets.QDialog):
 
         left_layout = QtWidgets.QVBoxLayout()
         left_layout.addWidget(QtWidgets.QLabel("Choose family:", self))
-        left_layout.addWidget(family_view, 1)
+        left_layout.addWidget(creators_view, 1)
         left_layout.addLayout(form_layout, 0)
         left_layout.addWidget(create_btn, 0)
 
@@ -242,8 +247,8 @@ class CreateDialog(QtWidgets.QDialog):
         create_btn.clicked.connect(self._on_create)
         variant_input.returnPressed.connect(self._on_create)
         variant_input.textChanged.connect(self._on_variant_change)
-        family_view.selectionModel().currentChanged.connect(
-            self._on_family_change
+        creators_view.selectionModel().currentChanged.connect(
+            self._on_item_change
         )
         variant_hints_menu.triggered.connect(self._on_variant_action)
 
@@ -258,8 +263,8 @@ class CreateDialog(QtWidgets.QDialog):
         self.variant_hints_menu = variant_hints_menu
         self.variant_hints_group = variant_hints_group
 
-        self.family_model = family_model
-        self.family_view = family_view
+        self.creators_model = creators_model
+        self.creators_view = creators_view
         self.create_btn = create_btn
 
     @property
@@ -280,11 +285,11 @@ class CreateDialog(QtWidgets.QDialog):
             self.subset_name_input.setText("< Asset is not set >")
             self._prereq_available = False
 
-        if self.family_model.rowCount() < 1:
+        if self.creators_model.rowCount() < 1:
             self._prereq_available = False
 
         self.create_btn.setEnabled(self._prereq_available)
-        self.family_view.setEnabled(self._prereq_available)
+        self.creators_view.setEnabled(self._prereq_available)
         self.variant_input.setEnabled(self._prereq_available)
         self.variant_hints_btn.setEnabled(self._prereq_available)
 
@@ -320,50 +325,57 @@ class CreateDialog(QtWidgets.QDialog):
     def _refresh_creators(self):
         # Refresh creators and add their families to list
         existing_items = {}
-        old_families = set()
-        for row in range(self.family_model.rowCount()):
-            item = self.family_model.item(row, 0)
-            family = item.data(QtCore.Qt.DisplayRole)
-            existing_items[family] = item
-            old_families.add(family)
+        old_creators = set()
+        for row in range(self.creators_model.rowCount()):
+            item = self.creators_model.item(row, 0)
+            identifier = item.data(CREATOR_IDENTIFIER_ROLE)
+            existing_items[identifier] = item
+            old_creators.add(identifier)
 
         # Add new families
-        new_families = set()
-        for family in self.controller.ui_creators.keys():
+        new_creators = set()
+        for identifier, creator in self.controller.ui_creators.items():
             # TODO add details about creator
-            new_families.add(family)
-            if family not in existing_items:
-                item = QtGui.QStandardItem(family)
+            new_creators.add(identifier)
+            if identifier in existing_items:
+                item = existing_items[identifier]
+            else:
+                item = QtGui.QStandardItem()
                 item.setFlags(
                     QtCore.Qt.ItemIsEnabled | QtCore.Qt.ItemIsSelectable
                 )
-                self.family_model.appendRow(item)
+                self.creators_model.appendRow(item)
+
+            label = creator.label or identifier
+            item.setData(label, QtCore.Qt.DisplayRole)
+            item.setData(identifier, CREATOR_IDENTIFIER_ROLE)
+            item.setData(creator.family, FAMILY_ROLE)
 
         # Remove families that are no more available
-        for family in (old_families - new_families):
-            item = existing_items[family]
-            self.family_model.takeRow(item.row())
+        for identifier in (old_creators - new_creators):
+            item = existing_items[identifier]
+            self.creators_model.takeRow(item.row())
 
-        if self.family_model.rowCount() < 1:
+        if self.creators_model.rowCount() < 1:
             return
 
         # Make sure there is a selection
-        indexes = self.family_view.selectedIndexes()
+        indexes = self.creators_view.selectedIndexes()
         if not indexes:
-            index = self.family_model.index(0, 0)
-            self.family_view.setCurrentIndex(index)
+            index = self.creators_model.index(0, 0)
+            self.creators_view.setCurrentIndex(index)
 
     def _on_plugins_refresh(self):
         # Trigger refresh only if is visible
         if self.isVisible():
             self.refresh()
 
-    def _on_family_change(self, new_index, _old_index):
-        family = None
+    def _on_item_change(self, new_index, _old_index):
+        identifier = None
         if new_index.isValid():
-            family = new_index.data(QtCore.Qt.DisplayRole)
+            identifier = new_index.data(CREATOR_IDENTIFIER_ROLE)
 
-        creator = self.controller.ui_creators.get(family)
+        creator = self.controller.ui_creators.get(identifier)
 
         self.creator_description_widget.set_plugin(creator)
 
@@ -495,7 +507,7 @@ class CreateDialog(QtWidgets.QDialog):
         self.refresh()
 
     def _on_create(self):
-        indexes = self.family_view.selectedIndexes()
+        indexes = self.creators_view.selectedIndexes()
         if not indexes or len(indexes) > 1:
             return
 
@@ -503,7 +515,9 @@ class CreateDialog(QtWidgets.QDialog):
             return
 
         index = indexes[0]
-        family = index.data(QtCore.Qt.DisplayRole)
+        creator_label = index.data(QtCore.Qt.DisplayRole)
+        creator_identifier = index.data(CREATOR_IDENTIFIER_ROLE)
+        family = index.data(FAMILY_ROLE)
         subset_name = self.subset_name_input.text()
         variant = self.variant_input.text()
         asset_name = self._asset_name
@@ -520,7 +534,9 @@ class CreateDialog(QtWidgets.QDialog):
 
         error_info = None
         try:
-            self.controller.create(family, subset_name, instance_data, options)
+            self.controller.create(
+                creator_identifier, subset_name, instance_data, options
+            )
 
         except CreatorError as exc:
             error_info = (str(exc), None)
@@ -534,7 +550,7 @@ class CreateDialog(QtWidgets.QDialog):
 
         if error_info:
             box = CreateErrorMessageBox(
-                family, subset_name, asset_name, *error_info
+                creator_label, subset_name, asset_name, *error_info
             )
             box.show()
             # Store dialog so is not garbage collected before is shown

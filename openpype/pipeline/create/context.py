@@ -168,15 +168,15 @@ class AttributeValues:
         return self.calculate_changes(self._data, self._origin_data)
 
 
-class FamilyAttributeValues(AttributeValues):
-    """Family specific attribute values of an instance.
+class CreatorAttributeValues(AttributeValues):
+    """Creator specific attribute values of an instance.
 
     Args:
         instance (CreatedInstance): Instance for which are values hold.
     """
     def __init__(self, instance, *args, **kwargs):
         self.instance = instance
-        super(FamilyAttributeValues, self).__init__(*args, **kwargs)
+        super(CreatorAttributeValues, self).__init__(*args, **kwargs)
 
 
 class PublishAttributeValues(AttributeValues):
@@ -350,13 +350,13 @@ class CreatedInstance:
         # Store original value of passed data
         self._orig_data = copy.deepcopy(data)
 
-        # Pop family and subset to preved unexpected changes
+        # Pop family and subset to prevent unexpected changes
         data.pop("family", None)
         data.pop("subset", None)
 
         # Pop dictionary values that will be converted to objects to be able
         #   catch changes
-        orig_family_attributes = data.pop("family_attributes", None) or {}
+        orig_creator_attributes = data.pop("creator_attributes", None) or {}
         orig_publish_attributes = data.pop("publish_attributes", None) or {}
 
         # QUESTION Does it make sense to have data stored as ordered dict?
@@ -373,18 +373,13 @@ class CreatedInstance:
         else:
             self._data["version"] = data.get("version")
 
-        # Stored family specific attribute values
+        # Stored creator specific attribute values
         # {key: value}
-        new_family_values = copy.deepcopy(orig_family_attributes)
-        family_attr_defs = []
-        if creator is not None:
-            new_family_values = creator.convert_family_attribute_values(
-                new_family_values
-            )
-            family_attr_defs = creator.get_attribute_defs()
+        creator_values = copy.deepcopy(orig_creator_attributes)
+        creator_attr_defs = creator.get_attribute_defs()
 
-        self._data["family_attributes"] = FamilyAttributeValues(
-            self, family_attr_defs, new_family_values, orig_family_attributes
+        self._data["creator_attributes"] = CreatorAttributeValues(
+            self, creator_attr_defs, creator_values, orig_creator_attributes
         )
 
         # Stored publish specific attribute values
@@ -471,17 +466,17 @@ class CreatedInstance:
         new_keys = set()
         for key, new_value in self._data.items():
             new_keys.add(key)
-            if key in ("family_attributes", "publish_attributes"):
+            if key in ("creator_attributes", "publish_attributes"):
                 continue
 
             old_value = self._orig_data.get(key)
             if old_value != new_value:
                 changes[key] = (old_value, new_value)
 
-        family_attributes = self.data["family_attributes"]
-        family_attr_changes = family_attributes.changes()
-        if family_attr_changes:
-            changes["family_attributes"] = family_attr_changes
+        creator_attributes = self.data["creator_attributes"]
+        creator_attr_changes = creator_attributes.changes()
+        if creator_attr_changes:
+            changes["creator_attributes"] = creator_attr_changes
 
         publish_attr_changes = self.publish_attributes.changes()
         if publish_attr_changes:
@@ -493,8 +488,8 @@ class CreatedInstance:
         return changes
 
     @property
-    def family_attribute_defs(self):
-        return self._data["family_attributes"].attr_defs
+    def creator_attribute_defs(self):
+        return self._data["creator_attributes"].attr_defs
 
     @property
     def publish_attributes(self):
@@ -503,12 +498,12 @@ class CreatedInstance:
     def data_to_store(self):
         output = collections.OrderedDict()
         for key, value in self._data.items():
-            if key in ("family_attributes", "publish_attributes"):
+            if key in ("creator_attributes", "publish_attributes"):
                 continue
             output[key] = value
 
-        family_attributes = self._data["family_attributes"]
-        output["family_attributes"] = family_attributes.data_to_store()
+        creator_attributes = self._data["creator_attributes"]
+        output["creator_attributes"] = creator_attributes.data_to_store()
 
         publish_attributes = self._data["publish_attributes"]
         output["publish_attributes"] = publish_attributes.data_to_store()
@@ -523,6 +518,8 @@ class CreatedInstance:
         instance_data = copy.deepcopy(instance_data)
 
         family = instance_data.get("family", None)
+        if family is None:
+            family = creator.family
         subset_name = instance_data.get("subset", None)
 
         return cls(
@@ -752,9 +749,8 @@ class CreateContext:
 
         # Collect instances
         for creator in self.creators.values():
-            family = creator.family
             attr_plugins = self._get_publish_plugins_with_attr_for_family(
-                family
+                creator.family
             )
             creator.collect_instances(attr_plugins)
 
@@ -763,15 +759,15 @@ class CreateContext:
 
         Reset instances if any autocreator executed properly.
         """
-        for family, creator in self.autocreators.items():
+        for identifier, creator in self.autocreators.items():
             try:
                 creator.create()
 
             except Exception:
                 # TODO raise report exception if any crashed
                 msg = (
-                    "Failed to run AutoCreator with family \"{}\" ({})."
-                ).format(family, inspect.getfile(creator.__class__))
+                    "Failed to run AutoCreator with identifier \"{}\" ({})."
+                ).format(identifier, inspect.getfile(creator.__class__))
                 self.log.warning(msg, exc_info=True)
 
     def validate_instances_context(self, instances=None):

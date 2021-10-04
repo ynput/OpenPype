@@ -545,18 +545,18 @@ class PublisherController:
 
         self._trigger_callbacks(self._instances_refresh_callback_refs)
 
-    def get_family_attribute_definitions(self, instances):
+    def get_creator_attribute_definitions(self, instances):
         output = []
         _attr_defs = {}
         for instance in instances:
-            for attr_def in instance.family_attribute_defs:
+            for attr_def in instance.creator_attribute_defs:
                 found_idx = None
                 for idx, _attr_def in _attr_defs.items():
                     if attr_def == _attr_def:
                         found_idx = idx
                         break
 
-                value = instance.data["family_attributes"][attr_def.key]
+                value = instance.data["creator_attributes"][attr_def.key]
                 if found_idx is None:
                     idx = len(output)
                     output.append((attr_def, [instance], [value]))
@@ -617,13 +617,10 @@ class PublisherController:
             return creator.get_icon()
         return None
 
-    def create(self, family, subset_name, instance_data, options):
-        # QUESTION Force to return instances or call `list_instances` on each
-        #   creation? (`list_instances` may slow down...)
-        #   - also save may not be required in that case
-        self.save_changes()
-
-        creator = self.creators[family]
+    def create(
+        self, creator_identifier, subset_name, instance_data, options
+    ):
+        creator = self.creators[creator_identifier]
         creator.create(subset_name, instance_data, options)
 
         self._trigger_callbacks(self._instances_refresh_callback_refs)

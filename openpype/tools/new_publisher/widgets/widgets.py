@@ -1096,9 +1096,9 @@ class GlobalAttrsWidget(QtWidgets.QWidget):
         self.task_value_widget.setEnabled(editable)
 
 
-class FamilyAttrsWidget(QtWidgets.QWidget):
+class CreatorAttrsWidget(QtWidgets.QWidget):
     def __init__(self, controller, parent):
-        super(FamilyAttrsWidget, self).__init__(parent)
+        super(CreatorAttrsWidget, self).__init__(parent)
 
         scroll_area = QtWidgets.QScrollArea(self)
         scroll_area.setWidgetResizable(True)
@@ -1137,7 +1137,7 @@ class FamilyAttrsWidget(QtWidgets.QWidget):
         self._attr_def_id_to_instances = {}
         self._attr_def_id_to_attr_def = {}
 
-        result = self.controller.get_family_attribute_definitions(
+        result = self.controller.get_creator_attribute_definitions(
             instances
         )
 
@@ -1169,9 +1169,9 @@ class FamilyAttrsWidget(QtWidgets.QWidget):
             return
 
         for instance in instances:
-            family_attributes = instance.data["family_attributes"]
-            if attr_def.key in family_attributes:
-                family_attributes[attr_def.key] = value
+            creator_attributes = instance.data["creator_attributes"]
+            if attr_def.key in creator_attributes:
+                creator_attributes[attr_def.key] = value
 
 
 class PublishPluginAttrsWidget(QtWidgets.QWidget):
@@ -1301,7 +1301,7 @@ class SubsetAttributesWidget(QtWidgets.QWidget):
 
         # BOTTOM PART
         bottom_widget = QtWidgets.QWidget(self)
-        family_attrs_widget = FamilyAttrsWidget(
+        creator_attrs_widget = CreatorAttrsWidget(
             controller, bottom_widget
         )
         publish_attrs_widget = PublishPluginAttrsWidget(
@@ -1314,7 +1314,7 @@ class SubsetAttributesWidget(QtWidgets.QWidget):
 
         bottom_layout = QtWidgets.QHBoxLayout(bottom_widget)
         bottom_layout.setContentsMargins(0, 0, 0, 0)
-        bottom_layout.addWidget(family_attrs_widget, 1)
+        bottom_layout.addWidget(creator_attrs_widget, 1)
         bottom_layout.addWidget(bottom_separator, 0)
         bottom_layout.addWidget(publish_attrs_widget, 1)
 
@@ -1339,7 +1339,7 @@ class SubsetAttributesWidget(QtWidgets.QWidget):
 
         self.global_attrs_widget = global_attrs_widget
 
-        self.family_attrs_widget = family_attrs_widget
+        self.creator_attrs_widget = creator_attrs_widget
         self.publish_attrs_widget = publish_attrs_widget
         self.thumbnail_widget = thumbnail_widget
 
@@ -1354,7 +1354,7 @@ class SubsetAttributesWidget(QtWidgets.QWidget):
                 break
 
         self._all_instances_valid = all_valid
-        self.family_attrs_widget.set_instances_valid(all_valid)
+        self.creator_attrs_widget.set_instances_valid(all_valid)
         self.publish_attrs_widget.set_instances_valid(all_valid)
 
         self.instance_context_changed.emit()
@@ -1371,11 +1371,11 @@ class SubsetAttributesWidget(QtWidgets.QWidget):
         self._all_instances_valid = all_valid
 
         self.global_attrs_widget.set_current_instances(instances)
-        self.family_attrs_widget.set_current_instances(instances)
+        self.creator_attrs_widget.set_current_instances(instances)
         self.publish_attrs_widget.set_current_instances(
             instances, context_selected
         )
-        self.family_attrs_widget.set_instances_valid(all_valid)
+        self.creator_attrs_widget.set_instances_valid(all_valid)
         self.publish_attrs_widget.set_instances_valid(all_valid)
 
 
