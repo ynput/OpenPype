@@ -672,7 +672,8 @@ class CreateContext:
         self.plugins_with_defs = []
         self._attr_plugins_by_family = {}
 
-        self._ignore_added_instances = False
+        self._bulk_counter = 0
+        self._bulk_instances_to_process = []
 
         if reset:
             self.reset(discover_publish_plugins)
@@ -703,11 +704,9 @@ class CreateContext:
         self.reset_plugins(discover_publish_plugins)
         self.reset_context_data()
 
-        with self.ignore_added_instances():
+        with self.bulk_instances_collection():
             self.reset_instances()
             self.execute_autocreators()
-
-        self.validate_instances_context()
 
     def reset_plugins(self, discover_publish_plugins=True):
         import avalon.api
@@ -806,19 +805,41 @@ class CreateContext:
 
     def creator_adds_instance(self, instance):
         self.instances.append(instance)
-        if not self._ignore_added_instances:
-            self.validate_instances_context([instance])
+        attr_plugins = self._get_publish_plugins_with_attr_for_family(
+            instance.creator.family
+        )
+        instance.set_publish_plugins(attr_plugins)
+
+        with self.bulk_instances_collection():
+            self._bulk_instances_to_process.append(instance)
 
     def creator_removed_instance(self, instance):
         self.instances.remove(instance)
 
     @contextmanager
-    def ignore_added_instances(self):
-        self._ignore_added_instances = True
+    def bulk_instances_collection(self):
+        """Validate context of instances in bulk.
+
+        This can be used for single instance or for adding multiple instances
+            which is helpfull on reset.
+        """
+        self._bulk_counter += 1
         try:
             yield
         finally:
-            self._ignore_added_instances = False
+            self._bulk_counter -= 1
+
+        # Trigger validation if there is no more context manager for bulk
+        #   instance validation
+        if self._bulk_counter == 0:
+            (
+                self._bulk_instances_to_process,
+                instances_to_validate
+            ) = (
+                [],
+                self._bulk_instances_to_process
+            )
+            self.validate_instances_context(instances_to_validate)
 
     def reset_instances(self):
         self.instances = []
