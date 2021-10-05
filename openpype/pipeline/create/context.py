@@ -428,6 +428,17 @@ class CreatedInstance:
         self._asset_is_valid = self.has_set_asset
         self._task_is_valid = self.has_set_task
 
+    def __str__(self):
+        return (
+            "<CreatedInstance {subset} ({family}[{creator_identifier}])>"
+            " {data}"
+        ).format(
+            subset=str(self._data),
+            creator_identifier=self.creator_identifier,
+            family=self.family,
+            data=str(self._data)
+        )
+
     def __getitem__(self, key):
         return self._data[key]
 
