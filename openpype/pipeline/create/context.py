@@ -19,6 +19,16 @@ from openpype.api import (
 )
 
 
+class ImmutableKeyError(TypeError):
+    def __init__(self, key, msg=None):
+        self.immutable_key = key
+        if not msg:
+            msg = "Key \"{}\" is immutable and does not allow changes.".format(
+                key
+            )
+        super(ImmutableKeyError, self).__init__(msg)
+
+
 class HostMissRequiredMethod(Exception):
     """Host does not have implemented required functions for creation."""
     def __init__(self, host, missing_methods):
@@ -330,7 +340,21 @@ class CreatedInstance:
         subset_name(str): Name of subset that will be created.
         data(dict): Data used for filling subset name or override data from
             already existing instance.
+        creator(BaseCreator): Creator responsible for instance.
+        host(ModuleType): Host implementation loaded with
+            `avalon.api.registered_host`.
+        attr_plugins(list): List of attribute definitions of publish plugins.
+        new(bool): Is instance new.
     """
+    __immutable_keys = (
+        "id",
+        "uuid",
+        "family",
+        "creator_identifier",
+        "creator_attributes",
+        "publish_attributes"
+    )
+
     def __init__(
         self, family, subset_name, data, creator, host=None,
         attr_plugins=None, new=True
@@ -399,6 +423,37 @@ class CreatedInstance:
         self._asset_is_valid = self.has_set_asset
         self._task_is_valid = self.has_set_task
 
+    def __getitem__(self, key):
+        return self._data[key]
+
+    def __setitem__(self, key, value):
+        # Validate immutable keys
+        if key not in self.__immutable_keys:
+            self._data[key] = value
+
+        elif value != self._data.get(key):
+            # Raise exception if key is immutable and value has changed
+            raise ImmutableKeyError(key)
+
+    def get(self, key, default=None):
+        return self._data.get(key, default)
+
+    def pop(self, key, *args, **kwargs):
+        # Raise exception if is trying to pop key which is immutable
+        if key in self.__immutable_keys:
+            raise ImmutableKeyError(key)
+
+        self._data.pop(key, *args, **kwargs)
+
+    def keys(self):
+        return self._data.keys()
+
+    def values(self):
+        return self._data.values()
+
+    def items(self):
+        return self._data.items()
+
     @property
     def family(self):
         return self._data["family"]
@@ -461,7 +516,7 @@ class CreatedInstance:
         Define class handling which keys are change to what.
         - this is dangerous as it is possible to modify any key (e.g. `uuid`)
         """
-        return self._data
+        return self
 
     def changes(self):
         """Calculate and return changes."""
