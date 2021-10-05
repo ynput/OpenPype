@@ -447,6 +447,9 @@ class CreatedInstance:
     def __getitem__(self, key):
         return self._data[key]
 
+    def __contains__(self, key):
+        return key in self._data
+
     def __setitem__(self, key, value):
         # Validate immutable keys
         if key not in self.__immutable_keys:
