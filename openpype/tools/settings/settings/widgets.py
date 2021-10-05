@@ -7,6 +7,12 @@ from avalon.mongodb import (
 )
 
 from openpype.settings.lib import get_system_settings
+from .constants import (
+    DEFAULT_PROJECT_LABEL,
+    PROJECT_NAME_ROLE,
+    PROJECT_IS_ACTIVE_ROLE,
+    PROJECT_IS_SELECTED_ROLE
+)
 
 
 class SettingsLineEdit(QtWidgets.QLineEdit):
@@ -602,10 +608,63 @@ class NiceCheckbox(QtWidgets.QFrame):
         return super(NiceCheckbox, self).mouseReleaseEvent(event)
 
 
-class ProjectListModel(QtGui.QStandardItemModel):
-    sort_role = QtCore.Qt.UserRole + 10
-    filter_role = QtCore.Qt.UserRole + 11
-    selected_role = QtCore.Qt.UserRole + 12
+class ProjectModel(QtGui.QStandardItemModel):
+    def __init__(self, only_active, *args, **kwargs):
+        super(ProjectModel, self).__init__(*args, **kwargs)
+
+        self.dbcon = None
+
+        self._only_active = only_active
+        self._default_item = None
+        self._items_by_name = {}
+
+    def set_dbcon(self, dbcon):
+        self.dbcon = dbcon
+
+    def refresh(self):
+        new_items = []
+        if self._default_item is None:
+            item = QtGui.QStandardItem(DEFAULT_PROJECT_LABEL)
+            item.setData(None, PROJECT_NAME_ROLE)
+            item.setData(True, PROJECT_IS_ACTIVE_ROLE)
+            item.setData(False, PROJECT_IS_SELECTED_ROLE)
+            new_items.append(item)
+            self._default_item = item
+
+        project_names = set()
+        if self.dbcon is not None:
+            for project_doc in self.dbcon.projects(
+                projection={"name": 1, "data.active": 1},
+                only_active=self._only_active
+            ):
+                project_name = project_doc["name"]
+                project_names.add(project_name)
+                if project_name in self._items_by_name:
+                    item = self._items_by_name[project_name]
+                else:
+                    item = QtGui.QStandardItem(project_name)
+
+                    self._items_by_name[project_name] = item
+                    new_items.append(item)
+
+                is_active = project_doc.get("data", {}).get("active", True)
+                item.setData(project_name, PROJECT_NAME_ROLE)
+                item.setData(is_active, PROJECT_IS_ACTIVE_ROLE)
+                item.setData(False, PROJECT_IS_SELECTED_ROLE)
+
+                if not is_active:
+                    font = item.font()
+                    font.setItalic(True)
+                    item.setFont(font)
+
+        root_item = self.invisibleRootItem()
+        for project_name in tuple(self._items_by_name.keys()):
+            if project_name not in project_names:
+                item = self._items_by_name.pop(project_name)
+                root_item.removeRow(item.row())
+
+        if new_items:
+            root_item.appendRows(new_items)
 
 
 class ProjectListView(QtWidgets.QListView):
@@ -619,7 +678,6 @@ class ProjectListView(QtWidgets.QListView):
 
 
 class ProjectListSortFilterProxy(QtCore.QSortFilterProxyModel):
-
     def __init__(self, *args, **kwargs):
         super(ProjectListSortFilterProxy, self).__init__(*args, **kwargs)
         self._enable_filter = True
@@ -630,7 +688,7 @@ class ProjectListSortFilterProxy(QtCore.QSortFilterProxyModel):
 
         index = self.sourceModel().index(source_row, 0, source_parent)
         is_active = bool(index.data(self.filterRole()))
-        is_selected = bool(index.data(ProjectListModel.selected_role))
+        is_selected = bool(index.data(PROJECT_IS_SELECTED_ROLE))
 
         return is_active or is_selected
 
@@ -643,7 +701,6 @@ class ProjectListSortFilterProxy(QtCore.QSortFilterProxyModel):
 
 
 class ProjectListWidget(QtWidgets.QWidget):
-    default = "< Default >"
     project_changed = QtCore.Signal()
 
     def __init__(self, parent, only_active=False):
@@ -657,13 +714,10 @@ class ProjectListWidget(QtWidgets.QWidget):
         label_widget = QtWidgets.QLabel("Projects")
 
         project_list = ProjectListView(self)
-        project_model = ProjectListModel()
+        project_model = ProjectModel(only_active)
         project_proxy = ProjectListSortFilterProxy()
 
-        project_proxy.setFilterRole(ProjectListModel.filter_role)
-        project_proxy.setSortRole(ProjectListModel.sort_role)
-        project_proxy.setSortCaseSensitivity(QtCore.Qt.CaseInsensitive)
-
+        project_proxy.setFilterRole(PROJECT_IS_ACTIVE_ROLE)
         project_proxy.setSourceModel(project_model)
         project_list.setModel(project_proxy)
 
@@ -693,13 +747,14 @@ class ProjectListWidget(QtWidgets.QWidget):
 
         project_list.left_mouse_released_at.connect(self.on_item_clicked)
 
+        self._default_project_item = None
+
         self.project_list = project_list
         self.project_proxy = project_proxy
         self.project_model = project_model
         self.inactive_chk = inactive_chk
 
         self.dbcon = None
-        self._only_active = only_active
 
     def on_item_clicked(self, new_index):
         new_project_name = new_index.data(QtCore.Qt.DisplayRole)
@@ -746,12 +801,12 @@ class ProjectListWidget(QtWidgets.QWidget):
         return not self._parent.entity.has_unsaved_changes
 
     def project_name(self):
-        if self.current_project == self.default:
+        if self.current_project == DEFAULT_PROJECT_LABEL:
             return None
         return self.current_project
 
     def select_default_project(self):
-        self.select_project(self.default)
+        self.select_project(DEFAULT_PROJECT_LABEL)
 
     def select_project(self, project_name):
         model = self.project_model
@@ -759,10 +814,10 @@ class ProjectListWidget(QtWidgets.QWidget):
 
         found_items = model.findItems(project_name)
         if not found_items:
-            found_items = model.findItems(self.default)
+            found_items = model.findItems(DEFAULT_PROJECT_LABEL)
 
         index = model.indexFromItem(found_items[0])
-        model.setData(index, True, ProjectListModel.selected_role)
+        model.setData(index, True, PROJECT_IS_SELECTED_ROLE)
 
         index = proxy.mapFromSource(index)
 
@@ -776,9 +831,6 @@ class ProjectListWidget(QtWidgets.QWidget):
         for index in self.project_list.selectedIndexes():
             selected_project = index.data(QtCore.Qt.DisplayRole)
             break
-
-        model = self.project_model
-        model.clear()
 
         mongo_url = os.environ["OPENPYPE_MONGO"]
 
@@ -797,35 +849,8 @@ class ProjectListWidget(QtWidgets.QWidget):
                 self.dbcon = None
                 self.current_project = None
 
-        items = [(self.default, True)]
-
-        if self.dbcon:
-
-            for doc in self.dbcon.projects(
-                    projection={"name": 1, "data.active": 1},
-                    only_active=self._only_active
-            ):
-                items.append(
-                    (doc["name"], doc.get("data", {}).get("active", True))
-                )
-
-        for project_name, is_active in items:
-
-            row = QtGui.QStandardItem(project_name)
-            row.setData(is_active, ProjectListModel.filter_role)
-            row.setData(False, ProjectListModel.selected_role)
-
-            if is_active:
-                row.setData(project_name, ProjectListModel.sort_role)
-
-            else:
-                row.setData("~" + project_name, ProjectListModel.sort_role)
-
-                font = row.font()
-                font.setItalic(True)
-                row.setFont(font)
-
-            model.appendRow(row)
+        self.project_model.set_dbcon(self.dbcon)
+        self.project_model.refresh()
 
         self.project_proxy.sort(0)
 
