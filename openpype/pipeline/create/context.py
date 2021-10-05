@@ -847,8 +847,8 @@ class CreateContext:
             instances = self.instances
         task_names_by_asset_name = collections.defaultdict(set)
         for instance in instances:
-            task_name = instance.data.get("task")
-            asset_name = instance.data.get("asset")
+            task_name = instance.get("task")
+            asset_name = instance.get("asset")
             if asset_name and task_name:
                 task_names_by_asset_name[asset_name].add(task_name)
 
@@ -878,12 +878,12 @@ class CreateContext:
             if not instance.has_valid_asset or not instance.has_valid_task:
                 continue
 
-            asset_name = instance.data["asset"]
+            asset_name = instance["asset"]
             if asset_name not in task_names_by_asset_name:
                 instance.set_asset_invalid(True)
                 continue
 
-            task_name = instance.data["task"]
+            task_name = instance["task"]
             if not task_name:
                 continue
 

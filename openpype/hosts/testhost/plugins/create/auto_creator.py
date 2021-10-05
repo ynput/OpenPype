@@ -71,12 +71,12 @@ class MyAutoCreator(AutoCreator):
             self._add_instance_to_context(new_instance)
 
         elif (
-            existing_instance.data["asset"] != asset_name
-            or existing_instance.data["task"] != task_name
+            existing_instance["asset"] != asset_name
+            or existing_instance["task"] != task_name
         ):
             asset_doc = io.find_one({"type": "asset", "name": asset_name})
             subset_name = self.get_subset_name(
                 variant, task_name, asset_doc, project_name, host_name
             )
-            existing_instance.data["asset"] = asset_name
-            existing_instance.data["task"] = task_name
+            existing_instance["asset"] = asset_name
+            existing_instance["task"] = task_name

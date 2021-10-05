@@ -556,7 +556,7 @@ class PublisherController:
                         found_idx = idx
                         break
 
-                value = instance.data["creator_attributes"][attr_def.key]
+                value = instance["creator_attributes"][attr_def.key]
                 if found_idx is None:
                     idx = len(output)
                     output.append((attr_def, [instance], [value]))

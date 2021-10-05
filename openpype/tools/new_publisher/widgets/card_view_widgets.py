@@ -70,7 +70,7 @@ class GroupWidget(QtWidgets.QWidget):
         instances_by_subset_name = collections.defaultdict(list)
         for instance in instances:
             instances_by_id[instance.id] = instance
-            subset_name = instance.data["subset"]
+            subset_name = instance["subset"]
             instances_by_subset_name[subset_name].append(instance)
 
         for instance_id in tuple(self._widgets_by_id.keys()):
@@ -177,8 +177,8 @@ class InstanceCardWidget(CardWidget):
         icon_layout.addWidget(icon_widget)
         icon_layout.addWidget(context_warning)
 
-        variant = instance.data["variant"]
-        subset_name = instance.data["subset"]
+        variant = instance["variant"]
+        subset_name = instance["subset"]
         found_parts = set(re.findall(variant, subset_name, re.IGNORECASE))
         if found_parts:
             for part in found_parts:
@@ -191,7 +191,7 @@ class InstanceCardWidget(CardWidget):
         label_widget.setTextInteractionFlags(QtCore.Qt.NoTextInteraction)
 
         active_checkbox = NiceCheckbox(parent=self)
-        active_checkbox.setChecked(instance.data["active"])
+        active_checkbox.setChecked(instance["active"])
 
         expand_btn = QtWidgets.QToolButton(self)
         # Not yet implemented
@@ -233,12 +233,12 @@ class InstanceCardWidget(CardWidget):
 
     def set_active(self, new_value):
         checkbox_value = self.active_checkbox.isChecked()
-        instance_value = self.instance.data["active"]
+        instance_value = self.instance["active"]
 
         # First change instance value and them change checkbox
         # - prevent to trigger `active_changed` signal
         if instance_value != new_value:
-            self.instance.data["active"] = new_value
+            self.instance["active"] = new_value
 
         if checkbox_value != new_value:
             self.active_checkbox.setChecked(new_value)
@@ -253,7 +253,7 @@ class InstanceCardWidget(CardWidget):
         self.context_warning.setVisible(not valid)
 
     def update_instance_values(self):
-        self.set_active(self.instance.data["active"])
+        self.set_active(self.instance["active"])
         self._validate_context()
 
     def _set_expanded(self, expanded=None):
@@ -263,11 +263,11 @@ class InstanceCardWidget(CardWidget):
 
     def _on_active_change(self):
         new_value = self.active_checkbox.isChecked()
-        old_value = self.instance.data["active"]
+        old_value = self.instance["active"]
         if new_value == old_value:
             return
 
-        self.instance.data["active"] = new_value
+        self.instance["active"] = new_value
         self.active_changed.emit()
 
     def _on_expend_clicked(self):

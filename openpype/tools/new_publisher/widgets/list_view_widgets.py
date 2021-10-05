@@ -76,11 +76,11 @@ class InstanceListItemWidget(QtWidgets.QWidget):
 
         self.instance = instance
 
-        subset_name_label = QtWidgets.QLabel(instance.data["subset"], self)
+        subset_name_label = QtWidgets.QLabel(instance["subset"], self)
         subset_name_label.setObjectName("ListViewSubsetName")
 
         active_checkbox = NiceCheckbox(parent=self)
-        active_checkbox.setChecked(instance.data["active"])
+        active_checkbox.setChecked(instance["active"])
 
         layout = QtWidgets.QHBoxLayout(self)
         content_margins = layout.contentsMargins()
@@ -113,18 +113,18 @@ class InstanceListItemWidget(QtWidgets.QWidget):
         self.subset_name_label.style().polish(self.subset_name_label)
 
     def is_active(self):
-        return self.instance.data["active"]
+        return self.instance["active"]
 
     def set_active(self, new_value):
         checkbox_value = self.active_checkbox.isChecked()
-        instance_value = self.instance.data["active"]
+        instance_value = self.instance["active"]
         if new_value is None:
             new_value = not instance_value
 
         # First change instance value and them change checkbox
         # - prevent to trigger `active_changed` signal
         if instance_value != new_value:
-            self.instance.data["active"] = new_value
+            self.instance["active"] = new_value
 
         if checkbox_value != new_value:
             self.active_checkbox.setChecked(new_value)
@@ -134,16 +134,16 @@ class InstanceListItemWidget(QtWidgets.QWidget):
         self.update_instance_values()
 
     def update_instance_values(self):
-        self.set_active(self.instance.data["active"])
+        self.set_active(self.instance["active"])
         self._set_valid_property(self.instance.has_valid_context)
 
     def _on_active_change(self):
         new_value = self.active_checkbox.isChecked()
-        old_value = self.instance.data["active"]
+        old_value = self.instance["active"]
         if new_value == old_value:
             return
 
-        self.instance.data["active"] = new_value
+        self.instance["active"] = new_value
         self.active_changed.emit(self.instance.id, new_value)
 
 
@@ -518,12 +518,12 @@ class InstanceListView(AbstractInstanceView):
             new_items_with_instance = []
             activity = None
             for instance in instances_by_group_name[group_name]:
-                instance_id = instance.data["uuid"]
+                instance_id = instance.id
                 if activity is None:
-                    activity = int(instance.data["active"])
+                    activity = int(instance["active"])
                 elif activity == -1:
                     pass
-                elif activity != instance.data["active"]:
+                elif activity != instance["active"]:
                     activity = -1
 
                 self._group_by_instance_id[instance_id] = group_name
@@ -534,8 +534,8 @@ class InstanceListView(AbstractInstanceView):
                     continue
 
                 item = QtGui.QStandardItem()
-                item.setData(instance.data["subset"], SORT_VALUE_ROLE)
-                item.setData(instance.data["uuid"], INSTANCE_ID_ROLE)
+                item.setData(instance["subset"], SORT_VALUE_ROLE)
+                item.setData(instance_id, INSTANCE_ID_ROLE)
                 new_items.append(item)
                 new_items_with_instance.append((item, instance))
 
@@ -579,7 +579,7 @@ class InstanceListView(AbstractInstanceView):
                     )
                     widget.active_changed.connect(self._on_active_changed)
                     self.instance_view.setIndexWidget(proxy_index, widget)
-                    self._widgets_by_id[instance.data["uuid"]] = widget
+                    self._widgets_by_id[instance.id] = widget
 
             # Trigger sort at the end of refresh
             if sort_at_the_end:
@@ -635,11 +635,11 @@ class InstanceListView(AbstractInstanceView):
 
     def get_selected_items(self):
         instances = []
-        instances_by_id = {}
         context_selected = False
-        for instance in self.controller.instances:
-            instance_id = instance.data["uuid"]
-            instances_by_id[instance_id] = instance
+        instances_by_id = {
+            instance.id: instance
+            for instance in self.controller.instances
+        }
 
         for index in self.instance_view.selectionModel().selectedIndexes():
             instance_id = index.data(INSTANCE_ID_ROLE)

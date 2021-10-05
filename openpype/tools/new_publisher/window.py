@@ -420,7 +420,7 @@ class PublisherWindow(QtWidgets.QDialog):
 
         all_valid = None
         for instance in self.controller.instances:
-            if not instance.data["active"]:
+            if not instance["active"]:
                 continue
 
             if not instance.has_valid_context:

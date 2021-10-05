@@ -969,7 +969,7 @@ class GlobalAttrsWidget(QtWidgets.QWidget):
         asset_names = set()
         if asset_name is None:
             for instance in self._current_instances:
-                asset_names.add(instance.data.get("asset"))
+                asset_names.add(instance.get("asset"))
         else:
             asset_names.add(asset_name)
 
@@ -986,19 +986,19 @@ class GlobalAttrsWidget(QtWidgets.QWidget):
         subset_names = set()
         for instance in self._current_instances:
             if variant_value is not None:
-                instance.data["variant"] = variant_value
+                instance["variant"] = variant_value
 
             if asset_name is not None:
-                instance.data["asset"] = asset_name
+                instance["asset"] = asset_name
                 instance.set_asset_invalid(False)
 
             if task_name is not None:
-                instance.data["task"] = task_name
+                instance["task"] = task_name
                 instance.set_task_invalid(False)
 
-            new_variant_value = instance.data.get("variant")
-            new_asset_name = instance.data.get("asset")
-            new_task_name = instance.data.get("task")
+            new_variant_value = instance.get("variant")
+            new_asset_name = instance.get("asset")
+            new_task_name = instance.get("task")
 
             asset_doc = asset_docs_by_name[new_asset_name]
 
@@ -1006,7 +1006,7 @@ class GlobalAttrsWidget(QtWidgets.QWidget):
                 new_variant_value, new_task_name, asset_doc, project_name
             )
             subset_names.add(new_subset_name)
-            instance.data["subset"] = new_subset_name
+            instance["subset"] = new_subset_name
 
         self.subset_value_widget.set_value(subset_names)
 
@@ -1074,13 +1074,13 @@ class GlobalAttrsWidget(QtWidgets.QWidget):
             if instance.creator is None:
                 editable = False
 
-            variants.add(instance.data.get("variant") or self.unknown_value)
-            families.add(instance.data.get("family") or self.unknown_value)
-            asset_name = instance.data.get("asset") or self.unknown_value
-            task_name = instance.data.get("task") or self.unknown_value
+            variants.add(instance.get("variant") or self.unknown_value)
+            families.add(instance.get("family") or self.unknown_value)
+            asset_name = instance.get("asset") or self.unknown_value
+            task_name = instance.get("task") or self.unknown_value
             asset_names.add(asset_name)
             asset_task_combinations.append((asset_name, task_name))
-            subset_names.add(instance.data.get("subset") or self.unknown_value)
+            subset_names.add(instance.get("subset") or self.unknown_value)
 
         self.variant_input.set_value(variants)
 
@@ -1169,7 +1169,7 @@ class CreatorAttrsWidget(QtWidgets.QWidget):
             return
 
         for instance in instances:
-            creator_attributes = instance.data["creator_attributes"]
+            creator_attributes = instance["creator_attributes"]
             if attr_def.key in creator_attributes:
                 creator_attributes[attr_def.key] = value
 
