@@ -422,7 +422,7 @@ class CreateDialog(QtWidgets.QDialog):
             self.subset_name_input.setText("< Invalid variant >")
             return
 
-        project_name = self.dbcon.Session["AVALON_PROJECT"]
+        project_name = self.controller.project_name
         task_name = self._task_name
 
         asset_doc = copy.deepcopy(self._asset_doc)
@@ -541,12 +541,12 @@ class CreateDialog(QtWidgets.QDialog):
         except CreatorError as exc:
             error_info = (str(exc), None)
 
-        except Exception as exc:
+        except:
             exc_type, exc_value, exc_traceback = sys.exc_info()
             formatted_traceback = "".join(traceback.format_exception(
                 exc_type, exc_value, exc_traceback
             ))
-            error_info = (str(exc), formatted_traceback)
+            error_info = (str(exc_value), formatted_traceback)
 
         if error_info:
             box = CreateErrorMessageBox(
