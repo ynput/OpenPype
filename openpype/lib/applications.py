@@ -1344,8 +1344,8 @@ def _prepare_last_workfile(data, workdir, workfile_template_key):
     )
 
     # Last workfile path
-    last_workfile_path = ""
-    if not data.get("last_workfile_path"):  # to inject explicitly
+    last_workfile_path = data.get("last_workfile_path") or ""
+    if not last_workfile_path:
         extensions = avalon.api.HOST_WORKFILE_EXTENSIONS.get(app.host_name)
 
         if extensions:
@@ -1361,8 +1361,6 @@ def _prepare_last_workfile(data, workdir, workfile_template_key):
             last_workfile_path = avalon.api.last_workfile(
                 workdir, file_template, workdir_data, extensions, True
             )
-    else:
-        last_workfile_path = data.get("last_workfile_path")
 
     if os.path.exists(last_workfile_path):
         log.debug((
