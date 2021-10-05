@@ -420,12 +420,12 @@ class AssetsDialog(QtWidgets.QDialog):
         return self._selected_asset
 
 
-class AssetNameInput(QtWidgets.QLineEdit):
+class ClickableLineEdit(QtWidgets.QLineEdit):
     clicked = QtCore.Signal()
 
     def __init__(self, *args, **kwargs):
-        super(AssetNameInput, self).__init__(*args, **kwargs)
-        self.setObjectName("AssetNameInput")
+        super(ClickableLineEdit, self).__init__(*args, **kwargs)
+        self.setReadOnly(True)
         self._mouse_pressed = False
 
     def mousePressEvent(self, event):
@@ -455,8 +455,8 @@ class AssetsField(ClickableFrame):
 
         dialog = AssetsDialog(controller, self)
 
-        name_input = AssetNameInput(self)
-        name_input.setReadOnly(True)
+        name_input = ClickableLineEdit(self)
+        name_input.setObjectName("AssetNameInput")
 
         layout = QtWidgets.QHBoxLayout(self)
         layout.setContentsMargins(0, 0, 0, 0)
