@@ -400,8 +400,9 @@ class PublisherController:
         return self.create_context.creators
 
     @property
-    def ui_creators(self):
-        return self.create_context.ui_creators
+    def manual_creators(self):
+        """Creators"""
+        return self.create_context.manual_creators
 
     @property
     def host_is_valid(self):

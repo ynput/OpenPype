@@ -693,8 +693,8 @@ class CreateContext:
         self.creators = {}
         # Prepare categories of creators
         self.autocreators = {}
-        # TODO rename 'ui_creators' to something more suitable
-        self.ui_creators = {}
+        # Manual creators
+        self.manual_creators = {}
 
         self.publish_discover_result = None
         self.publish_plugins = []
@@ -804,7 +804,7 @@ class CreateContext:
         # Discover and prepare creators
         creators = {}
         autocreators = {}
-        ui_creators = {}
+        manual_creators = {}
         for creator_class in avalon.api.discover(BaseCreator):
             if inspect.isabstract(creator_class):
                 self.log.info(
@@ -823,10 +823,10 @@ class CreateContext:
             if isinstance(creator, AutoCreator):
                 autocreators[creator_identifier] = creator
             elif isinstance(creator, Creator):
-                ui_creators[creator_identifier] = creator
+                manual_creators[creator_identifier] = creator
 
         self.autocreators = autocreators
-        self.ui_creators = ui_creators
+        self.manual_creators = manual_creators
 
         self.creators = creators
 
