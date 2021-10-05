@@ -2,7 +2,7 @@ from openpype.hosts.maya.api import plugin
 
 
 class CreateMayaScene(plugin.Creator):
-    """Raw Maya Ascii file export"""
+    """Raw Maya Scene file export"""
 
     name = "mayaScene"
     label = "Maya Scene"
