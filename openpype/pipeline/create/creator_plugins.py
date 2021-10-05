@@ -55,7 +55,7 @@ class BaseCreator:
 
     @abstractproperty
     def identifier(self):
-        """Family that plugin represents."""
+        """Identifier of creator (must be unique)."""
         pass
 
     @abstractproperty
@@ -70,6 +70,7 @@ class BaseCreator:
         return self._log
 
     def _add_instance_to_context(self, instance):
+        """Helper method to ad d"""
         self.create_context.creator_adds_instance(instance)
 
     def _remove_instance_from_context(self, instance):
@@ -116,6 +117,11 @@ class BaseCreator:
     def get_dynamic_data(
         self, variant, task_name, asset_doc, project_name, host_name
     ):
+        """Dynamic data for subset name filling.
+
+        These may be get dynamically created based on current context of
+        workfile.
+        """
         return {}
 
     def get_subset_name(

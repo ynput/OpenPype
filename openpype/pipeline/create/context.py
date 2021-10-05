@@ -275,16 +275,19 @@ class PublishAttributes:
         return output
 
     def plugin_names_order(self):
+        """Plugin names order by their 'order' attribute."""
         for name in self._plugin_names_order:
             yield name
 
     def data_to_store(self):
+        """Convert attribute values to "data to store"."""
         output = {}
         for key, attr_value in self._data.items():
             output[key] = attr_value.data_to_store()
         return output
 
     def changes(self):
+        """Return changes per each key."""
         changes = {}
         for key, attr_val in self._data.items():
             attr_changes = attr_val.changes()
@@ -299,6 +302,7 @@ class PublishAttributes:
         return changes
 
     def set_publish_plugins(self, attr_plugins):
+        """Set publish plugins attribute definitions."""
         self._plugin_names_order = []
         self._missing_plugins = []
         self.attr_plugins = attr_plugins or []
@@ -439,6 +443,7 @@ class CreatedInstance:
             data=str(self._data)
         )
 
+    # --- Dictionary like methods ---
     def __getitem__(self, key):
         return self._data[key]
 
@@ -472,6 +477,7 @@ class CreatedInstance:
 
     def items(self):
         return self._data.items()
+    # ------
 
     @property
     def family(self):
@@ -570,12 +576,12 @@ class CreatedInstance:
         return changes
 
     @property
-    def creator_attribute_defs(self):
-        return self.creator_attributes.attr_defs
-
-    @property
     def creator_attributes(self):
         return self._data["creator_attributes"]
+
+    @property
+    def creator_attribute_defs(self):
+        return self.creator_attributes.attr_defs
 
     @property
     def publish_attributes(self):
@@ -611,6 +617,7 @@ class CreatedInstance:
         self.publish_attributes.set_publish_plugins(attr_plugins)
 
     def add_members(self, members):
+        """Currently unused method."""
         for member in members:
             if member not in self._members:
                 self._members.append(member)
@@ -621,6 +628,16 @@ class CreateContext:
 
     Context itself also can store data related to whole creation (workfile).
     - those are mainly for Context publish plugins
+
+    Args:
+        host(ModuleType): Host implementation which handles implementation and
+            global metadata.
+        dbcon(AvalonMongoDB): Connection to mongo with context (at least
+            project).
+        headless(bool): Context is created out of UI (Current not used).
+        reset(bool): Reset context on initialization.
+        discover_publish_plugins(bool): Discover publish plugins during reset
+            phase.
     """
     # Methods required in host implementaion to be able create instances
     #   or change context data.
@@ -633,6 +650,7 @@ class CreateContext:
         self, host, dbcon=None, headless=False, reset=True,
         discover_publish_plugins=True
     ):
+        # Create conncetion if is not passed
         if dbcon is None:
             import avalon.api
 
@@ -641,12 +659,17 @@ class CreateContext:
             dbcon.install()
 
         self.dbcon = dbcon
+        self.host = host
 
+        # Prepare attribute for logger (Created on demand in `log` property)
         self._log = None
+
+        # Publish context plugins attributes and it's values
         self._publish_attributes = PublishAttributes(self, {})
         self._original_context_data = {}
 
-        self.host = host
+        # Validate host implementation
+        # - defines if context is capable of handling context data
         host_is_valid = True
         missing_methods = self.get_host_misssing_methods(host)
         if missing_methods:
@@ -660,6 +683,7 @@ class CreateContext:
             ).format(joined_methods))
 
         self._host_is_valid = host_is_valid
+        # Currently unused variable
         self.headless = headless
 
         # TODO convert to dictionary instance by id to validate duplicates
@@ -669,6 +693,7 @@ class CreateContext:
         self.creators = {}
         # Prepare categories of creators
         self.autocreators = {}
+        # TODO rename 'ui_creators' to something more suitable
         self.ui_creators = {}
 
         self.publish_discover_result = None
@@ -676,18 +701,29 @@ class CreateContext:
         self.plugins_with_defs = []
         self._attr_plugins_by_family = {}
 
+        # Helpers for validating context of collected instances
+        #   - they can be validation for multiple instances at one time
+        #       using context manager which will trigger validation
+        #       after leaving of last context manager scope
         self._bulk_counter = 0
         self._bulk_instances_to_process = []
 
+        # Trigger reset if was enabled
         if reset:
             self.reset(discover_publish_plugins)
 
     @property
     def publish_attributes(self):
+        """Access to global publish attributes."""
         return self._publish_attributes
 
     @classmethod
     def get_host_misssing_methods(cls, host):
+        """Collect missing methods from host.
+
+        Args:
+            host(ModuleType): Host implementaion.
+        """
         missing = set()
         for attr_name in cls.required_methods:
             if not hasattr(host, attr_name):
@@ -696,15 +732,21 @@ class CreateContext:
 
     @property
     def host_is_valid(self):
+        """Is host valid for creation."""
         return self._host_is_valid
 
     @property
     def log(self):
+        """Dynamic access to logger."""
         if self._log is None:
             self._log = logging.getLogger(self.__class__.__name__)
         return self._log
 
     def reset(self, discover_publish_plugins=True):
+        """Reset context with all plugins and instances.
+
+        All changes will be lost if were not saved explicitely.
+        """
         self.reset_plugins(discover_publish_plugins)
         self.reset_context_data()
 
@@ -713,6 +755,11 @@ class CreateContext:
             self.execute_autocreators()
 
     def reset_plugins(self, discover_publish_plugins=True):
+        """Reload plugins.
+
+        Reloads creators from preregistered paths and can load publish plugins
+        if it's enabled on context.
+        """
         import avalon.api
         import pyblish.logic
 
@@ -780,6 +827,11 @@ class CreateContext:
         self.creators = creators
 
     def reset_context_data(self):
+        """Reload context data using host implementation.
+
+        These data are not related to any instance but may be needed for whole
+        publishing.
+        """
         if not self.host_is_valid:
             self._original_context_data = {}
             self._publish_attributes = PublishAttributes(self, {})
@@ -796,11 +848,16 @@ class CreateContext:
         )
 
     def context_data_to_store(self):
+        """Data that should be stored by host function.
+
+        The same data should be returned on loading.
+        """
         return {
             "publish_attributes": self._publish_attributes.data_to_store()
         }
 
     def context_data_changes(self):
+        """Changes of attributes."""
         changes = {}
         publish_attribute_changes = self._publish_attributes.changes()
         if publish_attribute_changes:
@@ -808,12 +865,26 @@ class CreateContext:
         return changes
 
     def creator_adds_instance(self, instance):
+        """Creator adds new instance to context.
+
+        Instances should be added only from creators.
+
+        Args:
+            instance(CreatedInstance): Instance with prepared data from
+                creator.
+
+        TODO: Rename method to more suit.
+        """
+        # Add instance to instances list
         self.instances.append(instance)
+        # Prepare publish plugin attributes and set it on instance
         attr_plugins = self._get_publish_plugins_with_attr_for_family(
             instance.creator.family
         )
         instance.set_publish_plugins(attr_plugins)
 
+        # Add instance to be validated inside 'bulk_instances_collection'
+        #   context manager if is inside bulk
         with self.bulk_instances_collection():
             self._bulk_instances_to_process.append(instance)
 
@@ -826,6 +897,8 @@ class CreateContext:
 
         This can be used for single instance or for adding multiple instances
             which is helpfull on reset.
+
+        Should not be executed from multiple threads.
         """
         self._bulk_counter += 1
         try:
@@ -846,6 +919,7 @@ class CreateContext:
             self.validate_instances_context(instances_to_validate)
 
     def reset_instances(self):
+        """Reload instances"""
         self.instances = []
 
         # Collect instances
@@ -869,9 +943,12 @@ class CreateContext:
                 self.log.warning(msg, exc_info=True)
 
     def validate_instances_context(self, instances=None):
+        """Validate 'asset' and 'task' instance context."""
+        # Use all instances from context if 'instances' are not passed
         if instances is None:
             instances = self.instances
 
+        # Skip if instances are empty
         if not instances:
             return
 
@@ -921,6 +998,7 @@ class CreateContext:
                 instance.set_task_invalid(True)
 
     def save_changes(self):
+        """Save changes. Update all changed values."""
         if not self.host_is_valid:
             missing_methods = self.get_host_misssing_methods(self.host)
             raise HostMissRequiredMethod(self.host, missing_methods)
@@ -929,12 +1007,14 @@ class CreateContext:
         self._save_instance_changes()
 
     def _save_context_changes(self):
+        """Save global context values."""
         changes = self.context_data_changes()
         if changes:
             data = self.context_data_to_store()
             self.host.update_context_data(data, changes)
 
     def _save_instance_changes(self):
+        """Save instance specific values."""
         instances_by_identifier = collections.defaultdict(list)
         for instance in self.instances:
             identifier = instance.creator_identifier
@@ -968,6 +1048,14 @@ class CreateContext:
             creator.remove_instances(creator_instances)
 
     def _get_publish_plugins_with_attr_for_family(self, family):
+        """Publish plugin attributes for passed family.
+
+        Attribute definitions for specific family are cached.
+
+        Args:
+            family(str): Instance family for which should be attribute
+                definitions returned.
+        """
         if family not in self._attr_plugins_by_family:
             import pyblish.logic
 
@@ -983,6 +1071,7 @@ class CreateContext:
         return self._attr_plugins_by_family[family]
 
     def _get_publish_plugins_with_attr_for_context(self):
+        """Publish plugins attributes for Context plugins."""
         plugins = []
         for plugin in self.plugins_with_defs:
             if not plugin.__instanceEnabled__:
