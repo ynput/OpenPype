@@ -677,10 +677,28 @@ class ProjectListView(QtWidgets.QListView):
         super(ProjectListView, self).mouseReleaseEvent(event)
 
 
-class ProjectListSortFilterProxy(QtCore.QSortFilterProxyModel):
+class ProjectSortFilterProxy(QtCore.QSortFilterProxyModel):
     def __init__(self, *args, **kwargs):
-        super(ProjectListSortFilterProxy, self).__init__(*args, **kwargs)
+        super(ProjectSortFilterProxy, self).__init__(*args, **kwargs)
         self._enable_filter = True
+
+    def lessThan(self, left_index, right_index):
+        if left_index.data(PROJECT_NAME_ROLE) is None:
+            return True
+
+        if right_index.data(PROJECT_NAME_ROLE) is None:
+            return False
+
+        left_is_active = left_index.data(PROJECT_IS_ACTIVE_ROLE)
+        right_is_active = right_index.data(PROJECT_IS_ACTIVE_ROLE)
+        if right_is_active == left_is_active:
+            return super(ProjectSortFilterProxy, self).lessThan(
+                left_index, right_index
+            )
+
+        if left_is_active:
+            return True
+        return False
 
     def filterAcceptsRow(self, source_row, source_parent):
         if not self._enable_filter:
@@ -715,7 +733,7 @@ class ProjectListWidget(QtWidgets.QWidget):
 
         project_list = ProjectListView(self)
         project_model = ProjectModel(only_active)
-        project_proxy = ProjectListSortFilterProxy()
+        project_proxy = ProjectSortFilterProxy()
 
         project_proxy.setFilterRole(PROJECT_IS_ACTIVE_ROLE)
         project_proxy.setSourceModel(project_model)
