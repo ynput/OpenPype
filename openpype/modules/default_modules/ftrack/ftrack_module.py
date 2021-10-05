@@ -277,15 +277,17 @@ class FtrackModule(
         failed = {}
         missing = {}
         for key, value in attributes_changes.items():
+            if key not in ca_keys:
+                continue
+
             configuration = hier_attrs_by_key.get(key)
             if not configuration:
                 configuration = cust_attr_by_key.get(key)
             if not configuration:
-                if key in ca_keys:
-                    self.log.warning(
-                        "Custom attribute \"{}\" was not found.".format(key)
-                    )
-                    missing[key] = value
+                self.log.warning(
+                    "Custom attribute \"{}\" was not found.".format(key)
+                )
+                missing[key] = value
                 continue
 
             # TODO add add permissions check
