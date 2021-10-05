@@ -266,8 +266,8 @@ class FtrackModule(
         project_attrs = ca_defs.get("show") or {}
         ca_keys = (
             set(hierarchical_attrs.keys())
-            + set(project_attrs.keys())
-            + {CUST_ATTR_TOOLS, CUST_ATTR_APPLICATIONS, CUST_ATTR_INTENT}
+            | set(project_attrs.keys())
+            | {CUST_ATTR_TOOLS, CUST_ATTR_APPLICATIONS, CUST_ATTR_INTENT}
         )
 
         cust_attr, hier_attr = get_openpype_attr(session)
