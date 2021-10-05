@@ -686,8 +686,8 @@ class CreateContext:
         # Currently unused variable
         self.headless = headless
 
-        # TODO convert to dictionary instance by id to validate duplicates
-        self.instances = []
+        # Instances by their ID
+        self._instances_by_id = {}
 
         # Discovered creators
         self.creators = {}
@@ -711,6 +711,10 @@ class CreateContext:
         # Trigger reset if was enabled
         if reset:
             self.reset(discover_publish_plugins)
+
+    @property
+    def instances(self):
+        return self._instances_by_id.values()
 
     @property
     def publish_attributes(self):
@@ -876,7 +880,7 @@ class CreateContext:
         TODO: Rename method to more suit.
         """
         # Add instance to instances list
-        self.instances.append(instance)
+        self._instances_by_id[instance.id] = instance
         # Prepare publish plugin attributes and set it on instance
         attr_plugins = self._get_publish_plugins_with_attr_for_family(
             instance.creator.family
@@ -889,7 +893,7 @@ class CreateContext:
             self._bulk_instances_to_process.append(instance)
 
     def creator_removed_instance(self, instance):
-        self.instances.remove(instance)
+        self._instance.pop(instance.id, None)
 
     @contextmanager
     def bulk_instances_collection(self):
@@ -920,7 +924,7 @@ class CreateContext:
 
     def reset_instances(self):
         """Reload instances"""
-        self.instances = []
+        self._instances_by_id = {}
 
         # Collect instances
         for creator in self.creators.values():
@@ -946,7 +950,7 @@ class CreateContext:
         """Validate 'asset' and 'task' instance context."""
         # Use all instances from context if 'instances' are not passed
         if instances is None:
-            instances = self.instances
+            instances = tuple(self._instances_by_id.values())
 
         # Skip if instances are empty
         if not instances:
@@ -1016,7 +1020,7 @@ class CreateContext:
     def _save_instance_changes(self):
         """Save instance specific values."""
         instances_by_identifier = collections.defaultdict(list)
-        for instance in self.instances:
+        for instance in self._instances_by_id.values():
             identifier = instance.creator_identifier
             instances_by_identifier[identifier].append(instance)
 
