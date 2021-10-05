@@ -13,9 +13,7 @@ log = Logger().get_logger("SyncServer")
 
 pysftp = None
 try:
-    import pysftp as _pysftp
-
-    pysftp = _pysftp
+    import pysftp
 except (ImportError, SyntaxError):
     pass
     # if six.PY3:
