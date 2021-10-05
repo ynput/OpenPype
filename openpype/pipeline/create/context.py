@@ -846,6 +846,10 @@ class CreateContext:
     def validate_instances_context(self, instances=None):
         if instances is None:
             instances = self.instances
+
+        if not instances:
+            return
+
         task_names_by_asset_name = collections.defaultdict(set)
         for instance in instances:
             task_name = instance.get("task")
