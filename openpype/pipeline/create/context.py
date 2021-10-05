@@ -368,10 +368,13 @@ class CreatedInstance:
         self._data["creator_identifier"] = creator.identifier
 
         # QUESTION handle version of instance here or in creator?
-        if new:
-            self._data["version"] = 1
-        else:
-            self._data["version"] = data.get("version")
+        version = None
+        if not new:
+            version = data.get("version")
+
+        if version is None:
+            version = 1
+        self._data["version"] = version
 
         # Stored creator specific attribute values
         # {key: value}
