@@ -366,13 +366,8 @@ class CreatedInstance:
     )
 
     def __init__(
-        self, family, subset_name, data, creator, host=None, new=True
+        self, family, subset_name, data, creator, new=True
     ):
-        if host is None:
-            import avalon.api
-
-            host = avalon.api.registered_host()
-        self.host = host
         self.creator = creator
 
         # Instance members may have actions on them
@@ -491,6 +486,14 @@ class CreatedInstance:
         return self.creator.identifier
 
     @property
+    def create_context(self):
+        return self.creator.create_context
+
+    @property
+    def host(self):
+        return self.create_context.host
+
+    @property
     def has_set_asset(self):
         """Asset name is set in data."""
         return "asset" in self._data
@@ -591,9 +594,7 @@ class CreatedInstance:
         return output
 
     @classmethod
-    def from_existing(
-        cls, instance_data, creator, host=None
-    ):
+    def from_existing(cls, instance_data, creator):
         """Convert instance data from workfile to CreatedInstance."""
         instance_data = copy.deepcopy(instance_data)
 
@@ -603,7 +604,7 @@ class CreatedInstance:
         subset_name = instance_data.get("subset", None)
 
         return cls(
-            family, subset_name, instance_data, creator, host, new=False
+            family, subset_name, instance_data, creator, new=False
         )
 
     def set_publish_plugins(self, attr_plugins):
