@@ -541,6 +541,8 @@ class CreateDialog(QtWidgets.QDialog):
         except CreatorError as exc:
             error_info = (str(exc), None)
 
+        # Use bare except because some hosts raise their exceptions that
+        #   do not inherit from python's `BaseException`
         except:
             exc_type, exc_value, exc_traceback = sys.exc_info()
             formatted_traceback = "".join(traceback.format_exception(
