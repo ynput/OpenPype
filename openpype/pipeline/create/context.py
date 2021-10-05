@@ -228,33 +228,11 @@ class PublishAttributes:
         attr_plugins = attr_plugins or []
         self.attr_plugins = attr_plugins
 
-        self._data = {}
+        self._data = copy.deepcopy(origin_data)
         self._plugin_names_order = []
         self._missing_plugins = []
-        data = copy.deepcopy(origin_data)
-        added_keys = set()
-        for plugin in attr_plugins:
-            data = plugin.convert_attribute_values(data)
-            attr_defs = plugin.get_attribute_defs()
-            if not attr_defs:
-                continue
 
-            key = plugin.__name__
-            added_keys.add(key)
-            self._plugin_names_order.append(key)
-
-            value = data.get(key) or {}
-            orig_value = copy.deepcopy(origin_data.get(key) or {})
-            self._data[key] = PublishAttributeValues(
-                self, attr_defs, value, orig_value
-            )
-
-        for key, value in data.items():
-            if key not in added_keys:
-                self._missing_plugins.append(key)
-                self._data[key] = PublishAttributeValues(
-                    self, [], value, value
-                )
+        self.set_publish_plugins(attr_plugins)
 
     def __getitem__(self, key):
         return self._data[key]
@@ -321,12 +299,40 @@ class PublishAttributes:
         return changes
 
     def set_publish_plugins(self, attr_plugins):
-        # TODO implement
+        self._plugin_names_order = []
+        self._missing_plugins = []
         self.attr_plugins = attr_plugins or []
+        if not attr_plugins:
+            return
+
+        origin_data = self._origin_data
+        data = self._data
+        self._data = {}
+        added_keys = set()
         for plugin in attr_plugins:
+            output = plugin.convert_attribute_values(data)
+            if output is not None:
+                data = output
             attr_defs = plugin.get_attribute_defs()
             if not attr_defs:
                 continue
+
+            key = plugin.__name__
+            added_keys.add(key)
+            self._plugin_names_order.append(key)
+
+            value = data.get(key) or {}
+            orig_value = copy.deepcopy(origin_data.get(key) or {})
+            self._data[key] = PublishAttributeValues(
+                self, attr_defs, value, orig_value
+            )
+
+        for key, value in data.items():
+            if key not in added_keys:
+                self._missing_plugins.append(key)
+                self._data[key] = PublishAttributeValues(
+                    self, [], value, value
+                )
 
 
 class CreatedInstance:
