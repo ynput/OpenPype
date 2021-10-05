@@ -8,16 +8,14 @@ import platform
 
 from openpype.api import Logger
 from openpype.api import get_system_settings
-from openpype.modules.default_modules.sync_server.providers.abstract_provider \
-    import AbstractProvider
-
+from .abstract_provider import AbstractProvider
 log = Logger().get_logger("SyncServer")
 
+pysftp = None
 try:
     import pysftp
 except (ImportError, SyntaxError):
-    if six.PY3:
-        six.reraise(*sys.exc_info())
+    pass
 
     # handle imports from Python 2 hosts - in those only basic methods are used
     log.warning("Import failed, imported from Python 2, operations will fail.")
@@ -43,7 +41,7 @@ class SFTPHandler(AbstractProvider):
         self.project_name = project_name
         self.site_name = site_name
         self.root = None
-        self.conn = None
+        self._conn = None
 
         self.presets = presets
         if not self.presets:
@@ -65,10 +63,16 @@ class SFTPHandler(AbstractProvider):
         self.sftp_key = provider_presets["sftp_key"]
         self.sftp_key_pass = provider_presets["sftp_key_pass"]
 
-        self.conn = self._get_conn()
-
         self._tree = None
         self.active = True
+
+    @property
+    def conn(self):
+        """SFTP connection, cannot be used in all places though."""
+        if not self._conn:
+            self._conn = self._get_conn()
+
+        return self._conn
 
     def is_active(self):
         """
@@ -323,6 +327,7 @@ class SFTPHandler(AbstractProvider):
         if not self.file_path_exists(path):
             raise FileNotFoundError("File {} to be deleted doesn't exist."
                                     .format(path))
+
         self.conn.remove(path)
 
     def list_folder(self, folder_path):
@@ -396,6 +401,9 @@ class SFTPHandler(AbstractProvider):
         Returns:
             pysftp.Connection
         """
+        if not pysftp:
+            raise ImportError
+
         cnopts = pysftp.CnOpts()
         cnopts.hostkeys = None
 
