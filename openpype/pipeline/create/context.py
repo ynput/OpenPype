@@ -344,7 +344,6 @@ class CreatedInstance:
         creator(BaseCreator): Creator responsible for instance.
         host(ModuleType): Host implementation loaded with
             `avalon.api.registered_host`.
-        attr_plugins(list): List of attribute definitions of publish plugins.
         new(bool): Is instance new.
     """
     # Keys that can't be changed or removed from data after loading using
@@ -361,8 +360,7 @@ class CreatedInstance:
     )
 
     def __init__(
-        self, family, subset_name, data, creator, host=None,
-        attr_plugins=None, new=True
+        self, family, subset_name, data, creator, host=None, new=True
     ):
         if host is None:
             import avalon.api
@@ -416,8 +414,9 @@ class CreatedInstance:
 
         # Stored publish specific attribute values
         # {<plugin name>: {key: value}}
+        # - must be set using 'set_publish_plugins'
         self._data["publish_attributes"] = PublishAttributes(
-            self, orig_publish_attributes, attr_plugins
+            self, orig_publish_attributes, None
         )
         if data:
             self._data.update(data)
@@ -584,7 +583,7 @@ class CreatedInstance:
 
     @classmethod
     def from_existing(
-        cls, instance_data, creator, attr_plugins=None, host=None
+        cls, instance_data, creator, host=None
     ):
         """Convert instance data from workfile to CreatedInstance."""
         instance_data = copy.deepcopy(instance_data)
@@ -595,8 +594,7 @@ class CreatedInstance:
         subset_name = instance_data.get("subset", None)
 
         return cls(
-            family, subset_name, instance_data, creator, host,
-            attr_plugins, new=False
+            family, subset_name, instance_data, creator, host, new=False
         )
 
     def set_publish_plugins(self, attr_plugins):
@@ -821,10 +819,7 @@ class CreateContext:
 
         # Collect instances
         for creator in self.creators.values():
-            attr_plugins = self._get_publish_plugins_with_attr_for_family(
-                creator.family
-            )
-            creator.collect_instances(attr_plugins)
+            creator.collect_instances()
 
     def execute_autocreators(self):
         """Execute discovered AutoCreator plugins.

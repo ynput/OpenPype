@@ -20,20 +20,20 @@ class TestCreatorTwo(Creator):
         self.log.info(new_instance.data)
         self._add_instance_to_context(new_instance)
 
-    def collect_instances(self, attr_plugins):
+    def collect_instances(self):
         for instance_data in pipeline.list_instances():
             instance = None
             creator_id = instance_data.get("creator_identifier")
             if creator_id is not None:
                 if creator_id == self.identifier:
                     instance = CreatedInstance.from_existing(
-                        instance_data, self, attr_plugins
+                        instance_data, self
                     )
 
             elif instance_data["family"] == self.identifier:
                 instance_data["creator_identifier"] = self.identifier
                 instance = CreatedInstance.from_existing(
-                    instance_data, self, attr_plugins
+                    instance_data, self
                 )
 
             if instance is not None:
