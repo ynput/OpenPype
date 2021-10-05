@@ -20,6 +20,7 @@ from openpype.api import (
 
 
 class ImmutableKeyError(TypeError):
+    """Accessed key is immutable so does not allow changes or removements."""
     def __init__(self, key, msg=None):
         self.immutable_key = key
         if not msg:
@@ -346,6 +347,10 @@ class CreatedInstance:
         attr_plugins(list): List of attribute definitions of publish plugins.
         new(bool): Is instance new.
     """
+    # Keys that can't be changed or removed from data after loading using
+    #   creator.
+    # - 'creator_attributes' and 'publish_attributes' can change values of
+    #   their individual children but not on their own
     __immutable_keys = (
         "id",
         "uuid",
@@ -510,11 +515,9 @@ class CreatedInstance:
 
     @property
     def data(self):
-        """Pointer to data.
+        """Legacy access to data.
 
-        TODO:
-        Define class handling which keys are change to what.
-        - this is dangerous as it is possible to modify any key (e.g. `uuid`)
+        Access to data is needed to modify values.
         """
         return self
 
