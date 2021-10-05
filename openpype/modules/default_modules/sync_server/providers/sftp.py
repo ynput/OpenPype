@@ -16,8 +16,6 @@ try:
     import pysftp
 except (ImportError, SyntaxError):
     pass
-    # if six.PY3:
-    #     six.reraise(*sys.exc_info())
 
     # handle imports from Python 2 hosts - in those only basic methods are used
     log.warning("Import failed, imported from Python 2, operations will fail.")
