@@ -327,8 +327,8 @@ class SFTPHandler(AbstractProvider):
         if not self.file_path_exists(path):
             raise FileNotFoundError("File {} to be deleted doesn't exist."
                                     .format(path))
-        conn = self._get_conn()
-        conn.remove(path)
+
+        self.conn.remove(path)
 
     def list_folder(self, folder_path):
         """
