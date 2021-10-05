@@ -550,8 +550,7 @@ class CreatedInstance:
             if old_value != new_value:
                 changes[key] = (old_value, new_value)
 
-        creator_attributes = self.data["creator_attributes"]
-        creator_attr_changes = creator_attributes.changes()
+        creator_attr_changes = self.creator_attributes.changes()
         if creator_attr_changes:
             changes["creator_attributes"] = creator_attr_changes
 
@@ -566,7 +565,11 @@ class CreatedInstance:
 
     @property
     def creator_attribute_defs(self):
-        return self._data["creator_attributes"].attr_defs
+        return self.creator_attributes.attr_defs
+
+    @property
+    def creator_attributes(self):
+        return self._data["creator_attributes"]
 
     @property
     def publish_attributes(self):
@@ -579,11 +582,8 @@ class CreatedInstance:
                 continue
             output[key] = value
 
-        creator_attributes = self._data["creator_attributes"]
-        output["creator_attributes"] = creator_attributes.data_to_store()
-
-        publish_attributes = self._data["publish_attributes"]
-        output["publish_attributes"] = publish_attributes.data_to_store()
+        output["creator_attributes"] = self.creator_attributes.data_to_store()
+        output["publish_attributes"] = self.publish_attributes.data_to_store()
 
         return output
 
@@ -604,7 +604,7 @@ class CreatedInstance:
         )
 
     def set_publish_plugins(self, attr_plugins):
-        self._data["publish_attributes"].set_publish_plugins(attr_plugins)
+        self.publish_attributes.set_publish_plugins(attr_plugins)
 
     def add_members(self, members):
         for member in members:
