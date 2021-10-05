@@ -5,7 +5,7 @@ class CreateMayaScene(plugin.Creator):
     """Raw Maya Ascii file export"""
 
     name = "mayaScene"
-    label = "Maya Ascii"
+    label = "Maya Scene"
     family = "mayaScene"
     icon = "file-archive-o"
     defaults = ['Main']
