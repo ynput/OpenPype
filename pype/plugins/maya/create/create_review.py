@@ -16,6 +16,14 @@ class CreateReview(plugin.Creator):
     keepImages = False
     isolate = False
     imagePlane = True
+    transparency = [
+        "preset",
+        "simple",
+        "object sorting",
+        "weighted average",
+        "depth peeling",
+        "alpha cut"
+    ]
 
     def __init__(self, *args, **kwargs):
         super(CreateReview, self).__init__(*args, **kwargs)
@@ -29,5 +37,6 @@ class CreateReview(plugin.Creator):
         data["isolate"] = self.isolate
         data["keepImages"] = self.keepImages
         data["imagePlane"] = self.imagePlane
+        data["transparency"] = self.transparency
 
         self.data = data
