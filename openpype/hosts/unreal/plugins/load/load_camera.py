@@ -1,6 +1,6 @@
 import os
 
-from avalon import api, pipeline
+from avalon import api, io, pipeline
 from avalon.unreal import lib
 from avalon.unreal import pipeline as unreal_pipeline
 import unreal
@@ -83,6 +83,19 @@ class CameraLoader(api.Loader):
             asset_class=unreal.LevelSequence,
             factory=unreal.LevelSequenceFactoryNew()
         )
+
+        asset_name = io.Session["AVALON_ASSET"]
+        asset_doc = io.find_one({
+            "type": "asset",
+            "name": asset_name
+        })
+
+        data = asset_doc.get("data")
+
+        if data:
+            sequence.set_display_rate(unreal.FrameRate(data.get("fps"), 1.0))
+            sequence.set_playback_start(data.get("frameStart"))
+            sequence.set_playback_end(data.get("frameEnd"))
 
         settings = unreal.MovieSceneUserImportFBXSettings()
 
