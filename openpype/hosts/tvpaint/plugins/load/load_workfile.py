@@ -70,7 +70,7 @@ class LoadWorkfile(pipeline.Loader):
             data, anatomy.templates[template_key]["folder"]
         )
         version = api.last_workfile_with_version(
-            work_root, template, data, [data["ext"]]
+            work_root, template, data, host.file_extensions()
         )[1]
 
         if version is None:
