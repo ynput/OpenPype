@@ -1,5 +1,7 @@
-import pyblish.api
 import os
+
+import pyblish.api
+from pype import lib
 
 
 class CollectWorkfile(pyblish.api.ContextPlugin):
@@ -12,7 +14,13 @@ class CollectWorkfile(pyblish.api.ContextPlugin):
     def process(self, context):
         family = "workfile"
         task = os.getenv("AVALON_TASK", None)
-        subset = family + task.capitalize()
+        subset = lib.get_subset_name(
+            "workfile",
+            "",
+            task,
+            context.data["assetEntity"]["_id"],
+            host_name="photoshop"
+        )
 
         file_path = context.data["currentFile"]
         staging_dir = os.path.dirname(file_path)

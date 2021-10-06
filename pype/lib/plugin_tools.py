@@ -75,7 +75,8 @@ def get_subset_name(
     fill_pairs = (
         ("variant", variant),
         ("family", family),
-        ("task", task_name)
+        ("task", task_name),
+        ("host", host_name)
     )
     fill_data = {}
     for key, value in fill_pairs:

@@ -6,6 +6,7 @@ from avalon.nuke import (
     get_avalon_knob_data,
     add_publish_knob
 )
+from pype import lib
 
 
 class CollectWorkfile(pyblish.api.ContextPlugin):
@@ -28,7 +29,13 @@ class CollectWorkfile(pyblish.api.ContextPlugin):
         file_path = context.data["currentFile"]
         staging_dir = os.path.dirname(file_path)
         base_name = os.path.basename(file_path)
-        subset = family + task.capitalize()
+        subset = lib.get_subset_name(
+            "workfile",
+            "",
+            task,
+            context.data["assetEntity"]["_id"],
+            host_name="nuke"
+        )
 
         # Get frame range
         first_frame = int(root["first_frame"].getValue())
