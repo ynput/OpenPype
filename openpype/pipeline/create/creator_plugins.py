@@ -8,7 +8,7 @@ from abc import (
 )
 import six
 
-from openpype.lib import get_subset_name
+from openpype.lib import get_subset_name_with_asset_doc
 
 
 class CreatorError(Exception):
@@ -150,7 +150,7 @@ class BaseCreator:
             variant, task_name, asset_doc, project_name, host_name
         )
 
-        return get_subset_name(
+        return get_subset_name_with_asset_doc(
             self.family,
             variant,
             task_name,
