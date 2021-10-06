@@ -4,7 +4,7 @@ import pyblish.api
 
 
 class CollectMayaScene(pyblish.api.InstancePlugin):
-    """Collect May Ascii Data
+    """Collect Maya Scene Data
 
     """
 
