@@ -50,7 +50,8 @@ class ExtractCamera(api.Extractor):
             filepath=filepath,
             use_active_collection=False,
             use_selection=True,
-            object_types={'CAMERA'}
+            object_types={'CAMERA'},
+            bake_anim_simplify_factor=0.0
         )
 
         bpy.context.scene.unit_settings.scale_length = scale_length
