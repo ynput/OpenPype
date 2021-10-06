@@ -20,18 +20,10 @@ class MyAutoCreator(AutoCreator):
     def collect_instances(self):
         for instance_data in pipeline.list_instances():
             creator_id = instance_data.get("creator_identifier")
-            if creator_id is not None:
-                if creator_id == self.identifier:
-                    subset_name = instance_data["subset"]
-                    instance = CreatedInstance(
-                        self.family, subset_name, instance_data, self
-                    )
-                    self._add_instance_to_context(instance)
-
-            elif instance_data["family"] == self.identifier:
-                instance_data["creator_identifier"] = self.identifier
-                instance = CreatedInstance.from_existing(
-                    instance_data, self
+            if creator_id == self.identifier:
+                subset_name = instance_data["subset"]
+                instance = CreatedInstance(
+                    self.family, subset_name, instance_data, self
                 )
                 self._add_instance_to_context(instance)
 
