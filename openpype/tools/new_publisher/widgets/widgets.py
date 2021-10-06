@@ -565,9 +565,6 @@ class TasksCombobox(QtWidgets.QComboBox):
         super(TasksCombobox, self).__init__(parent)
         self.setObjectName("TasksCombobox")
 
-        self.setEditable(True)
-        self.lineEdit().setReadOnly(True)
-
         delegate = QtWidgets.QStyledItemDelegate()
         self.setItemDelegate(delegate)
 
@@ -586,6 +583,8 @@ class TasksCombobox(QtWidgets.QComboBox):
         self._multiselection_text = None
         self._is_valid = True
 
+        self._text = None
+
     def set_multiselection_text(self, text):
         self._multiselection_text = text
 
@@ -593,6 +592,7 @@ class TasksCombobox(QtWidgets.QComboBox):
         if self._ignore_index_change:
             return
 
+        self.set_text(None)
         text = self.currentText()
         idx = self.findText(text)
         if idx < 0:
@@ -605,6 +605,28 @@ class TasksCombobox(QtWidgets.QComboBox):
         )
 
         self.value_changed.emit()
+
+    def set_text(self, text):
+        if text == self._text:
+            return
+
+        self._text = text
+
+    def paintEvent(self, event):
+        """Paint custom text without using QLineEdit."""
+        painter = QtGui.QPainter(self)
+        painter.setPen(self.palette().color(QtGui.QPalette.Text))
+        opt = QtWidgets.QStyleOptionComboBox()
+        self.initStyleOption(opt)
+        if self._text is not None:
+            opt.currentText = self._text
+        style = self.style()
+        style.drawComplexControl(
+            QtWidgets.QStyle.CC_ComboBox, opt, painter, self
+        )
+        style.drawControl(
+            QtWidgets.QStyle.CE_ComboBoxLabel, opt, painter, self
+        )
 
     def is_valid(self):
         return self._is_valid
@@ -738,7 +760,7 @@ class TasksCombobox(QtWidgets.QComboBox):
         # Set current index (must be set to -1 if is invalid)
         self.setCurrentIndex(idx)
         if idx < 0:
-            self.lineEdit().setText(item_name)
+            self.set_text(item_name)
 
     def reset_to_origin(self):
         self.set_selected_items(self._origin_value)
