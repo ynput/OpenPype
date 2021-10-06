@@ -1031,7 +1031,7 @@ class WorkfileSettings(object):
             log.error(msg)
             nuke.message(msg)
 
-        bbox = self._asset_entity.get('data', {}).get('crop')
+        bbox = self._asset_entity.get('data', {}).get('reformat')
 
         if bbox:
             try:
@@ -1046,7 +1046,7 @@ class WorkfileSettings(object):
                 )
             except Exception as e:
                 bbox = None
-                msg = ("{}:{} \nFormat:Crop need to be set with dots, "
+                msg = ("{}:{} \nFormat:Reformat need to be set with dots, "
                        "example: 0.0.1920.1080, "
                        "/nSetting to default").format(__name__, e)
                 log.error(msg)
