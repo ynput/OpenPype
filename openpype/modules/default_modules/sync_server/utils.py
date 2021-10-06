@@ -29,7 +29,6 @@ def time_function(method):
             kw['log_time'][name] = int((te - ts) * 1000)
         else:
             log.debug('%r  %2.2f ms' % (method.__name__, (te - ts) * 1000))
-            print('%r  %2.2f ms' % (method.__name__, (te - ts) * 1000))
         return result
 
     return timed

@@ -131,7 +131,7 @@ class PrecollectInstances(pyblish.api.ContextPlugin):
             self.create_shot_instance(context, **data)
 
             self.log.info("Creating instance: {}".format(instance))
-            self.log.debug(
+            self.log.info(
                 "_ instance.data: {}".format(pformat(instance.data)))
 
             if not with_audio:

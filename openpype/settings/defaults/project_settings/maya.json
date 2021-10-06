@@ -156,6 +156,11 @@
         "CollectMayaRender": {
             "sync_workfile_version": false
         },
+        "ValidateInstanceInContext": {
+            "enabled": true,
+            "optional": true,
+            "active": true
+        },
         "ValidateContainers": {
             "enabled": true,
             "optional": true,
@@ -168,6 +173,11 @@
         "ValidateAttributes": {
             "enabled": false,
             "attributes": {}
+        },
+        "ValidateLoadedPlugin": {
+            "enabled": false,
+            "whitelist_native_plugins": false,
+            "authorized_plugins": []
         },
         "ValidateRenderSettings": {
             "arnold_render_attributes": [],
@@ -520,6 +530,7 @@
     "workfile_build": {
         "profiles": [
             {
+                "task_types": [],
                 "tasks": [
                     "Lighting"
                 ],

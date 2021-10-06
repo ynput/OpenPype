@@ -3,6 +3,7 @@ from uuid import uuid4
 from Qt import QtWidgets, QtCore, QtGui
 
 from .base import BaseWidget
+from .lib import create_deffered_value_change_timer
 from .widgets import (
     ExpandingWidget,
     IconButton
@@ -284,6 +285,10 @@ class ModifiableDictItem(QtWidgets.QWidget):
 
         self.confirm_btn = None
 
+        self._key_change_timer = create_deffered_value_change_timer(
+            self._on_timeout
+        )
+
         if collapsible_key:
             self.create_collapsible_ui()
         else:
@@ -516,6 +521,10 @@ class ModifiableDictItem(QtWidgets.QWidget):
         if self.ignore_input_changes:
             return
 
+        self._key_change_timer.start()
+
+    def _on_timeout(self):
+        key = self.key_value()
         is_key_duplicated = self.entity_widget.validate_key_duplication(
             self.temp_key, key, self
         )

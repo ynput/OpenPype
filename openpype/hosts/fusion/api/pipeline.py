@@ -3,7 +3,7 @@ Basic avalon integration
 """
 import os
 
-from avalon.tools import workfiles
+from openpype.tools import workfiles
 from avalon import api as avalon
 from pyblish import api as pyblish
 from openpype.api import Logger

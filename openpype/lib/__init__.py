@@ -27,6 +27,7 @@ from .execute import (
     get_pype_execute_args,
     execute,
     run_subprocess,
+    path_to_subprocess_arg,
     CREATE_NO_WINDOW
 )
 from .log import PypeLogger, timeit
@@ -57,6 +58,11 @@ from .python_module_tools import (
     recursive_bases_from_class,
     classes_from_module,
     import_module_from_dirpath
+)
+
+from .profiles_filtering import (
+    compile_list_of_regexes,
+    filter_profiles
 )
 
 from .avalon_context import (
@@ -118,12 +124,8 @@ from .applications import (
     prepare_host_environments,
     prepare_context_environments,
     get_app_environments_for_context,
-    apply_project_environments_value,
-
-    compile_list_of_regexes
+    apply_project_environments_value
 )
-
-from .profiles_filtering import filter_profiles
 
 from .plugin_tools import (
     TaskNotSetError,
@@ -171,6 +173,8 @@ __all__ = [
     "get_pype_execute_args",
     "execute",
     "run_subprocess",
+    "path_to_subprocess_arg",
+    "CREATE_NO_WINDOW",
 
     "env_value_to_bool",
     "get_paths_from_environ",

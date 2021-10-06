@@ -117,11 +117,13 @@ class ExtractReviewSlate(openpype.api.Extractor):
                 input_args.extend(repre["_profile"].get('input', []))
             else:
                 input_args.extend(repre["outputDef"].get('input', []))
-            input_args.append("-loop 1 -i {}".format(slate_path))
+            input_args.append("-loop 1 -i {}".format(
+                openpype.lib.path_to_subprocess_arg(slate_path)
+            ))
             input_args.extend([
                 "-r {}".format(fps),
-                "-t 0.04"]
-            )
+                "-t 0.04"
+            ])
 
             if use_legacy_code:
                 codec_args = repre["_profile"].get('codec', [])
@@ -188,20 +190,24 @@ class ExtractReviewSlate(openpype.api.Extractor):
             output_args.append("-y")
 
             slate_v_path = slate_path.replace(".png", ext)
-            output_args.append(slate_v_path)
+            output_args.append(
+                openpype.lib.path_to_subprocess_arg(slate_v_path)
+            )
             _remove_at_end.append(slate_v_path)
 
             slate_args = [
-                "\"{}\"".format(ffmpeg_path),
+                openpype.lib.path_to_subprocess_arg(ffmpeg_path),
                 " ".join(input_args),
                 " ".join(output_args)
             ]
-            slate_subprcs_cmd = " ".join(slate_args)
+            slate_subprocess_cmd = " ".join(slate_args)
 
             # run slate generation subprocess
-            self.log.debug("Slate Executing: {}".format(slate_subprcs_cmd))
+            self.log.debug(
+                "Slate Executing: {}".format(slate_subprocess_cmd)
+            )
             openpype.api.run_subprocess(
-                slate_subprcs_cmd, shell=True, logger=self.log
+                slate_subprocess_cmd, shell=True, logger=self.log
             )
 
             # create ffmpeg concat text file path
@@ -221,23 +227,22 @@ class ExtractReviewSlate(openpype.api.Extractor):
                 ])
 
             # concat slate and videos together
-            conc_input_args = ["-y", "-f concat", "-safe 0"]
-            conc_input_args.append("-i {}".format(conc_text_path))
-
-            conc_output_args = ["-c copy"]
-            conc_output_args.append(output_path)
-
             concat_args = [
                 ffmpeg_path,
-                " ".join(conc_input_args),
-                " ".join(conc_output_args)
+                "-y",
+                "-f", "concat",
+                "-safe", "0",
+                "-i", conc_text_path,
+                "-c", "copy",
+                output_path
             ]
-            concat_subprcs_cmd = " ".join(concat_args)
 
             # ffmpeg concat subprocess
-            self.log.debug("Executing concat: {}".format(concat_subprcs_cmd))
+            self.log.debug(
+                "Executing concat: {}".format(" ".join(concat_args))
+            )
             openpype.api.run_subprocess(
-                concat_subprcs_cmd, shell=True, logger=self.log
+                concat_args, logger=self.log
             )
 
             self.log.debug("__ repre[tags]: {}".format(repre["tags"]))

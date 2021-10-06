@@ -226,7 +226,8 @@ class ExtractBurnin(openpype.api.Extractor):
                     "options": copy.deepcopy(burnin_options),
                     "values": burnin_values,
                     "full_input_path": temp_data["full_input_paths"][0],
-                    "first_frame": temp_data["first_frame"]
+                    "first_frame": temp_data["first_frame"],
+                    "ffmpeg_cmd": new_repre.get("ffmpeg_cmd", "")
                 }
 
                 self.log.debug(

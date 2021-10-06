@@ -106,6 +106,36 @@ To get working connection to Google Drive there are some necessary steps:
 - add new site back in OpenPype Settings, name as you want, provider needs to be 'gdrive'
 - distribute credentials file via shared mounted disk location
 
+### SFTP
+
+SFTP provider is used to connect to SFTP server. Currently authentication with `user:password` or `user:ssh key` is implemented.
+Please provide only one combination, don't forget to provide password for ssh key if ssh key was created with a passphrase.
+
+(SFTP connection could be a bit finicky, use FileZilla or WinSCP for testing connection, it will be mush faster.)
+
+Beware that ssh key expects OpenSSH format (`.pem`) not a Putty format (`.ppk`)!
+
+#### How to set SFTP site
+
+- Enable Site Sync module in Settings
+- Add side with SFTP provider
+
+![Enable synching and create site](assets/site_sync_sftp_system.png)
+
+- In Projects setting enable Site Sync (on default project - all project will be synched, or on specific project)
+- Configure SFTP connection and destination folder on a SFTP server (in screenshot `/upload`)
+
+![SFTP connection](assets/site_sync_project_sftp_settings.png)
+  
+- if you want to force synching between local and sftp site for all users, use combination `active site: local`, `remote site: NAME_OF_SFTP_SITE`
+- if you want to allow only specific users to use SFTP synching (external users, not located in the office), use `active site: studio`, `remote site: studio`. 
+
+![Select active and remote site on a project](assets/site_sync_sftp_project_setting_not_forced.png)
+
+- Each artist can decide and configure synching from his/her local to SFTP via `Local Settings`
+
+![Select active and remote site on a project](assets/site_sync_sftp_settings_local.png)
+  
 ### Custom providers
 
 If a studio needs to use other services for cloud storage, or want to implement totally different storage providers, they can do so by writing their own provider plugin. We're working on a developer documentation, however, for now we recommend looking at `abstract_provider.py`and `gdrive.py` inside `openpype/modules/sync_server/providers` and using it as a template.
