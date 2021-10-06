@@ -6,7 +6,7 @@ Entry point of creation. All data and metadata are handled through create contex
 
 Discovers Creator plugins to be able create new instances and convert existing instances. Creators may have defined attributes that are specific for their instances. Attributes definition can enhance behavior of instance during publishing.
 
-Publish plugins are loaded because they can also define attributes definitions. These are less family specific To be able define attributes Publish plugin must inherit from `OpenPypePyblishPluginMixin` and must override `get_attribute_defs` class method which must return list of attribute definitions. Values of publish plugin definitions are stored per plugin name under `publish_attributes`.
+Publish plugins are loaded because they can also define attributes definitions. These are less family specific To be able define attributes Publish plugin must inherit from `OpenPypePyblishPluginMixin` and must override `get_attribute_defs` class method which must return list of attribute definitions. Values of publish plugin definitions are stored per plugin name under `publish_attributes`. Also can override `convert_attribute_values` class method which gives ability to modify values on instance before are used in CreatedInstance. Method `convert_attribute_values` can be also used without `get_attribute_defs` to modify values when changing compatibility (remove metadata from instance because are irrelevant).
 
 Possible attribute definitions can be found in `openpype/pipeline/lib/attribute_definitions.py`.
 
