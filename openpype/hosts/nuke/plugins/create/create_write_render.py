@@ -112,12 +112,10 @@ class CreateWriteRender(plugin.PypeCreator):
                 "name": "Reformat01",
                 "class": "Reformat",
                 "knobs": [
-                    ("box", [
-                        0.0,
-                        0.0,
-                        width,
-                        height
-                    ])
+                    ("type", 1),
+                    ("box_fixed", 1),
+                    ("box_width", width),
+                    ("box_height", height)
                 ],
                 "dependent": None
             }
