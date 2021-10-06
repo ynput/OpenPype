@@ -751,12 +751,46 @@ class CreateContext:
 
         All changes will be lost if were not saved explicitely.
         """
+        self.reset_avalon_context()
         self.reset_plugins(discover_publish_plugins)
         self.reset_context_data()
 
         with self.bulk_instances_collection():
             self.reset_instances()
             self.execute_autocreators()
+
+    def reset_avalon_context(self):
+        """Give ability to reset avalon context.
+
+        Reset is based on optional host implementation of `get_current_context`
+        function or using `avalon.api.Session`.
+
+        Some hosts have ability to change context file without using workfiles
+        tool but that change is not propagated to
+        """
+        import avalon.api
+
+        project_name = asset_name = task_name = None
+        if hasattr(self.host, "get_current_context"):
+            host_context = self.host.get_current_context()
+            if host_context:
+                project_name = host_context.get("project_name")
+                asset_name = host_context.get("asset_name")
+                task_name = host_context.get("task_name")
+
+        if not project_name:
+            project_name = avalon.api.Session.get("AVALON_PROJECT")
+        if not asset_name:
+            asset_name = avalon.api.Session.get("AVALON_ASSET")
+        if not task_name:
+            task_name = avalon.api.Session.get("AVALON_TASK")
+
+        if project_name:
+            self.dbcon.Session["AVALON_PROJECT"] = project_name
+        if asset_name:
+            self.dbcon.Session["AVALON_ASSET"] = asset_name
+        if task_name:
+            self.dbcon.Session["AVALON_TASK"] = task_name
 
     def reset_plugins(self, discover_publish_plugins=True):
         """Reload plugins.

@@ -538,7 +538,12 @@ class PublisherController:
 
     def reset(self):
         """Reset everything related to creation and publishing."""
+        # Stop publishing
         self.stop_publish()
+
+        # Reset avalon context
+        self.create_context.reset_avalon_context()
+
         self._reset_plugins()
         # Publish part must be resetted after plugins
         self._reset_publish()
