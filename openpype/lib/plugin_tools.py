@@ -27,16 +27,17 @@ class TaskNotSetError(KeyError):
         super(TaskNotSetError, self).__init__(msg)
 
 
-def get_subset_name(
+def _get_subset_name(
     family,
     variant,
     task_name,
     asset_id,
-    project_name=None,
-    host_name=None,
-    default_template=None,
-    dynamic_data=None,
-    dbcon=None
+    asset_doc,
+    project_name,
+    host_name,
+    default_template,
+    dynamic_data,
+    dbcon
 ):
     if not family:
         return ""
@@ -62,15 +63,16 @@ def get_subset_name(
 
     dbcon.install()
 
-    asset_doc = dbcon.find_one(
-        {
-            "type": "asset",
-            "_id": asset_id
-        },
-        {
-            "data.tasks": True
-        }
-    )
+    if asset_doc is None:
+        asset_doc = dbcon.find_one(
+            {
+                "type": "asset",
+                "_id": asset_id
+            },
+            {
+                "data.tasks": True
+            }
+        ) or {}
     asset_tasks = asset_doc.get("data", {}).get("tasks") or {}
     task_info = asset_tasks.get(task_name) or {}
     task_type = task_info.get("type")
@@ -110,6 +112,66 @@ def get_subset_name(
             fill_pairs[key] = value
 
     return template.format(**prepare_template_data(fill_pairs))
+
+
+def get_subset_name_with_asset_doc(
+    family,
+    variant,
+    task_name,
+    asset_doc,
+    project_name=None,
+    host_name=None,
+    default_template=None,
+    dynamic_data=None,
+    dbcon=None
+):
+    """Calculate subset name using OpenPype settings.
+
+    This variant of function expects already queried asset document.
+    """
+    return _get_subset_name(
+        family, variant,
+        task_name,
+        None,
+        asset_doc,
+        project_name,
+        host_name,
+        default_template,
+        dynamic_data,
+        dbcon
+    )
+
+
+def get_subset_name(
+    family,
+    variant,
+    task_name,
+    asset_id,
+    project_name=None,
+    host_name=None,
+    default_template=None,
+    dynamic_data=None,
+    dbcon=None
+):
+    """Calculate subset name using OpenPype settings.
+
+    This variant of function expects asset id as argument.
+
+    This is legacy function should be replaced with
+    `get_subset_name_with_asset_doc` where asset document is expected.
+    """
+    return _get_subset_name(
+        family,
+        variant,
+        task_name,
+        asset_id,
+        None,
+        project_name,
+        host_name,
+        default_template,
+        dynamic_data,
+        dbcon
+    )
 
 
 def prepare_template_data(fill_pairs):
