@@ -6,7 +6,6 @@ import subprocess
 import socket
 import json
 import platform
-import argparse
 import getpass
 import atexit
 import time
@@ -16,7 +15,10 @@ import ftrack_api
 import pymongo
 from openpype.lib import (
     get_pype_execute_args,
-    OpenPypeMongoConnection
+    OpenPypeMongoConnection,
+    get_openpype_version,
+    get_build_version,
+    validate_mongo_connection
 )
 from openpype_modules.ftrack import FTRACK_MODULE_DIR
 from openpype_modules.ftrack.lib import credentials
@@ -35,11 +37,15 @@ class MongoPermissionsError(Exception):
 def check_mongo_url(mongo_uri, log_error=False):
     """Checks if mongo server is responding"""
     try:
-        client = pymongo.MongoClient(mongo_uri)
-        # Force connection on a request as the connect=True parameter of
-        # MongoClient seems to be useless here
-        client.server_info()
-        client.close()
+        validate_mongo_connection(mongo_uri)
+
+    except pymongo.errors.InvalidURI as err:
+        if log_error:
+            print("Can't connect to MongoDB at {} because: {}".format(
+                mongo_uri, err
+            ))
+        return False
+
     except pymongo.errors.ServerSelectionTimeoutError as err:
         if log_error:
             print("Can't connect to MongoDB at {} because: {}".format(
@@ -236,14 +242,16 @@ def main_loop(ftrack_url):
         statuser_thread=statuser_thread
     )
 
-    system_name, pc_name = platform.uname()[:2]
     host_name = socket.gethostname()
-    main_info = {
-        "created_at": datetime.datetime.now().strftime("%Y.%m.%d %H:%M:%S"),
-        "Username": getpass.getuser(),
-        "Host Name": host_name,
-        "Host IP": socket.gethostbyname(host_name)
-    }
+    main_info = [
+        ["created_at", datetime.datetime.now().strftime("%Y.%m.%d %H:%M:%S")],
+        ["Username", getpass.getuser()],
+        ["Host Name", host_name],
+        ["Host IP", socket.gethostbyname(host_name)],
+        ["OpenPype executable", get_pype_execute_args()[-1]],
+        ["OpenPype version", get_openpype_version() or "N/A"],
+        ["OpenPype build version", get_build_version() or "N/A"]
+    ]
     main_info_str = json.dumps(main_info)
     # Main loop
     while True:

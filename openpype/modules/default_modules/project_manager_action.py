@@ -17,9 +17,6 @@ class ProjectManagerAction(OpenPypeModule, ITrayAction):
         # Tray attributes
         self.project_manager_window = None
 
-    def connect_with_modules(self, *_a, **_kw):
-        return
-
     def tray_init(self):
         """Initialization in tray implementation of ITrayAction."""
         self.create_project_manager_window()

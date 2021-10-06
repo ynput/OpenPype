@@ -376,6 +376,9 @@ class TasksWidget(QtWidgets.QWidget):
             task (str): Name of the task to select.
 
         """
+        task_view_model = self._tasks_view.model()
+        if not task_view_model:
+            return
 
         # Clear selection
         selection_model = self._tasks_view.selectionModel()
@@ -383,8 +386,8 @@ class TasksWidget(QtWidgets.QWidget):
 
         # Select the task
         mode = selection_model.Select | selection_model.Rows
-        for row in range(self._tasks_model.rowCount()):
-            index = self._tasks_model.index(row, 0)
+        for row in range(task_view_model.rowCount()):
+            index = task_view_model.index(row, 0)
             name = index.data(TASK_NAME_ROLE)
             if name == task_name:
                 selection_model.select(index, mode)

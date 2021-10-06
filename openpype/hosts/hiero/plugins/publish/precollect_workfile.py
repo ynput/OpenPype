@@ -8,11 +8,12 @@ from openpype.hosts.hiero.otio import hiero_export
 from Qt.QtGui import QPixmap
 import tempfile
 
+
 class PrecollectWorkfile(pyblish.api.ContextPlugin):
     """Inject the current working file into context"""
 
     label = "Precollect Workfile"
-    order = pyblish.api.CollectorOrder - 0.6
+    order = pyblish.api.CollectorOrder - 0.5
 
     def process(self, context):
 

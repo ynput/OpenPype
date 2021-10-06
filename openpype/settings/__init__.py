@@ -25,7 +25,8 @@ from .lib import (
 )
 from .entities import (
     SystemSettings,
-    ProjectSettings
+    ProjectSettings,
+    DefaultsNotDefined
 )
 
 
@@ -53,5 +54,6 @@ __all__ = (
     "get_local_settings",
 
     "SystemSettings",
-    "ProjectSettings"
+    "ProjectSettings",
+    "DefaultsNotDefined"
 )

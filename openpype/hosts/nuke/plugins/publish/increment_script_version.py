@@ -9,7 +9,7 @@ class IncrementScriptVersion(pyblish.api.ContextPlugin):
     order = pyblish.api.IntegratorOrder + 0.9
     label = "Increment Script Version"
     optional = True
-    families = ["workfile", "render", "render.local", "render.farm"]
+    families = ["workfile"]
     hosts = ['nuke']
 
     def process(self, context):

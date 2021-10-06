@@ -55,7 +55,7 @@ openpype_console tray --debug
 ---
 ### `launch` arguments {#eventserver-arguments}
 You have to set either proper environment variables to provide URL and credentials or use
-option to specify them. If you use `--store_credentials` provided credentials will be stored for later use.
+option to specify them.
 
 | Argument | Description |
 | --- | --- |
@@ -63,16 +63,13 @@ option to specify them. If you use `--store_credentials` provided credentials wi
 | `--ftrack-url` | URL to ftrack server (can be set with `FTRACK_SERVER`) |
 | `--ftrack-user` |user name to log in to ftrack (can be set with `FTRACK_API_USER`) |
 | `--ftrack-api-key` | ftrack api key (can be set with `FTRACK_API_KEY`) |
-| `--ftrack-events-path` | path to event server plugins (can be set with `FTRACK_EVENTS_PATH`) |
-| `--no-stored-credentials` | will use credential specified with options above |
-| `--store-credentials` | will store credentials to file for later use |
 | `--legacy` | run event server without mongo storing |
 | `--clockify-api-key` | Clockify API key (can be set with `CLOCKIFY_API_KEY`) |
 | `--clockify-workspace` | Clockify workspace (can be set with `CLOCKIFY_WORKSPACE`) |
 
 To run ftrack event server:
 ```shell
-openpype_console eventserver --ftrack-url=<url> --ftrack-user=<user> --ftrack-api-key=<key> --ftrack-events-path=<path> --no-stored-credentials --store-credentials
+openpype_console eventserver --ftrack-url=<url> --ftrack-user=<user> --ftrack-api-key=<key>
 ```
 
 ---

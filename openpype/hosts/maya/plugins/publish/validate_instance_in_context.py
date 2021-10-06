@@ -5,6 +5,8 @@ from __future__ import absolute_import
 import pyblish.api
 import openpype.api
 
+from maya import cmds
+
 
 class SelectInvalidInstances(pyblish.api.Action):
     """Select invalid instances in Outliner."""
@@ -18,13 +20,12 @@ class SelectInvalidInstances(pyblish.api.Action):
         # Get the errored instances
         failed = []
         for result in context.data["results"]:
-            if result["error"] is None:
-                continue
-            if result["instance"] is None:
-                continue
-            if result["instance"] in failed:
-                continue
-            if result["plugin"] != plugin:
+            if (
+                result["error"] is None
+                or result["instance"] is None
+                or result["instance"] in failed
+                or result["plugin"] != plugin
+            ):
                 continue
 
             failed.append(result["instance"])
@@ -44,25 +45,10 @@ class SelectInvalidInstances(pyblish.api.Action):
             self.deselect()
 
     def select(self, instances):
-        if "nuke" in pyblish.api.registered_hosts():
-            import avalon.nuke.lib
-            import nuke
-            avalon.nuke.lib.select_nodes(
-                [nuke.toNode(str(x)) for x in instances]
-            )
-
-        if "maya" in pyblish.api.registered_hosts():
-            from maya import cmds
-            cmds.select(instances, replace=True, noExpand=True)
+        cmds.select(instances, replace=True, noExpand=True)
 
     def deselect(self):
-        if "nuke" in pyblish.api.registered_hosts():
-            import avalon.nuke.lib
-            avalon.nuke.lib.reset_selection()
-
-        if "maya" in pyblish.api.registered_hosts():
-            from maya import cmds
-            cmds.select(deselect=True)
+        cmds.select(deselect=True)
 
 
 class RepairSelectInvalidInstances(pyblish.api.Action):
@@ -92,23 +78,14 @@ class RepairSelectInvalidInstances(pyblish.api.Action):
 
         context_asset = context.data["assetEntity"]["name"]
         for instance in instances:
-            if "nuke" in pyblish.api.registered_hosts():
-                import openpype.hosts.nuke.api as nuke_api
-                origin_node = instance[0]
-                nuke_api.lib.recreate_instance(
-                    origin_node, avalon_data={"asset": context_asset}
-                )
-            else:
-                self.set_attribute(instance, context_asset)
+            self.set_attribute(instance, context_asset)
 
     def set_attribute(self, instance, context_asset):
-        if "maya" in pyblish.api.registered_hosts():
-            from maya import cmds
-            cmds.setAttr(
-                instance.data.get("name") + ".asset",
-                context_asset,
-                type="string"
-            )
+        cmds.setAttr(
+            instance.data.get("name") + ".asset",
+            context_asset,
+            type="string"
+        )
 
 
 class ValidateInstanceInContext(pyblish.api.InstancePlugin):
@@ -124,7 +101,7 @@ class ValidateInstanceInContext(pyblish.api.InstancePlugin):
     order = openpype.api.ValidateContentsOrder
     label = "Instance in same Context"
     optional = True
-    hosts = ["maya", "nuke"]
+    hosts = ["maya"]
     actions = [SelectInvalidInstances, RepairSelectInvalidInstances]
 
     def process(self, instance):

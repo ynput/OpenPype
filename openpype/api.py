@@ -24,7 +24,9 @@ from .lib import (
     get_latest_version,
     get_global_environments,
     get_local_site_id,
-    change_openpype_mongo_url
+    change_openpype_mongo_url,
+    create_project_folders,
+    get_project_basic_paths
 )
 
 from .lib.mongo import (
@@ -72,6 +74,7 @@ __all__ = [
     "get_current_project_settings",
     "get_anatomy_settings",
     "get_environments",
+    "get_project_basic_paths",
 
     "SystemSettings",
 
@@ -120,5 +123,9 @@ __all__ = [
     "get_global_environments",
 
     "get_local_site_id",
-    "change_openpype_mongo_url"
+    "change_openpype_mongo_url",
+
+    "get_project_basic_paths",
+    "create_project_folders"
+
 ]

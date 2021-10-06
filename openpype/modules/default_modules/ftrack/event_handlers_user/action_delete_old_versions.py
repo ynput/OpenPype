@@ -23,6 +23,8 @@ class DeleteOldVersions(BaseAction):
     )
     icon = statics_icon("ftrack", "action_icons", "OpenPypeAdmin.svg")
 
+    settings_key = "delete_old_versions"
+
     dbcon = AvalonMongoDB()
 
     inteface_title = "Choose your preferences"

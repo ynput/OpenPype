@@ -1,8 +1,26 @@
 import re
 import logging
-from .applications import compile_list_of_regexes
 
 log = logging.getLogger(__name__)
+
+
+def compile_list_of_regexes(in_list):
+    """Convert strings in entered list to compiled regex objects."""
+    regexes = list()
+    if not in_list:
+        return regexes
+
+    for item in in_list:
+        if not item:
+            continue
+        try:
+            regexes.append(re.compile(item))
+        except TypeError:
+            print((
+                "Invalid type \"{}\" value \"{}\"."
+                " Expected string based object. Skipping."
+            ).format(str(type(item)), str(item)))
+    return regexes
 
 
 def _profile_exclusion(matching_profiles, logger):
