@@ -939,7 +939,7 @@ class CreateContext:
             self._bulk_instances_to_process.append(instance)
 
     def creator_removed_instance(self, instance):
-        self._instance.pop(instance.id, None)
+        self._instances_by_id.pop(instance.id, None)
 
     @contextmanager
     def bulk_instances_collection(self):
