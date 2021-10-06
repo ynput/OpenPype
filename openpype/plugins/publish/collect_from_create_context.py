@@ -7,10 +7,10 @@ import pyblish.api
 from openpype.lib import ApplicationManager
 
 
-class CollectInstancesFromCreateContext(pyblish.api.ContextPlugin):
-    """Collect instances from CreateContext from new publishing."""
+class CollectFromCreateContext(pyblish.api.ContextPlugin):
+    """Collect instances and data from CreateContext from new publishing."""
 
-    label = "Collect Instances from Create Context"
+    label = "Collect From Create Context"
     order = pyblish.api.CollectorOrder - 0.5
 
     def process(self, context):
@@ -23,6 +23,9 @@ class CollectInstancesFromCreateContext(pyblish.api.ContextPlugin):
             if instance_data["active"]:
                 self.create_instance(context, instance_data)
 
+        # Update global data to context
+        context.data.update(create_context.context_data_to_store())
+
     def create_instance(self, context, in_data):
         subset = in_data["subset"]
         # If instance data already contain families then use it
@@ -32,6 +35,7 @@ class CollectInstancesFromCreateContext(pyblish.api.ContextPlugin):
         instance.data.update({
             "subset": subset,
             "asset": in_data["asset"],
+            "task": in_data["task"],
             "label": subset,
             "name": subset,
             "family": in_data["family"],
