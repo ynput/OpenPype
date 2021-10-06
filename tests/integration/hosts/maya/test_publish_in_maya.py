@@ -8,6 +8,8 @@ from tests.lib.testing_classes import PublishTest
 class TestPublishInMaya(PublishTest):
     """Basic test case for publishing in Maya
 
+        Shouldnt be running standalone only via 'runtests' pype command! (??)
+
         Uses generic TestCase to prepare fixtures for test data, testing DBs,
         env vars.
 
@@ -61,38 +63,39 @@ class TestPublishInMaya(PublishTest):
                                     "startup")
         original_pythonpath = os.environ.get("PYTHONPATH")
         monkeypatch_session.setenv("PYTHONPATH",
-                                   "{};{}".format(original_pythonpath,
-                                                  startup_path))
+                                   "{}{}{}".format(startup_path,
+                                                   os.pathsep,
+                                                   original_pythonpath))
 
     def test_db_asserts(self, dbcon, publish_finished):
         """Host and input data dependent expected results in DB."""
         print("test_db_asserts")
-        assert 5 == dbcon.find({"type": "version"}).count(), \
+        assert 5 == dbcon.count_documents({"type": "version"}), \
             "Not expected no of versions"
 
-        assert 0 == dbcon.find({"type": "version",
-                                "name": {"$ne": 1}}).count(), \
+        assert 0 == dbcon.count_documents({"type": "version",
+                                           "name": {"$ne": 1}}), \
             "Only versions with 1 expected"
 
-        assert 1 == dbcon.find({"type": "subset",
-                                "name": "modelMain"}).count(), \
+        assert 1 == dbcon.count_documents({"type": "subset",
+                                           "name": "modelMain"}), \
             "modelMain subset must be present"
 
-        assert 1 == dbcon.find({"type": "subset",
-                                "name": "workfileTest_task"}).count(), \
+        assert 1 == dbcon.count_documents({"type": "subset",
+                                           "name": "workfileTest_task"}), \
             "workfileTest_task subset must be present"
 
-        assert 11 == dbcon.find({"type": "representation"}).count(), \
+        assert 11 == dbcon.count_documents({"type": "representation"}), \
             "Not expected no of representations"
 
-        assert 2 == dbcon.find({"type": "representation",
-                                "context.subset": "modelMain",
-                                "context.ext": "abc"}).count(), \
+        assert 2 == dbcon.count_documents({"type": "representation",
+                                           "context.subset": "modelMain",
+                                           "context.ext": "abc"}), \
             "Not expected no of representations with ext 'abc'"
 
-        assert 2 == dbcon.find({"type": "representation",
-                                "context.subset": "modelMain",
-                                "context.ext": "ma"}).count(), \
+        assert 2 == dbcon.count_documents({"type": "representation",
+                                           "context.subset": "modelMain",
+                                           "context.ext": "ma"}), \
             "Not expected no of representations with ext 'abc'"
 
 
