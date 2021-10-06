@@ -393,7 +393,7 @@ class ARenderProducts:
             self.layer_data,
             force_aov_name=product.productName,
             force_ext=product.ext,
-            force_cameras=[product.camera] or None
+            force_cameras=[product.camera]
         )
 
     def get_renderable_cameras(self):
