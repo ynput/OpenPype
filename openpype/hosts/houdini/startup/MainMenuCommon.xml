@@ -7,24 +7,30 @@
             <scriptItem id="avalon_create">
                 <label>Create ...</label>
                 <scriptCode><![CDATA[
+import hou
 from avalon.tools import creator
-creator.show()
+parent = hou.qt.mainWindow()
+creator.show(parent=parent)
 ]]></scriptCode>
             </scriptItem>
 
             <scriptItem id="avalon_load">
                 <label>Load ...</label>
                 <scriptCode><![CDATA[
+import hou
 from openpype.tools import loader
-loader.show(use_context=True)
+parent = hou.qt.mainWindow()
+loader.show(use_context=True, parent=parent)
 ]]></scriptCode>
             </scriptItem>
 
             <scriptItem id="avalon_manage">
                 <label>Manage ...</label>
                 <scriptCode><![CDATA[
-from avalon.tools import cbsceneinventory
-cbsceneinventory.show()
+import hou
+from avalon.tools import sceneinventory
+parent = hou.qt.mainWindow()
+sceneinventory.show(parent=parent)
 ]]></scriptCode>
             </scriptItem>
 
@@ -45,7 +51,8 @@ publish.show(parent)
                 <scriptCode><![CDATA[
 import hou, os
 from openpype.tools import workfiles
-workfiles.show(os.environ["AVALON_WORKDIR"])
+parent = hou.qt.mainWindow()
+workfiles.show(os.environ["AVALON_WORKDIR"], parent=parent)
                 ]]></scriptCode>
             </scriptItem>
 
