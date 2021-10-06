@@ -50,9 +50,7 @@ class LoadWorkfile(pipeline.Loader):
             "task": context["task"],
             "version": 1,
             "user": getpass.getuser(),
-            "root": {
-                template_key: anatomy.roots[template_key]
-            },
+            "root": anatomy.roots,
             "hierarchy": openpype.lib.get_hierarchy()
         }
         template = anatomy.templates[template_key]["file"]
