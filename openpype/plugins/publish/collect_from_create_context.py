@@ -3,8 +3,7 @@
 """
 import os
 import pyblish.api
-
-from openpype.lib import ApplicationManager
+import avalon.api
 
 
 class CollectFromCreateContext(pyblish.api.ContextPlugin):
@@ -15,6 +14,7 @@ class CollectFromCreateContext(pyblish.api.ContextPlugin):
 
     def process(self, context):
         create_context = context.data.pop("create_context", None)
+        # Skip if create context is not available
         if not create_context:
             return
 
@@ -25,6 +25,13 @@ class CollectFromCreateContext(pyblish.api.ContextPlugin):
 
         # Update global data to context
         context.data.update(create_context.context_data_to_store())
+
+        # Update context data
+        for key in ("AVALON_PROJECT", "AVALON_ASSET", "AVALON_TASK"):
+            value = create_context.dbcon.Session.get(key)
+            if value is not None:
+                avalon.api.Session[key] = value
+                os.environ[key] = value
 
     def create_instance(self, context, in_data):
         subset = in_data["subset"]
