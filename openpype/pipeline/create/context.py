@@ -813,6 +813,12 @@ class CreateContext:
                 continue
 
             creator_identifier = creator_class.identifier
+            if creator_identifier in creators:
+                self.log.warning((
+                    "Duplicated Creator identifier. "
+                    "Using first and skipping following"
+                ))
+                continue
             creator = creator_class(
                 self,
                 system_settings,
@@ -880,6 +886,12 @@ class CreateContext:
         TODO: Rename method to more suit.
         """
         # Add instance to instances list
+        if instance.id in self._instances_by_id:
+            self.log.warning((
+                "Instance with id {} is already added to context."
+            ).format(instance.id))
+            return
+
         self._instances_by_id[instance.id] = instance
         # Prepare publish plugin attributes and set it on instance
         attr_plugins = self._get_publish_plugins_with_attr_for_family(
