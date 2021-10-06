@@ -188,10 +188,11 @@ main () {
   # reinstall these because of bug in poetry? or cx_freeze?
   # cx_freeze will crash on missing __pychache__ on these but
   # reinstalling them solves the problem.
-  echo -e "${BIGreen}>>>${RST} Fixing pycache bug ..."
-  "$POETRY_HOME/bin/poetry" run pip install --disable-pip-version-check --force-reinstall setuptools
+  echo -e "${BIGreen}>>>${RST} Post-venv creation fixes ..."
+  "$POETRY_HOME/bin/poetry" run pip install setuptools==49.6.0
   "$POETRY_HOME/bin/poetry" run pip install --disable-pip-version-check --force-reinstall wheel
   "$POETRY_HOME/bin/poetry" run python -m pip install --disable-pip-version-check --force-reinstall pip
+  "$POETRY_HOME/bin/poetry" run pip install --disable-pip-version-check --force-reinstall cx_freeze
 }
 
 return_code=0
