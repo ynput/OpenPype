@@ -312,7 +312,7 @@ class AssetsDialog(QtWidgets.QDialog):
         proxy_model.setSourceModel(model)
         proxy_model.setFilterCaseSensitivity(QtCore.Qt.CaseInsensitive)
 
-        filter_input = QtWidgets.QLineEdit()
+        filter_input = QtWidgets.QLineEdit(self)
         filter_input.setPlaceholderText("Filter assets..")
 
         asset_view = QtWidgets.QTreeView(self)
