@@ -98,6 +98,7 @@ class CameraLoader(api.Loader):
             sequence.set_playback_end(data.get("frameEnd"))
 
         settings = unreal.MovieSceneUserImportFBXSettings()
+        settings.set_editor_property('reduce_keys', False)
 
         unreal.SequencerTools.import_fbx(
             unreal.EditorLevelLibrary.get_editor_world(),
@@ -181,6 +182,7 @@ class CameraLoader(api.Loader):
             sequence.set_playback_end(data.get("frameEnd"))
 
         settings = unreal.MovieSceneUserImportFBXSettings()
+        settings.set_editor_property('reduce_keys', False)
 
         unreal.SequencerTools.import_fbx(
             unreal.EditorLevelLibrary.get_editor_world(),
