@@ -113,9 +113,11 @@ if not build_dir.exists():
     _print("Probably freezing of code failed. Check ./build/build.log", 3)
     sys.exit(1)
 
+
 def _progress(_base, _names):
     progress_bar.update()
     return []
+
 
 deps_dir = build_dir / "dependencies"
 vendor_dir = build_dir / "vendor"

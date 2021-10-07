@@ -10,7 +10,6 @@ from pathlib import Path
 import click
 
 
-
 @click.command()
 @click.argument("keys", nargs=-1, type=click.STRING)
 def main(keys):
@@ -19,7 +18,6 @@ def main(keys):
     You can specify dot separated keys from `pyproject.toml`
     as arguments and this script will return them on separate
     lines. If key doesn't exists, None is returned.
-    
 
     """
     openpype_root = Path(os.path.dirname(__file__)).parent
@@ -27,8 +25,8 @@ def main(keys):
     for q in keys:
         query = q.split(".")
         data = py_project
-        for i, k in enumerate(query):
 
+        for k in query:
             if isinstance(data, list):
                 try:
                     data = data[int(k)]
