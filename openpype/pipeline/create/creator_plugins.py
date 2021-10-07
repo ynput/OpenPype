@@ -33,6 +33,9 @@ class BaseCreator:
     to `self` if it's not Plugin specific.
     """
 
+    # Label shown in UI
+    label = None
+
     # Variable to store logger
     _log = None
 
@@ -183,8 +186,6 @@ class Creator(BaseCreator):
 
     Creation requires prepared subset name and instance data.
     """
-    # Label shown in UI
-    label = None
 
     # GUI Purposes
     # - default_variants may not be used if `get_default_variants` is overriden

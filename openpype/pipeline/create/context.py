@@ -492,6 +492,10 @@ class CreatedInstance:
         return self.creator.identifier
 
     @property
+    def creator_label(self):
+        return self.creator.label or self.creator_identifier
+
+    @property
     def create_context(self):
         return self.creator.create_context
 
