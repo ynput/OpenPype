@@ -495,21 +495,13 @@ def get_openpype_system_settings(url: str) -> dict:
     Returns:
         dict: With settings data. Empty dictionary is returned if not found.
     """
-    try:
-        components = decompose_url(url)
-    except RuntimeError:
-        return {}
-    mongo_kwargs = {
-        "host": compose_url(**components),
-        "serverSelectionTimeoutMS": 2000
-    }
-    port = components.get("port")
-    if port is not None:
-        mongo_kwargs["port"] = int(port)
+    kwargs = {}
+    if should_add_certificate_path_to_mongo_url(url):
+        kwargs["ssl_ca_certs"] = certifi.where()
 
     try:
         # Create mongo connection
-        client = MongoClient(**mongo_kwargs)
+        client = MongoClient(url, **kwargs)
         # Access settings collection
         col = client["openpype"]["settings"]
         # Query global settings
