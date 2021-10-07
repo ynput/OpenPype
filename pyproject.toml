@@ -54,7 +54,7 @@ speedcopy = "^2.1"
 six = "^1.15"
 semver = "^2.13.0" # for version resolution
 wsrpc_aiohttp = "^3.1.1" # websocket server
-pywin32 = { version = "300", markers = "sys_platform == 'win32'" }
+pywin32 = { version = "301", markers = "sys_platform == 'win32'" }
 jinxed = [
     { version = "^1.0.1", markers = "sys_platform == 'darwin'" },
     { version = "^1.0.1", markers = "sys_platform == 'linux'" }
@@ -63,6 +63,9 @@ python3-xlib = { version="*", markers = "sys_platform == 'linux'"}
 enlighten = "^1.9.0"
 slack-sdk = "^3.6.0"
 requests = "2.25.1"
+pysftp = "^0.2.9"
+dropbox = "^11.20.0"
+
 
 [tool.poetry.dev-dependencies]
 flake8 = "^3.7"

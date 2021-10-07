@@ -168,9 +168,13 @@ class SchemasHub:
                 if isinstance(def_schema, dict):
                     def_schema = [def_schema]
 
+                all_def_schema = []
                 for item in def_schema:
-                    item["_dynamic_schema_id"] = def_id
-                output.extend(def_schema)
+                    items = self.resolve_schema_data(item)
+                    for _item in items:
+                        _item["_dynamic_schema_id"] = def_id
+                    all_def_schema.extend(items)
+                output.extend(all_def_schema)
         return output
 
     def get_template_name(self, item_def, default=None):

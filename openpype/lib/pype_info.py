@@ -9,23 +9,76 @@ import openpype.version
 from openpype.settings.lib import get_local_settings
 from .execute import get_pype_execute_args
 from .local_settings import get_local_site_id
+from .python_module_tools import import_filepath
+
+
+def get_openpype_version():
+    """Version of pype that is currently used."""
+    return openpype.version.__version__
 
 
 def get_pype_version():
-    """Version of pype that is currently used."""
-    return openpype.version.__version__
+    """Backwards compatibility. Remove when 100% not used."""
+    print((
+        "Using deprecated function 'openpype.lib.pype_info.get_pype_version'"
+        " replace with 'openpype.lib.pype_info.get_openpype_version'."
+    ))
+    return get_openpype_version()
+
+
+def get_build_version():
+    """OpenPype version of build."""
+    # Return OpenPype version if is running from code
+    if not is_running_from_build():
+        return get_openpype_version()
+
+    # Import `version.py` from build directory
+    version_filepath = os.path.join(
+        os.environ["OPENPYPE_ROOT"],
+        "openpype",
+        "version.py"
+    )
+    if not os.path.exists(version_filepath):
+        return None
+
+    module = import_filepath(version_filepath, "openpype_build_version")
+    return getattr(module, "__version__", None)
+
+
+def is_running_from_build():
+    """Determine if current process is running from build or code.
+
+    Returns:
+        bool: True if running from build.
+    """
+    executable_path = os.environ["OPENPYPE_EXECUTABLE"]
+    executable_filename = os.path.basename(executable_path)
+    if "python" in executable_filename.lower():
+        return False
+    return True
+
+
+def is_running_staging():
+    """Currently used OpenPype is staging version.
+
+    Returns:
+        bool: True if openpype version containt 'staging'.
+    """
+    if "staging" in get_openpype_version():
+        return True
+    return False
 
 
 def get_pype_info():
     """Information about currently used Pype process."""
     executable_args = get_pype_execute_args()
-    if len(executable_args) == 1:
+    if is_running_from_build():
         version_type = "build"
     else:
         version_type = "code"
 
     return {
-        "version": get_pype_version(),
+        "version": get_openpype_version(),
         "version_type": version_type,
         "executable": executable_args[-1],
         "pype_root": os.environ["OPENPYPE_REPOS_ROOT"],
@@ -73,7 +126,7 @@ def extract_pype_info_to_file(dirpath):
         filepath (str): Full path to file where data were extracted.
     """
     filename = "{}_{}_{}.json".format(
-        get_pype_version(),
+        get_openpype_version(),
         get_local_site_id(),
         datetime.datetime.now().strftime("%y%m%d%H%M%S")
     )

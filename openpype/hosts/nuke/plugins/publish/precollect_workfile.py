@@ -3,13 +3,12 @@ import pyblish.api
 import os
 import openpype.api as pype
 from avalon.nuke import lib as anlib
-reload(anlib)
 
 
 class CollectWorkfile(pyblish.api.ContextPlugin):
     """Collect current script for publish."""
 
-    order = pyblish.api.CollectorOrder - 0.60
+    order = pyblish.api.CollectorOrder - 0.50
     label = "Pre-collect Workfile"
     hosts = ['nuke']
 

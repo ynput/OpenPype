@@ -15,8 +15,8 @@ creator.show()
             <scriptItem id="avalon_load">
                 <label>Load ...</label>
                 <scriptCode><![CDATA[
-from avalon.tools import cbloader
-cbloader.show(use_context=True)
+from openpype.tools import loader
+loader.show(use_context=True)
 ]]></scriptCode>
             </scriptItem>
 

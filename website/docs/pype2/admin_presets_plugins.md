@@ -469,6 +469,7 @@ maya outliner colours for various families
   "camera": [0.447, 0.312, 1.0],
   "fbx": [1.0, 0.931, 0.312],
   "mayaAscii": [0.312, 1.0, 0.747],
+  "mayaScene": [0.312, 1.0, 0.747],
   "setdress": [0.312, 1.0, 0.747],
   "layout": [0.312, 1.0, 0.747],
   "vdbcache": [0.312, 1.0, 0.428],

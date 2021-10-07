@@ -13,6 +13,11 @@ from openpype_modules.ftrack.ftrack_server.lib import (
 from openpype.modules import ModulesManager
 
 from openpype.api import Logger
+from openpype.lib import (
+    get_openpype_version,
+    get_build_version
+)
+
 
 import ftrack_api
 
@@ -40,9 +45,11 @@ def send_status(event):
     new_event_data = {
         "subprocess_id": subprocess_id,
         "source": "processor",
-        "status_info": {
-            "created_at": subprocess_started.strftime("%Y.%m.%d %H:%M:%S")
-        }
+        "status_info": [
+            ["created_at", subprocess_started.strftime("%Y.%m.%d %H:%M:%S")],
+            ["OpenPype version", get_openpype_version() or "N/A"],
+            ["OpenPype build version", get_build_version() or "N/A"]
+        ]
     }
 
     new_event = ftrack_api.event.base.Event(
