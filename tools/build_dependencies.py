@@ -113,7 +113,26 @@ if not build_dir.exists():
     _print("Probably freezing of code failed. Check ./build/build.log", 3)
     sys.exit(1)
 
+def _progress(_base, _names):
+    progress_bar.update()
+    return []
+
 deps_dir = build_dir / "dependencies"
+vendor_dir = build_dir / "vendor"
+vendor_src = openpype_root / "vendor"
+
+# copy vendor files
+_print("Copying vendor files ...")
+
+total_files = count_folders(vendor_src)
+progress_bar = enlighten.Counter(
+    total=total_files, desc="Copying vendor files ...",
+    units="%", color=(64, 128, 222))
+
+shutil.copytree(vendor_src.as_posix(),
+                vendor_dir.as_posix(),
+                ignore=_progress)
+progress_bar.close()
 
 # copy all files
 _print("Copying dependencies ...")
@@ -122,12 +141,6 @@ total_files = count_folders(site_pkg)
 progress_bar = enlighten.Counter(
     total=total_files, desc="Processing Dependencies",
     units="%", color=(53, 178, 202))
-
-
-def _progress(_base, _names):
-    progress_bar.update()
-    return []
-
 
 shutil.copytree(site_pkg.as_posix(),
                 deps_dir.as_posix(),
