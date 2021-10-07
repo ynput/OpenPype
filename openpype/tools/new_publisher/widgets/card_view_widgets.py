@@ -23,7 +23,7 @@ class GroupWidget(QtWidgets.QWidget):
     active_changed = QtCore.Signal()
     removed_selected = QtCore.Signal()
 
-    def __init__(self, group_name, group_icon, parent):
+    def __init__(self, group_name, group_icons, parent):
         super(GroupWidget, self).__init__(parent)
 
         label_widget = QtWidgets.QLabel(group_name, self)
@@ -45,7 +45,7 @@ class GroupWidget(QtWidgets.QWidget):
         layout.addLayout(label_layout, 0)
 
         self._group = group_name
-        self._group_icon = group_icon
+        self._group_icons = group_icons
 
         self._widgets_by_id = {}
 
@@ -93,8 +93,9 @@ class GroupWidget(QtWidgets.QWidget):
                     widget = self._widgets_by_id[instance.id]
                     widget.update_instance(instance)
                 else:
+                    group_icon = self._group_icons[instance.creator_identifier]
                     widget = InstanceCardWidget(
-                        instance, self._group_icon, self
+                        instance, group_icon, self
                     )
                     widget.selected.connect(self.selected)
                     widget.active_changed.connect(self.active_changed)
@@ -163,7 +164,7 @@ class InstanceCardWidget(CardWidget):
         super(InstanceCardWidget, self).__init__(parent)
 
         self._id = instance.id
-        self._group_identifier = instance.creator_identifier
+        self._group_identifier = instance.creator_label
         self._group_icon = group_icon
 
         self.instance = instance
@@ -356,33 +357,39 @@ class InstanceCardView(AbstractInstanceView):
 
             self.select_item(CONTEXT_ID, None)
 
-        instances_by_creator = collections.defaultdict(list)
+        instances_by_group = collections.defaultdict(list)
+        identifiers_by_group = collections.defaultdict(set)
         for instance in self.controller.instances:
-            identifier = instance.creator_identifier
-            instances_by_creator[identifier].append(instance)
+            group_name = instance.creator_label
+            instances_by_group[group_name].append(instance)
+            identifiers_by_group[group_name].add(
+                instance.creator_identifier
+            )
 
-        for identifier in tuple(self._widgets_by_group.keys()):
-            if identifier in instances_by_creator:
+        for group_name in tuple(self._widgets_by_group.keys()):
+            if group_name in instances_by_group:
                 continue
 
-            if identifier == self._selected_group:
+            if group_name == self._selected_group:
                 self._on_remove_selected()
-            widget = self._widgets_by_group.pop(identifier)
+            widget = self._widgets_by_group.pop(group_name)
             widget.setVisible(False)
             self._content_layout.removeWidget(widget)
             widget.deleteLater()
 
-        sorted_identifiers = list(sorted(instances_by_creator.keys()))
+        sorted_group_names = list(sorted(instances_by_group.keys()))
         widget_idx = 1
-        for creator_identifier in sorted_identifiers:
-            if creator_identifier in self._widgets_by_group:
-                group_widget = self._widgets_by_group[creator_identifier]
+        for group_name in sorted_group_names:
+            if group_name in self._widgets_by_group:
+                group_widget = self._widgets_by_group[group_name]
             else:
-                group_icon = self.controller.get_icon_for_family(
-                    creator_identifier
-                )
+                group_icons = {
+                    idenfier: self.controller.get_icon_for_family(idenfier)
+                    for idenfier in identifiers_by_group[group_name]
+                }
+
                 group_widget = GroupWidget(
-                    creator_identifier, group_icon, self._content_widget
+                    group_name, group_icons, self._content_widget
                 )
                 group_widget.active_changed.connect(self._on_active_changed)
                 group_widget.selected.connect(self._on_widget_selection)
@@ -390,11 +397,11 @@ class InstanceCardView(AbstractInstanceView):
                     self._on_remove_selected
                 )
                 self._content_layout.insertWidget(widget_idx, group_widget)
-                self._widgets_by_group[creator_identifier] = group_widget
+                self._widgets_by_group[group_name] = group_widget
 
             widget_idx += 1
             group_widget.update_instances(
-                instances_by_creator[creator_identifier]
+                instances_by_group[group_name]
             )
 
     def refresh_instance_states(self):

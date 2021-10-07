@@ -436,9 +436,9 @@ class InstanceListView(AbstractInstanceView):
         instances_by_group_name = collections.defaultdict(list)
         group_names = set()
         for instance in self.controller.instances:
-            identifier = instance.creator_identifier
-            group_names.add(identifier)
-            instances_by_group_name[identifier].append(instance)
+            group_label = instance.creator_label
+            group_names.add(group_label)
+            instances_by_group_name[group_label].append(instance)
 
         sort_at_the_end = False
         root_item = self.instance_model.invisibleRootItem()
