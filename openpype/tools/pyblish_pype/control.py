@@ -216,18 +216,19 @@ class Controller(QtCore.QObject):
                 if order >= pyblish.api.ExtractorOrder - 0.5:
                     continue
                 elif order >= pyblish.api.ValidatorOrder - 0.5:
-                    setattr(plugin, "optional", True)
-                    setattr(plugin, "active", False)
+                    plugin.optional = True
+                    plugin.active = False
                     if self.last_active_plugin.get(plugin.__name__, False):
-                        setattr(plugin, "active", True)
+                        plugin.active = True
 
             _plugins.append(plugin)
         self.plugins = _plugins
 
     def deactivate_validator_plugins(self):
         for plugin in self.plugins:
-            if getattr(plugin, "order", 100) >= pyblish.api.ValidatorOrder - 0.5:
-                setattr(plugin, "active", False)
+            if getattr(plugin, "order", 100) >= \
+                    pyblish.api.ValidatorOrder - 0.5:
+                plugin.active = False
 
 
     def on_published(self):
