@@ -119,6 +119,12 @@ class Window(QtWidgets.QDialog):
 
         presets_button = widgets.ButtonWithMenu(awesome["filter"])
         presets_button.setEnabled(False)
+        self.change_mode_btn = QtWidgets.QPushButton()
+        if self.controller.sanity_mode:
+            self.change_mode_btn.setText("C")
+        else:
+            self.change_mode_btn.setText("S")
+        aditional_btns_layout.addWidget(self.change_mode_btn)
         aditional_btns_layout.addWidget(presets_button)
 
         layout_tab = QtWidgets.QHBoxLayout(header_tab_widget)
@@ -435,6 +441,7 @@ class Window(QtWidgets.QDialog):
         footer_button_reset.clicked.connect(self.on_reset_clicked)
         footer_button_validate.clicked.connect(self.on_validate_clicked)
         footer_button_play.clicked.connect(self.on_play_clicked)
+        self.change_mode_btn.clicked.connect(self.on_change_mode_clicked)
 
         comment_box.textChanged.connect(self.on_comment_entered)
         comment_box.returnPressed.connect(self.on_play_clicked)
@@ -873,6 +880,12 @@ class Window(QtWidgets.QDialog):
     def on_suspend_clicked(self, value=None):
         self.apply_log_suspend_value(not self._suspend_logs)
 
+    def on_change_mode_clicked(self):
+        if self.controller.sanity_mode:
+            self.change_to_classic_mode()
+        else:
+            self.change_to_sanity_mode()
+
     def apply_log_suspend_value(self, value):
         self._suspend_logs = value
         if self.state["current_page"] == "terminal":
@@ -1118,6 +1131,19 @@ class Window(QtWidgets.QDialog):
     # Functions
     #
     # -------------------------------------------------------------------------
+
+    def change_to_sanity_mode(self):
+
+        self.change_mode_btn.setText("C")
+        self.controller.sanity_mode = True
+        self.controller.deactivate_validator_plugins()
+        self.reset()
+
+    def change_to_classic_mode(self):
+
+        self.change_mode_btn.setText("S")
+        self.controller.sanity_mode = False
+        self.reset()
 
     def reset(self):
         """Prepare GUI for reset"""

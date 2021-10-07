@@ -31,6 +31,9 @@ class IterationBreak(Exception):
 
 class Controller(QtCore.QObject):
     log = logging.getLogger("PyblishController")
+
+    sanity_mode = False
+    last_active_plugin = {}
     # Emitted when the GUI is about to start processing;
     # e.g. resetting, validating or publishing.
     about_to_process = QtCore.Signal(object, object)
@@ -68,6 +71,10 @@ class Controller(QtCore.QObject):
 
     def __init__(self, parent=None):
         super(Controller, self).__init__(parent)
+
+        if os.getenv("PYBLISH_SANITY_MODE", "") == "true":
+            self.sanity_mode = True
+
         self.context = None
         self.plugins = {}
         self.optional_default = {}
@@ -170,6 +177,7 @@ class Controller(QtCore.QObject):
 
     def reset(self):
         """Discover plug-ins and run collection."""
+        self.last_active_plugin = {x.__name__: x.active for x in self.plugins}
 
         self.reset_context()
         self.reset_variables()
@@ -202,8 +210,25 @@ class Controller(QtCore.QObject):
                 and not getattr(plugin, "active", True)
             ):
                 continue
+
+            if self.sanity_mode:
+                order = getattr(plugin, "order", 100)
+                if order >= pyblish.api.ExtractorOrder - 0.5:
+                    continue
+                elif order >= pyblish.api.ValidatorOrder - 0.5:
+                    setattr(plugin, "optional", True)
+                    setattr(plugin, "active", False)
+                    if self.last_active_plugin.get(plugin.__name__, False):
+                        setattr(plugin, "active", True)
+
             _plugins.append(plugin)
         self.plugins = _plugins
+
+    def deactivate_validator_plugins(self):
+        for plugin in self.plugins:
+            if getattr(plugin, "order", 100) >= pyblish.api.ValidatorOrder - 0.5:
+                setattr(plugin, "active", False)
+
 
     def on_published(self):
         if self.is_running:
