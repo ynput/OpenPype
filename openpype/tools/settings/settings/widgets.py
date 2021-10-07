@@ -7,6 +7,12 @@ from avalon.mongodb import (
 )
 
 from openpype.settings.lib import get_system_settings
+from .constants import (
+    DEFAULT_PROJECT_LABEL,
+    PROJECT_NAME_ROLE,
+    PROJECT_IS_ACTIVE_ROLE,
+    PROJECT_IS_SELECTED_ROLE
+)
 
 
 class SettingsLineEdit(QtWidgets.QLineEdit):
@@ -92,11 +98,15 @@ class NumberSpinBox(QtWidgets.QDoubleSpinBox):
         min_value = kwargs.pop("minimum", -99999)
         max_value = kwargs.pop("maximum", 99999)
         decimals = kwargs.pop("decimal", 0)
+        steps = kwargs.pop("steps", None)
+
         super(NumberSpinBox, self).__init__(*args, **kwargs)
         self.setFocusPolicy(QtCore.Qt.StrongFocus)
         self.setDecimals(decimals)
         self.setMinimum(min_value)
         self.setMaximum(max_value)
+        if steps is not None:
+            self.setSingleStep(steps)
 
     def focusInEvent(self, event):
         super(NumberSpinBox, self).focusInEvent(event)
@@ -598,6 +608,65 @@ class NiceCheckbox(QtWidgets.QFrame):
         return super(NiceCheckbox, self).mouseReleaseEvent(event)
 
 
+class ProjectModel(QtGui.QStandardItemModel):
+    def __init__(self, only_active, *args, **kwargs):
+        super(ProjectModel, self).__init__(*args, **kwargs)
+
+        self.dbcon = None
+
+        self._only_active = only_active
+        self._default_item = None
+        self._items_by_name = {}
+
+    def set_dbcon(self, dbcon):
+        self.dbcon = dbcon
+
+    def refresh(self):
+        new_items = []
+        if self._default_item is None:
+            item = QtGui.QStandardItem(DEFAULT_PROJECT_LABEL)
+            item.setData(None, PROJECT_NAME_ROLE)
+            item.setData(True, PROJECT_IS_ACTIVE_ROLE)
+            item.setData(False, PROJECT_IS_SELECTED_ROLE)
+            new_items.append(item)
+            self._default_item = item
+
+        project_names = set()
+        if self.dbcon is not None:
+            for project_doc in self.dbcon.projects(
+                projection={"name": 1, "data.active": 1},
+                only_active=self._only_active
+            ):
+                project_name = project_doc["name"]
+                project_names.add(project_name)
+                if project_name in self._items_by_name:
+                    item = self._items_by_name[project_name]
+                else:
+                    item = QtGui.QStandardItem(project_name)
+
+                    self._items_by_name[project_name] = item
+                    new_items.append(item)
+
+                is_active = project_doc.get("data", {}).get("active", True)
+                item.setData(project_name, PROJECT_NAME_ROLE)
+                item.setData(is_active, PROJECT_IS_ACTIVE_ROLE)
+                item.setData(False, PROJECT_IS_SELECTED_ROLE)
+
+                if not is_active:
+                    font = item.font()
+                    font.setItalic(True)
+                    item.setFont(font)
+
+        root_item = self.invisibleRootItem()
+        for project_name in tuple(self._items_by_name.keys()):
+            if project_name not in project_names:
+                item = self._items_by_name.pop(project_name)
+                root_item.removeRow(item.row())
+
+        if new_items:
+            root_item.appendRows(new_items)
+
+
 class ProjectListView(QtWidgets.QListView):
     left_mouse_released_at = QtCore.Signal(QtCore.QModelIndex)
 
@@ -608,11 +677,51 @@ class ProjectListView(QtWidgets.QListView):
         super(ProjectListView, self).mouseReleaseEvent(event)
 
 
+class ProjectSortFilterProxy(QtCore.QSortFilterProxyModel):
+    def __init__(self, *args, **kwargs):
+        super(ProjectSortFilterProxy, self).__init__(*args, **kwargs)
+        self._enable_filter = True
+
+    def lessThan(self, left_index, right_index):
+        if left_index.data(PROJECT_NAME_ROLE) is None:
+            return True
+
+        if right_index.data(PROJECT_NAME_ROLE) is None:
+            return False
+
+        left_is_active = left_index.data(PROJECT_IS_ACTIVE_ROLE)
+        right_is_active = right_index.data(PROJECT_IS_ACTIVE_ROLE)
+        if right_is_active == left_is_active:
+            return super(ProjectSortFilterProxy, self).lessThan(
+                left_index, right_index
+            )
+
+        if left_is_active:
+            return True
+        return False
+
+    def filterAcceptsRow(self, source_row, source_parent):
+        if not self._enable_filter:
+            return True
+
+        index = self.sourceModel().index(source_row, 0, source_parent)
+        is_active = bool(index.data(self.filterRole()))
+        is_selected = bool(index.data(PROJECT_IS_SELECTED_ROLE))
+
+        return is_active or is_selected
+
+    def is_filter_enabled(self):
+        return self._enable_filter
+
+    def set_filter_enabled(self, value):
+        self._enable_filter = value
+        self.invalidateFilter()
+
+
 class ProjectListWidget(QtWidgets.QWidget):
-    default = "< Default >"
     project_changed = QtCore.Signal()
 
-    def __init__(self, parent):
+    def __init__(self, parent, only_active=False):
         self._parent = parent
 
         self.current_project = None
@@ -621,8 +730,14 @@ class ProjectListWidget(QtWidgets.QWidget):
         self.setObjectName("ProjectListWidget")
 
         label_widget = QtWidgets.QLabel("Projects")
+
         project_list = ProjectListView(self)
-        project_list.setModel(QtGui.QStandardItemModel())
+        project_model = ProjectModel(only_active)
+        project_proxy = ProjectSortFilterProxy()
+
+        project_proxy.setFilterRole(PROJECT_IS_ACTIVE_ROLE)
+        project_proxy.setSourceModel(project_model)
+        project_list.setModel(project_proxy)
 
         # Do not allow editing
         project_list.setEditTriggers(
@@ -636,9 +751,26 @@ class ProjectListWidget(QtWidgets.QWidget):
         layout.addWidget(label_widget, 0)
         layout.addWidget(project_list, 1)
 
+        if only_active:
+            inactive_chk = None
+        else:
+            inactive_chk = QtWidgets.QCheckBox(" Show Inactive Projects ")
+            inactive_chk.setChecked(not project_proxy.is_filter_enabled())
+
+            layout.addSpacing(5)
+            layout.addWidget(inactive_chk, 0)
+            layout.addSpacing(5)
+
+            inactive_chk.stateChanged.connect(self.on_inactive_vis_changed)
+
         project_list.left_mouse_released_at.connect(self.on_item_clicked)
 
+        self._default_project_item = None
+
         self.project_list = project_list
+        self.project_proxy = project_proxy
+        self.project_model = project_model
+        self.inactive_chk = inactive_chk
 
         self.dbcon = None
 
@@ -675,24 +807,38 @@ class ProjectListWidget(QtWidgets.QWidget):
         else:
             self.select_project(self.current_project)
 
+    def on_inactive_vis_changed(self):
+        if self.inactive_chk is None:
+            # should not happen.
+            return
+
+        enable_filter = not self.inactive_chk.isChecked()
+        self.project_proxy.set_filter_enabled(enable_filter)
+
     def validate_context_change(self):
         return not self._parent.entity.has_unsaved_changes
 
     def project_name(self):
-        if self.current_project == self.default:
+        if self.current_project == DEFAULT_PROJECT_LABEL:
             return None
         return self.current_project
 
     def select_default_project(self):
-        self.select_project(self.default)
+        self.select_project(DEFAULT_PROJECT_LABEL)
 
     def select_project(self, project_name):
-        model = self.project_list.model()
+        model = self.project_model
+        proxy = self.project_proxy
+
         found_items = model.findItems(project_name)
         if not found_items:
-            found_items = model.findItems(self.default)
+            found_items = model.findItems(DEFAULT_PROJECT_LABEL)
 
         index = model.indexFromItem(found_items[0])
+        model.setData(index, True, PROJECT_IS_SELECTED_ROLE)
+
+        index = proxy.mapFromSource(index)
+
         self.project_list.selectionModel().clear()
         self.project_list.selectionModel().setCurrentIndex(
             index, QtCore.QItemSelectionModel.SelectionFlag.SelectCurrent
@@ -703,11 +849,6 @@ class ProjectListWidget(QtWidgets.QWidget):
         for index in self.project_list.selectedIndexes():
             selected_project = index.data(QtCore.Qt.DisplayRole)
             break
-
-        model = self.project_list.model()
-        model.clear()
-
-        items = [self.default]
 
         mongo_url = os.environ["OPENPYPE_MONGO"]
 
@@ -726,17 +867,10 @@ class ProjectListWidget(QtWidgets.QWidget):
                 self.dbcon = None
                 self.current_project = None
 
-        if self.dbcon:
-            database = self.dbcon.database
-            for project_name in database.collection_names():
-                project_doc = database[project_name].find_one(
-                    {"type": "project"},
-                    {"name": 1}
-                )
-                if project_doc:
-                    items.append(project_doc["name"])
-        for item in items:
-            model.appendRow(QtGui.QStandardItem(item))
+        self.project_model.set_dbcon(self.dbcon)
+        self.project_model.refresh()
+
+        self.project_proxy.sort(0)
 
         self.select_project(selected_project)
 

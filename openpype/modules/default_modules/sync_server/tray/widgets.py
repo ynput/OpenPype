@@ -6,15 +6,12 @@ from functools import partial
 from Qt import QtWidgets, QtCore, QtGui
 from Qt.QtCore import Qt
 
-from openpype.tools.settings import (
-    ProjectListWidget,
-    style
-)
+from openpype.tools.settings import style
 
 from openpype.api import get_local_site_id
 from openpype.lib import PypeLogger
 
-from avalon.tools.delegates import pretty_timestamp
+from openpype.tools.utils.delegates import pretty_timestamp
 from avalon.vendor import qtawesome
 
 from .models import (
@@ -28,28 +25,58 @@ from . import delegates
 log = PypeLogger().get_logger("SyncServer")
 
 
-class SyncProjectListWidget(ProjectListWidget):
+class SyncProjectListWidget(QtWidgets.QWidget):
     """
         Lists all projects that are synchronized to choose from
     """
+    project_changed = QtCore.Signal()
+    message_generated = QtCore.Signal(str)
 
     def __init__(self, sync_server, parent):
         super(SyncProjectListWidget, self).__init__(parent)
+        self.setObjectName("ProjectListWidget")
+
+        self._parent = parent
+
+        label_widget = QtWidgets.QLabel("Projects", self)
+        project_list = QtWidgets.QListView(self)
+        project_model = QtGui.QStandardItemModel()
+        project_list.setModel(project_model)
+        project_list.setContextMenuPolicy(QtCore.Qt.CustomContextMenu)
+
+        # Do not allow editing
+        project_list.setEditTriggers(
+            QtWidgets.QAbstractItemView.EditTrigger.NoEditTriggers
+        )
+
+        layout = QtWidgets.QVBoxLayout(self)
+        layout.setContentsMargins(0, 0, 0, 0)
+        layout.setSpacing(3)
+        layout.addWidget(label_widget, 0)
+        layout.addWidget(project_list, 1)
+
+        project_list.customContextMenuRequested.connect(self._on_context_menu)
+        project_list.selectionModel().currentChanged.connect(
+            self._on_index_change
+        )
+
+        self.project_model = project_model
+        self.project_list = project_list
         self.sync_server = sync_server
-        self.project_list.setContextMenuPolicy(QtCore.Qt.CustomContextMenu)
-        self.project_list.customContextMenuRequested.connect(
-            self._on_context_menu)
+        self.current_project = None
         self.project_name = None
         self.local_site = None
+        self.remote_site = None
         self.icons = {}
 
-        self.layout().setContentsMargins(0, 0, 0, 0)
+    def _on_index_change(self, new_idx, _old_idx):
+        project_name = new_idx.data(QtCore.Qt.DisplayRole)
 
-    def validate_context_change(self):
-        return True
+        self.current_project = project_name
+        self.project_changed.emit()
 
     def refresh(self):
-        model = self.project_list.model()
+        model = self.project_model
         model.clear()
 
         project_name = None
@@ -70,11 +97,15 @@ class SyncProjectListWidget(ProjectListWidget):
             QtCore.Qt.DisplayRole
         )
         if not self.current_project:
-            self.current_project = self.project_list.model().item(0). \
-                data(QtCore.Qt.DisplayRole)
+            self.current_project = model.item(0).data(QtCore.Qt.DisplayRole)
 
         if project_name:
             self.local_site = self.sync_server.get_active_site(project_name)
+            self.remote_site = self.sync_server.get_remote_site(project_name)
+
+    def _can_edit(self):
+        """Returns true if some site is user local site, eg. could edit"""
+        return get_local_site_id() in (self.local_site, self.remote_site)
 
     def _get_icon(self, status):
         if not self.icons.get(status):
@@ -98,9 +129,7 @@ class SyncProjectListWidget(ProjectListWidget):
         menu = QtWidgets.QMenu(self)
         actions_mapping = {}
 
-        can_edit = self.model.can_edit
-
-        if can_edit:
+        if self._can_edit():
             if self.sync_server.is_project_paused(self.project_name):
                 action = QtWidgets.QAction("Unpause")
                 actions_mapping[action] = self._unpause

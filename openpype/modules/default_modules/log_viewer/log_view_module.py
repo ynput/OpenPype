@@ -40,10 +40,6 @@ class LogViewModule(OpenPypeModule, ITrayModule):
     def tray_exit(self):
         return
 
-    def connect_with_modules(self, _enabled_modules):
-        """Nothing special."""
-        return
-
     def _show_logs_gui(self):
         if self.window:
             self.window.show()

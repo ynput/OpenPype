@@ -10,6 +10,7 @@ import functools
 
 from openpype.settings import get_project_settings
 from .anatomy import Anatomy
+from .profiles_filtering import filter_profiles
 
 # avalon module is not imported at the top
 # - may not be in path at the time of pype.lib initialization
@@ -453,8 +454,6 @@ def get_workfile_template_key(
     if not profiles:
         return default
 
-    from .profiles_filtering import filter_profiles
-
     profile_filter = {
         "task_types": task_type,
         "hosts": host_name
@@ -791,7 +790,9 @@ class BuildWorkfile:
         current_task_name = avalon.io.Session["AVALON_TASK"]
 
         # Load workfile presets for task
-        self.build_presets = self.get_build_presets(current_task_name)
+        self.build_presets = self.get_build_presets(
+            current_task_name, current_asset_entity
+        )
 
         # Skip if there are any presets for task
         if not self.build_presets:
@@ -875,7 +876,7 @@ class BuildWorkfile:
         return loaded_containers
 
     @with_avalon
-    def get_build_presets(self, task_name):
+    def get_build_presets(self, task_name, asset_doc):
         """ Returns presets to build workfile for task name.
 
         Presets are loaded for current project set in
@@ -889,30 +890,33 @@ class BuildWorkfile:
             (dict): preset per entered task name
         """
         host_name = avalon.api.registered_host().__name__.rsplit(".", 1)[-1]
-        presets = get_project_settings(avalon.io.Session["AVALON_PROJECT"])
+        project_settings = get_project_settings(
+            avalon.io.Session["AVALON_PROJECT"]
+        )
 
+        host_settings = project_settings.get(host_name) or {}
         # Get presets for host
-        wb_settings = presets.get(host_name, {}).get("workfile_builder")
-
+        wb_settings = host_settings.get("workfile_builder")
         if not wb_settings:
             # backward compatibility
-            wb_settings = presets.get(host_name, {}).get("workfile_build")
+            wb_settings = host_settings.get("workfile_build") or {}
 
-        builder_presets = wb_settings.get("profiles")
+        builder_profiles = wb_settings.get("profiles")
+        if not builder_profiles:
+            return None
 
-        if not builder_presets:
-            return
-
-        task_name_low = task_name.lower()
-        per_task_preset = None
-        for preset in builder_presets:
-            preset_tasks = preset.get("tasks") or []
-            preset_tasks_low = [task.lower() for task in preset_tasks]
-            if task_name_low in preset_tasks_low:
-                per_task_preset = preset
-                break
-
-        return per_task_preset
+        task_type = (
+            asset_doc
+            .get("data", {})
+            .get("tasks", {})
+            .get(task_name, {})
+            .get("type")
+        )
+        filter_data = {
+            "task_types": task_type,
+            "tasks": task_name
+        }
+        return filter_profiles(builder_profiles, filter_data)
 
     def _filter_build_profiles(self, build_profiles, loaders_by_name):
         """ Filter build profiles by loaders and prepare process data.

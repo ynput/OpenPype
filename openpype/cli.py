@@ -18,6 +18,8 @@ from .pype_commands import PypeCommands
 @click.option("--list-versions", is_flag=True, expose_value=False,
               help=("list all detected versions. Use With `--use-staging "
                     "to list staging versions."))
+@click.option("--validate-version", expose_value=False,
+              help="validate given version integrity")
 def main(ctx):
     """Pype is main command serving as entry point to pipeline system.
 
@@ -281,3 +283,18 @@ def run(script):
         args_string = " ".join(args[1:])
         print(f"... running: {script} {args_string}")
         runpy.run_path(script, run_name="__main__", )
+
+
+@main.command()
+@click.argument("folder", nargs=-1)
+@click.option("-m",
+              "--mark",
+              help="Run tests marked by",
+              default=None)
+@click.option("-p",
+              "--pyargs",
+              help="Run tests from package",
+              default=None)
+def runtests(folder, mark, pyargs):
+    """Run all automatic tests after proper initialization via start.py"""
+    PypeCommands().run_tests(folder, mark, pyargs)

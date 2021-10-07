@@ -1,5 +1,5 @@
 import os
-
+from openpype.lib.pype_info import is_running_staging
 
 RESOURCES_DIR = os.path.dirname(os.path.abspath(__file__))
 
@@ -30,22 +30,22 @@ def get_liberation_font_path(bold=False, italic=False):
     return font_path
 
 
-def pype_icon_filepath(debug=None):
-    if debug is None:
-        debug = bool(os.getenv("OPENPYPE_DEV"))
+def get_openpype_icon_filepath(staging=None):
+    if staging is None:
+        staging = is_running_staging()
 
-    if debug:
+    if staging:
         icon_file_name = "openpype_icon_staging.png"
     else:
         icon_file_name = "openpype_icon.png"
     return get_resource("icons", icon_file_name)
 
 
-def pype_splash_filepath(debug=None):
-    if debug is None:
-        debug = bool(os.getenv("OPENPYPE_DEV"))
+def get_openpype_splash_filepath(staging=None):
+    if staging is None:
+        staging = is_running_staging()
 
-    if debug:
+    if staging:
         splash_file_name = "openpype_splash_staging.png"
     else:
         splash_file_name = "openpype_splash.png"

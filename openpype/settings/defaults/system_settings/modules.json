@@ -1,4 +1,9 @@
 {
+    "addon_paths": {
+        "windows": [],
+        "darwin": [],
+        "linux": []
+    },
     "avalon": {
         "AVALON_TIMEOUT": 1000,
         "AVALON_THUMBNAIL_ROOT": {

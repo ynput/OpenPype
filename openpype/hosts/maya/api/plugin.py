@@ -4,6 +4,53 @@ import avalon.maya
 from openpype.api import PypeCreatorMixin
 
 
+def get_reference_node(members, log=None):
+    """Get the reference node from the container members
+    Args:
+        members: list of node names
+
+    Returns:
+        str: Reference node name.
+
+    """
+
+    from maya import cmds
+
+    # Collect the references without .placeHolderList[] attributes as
+    # unique entries (objects only) and skipping the sharedReferenceNode.
+    references = set()
+    for ref in cmds.ls(members, exactType="reference", objectsOnly=True):
+
+        # Ignore any `:sharedReferenceNode`
+        if ref.rsplit(":", 1)[-1].startswith("sharedReferenceNode"):
+            continue
+
+        # Ignore _UNKNOWN_REF_NODE_ (PLN-160)
+        if ref.rsplit(":", 1)[-1].startswith("_UNKNOWN_REF_NODE_"):
+            continue
+
+        references.add(ref)
+
+    assert references, "No reference node found in container"
+
+    # Get highest reference node (least parents)
+    highest = min(references,
+                  key=lambda x: len(get_reference_node_parents(x)))
+
+    # Warn the user when we're taking the highest reference node
+    if len(references) > 1:
+        if not log:
+            from openpype.lib import PypeLogger
+
+            log = PypeLogger().get_logger(__name__)
+
+        log.warning("More than one reference node found in "
+                    "container, using highest reference node: "
+                    "%s (in: %s)", highest, list(references))
+
+    return highest
+
+
 def get_reference_node_parents(ref):
     """Return all parent reference nodes of reference node
 
@@ -109,7 +156,7 @@ class ReferenceLoader(api.Loader):
                     loader=self.__class__.__name__
                 ))
             else:
-                ref_node = self._get_reference_node(nodes)
+                ref_node = get_reference_node(nodes, self.log)
                 loaded_containers.append(containerise(
                     name=name,
                     namespace=namespace,
@@ -126,46 +173,6 @@ class ReferenceLoader(api.Loader):
         """To be implemented by subclass"""
         raise NotImplementedError("Must be implemented by subclass")
 
-    def _get_reference_node(self, members):
-        """Get the reference node from the container members
-        Args:
-            members: list of node names
-
-        Returns:
-            str: Reference node name.
-
-        """
-
-        from maya import cmds
-
-        # Collect the references without .placeHolderList[] attributes as
-        # unique entries (objects only) and skipping the sharedReferenceNode.
-        references = set()
-        for ref in cmds.ls(members, exactType="reference", objectsOnly=True):
-
-            # Ignore any `:sharedReferenceNode`
-            if ref.rsplit(":", 1)[-1].startswith("sharedReferenceNode"):
-                continue
-
-            # Ignore _UNKNOWN_REF_NODE_ (PLN-160)
-            if ref.rsplit(":", 1)[-1].startswith("_UNKNOWN_REF_NODE_"):
-                continue
-
-            references.add(ref)
-
-        assert references, "No reference node found in container"
-
-        # Get highest reference node (least parents)
-        highest = min(references,
-                      key=lambda x: len(get_reference_node_parents(x)))
-
-        # Warn the user when we're taking the highest reference node
-        if len(references) > 1:
-            self.log.warning("More than one reference node found in "
-                             "container, using highest reference node: "
-                             "%s (in: %s)", highest, list(references))
-
-        return highest
 
     def update(self, container, representation):
 
@@ -178,7 +185,7 @@ class ReferenceLoader(api.Loader):
 
         # Get reference node from container members
         members = cmds.sets(node, query=True, nodesOnly=True)
-        reference_node = self._get_reference_node(members)
+        reference_node = get_reference_node(members, self.log)
 
         file_type = {
             "ma": "mayaAscii",
@@ -274,7 +281,7 @@ class ReferenceLoader(api.Loader):
 
         # Assume asset has been referenced
         members = cmds.sets(node, query=True)
-        reference_node = self._get_reference_node(members)
+        reference_node = get_reference_node(members, self.log)
 
         assert reference_node, ("Imported container not supported; "
                                 "container must be referenced.")

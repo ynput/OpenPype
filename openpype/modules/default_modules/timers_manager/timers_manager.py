@@ -1,36 +1,106 @@
 import os
-import collections
+import platform
 from openpype.modules import OpenPypeModule
 from openpype_interfaces import (
     ITimersManager,
-    ITrayService,
-    IIdleManager,
-    IWebServerRoutes
+    ITrayService
 )
 from avalon.api import AvalonMongoDB
 
 
-class TimersManager(
-    OpenPypeModule, ITrayService, IIdleManager, IWebServerRoutes
-):
+class ExampleTimersManagerConnector:
+    """Timers manager can handle timers of multiple modules/addons.
+
+    Module must have object under `timers_manager_connector` attribute with
+    few methods. This is example class of the object that could be stored under
+    module.
+
+    Required methods are 'stop_timer' and 'start_timer'.
+
+    # TODO pass asset document instead of `hierarchy`
+    Example of `data` that are passed during changing timer:
+    ```
+    data = {
+        "project_name": project_name,
+        "task_name": task_name,
+        "task_type": task_type,
+        "hierarchy": hierarchy
+    }
+    ```
+    """
+    # Not needed at all
+    def __init__(self, module):
+        # Store timer manager module to be able call it's methods when needed
+        self._timers_manager_module = None
+
+        # Store module which want to use timers manager to have access
+        self._module = module
+
+    # Required
+    def stop_timer(self):
+        """Called by timers manager when module should stop timer."""
+        self._module.stop_timer()
+
+    # Required
+    def start_timer(self, data):
+        """Method called by timers manager when should start timer."""
+        self._module.start_timer(data)
+
+    # Optional
+    def register_timers_manager(self, timer_manager_module):
+        """Method called by timers manager where it's object is passed.
+
+        This is moment when timers manager module can be store to be able
+        call it's callbacks (e.g. timer started).
+        """
+        self._timers_manager_module = timer_manager_module
+
+    # Custom implementation
+    def timer_started(self, data):
+        """This is example of possibility to trigger callbacks on manager."""
+        if self._timers_manager_module is not None:
+            self._timers_manager_module.timer_started(self._module.id, data)
+
+    # Custom implementation
+    def timer_stopped(self):
+        if self._timers_manager_module is not None:
+            self._timers_manager_module.timer_stopped(self._module.id)
+
+
+class TimersManager(OpenPypeModule, ITrayService):
     """ Handles about Timers.
 
     Should be able to start/stop all timers at once.
-    If IdleManager is imported then is able to handle about stop timers
-        when user idles for a long time (set in presets).
+
+    To be able use this advantage module has to have attribute with name
+    `timers_manager_connector` which has two methods 'stop_timer'
+    and 'start_timer'. Optionally may have `register_timers_manager` where
+    object of TimersManager module is passed to be able call it's callbacks.
+
+    See `ExampleTimersManagerConnector`.
     """
     name = "timers_manager"
     label = "Timers Service"
+
+    _required_methods = (
+        "stop_timer",
+        "start_timer"
+    )
 
     def initialize(self, modules_settings):
         timers_settings = modules_settings[self.name]
 
         self.enabled = timers_settings["enabled"]
-        auto_stop = timers_settings["auto_stop"]
+
         # When timer will stop if idle manager is running (minutes)
         full_time = int(timers_settings["full_time"] * 60)
         # How many minutes before the timer is stopped will popup the message
         message_time = int(timers_settings["message_time"] * 60)
+
+        auto_stop = timers_settings["auto_stop"]
+        # Turn of auto stop on MacOs because pynput requires root permissions
+        if platform.system().lower() == "darwin" or full_time <= 0:
+            auto_stop = False
 
         self.auto_stop = auto_stop
         self.time_show_message = full_time - message_time
@@ -40,30 +110,46 @@ class TimersManager(
         self.last_task = None
 
         # Tray attributes
-        self.signal_handler = None
-        self.widget_user_idle = None
-        self.signal_handler = None
+        self._signal_handler = None
+        self._widget_user_idle = None
+        self._idle_manager = None
 
-        self.modules = []
+        self._connectors_by_module_id = {}
+        self._modules_by_id = {}
 
     def tray_init(self):
+        if not self.auto_stop:
+            return
+
+        from .idle_threads import IdleManager
         from .widget_user_idle import WidgetUserIdle, SignalHandler
-        self.widget_user_idle = WidgetUserIdle(self)
-        self.signal_handler = SignalHandler(self)
+
+        signal_handler = SignalHandler(self)
+        idle_manager = IdleManager()
+        widget_user_idle = WidgetUserIdle(self)
+        widget_user_idle.set_countdown_start(self.time_show_message)
+
+        idle_manager.signal_reset_timer.connect(
+            widget_user_idle.reset_countdown
+        )
+        idle_manager.add_time_signal(
+            self.time_show_message, signal_handler.signal_show_message
+        )
+        idle_manager.add_time_signal(
+            self.time_stop_timer, signal_handler.signal_stop_timers
+        )
+
+        self._signal_handler = signal_handler
+        self._widget_user_idle = widget_user_idle
+        self._idle_manager = idle_manager
 
     def tray_start(self, *_a, **_kw):
-        return
+        if self._idle_manager:
+            self._idle_manager.start()
 
     def tray_exit(self):
-        """Nothing special for TimersManager."""
-        return
-
-    def webserver_initialization(self, server_manager):
-        """Implementation of IWebServerRoutes interface."""
-        if self.tray_initialized:
-            from .rest_api import TimersManagerModuleRestApi
-            self.rest_api_obj = TimersManagerModuleRestApi(self,
-                                                           server_manager)
+        if self._idle_manager:
+            self._idle_manager.stop()
 
     def start_timer(self, project_name, asset_name, task_name, hierarchy):
         """
@@ -116,17 +202,35 @@ class TimersManager(
         return times
 
     def timer_started(self, source_id, data):
-        for module in self.modules:
-            if module.id != source_id:
-                module.start_timer(data)
+        for module_id, connector in self._connectors_by_module_id.items():
+            if module_id == source_id:
+                continue
+
+            try:
+                connector.start_timer(data)
+            except Exception:
+                self.log.info(
+                    "Failed to start timer on connector {}".format(
+                        str(connector)
+                    )
+                )
 
         self.last_task = data
         self.is_running = True
 
     def timer_stopped(self, source_id):
-        for module in self.modules:
-            if module.id != source_id:
-                module.stop_timer()
+        for module_id, connector in self._connectors_by_module_id.items():
+            if module_id == source_id:
+                continue
+
+            try:
+                connector.stop_timer()
+            except Exception:
+                self.log.info(
+                    "Failed to stop timer on connector {}".format(
+                        str(connector)
+                    )
+                )
 
     def restart_timers(self):
         if self.last_task is not None:
@@ -136,84 +240,60 @@ class TimersManager(
         if self.is_running is False:
             return
 
-        self.widget_user_idle.bool_not_stopped = False
-        self.widget_user_idle.refresh_context()
+        if self._widget_user_idle is not None:
+            self._widget_user_idle.set_timer_stopped()
         self.is_running = False
 
-        for module in self.modules:
-            module.stop_timer()
+        self.timer_stopped(None)
 
     def connect_with_modules(self, enabled_modules):
         for module in enabled_modules:
-            if not isinstance(module, ITimersManager):
+            connector = getattr(module, "timers_manager_connector", None)
+            if connector is None:
                 continue
-            module.timer_manager_module = self
-            self.modules.append(module)
 
-    def callbacks_by_idle_time(self):
-        """Implementation of IIdleManager interface."""
-        # Time when message is shown
-        if not self.auto_stop:
-            return {}
+            missing_methods = set()
+            for method_name in self._required_methods:
+                if not hasattr(connector, method_name):
+                    missing_methods.add(method_name)
 
-        callbacks = collections.defaultdict(list)
-        callbacks[self.time_show_message].append(lambda: self.time_callback(0))
+            if missing_methods:
+                joined = ", ".join(
+                    ['"{}"'.format(name for name in missing_methods)]
+                )
+                self.log.info((
+                    "Module \"{}\" has missing required methods {}."
+                ).format(module.name, joined))
+                continue
 
-        # Times when idle is between show widget and stop timers
-        show_to_stop_range = range(
-            self.time_show_message - 1, self.time_stop_timer
-        )
-        for num in show_to_stop_range:
-            callbacks[num].append(lambda: self.time_callback(1))
+            self._connectors_by_module_id[module.id] = connector
+            self._modules_by_id[module.id] = module
 
-        # Times when widget is already shown and user restart idle
-        shown_and_moved_range = range(
-            self.time_stop_timer - self.time_show_message
-        )
-        for num in shown_and_moved_range:
-            callbacks[num].append(lambda: self.time_callback(1))
-
-        # Time when timers are stopped
-        callbacks[self.time_stop_timer].append(lambda: self.time_callback(2))
-
-        return callbacks
-
-    def time_callback(self, int_def):
-        if not self.signal_handler:
-            return
-
-        if int_def == 0:
-            self.signal_handler.signal_show_message.emit()
-        elif int_def == 1:
-            self.signal_handler.signal_change_label.emit()
-        elif int_def == 2:
-            self.signal_handler.signal_stop_timers.emit()
-
-    def change_label(self):
-        if self.is_running is False:
-            return
-
-        if (
-            not self.idle_manager
-            or self.widget_user_idle.bool_is_showed is False
-        ):
-            return
-
-        if self.idle_manager.idle_time > self.time_show_message:
-            value = self.time_stop_timer - self.idle_manager.idle_time
-        else:
-            value = 1 + (
-                self.time_stop_timer -
-                self.time_show_message -
-                self.idle_manager.idle_time
-            )
-        self.widget_user_idle.change_count_widget(value)
+            # Optional method
+            if hasattr(connector, "register_timers_manager"):
+                try:
+                    connector.register_timers_manager(self)
+                except Exception:
+                    self.log.info((
+                        "Failed to register timers manager"
+                        " for connector of module \"{}\"."
+                    ).format(module.name))
 
     def show_message(self):
         if self.is_running is False:
             return
-        if self.widget_user_idle.bool_is_showed is False:
-            self.widget_user_idle.show()
+        if not self._widget_user_idle.is_showed():
+            self._widget_user_idle.reset_countdown()
+            self._widget_user_idle.show()
+
+    # Webserver module implementation
+    def webserver_initialization(self, server_manager):
+        """Add routes for timers to be able start/stop with rest api."""
+        if self.tray_initialized:
+            from .rest_api import TimersManagerModuleRestApi
+            self.rest_api_obj = TimersManagerModuleRestApi(
+                self, server_manager
+            )
 
     def change_timer_from_host(self, project_name, asset_name, task_name):
         """Prepared method for calling change timers on REST api"""

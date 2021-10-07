@@ -11,6 +11,7 @@ import zipfile
 import pyblish.api
 from avalon import api, io
 import openpype.api
+from openpype.lib import get_workfile_template_key_from_context
 
 
 class ExtractHarmonyZip(openpype.api.Extractor):
@@ -65,10 +66,10 @@ class ExtractHarmonyZip(openpype.api.Extractor):
 
         # Get Task types and Statuses for creation if needed
         self.task_types = self._get_all_task_types(project_entity)
-        self.task_statuses = self.get_all_task_statuses(project_entity)
+        self.task_statuses = self._get_all_task_statuses(project_entity)
 
         # Get Statuses of AssetVersions
-        self.assetversion_statuses = self.get_all_assetversion_statuses(
+        self.assetversion_statuses = self._get_all_assetversion_statuses(
             project_entity
         )
 
@@ -233,18 +234,28 @@ class ExtractHarmonyZip(openpype.api.Extractor):
             "version": 1,
             "ext": "zip",
         }
+        host_name = "harmony"
+        template_name = get_workfile_template_key_from_context(
+            instance.data["asset"],
+            instance.data.get("task"),
+            host_name,
+            project_name=project_entity["name"],
+            dbcon=io
+        )
 
         # Get a valid work filename first with version 1
-        file_template = anatomy.templates["work"]["file"]
+        file_template = anatomy.templates[template_name]["file"]
         anatomy_filled = anatomy.format(data)
-        work_path = anatomy_filled["work"]["path"]
+        work_path = anatomy_filled[template_name]["path"]
 
         # Get the final work filename with the proper version
         data["version"] = api.last_workfile_with_version(
-            os.path.dirname(work_path), file_template, data, [".zip"]
+            os.path.dirname(work_path),
+            file_template,
+            data,
+            api.HOST_WORKFILE_EXTENSIONS[host_name]
         )[1]
 
-        work_path = anatomy_filled["work"]["path"]
         base_name = os.path.splitext(os.path.basename(work_path))[0]
 
         staging_work_path = os.path.join(os.path.dirname(staging_scene),

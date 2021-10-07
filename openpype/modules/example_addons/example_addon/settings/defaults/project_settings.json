@@ -1,0 +1,15 @@
+{
+    "project_settings/example_addon": {
+        "number": 0,
+        "color_1": [
+            0.0,
+            0.0,
+            0.0
+        ],
+        "color_2": [
+            0.0,
+            0.0,
+            0.0
+        ]
+    }
+}

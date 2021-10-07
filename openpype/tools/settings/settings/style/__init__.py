@@ -10,4 +10,4 @@ def load_stylesheet():
 
 
 def app_icon_path():
-    return resources.pype_icon_filepath()
+    return resources.get_openpype_icon_filepath()

@@ -1,5 +1,7 @@
 from .gdrive import GDriveHandler
+from .dropbox import DropboxHandler
 from .local_drive import LocalDriveHandler
+from .sftp import SFTPHandler
 
 
 class ProviderFactory:
@@ -76,6 +78,14 @@ class ProviderFactory:
 
         return provider_info[0].get_configurable_items()
 
+    def get_provider_cls(self, provider_code):
+        """
+            Returns class object for 'provider_code' to run class methods on.
+        """
+        provider_info = self._get_creator_info(provider_code)
+
+        return provider_info[0]
+
     def _get_creator_info(self, provider):
         """
             Collect all necessary info for provider. Currently only creator
@@ -103,4 +113,6 @@ factory = ProviderFactory()
 # 7 denotes number of files that could be synced in single loop - learned by
 # trial and error
 factory.register_provider(GDriveHandler.CODE, GDriveHandler, 7)
+factory.register_provider(DropboxHandler.CODE, DropboxHandler, 10)
 factory.register_provider(LocalDriveHandler.CODE, LocalDriveHandler, 50)
+factory.register_provider(SFTPHandler.CODE, SFTPHandler, 20)

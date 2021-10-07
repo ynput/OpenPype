@@ -3,6 +3,12 @@ import pyblish.api
 from avalon.nuke import lib as anlib
 from openpype.hosts.nuke.api import lib as pnlib
 import openpype
+
+try:
+    from __builtin__ import reload
+except ImportError:
+    from importlib import reload
+
 reload(pnlib)
 
 

@@ -12,6 +12,9 @@ class ValidateVersion(pyblish.api.InstancePlugin):
     label = "Validate Version"
     hosts = ["nuke", "maya", "blender", "standalonepublisher"]
 
+    optional = False
+    active = True
+
     def process(self, instance):
         version = instance.data.get("version")
         latest_version = instance.data.get("latestVersion")
