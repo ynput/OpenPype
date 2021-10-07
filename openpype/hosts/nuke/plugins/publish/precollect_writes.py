@@ -64,7 +64,7 @@ class CollectNukeWrites(pyblish.api.InstancePlugin):
         )
 
         if [fm for fm in _families_test
-                if fm in ["render", "prerender"]]:
+                if fm in ["render", "prerender", "still"]]:
             if "representations" not in instance.data:
                 instance.data["representations"] = list()
 
@@ -100,7 +100,13 @@ class CollectNukeWrites(pyblish.api.InstancePlugin):
                             frame_start_str, frame_slate_str)
                         collected_frames.insert(0, slate_frame)
 
-                representation['files'] = collected_frames
+                if collected_frames_len == 1:
+                    representation['files'] = collected_frames.pop()
+                    if "still" in _families_test:
+                        instance.data['family'] = 'image'
+                        instance.data["families"].remove('still')
+                else:
+                    representation['files'] = collected_frames
                 instance.data["representations"].append(representation)
             except Exception:
                 instance.data["representations"].append(representation)

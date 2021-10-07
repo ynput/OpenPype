@@ -230,7 +230,13 @@ class FtrackModule(
             return
 
         import ftrack_api
-        from openpype_modules.ftrack.lib import get_openpype_attr
+        from openpype_modules.ftrack.lib import (
+            get_openpype_attr,
+            default_custom_attributes_definition,
+            CUST_ATTR_TOOLS,
+            CUST_ATTR_APPLICATIONS,
+            CUST_ATTR_INTENT
+        )
 
         try:
             session = self.create_ftrack_session()
@@ -255,6 +261,15 @@ class FtrackModule(
 
         project_id = project_entity["id"]
 
+        ca_defs = default_custom_attributes_definition()
+        hierarchical_attrs = ca_defs.get("is_hierarchical") or {}
+        project_attrs = ca_defs.get("show") or {}
+        ca_keys = (
+            set(hierarchical_attrs.keys())
+            | set(project_attrs.keys())
+            | {CUST_ATTR_TOOLS, CUST_ATTR_APPLICATIONS, CUST_ATTR_INTENT}
+        )
+
         cust_attr, hier_attr = get_openpype_attr(session)
         cust_attr_by_key = {attr["key"]: attr for attr in cust_attr}
         hier_attrs_by_key = {attr["key"]: attr for attr in hier_attr}
@@ -262,6 +277,9 @@ class FtrackModule(
         failed = {}
         missing = {}
         for key, value in attributes_changes.items():
+            if key not in ca_keys:
+                continue
+
             configuration = hier_attrs_by_key.get(key)
             if not configuration:
                 configuration = cust_attr_by_key.get(key)
