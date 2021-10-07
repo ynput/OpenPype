@@ -1,7 +1,6 @@
 import os
 import json
 import collections
-import openpype
 from openpype.modules import OpenPypeModule
 
 from openpype_interfaces import (
@@ -397,3 +396,16 @@ class FtrackModule(
     def timer_stopped(self):
         if self._timers_manager_module is not None:
             self._timers_manager_module.timer_stopped(self.id)
+
+    def get_task_time(self, project_name, asset_name, task_name):
+        session = self.create_ftrack_session()
+        query = (
+            'Task where name is "{}"'
+            ' and parent.name is "{}"'
+            ' and project.full_name is "{}"'
+        ).format(task_name, asset_name, project_name)
+        task_entity = session.query(query).first()
+        if not task_entity:
+            return 0
+        hours_logged = (task_entity["time_logged"] / 60) / 60
+        return hours_logged

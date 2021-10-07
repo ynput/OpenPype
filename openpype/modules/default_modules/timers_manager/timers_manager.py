@@ -191,6 +191,16 @@ class TimersManager(OpenPypeModule, ITrayService):
         }
         self.timer_started(None, data)
 
+    def get_task_time(self, project_name, asset_name, task_name):
+        times = {}
+        for module_id, connector in self._connectors_by_module_id.items():
+            if hasattr(connector, "get_task_time"):
+                module = self._modules_by_id[module_id]
+                times[module.name] = connector.get_task_time(
+                    project_name, asset_name, task_name
+                )
+        return times
+
     def timer_started(self, source_id, data):
         for module_id, connector in self._connectors_by_module_id.items():
             if module_id == source_id:
