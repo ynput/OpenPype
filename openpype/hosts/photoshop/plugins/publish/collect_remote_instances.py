@@ -72,7 +72,7 @@ class CollectRemoteInstances(pyblish.api.ContextPlugin):
                 "task": instance.data["task"],
                 "layer": layer.name
             }
-            subset = self.subset_template.format(
+            subset = self.subset_template_name.format(
                 **prepare_template_data(fill_pairs))
             instance.data["subset"] = subset
 
