@@ -8,6 +8,7 @@ log = logging.getLogger(__name__)
 
 from .jobs import JobQueue
 from .job_queue_route import JobQueueResource
+from .workers_rpc_route import WorkerRpc
 
 
 class WebServerManager:
@@ -72,6 +73,7 @@ class WebServerThread(threading.Thread):
 
         job_queue = JobQueue()
         self.job_queue_route = JobQueueResource(job_queue, manager)
+        self.workers_route = WorkerRpc(job_queue, manager, loop=loop)
 
     @property
     def port(self):
@@ -129,6 +131,9 @@ class WebServerThread(threading.Thread):
             await asyncio.sleep(0.5)
 
         print("Starting shutdown")
+        if self.workers_route:
+            await self.workers_route.stop()
+
         print("Stopping site")
         await self.site.stop()
         print("Site stopped")
