@@ -4,6 +4,7 @@ import os
 import sys
 import json
 from datetime import datetime
+import time
 
 from openpype.lib import PypeLogger
 from openpype.api import get_app_environments_for_context
@@ -109,6 +110,42 @@ class PypeCommands:
 
         log.info("Publish finished.")
         uninstall()
+
+    @staticmethod
+    def remotepublishfromapp(project, batch_path, host, user, targets=None):
+        from openpype import install, uninstall
+        from openpype.api import Logger
+
+        log = Logger.get_logger()
+
+        log.info("remotepublishphotoshop command")
+
+        install()
+
+        os.environ["OPENPYPE_PUBLISH_DATA"] = batch_path
+        os.environ["AVALON_PROJECT"] = project
+        os.environ["AVALON_APP"] = host
+
+        os.environ["OPENPYPE_EXECUTABLE"] = sys.executable
+        os.environ["IS_HEADLESS"] = "true"
+        from openpype.lib import ApplicationManager
+
+        application_manager = ApplicationManager()
+        data = {
+            "last_workfile_path": "c:/projects/test_project_test_asset_TestTask_v001.psd",
+            "start_last_workfile": True,
+            "project_name": project,
+            "asset_name": "test_asset",
+            "task_name": "test_task"
+        }
+
+        launched_app = application_manager.launch(
+            os.environ["AVALON_APP"] + "/2020", **data)
+
+        while launched_app.poll() is None:
+            time.sleep(0.5)
+
+        print(launched_app)
 
     @staticmethod
     def remotepublish(project, batch_path, host, user, targets=None):
