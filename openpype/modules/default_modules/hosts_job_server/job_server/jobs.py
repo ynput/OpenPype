@@ -129,6 +129,39 @@ class JobQueue:
         self._job_queue_by_host_name = collections.defaultdict(
             collections.deque
         )
+        self._workers_by_id = {}
+        self._workers_by_host_name = collections.defaultdict(list)
+
+    def workers(self):
+        """All currently registered workers."""
+        return self._workers_by_id.values()
+
+    def add_worker(self, worker):
+        host_name = worker.host_name
+        print("Added new worker for \"{}\"".format(host_name))
+        self._workers_by_id[worker.id] = worker
+        self._workers_by_host_name[host_name].append(worker)
+
+    def get_worker(self, worker_id):
+        return self._workers_by_id.get(worker_id)
+
+    def remove_worker(self, worker):
+        # Look if worker had assigned job to do
+        job = worker.current_job
+        if job is not None and not job.done:
+            # Reset job
+            job.set_worker(None)
+            job.reset()
+            # Add job back to queue
+            self._job_queue_by_host_name[job.host_name].appendleft(job)
+
+        # Remove worker from registered workers
+        self._workers_by_id.pop(worker.id, None)
+        host_name = worker.host_name
+        if worker in self._workers_by_host_name[host_name]:
+            self._workers_by_host_name[host_name].remove(worker)
+
+        print("Removed worker for \"{}\"".format(host_name))
 
     def get_job(self, job_id):
         """Job by it's id."""
