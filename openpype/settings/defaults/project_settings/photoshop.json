@@ -12,6 +12,11 @@
             "optional": true,
             "active": true
         },
+        "CollectRemoteInstances": {
+            "color_code": [],
+            "families": [],
+            "subset_template_name": ""
+        },
         "ExtractImage": {
             "formats": [
                 "png",
