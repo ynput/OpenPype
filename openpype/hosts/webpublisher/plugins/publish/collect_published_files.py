@@ -15,6 +15,7 @@ import tempfile
 import pyblish.api
 from avalon import io
 from openpype.lib import prepare_template_data
+from openpype.lib.plugin_tools import parse_json
 
 
 class CollectPublishedFiles(pyblish.api.ContextPlugin):
@@ -33,22 +34,6 @@ class CollectPublishedFiles(pyblish.api.ContextPlugin):
     # from Settings
     task_type_to_family = {}
 
-    def _load_json(self, path):
-        path = path.strip('\"')
-        assert os.path.isfile(path), (
-            "Path to json file doesn't exist. \"{}\"".format(path)
-        )
-        data = None
-        with open(path, "r") as json_file:
-            try:
-                data = json.load(json_file)
-            except Exception as exc:
-                self.log.error(
-                    "Error loading json: "
-                    "{} - Exception: {}".format(path, exc)
-                )
-        return data
-
     def _process_batch(self, dir_url):
         task_subfolders = [
             os.path.join(dir_url, o)
@@ -56,8 +41,8 @@ class CollectPublishedFiles(pyblish.api.ContextPlugin):
             if os.path.isdir(os.path.join(dir_url, o))]
         self.log.info("task_sub:: {}".format(task_subfolders))
         for task_dir in task_subfolders:
-            task_data = self._load_json(os.path.join(task_dir,
-                                                     "manifest.json"))
+            task_data = parse_json(os.path.join(task_dir,
+                                                "manifest.json"))
             self.log.info("task_data:: {}".format(task_data))
             ctx = task_data["context"]
             task_type = "default_task_type"
@@ -261,7 +246,7 @@ class CollectPublishedFiles(pyblish.api.ContextPlugin):
         assert batch_dir, (
             "Missing `OPENPYPE_PUBLISH_DATA`")
 
-        assert batch_dir, \
+        assert os.path.exists(batch_dir), \
             "Folder {} doesn't exist".format(batch_dir)
 
         project_name = os.environ.get("AVALON_PROJECT")

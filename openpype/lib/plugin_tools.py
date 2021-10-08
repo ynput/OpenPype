@@ -483,3 +483,20 @@ def should_decompress(file_url):
             "compression: \"dwab\"" in output
 
     return False
+
+
+def parse_json(path):
+    path = path.strip('\"')
+    assert os.path.isfile(path), (
+        "Path to json file doesn't exist. \"{}\"".format(path)
+    )
+    data = None
+    with open(path, "r") as json_file:
+        try:
+            data = json.load(json_file)
+        except Exception as exc:
+            log.error(
+                "Error loading json: "
+                "{} - Exception: {}".format(path, exc)
+            )
+    return data
