@@ -29,6 +29,8 @@ class Job:
         self._message = None
         self._deleted = False
 
+        self._worker = None
+
     def keep_in_memory(self):
         if self._done_time is None:
             return True
@@ -53,6 +55,8 @@ class Job:
         self._errored = False
         self._message = None
 
+        self._worker = None
+
     @property
     def started(self):
         return self._started
@@ -63,6 +67,18 @@ class Job:
 
     def set_deleted(self):
         self._deleted = True
+        self.set_worker(None)
+
+    def set_worker(self, worker):
+        if worker is self._worker:
+            return
+
+        if self._worker is not None:
+            self._worker.set_current_job(None)
+
+        self._worker = worker
+        if worker is not None:
+            worker.set_current_job(self)
 
     def set_started(self):
         self._started_time = datetime.datetime.now()
@@ -74,6 +90,8 @@ class Job:
         self._errored = not success
         self._message = message
         self._result_data = data
+        if self._worker is not None:
+            self._worker.set_current_job(None)
 
     def status(self):
         output = {}
