@@ -6,6 +6,9 @@ from aiohttp import web
 
 log = logging.getLogger(__name__)
 
+from .jobs import JobQueue
+from .job_queue_route import JobQueueResource
+
 
 class WebServerManager:
     """Manger that care about web server thread."""
@@ -66,6 +69,9 @@ class WebServerThread(threading.Thread):
         self.loop = loop
         self.runner = None
         self.site = None
+
+        job_queue = JobQueue()
+        self.job_queue_route = JobQueueResource(job_queue, manager)
 
     @property
     def port(self):
