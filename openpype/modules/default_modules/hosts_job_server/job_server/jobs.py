@@ -163,6 +163,35 @@ class JobQueue:
 
         print("Removed worker for \"{}\"".format(host_name))
 
+    def assign_jobs(self):
+        """Try to assign job for each idle worker.
+
+        Error all jobs without needed worker.
+        """
+        available_host_names = set()
+        for worker in self._workers_by_id.values():
+            host_name = worker.host_name
+            available_host_names.add(host_name)
+            if worker.is_idle():
+                jobs = self._job_queue_by_host_name[host_name]
+                while jobs:
+                    job = jobs.popleft()
+                    if not job.deleted:
+                        worker.set_current_job(job)
+                        break
+
+        for host_name in tuple(self._job_queue_by_host_name.keys()):
+            if host_name in available_host_names:
+                continue
+
+            jobs_deque = self._job_queue_by_host_name[host_name]
+            message = ("Not available workers for \"{}\"").format(host_name)
+            while jobs_deque:
+                job = jobs_deque.popleft()
+                if not job.deleted:
+                    job.set_done(False, message)
+        self._remove_old_jobs()
+
     def get_job(self, job_id):
         """Job by it's id."""
         return self._jobs_by_id.get(job_id)
