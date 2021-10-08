@@ -119,11 +119,12 @@ class Window(QtWidgets.QDialog):
 
         presets_button = widgets.ButtonWithMenu(awesome["filter"])
         presets_button.setEnabled(False)
+
         self.change_mode_btn = QtWidgets.QPushButton()
         if self.controller.sanity_mode:
-            self.change_mode_btn.setText("C")
+            self.set_publish_mode_btn()
         else:
-            self.change_mode_btn.setText("S")
+            self.set_validation_mode_btn()
         aditional_btns_layout.addWidget(self.change_mode_btn)
         aditional_btns_layout.addWidget(presets_button)
 
@@ -1132,16 +1133,22 @@ class Window(QtWidgets.QDialog):
     #
     # -------------------------------------------------------------------------
 
-    def change_to_sanity_mode(self):
+    def set_validation_mode_btn(self):
+        self.change_mode_btn.setText("V")
+        self.change_mode_btn.setToolTip("Switch to Validation mode.")
 
-        self.change_mode_btn.setText("C")
+    def set_publish_mode_btn(self):
+        self.change_mode_btn.setText("P")
+        self.change_mode_btn.setToolTip("Switch to Publish mode.")
+
+    def change_to_sanity_mode(self):
+        self.set_publish_mode_btn()
         self.controller.sanity_mode = True
         self.controller.deactivate_validator_plugins()
         self.reset()
 
     def change_to_classic_mode(self):
-
-        self.change_mode_btn.setText("S")
+        self.set_validation_mode_btn()
         self.controller.sanity_mode = False
         self.reset()
 
