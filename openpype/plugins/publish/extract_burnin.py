@@ -1,6 +1,5 @@
 import os
 import re
-import subprocess
 import json
 import copy
 import tempfile
@@ -157,6 +156,11 @@ class ExtractBurnin(openpype.api.Extractor):
             # Add anatomy keys to burnin_data.
             filled_anatomy = anatomy.format_all(burnin_data)
             burnin_data["anatomy"] = filled_anatomy.get_solved()
+
+            # Add context data burnin_data.
+            burnin_data["custom"] = (
+                instance.data.get("custom_burnin_data") or {}
+            )
 
             # Add source camera name to burnin data
             camera_name = repre.get("camera_name")

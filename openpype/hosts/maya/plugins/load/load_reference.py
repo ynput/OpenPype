@@ -13,6 +13,7 @@ class ReferenceLoader(openpype.hosts.maya.api.plugin.ReferenceLoader):
                 "pointcache",
                 "animation",
                 "mayaAscii",
+                "mayaScene",
                 "setdress",
                 "layout",
                 "camera",
@@ -71,7 +72,7 @@ class ReferenceLoader(openpype.hosts.maya.api.plugin.ReferenceLoader):
                 except:  # noqa: E722
                     pass
 
-            if family not in ["layout", "setdress", "mayaAscii"]:
+            if family not in ["layout", "setdress", "mayaAscii", "mayaScene"]:
                 for root in roots:
                     root.setParent(world=True)
 
