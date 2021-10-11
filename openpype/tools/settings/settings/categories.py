@@ -508,7 +508,7 @@ class SettingsCategoryWidget(QtWidgets.QWidget):
         first_invalid_item = invalid_items[0]
         self.scroll_widget.ensureWidgetVisible(first_invalid_item)
         if first_invalid_item.isVisible():
-            first_invalid_item.setFocus(True)
+            first_invalid_item.setFocus()
         return False
 
     def on_saved(self, saved_tab_widget):
