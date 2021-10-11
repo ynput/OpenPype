@@ -5,7 +5,7 @@ class HostsJobServer(OpenPypeModule):
     name = "hosts_job_server"
 
     def initialize(self, modules_settings):
-        server_url = modules_settings.get("server_url")
+        server_url = modules_settings.get("server_url") or ""
         while server_url.endswith("/"):
             server_url = server_url[:-1]
         self._server_url = server_url
