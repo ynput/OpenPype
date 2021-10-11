@@ -8,12 +8,12 @@ from avalon.nuke import lib as anlib
 class PreCollectNukeInstances(pyblish.api.ContextPlugin):
     """Collect all nodes with Avalon knob."""
 
-    order = pyblish.api.CollectorOrder - 0.59
+    order = pyblish.api.CollectorOrder - 0.49
     label = "Pre-collect Instances"
     hosts = ["nuke", "nukeassist"]
 
     # presets
-    sync_workfile_version = False
+    sync_workfile_version_on_families = []
 
     def process(self, context):
         asset_data = io.find_one({
@@ -120,11 +120,12 @@ class PreCollectNukeInstances(pyblish.api.ContextPlugin):
             # sync workfile version
             _families_test = [family] + families
             self.log.debug("__ _families_test: `{}`".format(_families_test))
-            if not next((f for f in _families_test
-                         if "prerender" in f),
-                        None) and self.sync_workfile_version:
-                # get version to instance for integration
-                instance.data['version'] = instance.context.data['version']
+            for family_test in _families_test:
+                if family_test in self.sync_workfile_version_on_families:
+                    self.log.debug("Syncing version with workfile for '{}'"
+                                   .format(family_test))
+                    # get version to instance for integration
+                    instance.data['version'] = instance.context.data['version']
 
             instance.data.update({
                 "subset": subset,

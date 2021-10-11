@@ -437,10 +437,6 @@ class OpenPypeAddOn(OpenPypeModule):
         """Initialization is not be required for most of addons."""
         pass
 
-    def connect_with_modules(self, enabled_modules):
-        """Do not require to implement connection with modules for addon."""
-        pass
-
 
 class ModulesManager:
     """Manager of Pype modules helps to load and prepare them to work.
@@ -494,6 +490,7 @@ class ModulesManager:
                 if (
                     not inspect.isclass(modules_item)
                     or modules_item is OpenPypeModule
+                    or modules_item is OpenPypeAddOn
                     or not issubclass(modules_item, OpenPypeModule)
                 ):
                     continue

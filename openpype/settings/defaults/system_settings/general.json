@@ -7,6 +7,11 @@
             "global": []
         }
     },
+    "disk_mapping": {
+        "windows": [],
+        "linux": [],
+        "darwin": []
+    },
     "openpype_path": {
         "windows": [],
         "darwin": [],

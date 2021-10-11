@@ -400,7 +400,9 @@ class TextWidget(InputWidget):
     def _on_value_change(self):
         if self.ignore_input_changes:
             return
+        self.start_value_timer()
 
+    def _on_value_change_timer(self):
         self.entity.set(self.input_value())
 
 
@@ -411,7 +413,8 @@ class NumberWidget(InputWidget):
         kwargs = {
             "minimum": self.entity.minimum,
             "maximum": self.entity.maximum,
-            "decimal": self.entity.decimal
+            "decimal": self.entity.decimal,
+            "steps": self.entity.steps
         }
         self.input_field = NumberSpinBox(self.content_widget, **kwargs)
         input_field_stretch = 1
@@ -426,6 +429,10 @@ class NumberWidget(InputWidget):
                 int(self.entity.minimum * slider_multiplier),
                 int(self.entity.maximum * slider_multiplier)
             )
+            if self.entity.steps is not None:
+                slider_widget.setSingleStep(
+                    self.entity.steps * slider_multiplier
+                )
 
             self.content_layout.addWidget(slider_widget, 1)
 
@@ -469,6 +476,9 @@ class NumberWidget(InputWidget):
         if self.ignore_input_changes:
             return
 
+        self.start_value_timer()
+
+    def _on_value_change_timer(self):
         value = self.input_field.value()
         if self._slider_widget is not None and not self._ignore_input_change:
             self._ignore_slider_change = True
@@ -566,7 +576,9 @@ class RawJsonWidget(InputWidget):
     def _on_value_change(self):
         if self.ignore_input_changes:
             return
+        self.start_value_timer()
 
+    def _on_value_change_timer(self):
         self._is_invalid = self.input_field.has_invalid_value()
         if not self.is_invalid:
             self.entity.set(self.input_field.json_value())
@@ -781,4 +793,7 @@ class PathInputWidget(InputWidget):
     def _on_value_change(self):
         if self.ignore_input_changes:
             return
+        self.start_value_timer()
+
+    def _on_value_change_timer(self):
         self.entity.set(self.input_value())

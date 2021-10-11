@@ -6,7 +6,12 @@
         },
         "ValidateVersion": {
             "enabled": true,
-            "optional": false
+            "optional": false,
+            "active": true
+        },
+        "ValidateIntent": {
+            "enabled": false,
+            "profiles": []
         },
         "IntegrateHeroVersion": {
             "enabled": true,
@@ -19,7 +24,7 @@
                 "animation",
                 "setdress",
                 "layout",
-                "mayaAscii"
+                "mayaScene"
             ]
         },
         "ExtractJpegEXR": {
@@ -152,6 +157,7 @@
                 {
                     "families": [],
                     "hosts": [],
+                    "task_types": [],
                     "tasks": [],
                     "template_name": "publish"
                 },
@@ -162,6 +168,7 @@
                         "prerender"
                     ],
                     "hosts": [],
+                    "task_types": [],
                     "tasks": [],
                     "template_name": "render"
                 }
@@ -170,6 +177,7 @@
                 {
                     "families": [],
                     "hosts": [],
+                    "task_types": [],
                     "tasks": [],
                     "template": ""
                 }
@@ -205,6 +213,7 @@
                 {
                     "families": [],
                     "hosts": [],
+                    "task_types": [],
                     "tasks": [],
                     "template": "{family}{Variant}"
                 },
@@ -213,6 +222,7 @@
                         "render"
                     ],
                     "hosts": [],
+                    "task_types": [],
                     "tasks": [],
                     "template": "{family}{Task}{Variant}"
                 },
@@ -224,6 +234,7 @@
                     "hosts": [
                         "tvpaint"
                     ],
+                    "task_types": [],
                     "tasks": [],
                     "template": "{family}{Task}_{Render_layer}_{Render_pass}"
                 },
@@ -235,6 +246,7 @@
                     "hosts": [
                         "tvpaint"
                     ],
+                    "task_types": [],
                     "tasks": [],
                     "template": "{family}{Task}"
                 },
@@ -245,6 +257,7 @@
                     "hosts": [
                         "aftereffects"
                     ],
+                    "task_types": [],
                     "tasks": [],
                     "template": "render{Task}{Variant}"
                 }
@@ -261,6 +274,7 @@
             "last_workfile_on_startup": [
                 {
                     "hosts": [],
+                    "task_types": [],
                     "tasks": [],
                     "enabled": true
                 }
@@ -268,6 +282,7 @@
             "open_workfile_tool_on_startup": [
                 {
                     "hosts": [],
+                    "task_types": [],
                     "tasks": [],
                     "enabled": false
                 }
@@ -287,6 +302,15 @@
                     "textures"
                 ]
             }
+        },
+        "loader": {
+            "family_filter_profiles": [
+                {
+                    "hosts": [],
+                    "task_types": [],
+                    "filter_families": []
+                }
+            ]
         }
     },
     "project_folder_structure": "{\"__project_root__\": {\"prod\": {}, \"resources\": {\"footage\": {\"plates\": {}, \"offline\": {}}, \"audio\": {}, \"art_dept\": {}}, \"editorial\": {}, \"assets[ftrack.Library]\": {\"characters[ftrack]\": {}, \"locations[ftrack]\": {}}, \"shots[ftrack.Sequence]\": {\"scripts\": {}, \"editorial[ftrack.Folder]\": {}}}}",

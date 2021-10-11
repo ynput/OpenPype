@@ -124,9 +124,47 @@
                             "value": "True"
                         }
                     ]
+                },
+                {
+                    "plugins": [
+                        "CreateWriteStill"
+                    ],
+                    "nukeNodeClass": "Write",
+                    "knobs": [
+                        {
+                            "name": "file_type",
+                            "value": "tiff"
+                        },
+                        {
+                            "name": "datatype",
+                            "value": "16 bit"
+                        },
+                        {
+                            "name": "compression",
+                            "value": "Deflate"
+                        },
+                        {
+                            "name": "tile_color",
+                            "value": "0x23ff00ff"
+                        },
+                        {
+                            "name": "channels",
+                            "value": "rgb"
+                        },
+                        {
+                            "name": "colorspace",
+                            "value": "sRGB"
+                        },
+                        {
+                            "name": "create_directories",
+                            "value": "True"
+                        }
+                    ]
                 }
             ],
-            "customNodes": []
+            "customNodes": [
+
+            ]
         },
         "regexInputs": {
             "inputs": [

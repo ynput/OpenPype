@@ -312,7 +312,7 @@ class ExtractOTIOReview(openpype.api.Extractor):
             out_frame_start += end_offset
 
         # start command list
-        command = ['"{}"'.format(ffmpeg_path)]
+        command = [ffmpeg_path]
 
         if sequence:
             input_dir, collection = sequence
@@ -324,8 +324,8 @@ class ExtractOTIOReview(openpype.api.Extractor):
 
             # form command for rendering gap files
             command.extend([
-                "-start_number {}".format(in_frame_start),
-                "-i \"{}\"".format(input_path)
+                "-start_number", str(in_frame_start),
+                "-i", input_path
             ])
 
         elif video:
@@ -334,13 +334,15 @@ class ExtractOTIOReview(openpype.api.Extractor):
             input_fps = otio_range.start_time.rate
             frame_duration = otio_range.duration.value
             sec_start = openpype.lib.frames_to_secons(frame_start, input_fps)
-            sec_duration = openpype.lib.frames_to_secons(frame_duration, input_fps)
+            sec_duration = openpype.lib.frames_to_secons(
+                frame_duration, input_fps
+            )
 
             # form command for rendering gap files
             command.extend([
-                "-ss {}".format(sec_start),
-                "-t {}".format(sec_duration),
-                "-i \"{}\"".format(video_path)
+                "-ss", str(sec_start),
+                "-t", str(sec_duration),
+                "-i", video_path
             ])
 
         elif gap:
@@ -349,22 +351,24 @@ class ExtractOTIOReview(openpype.api.Extractor):
 
             # form command for rendering gap files
             command.extend([
-                "-t {} -r {}".format(sec_duration, self.actual_fps),
-                "-f lavfi",
-                "-i color=c=black:s={}x{}".format(self.to_width,
-                                                  self.to_height),
-                "-tune stillimage"
+                "-t", str(sec_duration),
+                "-r", str(self.actual_fps),
+                "-f", "lavfi",
+                "-i", "color=c=black:s={}x{}".format(
+                    self.to_width, self.to_height
+                ),
+                "-tune", "stillimage"
             ])
 
         # add output attributes
         command.extend([
-            "-start_number {}".format(out_frame_start),
-            "\"{}\"".format(output_path)
+            "-start_number", str(out_frame_start),
+            output_path
         ])
         # execute
         self.log.debug("Executing: {}".format(" ".join(command)))
         output = openpype.api.run_subprocess(
-            " ".join(command), logger=self.log
+            command, logger=self.log
         )
         self.log.debug("Output: {}".format(output))
 

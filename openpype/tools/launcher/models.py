@@ -326,8 +326,6 @@ class ProjectModel(QtGui.QStandardItemModel):
         super(ProjectModel, self).__init__(parent=parent)
 
         self.dbcon = dbcon
-
-        self.hide_invisible = False
         self.project_icon = qtawesome.icon("fa.map", color="white")
         self._project_names = set()
 
@@ -380,16 +378,5 @@ class ProjectModel(QtGui.QStandardItemModel):
             self.invisibleRootItem().insertRows(row, items)
 
     def get_projects(self):
-        project_docs = []
-
-        for project_doc in sorted(
-            self.dbcon.projects(), key=lambda x: x["name"]
-        ):
-            if (
-                self.hide_invisible
-                and not project_doc["data"].get("visible", True)
-            ):
-                continue
-            project_docs.append(project_doc)
-
-        return project_docs
+        return sorted(self.dbcon.projects(only_active=True),
+                      key=lambda x: x["name"])

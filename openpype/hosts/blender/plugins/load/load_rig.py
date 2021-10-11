@@ -66,12 +66,16 @@ class BlendRigLoader(plugin.AssetLoader):
         objects = []
         nodes = list(container.children)
 
-        for obj in nodes:
-            obj.parent = asset_group
+        allowed_types = ['ARMATURE', 'MESH']
 
         for obj in nodes:
-            objects.append(obj)
-            nodes.extend(list(obj.children))
+            if obj.type in allowed_types:
+                obj.parent = asset_group
+
+        for obj in nodes:
+            if obj.type in allowed_types:
+                objects.append(obj)
+                nodes.extend(list(obj.children))
 
         objects.reverse()
 
@@ -107,7 +111,8 @@ class BlendRigLoader(plugin.AssetLoader):
 
                 if action is not None:
                     local_obj.animation_data.action = action
-                elif local_obj.animation_data.action is not None:
+                elif (local_obj.animation_data and
+                      local_obj.animation_data.action is not None):
                     plugin.prepare_data(
                         local_obj.animation_data.action, group_name)
 
@@ -126,7 +131,30 @@ class BlendRigLoader(plugin.AssetLoader):
 
         objects.reverse()
 
-        bpy.data.orphans_purge(do_local_ids=False)
+        curves = [obj for obj in data_to.objects if obj.type == 'CURVE']
+
+        for curve in curves:
+            local_obj = plugin.prepare_data(curve, group_name)
+            plugin.prepare_data(local_obj.data, group_name)
+
+            local_obj.use_fake_user = True
+
+            for mod in local_obj.modifiers:
+                mod_target_name = mod.object.name
+                mod.object = bpy.data.objects.get(
+                    f"{group_name}:{mod_target_name}")
+
+            if not local_obj.get(AVALON_PROPERTY):
+                local_obj[AVALON_PROPERTY] = dict()
+
+            avalon_info = local_obj[AVALON_PROPERTY]
+            avalon_info.update({"container_name": group_name})
+
+            local_obj.parent = asset_group
+            objects.append(local_obj)
+
+        while bpy.data.orphans_purge(do_local_ids=False):
+            pass
 
         bpy.ops.object.select_all(action='DESELECT')
 
