@@ -1823,3 +1823,20 @@ def recreate_instance(origin_node, avalon_data=None):
             dn.setInput(0, new_node)
 
     return new_node
+
+
+def extract_alembic(file,
+                    startFrame=None,
+                    endFrame=None):
+    """Extract an Alembic Geo.
+
+    This extracts an Alembic Geo .... what was Collected into the instance.
+
+    Arguments:
+
+        startFrame (float): Start frame of output. 
+
+        endFrame (float): End frame of output. 
+
+    """
+    pass
