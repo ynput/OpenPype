@@ -5,8 +5,26 @@ class HostsJobServer(OpenPypeModule):
     name = "hosts_job_server"
 
     def initialize(self, modules_settings):
-        self._server_url = modules_settings.get("server_url")
+        server_url = modules_settings.get("server_url")
+        while server_url.endswith("/"):
+            server_url = server_url[:-1]
+        self._server_url = server_url
         self.enabled = True
+
+    def send_job(self, host_name, job_data):
+        import requests
+
+        job_data = job_data or {}
+        job_data["host_name"] = host_name
+        api_path = "{}/api/jobs".format(self._server_url)
+        job_id = requests.post(api_path, data=job_data)
+        return job_id
+
+    def get_job_status(self, job_id):
+        import requests
+
+        api_path = "{}/api/jobs/{}".format(self._server_url, job_id)
+        return requests.get(api_path)
 
     def start_server(self, port=None, host=None):
         from .job_server import main
