@@ -27,6 +27,7 @@ class Worker:
         if self._job is not None:
             data = {
                 "job_id": self._job.id,
+                "worker_id": self.id,
                 "data": self._job.data
             }
             return await self.call("start_job", data)
