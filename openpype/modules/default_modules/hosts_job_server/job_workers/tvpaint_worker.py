@@ -2,6 +2,7 @@ import signal
 import time
 import asyncio
 
+from openpype.hosts.tvpaint.worker import TVPaintCommands
 from avalon.tvpaint.communication_server import (
     BaseCommunicator,
     CommunicationWrapper
@@ -55,8 +56,18 @@ class WorkerCommunicator(BaseCommunicator):
         if job is None:
             return
 
-        print(job)
-        self._worker_connection.finish_job()
+        success = False
+        message = "Unknown function"
+        data = None
+        workfile = job["workfile"]
+        if job.data.get("function") == "commands":
+            commands = TVPaintCommands(workfile, job.data["commands"])
+            commands.execute()
+            success = True
+            message = "Executed"
+            data = commands.result()
+
+        self._worker_connection.finish_job(success, message, data)
 
     def main_loop(self):
         while self.server_is_running:
