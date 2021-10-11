@@ -207,7 +207,7 @@ class TVPaintCommands:
         self.execute_george_through_file(george_script)
 
     def _close_workfile(self):
-        pass
+        self.execute_george_through_file("tv_projectclose")
 
     def execute(self):
         self._open_workfile()
