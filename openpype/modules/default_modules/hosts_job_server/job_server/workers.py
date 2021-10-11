@@ -59,7 +59,6 @@ class Worker:
         return result
 
     async def close(self):
-        # TODO disconnect without calling a method
         return await self.ws.close(
             code=WSCloseCode.GOING_AWAY,
             message="Server shutdown"
