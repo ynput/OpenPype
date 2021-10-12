@@ -28,9 +28,13 @@ class WorkerClient(JsonRpcClient):
         return True
 
     def finish_job(self, success, message, data):
-        self._loop.create_task(self._finish_job(success, message, data))
+        asyncio.ensure_future(
+            self._finish_job(success, message, data),
+            loop=self._loop
+        )
 
     async def _finish_job(self, success, message, data):
+        print("Current job", self.current_job)
         job_id = self.current_job["job_id"]
         self.current_job = None
 
@@ -146,17 +150,9 @@ class WorkerJobsConnection:
         print(
             "Registered as worker with id {}".format(worker_id)
         )
-        counter = 0
         while self._connected and self._loop.is_running():
             if self._stopped or ws.closed:
                 break
-
-            if self.client.current_job:
-                if counter == 3:
-                    counter = 0
-                    self.finish_job()
-                else:
-                    counter += 1
 
             await asyncio.sleep(0.3)
 
