@@ -25,17 +25,17 @@ def main(port=None, host=None):
     port = int(port or 8079)
     host = str(host or "localhost")
 
+    print(host, port)
     with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as con:
-        print(con, type(con))
         result_of_check = con.connect_ex((host, port))
 
-    print(result_of_check)
     if result_of_check == 0:
         print((
             "Server {}:{} is already running or address is occupied."
         ).format(host, port))
         return 1
 
+    print("Running server {}:{}".format(host, port))
     manager = WebServerManager(port, host)
     manager.start_server()
 
