@@ -3,32 +3,6 @@ from openpype.settings import get_project_settings
 from maya import cmds
 
 
-valid_repres_by_subset_id = collections.defaultdict(list)
-
-for subset_id, profile in profiles_per_subset_id.items():
-    for subset_id, in_data in asset_entity_data["subsets"].items():
-            subset_entity = in_data["subset_entity"]
-            subsets_by_id[subset_entity["_id"]] = subset_entity
-
-            version_data = in_data["version"]
-            version_entity = version_data["version_entity"]
-            version_by_subset_id[subset_id] = version_entity
-            repres_by_version_id[version_entity["_id"]] = (
-                version_data["repres"]
-            )
-
-    version_entity = version_by_subset_id[subset_id]
-    version_id = version_entity["_id"]
-    repres = repres_by_version_id[version_id]
-
-
-for subset_id, repres in representations_ordered:
-    repre_by_low_name = {
-        repre["name"].lower(): repre for repre in repres
-    }
-
-    for repre_name_idx, profile_repre_name in enumerate(profile["repre_names_lowered"]):
-        repre = repre_by_low_name.get(profile_repre_name)
 class AbstractTemplateLoader:
 
     def __init__(self):
