@@ -12,8 +12,9 @@ from .base_worker import WorkerJobsConnection
 
 class WorkerCommunicator(BaseCommunicator):
     def __init__(self, server_url):
-        super().__init__(self)
+        super().__init__()
 
+        self.return_code = 1
         self._server_url = server_url
         self._worker_connection = None
 
@@ -30,6 +31,7 @@ class WorkerCommunicator(BaseCommunicator):
 
     def stop(self):
         self._worker_connection.stop()
+        self.return_code = 0
         super().stop()
 
     @property
