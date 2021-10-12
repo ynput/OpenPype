@@ -51,7 +51,7 @@ class LoadClip(api.Loader):
         )
     ]
 
-    node_name_template = ""
+    node_name_template = "{class_name}_{ext}"
 
     @classmethod
     def get_representations(cls):
