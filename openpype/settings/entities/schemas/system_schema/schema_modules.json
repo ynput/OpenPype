@@ -238,6 +238,20 @@
             ]
         },
         {
+            "type": "dict",
+            "key": "job_queue",
+            "label": "Job Queue",
+            "require_restart": true,
+            "collapsible": true,
+            "children": [
+                {
+                    "type": "text",
+                    "key": "server_url",
+                    "label": "Server Rest URL"
+                }
+            ]
+        },
+        {
             "type": "dynamic_schema",
             "name": "system_settings/modules"
         }

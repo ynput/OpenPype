@@ -178,5 +178,8 @@
     },
     "slack": {
         "enabled": false
+    },
+    "job_queue": {
+        "server_url": ""
     }
 }
