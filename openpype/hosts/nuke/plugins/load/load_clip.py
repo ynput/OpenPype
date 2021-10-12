@@ -36,7 +36,7 @@ class LoadClip(api.Loader):
     icon = "file-video-o"
     color = "white"
 
-    script_start = nuke.root()["first_frame"].value()
+    script_start = int(nuke.root()["first_frame"].value())
 
     # option gui
     defaults = {
@@ -66,6 +66,9 @@ class LoadClip(api.Loader):
             containerise,
             viewer_update_and_undo_stop
         )
+        is_sequence = len(context["representation"]["files"]) <= 1
+
+        file = self.fname.replace("\\", "/")
 
         start_at_workfile = options.get(
             "start_at_workfile", self.defaults["start_at_workfile"])
@@ -73,43 +76,41 @@ class LoadClip(api.Loader):
         version = context['version']
         version_data = version.get("data", {})
         repr_id = context["representation"]["_id"]
+        colorspace = version_data.get("colorspace")
+        repr_cont = context["representation"]["context"]
 
         self.log.info("version_data: {}\n".format(version_data))
         self.log.debug(
             "Representation id `{}` ".format(repr_id))
 
-        self.first_frame = int(nuke.root()["first_frame"].getValue())
         self.handle_start = version_data.get("handleStart", 0)
         self.handle_end = version_data.get("handleEnd", 0)
 
         first = version_data.get("frameStart", None)
         last = version_data.get("frameEnd", None)
+        first -= self.handle_start
+        last += self.handle_end
+
+        if not is_sequence:
+            duration = last - first + 1
+            first = 1
+            last = first + duration
+        elif "#" not in file:
+            frame = repr_cont.get("frame")
+            assert frame, "Representation is not sequence"
+
+            padding = len(frame)
+            file = file.replace(frame, "#" * padding)
 
         # Fallback to asset name when namespace is None
         if namespace is None:
             namespace = context['asset']['name']
-
-        first -= self.handle_start
-        last += self.handle_end
-
-        file = self.fname
 
         if not file:
             repr_id = context["representation"]["_id"]
             self.log.warning(
                 "Representation id `{}` is failing to load".format(repr_id))
             return
-
-        file = file.replace("\\", "/")
-
-        repr_cont = context["representation"]["context"]
-        assert repr_cont.get("frame"), "Representation is not sequence"
-
-        if "#" not in file:
-            frame = repr_cont.get("frame")
-            if frame:
-                padding = len(frame)
-                file = file.replace(frame, "#" * padding)
 
         name_data = {
             "asset": repr_cont["asset"],
@@ -133,7 +134,6 @@ class LoadClip(api.Loader):
             read_node["file"].setValue(file)
 
             # Set colorspace defined in version data
-            colorspace = context["version"]["data"].get("colorspace")
             if colorspace:
                 read_node["colorspace"].setValue(str(colorspace))
 
@@ -233,7 +233,6 @@ class LoadClip(api.Loader):
 
         version_data = version.get("data", {})
 
-        self.first_frame = int(nuke.root()["first_frame"].getValue())
         self.handle_start = version_data.get("handleStart", 0)
         self.handle_end = version_data.get("handleEnd", 0)
 
@@ -315,11 +314,11 @@ class LoadClip(api.Loader):
             rtn["after"].setValue("continue")
             rtn["input.first_lock"].setValue(True)
             rtn["input.first"].setValue(
-                self.first_frame
+                self.script_start
             )
 
         if time_warp_nodes != []:
-            start_anim = self.first_frame + (self.handle_start / speed)
+            start_anim = self.script_start + (self.handle_start / speed)
             for timewarp in time_warp_nodes:
                 twn = nuke.createNode(timewarp["Class"],
                                       "name {}".format(timewarp["name"]))
