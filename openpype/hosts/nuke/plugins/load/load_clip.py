@@ -23,10 +23,13 @@ class LoadClip(api.Loader):
         "prerender",
         "review"
     ]
-    representations = ([
-        "exr", "dpx", "mov",
-        "review", "mp4"]
-        + get_review_presets_config())
+    representations = [
+        "exr",
+        "dpx",
+        "mov",
+        "review",
+        "mp4"
+    ]
 
     label = "Load Clip"
     order = -20
@@ -52,7 +55,11 @@ class LoadClip(api.Loader):
 
     @classmethod
     def get_representations(cls):
-        return cls.representations + cls._representations
+        return (
+            cls.representations
+            + cls._representations
+            + get_review_presets_config()
+        )
 
     def load(self, context, name, namespace, options):
         from avalon.nuke import (
