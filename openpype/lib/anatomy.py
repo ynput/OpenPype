@@ -1075,9 +1075,12 @@ class Templates:
             if isinstance(orig_value, str) and '{task}' in orig_value:
                 orig_value = orig_value.replace('{task}', '{task[name]}')
 
-            # Replace {hierarchy} by '{hierarchy[full]}' for backward compatibility
+            # Replace {hierarchy} by '{hierarchy[full]}' for backward
+            # compatibility
             if isinstance(orig_value, str) and '{hierarchy}' in orig_value:
-                orig_value = orig_value.replace('{hierarchy}', '{hierarchy[full]}')
+                orig_value = orig_value.replace(
+                    '{hierarchy}', '{hierarchy[full]}'
+                )
 
             if isinstance(orig_value, StringType):
                 output[key] = self._format(orig_value, data)
