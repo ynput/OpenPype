@@ -287,9 +287,8 @@ def run_disk_mapping_commands(mongo_url):
     if not disk_mapping:
         return
 
-    for mapping in disk_mapping.get(low_platform):
-        source, destination = mapping
-
+    mappings = disk_mapping.get(low_platform) or []
+    for source, destination in mappings:
         args = ["subst", destination.rstrip('/'), source.rstrip('/')]
         _print("disk mapping args:: {}".format(args))
         try:
