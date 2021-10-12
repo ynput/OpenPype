@@ -25,7 +25,6 @@ def main(port=None, host=None):
     port = int(port or 8079)
     host = str(host or "localhost")
 
-    print(host, port)
     with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as con:
         result_of_check = con.connect_ex((host, port))
 

@@ -24,10 +24,15 @@ class WorkerCommunicator(BaseCommunicator):
             self._server_url, "tvpaint", loop
         )
         asyncio.ensure_future(
-            self._worker_connection.main_loop(), loop=loop
+            self._worker_connection.main_loop(register_worker=False),
+            loop=loop
         )
 
         super()._start_webserver()
+
+    def _on_client_connect(self, *args, **kwargs):
+        super()._on_client_connect(*args, **kwargs)
+        self._worker_connection.register_as_worker()
 
     def stop(self):
         self._worker_connection.stop()

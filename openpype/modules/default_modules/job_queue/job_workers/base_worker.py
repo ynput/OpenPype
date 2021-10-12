@@ -81,12 +81,12 @@ class WorkerJobsConnection:
         else:
             self.client.finish_job(success, message, data)
 
-    async def main_loop(self):
+    async def main_loop(self, register_worker=True):
         self._is_running = True
 
         while not self._stopped:
             start_time = datetime.datetime.now()
-            await self._connection_loop()
+            await self._connection_loop(register_worker)
             delta = datetime.datetime.now() - start_time
             print("Connection loop took {}s".format(str(delta)))
             # Check if was stopped and stop while loop in that case
@@ -111,7 +111,7 @@ class WorkerJobsConnection:
         except Exception:
             traceback.print_exception(*sys.exc_info())
 
-    async def _connection_loop(self):
+    async def _connection_loop(self, register_worker):
         self._connecting = True
         future = asyncio.run_coroutine_threadsafe(
             self._connect(), loop=self._loop
@@ -143,13 +143,10 @@ class WorkerJobsConnection:
             self.client = None
             return
 
-        worker_id = await self.client.call(
-            "register_worker", [self._host_name]
-        )
-        self.client.set_id(worker_id)
-        print(
-            "Registered as worker with id {}".format(worker_id)
-        )
+        print("Connected to job queue server")
+        if register_worker:
+            self.register_as_worker()
+
         while self._connected and self._loop.is_running():
             if self._stopped or ws.closed:
                 break
@@ -157,6 +154,18 @@ class WorkerJobsConnection:
             await asyncio.sleep(0.3)
 
         await self._stop_cleanup()
+
+    def register_as_worker(self):
+        asyncio.ensure_future(self._register_as_worker(), loop=self._loop)
+
+    async def _register_as_worker(self):
+        worker_id = await self.client.call(
+            "register_worker", [self._host_name]
+        )
+        self.client.set_id(worker_id)
+        print(
+            "Registered as worker with id {}".format(worker_id)
+        )
 
     async def disconnect(self):
         await self._stop_cleanup()
