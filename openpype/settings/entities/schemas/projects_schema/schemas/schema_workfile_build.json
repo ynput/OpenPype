@@ -17,83 +17,9 @@
                         "type": "task-types-enum"
                     },
                     {
-                        "key": "tasks",
-                        "label": "Task names",
-                        "type": "list",
-                        "object_type": "text"
-                    },
-                    {
-                        "type": "splitter"
-                    },
-                    {
-                        "key": "current_context",
-                        "label": "<b>Current Context</b>",
-                        "type": "list",
-                        "highlight_content": true,
-                        "object_type": {
-                            "type": "dict",
-                            "children": [
-                                {
-                                    "key": "subset_name_filters",
-                                    "label": "Subset name Filters",
-                                    "type": "list",
-                                    "object_type": "text"
-                                },
-                                {
-                                    "key": "families",
-                                    "label": "Families",
-                                    "type": "list",
-                                    "object_type": "text"
-                                },
-                                {
-                                    "key": "repre_names",
-                                    "label": "Repre Names",
-                                    "type": "list",
-                                    "object_type": "text"
-                                },
-                                {
-                                    "key": "loaders",
-                                    "label": "Loaders",
-                                    "type": "list",
-                                    "object_type": "text"
-                                }
-                            ]
-                        }
-                    },
-                    {
-                        "key": "linked_assets",
-                        "label": "<b>Linked Assets</b>",
-                        "type": "list",
-                        "highlight_content": true,
-                        "object_type": {
-                            "type": "dict",
-                            "children": [
-                                {
-                                    "key": "subset_name_filters",
-                                    "label": "Subset name Filters",
-                                    "type": "list",
-                                    "object_type": "text"
-                                },
-                                {
-                                    "key": "families",
-                                    "label": "Families",
-                                    "type": "list",
-                                    "object_type": "text"
-                                },
-                                {
-                                    "key": "repre_names",
-                                    "label": "Repre Names",
-                                    "type": "list",
-                                    "object_type": "text"
-                                },
-                                {
-                                    "key": "loaders",
-                                    "label": "Loaders",
-                                    "type": "list",
-                                    "object_type": "text"
-                                }
-                            ]
-                        }
+                        "key": "path",
+                        "label": "Path to template",
+                        "type": "text"
                     }
                 ]
             }

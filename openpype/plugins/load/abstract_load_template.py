@@ -1,186 +1,134 @@
-import avalon.api
-import avalon.io
-from avalon.maya.pipeline import containerise
-from avalon.maya import lib
-from maya import cmds, mel
-from avalon import maya
 import avalon
-from openpype.lib.profiles_filtering import filter_profiles
 from openpype.settings import get_project_settings
+from maya import cmds
 
+
+valid_repres_by_subset_id = collections.defaultdict(list)
+
+for subset_id, profile in profiles_per_subset_id.items():
+    for subset_id, in_data in asset_entity_data["subsets"].items():
+            subset_entity = in_data["subset_entity"]
+            subsets_by_id[subset_entity["_id"]] = subset_entity
+
+            version_data = in_data["version"]
+            version_entity = version_data["version_entity"]
+            version_by_subset_id[subset_id] = version_entity
+            repres_by_version_id[version_entity["_id"]] = (
+                version_data["repres"]
+            )
+
+    version_entity = version_by_subset_id[subset_id]
+    version_id = version_entity["_id"]
+    repres = repres_by_version_id[version_id]
+
+
+for subset_id, repres in representations_ordered:
+    repre_by_low_name = {
+        repre["name"].lower(): repre for repre in repres
+    }
+
+    for repre_name_idx, profile_repre_name in enumerate(profile["repre_names_lowered"]):
+        repre = repre_by_low_name.get(profile_repre_name)
 class AbstractTemplateLoader:
 
-    def __init__(self, task) -> None:
-        self.task = task
-        self.get_template()
+    def __init__(self):
+        loaders_by_name = {}
+        for loader in avalon.api.discover(avalon.api.Loader):
+            loader_name = loader.__name__
+            if loader_name in loaders_by_name:
+                raise KeyError(
+                    "Duplicated loader name {0}!".format(loader_name)
+                )
+            loaders_by_name[loader_name] = loader
 
-    @with_avalon
-    def get_build_profiles(task_type):
-        host_name = avalon.io.Session["AVALON_APP"]
-        project_settings = get_project_settings(
-            avalon.io.Session["AVALON_PROJECT"]
+        # Skip if there are any loaders
+        if not loaders_by_name:
+            self.log.warning("There are no registered loaders.")
+            return
+
+        self.import_template(self.template_path)
+
+        placeholders = (
+            self.placeholderize(node) for node
+            in self.get_template_nodes()
+            if self.is_valid_placeholder(node)
         )
 
-        wb_settings = project_settings.get(host_name, {}).get("workfile_builder")
-        # Get presets for host
+        loaded_containers = []
+        for placeholder in placeholders:
+            container = avalon.api.load(
+                loaders_by_name[placeholder['loader']],
+                repre["_id"],
+                name=placeholder['name']
+            )
+            loaded_containers.append(container)
 
-        if not wb_settings:
-            # backward compatibility
-            wb_settings = host_settings.get("workfile_build") or {}
+    @property
+    def template_path(self):
+        project_settings = get_project_settings(avalon.io.Session["AVALON_PROJECT"])
+        #TODO: get task, get DCC
+        for profile in project_settings['maya']['workfile_build']['profiles']: #get DCC
+            if 'Modeling' in profile['task_types']: # Get tasktype
+                return profile['path'] #Validate path
+        raise ValueError("No matching profile found for task '{}' in DCC '{}'".format('Modeling', 'maya'))
 
-        builder_profiles = wb_settings.get("profiles")
-        if not builder_profiles:
-            return None
+    def import_template(self, template_path):
+        """
+        Import template in dcc
 
-        return filter_profiles(builder_profiles, {"task_type": task_type})
-
-    def get_template_path(self):
-        # Get template from avalon context
-
-
-        self.template_path = ''
-
-    def load_template(self):
+        Args:
+            template_path (str): fullpath to current task and dcc's template file
+        """
         raise NotImplementedError
 
-# Maya api
-class TemplateLoader:
-    def load_template(self):
-        self.context_assets = []
-        self.linked_assets = []
-
-        with maya.maintained_selection():
-            nodes = cmds.file(self.template_path,
-                      i=True,
-                      preserveReferences=True,
-                      returnNewNodes=True,
-                      groupReference=True,
-                     )
-        return self.get_template_nodes()
-
     def get_template_nodes(self):
-        nodes = cmds.ls(type='locator')
-        context_assets = []
-        linked_assets = []
+        raise NotImplementedError
 
-        for node in nodes: ### '&&&' Nom des variables à décider
-            if not cmds.has_attr("&&&Loader Pref"):
-                continue
-            elif cmds.getAttr("&&&Loader pref") == '&&&Context':
-                context_assets.append(node)
-            elif cmds.getAttr("&&&Loader pref") == "&&&Linked":
-                linked_assets.append(node)
-        return context_assets, linked_assets
+    def populate_template(self, nodes):
+        raise NotImplementedError
 
+    def placeholderize(self, node):
+        return {
+            'loader': self.get_placeholder_loader(node),
+            'type': self.get_placeholder_type(node),
+            'node': node,
+            'name': node,
+        }
 
-# class AbstractTemplateLoader:
-#     """Abstract loader for templating files"""
+    @staticmethod
+    def is_valid_placeholder(node):
+        raise NotImplementedError
 
-#     families = []
-#     # icon = "volume-up"
-#     # color = "orange"
+    @staticmethod
+    def get_placeholder_loader(node):
+        raise NotImplementedError
 
-#     #@with_avalon
-#     def get_build_profiles(task_type):
-#         host_name = avalon.api.registered_host().__name__.rsplit(".", 1)[-1]
-#         project_settings = get_project_settings(
-#             avalon.io.Session["AVALON_PROJECT"]
-#         )
+    @staticmethod
+    def get_placeholder_type(node):
+        raise NotImplementedError
 
-#         host_settings = project_settings.get(host_name) or {}
-#         # Get presets for host
-#         wb_settings = host_settings.get("workfile_builder")
-#         if not wb_settings:
-#             # backward compatibility
-#             wb_settings = host_settings.get("workfile_build") or {}
+class TemplateLoader(AbstractTemplateLoader):
+    def import_template(self, path):
+        self.newNodes = cmds.file(path, i=True, returnNewNodes=True)#Find a way to instantiate only once
 
-#         builder_profiles = wb_settings.get("profiles")
-#         if not builder_profiles:
-#             return None
+    def get_template_nodes(self): # Get templates nodes objects ? How ? Agnostic
+        #cmds.listAttribute('')
+        return cmds.ls(self.newNodes, type='locator') #filter by correct placeholders only
 
-#         return filter_profiles(builder_profiles, {"task_type": task_type})
+    def switch(self, placeholder): # Probably useless
+        print(placeholder['loader'])
 
-#     def load_template(self):
-#         raise NotImplementedError('Not implemented in your DCC pleas contact your TD.')
+    @staticmethod
+    def is_valid_placeholder(node):
+        if not cmds.attributeQuery('Test', node=node, exists=True):
+            print("Ignoring '{}': Invalid template placeholder".format(node))
+            return True
+        return True
 
-#     def load(self, context, name=None, namespace=None, data=None):
-#         print("3")
-#         # Get current asset name and entity
-#         current_asset_name = context.get('asset')
-#         current_asset_entity = avalon.io.find_one({
-#             "type": "asset",
-#             "name": current_asset_name
-#         })
-#         # Get current task name
-#         current_task_name = avalon.io.Session.get("AVALON_TASK", {})
+    @staticmethod
+    def get_placeholder_loader(node):
+        return cmds.attributeQuery('loader', node=node)
 
-#         # Skip if asset was not found
-#         if not current_asset_entity:
-#             print("Asset entity with name `{}` was not found".format(
-#                 current_asset_name
-#             ))
-#             return
-
-#         # Load workfile presets for task
-#         self.build_profiles = self.get_build_profiles(
-#             current_task_name.get('type'))
-
-#         # Skip if there are any presets for task
-#         if not self.build_presets:
-#             self.log.warning(
-#                 "Current task `{}` does not have any loading preset.".format(
-#                     current_task_name
-#                 )
-#             )
-#             return
-#         print("4'")
-#         # Prepare available loaders
-#         loaders_by_name = {}
-#         for loader in avalon.api.discover(avalon.api.Loader):
-#             loader_name = loader.__name__
-#             if loader_name in loaders_by_name:
-#                 raise KeyError(
-#                     "Duplicated loader name {0}!".format(loader_name)
-#                 )
-#             loaders_by_name[loader_name] = loader
-
-#         template_loader = loaders_by_name.get('TemplateLoader')
-
-#         # Skip if there are any loaders
-#         if not loaders_by_name:
-#             self.log.warning("There are no registered loaders.")
-#             return
-
-#         # Skip if there are not template loaders
-#         if not template_loader:
-#             self.log.error("There are no registered template loader.")
-#             return
-
-#         # Get template for current task
-#         template_path = self.build_presets.get("template_path")
-#         if not template_path:
-#             self.log.warning(
-#                 "Current task `{}` has no defined template.".format(
-#                     current_task_name
-#                 )
-#             )
-#             return
-#         self.template_path = resolve(template_path)
-#         #TODO: resolve path
-#         if not os.path.exits(template_path):
-#             self.log.warning(
-#                 "Template path: `{}` not found.".format(
-#                     current_task_name
-#                 )
-#             )
-#             return
-#         print("5")
-#         self.load_template()
-
-
-#     def update(self, container, representation):
-#         node = container["objectName"]
-
-#         path = avalon.api.get_representation_path(representation)
-
-#         cmds.file(path, type="mayaAscii", i=True, returnNewNodes=True, defaultNamespace=container['namespace'])
+    @staticmethod
+    def get_placeholder_type(node):
+        return cmds.attributeQuery('type', node=node)
