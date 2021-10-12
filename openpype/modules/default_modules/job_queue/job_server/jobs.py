@@ -95,7 +95,13 @@ class Job:
             self._worker.set_current_job(None)
 
     def status(self):
-        output = {}
+        worker_id = None
+        if self._worker is not None:
+            worker_id = self._worker.id
+        output = {
+            "id": self.id,
+            "worker_id": worker_id
+        }
         if self._message:
             output["message"] = self._message
 
