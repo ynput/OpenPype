@@ -11,6 +11,10 @@ class HostsJobServer(OpenPypeModule):
         self._server_url = server_url
         self.enabled = True
 
+    @property
+    def server_url(self):
+        return self._server_url
+
     def send_job(self, host_name, job_data):
         import requests
 
