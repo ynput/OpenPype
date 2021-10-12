@@ -1071,6 +1071,14 @@ class Templates:
         """
         output = collections.defaultdict(dict)
         for key, orig_value in templates.items():
+            # Replace {task} by '{task[name]}' for backward compatibility
+            if isinstance(orig_value, str) and '{task}' in orig_value:
+                orig_value = orig_value.replace('{task}', '{task[name]}')
+
+            # Replace {hierarchy} by '{hierarchy[full]}' for backward compatibility
+            if isinstance(orig_value, str) and '{hierarchy}' in orig_value:
+                orig_value = orig_value.replace('{hierarchy}', '{hierarchy[full]}')
+
             if isinstance(orig_value, StringType):
                 output[key] = self._format(orig_value, data)
                 continue

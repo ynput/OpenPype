@@ -357,22 +357,30 @@ def get_workdir_data(project_doc, asset_doc, task_name, host_name):
     Returns:
         dict: Data prepared for filling workdir template.
     """
-    hierarchy = "/".join(asset_doc["data"]["parents"])
-    task_type = asset_doc['data']['tasks'][task_name]['type']
-    task_code = project_doc['config']['tasks'][task_type]['short_name']
+    hierarchy = {k: v for k, v in enumerate(asset_doc["data"]["parents"])}
+    hierarchy["full"] = "/".join(asset_doc["data"]["parents"])
+
+    task_type = asset_doc['data']['tasks'].get(task_name, {}).get('type')
+
+    if task_type:
+        task_code = project_doc['config']['tasks'][task_type]['short_name']
+    else:
+        task_code = None
 
     data = {
         "project": {
             "name": project_doc["name"],
             "code": project_doc["data"].get("code")
         },
-        "task": task_name,
-        "task_type": task_type,
-        "task_code": task_code,
+        "task": {
+            "name": task_name,
+            "type": task_type,
+            "code": task_code,
+        },
         "asset": asset_doc["name"],
         "app": host_name,
         "user": os.getlogin(),
-        "hierarchy": hierarchy
+        "hierarchy": hierarchy,
     }
     return data
 
