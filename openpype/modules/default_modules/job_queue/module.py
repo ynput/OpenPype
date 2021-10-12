@@ -58,14 +58,14 @@ class JobQueueModule(OpenPypeModule):
         job_data = job_data or {}
         job_data["host_name"] = host_name
         api_path = "{}/api/jobs".format(self._server_url)
-        job_id = requests.post(api_path, data=job_data)
-        return job_id
+        post_request = requests.post(api_path, data=job_data)
+        return str(post_request.content.decode())
 
     def get_job_status(self, job_id):
         import requests
 
         api_path = "{}/api/jobs/{}".format(self._server_url, job_id)
-        return requests.get(api_path)
+        return requests.get(api_path).json()
 
     def cli(self, click_group):
         click_group.add_command(cli_main)
