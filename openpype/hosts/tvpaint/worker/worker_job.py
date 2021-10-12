@@ -69,7 +69,7 @@ class BaseCommand:
 
     @classmethod
     @abstractmethod
-    def from_existing(cls, data):
+    def from_existing(cls, parent, data):
         pass
 
     def execute_george(self, george_script):
@@ -194,23 +194,25 @@ class TVPaintCommands:
             command_name = command_data["command"]
 
             klass = self.classes_by_name[command_name]
-            command = klass.from_existing(command_data)
+            command = klass.from_existing(self, command_data)
             self.add_command(command)
 
     def add_command(self, command):
         self._commands.append(command)
 
     def _open_workfile(self):
-        george_script = "tv_LoadProject '\"'\"{}\"'\"'".format(
-            self._workfile.replace("\\", "/")
-        )
+        workfile = self._workfile.replace("\\", "/")
+        print("Opening workfile {}".format(workfile))
+        george_script = "tv_LoadProject '\"'\"{}\"'\"'".format(workfile)
         self.execute_george_through_file(george_script)
 
     def _close_workfile(self):
+        print("Closing workfile")
         self.execute_george_through_file("tv_projectclose")
 
     def execute(self):
         self._open_workfile()
+        print("Commands execution started ({})".format(len(self._commands)))
         for command in self._commands:
             command.execute()
             command.set_done()
