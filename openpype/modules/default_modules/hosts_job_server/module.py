@@ -1,3 +1,4 @@
+import click
 from openpype.modules import OpenPypeModule
 from openpype.api import get_system_settings
 
@@ -30,6 +31,9 @@ class HostsJobServer(OpenPypeModule):
 
         api_path = "{}/api/jobs/{}".format(self._server_url, job_id)
         return requests.get(api_path)
+
+    def cli(self, click_group):
+        click_group.add_command(cli_main)
 
     @classmethod
     def get_server_url_from_settings(cls):
@@ -83,3 +87,32 @@ class HostsJobServer(OpenPypeModule):
             ).format(app.full_name))
 
         return main(executable, server_url)
+
+
+@click.group(
+    "hosts_job_server",
+    help="Application job server. Can be used as render farm."
+)
+def cli_main():
+    pass
+
+
+@cli_main.command(
+    "start_server",
+    help="Start server handling workers and their jobs."
+)
+@click.option("--host", help="Server host (ip address)")
+@click.option("--port", help="Server port")
+def cli_start_server(host, port):
+    HostsJobServer.start_server(host, port)
+
+
+@cli_main.command(
+    "start_worker", help=(
+        "Start a worker for a specific application. (e.g. \"tvpaint/11.5\")"
+    )
+)
+@click.argument("app_name")
+@click.option("--server_url", help="Server url which handle workers and jobs.")
+def cli_start_worker(app_name, server_url):
+    HostsJobServer.start_worker(app_name, server_url)
