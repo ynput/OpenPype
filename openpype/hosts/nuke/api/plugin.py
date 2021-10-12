@@ -23,3 +23,19 @@ class PypeCreator(PypeCreatorMixin, avalon.nuke.pipeline.Creator):
             self.log.error(msg + '\n\nPlease use other subset name!')
             raise NameError("`{0}: {1}".format(__name__, msg))
         return
+
+
+def get_review_presets_config():
+    settings = get_current_project_settings()
+    review_profiles = (
+        settings["global"]
+        ["publish"]
+        ["ExtractReview"]
+        ["profiles"]
+    )
+
+    outputs = {}
+    for profile in review_profiles:
+        outputs.update(profile.get("outputs", {}))
+
+    return [str(name) for name, _prop in outputs.items()]
