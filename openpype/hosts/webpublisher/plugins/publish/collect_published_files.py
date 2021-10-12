@@ -15,7 +15,7 @@ import tempfile
 import pyblish.api
 from avalon import io
 from openpype.lib import prepare_template_data
-from openpype.lib.plugin_tools import parse_json
+from openpype.lib.plugin_tools import parse_json, get_batch_asset_task_info
 
 
 class CollectPublishedFiles(pyblish.api.ContextPlugin):
@@ -45,18 +45,11 @@ class CollectPublishedFiles(pyblish.api.ContextPlugin):
                                                 "manifest.json"))
             self.log.info("task_data:: {}".format(task_data))
             ctx = task_data["context"]
-            task_type = "default_task_type"
-            task_name = None
 
-            if ctx["type"] == "task":
-                items = ctx["path"].split('/')
-                asset = items[-2]
-                os.environ["AVALON_TASK"] = ctx["name"]
-                task_name = ctx["name"]
-                task_type = ctx["attributes"]["type"]
-            else:
-                asset = ctx["name"]
-                os.environ["AVALON_TASK"] = ""
+            asset, task_name, task_type = get_batch_asset_task_info(ctx)
+
+            if task_name:
+                os.environ["AVALON_TASK"] = task_name
 
             is_sequence = len(task_data["files"]) > 1
 

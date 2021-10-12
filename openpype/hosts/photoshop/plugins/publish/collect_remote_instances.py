@@ -3,6 +3,7 @@ import os
 
 from avalon import photoshop
 from openpype.lib import prepare_template_data
+from openpype.lib.plugin_tools import parse_json
 
 
 class CollectRemoteInstances(pyblish.api.ContextPlugin):
@@ -36,8 +37,11 @@ class CollectRemoteInstances(pyblish.api.ContextPlugin):
         variant = "Main"
         if batch_dir and os.path.exists(batch_dir):
             # TODO check if batch manifest is same as tasks manifests
-            task_data = self.parse_json(os.path.join(batch_dir,
-                                                     "manifest.json"))
+            task_data = parse_json(os.path.join(batch_dir,
+                                                "manifest.json"))
+            if not task_data:
+                raise ValueError(
+                    "Cannot parse batch meta in {} folder".format(batch_dir))
             variant = task_data["variant"]
 
         stub = photoshop.stub()

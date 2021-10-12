@@ -486,6 +486,13 @@ def should_decompress(file_url):
 
 
 def parse_json(path):
+    """Parses json file at 'path' location
+
+        Returns:
+            (dict) or None if unparsable
+        Raises:
+            AsssertionError if 'path' doesn't exist
+    """
     path = path.strip('\"')
     assert os.path.isfile(path), (
         "Path to json file doesn't exist. \"{}\"".format(path)
@@ -500,3 +507,24 @@ def parse_json(path):
                 "{} - Exception: {}".format(path, exc)
             )
     return data
+
+
+def get_batch_asset_task_info(ctx):
+    """Parses context data from webpublisher's batch metadata
+
+        Returns:
+            (tuple): asset, task_name (Optional), task_type
+    """
+    task_type = "default_task_type"
+    task_name = None
+    asset = None
+
+    if ctx["type"] == "task":
+        items = ctx["path"].split('/')
+        asset = items[-2]
+        task_name = ctx["name"]
+        task_type = ctx["attributes"]["type"]
+    else:
+        asset = ctx["name"]
+
+    return asset, task_name, task_type
