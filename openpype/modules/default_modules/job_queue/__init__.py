@@ -1,6 +1,6 @@
-from .module import HostsJobServer
+from .module import JobQueueModule
 
 
 __all__ = (
-    "HostsJobServer",
+    "JobQueueModule",
 )
