@@ -125,6 +125,17 @@ class PypeCommands:
         os.environ["OPENPYPE_PUBLISH_DATA"] = batch_path
         os.environ["AVALON_PROJECT"] = project
         os.environ["AVALON_APP"] = host
+        os.environ["AVALON_APP_NAME"] = os.environ["AVALON_APP"] + "/2020"
+        os.environ["AVALON_ASSET"] = "test_asset"
+        os.environ["AVALON_TASK"] = "test_task"
+
+        env = get_app_environments_for_context(
+            os.environ["AVALON_PROJECT"],
+            os.environ["AVALON_ASSET"],
+            os.environ["AVALON_TASK"],
+            os.environ["AVALON_APP_NAME"]
+        )
+        os.environ.update(env)
 
         os.environ["OPENPYPE_EXECUTABLE"] = sys.executable
         os.environ["IS_HEADLESS"] = "true"
