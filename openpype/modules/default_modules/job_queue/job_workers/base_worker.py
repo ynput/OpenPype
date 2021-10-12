@@ -107,7 +107,6 @@ class WorkerJobsConnection:
         except Exception:
             traceback.print_exception(*sys.exc_info())
 
-
     async def _connection_loop(self):
         self._connecting = True
         future = asyncio.run_coroutine_threadsafe(

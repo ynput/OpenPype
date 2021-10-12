@@ -61,9 +61,12 @@ class WorkerCommunicator(BaseCommunicator):
         success = False
         message = "Unknown function"
         data = None
-        workfile = job["workfile"]
-        if job.data.get("function") == "commands":
-            commands = TVPaintCommands(workfile, job.data["commands"])
+        job_data = job["data"]
+        workfile = job_data["workfile"]
+        if job_data.get("function") == "commands":
+            commands = TVPaintCommands(
+                workfile, job_data["commands"], self
+            )
             commands.execute()
             success = True
             message = "Executed"
