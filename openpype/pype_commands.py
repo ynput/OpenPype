@@ -8,6 +8,7 @@ import time
 
 from openpype.lib import PypeLogger
 from openpype.api import get_app_environments_for_context
+from openpype.lib.plugin_tools import parse_json, get_batch_asset_task_info
 
 
 class PypeCommands:
@@ -112,7 +113,17 @@ class PypeCommands:
         uninstall()
 
     @staticmethod
-    def remotepublishfromapp(project, batch_path, host, user, targets=None):
+    def remotepublishfromapp(project, batch_dir, host, user, targets=None):
+        """Opens installed variant of 'host' and run remote publish there.
+
+            Currently implemented and tested for Photoshop where customer
+            wants to process uploaded .psd file and publish collected layers
+            from there.
+
+            Requires installed host application on the machine.
+
+            Runs publish process as user would, in automatic fashion.
+        """
         from openpype import install, uninstall
         from openpype.api import Logger
 
@@ -122,36 +133,60 @@ class PypeCommands:
 
         install()
 
-        os.environ["OPENPYPE_PUBLISH_DATA"] = batch_path
-        os.environ["AVALON_PROJECT"] = project
-        os.environ["AVALON_APP"] = host
-        os.environ["AVALON_APP_NAME"] = os.environ["AVALON_APP"] + "/2020"
-        os.environ["AVALON_ASSET"] = "test_asset"
-        os.environ["AVALON_TASK"] = "test_task"
+        from openpype.lib import ApplicationManager
+        application_manager = ApplicationManager()
 
+        app_group = application_manager.app_groups.get(host)
+        if not app_group or not app_group.enabled:
+            raise ValueError("No application {} configured".format(host))
+
+        found_variant_key = None
+        # finds most up-to-date variant if any installed
+        for variant_key, variant in app_group.variants.items():
+            for executable in variant.executables:
+                if executable.exists():
+                    found_variant_key = variant_key
+
+        if not found_variant_key:
+            raise ValueError("No executable for {} found".format(host))
+
+        app_name = "{}/{}".format(host, found_variant_key)
+
+        os.environ["OPENPYPE_PUBLISH_DATA"] = batch_dir
+
+        batch_data = None
+        if batch_dir and os.path.exists(batch_dir):
+            # TODO check if batch manifest is same as tasks manifests
+            batch_data = parse_json(os.path.join(batch_dir, "manifest.json"))
+
+        if not batch_data:
+            raise ValueError(
+                "Cannot parse batch meta in {} folder".format(batch_dir))
+
+        asset, task_name, _task_type = get_batch_asset_task_info(
+            batch_data["context"])
+
+        workfile_path = os.path.join(batch_dir,
+                                     batch_data["task"],
+                                     batch_data["files"][0])
+        print("workfile_path {}".format(workfile_path))
+        data = {
+            "last_workfile_path": workfile_path,
+            "start_last_workfile": True
+        }
+
+        # must have for proper launch of app
         env = get_app_environments_for_context(
-            os.environ["AVALON_PROJECT"],
-            os.environ["AVALON_ASSET"],
-            os.environ["AVALON_TASK"],
-            os.environ["AVALON_APP_NAME"]
+            project,
+            asset,
+            task_name,
+            app_name
         )
         os.environ.update(env)
 
-        os.environ["OPENPYPE_EXECUTABLE"] = sys.executable
         os.environ["IS_HEADLESS"] = "true"
-        from openpype.lib import ApplicationManager
 
-        application_manager = ApplicationManager()
-        data = {
-            "last_workfile_path": "c:/projects/test_project_test_asset_TestTask_v001.psd",
-            "start_last_workfile": True,
-            "project_name": project,
-            "asset_name": "test_asset",
-            "task_name": "test_task"
-        }
-
-        launched_app = application_manager.launch(
-            os.environ["AVALON_APP"] + "/2020", **data)
+        launched_app = application_manager.launch(app_name, **data)
 
         while launched_app.poll() is None:
             time.sleep(0.5)
