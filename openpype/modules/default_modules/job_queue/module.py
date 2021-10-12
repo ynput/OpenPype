@@ -1,3 +1,10 @@
+import sys
+
+if sys.version_info[0] == 2:
+    from urlparse import urlsplit, urlunsplit
+else:
+    from urllib.parse import urlsplit, urlunsplit
+
 import click
 from openpype.modules import OpenPypeModule
 from openpype.api import get_system_settings
@@ -8,10 +15,21 @@ class JobQueueModule(OpenPypeModule):
 
     def initialize(self, modules_settings):
         server_url = modules_settings.get("server_url") or ""
-        while server_url.endswith("/"):
-            server_url = server_url[:-1]
-        self._server_url = server_url
+
+        self._server_url = self.url_conversion(server_url)
         self.enabled = True
+
+    @staticmethod
+    def url_conversion(url):
+        if not url:
+            return url
+
+        url_parts = list(urlsplit(url))
+        if not url_parts[0]:
+            url = "http://{}".format(url)
+            url_parts = list(urlsplit(url))
+
+        return urlunsplit(url_parts)
 
     @property
     def server_url(self):
@@ -38,7 +56,7 @@ class JobQueueModule(OpenPypeModule):
     @classmethod
     def get_server_url_from_settings(cls):
         module_settings = get_system_settings()["modules"]
-        return (
+        return cls.url_conversion(
             module_settings
             .get(cls.name, {})
             .get("server_url")
@@ -55,11 +73,14 @@ class JobQueueModule(OpenPypeModule):
         import requests
         from openpype.lib import ApplicationManager
 
-        if server_url is None:
+        if not server_url:
             server_url = cls.get_server_url_from_settings()
 
+        server_url = "localhost:8079"
         if not server_url:
             raise ValueError("Server url is not set.")
+
+        server_url = cls.url_conversion(server_url)
 
         # Validate url
         requests.get(server_url)
