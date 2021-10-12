@@ -20,14 +20,31 @@ class JobQueueModule(OpenPypeModule):
         self.enabled = True
 
     @staticmethod
-    def url_conversion(url):
+    def url_conversion(url, ws=False):
         if not url:
             return url
 
         url_parts = list(urlsplit(url))
-        if not url_parts[0]:
-            url = "http://{}".format(url)
+        scheme = url_parts[0]
+        if not scheme:
+            if ws:
+                url = "ws://{}".format(url)
+            else:
+                url = "http://{}".format(url)
             url_parts = list(urlsplit(url))
+
+        elif ws:
+            if scheme not in ("ws", "wss"):
+                if scheme == "https":
+                    url_parts[0] = "wss"
+                else:
+                    url_parts[0] = "ws"
+
+        elif scheme not in ("http", "https"):
+            if scheme == "wss":
+                url_parts[0] = "https"
+            else:
+                url_parts[0] = "http"
 
         return urlunsplit(url_parts)
 
@@ -76,14 +93,15 @@ class JobQueueModule(OpenPypeModule):
         if not server_url:
             server_url = cls.get_server_url_from_settings()
 
-        server_url = "localhost:8079"
         if not server_url:
             raise ValueError("Server url is not set.")
 
-        server_url = cls.url_conversion(server_url)
+        http_server_url = cls.url_conversion(server_url)
 
         # Validate url
-        requests.get(server_url)
+        requests.get(http_server_url)
+
+        ws_server_url = cls.url_conversion(server_url) + "/ws"
 
         app_manager = ApplicationManager()
         app = app_manager.applications.get(app_name)
@@ -93,7 +111,7 @@ class JobQueueModule(OpenPypeModule):
             )
 
         if app.host_name == "tvpaint":
-            return cls._start_tvpaint_worker(app, server_url)
+            return cls._start_tvpaint_worker(app, ws_server_url)
         raise ValueError("Unknown host \"{}\"".format(app.host_name))
 
     @classmethod
