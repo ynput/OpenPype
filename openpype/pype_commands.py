@@ -3,6 +3,7 @@
 import os
 import sys
 import json
+import click
 from datetime import datetime
 
 from openpype.lib import PypeLogger
@@ -32,6 +33,16 @@ class PypeCommands:
         else:
             user_role = "manager"
         settings.main(user_role)
+
+    @staticmethod
+    def add_modules(click_func):
+        from openpype.modules import ModulesManager
+
+        manager = ModulesManager()
+        for module in manager.modules:
+            if hasattr(module, "cli"):
+                module.cli(click_func)
+        return click_func
 
     @staticmethod
     def launch_eventservercli(*args):
