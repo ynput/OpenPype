@@ -199,6 +199,9 @@ class JobQueue:
                     job.set_done(False, message)
         self._remove_old_jobs()
 
+    def get_jobs(self):
+        return self._jobs_by_id.values()
+
     def get_job(self, job_id):
         """Job by it's id."""
         return self._jobs_by_id.get(job_id)

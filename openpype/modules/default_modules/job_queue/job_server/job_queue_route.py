@@ -27,7 +27,10 @@ class JobQueueResource:
             )
 
     async def get_jobs(self, request):
-        return Response(status=200)
+        jobs_data = []
+        for job in self._job_queue.get_jobs():
+            jobs_data.append(job.status())
+        return Response(status=200, body=self.encode(jobs_data))
 
     async def post_job(self, request):
         data = await request.json()
