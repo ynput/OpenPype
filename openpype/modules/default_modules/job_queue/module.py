@@ -3,8 +3,8 @@ from openpype.modules import OpenPypeModule
 from openpype.api import get_system_settings
 
 
-class HostsJobServer(OpenPypeModule):
-    name = "hosts_job_server"
+class JobQueueModule(OpenPypeModule):
+    name = "job_queue"
 
     def initialize(self, modules_settings):
         server_url = modules_settings.get("server_url") or ""
@@ -40,7 +40,7 @@ class HostsJobServer(OpenPypeModule):
         module_settings = get_system_settings()["modules"]
         return (
             module_settings
-            .get("hosts_job_server", {})
+            .get(cls.name, {})
             .get("server_url")
         )
 
@@ -90,7 +90,7 @@ class HostsJobServer(OpenPypeModule):
 
 
 @click.group(
-    "hosts_job_server",
+    JobQueueModule.name,
     help="Application job server. Can be used as render farm."
 )
 def cli_main():
@@ -104,7 +104,7 @@ def cli_main():
 @click.option("--host", help="Server host (ip address)")
 @click.option("--port", help="Server port")
 def cli_start_server(host, port):
-    HostsJobServer.start_server(host, port)
+    JobQueueModule.start_server(host, port)
 
 
 @cli_main.command(
@@ -115,4 +115,4 @@ def cli_start_server(host, port):
 @click.argument("app_name")
 @click.option("--server_url", help="Server url which handle workers and jobs.")
 def cli_start_worker(app_name, server_url):
-    HostsJobServer.start_worker(app_name, server_url)
+    JobQueueModule.start_worker(app_name, server_url)
