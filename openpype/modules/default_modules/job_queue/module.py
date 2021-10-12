@@ -107,7 +107,7 @@ class JobQueueModule(OpenPypeModule):
                 " or accessible on this workstation."
             ).format(app.full_name))
 
-        return main(executable, server_url)
+        return main(str(executable), server_url)
 
 
 @click.group(
