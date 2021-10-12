@@ -10,7 +10,6 @@ from avalon.maya import pipeline
 
 from openpype.api import BuildWorkfile
 from openpype.api import BuildWorkfileTemplate
-from lib_template_builder import create_place_holder
 import maya.cmds as cmds
 from openpype.settings import get_project_settings
 from openpype.tools.utils import host_tools
@@ -36,7 +35,7 @@ def deferred():
         cmds.menuItem(
             "Build First Workfile",
             parent=pipeline._menu,
-            command=lambda *args: BuildWorkfile().process()
+            command=lambda *args: BuildWorkfileTemplate().process()
         )
 
     def add_build_template_workfiles_item():
