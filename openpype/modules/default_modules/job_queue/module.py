@@ -122,10 +122,10 @@ def cli_main():
     "start_server",
     help="Start server handling workers and their jobs."
 )
-@click.option("--host", help="Server host (ip address)")
 @click.option("--port", help="Server port")
-def cli_start_server(host, port):
-    JobQueueModule.start_server(host, port)
+@click.option("--host", help="Server host (ip address)")
+def cli_start_server(port, host):
+    JobQueueModule.start_server(port, host)
 
 
 @cli_main.command(
