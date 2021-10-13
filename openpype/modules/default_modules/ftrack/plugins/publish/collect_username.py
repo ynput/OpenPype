@@ -36,6 +36,7 @@ class CollectUsername(pyblish.api.ContextPlugin):
         if os.environ["AVALON_APP"] == "photoshop":
             if not os.environ.get("IS_HEADLESS"):
                 self.log.debug("Regular process, skipping")
+                return
 
         os.environ["FTRACK_API_USER"] = os.environ["FTRACK_BOT_API_USER"]
         os.environ["FTRACK_API_KEY"] = os.environ["FTRACK_BOT_API_KEY"]
