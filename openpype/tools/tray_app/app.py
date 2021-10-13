@@ -203,14 +203,15 @@ class ConsoleTrayApp:
             self.initializing = True
 
             self.launch_method(*self.subprocess_args)
-        elif ConsoleTrayApp.process.poll() is not None:
-            self.exit()
-        elif ConsoleTrayApp.callback_queue:
+        elif ConsoleTrayApp.callback_queue and \
+                not ConsoleTrayApp.callback_queue.empty():
             try:
                 callback = ConsoleTrayApp.callback_queue.get(block=False)
                 callback()
             except queue.Empty:
                 pass
+        elif ConsoleTrayApp.process.poll() is not None:
+            self.exit()
 
     @classmethod
     def execute_in_main_thread(cls, func_to_call_from_main_thread):
@@ -230,8 +231,9 @@ class ConsoleTrayApp:
         self._close()
         if ConsoleTrayApp.websocket_server:
             ConsoleTrayApp.websocket_server.stop()
-        ConsoleTrayApp.process.kill()
-        ConsoleTrayApp.process.wait()
+        if ConsoleTrayApp.process:
+            ConsoleTrayApp.process.kill()
+            ConsoleTrayApp.process.wait()
         if self.timer:
             self.timer.stop()
         QtCore.QCoreApplication.exit()
