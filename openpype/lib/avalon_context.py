@@ -357,8 +357,7 @@ def get_workdir_data(project_doc, asset_doc, task_name, host_name):
     Returns:
         dict: Data prepared for filling workdir template.
     """
-    hierarchy = {k: v for k, v in enumerate(asset_doc["data"]["parents"])}
-    hierarchy["full"] = "/".join(asset_doc["data"]["parents"])
+    hierarchy = "/".join(asset_doc["data"]["parents"])
 
     task_type = asset_doc['data']['tasks'].get(task_name, {}).get('type')
 
