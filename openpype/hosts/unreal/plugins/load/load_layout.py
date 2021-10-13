@@ -1,9 +1,12 @@
 import os
 import json
+from pathlib import Path
 
 import unreal
 from unreal import EditorAssetLibrary
 from unreal import EditorLevelLibrary
+from unreal import AssetToolsHelpers
+from unreal import FBXImportType
 from unreal import MathLibrary as umath
 
 from avalon import api, pipeline
@@ -58,6 +61,8 @@ class LayoutLoader(api.Loader):
     def _process_family(self, assets, classname, transform):
         ar = unreal.AssetRegistryHelpers.get_asset_registry()
 
+        actors = []
+
         for asset in assets:
             obj = ar.get_asset_by_object_path(asset).get_asset()
             if obj.get_class().get_name() == classname:
@@ -75,7 +80,91 @@ class LayoutLoader(api.Loader):
                 ), False)
                 actor.set_actor_scale3d(transform.get('scale'))
 
+                actors.append(actor)
+
+        return actors
+
+    def _import_animation(
+            self, asset_dir, path, rig_count, instance_name, skeleton,
+            actors_dict):
+        anim_path = f"{asset_dir}/animations/{path.with_suffix('').name}_{rig_count:02d}"
+
+        # Import animation
+        task = unreal.AssetImportTask()
+        task.options = unreal.FbxImportUI()
+
+        task.set_editor_property(
+            'filename', str(path.with_suffix(f".{rig_count:02d}.fbx")))
+        task.set_editor_property('destination_path', anim_path)
+        task.set_editor_property(
+            'destination_name', f"{instance_name}_animation")
+        task.set_editor_property('replace_existing', False)
+        task.set_editor_property('automated', True)
+        task.set_editor_property('save', False)
+
+        # set import options here
+        task.options.set_editor_property(
+            'automated_import_should_detect_type', False)
+        task.options.set_editor_property(
+            'original_import_type', FBXImportType.FBXIT_SKELETAL_MESH)
+        task.options.set_editor_property(
+            'mesh_type_to_import', FBXImportType.FBXIT_ANIMATION)
+        task.options.set_editor_property('import_mesh', False)
+        task.options.set_editor_property('import_animations', True)
+        task.options.set_editor_property('override_full_name', True)
+        task.options.set_editor_property('skeleton', skeleton)
+
+        task.options.anim_sequence_import_data.set_editor_property(
+            'animation_length',
+            unreal.FBXAnimationLengthImportType.FBXALIT_EXPORTED_TIME
+        )
+        task.options.anim_sequence_import_data.set_editor_property(
+            'import_meshes_in_bone_hierarchy', False)
+        task.options.anim_sequence_import_data.set_editor_property(
+            'use_default_sample_rate', True)
+        task.options.anim_sequence_import_data.set_editor_property(
+            'import_custom_attribute', True)
+        task.options.anim_sequence_import_data.set_editor_property(
+            'import_bone_tracks', True)
+        task.options.anim_sequence_import_data.set_editor_property(
+            'remove_redundant_keys', True)
+        task.options.anim_sequence_import_data.set_editor_property(
+            'convert_scene', True)
+
+        AssetToolsHelpers.get_asset_tools().import_asset_tasks([task])
+
+        asset_content = unreal.EditorAssetLibrary.list_assets(
+            anim_path, recursive=False, include_folder=False
+        )
+
+        animation = None
+
+        for a in asset_content:
+            unreal.EditorAssetLibrary.save_asset(a)
+            imported_asset_data = unreal.EditorAssetLibrary.find_asset_data(a)
+            imported_asset = unreal.AssetRegistryHelpers.get_asset(
+                imported_asset_data)
+            if imported_asset.__class__ == unreal.AnimSequence:
+                animation = imported_asset
+                break
+
+        if animation:
+            actor = None
+            if actors_dict.get(instance_name):
+                for a in actors_dict.get(instance_name):
+                    if a.get_class().get_name() == 'SkeletalMeshActor':
+                        actor = a
+                        break
+
+            animation.set_editor_property('enable_root_motion', True)
+            actor.skeletal_mesh_component.set_editor_property(
+                'animation_mode', unreal.AnimationMode.ANIMATION_SINGLE_NODE)
+            actor.skeletal_mesh_component.animation_data.set_editor_property(
+                'anim_to_play', animation)
+
     def _process(self, libpath, asset_dir, loaded=None):
+        ar = unreal.AssetRegistryHelpers.get_asset_registry()
+
         with open(libpath, "r") as fp:
             data = json.load(fp)
 
@@ -84,46 +173,78 @@ class LayoutLoader(api.Loader):
         if not loaded:
             loaded = []
 
+        path = Path(libpath)
+        rig_count = 0
+
+        skeleton_dict = {}
+        actors_dict = {}
+
         for element in data:
             reference = element.get('reference_fbx')
-
-            if reference in loaded:
-                continue
-
-            loaded.append(reference)
-
-            family = element.get('family')
-            loaders = api.loaders_from_representation(
-                all_loaders, reference)
-            loader = self._get_loader(loaders, family)
-
-            if not loader:
-                continue
-
             instance_name = element.get('instance_name')
 
-            options = {
-                "asset_dir": asset_dir
-            }
+            skeleton = None
 
-            assets = api.load(
-                loader,
-                reference,
-                namespace=instance_name,
-                options=options
-            )
+            if reference not in loaded:
+                loaded.append(reference)
 
-            instances = [
-                item for item in data
-                if item.get('reference_fbx') == reference]
+                family = element.get('family')
+                loaders = api.loaders_from_representation(
+                    all_loaders, reference)
+                loader = self._get_loader(loaders, family)
 
-            for instance in instances:
-                transform = instance.get('transform')
+                if not loader:
+                    continue
 
-                if family == 'model':
-                    self._process_family(assets, 'StaticMesh', transform)
-                elif family == 'rig':
-                    self._process_family(assets, 'SkeletalMesh', transform)
+                options = {
+                    "asset_dir": asset_dir
+                }
+
+                assets = api.load(
+                    loader,
+                    reference,
+                    namespace=instance_name,
+                    options=options
+                )
+
+                instances = [
+                    item for item in data
+                    if item.get('reference_fbx') == reference]
+
+                for instance in instances:
+                    transform = instance.get('transform')
+                    inst = instance.get('instance_name')
+
+                    actors = []
+
+                    if family == 'model':
+                        actors = self._process_family(
+                            assets, 'StaticMesh', transform)
+                    elif family == 'rig':
+                        actors = self._process_family(
+                            assets, 'SkeletalMesh', transform)
+                        actors_dict[inst] = actors
+
+                if family == 'rig':
+                    # Finds skeleton among the imported assets
+                    for asset in assets:
+                        obj = ar.get_asset_by_object_path(asset).get_asset()
+                        if obj.get_class().get_name() == 'Skeleton':
+                            skeleton = obj
+                            if skeleton:
+                                break
+
+                if skeleton:
+                    skeleton_dict[reference] = skeleton
+            else:
+                skeleton = skeleton_dict.get(reference)
+
+            if skeleton:
+                self._import_animation(
+                    asset_dir, path, rig_count, instance_name, skeleton,
+                    actors_dict)
+
+            rig_count += 1
 
     def _remove_family(self, assets, components, classname, propname):
         ar = unreal.AssetRegistryHelpers.get_asset_registry()
