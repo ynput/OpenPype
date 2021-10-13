@@ -6,6 +6,7 @@ import pyblish.api
 
 from avalon import photoshop
 
+
 class ClosePS(pyblish.api.ContextPlugin):
     """Close PS after publish. For Webpublishing only.
     """
