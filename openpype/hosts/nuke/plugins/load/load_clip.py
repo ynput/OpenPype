@@ -130,7 +130,6 @@ class LoadClip(plugin.NukeLoader):
         read_node = nuke.createNode(
             "Read",
             "name {}".format(read_name))
-        self.set_as_member(read_node)
 
         # to avoid multiple undo steps for rest of process
         # we will switch off undo-ing
@@ -173,6 +172,8 @@ class LoadClip(plugin.NukeLoader):
 
         if version_data.get("retime", None):
             self.make_retimes(read_node, version_data)
+
+        self.set_as_member(read_node)
 
         return container
 
