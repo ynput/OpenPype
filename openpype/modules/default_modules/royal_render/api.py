@@ -5,7 +5,7 @@ import os
 
 from openpype.settings import get_project_settings
 from openpype.lib.local_settings import OpenPypeSettingsRegistry
-from openpype.lib import PypeLogger
+from openpype.lib import PypeLogger, run_subprocess
 from .rr_job import RRJob, SubmitFile, SubmitterParameter
 
 
@@ -18,13 +18,19 @@ class Api:
     RR_SUBMIT_CONSOLE = 1
     RR_SUBMIT_API = 2
 
-    def __init__(self, settings):
+    def __init__(self, settings, project=None):
         self._settings = settings
+        self._initialize_rr(project)
 
-    def initialize_rr_modules(self, project=None):
+    def _initialize_rr(self, project=None):
         # type: (str) -> None
+        """Initialize RR Path.
 
-        is_64bit_python = sys.maxsize > 2 ** 32
+        Args:
+            project (str, Optional): Project name to set RR api in
+                context.
+
+        """
         if project:
             project_settings = get_project_settings(project)
             rr_path = (
@@ -40,26 +46,52 @@ class Api:
                 ["rr_path"]
                 ["default"]
             )
+        os.environ["RR_ROOT"] = rr_path
+        self._rr_path = rr_path
 
-        # default for linux
-        rr_module_path = "/bin/lx64/lib"
+    def _get_rr_bin_path(self, rr_root=None):
+        # type: (str) -> str
+        """Get path to RR bin folder."""
+        rr_root = rr_root or self._rr_path
+        is_64bit_python = sys.maxsize > 2 ** 32
 
+        rr_bin_path = ""
         if sys.platform.lower() == "win32":
-            rr_module_path = "/bin/win64"
+            rr_bin_path = "/bin/win64"
             if not is_64bit_python:
                 # we are using 64bit python
-                rr_module_path = "/bin/win"
+                rr_bin_path = "/bin/win"
+            rr_bin_path = rr_bin_path.replace(
+                "/", os.path.sep
+            )
+
+        if sys.platform.lower() == "darwin":
+            rr_bin_path = "/bin/mac64"
+            if not is_64bit_python:
+                rr_bin_path = "/bin/mac"
+
+        if sys.platform.lower() == "linux":
+            rr_bin_path = "/bin/lx64"
+
+        return os.path.join(rr_root, rr_bin_path)
+
+    def _initialize_module_path(self):
+        # type: () -> None
+        """Set RR modules for Python."""
+        # default for linux
+        rr_bin = self._get_rr_bin_path()
+        rr_module_path = os.path.join(rr_bin, "lx64/lib")
+
+        if sys.platform.lower() == "win32":
+            rr_module_path = rr_bin
             rr_module_path = rr_module_path.replace(
                 "/", os.path.sep
             )
 
         if sys.platform.lower() == "darwin":
-            rr_module_path = "/bin/mac64/lib/python/27"
-            if not is_64bit_python:
-                rr_module_path = "/bin/mac/lib/python/27"
+            rr_module_path = os.path.join(rr_bin, "lib/python/27")
 
-        sys.path.append(os.path.join(rr_path, rr_module_path))
-        os.environ["RR_ROOT"] = rr_path
+        sys.path.append(os.path.join(self._rr_path, rr_module_path))
 
     def create_submission(self, jobs, submitter_attributes, file_name=None):
         # type: (list[RRJob], list[SubmitterParameter], str) -> SubmitFile
@@ -90,7 +122,22 @@ class Api:
 
     def _submit_using_console(self, file):
         # type: (SubmitFile) -> bool
-        ...
+        rr_console = os.path.join(
+            self._get_rr_bin_path(),
+            "rrSubmitterconsole"
+        )
+
+        if sys.platform.lower() == "darwin":
+            if "/bin/mac64" in rr_console:
+                rr_console = rr_console.replace("/bin/mac64", "/bin/mac")
+
+        if sys.platform.lower() == "win32":
+            if "/bin/win64" in rr_console:
+                rr_console = rr_console.replace("/bin/win64", "/bin/win")
+            rr_console += ".exe"
+
+        args = [rr_console, file]
+        run_subprocess(" ".join(args), logger=log)
 
     def _submit_using_api(self, file):
         # type: (SubmitFile) -> None
@@ -103,13 +150,12 @@ class Api:
             RoyalRenderException: When something fails.
 
         """
-        self.initialize_rr_modules()
+        self._initialize_module_path()
+        import libpyRR2 as rrLib  # noqa
+        from rrJob import getClass_JobBasics  # noqa
+        import libpyRR2 as _RenderAppBasic  # noqa
 
-        import libpyRR2 as rrLib
-        from rrJob import getClass_JobBasics
-        import libpyRR2 as _RenderAppBasic
-
-        tcp = rrLib._rrTCP("")
+        tcp = rrLib._rrTCP("")  # noqa
         rr_server = tcp.getRRServer()
 
         if len(rr_server) == 0:
@@ -144,9 +190,7 @@ class Api:
         # iterate over SubmitFile, set _JobBasic (job) and renderer
         # and feed it to jobSubmitNew()
         # not implemented yet
-
         job.renderer = renderer
-
         tcp.jobSubmitNew(job)
 
 
