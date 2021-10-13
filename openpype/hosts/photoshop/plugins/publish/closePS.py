@@ -6,7 +6,7 @@ import pyblish.api
 
 from avalon import photoshop
 
-class ClosePS(pyblish.api.InstancePlugin):
+class ClosePS(pyblish.api.ContextPlugin):
     """Close PS after publish. For Webpublishing only.
     """
 
@@ -17,7 +17,7 @@ class ClosePS(pyblish.api.InstancePlugin):
 
     hosts = ["photoshop"]
 
-    def process(self, instance):
+    def process(self, context):
         self.log.info("ClosePS")
         if not os.environ.get("IS_HEADLESS"):
             return
@@ -26,3 +26,4 @@ class ClosePS(pyblish.api.InstancePlugin):
         self.log.info("Shutting down PS")
         stub.save()
         stub.close()
+        self.log.info("PS closed")
