@@ -3,17 +3,17 @@ from openpype.hosts.nuke.api import plugin
 import nuke
 
 
-class CreateGeo(plugin.PypeCreator):
-    """Add Publishable Geometry"""
+class CreateModel(plugin.PypeCreator):
+    """Add Publishable Modelmetry"""
 
-    name = "geo"
-    label = "Create 3d Geo"
+    name = "model"
+    label = "Create 3d Model"
     family = "model"
     icon = "cube"
     defaults = ["Main"]
 
     def __init__(self, *args, **kwargs):
-        super(CreateGeo, self).__init__(*args, **kwargs)
+        super(CreateModel, self).__init__(*args, **kwargs)
         self.nodes = nuke.selectedNodes()
         self.node_color = "0xff3200ff"
         return
@@ -46,8 +46,8 @@ class CreateGeo(plugin.PypeCreator):
                 return
         else:
             # if selected is off then create one node
-            geo_node = nuke.createNode("Geo2")
-            geo_node["tile_color"].setValue(int(self.node_color, 16))
+            model_node = nuke.createNode("Model2")
+            model_node["tile_color"].setValue(int(self.node_color, 16))
             # add avalon knobs
-            instance = anlib.set_avalon_knob_data(geo_node, self.data)
+            instance = anlib.set_avalon_knob_data(model_node, self.data)
             return instance

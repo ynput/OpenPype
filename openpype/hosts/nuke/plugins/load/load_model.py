@@ -4,16 +4,16 @@ from avalon.nuke import containerise, update_container
 import nuke
 
 
-class AlembicGeoLoader(api.Loader):
+class AlembicModelLoader(api.Loader):
     """
-    This will load alembic geo into script.
+    This will load alembic model into script.
     """
 
-    families = ["geo"]
+    families = ["model"]
     representations = ["abc"]
 
-    label = "Load Alembic Geo"
-    icon = "geo"
+    label = "Load Alembic Model"
+    icon = "model"
     color = "orange"
     node_color = "0xff3200ff"
 
@@ -44,30 +44,30 @@ class AlembicGeoLoader(api.Loader):
         file = self.fname.replace("\\", "/")
 
         with anlib.maintained_selection():
-            geo_node = nuke.createNode(
-                "Geo2",
+            model_node = nuke.createNode(
+                "Model2",
                 "name {} file {} read_from_file True".format(
                     object_name, file),
                 inpanel=False
             )
-            geo_node.forceValidate()
-            geo_node["frame_rate"].setValue(float(fps))
+            model_node.forceValidate()
+            model_node["frame_rate"].setValue(float(fps))
 
             # workaround because nuke's bug is not adding
             # animation keys properly
-            xpos = geo_node.xpos()
-            ypos = geo_node.ypos()
+            xpos = model_node.xpos()
+            ypos = model_node.ypos()
             nuke.nodeCopy("%clipboard%")
-            nuke.delete(geo_node)
+            nuke.delete(model_node)
             nuke.nodePaste("%clipboard%")
-            geo_node = nuke.toNode(object_name)
-            geo_node.setXYpos(xpos, ypos)
+            model_node = nuke.toNode(object_name)
+            model_node.setXYpos(xpos, ypos)
 
         # color node by correct color by actual version
-        self.node_version_color(version, geo_node)
+        self.node_version_color(version, model_node)
 
         return containerise(
-            node=geo_node,
+            node=model_node,
             name=name,
             namespace=namespace,
             context=context,
@@ -97,7 +97,7 @@ class AlembicGeoLoader(api.Loader):
         })
         object_name = container['objectName']
         # get corresponding node
-        geo_node = nuke.toNode(object_name)
+        model_node = nuke.toNode(object_name)
 
         # get main variables
         version_data = version.get("data", {})
@@ -123,42 +123,42 @@ class AlembicGeoLoader(api.Loader):
         file = api.get_representation_path(representation).replace("\\", "/")
 
         with anlib.maintained_selection():
-            geo_node = nuke.toNode(object_name)
-            geo_node['selected'].setValue(True)
+            model_node = nuke.toNode(object_name)
+            model_node['selected'].setValue(True)
 
             # collect input output dependencies
-            dependencies = geo_node.dependencies()
-            dependent = geo_node.dependent()
+            dependencies = model_node.dependencies()
+            dependent = model_node.dependent()
 
-            geo_node["frame_rate"].setValue(float(fps))
-            geo_node["file"].setValue(file)
+            model_node["frame_rate"].setValue(float(fps))
+            model_node["file"].setValue(file)
 
             # workaround because nuke's bug is
             # not adding animation keys properly
-            xpos = geo_node.xpos()
-            ypos = geo_node.ypos()
+            xpos = model_node.xpos()
+            ypos = model_node.ypos()
             nuke.nodeCopy("%clipboard%")
-            nuke.delete(geo_node)
+            nuke.delete(model_node)
             nuke.nodePaste("%clipboard%")
-            geo_node = nuke.toNode(object_name)
-            geo_node.setXYpos(xpos, ypos)
+            model_node = nuke.toNode(object_name)
+            model_node.setXYpos(xpos, ypos)
 
             # link to original input nodes
             for i, input in enumerate(dependencies):
-                geo_node.setInput(i, input)
+                model_node.setInput(i, input)
             # link to original output nodes
             for d in dependent:
                 index = next((i for i, dpcy in enumerate(
                               d.dependencies())
-                              if geo_node is dpcy), 0)
-                d.setInput(index, geo_node)
+                              if model_node is dpcy), 0)
+                d.setInput(index, model_node)
 
         # color node by correct color by actual version
-        self.node_version_color(version, geo_node)
+        self.node_version_color(version, model_node)
 
         self.log.info("udated to version: {}".format(version.get("name")))
 
-        return update_container(geo_node, data_imprint)
+        return update_container(model_node, data_imprint)
 
     def node_version_color(self, version, node):
         """ Coloring a node by correct color by actual version
