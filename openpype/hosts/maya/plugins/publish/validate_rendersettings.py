@@ -76,7 +76,7 @@ class ValidateRenderSettings(pyblish.api.InstancePlugin):
         r'%a|<aov>|<renderpass>', re.IGNORECASE)
     R_LAYER_TOKEN = re.compile(
         r'%l|<layer>|<renderlayer>', re.IGNORECASE)
-    R_CAMERA_TOKEN = re.compile(r'%c|<camera>', re.IGNORECASE)
+    R_CAMERA_TOKEN = re.compile(r'%c|Camera>')
     R_SCENE_TOKEN = re.compile(r'%s|<scene>', re.IGNORECASE)
 
     DEFAULT_PADDING = 4
@@ -126,7 +126,9 @@ class ValidateRenderSettings(pyblish.api.InstancePlugin):
         if len(cameras) > 1 and not re.search(cls.R_CAMERA_TOKEN, prefix):
             invalid = True
             cls.log.error("Wrong image prefix [ {} ] - "
-                          "doesn't have: '<camera>' token".format(prefix))
+                          "doesn't have: '<Camera>' token".format(prefix))
+            cls.log.error(
+                "Note that to needs to have capital 'C' at the beginning")
 
         # renderer specific checks
         if renderer == "vray":

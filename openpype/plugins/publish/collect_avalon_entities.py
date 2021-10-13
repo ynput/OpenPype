@@ -22,6 +22,7 @@ class CollectAvalonEntities(pyblish.api.ContextPlugin):
         io.install()
         project_name = api.Session["AVALON_PROJECT"]
         asset_name = api.Session["AVALON_ASSET"]
+        task_name = api.Session["AVALON_TASK"]
 
         project_entity = io.find_one({
             "type": "project",
@@ -47,6 +48,12 @@ class CollectAvalonEntities(pyblish.api.ContextPlugin):
         context.data["assetEntity"] = asset_entity
 
         data = asset_entity['data']
+
+        # Task type
+        asset_tasks = data.get("tasks") or {}
+        task_info = asset_tasks.get(task_name) or {}
+        task_type = task_info.get("type")
+        context.data["taskType"] = task_type
 
         frame_start = data.get("frameStart")
         if frame_start is None:

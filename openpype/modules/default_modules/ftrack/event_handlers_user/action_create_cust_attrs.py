@@ -10,6 +10,7 @@ from openpype_modules.ftrack.lib import (
     CUST_ATTR_GROUP,
     CUST_ATTR_TOOLS,
     CUST_ATTR_APPLICATIONS,
+    CUST_ATTR_INTENT,
 
     default_custom_attributes_definition,
     app_definitions_from_app_manager,
@@ -431,7 +432,7 @@ class CustomAttributes(BaseAction):
 
         intent_custom_attr_data = {
             "label": "Intent",
-            "key": "intent",
+            "key": CUST_ATTR_INTENT,
             "type": "enumerator",
             "entity_type": "assetversion",
             "group": CUST_ATTR_GROUP,

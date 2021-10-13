@@ -1,8 +1,10 @@
 """Functions useful for delivery action or loader"""
 import os
 import shutil
+import glob
 import clique
 import collections
+
 
 def collect_frames(files):
     """
@@ -228,7 +230,16 @@ def process_sequence(
         Returns:
             (collections.defaultdict , int)
     """
-    if not os.path.exists(src_path):
+
+    def hash_path_exist(myPath):
+        res = myPath.replace('#', '*')
+        glob_search_results = glob.glob(res)
+        if len(glob_search_results) > 0:
+            return True
+        else:
+            return False
+
+    if not hash_path_exist(src_path):
         msg = "{} doesn't exist for {}".format(src_path,
                                                repre["_id"])
         report_items["Source file was not found"].append(msg)
