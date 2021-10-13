@@ -7,6 +7,7 @@ import platform
 import logging
 import collections
 import functools
+import getpass
 
 from openpype.settings import get_project_settings
 from .anatomy import Anatomy
@@ -378,7 +379,7 @@ def get_workdir_data(project_doc, asset_doc, task_name, host_name):
         },
         "asset": asset_doc["name"],
         "app": host_name,
-        "user": os.getlogin(),
+        "user": getpass.getuser(),
         "hierarchy": hierarchy,
     }
     return data
