@@ -150,6 +150,7 @@ class TimersManager(OpenPypeModule, ITrayService):
     def tray_exit(self):
         if self._idle_manager:
             self._idle_manager.stop()
+            self._idle_manager.wait()
 
     def start_timer(self, project_name, asset_name, task_name, hierarchy):
         """
