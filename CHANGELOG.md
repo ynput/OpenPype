@@ -1,6 +1,6 @@
 # Changelog
 
-## [3.5.0-nightly.5](https://github.com/pypeclub/OpenPype/tree/HEAD)
+## [3.5.0-nightly.6](https://github.com/pypeclub/OpenPype/tree/HEAD)
 
 [Full Changelog](https://github.com/pypeclub/OpenPype/compare/3.4.1...HEAD)
 
@@ -28,10 +28,11 @@
 - Nuke: Adding `still` image family workflow [\#2064](https://github.com/pypeclub/OpenPype/pull/2064)
 - Maya: validate authorized loaded plugins [\#2062](https://github.com/pypeclub/OpenPype/pull/2062)
 - Tools: add support for pyenv on windows [\#2051](https://github.com/pypeclub/OpenPype/pull/2051)
-- SyncServer: Dropbox Provider [\#1979](https://github.com/pypeclub/OpenPype/pull/1979)
 
 **🐛 Bug fixes**
 
+- General: Disk mapping group [\#2120](https://github.com/pypeclub/OpenPype/pull/2120)
+- Hiero: publishing effect first time makes wrong resources path [\#2115](https://github.com/pypeclub/OpenPype/pull/2115)
 - Add startup script for Houdini Core.  [\#2110](https://github.com/pypeclub/OpenPype/pull/2110)
 - TVPaint: Behavior name of loop also accept repeat [\#2109](https://github.com/pypeclub/OpenPype/pull/2109)
 - Ftrack: Project settings save custom attributes skip unknown attributes [\#2103](https://github.com/pypeclub/OpenPype/pull/2103)
@@ -65,7 +66,6 @@
 
 - General: Startup validations [\#2054](https://github.com/pypeclub/OpenPype/pull/2054)
 - Nuke: proxy mode validator [\#2052](https://github.com/pypeclub/OpenPype/pull/2052)
-- Ftrack: Removed ftrack interface [\#2049](https://github.com/pypeclub/OpenPype/pull/2049)
 - Settings UI: Deffered set value on entity [\#2044](https://github.com/pypeclub/OpenPype/pull/2044)
 - Loader: Families filtering [\#2043](https://github.com/pypeclub/OpenPype/pull/2043)
 - Settings UI: Project view enhancements [\#2042](https://github.com/pypeclub/OpenPype/pull/2042)
@@ -102,6 +102,7 @@
 
 **🚀 Enhancements**
 
+- Ftrack: Removed ftrack interface [\#2049](https://github.com/pypeclub/OpenPype/pull/2049)
 - Added possibility to configure of synchronization of workfile version… [\#2041](https://github.com/pypeclub/OpenPype/pull/2041)
 - General: Task types in profiles [\#2036](https://github.com/pypeclub/OpenPype/pull/2036)
 - Console interpreter: Handle invalid sizes on initialization [\#2022](https://github.com/pypeclub/OpenPype/pull/2022)
@@ -114,7 +115,6 @@
 - Configurable items for providers without Settings [\#1987](https://github.com/pypeclub/OpenPype/pull/1987)
 - Global: Example addons [\#1986](https://github.com/pypeclub/OpenPype/pull/1986)
 - Standalone Publisher: Extract harmony zip handle workfile template [\#1982](https://github.com/pypeclub/OpenPype/pull/1982)
-- Settings UI: Number sliders [\#1978](https://github.com/pypeclub/OpenPype/pull/1978)
 
 **🐛 Bug fixes**
 
@@ -129,7 +129,6 @@
 - Nuke: last version from path gets correct version [\#1990](https://github.com/pypeclub/OpenPype/pull/1990)
 - nuke, resolve, hiero: precollector order lest then 0.5 [\#1984](https://github.com/pypeclub/OpenPype/pull/1984)
 - Last workfile with multiple work templates [\#1981](https://github.com/pypeclub/OpenPype/pull/1981)
-- Collectors order [\#1977](https://github.com/pypeclub/OpenPype/pull/1977)
 
 ## [3.3.1](https://github.com/pypeclub/OpenPype/tree/3.3.1) (2021-08-20)
 
