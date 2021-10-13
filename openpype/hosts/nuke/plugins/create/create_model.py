@@ -4,7 +4,7 @@ import nuke
 
 
 class CreateModel(plugin.PypeCreator):
-    """Add Publishable Modelmetry"""
+    """Add Publishable Model Geometry"""
 
     name = "model"
     label = "Create 3d Model"

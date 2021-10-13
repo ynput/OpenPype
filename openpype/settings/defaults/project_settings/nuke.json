@@ -26,6 +26,9 @@
                 "Branch01",
                 "Part01"
             ]
+        },
+        "CreateModel": {
+            "extension": ".abc"
         }
     },
     "publish": {

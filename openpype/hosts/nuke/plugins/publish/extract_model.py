@@ -19,7 +19,7 @@ class ExtractModel(openpype.api.Extractor):
     write_geo_knobs = [
         ("file_type", "abc"),
         ("storageFormat", "Ogawa"),
-        ("writeGeometries", False),
+        ("writeGeometries", True),
         ("writePointClouds", False),
         ("writeAxes", False)
     ]
@@ -32,6 +32,7 @@ class ExtractModel(openpype.api.Extractor):
         step = 1
         output_range = str(nuke.FrameRange(first_frame, last_frame, step))
 
+        
         self.log.info("instance.data: `{}`".format(
             pformat(instance.data)))
 
@@ -40,28 +41,21 @@ class ExtractModel(openpype.api.Extractor):
         subset = instance.data["subset"]
         staging_dir = self.staging_dir(instance)
 
-        # get extension form preset
-        extension = next((k[1] for k in self.write_geo_knobs
-                          if k[0] == "file_type"), None)
-        if not extension:
-            raise RuntimeError(
-                "Bad config for extension in presets. "
-                "Talk to your supervisor or pipeline admin")
+        # get extension form setting or from preset
+        extension = instance.context.data["modelFormat"]
+        if not extension :
+            extension = next((k[1] for k in self.write_geo_knobs
+                            if k[0] == "file_type"), None)
+            if not extension:
+                raise RuntimeError(
+                    "Bad config for extension in presets. "
+                    "Talk to your supervisor or pipeline admin")
 
         # create file name and path
         filename = subset + ".{}".format(extension)
         file_path = os.path.join(staging_dir, filename).replace("\\", "/")
 
         with anlib.maintained_selection():
-            # bake model with axeses onto word coordinate XYZ
-            rm_n = bakeModelWithAxeses(
-                nuke.toNode(instance.data["name"]), output_range)
-            rm_nodes.append(rm_n)
-
-            # create scene node
-            rm_n = nuke.createNode("Scene")
-            rm_nodes.append(rm_n)
-
             # create write geo node
             wg_n = nuke.createNode("WriteGeo")
             wg_n["file"].setValue(file_path)
@@ -110,76 +104,3 @@ class ExtractModel(openpype.api.Extractor):
 
         self.log.info("Extracted instance '{0}' to: {1}".format(
             instance.name, file_path))
-
-
-def bakeModelWithAxeses(model_node, output_range):
-    """ Baking all perent hiearchy of axeses into model
-    with transposition onto word XYZ coordinance
-    """
-    bakeFocal = False
-    bakeHaperture = False
-    bakeVaperture = False
-
-    model_matrix = model_node['world_matrix']
-
-    new_cam_n = nuke.createNode("Model2")
-    new_cam_n.setInput(0, None)
-    new_cam_n['rotate'].setAnimated()
-    new_cam_n['translate'].setAnimated()
-
-    old_focal = model_node['focal']
-    if old_focal.isAnimated() and not (old_focal.animation(0).constant()):
-        new_cam_n['focal'].setAnimated()
-        bakeFocal = True
-    else:
-        new_cam_n['focal'].setValue(old_focal.value())
-
-    old_haperture = model_node['haperture']
-    if old_haperture.isAnimated() and not (
-            old_haperture.animation(0).constant()):
-        new_cam_n['haperture'].setAnimated()
-        bakeHaperture = True
-    else:
-        new_cam_n['haperture'].setValue(old_haperture.value())
-
-    old_vaperture = model_node['vaperture']
-    if old_vaperture.isAnimated() and not (
-            old_vaperture.animation(0).constant()):
-        new_cam_n['vaperture'].setAnimated()
-        bakeVaperture = True
-    else:
-        new_cam_n['vaperture'].setValue(old_vaperture.value())
-
-    new_cam_n['win_translate'].setValue(model_node['win_translate'].value())
-    new_cam_n['win_scale'].setValue(model_node['win_scale'].value())
-
-    for x in nuke.FrameRange(output_range):
-        math_matrix = nuke.math.Matrix4()
-        for y in range(model_matrix.height()):
-            for z in range(model_matrix.width()):
-                matrix_pointer = z + (y * model_matrix.width())
-                math_matrix[matrix_pointer] = model_matrix.getValueAt(
-                    x, (y + (z * model_matrix.width())))
-
-        rot_matrix = nuke.math.Matrix4(math_matrix)
-        rot_matrix.rotationOnly()
-        rot = rot_matrix.rotationsZXY()
-
-        new_cam_n['rotate'].setValueAt(math.degrees(rot[0]), x, 0)
-        new_cam_n['rotate'].setValueAt(math.degrees(rot[1]), x, 1)
-        new_cam_n['rotate'].setValueAt(math.degrees(rot[2]), x, 2)
-        new_cam_n['translate'].setValueAt(
-            model_matrix.getValueAt(x, 3), x, 0)
-        new_cam_n['translate'].setValueAt(
-            model_matrix.getValueAt(x, 7), x, 1)
-        new_cam_n['translate'].setValueAt(
-            model_matrix.getValueAt(x, 11), x, 2)
-
-        if bakeFocal:
-            new_cam_n['focal'].setValueAt(old_focal.getValueAt(x), x)
-        if bakeHaperture:
-            new_cam_n['haperture'].setValueAt(old_haperture.getValueAt(x), x)
-        if bakeVaperture:
-            new_cam_n['vaperture'].setValueAt(old_vaperture.getValueAt(x), x)
-
-    return new_cam_n
