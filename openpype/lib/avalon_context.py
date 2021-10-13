@@ -375,7 +375,7 @@ def get_workdir_data(project_doc, asset_doc, task_name, host_name):
         "task": {
             "name": task_name,
             "type": task_type,
-            "code": task_code,
+            "short": task_code,
         },
         "asset": asset_doc["name"],
         "app": host_name,
