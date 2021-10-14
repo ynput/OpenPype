@@ -8,6 +8,7 @@ from openpype.pipeline import (
 
 class TestCreatorTwo(Creator):
     identifier = "test_two"
+    label = "test"
     family = "test"
     description = "A second testing creator"
 

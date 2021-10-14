@@ -9,6 +9,7 @@ from openpype.pipeline import (
 
 class TestCreatorOne(Creator):
     identifier = "test_one"
+    label = "test"
     family = "test"
     description = "Testing creator of testhost"
 
