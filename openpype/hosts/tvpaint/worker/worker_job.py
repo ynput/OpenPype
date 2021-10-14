@@ -100,30 +100,22 @@ class ExecuteSimpleGeorgeScript(BaseCommand):
 class ExecuteGeorgeScript(BaseCommand):
     name = "execute_george_through_file"
 
-    def __init__(self, parent, script, data=None):
+    def __init__(
+        self, parent, script, tmp_file_keys=None, output_dirs=None, data=None
+    ):
         data = data or {}
-        data["script"] = script
-        self._script = script
-        super().__init__(parent, data)
+        if not tmp_file_keys:
+            tmp_file_keys = data.get("tmp_file_keys") or []
 
-    def execute(self):
-        self.execute_george_through_file(self._script)
+        if not output_dirs:
+            output_dirs = data.get("output_dirs") or {}
 
-    @classmethod
-    def from_existing(cls, parent, data):
-        script = data.pop("script")
-        return cls(parent, script, data)
-
-
-class ExecuteGeorgeScriptWithResult(BaseCommand):
-    name = "execute_george_through_file_result"
-
-    def __init__(self, parent, script, tmp_file_keys, data=None):
-        data = data or {}
         data["script"] = script
         data["tmp_file_keys"] = tmp_file_keys
+        data["output_dirs"] = output_dirs
         self._script = script
         self._tmp_file_keys = tmp_file_keys
+        self._output_dirs = output_dirs
         super().__init__(parent, data)
 
     def execute(self):
@@ -133,10 +125,17 @@ class ExecuteGeorgeScriptWithResult(BaseCommand):
                 mode="w", prefix=TMP_FILE_PREFIX, suffix=".txt", delete=False
             )
             output_file.close()
-            filepath_by_key[key] = output_file.name.replace("\\", "/")
+            format_key = "{" + key + "}"
+            output_path = output_file.name.replace("\\", "/")
+            self._script.replace(format_key, output_path)
+            filepath_by_key[key] = output_path
 
-        formatted_script = self._script.format(**filepath_by_key)
-        self.execute_george_through_file(formatted_script)
+        for key, dir_path in self._output_dirs.items():
+            format_key = "{" + key + "}"
+            dir_path = dir_path.replace("\\", "/")
+            self._script.replace(format_key, dir_path)
+
+        self.execute_george_through_file(self._script)
 
         result = {}
         for key, filepath in filepath_by_key.items():
@@ -150,8 +149,9 @@ class ExecuteGeorgeScriptWithResult(BaseCommand):
     @classmethod
     def from_existing(cls, parent, data):
         script = data.pop("script")
-        tmp_file_keys = data.pop("tmp_file_keys")
-        return cls(parent, script, tmp_file_keys, data)
+        tmp_file_keys = data.pop("tmp_file_keys", None)
+        output_dirs = data.pop("output_dirs", None)
+        return cls(parent, script, tmp_file_keys, output_dirs, data)
 
 
 class TVPaintCommands:
