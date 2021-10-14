@@ -85,16 +85,19 @@ class LayoutLoader(api.Loader):
         return actors
 
     def _import_animation(
-            self, asset_dir, path, rig_count, instance_name, skeleton,
-            actors_dict):
-        anim_path = f"{asset_dir}/animations/{path.with_suffix('').name}_{rig_count:02d}"
+            self, asset_dir, path, instance_name, skeleton, actors_dict,
+            animation_file):
+        anim_file = Path(animation_file)
+        anim_file_name = anim_file.with_suffix('')
+
+        anim_path = f"{asset_dir}/animations/{anim_file_name}"
 
         # Import animation
         task = unreal.AssetImportTask()
         task.options = unreal.FbxImportUI()
 
         task.set_editor_property(
-            'filename', str(path.with_suffix(f".{rig_count:02d}.fbx")))
+            'filename', str(path.with_suffix(f".{animation_file}")))
         task.set_editor_property('destination_path', anim_path)
         task.set_editor_property(
             'destination_name', f"{instance_name}_animation")
@@ -174,7 +177,6 @@ class LayoutLoader(api.Loader):
             loaded = []
 
         path = Path(libpath)
-        rig_count = 0
 
         skeleton_dict = {}
         actors_dict = {}
@@ -239,12 +241,12 @@ class LayoutLoader(api.Loader):
             else:
                 skeleton = skeleton_dict.get(reference)
 
-            if skeleton:
-                self._import_animation(
-                    asset_dir, path, rig_count, instance_name, skeleton,
-                    actors_dict)
+            animation_file = element.get('animation')
 
-            rig_count += 1
+            if animation_file and skeleton:
+                self._import_animation(
+                    asset_dir, path, instance_name, skeleton,
+                    actors_dict, animation_file)
 
     def _remove_family(self, assets, components, classname, propname):
         ar = unreal.AssetRegistryHelpers.get_asset_registry()
@@ -356,6 +358,7 @@ class LayoutLoader(api.Loader):
         return asset_content
 
     def update(self, container, representation):
+        assert False, "Update not working for now. Delete and reload the layout."
         source_path = api.get_representation_path(representation)
         destination_path = container["namespace"]
 

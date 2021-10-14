@@ -19,8 +19,8 @@ class ExtractLayout(openpype.api.Extractor):
     families = ["layout"]
     optional = True
 
-    def _export_animation(self, asset, instance, stagingdir):
-        file_names = []
+    def _export_animation(self, asset, instance, stagingdir, fbx_count):
+        n = fbx_count
 
         for obj in asset.children:
             if obj.type != "ARMATURE":
@@ -75,7 +75,7 @@ class ExtractLayout(openpype.api.Extractor):
 
             asset.select_set(True)
             obj.select_set(True)
-            fbx_filename = f"{instance.name}_{asset_group_name}.fbx"
+            fbx_filename = f"{n:03d}.fbx"
             filepath = os.path.join(stagingdir, fbx_filename)
 
             override = plugin.create_blender_context(
@@ -108,9 +108,9 @@ class ExtractLayout(openpype.api.Extractor):
                     pair[1].user_clear()
                     bpy.data.actions.remove(pair[1])
 
-            file_names.append(fbx_filename)
+            return fbx_filename, n + 1
 
-        return file_names
+        return None, n
 
     def process(self, instance):
         # Define extract output file path
@@ -126,6 +126,8 @@ class ExtractLayout(openpype.api.Extractor):
         fbx_files = []
 
         asset_group = bpy.data.objects[str(instance)]
+
+        fbx_count = 0
 
         for asset in asset_group.children:
             metadata = asset.get(AVALON_PROPERTY)
@@ -176,13 +178,17 @@ class ExtractLayout(openpype.api.Extractor):
                     "z": asset.scale.z
                 }
             }
-            json_data.append(json_element)
 
             # Extract the animation as well
             if family == "rig":
-                fbx_files.extend(
-                    self._export_animation(
-                        asset, instance, stagingdir))
+                f, n = self._export_animation(
+                    asset, instance, stagingdir, fbx_count)
+                if f:
+                    fbx_files.append(f)
+                    json_element["animation"] = f
+                    fbx_count = n
+
+            json_data.append(json_element)
 
         json_filename = "{}.json".format(instance.name)
         json_path = os.path.join(stagingdir, json_filename)
@@ -196,14 +202,26 @@ class ExtractLayout(openpype.api.Extractor):
             'files': json_filename,
             "stagingDir": stagingdir,
         }
-        fbx_representation = {
-            'name': 'fbx',
-            'ext': 'fbx',
-            'files': fbx_files,
-            "stagingDir": stagingdir,
-        }
         instance.data["representations"].append(json_representation)
-        instance.data["representations"].append(fbx_representation)
+
+        self.log.debug(fbx_files)
+
+        if len(fbx_files) == 1:
+            fbx_representation = {
+                'name': 'fbx',
+                'ext': 'fbx',
+                'files': fbx_files[0],
+                "stagingDir": stagingdir,
+            }
+            instance.data["representations"].append(fbx_representation)
+        elif len(fbx_files) > 1:
+            fbx_representation = {
+                'name': 'fbx',
+                'ext': 'fbx',
+                'files': fbx_files,
+                "stagingDir": stagingdir,
+            }
+            instance.data["representations"].append(fbx_representation)
 
         self.log.info("Extracted instance '%s' to: %s",
                       instance.name, json_representation)
