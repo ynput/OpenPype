@@ -1,5 +1,5 @@
 import sys
-
+import json
 if sys.version_info[0] == 2:
     from urlparse import urlsplit, urlunsplit
 else:
@@ -58,7 +58,7 @@ class JobQueueModule(OpenPypeModule):
         job_data = job_data or {}
         job_data["host_name"] = host_name
         api_path = "{}/api/jobs".format(self._server_url)
-        post_request = requests.post(api_path, data=job_data)
+        post_request = requests.post(api_path, data=json.dumps(job_data))
         return str(post_request.content.decode())
 
     def get_job_status(self, job_id):
