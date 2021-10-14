@@ -17,6 +17,11 @@ from openpype.api import (
 from openpype.lib import get_pype_execute_args
 from openpype.modules import TrayModulesManager
 from openpype import style
+from openpype.settings import (
+    SystemSettings,
+    ProjectSettings,
+    DefaultsNotDefined
+)
 
 from .pype_info_widget import PypeInfoWidget
 
@@ -113,6 +118,54 @@ class TrayManager:
         main_thread_timer.start()
 
         self.main_thread_timer = main_thread_timer
+
+        # For storing missing settings dialog
+        self._settings_validation_dialog = None
+
+        self.execute_in_main_thread(self._startup_validations)
+
+    def _startup_validations(self):
+        """Run possible startup validations."""
+        self._validate_settings_defaults()
+
+    def _validate_settings_defaults(self):
+        valid = True
+        try:
+            SystemSettings()
+            ProjectSettings()
+
+        except DefaultsNotDefined:
+            valid = False
+
+        if valid:
+            return
+
+        title = "Settings miss default values"
+        msg = (
+            "Your OpenPype will not work as expected! \n"
+            "Some default values in settigs are missing. \n\n"
+            "Please contact OpenPype team."
+        )
+        msg_box = QtWidgets.QMessageBox(
+            QtWidgets.QMessageBox.Warning,
+            title,
+            msg,
+            QtWidgets.QMessageBox.Ok,
+            flags=QtCore.Qt.Dialog
+        )
+        icon = QtGui.QIcon(resources.get_openpype_icon_filepath())
+        msg_box.setWindowIcon(icon)
+        msg_box.setStyleSheet(style.load_stylesheet())
+        msg_box.buttonClicked.connect(self._post_validate_settings_defaults)
+
+        self._settings_validation_dialog = msg_box
+
+        msg_box.show()
+
+    def _post_validate_settings_defaults(self):
+        widget = self._settings_validation_dialog
+        self._settings_validation_dialog = None
+        widget.deleteLater()
 
     def show_tray_message(self, title, message, icon=None, msecs=None):
         """Show tray message.
@@ -236,6 +289,7 @@ class SystemTrayIcon(QtWidgets.QSystemTrayIcon):
 
         self._click_timer = click_timer
         self._doubleclick = False
+        self._click_pos = None
 
     def _click_timer_timeout(self):
         self._click_timer.stop()
@@ -248,13 +302,17 @@ class SystemTrayIcon(QtWidgets.QSystemTrayIcon):
             self._show_context_menu()
 
     def _show_context_menu(self):
-        pos = QtGui.QCursor().pos()
+        pos = self._click_pos
+        self._click_pos = None
+        if pos is None:
+            pos = QtGui.QCursor().pos()
         self.contextMenu().popup(pos)
 
     def on_systray_activated(self, reason):
         # show contextMenu if left click
         if reason == QtWidgets.QSystemTrayIcon.Trigger:
             if self.tray_man.doubleclick_callback:
+                self._click_pos = QtGui.QCursor().pos()
                 self._click_timer.start()
             else:
                 self._show_context_menu()

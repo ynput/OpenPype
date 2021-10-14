@@ -21,7 +21,7 @@ jobs:
       with:
         python-version: 3.7
     - name: Install Python requirements
-      run: pip install gitpython semver
+      run: pip install gitpython semver PyGithub
 
     - name: 💉 Inject new version into files
       id: version

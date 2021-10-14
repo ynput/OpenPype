@@ -6,6 +6,11 @@
     "is_file": true,
     "children": [
         {
+            "type": "boolean",
+            "key": "stop_timer_on_application_exit",
+            "label": "Stop timer on application exit"
+        },
+        {
             "type": "dict",
             "collapsible": true,
             "key": "publish",

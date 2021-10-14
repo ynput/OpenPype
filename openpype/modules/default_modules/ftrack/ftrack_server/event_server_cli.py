@@ -17,7 +17,8 @@ from openpype.lib import (
     get_pype_execute_args,
     OpenPypeMongoConnection,
     get_openpype_version,
-    get_build_version
+    get_build_version,
+    validate_mongo_connection
 )
 from openpype_modules.ftrack import FTRACK_MODULE_DIR
 from openpype_modules.ftrack.lib import credentials
@@ -36,11 +37,15 @@ class MongoPermissionsError(Exception):
 def check_mongo_url(mongo_uri, log_error=False):
     """Checks if mongo server is responding"""
     try:
-        client = pymongo.MongoClient(mongo_uri)
-        # Force connection on a request as the connect=True parameter of
-        # MongoClient seems to be useless here
-        client.server_info()
-        client.close()
+        validate_mongo_connection(mongo_uri)
+
+    except pymongo.errors.InvalidURI as err:
+        if log_error:
+            print("Can't connect to MongoDB at {} because: {}".format(
+                mongo_uri, err
+            ))
+        return False
+
     except pymongo.errors.ServerSelectionTimeoutError as err:
         if log_error:
             print("Can't connect to MongoDB at {} because: {}".format(

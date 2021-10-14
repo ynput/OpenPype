@@ -21,6 +21,9 @@ as a naive barier to prevent artists from accidental setting changes.
 
 **`Environment`** - Globally applied environment variables that will be appended to any OpenPype process in the studio.
 
+**`Disk mapping`** - Platform dependent configuration for mapping of virtual disk(s) on an artist's OpenPype machines before OP starts up. 
+Uses `subst` command, if configured volume character in `Destination` field already exists, no re-mapping is done for that character(volume).
+
 **`Versions Repository`** - Location where automatic update mechanism searches for zip files with
 OpenPype update packages. To read more about preparing OpenPype for automatic updates go to [Admin Distribute docs](admin_distribute#2-openpype-codebase)
 

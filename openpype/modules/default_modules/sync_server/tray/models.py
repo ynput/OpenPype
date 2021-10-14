@@ -17,25 +17,6 @@ from . import lib
 log = PypeLogger().get_logger("SyncServer")
 
 
-class ProjectModel(QtCore.QAbstractListModel):
-    def __init__(self, *args, projects=None, **kwargs):
-        super(ProjectModel, self).__init__(*args, **kwargs)
-        self.projects = projects or []
-
-    def data(self, index, role):
-        if role == Qt.DisplayRole:
-            # See below for the data structure.
-            status, text = self.projects[index.row()]
-            # Return the todo text only.
-            return text
-
-    def rowCount(self, _index):
-        return len(self.todos)
-
-    def columnCount(self, _index):
-        return len(self._header)
-
-
 class _SyncRepresentationModel(QtCore.QAbstractTableModel):
 
     COLUMN_LABELS = []
@@ -320,6 +301,10 @@ class _SyncRepresentationModel(QtCore.QAbstractTableModel):
         """
         self._project = project
         self.sync_server.set_sync_project_settings()
+        # project might have been deactivated in the meantime
+        if not self.sync_server.get_sync_project_setting(project):
+            return
+
         self.active_site = self.sync_server.get_active_site(self.project)
         self.remote_site = self.sync_server.get_remote_site(self.project)
         self.refresh()

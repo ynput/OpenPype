@@ -606,7 +606,7 @@ class ExtractSequence(pyblish.api.Extractor):
                 self._copy_image(eq_frame_filepath, new_filepath)
                 layer_files_by_frame[frame_idx] = new_filepath
 
-        elif pre_behavior == "loop":
+        elif pre_behavior in ("loop", "repeat"):
             # Loop backwards from last frame of layer
             for frame_idx in reversed(range(mark_in_index, frame_start_index)):
                 eq_frame_idx_offset = (
@@ -678,7 +678,7 @@ class ExtractSequence(pyblish.api.Extractor):
                 self._copy_image(eq_frame_filepath, new_filepath)
                 layer_files_by_frame[frame_idx] = new_filepath
 
-        elif post_behavior == "loop":
+        elif post_behavior in ("loop", "repeat"):
             # Loop backwards from last frame of layer
             for frame_idx in range(frame_end_index + 1, mark_out_index + 1):
                 eq_frame_idx = frame_idx % frame_count
