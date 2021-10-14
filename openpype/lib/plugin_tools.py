@@ -6,6 +6,7 @@ import logging
 import re
 import json
 import tempfile
+import distutils
 
 from .execute import run_subprocess
 from .profiles_filtering import filter_profiles
@@ -386,10 +387,7 @@ def oiio_supported():
     """
     oiio_path = get_oiio_tools_path()
     if oiio_path:
-        try:
-            _ = run_subprocess([oiio_path, "-v"])
-        except FileNotFoundError:
-            oiio_path = None
+        oiio_path = distutils.spawn.find_executable(oiio_path)
 
     if not oiio_path:
         log.debug("OIIOTool is not configured or not present at {}".
