@@ -100,7 +100,8 @@ class Job:
             worker_id = self._worker.id
         output = {
             "id": self.id,
-            "worker_id": worker_id
+            "worker_id": worker_id,
+            "done": self._done
         }
         if self._message:
             output["message"] = self._message
