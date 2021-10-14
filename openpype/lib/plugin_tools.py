@@ -39,6 +39,36 @@ def _get_subset_name(
     dynamic_data,
     dbcon
 ):
+    """Calculate subset name based on passed context and OpenPype settings.
+
+    Subst name templates are defined in `project_settings/global/tools/creator
+    /subset_name_profiles` where are profiles with host name, family, task name
+    and task type filters. If context does not match any profile then
+    `DEFAULT_SUBSET_TEMPLATE` is used as default template.
+
+    That's main reason why so many arguments are required to calculate subset
+    name.
+
+    Args:
+        family (str): Instance family.
+        variant (str): In most of cases it is user input during creation.
+        task_name (str): Task name on which context is instance created.
+        asset_id (ObjectId): Id of object. Is optional if `asset_doc` is
+            passed.
+        asset_doc (dict): Queried asset document with it's tasks in data.
+            Used to get task type.
+        project_name (str): Name of project on which is instance created.
+            Important for project settings that are loaded.
+        host_name (str): One of filtering criteria for template profile
+            filters.
+        default_template (str): Default template if any profile does not match
+            passed context. Constant 'DEFAULT_SUBSET_TEMPLATE' is used if
+            is not passed.
+        dynamic_data (dict): Dynamic data specific for a creator which creates
+            instance.
+        dbcon (AvalonMongoDB): Mongo connection to be able query asset document
+            if 'asset_doc' is not passed.
+    """
     if not family:
         return ""
 
@@ -53,17 +83,16 @@ def _get_subset_name(
 
         project_name = avalon.api.Session["AVALON_PROJECT"]
 
-    # Function should expect asset document instead of asset id
-    # - that way `dbcon` is not needed
-    if dbcon is None:
-        from avalon.api import AvalonMongoDB
-
-        dbcon = AvalonMongoDB()
-        dbcon.Session["AVALON_PROJECT"] = project_name
-
-    dbcon.install()
-
+    # Query asset document if was not passed
     if asset_doc is None:
+        if dbcon is None:
+            from avalon.api import AvalonMongoDB
+
+            dbcon = AvalonMongoDB()
+            dbcon.Session["AVALON_PROJECT"] = project_name
+
+        dbcon.install()
+
         asset_doc = dbcon.find_one(
             {
                 "type": "asset",
