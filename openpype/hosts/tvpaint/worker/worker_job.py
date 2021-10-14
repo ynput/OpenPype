@@ -18,7 +18,7 @@ class BaseCommand:
         """Command name (must be unique)."""
         pass
 
-    def __init__(self, parent, data):
+    def __init__(self, data=None):
         if data is None:
             data = {}
         else:
@@ -30,10 +30,13 @@ class BaseCommand:
         data["id"] = command_id
         data["command"] = self.name
 
-        self._parent = parent
+        self._parent = None
         self._result = None
         self._command_data = data
         self._done = False
+
+    def set_parent(self, parent):
+        self._parent = parent
 
     @property
     def id(self):
@@ -69,7 +72,7 @@ class BaseCommand:
 
     @classmethod
     @abstractmethod
-    def from_existing(cls, parent, data):
+    def from_existing(cls, data):
         pass
 
     def execute_george(self, george_script):
@@ -82,26 +85,26 @@ class BaseCommand:
 class ExecuteSimpleGeorgeScript(BaseCommand):
     name = "execute_george_simple"
 
-    def __init__(self, parent, script, data=None):
+    def __init__(self, script, data=None):
         data = data or {}
         data["script"] = script
         self._script = script
-        super().__init__(parent, data)
+        super().__init__(data)
 
     def execute(self):
         self._result = self.execute_george(self._script)
 
     @classmethod
-    def from_existing(cls, parent, data):
+    def from_existing(cls, data):
         script = data.pop("script")
-        return cls(parent, script, data)
+        return cls(script, data)
 
 
 class ExecuteGeorgeScript(BaseCommand):
     name = "execute_george_through_file"
 
     def __init__(
-        self, parent, script, tmp_file_keys=None, output_dirs=None, data=None
+        self, script, tmp_file_keys=None, output_dirs=None, data=None
     ):
         data = data or {}
         if not tmp_file_keys:
@@ -116,7 +119,7 @@ class ExecuteGeorgeScript(BaseCommand):
         self._script = script
         self._tmp_file_keys = tmp_file_keys
         self._output_dirs = output_dirs
-        super().__init__(parent, data)
+        super().__init__(data)
 
     def execute(self):
         filepath_by_key = {}
@@ -147,11 +150,11 @@ class ExecuteGeorgeScript(BaseCommand):
         self._result = result
 
     @classmethod
-    def from_existing(cls, parent, data):
+    def from_existing(cls, data):
         script = data.pop("script")
         tmp_file_keys = data.pop("tmp_file_keys", None)
         output_dirs = data.pop("output_dirs", None)
-        return cls(parent, script, tmp_file_keys, output_dirs, data)
+        return cls(script, tmp_file_keys, output_dirs, data)
 
 
 class TVPaintCommands:
@@ -194,10 +197,11 @@ class TVPaintCommands:
             command_name = command_data["command"]
 
             klass = self.classes_by_name[command_name]
-            command = klass.from_existing(self, command_data)
+            command = klass.from_existing(command_data)
             self.add_command(command)
 
     def add_command(self, command):
+        command.set_parent(self)
         self._commands.append(command)
 
     def _open_workfile(self):
