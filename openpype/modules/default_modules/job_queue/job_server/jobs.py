@@ -103,8 +103,7 @@ class Job:
             "worker_id": worker_id,
             "done": self._done
         }
-        if self._message:
-            output["message"] = self._message
+        output["message"] = self._message or None
 
         state = "waiting"
         if self._deleted:
@@ -116,8 +115,7 @@ class Job:
         elif self._started:
             state = "started"
 
-        if self.done:
-            output["result"] = self._result_data
+        output["result"] = self._result_data
 
         output["state"] = state
 
