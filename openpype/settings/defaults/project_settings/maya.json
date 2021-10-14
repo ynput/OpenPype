@@ -320,7 +320,7 @@
             "optional": true,
             "active": true
         },
-        "ValidateJointsHidden": {
+        "ValidateRigJointsHidden": {
             "enabled": false,
             "optional": true,
             "active": true
