@@ -13,9 +13,14 @@
             "active": true
         },
         "CollectRemoteInstances": {
-            "color_code": [],
-            "families": [],
-            "subset_template_name": ""
+            "color_code_mapping": [
+                {
+                    "color_code": [],
+                    "layer_name_regex": [],
+                    "family": "",
+                    "subset_template_name": ""
+                }
+            ]
         },
         "ExtractImage": {
             "formats": [

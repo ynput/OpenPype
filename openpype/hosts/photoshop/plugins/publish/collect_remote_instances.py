@@ -1,5 +1,6 @@
 import pyblish.api
 import os
+import re
 
 from avalon import photoshop
 from openpype.lib import prepare_template_data
@@ -22,12 +23,11 @@ class CollectRemoteInstances(pyblish.api.ContextPlugin):
     hosts = ["photoshop"]
 
     # configurable by Settings
-    families = ["background"]
-    color_code = ["red"]
-    subset_template_name = ""
+    color_code_mapping = []
 
     def process(self, context):
         self.log.info("CollectRemoteInstances")
+        self.log.info("mapping:: {}".format(self.color_code_mapping))
         if not os.environ.get("IS_HEADLESS"):
             self.log.debug("Not headless publishing, skipping.")
             return
@@ -49,24 +49,26 @@ class CollectRemoteInstances(pyblish.api.ContextPlugin):
 
         instance_names = []
         for layer in layers:
-            self.log.info("!!!Layer:: {}".format(layer))
-            if layer.color_code not in self.color_code:
-                self.log.debug("Not marked, skip")
+            self.log.info("Layer:: {}".format(layer))
+            resolved_family, resolved_subset_template = self._resolve_mapping(
+                layer
+            )
+            self.log.info("resolved_family {}".format(resolved_family))
+            self.log.info("resolved_subset_template {}".format(
+                resolved_subset_template))
+
+            if not resolved_subset_template or not resolved_family:
+                self.log.debug("!!! Not marked, skip")
                 continue
 
             if layer.parents:
-                self.log.debug("Not a top layer, skip")
+                self.log.debug("!!! Not a top layer, skip")
                 continue
 
             instance = context.create_instance(layer.name)
             instance.append(layer)
-            instance.data["family"] = self.families[0]
+            instance.data["family"] = resolved_family
             instance.data["publish"] = layer.visible
-
-            # populate data from context, coming from outside?? TODO
-            # TEMP
-            self.log.info("asset {}".format(context.data["assetEntity"]))
-            self.log.info("taskType {}".format(context.data["taskType"]))
             instance.data["asset"] = context.data["assetEntity"]["name"]
             instance.data["task"] = context.data["taskType"]
 
@@ -76,7 +78,7 @@ class CollectRemoteInstances(pyblish.api.ContextPlugin):
                 "task": instance.data["task"],
                 "layer": layer.name
             }
-            subset = self.subset_template_name.format(
+            subset = resolved_subset_template.format(
                 **prepare_template_data(fill_pairs))
             instance.data["subset"] = subset
 
@@ -90,3 +92,45 @@ class CollectRemoteInstances(pyblish.api.ContextPlugin):
         if len(instance_names) != len(set(instance_names)):
             self.log.warning("Duplicate instances found. " +
                              "Remove unwanted via SubsetManager")
+
+    def _resolve_mapping(self, layer):
+        """Matches 'layer' color code and name to mapping.
+
+            If both color code AND name regex is configured, BOTH must be valid
+            If layer matches to multiple mappings, only first is used!
+        """
+        family_list = []
+        family = None
+        subset_name_list = []
+        resolved_subset_template = None
+        for mapping in self.color_code_mapping:
+            if mapping["color_code"] and \
+                    layer.color_code not in mapping["color_code"]:
+                break
+
+            if mapping["layer_name_regex"] and \
+                    not any(re.search(pattern, layer.name)
+               for pattern in mapping["layer_name_regex"]):
+                break
+
+            family_list.append(mapping["family"])
+            subset_name_list.append(mapping["subset_template_name"])
+
+        if len(subset_name_list) > 1:
+            self.log.warning("Multiple mappings found for '{}'".
+                             format(layer.name))
+            self.log.warning("Only first subset name template used!")
+            subset_name_list[:] = subset_name_list[0]
+
+        if len(family_list) > 1:
+            self.log.warning("Multiple mappings found for '{}'".
+                             format(layer.name))
+            self.log.warning("Only first family used!")
+            family_list[:] = family_list[0]
+
+        if subset_name_list:
+            resolved_subset_template = subset_name_list.pop()
+        if family_list:
+            family = family_list.pop()
+
+        return family, resolved_subset_template
