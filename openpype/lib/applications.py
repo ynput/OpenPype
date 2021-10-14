@@ -1162,8 +1162,12 @@ def prepare_host_environments(data, implementation_envs=True):
     if final_env is None:
         final_env = loaded_env
 
+    keys_to_remove = set(data["env"].keys()) - set(final_env.keys())
+
     # Update env
     data["env"].update(final_env)
+    for key in keys_to_remove:
+        data["env"].pop(key, None)
 
 
 def apply_project_environments_value(project_name, env, project_settings=None):
@@ -1349,23 +1353,23 @@ def _prepare_last_workfile(data, workdir, workfile_template_key):
     )
 
     # Last workfile path
-    last_workfile_path = ""
-    extensions = avalon.api.HOST_WORKFILE_EXTENSIONS.get(
-        app.host_name
-    )
-    if extensions:
-        anatomy = data["anatomy"]
-        # Find last workfile
-        file_template = anatomy.templates[workfile_template_key]["file"]
-        workdir_data.update({
-            "version": 1,
-            "user": get_openpype_username(),
-            "ext": extensions[0]
-        })
+    last_workfile_path = data.get("last_workfile_path") or ""
+    if not last_workfile_path:
+        extensions = avalon.api.HOST_WORKFILE_EXTENSIONS.get(app.host_name)
 
-        last_workfile_path = avalon.api.last_workfile(
-            workdir, file_template, workdir_data, extensions, True
-        )
+        if extensions:
+            anatomy = data["anatomy"]
+            # Find last workfile
+            file_template = anatomy.templates["work"]["file"]
+            workdir_data.update({
+                "version": 1,
+                "user": get_openpype_username(),
+                "ext": extensions[0]
+            })
+
+            last_workfile_path = avalon.api.last_workfile(
+                workdir, file_template, workdir_data, extensions, True
+            )
 
     if os.path.exists(last_workfile_path):
         log.debug((

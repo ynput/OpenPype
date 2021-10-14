@@ -63,6 +63,7 @@ class IntegrateAssetNew(pyblish.api.InstancePlugin):
                 "animation",
                 "model",
                 "mayaAscii",
+                "mayaScene",
                 "setdress",
                 "layout",
                 "ass",

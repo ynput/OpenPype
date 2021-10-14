@@ -123,7 +123,7 @@ class ReferenceLoader(api.Loader):
         count = options.get("count") or 1
         for c in range(0, count):
             namespace = namespace or lib.unique_namespace(
-                asset["name"] + "_",
+                "{}_{}_".format(asset["name"], context["subset"]["name"]),
                 prefix="_" if asset["name"][0].isdigit() else "",
                 suffix="_",
             )

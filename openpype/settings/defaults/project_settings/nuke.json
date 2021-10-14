@@ -38,6 +38,11 @@
                 "render"
             ]
         },
+        "ValidateInstanceInContext": {
+            "enabled": true,
+            "optional": true,
+            "active": true
+        },
         "ValidateContainers": {
             "enabled": true,
             "optional": true,
@@ -127,7 +132,8 @@
                 "jpg",
                 "jpeg",
                 "png",
-                "psd"
+                "psd",
+                "tiff"
             ],
             "node_name_template": "{class_name}_{ext}"
         },

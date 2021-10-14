@@ -13,6 +13,7 @@ class ReferenceLoader(openpype.hosts.maya.api.plugin.ReferenceLoader):
                 "pointcache",
                 "animation",
                 "mayaAscii",
+                "mayaScene",
                 "setdress",
                 "layout",
                 "camera",
@@ -40,14 +41,13 @@ class ReferenceLoader(openpype.hosts.maya.api.plugin.ReferenceLoader):
             family = "model"
 
         with maya.maintained_selection():
-
-            groupName = "{}:{}".format(namespace, name)
+            groupName = "{}:_GRP".format(namespace)
             cmds.loadPlugin("AbcImport.mll", quiet=True)
             nodes = cmds.file(self.fname,
                               namespace=namespace,
                               sharedReferenceFile=False,
                               groupReference=True,
-                              groupName="{}:{}".format(namespace, name),
+                              groupName=groupName,
                               reference=True,
                               returnNewNodes=True)
 
@@ -71,7 +71,7 @@ class ReferenceLoader(openpype.hosts.maya.api.plugin.ReferenceLoader):
                 except:  # noqa: E722
                     pass
 
-            if family not in ["layout", "setdress", "mayaAscii"]:
+            if family not in ["layout", "setdress", "mayaAscii", "mayaScene"]:
                 for root in roots:
                     root.setParent(world=True)
 

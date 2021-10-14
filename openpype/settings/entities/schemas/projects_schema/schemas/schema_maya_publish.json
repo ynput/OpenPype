@@ -33,6 +33,16 @@
             "name": "template_publish_plugin",
             "template_data": [
                 {
+                    "key": "ValidateInstanceInContext",
+                    "label": "Validate Instance In Context"
+                }
+            ]
+        },
+        {
+            "type": "schema_template",
+            "name": "template_publish_plugin",
+            "template_data": [
+                {
                     "key": "ValidateContainers",
                     "label": "ValidateContainers"
                 }
@@ -78,6 +88,32 @@
                     "type": "raw-json",
                     "key": "attributes",
                     "label": "Attributes"
+                }
+            ]
+        },
+
+        {
+            "type": "dict",
+            "collapsible": true,
+            "key": "ValidateLoadedPlugin",
+            "label": "Validate Loaded Plugin",
+            "checkbox_key": "enabled",
+            "children": [
+                {
+                    "type": "boolean",
+                    "key": "enabled",
+                    "label": "Enabled"
+                },
+                {
+                    "type": "boolean",
+                    "key": "whitelist_native_plugins",
+                    "label": "Whitelist Maya Native Plugins"
+                },
+                {
+                    "type": "list",
+                    "key": "authorized_plugins",
+                    "label": "Authorized plugins",
+                    "object_type": "text"
                 }
             ]
         },

@@ -288,14 +288,15 @@ def script_name():
 def add_button_write_to_read(node):
     name = "createReadNode"
     label = "Create Read From Rendered"
-    value = "import write_to_read;write_to_read.write_to_read(nuke.thisNode())"
+    value = "import write_to_read;\
+        write_to_read.write_to_read(nuke.thisNode(), allow_relative=False)"
     knob = nuke.PyScript_Knob(name, label, value)
     knob.clearFlag(nuke.STARTLINE)
     node.addKnob(knob)
 
 
 def create_write_node(name, data, input=None, prenodes=None,
-                      review=True, linked_knobs=None):
+                      review=True, linked_knobs=None, farm=True):
     ''' Creating write node which is group node
 
     Arguments:
@@ -421,7 +422,15 @@ def create_write_node(name, data, input=None, prenodes=None,
                             ))
                         continue
 
-                    if knob and value:
+                    if not knob and not value:
+                        continue
+
+                    log.info((knob, value))
+
+                    if isinstance(value, str):
+                        if "[" in value:
+                            now_node[knob].setExpression(value)
+                    else:
                         now_node[knob].setValue(value)
 
                 # connect to previous node
@@ -466,7 +475,7 @@ def create_write_node(name, data, input=None, prenodes=None,
     # imprinting group node
     anlib.set_avalon_knob_data(GN, data["avalon"])
     anlib.add_publish_knob(GN)
-    add_rendering_knobs(GN)
+    add_rendering_knobs(GN, farm)
 
     if review:
         add_review_knob(GN)
@@ -526,7 +535,7 @@ def create_write_node(name, data, input=None, prenodes=None,
     return GN
 
 
-def add_rendering_knobs(node):
+def add_rendering_knobs(node, farm=True):
     ''' Adds additional rendering knobs to given node
 
     Arguments:
@@ -535,9 +544,13 @@ def add_rendering_knobs(node):
     Return:
         node (obj): with added knobs
     '''
+    knob_options = [
+            "Use existing frames", "Local"]
+    if farm:
+        knob_options.append("On farm")
+
     if "render" not in node.knobs():
-        knob = nuke.Enumeration_Knob("render", "", [
-            "Use existing frames", "Local", "On farm"])
+        knob = nuke.Enumeration_Knob("render", "", knob_options)
         knob.clearFlag(nuke.STARTLINE)
         node.addKnob(knob)
     return node
