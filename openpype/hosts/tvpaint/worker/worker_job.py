@@ -224,6 +224,13 @@ class TVPaintCommands:
             for command in self._commands
         ]
 
+    def to_job_data(self):
+        return {
+            "workfile": self._workfile,
+            "function": "commands",
+            "commands": self.commands_data()
+        }
+
     def result(self):
         return [
             command.result()
