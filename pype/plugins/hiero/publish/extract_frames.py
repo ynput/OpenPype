@@ -18,10 +18,14 @@ class ExtractFrames(pype.api.Extractor):
 
     def process(self, instance):
         staging_dir = self.staging_dir(instance)
-        output_template = os.path.join(staging_dir, instance.data["name"])
+        output_template = (
+            os.path.join(staging_dir, instance.data["name"]) +
+            ".{:04d}.{}"
+        )
         sequence = hiero.ui.activeSequence()
         files = []
         for frame in instance.data["frames"]:
+            # Convert to uncompressed exr with oiiotool.
             track_item = sequence.trackItemAt(frame)
             media_source = track_item.source().mediaSource()
             input_path = media_source.fileinfos()[0].filename()
@@ -29,11 +33,9 @@ class ExtractFrames(pype.api.Extractor):
                 track_item.mapTimelineToSource(frame) +
                 track_item.source().mediaSource().startTime()
             )
-            format = instance.data["format"]
-            output_path = output_template
-            output_path += ".{:04d}.{}".format(int(frame), format)
+            exr_output_path = output_template.format(int(frame), "exr")
 
-            args = ["oiiotool"]
+            args = [os.getenv("PYPE_OIIO_PATH")]
 
             ext = os.path.splitext(input_path)[1][1:]
             if ext in self.movie_extensions:
@@ -41,10 +43,10 @@ class ExtractFrames(pype.api.Extractor):
             else:
                 args.extend(["--frames", str(int(input_frame))])
 
-            if ext == "exr":
-                args.extend(["--powc", "0.45,0.45,0.45,1.0"])
-
-            args.extend([input_path, "-o", output_path])
+            args.extend(
+                [input_path, "--compression", "none", "-o", exr_output_path]
+            )
+            self.log.info(args)
             output = pype.api.subprocess(args)
 
             failed_output = "oiiotool produced no output."
@@ -53,7 +55,24 @@ class ExtractFrames(pype.api.Extractor):
                     "oiiotool processing failed. Args: {}".format(args)
                 )
 
+            # Produce final format with ffmpeg.
+            output_path = output_template.format(
+                int(frame), instance.data["format"]
+            )
+            args = ["ffmpeg"]
+
+            if input_path.endswith(".exr"):
+                args.extend(["-gamma", "2.2"])
+
+            args.extend(["-i", exr_output_path, output_path])
+
+            self.log.info(args)
+            pype.api.subprocess(args)
+
             files.append(output_path)
+
+            # Clean up temporary uncompressed exr.
+            os.remove(exr_output_path)
 
             # Feedback to user because "oiiotool" can make the publishing
             # appear unresponsive.
@@ -64,21 +83,15 @@ class ExtractFrames(pype.api.Extractor):
                 )
             )
 
+        representation = {
+            "name": instance.data["format"],
+            "ext": instance.data["format"],
+            "stagingDir": staging_dir
+        }
+
         if len(files) == 1:
-            instance.data["representations"] = [
-                {
-                    "name": format,
-                    "ext": format,
-                    "files": os.path.basename(files[0]),
-                    "stagingDir": staging_dir
-                }
-            ]
+            representation["files"] = os.path.basename(files[0])
         else:
-            instance.data["representations"] = [
-                {
-                    "name": format,
-                    "ext": format,
-                    "files": [os.path.basename(x) for x in files],
-                    "stagingDir": staging_dir
-                }
-            ]
+            representation["files"] = [os.path.basename(x) for x in files]
+
+        instance.data["representations"] = [representation]
