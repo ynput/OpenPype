@@ -47,6 +47,10 @@ class BaseCommand:
         return self._parent
 
     @property
+    def communicator(self):
+        return self._parent.communicator
+
+    @property
     def done(self):
         return self._done
 
