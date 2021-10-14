@@ -22,12 +22,13 @@ class CreateHDA(plugin.Creator):
         # type: (str) -> bool
         """Check if existing subset name versions already exists."""
         # Get all subsets of the current asset
+        asset_id = io.find_one({"name": self.data["asset"], "type": "asset"},
+                               projection={"_id": True})['_id']
         subset_docs = io.find(
             {
                 "type": "subset",
-                "parent": self.data["asset"]
-            },
-            {"name": 1}
+                "parent": asset_id
+            }, {"name": 1}
         )
         existing_subset_names = set(subset_docs.distinct("name"))
         existing_subset_names_low = {
@@ -36,7 +37,7 @@ class CreateHDA(plugin.Creator):
         return subset_name.lower() in existing_subset_names_low
 
     def _process(self, instance):
-
+        subset_name = self.data["subset"]
         # get selected nodes
         out = hou.node("/obj")
         self.nodes = hou.selectedNodes()
@@ -60,26 +61,29 @@ class CreateHDA(plugin.Creator):
         if not to_hda.type().definition():
             # if node type has not its definition, it is not user
             # created hda. We test if hda can be created from the node.
-
             if not to_hda.canCreateDigitalAsset():
                 raise Exception(
                     "cannot create hda from node {}".format(to_hda))
 
             hda_node = to_hda.createDigitalAsset(
-                name=self.name,
-                hda_file_name="$HIP/{}.hda".format(self.name)
+                name=subset_name,
+                hda_file_name="$HIP/{}.hda".format(subset_name)
             )
             hou.moveNodesTo(self.nodes, hda_node)
             hda_node.layoutChildren()
         else:
+            if self._check_existing(subset_name):
+                raise plugin.OpenPypeCreatorError(
+                        ("subset {} is already published with different HDA"
+                         "definition.").format(subset_name))
             hda_node = to_hda
 
-        hda_node.setName(self.name)
+        hda_node.setName(subset_name)
 
         # delete node created by Avalon in /out
         # this needs to be addressed in future Houdini workflow refactor.
 
-        hou.node("/out/{}".format(self.name)).destroy()
+        hou.node("/out/{}".format(subset_name)).destroy()
 
         try:
             lib.imprint(hda_node, self.data)
