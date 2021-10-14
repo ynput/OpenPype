@@ -1018,6 +1018,9 @@ class Window(QtWidgets.QMainWindow):
 
         """
 
+    def set_save_enabled(self, enabled):
+        self.files_widget.btn_save.setEnabled(enabled)
+
     def on_task_changed(self):
         # Since we query the disk give it slightly more delay
         tools_lib.schedule(self._on_task_changed, 100, channel="mongo")
@@ -1190,7 +1193,7 @@ def show(root=None, debug=False, parent=None, use_context=True, save=True):
             }
             window.set_context(context)
 
-        window.files_widget.btn_save.setEnabled(save)
+        window.set_save_enabled(save)
 
         window.show()
         window.setStyleSheet(style.load_stylesheet())

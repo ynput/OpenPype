@@ -34,21 +34,23 @@ class HostToolsHelper:
             host = avalon.api.registered_host()
             validate_host_requirements(host)
 
-            window = Window(parent=parent)
+            self._workfiles_tool = Window(parent=parent)
 
+        return self._workfiles_tool
+
+    def show_workfiles_tool(self, parent=None, use_context=True, save=True):
+        workfiles_tool = self._get_workfiles_tool(parent)
+
+        if use_context:
             context = {
                 "asset": avalon.api.Session["AVALON_ASSET"],
                 "silo": avalon.api.Session["AVALON_SILO"],
                 "task": avalon.api.Session["AVALON_TASK"]
             }
-            window.set_context(context)
+            workfiles_tool.set_context(context)
 
-            self._workfiles_tool = window
-
-        return self._workfiles_tool
-
-    def show_workfiles_tool(self, parent=None):
-        workfiles_tool = self._get_workfiles_tool(parent)
+        if save:
+            workfiles_tool.set_save_enabled(save)
 
         workfiles_tool.refresh()
         workfiles_tool.show()
@@ -147,24 +149,24 @@ class HostToolsHelper:
 
         publish.show(parent)
 
-    def show_tool_by_name(self, tool_name, parent=None):
+    def show_tool_by_name(self, tool_name, parent=None, *args, **kwargs):
         if tool_name == "workfiles":
-            self.show_workfiles_tool(parent)
+            self.show_workfiles_tool(parent, *args, **kwargs)
 
         elif tool_name == "loader":
-            self.show_loader_tool(parent)
+            self.show_loader_tool(parent, *args, **kwargs)
 
         elif tool_name == "libraryloader":
-            self.show_library_loader_tool(parent)
+            self.show_library_loader_tool(parent, *args, **kwargs)
 
         elif tool_name == "creator":
-            self.show_creator_tool(parent)
+            self.show_creator_tool(parent, *args, **kwargs)
 
         elif tool_name == "subset_manager":
-            self.show_subset_manager_tool(parent)
+            self.show_subset_manager_tool(parent, *args, **kwargs)
 
         elif tool_name == "scene_inventory":
-            self.show_scene_inventory_tool(parent)
+            self.show_scene_inventory_tool(parent, *args, **kwargs)
 
 
 class _SingletonPoint:
@@ -176,13 +178,15 @@ class _SingletonPoint:
             cls.helper = HostToolsHelper()
 
     @classmethod
-    def show_tool_by_name(cls, tool_name, parent=None):
+    def show_tool_by_name(cls, tool_name, parent=None, *args, **kwargs):
         cls._create_helper()
-        cls.helper.show_tool_by_name(tool_name, parent)
+        cls.helper.show_tool_by_name(tool_name, parent, *args, **kwargs)
 
 
-def show_workfiles_tool(parent=None):
-    _SingletonPoint.show_tool_by_name("workfiles", parent)
+def show_workfiles_tool(parent=None, use_context=True, save=True):
+    _SingletonPoint.show_tool_by_name(
+        "workfiles", parent, use_context=use_context, save=save
+    )
 
 
 def show_loader_tool(parent=None):
