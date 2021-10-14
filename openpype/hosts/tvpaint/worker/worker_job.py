@@ -161,6 +161,51 @@ class ExecuteGeorgeScript(BaseCommand):
         return cls(script, tmp_file_keys, output_dirs, data)
 
 
+class CollectSceneData(BaseCommand):
+    name = "collect_scene_data"
+
+    def execute(self):
+        from avalon.tvpaint.lib import (
+            get_layers_data,
+            get_groups_data,
+            get_layers_pre_post_behavior,
+            get_layers_exposure_frames,
+            get_scene_data
+        )
+
+        groups_data = get_groups_data(communicator=self.communicator)
+        layers_data = get_layers_data(communicator=self.communicator)
+        layers_by_id = {
+            layer_data["layer_id"]: layer_data
+            for layer_data in layers_data
+        }
+        layer_ids = tuple(layers_by_id.keys())
+        pre_post_beh = get_layers_pre_post_behavior(
+            layer_ids, communicator=self.communicator
+        )
+        exposure_frames = get_layers_exposure_frames(
+            layer_ids, layers_data, communicator=self.communicator
+        )
+        output_layers_data = []
+        for layer_data in layers_data:
+            layer_id = layer_data["layer_id"]
+            layer_data["exposure_frames"] = exposure_frames[layer_id]
+            behaviors = pre_post_beh[layer_id]
+            for key, value in behaviors.items():
+                layer_data[key] = value
+            output_layers_data.append(layer_data)
+
+        self._result = {
+            "layers_data": output_layers_data,
+            "groups_data": groups_data,
+            "scene_data": get_scene_data(self.communicator)
+        }
+
+    @classmethod
+    def from_existing(cls, data):
+        return cls(data)
+
+
 class TVPaintCommands:
     def __init__(self, workfile, commands=None, communicator=None):
         if not commands:
