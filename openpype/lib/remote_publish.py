@@ -75,7 +75,7 @@ def publish_and_log(dbcon, _id, log, close_plugin_name=None):
             )
             if close_plugin:  # close host app explicitly after error
                 context = pyblish.api.Context()
-                close_plugin(context).process()
+                close_plugin().process(context)
             sys.exit(1)
         else:
             dbcon.update_one(
