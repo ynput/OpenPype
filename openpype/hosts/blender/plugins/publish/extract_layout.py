@@ -26,13 +26,6 @@ class ExtractLayout(openpype.api.Extractor):
             if obj.type != "ARMATURE":
                 continue
 
-            asset_group_name = asset.name
-            asset.name = asset.get(AVALON_PROPERTY).get("asset_name")
-
-            armature_name = obj.name
-            original_name = armature_name.split(':')[1]
-            obj.name = original_name
-
             object_action_pairs = []
             original_actions = []
 
@@ -54,6 +47,13 @@ class ExtractLayout(openpype.api.Extractor):
             else:
                 self.log.info("Object have no animation.")
                 continue
+
+            asset_group_name = asset.name
+            asset.name = asset.get(AVALON_PROPERTY).get("asset_name")
+
+            armature_name = obj.name
+            original_name = armature_name.split(':')[1]
+            obj.name = original_name
 
             object_action_pairs.append((obj, copy_action))
             original_actions.append(curr_action)
