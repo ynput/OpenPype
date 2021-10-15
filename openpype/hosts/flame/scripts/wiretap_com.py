@@ -8,6 +8,7 @@ import os
 import sys
 import subprocess
 import json
+import xml.dom.minidom as minidom
 from copy import deepcopy
 import datetime
 
@@ -23,6 +24,7 @@ from libwiretapPythonClientAPI import (
     WireTapServerHandle,
     WireTapInt,
     WireTapStr,
+    WiretapError
 )
 
 class WireTapCom(object):
@@ -47,20 +49,20 @@ class WireTapCom(object):
         WireTapClientUninit()
         print("WireTap closed...")
 
-    def get_launch_args(self,
-            project_name, project_data, user_name, workspace_name=None, *args, **kwargs):
-        
-        print(user_name)
-        
-        self._project_prep(project_name, project_data, user_name, workspace_name)
+    def get_launch_args(
+        self, project_name, project_data, user_name, workspace_name=None,
+            *args, **kwargs):
+
+        self._project_prep(project_name)
+        self._set_project_settings(project_name, project_data)
         user_name = self._user_prep(user_name)
 
         if workspace_name is None:
             # default workspace
             print("Using a default workspace")
             return [
-                "--start-project={}".format(project_name), 
-                "--start-user={}".format(user_name), 
+                "--start-project={}".format(project_name),
+                "--start-user={}".format(user_name),
                 "--create-workspace"
             ]
 
@@ -70,7 +72,7 @@ class WireTapCom(object):
 
             self._workspace_prep(project_name, workspace_name)
             return [
-                "--start-project={}".format(project_name), 
+                "--start-project={}".format(project_name),
                 "--start-user={}".format(user_name),
                 "--create-workspace",
                 "--start-workspace={}".format(workspace_name)
@@ -109,12 +111,10 @@ class WireTapCom(object):
         print(
             "Workspace `{}` is successfully created".format(workspace_name))
 
-    def _project_prep(self, project_name, project_data, user_name, workspace_name):
+    def _project_prep(self, project_name):
 
         project_exists = self._child_is_in_parent_path(
             "/projects", project_name, "PROJECT")
-
-        print(project_data)
 
         if not project_exists:
 
@@ -124,7 +124,6 @@ class WireTapCom(object):
                 raise AttributeError(
                     "Cannot create new project! There are no volumes defined for this Flame!"
                 )
-
 
             # sanity check :)
             if self.volume_name not in volumes:
@@ -162,8 +161,7 @@ class WireTapCom(object):
 
             # create project settings
             print(
-                "A new project '%s' will be created." % project_name)
-
+                "A new project '{}' will be created.".format(project_name))
 
     def _get_volumes(self):
 
@@ -198,7 +196,6 @@ class WireTapCom(object):
             volumes.append(node_name.c_str())
 
         return volumes
-
 
     def _user_prep(self, user_name):
         """Ensuring user does exists in user's stack
@@ -277,22 +274,6 @@ class WireTapCom(object):
 
         return usernames
 
-    def _get_groups(self):
-
-        # fetch all group which the user is a part of
-        user = pwd.getpwuid(os.geteuid()).pw_name  # current user
-        groups = [
-            g.gr_name for g in grp.getgrall() if user in g.gr_mem
-        ]  # compare user name with group database
-        gid = pwd.getpwnam(
-            user
-        ).pw_gid  # make sure current group is added if database if incomplete
-        default_group = grp.getgrgid(gid).gr_name
-        if default_group not in groups:
-            groups.append(default_group)
-
-        return (default_group, groups)
-
     def _child_is_in_parent_path(self, parent_path, child_name, child_type):
         # get the parent
         parent = WireTapNodeHandle(self._server, parent_path)
@@ -334,6 +315,55 @@ class WireTapCom(object):
                 return True
 
         return False
+
+    def _set_project_settings(self, project_name, project_data):
+        _xml = "<Project>"
+        _xml += "<Description>Created by OpenPype</Description>"
+        _xml += self._project_data_to_xml(project_data, "SetupDir")
+        _xml += self._project_data_to_xml(project_data, "FrameWidth")
+        _xml += self._project_data_to_xml(project_data, "FrameHeight")
+        _xml += self._project_data_to_xml(project_data, "FrameDepth")
+        _xml += self._project_data_to_xml(project_data, "AspectRatio")
+        _xml += self._project_data_to_xml(project_data, "FrameRate")
+        _xml += self._project_data_to_xml(project_data, "FieldDominance")
+
+        # proxy settings
+        _xml += self._project_data_to_xml(project_data, "ProxyWidthHint")
+        _xml += self._project_data_to_xml(project_data, "ProxyMinFrameSize")
+        _xml += self._project_data_to_xml(project_data, "ProxyQuality")
+
+        _xml += "</Project>"
+
+        pretty_xml = minidom.parseString(_xml).toprettyxml()
+        print("__ xml: {}".format(pretty_xml))
+
+        # set project data to wiretap
+        project_node = WireTapNodeHandle(
+            self._server, "/projects/" + project_name)
+
+        if not project_node.setMetaData("XML", _xml):
+            raise WiretapError(
+                "Error setting metadata for %s: %s"
+                % (project_name, project_node.lastError())
+            )
+
+        print("Project successfully created.")
+
+    def _project_data_to_xml(self, project_data, setting):
+        """Generating xml line with settings
+
+        Args:
+            project_data (dict): [description]
+            setting (str): [description]
+
+        Returns:
+            [str]: Empty string or '<setting>value</setting>'
+        """
+        return (
+            "<{}>{}</{}>".format(setting, project_data.get(setting), setting)
+            if project_data.get(setting)
+            else ""
+        )
 
 
 if __name__ == "__main__":
