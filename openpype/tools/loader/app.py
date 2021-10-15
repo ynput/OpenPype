@@ -55,9 +55,9 @@ class LoaderWindow(QtWidgets.QDialog):
         self.setWindowFlags(QtCore.Qt.Window)
         self.setFocusPolicy(QtCore.Qt.StrongFocus)
 
-        split = QtWidgets.QSplitter(self)
+        main_splitter = QtWidgets.QSplitter(self)
 
-        asset_filter_splitter = QtWidgets.QSplitter(split)
+        asset_filter_splitter = QtWidgets.QSplitter(main_splitter)
         asset_filter_splitter.setOrientation(QtCore.Qt.Vertical)
 
         # --- Left part ---
@@ -83,11 +83,11 @@ class LoaderWindow(QtWidgets.QDialog):
             self.groups_config,
             self.family_config_cache,
             tool_name=self.tool_name,
-            parent=split
+            parent=main_splitter
         )
 
         # --- Right part ---
-        thumb_ver_splitter = QtWidgets.QSplitter(split)
+        thumb_ver_splitter = QtWidgets.QSplitter(main_splitter)
         thumb_ver_splitter.setOrientation(QtCore.Qt.Vertical)
         version = VersionWidget(io, parent=thumb_ver_splitter)
         thumbnail = ThumbnailWidget(io, parent=thumb_ver_splitter)
@@ -111,9 +111,9 @@ class LoaderWindow(QtWidgets.QDialog):
         thumb_ver_splitter.setStretchFactor(0, 30)
         thumb_ver_splitter.setStretchFactor(1, 35)
 
-        split.addWidget(asset_filter_splitter)
-        split.addWidget(subsets)
-        split.addWidget(thumb_ver_splitter)
+        main_splitter.addWidget(asset_filter_splitter)
+        main_splitter.addWidget(subsets)
+        main_splitter.addWidget(thumb_ver_splitter)
 
         # TODO keep footer size by message size
         footer = QtWidgets.QWidget(self)
@@ -126,7 +126,7 @@ class LoaderWindow(QtWidgets.QDialog):
         footer_layout.setContentsMargins(0, 0, 0, 0)
 
         layout = QtWidgets.QVBoxLayout(self)
-        layout.addWidget(split)
+        layout.addWidget(main_splitter)
         layout.addWidget(footer)
 
         self.data = {
@@ -180,10 +180,10 @@ class LoaderWindow(QtWidgets.QDialog):
 
         # Defaults
         if sync_server_enabled:
-            split.setSizes([250, 1000, 550])
+            main_splitter.setSizes([250, 1000, 550])
             self.resize(1800, 900)
         else:
-            split.setSizes([250, 850, 200])
+            main_splitter.setSizes([250, 850, 200])
             self.resize(1300, 700)
 
     def resizeEvent(self, event):
