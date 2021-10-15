@@ -217,9 +217,13 @@ class HostToolsHelper:
         elif tool_name == "lookassigner":
             self.show_look_assigner(parent, *args, **kwargs)
 
-        self.log.warning(
-            "Can't show unknown tool name: \"{}\"".format(tool_name)
-        )
+        elif tool_name == "publish":
+            self.show_publish(parent, *args, **kwargs)
+
+        else:
+            self.log.warning(
+                "Can't show unknown tool name: \"{}\"".format(tool_name)
+            )
 
 
 class _SingletonPoint:
@@ -277,3 +281,7 @@ def show_scene_inventory(parent=None):
 
 def show_look_assigner(parent=None):
     _SingletonPoint.show_tool_by_name("lookassigner", parent)
+
+
+def show_publish(parent=None):
+    _SingletonPoint.show_tool_by_name("publish", parent)
