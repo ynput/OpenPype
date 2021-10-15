@@ -74,8 +74,8 @@ class CreateHDA(plugin.Creator):
         else:
             if self._check_existing(subset_name):
                 raise plugin.OpenPypeCreatorError(
-                        ("subset {} is already published with different HDA"
-                         "definition.").format(subset_name))
+                    ("subset {} is already published with different HDA"
+                     "definition.").format(subset_name))
             hda_node = to_hda
 
         hda_node.setName(subset_name)
@@ -87,7 +87,7 @@ class CreateHDA(plugin.Creator):
 
         try:
             lib.imprint(hda_node, self.data)
-        except hou.OperationFailed as e:
+        except hou.OperationFailed:
             raise plugin.OpenPypeCreatorError(
                 ("Cannot set metadata on asset. Might be that it already is "
                  "OpenPype asset.")
