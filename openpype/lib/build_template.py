@@ -1,4 +1,4 @@
-from openpype.plugins.load.abstract_load_template import TemplateLoader as maya_TemplateLoader
+from openpype.hosts.maya.plugins.init.template_loader import TemplateLoader as maya_TemplateLoader
 
 def get_concrete_template_loader(context):
     if context['DCC'] == 'Maya':
