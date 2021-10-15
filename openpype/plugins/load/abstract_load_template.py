@@ -1,6 +1,7 @@
+import os
 import avalon
 from openpype.settings import get_project_settings
-import collections
+from openpype.lib import Anatomy
 from openpype.lib import get_linked_assets
 
 #### Copy from BuildWorkfile in avalon_context.py
@@ -116,11 +117,24 @@ class AbstractTemplateLoader(object):
 
     @property
     def template_path(self):
-        project_settings = get_project_settings(avalon.io.Session["AVALON_PROJECT"])
-        for profile in project_settings['maya']['workfile_build']['profiles']: #get DCC
-            if 'Modeling' in profile['task_types']: # Get tasktype
-                return profile['path'] #Validate path
-        raise ValueError("No matching profile found for task '{}' in DCC '{}'".format('Modeling', 'maya'))
+        project = avalon.io.Session["AVALON_PROJECT"]
+        anatomy = Anatomy(project)
+        project_settings = get_project_settings(project)
+        current_dcc = avalon.io.Session["AVALON_APP"]
+        current_task = avalon.io.Session["AVALON_TASK"]
+
+        for profile in project_settings[current_dcc]['workfile_build']['profiles']:
+            if current_task in profile['task_types']:
+                path = profile['path']
+                break
+        else:
+            raise ValueError("No matching profile found for task '{}' in DCC '{}'".format(current_task, current_dcc))
+
+        try:
+            solved_path = os.path.normpath(anatomy.path_remapper(path))
+            return solved_path
+        except KeyError as missing_key:
+            raise KeyError("Could note solve '{}' in path '{}'".format(missing_key, path))
 
     def __init__(self):
 

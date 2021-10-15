@@ -1,4 +1,3 @@
-#from maya import cmds
 from openpype.plugins.load.abstract_load_template import AbstractTemplateLoader
 import importlib
 
@@ -19,7 +18,7 @@ class TemplateLoader(AbstractTemplateLoader):
 
     def _get_all_nodes_with_attribute(self, attribute_name):
         attribute_list = cmds.ls('*.{}'.format(attribute_name), long=True)
-        return [attr.split('.')[0] for attr in attribute_list]
+        return [attr.rpartition('.')[0] for attr in attribute_list]
 
     def _get_all_user_data_on_node(self, node):
         all_attributes = cmds.listAttr(node, userDefined=1)
@@ -30,7 +29,7 @@ class TemplateLoader(AbstractTemplateLoader):
 
         return user_data
 
-    def get_placeholders(self): # Get templates nodes objects ? How ? Agnostic
+    def get_template_nodes(self): # Get templates nodes objects ? How ? Agnostic
         context_nodes = self._get_all_nodes_with_attribute('current_context_builder') #attribute name must be a variable
         asset_nodes = self._get_all_nodes_with_attribute('linked_asset_builder') #attribute name must be a variable
 
@@ -51,9 +50,6 @@ class TemplateLoader(AbstractTemplateLoader):
         cmds.parent(child, nodeParent)
         cmds.delete(node)
 
-    def get_template_nodes(self):
-        return cmds.ls(type='locator')
-
     @staticmethod
     def is_valid_placeholder(node):
         if not cmds.attributeQuery('Test', node=node, exists=True):
@@ -61,30 +57,31 @@ class TemplateLoader(AbstractTemplateLoader):
             return True
         return True
 
+## TODO: Replace by get_loader_data
     @staticmethod
     def get_is_context_asset(node):
-        return True
+        return not cmds.getAttr(node+".linked_asset_builder")
 
     @staticmethod
     def get_loader(node):
-        return 'ReferenceLoader'
+        return cmds.getAttr(node+".loader")
 
     @staticmethod
     def get_representation_type(node):
-        return 'abc'
+        return cmds.getAttr(node+".repre_name")
 
     @staticmethod
     def get_family(node):
-        return "model"
+        return cmds.getAttr(node+".families")
 
     @staticmethod
     def get_subset(node):
-        return "modelMain"
+        return cmds.getAttr(node+".representation")
 
     @staticmethod
     def get_name(node):
-        return "Alice"
+        return cmds.getAttr(node+".asset")
 
     @staticmethod
     def get_order(node):
-        return 1
+        return cmds.getAttr(node+".order")
