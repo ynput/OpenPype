@@ -1,9 +1,16 @@
+import avalon
 from openpype.hosts.maya.plugins.init.template_loader import TemplateLoader as maya_TemplateLoader
 
-def get_concrete_template_loader(context):
-    if context['DCC'] == 'Maya':
-        return maya_TemplateLoader
-    raise ValueError('DCC not found for template')
+def get_concrete_template_loader():
+    concrete_loaders = {
+        'maya': maya_TemplateLoader
+    }
+
+    dcc = avalon.io.Session['AVALON_APP']
+    loader = concrete_loaders.get(dcc)
+    if not loader:
+        raise ValueError('DCC not found for template')
+    return loader
 
 class BuildWorkfileTemplate:
     #log = logging.getLogger("BuildWorkfile")
@@ -14,7 +21,7 @@ class BuildWorkfileTemplate:
         return containers
 
     def build_workfile(self):
-        concrete = get_concrete_template_loader({'DCC':'Maya'})
+        concrete = get_concrete_template_loader()
         instance = concrete()
 
         # Get current asset name and entity
