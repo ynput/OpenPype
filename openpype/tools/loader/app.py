@@ -101,12 +101,12 @@ class LoaderWindow(QtWidgets.QDialog):
         thumb_ver_splitter.addWidget(thumbnail)
         thumb_ver_splitter.addWidget(version)
 
-        representations = None
+        repres_widget = None
         if sync_server_enabled:
-            representations = RepresentationWidget(
+            repres_widget = RepresentationWidget(
                 io, self.tool_name, parent=thumb_ver_splitter
             )
-            thumb_ver_splitter.addWidget(representations)
+            thumb_ver_splitter.addWidget(repres_widget)
 
         thumb_ver_splitter.setStretchFactor(0, 30)
         thumb_ver_splitter.setStretchFactor(1, 35)
@@ -136,7 +136,6 @@ class LoaderWindow(QtWidgets.QDialog):
                 "subsets": subsets,
                 "version": version,
                 "thumbnail": thumbnail,
-                "representations": representations
             },
             "state": {
                 "assetIds": None
@@ -162,11 +161,13 @@ class LoaderWindow(QtWidgets.QDialog):
 
         subsets.load_started.connect(self._on_load_start)
         subsets.load_ended.connect(self._on_load_end)
-        representations.load_started.connect(self._on_load_start)
-        representations.load_ended.connect(self._on_load_end)
+        repres_widget.load_started.connect(self._on_load_start)
+        repres_widget.load_ended.connect(self._on_load_end)
 
         # TODO add overlay using stack widget
         self._message_label = message_label
+
+        self._repres_widget = repres_widget
 
         self._overlay_frame = overlay_frame
         self._message_timer = message_timer
@@ -321,9 +322,9 @@ class LoaderWindow(QtWidgets.QDialog):
 
         self.data["state"]["assetIds"] = asset_ids
 
-        representations = self.data["widgets"]["representations"]
         # reset repre list
-        representations.set_version_ids([])
+        if self._repres_widget is not None:
+            self._repres_widget.set_version_ids([])
 
     def _subsetschanged(self):
         asset_ids = self.data["state"]["assetIds"]
@@ -414,12 +415,14 @@ class LoaderWindow(QtWidgets.QDialog):
 
         self.data["widgets"]["thumbnail"].set_thumbnail(thumbnail_docs)
 
-        representations = self.data["widgets"]["representations"]
-        version_ids = [doc["_id"] for doc in version_docs or []]
-        representations.set_version_ids(version_ids)
+        if self._repres_widget is not None:
+            version_ids = [doc["_id"] for doc in version_docs or []]
+            self._repres_widget.set_version_ids(version_ids)
 
-        # representations.change_visibility("subset", len(rows) > 1)
-        # representations.change_visibility("asset", len(asset_docs) > 1)
+            # self._repres_widget.change_visibility("subset", len(rows) > 1)
+            # self._repres_widget.change_visibility(
+            #     "asset", len(asset_docs) > 1
+            # )
 
     def _set_context(self, context, refresh=True):
         """Set the selection in the interface using a context.
