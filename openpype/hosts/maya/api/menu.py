@@ -28,7 +28,6 @@ def _get_menu(menu_name=None):
 
 
 def deferred():
-
     def add_build_workfiles_item():
         # Add build first workfile
         cmds.menuItem(divider=True, parent=pipeline._menu)
@@ -48,9 +47,6 @@ def deferred():
         )
 
     def modify_workfiles():
-        def launch_workfiles_app(*_args, **_kwargs):
-            host_tools.show_workfiles(pipeline._parent)
-
         # Find the pipeline menu
         top_menu = _get_menu()
 
@@ -71,7 +67,7 @@ def deferred():
         cmds.menuItem(
             "Work Files",
             parent=pipeline._menu,
-            command=launch_workfiles_app,
+            command=lambda *args: host_tools.show_workfiles(pipeline._parent),
             insertAfter=after_action
         )
 
