@@ -101,8 +101,8 @@ def override_toolbox_ui():
             "lookassigner",
             parent=pipeline._parent
         )
-    except Exception as exc:
-        log.warning("Couldn't create Look assigner window.")
+    except Exception:
+        log.warning("Couldn't create Look assigner window.", exc_info=True)
 
     if look_assigner is not None:
         controls.append(
