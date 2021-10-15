@@ -214,8 +214,8 @@ def show_creator_tool(parent=None):
 
 
 def show_subset_manager_tool(parent=None):
-    _SingletonPoint.show_tool_by_name("subset_manager", parent)
+    _SingletonPoint.show_tool_by_name("subsetmanager", parent)
 
 
 def show_scene_inventory_tool(parent=None):
-    _SingletonPoint.show_tool_by_name("scene_inventory", parent)
+    _SingletonPoint.show_tool_by_name("sceneinventory", parent)
