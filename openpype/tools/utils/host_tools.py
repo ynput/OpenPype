@@ -17,13 +17,25 @@ class HostToolsHelper:
     Class may also contain tools that are available only for one or few hosts.
     """
     def __init__(self, parent=None):
+        self._log = None
+        # Global parent for all tools (may and may not be set)
         self._parent = parent
+
+        # Prepare attributes for all tools
         self._workfiles_tool = None
         self._loader_tool = None
         self._creator_tool = None
         self._subset_manager_tool = None
         self._scene_inventory_tool = None
         self._library_loader_tool = None
+
+    @property
+    def log(self):
+        if self._log is None:
+            from openpype.api import Logger
+
+            self._log = Logger.get_logger(self.__class__.__name__)
+        return self._log
 
     def _get_workfiles_tool(self, parent):
         if self._workfiles_tool is None:
@@ -39,6 +51,7 @@ class HostToolsHelper:
         return self._workfiles_tool
 
     def show_workfiles_tool(self, parent=None, use_context=None, save=None):
+        """Workfiles tool for changing context and saving workfiles."""
         if use_context is None:
             use_context = True
 
@@ -72,6 +85,7 @@ class HostToolsHelper:
         return self._loader_tool
 
     def show_loader_tool(self, parent=None, use_context=None):
+        """Loader tool for loading representations."""
         if use_context is None:
             use_context = False
         loader_tool = self._get_loader_tool(parent)
@@ -96,6 +110,7 @@ class HostToolsHelper:
         return self._creator_tool
 
     def show_creator_tool(self, parent=None):
+        """Show tool to create new instantes for publishing."""
         creator_tool = self._get_creator_tool(parent)
         creator_tool.refresh()
         creator_tool.show()
@@ -113,6 +128,7 @@ class HostToolsHelper:
         return self._subset_manager_tool
 
     def show_subset_manager_tool(self, parent=None):
+        """Show tool display/remove existing created instances."""
         subset_manager_tool = self._get_subset_manager_tool(parent)
         subset_manager_tool.show()
 
@@ -129,6 +145,7 @@ class HostToolsHelper:
         return self._scene_inventory_tool
 
     def show_scene_inventory_tool(self, parent=None):
+        """Show tool maintain loaded containers."""
         scene_inventory_tool = self._get_scene_inventory_tool(parent)
         scene_inventory_tool.show()
         scene_inventory_tool.refresh()
@@ -148,6 +165,7 @@ class HostToolsHelper:
         return self._library_loader_tool
 
     def show_library_loader_tool(self, parent=None):
+        """Loader tool for loading representations from library project."""
         library_loader_tool = self._get_library_loader_tool(parent)
         library_loader_tool.show()
         library_loader_tool.raise_()
@@ -155,11 +173,16 @@ class HostToolsHelper:
         library_loader_tool.refresh()
 
     def show_publish_tool(self, parent=None):
+        """Publish UI."""
         from avalon.tools import publish
 
         publish.show(parent)
 
     def show_tool_by_name(self, tool_name, parent=None, *args, **kwargs):
+        """Show tool by it's name.
+
+        This is helper for
+        """
         if tool_name == "workfiles":
             self.show_workfiles_tool(parent, *args, **kwargs)
 
@@ -178,8 +201,18 @@ class HostToolsHelper:
         elif tool_name == "sceneinventory":
             self.show_scene_inventory_tool(parent, *args, **kwargs)
 
+        self.log.warning(
+            "Can't show unknown tool name: \"{}\"".format(tool_name)
+        )
+
 
 class _SingletonPoint:
+    """Singleton access to host tools.
+
+    Some hosts don't have ability to create 'HostToolsHelper' object anc can
+    only register function callbacks. For those cases is created this singleton
+    point where 'HostToolsHelper' is created "in shared memory".
+    """
     helper = None
 
     @classmethod
@@ -193,6 +226,7 @@ class _SingletonPoint:
         cls.helper.show_tool_by_name(tool_name, parent, *args, **kwargs)
 
 
+# Function callbacks using singleton acces point
 def show_workfiles_tool(parent=None, use_context=None, save=None):
     _SingletonPoint.show_tool_by_name(
         "workfiles", parent, use_context=use_context, save=save
