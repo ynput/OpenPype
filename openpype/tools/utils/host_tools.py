@@ -38,9 +38,14 @@ class HostToolsHelper:
 
         return self._workfiles_tool
 
-    def show_workfiles_tool(self, parent=None, use_context=True, save=True):
-        workfiles_tool = self._get_workfiles_tool(parent)
+    def show_workfiles_tool(self, parent=None, use_context=None, save=None):
+        if use_context is None:
+            use_context = True
 
+        if save is None:
+            save = True
+
+        workfiles_tool = self._get_workfiles_tool(parent)
         if use_context:
             context = {
                 "asset": avalon.api.Session["AVALON_ASSET"],
@@ -183,7 +188,7 @@ class _SingletonPoint:
         cls.helper.show_tool_by_name(tool_name, parent, *args, **kwargs)
 
 
-def show_workfiles_tool(parent=None, use_context=True, save=True):
+def show_workfiles_tool(parent=None, use_context=None, save=None):
     _SingletonPoint.show_tool_by_name(
         "workfiles", parent, use_context=use_context, save=save
     )
