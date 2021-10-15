@@ -4,7 +4,6 @@ Basic avalon integration
 import os
 import contextlib
 from collections import OrderedDict
-from openpype.tools import workfiles
 from avalon import api as avalon
 from avalon import schema
 from avalon.pipeline import AVALON_CONTAINER_ID
@@ -12,6 +11,7 @@ from pyblish import api as pyblish
 from openpype.api import Logger
 from . import lib
 from . import PLUGINS_DIR
+from openpype.tools.utils import host_tools
 log = Logger().get_logger(__name__)
 
 PUBLISH_PATH = os.path.join(PLUGINS_DIR, "publish")
@@ -212,14 +212,12 @@ def update_container(timeline_item, data=None):
 
 
 def launch_workfiles_app(*args):
-    workdir = os.environ["AVALON_WORKDIR"]
-    workfiles.show(workdir)
+    host_tools.show_workfiles()
 
 
 def publish(parent):
     """Shorthand to publish from within host"""
-    from avalon.tools import publish
-    return publish.show(parent)
+    return host_tools.show_publish()
 
 
 @contextlib.contextmanager
