@@ -219,6 +219,40 @@ class HostToolsHelper:
         look_assigner_tool = self.get_look_assigner_tool(parent)
         look_assigner_tool.show()
 
+    def get_tool_by_name(self, tool_name, parent=None, *args, **kwargs):
+        """Show tool by it's name.
+
+        This is helper for
+        """
+        if tool_name == "workfiles":
+            return self.get_workfiles_tool(parent, *args, **kwargs)
+
+        elif tool_name == "loader":
+            return self.get_loader_tool(parent, *args, **kwargs)
+
+        elif tool_name == "libraryloader":
+            return self.get_library_loader_tool(parent, *args, **kwargs)
+
+        elif tool_name == "creator":
+            return self.get_creator_tool(parent, *args, **kwargs)
+
+        elif tool_name == "subsetmanager":
+            return self.get_subset_manager_tool(parent, *args, **kwargs)
+
+        elif tool_name == "sceneinventory":
+            return self.get_scene_inventory_tool(parent, *args, **kwargs)
+
+        elif tool_name == "lookassigner":
+            return self.get_look_assigner_tool(parent, *args, **kwargs)
+
+        elif tool_name == "publish":
+            self.log.info("Can't return publish tool window.")
+
+        else:
+            self.log.warning(
+                "Can't show unknown tool name: \"{}\"".format(tool_name)
+            )
+
     def show_tool_by_name(self, tool_name, parent=None, *args, **kwargs):
         """Show tool by it's name.
 
@@ -273,8 +307,17 @@ class _SingletonPoint:
         cls._create_helper()
         cls.helper.show_tool_by_name(tool_name, parent, *args, **kwargs)
 
+    @classmethod
+    def get_tool_by_name(cls, tool_name, parent=None, *args, **kwargs):
+        cls._create_helper()
+        return cls.helper.get_tool_by_name(tool_name, parent, *args, **kwargs)
+
 
 # Function callbacks using singleton acces point
+def get_tool_by_name(tool_name, parent=None, *args, **kwargs):
+    return _SingletonPoint.get_tool_by_name(tool_name, parent, *args, **kwargs)
+
+
 def show_tool_by_name(tool_name, parent=None, *args, **kwargs):
     _SingletonPoint.show_tool_by_name(tool_name, parent, *args, **kwargs)
 
