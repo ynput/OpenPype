@@ -1042,12 +1042,6 @@ class WorkfileSettings(object):
             existing_format.setWidth(data["width"])
             existing_format.setHeight(data["height"])
             existing_format.setPixelAspect(data["pixel_aspect"])
-
-            if bbox:
-                existing_format.setX(data["x"])
-                existing_format.setY(data["y"])
-                existing_format.setR(data["r"])
-                existing_format.setT(data["t"])
         else:
             format_string = self.make_format_string(**data)
             log.info("Creating new format: {}".format(format_string))
