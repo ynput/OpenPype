@@ -54,61 +54,72 @@ class LoaderWindow(QtWidgets.QDialog):
         self.setWindowFlags(QtCore.Qt.Window)
         self.setFocusPolicy(QtCore.Qt.StrongFocus)
 
-        body = QtWidgets.QWidget()
-        footer = QtWidgets.QWidget()
-        footer.setFixedHeight(20)
+        split = QtWidgets.QSplitter(self)
 
-        container = QtWidgets.QWidget()
+        asset_filter_splitter = QtWidgets.QSplitter(split)
+        asset_filter_splitter.setOrientation(QtCore.Qt.Vertical)
 
-        assets = AssetWidget(io, multiselection=True, parent=self)
+        # --- Left part ---
+        # Assets widget
+        assets = AssetWidget(
+            io, multiselection=True, parent=asset_filter_splitter
+        )
         assets.set_current_asset_btn_visibility(True)
 
-        families = FamilyListView(io, self.family_config_cache, self)
-        subsets = SubsetWidget(
-            io,
-            self.groups_config,
-            self.family_config_cache,
-            tool_name=self.tool_name,
-            parent=self
+        # Families widget
+        families = FamilyListView(
+            io, self.family_config_cache, asset_filter_splitter
         )
-        version = VersionWidget(io)
-        thumbnail = ThumbnailWidget(io)
-        representations = RepresentationWidget(io, self.tool_name)
-
-        manager = ModulesManager()
-        sync_server = manager.modules_by_name["sync_server"]
-
-        thumb_ver_splitter = QtWidgets.QSplitter()
-        thumb_ver_splitter.setOrientation(QtCore.Qt.Vertical)
-        thumb_ver_splitter.addWidget(thumbnail)
-        thumb_ver_splitter.addWidget(version)
-        if sync_server.enabled:
-            thumb_ver_splitter.addWidget(representations)
-        thumb_ver_splitter.setStretchFactor(0, 30)
-        thumb_ver_splitter.setStretchFactor(1, 35)
-
-        # Create splitter to show / hide family filters
-        asset_filter_splitter = QtWidgets.QSplitter()
-        asset_filter_splitter.setOrientation(QtCore.Qt.Vertical)
         asset_filter_splitter.addWidget(assets)
         asset_filter_splitter.addWidget(families)
         asset_filter_splitter.setStretchFactor(0, 65)
         asset_filter_splitter.setStretchFactor(1, 35)
 
-        container_layout = QtWidgets.QHBoxLayout(container)
-        container_layout.setContentsMargins(0, 0, 0, 0)
-        split = QtWidgets.QSplitter()
+        # --- Middle part ---
+        # Subsets widget
+        subsets = SubsetWidget(
+            io,
+            self.groups_config,
+            self.family_config_cache,
+            tool_name=self.tool_name,
+            parent=split
+        )
+
+        # --- Right part ---
+        thumb_ver_splitter = QtWidgets.QSplitter(split)
+        thumb_ver_splitter.setOrientation(QtCore.Qt.Vertical)
+        version = VersionWidget(io, parent=thumb_ver_splitter)
+        thumbnail = ThumbnailWidget(io, parent=thumb_ver_splitter)
+
+        manager = ModulesManager()
+        sync_server = manager.modules_by_name.get("sync_server")
+        sync_server_enabled = False
+        if sync_server is not None:
+            sync_server_enabled = sync_server.enabled
+
+        thumb_ver_splitter.addWidget(thumbnail)
+        thumb_ver_splitter.addWidget(version)
+
+        representations = None
+        if sync_server_enabled:
+            representations = RepresentationWidget(
+                io, self.tool_name, parent=thumb_ver_splitter
+            )
+            thumb_ver_splitter.addWidget(representations)
+
+        thumb_ver_splitter.setStretchFactor(0, 30)
+        thumb_ver_splitter.setStretchFactor(1, 35)
+
         split.addWidget(asset_filter_splitter)
         split.addWidget(subsets)
         split.addWidget(thumb_ver_splitter)
 
-        container_layout.addWidget(split)
+        # TODO keep footer size by message size
+        footer = QtWidgets.QWidget(self)
+        footer.setFixedHeight(20)
 
-        body_layout = QtWidgets.QHBoxLayout(body)
-        body_layout.addWidget(container)
-        body_layout.setContentsMargins(0, 0, 0, 0)
-
-        message = QtWidgets.QLabel()
+        # TODO Don't hide messsage just set label to empty string
+        message = QtWidgets.QLabel(footer)
         message.hide()
 
         footer_layout = QtWidgets.QVBoxLayout(footer)
@@ -116,7 +127,7 @@ class LoaderWindow(QtWidgets.QDialog):
         footer_layout.setContentsMargins(0, 0, 0, 0)
 
         layout = QtWidgets.QVBoxLayout(self)
-        layout.addWidget(body)
+        layout.addWidget(split)
         layout.addWidget(footer)
 
         self.data = {
@@ -152,6 +163,7 @@ class LoaderWindow(QtWidgets.QDialog):
         representations.load_started.connect(self._on_load_start)
         representations.load_ended.connect(self._on_load_end)
 
+        # TODO add overlay using stack widget
         self._overlay_frame = overlay_frame
 
         self.family_config_cache.refresh()
@@ -161,7 +173,7 @@ class LoaderWindow(QtWidgets.QDialog):
         self._assetschanged()
 
         # Defaults
-        if sync_server.enabled:
+        if sync_server_enabled:
             split.setSizes([250, 1000, 550])
             self.resize(1800, 900)
         else:
