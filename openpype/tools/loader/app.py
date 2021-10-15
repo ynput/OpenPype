@@ -37,6 +37,7 @@ class LoaderWindow(QtWidgets.QDialog):
     """Asset loader interface"""
 
     tool_name = "loader"
+    message_timeout = 5000
 
     def __init__(self, parent=None):
         super(LoaderWindow, self).__init__(parent)
@@ -118,12 +119,10 @@ class LoaderWindow(QtWidgets.QDialog):
         footer = QtWidgets.QWidget(self)
         footer.setFixedHeight(20)
 
-        # TODO Don't hide messsage just set label to empty string
-        message = QtWidgets.QLabel(footer)
-        message.hide()
+        message_label = QtWidgets.QLabel(footer)
 
         footer_layout = QtWidgets.QVBoxLayout(footer)
-        footer_layout.addWidget(message)
+        footer_layout.addWidget(message_label)
         footer_layout.setContentsMargins(0, 0, 0, 0)
 
         layout = QtWidgets.QVBoxLayout(self)
@@ -139,9 +138,6 @@ class LoaderWindow(QtWidgets.QDialog):
                 "thumbnail": thumbnail,
                 "representations": representations
             },
-            "label": {
-                "message": message,
-            },
             "state": {
                 "assetIds": None
             }
@@ -149,6 +145,12 @@ class LoaderWindow(QtWidgets.QDialog):
 
         overlay_frame = OverlayFrame("Loading...", self)
         overlay_frame.setVisible(False)
+
+        message_timer = QtCore.QTimer()
+        message_timer.setInterval(self.message_timeout)
+        message_timer.setSingleShot(True)
+
+        message_timer.timeout.connect(self._on_message_timeout)
 
         families.active_changed.connect(subsets.set_family_filters)
         assets.selection_changed.connect(self.on_assetschanged)
@@ -164,7 +166,10 @@ class LoaderWindow(QtWidgets.QDialog):
         representations.load_ended.connect(self._on_load_end)
 
         # TODO add overlay using stack widget
+        self._message_label = message_label
+
         self._overlay_frame = overlay_frame
+        self._message_timer = message_timer
 
         self.family_config_cache.refresh()
         self.groups_config.refresh()
@@ -450,13 +455,13 @@ class LoaderWindow(QtWidgets.QDialog):
         asset_widget = self.data["widgets"]["assets"]
         asset_widget.select_assets(asset)
 
-    def echo(self, message):
-        widget = self.data["label"]["message"]
-        widget.setText(str(message))
-        widget.show()
-        print(message)
+    def _on_message_timeout(self):
+        self._message_label.setText("")
 
-        lib.schedule(widget.hide, 5000, channel="message")
+    def echo(self, message):
+        self._message_label.setText(str(message))
+        print(message)
+        self._message_timer.start()
 
     def closeEvent(self, event):
         # Kill on holding SHIFT
