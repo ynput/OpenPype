@@ -40,6 +40,7 @@ class HostToolsHelper:
 
     def _get_workfiles_tool(self, parent):
         if self._workfiles_tool is None:
+            from avalon import style
             from openpype.tools.workfiles.app import (
                 Window, validate_host_requirements
             )
@@ -47,7 +48,9 @@ class HostToolsHelper:
             host = avalon.api.registered_host()
             validate_host_requirements(host)
 
-            self._workfiles_tool = Window(parent=parent)
+            workfiles_window = Window(parent=parent)
+            workfiles_window.setStyleSheet(style.load_stylesheet())
+            self._workfiles_tool = workfiles_window
 
         return self._workfiles_tool
 
@@ -79,9 +82,12 @@ class HostToolsHelper:
 
     def _get_loader_tool(self, parent):
         if self._loader_tool is None:
+            from avalon import style
             from openpype.tools.loader import LoaderWindow
 
-            self._loader_tool = LoaderWindow(parent=parent or self._parent)
+            loader_window = LoaderWindow(parent=parent or self._parent)
+            loader_window.setStyleSheet(style.load_stylesheet())
+            self._loader_tool = loader_window
 
         return self._loader_tool
 
@@ -104,9 +110,12 @@ class HostToolsHelper:
 
     def _get_creator_tool(self, parent):
         if self._creator_tool is None:
+            from avalon import style
             from avalon.tools.creator.app import Window
 
-            self._creator_tool = Window(parent=parent or self._parent)
+            creator_window = Window(parent=parent or self._parent)
+            creator_window.setStyleSheet(style.load_stylesheet())
+            self._creator_tool = creator_window
 
         return self._creator_tool
 
@@ -122,9 +131,12 @@ class HostToolsHelper:
 
     def _get_subset_manager_tool(self, parent):
         if self._subset_manager_tool is None:
+            from avalon import style
             from avalon.tools.subsetmanager import Window
 
-            self._subset_manager_tool = Window(parent=parent or self._parent)
+            subset_manager_window = Window(parent=parent or self._parent)
+            subset_manager_window.setStyleSheet(style.load_stylesheet())
+            self._subset_manager_tool = subset_manager_window
 
         return self._subset_manager_tool
 
@@ -139,9 +151,12 @@ class HostToolsHelper:
 
     def _get_scene_inventory_tool(self, parent):
         if self._scene_inventory_tool is None:
+            from avalon import style
             from avalon.tools.sceneinventory.app import Window
 
-            self._scene_inventory_tool = Window(parent=parent or self._parent)
+            scene_inventory_window = Window(parent=parent or self._parent)
+            scene_inventory_window.setStyleSheet(style.load_stylesheet())
+            self._scene_inventory_tool = scene_inventory_window
 
         return self._scene_inventory_tool
 
@@ -157,11 +172,14 @@ class HostToolsHelper:
 
     def _get_library_loader_tool(self, parent):
         if self._library_loader_tool is None:
+            from avalon import style
             from openpype.tools.libraryloader import LibraryLoaderWindow
 
-            self._library_loader_tool = LibraryLoaderWindow(
+            library_window = LibraryLoaderWindow(
                 parent=parent or self._parent
             )
+            library_window.setStyleSheet(style.load_stylesheet())
+            self._library_loader_tool = library_window
 
         return self._library_loader_tool
 
@@ -181,9 +199,12 @@ class HostToolsHelper:
 
     def _get_look_assigner_tool(self, parent):
         if self._look_assigner_tool is None:
+            from avalon import style
             import mayalookassigner
 
-            self._look_assigner_tool = mayalookassigner.App(parent)
+            mayalookassigner_window = mayalookassigner.App(parent)
+            mayalookassigner_window.setStyleSheet(style.load_stylesheet())
+            self._look_assigner_tool = mayalookassigner_window
         return self._look_assigner_tool
 
     def show_look_assigner(self, parent=None):
