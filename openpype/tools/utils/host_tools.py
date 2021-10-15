@@ -71,11 +71,16 @@ class HostToolsHelper:
 
         return self._loader_tool
 
-    def show_loader_tool(self, parent=None):
+    def show_loader_tool(self, parent=None, use_context=None):
+        if use_context is None:
+            use_context = False
         loader_tool = self._get_loader_tool(parent)
 
-        context = {"asset": avalon.api.Session["AVALON_ASSET"]}
-        loader_tool.set_context(context, refresh=True)
+        if use_context:
+            context = {"asset": avalon.api.Session["AVALON_ASSET"]}
+            loader_tool.set_context(context, refresh=True)
+        else:
+            loader_tool.refresh()
 
         loader_tool.show()
         loader_tool.raise_()
@@ -194,8 +199,10 @@ def show_workfiles_tool(parent=None, use_context=None, save=None):
     )
 
 
-def show_loader_tool(parent=None):
-    _SingletonPoint.show_tool_by_name("loader", parent)
+def show_loader_tool(parent=None, use_context=None):
+    _SingletonPoint.show_tool_by_name(
+        "loader", parent, use_context=use_context
+    )
 
 
 def show_library_loader_tool(parent=None):
