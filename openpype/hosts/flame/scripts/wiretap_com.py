@@ -9,6 +9,7 @@ import sys
 import subprocess
 import json
 from copy import deepcopy
+import datetime
 
 flame_python_path = "/opt/Autodesk/flame_2021/python"
 flame_exe_path = "/opt/Autodesk/flame_2021/bin/flame.app/Contents/MacOS/startApp"
@@ -47,60 +48,33 @@ class WireTapCom(object):
         print("WireTap closed...")
 
     def get_launch_args(self,
-            project_name, user_name, workspace_name=None, *args, **kwargs):
-
-        self._project_prep(project_name, user_name, workspace_name)
-        self._user_prep(user_name)
+            project_name, project_data, user_name, workspace_name=None, *args, **kwargs):
+        
+        print(user_name)
+        
+        self._project_prep(project_name, project_data, user_name, workspace_name)
+        user_name = self._user_prep(user_name)
 
         if workspace_name is None:
             # default workspace
             print("Using a default workspace")
-            return (
-                "--start-project='{}' --start-user='{}' --create-workspace"
-            ).format(
-                project_name,
-                user_name,
-            )
+            return [
+                "--start-project={}".format(project_name), 
+                "--start-user={}".format(user_name), 
+                "--create-workspace"
+            ]
 
         else:
             print(
                 "Using a custom workspace '{}'".format(workspace_name))
 
             self._workspace_prep(project_name, workspace_name)
-            return (
-                "--start-project='{}' --start-user='{}' "
-                "--create-workspace --start-workspace='{}'").format(
-                    project_name, user_name, workspace_name)
-
-
-    def _user_prep(self, user_name):
-        """Ensuring user does exists in user's stack
-
-        Args:
-            user_name (str): name of a user
-
-        Raises:
-            AttributeError: unable to create user
-        """
-
-        if not self._child_is_in_parent_path("/users", user_name, "USER"):
-            # Create the new user
-            users = WireTapNodeHandle(self._server, "/users")
-            print(">> dir users: {}".format(dir(users)))
-            print(">> users obj: {}".format(users))
-
-            # todo: check what users are available in stack and find lastly
-            #       created which is matching at least partly to the
-            #       input user_name
-
-            user_node = WireTapNodeHandle()
-            if not users.createNode(user_name, "USER", user_node):
-                raise AttributeError(
-                    "User {} cannot be created: {}".format(
-                        user_name, users.lastError())
-                )
-
-            print("User `{}` is created".format(user_name))
+            return [
+                "--start-project={}".format(project_name), 
+                "--start-user={}".format(user_name),
+                "--create-workspace",
+                "--start-workspace={}".format(workspace_name)
+            ]
 
     def _workspace_prep(self, project_name, workspace_name):
         """Preparing a workspace
@@ -135,10 +109,12 @@ class WireTapCom(object):
         print(
             "Workspace `{}` is successfully created".format(workspace_name))
 
-    def _project_prep(self, project_name, user_name, workspace_name):
+    def _project_prep(self, project_name, project_data, user_name, workspace_name):
 
         project_exists = self._child_is_in_parent_path(
             "/projects", project_name, "PROJECT")
+
+        print(project_data)
 
         if not project_exists:
 
@@ -158,7 +134,7 @@ class WireTapCom(object):
                         self.volume_name, volumes)
                 )
 
-            project_create_cmd = [\
+            project_create_cmd = [
                 os.path.join(
                     "/opt/Autodesk/",
                     "wiretap",
@@ -223,6 +199,84 @@ class WireTapCom(object):
 
         return volumes
 
+
+    def _user_prep(self, user_name):
+        """Ensuring user does exists in user's stack
+
+        Args:
+            user_name (str): name of a user
+
+        Raises:
+            AttributeError: unable to create user
+        """
+
+        # get all used usernames in db
+        used_names = self._get_usernames()
+        print(">> used_names: {}".format(used_names))
+
+        # filter only those which are sharing input user name
+        filtered_users = [user for user in used_names if user_name in user]
+
+        if filtered_users:
+            # todo: need to find lastly created following regex patern for date used in name
+            return filtered_users.pop()
+
+        # create new user name with date in suffix
+        now = datetime.datetime.now() # current date and time
+        date = now.strftime("%Y%m%d")
+        new_user_name = "{}_{}".format(user_name, date)
+        print(new_user_name)
+
+        if not self._child_is_in_parent_path("/users", new_user_name, "USER"):
+            # Create the new user
+            users = WireTapNodeHandle(self._server, "/users")
+
+            user_node = WireTapNodeHandle()
+            created_user = users.createNode(new_user_name, "USER", user_node)
+            if not created_user:
+                raise AttributeError(
+                    "User {} cannot be created: {}".format(
+                        new_user_name, users.lastError())
+                )
+
+            print("User `{}` is created".format(new_user_name))
+            return new_user_name
+
+
+    def _get_usernames(self):
+
+        root = WireTapNodeHandle(self._server, "/users")
+        num_children = WireTapInt(0)
+
+        get_children_num = root.getNumChildren(num_children)
+        if not get_children_num:
+            raise AttributeError(
+                "Cannot get number of volumes: {}".format(root.lastError())
+            )
+
+        usernames = []
+
+        # go trough all children and get volume names
+        child_obj = WireTapNodeHandle()
+        for child_idx in range(num_children):
+
+            # get a child
+            if not root.getChild(child_idx, child_obj):
+                raise AttributeError(
+                    "Unable to get child: {}".format(root.lastError()))
+
+            node_name = WireTapStr()
+            get_children_name = child_obj.getDisplayName(node_name)
+
+            if not get_children_name:
+                raise AttributeError(
+                    "Unable to get child name: {}".format(child_obj.lastError())
+                )
+
+            usernames.append(node_name.c_str())
+
+        return usernames
+
     def _get_groups(self):
 
         # fetch all group which the user is a part of
@@ -284,14 +338,16 @@ class WireTapCom(object):
 
 if __name__ == "__main__":
     json_path = sys.argv[-1]
-    in_data = json.loads(json_path)
+    json_data = open(json_path).read()
+    in_data = json.loads(json_data)
     out_data = deepcopy(in_data)
 
     wiretap_handler = WireTapCom()
 
     try:
         app_args = wiretap_handler.get_launch_args(
-            project_name=in_data["project_data"],
+            project_name=in_data["project_name"],
+            project_data=in_data["project_data"],
             user_name=in_data["user_name"],
             workspace_name=in_data.get("workspace_mame")
         )

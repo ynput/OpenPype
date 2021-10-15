@@ -1,10 +1,10 @@
 import os
 import json
 import tempfile
-from openpype.lib import PreLaunchHook
+from openpype.lib import (
+    PreLaunchHook, get_openpype_username)
 from openpype.hosts import flame as opflame
 import openpype
-
 from pprint import pformat
 
 
@@ -20,12 +20,27 @@ class FlamePrelaunch(PreLaunchHook):
     flame_python_exe = "/opt/Autodesk/python/2021/bin/python2.7"
 
     wtc_script_path = os.path.join(
-        opflame.HOST_DIR, "sripts", "wiretap_com.py")
+        opflame.HOST_DIR, "scripts", "wiretap_com.py")
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+
+        self.signature = "( {} )".format(self.__class__.__name__)
 
     def execute(self):
+        """Hook entry method."""
+        project_doc = self.data["project_doc"]
+        asset_name = self.data["asset_name"]
+        task_name = self.data["task_name"]
+        user_name = get_openpype_username()
+
+        self.log.debug("Collected user \"{}\"".format(user_name))
+        self.log.info(pformat(project_doc))
+        
         data_to_script = {
-            "project_name": "test_project_325",
-            "user_name": "jakub_jeza_jezek"
+            "project_name": project_doc["name"],
+            "user_name": user_name,
+            "project_data": project_doc["data"]
         }
 
         app_arguments = self._get_launch_arguments(data_to_script)
@@ -51,12 +66,11 @@ class FlamePrelaunch(PreLaunchHook):
         )
 
         # Prepare subprocess arguments
-        args = list(self.flame_python_exe)
+        args = [self.flame_python_exe]
         args.append(self.wtc_script_path)
         args.append(temporary_json_filepath)
-        self.log.debug("Executing: {}".format(" ".join(args)))
+        self.log.info("Executing: {}".format(" ".join(args)))
 
-        # Run burnin script
         process_kwargs = {
             "logger": self.log,
             "env": {}
@@ -64,9 +78,12 @@ class FlamePrelaunch(PreLaunchHook):
 
         openpype.api.run_subprocess(args, **process_kwargs)
 
-        returned_data = json.loads(temporary_json_filepath)
+        return_json_data = open(temporary_json_filepath).read()
+
+        returned_data = json.loads(return_json_data)
 
         app_args = returned_data.get("app_args")
+        self.log.info("____ app_args: `{}`".format(app_args))
 
         if not app_args:
             RuntimeError("App arguments were not solved")
