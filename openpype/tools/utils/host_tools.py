@@ -51,7 +51,7 @@ class HostToolsHelper:
 
         return self._workfiles_tool
 
-    def show_workfiles_tool(self, parent=None, use_context=None, save=None):
+    def show_workfiles(self, parent=None, use_context=None, save=None):
         """Workfiles tool for changing context and saving workfiles."""
         if use_context is None:
             use_context = True
@@ -85,7 +85,7 @@ class HostToolsHelper:
 
         return self._loader_tool
 
-    def show_loader_tool(self, parent=None, use_context=None):
+    def show_loader(self, parent=None, use_context=None):
         """Loader tool for loading representations."""
         if use_context is None:
             use_context = False
@@ -110,7 +110,7 @@ class HostToolsHelper:
 
         return self._creator_tool
 
-    def show_creator_tool(self, parent=None):
+    def show_creator(self, parent=None):
         """Show tool to create new instantes for publishing."""
         creator_tool = self._get_creator_tool(parent)
         creator_tool.refresh()
@@ -128,7 +128,7 @@ class HostToolsHelper:
 
         return self._subset_manager_tool
 
-    def show_subset_manager_tool(self, parent=None):
+    def show_subset_manager(self, parent=None):
         """Show tool display/remove existing created instances."""
         subset_manager_tool = self._get_subset_manager_tool(parent)
         subset_manager_tool.show()
@@ -145,7 +145,7 @@ class HostToolsHelper:
 
         return self._scene_inventory_tool
 
-    def show_scene_inventory_tool(self, parent=None):
+    def show_scene_inventory(self, parent=None):
         """Show tool maintain loaded containers."""
         scene_inventory_tool = self._get_scene_inventory_tool(parent)
         scene_inventory_tool.show()
@@ -165,7 +165,7 @@ class HostToolsHelper:
 
         return self._library_loader_tool
 
-    def show_library_loader_tool(self, parent=None):
+    def show_library_loader(self, parent=None):
         """Loader tool for loading representations from library project."""
         library_loader_tool = self._get_library_loader_tool(parent)
         library_loader_tool.show()
@@ -173,7 +173,7 @@ class HostToolsHelper:
         library_loader_tool.activateWindow()
         library_loader_tool.refresh()
 
-    def show_publish_tool(self, parent=None):
+    def show_publish(self, parent=None):
         """Publish UI."""
         from avalon.tools import publish
 
@@ -197,22 +197,22 @@ class HostToolsHelper:
         This is helper for
         """
         if tool_name == "workfiles":
-            self.show_workfiles_tool(parent, *args, **kwargs)
+            self.show_workfiles(parent, *args, **kwargs)
 
         elif tool_name == "loader":
-            self.show_loader_tool(parent, *args, **kwargs)
+            self.show_loader(parent, *args, **kwargs)
 
         elif tool_name == "libraryloader":
-            self.show_library_loader_tool(parent, *args, **kwargs)
+            self.show_library_loader(parent, *args, **kwargs)
 
         elif tool_name == "creator":
-            self.show_creator_tool(parent, *args, **kwargs)
+            self.show_creator(parent, *args, **kwargs)
 
         elif tool_name == "subsetmanager":
-            self.show_subset_manager_tool(parent, *args, **kwargs)
+            self.show_subset_manager(parent, *args, **kwargs)
 
         elif tool_name == "sceneinventory":
-            self.show_scene_inventory_tool(parent, *args, **kwargs)
+            self.show_scene_inventory(parent, *args, **kwargs)
 
         elif tool_name == "lookmanager":
             self.show_look_manager(parent, *args, **kwargs)
@@ -243,32 +243,37 @@ class _SingletonPoint:
 
 
 # Function callbacks using singleton acces point
-def show_workfiles_tool(parent=None, use_context=None, save=None):
+def show_tool_by_name(tool_name, parent=None, *args, **kwargs):
+    _SingletonPoint.show_tool_by_name(tool_name, parent, *args, **kwargs)
+
+
+def show_workfiles(parent=None, use_context=None, save=None):
     _SingletonPoint.show_tool_by_name(
         "workfiles", parent, use_context=use_context, save=save
     )
 
 
-def show_loader_tool(parent=None, use_context=None):
+def show_loader(parent=None, use_context=None):
     _SingletonPoint.show_tool_by_name(
         "loader", parent, use_context=use_context
     )
 
 
-def show_library_loader_tool(parent=None):
+def show_library_loader(parent=None):
     _SingletonPoint.show_tool_by_name("libraryloader", parent)
 
 
-def show_creator_tool(parent=None):
+def show_creator(parent=None):
     _SingletonPoint.show_tool_by_name("creator", parent)
 
 
-def show_subset_manager_tool(parent=None):
+def show_subset_manager(parent=None):
     _SingletonPoint.show_tool_by_name("subsetmanager", parent)
 
 
-def show_scene_inventory_tool(parent=None):
+def show_scene_inventory(parent=None):
     _SingletonPoint.show_tool_by_name("sceneinventory", parent)
+
 
 def show_look_manager(self, parent=None):
     _SingletonPoint.show_tool_by_name("lookmanager", parent)
