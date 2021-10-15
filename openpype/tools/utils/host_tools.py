@@ -4,7 +4,6 @@ It is possible to create `HostToolsHelper` in host implementaion or
 use singleton approach with global functions (using helper anyway).
 """
 
-from Qt import QtCore
 import avalon.api
 
 
