@@ -162,10 +162,10 @@ class HostToolsHelper:
         elif tool_name == "creator":
             self.show_creator_tool(parent, *args, **kwargs)
 
-        elif tool_name == "subset_manager":
+        elif tool_name == "subsetmanager":
             self.show_subset_manager_tool(parent, *args, **kwargs)
 
-        elif tool_name == "scene_inventory":
+        elif tool_name == "sceneinventory":
             self.show_scene_inventory_tool(parent, *args, **kwargs)
 
 
