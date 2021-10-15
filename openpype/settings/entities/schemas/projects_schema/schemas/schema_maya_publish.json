@@ -342,7 +342,7 @@
                         },
                         {
                             "key": "ValidateRigJointsHidden",
-                            "label": "Validate Rig JointsHidden"
+                            "label": "Validate Rig Joints Hidden"
                         },
                         {
                             "key": "ValidateRigControllers",
