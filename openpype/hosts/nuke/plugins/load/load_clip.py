@@ -13,8 +13,6 @@ from avalon.nuke import (
 )
 from openpype.hosts.nuke.api import plugin
 
-reload(plugin)
-
 
 class LoadClip(plugin.NukeLoader):
     """Load clip into Nuke
@@ -143,7 +141,6 @@ class LoadClip(plugin.NukeLoader):
                 read_node["colorspace"].setValue(iio_colorspace)
 
             self.set_range_to_node(read_node, first, last, start_at_workfile)
-
 
             # add additional metadata from the version to imprint Avalon knob
             add_keys = ["frameStart", "frameEnd",
@@ -338,8 +335,10 @@ class LoadClip(plugin.NukeLoader):
             if time_warp_nodes != []:
                 start_anim = self.script_start + (self.handle_start / speed)
                 for timewarp in time_warp_nodes:
-                    twn = nuke.createNode(timewarp["Class"],
-                                        "name {}".format(timewarp["name"]))
+                    twn = nuke.createNode(
+                        timewarp["Class"],
+                        "name {}".format(timewarp["name"])
+                    )
                     if isinstance(timewarp["lookup"], list):
                         # if array for animation
                         twn["lookup"].setAnimated()
