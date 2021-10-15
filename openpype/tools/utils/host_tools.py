@@ -28,6 +28,7 @@ class HostToolsHelper:
         self._subset_manager_tool = None
         self._scene_inventory_tool = None
         self._library_loader_tool = None
+        self._look_manager_tool = None
 
     @property
     def log(self):
@@ -178,6 +179,18 @@ class HostToolsHelper:
 
         publish.show(parent)
 
+    def _get_look_manager_tool(self, parent):
+        if self._look_manager_tool is None:
+            import mayalookassigner
+
+            self._look_manager_tool = mayalookassigner.App(parent)
+        return self._look_manager_tool
+
+    def show_look_manager(self, parent=None):
+        """Look manager is Maya specific tool for look management."""
+        look_manager_tool = self._get_look_manager_tool(parent)
+        look_manager_tool.show()
+
     def show_tool_by_name(self, tool_name, parent=None, *args, **kwargs):
         """Show tool by it's name.
 
@@ -200,6 +213,9 @@ class HostToolsHelper:
 
         elif tool_name == "sceneinventory":
             self.show_scene_inventory_tool(parent, *args, **kwargs)
+
+        elif tool_name == "lookmanager":
+            self.show_look_manager(parent, *args, **kwargs)
 
         self.log.warning(
             "Can't show unknown tool name: \"{}\"".format(tool_name)
@@ -253,3 +269,6 @@ def show_subset_manager_tool(parent=None):
 
 def show_scene_inventory_tool(parent=None):
     _SingletonPoint.show_tool_by_name("sceneinventory", parent)
+
+def show_look_manager(self, parent=None):
+    _SingletonPoint.show_tool_by_name("lookmanager", parent)
