@@ -39,6 +39,7 @@ class HostToolsHelper:
         return self._log
 
     def get_workfiles_tool(self, parent):
+        """Create, cache and return workfiles tool window."""
         if self._workfiles_tool is None:
             from avalon import style
             from openpype.tools.workfiles.app import (
@@ -81,6 +82,7 @@ class HostToolsHelper:
         workfiles_tool.activateWindow()
 
     def get_loader_tool(self, parent):
+        """Create, cache and return loader tool window."""
         if self._loader_tool is None:
             from avalon import style
             from openpype.tools.loader import LoaderWindow
@@ -109,6 +111,7 @@ class HostToolsHelper:
         loader_tool.refresh()
 
     def get_creator_tool(self, parent):
+        """Create, cache and return creator tool window."""
         if self._creator_tool is None:
             from avalon import style
             from avalon.tools.creator.app import Window
@@ -130,6 +133,7 @@ class HostToolsHelper:
         creator_tool.activateWindow()
 
     def get_subset_manager_tool(self, parent):
+        """Create, cache and return subset manager tool window."""
         if self._subset_manager_tool is None:
             from avalon import style
             from avalon.tools.subsetmanager import Window
@@ -150,6 +154,7 @@ class HostToolsHelper:
         subset_manager_tool.activateWindow()
 
     def get_scene_inventory_tool(self, parent):
+        """Create, cache and return scene inventory tool window."""
         if self._scene_inventory_tool is None:
             from avalon import style
             from avalon.tools.sceneinventory.app import Window
@@ -171,6 +176,7 @@ class HostToolsHelper:
         scene_inventory_tool.activateWindow()
 
     def get_library_loader_tool(self, parent):
+        """Create, cache and return library loader tool window."""
         if self._library_loader_tool is None:
             from avalon import style
             from openpype.tools.libraryloader import LibraryLoaderWindow
@@ -198,6 +204,7 @@ class HostToolsHelper:
         publish.show(parent)
 
     def get_look_assigner_tool(self, parent):
+        """Create, cache and return look assigner tool window."""
         if self._look_assigner_tool is None:
             from avalon import style
             import mayalookassigner
