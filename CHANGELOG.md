@@ -1,6 +1,6 @@
 # Changelog
 
-## [3.5.0-nightly.6](https://github.com/pypeclub/OpenPype/tree/HEAD)
+## [3.5.0-nightly.7](https://github.com/pypeclub/OpenPype/tree/HEAD)
 
 [Full Changelog](https://github.com/pypeclub/OpenPype/compare/3.4.1...HEAD)
 
@@ -10,12 +10,16 @@
 
 **🆕 New features**
 
+- Added project and task into context change message in Maya [\#2131](https://github.com/pypeclub/OpenPype/pull/2131)
+- PYPE-1218 - changed namespace to contain subset name in Maya [\#2114](https://github.com/pypeclub/OpenPype/pull/2114)
 - Added running configurable disk mapping command before start of OP [\#2091](https://github.com/pypeclub/OpenPype/pull/2091)
 - SFTP provider [\#2073](https://github.com/pypeclub/OpenPype/pull/2073)
 - Maya: Validate setdress top group [\#2068](https://github.com/pypeclub/OpenPype/pull/2068)
 
 **🚀 Enhancements**
 
+- Settings: Updated readme for entity types in settings [\#2132](https://github.com/pypeclub/OpenPype/pull/2132)
+- Nuke: unified clip loader [\#2128](https://github.com/pypeclub/OpenPype/pull/2128)
 - Settings UI: Project model refreshing and sorting [\#2104](https://github.com/pypeclub/OpenPype/pull/2104)
 - Create Read From Rendered - Disable Relative paths by default [\#2093](https://github.com/pypeclub/OpenPype/pull/2093)
 - Added choosing different dirmap mapping if workfile synched locally [\#2088](https://github.com/pypeclub/OpenPype/pull/2088)
@@ -31,6 +35,7 @@
 
 **🐛 Bug fixes**
 
+- Fix - oiiotool wasn't recognized even if present [\#2129](https://github.com/pypeclub/OpenPype/pull/2129)
 - General: Disk mapping group [\#2120](https://github.com/pypeclub/OpenPype/pull/2120)
 - Hiero: publishing effect first time makes wrong resources path [\#2115](https://github.com/pypeclub/OpenPype/pull/2115)
 - Add startup script for Houdini Core.  [\#2110](https://github.com/pypeclub/OpenPype/pull/2110)
@@ -66,12 +71,11 @@
 
 - General: Startup validations [\#2054](https://github.com/pypeclub/OpenPype/pull/2054)
 - Nuke: proxy mode validator [\#2052](https://github.com/pypeclub/OpenPype/pull/2052)
-- Settings UI: Deffered set value on entity [\#2044](https://github.com/pypeclub/OpenPype/pull/2044)
+- Ftrack: Removed ftrack interface [\#2049](https://github.com/pypeclub/OpenPype/pull/2049)
 - Loader: Families filtering [\#2043](https://github.com/pypeclub/OpenPype/pull/2043)
 - Settings UI: Project view enhancements [\#2042](https://github.com/pypeclub/OpenPype/pull/2042)
 - Settings for Nuke IncrementScriptVersion [\#2039](https://github.com/pypeclub/OpenPype/pull/2039)
 - Loader & Library loader: Use tools from OpenPype [\#2038](https://github.com/pypeclub/OpenPype/pull/2038)
-- Adding predefined project folders creation in PM [\#2030](https://github.com/pypeclub/OpenPype/pull/2030)
 - WebserverModule: Removed interface of webserver module [\#2028](https://github.com/pypeclub/OpenPype/pull/2028)
 - TimersManager: Removed interface of timers manager [\#2024](https://github.com/pypeclub/OpenPype/pull/2024)
 - Feature Maya import asset from scene inventory [\#2018](https://github.com/pypeclub/OpenPype/pull/2018)
@@ -102,9 +106,10 @@
 
 **🚀 Enhancements**
 
-- Ftrack: Removed ftrack interface [\#2049](https://github.com/pypeclub/OpenPype/pull/2049)
+- Settings UI: Deffered set value on entity [\#2044](https://github.com/pypeclub/OpenPype/pull/2044)
 - Added possibility to configure of synchronization of workfile version… [\#2041](https://github.com/pypeclub/OpenPype/pull/2041)
 - General: Task types in profiles [\#2036](https://github.com/pypeclub/OpenPype/pull/2036)
+- Adding predefined project folders creation in PM [\#2030](https://github.com/pypeclub/OpenPype/pull/2030)
 - Console interpreter: Handle invalid sizes on initialization [\#2022](https://github.com/pypeclub/OpenPype/pull/2022)
 - Ftrack: Show OpenPype versions in event server status [\#2019](https://github.com/pypeclub/OpenPype/pull/2019)
 - General: Staging icon [\#2017](https://github.com/pypeclub/OpenPype/pull/2017)
@@ -112,9 +117,6 @@
 - Modules: Connect method is not required [\#2009](https://github.com/pypeclub/OpenPype/pull/2009)
 - Settings UI: Number with configurable steps [\#2001](https://github.com/pypeclub/OpenPype/pull/2001)
 - Moving project folder structure creation out of ftrack module \#1989 [\#1996](https://github.com/pypeclub/OpenPype/pull/1996)
-- Configurable items for providers without Settings [\#1987](https://github.com/pypeclub/OpenPype/pull/1987)
-- Global: Example addons [\#1986](https://github.com/pypeclub/OpenPype/pull/1986)
-- Standalone Publisher: Extract harmony zip handle workfile template [\#1982](https://github.com/pypeclub/OpenPype/pull/1982)
 
 **🐛 Bug fixes**
 
@@ -127,8 +129,6 @@
 - Bugfix/webpublisher task type [\#2006](https://github.com/pypeclub/OpenPype/pull/2006)
 - Nuke thumbnails generated from middle of the sequence [\#1992](https://github.com/pypeclub/OpenPype/pull/1992)
 - Nuke: last version from path gets correct version [\#1990](https://github.com/pypeclub/OpenPype/pull/1990)
-- nuke, resolve, hiero: precollector order lest then 0.5 [\#1984](https://github.com/pypeclub/OpenPype/pull/1984)
-- Last workfile with multiple work templates [\#1981](https://github.com/pypeclub/OpenPype/pull/1981)
 
 ## [3.3.1](https://github.com/pypeclub/OpenPype/tree/3.3.1) (2021-08-20)
 
