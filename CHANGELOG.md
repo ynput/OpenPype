@@ -1,8 +1,8 @@
 # Changelog
 
-## [3.5.0-nightly.8](https://github.com/pypeclub/OpenPype/tree/HEAD)
+## [3.5.0](https://github.com/pypeclub/OpenPype/tree/3.5.0) (2021-10-17)
 
-[Full Changelog](https://github.com/pypeclub/OpenPype/compare/3.4.1...HEAD)
+[Full Changelog](https://github.com/pypeclub/OpenPype/compare/3.4.1...3.5.0)
 
 **Deprecated:**
 
@@ -11,6 +11,7 @@
 **🆕 New features**
 
 - Added project and task into context change message in Maya [\#2131](https://github.com/pypeclub/OpenPype/pull/2131)
+- Add ExtractBurnin to photoshop review [\#2124](https://github.com/pypeclub/OpenPype/pull/2124)
 - PYPE-1218 - changed namespace to contain subset name in Maya [\#2114](https://github.com/pypeclub/OpenPype/pull/2114)
 - Added running configurable disk mapping command before start of OP [\#2091](https://github.com/pypeclub/OpenPype/pull/2091)
 - SFTP provider [\#2073](https://github.com/pypeclub/OpenPype/pull/2073)
@@ -36,30 +37,30 @@
 
 **🐛 Bug fixes**
 
+- Maya: fix model publishing [\#2130](https://github.com/pypeclub/OpenPype/pull/2130)
 - Fix - oiiotool wasn't recognized even if present [\#2129](https://github.com/pypeclub/OpenPype/pull/2129)
 - General: Disk mapping group [\#2120](https://github.com/pypeclub/OpenPype/pull/2120)
 - Hiero: publishing effect first time makes wrong resources path [\#2115](https://github.com/pypeclub/OpenPype/pull/2115)
 - Add startup script for Houdini Core.  [\#2110](https://github.com/pypeclub/OpenPype/pull/2110)
 - TVPaint: Behavior name of loop also accept repeat [\#2109](https://github.com/pypeclub/OpenPype/pull/2109)
 - Ftrack: Project settings save custom attributes skip unknown attributes [\#2103](https://github.com/pypeclub/OpenPype/pull/2103)
+- Blender: Fix NoneType error when animation\_data is missing for a rig [\#2101](https://github.com/pypeclub/OpenPype/pull/2101)
 - Fix broken import in sftp provider [\#2100](https://github.com/pypeclub/OpenPype/pull/2100)
 - Global: Fix docstring on publish plugin extract review [\#2097](https://github.com/pypeclub/OpenPype/pull/2097)
+- Delivery Action Files Sequence fix [\#2096](https://github.com/pypeclub/OpenPype/pull/2096)
 - General: Cloud mongo ca certificate issue [\#2095](https://github.com/pypeclub/OpenPype/pull/2095)
 - TVPaint: Creator use context from workfile [\#2087](https://github.com/pypeclub/OpenPype/pull/2087)
 - Blender: fix texture missing when publishing blend files [\#2085](https://github.com/pypeclub/OpenPype/pull/2085)
 - General: Startup validations oiio tool path fix on linux [\#2083](https://github.com/pypeclub/OpenPype/pull/2083)
 - Deadline: Collect deadline server does not check existence of deadline key [\#2082](https://github.com/pypeclub/OpenPype/pull/2082)
 - Blender: fixed Curves with modifiers in Rigs [\#2081](https://github.com/pypeclub/OpenPype/pull/2081)
+- Nuke UI scaling [\#2077](https://github.com/pypeclub/OpenPype/pull/2077)
 - Maya: Fix multi-camera renders [\#2065](https://github.com/pypeclub/OpenPype/pull/2065)
+- Fix Sync Queue when project disabled [\#2063](https://github.com/pypeclub/OpenPype/pull/2063)
 
 **Merged pull requests:**
 
-- Maya: fix model publishing [\#2130](https://github.com/pypeclub/OpenPype/pull/2130)
-- Add ExtractBurnin to photoshop review [\#2124](https://github.com/pypeclub/OpenPype/pull/2124)
-- Blender: Fix NoneType error when animation\_data is missing for a rig [\#2101](https://github.com/pypeclub/OpenPype/pull/2101)
-- Delivery Action Files Sequence fix [\#2096](https://github.com/pypeclub/OpenPype/pull/2096)
 - Bump pywin32 from 300 to 301 [\#2086](https://github.com/pypeclub/OpenPype/pull/2086)
-- Nuke UI scaling [\#2077](https://github.com/pypeclub/OpenPype/pull/2077)
 
 ## [3.4.1](https://github.com/pypeclub/OpenPype/tree/3.4.1) (2021-09-23)
 
@@ -86,7 +87,6 @@
 
 **🐛 Bug fixes**
 
-- Fix Sync Queue when project disabled [\#2063](https://github.com/pypeclub/OpenPype/pull/2063)
 - Timers manger: Typo fix [\#2058](https://github.com/pypeclub/OpenPype/pull/2058)
 - Hiero: Editorial fixes [\#2057](https://github.com/pypeclub/OpenPype/pull/2057)
 - Differentiate jpg sequences from thumbnail [\#2056](https://github.com/pypeclub/OpenPype/pull/2056)
@@ -100,10 +100,6 @@
 ## [3.4.0](https://github.com/pypeclub/OpenPype/tree/3.4.0) (2021-09-17)
 
 [Full Changelog](https://github.com/pypeclub/OpenPype/compare/CI/3.4.0-nightly.6...3.4.0)
-
-### 📖 Documentation
-
-- Documentation: Ftrack launch argsuments update [\#2014](https://github.com/pypeclub/OpenPype/pull/2014)
 
 **🆕 New features**
 
@@ -130,6 +126,10 @@
 - FFmpeg: Subprocess arguments as list [\#2032](https://github.com/pypeclub/OpenPype/pull/2032)
 - General: Fix Python 2 breaking line [\#2016](https://github.com/pypeclub/OpenPype/pull/2016)
 - Bugfix/webpublisher task type [\#2006](https://github.com/pypeclub/OpenPype/pull/2006)
+
+### 📖 Documentation
+
+- Documentation: Ftrack launch argsuments update [\#2014](https://github.com/pypeclub/OpenPype/pull/2014)
 
 ## [3.3.1](https://github.com/pypeclub/OpenPype/tree/3.3.1) (2021-08-20)
 
