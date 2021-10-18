@@ -90,8 +90,8 @@ class LoaderWindow(QtWidgets.QDialog):
         thumb_ver_splitter = QtWidgets.QSplitter(main_splitter)
         thumb_ver_splitter.setOrientation(QtCore.Qt.Vertical)
 
+        thumbnail_widget = ThumbnailWidget(io, parent=thumb_ver_splitter)
         version_info_widget = VersionWidget(io, parent=thumb_ver_splitter)
-        thumbnail = ThumbnailWidget(io, parent=thumb_ver_splitter)
 
         manager = ModulesManager()
         sync_server = manager.modules_by_name.get("sync_server")
@@ -99,7 +99,7 @@ class LoaderWindow(QtWidgets.QDialog):
         if sync_server is not None:
             sync_server_enabled = sync_server.enabled
 
-        thumb_ver_splitter.addWidget(thumbnail)
+        thumb_ver_splitter.addWidget(thumbnail_widget)
         thumb_ver_splitter.addWidget(version_info_widget)
 
         repres_widget = None
@@ -134,8 +134,7 @@ class LoaderWindow(QtWidgets.QDialog):
             "widgets": {
                 "families": families,
                 "assets": assets,
-                "subsets": subsets,
-                "thumbnail": thumbnail
+                "subsets": subsets
             },
             "state": {
                 "assetIds": None
@@ -168,6 +167,7 @@ class LoaderWindow(QtWidgets.QDialog):
         self._message_label = message_label
 
         self._version_info_widget = version_info_widget
+        self._thumbnail_widget = thumbnail_widget
         self._repres_widget = repres_widget
 
         self._overlay_frame = overlay_frame
@@ -318,8 +318,8 @@ class LoaderWindow(QtWidgets.QDialog):
         )
 
         # Clear the version information on asset change
+        self._thumbnail_widget.set_thumbnail(asset_docs)
         self._version_info_widget.set_version(None)
-        self.data["widgets"]["thumbnail"].set_thumbnail(asset_docs)
 
         self.data["state"]["assetIds"] = asset_ids
 
@@ -414,7 +414,7 @@ class LoaderWindow(QtWidgets.QDialog):
             if len(asset_docs) > 0:
                 thumbnail_docs = asset_docs
 
-        self.data["widgets"]["thumbnail"].set_thumbnail(thumbnail_docs)
+        self._thumbnail_widget.set_thumbnail(thumbnail_docs)
 
         if self._repres_widget is not None:
             version_ids = [doc["_id"] for doc in version_docs or []]
