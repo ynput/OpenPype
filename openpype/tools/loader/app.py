@@ -78,7 +78,7 @@ class LoaderWindow(QtWidgets.QDialog):
 
         # --- Middle part ---
         # Subsets widget
-        subsets = SubsetWidget(
+        subsets_widget = SubsetWidget(
             io,
             self.groups_config,
             self.family_config_cache,
@@ -113,7 +113,7 @@ class LoaderWindow(QtWidgets.QDialog):
         thumb_ver_splitter.setStretchFactor(1, 35)
 
         main_splitter.addWidget(left_side_splitter)
-        main_splitter.addWidget(subsets)
+        main_splitter.addWidget(subsets_widget)
         main_splitter.addWidget(thumb_ver_splitter)
 
         # TODO keep footer size by message size
@@ -148,21 +148,26 @@ class LoaderWindow(QtWidgets.QDialog):
 
         message_timer.timeout.connect(self._on_message_timeout)
 
-        families_filter_view.active_changed.connect(subsets.set_family_filters)
+        families_filter_view.active_changed.connect(
+            self._on_family_filter_change
+        )
         assets_widget.selection_changed.connect(self.on_assetschanged)
         assets_widget.refresh_triggered.connect(self.on_assetschanged)
+        # TODO do not touch view in asset widget
         assets_widget.view.clicked.connect(self.on_assetview_click)
-        subsets.active_changed.connect(self.on_subsetschanged)
-        subsets.version_changed.connect(self.on_versionschanged)
-        subsets.refreshed.connect(self._on_subset_refresh)
+        subsets_widget.active_changed.connect(self.on_subsetschanged)
+        subsets_widget.version_changed.connect(self.on_versionschanged)
+        subsets_widget.refreshed.connect(self._on_subset_refresh)
 
-        subsets.load_started.connect(self._on_load_start)
-        subsets.load_ended.connect(self._on_load_end)
+        subsets_widget.load_started.connect(self._on_load_start)
+        subsets_widget.load_ended.connect(self._on_load_end)
         repres_widget.load_started.connect(self._on_load_start)
         repres_widget.load_ended.connect(self._on_load_end)
 
         self._assets_widget = assets_widget
         self._families_filter_view = families_filter_view
+
+        self._subsets_widget = subsets_widget
 
         self._version_info_widget = version_info_widget
         self._thumbnail_widget = thumbnail_widget
@@ -236,10 +241,10 @@ class LoaderWindow(QtWidgets.QDialog):
         self._overlay_frame.setVisible(False)
 
     def _on_subset_refresh(self, has_item):
-        subsets_widget = self.data["widgets"]["subsets"]
-
-        subsets_widget.set_loading_state(loading=False, empty=not has_item)
-        families = subsets_widget.get_subsets_families()
+        self._subsets_widget.set_loading_state(
+            loading=False, empty=not has_item
+        )
+        families = self._subsets_widget.get_subsets_families()
         self._families_filter_view.set_enabled_families(families)
 
     def _on_load_end(self):
@@ -248,6 +253,8 @@ class LoaderWindow(QtWidgets.QDialog):
         QtCore.QTimer.singleShot(100, self._hide_overlay)
 
     # ------------------------------
+    def _on_family_filter_change(self, families):
+        self._subsets_widget.set_family_filters(families)
 
     def on_context_task_change(self, *args, **kwargs):
         # Refresh families config
@@ -291,7 +298,8 @@ class LoaderWindow(QtWidgets.QDialog):
 
     def _assetschanged(self):
         """Selected assets have changed"""
-        subsets_widget = self.data["widgets"]["subsets"]
+        subsets_widget = self._subsets_widget
+        # TODO do not touch subset widget inner attributes
         subsets_model = subsets_widget.model
 
         subsets_model.clear()
@@ -330,8 +338,9 @@ class LoaderWindow(QtWidgets.QDialog):
             self._versionschanged()
             return
 
-        subsets = self.data["widgets"]["subsets"]
-        selected_subsets = subsets.selected_subsets(_merged=True, _other=False)
+        selected_subsets = self._subsets_widget.selected_subsets(
+            _merged=True, _other=False
+        )
 
         asset_models = {}
         asset_ids = []
@@ -370,7 +379,7 @@ class LoaderWindow(QtWidgets.QDialog):
         self._versionschanged()
 
     def _versionschanged(self):
-        subsets = self.data["widgets"]["subsets"]
+        subsets = self._subsets_widget
         selection = subsets.view.selectionModel()
 
         # Active must be in the selected rows otherwise we
@@ -488,7 +497,7 @@ class LoaderWindow(QtWidgets.QDialog):
         event.setAccepted(True)  # Avoid interfering other widgets
 
     def show_grouping_dialog(self):
-        subsets = self.data["widgets"]["subsets"]
+        subsets = self._subsets_widget
         if not subsets.is_groupable():
             self.echo("Grouping not enabled.")
             return
@@ -527,7 +536,8 @@ class SubsetGroupingDialog(QtWidgets.QDialog):
 
         self.items = items
         self.groups_config = groups_config
-        self.subsets = parent.data["widgets"]["subsets"]
+        # TODO do not touch inner attributes
+        self.subsets = parent._subsets_widget
         self.asset_ids = parent.data["state"]["assetIds"]
 
         name = QtWidgets.QLineEdit()
