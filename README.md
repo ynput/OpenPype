@@ -133,6 +133,12 @@ Easiest way to build OpenPype on Linux is using [Docker](https://www.docker.com/
 sudo ./tools/docker_build.sh
 ```
 
+This will by default use Debian as base image. If you need to make Centos 7 compatible build, please run:
+
+```sh
+sudo ./tools/docker_build.sh centos7
+```
+
 If all is successful, you'll find built OpenPype in `./build/` folder.
 
 #### Manual build
@@ -157,6 +163,11 @@ you'll need also additional libraries for Qt5:
 
 ```sh
 sudo apt install qt5-default
+```
+or if you are on Ubuntu > 20.04, there is no `qt5-default` packages so you need to install its content individually:
+
+```sh
+sudo apt-get install qtbase5-dev qtchooser qt5-qmake qtbase5-dev-tools
 ```
 </details>
 
