@@ -68,11 +68,11 @@ class LoaderWindow(QtWidgets.QDialog):
         assets.set_current_asset_btn_visibility(True)
 
         # Families widget
-        families = FamilyListView(
+        families_filter_view = FamilyListView(
             io, self.family_config_cache, asset_filter_splitter
         )
         asset_filter_splitter.addWidget(assets)
-        asset_filter_splitter.addWidget(families)
+        asset_filter_splitter.addWidget(families_filter_view)
         asset_filter_splitter.setStretchFactor(0, 65)
         asset_filter_splitter.setStretchFactor(1, 35)
 
@@ -132,7 +132,6 @@ class LoaderWindow(QtWidgets.QDialog):
 
         self.data = {
             "widgets": {
-                "families": families,
                 "assets": assets,
                 "subsets": subsets
             },
@@ -150,7 +149,7 @@ class LoaderWindow(QtWidgets.QDialog):
 
         message_timer.timeout.connect(self._on_message_timeout)
 
-        families.active_changed.connect(subsets.set_family_filters)
+        families_filter_view.active_changed.connect(subsets.set_family_filters)
         assets.selection_changed.connect(self.on_assetschanged)
         assets.refresh_triggered.connect(self.on_assetschanged)
         assets.view.clicked.connect(self.on_assetview_click)
@@ -163,15 +162,17 @@ class LoaderWindow(QtWidgets.QDialog):
         repres_widget.load_started.connect(self._on_load_start)
         repres_widget.load_ended.connect(self._on_load_end)
 
-        # TODO add overlay using stack widget
         self._message_label = message_label
+        self._message_timer = message_timer
+
+        self._families_filter_view = families_filter_view
 
         self._version_info_widget = version_info_widget
         self._thumbnail_widget = thumbnail_widget
         self._repres_widget = repres_widget
 
+        # TODO add overlay using stack widget
         self._overlay_frame = overlay_frame
-        self._message_timer = message_timer
 
         self.family_config_cache.refresh()
         self.groups_config.refresh()
@@ -236,11 +237,10 @@ class LoaderWindow(QtWidgets.QDialog):
 
     def _on_subset_refresh(self, has_item):
         subsets_widget = self.data["widgets"]["subsets"]
-        families_view = self.data["widgets"]["families"]
 
         subsets_widget.set_loading_state(loading=False, empty=not has_item)
         families = subsets_widget.get_subsets_families()
-        families_view.set_enabled_families(families)
+        self._families_filter_view.set_enabled_families(families)
 
     def _on_load_end(self):
         # Delay hiding as click events happened during loading should be
@@ -251,9 +251,8 @@ class LoaderWindow(QtWidgets.QDialog):
 
     def on_context_task_change(self, *args, **kwargs):
         assets_widget = self.data["widgets"]["assets"]
-        families_view = self.data["widgets"]["families"]
         # Refresh families config
-        families_view.refresh()
+        self._families_filter_view.refresh()
         # Change to context asset on context change
         assets_widget.select_assets(io.Session["AVALON_ASSET"])
 
@@ -268,8 +267,7 @@ class LoaderWindow(QtWidgets.QDialog):
         assets_widget.refresh()
         assets_widget.setFocus()
 
-        families_view = self.data["widgets"]["families"]
-        families_view.refresh()
+        self._families_filter_view.refresh()
 
     def clear_assets_underlines(self):
         """Clear colors from asset data to remove colored underlines
