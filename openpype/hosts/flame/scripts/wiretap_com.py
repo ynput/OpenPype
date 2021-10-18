@@ -118,18 +118,17 @@ class WireTapCom(object):
 
         if not project_exists:
 
-            volumes = self._get_volumes()
+            volumes = self._get_all_volumes()
 
             if len(volumes) == 0:
                 raise AttributeError(
-                    "Cannot create new project! There are no volumes defined for this Flame!"
+                    "Not able to create new project. No Volumes existing"
                 )
 
-            # sanity check :)
+            # check if volumes exists
             if self.volume_name not in volumes:
                 raise AttributeError(
-                    "Volume '%s' specified in hook does not exist in "
-                    "list of current volumes '%s'" % (
+                    ("Volume '{}' does not exist '{}'").format(
                         self.volume_name, volumes)
                 )
 
@@ -163,12 +162,12 @@ class WireTapCom(object):
             print(
                 "A new project '{}' will be created.".format(project_name))
 
-    def _get_volumes(self):
+    def _get_all_volumes(self):
 
         root = WireTapNodeHandle(self._server, "/volumes")
-        num_children = WireTapInt(0)
+        children_num = WireTapInt(0)
 
-        get_children_num = root.getNumChildren(num_children)
+        get_children_num = root.getNumChildren(children_num)
         if not get_children_num:
             raise AttributeError(
                 "Cannot get number of volumes: {}".format(root.lastError())
@@ -178,7 +177,7 @@ class WireTapCom(object):
 
         # go trough all children and get volume names
         child_obj = WireTapNodeHandle()
-        for child_idx in range(num_children):
+        for child_idx in range(children_num):
 
             # get a child
             if not root.getChild(child_idx, child_obj):
@@ -243,9 +242,9 @@ class WireTapCom(object):
     def _get_usernames(self):
 
         root = WireTapNodeHandle(self._server, "/users")
-        num_children = WireTapInt(0)
+        children_num = WireTapInt(0)
 
-        get_children_num = root.getNumChildren(num_children)
+        get_children_num = root.getNumChildren(children_num)
         if not get_children_num:
             raise AttributeError(
                 "Cannot get number of volumes: {}".format(root.lastError())
@@ -255,7 +254,7 @@ class WireTapCom(object):
 
         # go trough all children and get volume names
         child_obj = WireTapNodeHandle()
-        for child_idx in range(num_children):
+        for child_idx in range(children_num):
 
             # get a child
             if not root.getChild(child_idx, child_obj):
@@ -275,27 +274,25 @@ class WireTapCom(object):
         return usernames
 
     def _child_is_in_parent_path(self, parent_path, child_name, child_type):
-        # get the parent
         parent = WireTapNodeHandle(self._server, parent_path)
 
-        # get number of children
-        num_children = WireTapInt(0)
-        if not parent.getNumChildren(num_children):
-            raise AttributeError(
-                "Wiretap Error: Unable to obtain number of "
-                "children for node %s. Please check that your "
-                "wiretap service is running. "
-                "Error reported: %s" % (parent_path, parent.lastError())
+        # iterate number of children
+        children_num = WireTapInt(0)
+        requested = parent.getNumChildren(children_num)
+        if not requested:
+            raise AttributeError((
+                "Error: Cannot request number of "
+                "childrens from the node {}. Make sure your "
+                "wiretap service is running: {}").format(
+                    parent_path, parent.lastError())
             )
 
-        # iterate over children, look for the given node
+        # iterate children
         child_obj = WireTapNodeHandle()
-        for child_idx in range(num_children):
-
-            # get the child
+        for child_idx in range(children_num):
             if not parent.getChild(child_idx, child_obj):
                 raise AttributeError(
-                    "Unable to get child: {}".format(
+                    "Cannot get child: {}".format(
                         parent.lastError()))
 
             node_name = WireTapStr()
@@ -317,21 +314,11 @@ class WireTapCom(object):
         return False
 
     def _set_project_settings(self, project_name, project_data):
+
+        # generated xml from project_data dict
         _xml = "<Project>"
-        _xml += "<Description>Created by OpenPype</Description>"
-        _xml += self._project_data_to_xml(project_data, "SetupDir")
-        _xml += self._project_data_to_xml(project_data, "FrameWidth")
-        _xml += self._project_data_to_xml(project_data, "FrameHeight")
-        _xml += self._project_data_to_xml(project_data, "FrameDepth")
-        _xml += self._project_data_to_xml(project_data, "AspectRatio")
-        _xml += self._project_data_to_xml(project_data, "FrameRate")
-        _xml += self._project_data_to_xml(project_data, "FieldDominance")
-
-        # proxy settings
-        _xml += self._project_data_to_xml(project_data, "ProxyWidthHint")
-        _xml += self._project_data_to_xml(project_data, "ProxyMinFrameSize")
-        _xml += self._project_data_to_xml(project_data, "ProxyQuality")
-
+        for key, value in project_data.items():
+            _xml += "<{}>{}</{}>".format(key, value, key)
         _xml += "</Project>"
 
         pretty_xml = minidom.parseString(_xml).toprettyxml()
@@ -348,22 +335,6 @@ class WireTapCom(object):
             )
 
         print("Project successfully created.")
-
-    def _project_data_to_xml(self, project_data, setting):
-        """Generating xml line with settings
-
-        Args:
-            project_data (dict): [description]
-            setting (str): [description]
-
-        Returns:
-            [str]: Empty string or '<setting>value</setting>'
-        """
-        return (
-            "<{}>{}</{}>".format(setting, project_data.get(setting), setting)
-            if project_data.get(setting)
-            else ""
-        )
 
 
 if __name__ == "__main__":

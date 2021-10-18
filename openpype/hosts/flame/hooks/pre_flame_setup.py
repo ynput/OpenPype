@@ -30,19 +30,33 @@ class FlamePrelaunch(PreLaunchHook):
     def execute(self):
         """Hook entry method."""
         project_doc = self.data["project_doc"]
-        asset_name = self.data["asset_name"]
-        task_name = self.data["task_name"]
         user_name = get_openpype_username()
 
         self.log.debug("Collected user \"{}\"".format(user_name))
         self.log.info(pformat(project_doc))
-        
+        _db_p_data = project_doc["data"]
+        width = _db_p_data["resolutionWidth"]
+        height = _db_p_data["resolutionHeight"]
+        fps = int(_db_p_data["fps"])
+
+        project_data = {
+            "Name": project_doc["name"],
+            "Nickname": project_doc["code"],
+            "Description": "Created by OpenPype",
+            "SetupDir": project_doc["name"],
+            "FrameWidth": int(width),
+            "FrameHeight": int(height),
+            "AspectRatio": float((width / height) * _db_p_data["pixelAspect"]),
+            "FrameRate": "{} fps".format(fps),
+            "FrameDepth": "16-bit fp",
+            "FieldDominance": "PROGRESSIVE"
+        }
+
         data_to_script = {
             "project_name": project_doc["name"],
             "user_name": user_name,
-            "project_data": project_doc["data"]
+            "project_data": project_data
         }
-
         app_arguments = self._get_launch_arguments(data_to_script)
 
         self.log.info(pformat(dict(self.launch_context.env)))
