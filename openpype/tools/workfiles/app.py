@@ -55,16 +55,37 @@ class NameWindow(QtWidgets.QDialog):
 
         # Set work file data for template formatting
         asset_name = session["AVALON_ASSET"]
-        project_doc = io.find_one({
-            "type": "project"
+        project_doc = io.find_one(
+            {"type": "project"},
+            {
+                "name": True,
+                "data.code": True,
+                "config.tasks": True,
+            }
+        )
+        asset_doc = io.find_one({
+            "type": "asset",
+            "name": asset_name
         })
+
+        task_type = asset_doc['data']['tasks'].get(session["AVALON_TASK"], {}).get('type')
+
+        if task_type:
+            task_short = project_doc['config']['tasks'][task_type]['short_name']
+        else:
+            task_short = None
+
         self.data = {
             "project": {
                 "name": project_doc["name"],
                 "code": project_doc["data"].get("code")
             },
             "asset": asset_name,
-            "task": session["AVALON_TASK"],
+            "task": {
+                "name": session["AVALON_TASK"],
+                "type": task_type,
+                "short": task_short,
+            },
             "version": 1,
             "user": getpass.getuser(),
             "comment": "",
@@ -364,23 +385,25 @@ class TasksWidget(QtWidgets.QWidget):
             task (str): Name of the task to select.
 
         """
+        task_view_model = self._tasks_view.model()
+        if not task_view_model:
+            return
 
         # Clear selection
-        view = self.widgets["view"]
-        model = view.model()
-        selection_model = view.selectionModel()
+        selection_model = self._tasks_view.selectionModel()
         selection_model.clearSelection()
 
         # Select the task
         mode = selection_model.Select | selection_model.Rows
-        for row in range(model.rowCount(QtCore.QModelIndex())):
-            index = model.index(row, 0, QtCore.QModelIndex())
-            name = index.data(QtCore.Qt.DisplayRole)
-            if name == task:
+        for row in range(task_view_model.rowCount()):
+            index = task_view_model.index(row, 0)
+            name = index.data(TASK_NAME_ROLE)
+            if name == task_name:
                 selection_model.select(index, mode)
 
                 # Set the currently active index
-                view.setCurrentIndex(index)
+                self._tasks_view.setCurrentIndex(index)
+                break
 
     def get_current_task(self):
         """Return name of task at current index (selected)
@@ -416,7 +439,6 @@ class FilesWidget(QtWidgets.QWidget):
         # Pype's anatomy object for current project
         self.anatomy = Anatomy(io.Session["AVALON_PROJECT"])
         # Template key used to get work template from anatomy templates
-        # TODO change template key based on task
         self.template_key = "work"
 
         # This is not root but workfile directory
@@ -508,12 +530,13 @@ class FilesWidget(QtWidgets.QWidget):
 
     def set_asset_task(self, asset, task):
         self._asset = asset
-        self._task = task
+        self._task_name = task_name
+        self._task_type = task_type
 
         # Define a custom session so we can query the work root
         # for a "Work area" that is not our current Session.
         # This way we can browse it even before we enter it.
-        if self._asset and self._task:
+        if self._asset and self._task_name and self._task_type:
             session = self._get_session()
             self.root = self.host.work_root(session)
             self.files_model.set_root(self.root)
