@@ -2,11 +2,12 @@ import sys
 import time
 import logging
 
+from Qt import QtWidgets, QtCore
+
 from openpype.hosts.maya.api.lib import assign_look_by_version
 
 from avalon import style, io
 from avalon.tools import lib
-from avalon.vendor.Qt import QtWidgets, QtCore
 
 from maya import cmds
 # old api for MFileIO
@@ -21,7 +22,7 @@ from .commands import (
     get_workfile,
     remove_unused_looks
 )
-from . vray_proxies import vrayproxy_assign_look
+from .vray_proxies import vrayproxy_assign_look
 
 
 module = sys.modules[__name__]
