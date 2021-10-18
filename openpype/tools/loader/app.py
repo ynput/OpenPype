@@ -89,7 +89,8 @@ class LoaderWindow(QtWidgets.QDialog):
         # --- Right part ---
         thumb_ver_splitter = QtWidgets.QSplitter(main_splitter)
         thumb_ver_splitter.setOrientation(QtCore.Qt.Vertical)
-        version = VersionWidget(io, parent=thumb_ver_splitter)
+
+        version_info_widget = VersionWidget(io, parent=thumb_ver_splitter)
         thumbnail = ThumbnailWidget(io, parent=thumb_ver_splitter)
 
         manager = ModulesManager()
@@ -99,7 +100,7 @@ class LoaderWindow(QtWidgets.QDialog):
             sync_server_enabled = sync_server.enabled
 
         thumb_ver_splitter.addWidget(thumbnail)
-        thumb_ver_splitter.addWidget(version)
+        thumb_ver_splitter.addWidget(version_info_widget)
 
         repres_widget = None
         if sync_server_enabled:
@@ -134,8 +135,7 @@ class LoaderWindow(QtWidgets.QDialog):
                 "families": families,
                 "assets": assets,
                 "subsets": subsets,
-                "version": version,
-                "thumbnail": thumbnail,
+                "thumbnail": thumbnail
             },
             "state": {
                 "assetIds": None
@@ -167,6 +167,7 @@ class LoaderWindow(QtWidgets.QDialog):
         # TODO add overlay using stack widget
         self._message_label = message_label
 
+        self._version_info_widget = version_info_widget
         self._repres_widget = repres_widget
 
         self._overlay_frame = overlay_frame
@@ -317,7 +318,7 @@ class LoaderWindow(QtWidgets.QDialog):
         )
 
         # Clear the version information on asset change
-        self.data["widgets"]["version"].set_version(None)
+        self._version_info_widget.set_version(None)
         self.data["widgets"]["thumbnail"].set_thumbnail(asset_docs)
 
         self.data["state"]["assetIds"] = asset_ids
@@ -404,7 +405,7 @@ class LoaderWindow(QtWidgets.QDialog):
                 else:
                     version_docs.append(item["version_document"])
 
-        self.data["widgets"]["version"].set_version(version_doc)
+        self._version_info_widget.set_version(version_doc)
 
         thumbnail_docs = version_docs
         assets_widget = self.data["widgets"]["assets"]
