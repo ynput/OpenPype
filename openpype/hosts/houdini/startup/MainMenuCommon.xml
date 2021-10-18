@@ -40,7 +40,7 @@ host_tools.show_scene_inventory(parent)
 import hou
 from openpype.tools.utils import host_tools
 parent = hou.qt.mainWindow()
-publish.show(parent)
+host_tools.show_publish(parent)
                 ]]></scriptCode>
             </scriptItem>
 
