@@ -54,6 +54,7 @@ class WireTapCom(object):
 
         self._project_prep(project_name)
         self._set_project_settings(project_name, project_data)
+        self._set_project_colorspace(project_name, color_profile=None)
         user_name = self._user_prep(user_name)
 
         if workspace_name is None:
@@ -236,7 +237,6 @@ class WireTapCom(object):
             print("User `{}` is created".format(new_user_name))
             return new_user_name
 
-
     def _get_usernames(self):
 
         root = WireTapNodeHandle(self._server, "/users")
@@ -321,11 +321,11 @@ class WireTapCom(object):
 
         pretty_xml = minidom.parseString(_xml).toprettyxml()
         print("__ xml: {}".format(pretty_xml))
-        
+
         # set project data to wiretap
         project_node = WireTapNodeHandle(
             self._server, "/projects/{}".format(project_name))
-        
+
         if not project_node.setMetaData("XML", _xml):
             raise AttributeError(
                 "Not able to set metadata {}. Error: {}".format(
@@ -333,6 +333,33 @@ class WireTapCom(object):
             )
 
         print("Project settings successfully set.")
+
+    def _set_project_colorspace(self, project_name, color_profile=None):
+        color_profile = color_profile or "ACES 1.0"
+        project_colorspace_cmd = [
+            os.path.join(
+                "/opt/Autodesk/",
+                "wiretap",
+                "tools",
+                "2021",
+                "wiretap_duplicate_node",
+            ),
+            "-s",
+            "/syncolor/policies/Autodesk/{}".format(color_profile),
+            "-n",
+            "/projects/{}/syncolor".format(project_name)
+        ]
+
+        print(project_colorspace_cmd)
+
+        exit_code = subprocess.call(
+            project_colorspace_cmd,
+            cwd=os.path.expanduser('~'))
+
+        if exit_code != 0:
+            RuntimeError("Cannot set colorspace {} on project {}".format(
+                color_profile, project_name
+            ))
 
 
 if __name__ == "__main__":
