@@ -100,20 +100,6 @@
                             }
                         }
                     ]
-                },
-                {
-                    "type": "dict",
-                    "collapsible": false,
-                    "key": "CreateModel",
-                    "label": "CreateModel",
-                    "is_group": true,
-                    "children": [
-                        {
-                            "type": "text",
-                            "key": "extension",
-                            "label": "Extension"
-                        }
-                    ]
                 }
             ]
         },
