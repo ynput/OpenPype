@@ -5,15 +5,15 @@ import openpype.hosts.blender.api.action
 
 
 class ValidateObjectIsInObjectMode(pyblish.api.InstancePlugin):
-    """Validate that the current object is in Object Mode."""
+    """Validate that the objects in the instance are in Object Mode."""
 
     order = pyblish.api.ValidatorOrder - 0.01
     hosts = ["blender"]
-    families = ["model", "rig"]
+    families = ["model", "rig", "layout"]
     category = "geometry"
-    label = "Object is in Object Mode"
+    label = "Validate Object Mode"
     actions = [openpype.hosts.blender.api.action.SelectInvalidAction]
-    optional = True
+    optional = False
 
     @classmethod
     def get_invalid(cls, instance) -> List:
