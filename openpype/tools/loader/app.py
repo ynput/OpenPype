@@ -57,24 +57,24 @@ class LoaderWindow(QtWidgets.QDialog):
 
         main_splitter = QtWidgets.QSplitter(self)
 
-        asset_filter_splitter = QtWidgets.QSplitter(main_splitter)
-        asset_filter_splitter.setOrientation(QtCore.Qt.Vertical)
-
         # --- Left part ---
+        left_side_splitter = QtWidgets.QSplitter(main_splitter)
+        left_side_splitter.setOrientation(QtCore.Qt.Vertical)
+
         # Assets widget
         assets = AssetWidget(
-            io, multiselection=True, parent=asset_filter_splitter
+            io, multiselection=True, parent=left_side_splitter
         )
         assets.set_current_asset_btn_visibility(True)
 
         # Families widget
         families_filter_view = FamilyListView(
-            io, self.family_config_cache, asset_filter_splitter
+            io, self.family_config_cache, left_side_splitter
         )
-        asset_filter_splitter.addWidget(assets)
-        asset_filter_splitter.addWidget(families_filter_view)
-        asset_filter_splitter.setStretchFactor(0, 65)
-        asset_filter_splitter.setStretchFactor(1, 35)
+        left_side_splitter.addWidget(assets)
+        left_side_splitter.addWidget(families_filter_view)
+        left_side_splitter.setStretchFactor(0, 65)
+        left_side_splitter.setStretchFactor(1, 35)
 
         # --- Middle part ---
         # Subsets widget
@@ -112,7 +112,7 @@ class LoaderWindow(QtWidgets.QDialog):
         thumb_ver_splitter.setStretchFactor(0, 30)
         thumb_ver_splitter.setStretchFactor(1, 35)
 
-        main_splitter.addWidget(asset_filter_splitter)
+        main_splitter.addWidget(left_side_splitter)
         main_splitter.addWidget(subsets)
         main_splitter.addWidget(thumb_ver_splitter)
 
