@@ -23,8 +23,7 @@ from libwiretapPythonClientAPI import (
     WireTapNodeHandle,
     WireTapServerHandle,
     WireTapInt,
-    WireTapStr,
-    WiretapError
+    WireTapStr
 )
 
 class WireTapCom(object):
@@ -158,9 +157,8 @@ class WireTapCom(object):
             if exit_code != 0:
                 RuntimeError("Cannot create project in flame db")
 
-            # create project settings
             print(
-                "A new project '{}' will be created.".format(project_name))
+                "A new project '{}' is created.".format(project_name))
 
     def _get_all_volumes(self):
 
@@ -323,18 +321,18 @@ class WireTapCom(object):
 
         pretty_xml = minidom.parseString(_xml).toprettyxml()
         print("__ xml: {}".format(pretty_xml))
-
+        
         # set project data to wiretap
         project_node = WireTapNodeHandle(
-            self._server, "/projects/" + project_name)
-
+            self._server, "/projects/{}".format(project_name))
+        
         if not project_node.setMetaData("XML", _xml):
-            raise WiretapError(
-                "Error setting metadata for %s: %s"
-                % (project_name, project_node.lastError())
+            raise AttributeError(
+                "Not able to set metadata {}. Error: {}".format(
+                    project_name, project_node.lastError())
             )
 
-        print("Project successfully created.")
+        print("Project settings successfully set.")
 
 
 if __name__ == "__main__":

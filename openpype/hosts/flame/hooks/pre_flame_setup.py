@@ -41,7 +41,7 @@ class FlamePrelaunch(PreLaunchHook):
 
         project_data = {
             "Name": project_doc["name"],
-            "Nickname": project_doc["code"],
+            "Nickname": _db_p_data["code"],
             "Description": "Created by OpenPype",
             "SetupDir": project_doc["name"],
             "FrameWidth": int(width),
