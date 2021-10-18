@@ -13,8 +13,14 @@ from maya import cmds
 import maya.OpenMaya
 import maya.api.OpenMaya as om
 
-from . import widgets
-from . import commands
+from .widgets import (
+    AssetOutliner,
+    LookOutliner
+)
+from .commands import (
+    get_workfile,
+    remove_unused_looks
+)
 from . vray_proxies import vrayproxy_assign_look
 
 
@@ -32,7 +38,7 @@ class App(QtWidgets.QWidget):
         # Store callback references
         self._callbacks = []
 
-        filename = commands.get_workfile()
+        filename = get_workfile()
 
         self.setObjectName("lookManager")
         self.setWindowTitle("Look Manager 1.3.0 - [{}]".format(filename))
@@ -57,13 +63,13 @@ class App(QtWidgets.QWidget):
         """Build the UI"""
 
         # Assets (left)
-        asset_outliner = widgets.AssetOutliner()
+        asset_outliner = AssetOutliner()
 
         # Looks (right)
         looks_widget = QtWidgets.QWidget()
         looks_layout = QtWidgets.QVBoxLayout(looks_widget)
 
-        look_outliner = widgets.LookOutliner()  # Database look overview
+        look_outliner = LookOutliner()  # Database look overview
 
         assign_selected = QtWidgets.QCheckBox("Assign to selected only")
         assign_selected.setToolTip("Whether to assign only to selected nodes "
@@ -124,7 +130,7 @@ class App(QtWidgets.QWidget):
             lambda: self.echo("Loaded assets.."))
 
         self.look_outliner.menu_apply_action.connect(self.on_process_selected)
-        self.remove_unused.clicked.connect(commands.remove_unused_looks)
+        self.remove_unused.clicked.connect(remove_unused_looks)
 
         # Maya renderlayer switch callback
         callback = om.MEventMessage.addEventCallback(
