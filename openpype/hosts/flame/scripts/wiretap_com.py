@@ -49,12 +49,14 @@ class WireTapCom(object):
         print("WireTap closed...")
 
     def get_launch_args(
-        self, project_name, project_data, user_name, workspace_name=None,
-            *args, **kwargs):
-
+        self, project_name, project_data, user_name, *args, **kwargs):
+        
+        workspace_name = kwargs.get("workspace_name")
+        color_policy = kwargs.get("color_policy")
+        
         self._project_prep(project_name)
         self._set_project_settings(project_name, project_data)
-        self._set_project_colorspace(project_name, color_profile=None)
+        self._set_project_colorspace(project_name, color_policy)
         user_name = self._user_prep(user_name)
 
         if workspace_name is None:
@@ -334,8 +336,8 @@ class WireTapCom(object):
 
         print("Project settings successfully set.")
 
-    def _set_project_colorspace(self, project_name, color_profile=None):
-        color_profile = color_profile or "ACES 1.0"
+    def _set_project_colorspace(self, project_name, color_policy):
+        color_policy = color_policy or "Legacy"
         project_colorspace_cmd = [
             os.path.join(
                 "/opt/Autodesk/",
@@ -345,7 +347,7 @@ class WireTapCom(object):
                 "wiretap_duplicate_node",
             ),
             "-s",
-            "/syncolor/policies/Autodesk/{}".format(color_profile),
+            "/syncolor/policies/Autodesk/{}".format(color_policy),
             "-n",
             "/projects/{}/syncolor".format(project_name)
         ]
@@ -358,7 +360,7 @@ class WireTapCom(object):
 
         if exit_code != 0:
             RuntimeError("Cannot set colorspace {} on project {}".format(
-                color_profile, project_name
+                color_policy, project_name
             ))
 
 
@@ -372,10 +374,10 @@ if __name__ == "__main__":
 
     try:
         app_args = wiretap_handler.get_launch_args(
-            project_name=in_data["project_name"],
-            project_data=in_data["project_data"],
-            user_name=in_data["user_name"],
-            workspace_name=in_data.get("workspace_mame")
+            project_name=in_data.pop("project_name"),
+            project_data=in_data.pop("project_data"),
+            user_name=in_data.pop("user_name"),
+            **in_data
         )
     finally:
         wiretap_handler.close()

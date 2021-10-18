@@ -55,7 +55,8 @@ class FlamePrelaunch(PreLaunchHook):
         data_to_script = {
             "project_name": project_doc["name"],
             "user_name": user_name,
-            "project_data": project_data
+            "project_data": project_data,
+            "color_policy": "ACES 1.1"
         }
         app_arguments = self._get_launch_arguments(data_to_script)
 
