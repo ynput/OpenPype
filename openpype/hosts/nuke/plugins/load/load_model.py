@@ -46,7 +46,7 @@ class AlembicModelLoader(api.Loader):
         with anlib.maintained_selection():
             model_node = nuke.createNode(
                 "ReadGeo2",
-                "name {} file {} read_from_file True".format(
+                "name {} file {} ".format(
                     object_name, file),
                 inpanel=False
             )

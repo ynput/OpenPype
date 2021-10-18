@@ -42,7 +42,7 @@ class ExtractModel(openpype.api.Extractor):
         staging_dir = self.staging_dir(instance)
 
         # get extension form setting or from preset
-        extension = instance.context.data["modelFormat"]
+        extension = instance.context.data["project_settings"]["nuke"]["create"]["CreateModel"]["extension"]
         if not extension :
             extension = next((k[1] for k in self.write_geo_knobs
                             if k[0] == "file_type"), None)

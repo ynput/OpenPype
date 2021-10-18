@@ -28,7 +28,7 @@
             ]
         },
         "CreateModel": {
-            "extension": ".abc"
+            "extension": "abc"
         }
     },
     "publish": {
