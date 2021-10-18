@@ -46,7 +46,7 @@ class CreateModel(plugin.PypeCreator):
                 return
         else:
             # if selected is off then create one node
-            model_node = nuke.createNode("Model2")
+            model_node = nuke.createNode("WriteGeo")
             model_node["tile_color"].setValue(int(self.node_color, 16))
             # add avalon knobs
             instance = anlib.set_avalon_knob_data(model_node, self.data)
