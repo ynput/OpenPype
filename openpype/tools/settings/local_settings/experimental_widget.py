@@ -22,7 +22,9 @@ class LocalExperimentalToolsWidgets(QtWidgets.QWidget):
 
         # Label that says there are no experimental tools available
         empty_label = QtWidgets.QLabel(self)
-        empty_label.setText("There are no experimental tools available.")
+        empty_label.setText(
+            "There are no experimental tools available..."
+        )
 
         layout.addRow(empty_label)
 
