@@ -6,7 +6,6 @@ from openpype.hosts.photoshop.plugins.lib import get_unique_layer_name
 
 stub = photoshop.stub()
 
-
 class ImageLoader(api.Loader):
     """Load images
 
@@ -45,8 +44,9 @@ class ImageLoader(api.Loader):
         layer_name = "{}_{}".format(context["asset"], context["subset"])
         # switching assets
         if namespace_from_container != layer_name:
-            layer_name = self._get_unique_layer_name(context["asset"],
-                                                     context["subset"])
+            layer_name = get_unique_layer_name(stub.get_layers(),
+                                               context["asset"],
+                                               context["subset"])
         else:  # switching version - keep same name
             layer_name = container["namespace"]
 
