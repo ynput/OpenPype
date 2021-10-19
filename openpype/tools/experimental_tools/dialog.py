@@ -1,4 +1,4 @@
-from Qt import QtWidgets
+from Qt import QtWidgets, QtCore, QtGui
 
 from openpype.style import (
     load_stylesheet,
@@ -12,7 +12,7 @@ class ToolButton(QtWidgets.QPushButton):
     triggered = QtCore.Signal(str)
 
     def __init__(self, identifier, *args, **kwargs):
-        super(ExperimentalDialog, self).__init__(*args, **kwargs)
+        super(ToolButton, self).__init__(*args, **kwargs)
         self._identifier = identifier
 
         self.clicked.connect(self._on_click)
@@ -27,23 +27,22 @@ class ExperimentalDialog(QtWidgets.QDialog):
     def __init__(self, parent=None):
         super(ExperimentalDialog, self).__init__(parent)
         self.setWindowTitle("OpenPype Experimental tools")
-        self.setWindowIcon(app_icon_path())
+        icon = QtGui.QIcon(app_icon_path())
+        self.setWindowIcon(icon)
 
         empty_label = QtWidgets.QLabel(
             "There are no experimental tools available.", self
         )
         content_widget = QtWidgets.QWidget(self)
-        content_widget.setVisible(False)
 
         content_layout = QtWidgets.QHBoxLayout(content_widget)
         content_layout.setContentsMargins(0, 0, 0, 0)
 
         experimental_tools = ExperimentalTools()
-        buttons_by_tool_identifier = {}
 
         layout = QtWidgets.QHBoxLayout(self)
         layout.addWidget(empty_label)
-        layout.addWidget(content_widget)
+        layout.addWidget(content_widget, 1)
 
         refresh_timer = QtCore.QTimer()
         refresh_timer.setInterval(self.refresh_interval)
@@ -54,7 +53,7 @@ class ExperimentalDialog(QtWidgets.QDialog):
         self._content_layout = content_layout
 
         self._experimental_tools = experimental_tools
-        self._buttons_by_tool_identifier = buttons_by_tool_identifier
+        self._buttons_by_tool_identifier = {}
 
         self._is_refreshing = False
         self._refresh_on_active = True
@@ -69,7 +68,7 @@ class ExperimentalDialog(QtWidgets.QDialog):
         self._experimental_tools.refresh_availability()
 
         buttons_to_remove = set(self._buttons_by_tool_identifier.keys())
-        for idx, tool in enumerate(self._experimental_tools.experimental_tools):
+        for idx, tool in enumerate(self._experimental_tools.tools):
             identifier = tool.identifier
             if identifier in buttons_to_remove:
                 buttons_to_remove.remove(identifier)
@@ -90,7 +89,7 @@ class ExperimentalDialog(QtWidgets.QDialog):
 
             elif is_new or button.isEnabled():
                 button.setToolTip((
-                    "You can enable this tool in local settings.
+                    "You can enable this tool in local settings."
                     "\n\nOpenPype Tray > Settings > Experimental Tools"
                 ))
 
@@ -101,7 +100,9 @@ class ExperimentalDialog(QtWidgets.QDialog):
             self._content_layout.takeAt(idx)
             button.deleteLater()
 
-        self._empty_label.setVisible(not self._buttons_by_tool_identifier)
+        self._empty_label.setVisible(
+            len(self._buttons_by_tool_identifier) == 0
+        )
 
         self._is_refreshing = False
 
@@ -111,7 +112,7 @@ class ExperimentalDialog(QtWidgets.QDialog):
             tool.execute()
 
     def showEvent(self, event):
-        super(LauncherWindow, self).showEvent(event)
+        super(ExperimentalDialog, self).showEvent(event)
 
         if self._refresh_on_active:
             # Start/Restart timer
@@ -129,7 +130,7 @@ class ExperimentalDialog(QtWidgets.QDialog):
                 self._refresh_timer.start()
                 self.refresh()
 
-        super(LauncherWindow, self).changeEvent(event)
+        super(ExperimentalDialog, self).changeEvent(event)
 
     def _on_refresh_timeout(self):
         # Stop timer if window is not visible
