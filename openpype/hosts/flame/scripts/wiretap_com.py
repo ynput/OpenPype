@@ -36,13 +36,23 @@ class WireTapCom(object):
     """
 
     def __init__(self, host_name=None, volume_name=None, group_name=None):
+        """Initialisation of WireTap communication class
 
-        WireTapClientInit()
-
+        Args:
+            host_name (str, optional): Name of host server. Defaults to None.
+            volume_name (str, optional): Name of volume. Defaults to None.
+            group_name (str, optional): Name of user group. Defaults to None.
+        """
+        # set main attributes of server
+        # if there are none set the default installation
         self.host_name = host_name or "localhost"
         self.volume_name = volume_name or "stonefs"
         self.group_name = group_name or "staff"
 
+        # initialize WireTap client
+        WireTapClientInit()
+
+        # add the server to shared variable
         self._server = WireTapServerHandle("{}:IFFFS".format(self.host_name))
         print("WireTap connected at '{}'...".format(
             self.host_name))
@@ -312,6 +322,22 @@ class WireTapCom(object):
         return usernames
 
     def _child_is_in_parent_path(self, parent_path, child_name, child_type):
+        """Checking if a given child is in parent path.
+
+        Args:
+            parent_path (str): db path to parent
+            child_name (str): name of child
+            child_type (str): type of child
+
+        Raises:
+            AttributeError: Not able to get number of children
+            AttributeError: Not able to get children form parent
+            AttributeError: Not able to get children name
+            AttributeError: Not able to get children type
+
+        Returns:
+            bool: True if child is in parent path
+        """
         parent = WireTapNodeHandle(self._server, parent_path)
 
         # iterate number of children
@@ -352,7 +378,16 @@ class WireTapCom(object):
         return False
 
     def _set_project_settings(self, project_name, project_data):
+        """Setting project attributes.
 
+        Args:
+            project_name (str): name of project
+            project_data (dict): data with project attributes
+                                 (flame compatible)
+
+        Raises:
+            AttributeError: Not able to set project attributes
+        """
         # generated xml from project_data dict
         _xml = "<Project>"
         for key, value in project_data.items():
@@ -368,13 +403,22 @@ class WireTapCom(object):
 
         if not project_node.setMetaData("XML", _xml):
             raise AttributeError(
-                "Not able to set metadata {}. Error: {}".format(
+                "Not able to set project attributes {}. Error: {}".format(
                     project_name, project_node.lastError())
             )
 
         print("Project settings successfully set.")
 
     def _set_project_colorspace(self, project_name, color_policy):
+        """Set project's colorspace policy.
+
+        Args:
+            project_name (str): name of project
+            color_policy (str): name of policy
+
+        Raises:
+            RuntimeError: Not able to set colorspace policy
+        """
         color_policy = color_policy or "Legacy"
         project_colorspace_cmd = [
             os.path.join(
@@ -427,9 +471,11 @@ if __name__ == "__main__":
     finally:
         wiretap_handler.close()
 
+    # set returned args back to out data
     out_data.update({
         "app_args": app_args
     })
 
+    # write it out back to the exchange json file
     with open(json_path, "w") as file_stream:
         json.dump(out_data, file_stream, indent=4)

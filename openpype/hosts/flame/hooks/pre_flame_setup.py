@@ -53,10 +53,16 @@ class FlamePrelaunch(PreLaunchHook):
         }
 
         data_to_script = {
+            # from settings
+            "host_name": "localhost",
+            "volume_name": "stonefs",
+            "group_name": "staff",
+            "color_policy": "ACES 1.1",
+
+            # from project
             "project_name": project_doc["name"],
             "user_name": user_name,
-            "project_data": project_data,
-            "color_policy": "ACES 1.1"
+            "project_data": project_data
         }
         app_arguments = self._get_launch_arguments(data_to_script)
 
@@ -81,9 +87,11 @@ class FlamePrelaunch(PreLaunchHook):
         )
 
         # Prepare subprocess arguments
-        args = [self.flame_python_exe]
-        args.append(self.wtc_script_path)
-        args.append(temporary_json_filepath)
+        args = [
+            self.flame_python_exe,
+            self.wtc_script_path,
+            temporary_json_filepath
+        ]
         self.log.info("Executing: {}".format(" ".join(args)))
 
         process_kwargs = {
@@ -93,17 +101,16 @@ class FlamePrelaunch(PreLaunchHook):
 
         openpype.api.run_subprocess(args, **process_kwargs)
 
+        # process returned json file to pass launch args
         return_json_data = open(temporary_json_filepath).read()
-
         returned_data = json.loads(return_json_data)
-
         app_args = returned_data.get("app_args")
         self.log.info("____ app_args: `{}`".format(app_args))
 
         if not app_args:
             RuntimeError("App arguments were not solved")
-        else:
-            # Remove the temporary json
-            os.remove(temporary_json_filepath)
+
+        # Remove the temporary json
+        os.remove(temporary_json_filepath)
 
         return app_args
