@@ -6,6 +6,7 @@ import logging
 import re
 import json
 import tempfile
+import distutils
 
 from .execute import run_subprocess
 from .profiles_filtering import filter_profiles
@@ -439,7 +440,7 @@ def oiio_supported():
     """
         Checks if oiiotool is configured for this platform.
 
-        Expects full path to executable.
+        Triggers simple subprocess, handles exception if fails.
 
         'should_decompress' will throw exception if configured,
         but not present or not working.
@@ -447,7 +448,10 @@ def oiio_supported():
             (bool)
     """
     oiio_path = get_oiio_tools_path()
-    if not oiio_path or not os.path.exists(oiio_path):
+    if oiio_path:
+        oiio_path = distutils.spawn.find_executable(oiio_path)
+
+    if not oiio_path:
         log.debug("OIIOTool is not configured or not present at {}".
                   format(oiio_path))
         return False

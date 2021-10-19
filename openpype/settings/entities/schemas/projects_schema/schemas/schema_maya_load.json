@@ -47,8 +47,13 @@
                 },
                 {
                     "type": "color",
-                    "label": "Maya Scene:",
+                    "label": "Maya Ascii:",
                     "key": "mayaAscii"
+                },
+                {
+                    "type": "color",
+                    "label": "Maya Scene:",
+                    "key": "mayaScene"
                 },
                 {
                     "type": "color",

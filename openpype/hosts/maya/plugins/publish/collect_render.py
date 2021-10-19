@@ -174,10 +174,16 @@ class CollectMayaRender(pyblish.api.ContextPlugin):
             assert render_products, "no render products generated"
             exp_files = []
             for product in render_products:
-                for camera in layer_render_products.layer_data.cameras:
-                    exp_files.append(
-                        {product.productName: layer_render_products.get_files(
-                            product, camera)})
+                product_name = product.productName
+                if product.camera and layer_render_products.has_camera_token():
+                    product_name = "{}{}".format(
+                        product.camera,
+                        "_" + product_name if product_name else "")
+                exp_files.append(
+                    {
+                        product_name: layer_render_products.get_files(
+                            product)
+                    })
 
             self.log.info("multipart: {}".format(
                 layer_render_products.multipart))
@@ -199,12 +205,14 @@ class CollectMayaRender(pyblish.api.ContextPlugin):
 
             # replace relative paths with absolute. Render products are
             # returned as list of dictionaries.
+            publish_meta_path = None
             for aov in exp_files:
                 full_paths = []
                 for file in aov[aov.keys()[0]]:
                     full_path = os.path.join(workspace, "renders", file)
                     full_path = full_path.replace("\\", "/")
                     full_paths.append(full_path)
+                    publish_meta_path = os.path.dirname(full_path)
                 aov_dict[aov.keys()[0]] = full_paths
 
             frame_start_render = int(self.get_render_attribute(
@@ -230,6 +238,26 @@ class CollectMayaRender(pyblish.api.ContextPlugin):
                 frame_end_handle = frame_end_render
 
             full_exp_files.append(aov_dict)
+
+            # find common path to store metadata
+            # so if image prefix is branching to many directories
+            # metadata file will be located in top-most common
+            # directory.
+            # TODO: use `os.path.commonpath()` after switch to Python 3
+            common_publish_meta_path = os.path.splitdrive(
+                publish_meta_path)[0]
+            if common_publish_meta_path:
+                common_publish_meta_path += os.path.sep
+            for part in publish_meta_path.split("/"):
+                common_publish_meta_path = os.path.join(
+                    common_publish_meta_path, part)
+                if part == expected_layer_name:
+                    break
+            common_publish_meta_path = common_publish_meta_path.replace(
+                "\\", "/")
+            self.log.info(
+                "Publish meta path: {}".format(common_publish_meta_path))
+
             self.log.info(full_exp_files)
             self.log.info("collecting layer: {}".format(layer_name))
             # Get layer specific settings, might be overrides
@@ -262,6 +290,7 @@ class CollectMayaRender(pyblish.api.ContextPlugin):
                 # which was submitted originally
                 "source": filepath,
                 "expectedFiles": full_exp_files,
+                "publishRenderMetadataFolder": common_publish_meta_path,
                 "resolutionWidth": cmds.getAttr("defaultResolution.width"),
                 "resolutionHeight": cmds.getAttr("defaultResolution.height"),
                 "pixelAspect": cmds.getAttr("defaultResolution.pixelAspect"),
