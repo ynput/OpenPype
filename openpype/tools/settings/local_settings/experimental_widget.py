@@ -28,7 +28,7 @@ class LocalExperimentalToolsWidgets(QtWidgets.QWidget):
 
         experimental_defs = ExperimentalTools()
         checkboxes_by_identifier = {}
-        for tool in experimental_defs.experimental_tools:
+        for tool in experimental_defs.tools:
             checkbox = QtWidgets.QCheckBox(self)
             label_widget = QtWidgets.QLabel(tool.label, self)
             checkbox.setToolTip(tool.tooltip)

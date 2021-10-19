@@ -68,7 +68,7 @@ class ExperimentalTools:
             tool.identifier: tool
             for tool in experimental_tools
         }
-        self.experimental_tools = experimental_tools
+        self.tools = experimental_tools
         self._parent_widget = parent
 
     def refresh_availability(self):
