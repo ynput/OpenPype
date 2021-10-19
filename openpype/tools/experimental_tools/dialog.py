@@ -30,41 +30,59 @@ class ExperimentalDialog(QtWidgets.QDialog):
         icon = QtGui.QIcon(app_icon_path())
         self.setWindowIcon(icon)
 
+        empty_widget = QtWidgets.QWidget(self)
+
         empty_label = QtWidgets.QLabel(
-            "There are no experimental tools available.", self
+            "There are no experimental tools available...", empty_widget
         )
+
+        empty_btns_layout = QtWidgets.QHBoxLayout()
+        ok_btn = QtWidgets.QPushButton("OK", empty_widget)
+
+        empty_btns_layout.setContentsMargins(0, 0, 0, 0)
+        empty_btns_layout.addStretch(1)
+        empty_btns_layout.addWidget(ok_btn, 0)
+
+        empty_layout = QtWidgets.QVBoxLayout(empty_widget)
+        empty_layout.setContentsMargins(0, 0, 0, 0)
+        empty_layout.addWidget(empty_label)
+        empty_layout.addStretch(1)
+        empty_layout.addLayout(empty_btns_layout)
+
         content_widget = QtWidgets.QWidget(self)
 
-        content_layout = QtWidgets.QHBoxLayout(content_widget)
+        content_layout = QtWidgets.QVBoxLayout(content_widget)
         content_layout.setContentsMargins(0, 0, 0, 0)
 
         experimental_tools = ExperimentalTools()
 
-        layout = QtWidgets.QHBoxLayout(self)
-        layout.addWidget(empty_label)
+        layout = QtWidgets.QVBoxLayout(self)
+        layout.addWidget(empty_widget, 1)
         layout.addWidget(content_widget, 1)
 
         refresh_timer = QtCore.QTimer()
         refresh_timer.setInterval(self.refresh_interval)
         refresh_timer.timeout.connect(self._on_refresh_timeout)
 
-        self._empty_label = empty_label
+        ok_btn.clicked.connect(self._on_ok_click)
+
+        self._empty_widget = empty_widget
         self._content_widget = content_widget
         self._content_layout = content_layout
 
         self._experimental_tools = experimental_tools
         self._buttons_by_tool_identifier = {}
 
-        self._is_refreshing = False
-        self._refresh_on_active = True
-        self._window_is_active = False
         self._refresh_timer = refresh_timer
 
-    def refresh(self):
-        if self._is_refreshing:
-            return
-        self._is_refreshing = True
+        # Is dialog first shown
+        self._first_show = True
+        # Trigger refresh when window get's activity
+        self._refresh_on_active = True
+        # Is window active
+        self._window_is_active = False
 
+    def refresh(self):
         self._experimental_tools.refresh_availability()
 
         buttons_to_remove = set(self._buttons_by_tool_identifier.keys())
@@ -100,11 +118,18 @@ class ExperimentalDialog(QtWidgets.QDialog):
             self._content_layout.takeAt(idx)
             button.deleteLater()
 
-        self._empty_label.setVisible(
-            len(self._buttons_by_tool_identifier) == 0
-        )
+        self._set_visibility()
 
-        self._is_refreshing = False
+    def _is_content_visible(self):
+        return len(self._buttons_by_tool_identifier) > 0
+
+    def _set_visibility(self):
+        content_visible = self._is_content_visible()
+        self._content_widget.setVisible(content_visible)
+        self._empty_widget.setVisible(not content_visible)
+
+    def _on_ok_click(self):
+        self.close()
 
     def _on_btn_trigger(self, identifier):
         tool = self._experimental_tools.tools_by_identifier.get(identifier)
@@ -122,6 +147,14 @@ class ExperimentalDialog(QtWidgets.QDialog):
 
         elif not self._refresh_timer.isActive():
             self._refresh_timer.start()
+
+        if self._first_show:
+            self._first_show = False
+            # Resize dialog if there is not content
+            if not self._is_content_visible():
+                size = self.size()
+                size.setWidth(size.width() + size.width() / 3)
+                self.resize(size)
 
     def changeEvent(self, event):
         if event.type() == QtCore.QEvent.ActivationChange:
