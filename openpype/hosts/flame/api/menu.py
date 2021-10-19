@@ -5,7 +5,7 @@ from pprint import pprint, pformat
 from copy import deepcopy
 
 from .lib import rescan_hooks
-from openpype.tools.utils.tools_helper import AvalonToolsHelper
+from openpype.tools.utils.host_tools import HostToolsHelper
 
 
 menu_group_name = 'OpenPype'
@@ -15,6 +15,7 @@ default_flame_export_presets = {
     'Preview': {'PresetVisibility': 3, 'PresetType': 2, 'PresetFile': 'Generate Preview.xml'},
     'Thumbnail': {'PresetVisibility': 3, 'PresetType': 0, 'PresetFile': 'Generate Thumbnail.xml'}
 }
+
 
 class _FlameMenuApp(object):
     def __init__(self, framework):
@@ -49,7 +50,7 @@ class _FlameMenuApp(object):
             }],
             "name": self.menu_group_name
         }
-        self.tools_helper = AvalonToolsHelper()
+        self.tools_helper = HostToolsHelper()
 
     def __getattr__(self, name):
         def method(*args, **kwargs):
@@ -84,10 +85,6 @@ class FlameMenuProjectconnect(_FlameMenuApp):
         return method
 
     def build_menu(self):
-        from avalon.tools import publish
-
-        # todo: load all active projects from db and offer link
-
         if not self.flame:
             return []
 
@@ -98,27 +95,27 @@ class FlameMenuProjectconnect(_FlameMenuApp):
 
         menu['actions'].append({
             "name": "Workfiles ...",
-            "execute": lambda x: self.tools_helper.show_workfiles_tool()
+            "execute": lambda x: self.tools_helper.show_workfiles()
         })
         menu['actions'].append({
             "name": "Create ...",
-            "execute": lambda x: self.tools_helper.show_creator_tool()
+            "execute": lambda x: self.tools_helper.show_creator()
         })
         menu['actions'].append({
             "name": "Publish ...",
-            "execute": lambda x: publish.show()
+            "execute": lambda x: self.tools_helper.show_publish()
         })
         menu['actions'].append({
             "name": "Load ...",
-            "execute": lambda x: self.tools_helper.show_loader_tool()
+            "execute": lambda x: self.tools_helper.show_loader()
         })
         menu['actions'].append({
             "name": "Manage ...",
-            "execute": lambda x: self.tools_helper.show_scene_inventory_tool()
+            "execute": lambda x: self.tools_helper.show_scene_inventory()
         })
         menu['actions'].append({
             "name": "Library ...",
-            "execute": lambda x: self.tools_helper.show_library_loader_tool()
+            "execute": lambda x: self.tools_helper.show_library_loader()
         })
         return menu
 
@@ -156,10 +153,6 @@ class FlameMenuTimeline(_FlameMenuApp):
         return method
 
     def build_menu(self):
-        from avalon.tools import publish
-
-        # todo: load all active projects from db and offer link
-
         if not self.flame:
             return []
 
@@ -170,19 +163,19 @@ class FlameMenuTimeline(_FlameMenuApp):
 
         menu['actions'].append({
             "name": "Create ...",
-            "execute": lambda x: self.tools_helper.show_creator_tool()
+            "execute": lambda x: self.tools_helper.show_creator()
         })
         menu['actions'].append({
             "name": "Publish ...",
-            "execute": lambda x: publish.show()
+            "execute": lambda x: self.tools_helper.show_publish()
         })
         menu['actions'].append({
             "name": "Load ...",
-            "execute": lambda x: self.tools_helper.show_loader_tool()
+            "execute": lambda x: self.tools_helper.show_loader()
         })
         menu['actions'].append({
             "name": "Manage ...",
-            "execute": lambda x: self.tools_helper.show_scene_inventory_tool()
+            "execute": lambda x: self.tools_helper.show_scene_inventory()
         })
 
         return menu
