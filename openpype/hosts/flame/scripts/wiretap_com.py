@@ -2,8 +2,6 @@
 # -*- coding: utf-8 -*-
 
 from __future__ import absolute_import
-import pwd
-import grp
 import os
 import sys
 import subprocess
@@ -12,6 +10,7 @@ import xml.dom.minidom as minidom
 from copy import deepcopy
 import datetime
 
+# Todo: this has to be replaced with somehting more dynamic
 flame_python_path = "/opt/Autodesk/flame_2021/python"
 flame_exe_path = "/opt/Autodesk/flame_2021/bin/flame.app/Contents/MacOS/startApp"
 
@@ -28,7 +27,12 @@ from libwiretapPythonClientAPI import (
 
 class WireTapCom(object):
     """
-    Comunicator class wrapper for talking to WireTap
+    Comunicator class wrapper for talking to WireTap db.
+
+    This way we are able to set new project with settings and
+    correct colorspace policy. Also we are able to create new user
+    or get actuall user with similar name (users are usually cloning
+    their profiles and adding date stamp into suffix).
     """
 
     def __init__(self, host_name=None, volume_name=None, group_name=None):
@@ -49,11 +53,21 @@ class WireTapCom(object):
         print("WireTap closed...")
 
     def get_launch_args(
-        self, project_name, project_data, user_name, *args, **kwargs):
-        
+            self, project_name, project_data, user_name, *args, **kwargs):
+        """Forming launch arguments for OpenPype launcher.
+
+        Args:
+            project_name (str): name of project
+            project_data (dict): Flame compatible project data
+            user_name (str): name of user
+
+        Returns:
+            list: arguments
+        """
+
         workspace_name = kwargs.get("workspace_name")
         color_policy = kwargs.get("color_policy")
-        
+
         self._project_prep(project_name)
         self._set_project_settings(project_name, project_data)
         self._set_project_colorspace(project_name, color_policy)
@@ -114,12 +128,21 @@ class WireTapCom(object):
             "Workspace `{}` is successfully created".format(workspace_name))
 
     def _project_prep(self, project_name):
+        """Preparing a project
 
+        In case it doesn not exists it will create one
+
+        Args:
+            project_name (str): project name
+
+        Raises:
+            AttributeError: unable to create project
+        """
+        # test if projeft exists
         project_exists = self._child_is_in_parent_path(
             "/projects", project_name, "PROJECT")
 
         if not project_exists:
-
             volumes = self._get_all_volumes()
 
             if len(volumes) == 0:
@@ -134,6 +157,7 @@ class WireTapCom(object):
                         self.volume_name, volumes)
                 )
 
+            # form cmd arguments
             project_create_cmd = [
                 os.path.join(
                     "/opt/Autodesk/",
@@ -164,7 +188,14 @@ class WireTapCom(object):
                 "A new project '{}' is created.".format(project_name))
 
     def _get_all_volumes(self):
+        """Request all available volumens from WireTap
 
+        Returns:
+            list: all available volumes in server
+
+        Rises:
+            AttributeError: unable to get any volumes childs from server
+        """
         root = WireTapNodeHandle(self._server, "/volumes")
         children_num = WireTapInt(0)
 
@@ -240,7 +271,14 @@ class WireTapCom(object):
             return new_user_name
 
     def _get_usernames(self):
+        """Requesting all available users from WireTap
 
+        Returns:
+            list: all available user names
+
+        Raises:
+            AttributeError: there are no users in server
+        """
         root = WireTapNodeHandle(self._server, "/users")
         children_num = WireTapInt(0)
 
@@ -365,12 +403,19 @@ class WireTapCom(object):
 
 
 if __name__ == "__main__":
+    # get json exchange data
     json_path = sys.argv[-1]
     json_data = open(json_path).read()
     in_data = json.loads(json_data)
     out_data = deepcopy(in_data)
 
-    wiretap_handler = WireTapCom()
+    # get main server attributes
+    host_name = in_data.pop("host_name")
+    volume_name = in_data.pop("volume_name")
+    group_name = in_data.pop("group_name")
+
+    # initialize class
+    wiretap_handler = WireTapCom(host_name, volume_name, group_name)
 
     try:
         app_args = wiretap_handler.get_launch_args(
