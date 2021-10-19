@@ -42,7 +42,7 @@ for path in [
 
 from Qt import QtWidgets, QtCore
 
-from openpype.tools.new_publisher.window import PublisherWindow
+from openpype.tools.publisher.window import PublisherWindow
 
 
 def main():
