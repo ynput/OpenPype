@@ -174,5 +174,16 @@
                 }
             ]
         }
+    },
+    "maya": {
+        "colorManagmentPreference": {
+            "configFilePath": {
+                "windows": [],
+                "darwin": [],
+                "linux": []
+            },
+            "renderSpace": "scene-linear Rec 709/sRGB",
+            "viewTransform": "sRGB gamma"
+        }
     }
 }
