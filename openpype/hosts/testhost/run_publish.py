@@ -1,6 +1,6 @@
 import os
 import sys
-openpype_dir = ""
+
 mongo_url = ""
 project_name = ""
 asset_name = ""
@@ -9,9 +9,6 @@ ftrack_url = ""
 ftrack_username = ""
 ftrack_api_key = ""
 
-host_name = "testhost"
-current_file = os.path.abspath(__file__)
-
 
 def multi_dirname(path, times=1):
     for _ in range(times):
@@ -19,8 +16,12 @@ def multi_dirname(path, times=1):
     return path
 
 
+host_name = "testhost"
+current_file = os.path.abspath(__file__)
+openpype_dir = multi_dirname(current_file, 4)
+
 os.environ["OPENPYPE_MONGO"] = mongo_url
-os.environ["OPENPYPE_ROOT"] = multi_dirname(current_file, 4)
+os.environ["OPENPYPE_ROOT"] = openpype_dir
 os.environ["AVALON_MONGO"] = mongo_url
 os.environ["AVALON_PROJECT"] = project_name
 os.environ["AVALON_ASSET"] = asset_name
