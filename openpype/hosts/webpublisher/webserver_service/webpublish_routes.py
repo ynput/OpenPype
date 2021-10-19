@@ -175,6 +175,9 @@ class TaskNode(Node):
 class WebpublisherBatchPublishEndpoint(_RestApiEndpoint):
     """Triggers headless publishing of batch."""
     async def post(self, request) -> Response:
+        # for postprocessing in host, currently only PS
+        host_map = {"photoshop": [".psd", ".psb"]}
+
         output = {}
         log.info("WebpublisherBatchPublishEndpoint called")
         content = await request.json()
@@ -182,22 +185,34 @@ class WebpublisherBatchPublishEndpoint(_RestApiEndpoint):
         batch_path = os.path.join(self.resource.upload_dir,
                                   content["batch"])
 
+        add_args = {
+            "host": "webpublisher",
+            "project": content["project_name"],
+            "user": content["user"]
+        }
+
+        command = "remotepublish"
+
+        if content.get("studio_processing"):
+            log.info("Post processing called")
+            command = "remotepublishfromapp"
+            for host, extensions in host_map.items():
+                for ext in extensions:
+                    for file_name in content.get("files", []):
+                        if ext in file_name:
+                            add_args["host"] = host
+                            break
+
         openpype_app = self.resource.executable
         args = [
             openpype_app,
-            'remotepublish',
+            command,
             batch_path
         ]
 
         if not openpype_app or not os.path.exists(openpype_app):
             msg = "Non existent OpenPype executable {}".format(openpype_app)
             raise RuntimeError(msg)
-
-        add_args = {
-            "host": "webpublisher",
-            "project": content["project_name"],
-            "user": content["user"]
-        }
 
         for key, value in add_args.items():
             args.append("--{}".format(key))
