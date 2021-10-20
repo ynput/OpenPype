@@ -28,7 +28,7 @@
         "bg": "#2C313A",
         "bg-inputs": "#21252B",
         "bg-buttons": "#434a56",
-        "bg-button-hover": "hsla(220, 14%, 70%, .3)",
+        "bg-button-hover": "rgba(168, 175, 189, 0.3)",
         "bg-inputs-disabled": "#2C313A",
         "bg-buttons-disabled": "#434a56",
 
@@ -38,15 +38,15 @@
 
         "bg-view": "#21252B",
         "bg-view-header": "#373D48",
-        "bg-view-hover": "hsla(220, 14%, 70%, .3)",
+        "bg-view-hover": "rgba(168, 175, 189, .3)",
         "bg-view-alternate": "rgb(36, 42, 50)",
         "bg-view-disabled": "#434a56",
         "bg-view-alternate-disabled": "#2C313A",
-        "bg-view-selection": "hsla(200, 60%, 60%, .4)",
-        "bg-view-selection-hover": "hsla(200, 60%, 60%, .8)",
+        "bg-view-selection": "rgba(92, 173, 214, .4)",
+        "bg-view-selection-hover": "rgba(92, 173, 214, .8)",
 
         "border": "#373D48",
-        "border-hover": "hsla(220, 14%, 70%, .3)",
+        "border-hover": "rgba(168, 175, 189, .3)",
         "border-focus": "hsl(200, 60%, 60%)"
     }
 }
