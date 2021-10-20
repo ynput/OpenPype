@@ -1,3 +1,4 @@
+import os
 from openpype.settings import get_local_settings
 
 # Constant key under which local settings are stored
@@ -60,6 +61,9 @@ class ExperimentalTools:
                 "Combined creation and publishing into one tool."
             )
         ]
+        if not host_name:
+            host_name = os.environ.get("AVALON_APP")
+
         if filter_hosts is None:
             filter_hosts = host_name is not None
 
