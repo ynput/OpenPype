@@ -29,6 +29,7 @@ class ExperimentalDialog(QtWidgets.QDialog):
         self.setWindowTitle("OpenPype Experimental tools")
         icon = QtGui.QIcon(app_icon_path())
         self.setWindowIcon(icon)
+        self.setStyleSheet(load_stylesheet())
 
         empty_widget = QtWidgets.QWidget(self)
 
