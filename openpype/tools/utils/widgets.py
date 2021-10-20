@@ -310,7 +310,6 @@ class OptionalMenu(QtWidgets.QMenu):
     actions that were instances of `QtWidgets.QWidgetAction`.
 
     """
-
     def mouseReleaseEvent(self, event):
         """Emit option clicked signal if mouse released on it"""
         active = self.actionAt(event.pos())
@@ -349,6 +348,7 @@ class OptionalAction(QtWidgets.QWidgetAction):
         self.use_option = use_option
         self.option_tip = ""
         self.optioned = False
+        self.widget = None
 
     def createWidget(self, parent):
         widget = OptionalActionWidget(self.label, parent)
@@ -374,20 +374,10 @@ class OptionalAction(QtWidgets.QWidgetAction):
         self.optioned = True
 
     def set_highlight(self, state, global_pos=None):
-        body = self.widget.body
-        option = self.widget.option
-
-        role = QtGui.QPalette.Highlight if state else QtGui.QPalette.Window
-        body.setBackgroundRole(role)
-        body.setAutoFillBackground(state)
-
-        if not self.use_option:
-            return
-
-        state = option.is_hovered(global_pos)
-        role = QtGui.QPalette.Highlight if state else QtGui.QPalette.Window
-        option.setBackgroundRole(role)
-        option.setAutoFillBackground(state)
+        option_state = False
+        if self.use_option:
+            option_state = self.widget.option.is_hovered(global_pos)
+        self.widget.set_hover_properties(state, option_state)
 
 
 class OptionalActionWidget(QtWidgets.QWidget):
@@ -397,11 +387,15 @@ class OptionalActionWidget(QtWidgets.QWidget):
         super(OptionalActionWidget, self).__init__(parent)
 
         body_widget = QtWidgets.QWidget(self)
-        body_widget.setStyleSheet("background: transparent;")
+        body_widget.setObjectName("OptionalActionBody")
 
         icon = QtWidgets.QLabel(body_widget)
         label = QtWidgets.QLabel(label, body_widget)
+        # (NOTE) For removing ugly QLable shadow FX when highlighted in Nuke.
+        #   See https://stackoverflow.com/q/52838690/4145300
+        label.setStyle(QtWidgets.QStyleFactory.create("Plastique"))
         option = OptionBox(body_widget)
+        option.setObjectName("OptionalActionOption")
 
         icon.setFixedSize(24, 16)
         option.setFixedSize(30, 30)
@@ -429,9 +423,22 @@ class OptionalActionWidget(QtWidgets.QWidget):
         self.option = option
         self.body = body_widget
 
-        # (NOTE) For removing ugly QLable shadow FX when highlighted in Nuke.
-        #   See https://stackoverflow.com/q/52838690/4145300
-        label.setStyle(QtWidgets.QStyleFactory.create("Plastique"))
+    def set_hover_properties(self, hovered, option_hovered):
+        body_state = ""
+        option_state = ""
+        if hovered:
+            body_state = "hover"
+
+        if option_hovered:
+            option_state = "hover"
+
+        if self.body.property("state") != body_state:
+            self.body.setProperty("state", body_state)
+            self.body.style().polish(self.body)
+
+        if self.option.property("state") != option_state:
+            self.option.setProperty("state", option_state)
+            self.option.style().polish(self.option)
 
     def setIcon(self, icon):
         pixmap = icon.pixmap(16, 16)
@@ -451,8 +458,6 @@ class OptionBox(QtWidgets.QLabel):
         icon = qtawesome.icon("fa.sticky-note-o", color="#c6c6c6")
         pixmap = icon.pixmap(18, 18)
         self.setPixmap(pixmap)
-
-        self.setStyleSheet("background: transparent;")
 
     def is_hovered(self, global_pos):
         if global_pos is None:

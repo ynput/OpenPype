@@ -634,3 +634,11 @@ QScrollBar::add-page:vertical, QScrollBar::sub-page:vertical {
     padding: 5px 1px;
     border: 0px;
 }
+
+#OptionalActionBody, #OptionalActionOption {
+    background: transparent;
+}
+
+#OptionalActionBody[state="hover"], #OptionalActionOption[state="hover"] {
+    background: {color:bg-view-hover};
+}
