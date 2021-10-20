@@ -51,8 +51,16 @@ class ExperimentalTools:
     To add/remove experimental tool just add/remove tool to
     `experimental_tools` variable in __init__ function.
 
+    Args:
+        parent (QtWidgets.QWidget): Parent widget for tools.
+        host_name (str): Name of host in which context we're now. Environment
+            value 'AVALON_APP' is used when not passed.
+        filter_hosts (bool): Should filter tools. By default is set to 'True'
+            when 'host_name' is passed. Is always set to 'False' if 'host_name'
+            is not defined.
     """
     def __init__(self, parent=None, host_name=None, filter_hosts=None):
+        # Definition of experimental tools
         experimental_tools = [
             ExperimentalTool(
                 "publisher",
@@ -61,15 +69,18 @@ class ExperimentalTools:
                 "Combined creation and publishing into one tool."
             )
         ]
+        # Try to get host name from env variable `AVALON_APP`
         if not host_name:
             host_name = os.environ.get("AVALON_APP")
 
+        # Decide if filtering by host name should happen
         if filter_hosts is None:
             filter_hosts = host_name is not None
 
         if filter_hosts and not host_name:
             filter_hosts = False
 
+        # Filter tools by host name
         if filter_hosts:
             experimental_tools = [
                 tool
