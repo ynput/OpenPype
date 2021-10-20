@@ -351,6 +351,11 @@ class MayaSubmitDeadline(pyblish.api.InstancePlugin):
                             f.replace(orig_scene, new_scene)
                         )
                     instance.data["expectedFiles"] = [new_exp]
+
+                if instance.data.get("publishRenderMetadataFolder"):
+                    instance.data["publishRenderMetadataFolder"] = \
+                        instance.data["publishRenderMetadataFolder"].replace(
+                            orig_scene, new_scene)
                 self.log.info("Scene name was switched {} -> {}".format(
                     orig_scene, new_scene
                 ))

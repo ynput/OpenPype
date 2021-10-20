@@ -11,7 +11,7 @@ import pyblish.api
 class CollectDeadlineServerFromInstance(pyblish.api.InstancePlugin):
     """Collect Deadline Webservice URL from instance."""
 
-    order = pyblish.api.CollectorOrder
+    order = pyblish.api.CollectorOrder + 0.02
     label = "Deadline Webservice from the Instance"
     families = ["rendering"]
 
@@ -46,24 +46,25 @@ class CollectDeadlineServerFromInstance(pyblish.api.InstancePlugin):
             ["deadline"]
         )
 
-        try:
-            default_servers = deadline_settings["deadline_urls"]
-            project_servers = (
-                render_instance.context.data
-                ["project_settings"]
-                ["deadline"]
-                ["deadline_servers"]
-            )
-            deadline_servers = {
-                k: default_servers[k]
-                for k in project_servers
-                if k in default_servers
-            }
+        default_server = render_instance.context.data["defaultDeadline"]
+        instance_server = render_instance.data.get("deadlineServers")
+        if not instance_server:
+            return default_server
 
-        except AttributeError:
-            # Handle situation were we had only one url for deadline.
-            return render_instance.context.data["defaultDeadline"]
-
+        default_servers = deadline_settings["deadline_urls"]
+        project_servers = (
+            render_instance.context.data
+            ["project_settings"]
+            ["deadline"]
+            ["deadline_servers"]
+        )
+        deadline_servers = {
+            k: default_servers[k]
+            for k in project_servers
+            if k in default_servers
+        }
+        # This is Maya specific and may not reflect real selection of deadline
+        #   url as dictionary keys in Python 2 are not ordered
         return deadline_servers[
             list(deadline_servers.keys())[
                 int(render_instance.data.get("deadlineServers"))

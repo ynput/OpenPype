@@ -1,4 +1,5 @@
 {
+    "stop_timer_on_application_exit": false,
     "publish": {
         "ExtractSequence": {
             "review_bg": [

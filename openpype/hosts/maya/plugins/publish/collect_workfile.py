@@ -4,7 +4,7 @@ import os
 from maya import cmds
 
 
-class CollectMayaScene(pyblish.api.ContextPlugin):
+class CollectWorkfile(pyblish.api.ContextPlugin):
     """Inject the current working file into context"""
 
     order = pyblish.api.CollectorOrder - 0.01

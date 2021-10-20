@@ -111,7 +111,8 @@ class BlendRigLoader(plugin.AssetLoader):
 
                 if action is not None:
                     local_obj.animation_data.action = action
-                elif local_obj.animation_data.action is not None:
+                elif (local_obj.animation_data and
+                      local_obj.animation_data.action is not None):
                     plugin.prepare_data(
                         local_obj.animation_data.action, group_name)
 

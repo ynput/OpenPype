@@ -1,3 +1,5 @@
+import json
+
 from aiohttp.web_response import Response
 from openpype.api import Logger
 
@@ -28,6 +30,11 @@ class TimersManagerModuleRestApi:
             self.prefix + "/stop_timer",
             self.stop_timer
         )
+        self.server_manager.add_route(
+            "GET",
+            self.prefix + "/get_task_time",
+            self.get_task_time
+        )
 
     async def start_timer(self, request):
         data = await request.json()
@@ -48,3 +55,20 @@ class TimersManagerModuleRestApi:
     async def stop_timer(self, request):
         self.module.stop_timers()
         return Response(status=200)
+
+    async def get_task_time(self, request):
+        data = await request.json()
+        try:
+            project_name = data['project_name']
+            asset_name = data['asset_name']
+            task_name = data['task_name']
+        except KeyError:
+            message = (
+                "Payload must contain fields 'project_name, 'asset_name',"
+                " 'task_name'"
+            )
+            log.warning(message)
+            return Response(text=message, status=404)
+
+        time = self.module.get_task_time(project_name, asset_name, task_name)
+        return Response(text=json.dumps(time))

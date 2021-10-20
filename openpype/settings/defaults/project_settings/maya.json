@@ -315,6 +315,21 @@
             "optional": true,
             "active": true
         },
+        "ValidateRigContents": {
+            "enabled": false,
+            "optional": true,
+            "active": true
+        },
+        "ValidateRigJointsHidden": {
+            "enabled": false,
+            "optional": true,
+            "active": true
+        },
+        "ValidateRigControllers": {
+            "enabled": false,
+            "optional": true,
+            "active": true
+        },
         "ValidateCameraAttributes": {
             "enabled": false,
             "optional": true,
@@ -484,6 +499,12 @@
                 255
             ],
             "mayaAscii": [
+                67,
+                174,
+                255,
+                255
+            ],
+            "mayaScene": [
                 67,
                 174,
                 255,

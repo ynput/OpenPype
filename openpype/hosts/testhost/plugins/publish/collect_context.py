@@ -1,5 +1,4 @@
 import pyblish.api
-from avalon import io
 
 from openpype.pipeline import (
     OpenPypePyblishPluginMixin,
