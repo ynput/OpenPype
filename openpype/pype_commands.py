@@ -164,9 +164,15 @@ class PypeCommands:
         asset, task_name, _task_type = get_batch_asset_task_info(
             batch_data["context"])
 
+        # processing from app expects JUST ONE task in batch and 1 workfile
+        task_dir_name = batch_data["tasks"][0]
+        task_data = parse_json(os.path.join(batch_dir, task_dir_name,
+                                            "manifest.json"))
+
         workfile_path = os.path.join(batch_dir,
-                                     batch_data["task"],
-                                     batch_data["files"][0])
+                                     task_dir_name,
+                                     task_data["files"][0])
+
         print("workfile_path {}".format(workfile_path))
 
         _, batch_id = os.path.split(batch_dir)
