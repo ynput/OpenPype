@@ -64,10 +64,16 @@ class ExperimentalTools:
                 if tool.is_available_for_host(host_name)
             ]
 
-        self.tools_by_identifier = {
-            tool.identifier: tool
-            for tool in experimental_tools
-        }
+        # Store tools by identifier
+        tools_by_identifier = {}
+        for tool in experimental_tools:
+            if tool.identifier in tools_by_identifier:
+                raise KeyError((
+                    "Duplicated experimental tool identifier \"{}\""
+                ).format(tool.identifier))
+            tools_by_identifier[tool.identifier] = tool
+
+        self.tools_by_identifier = tools_by_identifier
         self.tools = experimental_tools
         self._parent_widget = parent
 
