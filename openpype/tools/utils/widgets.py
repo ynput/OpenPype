@@ -35,27 +35,18 @@ class AssetWidget(QtWidgets.QWidget):
 
         self.dbcon = dbcon
 
-        self.setContentsMargins(0, 0, 0, 0)
-
-        layout = QtWidgets.QVBoxLayout(self)
-        layout.setContentsMargins(0, 0, 0, 0)
-        layout.setSpacing(4)
-
         # Tree View
         model = AssetModel(dbcon=self.dbcon, parent=self)
         proxy = RecursiveSortFilterProxyModel()
         proxy.setSourceModel(model)
         proxy.setFilterCaseSensitivity(QtCore.Qt.CaseInsensitive)
 
-        view = AssetsView()
+        view = AssetsView(self)
         view.setModel(proxy)
         if multiselection:
             asset_delegate = AssetDelegate()
             view.setSelectionMode(view.ExtendedSelection)
             view.setItemDelegate(asset_delegate)
-
-        # Header
-        header = QtWidgets.QHBoxLayout()
 
         icon = qtawesome.icon("fa.arrow-down", color=style.colors.light)
         set_current_asset_btn = QtWidgets.QPushButton(icon, "")
@@ -64,22 +55,28 @@ class AssetWidget(QtWidgets.QWidget):
         set_current_asset_btn.setVisible(False)
 
         icon = qtawesome.icon("fa.refresh", color=style.colors.light)
-        refresh = QtWidgets.QPushButton(icon, "")
+        refresh = QtWidgets.QPushButton(icon, "", parent=self)
         refresh.setToolTip("Refresh items")
 
-        filter = QtWidgets.QLineEdit()
-        filter.textChanged.connect(proxy.setFilterFixedString)
-        filter.setPlaceholderText("Filter assets..")
+        filter_input = QtWidgets.QLineEdit(self)
+        filter_input.setPlaceholderText("Filter assets..")
 
-        header.addWidget(filter)
-        header.addWidget(set_current_asset_btn)
-        header.addWidget(refresh)
+        # Header
+        header_layout = QtWidgets.QHBoxLayout()
+        header_layout.addWidget(filter_input)
+        header_layout.addWidget(set_current_asset_btn)
+        header_layout.addWidget(refresh)
 
         # Layout
-        layout.addLayout(header)
+        layout = QtWidgets.QVBoxLayout(self)
+        layout.setContentsMargins(0, 0, 0, 0)
+        layout.setSpacing(4)
+        layout.addLayout(header_layout)
         layout.addWidget(view)
 
         # Signals/Slots
+        filter_input.textChanged.connect(proxy.setFilterFixedString)
+
         selection = view.selectionModel()
         selection.selectionChanged.connect(self.selection_changed)
         selection.currentChanged.connect(self.current_changed)
@@ -399,30 +396,30 @@ class OptionalActionWidget(QtWidgets.QWidget):
     def __init__(self, label, parent=None):
         super(OptionalActionWidget, self).__init__(parent)
 
-        body = QtWidgets.QWidget()
-        body.setStyleSheet("background: transparent;")
+        body_widget = QtWidgets.QWidget(self)
+        body_widget.setStyleSheet("background: transparent;")
 
-        icon = QtWidgets.QLabel()
-        label = QtWidgets.QLabel(label)
-        option = OptionBox(body)
+        icon = QtWidgets.QLabel(body_widget)
+        label = QtWidgets.QLabel(label, body_widget)
+        option = OptionBox(body_widget)
 
         icon.setFixedSize(24, 16)
         option.setFixedSize(30, 30)
 
-        layout = QtWidgets.QHBoxLayout(body)
-        layout.setContentsMargins(0, 0, 0, 0)
-        layout.setSpacing(2)
-        layout.addWidget(icon)
-        layout.addWidget(label)
-        layout.addSpacing(6)
+        body_layout = QtWidgets.QHBoxLayout(body_widget)
+        body_layout.setContentsMargins(0, 0, 0, 0)
+        body_layout.setSpacing(2)
+        body_layout.addWidget(icon)
+        body_layout.addWidget(label)
+        body_layout.addSpacing(6)
 
         layout = QtWidgets.QHBoxLayout(self)
         layout.setContentsMargins(6, 1, 2, 1)
         layout.setSpacing(0)
-        layout.addWidget(body)
+        layout.addWidget(body_widget)
         layout.addWidget(option)
 
-        body.setMouseTracking(True)
+        body_widget.setMouseTracking(True)
         label.setMouseTracking(True)
         option.setMouseTracking(True)
         self.setMouseTracking(True)
@@ -431,7 +428,7 @@ class OptionalActionWidget(QtWidgets.QWidget):
         self.icon = icon
         self.label = label
         self.option = option
-        self.body = body
+        self.body = body_widget
 
         # (NOTE) For removing ugly QLable shadow FX when highlighted in Nuke.
         #   See https://stackoverflow.com/q/52838690/4145300
@@ -476,20 +473,20 @@ class OptionDialog(QtWidgets.QDialog):
     def create(self, options):
         parser = qargparse.QArgumentParser(arguments=options)
 
-        decision = QtWidgets.QWidget()
-        accept = QtWidgets.QPushButton("Accept")
-        cancel = QtWidgets.QPushButton("Cancel")
+        decision_widget = QtWidgets.QWidget(self)
+        accept_btn = QtWidgets.QPushButton("Accept", decision_widget)
+        cancel_btn = QtWidgets.QPushButton("Cancel", decision_widget)
 
-        layout = QtWidgets.QHBoxLayout(decision)
-        layout.addWidget(accept)
-        layout.addWidget(cancel)
+        decision_layout = QtWidgets.QHBoxLayout(decision_widget)
+        decision_layout.addWidget(accept_btn)
+        decision_layout.addWidget(cancel_btn)
 
         layout = QtWidgets.QVBoxLayout(self)
         layout.addWidget(parser)
-        layout.addWidget(decision)
+        layout.addWidget(decision_widget)
 
-        accept.clicked.connect(self.accept)
-        cancel.clicked.connect(self.reject)
+        accept_btn.clicked.connect(self.accept)
+        cancel_btn.clicked.connect(self.reject)
         parser.changed.connect(self.on_changed)
 
     def on_changed(self, argument):
