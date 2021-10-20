@@ -12,6 +12,10 @@
             "key": "defaults",
             "children": [
                 {
+                    "type": "label",
+                    "label": "The list of existing default placeholders for the construction of paths:<br> {root[`root_name`]}, {project[name]}, {project[short]}, {hierarchy}, {asset}, {task[name]}, {task[type]}, {task[code]}, {family}, {subset}, {output}, {ext}, {thumbnail_root}, {_id}, {thumbnail_type} "
+                },
+                {
                     "type": "number",
                     "key": "version_padding",
                     "label": "Version Padding",

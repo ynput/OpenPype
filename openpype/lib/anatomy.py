@@ -989,6 +989,10 @@ class Templates:
         invalid_required = []
         missing_required = []
         replace_keys = []
+
+        if "{task[name]}" in orig_template and not isinstance(data["task"], dict):
+            data['task']= {'name': data.get("task")}
+
         for group in self.key_pattern.findall(template):
             orig_key = group[1:-1]
             key = str(orig_key)
@@ -1074,6 +1078,10 @@ class Templates:
         output = collections.defaultdict(dict)
         for key, orig_value in templates.items():
             if isinstance(orig_value, StringType):
+                # Replace {task} by '{task[name]}' for backward compatibility
+                if '{task}' in orig_value:
+                    orig_value = orig_value.replace('{task}', '{task[name]}')
+
                 output[key] = self._format(orig_value, data)
                 continue
 

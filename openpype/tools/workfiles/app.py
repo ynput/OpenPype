@@ -65,16 +65,33 @@ class NameWindow(QtWidgets.QDialog):
             {"type": "project"},
             {
                 "name": True,
-                "data.code": True
+                "data.code": True,
+                "config.tasks": True,
             }
         )
+        asset_doc = io.find_one({
+            "type": "asset",
+            "name": asset_name
+        })
+
+        task_type = asset_doc['data']['tasks'].get(session["AVALON_TASK"], {}).get('type')
+
+        if task_type:
+            task_short = project_doc['config']['tasks'][task_type]['short_name']
+        else:
+            task_short = None
+
         self.data = {
             "project": {
                 "name": project_doc["name"],
                 "code": project_doc["data"].get("code")
             },
             "asset": asset_name,
-            "task": session["AVALON_TASK"],
+            "task": {
+                "name": session["AVALON_TASK"],
+                "type": task_type,
+                "short": task_short,
+            },
             "version": 1,
             "user": getpass.getuser(),
             "comment": "",

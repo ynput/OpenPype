@@ -84,7 +84,7 @@ def override_toolbox_ui():
         log.warning("Could not import Loader tool")
 
     try:
-        from avalon.maya.pipeline import launch_workfiles_app
+        from openpype.tools import workfiles as launch_workfiles_app
     except Exception:
         log.warning("Could not import Workfiles tool")
 
@@ -142,7 +142,12 @@ def override_toolbox_ui():
                 annotation="Work Files",
                 label="Work Files",
                 image=os.path.join(icons, "workfiles.png"),
-                command=lambda: launch_workfiles_app(),
+                command=lambda: launch_workfiles_app.show(
+                    os.path.join(
+                        mc.workspace(query=True, rootDirectory=True),
+                        mc.workspace(fileRuleEntry="scene")
+                    )
+                ),
                 bgc=background_color,
                 width=icon_size,
                 height=icon_size,

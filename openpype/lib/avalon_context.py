@@ -7,6 +7,7 @@ import platform
 import logging
 import collections
 import functools
+import getpass
 
 from openpype.settings import get_project_settings
 from .anatomy import Anatomy
@@ -346,7 +347,7 @@ def get_latest_version(asset_name, subset_name, dbcon=None, project_name=None):
 
 
 def get_workfile_template_key_from_context(
-    asset_name, task_name, host_name, project_name=None,
+    task_info, host_name, project_name=None,
     dbcon=None, project_settings=None
 ):
     """Helper function to get template key for workfile template.
@@ -358,9 +359,8 @@ def get_workfile_template_key_from_context(
     'project_name' arguments.
 
     Args:
-        asset_name(str): Name of asset document.
-        task_name(str): Task name for which is template key retrieved.
-            Must be available on asset document under `data.tasks`.
+        task_info(dict): Information about the task is used to retrieve the
+            `type` of the task.
         host_name(str): Name of host implementation for which is workfile
             used.
         project_name(str): Project name where asset and task is. Not required
@@ -387,17 +387,6 @@ def get_workfile_template_key_from_context(
     elif not project_name:
         project_name = dbcon.Session["AVALON_PROJECT"]
 
-    asset_doc = dbcon.find_one(
-        {
-            "type": "asset",
-            "name": asset_name
-        },
-        {
-            "data.tasks": 1
-        }
-    )
-    asset_tasks = asset_doc.get("data", {}).get("tasks") or {}
-    task_info = asset_tasks.get(task_name) or {}
     task_type = task_info.get("type")
 
     return get_workfile_template_key(
@@ -479,15 +468,27 @@ def get_workdir_data(project_doc, asset_doc, task_name, host_name):
     """
     hierarchy = "/".join(asset_doc["data"]["parents"])
 
+    task_type = asset_doc['data']['tasks'].get(task_name, {}).get('type')
+
+    if task_type:
+        task_code = project_doc['config']['tasks'][task_type]['short_name']
+    else:
+        task_code = None
+
     data = {
         "project": {
             "name": project_doc["name"],
             "code": project_doc["data"].get("code")
         },
-        "task": task_name,
+        "task": {
+            "name": task_name,
+            "type": task_type,
+            "short": task_code,
+        },
         "asset": asset_doc["name"],
         "app": host_name,
-        "hierarchy": hierarchy
+        "user": getpass.getuser(),
+        "hierarchy": hierarchy,
     }
     return data
 
@@ -530,7 +531,6 @@ def get_workdir_with_workdir_data(
 
     if not template_key:
         template_key = get_workfile_template_key_from_context(
-            workdir_data["asset"],
             workdir_data["task"],
             workdir_data["app"],
             project_name=workdir_data["project"]["name"],
