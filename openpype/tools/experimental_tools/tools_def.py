@@ -15,7 +15,9 @@ class ExperimentalTool:
         hosts_filter (list): List of host names for which is tool available.
             Some tools may not be available in all hosts.
     """
-    def __init__(self, identifier, label, callback, tooltip, hosts_filter=None):
+    def __init__(
+        self, identifier, label, callback, tooltip, hosts_filter=None
+    ):
         self.identifier = identifier
         self.label = label
         self.callback = callback
