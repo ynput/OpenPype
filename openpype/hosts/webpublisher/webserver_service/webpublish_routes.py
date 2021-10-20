@@ -11,6 +11,7 @@ from avalon.api import AvalonMongoDB
 
 from openpype.lib import OpenPypeMongoConnection
 from openpype_modules.avalon_apps.rest_api import _RestApiEndpoint
+from openpype.lib.plugin_tools import parse_json
 
 from openpype.lib import PypeLogger
 
@@ -195,13 +196,29 @@ class WebpublisherBatchPublishEndpoint(_RestApiEndpoint):
 
         if content.get("studio_processing"):
             log.info("Post processing called")
+
+            batch_data = parse_json(os.path.join(batch_path, "manifest.json"))
+            if not batch_data:
+                raise ValueError(
+                    "Cannot parse batch meta in {} folder".format(batch_path))
+            task_dir_name = batch_data["tasks"][0]
+            task_data = parse_json(os.path.join(batch_path, task_dir_name,
+                                                "manifest.json"))
+            if not task_data:
+                raise ValueError(
+                    "Cannot parse batch meta in {} folder".format(task_data))
+
             command = "remotepublishfromapp"
             for host, extensions in host_map.items():
                 for ext in extensions:
-                    for file_name in content.get("files", []):
+                    for file_name in task_data["files"]:
                         if ext in file_name:
                             add_args["host"] = host
                             break
+
+            if not add_args.get("host"):
+                raise ValueError(
+                    "Couldn't discern host from {}".format(task_data["files"]))
 
         openpype_app = self.resource.executable
         args = [
