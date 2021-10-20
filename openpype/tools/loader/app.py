@@ -46,7 +46,6 @@ class LoaderWindow(QtWidgets.QDialog):
         if project_name:
             title += " - {}".format(project_name)
         self.setWindowTitle(title)
-        self.setStyleSheet(load_stylesheet())
 
         # Groups config
         self.groups_config = lib.GroupsConfig(io)
@@ -190,6 +189,8 @@ class LoaderWindow(QtWidgets.QDialog):
         else:
             main_splitter.setSizes([250, 850, 200])
             self.resize(1300, 700)
+
+        self.setStyleSheet(load_stylesheet())
 
     def resizeEvent(self, event):
         super(LoaderWindow, self).resizeEvent(event)
