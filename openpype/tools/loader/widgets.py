@@ -1120,6 +1120,7 @@ class RepresentationWidget(QtWidgets.QWidget):
         label = QtWidgets.QLabel("Representations", self)
 
         tree_view = DeselectableTreeView(parent=self)
+        tree_view.setObjectName("RepresentationView")
         tree_view.setModel(proxy_model)
         tree_view.setAllColumnsShowFocus(True)
         tree_view.setContextMenuPolicy(QtCore.Qt.CustomContextMenu)
@@ -1129,12 +1130,6 @@ class RepresentationWidget(QtWidgets.QWidget):
         tree_view.sortByColumn(1, QtCore.Qt.AscendingOrder)
         tree_view.setAlternatingRowColors(True)
         tree_view.setIndentation(20)
-        tree_view.setStyleSheet("""
-            QTreeView::item{
-                padding: 5px 1px;
-                border: 0px;
-            }
-        """)
         tree_view.collapseAll()
 
         for column_name, width in self.default_widths:

@@ -630,7 +630,7 @@ QScrollBar::add-page:vertical, QScrollBar::sub-page:vertical {
     font-family: "Roboto Mono";
 }
 
-#SubsetView::item {
+#SubsetView::item, #RepresentationView:item {
     padding: 5px 1px;
     border: 0px;
 }
