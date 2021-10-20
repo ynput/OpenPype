@@ -182,21 +182,20 @@ class SubsetWidget(QtWidgets.QWidget):
         view.setObjectName("SubsetView")
         view.setIndentation(20)
         view.setAllColumnsShowFocus(True)
-
-        # Set view delegates
-        version_delegate = VersionDelegate(self.dbcon)
-        column = model.Columns.index("version")
-        view.setItemDelegateForColumn(column, version_delegate)
-
-        time_delegate = PrettyTimeDelegate()
-        column = model.Columns.index("time")
-        view.setItemDelegateForColumn(column, time_delegate)
-
         view.setContextMenuPolicy(QtCore.Qt.CustomContextMenu)
         view.setSelectionMode(QtWidgets.QAbstractItemView.ExtendedSelection)
         view.setSortingEnabled(True)
         view.sortByColumn(1, QtCore.Qt.AscendingOrder)
         view.setAlternatingRowColors(True)
+
+        # Set view delegates
+        version_delegate = VersionDelegate(self.dbcon, view)
+        column = model.Columns.index("version")
+        view.setItemDelegateForColumn(column, version_delegate)
+
+        time_delegate = PrettyTimeDelegate(view)
+        column = model.Columns.index("time")
+        view.setItemDelegateForColumn(column, time_delegate)
 
         layout = QtWidgets.QVBoxLayout(self)
         layout.setContentsMargins(0, 0, 0, 0)
