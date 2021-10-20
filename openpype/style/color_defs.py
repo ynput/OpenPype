@@ -155,7 +155,10 @@ class RGBAColor:
         red = int(red_str)
         green = int(green_str)
         blue = int(blue_str)
-        alpha = int(alpha_str)
+        if "." in alpha_str:
+            alpha = int(float(alpha_str) * 100)
+        else:
+            alpha = int(alpha_str)
 
         int_validation(red, 0, 255)
         int_validation(green, 0, 255)
