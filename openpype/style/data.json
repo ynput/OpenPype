@@ -47,6 +47,14 @@
 
         "border": "#373D48",
         "border-hover": "rgba(168, 175, 189, .3)",
-        "border-focus": "hsl(200, 60%, 60%)"
+        "border-focus": "hsl(200, 60%, 60%)",
+
+        "loader": {
+            "asset-view": {
+                "selected": "rgba(168, 175, 189, 0.6)",
+                "hover": "rgba(168, 175, 189, 0.3)",
+                "selected-hover": "rgba(168, 175, 189, 0.7)"
+            }
+        }
     }
 }
