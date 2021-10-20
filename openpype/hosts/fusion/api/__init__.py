@@ -1,8 +1,6 @@
 from .pipeline import (
     install,
-    uninstall,
-    publish,
-    launch_workfiles_app
+    uninstall
 )
 
 from .utils import (
@@ -22,12 +20,9 @@ __all__ = [
     # pipeline
     "install",
     "uninstall",
-    "publish",
-    "launch_workfiles_app",
 
     # utils
     "setup",
-    "get_resolve_module",
 
     # lib
     "get_additional_data",

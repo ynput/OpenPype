@@ -7,7 +7,6 @@ from collections import OrderedDict
 
 
 from avalon import api, io, lib
-from openpype.tools import workfiles
 import avalon.nuke
 from avalon.nuke import lib as anlib
 from avalon.nuke import (
@@ -24,7 +23,7 @@ from openpype.api import (
     get_current_project_settings,
     ApplicationManager
 )
-
+from openpype.tools.utils import host_tools
 import nuke
 
 from .utils import set_context_favorites
@@ -1662,7 +1661,7 @@ def launch_workfiles_app():
 
     if not opnl.workfiles_launched:
         opnl.workfiles_launched = True
-        workfiles.show(os.environ["AVALON_WORKDIR"])
+        host_tools.show_workfiles()
 
 
 def process_workfile_builder():
