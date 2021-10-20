@@ -407,14 +407,13 @@ class OptionalActionWidget(QtWidgets.QWidget):
         option.setFixedSize(30, 30)
 
         body_layout = QtWidgets.QHBoxLayout(body_widget)
-        body_layout.setContentsMargins(0, 0, 0, 0)
+        body_layout.setContentsMargins(4, 0, 4, 0)
         body_layout.setSpacing(2)
         body_layout.addWidget(icon)
         body_layout.addWidget(label)
-        body_layout.addSpacing(6)
 
         layout = QtWidgets.QHBoxLayout(self)
-        layout.setContentsMargins(6, 1, 2, 1)
+        layout.setContentsMargins(2, 1, 2, 1)
         layout.setSpacing(0)
         layout.addWidget(body_widget)
         layout.addWidget(option)
