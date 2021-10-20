@@ -131,9 +131,6 @@ class LoaderWindow(QtWidgets.QDialog):
         layout.addWidget(footer_widget)
 
         self.data = {
-            "widgets": {
-                "subsets": subsets
-            },
             "state": {
                 "assetIds": None
             }
@@ -206,8 +203,8 @@ class LoaderWindow(QtWidgets.QDialog):
     # -------------------------------
 
     def on_assetview_click(self, *args):
-        subsets_widget = self.data["widgets"]["subsets"]
-        selection_model = subsets_widget.view.selectionModel()
+        # TODO do not touch inner attributes of subset widget
+        selection_model = self._subsets_widget.view.selectionModel()
         if selection_model.selectedIndexes():
             selection_model.clearSelection()
 
