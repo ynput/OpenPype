@@ -50,7 +50,14 @@ class ExperimentalTools:
 
     """
     def __init__(self, parent=None, host_name=None, filter_hosts=None):
-        experimental_tools = []
+        experimental_tools = [
+            ExperimentalTool(
+                "publisher",
+                "New publisher",
+                self._show_publisher,
+                "Combined creation and publishing into one tool."
+            )
+        ]
         if filter_hosts is None:
             filter_hosts = host_name is not None
 
@@ -71,6 +78,8 @@ class ExperimentalTools:
         self.tools = experimental_tools
         self._parent_widget = parent
 
+        self._publisher_tool = None
+
     def refresh_availability(self):
         local_settings = get_local_settings()
         experimental_settings = (
@@ -80,3 +89,13 @@ class ExperimentalTools:
         for identifier, eperimental_tool in self.tools_by_identifier.items():
             enabled = experimental_settings.get(identifier, False)
             eperimental_tool.set_enabled(enabled)
+
+    def _show_publisher(self):
+        if self._publisher_tool is None:
+            from openpype.tools import publisher
+
+            self._publisher_tool = publisher.PublisherWindow(
+                parent=self._parent_widget
+            )
+
+        self._publisher_tool.show()
