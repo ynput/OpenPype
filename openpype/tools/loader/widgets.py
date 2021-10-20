@@ -159,20 +159,25 @@ class SubsetWidget(QtWidgets.QWidget):
             grouping=enable_grouping
         )
         proxy = SubsetFilterProxyModel()
+        proxy.setSourceModel(model)
+        proxy.setDynamicSortFilter(True)
+        proxy.setFilterCaseSensitivity(QtCore.Qt.CaseInsensitive)
+
         family_proxy = FamiliesFilterProxyModel()
         family_proxy.setSourceModel(proxy)
 
-        subset_filter = QtWidgets.QLineEdit()
+        subset_filter = QtWidgets.QLineEdit(self)
         subset_filter.setPlaceholderText("Filter subsets..")
 
-        groupable = QtWidgets.QCheckBox("Enable Grouping")
-        groupable.setChecked(enable_grouping)
+        group_checkbox = QtWidgets.QCheckBox("Enable Grouping", self)
+        group_checkbox.setChecked(enable_grouping)
 
         top_bar_layout = QtWidgets.QHBoxLayout()
         top_bar_layout.addWidget(subset_filter)
-        top_bar_layout.addWidget(groupable)
+        top_bar_layout.addWidget(group_checkbox)
 
-        view = TreeViewSpinner()
+        view = TreeViewSpinner(self)
+        view.setModel(family_proxy)
         view.setObjectName("SubsetView")
         view.setIndentation(20)
         view.setStyleSheet("""
@@ -192,58 +197,49 @@ class SubsetWidget(QtWidgets.QWidget):
         column = model.Columns.index("time")
         view.setItemDelegateForColumn(column, time_delegate)
 
-        layout = QtWidgets.QVBoxLayout(self)
-        layout.setContentsMargins(0, 0, 0, 0)
-        layout.addLayout(top_bar_layout)
-        layout.addWidget(view)
-
         view.setContextMenuPolicy(QtCore.Qt.CustomContextMenu)
         view.setSelectionMode(QtWidgets.QAbstractItemView.ExtendedSelection)
         view.setSortingEnabled(True)
         view.sortByColumn(1, QtCore.Qt.AscendingOrder)
         view.setAlternatingRowColors(True)
 
-        self.data = {
-            "delegates": {
-                "version": version_delegate,
-                "time": time_delegate
-            },
-            "state": {
-                "groupable": groupable
-            }
-        }
-
-        self.proxy = proxy
-        self.model = model
-        self.view = view
-        self.filter = subset_filter
-        self.family_proxy = family_proxy
+        layout = QtWidgets.QVBoxLayout(self)
+        layout.setContentsMargins(0, 0, 0, 0)
+        layout.addLayout(top_bar_layout)
+        layout.addWidget(view)
 
         # settings and connections
-        self.proxy.setSourceModel(self.model)
-        self.proxy.setDynamicSortFilter(True)
-        self.proxy.setFilterCaseSensitivity(QtCore.Qt.CaseInsensitive)
-
-        self.view.setModel(self.family_proxy)
-        self.view.customContextMenuRequested.connect(self.on_context_menu)
-
         for column_name, width in self.default_widths:
             idx = model.Columns.index(column_name)
             view.setColumnWidth(idx, width)
 
+        self.model = model
+        self.view = view
+
         actual_project = dbcon.Session["AVALON_PROJECT"]
         self.on_project_change(actual_project)
+
+        view.customContextMenuRequested.connect(self.on_context_menu)
 
         selection = view.selectionModel()
         selection.selectionChanged.connect(self.active_changed)
 
         version_delegate.version_changed.connect(self.version_changed)
 
-        groupable.stateChanged.connect(self.set_grouping)
+        group_checkbox.stateChanged.connect(self.set_grouping)
 
-        self.filter.textChanged.connect(self.proxy.setFilterRegExp)
-        self.filter.textChanged.connect(self.view.expandAll)
+        subset_filter.textChanged.connect(proxy.setFilterRegExp)
+        subset_filter.textChanged.connect(view.expandAll)
         model.refreshed.connect(self.refreshed)
+
+        self.proxy = proxy
+        self.family_proxy = family_proxy
+
+        self._subset_filter = subset_filter
+        self._group_checkbox = group_checkbox
+
+        self._version_delegate = version_delegate
+        self._time_delegate = time_delegate
 
         self.model.refresh()
 
@@ -254,7 +250,7 @@ class SubsetWidget(QtWidgets.QWidget):
         self.family_proxy.setFamiliesFilter(families)
 
     def is_groupable(self):
-        return self.data["state"]["groupable"].checkState()
+        return self._group_checkbox.isChecked()
 
     def set_grouping(self, state):
         with tools_lib.preserve_selection(tree_view=self.view,
@@ -1128,7 +1124,7 @@ class RepresentationWidget(QtWidgets.QWidget):
 
         label = QtWidgets.QLabel("Representations", self)
 
-        tree_view = DeselectableTreeView()
+        tree_view = DeselectableTreeView(parent=self)
         tree_view.setModel(proxy_model)
         tree_view.setAllColumnsShowFocus(True)
         tree_view.setContextMenuPolicy(QtCore.Qt.CustomContextMenu)
