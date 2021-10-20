@@ -1,10 +1,10 @@
 import sys
 
 from Qt import QtWidgets, QtCore
-from avalon import api, io, style, pipeline
+from avalon import api, io, pipeline
 
+from openpype.style import load_stylesheet
 from openpype.tools.utils.widgets import AssetWidget
-
 from openpype.tools.utils import lib
 
 from .widgets import (
@@ -46,6 +46,7 @@ class LoaderWindow(QtWidgets.QDialog):
         if project_name:
             title += " - {}".format(project_name)
         self.setWindowTitle(title)
+        self.setStyleSheet(load_stylesheet())
 
         # Groups config
         self.groups_config = lib.GroupsConfig(io)
@@ -653,7 +654,6 @@ def show(debug=False, parent=None, use_context=False):
 
     with lib.application():
         window = LoaderWindow(parent)
-        window.setStyleSheet(style.load_stylesheet())
         window.show()
 
         if use_context:
