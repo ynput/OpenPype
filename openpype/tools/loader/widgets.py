@@ -37,12 +37,13 @@ class OverlayFrame(QtWidgets.QFrame):
         super(OverlayFrame, self).__init__(parent)
 
         label_widget = QtWidgets.QLabel(label, self)
+        label_widget.setAttribute(QtCore.Qt.WA_TranslucentBackground)
+
         main_layout = QtWidgets.QVBoxLayout(self)
         main_layout.addWidget(label_widget, 1, QtCore.Qt.AlignCenter)
 
         self.label_widget = label_widget
 
-        label_widget.setStyleSheet("background: transparent;")
         self.setStyleSheet((
             "background: rgba(0, 0, 0, 127);"
             "font-size: 60pt;"
