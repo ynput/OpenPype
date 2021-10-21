@@ -3,7 +3,7 @@ import sys
 from Qt import QtWidgets, QtCore
 from avalon import api, io, pipeline
 
-from openpype.style import load_stylesheet
+from openpype import style
 from openpype.tools.utils.widgets import AssetWidget
 from openpype.tools.utils import lib
 
@@ -96,14 +96,17 @@ class LoaderWindow(QtWidgets.QDialog):
         thumbnail_widget = ThumbnailWidget(io, parent=thumb_ver_splitter)
         version_info_widget = VersionWidget(io, parent=thumb_ver_splitter)
 
+        thumb_ver_splitter.addWidget(thumbnail_widget)
+        thumb_ver_splitter.addWidget(version_info_widget)
+
+        thumb_ver_splitter.setStretchFactor(0, 30)
+        thumb_ver_splitter.setStretchFactor(1, 35)
+
         manager = ModulesManager()
         sync_server = manager.modules_by_name.get("sync_server")
         sync_server_enabled = False
         if sync_server is not None:
             sync_server_enabled = sync_server.enabled
-
-        thumb_ver_splitter.addWidget(thumbnail_widget)
-        thumb_ver_splitter.addWidget(version_info_widget)
 
         repres_widget = None
         if sync_server_enabled:
@@ -111,9 +114,6 @@ class LoaderWindow(QtWidgets.QDialog):
                 io, self.tool_name, parent=thumb_ver_splitter
             )
             thumb_ver_splitter.addWidget(repres_widget)
-
-        thumb_ver_splitter.setStretchFactor(0, 30)
-        thumb_ver_splitter.setStretchFactor(1, 35)
 
         main_splitter.addWidget(left_side_splitter)
         main_splitter.addWidget(subsets_widget)
@@ -193,7 +193,7 @@ class LoaderWindow(QtWidgets.QDialog):
             main_splitter.setSizes([250, 850, 200])
             self.resize(1300, 700)
 
-        self.setStyleSheet(load_stylesheet())
+        self.setStyleSheet(style.load_stylesheet())
 
     def resizeEvent(self, event):
         super(LoaderWindow, self).resizeEvent(event)
