@@ -112,6 +112,9 @@ class ExperimentalToolsDialog(QtWidgets.QDialog):
                     "\n\nOpenPype Tray > Settings > Experimental Tools"
                 ))
 
+            if tool.enabled != button.isEnabled():
+                button.setEnabled(tool.enabled)
+
         for identifier in buttons_to_remove:
             button = self._buttons_by_tool_identifier.pop(identifier)
             button.setVisible(False)
