@@ -1,7 +1,27 @@
+"""Color definitions that can be used to parse strings for stylesheet.
+
+Each definition must have available method `get_qcolor` which should return
+`QtGui.QColor` representation of the color.
+
+# TODO create abstract class to force this method implementation
+
+Usage: Some colors may be not be used only in stylesheet but is required to
+use them in code too. To not hardcode these color values into code it is better
+to use same colors that are available fro stylesheets.
+
+It is possible that some colors may not be used in stylesheet at all and thei
+definition is used only in code.
+"""
+
 import re
 
 
 def parse_color(value):
+    """Parse string value of color to one of objected representation.
+
+    Args:
+        value(str): Color definition usable in stylesheet.
+    """
     modified_value = value.strip().lower()
     if modified_value.startswith("hsla"):
         return HSLAColor(value)
@@ -21,12 +41,30 @@ def parse_color(value):
 
 
 def create_qcolor(*args):
+    """Create QtGui.QColor object.
+
+    Args:
+        *args (tuple): It is possible to pass initialization arguments for
+            Qcolor.
+    """
     from Qt import QtGui
 
     return QtGui.QColor(*args)
 
 
 def min_max_check(value, min_value, max_value):
+    """Validate number value if is in passed range.
+
+    Args:
+        value (int, float): Value which is validated.
+        min_value (int, float): Minimum possible value. Validation is skipped
+            if passed value is None.
+        max_value (int, float): Maximum possible value. Validation is skipped
+            if passed value is None.
+
+    Raises:
+        ValueError: When 'value' is out of specified range.
+    """
     if min_value is not None and value < min_value:
         raise ValueError("Minimum expected value is '{}' got '{}'".format(
             min_value, value
@@ -39,6 +77,16 @@ def min_max_check(value, min_value, max_value):
 
 
 def int_validation(value, min_value=None, max_value=None):
+    """Validation of integer value within range.
+
+    Args:
+        value (int): Validated value.
+        min_value (int): Minimum possible value.
+        max_value (int): Maximum possible value.
+
+    Raises:
+        TypeError: If 'value' is not 'int' type.
+    """
     if not isinstance(value, int):
         raise TypeError((
             "Invalid type of hue expected 'int' got {}"
@@ -48,6 +96,16 @@ def int_validation(value, min_value=None, max_value=None):
 
 
 def float_validation(value, min_value=None, max_value=None):
+    """Validation of float value within range.
+
+    Args:
+        value (float): Validated value.
+        min_value (float): Minimum possible value.
+        max_value (float): Maximum possible value.
+
+    Raises:
+        TypeError: If 'value' is not 'float' type.
+    """
     if not isinstance(value, float):
         raise TypeError((
             "Invalid type of hue expected 'int' got {}"
@@ -57,6 +115,11 @@ def float_validation(value, min_value=None, max_value=None):
 
 
 class UnknownColor:
+    """Color from stylesheet data without known color definition.
+
+    This is backup for unknown color definitions which may be for example
+    constants or definition not yet defined by class.
+    """
     def __init__(self, value):
         self.value = value
 
@@ -65,6 +128,14 @@ class UnknownColor:
 
 
 class HEXColor:
+    """Hex color definition.
+
+    Hex color is defined by '#' and 3 or 6 hex values (0-F).
+
+    Examples:
+        "#fff"
+        "#f3f3f3"
+    """
     regex = re.compile(r"[a-fA-F0-9]{3}(?:[a-fA-F0-9]{3})?$")
 
     def __init__(self, color_string):
@@ -92,6 +163,7 @@ class HEXColor:
 
     @classmethod
     def hex_to_rgb(cls, value):
+        """Convert hex value to rgb."""
         hex_value = value.lstrip("#")
         if not cls.regex.match(hex_value):
             raise ValueError("\"{}\" is not a valid HEX code.".format(value))
@@ -111,6 +183,13 @@ class HEXColor:
 
 
 class RGBColor:
+    """Color defined by red green and blue values.
+
+    Each color has possible integer range 0-255.
+
+    Examples:
+        "rgb(255, 127, 0)"
+    """
     def __init__(self, value):
         modified_color = value.lower().strip()
         content = modified_color.rstrip(")").lstrip("rgb(")
@@ -146,6 +225,13 @@ class RGBColor:
 
 
 class RGBAColor:
+    """Color defined by red green, blue and alpha values.
+
+    Each color has possible integer range 0-255.
+
+    Examples:
+        "rgba(255, 127, 0, 127)"
+    """
     def __init__(self, value):
         modified_color = value.lower().strip()
         content = modified_color.rstrip(")").lstrip("rgba(")
@@ -191,6 +277,15 @@ class RGBAColor:
 
 
 class HSLColor:
+    """Color defined by hue, saturation and light values.
+
+    Hue is defined as integer in rage 0-360. Saturation and light can be
+    defined as float or percent value.
+
+    Examples:
+        "hsl(27, 0.7, 0.3)"
+        "hsl(27, 70%, 30%)"
+    """
     def __init__(self, value):
         modified_color = value.lower().strip()
         content = modified_color.rstrip(")").lstrip("hsl(")
@@ -235,6 +330,16 @@ class HSLColor:
 
 
 class HSLAColor:
+    """Color defined by hue, saturation, light and alpha values.
+
+    Hue is defined as integer in rage 0-360. Saturation and light can be
+    defined as float (0-1 range) or percent value(0-100%). And alpha
+    as float (0-1 range).
+
+    Examples:
+        "hsl(27, 0.7, 0.3)"
+        "hsl(27, 70%, 30%)"
+    """
     def __init__(self, value):
         modified_color = value.lower().strip()
         content = modified_color.rstrip(")").lstrip("hsla(")
@@ -251,10 +356,8 @@ class HSLAColor:
             light = float(light_str.rstrip("%")) / 100
         else:
             light = float(light_str)
-        alpha = float(alpha_str)
 
-        if isinstance(alpha, int):
-            alpha = float(alpha)
+        alpha = float(alpha_str)
 
         int_validation(hue, 0, 360)
         float_validation(sat, 0, 1)
