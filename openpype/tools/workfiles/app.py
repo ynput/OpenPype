@@ -944,7 +944,10 @@ class Window(QtWidgets.QMainWindow):
     def __init__(self, parent=None):
         super(Window, self).__init__(parent=parent)
         self.setWindowTitle(self.title)
-        self.setWindowFlags(QtCore.Qt.Window | QtCore.Qt.WindowCloseButtonHint)
+        window_flags = QtCore.Qt.Window | QtCore.Qt.WindowCloseButtonHint
+        if not parent:
+            window_flags |= QtCore.Qt.WindowStaysOnTopHint
+        self.setWindowFlags(window_flags)
 
         # Create pages widget and set it as central widget
         pages_widget = QtWidgets.QStackedWidget(self)
@@ -1014,6 +1017,9 @@ class Window(QtWidgets.QMainWindow):
         whilst trying to name an instance.
 
         """
+
+    def set_save_enabled(self, enabled):
+        self.files_widget.btn_save.setEnabled(enabled)
 
     def on_task_changed(self):
         # Since we query the disk give it slightly more delay
@@ -1187,7 +1193,7 @@ def show(root=None, debug=False, parent=None, use_context=True, save=True):
             }
             window.set_context(context)
 
-        window.files_widget.btn_save.setEnabled(save)
+        window.set_save_enabled(save)
 
         window.show()
         window.setStyleSheet(style.load_stylesheet())
