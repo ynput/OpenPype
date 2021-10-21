@@ -48,7 +48,7 @@ class _ModuleClass(object):
 
     def __getattr__(self, attr_name):
         if attr_name not in self.__attributes__:
-            if attr_name in ("__path__"):
+            if attr_name in ("__path__", "__file__"):
                 return None
             raise ImportError("No module named {}.{}".format(
                 self.name, attr_name
@@ -104,6 +104,9 @@ class _InterfacesClass(_ModuleClass):
     """
     def __getattr__(self, attr_name):
         if attr_name not in self.__attributes__:
+            if attr_name in ("__path__", "__file__"):
+                return None
+
             # Fake Interface if is not missing
             self.__attributes__[attr_name] = type(
                 attr_name,
