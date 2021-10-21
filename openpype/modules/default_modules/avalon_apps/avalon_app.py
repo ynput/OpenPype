@@ -70,6 +70,9 @@ class AvalonModule(OpenPypeModule, ITrayModule):
 
     # Definition of Tray menu
     def tray_menu(self, tray_menu):
+        if self.libraryloader is None:
+            return
+
         from Qt import QtWidgets
         # Actions
         action_library_loader = QtWidgets.QAction(
@@ -87,6 +90,9 @@ class AvalonModule(OpenPypeModule, ITrayModule):
         return
 
     def show_library_loader(self):
+        if self.libraryloader is None:
+            return
+
         self.libraryloader.show()
 
         # Raise and activate the window
