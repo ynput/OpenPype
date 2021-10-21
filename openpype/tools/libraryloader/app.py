@@ -35,6 +35,18 @@ class LibraryLoaderWindow(QtWidgets.QDialog):
     ):
         super(LibraryLoaderWindow, self).__init__(parent)
 
+        # Window modifications
+        self.setWindowTitle(self.tool_title)
+        window_flags = QtCore.Qt.Window
+        if not parent:
+            window_flags |= QtCore.Qt.WindowStaysOnTopHint
+        self.setWindowFlags(window_flags)
+        self.setFocusPolicy(QtCore.Qt.StrongFocus)
+
+        icon = QtGui.QIcon(style.app_icon_path())
+        self.setWindowIcon(icon)
+
+        self._first_show = True
         self._initial_refresh = False
         self._ignore_project_change = False
 
@@ -52,17 +64,6 @@ class LibraryLoaderWindow(QtWidgets.QDialog):
         self.family_config_cache = tools_lib.FamilyConfigCache(dbcon)
 
         # UI initialization
-        # Enable minimize and maximize for app
-        self.setWindowTitle(self.tool_title)
-        window_flags = QtCore.Qt.Window
-        if not parent:
-            window_flags |= QtCore.Qt.WindowStaysOnTopHint
-        self.setWindowFlags(window_flags)
-        self.setFocusPolicy(QtCore.Qt.StrongFocus)
-
-        icon = QtGui.QIcon(style.app_icon_path())
-        self.setWindowIcon(icon)
-
         main_splitter = QtWidgets.QSplitter(self)
 
         # --- Left part ---
@@ -193,11 +194,14 @@ class LibraryLoaderWindow(QtWidgets.QDialog):
             main_splitter.setSizes([250, 850, 200])
             self.resize(1300, 700)
 
-        self.setStyleSheet(style.load_stylesheet())
-
     def showEvent(self, event):
         super(LibraryLoaderWindow, self).showEvent(event)
+        if self._first_show:
+            self._first_show = False
+            self.setStyleSheet(style.load_stylesheet())
+
         if not self._initial_refresh:
+            self._initial_refresh = True
             self.refresh()
 
     def on_assetview_click(self, *args):

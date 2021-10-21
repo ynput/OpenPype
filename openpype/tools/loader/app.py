@@ -193,7 +193,7 @@ class LoaderWindow(QtWidgets.QDialog):
             main_splitter.setSizes([250, 850, 200])
             self.resize(1300, 700)
 
-        self.setStyleSheet(style.load_stylesheet())
+        self._first_show = True
 
     def resizeEvent(self, event):
         super(LoaderWindow, self).resizeEvent(event)
@@ -202,6 +202,12 @@ class LoaderWindow(QtWidgets.QDialog):
     def moveEvent(self, event):
         super(LoaderWindow, self).moveEvent(event)
         self._overlay_frame.move(0, 0)
+
+    def showEvent(self, event):
+        super(LoaderWindow, self).showEvent(event)
+        if self._first_show:
+            self._first_show = False
+            self.setStyleSheet(style.load_stylesheet())
 
     # -------------------------------
     # Delay calling blocking methods
