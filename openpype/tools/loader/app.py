@@ -52,7 +52,10 @@ class LoaderWindow(QtWidgets.QDialog):
         self.family_config_cache = lib.FamilyConfigCache(io)
 
         # Enable minimize and maximize for app
-        self.setWindowFlags(QtCore.Qt.Window)
+        window_flags = QtCore.Qt.Window
+        if not parent:
+            window_flags |= QtCore.Qt.WindowStaysOnTopHint
+        self.setWindowFlags(window_flags)
         self.setFocusPolicy(QtCore.Qt.StrongFocus)
 
         main_splitter = QtWidgets.QSplitter(self)

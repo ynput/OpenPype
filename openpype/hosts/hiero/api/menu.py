@@ -2,6 +2,7 @@ import os
 import sys
 import hiero.core
 from openpype.api import Logger
+from openpype.tools.utils import host_tools
 from avalon.api import Session
 from hiero.ui import findMenuAction
 
@@ -41,8 +42,6 @@ def menu_install():
         apply_colorspace_project, apply_colorspace_clips
     )
     # here is the best place to add menu
-    from avalon.tools import creator, sceneinventory
-    from openpype.tools import loader
     from avalon.vendor.Qt import QtGui
 
     menu_name = os.environ['AVALON_LABEL']
@@ -87,15 +86,15 @@ def menu_install():
 
     creator_action = menu.addAction("Create ...")
     creator_action.setIcon(QtGui.QIcon("icons:CopyRectangle.png"))
-    creator_action.triggered.connect(creator.show)
+    creator_action.triggered.connect(host_tools.show_creator)
 
     loader_action = menu.addAction("Load ...")
     loader_action.setIcon(QtGui.QIcon("icons:CopyRectangle.png"))
-    loader_action.triggered.connect(loader.show)
+    loader_action.triggered.connect(host_tools.show_loader)
 
     sceneinventory_action = menu.addAction("Manage ...")
     sceneinventory_action.setIcon(QtGui.QIcon("icons:CopyRectangle.png"))
-    sceneinventory_action.triggered.connect(sceneinventory.show)
+    sceneinventory_action.triggered.connect(host_tools.show_scene_inventory)
     menu.addSeparator()
 
     if os.getenv("OPENPYPE_DEVELOP"):

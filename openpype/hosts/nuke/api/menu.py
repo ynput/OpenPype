@@ -4,7 +4,7 @@ from avalon.api import Session
 
 from .lib import WorkfileSettings
 from openpype.api import Logger, BuildWorkfile, get_current_project_settings
-from openpype.tools import workfiles
+from openpype.tools.utils import host_tools
 
 log = Logger().get_logger(__name__)
 
@@ -25,7 +25,7 @@ def install():
     menu.removeItem(rm_item[1].name())
     menu.addCommand(
         name,
-        workfiles.show,
+        host_tools.show_workfiles,
         index=2
     )
     menu.addSeparator(index=3)
