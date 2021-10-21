@@ -1,0 +1,91 @@
+#! python3
+
+"""
+Resolve's tools for setting environment
+"""
+
+import os
+import shutil
+from openpype.api import Logger
+log = Logger().get_logger(__name__)
+
+
+def _sync_utility_scripts(env=None):
+    """ Synchronizing basic utlility scripts for resolve.
+
+    To be able to run start OpenPype within Flame we have to copy
+    all utility_scripts and additional FLAME_SCRIPT_DIR into
+    `/opt/Autodesk/shared/python`. This will be always synchronizing those
+    folders.
+    """
+    from .. import HOST_DIR
+
+    if not env:
+        env = os.environ
+
+    # initiate inputs
+    scripts = {}
+    fsd_env = env.get("FLAME_SCRIPT_DIR", "")
+    flame_shared_dir = "/opt/Autodesk/shared/python"
+
+    fsd_paths = [os.path.join(
+        HOST_DIR,
+        "utility_scripts"
+    )]
+
+    # collect script dirs
+    log.info("FLAME_SCRIPT_DIR: `{fsd_env}`".format(**locals()))
+    log.info("fsd_paths: `{fsd_paths}`".format(**locals()))
+
+    # add application environment setting for FLAME_SCRIPT_DIR
+    # to script path search
+    for _dirpath in fsd_env.split(os.pathsep):
+        if not os.path.isdir(_dirpath):
+            log.warning("Path is not a valid dir: `{_dirpath}`".format(**locals()))
+            continue
+        fsd_paths.append(_dirpath)
+
+    # collect scripts from dirs
+    for path in fsd_paths:
+        scripts.update({path: os.listdir(path)})
+
+    log.info("Additional Flame script paths: `{fsd_paths}`".format(**locals()))
+    log.info("Flame Scripts: `{scripts}`".format(**locals()))
+
+    # make sure no script file is in folder
+    if next(iter(os.listdir(flame_shared_dir)), None):
+        for s in os.listdir(flame_shared_dir):
+            path = os.path.join(flame_shared_dir, s)
+            log.info("Removing `{path}`...".format(**locals()))
+            if os.path.isdir(path):
+                shutil.rmtree(path, onerror=None)
+            else:
+                os.remove(path)
+
+    # copy scripts into Resolve's utility scripts dir
+    for dirpath, scriptlist in scripts.items():
+        # directory and scripts list
+        for _script in scriptlist:
+            # script in script list
+            src = os.path.join(dirpath, _script)
+            dst = os.path.join(flame_shared_dir, _script)
+            log.info("Copying `{src}` to `{dst}`...".format(**locals()))
+            if os.path.isdir(src):
+                shutil.copytree(
+                    src, dst, symlinks=False,
+                    ignore=None, ignore_dangling_symlinks=False
+                )
+            else:
+                shutil.copy2(src, dst)
+
+
+def setup(env=None):
+    """ Wrapper installer started from pype.hooks.resolve.FlamePrelaunch()
+    """
+    if not env:
+        env = os.environ
+
+    # synchronize resolve utility scripts
+    _sync_utility_scripts(env)
+
+    log.info("Flame OpenPype wrapper has been installed")
