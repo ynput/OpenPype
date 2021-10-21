@@ -116,8 +116,8 @@ module.exports = {
       // Optional: Algolia search parameters
       searchParameters: {},
     },
-    googleAnalytics: {
-      trackingID: 'G-HHJZ9VF0FG',
+    gtag: {
+      trackingID: 'G-DTKXMFENFY',
       // Optional fields.
       anonymizeIP: false, // Should IPs be anonymized?
     },
