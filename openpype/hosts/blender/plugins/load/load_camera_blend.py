@@ -91,7 +91,7 @@ class BlendCameraLoader(plugin.AssetLoader):
 
         bpy.data.orphans_purge(do_local_ids=False)
 
-        bpy.ops.object.select_all(action='DESELECT')
+        plugin.deselect_all()
 
         return objects
 

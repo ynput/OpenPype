@@ -38,7 +38,7 @@ class FbxCameraLoader(plugin.AssetLoader):
                 bpy.data.objects.remove(obj)
 
     def _process(self, libpath, asset_group, group_name):
-        bpy.ops.object.select_all(action='DESELECT')
+        plugin.deselect_all()
 
         collection = bpy.context.view_layer.active_layer_collection.collection
 
@@ -68,7 +68,7 @@ class FbxCameraLoader(plugin.AssetLoader):
             avalon_info = obj[AVALON_PROPERTY]
             avalon_info.update({"container_name": group_name})
 
-        bpy.ops.object.select_all(action='DESELECT')
+        plugin.deselect_all()
 
         return objects
 

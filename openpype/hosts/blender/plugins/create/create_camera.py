@@ -53,7 +53,7 @@ class CreateCamera(plugin.Creator):
             selected.append(asset_group)
             bpy.ops.object.parent_set(keep_transform=True)
         else:
-            bpy.ops.object.select_all(action='DESELECT')
+            plugin.deselect_all()
             camera_obj.select_set(True)
             asset_group.select_set(True)
             bpy.context.view_layer.objects.active = asset_group

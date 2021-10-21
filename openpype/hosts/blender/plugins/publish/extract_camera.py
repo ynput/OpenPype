@@ -23,7 +23,7 @@ class ExtractCamera(api.Extractor):
         # Perform extraction
         self.log.info("Performing extraction..")
 
-        bpy.ops.object.select_all(action='DESELECT')
+        plugin.deselect_all()
 
         selected = []
 
@@ -56,7 +56,7 @@ class ExtractCamera(api.Extractor):
 
         bpy.context.scene.unit_settings.scale_length = scale_length
 
-        bpy.ops.object.select_all(action='DESELECT')
+        plugin.deselect_all()
 
         if "representations" not in instance.data:
             instance.data["representations"] = []
