@@ -8,6 +8,8 @@ LOCAL_EXPERIMENTAL_KEY = "experimental_tools"
 class ExperimentalTool:
     """Definition of experimental tool.
 
+    Definition is used in local settings and in experimental tools dialog.
+
     Args:
         identifier (str): String identifier of tool (unique).
         label (str): Label shown in UI.
@@ -91,11 +93,32 @@ class ExperimentalTools:
                 ).format(tool.identifier))
             tools_by_identifier[tool.identifier] = tool
 
-        self.tools_by_identifier = tools_by_identifier
-        self.tools = experimental_tools
+        self._tools_by_identifier = tools_by_identifier
+        self._tools = experimental_tools
         self._parent_widget = parent
 
+    @property
+    def tools(self):
+        """Tools in list.
+
+        Returns:
+            list: Tools filtered by host name if filtering was enabled
+                on initialization.
+        """
+        return self._tools
+
+    @property
+    def tools_by_identifier(self):
+        """Tools by their identifier.
+
+        Returns:
+            dict: Tools by identifier filtered by host name if filtering
+                was enabled on initialization.
+        """
+        return self._tools_by_identifier
+
     def refresh_availability(self):
+        """Reload local settings and check if any tool changed ability."""
         local_settings = get_local_settings()
         experimental_settings = (
             local_settings.get(LOCAL_EXPERIMENTAL_KEY)
