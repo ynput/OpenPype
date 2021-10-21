@@ -2,13 +2,15 @@ import sys
 import os
 import logging
 
-from avalon.vendor.Qt import QtWidgets, QtGui
-from avalon.maya import pipeline
-from openpype.api import BuildWorkfile
-import maya.cmds as cmds
-from openpype.settings import get_project_settings
+from Qt import QtWidgets, QtGui
 
-self = sys.modules[__name__]
+import maya.cmds as cmds
+
+from avalon.maya import pipeline
+
+from openpype.api import BuildWorkfile
+from openpype.settings import get_project_settings
+from openpype.tools.utils import host_tools
 
 
 log = logging.getLogger(__name__)
@@ -36,25 +38,15 @@ def deferred():
         )
 
     def add_look_assigner_item():
-        import mayalookassigner
         cmds.menuItem(
             "Look assigner",
             parent=pipeline._menu,
-            command=lambda *args: mayalookassigner.show()
+            command=lambda *args: host_tools.show_look_assigner(
+                pipeline._parent
+            )
         )
 
     def modify_workfiles():
-        from openpype.tools import workfiles
-
-        def launch_workfiles_app(*_args, **_kwargs):
-            workfiles.show(
-                os.path.join(
-                    cmds.workspace(query=True, rootDirectory=True),
-                    cmds.workspace(fileRuleEntry="scene")
-                ),
-                parent=pipeline._parent
-            )
-
         # Find the pipeline menu
         top_menu = _get_menu()
 
@@ -75,7 +67,7 @@ def deferred():
         cmds.menuItem(
             "Work Files",
             parent=pipeline._menu,
-            command=launch_workfiles_app,
+            command=lambda *args: host_tools.show_workfiles(pipeline._parent),
             insertAfter=after_action
         )
 
