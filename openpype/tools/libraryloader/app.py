@@ -129,6 +129,10 @@ class LibraryLoaderWindow(QtWidgets.QDialog):
         main_splitter.addWidget(left_side_splitter)
         main_splitter.addWidget(subsets_widget)
         main_splitter.addWidget(thumb_ver_splitter)
+        if sync_server_enabled:
+            main_splitter.setSizes([250, 1000, 550])
+        else:
+            main_splitter.setSizes([250, 850, 200])
 
         # --- Footer ---
         footer_widget = QtWidgets.QWidget(self)
@@ -168,6 +172,7 @@ class LibraryLoaderWindow(QtWidgets.QDialog):
         projects_combobox.currentTextChanged.connect(self.on_project_change)
 
         self.sync_server = sync_server
+        self._sync_server_enabled = sync_server_enabled
 
         self._combobox_delegate = combobox_delegate
         self._projects_combobox = projects_combobox
@@ -186,19 +191,15 @@ class LibraryLoaderWindow(QtWidgets.QDialog):
         # Set default thumbnail on start
         thumbnail_widget.set_thumbnail(None)
 
-        # Defaults
-        if sync_server_enabled:
-            main_splitter.setSizes([250, 1000, 550])
-            self.resize(1800, 900)
-        else:
-            main_splitter.setSizes([250, 850, 200])
-            self.resize(1300, 700)
-
     def showEvent(self, event):
         super(LibraryLoaderWindow, self).showEvent(event)
         if self._first_show:
             self._first_show = False
             self.setStyleSheet(style.load_stylesheet())
+            if self._sync_server_enabled:
+                self.resize(1800, 900)
+            else:
+                self.resize(1300, 700)
 
         if not self._initial_refresh:
             self._initial_refresh = True
