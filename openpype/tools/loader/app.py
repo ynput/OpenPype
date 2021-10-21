@@ -119,6 +119,11 @@ class LoaderWindow(QtWidgets.QDialog):
         main_splitter.addWidget(subsets_widget)
         main_splitter.addWidget(thumb_ver_splitter)
 
+        if sync_server_enabled:
+            main_splitter.setSizes([250, 1000, 550])
+        else:
+            main_splitter.setSizes([250, 850, 200])
+
         # TODO keep footer size by message size
         footer_widget = QtWidgets.QWidget(self)
         footer_widget.setFixedHeight(20)
@@ -164,6 +169,8 @@ class LoaderWindow(QtWidgets.QDialog):
         repres_widget.load_started.connect(self._on_load_start)
         repres_widget.load_ended.connect(self._on_load_end)
 
+        self._sync_server_enabled = sync_server_enabled
+
         self._assets_widget = assets_widget
         self._families_filter_view = families_filter_view
 
@@ -185,14 +192,6 @@ class LoaderWindow(QtWidgets.QDialog):
         self._refresh()
         self._assetschanged()
 
-        # Defaults
-        if sync_server_enabled:
-            main_splitter.setSizes([250, 1000, 550])
-            self.resize(1800, 900)
-        else:
-            main_splitter.setSizes([250, 850, 200])
-            self.resize(1300, 700)
-
         self._first_show = True
 
     def resizeEvent(self, event):
@@ -208,6 +207,10 @@ class LoaderWindow(QtWidgets.QDialog):
         if self._first_show:
             self._first_show = False
             self.setStyleSheet(style.load_stylesheet())
+            if self._sync_server_enabled:
+                self.resize(1800, 900)
+            else:
+                self.resize(1300, 700)
 
     # -------------------------------
     # Delay calling blocking methods
