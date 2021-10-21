@@ -97,6 +97,42 @@
             }
         }
     },
+    "flame": {
+        "enabled": true,
+        "label": "Flame",
+        "icon": "{}/app_icons/flame.png",
+        "host_name": "flame",
+        "environment": {
+            "FLAME_SCRIPT_DIR": {
+                "windows": "",
+                "darvin": "",
+                "linux": ""
+            }
+        },
+        "variants": {
+            "2021": {
+                "use_python_2": true,
+                "executables": {
+                    "windows": [],
+                    "darwin": [
+                        "/opt/Autodesk/flame_2021/bin/flame.app/Contents/MacOS/startApp"
+                    ],
+                    "linux": [
+                        "/opt/Autodesk/flame_2021/bin/flame"
+                    ]
+                },
+                "arguments": {
+                    "windows": [],
+                    "darwin": [],
+                    "linux": []
+                },
+                "environment": {}
+            },
+            "__dynamic_keys_labels__": {
+                "2021": "2021 (Testing Only)"
+            }
+        }
+    },
     "nuke": {
         "enabled": true,
         "label": "Nuke",
