@@ -80,7 +80,7 @@ class TestPerformance():
             file_id3 = bson.objectid.ObjectId()
 
             self.inserted_ids.extend([file_id, file_id2, file_id3])
-            version_str = "v{0:03}".format(i + 1)
+            version_str = "v{:03d}".format(i + 1)
             file_name = "test_Cylinder_workfileLookdev_{}.mb".\
                 format(version_str)
 
@@ -95,7 +95,7 @@ class TestPerformance():
                             "family": "workfile",
                             "hierarchy": "Assets",
                             "project": {"code": "test", "name": "Test"},
-                            "version": 1,
+                            "version": i + 1,
                             "asset": "Cylinder",
                             "representation": "mb",
                             "root": self.ROOT_DIR
@@ -104,8 +104,8 @@ class TestPerformance():
                         "name": "mb",
                         "parent": {"oid": '{}'.format(id)},
                         "data": {
-                            "path": "C:\\projects\\Test\\Assets\\Cylinder\\publish\\workfile\\workfileLookdev\\{}\\{}".format(version_str, file_name),
-                            "template": "{root}\\{project[name]}\\{hierarchy}\\{asset}\\publish\\{family}\\{subset}\\v{version:0>3}\\{project[code]}_{asset}_{subset}_v{version:0>3}<_{output}><.{frame:0>4}>.{representation}"
+                            "path": "C:\\projects\\test_performance\\Assets\\Cylinder\\publish\\workfile\\workfileLookdev\\{}\\{}".format(version_str, file_name),  # noqa
+                            "template": "{root[work]}\\{project[name]}\\{hierarchy}\\{asset}\\publish\\{family}\\{subset}\\v{version:0>3}\\{project[code]}_{asset}_{subset}_v{version:0>3}<_{output}><.{frame:0>4}>.{representation}"  # noqa
                         },
                         "type": "representation",
                         "schema": "openpype:representation-2.0"
@@ -188,30 +188,21 @@ class TestPerformance():
                         create_files=False):
         ret = [
             {
-                 "path": "{root}" + "/Test/Assets/Cylinder/publish/workfile/" +
-                         "workfileLookdev/v{0:03}/" +
-                         "test_Cylinder_A_workfileLookdev_v{0:03}.dat"
-                         .format(i, i),
+                 "path": "{root[work]}" + "/test_performance/Assets/Cylinder/publish/workfile/workfileLookdev/v{:03d}/test_Cylinder_A_workfileLookdev_v{:03d}.dat".format(i, i),  #noqa
                  "_id": '{}'.format(file_id),
                  "hash": "temphash",
                  "sites": self.get_sites(self.MAX_NUMBER_OF_SITES),
                  "size": random.randint(0, self.MAX_FILE_SIZE_B)
             },
             {
-                "path": "{root}" + "/Test/Assets/Cylinder/publish/workfile/" +
-                        "workfileLookdev/v{0:03}/" +
-                        "test_Cylinder_B_workfileLookdev_v{0:03}.dat"
-                        .format(i, i),
+                "path": "{root[work]}" + "/test_performance/Assets/Cylinder/publish/workfile/workfileLookdev/v{:03d}/test_Cylinder_B_workfileLookdev_v{:03d}.dat".format(i, i),  #noqa
                 "_id": '{}'.format(file_id2),
                 "hash": "temphash",
                 "sites": self.get_sites(self.MAX_NUMBER_OF_SITES),
                 "size": random.randint(0, self.MAX_FILE_SIZE_B)
             },
             {
-                "path": "{root}" + "/Test/Assets/Cylinder/publish/workfile/" +
-                        "workfileLookdev/v{0:03}/" +
-                        "test_Cylinder_C_workfileLookdev_v{0:03}.dat"
-                        .format(i, i),
+                "path": "{root[work]}" + "/test_performance/Assets/Cylinder/publish/workfile/workfileLookdev/v{:03d}/test_Cylinder_C_workfileLookdev_v{:03d}.dat".format(i, i),  #noqa
                 "_id": '{}'.format(file_id3),
                 "hash": "temphash",
                 "sites": self.get_sites(self.MAX_NUMBER_OF_SITES),
@@ -221,7 +212,7 @@ class TestPerformance():
             ]
         if create_files:
             for f in ret:
-                path = f.get("path").replace("{root}", self.ROOT_DIR)
+                path = f.get("path").replace("{root[work]}", self.ROOT_DIR)
                 os.makedirs(os.path.dirname(path), exist_ok=True)
                 with open(path, 'wb') as fp:
                     fp.write(os.urandom(f.get("size")))
@@ -231,26 +222,26 @@ class TestPerformance():
     def get_files_doc(self, i, file_id, file_id2, file_id3):
         ret = {}
         ret['{}'.format(file_id)] = {
-            "path": "{root}" +
-                    "/Test/Assets/Cylinder/publish/workfile/workfileLookdev/"
-                    "v001/test_CylinderA_workfileLookdev_v{0:03}.mb".format(i),
+            "path": "{root[work]}" +
+                    "/test_performance/Assets/Cylinder/publish/workfile/workfileLookdev/"
+                    "v{:03d}/test_CylinderA_workfileLookdev_v{:03d}.mb".format(i, i),  # noqa
             "hash": "temphash",
             "sites": ["studio"],
             "size": 87236
         }
 
         ret['{}'.format(file_id2)] = {
-            "path": "{root}" +
-                    "/Test/Assets/Cylinder/publish/workfile/workfileLookdev/"
-                    "v001/test_CylinderB_workfileLookdev_v{0:03}.mb".format(i),
+            "path": "{root[work]}" +
+                    "/test_performance/Assets/Cylinder/publish/workfile/workfileLookdev/"
+                    "v{:03d}/test_CylinderB_workfileLookdev_v{:03d}.mb".format(i, i),  # noqa
             "hash": "temphash",
             "sites": ["studio"],
             "size": 87236
         }
         ret['{}'.format(file_id3)] = {
-            "path": "{root}" +
-                    "/Test/Assets/Cylinder/publish/workfile/workfileLookdev/"
-                    "v001/test_CylinderC_workfileLookdev_v{0:03}.mb".format(i),
+            "path": "{root[work]}" +
+                    "/test_performance/Assets/Cylinder/publish/workfile/workfileLookdev/"
+                    "v{:03d}/test_CylinderC_workfileLookdev_v{:03d}.mb".format(i, i),  # noqa
             "hash": "temphash",
             "sites": ["studio"],
             "size": 87236
@@ -287,7 +278,7 @@ class TestPerformance():
 
 if __name__ == '__main__':
     tp = TestPerformance('array')
-    tp.prepare(no_of_records=10, create_files=True)  # enable to prepare data
+    tp.prepare(no_of_records=10000, create_files=True)  # enable to prepare data
     # tp.run(10, 3)
 
     # print('-'*50)
