@@ -60,8 +60,6 @@ class ExtractFBX(api.Extractor):
             add_leaf_bones=False
         )
 
-        bpy.context.scene.unit_settings.scale_length = scale_length
-
         plugin.deselect_all()
 
         for mat in new_materials:
