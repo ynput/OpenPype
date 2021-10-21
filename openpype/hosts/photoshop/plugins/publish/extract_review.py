@@ -17,6 +17,10 @@ class ExtractReview(openpype.api.Extractor):
     hosts = ["photoshop"]
     families = ["review"]
 
+    # Extract Options
+    jpg_options = None
+    mov_options = None
+
     def process(self, instance):
         staging_dir = self.staging_dir(instance)
         self.log.info("Outputting image to {}".format(staging_dir))
@@ -53,7 +57,8 @@ class ExtractReview(openpype.api.Extractor):
             "name": "jpg",
             "ext": "jpg",
             "files": output_image,
-            "stagingDir": staging_dir
+            "stagingDir": staging_dir,
+            "tags": self.jpg_options['tags']
         })
         instance.data["stagingDir"] = staging_dir
 
@@ -97,7 +102,7 @@ class ExtractReview(openpype.api.Extractor):
             "frameEnd": 1,
             "fps": 25,
             "preview": True,
-            "tags": ["review", "ftrackreview"]
+            "tags": self.mov_options['tags']
         })
 
         # Required for extract_review plugin (L222 onwards).

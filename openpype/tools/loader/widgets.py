@@ -786,7 +786,10 @@ class ThumbnailWidget(QtWidgets.QLabel):
 
     def scale_pixmap(self, pixmap):
         return pixmap.scaled(
-            self.width(), self.height(), QtCore.Qt.KeepAspectRatio
+            self.width(),
+            self.height(),
+            QtCore.Qt.KeepAspectRatio,
+            QtCore.Qt.SmoothTransformation
         )
 
     def set_thumbnail(self, entity=None):

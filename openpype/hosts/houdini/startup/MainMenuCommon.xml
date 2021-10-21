@@ -7,24 +7,30 @@
             <scriptItem id="avalon_create">
                 <label>Create ...</label>
                 <scriptCode><![CDATA[
-from avalon.tools import creator
-creator.show()
+import hou
+from openpype.tools.utils import host_tools
+parent = hou.qt.mainWindow()
+host_tools.show_creator(parent)
 ]]></scriptCode>
             </scriptItem>
 
             <scriptItem id="avalon_load">
                 <label>Load ...</label>
                 <scriptCode><![CDATA[
-from openpype.tools import loader
-loader.show(use_context=True)
+import hou
+from openpype.tools.utils import host_tools
+parent = hou.qt.mainWindow()
+host_tools.show_loader(parent=parent, use_context=True)
 ]]></scriptCode>
             </scriptItem>
 
             <scriptItem id="avalon_manage">
                 <label>Manage ...</label>
                 <scriptCode><![CDATA[
-from avalon.tools import cbsceneinventory
-cbsceneinventory.show()
+import hou
+from openpype.tools.utils import host_tools
+parent = hou.qt.mainWindow()
+host_tools.show_scene_inventory(parent)
 ]]></scriptCode>
             </scriptItem>
 
@@ -32,9 +38,9 @@ cbsceneinventory.show()
                 <label>Publish ...</label>
                 <scriptCode><![CDATA[
 import hou
-from avalon.tools import publish
+from openpype.tools.utils import host_tools
 parent = hou.qt.mainWindow()
-publish.show(parent)
+host_tools.show_publish(parent)
                 ]]></scriptCode>
             </scriptItem>
 
@@ -43,9 +49,10 @@ publish.show(parent)
             <scriptItem id="workfiles">
                 <label>Work Files ...</label>
                 <scriptCode><![CDATA[
-import hou, os
-from openpype.tools import workfiles
-workfiles.show(os.environ["AVALON_WORKDIR"])
+import hou
+from openpype.tools.utils import host_tools
+parent = hou.qt.mainWindow()
+host_tools.show_workfiles(parent)
                 ]]></scriptCode>
             </scriptItem>
 

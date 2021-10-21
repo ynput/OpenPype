@@ -56,8 +56,8 @@ class ValidateOutputResolution(pyblish.api.InstancePlugin):
 
     def process(self, instance):
 
-        # Skip bounding box check if a crop node exists.
-        if instance[0].dependencies()[0].Class() == "Crop":
+        # Skip bounding box check if a reformat node exists.
+        if instance[0].dependencies()[0].Class() == "Reformat":
             return
 
         msg = "Bounding box is outside the format."
