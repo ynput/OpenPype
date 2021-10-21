@@ -65,6 +65,19 @@ class ExperimentalTools:
         # Definition of experimental tools
         experimental_tools = []
 
+        # --- Example tool (callback will just print on click) ---
+        # def example_callback(*args):
+        #     print("Triggered tool")
+        #
+        # experimental_tools = [
+        #     ExperimentalTool(
+        #         "example",
+        #         "Exmaple experimental tool",
+        #         example_callback,
+        #         "Example tool tooltip."
+        #     )
+        # ]
+
         # Try to get host name from env variable `AVALON_APP`
         if not host_name:
             host_name = os.environ.get("AVALON_APP")
