@@ -21,11 +21,11 @@ class ToolButton(QtWidgets.QPushButton):
         self.triggered.emit(self._identifier)
 
 
-class ExperimentalDialog(QtWidgets.QDialog):
+class ExperimentalToolsDialog(QtWidgets.QDialog):
     refresh_interval = 3000
 
     def __init__(self, parent=None):
-        super(ExperimentalDialog, self).__init__(parent)
+        super(ExperimentalToolsDialog, self).__init__(parent)
         self.setWindowTitle("OpenPype Experimental tools")
         icon = QtGui.QIcon(app_icon_path())
         self.setWindowIcon(icon)
@@ -138,7 +138,7 @@ class ExperimentalDialog(QtWidgets.QDialog):
             tool.execute()
 
     def showEvent(self, event):
-        super(ExperimentalDialog, self).showEvent(event)
+        super(ExperimentalToolsDialog, self).showEvent(event)
 
         if self._refresh_on_active:
             # Start/Restart timer
@@ -164,7 +164,7 @@ class ExperimentalDialog(QtWidgets.QDialog):
                 self._refresh_timer.start()
                 self.refresh()
 
-        super(ExperimentalDialog, self).changeEvent(event)
+        super(ExperimentalToolsDialog, self).changeEvent(event)
 
     def _on_refresh_timeout(self):
         # Stop timer if window is not visible
