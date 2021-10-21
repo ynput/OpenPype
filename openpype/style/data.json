@@ -32,6 +32,9 @@
         "bg-inputs-disabled": "#2C313A",
         "bg-buttons-disabled": "#434a56",
 
+        "bg-splitter": "#434a56",
+        "bg-splitter-hover": "rgba(168, 175, 189, 0.3)",
+
         "bg-menu-separator": "rgba(75, 83, 98, 127)",
 
         "bg-scroll-handle": "#4B5362",
