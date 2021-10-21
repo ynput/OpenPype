@@ -1,6 +1,5 @@
 import os
 import openpype
-from openpype import resources
 from openpype.modules import OpenPypeModule
 from openpype_interfaces import ITrayModule
 
@@ -52,16 +51,12 @@ class AvalonModule(OpenPypeModule, ITrayModule):
     def tray_init(self):
         # Add library tool
         try:
-            from Qt import QtGui
-            from avalon import style
             from openpype.tools.libraryloader import LibraryLoaderWindow
 
             self.libraryloader = LibraryLoaderWindow(
-                icon=QtGui.QIcon(resources.get_openpype_icon_filepath()),
                 show_projects=True,
                 show_libraries=True
             )
-            self.libraryloader.setStyleSheet(style.load_stylesheet())
         except Exception:
             self.log.warning(
                 "Couldn't load Library loader tool for tray.",
