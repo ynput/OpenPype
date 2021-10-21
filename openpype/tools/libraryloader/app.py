@@ -188,9 +188,6 @@ class LibraryLoaderWindow(QtWidgets.QDialog):
         self._message_label = message_label
         self._message_timer = message_timer
 
-        # Set default thumbnail on start
-        thumbnail_widget.set_thumbnail(None)
-
     def showEvent(self, event):
         super(LibraryLoaderWindow, self).showEvent(event)
         if self._first_show:

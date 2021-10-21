@@ -745,6 +745,7 @@ class ThumbnailWidget(QtWidgets.QLabel):
             "default_thumbnail.png"
         )
         self.default_pix = QtGui.QPixmap(default_pix_path)
+        self.set_pixmap()
 
     def height(self):
         width = self.width()
