@@ -29,7 +29,6 @@ class ExperimentalToolsDialog(QtWidgets.QDialog):
         self.setWindowTitle("OpenPype Experimental tools")
         icon = QtGui.QIcon(app_icon_path())
         self.setWindowIcon(icon)
-        self.setStyleSheet(load_stylesheet())
 
         empty_widget = QtWidgets.QWidget(self)
 
@@ -154,6 +153,8 @@ class ExperimentalToolsDialog(QtWidgets.QDialog):
 
         if self._first_show:
             self._first_show = False
+            # Set stylesheet
+            self.setStyleSheet(load_stylesheet())
             # Resize dialog if there is not content
             if not self._is_content_visible():
                 size = self.size()
