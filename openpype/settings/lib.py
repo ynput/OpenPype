@@ -857,12 +857,6 @@ def get_anatomy_settings(
             result, local_settings, project_name, site_name
         )
 
-    # Replace {task} by '{task[name]}' in all template for backward compatibility
-    for template in result.get('templates', {}).values():
-        for sub_template_name, sub_template_value in template.items():
-            if isinstance(sub_template_value, str) and  '{task}' in sub_template_value:
-                template[sub_template_name] = sub_template_value.replace('{task}', '{task[name]}')
-
     return result
 
 
