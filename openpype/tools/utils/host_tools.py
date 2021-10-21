@@ -220,6 +220,16 @@ class HostToolsHelper:
         look_assigner_tool.show()
 
     def get_experimental_tools_dialog(self, parent=None):
+        """Dialog of experimental tools.
+
+        For some hosts it is not easy to modify menu of tools. For
+        those cases was addded experimental tools dialog which is Qt based
+        and can dynamically filled by experimental tools so
+        host need only single "Experimental tools" button to see them.
+
+        Dialog can be also empty with a message that there are not available
+        experimental tools.
+        """
         if self._experimental_tools_dialog is None:
             from openpype.tools.experimental_tools import (
                 ExperimentalToolsDialog
@@ -229,6 +239,7 @@ class HostToolsHelper:
         return self._experimental_tools_dialog
 
     def show_experimental_tools_dialog(self, parent=None):
+        """Show dialog with experimental tools."""
         dialog = self.get_experimental_tools_dialog(parent)
 
         dialog.show()
