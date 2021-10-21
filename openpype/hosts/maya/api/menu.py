@@ -46,6 +46,15 @@ def deferred():
             )
         )
 
+    def add_experimental_item():
+        cmds.menuItem(
+            "Experimental tools...",
+            parent=pipeline._menu,
+            command=lambda *args: host_tools.show_experimental_tools_dialog(
+                pipeline._parent
+            )
+        )
+
     def modify_workfiles():
         # Find the pipeline menu
         top_menu = _get_menu()
@@ -103,6 +112,7 @@ def deferred():
 
     add_build_workfiles_item()
     add_look_assigner_item()
+    add_experimental_item()
     modify_workfiles()
     remove_project_manager()
 
