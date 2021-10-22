@@ -44,6 +44,15 @@ def deferred():
             )
         )
 
+    def add_experimental_item():
+        cmds.menuItem(
+            "Experimental tools...",
+            parent=pipeline._menu,
+            command=lambda *args: host_tools.show_experimental_tools_dialog(
+                pipeline._parent
+            )
+        )
+
     def add_scripts_menu():
         try:
             import scriptsmenu.launchformaya as launchformaya
@@ -130,6 +139,7 @@ def deferred():
     # add_scripts_menu()
     add_build_workfiles_item()
     add_look_assigner_item()
+    add_experimental_item()
     modify_workfiles()
     remove_project_manager()
     add_scripts_menu()
