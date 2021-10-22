@@ -74,10 +74,12 @@ class NameWindow(QtWidgets.QDialog):
             "name": asset_name
         })
 
-        task_type = asset_doc['data']['tasks'].get(session["AVALON_TASK"], {}).get('type')
+        task_type = asset_doc["data"]["tasks"].get(
+            session["AVALON_TASK"], {}).get("type")
 
         if task_type:
-            task_short = project_doc['config']['tasks'][task_type]['short_name']
+            task_short = project_doc["config"]["tasks"].get(
+                task_type, {}).get("short_name")
         else:
             task_short = None
 
