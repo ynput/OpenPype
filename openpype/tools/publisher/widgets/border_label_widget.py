@@ -4,6 +4,14 @@ from openpype.style import get_objected_colors
 
 
 class _VLineWidget(QtWidgets.QWidget):
+    """Widget drawing 1px wide vertical line.
+
+    ```  │  ```
+
+    Line is drawn in the middle of widget.
+
+    It is expected that parent widget will set width.
+    """
     def __init__(self, color, left, parent):
         super(_VLineWidget, self).__init__(parent)
         self._color = color
@@ -33,9 +41,21 @@ class _VLineWidget(QtWidgets.QWidget):
         painter.end()
 
 
-class _HLineWidget(QtWidgets.QWidget):
+class _HBottomLineWidget(QtWidgets.QWidget):
+    """Widget drawing 1px wide vertical line with side lines going upwards.
+
+    ```└─────────────┘```
+
+    Corners may have curve set by radius (`set_radius`). Radius should expect
+    height of widget.
+
+    Bottom line is drawed at the bottom of widget. If radius is 0 then height
+    of widget should be 1px.
+
+    It is expected that parent widget will set height and radius.
+    """
     def __init__(self, color, parent):
-        super(_HLineWidget, self).__init__(parent)
+        super(_HBottomLineWidget, self).__init__(parent)
         self._color = color
         self._radius = 0
 
@@ -65,9 +85,23 @@ class _HLineWidget(QtWidgets.QWidget):
         painter.end()
 
 
-class _HCornerLineWidget(QtWidgets.QWidget):
+class _HTopCornerLineWidget(QtWidgets.QWidget):
+    """Widget drawing 1px wide horizontal line with side line going downwards.
+
+    ```┌───────```
+          or
+    ```────────┐```
+
+    Horizontal line is drawed in the middle of widget.
+
+    Widget represents left or right corner. Corner may have curve set by
+    radius (`set_radius`). Radius should expect height of widget (maximum half
+    height of widget).
+
+    It is expected that parent widget will set height and radius.
+    """
     def __init__(self, color, left_side, parent):
-        super(_HCornerLineWidget, self).__init__(parent)
+        super(_HTopCornerLineWidget, self).__init__(parent)
         self._left_side = left_side
         self._color = color
         self._radius = 0
@@ -112,13 +146,13 @@ class _HCornerLineWidget(QtWidgets.QWidget):
 class BorderedLabelWidget(QtWidgets.QFrame):
     """Draws borders around widget with label in the middle of top.
 
-    +------- Label --------+
-    |                      |
-    |                      |
-    |       CONTENT        |
-    |                      |
-    |                      |
-    +----------------------+
+    ┌─────── Label ────────┐
+    │                      │
+    │                      │
+    │       CONTENT        │
+    │                      │
+    │                      │
+    └──────────────────────┘
     """
     def __init__(self, label, parent):
         super(BorderedLabelWidget, self).__init__(parent)
@@ -128,8 +162,8 @@ class BorderedLabelWidget(QtWidgets.QFrame):
         if color_value:
             color = color_value.get_qcolor()
 
-        top_left_w = _HCornerLineWidget(color, True, self)
-        top_right_w = _HCornerLineWidget(color, False, self)
+        top_left_w = _HTopCornerLineWidget(color, True, self)
+        top_right_w = _HTopCornerLineWidget(color, False, self)
 
         label_widget = QtWidgets.QLabel(label, self)
 
@@ -143,7 +177,7 @@ class BorderedLabelWidget(QtWidgets.QFrame):
         left_w = _VLineWidget(color, True, self)
         right_w = _VLineWidget(color, False, self)
 
-        bottom_w = _HLineWidget(color, self)
+        bottom_w = _HBottomLineWidget(color, self)
 
         center_layout = QtWidgets.QHBoxLayout()
         center_layout.setContentsMargins(5, 5, 5, 5)
@@ -176,6 +210,7 @@ class BorderedLabelWidget(QtWidgets.QFrame):
         self._center_layout = center_layout
 
     def set_content_margins(self, value):
+        """Set margins around content."""
         self._center_layout.setContentsMargins(
             value, value, value, value
         )
@@ -204,6 +239,7 @@ class BorderedLabelWidget(QtWidgets.QFrame):
             self._widget.update()
 
     def set_center_widget(self, widget):
+        """Set content widget and add it to center."""
         while self._center_layout.count():
             item = self._center_layout.takeAt(0)
             widget = item.widget()

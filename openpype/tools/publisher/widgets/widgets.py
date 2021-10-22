@@ -32,6 +32,7 @@ class PixmapLabel(QtWidgets.QLabel):
         self._source_pixmap = pixmap
 
     def set_source_pixmap(self, pixmap):
+        """Change source image."""
         self._source_pixmap = pixmap
         self._set_resized_pix()
 
@@ -53,7 +54,7 @@ class PixmapLabel(QtWidgets.QLabel):
 
 
 class TransparentPixmapLabel(QtWidgets.QLabel):
-    """Label resizing to width and height of font."""
+    """Transparent label resizing to width and height of font."""
     def __init__(self, *args, **kwargs):
         super(TransparentPixmapLabel, self).__init__(*args, **kwargs)
 
@@ -67,7 +68,11 @@ class TransparentPixmapLabel(QtWidgets.QLabel):
 
 
 class IconValuePixmapLabel(PixmapLabel):
-    """Label resizing to width and height of font."""
+    """Label resizing to width and height of font.
+
+    Handle icon parsing from creators/instances. Using of QAwesome module
+    of path to images.
+    """
     fa_prefixes = ["", "fa."]
     default_size = 200
 
@@ -77,6 +82,11 @@ class IconValuePixmapLabel(PixmapLabel):
         super(IconValuePixmapLabel, self).__init__(source_pixmap, parent)
 
     def set_icon_def(self, icon_def):
+        """Set icon by it's definition name.
+
+        Args:
+            icon_def (str): Name of FontAwesome icon or path to image.
+        """
         source_pixmap = self._parse_icon_def(icon_def)
         self.set_source_pixmap(source_pixmap)
 
@@ -115,6 +125,7 @@ class IconValuePixmapLabel(PixmapLabel):
 
 
 class ContextWarningLabel(PixmapLabel):
+    """Pixmap label with warning icon."""
     def __init__(self, parent):
         pix = get_pixmap("warning")
 
@@ -150,6 +161,18 @@ class IconButton(QtWidgets.QPushButton):
 
 
 class PublishIconBtn(IconButton):
+    """Button using alpha of source image to redraw with different color.
+
+    Main class for buttons showed in publisher.
+
+    TODO:
+    Add different states:
+    - normal           : before publishing
+    - publishing       : publishing is running
+    - validation error : validation error happened
+    - error            : other error happened
+    - success          : publishing finished
+    """
     def __init__(self, pixmap_path, *args, **kwargs):
         super(PublishIconBtn, self).__init__(*args, **kwargs)
 
@@ -164,9 +187,11 @@ class PublishIconBtn(IconButton):
         self.setIcon(self._enabled_icon)
 
     def get_enabled_icon(self):
+        """Enabled icon."""
         return self._enabled_icon
 
     def get_disabled_icon(self):
+        """Disabled icon."""
         if self._disabled_icon is None:
             pixmap = self.paint_image_with_color(
                 self._base_image, QtCore.Qt.gray
@@ -176,6 +201,14 @@ class PublishIconBtn(IconButton):
 
     @staticmethod
     def paint_image_with_color(image, color):
+        """Redraw image with single color using it's alpha.
+
+        It is expected that input image is singlecolor image with alpha.
+
+        Args:
+            image (QImage): Loaded image with alpha.
+            color (QColor): Color that will be used to paint image.
+        """
         width = image.width()
         height = image.height()
         partition = 8
@@ -212,6 +245,7 @@ class PublishIconBtn(IconButton):
 
 
 class ResetBtn(PublishIconBtn):
+    """Publish reset button."""
     def __init__(self, parent=None):
         icon_path = get_icon_path("refresh")
         super(ResetBtn, self).__init__(icon_path, parent)
@@ -219,6 +253,7 @@ class ResetBtn(PublishIconBtn):
 
 
 class StopBtn(PublishIconBtn):
+    """Publish stop button."""
     def __init__(self, parent):
         icon_path = get_icon_path("stop")
         super(StopBtn, self).__init__(icon_path, parent)
@@ -226,6 +261,7 @@ class StopBtn(PublishIconBtn):
 
 
 class ValidateBtn(PublishIconBtn):
+    """Publish validate button."""
     def __init__(self, parent=None):
         icon_path = get_icon_path("validate")
         super(ValidateBtn, self).__init__(icon_path, parent)
@@ -233,6 +269,7 @@ class ValidateBtn(PublishIconBtn):
 
 
 class PublishBtn(PublishIconBtn):
+    """Publish start publish button."""
     def __init__(self, parent=None):
         icon_path = get_icon_path("play")
         super(PublishBtn, self).__init__(icon_path, "Publish", parent)
@@ -240,6 +277,7 @@ class PublishBtn(PublishIconBtn):
 
 
 class CreateInstanceBtn(PublishIconBtn):
+    """Create add button."""
     def __init__(self, parent=None):
         icon_path = get_icon_path("add")
         super(CreateInstanceBtn, self).__init__(icon_path, parent)
@@ -247,6 +285,7 @@ class CreateInstanceBtn(PublishIconBtn):
 
 
 class RemoveInstanceBtn(PublishIconBtn):
+    """Create remove button."""
     def __init__(self, parent=None):
         icon_path = get_icon_path("delete")
         super(RemoveInstanceBtn, self).__init__(icon_path, parent)
@@ -254,6 +293,7 @@ class RemoveInstanceBtn(PublishIconBtn):
 
 
 class ChangeViewBtn(PublishIconBtn):
+    """Create toggle view button."""
     def __init__(self, parent=None):
         icon_path = get_icon_path("change_view")
         super(ChangeViewBtn, self).__init__(icon_path, parent)
@@ -261,19 +301,32 @@ class ChangeViewBtn(PublishIconBtn):
 
 
 class AbstractInstanceView(QtWidgets.QWidget):
+    """Abstract class for instance view in creation part."""
     selection_changed = QtCore.Signal()
     active_changed = QtCore.Signal()
+    # Refreshed attribute is not changed by view itself
+    # - widget which triggers `refresh` is changing the state
+    # TODO store that information in widget which cares about refreshing
     refreshed = False
 
     def set_refreshed(self, refreshed):
+        """View is refreshed with last instances.
+
+        Views are not updated all the time. Only if are visible.
+        """
         self.refreshed = refreshed
 
     def refresh(self):
+        """Refresh instances in the view from current `CreatedContext`."""
         raise NotImplementedError((
             "{} Method 'refresh' is not implemented."
         ).format(self.__class__.__name__))
 
     def get_selected_items(self):
+        """Selected instances required for callbacks.
+
+        Example: When delete button is clicked to know what should be deleted.
+        """
         raise NotImplementedError((
             "{} Method 'get_selected_items' is not implemented."
         ).format(self.__class__.__name__))
