@@ -22,6 +22,7 @@ import avalon.maya.lib
 import avalon.maya.interactive
 
 from openpype import lib
+from openpype.api import get_anatomy_settings
 
 
 log = logging.getLogger(__name__)
@@ -2740,3 +2741,48 @@ def iter_shader_edits(relationships, shader_nodes, nodes_by_id, label=None):
                "uuid": data["uuid"],
                "nodes": nodes,
                "attributes": attr_value}
+
+
+def set_colorspace():
+    """Set Colorspace from project configuration
+
+    """
+    imageio = get_anatomy_settings(os.getenv("AVALON_PROJECT"))["imageio"]["maya"]
+    root_dict = imageio["colorManagmentPreference"]
+    
+    if not isinstance(root_dict, dict):
+        msg = "set_colorspace(): argument should be dictionary"
+        log.error(msg)
+
+    log.debug(">> root_dict: {}".format(root_dict))
+
+    # first enable color management
+    cmds.colorManagementPrefs(e=True, cmEnabled=True)
+    cmds.colorManagementPrefs(e=True, ocioRulesEnabled=True)
+
+    # second set config path
+    if root_dict.get("configFilePath"):
+        unresolved_path = root_dict["configFilePath"]
+        ocio_paths = unresolved_path[platform.system().lower()]
+
+        resolved_path = None
+        for ocio_p in ocio_paths:
+            resolved_path = str(ocio_p).format(**os.environ)
+            if not os.path.exists(resolved_path):
+                continue
+
+        if resolved_path:
+            cmds.colorManagementPrefs(e=True, configFilePath= str(resolved_path).replace("\\", "/") )
+            cmds.colorManagementPrefs(e=True, cmConfigFileEnabled=True)
+            
+            log.debug("maya '{}' changed to: {}".format(
+                "configFilePath", resolved_path))
+            root_dict.pop("configFilePath")
+
+
+    # third define rendering space and view transform
+    renderSpace = root_dict["renderSpace"]
+    cmds.colorManagementPrefs(e=True, renderingSpaceName=renderSpace)
+    viewTransform = root_dict["viewTransform"]
+    cmds.colorManagementPrefs(e=True, viewTransformName=viewTransform)
+

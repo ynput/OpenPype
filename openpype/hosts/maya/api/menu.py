@@ -11,6 +11,7 @@ from avalon.maya import pipeline
 from openpype.api import BuildWorkfile
 from openpype.settings import get_project_settings
 from openpype.tools.utils import host_tools
+from openpype.hosts.maya.api import lib
 
 
 log = logging.getLogger(__name__)
@@ -125,6 +126,31 @@ def deferred():
         if project_manager_action is not None:
             system_menu.menu().removeAction(project_manager_action)
 
+    def add_colorspace():
+        # Find the pipeline menu
+        top_menu = _get_menu()
+
+        # Try to find workfile tool action in the menu
+        workfile_action = None
+        for action in top_menu.actions():
+            if action.text() == "Reset Resolution":
+                workfile_action = action
+                break
+
+        # Add at the top of menu if "Work Files" action was not found
+        after_action = ""
+        if workfile_action:
+            # Use action's object name for `insertAfter` argument
+            after_action = workfile_action.objectName()
+
+        # Insert action to menu
+        cmds.menuItem(
+            "Set Colorspace",
+            parent=pipeline._menu,
+            command=lambda *args: lib.set_colorspace(),
+            insertAfter=after_action
+        )
+
     log.info("Attempting to install scripts menu ...")
 
     # add_scripts_menu()
@@ -132,6 +158,7 @@ def deferred():
     add_look_assigner_item()
     modify_workfiles()
     remove_project_manager()
+    add_colorspace()
     add_scripts_menu()
 
 
