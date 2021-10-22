@@ -325,14 +325,21 @@ class PublishReport:
 
 
 class PublisherController:
-    """Middleware between UI, CreateContext and publish Context."""
+    """Middleware between UI, CreateContext and publish Context.
+
+    Handle both creation and publishing parts.
+
+    Args:
+        dbcon (AvalonMongoDB): Connection to mongo with context.
+        headless (bool): Headless publishing. ATM not implemented or used.
+    """
     def __init__(self, dbcon=None, headless=False):
         self.log = logging.getLogger("PublisherController")
         self.host = avalon.api.registered_host()
         self.headless = headless
 
         self.create_context = CreateContext(
-            self.host, dbcon, headless=False, reset=False
+            self.host, dbcon, headless=headless, reset=False
         )
 
         # pyblish.api.Context
@@ -371,7 +378,7 @@ class PublisherController:
         # Plugin iterator
         self._main_thread_iter = None
 
-        # Varianbles where callbacks are stored
+        # Variables where callbacks are stored
         self._instances_refresh_callback_refs = set()
         self._plugins_refresh_callback_refs = set()
 
