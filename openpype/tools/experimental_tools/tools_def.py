@@ -72,7 +72,7 @@ class ExperimentalTools:
         # experimental_tools = [
         #     ExperimentalTool(
         #         "example",
-        #         "Exmaple experimental tool",
+        #         "Example experimental tool",
         #         example_callback,
         #         "Example tool tooltip."
         #     )
