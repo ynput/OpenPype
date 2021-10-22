@@ -1,10 +1,16 @@
 import os
 
 import pyblish.api
-import openpype.api
-import openpype.lib
-from openpype.lib import should_decompress, \
-    get_decompress_dir, decompress
+from openpype.lib import (
+    get_ffmpeg_tool_path,
+
+    run_subprocess,
+    path_to_subprocess_arg,
+
+    should_decompress,
+    get_decompress_dir,
+    decompress
+)
 import shutil
 
 
@@ -85,17 +91,19 @@ class ExtractJpegEXR(pyblish.api.InstancePlugin):
 
             self.log.info("output {}".format(full_output_path))
 
-            ffmpeg_path = openpype.lib.get_ffmpeg_tool_path("ffmpeg")
+            ffmpeg_path = get_ffmpeg_tool_path("ffmpeg")
             ffmpeg_args = self.ffmpeg_args or {}
 
             jpeg_items = []
-            jpeg_items.append("\"{}\"".format(ffmpeg_path))
+            jpeg_items.append(path_to_subprocess_arg(ffmpeg_path))
             # override file if already exists
             jpeg_items.append("-y")
             # use same input args like with mov
             jpeg_items.extend(ffmpeg_args.get("input") or [])
             # input file
-            jpeg_items.append("-i \"{}\"".format(full_input_path))
+            jpeg_items.append("-i {}".format(
+                path_to_subprocess_arg(full_input_path)
+            ))
             # output arguments from presets
             jpeg_items.extend(ffmpeg_args.get("output") or [])
 
@@ -104,21 +112,22 @@ class ExtractJpegEXR(pyblish.api.InstancePlugin):
                 jpeg_items.append("-vframes 1")
 
             # output file
-            jpeg_items.append("\"{}\"".format(full_output_path))
+            jpeg_items.append(path_to_subprocess_arg(full_output_path))
 
-            subprocess_jpeg = " ".join(jpeg_items)
+            subprocess_command = " ".join(jpeg_items)
 
             # run subprocess
-            self.log.debug("{}".format(subprocess_jpeg))
+            self.log.debug("{}".format(subprocess_command))
             try:  # temporary until oiiotool is supported cross platform
-                openpype.api.run_subprocess(
-                    subprocess_jpeg, shell=True, logger=self.log
+                run_subprocess(
+                    subprocess_command, shell=True, logger=self.log
                 )
             except RuntimeError as exp:
                 if "Compression" in str(exp):
                     self.log.debug("Unsupported compression on input files. " +
                                    "Skipping!!!")
                     return
+                self.log.warning("Conversion crashed", exc_info=True)
                 raise
 
             if "representations" not in instance.data:

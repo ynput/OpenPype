@@ -8,13 +8,7 @@ from .pipeline import (
     launch_workfiles_app
 )
 
-from avalon.tools import (
-    creator,
-    loader,
-    sceneinventory,
-    libraryloader,
-    subsetmanager
-)
+from openpype.tools.utils import host_tools
 
 
 def load_stylesheet():
@@ -30,7 +24,7 @@ def load_stylesheet():
 
 class Spacer(QtWidgets.QWidget):
     def __init__(self, height, *args, **kwargs):
-        super(self.__class__, self).__init__(*args, **kwargs)
+        super(Spacer, self).__init__(*args, **kwargs)
 
         self.setFixedHeight(height)
 
@@ -47,7 +41,7 @@ class Spacer(QtWidgets.QWidget):
 
 class OpenPypeMenu(QtWidgets.QWidget):
     def __init__(self, *args, **kwargs):
-        super(self.__class__, self).__init__(*args, **kwargs)
+        super(OpenPypeMenu, self).__init__(*args, **kwargs)
 
         self.setObjectName("OpenPypeMenu")
 
@@ -117,7 +111,7 @@ class OpenPypeMenu(QtWidgets.QWidget):
 
     def on_create_clicked(self):
         print("Clicked Create")
-        creator.show()
+        host_tools.show_creator()
 
     def on_publish_clicked(self):
         print("Clicked Publish")
@@ -125,19 +119,19 @@ class OpenPypeMenu(QtWidgets.QWidget):
 
     def on_load_clicked(self):
         print("Clicked Load")
-        loader.show(use_context=True)
+        host_tools.show_loader(use_context=True)
 
     def on_inventory_clicked(self):
         print("Clicked Inventory")
-        sceneinventory.show()
+        host_tools.show_scene_inventory()
 
     def on_subsetm_clicked(self):
         print("Clicked Subset Manager")
-        subsetmanager.show()
+        host_tools.show_subset_manager()
 
     def on_libload_clicked(self):
         print("Clicked Library")
-        libraryloader.show()
+        host_tools.show_library_loader()
 
     def on_rename_clicked(self):
         print("Clicked Rename")

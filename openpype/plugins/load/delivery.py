@@ -71,7 +71,7 @@ class DeliveryOptionsDialog(QtWidgets.QDialog):
         self._set_representations(contexts)
 
         self.setWindowTitle("OpenPype - Deliver versions")
-        icon = QtGui.QIcon(resources.pype_icon_filepath())
+        icon = QtGui.QIcon(resources.get_openpype_icon_filepath())
         self.setWindowIcon(icon)
 
         self.setWindowFlags(

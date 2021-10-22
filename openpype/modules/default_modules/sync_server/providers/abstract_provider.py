@@ -80,7 +80,8 @@ class AbstractProvider:
             representation (dict): complete repre containing 'file'
             site (str): site name
         Returns:
-            (string) file_id of created file, raises exception
+            (string) file_id of created/modified file ,
+                throws FileExistsError, FileNotFoundError exceptions
         """
         pass
 
@@ -103,7 +104,8 @@ class AbstractProvider:
             representation (dict): complete repre containing 'file'
             site (str): site name
         Returns:
-            None
+            (string) file_id of created/modified file ,
+                throws FileExistsError, FileNotFoundError exceptions
         """
         pass
 

@@ -48,7 +48,7 @@ class _ModuleClass(object):
 
     def __getattr__(self, attr_name):
         if attr_name not in self.__attributes__:
-            if attr_name in ("__path__"):
+            if attr_name in ("__path__", "__file__"):
                 return None
             raise ImportError("No module named {}.{}".format(
                 self.name, attr_name
@@ -104,6 +104,9 @@ class _InterfacesClass(_ModuleClass):
     """
     def __getattr__(self, attr_name):
         if attr_name not in self.__attributes__:
+            if attr_name in ("__path__", "__file__"):
+                return None
+
             # Fake Interface if is not missing
             self.__attributes__[attr_name] = type(
                 attr_name,
@@ -417,7 +420,6 @@ class OpenPypeModule:
         """
         pass
 
-    @abstractmethod
     def connect_with_modules(self, enabled_modules):
         """Connect with other enabled modules."""
         pass
@@ -436,10 +438,6 @@ class OpenPypeAddOn(OpenPypeModule):
 
     def initialize(self, module_settings):
         """Initialization is not be required for most of addons."""
-        pass
-
-    def connect_with_modules(self, enabled_modules):
-        """Do not require to implement connection with modules for addon."""
         pass
 
 

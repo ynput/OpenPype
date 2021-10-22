@@ -3,6 +3,7 @@ from uuid import uuid4
 from Qt import QtWidgets, QtCore, QtGui
 
 from .base import BaseWidget
+from .lib import create_deffered_value_change_timer
 from .widgets import (
     ExpandingWidget,
     IconButton
@@ -127,9 +128,9 @@ class ModifiableDictEmptyItem(QtWidgets.QWidget):
     def add_new_item(self, key=None, label=None):
         input_field = self.entity_widget.add_new_key(key, label)
         if self.collapsible_key:
-            self.key_input.setFocus(True)
+            self.key_input.setFocus()
         else:
-            input_field.key_input.setFocus(True)
+            input_field.key_input.setFocus()
         return input_field
 
     def _on_add_clicked(self):
@@ -283,6 +284,10 @@ class ModifiableDictItem(QtWidgets.QWidget):
         self.key_label_input = None
 
         self.confirm_btn = None
+
+        self._key_change_timer = create_deffered_value_change_timer(
+            self._on_timeout
+        )
 
         if collapsible_key:
             self.create_collapsible_ui()
@@ -516,6 +521,10 @@ class ModifiableDictItem(QtWidgets.QWidget):
         if self.ignore_input_changes:
             return
 
+        self._key_change_timer.start()
+
+    def _on_timeout(self):
+        key = self.key_value()
         is_key_duplicated = self.entity_widget.validate_key_duplication(
             self.temp_key, key, self
         )
@@ -554,7 +563,7 @@ class ModifiableDictItem(QtWidgets.QWidget):
 
     def on_add_clicked(self):
         widget = self.entity_widget.add_new_key(None, None)
-        widget.key_input.setFocus(True)
+        widget.key_input.setFocus()
 
     def on_edit_pressed(self):
         if not self.key_input.isVisible():

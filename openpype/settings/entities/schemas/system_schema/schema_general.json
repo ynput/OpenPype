@@ -41,6 +41,76 @@
             "type": "splitter"
         },
         {
+            "type": "dict",
+            "key": "disk_mapping",
+            "label": "Disk mapping",
+            "is_group": true,
+            "use_label_wrap": false,
+            "collapsible": false,
+            "children": [
+                {
+                    "key": "windows",
+                    "label": "Windows",
+                    "type": "list",
+                    "object_type": {
+                        "type": "list-strict",
+                        "key": "item",
+                         "object_types": [
+                            {
+                                "label": "Source",
+                                "type": "path"
+                            },
+                            {
+                                "label": "Destination",
+                                "type": "path"
+                            }
+                        ]
+                    }
+                },
+                {
+                    "key": "linux",
+                    "label": "Linux",
+                    "type": "list",
+                    "object_type": {
+                        "type": "list-strict",
+                        "key": "item",
+                         "object_types": [
+                            {
+                                "label": "Source",
+                                "type": "path"
+                            },
+                            {
+                                "label": "Destination",
+                                "type": "path"
+                            }
+                        ]
+                    }
+                },
+                {
+                    "key": "darwin",
+                    "label": "MacOS",
+                    "type": "list",
+                    "object_type": {
+                        "type": "list-strict",
+                        "key": "item",
+                         "object_types": [
+                            {
+                                "label": "Source",
+                                "type": "path"
+                            },
+                            {
+                                "label": "Destination",
+                                "type": "path"
+                            }
+                        ]
+                    }
+                }
+            ]
+        },
+        {
+            "type": "splitter"
+        },
+        {
             "type": "path",
             "key": "openpype_path",
             "label": "Versions Repository",
