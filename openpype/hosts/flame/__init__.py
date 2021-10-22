@@ -51,6 +51,7 @@ INVENTORY_PATH = os.path.join(PLUGINS_DIR, "inventory")
 
 app_framework = None
 apps = []
+selection = None
 
 
 __all__ = [
@@ -65,6 +66,7 @@ __all__ = [
 
     "app_framework",
     "apps",
+    "selection",
 
     # pipeline
     "install",

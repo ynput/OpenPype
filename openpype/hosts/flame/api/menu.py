@@ -7,7 +7,6 @@ from copy import deepcopy
 from .lib import rescan_hooks
 from openpype.tools.utils.host_tools import HostToolsHelper
 
-
 menu_group_name = 'OpenPype'
 
 default_flame_export_presets = {
@@ -16,6 +15,10 @@ default_flame_export_presets = {
     'Thumbnail': {'PresetVisibility': 3, 'PresetType': 0, 'PresetFile': 'Generate Thumbnail.xml'}
 }
 
+def send_selection(selection):
+    import openpype.hosts.flame as opflame
+    opflame.selection = selection
+    print(opflame.selection)
 
 class _FlameMenuApp(object):
     def __init__(self, framework):
@@ -99,10 +102,12 @@ class FlameMenuProjectconnect(_FlameMenuApp):
         })
         menu['actions'].append({
             "name": "Create ...",
+            "isVisible": send_selection,
             "execute": lambda x: self.tools_helper.show_creator()
         })
         menu['actions'].append({
             "name": "Publish ...",
+            "isVisible": send_selection,
             "execute": lambda x: self.tools_helper.show_publish()
         })
         menu['actions'].append({
@@ -118,9 +123,6 @@ class FlameMenuProjectconnect(_FlameMenuApp):
             "execute": lambda x: self.tools_helper.show_library_loader()
         })
         return menu
-
-    def get_projects(self, *args, **kwargs):
-        pass
 
     def refresh(self, *args, **kwargs):
         self.rescan()
@@ -163,10 +165,12 @@ class FlameMenuTimeline(_FlameMenuApp):
 
         menu['actions'].append({
             "name": "Create ...",
+            "isVisible": send_selection,
             "execute": lambda x: self.tools_helper.show_creator()
         })
         menu['actions'].append({
             "name": "Publish ...",
+            "isVisible": send_selection,
             "execute": lambda x: self.tools_helper.show_publish()
         })
         menu['actions'].append({
@@ -179,9 +183,6 @@ class FlameMenuTimeline(_FlameMenuApp):
         })
 
         return menu
-
-    def get_projects(self, *args, **kwargs):
-        pass
 
     def refresh(self, *args, **kwargs):
         self.rescan()
