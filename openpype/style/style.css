@@ -415,6 +415,25 @@ QAbstractItemView::branch:closed:has-children:has-siblings:hover {
     background: transparent;
 }
 
+QAbstractItemView::branch:has-siblings:!adjoins-item {
+    border-image: none;
+    image: url(:/openpype/images/transparent.png);
+    background: transparent;
+}
+
+QAbstractItemView::branch:has-siblings:adjoins-item {
+    border-image: none;
+    image: url(:/openpype/images/transparent.png);
+    background: transparent;
+}
+
+QAbstractItemView::branch:!has-children:!has-siblings:adjoins-item {
+    border-image: none;
+    image: url(:/openpype/images/transparent.png);
+    background: transparent;
+}
+
+
 /* Progress bar */
 QProgressBar {
     border: 1px solid {color:border};
