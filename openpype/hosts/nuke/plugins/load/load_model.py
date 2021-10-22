@@ -13,7 +13,7 @@ class AlembicModelLoader(api.Loader):
     representations = ["abc"]
 
     label = "Load Alembic Model"
-    icon = "model"
+    icon = "cube"
     color = "orange"
     node_color = "0x4ecd91ff"
 
