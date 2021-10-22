@@ -93,8 +93,6 @@ class HostToolsHelper:
 
     def show_loader(self, parent=None, use_context=None):
         """Loader tool for loading representations."""
-        from avalon import style
-
         loader_tool = self.get_loader_tool(parent)
 
         loader_tool.show()
@@ -109,8 +107,6 @@ class HostToolsHelper:
             loader_tool.set_context(context, refresh=True)
         else:
             loader_tool.refresh()
-
-        loader_tool.setStyleSheet(style.load_stylesheet())
 
     def get_creator_tool(self, parent):
         """Create, cache and return creator tool window."""
@@ -196,14 +192,11 @@ class HostToolsHelper:
 
     def show_library_loader(self, parent=None):
         """Loader tool for loading representations from library project."""
-        from avalon import style
-
         library_loader_tool = self.get_library_loader_tool(parent)
         library_loader_tool.show()
         library_loader_tool.raise_()
         library_loader_tool.activateWindow()
         library_loader_tool.refresh()
-        library_loader_tool.setStyleSheet(style.load_stylesheet())
 
     def show_publish(self, parent=None):
         """Publish UI."""

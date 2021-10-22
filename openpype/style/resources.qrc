@@ -19,5 +19,6 @@
         <file>images/up_arrow.png</file>
         <file>images/up_arrow_disabled.png</file>
         <file>images/up_arrow_on.png</file>
+        <file>images/transparent.png</file>
     </qresource>
 </RCC>
