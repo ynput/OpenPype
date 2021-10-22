@@ -29,7 +29,6 @@ class ExtractModel(openpype.api.Extractor):
         first_frame = int(nuke.root()["first_frame"].getValue())
         last_frame = int(nuke.root()["last_frame"].getValue())
         step = 1
-        output_range = str(nuke.FrameRange(first_frame, last_frame, step))
         
         self.log.info("instance.data: `{}`".format(
             pformat(instance.data)))
