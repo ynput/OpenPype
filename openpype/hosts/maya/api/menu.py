@@ -21,10 +21,8 @@ def _get_menu(menu_name=None):
     if menu_name is None:
         menu_name = pipeline._menu
 
-    widgets = dict((
-        w.objectName(), w) for w in QtWidgets.QApplication.allWidgets())
-    menu = widgets.get(menu_name)
-    return menu
+    widgets = {w.objectName(): w for w in QtWidgets.QApplication.allWidgets()}
+    return widgets.get(menu_name)
 
 
 def deferred():
@@ -45,6 +43,34 @@ def deferred():
                 pipeline._parent
             )
         )
+
+    def add_scripts_menu():
+        try:
+            import scriptsmenu.launchformaya as launchformaya
+        except ImportError:
+            log.warning(
+                "Skipping studio.menu install, because "
+                "'scriptsmenu' module seems unavailable."
+            )
+            return
+
+        # load configuration of custom menu
+        project_settings = get_project_settings(os.getenv("AVALON_PROJECT"))
+        config = project_settings["maya"]["scriptsmenu"]["definition"]
+        _menu = project_settings["maya"]["scriptsmenu"]["name"]
+
+        if not config:
+            log.warning("Skipping studio menu, no definition found.")
+            return
+
+        # run the launcher for Maya menu
+        studio_menu = launchformaya.main(
+            title=_menu.title(),
+            objectName=_menu.title().lower().replace(" ", "_")
+        )
+
+        # apply configuration
+        studio_menu.build_from_configuration(studio_menu, config)
 
     def modify_workfiles():
         # Find the pipeline menu
@@ -101,38 +127,12 @@ def deferred():
 
     log.info("Attempting to install scripts menu ...")
 
+    # add_scripts_menu()
     add_build_workfiles_item()
     add_look_assigner_item()
     modify_workfiles()
     remove_project_manager()
-
-    try:
-        import scriptsmenu.launchformaya as launchformaya
-        import scriptsmenu.scriptsmenu as scriptsmenu
-    except ImportError:
-        log.warning(
-            "Skipping studio.menu install, because "
-            "'scriptsmenu' module seems unavailable."
-        )
-        return
-
-    # load configuration of custom menu
-    project_settings = get_project_settings(os.getenv("AVALON_PROJECT"))
-    config = project_settings["maya"]["scriptsmenu"]["definition"]
-    _menu = project_settings["maya"]["scriptsmenu"]["name"]
-
-    if not config:
-        log.warning("Skipping studio menu, no definition found.")
-        return
-
-    # run the launcher for Maya menu
-    studio_menu = launchformaya.main(
-        title=_menu.title(),
-        objectName=_menu.title().lower().replace(" ", "_")
-    )
-
-    # apply configuration
-    studio_menu.build_from_configuration(studio_menu, config)
+    add_scripts_menu()
 
 
 def uninstall():
@@ -153,7 +153,7 @@ def install():
         return
 
     # Allow time for uninstallation to finish.
-    cmds.evalDeferred(deferred)
+    cmds.evalDeferred(deferred, lowestPriority=True)
 
 
 def popup():
