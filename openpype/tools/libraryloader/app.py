@@ -38,7 +38,10 @@ class LibraryLoaderWindow(QtWidgets.QDialog):
 
         # Enable minimize and maximize for app
         self.setWindowTitle(self.tool_title)
-        self.setWindowFlags(QtCore.Qt.Window)
+        window_flags = QtCore.Qt.Window
+        if not parent:
+            window_flags |= QtCore.Qt.WindowStaysOnTopHint
+        self.setWindowFlags(window_flags)
         self.setFocusPolicy(QtCore.Qt.StrongFocus)
         if icon is not None:
             self.setWindowIcon(icon)

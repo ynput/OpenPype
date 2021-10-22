@@ -357,7 +357,7 @@ class ListWidget(InputWidget):
         new_entity = self.entity.add_new_item(row)
         input_field = self._input_fields_by_entity_id.get(new_entity.id)
         if input_field is not None:
-            input_field.input_field.setFocus(True)
+            input_field.input_field.setFocus()
         return new_entity
 
     def add_row(self, child_entity, row=None):

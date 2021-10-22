@@ -13,12 +13,8 @@
                     "label": "Image Loader"
                 },
                 {
-                    "key": "LoadMov",
-                    "label": "Movie Loader"
-                },
-                {
-                    "key": "LoadSequence",
-                    "label": "Image Sequence Loader"
+                    "key": "LoadClip",
+                    "label": "Clip Loader"
                 }
             ]
         }

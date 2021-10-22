@@ -17,6 +17,18 @@
                 "png",
                 "jpg"
             ]
+        },
+        "ExtractReview": {
+            "jpg_options": {
+                "tags": [
+                ]
+            },
+            "mov_options": {
+                "tags": [
+                    "review",
+                    "ftrackreview"
+                ]
+            }
         }
     },
     "workfile_builder": {

@@ -128,9 +128,9 @@ class ModifiableDictEmptyItem(QtWidgets.QWidget):
     def add_new_item(self, key=None, label=None):
         input_field = self.entity_widget.add_new_key(key, label)
         if self.collapsible_key:
-            self.key_input.setFocus(True)
+            self.key_input.setFocus()
         else:
-            input_field.key_input.setFocus(True)
+            input_field.key_input.setFocus()
         return input_field
 
     def _on_add_clicked(self):
@@ -563,7 +563,7 @@ class ModifiableDictItem(QtWidgets.QWidget):
 
     def on_add_clicked(self):
         widget = self.entity_widget.add_new_key(None, None)
-        widget.key_input.setFocus(True)
+        widget.key_input.setFocus()
 
     def on_edit_pressed(self):
         if not self.key_input.isVisible():
