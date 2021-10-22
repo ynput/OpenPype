@@ -408,6 +408,14 @@ class CreatedInstance:
             version = 1
         self._data["version"] = version
 
+        # Pop from source data all keys that are defined in `_data` before
+        #   this moment and through their values away
+        # - they should be the same and if are not then should not change
+        #   already set values
+        for key in self._data.keys():
+            if key in data:
+                data.pop(key)
+
         # Stored creator specific attribute values
         # {key: value}
         creator_values = copy.deepcopy(orig_creator_attributes)
