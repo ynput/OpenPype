@@ -2,6 +2,7 @@
 
 import re
 import os
+import platform
 import uuid
 import math
 
@@ -1885,6 +1886,8 @@ def set_context_settings():
 
     # Set frame range.
     avalon.maya.interactive.reset_frame_range()
+    # Set colorspace
+    set_colorspace()
 
 
 # Valid FPS
