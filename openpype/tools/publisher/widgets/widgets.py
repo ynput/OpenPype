@@ -333,6 +333,10 @@ class AbstractInstanceView(QtWidgets.QWidget):
 
 
 class ClickableFrame(QtWidgets.QFrame):
+    """Widget that catch left mouse click and can trigger a callback.
+
+    Callback is defined by overriding `_mouse_release_callback`.
+    """
     def __init__(self, parent):
         super(ClickableFrame, self).__init__(parent)
 
@@ -356,6 +360,7 @@ class ClickableFrame(QtWidgets.QFrame):
 
 
 class AssetsDialog(QtWidgets.QDialog):
+    """Dialog to select asset for a context of instance."""
     def __init__(self, controller, parent):
         super(AssetsDialog, self).__init__(parent)
         self.setWindowTitle("Select asset")
@@ -407,8 +412,9 @@ class AssetsDialog(QtWidgets.QDialog):
         self._soft_reset_enabled = True
 
     def showEvent(self, event):
+        """Refresh asset model on show."""
         super(AssetsDialog, self).showEvent(event)
-
+        # Refresh on show
         self.reset(False)
 
     def reset(self, force=True):
@@ -421,10 +427,13 @@ class AssetsDialog(QtWidgets.QDialog):
         self._model.reset()
 
     def name_is_valid(self, name):
+        # Make sure we're reset
         self.reset(False)
+        # Valid the name by model
         return self._model.name_is_valid(name)
 
     def _on_filter_change(self, text):
+        """Trigger change of filter of assets."""
         self._proxy_model.setFilterFixedString(text)
 
     def _on_cancel_clicked(self):
@@ -439,6 +448,10 @@ class AssetsDialog(QtWidgets.QDialog):
         self.done(1)
 
     def set_selected_assets(self, asset_names):
+        """Change preselected asset before showing the dialog.
+
+        This also resets model and clean filter.
+        """
         self.reset(False)
         self._asset_view.collapseAll()
         self._filter_input.setText("")
@@ -470,10 +483,15 @@ class AssetsDialog(QtWidgets.QDialog):
             self._asset_view.expand(proxy_index)
 
     def get_selected_asset(self):
+        """Get selected asset name."""
         return self._selected_asset
 
 
 class ClickableLineEdit(QtWidgets.QLineEdit):
+    """QLineEdit capturing left mouse click.
+
+    Triggers `clicked` signal on mouse click.
+    """
     clicked = QtCore.Signal()
 
     def __init__(self, *args, **kwargs):
@@ -501,6 +519,10 @@ class ClickableLineEdit(QtWidgets.QLineEdit):
 
 
 class AssetsField(ClickableFrame):
+    """Field where asset name of selected instance/s is showed.
+
+    Click on the field will trigger `AssetsDialog`.
+    """
     value_changed = QtCore.Signal()
 
     def __init__(self, controller, parent):
@@ -550,6 +572,11 @@ class AssetsField(ClickableFrame):
         self._dialog.open()
 
     def set_multiselection_text(self, text):
+        """Change text for multiselection of different assets.
+
+        When there are selected multiple instances at once and they don't have
+        same asset in context.
+        """
         self._multiselection_text = text
 
     def _set_is_valid(self, valid):
@@ -568,18 +595,33 @@ class AssetsField(ClickableFrame):
             self._name_input.style().polish(self._name_input)
 
     def is_valid(self):
+        """Is asset valid."""
         return self._is_valid
 
     def has_value_changed(self):
+        """Value of asset has changed."""
         return self._has_value_changed
 
     def get_selected_items(self):
+        """Selected asset names."""
         return list(self._selected_items)
 
     def set_text(self, text):
+        """Set text in text field.
+
+        Does not change selected items (assets).
+        """
         self._name_input.setText(text)
 
     def set_selected_items(self, asset_names=None):
+        """Set asset names for selection of instances.
+
+        Passed asset names are validated and if there are 2 or more different
+        asset names then multiselection text is shown.
+
+        Args:
+            asset_names (list, tuple, set, NoneType): List of asset names.
+        """
         if asset_names is None:
             asset_names = []
 
@@ -608,16 +650,26 @@ class AssetsField(ClickableFrame):
         self._set_is_valid(is_valid)
 
     def reset_to_origin(self):
+        """Change to asset names set with last `set_selected_items` call."""
         self.set_selected_items(self._origin_value)
 
 
 class TasksCombobox(QtWidgets.QComboBox):
+    """Combobox to show tasks for selected instances.
+
+    Combobox gives ability to select only from intersection of task names for
+    asset names in selected instances.
+
+    If asset names in selected instances does not have same tasks then combobox
+    will be empty.
+    """
     value_changed = QtCore.Signal()
 
     def __init__(self, controller, parent):
         super(TasksCombobox, self).__init__(parent)
         self.setObjectName("TasksCombobox")
 
+        # Set empty delegate to propagate stylesheet to a combobox
         delegate = QtWidgets.QStyledItemDelegate()
         self.setItemDelegate(delegate)
 
@@ -639,6 +691,7 @@ class TasksCombobox(QtWidgets.QComboBox):
         self._text = None
 
     def set_multiselection_text(self, text):
+        """Change text shown when multiple different tasks are in context."""
         self._multiselection_text = text
 
     def _on_index_change(self):
@@ -660,13 +713,18 @@ class TasksCombobox(QtWidgets.QComboBox):
         self.value_changed.emit()
 
     def set_text(self, text):
+        """Set context shown in combobox without chaning selected items."""
         if text == self._text:
             return
 
         self._text = text
 
     def paintEvent(self, event):
-        """Paint custom text without using QLineEdit."""
+        """Paint custom text without using QLineEdit.
+
+        The easiest way how to draw custom text in combobox and keep combobox
+        properties and event handling.
+        """
         painter = QtGui.QPainter(self)
         painter.setPen(self.palette().color(QtGui.QPalette.Text))
         opt = QtWidgets.QStyleOptionComboBox()
@@ -682,9 +740,11 @@ class TasksCombobox(QtWidgets.QComboBox):
         )
 
     def is_valid(self):
+        """Are all selected items valid."""
         return self._is_valid
 
     def has_value_changed(self):
+        """Did selection of task changed."""
         return self._has_value_changed
 
     def _set_is_valid(self, valid):
@@ -703,9 +763,17 @@ class TasksCombobox(QtWidgets.QComboBox):
             self.style().polish(self)
 
     def get_selected_items(self):
+        """Get selected tasks.
+
+        If value has changed then will return list with single item.
+
+        Returns:
+            list: Selected tasks.
+        """
         return list(self._selected_items)
 
     def set_asset_names(self, asset_names):
+        """Set asset names for which should show tasks."""
         self._ignore_index_change = True
 
         self._model.set_asset_names(asset_names)
@@ -743,6 +811,12 @@ class TasksCombobox(QtWidgets.QComboBox):
         self._set_is_valid(is_valid)
 
     def set_selected_items(self, asset_task_combinations=None):
+        """Set items for selected instances.
+
+        Args:
+            asset_task_combinations (list): List of tuples. Each item in
+                the list contain asset name and task name.
+        """
         if asset_task_combinations is None:
             asset_task_combinations = []
 
@@ -816,6 +890,7 @@ class TasksCombobox(QtWidgets.QComboBox):
             self.set_text(item_name)
 
     def reset_to_origin(self):
+        """Change to task names set with last `set_selected_items` call."""
         self.set_selected_items(self._origin_value)
 
 

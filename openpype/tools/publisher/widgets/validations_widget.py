@@ -12,6 +12,10 @@ from .widgets import (
 
 
 class ValidationErrorInstanceList(QtWidgets.QListView):
+    """List of publish instances that caused a validation error.
+
+    Instances are collected per plugin's validation error title.
+    """
     def __init__(self, *args, **kwargs):
         super(ValidationErrorInstanceList, self).__init__(*args, **kwargs)
 
@@ -33,6 +37,14 @@ class ValidationErrorInstanceList(QtWidgets.QListView):
 
 
 class ValidationErrorTitleWidget(QtWidgets.QWidget):
+    """Title of validation error.
+
+    Widget is used as radio button so requires clickable functionality and
+    changing style on selection/deselection.
+
+    Has toggle button to show/hide instances on which validation error happened
+    if there is a list (Valdation error may happen on context).
+    """
     selected = QtCore.Signal(int)
 
     def __init__(self, index, error_info, parent):
@@ -109,25 +121,31 @@ class ValidationErrorTitleWidget(QtWidgets.QWidget):
         self._instances_view = instances_view
 
     def _mouse_release_callback(self):
+        """Mark this widget as selected on click."""
         self.set_selected(True)
 
     @property
     def is_selected(self):
+        """Is widget marked a selected"""
         return self._selected
 
     @property
     def index(self):
+        """Widget's index set by parent."""
         return self._index
 
     def set_index(self, index):
+        """Set index of widget (called by parent)."""
         self._index = index
 
     def _change_style_property(self, selected):
+        """Change style of widget based on selection."""
         value = "1" if selected else ""
         self._title_frame.setProperty("selected", value)
         self._title_frame.style().polish(self._title_frame)
 
     def set_selected(self, selected=None):
+        """Change selected state of widget."""
         if selected is None:
             selected = not self._selected
 
@@ -140,6 +158,7 @@ class ValidationErrorTitleWidget(QtWidgets.QWidget):
             self.selected.emit(self._index)
 
     def _on_toggle_btn_click(self):
+        """Show/hide instances list."""
         new_visible = not self._instances_view.isVisible()
         self._instances_view.setVisible(new_visible)
         if new_visible:
@@ -149,6 +168,10 @@ class ValidationErrorTitleWidget(QtWidgets.QWidget):
 
 
 class ActionButton(ClickableFrame):
+    """Plugin's action callback button.
+
+    Action may have label or icon or both.
+    """
     action_clicked = QtCore.Signal(str)
 
     def __init__(self, action, parent):
@@ -179,6 +202,10 @@ class ActionButton(ClickableFrame):
 
 
 class ValidateActionsWidget(QtWidgets.QFrame):
+    """Wrapper widget for plugin actions.
+
+    Change actions based on selected validation error.
+    """
     def __init__(self, controller, parent):
         super(ValidateActionsWidget, self).__init__(parent)
 
@@ -198,6 +225,7 @@ class ValidateActionsWidget(QtWidgets.QFrame):
         self._actions_mapping = {}
 
     def clear(self):
+        """Remove actions from widget."""
         while self._content_layout.count():
             item = self._content_layout.takeAt(0)
             widget = item.widget()
@@ -206,6 +234,10 @@ class ValidateActionsWidget(QtWidgets.QFrame):
         self._actions_mapping = {}
 
     def set_plugin(self, plugin):
+        """Set selected plugin and show it's actions.
+
+        Clears current actions from widget and recreate them from the plugin.
+        """
         self.clear()
         self._plugin = plugin
         if not plugin:
@@ -238,6 +270,14 @@ class ValidateActionsWidget(QtWidgets.QFrame):
 
 
 class VerticallScrollArea(QtWidgets.QScrollArea):
+    """Scroll area for validation error titles.
+
+    The biggest difference is that the scroll area has scroll bar on left side
+    and resize of content will also resize scrollarea itself.
+
+    Resize if deffered by 100ms because at the moment of resize are not yet
+    propagated sizes and visibility of scroll bars.
+    """
     def __init__(self, *args, **kwargs):
         super(VerticallScrollArea, self).__init__(*args, **kwargs)
 
@@ -296,6 +336,23 @@ class VerticallScrollArea(QtWidgets.QScrollArea):
 
 
 class ValidationsWidget(QtWidgets.QWidget):
+    """Widgets showing validation error.
+
+    This widget is shown if validation error/s happened during validation part.
+
+    Shows validation error titles with instances on which happened and
+    validation error detail with possible actions (repair).
+
+    ┌──────┬────────────────┬───────┐
+    │titles│                │actions│
+    │      │                │       │
+    │      │  Error detail  │       │
+    │      │                │       │
+    │      │                │       │
+    ├──────┴────────────────┴───────┤
+    │         Publish buttons       │
+    └───────────────────────────────┘
+    """
     def __init__(self, controller, parent):
         super(ValidationsWidget, self).__init__(parent)
 
@@ -354,6 +411,7 @@ class ValidationsWidget(QtWidgets.QWidget):
         self._previous_select = None
 
     def clear(self):
+        """Delete all dynamic widgets and hide all wrappers."""
         self._title_widgets = {}
         self._error_info = {}
         self._previous_select = None
@@ -369,6 +427,7 @@ class ValidationsWidget(QtWidgets.QWidget):
         self._actions_widget.setVisible(False)
 
     def set_errors(self, errors):
+        """Set errors into context and created titles."""
         self.clear()
         if not errors:
             return
