@@ -124,19 +124,17 @@ class LoaderWindow(QtWidgets.QDialog):
         else:
             main_splitter.setSizes([250, 850, 200])
 
-        # TODO keep footer size by message size
         footer_widget = QtWidgets.QWidget(self)
-        footer_widget.setFixedHeight(20)
 
         message_label = QtWidgets.QLabel(footer_widget)
 
-        footer_layout = QtWidgets.QVBoxLayout(footer_widget)
+        footer_layout = QtWidgets.QHBoxLayout(footer_widget)
         footer_layout.setContentsMargins(0, 0, 0, 0)
-        footer_layout.addWidget(message_label)
+        footer_layout.addWidget(message_label, 1)
 
         layout = QtWidgets.QVBoxLayout(self)
-        layout.addWidget(main_splitter)
-        layout.addWidget(footer_widget)
+        layout.addWidget(main_splitter, 1)
+        layout.addWidget(footer_widget, 0)
 
         self.data = {
             "state": {
