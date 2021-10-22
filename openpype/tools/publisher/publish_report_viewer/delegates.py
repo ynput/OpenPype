@@ -33,10 +33,10 @@ class GroupItemDelegate(QtWidgets.QStyledItemDelegate):
     _plus_pixmaps = {}
     _path_stroker = None
 
-    _item_pix_offset_ratio = 1 / 5
-    _item_border_size = 1 / 7
-    _group_pix_offset_ratio = 1 / 3
-    _group_pix_stroke_size_ratio = 1 / 7
+    _item_pix_offset_ratio = 1.0 / 5.0
+    _item_border_size = 1.0 / 7.0
+    _group_pix_offset_ratio = 1.0 / 3.0
+    _group_pix_stroke_size_ratio = 1.0 / 7.0
 
     @classmethod
     def _get_path_stroker(cls):
