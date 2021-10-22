@@ -28,7 +28,6 @@ class ExtractModel(openpype.api.Extractor):
         handle_end = instance.context.data["handleEnd"]
         first_frame = int(nuke.root()["first_frame"].getValue())
         last_frame = int(nuke.root()["last_frame"].getValue())
-        step = 1
         
         self.log.info("instance.data: `{}`".format(
             pformat(instance.data)))
