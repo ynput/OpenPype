@@ -2777,7 +2777,7 @@ def set_colorspace():
 
         if resolved_path:
             filepath = str(resolved_path).replace("\\", "/")
-            cmds.colorManagementPrefs(e=True, configFilePath=filepath )
+            cmds.colorManagementPrefs(e=True, configFilePath=filepath)
             cmds.colorManagementPrefs(e=True, cmConfigFileEnabled=True)
             log.debug("maya '{}' changed to: {}".format(
                 "configFilePath", resolved_path))
