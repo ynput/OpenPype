@@ -393,6 +393,7 @@ class CreatedInstance:
 
         # QUESTION Does it make sense to have data stored as ordered dict?
         self._data = collections.OrderedDict()
+        # QUESTION Do we need this "id" information on instance?
         self._data["id"] = "pyblish.avalon.instance"
         self._data["family"] = family
         self._data["subset"] = subset_name
