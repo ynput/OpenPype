@@ -1886,6 +1886,7 @@ def set_context_settings():
 
     # Set frame range.
     avalon.maya.interactive.reset_frame_range()
+    
     # Set colorspace
     set_colorspace()
 
@@ -2781,6 +2782,10 @@ def set_colorspace():
             log.debug("maya '{}' changed to: {}".format(
                 "configFilePath", resolved_path))
             root_dict.pop("configFilePath")
+        else :
+            cmds.colorManagementPrefs(e=True, cmConfigFileEnabled=False)
+            cmds.colorManagementPrefs(e=True, configFilePath= "" )
+
 
 
     # third define rendering space and view transform
