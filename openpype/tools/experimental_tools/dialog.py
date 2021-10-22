@@ -30,6 +30,7 @@ class ExperimentalToolsDialog(QtWidgets.QDialog):
         icon = QtGui.QIcon(app_icon_path())
         self.setWindowIcon(icon)
 
+        # Widgets for cases there are not available experimental tools
         empty_widget = QtWidgets.QWidget(self)
 
         empty_label = QtWidgets.QLabel(
@@ -49,16 +50,42 @@ class ExperimentalToolsDialog(QtWidgets.QDialog):
         empty_layout.addStretch(1)
         empty_layout.addLayout(empty_btns_layout)
 
-        content_widget = QtWidgets.QWidget(self)
+        # Content of Experimental tools
 
-        content_layout = QtWidgets.QVBoxLayout(content_widget)
+        # Layout where buttons are added
+        content_layout = QtWidgets.QVBoxLayout()
         content_layout.setContentsMargins(0, 0, 0, 0)
+
+        # Separator line
+        separator_widget = QtWidgets.QWidget(self)
+        separator_widget.setObjectName("Separator")
+        separator_widget.setMinimumHeight(2)
+        separator_widget.setMaximumHeight(2)
+
+        # Label describing how to turn off tools
+        tool_btns_widget = QtWidgets.QWidget(self)
+        tool_btns_label = QtWidgets.QLabel(
+            (
+                "You can enable these features in"
+                "<br><b>OpenPype tray -> Settings -> Experimental tools</b>"
+            ),
+            tool_btns_widget
+        )
+        tool_btns_label.setAlignment(QtCore.Qt.AlignCenter)
+
+        tool_btns_layout = QtWidgets.QVBoxLayout(tool_btns_widget)
+        tool_btns_layout.setContentsMargins(0, 0, 0, 0)
+        tool_btns_layout.addLayout(content_layout)
+        tool_btns_layout.addStretch(1)
+        tool_btns_layout.addWidget(separator_widget, 0)
+        tool_btns_layout.addWidget(tool_btns_label, 0)
 
         experimental_tools = ExperimentalTools()
 
+        # Main layout
         layout = QtWidgets.QVBoxLayout(self)
         layout.addWidget(empty_widget, 1)
-        layout.addWidget(content_widget, 1)
+        layout.addWidget(tool_btns_widget, 1)
 
         refresh_timer = QtCore.QTimer()
         refresh_timer.setInterval(self.refresh_interval)
@@ -67,7 +94,7 @@ class ExperimentalToolsDialog(QtWidgets.QDialog):
         ok_btn.clicked.connect(self._on_ok_click)
 
         self._empty_widget = empty_widget
-        self._content_widget = content_widget
+        self._tool_btns_widget = tool_btns_widget
         self._content_layout = content_layout
 
         self._experimental_tools = experimental_tools
@@ -94,7 +121,7 @@ class ExperimentalToolsDialog(QtWidgets.QDialog):
                 button = self._buttons_by_tool_identifier[identifier]
             else:
                 is_new = True
-                button = ToolButton(identifier, self)
+                button = ToolButton(identifier, self._tool_btns_widget)
                 button.triggered.connect(self._on_btn_trigger)
                 self._buttons_by_tool_identifier[identifier] = button
                 self._content_layout.insertWidget(idx, button)
@@ -128,7 +155,7 @@ class ExperimentalToolsDialog(QtWidgets.QDialog):
 
     def _set_visibility(self):
         content_visible = self._is_content_visible()
-        self._content_widget.setVisible(content_visible)
+        self._tool_btns_widget.setVisible(content_visible)
         self._empty_widget.setVisible(not content_visible)
 
     def _on_ok_click(self):
