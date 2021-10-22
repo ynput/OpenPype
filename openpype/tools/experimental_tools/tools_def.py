@@ -117,6 +117,8 @@ class ExperimentalTools:
         self._tools = experimental_tools
         self._parent_widget = parent
 
+        self._publisher_tool = None
+
     @property
     def tools(self):
         """Tools in list.
