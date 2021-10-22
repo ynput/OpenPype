@@ -272,14 +272,22 @@ class GroupItemDelegate(QtWidgets.QStyledItemDelegate):
         bg_rect.setY(_rect.y())
         bg_rect.setHeight(_rect.height())
 
-        expander_rect = QtCore.QRectF(bg_rect)
-        expander_rect.setWidth(expander_rect.height() + 5)
+        expander_height = bg_rect.height()
+        expander_width = expander_height + 5
+        expander_y_offset = expander_height % 2
+        expander_height -= expander_y_offset
+        expander_rect = QtCore.QRectF(
+            bg_rect.x(),
+            bg_rect.y() + expander_y_offset,
+            expander_width,
+            expander_height
+        )
 
         label_rect = QtCore.QRectF(
-            expander_rect.x() + expander_rect.width(),
-            expander_rect.y(),
-            bg_rect.width() - expander_rect.width(),
-            expander_rect.height()
+            bg_rect.x() + expander_width,
+            bg_rect.y(),
+            bg_rect.width() - expander_width,
+            bg_rect.height()
         )
 
         bg_path = QtGui.QPainterPath()
@@ -298,9 +306,9 @@ class GroupItemDelegate(QtWidgets.QStyledItemDelegate):
 
         expanded = self.parent().isExpanded(index)
         if expanded:
-            expander_icon = self._get_minus_pixmap(expander_rect.height())
+            expander_icon = self._get_minus_pixmap(expander_height)
         else:
-            expander_icon = self._get_plus_pixmap(expander_rect.height())
+            expander_icon = self._get_plus_pixmap(expander_height)
 
         label = index.data(QtCore.Qt.DisplayRole)
         label = option.fontMetrics.elidedText(
