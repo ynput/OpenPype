@@ -365,7 +365,7 @@
             "label": "Maya",
             "children": [    
                 {
-                    "key": "colorManagmentPreference",
+                    "key": "colorManagementPreference",
                     "type": "dict",
                     "label": "Color Managment Preference",
                     "collapsible": false,

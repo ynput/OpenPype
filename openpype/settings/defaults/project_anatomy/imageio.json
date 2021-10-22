@@ -176,7 +176,7 @@
         }
     },
     "maya": {
-        "colorManagmentPreference": {
+        "colorManagementPreference": {
             "configFilePath": {
                 "windows": [],
                 "darwin": [],

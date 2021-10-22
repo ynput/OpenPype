@@ -2752,7 +2752,7 @@ def set_colorspace():
 
     """
     imageio = get_anatomy_settings(os.getenv("AVALON_PROJECT"))["imageio"]["maya"]
-    root_dict = imageio["colorManagmentPreference"]
+    root_dict = imageio["colorManagementPreference"]
     
     if not isinstance(root_dict, dict):
         msg = "set_colorspace(): argument should be dictionary"
