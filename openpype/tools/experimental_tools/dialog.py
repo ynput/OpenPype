@@ -81,7 +81,9 @@ class ExperimentalToolsDialog(QtWidgets.QDialog):
         tool_btns_layout.addWidget(separator_widget, 0)
         tool_btns_layout.addWidget(tool_btns_label, 0)
 
-        experimental_tools = ExperimentalTools()
+        experimental_tools = ExperimentalTools(
+            parent=parent, filter_hosts=True
+        )
 
         # Main layout
         layout = QtWidgets.QVBoxLayout(self)
