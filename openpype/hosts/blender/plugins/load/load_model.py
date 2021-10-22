@@ -93,7 +93,7 @@ class BlendModelLoader(plugin.AssetLoader):
 
         bpy.data.orphans_purge(do_local_ids=False)
 
-        bpy.ops.object.select_all(action='DESELECT')
+        plugin.deselect_all()
 
         return objects
 
@@ -126,7 +126,7 @@ class BlendModelLoader(plugin.AssetLoader):
         asset_group.empty_display_type = 'SINGLE_ARROW'
         avalon_container.objects.link(asset_group)
 
-        bpy.ops.object.select_all(action='DESELECT')
+        plugin.deselect_all()
 
         if options is not None:
             parent = options.get('parent')
@@ -158,7 +158,7 @@ class BlendModelLoader(plugin.AssetLoader):
 
                 bpy.ops.object.parent_set(keep_transform=True)
 
-                bpy.ops.object.select_all(action='DESELECT')
+                plugin.deselect_all()
 
         objects = self._process(libpath, asset_group, group_name)
 
