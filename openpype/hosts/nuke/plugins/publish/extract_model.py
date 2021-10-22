@@ -1,6 +1,5 @@
 import nuke
 import os
-import math
 import pyblish.api
 import openpype.api
 from avalon.nuke import lib as anlib
@@ -31,7 +30,6 @@ class ExtractModel(openpype.api.Extractor):
         last_frame = int(nuke.root()["last_frame"].getValue())
         step = 1
         output_range = str(nuke.FrameRange(first_frame, last_frame, step))
-
         
         self.log.info("instance.data: `{}`".format(
             pformat(instance.data)))
