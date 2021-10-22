@@ -8,6 +8,8 @@ LOCAL_EXPERIMENTAL_KEY = "experimental_tools"
 class ExperimentalTool:
     """Definition of experimental tool.
 
+    Definition is used in local settings and in experimental tools dialog.
+
     Args:
         identifier (str): String identifier of tool (unique).
         label (str): Label shown in UI.
@@ -69,6 +71,20 @@ class ExperimentalTools:
                 "Combined creation and publishing into one tool."
             )
         ]
+
+        # --- Example tool (callback will just print on click) ---
+        # def example_callback(*args):
+        #     print("Triggered tool")
+        #
+        # experimental_tools = [
+        #     ExperimentalTool(
+        #         "example",
+        #         "Example experimental tool",
+        #         example_callback,
+        #         "Example tool tooltip."
+        #     )
+        # ]
+
         # Try to get host name from env variable `AVALON_APP`
         if not host_name:
             host_name = os.environ.get("AVALON_APP")
@@ -97,13 +113,32 @@ class ExperimentalTools:
                 ).format(tool.identifier))
             tools_by_identifier[tool.identifier] = tool
 
-        self.tools_by_identifier = tools_by_identifier
-        self.tools = experimental_tools
+        self._tools_by_identifier = tools_by_identifier
+        self._tools = experimental_tools
         self._parent_widget = parent
 
-        self._publisher_tool = None
+    @property
+    def tools(self):
+        """Tools in list.
+
+        Returns:
+            list: Tools filtered by host name if filtering was enabled
+                on initialization.
+        """
+        return self._tools
+
+    @property
+    def tools_by_identifier(self):
+        """Tools by their identifier.
+
+        Returns:
+            dict: Tools by identifier filtered by host name if filtering
+                was enabled on initialization.
+        """
+        return self._tools_by_identifier
 
     def refresh_availability(self):
+        """Reload local settings and check if any tool changed ability."""
         local_settings = get_local_settings()
         experimental_settings = (
             local_settings.get(LOCAL_EXPERIMENTAL_KEY)

@@ -12,12 +12,36 @@ _FONT_IDS = None
 current_dir = os.path.dirname(os.path.abspath(__file__))
 
 
+def _get_colors_raw_data():
+    """Read data file with stylesheet fill values.
+
+    Returns:
+        dict: Loaded data for stylesheet.
+    """
+    data_path = os.path.join(current_dir, "data.json")
+    with open(data_path, "r") as data_stream:
+        data = json.load(data_stream)
+    return data
+
+
 def get_colors_data():
+    """Only color data from stylesheet data."""
     data = _get_colors_raw_data()
     return data.get("color") or {}
 
 
 def _convert_color_values_to_objects(value):
+    """Parse all string values in dictionary to Color definitions.
+
+    Recursive function calling itself if value is dictionary.
+
+    Args:
+        value (dict, str): String is parsed into color definition object and
+            dictionary is passed into this function.
+
+    Raises:
+        TypeError: If value in color data do not contain string of dictionary.
+    """
     if isinstance(value, dict):
         output = {}
         for _key, _value in value.items():
@@ -32,6 +56,11 @@ def _convert_color_values_to_objects(value):
 
 
 def get_objected_colors():
+    """Colors parsed from stylesheet data into color definitions.
+
+    Returns:
+        dict: Parsed color objects by keys in data.
+    """
     colors_data = get_colors_data()
     output = {}
     for key, value in colors_data.items():
@@ -39,14 +68,15 @@ def get_objected_colors():
     return output
 
 
-def _get_colors_raw_data():
-    data_path = os.path.join(current_dir, "data.json")
-    with open(data_path, "r") as data_stream:
-        data = json.load(data_stream)
-    return data
-
-
 def _load_stylesheet():
+    """Load strylesheet and trigger all related callbacks.
+
+    Style require more than a stylesheet string. Stylesheet string
+    contains paths to resources which must be registered into Qt application
+    and load fonts used in stylesheets.
+
+    Also replace values from stylesheet data into stylesheet text.
+    """
     from . import qrc_resources
 
     qrc_resources.qInitResources()
@@ -78,6 +108,7 @@ def _load_stylesheet():
 
 
 def _load_font():
+    """Load and register fonts into Qt application."""
     from Qt import QtGui
 
     global _FONT_IDS
@@ -117,6 +148,7 @@ def _load_font():
 
 
 def load_stylesheet():
+    """Load and return OpenPype Qt stylesheet."""
     global _STYLESHEET_CACHE
     if _STYLESHEET_CACHE is None:
         _STYLESHEET_CACHE = _load_stylesheet()
@@ -125,4 +157,5 @@ def load_stylesheet():
 
 
 def app_icon_path():
+    """Path to OpenPype icon."""
     return resources.get_openpype_icon_filepath()

@@ -244,17 +244,17 @@ class CollectMayaRender(pyblish.api.ContextPlugin):
             # metadata file will be located in top-most common
             # directory.
             # TODO: use `os.path.commonpath()` after switch to Python 3
+            publish_meta_path = os.path.normpath(publish_meta_path)
             common_publish_meta_path = os.path.splitdrive(
                 publish_meta_path)[0]
             if common_publish_meta_path:
                 common_publish_meta_path += os.path.sep
-            for part in publish_meta_path.split("/"):
+            for part in publish_meta_path.replace(
+                    common_publish_meta_path, "").split(os.path.sep):
                 common_publish_meta_path = os.path.join(
                     common_publish_meta_path, part)
                 if part == expected_layer_name:
                     break
-            common_publish_meta_path = common_publish_meta_path.replace(
-                "\\", "/")
             self.log.info(
                 "Publish meta path: {}".format(common_publish_meta_path))
 

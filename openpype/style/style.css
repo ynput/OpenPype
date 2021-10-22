@@ -206,12 +206,28 @@ QComboBox::down-arrow, QComboBox::down-arrow:on, QComboBox::down-arrow:hover, QC
 }
 
 /* Splitter */
-QSplitter {
-    border: none;
+QSplitter::handle {
+    border: 3px solid transparent;
 }
 
-QSplitter::handle {
-    border: 1px dotted {color:bg-menu-separator};
+QSplitter::handle:horizontal {
+    /* must be single like because of Nuke*/
+    background: qlineargradient(x1:0, y1:0, x2:1, y2:0,stop:0.3 rgba(0, 0, 0, 0),stop:0.5 {color:bg-splitter},stop:0.7 rgba(0, 0, 0, 0));
+}
+
+QSplitter::handle:vertical {
+    /* must be single like because of Nuke*/
+    background: qlineargradient(x1:0, y1:0, x2:0, y2:1,stop:0.3 rgba(0, 0, 0, 0),stop:0.5 {color:bg-splitter},stop:0.7 rgba(0, 0, 0, 0));
+}
+
+QSplitter::handle:horizontal:hover {
+    /* must be single like because of Nuke*/
+    background: qlineargradient(x1:0, y1:0, x2:1, y2:0,stop:0.3 rgba(0, 0, 0, 0),stop:0.5 {color:bg-splitter-hover},stop:0.7 rgba(0, 0, 0, 0));
+}
+
+QSplitter::handle:vertical:hover {
+    /* must be single like because of Nuke*/
+    background: qlineargradient(x1:0, y1:0, x2:0, y2:1,stop:0.3 rgba(0, 0, 0, 0),stop:0.5 {color:bg-splitter-hover},stop:0.7 rgba(0, 0, 0, 0));
 }
 
 /* SLider */
@@ -238,18 +254,15 @@ QSlider::groove:focus {
     border-color: {color:border-focus};
 }
 QSlider::handle {
-    background: qlineargradient(
-        x1: 0, y1: 0.5,
-        x2: 1, y2: 0.5,
-        stop: 0 {palette:blue-base},
-        stop: 1 {palette:green-base}
-    );
+    /* must be single like because of Nuke*/
+    background: qlineargradient(x1: 0, y1: 0.5, x2: 1, y2: 0.5,stop: 0 {palette:blue-base},stop: 1 {palette:green-base});
     border: 1px solid #5c5c5c;
     width: 10px;
     height: 10px;
 
     border-radius: 5px;
 }
+
 QSlider::handle:horizontal {
     margin: -2px 0;
 }
@@ -258,12 +271,8 @@ QSlider::handle:vertical {
 }
 
 QSlider::handle:disabled {
-    background: qlineargradient(
-        x1:0, y1:0,
-        x2:1, y2:1,
-        stop:0 {color:bg-buttons},
-        stop:1 {color:bg-buttons-disabled}
-    );
+    /* must be single like because of Nuke*/
+    background: qlineargradient(x1:0, y1:0,x2:1, y2:1,stop:0 {color:bg-buttons},stop:1 {color:bg-buttons-disabled});
 }
 
 /* Tab widget*/
@@ -281,19 +290,15 @@ QTabBar::tab {
     border-left: 3px solid transparent;
     border-top: 1px solid {color:border};
     border-right: 1px solid {color:border};
-    background: qlineargradient(
-        x1: 0, y1: 1, x2: 0, y2: 0,
-        stop: 0.5 {color:bg}, stop: 1.0 {color:bg-inputs}
-    );
+    /* must be single like because of Nuke*/
+    background: qlineargradient(x1: 0, y1: 1, x2: 0, y2: 0,stop: 0.5 {color:bg}, stop: 1.0 {color:bg-inputs});
 }
 
 QTabBar::tab:selected {
     background: {color:grey-lighter};
     border-left: 3px solid {color:border-focus};
-    background: qlineargradient(
-        x1: 0, y1: 1, x2: 0, y2: 0,
-        stop: 0.5 {color:bg}, stop: 1.0 {color:border}
-    );
+    /* must be single like because of Nuke*/
+    background: qlineargradient(x1: 0, y1: 1, x2: 0, y2: 0,stop: 0.5 {color:bg}, stop: 1.0 {color:border});
 }
 
 QTabBar::tab:!selected {
@@ -341,6 +346,15 @@ QHeaderView::section:first {
 QHeaderView::section:last {
     border-right: none;
 }
+
+QHeaderView::down-arrow {
+    image: url(:/openpype/images/down_arrow.png);
+}
+
+QHeaderView::up-arrow {
+    image: url(:/openpype/images/up_arrow.png);
+}
+
 /* Views QListView QTreeView QTableView */
 QAbstractItemView {
     border: 0px solid {color:border};
@@ -399,22 +413,41 @@ QAbstractItemView::branch:open:has-children:has-siblings {
 QAbstractItemView::branch:open:has-children:!has-siblings:hover,
 QAbstractItemView::branch:open:has-children:has-siblings:hover {
     border-image: none;
-    image: url(:/openpype/images//branch_open_on.png);
+    image: url(:/openpype/images/branch_open_on.png);
     background: transparent;
 }
 
 QAbstractItemView::branch:has-children:!has-siblings:closed,
 QAbstractItemView::branch:closed:has-children:has-siblings {
     border-image: none;
-    image: url(:/openpype/images//branch_closed.png);
+    image: url(:/openpype/images/branch_closed.png);
     background: transparent;
 }
 QAbstractItemView::branch:has-children:!has-siblings:closed:hover,
 QAbstractItemView::branch:closed:has-children:has-siblings:hover {
     border-image: none;
-    image: url(:/openpype/images//branch_closed_on.png);
+    image: url(:/openpype/images/branch_closed_on.png);
     background: transparent;
 }
+
+QAbstractItemView::branch:has-siblings:!adjoins-item {
+    border-image: none;
+    image: url(:/openpype/images/transparent.png);
+    background: transparent;
+}
+
+QAbstractItemView::branch:has-siblings:adjoins-item {
+    border-image: none;
+    image: url(:/openpype/images/transparent.png);
+    background: transparent;
+}
+
+QAbstractItemView::branch:!has-children:!has-siblings:adjoins-item {
+    border-image: none;
+    image: url(:/openpype/images/transparent.png);
+    background: transparent;
+}
+
 
 /* Progress bar */
 QProgressBar {
@@ -431,12 +464,8 @@ QProgressBar:vertical {
 }
 
 QProgressBar::chunk {
-    background: qlineargradient(
-        x1: 0, y1: 0.5,
-        x2: 1, y2: 0.5,
-        stop: 0 {palette:blue-base},
-        stop: 1 {palette:green-base}
-    );
+    /* must be single like because of Nuke*/
+    background: qlineargradient(x1: 0, y1: 0.5,x2: 1, y2: 0.5,stop: 0 {palette:blue-base},stop: 1 {palette:green-base});
 }
 
 /* Scroll bars */
@@ -643,6 +672,19 @@ QScrollBar::add-page:vertical, QScrollBar::sub-page:vertical {
 /* Python console interpreter */
 #PythonInterpreterOutput, #PythonCodeEditor {
     font-family: "Roboto Mono";
+}
+
+#SubsetView::item, #RepresentationView:item {
+    padding: 5px 1px;
+    border: 0px;
+}
+
+#OptionalActionBody, #OptionalActionOption {
+    background: transparent;
+}
+
+#OptionalActionBody[state="hover"], #OptionalActionOption[state="hover"] {
+    background: {color:bg-view-hover};
 }
 
 /* New Create/Publish UI */
