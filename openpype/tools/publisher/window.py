@@ -28,6 +28,7 @@ from .widgets import (
 
 
 class PublisherWindow(QtWidgets.QDialog):
+    """Main window of publisher."""
     default_width = 1000
     default_height = 600
 
@@ -241,14 +242,13 @@ class PublisherWindow(QtWidgets.QDialog):
 
         self.creator_window = creator_window
 
-        self.setStyleSheet(style.load_stylesheet())
-
-        self.resize(self.default_width, self.default_height)
 
     def showEvent(self, event):
         super(PublisherWindow, self).showEvent(event)
         if self._first_show:
             self._first_show = False
+            self.resize(self.default_width, self.default_height)
+            self.setStyleSheet(style.load_stylesheet())
             self.reset()
 
     def closeEvent(self, event):
