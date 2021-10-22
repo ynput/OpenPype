@@ -4,11 +4,11 @@ import nuke
 
 @pyblish.api.log
 class CollectModel(pyblish.api.InstancePlugin):
-    """Collect Model (group) node instance and its content
+    """Collect Model node instance and its content
     """
 
     order = pyblish.api.CollectorOrder + 0.22
-    label = "Collect Model (Group)"
+    label = "Collect Model"
     hosts = ["nuke"]
     families = ["model"]
 

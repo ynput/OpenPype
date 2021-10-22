@@ -32,7 +32,6 @@
         "PreCollectNukeInstances": {
             "sync_workfile_version_on_families": [
                 "nukenodes",
-                "model",
                 "camera",
                 "gizmo",
                 "source",
