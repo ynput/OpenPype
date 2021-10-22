@@ -15,7 +15,7 @@ class AlembicModelLoader(api.Loader):
     label = "Load Alembic Model"
     icon = "model"
     color = "orange"
-    node_color = "0xff3200ff"
+    node_color = "0x4ecd91ff"
 
     def load(self, context, name, namespace, data):
         # get main variables
