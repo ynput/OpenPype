@@ -425,20 +425,20 @@ QAbstractItemView::branch:open:has-children:has-siblings {
 QAbstractItemView::branch:open:has-children:!has-siblings:hover,
 QAbstractItemView::branch:open:has-children:has-siblings:hover {
     border-image: none;
-    image: url(:/openpype/images//branch_open_on.png);
+    image: url(:/openpype/images/branch_open_on.png);
     background: transparent;
 }
 
 QAbstractItemView::branch:has-children:!has-siblings:closed,
 QAbstractItemView::branch:closed:has-children:has-siblings {
     border-image: none;
-    image: url(:/openpype/images//branch_closed.png);
+    image: url(:/openpype/images/branch_closed.png);
     background: transparent;
 }
 QAbstractItemView::branch:has-children:!has-siblings:closed:hover,
 QAbstractItemView::branch:closed:has-children:has-siblings:hover {
     border-image: none;
-    image: url(:/openpype/images//branch_closed_on.png);
+    image: url(:/openpype/images/branch_closed_on.png);
     background: transparent;
 }
 
