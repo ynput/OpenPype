@@ -1886,7 +1886,7 @@ def set_context_settings():
 
     # Set frame range.
     avalon.maya.interactive.reset_frame_range()
-    
+
     # Set colorspace
     set_colorspace()
 
@@ -2749,11 +2749,11 @@ def iter_shader_edits(relationships, shader_nodes, nodes_by_id, label=None):
 
 def set_colorspace():
     """Set Colorspace from project configuration
-
     """
-    imageio = get_anatomy_settings(os.getenv("AVALON_PROJECT"))["imageio"]["maya"]
+    project_name = os.getenv("AVALON_PROJECT")
+    imageio = get_anatomy_settings(project_name)["imageio"]["maya"]
     root_dict = imageio["colorManagementPreference"]
-    
+
     if not isinstance(root_dict, dict):
         msg = "set_colorspace(): argument should be dictionary"
         log.error(msg)
@@ -2776,21 +2776,18 @@ def set_colorspace():
                 continue
 
         if resolved_path:
-            cmds.colorManagementPrefs(e=True, configFilePath= str(resolved_path).replace("\\", "/") )
+            filepath = str(resolved_path).replace("\\", "/")
+            cmds.colorManagementPrefs(e=True, configFilePath=filepath )
             cmds.colorManagementPrefs(e=True, cmConfigFileEnabled=True)
-            
             log.debug("maya '{}' changed to: {}".format(
                 "configFilePath", resolved_path))
             root_dict.pop("configFilePath")
-        else :
+        else:
             cmds.colorManagementPrefs(e=True, cmConfigFileEnabled=False)
-            cmds.colorManagementPrefs(e=True, configFilePath= "" )
+            cmds.colorManagementPrefs(e=True, configFilePath="" )
 
-
-
-    # third define rendering space and view transform
+    # third set rendering space and view transform
     renderSpace = root_dict["renderSpace"]
     cmds.colorManagementPrefs(e=True, renderingSpaceName=renderSpace)
     viewTransform = root_dict["viewTransform"]
     cmds.colorManagementPrefs(e=True, viewTransformName=viewTransform)
-
