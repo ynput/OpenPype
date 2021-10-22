@@ -41,7 +41,6 @@ class HostToolsHelper:
     def get_workfiles_tool(self, parent):
         """Create, cache and return workfiles tool window."""
         if self._workfiles_tool is None:
-            from avalon import style
             from openpype.tools.workfiles.app import (
                 Window, validate_host_requirements
             )
@@ -50,13 +49,14 @@ class HostToolsHelper:
             validate_host_requirements(host)
 
             workfiles_window = Window(parent=parent)
-            workfiles_window.setStyleSheet(style.load_stylesheet())
             self._workfiles_tool = workfiles_window
 
         return self._workfiles_tool
 
     def show_workfiles(self, parent=None, use_context=None, save=None):
         """Workfiles tool for changing context and saving workfiles."""
+        from avalon import style
+
         if use_context is None:
             use_context = True
 
@@ -80,24 +80,28 @@ class HostToolsHelper:
         # Pull window to the front.
         workfiles_tool.raise_()
         workfiles_tool.activateWindow()
+        workfiles_tool.setStyleSheet(style.load_stylesheet())
 
     def get_loader_tool(self, parent):
         """Create, cache and return loader tool window."""
         if self._loader_tool is None:
-            from avalon import style
             from openpype.tools.loader import LoaderWindow
 
             loader_window = LoaderWindow(parent=parent or self._parent)
-            loader_window.setStyleSheet(style.load_stylesheet())
             self._loader_tool = loader_window
 
         return self._loader_tool
 
     def show_loader(self, parent=None, use_context=None):
         """Loader tool for loading representations."""
+        loader_tool = self.get_loader_tool(parent)
+
+        loader_tool.show()
+        loader_tool.raise_()
+        loader_tool.activateWindow()
+
         if use_context is None:
             use_context = False
-        loader_tool = self.get_loader_tool(parent)
 
         if use_context:
             context = {"asset": avalon.api.Session["AVALON_ASSET"]}
@@ -105,28 +109,25 @@ class HostToolsHelper:
         else:
             loader_tool.refresh()
 
-        loader_tool.show()
-        loader_tool.raise_()
-        loader_tool.activateWindow()
-        loader_tool.refresh()
-
     def get_creator_tool(self, parent):
         """Create, cache and return creator tool window."""
         if self._creator_tool is None:
-            from avalon import style
             from avalon.tools.creator.app import Window
 
             creator_window = Window(parent=parent or self._parent)
-            creator_window.setStyleSheet(style.load_stylesheet())
             self._creator_tool = creator_window
 
         return self._creator_tool
 
     def show_creator(self, parent=None):
         """Show tool to create new instantes for publishing."""
+        from avalon import style
+
         creator_tool = self.get_creator_tool(parent)
         creator_tool.refresh()
         creator_tool.show()
+
+        creator_tool.setStyleSheet(style.load_stylesheet())
 
         # Pull window to the front.
         creator_tool.raise_()
@@ -135,19 +136,21 @@ class HostToolsHelper:
     def get_subset_manager_tool(self, parent):
         """Create, cache and return subset manager tool window."""
         if self._subset_manager_tool is None:
-            from avalon import style
             from avalon.tools.subsetmanager import Window
 
             subset_manager_window = Window(parent=parent or self._parent)
-            subset_manager_window.setStyleSheet(style.load_stylesheet())
             self._subset_manager_tool = subset_manager_window
 
         return self._subset_manager_tool
 
     def show_subset_manager(self, parent=None):
         """Show tool display/remove existing created instances."""
+        from avalon import style
+
         subset_manager_tool = self.get_subset_manager_tool(parent)
         subset_manager_tool.show()
+
+        subset_manager_tool.setStyleSheet(style.load_stylesheet())
 
         # Pull window to the front.
         subset_manager_tool.raise_()
@@ -156,20 +159,21 @@ class HostToolsHelper:
     def get_scene_inventory_tool(self, parent):
         """Create, cache and return scene inventory tool window."""
         if self._scene_inventory_tool is None:
-            from avalon import style
             from avalon.tools.sceneinventory.app import Window
 
             scene_inventory_window = Window(parent=parent or self._parent)
-            scene_inventory_window.setStyleSheet(style.load_stylesheet())
             self._scene_inventory_tool = scene_inventory_window
 
         return self._scene_inventory_tool
 
     def show_scene_inventory(self, parent=None):
         """Show tool maintain loaded containers."""
+        from avalon import style
+
         scene_inventory_tool = self.get_scene_inventory_tool(parent)
         scene_inventory_tool.show()
         scene_inventory_tool.refresh()
+        scene_inventory_tool.setStyleSheet(style.load_stylesheet())
 
         # Pull window to the front.
         scene_inventory_tool.raise_()
@@ -178,13 +182,11 @@ class HostToolsHelper:
     def get_library_loader_tool(self, parent):
         """Create, cache and return library loader tool window."""
         if self._library_loader_tool is None:
-            from avalon import style
             from openpype.tools.libraryloader import LibraryLoaderWindow
 
             library_window = LibraryLoaderWindow(
                 parent=parent or self._parent
             )
-            library_window.setStyleSheet(style.load_stylesheet())
             self._library_loader_tool = library_window
 
         return self._library_loader_tool
@@ -206,18 +208,19 @@ class HostToolsHelper:
     def get_look_assigner_tool(self, parent):
         """Create, cache and return look assigner tool window."""
         if self._look_assigner_tool is None:
-            from avalon import style
             import mayalookassigner
 
             mayalookassigner_window = mayalookassigner.App(parent)
-            mayalookassigner_window.setStyleSheet(style.load_stylesheet())
             self._look_assigner_tool = mayalookassigner_window
         return self._look_assigner_tool
 
     def show_look_assigner(self, parent=None):
         """Look manager is Maya specific tool for look management."""
+        from avalon import style
+
         look_assigner_tool = self.get_look_assigner_tool(parent)
         look_assigner_tool.show()
+        look_assigner_tool.setStyleSheet(style.load_stylesheet())
 
     def get_experimental_tools_dialog(self, parent=None):
         """Dialog of experimental tools.

@@ -35,27 +35,18 @@ class AssetWidget(QtWidgets.QWidget):
 
         self.dbcon = dbcon
 
-        self.setContentsMargins(0, 0, 0, 0)
-
-        layout = QtWidgets.QVBoxLayout(self)
-        layout.setContentsMargins(0, 0, 0, 0)
-        layout.setSpacing(4)
-
         # Tree View
         model = AssetModel(dbcon=self.dbcon, parent=self)
         proxy = RecursiveSortFilterProxyModel()
         proxy.setSourceModel(model)
         proxy.setFilterCaseSensitivity(QtCore.Qt.CaseInsensitive)
 
-        view = AssetsView()
+        view = AssetsView(self)
         view.setModel(proxy)
         if multiselection:
             asset_delegate = AssetDelegate()
             view.setSelectionMode(view.ExtendedSelection)
             view.setItemDelegate(asset_delegate)
-
-        # Header
-        header = QtWidgets.QHBoxLayout()
 
         icon = qtawesome.icon("fa.arrow-down", color=style.colors.light)
         set_current_asset_btn = QtWidgets.QPushButton(icon, "")
@@ -64,22 +55,28 @@ class AssetWidget(QtWidgets.QWidget):
         set_current_asset_btn.setVisible(False)
 
         icon = qtawesome.icon("fa.refresh", color=style.colors.light)
-        refresh = QtWidgets.QPushButton(icon, "")
+        refresh = QtWidgets.QPushButton(icon, "", parent=self)
         refresh.setToolTip("Refresh items")
 
-        filter = QtWidgets.QLineEdit()
-        filter.textChanged.connect(proxy.setFilterFixedString)
-        filter.setPlaceholderText("Filter assets..")
+        filter_input = QtWidgets.QLineEdit(self)
+        filter_input.setPlaceholderText("Filter assets..")
 
-        header.addWidget(filter)
-        header.addWidget(set_current_asset_btn)
-        header.addWidget(refresh)
+        # Header
+        header_layout = QtWidgets.QHBoxLayout()
+        header_layout.addWidget(filter_input)
+        header_layout.addWidget(set_current_asset_btn)
+        header_layout.addWidget(refresh)
 
         # Layout
-        layout.addLayout(header)
+        layout = QtWidgets.QVBoxLayout(self)
+        layout.setContentsMargins(0, 0, 0, 0)
+        layout.setSpacing(4)
+        layout.addLayout(header_layout)
         layout.addWidget(view)
 
         # Signals/Slots
+        filter_input.textChanged.connect(proxy.setFilterFixedString)
+
         selection = view.selectionModel()
         selection.selectionChanged.connect(self.selection_changed)
         selection.currentChanged.connect(self.current_changed)
@@ -313,7 +310,6 @@ class OptionalMenu(QtWidgets.QMenu):
     actions that were instances of `QtWidgets.QWidgetAction`.
 
     """
-
     def mouseReleaseEvent(self, event):
         """Emit option clicked signal if mouse released on it"""
         active = self.actionAt(event.pos())
@@ -352,6 +348,7 @@ class OptionalAction(QtWidgets.QWidgetAction):
         self.use_option = use_option
         self.option_tip = ""
         self.optioned = False
+        self.widget = None
 
     def createWidget(self, parent):
         widget = OptionalActionWidget(self.label, parent)
@@ -377,20 +374,10 @@ class OptionalAction(QtWidgets.QWidgetAction):
         self.optioned = True
 
     def set_highlight(self, state, global_pos=None):
-        body = self.widget.body
-        option = self.widget.option
-
-        role = QtGui.QPalette.Highlight if state else QtGui.QPalette.Window
-        body.setBackgroundRole(role)
-        body.setAutoFillBackground(state)
-
-        if not self.use_option:
-            return
-
-        state = option.is_hovered(global_pos)
-        role = QtGui.QPalette.Highlight if state else QtGui.QPalette.Window
-        option.setBackgroundRole(role)
-        option.setAutoFillBackground(state)
+        option_state = False
+        if self.use_option:
+            option_state = self.widget.option.is_hovered(global_pos)
+        self.widget.set_hover_properties(state, option_state)
 
 
 class OptionalActionWidget(QtWidgets.QWidget):
@@ -399,30 +386,33 @@ class OptionalActionWidget(QtWidgets.QWidget):
     def __init__(self, label, parent=None):
         super(OptionalActionWidget, self).__init__(parent)
 
-        body = QtWidgets.QWidget()
-        body.setStyleSheet("background: transparent;")
+        body_widget = QtWidgets.QWidget(self)
+        body_widget.setObjectName("OptionalActionBody")
 
-        icon = QtWidgets.QLabel()
-        label = QtWidgets.QLabel(label)
-        option = OptionBox(body)
+        icon = QtWidgets.QLabel(body_widget)
+        label = QtWidgets.QLabel(label, body_widget)
+        # (NOTE) For removing ugly QLable shadow FX when highlighted in Nuke.
+        #   See https://stackoverflow.com/q/52838690/4145300
+        label.setStyle(QtWidgets.QStyleFactory.create("Plastique"))
+        option = OptionBox(body_widget)
+        option.setObjectName("OptionalActionOption")
 
         icon.setFixedSize(24, 16)
         option.setFixedSize(30, 30)
 
-        layout = QtWidgets.QHBoxLayout(body)
-        layout.setContentsMargins(0, 0, 0, 0)
-        layout.setSpacing(2)
-        layout.addWidget(icon)
-        layout.addWidget(label)
-        layout.addSpacing(6)
+        body_layout = QtWidgets.QHBoxLayout(body_widget)
+        body_layout.setContentsMargins(4, 0, 4, 0)
+        body_layout.setSpacing(2)
+        body_layout.addWidget(icon)
+        body_layout.addWidget(label)
 
         layout = QtWidgets.QHBoxLayout(self)
-        layout.setContentsMargins(6, 1, 2, 1)
+        layout.setContentsMargins(2, 1, 2, 1)
         layout.setSpacing(0)
-        layout.addWidget(body)
+        layout.addWidget(body_widget)
         layout.addWidget(option)
 
-        body.setMouseTracking(True)
+        body_widget.setMouseTracking(True)
         label.setMouseTracking(True)
         option.setMouseTracking(True)
         self.setMouseTracking(True)
@@ -431,11 +421,24 @@ class OptionalActionWidget(QtWidgets.QWidget):
         self.icon = icon
         self.label = label
         self.option = option
-        self.body = body
+        self.body = body_widget
 
-        # (NOTE) For removing ugly QLable shadow FX when highlighted in Nuke.
-        #   See https://stackoverflow.com/q/52838690/4145300
-        label.setStyle(QtWidgets.QStyleFactory.create("Plastique"))
+    def set_hover_properties(self, hovered, option_hovered):
+        body_state = ""
+        option_state = ""
+        if hovered:
+            body_state = "hover"
+
+        if option_hovered:
+            option_state = "hover"
+
+        if self.body.property("state") != body_state:
+            self.body.setProperty("state", body_state)
+            self.body.style().polish(self.body)
+
+        if self.option.property("state") != option_state:
+            self.option.setProperty("state", option_state)
+            self.option.style().polish(self.option)
 
     def setIcon(self, icon):
         pixmap = icon.pixmap(16, 16)
@@ -456,8 +459,6 @@ class OptionBox(QtWidgets.QLabel):
         pixmap = icon.pixmap(18, 18)
         self.setPixmap(pixmap)
 
-        self.setStyleSheet("background: transparent;")
-
     def is_hovered(self, global_pos):
         if global_pos is None:
             return False
@@ -476,20 +477,20 @@ class OptionDialog(QtWidgets.QDialog):
     def create(self, options):
         parser = qargparse.QArgumentParser(arguments=options)
 
-        decision = QtWidgets.QWidget()
-        accept = QtWidgets.QPushButton("Accept")
-        cancel = QtWidgets.QPushButton("Cancel")
+        decision_widget = QtWidgets.QWidget(self)
+        accept_btn = QtWidgets.QPushButton("Accept", decision_widget)
+        cancel_btn = QtWidgets.QPushButton("Cancel", decision_widget)
 
-        layout = QtWidgets.QHBoxLayout(decision)
-        layout.addWidget(accept)
-        layout.addWidget(cancel)
+        decision_layout = QtWidgets.QHBoxLayout(decision_widget)
+        decision_layout.addWidget(accept_btn)
+        decision_layout.addWidget(cancel_btn)
 
         layout = QtWidgets.QVBoxLayout(self)
         layout.addWidget(parser)
-        layout.addWidget(decision)
+        layout.addWidget(decision_widget)
 
-        accept.clicked.connect(self.accept)
-        cancel.clicked.connect(self.reject)
+        accept_btn.clicked.connect(self.accept)
+        cancel_btn.clicked.connect(self.reject)
         parser.changed.connect(self.on_changed)
 
     def on_changed(self, argument):
