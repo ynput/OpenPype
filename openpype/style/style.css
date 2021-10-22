@@ -340,6 +340,15 @@ QHeaderView::section:first {
 QHeaderView::section:last {
     border-right: none;
 }
+
+QHeaderView::down-arrow {
+    image: url(:/openpype/images/down_arrow.png);
+}
+
+QHeaderView::up-arrow {
+    image: url(:/openpype/images/up_arrow.png);
+}
+
 /* Views QListView QTreeView QTableView */
 QAbstractItemView {
     border: 0px solid {color:border};
