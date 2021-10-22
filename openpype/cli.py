@@ -298,3 +298,9 @@ def run(script):
 def runtests(folder, mark, pyargs):
     """Run all automatic tests after proper initialization via start.py"""
     PypeCommands().run_tests(folder, mark, pyargs)
+
+
+@main.command()
+def context_selector():
+    """Show widget to show context selector."""
+    PypeCommands().show_context_selector()
