@@ -9,7 +9,7 @@ import weakref
 try:
     from weakref import WeakMethod
 except Exception:
-    from openpype.lib.python2_comp import WeakMethod
+    from openpype.lib.python_2_comp import WeakMethod
 
 import avalon.api
 import pyblish.api
