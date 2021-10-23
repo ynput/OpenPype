@@ -3,6 +3,7 @@ import json
 from avalon.api import AvalonMongoDB
 from openpype.api import ProjectSettings
 from openpype.lib import create_project
+from openpype.settings import SaveWarningExc
 
 from openpype_modules.ftrack.lib import (
     BaseAction,
@@ -417,7 +418,12 @@ class PrepareProjectLocal(BaseAction):
             else:
                 attributes_entity[key] = value
 
-        project_settings.save()
+        try:
+            project_settings.save()
+        except SaveWarningExc as exc:
+            self.log.info("Few warnings happened during settings save:")
+            for warning in exc.warnings:
+                self.log.info(str(warning))
 
         # Change custom attributes on project
         if custom_attribute_values:
