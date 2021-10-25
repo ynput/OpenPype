@@ -285,13 +285,16 @@ class PypeCommands:
         print("Running {}".format(cmd))
         subprocess.run(cmd)
 
-    def syncsiteserver(self, active_site, remote_site):
+    def syncserver(self, active_site):
+        """Start running sync_server in background."""
+        os.environ["SITE_SYNC_LOCAL_ID"] = active_site
+
         from openpype.modules import ModulesManager
 
         manager = ModulesManager()
         sync_server_module = manager.modules_by_name["sync_server"]
 
-        sync_server_module.init_server()
+        sync_server_module.server_init()
         sync_server_module.start_server()
 
         import time

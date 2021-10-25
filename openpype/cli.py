@@ -305,9 +305,7 @@ def runtests(folder, mark, pyargs):
               is_flag=True, help=("Run process in debug mode"))
 @click.option("-a", "--active_site", required=True,
               help="Name of active stie")
-@click.option("-r", "--remote_site", required=True,
-              help="Name of remote site")
-def syncsiteserver(debug, active_site, remote_site):
+def syncserver(debug, active_site):
     """Run sync site server in background.
 
         Some Site Sync use cases need to expose site to another one.
@@ -316,7 +314,12 @@ def syncsiteserver(debug, active_site, remote_site):
         to SFTP for only a couple of artists, some background process must
         mark published assets to live on multiple sites (they might be
         physically in same location - mounted shared disk).
+
+        Process mimics OP Tray with specific 'active_site' name, all
+        configuration for this "dummy" user comes from Setting or Local
+        Settings (configured by starting OP Tray with env
+        var SITE_SYNC_LOCAL_ID set to 'active_site'.
     """
     if debug:
         os.environ['OPENPYPE_DEBUG'] = '3'
-    PypeCommands().syncsiteserver(active_site, remote_site)
+    PypeCommands().syncserver(active_site)
