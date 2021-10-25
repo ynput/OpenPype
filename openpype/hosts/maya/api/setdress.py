@@ -5,6 +5,7 @@ import os
 import contextlib
 import copy
 
+import six
 from maya import cmds
 
 from avalon import api, io
@@ -69,7 +70,8 @@ def unlocked(nodes):
         yield
     finally:
         # Reapply original states
-        for uuid, state in states.iteritems():
+        _iteritems = getattr(states, "iteritems", states.items)
+        for uuid, state in _iteritems():
             nodes_from_id = cmds.ls(uuid, long=True)
             if nodes_from_id:
                 node = nodes_from_id[0]
@@ -94,7 +96,7 @@ def load_package(filepath, name, namespace=None):
         # Define a unique namespace for the package
         namespace = os.path.basename(filepath).split(".")[0]
         unique_namespace(namespace)
-    assert isinstance(namespace, basestring)
+    assert isinstance(namespace, six.string_types)
 
     # Load the setdress package data
     with open(filepath, "r") as fp:
