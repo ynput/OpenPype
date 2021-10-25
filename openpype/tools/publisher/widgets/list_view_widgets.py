@@ -301,12 +301,12 @@ class InstanceTreeView(QtWidgets.QTreeView):
         self._pressed_group_index = pressed_group_index
 
     def mousePressEvent(self, event):
-        if not self._mouse_press(event):
-            super(InstanceTreeView, self).mousePressEvent(event)
+        self._mouse_press(event)
+        super(InstanceTreeView, self).mousePressEvent(event)
 
     def mouseDoubleClickEvent(self, event):
-        if not self._mouse_press(event):
-            super(InstanceTreeView, self).mouseDoubleClickEvent(event)
+        self._mouse_press(event)
+        super(InstanceTreeView, self).mouseDoubleClickEvent(event)
 
     def _mouse_release(self, event, pressed_index):
         if event.button() != QtCore.Qt.LeftButton:
