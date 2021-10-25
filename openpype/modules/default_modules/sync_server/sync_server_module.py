@@ -4,6 +4,7 @@ from datetime import datetime
 import threading
 import platform
 import copy
+from collections import deque
 
 from avalon.api import AvalonMongoDB
 
@@ -120,6 +121,11 @@ class SyncServerModule(OpenPypeModule, ITrayModule):
 
         self._connection = None
 
+        # list of long blocking tasks
+        self.long_running_tasks = deque()
+        # projects that long tasks are running on
+        self.projects_processed = set()
+
     """ Start of Public API """
     def add_site(self, collection, representation_id, site_name=None,
                  force=False):
@@ -196,6 +202,15 @@ class SyncServerModule(OpenPypeModule, ITrayModule):
 
         for repre in representations:
             self.remove_site(collection, repre.get("_id"), site_name, True)
+
+    def create_validate_project_task(self, collection, site_name):
+        from .sync_server import validate_project
+        task = {
+            "type": "validate",
+            "project_name": collection,
+            "func": lambda: validate_project(self, collection, site_name)
+        }
+        self.long_running_tasks.append(task)
 
     def pause_representation(self, collection, representation_id, site_name):
         """
@@ -1347,7 +1362,7 @@ class SyncServerModule(OpenPypeModule, ITrayModule):
         found = False
         for repre_file in representation.pop().get("files"):
             for site in repre_file.get("sites"):
-                if site["name"] == site_name:
+                if site.get("name") == site_name:
                     found = True
                     break
         if not found:
@@ -1398,13 +1413,20 @@ class SyncServerModule(OpenPypeModule, ITrayModule):
         self._update_site(collection, query, update, arr_filter)
 
     def _add_site(self, collection, query, representation, elem, site_name,
-                  force=False):
+                  force=False, file_id=None):
         """
             Adds 'site_name' to 'representation' on 'collection'
+
+            Args:
+                representation (list of 1 dict)
+                file_id (ObjectId)
 
             Use 'force' to remove existing or raises ValueError
         """
         for repre_file in representation.pop().get("files"):
+            if file_id and file_id != repre_file["_id"]:
+                continue
+
             for site in repre_file.get("sites"):
                 if site["name"] == site_name:
                     if force:
@@ -1417,11 +1439,19 @@ class SyncServerModule(OpenPypeModule, ITrayModule):
                         log.info(msg)
                         raise ValueError(msg)
 
-        update = {
-            "$push": {"files.$[].sites": elem}
-        }
+        if not file_id:
+            update = {
+                "$push": {"files.$[].sites": elem}
+            }
 
-        arr_filter = []
+            arr_filter = []
+        else:
+            update = {
+                "$push": {"files.$[f].sites": elem}
+            }
+            arr_filter = [
+                {'f._id': file_id}
+            ]
 
         self._update_site(collection, query, update, arr_filter)
 

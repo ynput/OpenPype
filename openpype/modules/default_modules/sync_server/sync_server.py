@@ -3,6 +3,8 @@ import os
 import asyncio
 import threading
 import concurrent.futures
+from datetime import datetime
+from bson.objectid import ObjectId
 from concurrent.futures._base import CancelledError
 
 from .providers import lib
@@ -160,6 +162,80 @@ def resolve_paths(module, file_path, collection,
     local_file_path = local_handler.resolve_path(file_path)
 
     return local_file_path, remote_file_path
+
+
+def validate_project(module, collection, site_name, both_way=False):
+    """
+        Validate 'collection' of 'site_name' and its local files
+
+        If file present and not marked with a 'site_name' in DB, DB is
+        updated with site name and file modified date.
+    """
+    module.log.debug("Validation of {} for {} started".format(collection,
+                                                            site_name))
+    query = {
+        "type": "representation"
+    }
+
+    representations = list(
+        module.connection.database[collection].find(query))
+    if not representations:
+        module.log.debug("No repre found")
+        return
+
+    sites_added = 0
+    sites_removed = 0
+    for repre in representations:
+        repre_id = repre["_id"]
+        # self.remove_site(collection, str(repre_id), site_name)
+        for repre_file in repre.get("files", []):
+            try:
+                has_site = site_name in [site["name"]
+                                         for site in repre_file["sites"]]
+            except TypeError:
+                module.log.debug("Structure error in {}".format(repre_id))
+                continue
+
+            if has_site and not both_way:
+                continue
+
+            file_path = repre_file.get("path", "")
+            local_file_path = module.get_local_file_path(collection,
+                                                       site_name,
+                                                       file_path)
+
+            if local_file_path and os.path.exists(local_file_path):
+                module.log.debug("Adding site {} for {}".format(site_name,
+                                                              repre_id))
+                if not has_site:
+                    query = {
+                        "_id": ObjectId(repre_id)
+                    }
+                    created_dt = datetime.fromtimestamp(
+                        os.path.getmtime(local_file_path))
+                    elem = {"name": site_name,
+                            "created_dt": created_dt}
+                    module._add_site(collection, query, [repre], elem,
+                                     site_name=site_name,
+                                     file_id=repre_file["_id"])
+                sites_added += 1
+            else:
+                if has_site and both_way:
+                    module.log.debug("Removing site {} for {}".\
+                                     format(site_name, repre["_id"]))
+                    module.reset_provider_for_file(collection,
+                                                   repre["_id"],
+                                                   file_id=repre_file["_id"],
+                                                   remove=True)
+                    sites_removed += 1
+
+    if sites_added % 100 == 0:
+        module.log.debug("Sites added {}".format(sites_added))
+
+    module.log.debug("Validation of {} for {} ended".format(collection,
+                                                            site_name))
+    module.log.info("Sites added {}, sites removed {}".format(
+        sites_added, sites_removed))
 
 
 def site_is_working(module, project_name, site_name):
@@ -421,6 +497,13 @@ class SyncServerThread(threading.Thread):
             periodically.
         """
         while self.is_running:
+            if self.module.long_running_tasks:
+                task = self.module.long_running_tasks.pop()
+                self.module.projects_processed.add(task["project_name"])
+                log.info("starting long running")
+                await self.loop.run_in_executor(None, task["func"])
+                log.info("finished long running")
+                self.module.projects_processed.remove(task["project_name"])
             await asyncio.sleep(0.5)
         tasks = [task for task in asyncio.all_tasks() if
                  task is not asyncio.current_task()]

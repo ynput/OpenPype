@@ -88,6 +88,9 @@ class SyncProjectListWidget(QtWidgets.QWidget):
             else:
                 icon = self._get_icon("synced")
 
+            if project_name in self.sync_server.projects_processed:
+                icon = self._get_icon("paused")   # change
+
             model.appendRow(QtGui.QStandardItem(icon, project_name))
 
         if len(self.sync_server.sync_project_settings.keys()) == 0:
@@ -143,6 +146,11 @@ class SyncProjectListWidget(QtWidgets.QWidget):
             actions_mapping[action] = self._clear_project
             menu.addAction(action)
 
+        if self.project_name not in self.sync_server.projects_processed:
+            action = QtWidgets.QAction("Validate files on active site")
+            actions_mapping[action] = self._validate_site
+            menu.addAction(action)
+
         result = menu.exec_(QtGui.QCursor.pos())
         if result:
             to_run = actions_mapping[result]
@@ -164,6 +172,13 @@ class SyncProjectListWidget(QtWidgets.QWidget):
     def _clear_project(self):
         if self.project_name:
             self.sync_server.clear_project(self.project_name, self.local_site)
+            self.project_name = None
+        self.refresh()
+
+    def _validate_site(self):
+        if self.project_name:
+            self.sync_server.create_validate_project_task(self.project_name,
+                                                          self.local_site)
             self.project_name = None
         self.refresh()
 
