@@ -95,8 +95,8 @@ class InstanceListItemWidget(QtWidgets.QWidget):
 
         active_checkbox.stateChanged.connect(self._on_active_change)
 
-        self.subset_name_label = subset_name_label
-        self.active_checkbox = active_checkbox
+        self._subset_name_label = subset_name_label
+        self._active_checkbox = active_checkbox
 
         self._has_valid_context = None
 
@@ -109,14 +109,14 @@ class InstanceListItemWidget(QtWidgets.QWidget):
         state = ""
         if not valid:
             state = "invalid"
-        self.subset_name_label.setProperty("state", state)
-        self.subset_name_label.style().polish(self.subset_name_label)
+        self._subset_name_label.setProperty("state", state)
+        self._subset_name_label.style().polish(self._subset_name_label)
 
     def is_active(self):
         return self.instance["active"]
 
     def set_active(self, new_value):
-        checkbox_value = self.active_checkbox.isChecked()
+        checkbox_value = self._active_checkbox.isChecked()
         instance_value = self.instance["active"]
         if new_value is None:
             new_value = not instance_value
@@ -127,7 +127,7 @@ class InstanceListItemWidget(QtWidgets.QWidget):
             self.instance["active"] = new_value
 
         if checkbox_value != new_value:
-            self.active_checkbox.setChecked(new_value)
+            self._active_checkbox.setChecked(new_value)
 
     def update_instance(self, instance):
         self.instance = instance
@@ -138,7 +138,7 @@ class InstanceListItemWidget(QtWidgets.QWidget):
         self._set_valid_property(self.instance.has_valid_context)
 
     def _on_active_change(self):
-        new_value = self.active_checkbox.isChecked()
+        new_value = self._active_checkbox.isChecked()
         old_value = self.instance["active"]
         if new_value == old_value:
             return
@@ -193,7 +193,6 @@ class InstanceListGroupWidget(QtWidgets.QFrame):
         )
         layout.addWidget(toggle_checkbox, 0)
 
-        # self.setAttribute(QtCore.Qt.WA_TranslucentBackground)
         name_label.setAttribute(QtCore.Qt.WA_TranslucentBackground)
         expand_btn.setAttribute(QtCore.Qt.WA_TranslucentBackground)
 
@@ -370,10 +369,10 @@ class InstanceListView(AbstractInstanceView):
         self._context_item = None
         self._context_widget = None
 
-        self.instance_view = instance_view
+        self._instance_view = instance_view
         self._instance_delegate = instance_delegate
-        self.instance_model = instance_model
-        self.proxy_model = proxy_model
+        self._instance_model = instance_model
+        self._proxy_model = proxy_model
 
     def _on_expand(self, index):
         group_name = index.data(SORT_VALUE_ROLE)
@@ -388,7 +387,7 @@ class InstanceListView(AbstractInstanceView):
             group_widget.set_expanded(False)
 
     def _on_toggle_request(self, toggle):
-        selected_instance_ids = self.instance_view.get_selected_instance_ids()
+        selected_instance_ids = self._instance_view.get_selected_instance_ids()
         if toggle == -1:
             active = None
         elif toggle == 1:
@@ -441,8 +440,8 @@ class InstanceListView(AbstractInstanceView):
             instances_by_group_name[group_label].append(instance)
 
         sort_at_the_end = False
-        root_item = self.instance_model.invisibleRootItem()
 
+        root_item = self._instance_model.invisibleRootItem()
         context_item = None
         if self._context_item is None:
             sort_at_the_end = True
@@ -452,12 +451,12 @@ class InstanceListView(AbstractInstanceView):
 
             root_item.appendRow(context_item)
 
-            index = self.instance_model.index(
+            index = self._instance_model.index(
                 context_item.row(), context_item.column()
             )
-            proxy_index = self.proxy_model.mapFromSource(index)
-            widget = ListContextWidget(self.instance_view)
-            self.instance_view.setIndexWidget(proxy_index, widget)
+            proxy_index = self._proxy_model.mapFromSource(index)
+            widget = ListContextWidget(self._instance_view)
+            self._instance_view.setIndexWidget(proxy_index, widget)
 
             self._context_widget = widget
             self._context_item = context_item
@@ -479,16 +478,16 @@ class InstanceListView(AbstractInstanceView):
             root_item.appendRows(new_group_items)
 
         for group_item in new_group_items:
-            index = self.instance_model.index(
+            index = self._instance_model.index(
                 group_item.row(), group_item.column()
             )
-            proxy_index = self.proxy_model.mapFromSource(index)
+            proxy_index = self._proxy_model.mapFromSource(index)
             group_name = group_item.data(SORT_VALUE_ROLE)
-            widget = InstanceListGroupWidget(group_name, self.instance_view)
+            widget = InstanceListGroupWidget(group_name, self._instance_view)
             widget.expand_changed.connect(self._on_group_expand_request)
             widget.toggle_requested.connect(self._on_group_toggle_request)
             self._group_widgets[group_name] = widget
-            self.instance_view.setIndexWidget(proxy_index, widget)
+            self._instance_view.setIndexWidget(proxy_index, widget)
 
         for group_name in tuple(self._group_items.keys()):
             if group_name in group_names:
@@ -504,12 +503,12 @@ class InstanceListView(AbstractInstanceView):
             to_remove = set()
             existing_mapping = {}
 
-            group_index = self.instance_model.index(
+            group_index = self._instance_model.index(
                 group_item.row(), group_item.column()
             )
 
             for idx in range(group_item.rowCount()):
-                index = self.instance_model.index(idx, 0, group_index)
+                index = self._instance_model.index(idx, 0, group_index)
                 instance_id = index.data(INSTANCE_ID_ROLE)
                 to_remove.add(instance_id)
                 existing_mapping[instance_id] = idx
@@ -568,28 +567,28 @@ class InstanceListView(AbstractInstanceView):
                 for item, instance in new_items_with_instance:
                     if not instance.has_valid_context:
                         expand_groups.add(group_name)
-                    item_index = self.instance_model.index(
+                    item_index = self._instance_model.index(
                         item.row(),
                         item.column(),
                         group_index
                     )
-                    proxy_index = self.proxy_model.mapFromSource(item_index)
+                    proxy_index = self._proxy_model.mapFromSource(item_index)
                     widget = InstanceListItemWidget(
-                        instance, self.instance_view
+                        instance, self._instance_view
                     )
                     widget.active_changed.connect(self._on_active_changed)
-                    self.instance_view.setIndexWidget(proxy_index, widget)
+                    self._instance_view.setIndexWidget(proxy_index, widget)
                     self._widgets_by_id[instance.id] = widget
 
             # Trigger sort at the end of refresh
             if sort_at_the_end:
-                self.proxy_model.sort(0)
+                self._proxy_model.sort(0)
 
         for group_name in expand_groups:
             group_item = self._group_items[group_name]
-            proxy_index = self.proxy_model.mapFromSource(group_item.index())
+            proxy_index = self._proxy_model.mapFromSource(group_item.index())
 
-            self.instance_view.expand(proxy_index)
+            self._instance_view.expand(proxy_index)
 
     def refresh_instance_states(self):
         for widget in self._widgets_by_id.values():
@@ -641,7 +640,7 @@ class InstanceListView(AbstractInstanceView):
             for instance in self.controller.instances
         }
 
-        for index in self.instance_view.selectionModel().selectedIndexes():
+        for index in self._instance_view.selectionModel().selectedIndexes():
             instance_id = index.data(INSTANCE_ID_ROLE)
             if not context_selected and instance_id == CONTEXT_ID:
                 context_selected = True
@@ -661,11 +660,11 @@ class InstanceListView(AbstractInstanceView):
         if not group_item:
             return
 
-        group_index = self.instance_model.index(
+        group_index = self._instance_model.index(
             group_item.row(), group_item.column()
         )
-        proxy_index = self.proxy_model.mapFromSource(group_index)
-        self.instance_view.setExpanded(proxy_index, expanded)
+        proxy_index = self.mapFromSource(group_index)
+        self._instance_view.setExpanded(proxy_index, expanded)
 
     def _on_group_toggle_request(self, group_name, state):
         if state == QtCore.Qt.PartiallyChecked:
@@ -689,6 +688,6 @@ class InstanceListView(AbstractInstanceView):
 
         self._change_active_instances(instance_ids, active)
 
-        proxy_index = self.proxy_model.mapFromSource(group_item.index())
-        if not self.instance_view.isExpanded(proxy_index):
-            self.instance_view.expand(proxy_index)
+        proxy_index = self.mapFromSource(group_item.index())
+        if not self._instance_view.isExpanded(proxy_index):
+            self._instance_view.expand(proxy_index)
