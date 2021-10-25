@@ -1851,6 +1851,31 @@ def set_scene_resolution(width, height, pixelAspect):
     cmds.setAttr("%s.deviceAspectRatio" % control_node, deviceAspectRatio)
     cmds.setAttr("%s.pixelAspect" % control_node, pixelAspect)
 
+def reset_scene_resolution():
+    """Apply the scene resolution  from the project definition
+
+    scene resolution can be overwritten by an asset if the asset.data contains
+    any information regarding scene resolution .
+
+    Returns:
+        None
+    """
+
+    project_doc = io.find_one({"type": "project"})
+    project_data = project_doc["data"]
+    asset_data = lib.get_asset()["data"]
+
+    # Set project resolution
+    width_key = "resolutionWidth"
+    height_key = "resolutionHeight"
+    pixelAspect_key = "pixelAspect"
+
+    width = asset_data.get(width_key, project_data.get(width_key, 1920))
+    height = asset_data.get(height_key, project_data.get(height_key, 1080))
+    pixelAspect = asset_data.get(pixelAspect_key, project_data.get(pixelAspect_key, 1))
+
+    set_scene_resolution(width, height, pixelAspect)
+
 def set_context_settings():
     """Apply the project settings from the project definition
 
@@ -1876,16 +1901,7 @@ def set_context_settings():
     api.Session["AVALON_FPS"] = str(fps)
     set_scene_fps(fps)
 
-    # Set project resolution
-    width_key = "resolutionWidth"
-    height_key = "resolutionHeight"
-    pixelAspect_key = "pixelAspect"
-
-    width = asset_data.get(width_key, project_data.get(width_key, 1920))
-    height = asset_data.get(height_key, project_data.get(height_key, 1080))
-    pixelAspect = asset_data.get(pixelAspect_key, project_data.get(pixelAspect_key, 1))
-
-    set_scene_resolution(width, height, pixelAspect)
+    reset_scene_resolution()
 
     # Set frame range.
     avalon.maya.interactive.reset_frame_range()
