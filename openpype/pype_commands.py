@@ -284,3 +284,16 @@ class PypeCommands:
         cmd = "pytest {} {} {}".format(folder, mark_str, pyargs_str)
         print("Running {}".format(cmd))
         subprocess.run(cmd)
+
+    def syncsiteserver(self, active_site, remote_site):
+        from openpype.modules import ModulesManager
+
+        manager = ModulesManager()
+        sync_server_module = manager.modules_by_name["sync_server"]
+
+        sync_server_module.init_server()
+        sync_server_module.start_server()
+
+        import time
+        while True:
+            time.sleep(1.0)

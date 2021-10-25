@@ -699,7 +699,11 @@ class SyncServerModule(OpenPypeModule, ITrayModule):
             Called when tray is initialized, it checks if module should be
             enabled. If not, no initialization necessary.
         """
-        # import only in tray, because of Python2 hosts
+        self.server_init()
+
+    def server_init(self):
+        """Actual initialization of Sync Server."""
+        # import only in tray or Python3, because of Python2 hosts
         from .sync_server import SyncServerThread
 
         if not self.enabled:
@@ -722,10 +726,10 @@ class SyncServerModule(OpenPypeModule, ITrayModule):
             self.enabled = False
         except KeyError:
             log.info((
-                "There are not set presets for SyncServer OR "
-                "Credentials provided are invalid, "
-                "no syncing possible").
-                format(str(self.sync_project_settings)), exc_info=True)
+                         "There are not set presets for SyncServer OR "
+                         "Credentials provided are invalid, "
+                         "no syncing possible").
+                     format(str(self.sync_project_settings)), exc_info=True)
             self.enabled = False
 
     def tray_start(self):
@@ -739,6 +743,9 @@ class SyncServerModule(OpenPypeModule, ITrayModule):
         Returns:
             None
         """
+        self.server_start()
+
+    def server_start(self):
         if self.sync_project_settings and self.enabled:
             self.sync_server_thread.start()
         else:
@@ -751,6 +758,9 @@ class SyncServerModule(OpenPypeModule, ITrayModule):
 
             Called from Module Manager
         """
+        self.server_exit()
+
+    def server_exit(self):
         if not self.sync_server_thread:
             return
 

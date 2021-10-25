@@ -298,3 +298,25 @@ def run(script):
 def runtests(folder, mark, pyargs):
     """Run all automatic tests after proper initialization via start.py"""
     PypeCommands().run_tests(folder, mark, pyargs)
+
+
+@main.command()
+@click.option("-d", "--debug",
+              is_flag=True, help=("Run process in debug mode"))
+@click.option("-a", "--active_site", required=True,
+              help="Name of active stie")
+@click.option("-r", "--remote_site", required=True,
+              help="Name of remote site")
+def syncsiteserver(debug, active_site, remote_site):
+    """Run sync site server in background.
+
+        Some Site Sync use cases need to expose site to another one.
+        For example if majority of artists work in studio, they are not using
+        SS at all, but if you want to expose published assets to 'studio' site
+        to SFTP for only a couple of artists, some background process must
+        mark published assets to live on multiple sites (they might be
+        physically in same location - mounted shared disk).
+    """
+    if debug:
+        os.environ['OPENPYPE_DEBUG'] = '3'
+    PypeCommands().syncsiteserver(active_site, remote_site)
