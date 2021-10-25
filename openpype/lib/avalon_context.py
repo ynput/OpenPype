@@ -362,6 +362,8 @@ def get_workfile_template_key_from_context(
         asset_name(str): Name of asset document.
         task_name(str): Task name for which is template key retrieved.
             Must be available on asset document under `data.tasks`.
+        host_name(str): Name of host implementation for which is workfile
+            used.
         project_name(str): Project name where asset and task is. Not required
             when 'dbcon' is passed.
         dbcon(AvalonMongoDB): Connection to mongo with already set project
