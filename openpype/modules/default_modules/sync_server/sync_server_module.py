@@ -694,12 +694,15 @@ class SyncServerModule(OpenPypeModule, ITrayModule):
 
     def tray_init(self):
         """
-            Actual initialization of Sync Server.
+            Actual initialization of Sync Server for Tray.
 
             Called when tray is initialized, it checks if module should be
             enabled. If not, no initialization necessary.
         """
         self.server_init()
+
+        from .tray.app import SyncServerWindow
+        self.widget = SyncServerWindow(self)
 
     def server_init(self):
         """Actual initialization of Sync Server."""
@@ -719,8 +722,6 @@ class SyncServerModule(OpenPypeModule, ITrayModule):
         try:
             self.sync_server_thread = SyncServerThread(self)
 
-            from .tray.app import SyncServerWindow
-            self.widget = SyncServerWindow(self)
         except ValueError:
             log.info("No system setting for sync. Not syncing.", exc_info=True)
             self.enabled = False

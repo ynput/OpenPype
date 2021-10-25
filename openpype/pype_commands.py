@@ -295,7 +295,7 @@ class PypeCommands:
         sync_server_module = manager.modules_by_name["sync_server"]
 
         sync_server_module.server_init()
-        sync_server_module.start_server()
+        sync_server_module.server_start()
 
         import time
         while True:
