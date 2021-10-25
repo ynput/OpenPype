@@ -242,7 +242,6 @@ class PublisherWindow(QtWidgets.QDialog):
 
         self.creator_window = creator_window
 
-
     def showEvent(self, event):
         super(PublisherWindow, self).showEvent(event)
         if self._first_show:
