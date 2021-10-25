@@ -175,8 +175,8 @@ class ContextCardWidget(CardWidget):
         layout.addLayout(icon_layout, 0)
         layout.addWidget(label_widget, 1)
 
-        self.icon_widget = icon_widget
-        self.label_widget = label_widget
+        self._icon_widget = icon_widget
+        self._label_widget = label_widget
 
 
 class InstanceCardWidget(CardWidget):
@@ -191,6 +191,9 @@ class InstanceCardWidget(CardWidget):
 
         self.instance = instance
 
+        self._last_subset_name = None
+        self._last_variant = None
+
         icon_widget = IconValuePixmapLabel(group_icon, self)
         icon_widget.setObjectName("FamilyIconLabel")
         context_warning = ContextWarningLabel(self)
@@ -200,21 +203,8 @@ class InstanceCardWidget(CardWidget):
         icon_layout.addWidget(icon_widget)
         icon_layout.addWidget(context_warning)
 
-        variant = instance["variant"]
-        subset_name = instance["subset"]
-        found_parts = set(re.findall(variant, subset_name, re.IGNORECASE))
-        if found_parts:
-            for part in found_parts:
-                replacement = "<b>{}</b>".format(part)
-                subset_name = subset_name.replace(part, replacement)
-
-        label_widget = QtWidgets.QLabel(subset_name, self)
-        # HTML text will cause that label start catch mouse clicks
-        # - disabling with changing interaction flag
-        label_widget.setTextInteractionFlags(QtCore.Qt.NoTextInteraction)
-
+        label_widget = QtWidgets.QLabel(self)
         active_checkbox = NiceCheckbox(parent=self)
-        active_checkbox.setChecked(instance["active"])
 
         expand_btn = QtWidgets.QToolButton(self)
         # Not yet implemented
@@ -246,16 +236,16 @@ class InstanceCardWidget(CardWidget):
         active_checkbox.stateChanged.connect(self._on_active_change)
         expand_btn.clicked.connect(self._on_expend_clicked)
 
-        self.icon_widget = icon_widget
-        self.label_widget = label_widget
-        self.context_warning = context_warning
-        self.active_checkbox = active_checkbox
-        self.expand_btn = expand_btn
+        self._icon_widget = icon_widget
+        self._label_widget = label_widget
+        self._context_warning = context_warning
+        self._active_checkbox = active_checkbox
+        self._expand_btn = expand_btn
 
-        self._validate_context()
+        self.update_instance_values()
 
     def set_active(self, new_value):
-        checkbox_value = self.active_checkbox.isChecked()
+        checkbox_value = self._active_checkbox.isChecked()
         instance_value = self.instance["active"]
 
         # First change instance value and them change checkbox
@@ -264,7 +254,7 @@ class InstanceCardWidget(CardWidget):
             self.instance["active"] = new_value
 
         if checkbox_value != new_value:
-            self.active_checkbox.setChecked(new_value)
+            self._active_checkbox.setChecked(new_value)
 
     def update_instance(self, instance):
         self.instance = instance
@@ -272,10 +262,36 @@ class InstanceCardWidget(CardWidget):
 
     def _validate_context(self):
         valid = self.instance.has_valid_context
-        self.icon_widget.setVisible(valid)
-        self.context_warning.setVisible(not valid)
+        self._icon_widget.setVisible(valid)
+        self._context_warning.setVisible(not valid)
+
+    def _update_subset_name(self):
+        variant = self.instance["variant"]
+        subset_name = self.instance["subset"]
+        if (
+            variant == self._last_variant
+            and subset_name == self._last_subset_name
+        ):
+            return
+
+        self._last_variant = variant
+        self._last_subset_name = subset_name
+        # Make `variant` bold
+        found_parts = set(re.findall(variant, subset_name, re.IGNORECASE))
+        if found_parts:
+            for part in found_parts:
+                replacement = "<b>{}</b>".format(part)
+                subset_name = subset_name.replace(part, replacement)
+
+        self._label_widget.setText(subset_name)
+        # HTML text will cause that label start catch mouse clicks
+        # - disabling with changing interaction flag
+        self._label_widget.setTextInteractionFlags(
+            QtCore.Qt.NoTextInteraction
+        )
 
     def update_instance_values(self):
+        self._update_subset_name()
         self.set_active(self.instance["active"])
         self._validate_context()
 
@@ -285,7 +301,7 @@ class InstanceCardWidget(CardWidget):
         self.detail_widget.setVisible(expanded)
 
     def _on_active_change(self):
-        new_value = self.active_checkbox.isChecked()
+        new_value = self._active_checkbox.isChecked()
         old_value = self.instance["active"]
         if new_value == old_value:
             return
