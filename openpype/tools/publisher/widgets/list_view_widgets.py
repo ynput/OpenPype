@@ -1,3 +1,27 @@
+"""Simple easy instance view grouping instances into collapsible groups.
+
+Groups are defined by `creator_label` attribute on instance (Group
+defined by creator).
+
+Each item can be enabled/disabled with their checkbox, whole group
+can be enabled/disabled with checkbox on group or
+selection can be enabled disabled using checkbox or keyboard key presses:
+- Space - change state of selection to oposite
+- Enter - enable selection
+- Backspace - disable selection
+
+```
+|- Options
+|- <Group 1> [x]
+|  |- <Instance 1> [x]
+|  |- <Instance 2> [x]
+|  ...
+|- <Group 2> [ ]
+|  |- <Instance 3> [ ]
+|  ...
+...
+```
+"""
 import collections
 
 from Qt import QtWidgets, QtCore, QtGui
@@ -15,7 +39,15 @@ from ..constants import (
 
 
 class ListItemDelegate(QtWidgets.QStyledItemDelegate):
-    """Generic delegate for instance header"""
+    """Generic delegate for instance group.
+
+    All indexes having `IS_GROUP_ROLE` data set to True will use
+    `group_item_paint` method to draw it's content otherwise default styled
+    item delegate paint method is used.
+
+    Goal is to draw group items with different colors for normal, hover and
+    pressed state.
+    """
     radius_ratio = 0.3
 
     def __init__(self, parent):
@@ -36,6 +68,7 @@ class ListItemDelegate(QtWidgets.QStyledItemDelegate):
             super(ListItemDelegate, self).paint(painter, option, index)
 
     def group_item_paint(self, painter, option, index):
+        """Paint group item."""
         self.initStyleOption(option, index)
 
         bg_rect = QtCore.QRectF(
@@ -69,6 +102,10 @@ class ListItemDelegate(QtWidgets.QStyledItemDelegate):
 
 
 class InstanceListItemWidget(QtWidgets.QWidget):
+    """Widget with instance info drawn over delegate paint.
+
+    This is required to be able use custom checkbox on custom place.
+    """
     active_changed = QtCore.Signal(str, bool)
 
     def __init__(self, instance, parent):
@@ -113,9 +150,11 @@ class InstanceListItemWidget(QtWidgets.QWidget):
         self._subset_name_label.style().polish(self._subset_name_label)
 
     def is_active(self):
+        """Instance is activated."""
         return self.instance["active"]
 
     def set_active(self, new_value):
+        """Change active state of instance and checkbox."""
         checkbox_value = self._active_checkbox.isChecked()
         instance_value = self.instance["active"]
         if new_value is None:
@@ -130,11 +169,19 @@ class InstanceListItemWidget(QtWidgets.QWidget):
             self._active_checkbox.setChecked(new_value)
 
     def update_instance(self, instance):
+        """Update instance object."""
         self.instance = instance
         self.update_instance_values()
 
     def update_instance_values(self):
+        """Update instance data propagated to widgets."""
+        # Check subset name
+        subset_name = self.instance["subset"]
+        if subset_name != self._subset_name_label.text():
+            self._subset_name_label.setText(subset_name)
+        # Check active state
         self.set_active(self.instance["active"])
+        # Check valid states
         self._set_valid_property(self.instance.has_valid_context)
 
     def _on_active_change(self):
@@ -148,6 +195,7 @@ class InstanceListItemWidget(QtWidgets.QWidget):
 
 
 class ListContextWidget(QtWidgets.QFrame):
+    """Context (or global attributes) widget."""
     def __init__(self, parent):
         super(ListContextWidget, self).__init__(parent)
 
@@ -166,6 +214,11 @@ class ListContextWidget(QtWidgets.QFrame):
 
 
 class InstanceListGroupWidget(QtWidgets.QFrame):
+    """Widget representing group of instances.
+
+    Has collapse/expand indicator, label of group and checkbox modifying all of
+    it's children.
+    """
     expand_changed = QtCore.Signal(str, bool)
     toggle_requested = QtCore.Signal(str, int)
 
@@ -208,6 +261,12 @@ class InstanceListGroupWidget(QtWidgets.QFrame):
         self.toggle_checkbox = toggle_checkbox
 
     def set_checkstate(self, state):
+        """Change checkstate of "active" checkbox.
+
+        Args:
+            state(QtCore.Qt.CheckState): Checkstate of checkbox. Have 3
+                variants Unchecked, Checked and PartiallyChecked.
+        """
         if self.checkstate() == state:
             return
         self._ignore_state_change = True
@@ -215,6 +274,7 @@ class InstanceListGroupWidget(QtWidgets.QFrame):
         self._ignore_state_change = False
 
     def checkstate(self):
+        """CUrrent checkstate of "active" checkbox."""
         return self.toggle_checkbox.checkState()
 
     def _on_checkbox_change(self, state):
@@ -225,6 +285,7 @@ class InstanceListGroupWidget(QtWidgets.QFrame):
         self.expand_changed.emit(self.group_name, not self._expanded)
 
     def set_expanded(self, expanded):
+        """Change icon of collapse/expand identifier."""
         if self._expanded == expanded:
             return
 
@@ -236,6 +297,7 @@ class InstanceListGroupWidget(QtWidgets.QFrame):
 
 
 class InstanceTreeView(QtWidgets.QTreeView):
+    """View showing instances and their groups."""
     toggle_requested = QtCore.Signal(int)
 
     def __init__(self, *args, **kwargs):
@@ -263,6 +325,7 @@ class InstanceTreeView(QtWidgets.QTreeView):
                 self.collapse(index)
 
     def get_selected_instance_ids(self):
+        """Ids of selected instances."""
         instance_ids = set()
         for index in self.selectionModel().selectedIndexes():
             instance_id = index.data(INSTANCE_ID_ROLE)
@@ -289,6 +352,11 @@ class InstanceTreeView(QtWidgets.QTreeView):
         return super(InstanceTreeView, self).event(event)
 
     def _mouse_press(self, event):
+        """Store index of pressed group.
+
+        This is to be able change state of group and process mouse
+        "double click" as 2x "single click".
+        """
         if event.button() != QtCore.Qt.LeftButton:
             return
 
@@ -332,6 +400,10 @@ class InstanceTreeView(QtWidgets.QTreeView):
 
 
 class InstanceListView(AbstractInstanceView):
+    """Widget providing abstract methods of AbstractInstanceView for list view.
+
+    This is public access to and from list view.
+    """
     def __init__(self, controller, parent):
         super(InstanceListView, self).__init__(parent)
 
@@ -432,6 +504,8 @@ class InstanceListView(AbstractInstanceView):
         widget.set_checkstate(state)
 
     def refresh(self):
+        """Refresh instances in the view."""
+        # Prepare instances by their groups
         instances_by_group_name = collections.defaultdict(list)
         group_names = set()
         for instance in self.controller.instances:
@@ -439,9 +513,15 @@ class InstanceListView(AbstractInstanceView):
             group_names.add(group_label)
             instances_by_group_name[group_label].append(instance)
 
+        # Sort view at the end of refresh
+        # - is turned off until any change in view happens
         sort_at_the_end = False
 
+        # Access to root item of main model
         root_item = self._instance_model.invisibleRootItem()
+
+        # Create or use already existing context item
+        # - context widget does not change so we don't have to update anything
         context_item = None
         if self._context_item is None:
             sort_at_the_end = True
@@ -461,6 +541,7 @@ class InstanceListView(AbstractInstanceView):
             self._context_widget = widget
             self._context_item = context_item
 
+        # Create new groups based on prepared `instances_by_group_name`
         new_group_items = []
         for group_name in group_names:
             if group_name in self._group_items:
@@ -473,10 +554,13 @@ class InstanceListView(AbstractInstanceView):
             self._group_items[group_name] = group_item
             new_group_items.append(group_item)
 
+        # Add new group items to root item if there are any
         if new_group_items:
+            # Trigger sort at the end
             sort_at_the_end = True
             root_item.appendRows(new_group_items)
 
+        # Create widget for each new group item and store it for future usage
         for group_item in new_group_items:
             index = self._instance_model.index(
                 group_item.row(), group_item.column()
@@ -489,6 +573,7 @@ class InstanceListView(AbstractInstanceView):
             self._group_widgets[group_name] = widget
             self._instance_view.setIndexWidget(proxy_index, widget)
 
+        # Remove groups that are not available anymore
         for group_name in tuple(self._group_items.keys()):
             if group_name in group_names:
                 continue
@@ -498,26 +583,44 @@ class InstanceListView(AbstractInstanceView):
             widget = self._group_widgets.pop(group_name)
             widget.deleteLater()
 
+        # Store which groups should be expanded at the end
         expand_groups = set()
+        # Process changes in each group item
+        # - create new instance, update existing and remove not existing
         for group_name, group_item in self._group_items.items():
+            # Instance items to remove
+            # - will contain all exising instance ids at the start
+            # - instance ids may be removed when existing instances are checked
             to_remove = set()
+            # Mapping of existing instances under group item
             existing_mapping = {}
 
+            # Get group index to be able get children indexes
             group_index = self._instance_model.index(
                 group_item.row(), group_item.column()
             )
 
+            # Iterate over children indexes of group item
             for idx in range(group_item.rowCount()):
                 index = self._instance_model.index(idx, 0, group_index)
                 instance_id = index.data(INSTANCE_ID_ROLE)
+                # Add all instance into `to_remove` set
                 to_remove.add(instance_id)
                 existing_mapping[instance_id] = idx
 
+            # Collect all new instances that are not existing under group
+            # New items
             new_items = []
+            # Tuples of new instance and instance itself
             new_items_with_instance = []
+            # Group activity (should be {-1;0;1} at the end)
+            # - 0 when all instances are disabled
+            # - 1 when all instances are enabled
+            # - -1 when it's mixed
             activity = None
             for instance in instances_by_group_name[group_name]:
                 instance_id = instance.id
+                # Handle group activity
                 if activity is None:
                     activity = int(instance["active"])
                 elif activity == -1:
@@ -526,18 +629,22 @@ class InstanceListView(AbstractInstanceView):
                     activity = -1
 
                 self._group_by_instance_id[instance_id] = group_name
+                # Remove instance id from `to_remove` if already exists and
+                #   trigger update of widget
                 if instance_id in to_remove:
                     to_remove.remove(instance_id)
                     widget = self._widgets_by_id[instance_id]
                     widget.update_instance(instance)
                     continue
 
+                # Create new item and store it as new
                 item = QtGui.QStandardItem()
                 item.setData(instance["subset"], SORT_VALUE_ROLE)
                 item.setData(instance_id, INSTANCE_ID_ROLE)
                 new_items.append(item)
                 new_items_with_instance.append((item, instance))
 
+            # Set checkstate of group checkbox
             state = QtCore.Qt.PartiallyChecked
             if activity == 0:
                 state = QtCore.Qt.Unchecked
@@ -547,21 +654,28 @@ class InstanceListView(AbstractInstanceView):
             widget = self._group_widgets[group_name]
             widget.set_checkstate(state)
 
+            # Remove items that were not found
             idx_to_remove = []
             for instance_id in to_remove:
                 idx_to_remove.append(existing_mapping[instance_id])
 
+            # Remove them in reverse order to prevend row index changes
             for idx in reversed(sorted(idx_to_remove)):
                 group_item.removeRows(idx, 1)
 
+            # Cleanup instance related widgets
             for instance_id in to_remove:
                 self._group_by_instance_id.pop(instance_id)
                 widget = self._widgets_by_id.pop(instance_id)
                 widget.deleteLater()
 
+            # Process new instance items and add them to model and create
+            #   their widgets
             if new_items:
+                # Trigger sort at the end when new instances are available
                 sort_at_the_end = True
 
+                # Add items under group item
                 group_item.appendRows(new_items)
 
                 for item, instance in new_items_with_instance:
@@ -584,6 +698,7 @@ class InstanceListView(AbstractInstanceView):
             if sort_at_the_end:
                 self._proxy_model.sort(0)
 
+        # Expand groups marked for expanding
         for group_name in expand_groups:
             group_item = self._group_items[group_name]
             proxy_index = self._proxy_model.mapFromSource(group_item.index())
@@ -591,6 +706,7 @@ class InstanceListView(AbstractInstanceView):
             self._instance_view.expand(proxy_index)
 
     def refresh_instance_states(self):
+        """Trigger update of all instances."""
         for widget in self._widgets_by_id.values():
             widget.update_instance_values()
 
@@ -633,6 +749,12 @@ class InstanceListView(AbstractInstanceView):
             self.active_changed.emit()
 
     def get_selected_items(self):
+        """Get selected instance ids and context selection.
+
+        Returns:
+            tuple<list, bool>: Selected instance ids and boolean if context
+                is selected.
+        """
         instances = []
         context_selected = False
         instances_by_id = {
