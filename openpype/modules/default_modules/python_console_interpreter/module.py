@@ -18,9 +18,6 @@ class PythonInterpreterAction(OpenPypeModule, ITrayAction):
         if self._interpreter_window is not None:
             self._interpreter_window.save_registry()
 
-    def connect_with_modules(self, *args, **kwargs):
-        pass
-
     def create_interpreter_window(self):
         """Initializa Settings Qt window."""
         if self._interpreter_window:

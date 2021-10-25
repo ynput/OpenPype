@@ -68,9 +68,6 @@ class CollectFtrackFamily(pyblish.api.InstancePlugin):
                         instance.data["families"].append("ftrack")
                 else:
                     instance.data["families"] = ["ftrack"]
-        else:
-            self.log.debug("Instance '{}' doesn't match any profile".format(
-                instance.data.get("family")))
 
     def _get_add_ftrack_f_from_addit_filters(self,
                                              additional_filters,

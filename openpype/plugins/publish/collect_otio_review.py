@@ -20,7 +20,7 @@ class CollectOcioReview(pyblish.api.InstancePlugin):
     """Get matching otio track from defined review layer"""
 
     label = "Collect OTIO Review"
-    order = pyblish.api.CollectorOrder - 0.57
+    order = pyblish.api.CollectorOrder - 0.47
     families = ["clip"]
     hosts = ["resolve", "hiero"]
 

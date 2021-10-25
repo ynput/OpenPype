@@ -3,6 +3,7 @@ import json
 from Qt import QtWidgets, QtGui, QtCore
 from openpype.tools.settings import CHILD_OFFSET
 from .widgets import ExpandingWidget
+from .lib import create_deffered_value_change_timer
 
 
 class BaseWidget(QtWidgets.QWidget):
@@ -213,7 +214,8 @@ class BaseWidget(QtWidgets.QWidget):
     def _paste_value_actions(self, menu):
         output = []
         # Allow paste of value only if were copied from this UI
-        mime_data = QtWidgets.QApplication.clipboard().mimeData()
+        clipboard = QtWidgets.QApplication.clipboard()
+        mime_data = clipboard.mimeData()
         mime_value = mime_data.data("application/copy_settings_value")
         # Skip if there is nothing to do
         if not mime_value:
@@ -329,6 +331,20 @@ class BaseWidget(QtWidgets.QWidget):
 
 
 class InputWidget(BaseWidget):
+    def __init__(self, *args, **kwargs):
+        super(InputWidget, self).__init__(*args, **kwargs)
+
+        # Input widgets have always timer available (but may not be used).
+        self._value_change_timer = create_deffered_value_change_timer(
+            self._on_value_change_timer
+        )
+
+    def start_value_timer(self):
+        self._value_change_timer.start()
+
+    def _on_value_change_timer(self):
+        pass
+
     def create_ui(self):
         if self.entity.use_label_wrap:
             label = None

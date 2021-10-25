@@ -10,3 +10,5 @@ CUST_ATTR_AUTO_SYNC = "avalon_auto_sync"
 CUST_ATTR_APPLICATIONS = "applications"
 # Environment tools custom attribute
 CUST_ATTR_TOOLS = "tools_env"
+# Intent custom attribute name
+CUST_ATTR_INTENT = "intent"

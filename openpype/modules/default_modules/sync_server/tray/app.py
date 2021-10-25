@@ -26,7 +26,7 @@ class SyncServerWindow(QtWidgets.QDialog):
         self.setFocusPolicy(QtCore.Qt.StrongFocus)
 
         self.setStyleSheet(style.load_stylesheet())
-        self.setWindowIcon(QtGui.QIcon(resources.pype_icon_filepath()))
+        self.setWindowIcon(QtGui.QIcon(resources.get_openpype_icon_filepath()))
         self.resize(1450, 700)
 
         self.timer = QtCore.QTimer()
@@ -77,19 +77,36 @@ class SyncServerWindow(QtWidgets.QDialog):
         self.setWindowTitle("Sync Queue")
 
         self.projects.project_changed.connect(
-            lambda: repres.table_view.model().set_project(
-                self.projects.current_project))
+            self._on_project_change
+        )
 
         self.pause_btn.clicked.connect(self._pause)
         self.pause_btn.setAutoDefault(False)
         self.pause_btn.setDefault(False)
         repres.message_generated.connect(self._update_message)
+        self.projects.message_generated.connect(self._update_message)
 
         self.representationWidget = repres
+
+    def _on_project_change(self):
+        if self.projects.current_project is None:
+            return
+
+        self.representationWidget.table_view.model().set_project(
+            self.projects.current_project
+        )
+
+        project_name = self.projects.current_project
+        if not self.sync_server.get_sync_project_setting(project_name):
+            self.projects.message_generated.emit(
+                "Project {} not active anymore".format(project_name))
+            self.projects.refresh()
+            return
 
     def showEvent(self, event):
         self.representationWidget.model.set_project(
             self.projects.current_project)
+        self.projects.refresh()
         self._set_running(True)
         super().showEvent(event)
 

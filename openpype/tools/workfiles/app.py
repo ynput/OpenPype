@@ -376,6 +376,9 @@ class TasksWidget(QtWidgets.QWidget):
             task (str): Name of the task to select.
 
         """
+        task_view_model = self._tasks_view.model()
+        if not task_view_model:
+            return
 
         # Clear selection
         selection_model = self._tasks_view.selectionModel()
@@ -383,8 +386,8 @@ class TasksWidget(QtWidgets.QWidget):
 
         # Select the task
         mode = selection_model.Select | selection_model.Rows
-        for row in range(self._tasks_model.rowCount()):
-            index = self._tasks_model.index(row, 0)
+        for row in range(task_view_model.rowCount()):
+            index = task_view_model.index(row, 0)
             name = index.data(TASK_NAME_ROLE)
             if name == task_name:
                 selection_model.select(index, mode)
@@ -430,7 +433,6 @@ class FilesWidget(QtWidgets.QWidget):
         # Pype's anatomy object for current project
         self.anatomy = Anatomy(io.Session["AVALON_PROJECT"])
         # Template key used to get work template from anatomy templates
-        # TODO change template key based on task
         self.template_key = "work"
 
         # This is not root but workfile directory
@@ -942,7 +944,10 @@ class Window(QtWidgets.QMainWindow):
     def __init__(self, parent=None):
         super(Window, self).__init__(parent=parent)
         self.setWindowTitle(self.title)
-        self.setWindowFlags(QtCore.Qt.Window | QtCore.Qt.WindowCloseButtonHint)
+        window_flags = QtCore.Qt.Window | QtCore.Qt.WindowCloseButtonHint
+        if not parent:
+            window_flags |= QtCore.Qt.WindowStaysOnTopHint
+        self.setWindowFlags(window_flags)
 
         # Create pages widget and set it as central widget
         pages_widget = QtWidgets.QStackedWidget(self)
@@ -1012,6 +1017,9 @@ class Window(QtWidgets.QMainWindow):
         whilst trying to name an instance.
 
         """
+
+    def set_save_enabled(self, enabled):
+        self.files_widget.btn_save.setEnabled(enabled)
 
     def on_task_changed(self):
         # Since we query the disk give it slightly more delay
@@ -1185,7 +1193,7 @@ def show(root=None, debug=False, parent=None, use_context=True, save=True):
             }
             window.set_context(context)
 
-        window.files_widget.btn_save.setEnabled(save)
+        window.set_save_enabled(save)
 
         window.show()
         window.setStyleSheet(style.load_stylesheet())

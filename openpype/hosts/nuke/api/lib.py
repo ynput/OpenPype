@@ -7,7 +7,6 @@ from collections import OrderedDict
 
 
 from avalon import api, io, lib
-from avalon.tools import workfiles
 import avalon.nuke
 from avalon.nuke import lib as anlib
 from avalon.nuke import (
@@ -24,7 +23,7 @@ from openpype.api import (
     get_current_project_settings,
     ApplicationManager
 )
-
+from openpype.tools.utils import host_tools
 import nuke
 
 from .utils import set_context_favorites
@@ -287,15 +286,16 @@ def script_name():
 
 def add_button_write_to_read(node):
     name = "createReadNode"
-    label = "Cread Read From Rendered"
-    value = "import write_to_read;write_to_read.write_to_read(nuke.thisNode())"
+    label = "Create Read From Rendered"
+    value = "import write_to_read;\
+        write_to_read.write_to_read(nuke.thisNode(), allow_relative=False)"
     knob = nuke.PyScript_Knob(name, label, value)
     knob.clearFlag(nuke.STARTLINE)
     node.addKnob(knob)
 
 
 def create_write_node(name, data, input=None, prenodes=None,
-                      review=True, linked_knobs=None):
+                      review=True, linked_knobs=None, farm=True):
     ''' Creating write node which is group node
 
     Arguments:
@@ -421,7 +421,15 @@ def create_write_node(name, data, input=None, prenodes=None,
                             ))
                         continue
 
-                    if knob and value:
+                    if not knob and not value:
+                        continue
+
+                    log.info((knob, value))
+
+                    if isinstance(value, str):
+                        if "[" in value:
+                            now_node[knob].setExpression(value)
+                    else:
                         now_node[knob].setValue(value)
 
                 # connect to previous node
@@ -466,7 +474,7 @@ def create_write_node(name, data, input=None, prenodes=None,
     # imprinting group node
     anlib.set_avalon_knob_data(GN, data["avalon"])
     anlib.add_publish_knob(GN)
-    add_rendering_knobs(GN)
+    add_rendering_knobs(GN, farm)
 
     if review:
         add_review_knob(GN)
@@ -526,7 +534,7 @@ def create_write_node(name, data, input=None, prenodes=None,
     return GN
 
 
-def add_rendering_knobs(node):
+def add_rendering_knobs(node, farm=True):
     ''' Adds additional rendering knobs to given node
 
     Arguments:
@@ -535,9 +543,13 @@ def add_rendering_knobs(node):
     Return:
         node (obj): with added knobs
     '''
+    knob_options = [
+            "Use existing frames", "Local"]
+    if farm:
+        knob_options.append("On farm")
+
     if "render" not in node.knobs():
-        knob = nuke.Enumeration_Knob("render", "", [
-            "Use existing frames", "Local", "On farm"])
+        knob = nuke.Enumeration_Knob("render", "", knob_options)
         knob.clearFlag(nuke.STARTLINE)
         node.addKnob(knob)
     return node
@@ -727,7 +739,7 @@ class WorkfileSettings(object):
             log.error(msg)
             nuke.message(msg)
 
-        log.warning(">> root_dict: {}".format(root_dict))
+        log.debug(">> root_dict: {}".format(root_dict))
 
         # first set OCIO
         if self._root_node["colorManagement"].value() \
@@ -1019,27 +1031,6 @@ class WorkfileSettings(object):
             log.error(msg)
             nuke.message(msg)
 
-        bbox = self._asset_entity.get('data', {}).get('crop')
-
-        if bbox:
-            try:
-                x, y, r, t = bbox.split(".")
-                data.update(
-                    {
-                        "x": int(x),
-                        "y": int(y),
-                        "r": int(r),
-                        "t": int(t),
-                    }
-                )
-            except Exception as e:
-                bbox = None
-                msg = ("{}:{} \nFormat:Crop need to be set with dots, "
-                       "example: 0.0.1920.1080, "
-                       "/nSetting to default").format(__name__, e)
-                log.error(msg)
-                nuke.message(msg)
-
         existing_format = None
         for format in nuke.formats():
             if data["name"] == format.name():
@@ -1051,12 +1042,6 @@ class WorkfileSettings(object):
             existing_format.setWidth(data["width"])
             existing_format.setHeight(data["height"])
             existing_format.setPixelAspect(data["pixel_aspect"])
-
-            if bbox:
-                existing_format.setX(data["x"])
-                existing_format.setY(data["y"])
-                existing_format.setR(data["r"])
-                existing_format.setT(data["t"])
         else:
             format_string = self.make_format_string(**data)
             log.info("Creating new format: {}".format(format_string))
@@ -1277,6 +1262,7 @@ class ExporterReview:
     def clean_nodes(self):
         for node in self._temp_nodes:
             nuke.delete(node)
+        self._temp_nodes = []
         self.log.info("Deleted nodes...")
 
 
@@ -1301,6 +1287,7 @@ class ExporterReviewLut(ExporterReview):
                  lut_style=None):
         # initialize parent class
         ExporterReview.__init__(self, klass, instance)
+        self._temp_nodes = []
 
         # deal with now lut defined in viewer lut
         if hasattr(klass, "viewer_lut_raw"):
@@ -1674,7 +1661,7 @@ def launch_workfiles_app():
 
     if not opnl.workfiles_launched:
         opnl.workfiles_launched = True
-        workfiles.show(os.environ["AVALON_WORKDIR"])
+        host_tools.show_workfiles()
 
 
 def process_workfile_builder():

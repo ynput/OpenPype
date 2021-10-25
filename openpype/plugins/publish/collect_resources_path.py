@@ -26,6 +26,7 @@ class CollectResourcesPath(pyblish.api.InstancePlugin):
                 "animation",
                 "model",
                 "mayaAscii",
+                "mayaScene",
                 "setdress",
                 "layout",
                 "ass",
@@ -66,6 +67,12 @@ class CollectResourcesPath(pyblish.api.InstancePlugin):
             "frame": "FRAME_TEMP",
             "representation": "TEMP"
         })
+
+        # For the first time publish
+        if instance.data.get("hierarchy"):
+            template_data.update({
+                "hierarchy": instance.data["hierarchy"]
+            })
 
         anatomy_filled = anatomy.format(template_data)
 

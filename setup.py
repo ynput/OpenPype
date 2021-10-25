@@ -59,13 +59,14 @@ includes = []
 excludes = [
     "openpype"
 ]
-bin_includes = []
+bin_includes = [
+    "vendor"
+]
 include_files = [
     "igniter",
     "openpype",
     "repos",
     "schema",
-    "vendor",
     "LICENSE",
     "README.md"
 ]

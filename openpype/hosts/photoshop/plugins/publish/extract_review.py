@@ -17,6 +17,10 @@ class ExtractReview(openpype.api.Extractor):
     hosts = ["photoshop"]
     families = ["review"]
 
+    # Extract Options
+    jpg_options = None
+    mov_options = None
+
     def process(self, instance):
         staging_dir = self.staging_dir(instance)
         self.log.info("Outputting image to {}".format(staging_dir))
@@ -53,14 +57,16 @@ class ExtractReview(openpype.api.Extractor):
             "name": "jpg",
             "ext": "jpg",
             "files": output_image,
-            "stagingDir": staging_dir
+            "stagingDir": staging_dir,
+            "tags": self.jpg_options['tags']
         })
         instance.data["stagingDir"] = staging_dir
 
         # Generate thumbnail.
         thumbnail_path = os.path.join(staging_dir, "thumbnail.jpg")
         args = [
-            "{}".format(ffmpeg_path), "-y",
+            ffmpeg_path,
+            "-y",
             "-i", output_image_path,
             "-vf", "scale=300:-1",
             "-vframes", "1",
@@ -78,7 +84,8 @@ class ExtractReview(openpype.api.Extractor):
         # Generate mov.
         mov_path = os.path.join(staging_dir, "review.mov")
         args = [
-            ffmpeg_path, "-y",
+            ffmpeg_path,
+            "-y",
             "-i", output_image_path,
             "-vf", "pad=ceil(iw/2)*2:ceil(ih/2)*2",
             "-vframes", "1",
@@ -95,7 +102,7 @@ class ExtractReview(openpype.api.Extractor):
             "frameEnd": 1,
             "fps": 25,
             "preview": True,
-            "tags": ["review", "ftrackreview"]
+            "tags": self.mov_options['tags']
         })
 
         # Required for extract_review plugin (L222 onwards).

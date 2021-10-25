@@ -30,7 +30,18 @@
     },
     "publish": {
         "PreCollectNukeInstances": {
-            "sync_workfile_version": true
+            "sync_workfile_version_on_families": [
+                "nukenodes",
+                "camera",
+                "gizmo",
+                "source",
+                "render"
+            ]
+        },
+        "ValidateInstanceInContext": {
+            "enabled": true,
+            "optional": true,
+            "active": true
         },
         "ValidateContainers": {
             "enabled": true,
@@ -96,63 +107,30 @@
         },
         "ExtractSlateFrame": {
             "viewer_lut_raw": false
+        },
+        "IncrementScriptVersion": {
+            "enabled": true,
+            "optional": true,
+            "active": true
         }
     },
     "load": {
         "LoadImage": {
             "enabled": true,
-            "families": [
-                "render2d",
-                "source",
-                "plate",
-                "render",
-                "prerender",
-                "review",
-                "image"
-            ],
-            "representations": [
+            "_representations": [
                 "exr",
                 "dpx",
                 "jpg",
                 "jpeg",
                 "png",
-                "psd"
+                "psd",
+                "tiff"
             ],
             "node_name_template": "{class_name}_{ext}"
         },
-        "LoadMov": {
+        "LoadClip": {
             "enabled": true,
-            "families": [
-                "source",
-                "plate",
-                "render",
-                "prerender",
-                "review"
-            ],
-            "representations": [
-                "mov",
-                "review",
-                "mp4",
-                "h264"
-            ],
-            "node_name_template": "{class_name}_{ext}"
-        },
-        "LoadSequence": {
-            "enabled": true,
-            "families": [
-                "render2d",
-                "source",
-                "plate",
-                "render",
-                "prerender",
-                "review"
-            ],
-            "representations": [
-                "exr",
-                "dpx",
-                "jpg",
-                "jpeg",
-                "png"
+            "_representations": [
             ],
             "node_name_template": "{class_name}_{ext}"
         }
@@ -163,6 +141,7 @@
         "builder_on_start": false,
         "profiles": [
             {
+                "task_types": [],
                 "tasks": [],
                 "current_context": [
                     {

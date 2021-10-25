@@ -385,6 +385,7 @@ class ProcessSubmittedJobOnFarm(pyblish.api.InstancePlugin):
         """
         task = os.environ["AVALON_TASK"]
         subset = instance_data["subset"]
+        cameras = instance_data.get("cameras", [])
         instances = []
         # go through aovs in expected files
         for aov, files in exp_files[0].items():
@@ -410,7 +411,11 @@ class ProcessSubmittedJobOnFarm(pyblish.api.InstancePlugin):
                 task[0].upper(), task[1:],
                 subset[0].upper(), subset[1:])
 
-            subset_name = '{}_{}'.format(group_name, aov)
+            cam = [c for c in cameras if c in col.head]
+            if cam:
+                subset_name = '{}_{}_{}'.format(group_name, cam, aov)
+            else:
+                subset_name = '{}_{}'.format(group_name, aov)
 
             if isinstance(col, (list, tuple)):
                 staging = os.path.dirname(col[0])

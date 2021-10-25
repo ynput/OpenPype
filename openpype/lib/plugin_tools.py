@@ -6,6 +6,7 @@ import logging
 import re
 import json
 import tempfile
+import distutils
 
 from .execute import run_subprocess
 from .profiles_filtering import filter_profiles
@@ -35,7 +36,8 @@ def get_subset_name(
     project_name=None,
     host_name=None,
     default_template=None,
-    dynamic_data=None
+    dynamic_data=None,
+    dbcon=None
 ):
     if not family:
         return ""
@@ -46,13 +48,42 @@ def get_subset_name(
     # Use only last part of class family value split by dot (`.`)
     family = family.rsplit(".", 1)[-1]
 
+    if project_name is None:
+        import avalon.api
+
+        project_name = avalon.api.Session["AVALON_PROJECT"]
+
+    # Function should expect asset document instead of asset id
+    # - that way `dbcon` is not needed
+    if dbcon is None:
+        from avalon.api import AvalonMongoDB
+
+        dbcon = AvalonMongoDB()
+        dbcon.Session["AVALON_PROJECT"] = project_name
+
+    dbcon.install()
+
+    asset_doc = dbcon.find_one(
+        {
+            "type": "asset",
+            "_id": asset_id
+        },
+        {
+            "data.tasks": True
+        }
+    )
+    asset_tasks = asset_doc.get("data", {}).get("tasks") or {}
+    task_info = asset_tasks.get(task_name) or {}
+    task_type = task_info.get("type")
+
     # Get settings
     tools_settings = get_project_settings(project_name)["global"]["tools"]
     profiles = tools_settings["creator"]["subset_name_profiles"]
     filtering_criteria = {
         "families": family,
         "hosts": host_name,
-        "tasks": task_name
+        "tasks": task_name,
+        "task_types": task_type
     }
 
     matching_profile = filter_profiles(profiles, filtering_criteria)
@@ -347,7 +378,7 @@ def oiio_supported():
     """
         Checks if oiiotool is configured for this platform.
 
-        Expects full path to executable.
+        Triggers simple subprocess, handles exception if fails.
 
         'should_decompress' will throw exception if configured,
         but not present or not working.
@@ -355,7 +386,10 @@ def oiio_supported():
             (bool)
     """
     oiio_path = get_oiio_tools_path()
-    if not oiio_path or not os.path.exists(oiio_path):
+    if oiio_path:
+        oiio_path = distutils.spawn.find_executable(oiio_path)
+
+    if not oiio_path:
         log.debug("OIIOTool is not configured or not present at {}".
                   format(oiio_path))
         return False

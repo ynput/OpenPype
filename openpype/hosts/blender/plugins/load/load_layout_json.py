@@ -60,9 +60,7 @@ class JsonLayoutLoader(plugin.AssetLoader):
         return None
 
     def _process(self, libpath, asset, asset_group, actions):
-        print(f"asset: {asset}")
-
-        bpy.ops.object.select_all(action='DESELECT')
+        plugin.deselect_all()
 
         with open(libpath, "r") as fp:
             data = json.load(fp)

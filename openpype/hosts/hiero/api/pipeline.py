@@ -4,15 +4,12 @@ Basic avalon integration
 import os
 import contextlib
 from collections import OrderedDict
-from avalon.tools import (
-    workfiles,
-    publish as _publish
-)
 from avalon.pipeline import AVALON_CONTAINER_ID
 from avalon import api as avalon
 from avalon import schema
 from pyblish import api as pyblish
 from openpype.api import Logger
+from openpype.tools.utils import host_tools
 from . import lib, menu, events
 
 log = Logger().get_logger(__name__)
@@ -213,15 +210,13 @@ def update_container(track_item, data=None):
 def launch_workfiles_app(*args):
     ''' Wrapping function for workfiles launcher '''
 
-    workdir = os.environ["AVALON_WORKDIR"]
-
     # show workfile gui
-    workfiles.show(workdir)
+    host_tools.show_workfiles()
 
 
 def publish(parent):
     """Shorthand to publish from within host"""
-    return _publish.show(parent)
+    return host_tools.show_publish(parent)
 
 
 @contextlib.contextmanager

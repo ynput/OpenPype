@@ -378,6 +378,17 @@ def add_otio_metadata(otio_item, media_source, **kwargs):
 
 def create_otio_timeline():
 
+    def set_prev_item(itemindex, track_item):
+        # Add Gap if needed
+        if itemindex == 0:
+            # if it is first track item at track then add
+            # it to previouse item
+            return track_item
+
+        else:
+            # get previouse item
+            return track_item.parent().items()[itemindex - 1]
+
     # get current timeline
     self.timeline = hiero.ui.activeSequence()
     self.project_fps = self.timeline.framerate().toFloat()
@@ -396,14 +407,6 @@ def create_otio_timeline():
             type(track), track.name())
 
         for itemindex, track_item in enumerate(track):
-            # skip offline track items
-            if not track_item.isMediaPresent():
-                continue
-
-            # skip if track item is disabled
-            if not track_item.isEnabled():
-                continue
-
             # Add Gap if needed
             if itemindex == 0:
                 # if it is first track item at track then add
