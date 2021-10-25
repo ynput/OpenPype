@@ -65,7 +65,7 @@ QCheckBox {
 /* Buttons */
 QPushButton {
     text-align:center center;
-    border: 1px solid transparent;
+    border: 0px solid transparent;
     border-radius: 0.2em;
     padding: 3px 5px 3px 5px;
     background: {color:bg-buttons};
@@ -91,7 +91,7 @@ QPushButton::menu-indicator  {
 }
 
 QToolButton {
-    border: 1px solid transparent;
+    border: 0px solid transparent;
     background: {color:bg-buttons};
     border-radius: 0.2em;
     padding: 2px;
@@ -787,7 +787,6 @@ QScrollBar::add-page:vertical, QScrollBar::sub-page:vertical {
 }
 
 #ValidationActionButton {
-    border: 1px solid transparent;
     border-radius: 0.2em;
     padding: 4px 6px 4px 6px;
     background: {color:bg-buttons};
