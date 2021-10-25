@@ -347,7 +347,7 @@ def get_latest_version(asset_name, subset_name, dbcon=None, project_name=None):
 
 
 def get_workfile_template_key_from_context(
-    task_info, host_name, project_name=None,
+    asset_name, task_name, host_name, project_name=None,
     dbcon=None, project_settings=None
 ):
     """Helper function to get template key for workfile template.
@@ -359,10 +359,9 @@ def get_workfile_template_key_from_context(
     'project_name' arguments.
 
     Args:
-        task_info(dict): Information about the task is used to retrieve the
-            `type` of the task.
-        host_name(str): Name of host implementation for which is workfile
-            used.
+        asset_name(str): Name of asset document.
+        task_name(str): Task name for which is template key retrieved.
+            Must be available on asset document under `data.tasks`.
         project_name(str): Project name where asset and task is. Not required
             when 'dbcon' is passed.
         dbcon(AvalonMongoDB): Connection to mongo with already set project
@@ -387,6 +386,17 @@ def get_workfile_template_key_from_context(
     elif not project_name:
         project_name = dbcon.Session["AVALON_PROJECT"]
 
+    asset_doc = dbcon.find_one(
+        {
+            "type": "asset",
+            "name": asset_name
+        },
+        {
+            "data.tasks": 1
+        }
+    )
+    asset_tasks = asset_doc.get("data", {}).get("tasks") or {}
+    task_info = asset_tasks.get(task_name) or {}
     task_type = task_info.get("type")
 
     return get_workfile_template_key(
@@ -530,11 +540,10 @@ def get_workdir_with_workdir_data(
         anatomy = Anatomy(project_name)
 
     if not template_key:
-        template_key = get_workfile_template_key_from_context(
-            workdir_data["task"],
+        template_key = get_workfile_template_key(
+            workdir_data["task"].get("type"),
             workdir_data["app"],
             project_name=workdir_data["project"]["name"],
-            dbcon=dbcon
         )
 
     anatomy_filled = anatomy.format(workdir_data)
