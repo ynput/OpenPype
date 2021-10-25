@@ -10,10 +10,7 @@ from avalon.maya import pipeline
 
 from openpype.api import BuildWorkfile
 from openpype.api import BuildWorkfileTemplate
-from lib_template_builder import (
-    create_linked_asset_place_holder,
-    create_context_place_holder
-)
+from lib_template_builder import create_place_holder
 import maya.cmds as cmds
 from openpype.settings import get_project_settings
 from openpype.tools.utils import host_tools
@@ -56,14 +53,9 @@ def deferred():
         )
         cmds.menuItem(divider=True)
         cmds.menuItem(
-            "Create Current Context Place Holder",
+            "Create Place Holder",
             parent=_builder_menu,
-            command=lambda *args: create_context_place_holder()
-        )
-        cmds.menuItem(
-            "Create Linked Asset Place Holder",
-            parent=_builder_menu,
-            command=lambda *args: create_linked_asset_place_holder()
+            command=lambda *args: create_place_holder()
         )
 
     def add_look_assigner_item():
