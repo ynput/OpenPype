@@ -218,7 +218,9 @@ class PublishIconBtn(IconButton):
         part_h -= part_h % 2
         scaled_image = image.scaled(
             width - (2 * part_w),
-            height - (2 * part_h)
+            height - (2 * part_h),
+            QtCore.Qt.IgnoreAspectRatio,
+            QtCore.Qt.SmoothTransformation
         )
         alpha_mask = scaled_image.createAlphaMask()
         alpha_region = QtGui.QRegion(QtGui.QBitmap.fromImage(alpha_mask))
