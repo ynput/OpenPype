@@ -1,3 +1,4 @@
+# -*- coding: utf-8 -*-
 try:
     import commonmark
 except Exception:
@@ -343,15 +344,15 @@ class ValidationsWidget(QtWidgets.QWidget):
     Shows validation error titles with instances on which happened and
     validation error detail with possible actions (repair).
 
-    +------+----------------+-------+
-    |titles|                |actions|
-    |      |                |       |
-    |      |  Error detail  |       |
-    |      |                |       |
-    |      |                |       |
-    +------+----------------+-------+
-    |         Publish buttons       |
-    +-------------------------------+
+    ┌──────┬────────────────┬───────┐
+    │titles│                │actions│
+    │      │                │       │
+    │      │  Error detail  │       │
+    │      │                │       │
+    │      │                │       │
+    ├──────┴────────────────┴───────┤
+    │         Publish buttons       │
+    └───────────────────────────────┘
     """
     def __init__(self, controller, parent):
         super(ValidationsWidget, self).__init__(parent)

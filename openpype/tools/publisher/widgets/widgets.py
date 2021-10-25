@@ -1,3 +1,4 @@
+# -*- coding: utf-8 -*-
 import os
 import re
 import copy
@@ -1537,16 +1538,15 @@ class PublishPluginAttrsWidget(QtWidgets.QWidget):
 
 class SubsetAttributesWidget(QtWidgets.QWidget):
     """Wrapper widget where attributes of instance/s are modified.
-     _____________________________
-    |                 |           |
-    |     Global      | Thumbnail |
-    |     attributes  |           | TOP
-    |_________________|___________|
-    |              |              |
-    |              |  Publish     |
-    |  Family      |  plugin      |
-    |  attributes  |  attributes  | BOTTOM
-    |______________|______________|
+    ┌─────────────────┬─────────────┐
+    │   Global        │             │
+    │   attributes    │  Thumbnail  │  TOP
+    │                 │             │
+    ├─────────────┬───┴─────────────┤
+    │  Family     │   Publish       │
+    │  attributes │   plugin        │  BOTTOM
+    │             │   attributes    │
+    └───────────────────────────────┘
     """
     instance_context_changed = QtCore.Signal()
 

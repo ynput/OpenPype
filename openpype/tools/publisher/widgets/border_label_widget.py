@@ -1,3 +1,5 @@
+# -*- coding: utf-8 -*-
+
 from Qt import QtWidgets, QtCore, QtGui
 
 from openpype.style import get_objected_colors
@@ -6,7 +8,7 @@ from openpype.style import get_objected_colors
 class _VLineWidget(QtWidgets.QWidget):
     """Widget drawing 1px wide vertical line.
 
-    ```  |  ```
+    ```  │  ```
 
     Line is drawn in the middle of widget.
 
@@ -44,7 +46,7 @@ class _VLineWidget(QtWidgets.QWidget):
 class _HBottomLineWidget(QtWidgets.QWidget):
     """Widget drawing 1px wide vertical line with side lines going upwards.
 
-    ```|_____________|```
+    ```└─────────────┘```
 
     Corners may have curve set by radius (`set_radius`). Radius should expect
     height of widget.
@@ -88,15 +90,9 @@ class _HBottomLineWidget(QtWidgets.QWidget):
 class _HTopCornerLineWidget(QtWidgets.QWidget):
     """Widget drawing 1px wide horizontal line with side line going downwards.
 
-    ```
-    _______
-           |
-    ```
+    ```────────┐```
           or
-    ```
-     _______
-    |
-    ```
+    ```┌───────```
 
     Horizontal line is drawed in the middle of widget.
 
@@ -152,13 +148,13 @@ class _HTopCornerLineWidget(QtWidgets.QWidget):
 class BorderedLabelWidget(QtWidgets.QFrame):
     """Draws borders around widget with label in the middle of top.
 
-    +------- Label --------+
-    |                      |
-    |                      |
-    |       CONTENT        |
-    |                      |
-    |                      |
-    +----------------------+
+    ┌─────── Label ────────┐
+    │                      │
+    │                      │
+    │       CONTENT        │
+    │                      │
+    │                      │
+    └──────────────────────┘
     """
     def __init__(self, label, parent):
         super(BorderedLabelWidget, self).__init__(parent)
