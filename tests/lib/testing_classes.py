@@ -228,6 +228,7 @@ class PublishTest(ModuleUnitTest):
         while launched_app.poll() is None:
             time.sleep(0.5)
             if time.time() - time_start > self.TIMEOUT:
+                launched_app.terminate()
                 raise ValueError("Timeout reached")
 
         # some clean exit test possible?
