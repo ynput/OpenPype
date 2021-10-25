@@ -286,6 +286,30 @@ class CreateInstanceBtn(PublishIconBtn):
         self.setToolTip("Create new instance")
 
 
+class CopyPublishReportBtn(PublishIconBtn):
+    """Copy report button."""
+    def __init__(self, parent=None):
+        icon_path = get_icon_path("copy")
+        super(CopyPublishReportBtn, self).__init__(icon_path, parent)
+        self.setToolTip("Copy report")
+
+
+class SavePublishReportBtn(PublishIconBtn):
+    """Save report button."""
+    def __init__(self, parent=None):
+        icon_path = get_icon_path("download_arrow")
+        super(SavePublishReportBtn, self).__init__(icon_path, parent)
+        self.setToolTip("Export and save report")
+
+
+class ShowPublishReportBtn(PublishIconBtn):
+    """Show report button."""
+    def __init__(self, parent=None):
+        icon_path = get_icon_path("view_report")
+        super(ShowPublishReportBtn, self).__init__(icon_path, parent)
+        self.setToolTip("Show details")
+
+
 class RemoveInstanceBtn(PublishIconBtn):
     """Create remove button."""
     def __init__(self, parent=None):
