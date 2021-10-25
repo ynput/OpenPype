@@ -409,6 +409,9 @@ class AssetsDialog(QtWidgets.QDialog):
         self._asset_view = asset_view
 
         self._selected_asset = None
+        # Soft refresh is enabled
+        # - reset will happen at all cost if soft reset is enabled
+        # - adds ability to call reset on multiple places without repeating
         self._soft_reset_enabled = True
 
     def showEvent(self, event):
@@ -418,6 +421,7 @@ class AssetsDialog(QtWidgets.QDialog):
         self.reset(False)
 
     def reset(self, force=True):
+        """Reset asset model."""
         if not force and not self._soft_reset_enabled:
             return
 
@@ -427,6 +431,11 @@ class AssetsDialog(QtWidgets.QDialog):
         self._model.reset()
 
     def name_is_valid(self, name):
+        """Is asset name valid.
+
+        Args:
+            name(str): Asset name that should be checked.
+        """
         # Make sure we're reset
         self.reset(False)
         # Valid the name by model
@@ -883,6 +892,11 @@ class TasksCombobox(QtWidgets.QComboBox):
         return True
 
     def set_selected_item(self, item_name):
+        """Set task which is set on selected instance.
+
+        Args:
+            item_name(str): Task name which should be selected.
+        """
         idx = self.findText(item_name)
         # Set current index (must be set to -1 if is invalid)
         self.setCurrentIndex(idx)
@@ -895,6 +909,7 @@ class TasksCombobox(QtWidgets.QComboBox):
 
 
 class VariantInputWidget(QtWidgets.QLineEdit):
+    """Input widget for variant."""
     value_changed = QtCore.Signal()
 
     def __init__(self, parent):
@@ -919,9 +934,11 @@ class VariantInputWidget(QtWidgets.QLineEdit):
         self.textChanged.connect(self._on_text_change)
 
     def is_valid(self):
+        """Is variant text valid."""
         return self._is_valid
 
     def has_value_changed(self):
+        """Value of variant has changed."""
         return self._has_value_changed
 
     def _set_state_property(self, state):
@@ -931,6 +948,7 @@ class VariantInputWidget(QtWidgets.QLineEdit):
             self.style().polish(self)
 
     def set_multiselection_text(self, text):
+        """Change text of multiselection."""
         self._multiselection_text = text
 
     def _set_is_valid(self, valid):
@@ -955,12 +973,18 @@ class VariantInputWidget(QtWidgets.QLineEdit):
         self.value_changed.emit()
 
     def reset_to_origin(self):
+        """Set origin value of selected instnaces."""
         self.set_value(self._origin_value)
 
     def get_value(self):
+        """Get current value.
+
+        Origin value returned if didn't change.
+        """
         return copy.deepcopy(self._current_value)
 
     def set_value(self, variants=None):
+        """Set value of currently selected instances."""
         if variants is None:
             variants = []
 
@@ -987,6 +1011,12 @@ class VariantInputWidget(QtWidgets.QLineEdit):
 
 
 class MultipleItemWidget(QtWidgets.QWidget):
+    """Widget for immutable text which can have more than one value.
+
+    Content may be bigger than widget's size and does not have scroll but has
+    flick widget on top (is possible to move around with clicked mouse).
+    """
+
     def __init__(self, parent):
         super(MultipleItemWidget, self).__init__(parent)
 
@@ -1019,6 +1049,7 @@ class MultipleItemWidget(QtWidgets.QWidget):
         super(MultipleItemWidget, self).showEvent(event)
         tmp_item = None
         if not self._value:
+            # Add temp item to be able calculate maximum height of widget
             tmp_item = QtGui.QStandardItem("tmp")
             self._model.appendRow(tmp_item)
 
@@ -1029,6 +1060,7 @@ class MultipleItemWidget(QtWidgets.QWidget):
             self._model.clear()
 
     def set_value(self, value=None):
+        """Set value/s of currently selected instance."""
         if value is None:
             value = []
         self._value = value
@@ -1042,6 +1074,23 @@ class MultipleItemWidget(QtWidgets.QWidget):
 
 
 class GlobalAttrsWidget(QtWidgets.QWidget):
+    """Global attributes mainly to define context and subset name of instances.
+
+    Subset name is or may be affected on context. Gives abiity to modify
+    context and subset name of instance. This change is not autopromoted but
+    must be submited.
+
+    Warning: Until artist hit `Submit` changes must not be propagated to
+    instance data.
+
+    Global attributes contain these widgets:
+    Variant:      [  text input  ]
+    Asset:        [ asset dialog ]
+    Task:         [   combobox   ]
+    Family:       [   immutable  ]
+    Subset name:  [   immutable  ]
+                     [Submit] [Cancel]
+    """
     instance_context_changed = QtCore.Signal()
 
     multiselection_text = "< Multiselection >"
@@ -1103,6 +1152,7 @@ class GlobalAttrsWidget(QtWidgets.QWidget):
         self.cancel_btn = cancel_btn
 
     def _on_submit(self):
+        """Commit changes for selected instnaces."""
         variant_value = None
         asset_name = None
         task_name = None
@@ -1166,6 +1216,7 @@ class GlobalAttrsWidget(QtWidgets.QWidget):
         self.instance_context_changed.emit()
 
     def _on_cancel(self):
+        """Cancel changes and set back to their irigin value."""
         self.variant_input.reset_to_origin()
         self.asset_value_widget.reset_to_origin()
         self.task_value_widget.reset_to_origin()
@@ -1206,6 +1257,12 @@ class GlobalAttrsWidget(QtWidgets.QWidget):
         self.submit_btn.setEnabled(enabled)
 
     def set_current_instances(self, instances):
+        """Set currently selected instances.
+
+        Args:
+            instances(list<CreatedInstance>): List of selected instances.
+                Empty instances tells that nothing or context is selected.
+        """
         self._set_btns_visible(False)
 
         self._current_instances = instances
@@ -1247,6 +1304,19 @@ class GlobalAttrsWidget(QtWidgets.QWidget):
 
 
 class CreatorAttrsWidget(QtWidgets.QWidget):
+    """Widget showing creator specific attributes for selected instances.
+
+    Attributes are defined on creator so are dynamic. Their look and type is
+    based on attribute definitions that are defined in
+    `~/openpype/pipeline/lib/attribute_definitions.py` and their widget
+    representation in `~/openpype/widgets/attribute_defs/*`.
+
+    Widgets are disabled if context of instance is not valid.
+
+    Definitions are shown for all instance no matter if they are created with
+    different creators. If creator have same (similar) definitions their
+    widgets are merged into one (different label does not count).
+    """
     def __init__(self, controller, parent):
         super(CreatorAttrsWidget, self).__init__(parent)
 
@@ -1270,6 +1340,7 @@ class CreatorAttrsWidget(QtWidgets.QWidget):
         self._content_widget = None
 
     def set_instances_valid(self, valid):
+        """Change valid state of current instances."""
         if (
             self._content_widget is not None
             and self._content_widget.isEnabled() != valid
@@ -1277,6 +1348,7 @@ class CreatorAttrsWidget(QtWidgets.QWidget):
             self._content_widget.setEnabled(valid)
 
     def set_current_instances(self, instances):
+        """Set current instances for which are attribute definitons shown."""
         prev_content_widget = self._scroll_area.widget()
         if prev_content_widget:
             self._scroll_area.takeWidget()
@@ -1325,6 +1397,23 @@ class CreatorAttrsWidget(QtWidgets.QWidget):
 
 
 class PublishPluginAttrsWidget(QtWidgets.QWidget):
+    """Widget showing publsish plugin attributes for selected instances.
+
+    Attributes are defined on publish plugins. Publihs plugin may define
+    attribute definitions but must inherit `OpenPypePyblishPluginMixin`
+    (~/openpype/pipeline/publish). At the moment requires to implement
+    `get_attribute_defs` and `convert_attribute_values` class methods.
+
+    Look and type of attributes is based on attribute definitions that are
+    defined in `~/openpype/pipeline/lib/attribute_definitions.py` and their
+    widget representation in `~/openpype/widgets/attribute_defs/*`.
+
+    Widgets are disabled if context of instance is not valid.
+
+    Definitions are shown for all instance no matter if they have different
+    families. Similar definitions are merged into one (different label
+    does not count).
+    """
     def __init__(self, controller, parent):
         super(PublishPluginAttrsWidget, self).__init__(parent)
 
@@ -1349,6 +1438,7 @@ class PublishPluginAttrsWidget(QtWidgets.QWidget):
         self._content_widget = None
 
     def set_instances_valid(self, valid):
+        """Change valid state of current instances."""
         if (
             self._content_widget is not None
             and self._content_widget.isEnabled() != valid
@@ -1356,6 +1446,7 @@ class PublishPluginAttrsWidget(QtWidgets.QWidget):
             self._content_widget.setEnabled(valid)
 
     def set_current_instances(self, instances, context_selected):
+        """Set current instances for which are attribute definitons shown."""
         prev_content_widget = self._scroll_area.widget()
         if prev_content_widget:
             self._scroll_area.takeWidget()
@@ -1419,7 +1510,7 @@ class PublishPluginAttrsWidget(QtWidgets.QWidget):
 
 
 class SubsetAttributesWidget(QtWidgets.QWidget):
-    """Widget where attributes of instance/s are modified.
+    """Wrapper widget where attributes of instance/s are modified.
      _____________________________
     |                 |           |
     |     Global      | Thumbnail |
@@ -1509,6 +1600,13 @@ class SubsetAttributesWidget(QtWidgets.QWidget):
         self.instance_context_changed.emit()
 
     def set_current_instances(self, instances, context_selected):
+        """Change currently selected items.
+
+        Args:
+            instances(list<CreatedInstance>): List of currently selected
+                instances.
+            context_selected(bool): Is context selected.
+        """
         all_valid = True
         for instance in instances:
             if not instance.has_valid_context:
