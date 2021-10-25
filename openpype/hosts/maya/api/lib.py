@@ -1819,7 +1819,7 @@ def set_scene_fps(fps, update=True):
     cmds.file(modified=True)
 
 
-def set_scene_resolution(width, height):
+def set_scene_resolution(width, height, pixelAspect):
     """Set the render resolution
 
     Args:
@@ -1847,6 +1847,9 @@ def set_scene_resolution(width, height):
     cmds.setAttr("%s.width" % control_node, width)
     cmds.setAttr("%s.height" % control_node, height)
 
+    deviceAspectRatio = ((float(width) / float(height)) * float(pixelAspect))
+    cmds.setAttr("%s.deviceAspectRatio" % control_node, deviceAspectRatio)
+    cmds.setAttr("%s.pixelAspect" % control_node, pixelAspect)
 
 def set_context_settings():
     """Apply the project settings from the project definition
@@ -1876,11 +1879,13 @@ def set_context_settings():
     # Set project resolution
     width_key = "resolutionWidth"
     height_key = "resolutionHeight"
+    pixelAspect_key = "pixelAspect"
 
     width = asset_data.get(width_key, project_data.get(width_key, 1920))
     height = asset_data.get(height_key, project_data.get(height_key, 1080))
+    pixelAspect = asset_data.get(pixelAspect_key, project_data.get(pixelAspect_key, 1))
 
-    set_scene_resolution(width, height)
+    set_scene_resolution(width, height, pixelAspect)
 
     # Set frame range.
     avalon.maya.interactive.reset_frame_range()
