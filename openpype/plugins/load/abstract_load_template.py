@@ -113,6 +113,8 @@ def get_loader_by_name():
             loaders_by_name[loader_name] = loader
     return loaders_by_name
 
+##############################
+
 class AbstractTemplateLoader(object):
 
     @property
@@ -129,12 +131,15 @@ class AbstractTemplateLoader(object):
                 break
         else:
             raise ValueError("No matching profile found for task '{}' in DCC '{}'".format(current_task, current_dcc))
-
         try:
             solved_path = os.path.normpath(anatomy.path_remapper(path))
-            return solved_path
+
         except KeyError as missing_key:
-            raise KeyError("Could note solve '{}' in path '{}'".format(missing_key, path))
+            raise KeyError("Could not solve key '{}' in path '{}'".format(missing_key, path))
+
+        if not os.path.exists(solved_path):
+            raise IOError("Template '{}' does not exists.".format(path))
+        return solved_path
 
     def __init__(self):
 
@@ -146,7 +151,7 @@ class AbstractTemplateLoader(object):
             self.log.warning("There are no registered loaders.")
             return
 
-        #get_assets
+        # get_assets
         current_asset_entity = avalon.io.find_one({
             "type": "asset",
             "name": avalon.io.Session["AVALON_ASSET"]
@@ -155,55 +160,44 @@ class AbstractTemplateLoader(object):
         current_entities = _collect_last_version_repres([current_asset_entity])
         assets = get_linked_assets(current_asset_entity)
         linked_entities = _collect_last_version_repres(assets)
+        current_representations = self.get_representations(current_entities)
+        linked_representations = self.get_representations(linked_entities)
 
-        placeholders = (
-            self.placeholderize(node) for node
+        placeholders = [
+            self._get_node_data(node) for node
             in self.get_template_nodes()
             if self.is_valid_placeholder(node)
-        )
-        sorted_placeholders = sorted(placeholders, key=lambda x: x['order'])
+        ]
 
-        for ph in sorted_placeholders:
-            if ph['context_asset']:
-                repres = self.get_representations_by_placeholder(ph, current_entities)
-            else:
-                repres = self.get_representations_by_placeholder(ph, linked_entities)
-            for rep in repres:
+        placeholders.sort(key=lambda x: x['order'])
+
+        for placeholder in placeholders:
+            loader_name = self._get_placeholder_loader_name(placeholder)
+            representations = current_representations if placeholder else linked_representations
+            for representation in self.get_valid_representations_id_for_placeholder(representations, placeholder):
                 container = avalon.api.load(
-                        loaders_by_name["ReferenceLoader"],
-                        rep
+                        loaders_by_name[loader_name],
+                        representation
                     )
-                self.switch(container, ph['node'])
+                self.switch(container, placeholder)
 
-    def get_representations_by_placeholder(self, ph, entities):
-        def validate_representation(representation):
-            return (
-                ph['family'] == representation['context']['family']
-                and ph['representation_type'] == representation['context']['representation']
-                and ph['subset'] == representation['context']['subset']
-                )
+    def get_representations(self, entities):
+        """Parse avalon entities to get representations"""
+        return [subset['version']['repres'] for entity in entities.values()
+                  for subset in entity['subsets'].values()
+                  if entity['asset_entity']['_id']]
 
-        repres = [subset['version']['repres'] for entity in entities.values() for subset in entity['subsets'].values()]
-        repres = [r['_id'] for rep in repres for r in rep if validate_representation(r)] #flatten list + validate
+    @staticmethod
+    def get_valid_representations_id(self, representation):
+        raise NotImplementedError
 
-        if len(repres) <1:
-            raise ValueError("No representation found for asset {} with:\n"
-                  "family : {}\n"
-                  "rerpresentation : {}\n"
-                  "subset : {}\n".format(ph['name'], ph['family'], ph['representation_type'], ph['subset']))
-        return repres
+    @staticmethod
+    def validate_representation(representation, placeholder):
+        raise NotImplementedError
 
-    def placeholderize(self, node):
-        return {
-            'context_asset': self.get_is_context_asset(node),
-            'loader': self.get_loader(node),
-            'representation_type': self.get_representation_type(node),
-            'family': self.get_family(node),
-            'subset': self.get_subset(node),
-            'node': node,
-            'name': self.get_name(node),
-            'order': self.get_order(node),
-        }
+    @staticmethod
+    def _get_node_data(self, node):
+        raise NotImplementedError
 
     def import_template(self, template_path):
         """
@@ -215,35 +209,14 @@ class AbstractTemplateLoader(object):
         raise NotImplementedError
 
     def switch(self, container, node):
+        """
+        Import template in dcc
+
+        Args:
+            container (str): fullpath to current task and dcc's template file
+            node ():
+        """
         raise NotImplementedError
 
     def get_template_nodes(self):
-        raise NotImplementedError
-
-    @staticmethod
-    def get_is_context_asset(node):
-        raise NotImplementedError
-
-    @staticmethod
-    def get_loader(node):
-        raise NotImplementedError
-
-    @staticmethod
-    def get_type(node):
-        raise NotImplementedError
-
-    @staticmethod
-    def get_family(node):
-        raise NotImplementedError
-
-    @staticmethod
-    def get_subset(node):
-        raise NotImplementedError
-
-    @staticmethod
-    def get_name(node):
-        raise NotImplementedError
-
-    @staticmethod
-    def get_order(node):
         raise NotImplementedError
