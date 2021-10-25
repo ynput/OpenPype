@@ -1,3 +1,25 @@
+"""Card view instance with more information about each instance.
+
+Instances are grouped under groups. Groups are defined by `creator_label`
+attribute on instance (Group defined by creator).
+
+Only one item can be selected at a time.
+
+```
+<i> == Icon (Can have Warning icon when context is not right)
++----------------------+
+|   Options            |
+| <Group 1> -----------|
+| <i> <Instance 1>  [x]|
+| <i> <Instance 2>  [x]|
+| ...                  |
+| <Group 2> -----------|
+| <i> <Instance 3>  [ ]|
+| ...                  |
++----------------------+
+```
+"""
+
 import re
 import collections
 

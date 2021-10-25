@@ -1,7 +1,7 @@
 """Simple easy instance view grouping instances into collapsible groups.
 
-Groups are defined by `creator_label` attribute on instance (Group
-defined by creator).
+View has multiselection ability. Groups are defined by `creator_label`
+attribute on instance (Group defined by creator).
 
 Each item can be enabled/disabled with their checkbox, whole group
 can be enabled/disabled with checkbox on group or
