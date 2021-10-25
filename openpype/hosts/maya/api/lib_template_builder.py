@@ -20,7 +20,4 @@ def create_place_holder():
     cmds.addAttr(place_holder_name, longName="loader", dataType='string')
     cmds.addAttr(place_holder_name, longName="order", dataType='string')
 
-    attr_name = "{}.{}".format(place_holder_name, attribute_name)
-    cmds.setAttr(attr_name, True)
-
     return place_holder_name
