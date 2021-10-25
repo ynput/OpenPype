@@ -1851,6 +1851,7 @@ def set_scene_resolution(width, height, pixelAspect):
     cmds.setAttr("%s.deviceAspectRatio" % control_node, deviceAspectRatio)
     cmds.setAttr("%s.pixelAspect" % control_node, pixelAspect)
 
+
 def reset_scene_resolution():
     """Apply the scene resolution  from the project definition
 
@@ -1872,7 +1873,8 @@ def reset_scene_resolution():
 
     width = asset_data.get(width_key, project_data.get(width_key, 1920))
     height = asset_data.get(height_key, project_data.get(height_key, 1080))
-    pixelAspect = asset_data.get(pixelAspect_key, project_data.get(pixelAspect_key, 1))
+    pixelAspect = asset_data.get(pixelAspect_key,
+                                 project_data.get(pixelAspect_key, 1))
 
     set_scene_resolution(width, height, pixelAspect)
 
