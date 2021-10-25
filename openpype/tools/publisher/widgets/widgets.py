@@ -1442,7 +1442,6 @@ class SubsetAttributesWidget(QtWidgets.QWidget):
         # Global attributes
         global_attrs_widget = GlobalAttrsWidget(controller, top_widget)
         thumbnail_widget = ThumbnailWidget(top_widget)
-        thumbnail_widget.setVisible(False)
 
         top_layout = QtWidgets.QHBoxLayout(top_widget)
         top_layout.setContentsMargins(0, 0, 0, 0)
@@ -1530,10 +1529,19 @@ class SubsetAttributesWidget(QtWidgets.QWidget):
 
 
 class ThumbnailWidget(QtWidgets.QWidget):
+    """Instance thumbnail widget.
+
+    Logic implementation of this widget is missing but widget is used
+    to offset `GlobalAttrsWidget` inputs visually.
+    """
     def __init__(self, parent):
         super(ThumbnailWidget, self).__init__(parent)
 
-        default_pix = get_pixmap("thumbnail")
+        # Missing implementation for thumbnail
+        # - widget kept to make a visial offset of global attr widget offset
+        # default_pix = get_pixmap("thumbnail")
+        default_pix = QtGui.QPixmap(10, 10)
+        default_pix.fill(QtCore.Qt.transparent)
 
         thumbnail_label = QtWidgets.QLabel(self)
         thumbnail_label.setPixmap(
