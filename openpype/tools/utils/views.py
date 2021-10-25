@@ -68,8 +68,8 @@ class AssetsView(TreeViewSpinner, DeselectableTreeView):
     This implements a context menu.
     """
 
-    def __init__(self):
-        super(AssetsView, self).__init__()
+    def __init__(self, parent=None):
+        super(AssetsView, self).__init__(parent)
         self.setIndentation(15)
         self.setContextMenuPolicy(QtCore.Qt.CustomContextMenu)
         self.setHeaderHidden(True)

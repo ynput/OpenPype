@@ -110,7 +110,39 @@
                             "object_type": "text"
                         }
                     ]
-                }                
+                },
+                {
+                    "type": "dict",
+                    "collapsible": true,
+                    "key": "ExtractReview",
+                    "label": "Extract Review",
+                    "children": [
+                        {
+                            "type": "dict",
+                            "collapsible": false,
+                            "key": "jpg_options",
+                            "label": "Extracted jpg Options",
+                            "children": [
+                                {
+                                    "type": "schema",
+                                    "name": "schema_representation_tags"
+                                }
+                            ]
+                        },
+                        {
+                            "type": "dict",
+                            "collapsible": false,
+                            "key": "mov_options",
+                            "label": "Extracted mov Options",
+                            "children": [
+                                {
+                                    "type": "schema",
+                                    "name": "schema_representation_tags"
+                                }
+                            ]
+                        }
+                    ]
+                }
             ]
         },
         {

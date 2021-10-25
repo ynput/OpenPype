@@ -41,14 +41,13 @@ class ReferenceLoader(openpype.hosts.maya.api.plugin.ReferenceLoader):
             family = "model"
 
         with maya.maintained_selection():
-
-            groupName = "{}:{}".format(namespace, name)
+            groupName = "{}:_GRP".format(namespace)
             cmds.loadPlugin("AbcImport.mll", quiet=True)
             nodes = cmds.file(self.fname,
                               namespace=namespace,
                               sharedReferenceFile=False,
                               groupReference=True,
-                              groupName="{}:{}".format(namespace, name),
+                              groupName=groupName,
                               reference=True,
                               returnNewNodes=True)
 
