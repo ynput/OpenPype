@@ -1,3 +1,4 @@
+# -*- coding: utf-8 -*-
 """Card view instance with more information about each instance.
 
 Instances are grouped under groups. Groups are defined by `creator_label`
@@ -6,17 +7,16 @@ attribute on instance (Group defined by creator).
 Only one item can be selected at a time.
 
 ```
-<i> == Icon (Can have Warning icon when context is not right)
-+----------------------+
-|   Options            |
-| <Group 1> -----------|
-| <i> <Instance 1>  [x]|
-| <i> <Instance 2>  [x]|
-| ...                  |
-| <Group 2> -----------|
-| <i> <Instance 3>  [ ]|
-| ...                  |
-+----------------------+
+<i> : Icon. Can have Warning icon when context is not right
+┌──────────────────────┐
+│  Options             │
+│ <Group 1> ────────── │
+│ <i> <Instance 1>  [x]│
+│ <i> <Instance 2>  [x]│
+│ <Group 2> ────────── │
+│ <i> <Instance 3>  [x]│
+│ ...                  │
+└──────────────────────┘
 ```
 """
 
@@ -41,6 +41,7 @@ from ..constants import (
 
 
 class GroupWidget(QtWidgets.QWidget):
+    """Widget wrapping instances under group."""
     selected = QtCore.Signal(str, str)
     active_changed = QtCore.Signal()
     removed_selected = QtCore.Signal()
@@ -75,19 +76,29 @@ class GroupWidget(QtWidgets.QWidget):
         self._content_layout = layout
 
     def get_widget_by_instance_id(self, instance_id):
+        """Get instance widget by it's id."""
         return self._widgets_by_id.get(instance_id)
 
     def update_instance_values(self):
+        """Trigger update on instance widgets."""
         for widget in self._widgets_by_id.values():
             widget.update_instance_values()
 
     def confirm_remove_instance_id(self, instance_id):
+        """Delete widget by instance id."""
         widget = self._widgets_by_id.pop(instance_id)
         widget.setVisible(False)
         self._content_layout.removeWidget(widget)
         widget.deleteLater()
 
     def update_instances(self, instances):
+        """Update instances for the group.
+
+        Args:
+            instances(list<CreatedInstance>): List of instances in
+                CreateContext.
+        """
+        # Store instances by id and by subset name
         instances_by_id = {}
         instances_by_subset_name = collections.defaultdict(list)
         for instance in instances:
@@ -95,6 +106,7 @@ class GroupWidget(QtWidgets.QWidget):
             subset_name = instance["subset"]
             instances_by_subset_name[subset_name].append(instance)
 
+        # Remove instance widgets that are not in passed instances
         for instance_id in tuple(self._widgets_by_id.keys()):
             if instance_id in instances_by_id:
                 continue
@@ -107,7 +119,9 @@ class GroupWidget(QtWidgets.QWidget):
             self._content_layout.removeWidget(widget)
             widget.deleteLater()
 
+        # Sort instances by subset name
         sorted_subset_names = list(sorted(instances_by_subset_name.keys()))
+        # Add new instances to widget
         widget_idx = 1
         for subset_names in sorted_subset_names:
             for instance in instances_by_subset_name[subset_names]:
@@ -127,8 +141,10 @@ class GroupWidget(QtWidgets.QWidget):
 
 
 class CardWidget(ClickableFrame):
+    """Clickable card used as bigger button."""
     selected = QtCore.Signal(str, str)
-    # This must be set
+    # Group identifier of card
+    # - this must be set because if send when mouse is released with card id
     _group_identifier = None
 
     def __init__(self, parent):
@@ -140,9 +156,11 @@ class CardWidget(ClickableFrame):
 
     @property
     def is_selected(self):
+        """Is card selected."""
         return self._selected
 
     def set_selected(self, selected):
+        """Set card as selected."""
         if selected == self._selected:
             return
         self._selected = selected
@@ -151,10 +169,15 @@ class CardWidget(ClickableFrame):
         self.style().polish(self)
 
     def _mouse_release_callback(self):
+        """Trigger selected signal."""
         self.selected.emit(self._id, self._group_identifier)
 
 
 class ContextCardWidget(CardWidget):
+    """Card for global context.
+
+    Is not visually under group widget and is always at the top of card view.
+    """
     def __init__(self, parent):
         super(ContextCardWidget, self).__init__(parent)
 
@@ -180,6 +203,7 @@ class ContextCardWidget(CardWidget):
 
 
 class InstanceCardWidget(CardWidget):
+    """Card widget representing instance."""
     active_changed = QtCore.Signal()
 
     def __init__(self, instance, group_icon, parent):
@@ -245,6 +269,7 @@ class InstanceCardWidget(CardWidget):
         self.update_instance_values()
 
     def set_active(self, new_value):
+        """Set instance as active."""
         checkbox_value = self._active_checkbox.isChecked()
         instance_value = self.instance["active"]
 
@@ -257,6 +282,7 @@ class InstanceCardWidget(CardWidget):
             self._active_checkbox.setChecked(new_value)
 
     def update_instance(self, instance):
+        """Update instance object and update UI."""
         self.instance = instance
         self.update_instance_values()
 
@@ -291,6 +317,7 @@ class InstanceCardWidget(CardWidget):
         )
 
     def update_instance_values(self):
+        """Update instance data"""
         self._update_subset_name()
         self.set_active(self.instance["active"])
         self._validate_context()
@@ -314,6 +341,10 @@ class InstanceCardWidget(CardWidget):
 
 
 class InstanceCardView(AbstractInstanceView):
+    """Publish access to card view.
+
+    Wrapper of all widgets in card view.
+    """
     def __init__(self, controller, parent):
         super(InstanceCardView, self).__init__(parent)
 
@@ -356,6 +387,7 @@ class InstanceCardView(AbstractInstanceView):
         )
 
     def sizeHint(self):
+        """Modify sizeHint based on visibility of scroll bars."""
         # Calculate width hint by content widget and verticall scroll bar
         scroll_bar = self._scroll_area.verticalScrollBar()
         width = (
@@ -384,6 +416,10 @@ class InstanceCardView(AbstractInstanceView):
         return None
 
     def refresh(self):
+        """Refresh instances in view based on CreatedContext."""
+        # Create context item if is not already existing
+        # - this must be as first thing to do as context item should be at the
+        #   top
         if self._context_widget is None:
             widget = ContextCardWidget(self._content_widget)
             widget.selected.connect(self._on_widget_selection)
@@ -395,6 +431,7 @@ class InstanceCardView(AbstractInstanceView):
 
             self.select_item(CONTEXT_ID, None)
 
+        # Prepare instances by group and identifiers by group
         instances_by_group = collections.defaultdict(list)
         identifiers_by_group = collections.defaultdict(set)
         for instance in self.controller.instances:
@@ -404,6 +441,7 @@ class InstanceCardView(AbstractInstanceView):
                 instance.creator_identifier
             )
 
+        # Remove groups that were not found in apassed instances
         for group_name in tuple(self._widgets_by_group.keys()):
             if group_name in instances_by_group:
                 continue
@@ -415,7 +453,10 @@ class InstanceCardView(AbstractInstanceView):
             self._content_layout.removeWidget(widget)
             widget.deleteLater()
 
+        # Sort groups
         sorted_group_names = list(sorted(instances_by_group.keys()))
+        # Keep track of widget indexes
+        # - we start with 1 because Context item as at the top
         widget_idx = 1
         for group_name in sorted_group_names:
             if group_name in self._widgets_by_group:
@@ -443,6 +484,7 @@ class InstanceCardView(AbstractInstanceView):
             )
 
     def refresh_instance_states(self):
+        """Trigger update of instances on group widgets."""
         for widget in self._widgets_by_group.values():
             widget.update_instance_values()
 
@@ -453,6 +495,11 @@ class InstanceCardView(AbstractInstanceView):
         self.select_item(instance_id, group_name)
 
     def select_item(self, instance_id, group_name):
+        """Select specific item by instance id.
+
+        Pass `CONTEXT_ID` as instance id and empty string as group to select
+        global context item.
+        """
         if instance_id == CONTEXT_ID:
             new_widget = self._context_widget
         else:
@@ -479,6 +526,7 @@ class InstanceCardView(AbstractInstanceView):
             self._on_widget_selection(CONTEXT_ID, None)
 
     def get_selected_items(self):
+        """Get selected instance ids and context."""
         instances = []
         context_selected = False
         selected_widget = self._get_selected_widget()
