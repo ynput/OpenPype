@@ -12,7 +12,10 @@ from .widgets import (
     StopBtn,
     ResetBtn,
     ValidateBtn,
-    PublishBtn
+    PublishBtn,
+    CopyPublishReportBtn,
+    SavePublishReportBtn,
+    ShowPublishReportBtn
 )
 
 
@@ -66,16 +69,49 @@ class ActionsButton(QtWidgets.QToolButton):
 
 
 class PublishFrame(QtWidgets.QFrame):
+    """Frame showed during publishing.
+
+    Shows all information related to publishing. Contains validation error
+    widget which is showed if only validation error happens during validation.
+
+    Processing layer is default layer. Validation error layer is shown if only
+    validation exception is raised during publishing. Report layer is available
+    only when publishing process is stopped and must be manually triggered to
+    change into that layer.
+
+    +------------------------------------------------------------------------+
+    |                                                                        |
+    |                                                                        |
+    |                                                                        |
+    |                       < Validation error widget >                      |
+    |                                                                        |
+    |                                                                        |
+    |                                                                        |
+    |                                                                        |
+    +------------------------------------------------------------------------+
+    |                             < Main label >                             |
+    |                             < Label top >                              |
+    |        (####                      10%  <Progress bar>                ) |
+    | <Instance label>                                        <Plugin label> |
+    | Report: <Copy><Save> <Label bottom>   <Reset><Stop><Validate><Publish> |
+    +------------------------------------------------------------------------+
+    """
     def __init__(self, controller, parent):
         super(PublishFrame, self).__init__(parent)
 
         self.setObjectName("PublishFrame")
 
+        # Widget showing validation errors. Their details and action callbacks.
+        validation_errors_widget = ValidationsWidget(controller, self)
+
+        # Bottom part of widget where process and callback buttons are showed
+        # - QFrame used to be able set background using stylesheets easily
+        #   and not override all children widgets style
         info_frame = QtWidgets.QFrame(self)
         info_frame.setObjectName("PublishInfoFrame")
 
-        validation_errors_widget = ValidationsWidget(controller, self)
-
+        # Content of info frame
+        # - separated into QFrame and QWidget (widget has transparent bg)
         content_widget = QtWidgets.QWidget(info_frame)
         content_widget.setAttribute(QtCore.Qt.WA_TranslucentBackground)
 
@@ -83,20 +119,27 @@ class PublishFrame(QtWidgets.QFrame):
         info_layout.setContentsMargins(0, 0, 0, 0)
         info_layout.addWidget(content_widget)
 
+        # Center widget displaying current state (without any specific info)
         main_label = QtWidgets.QLabel(content_widget)
         main_label.setObjectName("PublishInfoMainLabel")
         main_label.setAlignment(QtCore.Qt.AlignCenter)
 
-        message_label = QtWidgets.QLabel(content_widget)
-        message_label.setAlignment(QtCore.Qt.AlignCenter)
+        # Supporting labels for main label
+        # Top label is displayed just under main label
+        message_label_top = QtWidgets.QLabel(content_widget)
+        message_label_top.setAlignment(QtCore.Qt.AlignCenter)
 
+        # Bottom label is displayed between report and publish buttons
+        #   at bottom part of info frame
         message_label_bottom = QtWidgets.QLabel(content_widget)
         message_label_bottom.setAlignment(QtCore.Qt.AlignCenter)
 
+        # Label showing currently processed instance
         instance_label = QtWidgets.QLabel("<Instance name>", content_widget)
         instance_label.setAlignment(
             QtCore.Qt.AlignLeft | QtCore.Qt.AlignVCenter
         )
+        # Label showing currently processed plugin
         plugin_label = QtWidgets.QLabel("<Plugin name>", content_widget)
         plugin_label.setAlignment(
             QtCore.Qt.AlignRight | QtCore.Qt.AlignVCenter
@@ -105,53 +148,58 @@ class PublishFrame(QtWidgets.QFrame):
         instance_plugin_layout.addWidget(instance_label, 1)
         instance_plugin_layout.addWidget(plugin_label, 1)
 
+        # Progress bar showing progress of publishing
         progress_widget = QtWidgets.QProgressBar(content_widget)
         progress_widget.setObjectName("PublishProgressBar")
 
-        report_btn = ActionsButton(content_widget)
-        report_btn.setVisible(False)
+        # Report buttons to be able copy, save or see report
+        report_btns_widget = QtWidgets.QWidget(content_widget)
+        report_btns_widget.setAttribute(QtCore.Qt.WA_TranslucentBackground)
+        # Hidden by default
+        report_btns_widget.setVisible(False)
 
-        export_report_action = QtWidgets.QAction(
-            "Export report", report_btn.menu()
-        )
-        copy_report_action = QtWidgets.QAction(
-            "Copy report", report_btn.menu()
-        )
-        report_btn.add_action(export_report_action)
-        report_btn.add_action(copy_report_action)
+        report_label = QtWidgets.QLabel("Report:", report_btns_widget)
+        copy_report_btn = CopyPublishReportBtn(report_btns_widget)
+        export_report_btn = SavePublishReportBtn(report_btns_widget)
+        show_details_btn = ShowPublishReportBtn(report_btns_widget)
 
-        show_details_btn = QtWidgets.QPushButton(
-            "Show details", content_widget
-        )
-        show_details_btn.setVisible(False)
+        report_btns_layout = QtWidgets.QHBoxLayout(report_btns_widget)
+        report_btns_layout.setContentsMargins(0, 0, 0, 0)
+        report_btns_layout.addWidget(report_label, 0)
+        report_btns_layout.addWidget(copy_report_btn, 0)
+        report_btns_layout.addWidget(export_report_btn, 0)
+        report_btns_layout.addWidget(show_details_btn, 0)
 
+        # Publishing buttons to stop, reset or trigger publishing
         reset_btn = ResetBtn(content_widget)
         stop_btn = StopBtn(content_widget)
         validate_btn = ValidateBtn(content_widget)
         publish_btn = PublishBtn(content_widget)
 
-        footer_layout = QtWidgets.QHBoxLayout()
-        footer_layout.addWidget(report_btn, 0)
-        footer_layout.addWidget(show_details_btn, 0)
-        footer_layout.addWidget(message_label_bottom, 1)
-        footer_layout.addWidget(reset_btn, 0)
-        footer_layout.addWidget(stop_btn, 0)
-        footer_layout.addWidget(validate_btn, 0)
-        footer_layout.addWidget(publish_btn, 0)
+        # Footer on info frame layout
+        info_footer_layout = QtWidgets.QHBoxLayout()
+        info_footer_layout.addWidget(report_btns_widget, 0)
+        info_footer_layout.addWidget(message_label_bottom, 1)
+        info_footer_layout.addWidget(reset_btn, 0)
+        info_footer_layout.addWidget(stop_btn, 0)
+        info_footer_layout.addWidget(validate_btn, 0)
+        info_footer_layout.addWidget(publish_btn, 0)
 
+        # Info frame content
         content_layout = QtWidgets.QVBoxLayout(content_widget)
         content_layout.setSpacing(5)
         content_layout.setAlignment(QtCore.Qt.AlignCenter)
 
         content_layout.addWidget(main_label)
         content_layout.addStretch(1)
-        content_layout.addWidget(message_label)
+        content_layout.addWidget(message_label_top)
         content_layout.addStretch(1)
         content_layout.addLayout(instance_plugin_layout)
         content_layout.addWidget(progress_widget)
         content_layout.addStretch(1)
-        content_layout.addLayout(footer_layout)
+        content_layout.addLayout(info_footer_layout)
 
+        # Whole widget layout
         publish_widget = QtWidgets.QWidget(self)
         publish_widget.setAttribute(QtCore.Qt.WA_TranslucentBackground)
         publish_layout = QtWidgets.QVBoxLayout(publish_widget)
@@ -179,8 +227,8 @@ class PublishFrame(QtWidgets.QFrame):
 
         show_details_btn.clicked.connect(self._on_show_details)
 
-        copy_report_action.triggered.connect(self._on_copy_report)
-        export_report_action.triggered.connect(self._on_export_report)
+        copy_report_btn.clicked.connect(self._on_copy_report)
+        export_report_btn.clicked.connect(self._on_export_report)
 
         reset_btn.clicked.connect(self._on_reset_clicked)
         stop_btn.clicked.connect(self._on_stop_clicked)
@@ -199,32 +247,30 @@ class PublishFrame(QtWidgets.QFrame):
 
         self.controller = controller
 
-        self.validation_errors_widget = validation_errors_widget
+        self._info_frame = info_frame
+        self._publish_widget = publish_widget
+
+        self._validation_errors_widget = validation_errors_widget
 
         self._main_layout = main_layout
 
-        self.publish_widget = publish_widget
+        self._main_label = main_label
+        self._message_label_top = message_label_top
 
-        self.info_frame = info_frame
-        self.main_label = main_label
-        self.message_label = message_label
+        self._instance_label = instance_label
+        self._plugin_label = plugin_label
 
-        self.instance_label = instance_label
-        self.plugin_label = plugin_label
-        self.progress_widget = progress_widget
+        self._progress_widget = progress_widget
 
-        self.report_btn = report_btn
-        self.show_details_btn = show_details_btn
-        self.message_label_bottom = message_label_bottom
-        self.reset_btn = reset_btn
-        self.stop_btn = stop_btn
-        self.validate_btn = validate_btn
-        self.publish_btn = publish_btn
+        self._report_btns_widget = report_btns_widget
+        self._message_label_bottom = message_label_bottom
+        self._reset_btn = reset_btn
+        self._stop_btn = stop_btn
+        self._validate_btn = validate_btn
+        self._publish_btn = publish_btn
 
-        self.close_report_btn = close_report_btn
-
-        self.details_widget = details_widget
-        self.report_view = report_view
+        self._details_widget = details_widget
+        self._report_view = report_view
 
     def _get_report_close_icon(self):
         size = 100
@@ -255,37 +301,35 @@ class PublishFrame(QtWidgets.QFrame):
         self._change_bg_property()
         self._set_progress_visibility(True)
 
-        self.main_label.setText("Hit publish (play button)! If you want")
-        self.message_label.setText("")
-        self.message_label_bottom.setText("")
-        self.report_btn.setVisible(False)
-        self.show_details_btn.setVisible(False)
+        self._main_label.setText("Hit publish (play button)! If you want")
+        self._message_label_top.setText("")
+        self._message_label_bottom.setText("")
+        self._report_btns_widget.setVisible(False)
 
-        self.reset_btn.setEnabled(True)
-        self.stop_btn.setEnabled(False)
-        self.validate_btn.setEnabled(True)
-        self.publish_btn.setEnabled(True)
+        self._reset_btn.setEnabled(True)
+        self._stop_btn.setEnabled(False)
+        self._validate_btn.setEnabled(True)
+        self._publish_btn.setEnabled(True)
 
-        self.progress_widget.setValue(self.controller.publish_progress)
-        self.progress_widget.setMaximum(self.controller.publish_max_progress)
+        self._progress_widget.setValue(self.controller.publish_progress)
+        self._progress_widget.setMaximum(self.controller.publish_max_progress)
 
     def _on_publish_start(self):
-        self.validation_errors_widget.clear()
+        self._validation_errors_widget.clear()
 
         self._set_success_property(-1)
         self._change_bg_property()
         self._set_progress_visibility(True)
-        self.main_label.setText("Publishing...")
-        self.report_btn.setVisible(False)
-        self.show_details_btn.setVisible(False)
+        self._main_label.setText("Publishing...")
+        self._report_btns_widget.setVisible(False)
 
-        self.reset_btn.setEnabled(False)
-        self.stop_btn.setEnabled(True)
-        self.validate_btn.setEnabled(False)
-        self.publish_btn.setEnabled(False)
+        self._reset_btn.setEnabled(False)
+        self._stop_btn.setEnabled(True)
+        self._validate_btn.setEnabled(False)
+        self._publish_btn.setEnabled(False)
 
     def _on_publish_validated(self):
-        self.validate_btn.setEnabled(False)
+        self._validate_btn.setEnabled(False)
 
     def _on_instance_change(self, context, instance):
         """Change instance label when instance is going to be processed."""
@@ -303,7 +347,7 @@ class PublishFrame(QtWidgets.QFrame):
                 or instance.data["name"]
             )
 
-        self.instance_label.setText(new_name)
+        self._instance_label.setText(new_name)
         QtWidgets.QApplication.processEvents()
 
     def _on_plugin_change(self, plugin):
@@ -312,17 +356,16 @@ class PublishFrame(QtWidgets.QFrame):
         if hasattr(plugin, "label") and plugin.label:
             plugin_name = plugin.label
 
-        self.progress_widget.setValue(self.controller.publish_progress)
-        self.plugin_label.setText(plugin_name)
+        self._progress_widget.setValue(self.controller.publish_progress)
+        self._plugin_label.setText(plugin_name)
         QtWidgets.QApplication.processEvents()
 
     def _on_publish_stop(self):
-        self.progress_widget.setValue(self.controller.publish_progress)
-        self.report_btn.setVisible(True)
-        self.show_details_btn.setVisible(True)
+        self._progress_widget.setValue(self.controller.publish_progress)
+        self._report_btns_widget.setVisible(True)
 
-        self.reset_btn.setEnabled(True)
-        self.stop_btn.setEnabled(False)
+        self._reset_btn.setEnabled(True)
+        self._stop_btn.setEnabled(False)
         validate_enabled = not self.controller.publish_has_crashed
         publish_enabled = not self.controller.publish_has_crashed
         if validate_enabled:
@@ -337,8 +380,8 @@ class PublishFrame(QtWidgets.QFrame):
             else:
                 publish_enabled = not self.controller.publish_has_finished
 
-        self.validate_btn.setEnabled(validate_enabled)
-        self.publish_btn.setEnabled(publish_enabled)
+        self._validate_btn.setEnabled(validate_enabled)
+        self._publish_btn.setEnabled(publish_enabled)
 
         error = self.controller.get_publish_crash_error()
         validation_errors = self.controller.get_validation_errors()
@@ -361,15 +404,15 @@ class PublishFrame(QtWidgets.QFrame):
         if self.controller.publish_has_validated:
             main_label += " - Validation passed"
 
-        self.main_label.setText(main_label)
-        self.message_label.setText(
+        self._main_label.setText(main_label)
+        self._message_label_top.setText(
             "Hit publish (play button) to continue."
         )
 
         self._set_success_property(-1)
 
     def _set_error(self, error):
-        self.main_label.setText("Error happened")
+        self._main_label.setText("Error happened")
         if isinstance(error, KnownPublishError):
             msg = str(error)
         else:
@@ -377,22 +420,22 @@ class PublishFrame(QtWidgets.QFrame):
                 "Something went wrong. Send report"
                 " to your supervisor or OpenPype."
             )
-        self.message_label.setText(msg)
-        self.message_label_bottom.setText("")
+        self._message_label_top.setText(msg)
+        self._message_label_bottom.setText("")
         self._set_success_property(0)
 
     def _set_validation_errors(self, validation_errors):
-        self.main_label.setText("Your publish didn't pass studio validations")
-        self.message_label.setText("")
-        self.message_label_bottom.setText("Check results above please")
+        self._main_label.setText("Your publish didn't pass studio validations")
+        self._message_label_top.setText("")
+        self._message_label_bottom.setText("Check results above please")
         self._set_success_property(2)
 
-        self.validation_errors_widget.set_errors(validation_errors)
+        self._validation_errors_widget.set_errors(validation_errors)
 
     def _set_finished(self):
-        self.main_label.setText("Finished")
-        self.message_label.setText("")
-        self.message_label_bottom.setText("")
+        self._main_label.setText("Finished")
+        self._message_label_top.setText("")
+        self._message_label_bottom.setText("")
         self._set_success_property(1)
 
     def _change_bg_property(self, state=None):
@@ -400,10 +443,10 @@ class PublishFrame(QtWidgets.QFrame):
         self.style().polish(self)
 
     def _set_progress_visibility(self, visible):
-        self.instance_label.setVisible(visible)
-        self.plugin_label.setVisible(visible)
-        self.progress_widget.setVisible(visible)
-        self.message_label.setVisible(visible)
+        self._instance_label.setVisible(visible)
+        self._plugin_label.setVisible(visible)
+        self._progress_widget.setVisible(visible)
+        self._message_label_top.setVisible(visible)
 
     def _set_success_property(self, state=None):
         if state is None:
@@ -411,7 +454,7 @@ class PublishFrame(QtWidgets.QFrame):
         else:
             state = str(state)
 
-        for widget in (self.progress_widget, self.info_frame):
+        for widget in (self._progress_widget, self._info_frame):
             if widget.property("state") != state:
                 widget.setProperty("state", state)
                 widget.style().polish(widget)
@@ -451,9 +494,9 @@ class PublishFrame(QtWidgets.QFrame):
 
     def _on_show_details(self):
         self._change_bg_property(2)
-        self._main_layout.setCurrentWidget(self.details_widget)
+        self._main_layout.setCurrentWidget(self._details_widget)
         logs = self.controller.get_publish_report()
-        self.report_view.set_report(logs)
+        self._report_view.set_report(logs)
 
     def _on_close_report_clicked(self):
         if self.controller.get_publish_crash_error():
@@ -463,7 +506,7 @@ class PublishFrame(QtWidgets.QFrame):
             self._change_bg_property(1)
         else:
             self._change_bg_property(2)
-        self._main_layout.setCurrentWidget(self.publish_widget)
+        self._main_layout.setCurrentWidget(self._publish_widget)
 
     def _on_reset_clicked(self):
         self.controller.reset()
