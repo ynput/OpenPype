@@ -124,7 +124,8 @@ class _SyncRepresentationModel(QtCore.QAbstractTableModel):
 
         if not representations:
             self.query = self.get_query(load_records)
-            representations = self.dbcon.aggregate(self.query)
+            representations = self.dbcon.aggregate(pipeline=self.query,
+                                                   allowDiskUse=True)
 
         self.add_page_records(self.active_site, self.remote_site,
                               representations)
@@ -159,7 +160,8 @@ class _SyncRepresentationModel(QtCore.QAbstractTableModel):
         items_to_fetch = min(self._total_records - self._rec_loaded,
                              self.PAGE_SIZE)
         self.query = self.get_query(self._rec_loaded)
-        representations = self.dbcon.aggregate(self.query)
+        representations = self.dbcon.aggregate(pipeline=self.query,
+                                               allowDiskUse=True)
         self.beginInsertRows(index,
                              self._rec_loaded,
                              self._rec_loaded + items_to_fetch - 1)
@@ -209,7 +211,8 @@ class _SyncRepresentationModel(QtCore.QAbstractTableModel):
         #           replace('False', 'false').\
         #           replace('True', 'true').replace('None', 'null'))
 
-        representations = self.dbcon.aggregate(self.query)
+        representations = self.dbcon.aggregate(pipeline=self.query,
+                                               allowDiskUse=True)
         self.refresh(representations)
 
     def set_word_filter(self, word_filter):
@@ -445,7 +448,8 @@ class SyncRepresentationSummaryModel(_SyncRepresentationModel):
         self.query = self.get_query()
         self.default_query = list(self.get_query())
 
-        representations = self.dbcon.aggregate(self.query)
+        representations = self.dbcon.aggregate(pipeline=self.query,
+                                               allowDiskUse=True)
         self.refresh(representations)
 
         self.timer = QtCore.QTimer()
@@ -973,7 +977,8 @@ class SyncRepresentationDetailModel(_SyncRepresentationModel):
         self.sort = self.DEFAULT_SORT
 
         self.query = self.get_query()
-        representations = self.dbcon.aggregate(self.query)
+        representations = self.dbcon.aggregate(pipeline=self.query,
+                                               allowDiskUse=True)
         self.refresh(representations)
 
         self.timer = QtCore.QTimer()
