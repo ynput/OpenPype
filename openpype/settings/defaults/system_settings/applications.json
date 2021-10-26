@@ -103,7 +103,7 @@
         "icon": "{}/app_icons/flame.png",
         "host_name": "flame",
         "environment": {
-            "FLAME_SCRIPT_DIR": {
+            "FLAME_SCRIPT_DIRS": {
                 "windows": "",
                 "darvin": "",
                 "linux": ""

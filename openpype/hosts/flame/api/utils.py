@@ -1,5 +1,5 @@
 """
-Resolve's tools for setting environment
+Flame utils for syncing scripts
 """
 
 import os
@@ -7,8 +7,9 @@ import shutil
 from openpype.api import Logger
 log = Logger().get_logger(__name__)
 
+
 def _sync_utility_scripts(env=None):
-    """ Synchronizing basic utlility scripts for resolve.
+    """ Synchronizing basic utlility scripts for flame.
 
     To be able to run start OpenPype within Flame we have to copy
     all utility_scripts and additional FLAME_SCRIPT_DIR into
@@ -21,7 +22,7 @@ def _sync_utility_scripts(env=None):
 
     # initiate inputs
     scripts = {}
-    fsd_env = env.get("FLAME_SCRIPT_DIR", "")
+    fsd_env = env.get("FLAME_SCRIPT_DIRS", "")
     flame_shared_dir = "/opt/Autodesk/shared/python"
 
     fsd_paths = [os.path.join(
@@ -77,7 +78,8 @@ def _sync_utility_scripts(env=None):
 
 
 def setup(env=None):
-    """ Wrapper installer started from pype.hooks.resolve.FlamePrelaunch()
+    """ Wrapper installer started from
+    `flame/hooks/pre_flame_setup.py`
     """
     env = env or os.environ
 
