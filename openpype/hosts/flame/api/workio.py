@@ -2,10 +2,10 @@
 
 import os
 from openpype.api import Logger
-from .. import (
-    get_project_manager,
-    get_current_project
-)
+# from .. import (
+#     get_project_manager,
+#     get_current_project
+# )
 
 
 log = Logger().get_logger(__name__)
