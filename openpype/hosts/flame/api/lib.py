@@ -1,56 +1,51 @@
 import sys
-import json
-import re
 import os
 import pickle
 import contextlib
-from pprint import pprint, pformat
-from opentimelineio import opentime
-import openpype
-
-
-# from ..otio import davinci_export as otio_export
+from pprint import pformat
 
 from openpype.api import Logger
 
 log = Logger().get_logger(__name__)
 
-self = sys.modules[__name__]
-self.project_manager = None
-self.media_storage = None
 
-# OpenPype sequencial rename variables
-self.rename_index = 0
-self.rename_add = 0
+@contextlib.contextmanager
+def load_preferences_file(klass, filepath, attribute):
+    try:
+        with open(filepath, "r") as prefs_file:
+            setattr(klass, attribute, pickle.load(prefs_file))
 
-self.publish_clip_color = "Pink"
-self.pype_marker_workflow = True
+        yield
 
-# OpenPype compound clip workflow variable
-self.pype_tag_name = "VFX Notes"
+    except IOError:
+        klass.log.info("Unable to load preferences from {}".format(
+            filepath))
 
-# OpenPype marker workflow variables
-self.pype_marker_name = "OpenPypeData"
-self.pype_marker_duration = 1
-self.pype_marker_color = "Mint"
-self.temp_marker_frame = None
+    finally:
+        klass.log.info("Preferences loaded from {}".format(filepath))
 
-# OpenPype default timeline
-self.pype_timeline_name = "OpenPypeTimeline"
+
+@contextlib.contextmanager
+def save_preferences_file(klass, filepath, attribute):
+    try:
+        with open(filepath, "w") as prefs_file:
+            attr = getattr(klass, attribute)
+            pickle.dump(attr, prefs_file)
+
+        yield
+
+    except IOError:
+        klass.log.info("Unable to save preferences to {}".format(
+            filepath))
+
+    finally:
+        klass.log.info("Preferences saved to {}".format(filepath))
 
 
 class FlameAppFramework(object):
     # flameAppFramework class takes care of preferences
 
     class prefs_dict(dict):
-        # subclass of a dict() in order to directly link it
-        # to main framework prefs dictionaries
-        # when accessed directly it will operate on a dictionary under a "name"
-        # key in master dictionary.
-        # master = {}
-        # p = prefs(master, "app_name")
-        # p["key"] = "value"
-        # master - {"app_name": {"key", "value"}}
 
         def __init__(self, master, name, **kwargs):
             self.name = name
@@ -85,7 +80,7 @@ class FlameAppFramework(object):
         def __contains__(self, k):
             return self.master[self.name].__contains__(k)
 
-        def copy(self): # don"t delegate w/ super - dict.copy() -> dict :(
+        def copy(self):  # don"t delegate w/ super - dict.copy() -> dict :(
             return type(self)(self)
 
         def keys(self):
@@ -96,7 +91,8 @@ class FlameAppFramework(object):
             return cls.master[cls.name].fromkeys(keys, v)
 
         def __repr__(self):
-            return "{0}({1})".format(type(self).__name__, self.master[self.name].__repr__())
+            return "{0}({1})".format(
+                type(self).__name__, self.master[self.name].__repr__())
 
         def master_keys(self):
             return self.master.keys()
@@ -110,13 +106,12 @@ class FlameAppFramework(object):
         self.prefs_global = {}
         self.log = log
 
-
         try:
             import flame
             self.flame = flame
             self.flame_project_name = self.flame.project.current_project.name
             self.flame_user_name = flame.users.current_user.name
-        except:
+        except Exception:
             self.flame = None
             self.flame_project_name = None
             self.flame_user_name = None
@@ -127,10 +122,11 @@ class FlameAppFramework(object):
         if sys.platform == "darwin":
             self.prefs_folder = os.path.join(
                 os.path.expanduser("~"),
-                    "Library",
-                    "Caches",
-                    "OpenPype",
-                    self.bundle_name)
+                "Library",
+                "Caches",
+                "OpenPype",
+                self.bundle_name
+            )
         elif sys.platform.startswith("linux"):
             self.prefs_folder = os.path.join(
                 os.path.expanduser("~"),
@@ -157,89 +153,74 @@ class FlameAppFramework(object):
 
         self.apps = []
 
-    def load_prefs(self):
+    def get_pref_file_paths(self):
+
         prefix = self.prefs_folder + os.path.sep + self.bundle_name
-        prefs_file_path = (prefix + "." + self.flame_user_name + "."
-                           + self.flame_project_name + ".prefs")
-        prefs_user_file_path = (prefix + "." + self.flame_user_name
-                                + ".prefs")
+        prefs_file_path = "_".join([
+            prefix, self.flame_user_name,
+            self.flame_project_name]) + ".prefs"
+        prefs_user_file_path = "_".join([
+            prefix, self.flame_user_name]) + ".prefs"
         prefs_global_file_path = prefix + ".prefs"
 
-        try:
-            with open(prefs_file_path, "r") as prefs_file:
-                self.prefs = pickle.load(prefs_file)
+        return (prefs_file_path, prefs_user_file_path, prefs_global_file_path)
 
-            self.log.info("preferences loaded from {}".format(prefs_file_path))
-            self.log.info("preferences contents:\n" + pformat(self.prefs))
-        except:
-            self.log.info("unable to load preferences from {}".format(
-                prefs_file_path))
+    def load_prefs(self):
 
-        try:
-            with open(prefs_user_file_path, "r") as prefs_file:
-                self.prefs_user = pickle.load(prefs_file)
-            self.log.info("preferences loaded from {}".format(
-                prefs_user_file_path))
-            self.log.info("preferences contents:\n" + pformat(self.prefs_user))
-        except:
-            self.log.info("unable to load preferences from {}".format(
-                prefs_user_file_path))
+        (proj_pref_path, user_pref_path,
+         glob_pref_path) = self.get_pref_file_paths()
 
-        try:
-            with open(prefs_global_file_path, "r") as prefs_file:
-                self.prefs_global = pickle.load(prefs_file)
-            self.log.info("preferences loaded from {}".format(
-                prefs_global_file_path))
-            self.log.info("preferences contents:\n" + pformat(self.prefs_global))
+        with load_preferences_file(self, proj_pref_path, "prefs"):
+            self.log.info(
+                "Project - preferences contents:\n{}".format(
+                    pformat(self.prefs)
+                ))
 
-        except:
-            self.log.info("unable to load preferences from {}".format(
-                prefs_global_file_path))
+        with load_preferences_file(self, user_pref_path, "prefs_user"):
+            self.log.info(
+                "User - preferences contents:\n{}".format(
+                    pformat(self.prefs_user)
+                ))
+
+        with load_preferences_file(self, glob_pref_path, "prefs_global"):
+            self.log.info(
+                "Global - preferences contents:\n{}".format(
+                    pformat(self.prefs_global)
+                ))
 
         return True
 
     def save_prefs(self):
-        import pickle
-
+        # make sure the preference folder is available
         if not os.path.isdir(self.prefs_folder):
             try:
                 os.makedirs(self.prefs_folder)
-            except:
-                self.log.info("unable to create folder {}".format(
+            except Exception:
+                self.log.info("Unable to create folder {}".format(
                     self.prefs_folder))
                 return False
 
-        prefix = self.prefs_folder + os.path.sep + self.bundle_name
-        prefs_file_path = prefix + "." + self.flame_user_name + "." + self.flame_project_name + ".prefs"
-        prefs_user_file_path = prefix + "." + self.flame_user_name  + ".prefs"
-        prefs_global_file_path = prefix + ".prefs"
+        # get all pref file paths
+        (proj_pref_path, user_pref_path,
+         glob_pref_path) = self.get_pref_file_paths()
 
-        try:
-            prefs_file = open(prefs_file_path, "w")
-            pickle.dump(self.prefs, prefs_file)
-            prefs_file.close()
-            self.log.info("preferences saved to {}".format(prefs_file_path))
-            self.log.info("preferences contents:\n" + pformat(self.prefs))
-        except:
-            self.log.info("unable to save preferences to {}".format(prefs_file_path))
+        with save_preferences_file(self, proj_pref_path, "prefs"):
+            self.log.info(
+                "Project - preferences contents:\n{}".format(
+                    pformat(self.prefs)
+                ))
 
-        try:
-            prefs_file = open(prefs_user_file_path, "w")
-            pickle.dump(self.prefs_user, prefs_file)
-            prefs_file.close()
-            self.log.info("preferences saved to {}".format(prefs_user_file_path))
-            self.log.info("preferences contents:\n" + pformat(self.prefs_user))
-        except:
-            self.log.info("unable to save preferences to {}".format(prefs_user_file_path))
+        with save_preferences_file(self, user_pref_path, "prefs_user"):
+            self.log.info(
+                "User - preferences contents:\n{}".format(
+                    pformat(self.prefs_user)
+                ))
 
-        try:
-            prefs_file = open(prefs_global_file_path, "w")
-            pickle.dump(self.prefs_global, prefs_file)
-            prefs_file.close()
-            self.log.info("preferences saved to {}".format(prefs_global_file_path))
-            self.log.info("preferences contents:\n" + pformat(self.prefs_global))
-        except:
-            self.log.info("unable to save preferences to {}".format(prefs_global_file_path))
+        with save_preferences_file(self, glob_pref_path, "prefs_global"):
+            self.log.info(
+                "Global - preferences contents:\n{}".format(
+                    pformat(self.prefs_global)
+                ))
 
         return True
 
@@ -263,6 +244,7 @@ def maintain_current_timeline(to_timeline, from_timeline=None):
         >>> print(get_current_timeline().GetName())
         timeline1
     """
+    # todo: this is still Resolve's implementation
     project = get_current_project()
     working_timeline = from_timeline or project.GetCurrentTimeline()
 
@@ -306,5 +288,5 @@ def rescan_hooks():
     import flame
     try:
         flame.execute_shortcut('Rescan Python Hooks')
-    except:
+    except Exception:
         pass

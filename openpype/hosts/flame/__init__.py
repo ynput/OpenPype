@@ -24,7 +24,7 @@ from .api.lib import (
 )
 
 from .api.menu import (
-    FlameMenuProjectconnect,
+    FlameMenuProjectConnect,
     FlameMenuTimeline
 )
 
@@ -90,7 +90,7 @@ __all__ = [
     "create_bin",
 
     # menu
-    "FlameMenuProjectconnect",
+    "FlameMenuProjectConnect",
     "FlameMenuTimeline",
 
     # plugin

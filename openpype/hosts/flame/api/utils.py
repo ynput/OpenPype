@@ -1,5 +1,3 @@
-#! python3
-
 """
 Resolve's tools for setting environment
 """
@@ -8,7 +6,6 @@ import os
 import shutil
 from openpype.api import Logger
 log = Logger().get_logger(__name__)
-
 
 def _sync_utility_scripts(env=None):
     """ Synchronizing basic utlility scripts for resolve.
@@ -20,8 +17,7 @@ def _sync_utility_scripts(env=None):
     """
     from .. import HOST_DIR
 
-    if not env:
-        env = os.environ
+    env = env or os.environ
 
     # initiate inputs
     scripts = {}
@@ -41,7 +37,8 @@ def _sync_utility_scripts(env=None):
     # to script path search
     for _dirpath in fsd_env.split(os.pathsep):
         if not os.path.isdir(_dirpath):
-            log.warning("Path is not a valid dir: `{_dirpath}`".format(**locals()))
+            log.warning("Path is not a valid dir: `{_dirpath}`".format(
+                **locals()))
             continue
         fsd_paths.append(_dirpath)
 
@@ -82,8 +79,7 @@ def _sync_utility_scripts(env=None):
 def setup(env=None):
     """ Wrapper installer started from pype.hooks.resolve.FlamePrelaunch()
     """
-    if not env:
-        env = os.environ
+    env = env or os.environ
 
     # synchronize resolve utility scripts
     _sync_utility_scripts(env)

@@ -55,7 +55,7 @@ atexit.register(cleanup)
 
 
 def load_apps():
-    opflame.apps.append(opflame.FlameMenuProjectconnect(opflame.app_framework))
+    opflame.apps.append(opflame.FlameMenuProjectConnect(opflame.app_framework))
     opflame.apps.append(opflame.FlameMenuTimeline(opflame.app_framework))
     opflame.app_framework.log.info("Apps are loaded")
 
@@ -121,7 +121,7 @@ def get_main_menu_custom_ui_actions():
     # install openpype and the host
     openpype_install()
 
-    return _build_app_menu("FlameMenuProjectconnect")
+    return _build_app_menu("FlameMenuProjectConnect")
 
 
 def get_timeline_custom_ui_actions():

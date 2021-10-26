@@ -70,7 +70,7 @@ class _FlameMenuApp(object):
             self.log.info('Rescan Python Hooks')
 
 
-class FlameMenuProjectconnect(_FlameMenuApp):
+class FlameMenuProjectConnect(_FlameMenuApp):
 
     # flameMenuProjectconnect app takes care of the preferences dialog as well
 

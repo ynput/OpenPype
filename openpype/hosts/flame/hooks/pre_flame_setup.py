@@ -1,6 +1,7 @@
 import os
 import json
 import tempfile
+import contextlib
 from openpype.lib import (
     PreLaunchHook, get_openpype_username)
 from openpype.hosts import flame as opflame
@@ -76,41 +77,56 @@ class FlamePrelaunch(PreLaunchHook):
         # Dump data to string
         dumped_script_data = json.dumps(script_data)
 
+        with make_temp_file(dumped_script_data) as tmp_json_path:
+            # Prepare subprocess arguments
+            args = [
+                self.flame_python_exe,
+                self.wtc_script_path,
+                tmp_json_path
+            ]
+            self.log.info("Executing: {}".format(" ".join(args)))
+
+            process_kwargs = {
+                "logger": self.log,
+                "env": {}
+            }
+
+            openpype.api.run_subprocess(args, **process_kwargs)
+
+            # process returned json file to pass launch args
+            return_json_data = open(tmp_json_path).read()
+            returned_data = json.loads(return_json_data)
+            app_args = returned_data.get("app_args")
+            self.log.info("____ app_args: `{}`".format(app_args))
+
+            if not app_args:
+                RuntimeError("App arguments were not solved")
+
+        return app_args
+
+
+@contextlib.contextmanager
+def make_temp_file(data):
+    try:
         # Store dumped json to temporary file
         temporary_json_file = tempfile.NamedTemporaryFile(
             mode="w", suffix=".json", delete=False
         )
-        temporary_json_file.write(dumped_script_data)
+        temporary_json_file.write(data)
         temporary_json_file.close()
         temporary_json_filepath = temporary_json_file.name.replace(
             "\\", "/"
         )
 
-        # Prepare subprocess arguments
-        args = [
-            self.flame_python_exe,
-            self.wtc_script_path,
-            temporary_json_filepath
-        ]
-        self.log.info("Executing: {}".format(" ".join(args)))
+        yield temporary_json_filepath
 
-        process_kwargs = {
-            "logger": self.log,
-            "env": {}
-        }
+    except IOError as _error:
+        raise IOError(
+            "Not able to create temp json file: {}".format(
+                _error
+            )
+        )
 
-        openpype.api.run_subprocess(args, **process_kwargs)
-
-        # process returned json file to pass launch args
-        return_json_data = open(temporary_json_filepath).read()
-        returned_data = json.loads(return_json_data)
-        app_args = returned_data.get("app_args")
-        self.log.info("____ app_args: `{}`".format(app_args))
-
-        if not app_args:
-            RuntimeError("App arguments were not solved")
-
+    finally:
         # Remove the temporary json
         os.remove(temporary_json_filepath)
-
-        return app_args
