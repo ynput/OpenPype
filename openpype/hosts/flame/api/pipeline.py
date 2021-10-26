@@ -36,7 +36,7 @@ def install():
 
     pyblish.register_host("flame")
     pyblish.register_plugin_path(PUBLISH_PATH)
-    log.info("Registering DaVinci Resovle plug-ins..")
+    log.info("Registering Flame plug-ins..")
 
     avalon.register_plugin_path(avalon.Loader, LOAD_PATH)
     avalon.register_plugin_path(avalon.Creator, CREATE_PATH)
@@ -129,13 +129,13 @@ def on_pyblish_instance_toggled(instance, old_value, new_value):
     log.info("instance toggle: {}, old_value: {}, new_value:{} ".format(
         instance, old_value, new_value))
 
-    from openpype.hosts.resolve import (
-        set_publish_attribute
-    )
+    # from openpype.hosts.resolve import (
+    #     set_publish_attribute
+    # )
 
-    # Whether instances should be passthrough based on new value
-    timeline_item = instance.data["item"]
-    set_publish_attribute(timeline_item, new_value)
+    # # Whether instances should be passthrough based on new value
+    # timeline_item = instance.data["item"]
+    # set_publish_attribute(timeline_item, new_value)
 
 
 def remove_instance(instance):
