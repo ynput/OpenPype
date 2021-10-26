@@ -1361,6 +1361,10 @@ def _prepare_last_workfile(data, workdir, workfile_template_key):
             anatomy = data["anatomy"]
             # Find last workfile
             file_template = anatomy.templates["work"]["file"]
+            # Replace {task} by '{task[name]}' for backward compatibility
+            if '{task}' in file_template:
+                file_template = file_template.replace('{task}', '{task[name]}')
+
             workdir_data.update({
                 "version": 1,
                 "user": get_openpype_username(),

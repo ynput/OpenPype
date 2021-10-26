@@ -49,10 +49,26 @@ class CollectHarmonyScenes(pyblish.api.InstancePlugin):
 
             # fix anatomy data
             anatomy_data_new = copy.deepcopy(anatomy_data)
+
+            project_entity = context.data["projectEntity"]
+            asset_entity = context.data["assetEntity"]
+
+            task_type = asset_entity["data"]["tasks"].get(task, {}).get("type")
+
+            if task_type:
+                task_code = project_entity["config"]["tasks"][task_type][
+                    "short_name"]
+            else:
+                task_code = None
+
             # updating hierarchy data
             anatomy_data_new.update({
                 "asset": asset_data["name"],
-                "task": task,
+                "task": {
+                    "name": task,
+                    "type": task_type,
+                    "short": task_code,
+                },
                 "subset": subset_name
             })
 

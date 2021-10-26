@@ -27,6 +27,7 @@ class CollectHarmonyZips(pyblish.api.InstancePlugin):
         anatomy_data = instance.context.data["anatomyData"]
         repres = instance.data["representations"]
         files = repres[0]["files"]
+        project_entity = context.data["projectEntity"]
 
         if files.endswith(".zip"):
             # A zip file was dropped
@@ -45,14 +46,28 @@ class CollectHarmonyZips(pyblish.api.InstancePlugin):
 
             self.log.info("Copied data: {}".format(new_instance.data))
 
+            task_type = asset_data["data"]["tasks"].get(task, {}).get("type")
+
+            if task_type:
+                task_code = project_entity["config"]["tasks"][task_type][
+                    "short_name"]
+            else:
+                task_code = None
+
             # fix anatomy data
             anatomy_data_new = copy.deepcopy(anatomy_data)
             # updating hierarchy data
-            anatomy_data_new.update({
-                "asset": asset_data["name"],
-                "task": task,
-                "subset": subset_name
-            })
+            anatomy_data_new.update(
+                {
+                    "asset": asset_data["name"],
+                    "task": {
+                        "name": task,
+                        "type": task_type,
+                        "short": task_code,
+                    },
+                    "subset": subset_name,
+                }
+            )
 
             new_instance.data["label"] = f"{instance_name}"
             new_instance.data["subset"] = subset_name

@@ -238,9 +238,9 @@ class CollectAnatomyInstanceData(pyblish.api.ContextPlugin):
                 anatomy_updates["hierarchy"] = "/".join(parents)
 
             # Task
-            task_name = instance.data.get("task")
-            if task_name:
-                anatomy_updates["task"] = task_name
+            task_info = instance.data.get("task")
+            if task_info:
+                anatomy_updates["task"] = task_info
 
             # Additional data
             resolution_width = instance.data.get("resolutionWidth")

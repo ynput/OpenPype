@@ -109,7 +109,7 @@ class CollectFtrackApi(pyblish.api.ContextPlugin):
                 "Checking entities of instance \"{}\"".format(str(instance))
             )
             instance_asset_name = instance.data.get("asset")
-            instance_task_name = instance.data.get("task")
+            instance_task_name = instance.data.get("task").get("name")
 
             if not instance_asset_name and not instance_task_name:
                 self.log.debug("Instance does not have set context keys.")

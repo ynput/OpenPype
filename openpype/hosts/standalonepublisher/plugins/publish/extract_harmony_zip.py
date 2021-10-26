@@ -31,8 +31,10 @@ class ExtractHarmonyZip(openpype.api.Extractor):
 
     # Presets
     create_workfile = True
-    default_task = "harmonyIngest"
-    default_task_type = "Ingest"
+    default_task = {
+        "name": "harmonyIngest",
+        "type": "Ingest",
+    }
     default_task_status = "Ingested"
     assetversion_status = "Ingested"
 
@@ -220,9 +222,9 @@ class ExtractHarmonyZip(openpype.api.Extractor):
         anatomy = openpype.api.Anatomy()
         project_entity = instance.context.data["projectEntity"]
 
-        task_name = instance.data.get("task")
-        task_type = instance.data['tasks'].get(task_name, {}).get('type')
-        task_short = project_entity['config']['tasks'][task_type]['short_name']
+        task_name = instance.data.get("task").get("name")
+        task_type = instance.data.get("task").get("type")
+        task_short = instance.data.get("task").get("short")
 
         data = {
             "root": api.registered_root(),
