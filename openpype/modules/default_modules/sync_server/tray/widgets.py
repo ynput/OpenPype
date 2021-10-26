@@ -32,6 +32,8 @@ class SyncProjectListWidget(QtWidgets.QWidget):
     project_changed = QtCore.Signal()
     message_generated = QtCore.Signal(str)
 
+    REFRESH_SEC = 10000
+
     def __init__(self, sync_server, parent):
         super(SyncProjectListWidget, self).__init__(parent)
         self.setObjectName("ProjectListWidget")
@@ -69,6 +71,17 @@ class SyncProjectListWidget(QtWidgets.QWidget):
         self.remote_site = None
         self.icons = {}
 
+        self.timer = QtCore.QTimer()
+        self.timer.timeout.connect(self.tick)
+        self.timer.start(self.REFRESH_SEC)
+
+    def tick(self):
+        """
+            Triggers refresh of model.
+        """
+        self.refresh()
+        self.timer.start(self.REFRESH_SEC)
+
     def _on_index_change(self, new_idx, _old_idx):
         project_name = new_idx.data(QtCore.Qt.DisplayRole)
 
@@ -89,7 +102,7 @@ class SyncProjectListWidget(QtWidgets.QWidget):
                 icon = self._get_icon("synced")
 
             if project_name in self.sync_server.projects_processed:
-                icon = self._get_icon("paused")   # change
+                icon = self._get_icon("refresh")
 
             model.appendRow(QtGui.QStandardItem(icon, project_name))
 

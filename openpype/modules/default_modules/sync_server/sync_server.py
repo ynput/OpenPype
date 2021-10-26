@@ -164,15 +164,22 @@ def resolve_paths(module, file_path, collection,
     return local_file_path, remote_file_path
 
 
-def validate_project(module, collection, site_name, both_way=False):
+def validate_project(module, collection, site_name, remove_missing=False):
     """
         Validate 'collection' of 'site_name' and its local files
 
         If file present and not marked with a 'site_name' in DB, DB is
         updated with site name and file modified date.
+
+        Args:
+            module (SyncServerModule)
+            collection (string): project name
+            site_name (string): active site name
+            remove_missing (bool): if True remove sites in DB if missing
+                physically
     """
     module.log.debug("Validation of {} for {} started".format(collection,
-                                                            site_name))
+                                                              site_name))
     query = {
         "type": "representation"
     }
@@ -187,7 +194,6 @@ def validate_project(module, collection, site_name, both_way=False):
     sites_removed = 0
     for repre in representations:
         repre_id = repre["_id"]
-        # self.remove_site(collection, str(repre_id), site_name)
         for repre_file in repre.get("files", []):
             try:
                 has_site = site_name in [site["name"]
@@ -196,17 +202,17 @@ def validate_project(module, collection, site_name, both_way=False):
                 module.log.debug("Structure error in {}".format(repre_id))
                 continue
 
-            if has_site and not both_way:
+            if has_site and not remove_missing:
                 continue
 
             file_path = repre_file.get("path", "")
             local_file_path = module.get_local_file_path(collection,
-                                                       site_name,
-                                                       file_path)
+                                                         site_name,
+                                                         file_path)
 
             if local_file_path and os.path.exists(local_file_path):
                 module.log.debug("Adding site {} for {}".format(site_name,
-                                                              repre_id))
+                                                                repre_id))
                 if not has_site:
                     query = {
                         "_id": ObjectId(repre_id)
@@ -220,7 +226,7 @@ def validate_project(module, collection, site_name, both_way=False):
                                      file_id=repre_file["_id"])
                 sites_added += 1
             else:
-                if has_site and both_way:
+                if has_site and remove_missing:
                     module.log.debug("Removing site {} for {}".\
                                      format(site_name, repre["_id"]))
                     module.reset_provider_for_file(collection,
@@ -499,7 +505,6 @@ class SyncServerThread(threading.Thread):
         while self.is_running:
             if self.module.long_running_tasks:
                 task = self.module.long_running_tasks.pop()
-                self.module.projects_processed.add(task["project_name"])
                 log.info("starting long running")
                 await self.loop.run_in_executor(None, task["func"])
                 log.info("finished long running")
