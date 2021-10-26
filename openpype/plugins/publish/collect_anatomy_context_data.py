@@ -61,7 +61,7 @@ class CollectAnatomyContextData(pyblish.api.ContextPlugin):
             task_code = project_entity['config']['tasks'][task_type][
                 'short_name']
         else:
-          task_code = None
+            task_code = None
 
         context_data = {
             "project": {
