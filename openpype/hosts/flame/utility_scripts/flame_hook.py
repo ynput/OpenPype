@@ -1,6 +1,6 @@
 import sys
-from Qt import QtWidgets, QtCore
-from pprint import pprint, pformat
+from Qt import QtWidgets
+from pprint import pformat
 import atexit
 import openpype
 import avalon
@@ -81,11 +81,7 @@ except ImportError:
 
 
 def rescan_hooks():
-    import flame
-    try:
-        flame.execute_shortcut('Rescan Python Hooks')
-    except:
-        pass
+    flame.execute_shortcut('Rescan Python Hooks')
 
 
 def _build_app_menu(app_name):
@@ -111,6 +107,7 @@ def _build_app_menu(app_name):
                 print("!-!!! not able to import flame module !!!!")
 
     return menu
+
 
 def project_saved(project_name, save_time, is_auto_save):
     if opflame.app_framework:
