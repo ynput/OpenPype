@@ -10,20 +10,26 @@ import xml.dom.minidom as minidom
 from copy import deepcopy
 import datetime
 
-# Todo: this has to be replaced with somehting more dynamic
-flame_python_path = "/opt/Autodesk/flame_2021/python"
-flame_exe_path = "/opt/Autodesk/flame_2021/bin/flame.app/Contents/MacOS/startApp"
+try:
+    from libwiretapPythonClientAPI import (
+        WireTapClientInit)
+except ImportError:
+    flame_python_path = "/opt/Autodesk/flame_2021/python"
+    flame_exe_path = (
+        "/opt/Autodesk/flame_2021/bin/flame.app"
+        "/Contents/MacOS/startApp")
 
-sys.path.append(flame_python_path)
+    sys.path.append(flame_python_path)
 
-from libwiretapPythonClientAPI import (
-    WireTapClientInit,
-    WireTapClientUninit,
-    WireTapNodeHandle,
-    WireTapServerHandle,
-    WireTapInt,
-    WireTapStr
-)
+    from libwiretapPythonClientAPI import (
+        WireTapClientInit,
+        WireTapClientUninit,
+        WireTapNodeHandle,
+        WireTapServerHandle,
+        WireTapInt,
+        WireTapStr
+    )
+
 
 class WireTapCom(object):
     """
@@ -231,7 +237,8 @@ class WireTapCom(object):
 
             if not get_children_name:
                 raise AttributeError(
-                    "Unable to get child name: {}".format(child_obj.lastError())
+                    "Unable to get child name: {}".format(
+                        child_obj.lastError())
                 )
 
             volumes.append(node_name.c_str())
@@ -256,11 +263,12 @@ class WireTapCom(object):
         filtered_users = [user for user in used_names if user_name in user]
 
         if filtered_users:
-            # todo: need to find lastly created following regex patern for date used in name
+            # todo: need to find lastly created following regex patern for
+            # date used in name
             return filtered_users.pop()
 
         # create new user name with date in suffix
-        now = datetime.datetime.now() # current date and time
+        now = datetime.datetime.now()  # current date and time
         date = now.strftime("%Y%m%d")
         new_user_name = "{}_{}".format(user_name, date)
         print(new_user_name)
@@ -314,7 +322,8 @@ class WireTapCom(object):
 
             if not get_children_name:
                 raise AttributeError(
-                    "Unable to get child name: {}".format(child_obj.lastError())
+                    "Unable to get child name: {}".format(
+                        child_obj.lastError())
                 )
 
             usernames.append(node_name.c_str())
