@@ -224,10 +224,10 @@ def validate_project(module, collection, site_name, remove_missing=False):
                     module._add_site(collection, query, [repre], elem,
                                      site_name=site_name,
                                      file_id=repre_file["_id"])
-                sites_added += 1
+                    sites_added += 1
             else:
                 if has_site and remove_missing:
-                    module.log.debug("Removing site {} for {}".\
+                    module.log.debug("Removing site {} for {}".
                                      format(site_name, repre["_id"]))
                     module.reset_provider_for_file(collection,
                                                    repre["_id"],
@@ -240,8 +240,8 @@ def validate_project(module, collection, site_name, remove_missing=False):
 
     module.log.debug("Validation of {} for {} ended".format(collection,
                                                             site_name))
-    module.log.info("Sites added {}, sites removed {}".format(
-        sites_added, sites_removed))
+    module.log.info("Sites added {}, sites removed {}".format(sites_added,
+                                                              sites_removed))
 
 
 def site_is_working(module, project_name, site_name):

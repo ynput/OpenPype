@@ -188,7 +188,7 @@ class TestPerformance():
                         create_files=False):
         ret = [
             {
-                 "path": "{root[work]}" + "/test_performance/Assets/Cylinder/publish/workfile/workfileLookdev/v{:03d}/test_Cylinder_A_workfileLookdev_v{:03d}.dat".format(i, i),  #noqa
+                 "path": "{root[work]}" + "{root[work]}/test_performance/Assets/Cylinder/publish/workfile/workfileLookdev/v{:03d}/test_Cylinder_A_workfileLookdev_v{:03d}.dat".format(i, i),  #noqa
                  "_id": '{}'.format(file_id),
                  "hash": "temphash",
                  "sites": self.get_sites(self.MAX_NUMBER_OF_SITES),
@@ -223,7 +223,7 @@ class TestPerformance():
         ret = {}
         ret['{}'.format(file_id)] = {
             "path": "{root[work]}" +
-                    "/test_performance/Assets/Cylinder/publish/workfile/workfileLookdev/"
+                    "/test_performance/Assets/Cylinder/publish/workfile/workfileLookdev/"  #noqa
                     "v{:03d}/test_CylinderA_workfileLookdev_v{:03d}.mb".format(i, i),  # noqa
             "hash": "temphash",
             "sites": ["studio"],
@@ -232,7 +232,7 @@ class TestPerformance():
 
         ret['{}'.format(file_id2)] = {
             "path": "{root[work]}" +
-                    "/test_performance/Assets/Cylinder/publish/workfile/workfileLookdev/"
+                    "/test_performance/Assets/Cylinder/publish/workfile/workfileLookdev/"  #noqa
                     "v{:03d}/test_CylinderB_workfileLookdev_v{:03d}.mb".format(i, i),  # noqa
             "hash": "temphash",
             "sites": ["studio"],
@@ -240,7 +240,7 @@ class TestPerformance():
         }
         ret['{}'.format(file_id3)] = {
             "path": "{root[work]}" +
-                    "/test_performance/Assets/Cylinder/publish/workfile/workfileLookdev/"
+                    "/test_performance/Assets/Cylinder/publish/workfile/workfileLookdev/"  #noqa
                     "v{:03d}/test_CylinderC_workfileLookdev_v{:03d}.mb".format(i, i),  # noqa
             "hash": "temphash",
             "sites": ["studio"],
@@ -278,7 +278,7 @@ class TestPerformance():
 
 if __name__ == '__main__':
     tp = TestPerformance('array')
-    tp.prepare(no_of_records=10000, create_files=True)  # enable to prepare data
+    tp.prepare(no_of_records=10000, create_files=True)
     # tp.run(10, 3)
 
     # print('-'*50)
