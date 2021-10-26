@@ -10,36 +10,14 @@ log = Logger().get_logger(__name__)
 
 
 @contextlib.contextmanager
-def load_preferences_file(klass, filepath, attribute):
+def io_preferences_file(klass, filepath, write=False):
     try:
-        with open(filepath, "r") as prefs_file:
-            setattr(klass, attribute, pickle.load(prefs_file))
-
-        yield
+        flag = "w" if write else "r"
+        yield open(filepath, flag)
 
     except IOError:
-        klass.log.info("Unable to load preferences from {}".format(
+        klass.log.info("Unable to work with preferences `{}`".format(
             filepath))
-
-    finally:
-        klass.log.info("Preferences loaded from {}".format(filepath))
-
-
-@contextlib.contextmanager
-def save_preferences_file(klass, filepath, attribute):
-    try:
-        with open(filepath, "w") as prefs_file:
-            attr = getattr(klass, attribute)
-            pickle.dump(attr, prefs_file)
-
-        yield
-
-    except IOError:
-        klass.log.info("Unable to save preferences to {}".format(
-            filepath))
-
-    finally:
-        klass.log.info("Preferences saved to {}".format(filepath))
 
 
 class FlameAppFramework(object):
@@ -170,19 +148,22 @@ class FlameAppFramework(object):
         (proj_pref_path, user_pref_path,
          glob_pref_path) = self.get_pref_file_paths()
 
-        with load_preferences_file(self, proj_pref_path, "prefs"):
+        with io_preferences_file(self, proj_pref_path) as prefs_file:
+            self.prefs = pickle.load(prefs_file)
             self.log.info(
                 "Project - preferences contents:\n{}".format(
                     pformat(self.prefs)
                 ))
 
-        with load_preferences_file(self, user_pref_path, "prefs_user"):
+        with io_preferences_file(self, user_pref_path) as prefs_file:
+            self.prefs_user = pickle.load(prefs_file)
             self.log.info(
                 "User - preferences contents:\n{}".format(
                     pformat(self.prefs_user)
                 ))
 
-        with load_preferences_file(self, glob_pref_path, "prefs_global"):
+        with io_preferences_file(self, glob_pref_path) as prefs_file:
+            self.prefs_global = pickle.load(prefs_file)
             self.log.info(
                 "Global - preferences contents:\n{}".format(
                     pformat(self.prefs_global)
@@ -204,19 +185,22 @@ class FlameAppFramework(object):
         (proj_pref_path, user_pref_path,
          glob_pref_path) = self.get_pref_file_paths()
 
-        with save_preferences_file(self, proj_pref_path, "prefs"):
+        with io_preferences_file(self, proj_pref_path, True) as prefs_file:
+            pickle.dump(self.prefs, prefs_file)
             self.log.info(
                 "Project - preferences contents:\n{}".format(
                     pformat(self.prefs)
                 ))
 
-        with save_preferences_file(self, user_pref_path, "prefs_user"):
+        with io_preferences_file(self, user_pref_path, True) as prefs_file:
+            pickle.dump(self.prefs_user, prefs_file)
             self.log.info(
                 "User - preferences contents:\n{}".format(
                     pformat(self.prefs_user)
                 ))
 
-        with save_preferences_file(self, glob_pref_path, "prefs_global"):
+        with io_preferences_file(self, glob_pref_path, True) as prefs_file:
+            pickle.dump(self.prefs_global, prefs_file)
             self.log.info(
                 "Global - preferences contents:\n{}".format(
                     pformat(self.prefs_global)
