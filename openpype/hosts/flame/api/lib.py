@@ -15,9 +15,9 @@ def io_preferences_file(klass, filepath, write=False):
         flag = "w" if write else "r"
         yield open(filepath, flag)
 
-    except IOError:
-        klass.log.info("Unable to work with preferences `{}`".format(
-            filepath))
+    except IOError as _error:
+        klass.log.info("Unable to work with preferences `{}`: {}".format(
+            filepath, _error))
 
 
 class FlameAppFramework(object):
