@@ -28,17 +28,48 @@ class TaskNotSetError(KeyError):
         super(TaskNotSetError, self).__init__(msg)
 
 
-def get_subset_name(
+def _get_subset_name(
     family,
     variant,
     task_name,
     asset_id,
-    project_name=None,
-    host_name=None,
-    default_template=None,
-    dynamic_data=None,
-    dbcon=None
+    asset_doc,
+    project_name,
+    host_name,
+    default_template,
+    dynamic_data,
+    dbcon
 ):
+    """Calculate subset name based on passed context and OpenPype settings.
+
+    Subst name templates are defined in `project_settings/global/tools/creator
+    /subset_name_profiles` where are profiles with host name, family, task name
+    and task type filters. If context does not match any profile then
+    `DEFAULT_SUBSET_TEMPLATE` is used as default template.
+
+    That's main reason why so many arguments are required to calculate subset
+    name.
+
+    Args:
+        family (str): Instance family.
+        variant (str): In most of cases it is user input during creation.
+        task_name (str): Task name on which context is instance created.
+        asset_id (ObjectId): Id of object. Is optional if `asset_doc` is
+            passed.
+        asset_doc (dict): Queried asset document with it's tasks in data.
+            Used to get task type.
+        project_name (str): Name of project on which is instance created.
+            Important for project settings that are loaded.
+        host_name (str): One of filtering criteria for template profile
+            filters.
+        default_template (str): Default template if any profile does not match
+            passed context. Constant 'DEFAULT_SUBSET_TEMPLATE' is used if
+            is not passed.
+        dynamic_data (dict): Dynamic data specific for a creator which creates
+            instance.
+        dbcon (AvalonMongoDB): Mongo connection to be able query asset document
+            if 'asset_doc' is not passed.
+    """
     if not family:
         return ""
 
@@ -53,25 +84,25 @@ def get_subset_name(
 
         project_name = avalon.api.Session["AVALON_PROJECT"]
 
-    # Function should expect asset document instead of asset id
-    # - that way `dbcon` is not needed
-    if dbcon is None:
-        from avalon.api import AvalonMongoDB
+    # Query asset document if was not passed
+    if asset_doc is None:
+        if dbcon is None:
+            from avalon.api import AvalonMongoDB
 
-        dbcon = AvalonMongoDB()
-        dbcon.Session["AVALON_PROJECT"] = project_name
+            dbcon = AvalonMongoDB()
+            dbcon.Session["AVALON_PROJECT"] = project_name
 
-    dbcon.install()
+        dbcon.install()
 
-    asset_doc = dbcon.find_one(
-        {
-            "type": "asset",
-            "_id": asset_id
-        },
-        {
-            "data.tasks": True
-        }
-    )
+        asset_doc = dbcon.find_one(
+            {
+                "type": "asset",
+                "_id": asset_id
+            },
+            {
+                "data.tasks": True
+            }
+        ) or {}
     asset_tasks = asset_doc.get("data", {}).get("tasks") or {}
     task_info = asset_tasks.get(task_name) or {}
     task_type = task_info.get("type")
@@ -111,6 +142,66 @@ def get_subset_name(
             fill_pairs[key] = value
 
     return template.format(**prepare_template_data(fill_pairs))
+
+
+def get_subset_name_with_asset_doc(
+    family,
+    variant,
+    task_name,
+    asset_doc,
+    project_name=None,
+    host_name=None,
+    default_template=None,
+    dynamic_data=None,
+    dbcon=None
+):
+    """Calculate subset name using OpenPype settings.
+
+    This variant of function expects already queried asset document.
+    """
+    return _get_subset_name(
+        family, variant,
+        task_name,
+        None,
+        asset_doc,
+        project_name,
+        host_name,
+        default_template,
+        dynamic_data,
+        dbcon
+    )
+
+
+def get_subset_name(
+    family,
+    variant,
+    task_name,
+    asset_id,
+    project_name=None,
+    host_name=None,
+    default_template=None,
+    dynamic_data=None,
+    dbcon=None
+):
+    """Calculate subset name using OpenPype settings.
+
+    This variant of function expects asset id as argument.
+
+    This is legacy function should be replaced with
+    `get_subset_name_with_asset_doc` where asset document is expected.
+    """
+    return _get_subset_name(
+        family,
+        variant,
+        task_name,
+        asset_id,
+        None,
+        project_name,
+        host_name,
+        default_template,
+        dynamic_data,
+        dbcon
+    )
 
 
 def prepare_template_data(fill_pairs):
