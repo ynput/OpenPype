@@ -1,19 +1,28 @@
 import os
-import sys
-from Qt import QtWidgets, QtCore
-from pprint import pprint, pformat
+from Qt import QtWidgets
 from copy import deepcopy
 
-from .lib import rescan_hooks
 from openpype.tools.utils.host_tools import HostToolsHelper
 
 
 menu_group_name = 'OpenPype'
 
 default_flame_export_presets = {
-    'Publish': {'PresetVisibility': 2, 'PresetType': 0, 'PresetFile': 'OpenEXR/OpenEXR (16-bit fp PIZ).xml'},
-    'Preview': {'PresetVisibility': 3, 'PresetType': 2, 'PresetFile': 'Generate Preview.xml'},
-    'Thumbnail': {'PresetVisibility': 3, 'PresetType': 0, 'PresetFile': 'Generate Thumbnail.xml'}
+    'Publish': {
+        'PresetVisibility': 2,
+        'PresetType': 0,
+        'PresetFile': 'OpenEXR/OpenEXR (16-bit fp PIZ).xml'
+    },
+    'Preview': {
+        'PresetVisibility': 3,
+        'PresetType': 2,
+        'PresetFile': 'Generate Preview.xml'
+    },
+    'Thumbnail': {
+        'PresetVisibility': 3,
+        'PresetType': 0,
+        'PresetFile': 'Generate Thumbnail.xml'
+    }
 }
 
 
@@ -31,7 +40,7 @@ class _FlameMenuApp(object):
         try:
             import flame
             self.flame = flame
-        except:
+        except ImportError:
             self.flame = None
 
         self.flame_project_name = flame.project.current_project.name
@@ -62,7 +71,7 @@ class _FlameMenuApp(object):
             try:
                 import flame
                 self.flame = flame
-            except:
+            except ImportError:
                 self.flame = None
 
         if self.flame:
@@ -130,7 +139,7 @@ class FlameMenuProjectConnect(_FlameMenuApp):
             try:
                 import flame
                 self.flame = flame
-            except:
+            except ImportError:
                 self.flame = None
 
         if self.flame:
@@ -191,7 +200,7 @@ class FlameMenuTimeline(_FlameMenuApp):
             try:
                 import flame
                 self.flame = flame
-            except:
+            except ImportError:
                 self.flame = None
 
         if self.flame:
