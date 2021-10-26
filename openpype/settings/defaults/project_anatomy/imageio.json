@@ -162,9 +162,7 @@
                     ]
                 }
             ],
-            "customNodes": [
-
-            ]
+            "customNodes": []
         },
         "regexInputs": {
             "inputs": [

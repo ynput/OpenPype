@@ -1,7 +1,8 @@
 from collections import defaultdict
-from avalon.tools import models
 
-from avalon.vendor.Qt import QtCore
+from Qt import QtCore
+
+from avalon.tools import models
 from avalon.vendor import qtawesome
 from avalon.style import colors
 
