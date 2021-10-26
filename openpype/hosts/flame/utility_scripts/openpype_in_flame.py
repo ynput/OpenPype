@@ -105,6 +105,7 @@ This will happen only in case a project has been loaded.
 Then `app_initialized` will load main Framework which will load
 all menu objects as apps.
 """
+
 try:
     import flame
     app_initialized(parent=None)
@@ -151,6 +152,8 @@ def _build_app_menu(app_name):
 
 """ Flame hooks are starting here
 """
+
+
 def project_saved(project_name, save_time, is_auto_save):
     """Hook to activate when project is saved
 
