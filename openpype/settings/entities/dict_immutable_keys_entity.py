@@ -585,3 +585,20 @@ class RootsDictEntity(DictImmutableKeysEntity):
         self._project_value = NOT_SET
 
         super(RootsDictEntity, self)._item_initialization()
+
+    def schema_validations(self):
+        if self.object_type is None:
+            reason = (
+                "Missing children definitions for root values"
+                " ('object_type' not filled)."
+            )
+            raise EntitySchemaError(self, reason)
+
+        if not isinstance(self.object_type, dict):
+            reason = (
+                "Children definitions for root values must be dictionary"
+                " ('object_type' is \"{}\")."
+            ).format(str(type(self.object_type)))
+            raise EntitySchemaError(self, reason)
+
+        super(RootsDictEntity, self).schema_validations()
