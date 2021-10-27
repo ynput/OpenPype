@@ -59,15 +59,15 @@ def _sync_utility_scripts(env=None):
     if next(iter(os.listdir(flame_shared_dir)), None):
         for _itm in os.listdir(flame_shared_dir):
             skip = False
-            
+
             # skip all scripts and folders which are not maintained
             if _itm not in remove_black_list:
                 skip = True
-            
+
             # do not skyp if pyc in extension
             if not os.path.isdir(_itm) and "pyc" in os.path.splitext(_itm)[-1]:
                 skip = False
-            
+
             # continue if skip in true
             if skip:
                 continue

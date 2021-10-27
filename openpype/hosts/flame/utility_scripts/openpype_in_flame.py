@@ -107,14 +107,14 @@ all menu objects as apps.
 """
 
 try:
-    import flame
+    import flame  # noqa
     app_initialized(parent=None)
 except ImportError:
     print("!!!! not able to import flame module !!!!")
 
 
 def rescan_hooks():
-    import flame
+    import flame  # noqa
     flame.execute_shortcut('Rescan Python Hooks')
 
 
@@ -143,7 +143,7 @@ def _build_app_menu(app_name):
             'menu_auto_refresh', {})
         if menu_auto_refresh.get('timeline_menu', True):
             try:
-                import flame
+                import flame  # noqa
                 flame.schedule_idle_event(rescan_hooks)
             except ImportError:
                 print("!-!!! not able to import flame module !!!!")
