@@ -547,3 +547,15 @@ class DictImmutableKeysEntity(ItemEntity):
         super(DictImmutableKeysEntity, self).reset_callbacks()
         for child_entity in self.children:
             child_entity.reset_callbacks()
+
+
+class RootsEntity(DictImmutableKeysEntity):
+    """Entity that adds ability to fill value for roots of current project.
+
+    Value schema is defined by `object_type`.
+
+    It is not possible to change override state (Studio values will always
+    contain studio overrides and same for project). That is because roots can
+    be totally different for each project.
+    """
+    schema_types = ["dict-roots"]
