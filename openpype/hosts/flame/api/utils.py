@@ -51,17 +51,28 @@ def _sync_utility_scripts(env=None):
     for _k, s_list in scripts.items():
         remove_black_list += s_list
 
+    log.info("remove_black_list: `{remove_black_list}`".format(**locals()))
     log.info("Additional Flame script paths: `{fsd_paths}`".format(**locals()))
     log.info("Flame Scripts: `{scripts}`".format(**locals()))
 
     # make sure no script file is in folder
     if next(iter(os.listdir(flame_shared_dir)), None):
-        for s in os.listdir(flame_shared_dir):
+        for _itm in os.listdir(flame_shared_dir):
+            skip = False
+            
             # skip all scripts and folders which are not maintained
-            if s not in remove_black_list:
+            if _itm not in remove_black_list:
+                skip = True
+            
+            # do not skyp if pyc in extension
+            if not os.path.isdir(_itm) and "pyc" in os.path.splitext(_itm)[-1]:
+                skip = False
+            
+            # continue if skip in true
+            if skip:
                 continue
 
-            path = os.path.join(flame_shared_dir, s)
+            path = os.path.join(flame_shared_dir, _itm)
             log.info("Removing `{path}`...".format(**locals()))
             if os.path.isdir(path):
                 shutil.rmtree(path, onerror=None)
