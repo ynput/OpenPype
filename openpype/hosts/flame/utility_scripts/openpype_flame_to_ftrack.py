@@ -136,8 +136,8 @@ def main_window(selection):
                     for segment in tracks.segments:
                         # Add timeline segment to tree
                         QtWidgets.QTreeWidgetItem(tree, [
-                            str(sequence.name)[1:-1],
-                            str(segment.shot_name)[1:-1],
+                            str(sequence.name),
+                            str(segment.name),
                             'Compositing',
                             'Ready to Start',
                             'Tape: {} - Duration {}'.format(
@@ -159,12 +159,46 @@ def main_window(selection):
         tree.selectAll()
 
     def send_to_ftrack():
+        import flame
+        import six
+        import sys
+
+        def create_ftrack_entity(session, name, parent):
+            entity = session.create(type, {
+                'name': name,
+                'parent': parent
+            })
+            try:
+                session.commit()
+            except Exception:
+                tp, value, tb = sys.exc_info()
+                session.rollback()
+                session._configure_locations()
+                six.reraise(tp, value, tb)
+            return entity
+
         with maintained_ftrack_session() as session:
             print("Ftrack session is: {}".format(session))
+
+            # get project name from flame current project
+            project_name = flame.project.current_project.name
+            # get project from ftrack -
+            # ftrack project name has to be the same as flame project!
+            query = 'Project where full_name is "{}"'.format(project_name)
+            f_project = session.query(query).one()
+            print("Ftrack project is: {}".format(f_project))
+
             # Get all selected items from treewidget
             clips_info = []
 
             for item in tree.selectedItems():
+                f_entity = create_ftrack_entity(
+                    session,
+                    item.text(1),
+                    f_project
+                )
+                print("Shot entity is: {}".format(f_entity))
+
                 tree_line = [
                     item.text(0),
                     item.text(1),
