@@ -35,26 +35,6 @@ def application():
         yield app
 
 
-def defer(delay, func):
-    """Append artificial delay to `func`
-
-    This aids in keeping the GUI responsive, but complicates logic
-    when producing tests. To combat this, the environment variable ensures
-    that every operation is synchonous.
-
-    Arguments:
-        delay (float): Delay multiplier; default 1, 0 means no delay
-        func (callable): Any callable
-
-    """
-
-    delay *= float(os.getenv("PYBLISH_DELAY", 1))
-    if delay > 0:
-        return QtCore.QTimer.singleShot(delay, func)
-    else:
-        return func()
-
-
 class SharedObjects:
     jobs = {}
 
