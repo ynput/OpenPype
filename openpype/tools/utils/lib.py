@@ -82,18 +82,6 @@ def schedule(func, time, channel="default"):
     SharedObjects.jobs[channel] = timer
 
 
-@contextlib.contextmanager
-def dummy():
-    """Dummy context manager
-
-    Usage:
-        >> with some_context() if False else dummy():
-        ..   pass
-
-    """
-    yield
-
-
 def iter_model_rows(model, column, include_root=False):
     """Iterate over all row indices in a model"""
     indices = [QtCore.QModelIndex()]  # start iteration at root
