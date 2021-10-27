@@ -1,6 +1,75 @@
 from __future__ import print_function
 from PySide2 import QtWidgets, QtCore
 from pprint import pformat
+from contextlib import contextmanager
+
+@contextmanager
+def maintained_ftrack_session():
+    import ftrack_api
+    import os
+
+    def validate_credentials(url, user, api):
+        first_validation = True
+        if not user:
+            print('- Ftrack Username is not set')
+            first_validation = False
+        if not api:
+            print('- Ftrack API key is not set')
+            first_validation = False
+        if not first_validation:
+            return False
+
+        try:
+            session = ftrack_api.Session(
+                server_url=url,
+                api_user=user,
+                api_key=api
+            )
+            session.close()
+        except Exception as _e:
+            print(
+                "Can't log into Ftrack with used credentials: {}".format(
+                    _e)
+            )
+            ftrack_cred = {
+                'Ftrack server': str(url),
+                'Username': str(user),
+                'API key': str(api),
+            }
+
+            item_lens = [len(key) + 1 for key in ftrack_cred]
+            justify_len = max(*item_lens)
+            for key, value in ftrack_cred.items():
+                print('{} {}'.format((key + ':').ljust(
+                    justify_len, ' '), value))
+            return False
+        print(
+            'Credentials Username: "{}", API key: "{}" are valid.'.format(
+                user, api)
+        )
+        return True
+
+    # fill your own credentials
+    url = os.getenv("FTRACK_SERVER")
+    user = os.getenv("FTRACK_API_USER")
+    api = os.getenv("FTRACK_API_KEY")
+
+    try:
+        assert validate_credentials(url, user, api), (
+            "Ftrack credentials failed")
+        # open ftrack session
+        session = ftrack_api.Session(
+            server_url=url,
+            api_user=user,
+            api_key=api
+        )
+        yield session
+    except Exception as _E:
+        ConnectionRefusedError(
+            "ERROR: {}".format(_E))
+    finally:
+        # close the session
+        session.close()
 
 class FlameTreeWidget(QtWidgets.QTreeWidget):
     """
@@ -90,73 +159,24 @@ def main_window(selection):
         tree.selectAll()
 
     def send_to_ftrack():
-        import ftrack_api
+        with maintained_ftrack_session() as session:
+            print("Ftrack session is: {}".format(session))
+            # Get all selected items from treewidget
+            clips_info = []
 
-        def validate_credentials(url, user, api):
-            first_validation = True
-            if not user:
-                print('- Ftrack Username is not set')
-                first_validation = False
-            if not api:
-                print('- Ftrack API key is not set')
-                first_validation = False
-            if not first_validation:
-                return False
+            for item in tree.selectedItems():
+                tree_line = [
+                    item.text(0),
+                    item.text(1),
+                    item.text(2),
+                    item.text(3),
+                    item.text(4),
+                    item.text(5)
+                ]
+                print(tree_line)
+                clips_info.append(tree_line)
 
-            try:
-                session = ftrack_api.Session(
-                    server_url=url,
-                    api_user=user,
-                    api_key=api
-                )
-                session.close()
-            except Exception as _e:
-                print(
-                    "Can't log into Ftrack with used credentials: {}".format(
-                        _e)
-                )
-                ftrack_cred = {
-                    'Ftrack server': str(url),
-                    'Username': str(user),
-                    'API key': str(api),
-                }
-
-                item_lens = [len(key) + 1 for key in ftrack_cred]
-                justify_len = max(*item_lens)
-                for key, value in ftrack_cred.items():
-                    print('{} {}'.format((key + ':').ljust(
-                        justify_len, ' '), value))
-                return False
-            print(
-                'Credentials Username: "{}", API key: "{}" are valid.'.format(
-                    user, api)
-            )
-            return True
-
-        # fill your own credentials
-        url = ""
-        user = ""
-        api = ""
-
-        if validate_credentials(url, user, api):
-            print("validation of ftrack went trough")
-
-        # Get all selected items from treewidget
-        clips_info = []
-
-        for item in tree.selectedItems():
-            tree_line = [
-                item.text(0),
-                item.text(1),
-                item.text(2),
-                item.text(3),
-                item.text(4),
-                item.text(5)
-            ]
-            print(tree_line)
-            clips_info.append(tree_line)
-
-        print("selected clips: {}".format(pformat(clips_info)))
+            print("selected clips: {}".format(pformat(clips_info)))
 
     # creating ui
     window = QtWidgets.QWidget()
