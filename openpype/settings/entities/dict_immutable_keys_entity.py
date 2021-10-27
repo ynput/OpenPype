@@ -172,7 +172,7 @@ class DictImmutableKeysEntity(ItemEntity):
         for child_obj in added_children:
             self.gui_layout.append(child_obj)
 
-    def _item_initalization(self):
+    def _item_initialization(self):
         self._default_metadata = NOT_SET
         self._studio_override_metadata = NOT_SET
         self._project_override_metadata = NOT_SET
