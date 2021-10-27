@@ -31,7 +31,7 @@ def _sync_utility_scripts(env=None):
     )]
 
     # collect script dirs
-    log.info("FLAME_SCRIPT_DIR: `{fsd_env}`".format(**locals()))
+    log.info("FLAME_SCRIPT_DIRS: `{fsd_env}`".format(**locals()))
     log.info("fsd_paths: `{fsd_paths}`".format(**locals()))
 
     # add application environment setting for FLAME_SCRIPT_DIR
