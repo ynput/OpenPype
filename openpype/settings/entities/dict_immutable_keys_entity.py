@@ -602,3 +602,14 @@ class RootsDictEntity(DictImmutableKeysEntity):
             raise EntitySchemaError(self, reason)
 
         super(RootsDictEntity, self).schema_validations()
+
+    def on_child_change(self, child_obj):
+        if self._override_state is OverrideState.STUDIO:
+            if not child_obj.has_studio_override:
+                self.add_to_studio_default()
+
+        elif self._override_state is OverrideState.PROJECT:
+            if not child_obj.has_project_override:
+                self.add_to_project_override()
+
+        return super(RootsDictEntity, self).on_child_change(child_obj)
