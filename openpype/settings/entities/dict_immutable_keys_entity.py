@@ -619,3 +619,40 @@ class RootsDictEntity(DictImmutableKeysEntity):
         """Override this method as this entity should not have metadata."""
         self._metadata_are_modified = False
         self._current_metadata = {}
+
+    def update_default_value(self, value):
+        """Update default values.
+
+        Not an api method, should be called by parent.
+        """
+        value = self._check_update_value(value, "default")
+        value, _ = self._prepare_value(value)
+
+        self._default_value = value
+        self._default_metadata = {}
+        self.has_default_value = value is not NOT_SET
+
+    def update_studio_value(self, value):
+        """Update studio override values.
+
+        Not an api method, should be called by parent.
+        """
+        value = self._check_update_value(value, "studio override")
+        value, _ = self._prepare_value(value)
+
+        self._studio_value = value
+        self._studio_override_metadata = {}
+        self.had_studio_override = value is not NOT_SET
+
+    def update_project_value(self, value):
+        """Update project override values.
+
+        Not an api method, should be called by parent.
+        """
+
+        value = self._check_update_value(value, "project override")
+        value, _metadata = self._prepare_value(value)
+
+        self._project_value = value
+        self._project_override_metadata = {}
+        self.had_project_override = value is not NOT_SET
