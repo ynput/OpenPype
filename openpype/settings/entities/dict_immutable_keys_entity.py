@@ -19,6 +19,7 @@ from . import (
     GUIEntity
 )
 from .exceptions import (
+    DefaultsNotDefined,
     SchemaDuplicatedKeys,
     EntitySchemaError,
     InvalidKeySymbols
@@ -603,6 +604,43 @@ class RootsDictEntity(DictImmutableKeysEntity):
 
         super(RootsDictEntity, self).schema_validations()
 
+    def set_override_state(self, state, ignore_missing_defaults):
+        self.children = []
+        self.non_gui_children = {}
+        self.gui_layout = []
+
+        roots_entity = self.get_entity_from_path(
+            "project_anatomy/roots"
+        )
+        children = []
+        first = True
+        for key in roots_entity.keys():
+            if first:
+                first = False
+            elif self.separate_items:
+                children.append({"type": "separator"})
+            child = copy.deepcopy(self.object_type)
+            child["key"] = key
+            child["label"] = key
+            children.append(child)
+
+        schema_data = copy.deepcopy(self.schema_data)
+        schema_data["children"] = children
+
+        self._add_children(schema_data)
+
+        self._set_children_values(state)
+
+        super(RootsDictEntity, self).set_override_state(
+            state, True
+        )
+
+        if state == OverrideState.STUDIO:
+            self.add_to_studio_default()
+
+        elif state == OverrideState.PROJECT:
+            self.add_to_project_override()
+
     def on_child_change(self, child_obj):
         if self._override_state is OverrideState.STUDIO:
             if not child_obj.has_studio_override:
@@ -614,6 +652,36 @@ class RootsDictEntity(DictImmutableKeysEntity):
 
         return super(RootsDictEntity, self).on_child_change(child_obj)
 
+    def _set_children_values(self, state):
+        if state >= OverrideState.DEFAULTS:
+            default_value = self._default_value
+            if default_value is NOT_SET:
+                if state > OverrideState.DEFAULTS:
+                    raise DefaultsNotDefined(self)
+                else:
+                    default_value = {}
+
+            for key, child_obj in self.non_gui_children.items():
+                child_value = default_value.get(key, NOT_SET)
+                child_obj.update_default_value(child_value)
+
+        if state >= OverrideState.STUDIO:
+            value = self._studio_value
+            if value is NOT_SET:
+                value = {}
+
+            for key, child_obj in self.non_gui_children.items():
+                child_value = value.get(key, NOT_SET)
+                child_obj.update_studio_value(child_value)
+
+        if state >= OverrideState.PROJECT:
+            value = self._project_value
+            if value is NOT_SET:
+                value = {}
+
+            for key, child_obj in self.non_gui_children.items():
+                child_value = value.get(key, NOT_SET)
+                child_obj.update_project_value(child_value)
 
     def _update_current_metadata(self):
         """Override this method as this entity should not have metadata."""
