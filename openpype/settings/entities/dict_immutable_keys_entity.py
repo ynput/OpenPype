@@ -613,3 +613,9 @@ class RootsDictEntity(DictImmutableKeysEntity):
                 self.add_to_project_override()
 
         return super(RootsDictEntity, self).on_child_change(child_obj)
+
+
+    def _update_current_metadata(self):
+        """Override this method as this entity should not have metadata."""
+        self._metadata_are_modified = False
+        self._current_metadata = {}
