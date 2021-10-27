@@ -142,18 +142,23 @@ class ConsoleTrayApp:
         self.tray_reconnect = False
         ConsoleTrayApp.webserver_client.close()
 
-    def _send_text(self, new_text):
+    def _send_text_queue(self):
+        """Sends lines and purges queue"""
+        lines = tuple(self.new_text)
+        self.new_text.clear()
+
+        if lines:
+            self._send_lines(lines)
+
+    def _send_lines(self, lines):
         """ Send console content. """
         if not ConsoleTrayApp.webserver_client:
             return
 
-        if isinstance(new_text, str):
-            new_text = collections.deque(new_text.split("\n"))
-
         payload = {
             "host": self.host_id,
             "action": host_console_listener.MsgAction.ADD,
-            "text": "\n".join(new_text)
+            "text": "\n".join(lines)
         }
 
         self._send(payload)
@@ -174,14 +179,7 @@ class ConsoleTrayApp:
         if self.tray_reconnect:
             self._connect()  # reconnect
 
-        if ConsoleTrayApp.webserver_client and self.new_text:
-            self._send_text(self.new_text)
-            self.new_text = collections.deque()
-
-        if self.new_text:  # no webserver_client, text keeps stashing
-            start = max(len(self.new_text) - self.MAX_LINES, 0)
-            self.new_text = itertools.islice(self.new_text,
-                                             start, self.MAX_LINES)
+        self._send_text_queue()
 
         if not self.initialized:
             if self.initializing:
@@ -191,7 +189,7 @@ class ConsoleTrayApp:
                 elif not host_connected:
                     text = "{} process is not alive. Exiting".format(self.host)
                     print(text)
-                    self._send_text([text])
+                    self._send_lines([text])
                     ConsoleTrayApp.websocket_server.stop()
                     sys.exit(1)
                 elif host_connected:
@@ -205,14 +203,15 @@ class ConsoleTrayApp:
             self.initializing = True
 
             self.launch_method(*self.subprocess_args)
-        elif ConsoleTrayApp.process.poll() is not None:
-            self.exit()
-        elif ConsoleTrayApp.callback_queue:
+        elif ConsoleTrayApp.callback_queue and \
+                not ConsoleTrayApp.callback_queue.empty():
             try:
                 callback = ConsoleTrayApp.callback_queue.get(block=False)
                 callback()
             except queue.Empty:
                 pass
+        elif ConsoleTrayApp.process.poll() is not None:
+            self.exit()
 
     @classmethod
     def execute_in_main_thread(cls, func_to_call_from_main_thread):
@@ -232,8 +231,9 @@ class ConsoleTrayApp:
         self._close()
         if ConsoleTrayApp.websocket_server:
             ConsoleTrayApp.websocket_server.stop()
-        ConsoleTrayApp.process.kill()
-        ConsoleTrayApp.process.wait()
+        if ConsoleTrayApp.process:
+            ConsoleTrayApp.process.kill()
+            ConsoleTrayApp.process.wait()
         if self.timer:
             self.timer.stop()
         QtCore.QCoreApplication.exit()

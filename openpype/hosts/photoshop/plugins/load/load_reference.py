@@ -6,10 +6,14 @@ from openpype.hosts.photoshop.plugins.lib import get_unique_layer_name
 
 stub = photoshop.stub()
 
-class ImageLoader(api.Loader):
-    """Load images
 
-    Stores the imported asset in a container named after the asset.
+class ReferenceLoader(api.Loader):
+    """Load reference images
+
+        Stores the imported asset in a container named after the asset.
+
+        Inheriting from 'load_image' didn't work because of
+        "Cannot write to closing transport", possible refactor.
     """
 
     families = ["image", "render"]
@@ -74,4 +78,5 @@ class ImageLoader(api.Loader):
         self.update(container, representation)
 
     def import_layer(self, file_name, layer_name):
-        return stub.import_smart_object(file_name, layer_name)
+        return stub.import_smart_object(file_name, layer_name,
+                                        as_reference=True)

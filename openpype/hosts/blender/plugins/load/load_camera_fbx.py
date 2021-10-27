@@ -1,129 +1,81 @@
-"""Load a layout in Blender."""
+"""Load an asset in Blender from an Alembic file."""
 
 from pathlib import Path
 from pprint import pformat
-from typing import Dict, Optional
+from typing import Dict, List, Optional
 
 import bpy
-import json
 
 from avalon import api
+from avalon.blender import lib
 from avalon.blender.pipeline import AVALON_CONTAINERS
 from avalon.blender.pipeline import AVALON_CONTAINER_ID
 from avalon.blender.pipeline import AVALON_PROPERTY
-from avalon.blender.pipeline import AVALON_INSTANCES
-from openpype import lib
 from openpype.hosts.blender.api import plugin
 
 
-class JsonLayoutLoader(plugin.AssetLoader):
-    """Load layout published from Unreal."""
+class FbxCameraLoader(plugin.AssetLoader):
+    """Load a camera from FBX.
 
-    families = ["layout"]
-    representations = ["json"]
+    Stores the imported asset in an empty named after the asset.
+    """
 
-    label = "Load Layout"
+    families = ["camera"]
+    representations = ["fbx"]
+
+    label = "Load Camera (FBX)"
     icon = "code-fork"
     color = "orange"
-
-    animation_creator_name = "CreateAnimation"
 
     def _remove(self, asset_group):
         objects = list(asset_group.children)
 
         for obj in objects:
-            api.remove(obj.get(AVALON_PROPERTY))
+            if obj.type == 'CAMERA':
+                bpy.data.cameras.remove(obj.data)
+            elif obj.type == 'EMPTY':
+                objects.extend(obj.children)
+                bpy.data.objects.remove(obj)
 
-    def _remove_animation_instances(self, asset_group):
-        instances = bpy.data.collections.get(AVALON_INSTANCES)
-        if instances:
-            for obj in list(asset_group.children):
-                anim_collection = instances.children.get(
-                    obj.name + "_animation")
-                if anim_collection:
-                    bpy.data.collections.remove(anim_collection)
-
-    def _get_loader(self, loaders, family):
-        name = ""
-        if family == 'rig':
-            name = "BlendRigLoader"
-        elif family == 'model':
-            name = "BlendModelLoader"
-
-        if name == "":
-            return None
-
-        for loader in loaders:
-            if loader.__name__ == name:
-                return loader
-
-        return None
-
-    def _process(self, libpath, asset, asset_group, actions):
+    def _process(self, libpath, asset_group, group_name):
         plugin.deselect_all()
 
-        with open(libpath, "r") as fp:
-            data = json.load(fp)
+        collection = bpy.context.view_layer.active_layer_collection.collection
 
-        all_loaders = api.discover(api.Loader)
+        bpy.ops.import_scene.fbx(filepath=libpath)
 
-        for element in data:
-            reference = element.get('reference')
-            family = element.get('family')
+        parent = bpy.context.scene.collection
 
-            loaders = api.loaders_from_representation(all_loaders, reference)
-            loader = self._get_loader(loaders, family)
+        objects = lib.get_selection()
 
-            if not loader:
-                continue
+        for obj in objects:
+            obj.parent = asset_group
 
-            instance_name = element.get('instance_name')
+        for obj in objects:
+            parent.objects.link(obj)
+            collection.objects.unlink(obj)
 
-            action = None
+        for obj in objects:
+            name = obj.name
+            obj.name = f"{group_name}:{name}"
+            if obj.type != 'EMPTY':
+                name_data = obj.data.name
+                obj.data.name = f"{group_name}:{name_data}"
 
-            if actions:
-                action = actions.get(instance_name, None)
+            if not obj.get(AVALON_PROPERTY):
+                obj[AVALON_PROPERTY] = dict()
 
-            options = {
-                'parent': asset_group,
-                'transform': element.get('transform'),
-                'action': action,
-                'create_animation': True if family == 'rig' else False,
-                'animation_asset': asset
-            }
+            avalon_info = obj[AVALON_PROPERTY]
+            avalon_info.update({"container_name": group_name})
 
-            # This should return the loaded asset, but the load call will be
-            # added to the queue to run in the Blender main thread, so
-            # at this time it will not return anything. The assets will be
-            # loaded in the next Blender cycle, so we use the options to
-            # set the transform, parent and assign the action, if there is one.
-            api.load(
-                loader,
-                reference,
-                namespace=instance_name,
-                options=options
-            )
+        plugin.deselect_all()
 
-        # Create the camera asset and the camera instance
-        creator_plugin = lib.get_creator_by_name("CreateCamera")
-        if not creator_plugin:
-            raise ValueError("Creator plugin \"CreateCamera\" was "
-                             "not found.")
+        return objects
 
-        api.create(
-            creator_plugin,
-            name="camera",
-            # name=f"{unique_number}_{subset}_animation",
-            asset=asset,
-            options={"useSelection": False}
-            # data={"dependencies": str(context["representation"]["_id"])}
-        )
-
-    def process_asset(self,
-                      context: dict,
-                      name: str,
-                      namespace: Optional[str] = None,
-                      options: Optional[Dict] = None):
+    def process_asset(
+        self, context: dict, name: str, namespace: Optional[str] = None,
+        options: Optional[Dict] = None
+    ) -> Optional[List]:
         """
         Arguments:
             name: Use pre-defined name
@@ -146,10 +98,16 @@ class JsonLayoutLoader(plugin.AssetLoader):
             bpy.context.scene.collection.children.link(avalon_container)
 
         asset_group = bpy.data.objects.new(group_name, object_data=None)
-        asset_group.empty_display_type = 'SINGLE_ARROW'
         avalon_container.objects.link(asset_group)
 
-        self._process(libpath, asset, asset_group, None)
+        objects = self._process(libpath, asset_group, group_name)
+
+        objects = []
+        nodes = list(asset_group.children)
+
+        for obj in nodes:
+            objects.append(obj)
+            nodes.extend(list(obj.children))
 
         bpy.context.scene.collection.objects.link(asset_group)
 
@@ -167,8 +125,8 @@ class JsonLayoutLoader(plugin.AssetLoader):
             "objectName": group_name
         }
 
-        self[:] = asset_group.children
-        return asset_group.children
+        self[:] = objects
+        return objects
 
     def exec_update(self, container: Dict, representation: Dict):
         """Update the loaded asset.
@@ -178,6 +136,9 @@ class JsonLayoutLoader(plugin.AssetLoader):
         If the objects of the collection are used in another collection they
         will not be removed, only unlinked. Normally this should not be the
         case though.
+
+        Warning:
+            No nested collections are supported at the moment!
         """
         object_name = container["objectName"]
         asset_group = bpy.data.objects.get(object_name)
@@ -221,29 +182,10 @@ class JsonLayoutLoader(plugin.AssetLoader):
             self.log.info("Library already loaded, not updating...")
             return
 
-        actions = {}
-
-        for obj in asset_group.children:
-            obj_meta = obj.get(AVALON_PROPERTY)
-            if obj_meta.get('family') == 'rig':
-                rig = None
-                for child in obj.children:
-                    if child.type == 'ARMATURE':
-                        rig = child
-                        break
-                if not rig:
-                    raise Exception("No armature in the rig asset group.")
-                if rig.animation_data and rig.animation_data.action:
-                    namespace = obj_meta.get('namespace')
-                    actions[namespace] = rig.animation_data.action
-
         mat = asset_group.matrix_basis.copy()
 
-        self._remove_animation_instances(asset_group)
-
         self._remove(asset_group)
-
-        self._process(str(libpath), asset_group, actions)
+        self._process(str(libpath), asset_group, object_name)
 
         asset_group.matrix_basis = mat
 
@@ -259,14 +201,15 @@ class JsonLayoutLoader(plugin.AssetLoader):
 
         Returns:
             bool: Whether the container was deleted.
+
+        Warning:
+            No nested collections are supported at the moment!
         """
         object_name = container["objectName"]
         asset_group = bpy.data.objects.get(object_name)
 
         if not asset_group:
             return False
-
-        self._remove_animation_instances(asset_group)
 
         self._remove(asset_group)
 

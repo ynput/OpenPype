@@ -164,8 +164,9 @@ class LoaderWindow(QtWidgets.QDialog):
 
         subsets_widget.load_started.connect(self._on_load_start)
         subsets_widget.load_ended.connect(self._on_load_end)
-        repres_widget.load_started.connect(self._on_load_start)
-        repres_widget.load_ended.connect(self._on_load_end)
+        if repres_widget:
+            repres_widget.load_started.connect(self._on_load_start)
+            repres_widget.load_ended.connect(self._on_load_end)
 
         self._sync_server_enabled = sync_server_enabled
 
