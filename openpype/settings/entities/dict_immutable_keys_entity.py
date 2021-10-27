@@ -4,7 +4,8 @@ import collections
 from .lib import (
     WRAPPER_TYPES,
     OverrideState,
-    NOT_SET
+    NOT_SET,
+    STRING_TYPE
 )
 from openpype.settings.constants import (
     METADATA_KEYS,
@@ -549,7 +550,7 @@ class DictImmutableKeysEntity(ItemEntity):
             child_entity.reset_callbacks()
 
 
-class RootsEntity(DictImmutableKeysEntity):
+class RootsDictEntity(DictImmutableKeysEntity):
     """Entity that adds ability to fill value for roots of current project.
 
     Value schema is defined by `object_type`.
@@ -558,4 +559,29 @@ class RootsEntity(DictImmutableKeysEntity):
     contain studio overrides and same for project). That is because roots can
     be totally different for each project.
     """
+    _origin_schema_data = None
     schema_types = ["dict-roots"]
+
+    def _item_initialization(self):
+        origin_schema_data = self.schema_data
+
+        self.separate_items = origin_schema_data.get("separate_items", True)
+        object_type = origin_schema_data.get("object_type")
+        if isinstance(object_type, STRING_TYPE):
+            object_type = {"type": object_type}
+        self.object_type = object_type
+
+        if not self.is_group:
+            self.is_group = True
+
+        schema_data = copy.deepcopy(self.schema_data)
+        schema_data["children"] = []
+
+        self.schema_data = schema_data
+        self._origin_schema_data = origin_schema_data
+
+        self._default_value = NOT_SET
+        self._studio_value = NOT_SET
+        self._project_value = NOT_SET
+
+        super(RootsDictEntity, self)._item_initialization()
