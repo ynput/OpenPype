@@ -47,12 +47,20 @@ def _sync_utility_scripts(env=None):
     for path in fsd_paths:
         scripts.update({path: os.listdir(path)})
 
+    remove_black_list = []
+    for _k, s_list in scripts.items():
+        remove_black_list += s_list
+
     log.info("Additional Flame script paths: `{fsd_paths}`".format(**locals()))
     log.info("Flame Scripts: `{scripts}`".format(**locals()))
 
     # make sure no script file is in folder
     if next(iter(os.listdir(flame_shared_dir)), None):
         for s in os.listdir(flame_shared_dir):
+            # skip all scripts and folders which are not maintained
+            if s not in remove_black_list:
+                continue
+
             path = os.path.join(flame_shared_dir, s)
             log.info("Removing `{path}`...".format(**locals()))
             if os.path.isdir(path):
