@@ -253,6 +253,7 @@ def create_unreal_project(project_name: str,
         "Plugins": [
             {"Name": "PythonScriptPlugin", "Enabled": True},
             {"Name": "EditorScriptingUtilities", "Enabled": True},
+            {"Name": "SequencerScripting", "Enabled": True},
             {"Name": "Avalon", "Enabled": True}
         ]
     }

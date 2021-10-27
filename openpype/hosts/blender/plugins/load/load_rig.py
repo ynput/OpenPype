@@ -158,7 +158,7 @@ class BlendRigLoader(plugin.AssetLoader):
         while bpy.data.orphans_purge(do_local_ids=False):
             pass
 
-        bpy.ops.object.select_all(action='DESELECT')
+        plugin.deselect_all()
 
         return objects
 
@@ -193,7 +193,7 @@ class BlendRigLoader(plugin.AssetLoader):
 
         action = None
 
-        bpy.ops.object.select_all(action='DESELECT')
+        plugin.deselect_all()
 
         create_animation = False
 
@@ -229,7 +229,7 @@ class BlendRigLoader(plugin.AssetLoader):
 
                 bpy.ops.object.parent_set(keep_transform=True)
 
-                bpy.ops.object.select_all(action='DESELECT')
+                plugin.deselect_all()
 
         objects = self._process(libpath, asset_group, group_name, action)
 
@@ -252,7 +252,7 @@ class BlendRigLoader(plugin.AssetLoader):
                 data={"dependencies": str(context["representation"]["_id"])}
             )
 
-            bpy.ops.object.select_all(action='DESELECT')
+            plugin.deselect_all()
 
         bpy.context.scene.collection.objects.link(asset_group)
 

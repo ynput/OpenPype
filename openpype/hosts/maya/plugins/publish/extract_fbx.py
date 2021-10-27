@@ -183,7 +183,8 @@ class ExtractFBX(openpype.api.Extractor):
         # Apply the FBX overrides through MEL since the commands
         # only work correctly in MEL according to online
         # available discussions on the topic
-        for option, value in options.iteritems():
+        _iteritems = getattr(options, "iteritems", options.items)
+        for option, value in _iteritems():
             key = option[0].upper() + option[1:]  # uppercase first letter
 
             # Boolean must be passed as lower-case strings

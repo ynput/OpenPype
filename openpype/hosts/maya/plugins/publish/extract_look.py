@@ -205,6 +205,9 @@ class ExtractLook(openpype.api.Extractor):
         lookdata = instance.data["lookData"]
         relationships = lookdata["relationships"]
         sets = relationships.keys()
+        if not sets:
+            self.log.info("No sets found")
+            return
 
         results = self.process_resources(instance, staging_dir=dir_path)
         transfers = results["fileTransfers"]
