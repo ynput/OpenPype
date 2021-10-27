@@ -65,7 +65,7 @@ def maintained_ftrack_session():
         )
         yield session
     except Exception as _E:
-        ConnectionRefusedError(
+        print(
             "ERROR: {}".format(_E))
     finally:
         # close the session
@@ -163,7 +163,7 @@ def main_window(selection):
         import six
         import sys
 
-        def create_ftrack_entity(session, name, parent):
+        def create_ftrack_entity(session, type, name, parent):
             entity = session.create(type, {
                 'name': name,
                 'parent': parent
@@ -194,6 +194,7 @@ def main_window(selection):
             for item in tree.selectedItems():
                 f_entity = create_ftrack_entity(
                     session,
+                    "Shot",
                     item.text(1),
                     f_project
                 )
@@ -221,7 +222,6 @@ def main_window(selection):
     window.setStyleSheet('background-color: #313131')
 
     # Center window in linux
-
     resolution = QtWidgets.QDesktopWidget().screenGeometry()
     window.move((resolution.width() / 2) - (window.frameSize().width() / 2),
                 (resolution.height() / 2) - (window.frameSize().height() / 2))
