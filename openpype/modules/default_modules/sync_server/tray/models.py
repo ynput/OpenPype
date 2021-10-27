@@ -194,16 +194,16 @@ class _SyncRepresentationModel(QtCore.QAbstractTableModel):
         else:
             order = -1
 
-        backup_sort = dict(self.sort)
+        backup_sort = dict(self.sort_criteria)
 
-        self.sort = {self.SORT_BY_COLUMN[index]: order}  # reset
+        self.sort_criteria = {self.SORT_BY_COLUMN[index]: order}  # reset
         # add last one
         for key, val in backup_sort.items():
             if key != '_id' and key != self.SORT_BY_COLUMN[index]:
-                self.sort[key] = val
+                self.sort_criteria[key] = val
                 break
         # add default one
-        self.sort['_id'] = 1
+        self.sort_criteria['_id'] = 1
 
         self.query = self.get_query()
         # import json
@@ -443,7 +443,7 @@ class SyncRepresentationSummaryModel(_SyncRepresentationModel):
         self.active_site = self.sync_server.get_active_site(self.project)
         self.remote_site = self.sync_server.get_remote_site(self.project)
 
-        self.sort = self.DEFAULT_SORT
+        self.sort_criteria = self.DEFAULT_SORT
 
         self.query = self.get_query()
         self.default_query = list(self.get_query())
@@ -736,7 +736,7 @@ class SyncRepresentationSummaryModel(_SyncRepresentationModel):
             )
 
         aggr.extend(
-            [{"$sort": self.sort},
+            [{"$sort": self.sort_criteria},
              {
                 '$facet': {
                     'paginatedResults': [{'$skip': self._rec_loaded},
@@ -974,7 +974,7 @@ class SyncRepresentationDetailModel(_SyncRepresentationModel):
         self.active_site = self.sync_server.get_active_site(self.project)
         self.remote_site = self.sync_server.get_remote_site(self.project)
 
-        self.sort = self.DEFAULT_SORT
+        self.sort_criteria = self.DEFAULT_SORT
 
         self.query = self.get_query()
         representations = self.dbcon.aggregate(pipeline=self.query,
@@ -1240,7 +1240,7 @@ class SyncRepresentationDetailModel(_SyncRepresentationModel):
             print(self.column_filtering)
 
         aggr.extend([
-            {"$sort": self.sort},
+            {"$sort": self.sort_criteria},
             {
                 '$facet': {
                     'paginatedResults': [{'$skip': self._rec_loaded},
