@@ -114,6 +114,7 @@ except ImportError:
 
 
 def rescan_hooks():
+    import flame
     flame.execute_shortcut('Rescan Python Hooks')
 
 
