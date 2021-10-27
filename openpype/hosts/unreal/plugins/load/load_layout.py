@@ -358,11 +358,17 @@ class LayoutLoader(api.Loader):
         return asset_content
 
     def update(self, container, representation):
-        assert False, "Update not working for now. Delete and reload the layout."
+        ar = unreal.AssetRegistryHelpers.get_asset_registry()
+
         source_path = api.get_representation_path(representation)
         destination_path = container["namespace"]
+        libpath = Path(api.get_representation_path(representation))
 
         self._remove_actors(destination_path)
+
+        # Delete old animations
+        anim_path = f"{destination_path}/animations/"
+        EditorAssetLibrary.delete_directory(anim_path)
 
         with open(source_path, "r") as fp:
             data = json.load(fp)
@@ -397,23 +403,63 @@ class LayoutLoader(api.Loader):
             else:
                 # If the asset is in the new layout, search the instances in
                 # the JSON file, and create actors for them.
+
+                actors_dict = {}
+                skeleton_dict = {}
+
                 for element in data:
-                    if element.get('reference_fbx') == ref:
-                        if ref not in loaded:
-                            loaded.append(ref)
+                    reference = element.get('reference_fbx')
+                    instance_name = element.get('instance_name')
+
+                    skeleton = None
+
+                    if reference == ref and ref not in loaded:
+                        loaded.append(ref)
+
+                        family = element.get('family')
 
                         assets = EditorAssetLibrary.list_assets(
                             ppath, recursive=True, include_folder=False)
 
-                        transform = element.get('transform')
-                        family = element.get('family')
+                        instances = [
+                            item for item in data
+                            if item.get('reference_fbx') == reference]
 
-                        if family == 'model':
-                            self._process_family(
-                                assets, 'StaticMesh', transform)
-                        elif family == 'rig':
-                            self._process_family(
-                                assets, 'SkeletalMesh', transform)
+                        for instance in instances:
+                            transform = instance.get('transform')
+                            inst = instance.get('instance_name')
+
+                            actors = []
+
+                            if family == 'model':
+                                actors = self._process_family(
+                                    assets, 'StaticMesh', transform)
+                            elif family == 'rig':
+                                actors = self._process_family(
+                                    assets, 'SkeletalMesh', transform)
+                                actors_dict[inst] = actors
+
+                        if family == 'rig':
+                            # Finds skeleton among the imported assets
+                            for asset in assets:
+                                obj = ar.get_asset_by_object_path(asset).get_asset()
+                                if obj.get_class().get_name() == 'Skeleton':
+                                    skeleton = obj
+                                    if skeleton:
+                                        break
+
+                        if skeleton:
+                            skeleton_dict[reference] = skeleton
+                    else:
+                        skeleton = skeleton_dict.get(reference)
+
+                    animation_file = element.get('animation')
+
+                    if animation_file and skeleton:
+                        self._import_animation(
+                            destination_path, libpath,
+                            instance_name, skeleton,
+                            actors_dict, animation_file)
 
         self._process(source_path, destination_path, loaded)
 
