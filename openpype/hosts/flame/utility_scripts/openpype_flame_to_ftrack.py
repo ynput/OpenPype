@@ -136,13 +136,13 @@ def main_window(selection):
                     for segment in tracks.segments:
                         # Add timeline segment to tree
                         QtWidgets.QTreeWidgetItem(tree, [
-                            str(sequence.name),
-                            str(segment.name),
+                            str(sequence.name)[1:-1],
+                            str(segment.name)[1:-1],
                             'Compositing',
                             'Ready to Start',
                             'Tape: {} - Duration {}'.format(
                                 segment.tape_name,
-                                str(segment.source_duration)[4:-1]
+                                str(segment.record_duration)[4:-1]
                             ),
                             str(segment.comment)[1:-1]
                         ]).setFlags(
