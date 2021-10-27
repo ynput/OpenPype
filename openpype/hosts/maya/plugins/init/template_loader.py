@@ -6,7 +6,7 @@ def init_cmds():
     global cmds
     cmds = cmds or importlib.import_module('maya').cmds
 
-ATTRIBUTES = ['asset_type', 'representation', 'families', 'repre_name', 'asset', 'hierarchy', 'loader', 'order']
+ATTRIBUTES = ['builder_type', 'representation', 'families', 'repre_name', 'asset', 'hierarchy', 'loader', 'order']
 
 class TemplateLoader(AbstractTemplateLoader):
 
@@ -17,43 +17,53 @@ class TemplateLoader(AbstractTemplateLoader):
     def import_template(self, path):
         self.newNodes = cmds.file(path, i=True, returnNewNodes=True)
 
-
-    def get_template_nodes(self):
-        return self._get_all_nodes_with_attribute('asset_type')
+    @staticmethod
+    def get_template_nodes():
+        attribute_list = cmds.ls('*.builder_type', long=True)
+        return [attr.rpartition('.')[0] for attr in attribute_list]
 
     def placeholderize(self, node):
         return self._get_all_user_data_on_node(node)
 
+    def is_placeholder_context(self, placeholder):
+        return placeholder['builder_type'] == "context_asset"
+
     @staticmethod
     def get_valid_representations_id_for_placeholder(representations, placeholder):
+        if len(representations) < 1:
+            return []
+
         repres = [r['_id'] for rep in representations for r in rep if (
             placeholder['families'] == r['context']['family']
             and placeholder['repre_name'] == r['context']['representation']
             and placeholder['representation'] == r['context']['subset']
             )]
 
-        if len(repres) <1:
-            raise ValueError("No representation found for asset {} with:\n"
-                  "family : {}\n"
+        if len(repres) < 1:
+            raise ValueError("No representation found for {} with:\n"
                   "rerpresentation : {}\n"
-                  "subset : {}\n".format(
-                      placeholder['name'],
-                      placeholder['family'],
-                      placeholder['representation_type'],
-                      placeholder['subset']
+                  "representation name : {}\n"
+                  "Are you sure representations have been published ?".format(
+                      placeholder['builder_type'],
+                      placeholder['representation'],
+                      placeholder['repre_name']
                       )
                     )
         return repres
 
     @staticmethod
-    def switch(container, placeholder):
+    def switch(containers, placeholder):
         node = placeholder['node']
         nodeParent = cmds.ls(node, long=True)[0].rpartition('|')[0]
         if cmds.nodeType(node) != 'transform':
             nodeParent = nodeParent.rpartition('|')[0]
-        #TODO: Find a prettier solution
-        child = map(lambda x: x.replace('__', '_:').replace('_CON', ''), container)
+
+        child = map(lambda x: x.replace('__', '_:').replace('_CON', ''), containers)
         cmds.parent(child, nodeParent)
+
+    @staticmethod
+    def clean_placeholder(placeholder):
+        node = placeholder['node']
         cmds.delete(node)
 
     @staticmethod
@@ -70,18 +80,9 @@ class TemplateLoader(AbstractTemplateLoader):
          return placeholder['loader']
 
     @staticmethod
-    def _get_all_nodes_with_attribute(attribute_name):
-        attribute_list = cmds.ls('*.{}'.format(attribute_name), long=True)
-        return [attr.rpartition('.')[0] for attr in attribute_list]
-
-    @staticmethod
     def _get_node_data(node):
-        all_attributes = cmds.listAttr(node, userDefined=True)
-
-        user_data = {}
-        for attr in all_attributes:
-            if not attr in ATTRIBUTES:
-                continue
+        user_data = dict()
+        for attr in ATTRIBUTES:
             user_data[attr] = cmds.getAttr('{}.{}'.format(node, attr), asString=True)
         user_data['node'] = node
 
