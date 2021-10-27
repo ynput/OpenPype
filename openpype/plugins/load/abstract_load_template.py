@@ -116,9 +116,41 @@ def get_loader_by_name():
 ##############################
 
 class AbstractTemplateLoader(object):
+    """
+    Property returning template path. Avoiding getter.
+    Getting template path from open pype settings
+    bassing on current avalon session
+    and solving the path variables if needed.
+
+    Properties:
+        template_path (str) :
+
+    Methods:
+        get_representations
+        get_valid_representations_id_for_placeholder
+        validate_representation
+        _get_node_data
+        import_template
+        switch
+        get_template_nodes
+    """
 
     @property
     def template_path(self):
+        """
+        Property returning template path. Avoiding getter.
+        Getting template path from open pype settings
+        bassing on current avalon session
+        and solving the path variables if needed.
+
+        Returns:
+            str: Solved template path
+
+        Raises:
+            ValueError: No profile found from settings for current avalon session
+            KeyError: Could not solve path because a key does not exists in avalon context
+            IOError: Solved path does not exists on current filesystem
+        """
         project = avalon.io.Session["AVALON_PROJECT"]
         anatomy = Anatomy(project)
         project_settings = get_project_settings(project)
@@ -135,10 +167,10 @@ class AbstractTemplateLoader(object):
             solved_path = os.path.normpath(anatomy.path_remapper(path))
 
         except KeyError as missing_key:
-            raise KeyError("Could not solve key '{}' in path '{}'".format(missing_key, path))
+            raise KeyError("Could not solve key '{}' in template path '{}'".format(missing_key, path))
 
         if not os.path.exists(solved_path):
-            raise IOError("Template '{}' does not exists.".format(path))
+            raise IOError("Template found in openPype settings for task '{}' with DCC '{}' does not exists. (Not found : {})".format(current_task, current_dcc, solved_path))
         return solved_path
 
     def __init__(self):
@@ -173,13 +205,14 @@ class AbstractTemplateLoader(object):
 
         for placeholder in placeholders:
             loader_name = self._get_placeholder_loader_name(placeholder)
-            representations = current_representations if placeholder else linked_representations
+            representations = current_representations if self.is_placeholder_context(placeholder) else linked_representations
             for representation in self.get_valid_representations_id_for_placeholder(representations, placeholder):
                 container = avalon.api.load(
                         loaders_by_name[loader_name],
                         representation
                     )
                 self.switch(container, placeholder)
+            self.clean_placeholder(placeholder)
 
     def get_representations(self, entities):
         """Parse avalon entities to get representations"""
@@ -188,15 +221,47 @@ class AbstractTemplateLoader(object):
                   if entity['asset_entity']['_id']]
 
     @staticmethod
-    def get_valid_representations_id(self, representation):
+    def get_valid_representations_id_for_placeholder(self, representation):
+        """
+        filter representations
+
+        Arguments :
+            representation [dict()]:
+
+        Returns:
+            representations [dict()] :
+        """
         raise NotImplementedError
 
     @staticmethod
     def validate_representation(representation, placeholder):
+        """
+        Property returning template path. Avoiding getter.
+        Getting template path from open pype settings
+        bassing on current avalon session
+        and solving the path variables if needed.
+
+        Returns:
+            str: Solved template path
+
+        Raises:
+            ValueError: No profile found from settings for current avalon session
+            KeyError: Could not solve path because a key does not exists in avalon context
+            IOError: Solved path does not exists on current filesystem
+        """
         raise NotImplementedError
 
     @staticmethod
     def _get_node_data(self, node):
+        """
+        extract data from node
+
+        Arguments:
+            NodeClass: Your class
+
+        Returns:
+            str: Solved template path
+        """
         raise NotImplementedError
 
     def import_template(self, template_path):
@@ -208,15 +273,27 @@ class AbstractTemplateLoader(object):
         """
         raise NotImplementedError
 
-    def switch(self, container, node):
+    def switch(self, containers, placeholder):
         """
-        Import template in dcc
+        Load containers for placeholder
 
         Args:
-            container (str): fullpath to current task and dcc's template file
-            node ():
+            containers ():
+            placeholder ():
+
+        Returns :
+            None
         """
         raise NotImplementedError
 
     def get_template_nodes(self):
+        """
+        Property returning template path. forbidding user to set.
+        Getting template path from open pype settings
+        bassing on current avalon session
+        and solving the path variables if needed.
+
+        Returns:
+            str: Solved template path
+        """
         raise NotImplementedError
