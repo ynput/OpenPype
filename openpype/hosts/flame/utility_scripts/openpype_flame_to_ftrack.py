@@ -3,6 +3,12 @@ from PySide2 import QtWidgets, QtCore
 from pprint import pformat
 from contextlib import contextmanager
 
+# Constants
+WORKFILE_START_FRAME = 1001
+HIERARCHY_TEMPLATE = "shots/{sequence}"
+CREATE_TASK_TYPE = "Compositing"
+
+
 @contextmanager
 def maintained_ftrack_session():
     import ftrack_api
@@ -71,6 +77,63 @@ def maintained_ftrack_session():
         # close the session
         session.close()
 
+
+class FlameLabel(QtWidgets.QLabel):
+    """
+    Custom Qt Flame Label Widget
+
+    For different label looks set label_type as: 'normal', 'background', or 'outline'
+
+    To use:
+
+    label = FlameLabel('Label Name', 'normal', window)
+    """
+
+    def __init__(self, label_name, label_type, parent_window, *args, **kwargs):
+        super(FlameLabel, self).__init__(*args, **kwargs)
+
+        self.setText(label_name)
+        self.setParent(parent_window)
+        self.setMinimumSize(130, 28)
+        self.setMaximumHeight(28)
+        self.setFocusPolicy(QtCore.Qt.NoFocus)
+
+        # Set label stylesheet based on label_type
+
+        if label_type == 'normal':
+            self.setStyleSheet('QLabel {color: #9a9a9a; border-bottom: 1px inset #282828; font: 14px "Discreet"}'
+                               'QLabel:disabled {color: #6a6a6a}')
+        elif label_type == 'background':
+            self.setAlignment(QtCore.Qt.AlignCenter)
+            self.setStyleSheet('color: #9a9a9a; background-color: #393939; font: 14px "Discreet"')
+        elif label_type == 'outline':
+            self.setAlignment(QtCore.Qt.AlignCenter)
+            self.setStyleSheet('color: #9a9a9a; background-color: #212121; border: 1px solid #404040; font: 14px "Discreet"')
+
+
+class FlameLineEdit(QtWidgets.QLineEdit):
+    """
+    Custom Qt Flame Line Edit Widget
+
+    Main window should include this: window.setFocusPolicy(QtCore.Qt.StrongFocus)
+
+    To use:
+
+    line_edit = FlameLineEdit('Some text here', window)
+    """
+
+    def __init__(self, text, parent_window, *args, **kwargs):
+        super(FlameLineEdit, self).__init__(*args, **kwargs)
+
+        self.setText(text)
+        self.setParent(parent_window)
+        self.setMinimumHeight(28)
+        self.setMinimumWidth(110)
+        self.setStyleSheet('QLineEdit {color: #9a9a9a; background-color: #373e47; selection-color: #262626; selection-background-color: #b8b1a7; font: 14px "Discreet"}'
+                           'QLineEdit:focus {background-color: #474e58}'
+                           'QLineEdit:disabled {color: #6a6a6a; background-color: #373737}')
+
+
 class FlameTreeWidget(QtWidgets.QTreeWidget):
     """
     Custom Qt Flame Tree Widget
@@ -125,33 +188,74 @@ class FlameButton(QtWidgets.QPushButton):
 
 
 def main_window(selection):
+    def timecode_to_frames(timecode, framerate):
+
+        def _seconds(value):
+            if isinstance(value, str):
+                _zip_ft = zip((3600, 60, 1, 1/framerate), value.split(':'))
+                return sum(f * float(t) for f, t in _zip_ft)
+            elif isinstance(value, (int, float)):
+                return value / framerate
+            return 0
+
+        def _frames(seconds):
+            return seconds * framerate
+
+        def timecode_to_frames(_timecode, start=None):
+            return _frames(_seconds(_timecode) - _seconds(start))
+
+        if '+' in timecode:
+            timecode = timecode.replace('+', ':')
+        elif '#' in timecode:
+            timecode = timecode.replace('#', ':')
+
+        frames = int(round(timecode_to_frames(timecode, start='00:00:00:00')))
+
+        return frames
 
     def timeline_info(selection):
         import flame
 
         # identificar as informacoes dos segmentos na timeline
         for sequence in selection:
+            frame_rate = float(str(sequence.frame_rate)[:-4])
             for ver in sequence.versions:
                 for tracks in ver.tracks:
                     for segment in tracks.segments:
+                        print(segment.type)
+                        # get clip frame duration
+                        record_duration = str(segment.record_duration)[1:-1]
+                        clip_duration = timecode_to_frames(
+                            record_duration, frame_rate)
+
+                        # populate shot source metadata
+                        shot_description = ""
+                        for attr in ["tape_name", "source_name", "head",
+                                     "tail", "file_path"]:
+                            if not hasattr(segment, attr):
+                                continue
+                            _value = getattr(segment, attr)
+                            _label = attr.replace("_", " ").capitalize()
+                            row = "{}: {}\n".format(_label, _value)
+                            shot_description += row
+
                         # Add timeline segment to tree
                         QtWidgets.QTreeWidgetItem(tree, [
-                            str(sequence.name)[1:-1],
-                            str(segment.name)[1:-1],
-                            'Compositing',
-                            'Ready to Start',
-                            'Tape: {} - Duration {}'.format(
-                                segment.tape_name,
-                                str(segment.record_duration)[4:-1]
-                            ),
-                            str(segment.comment)[1:-1]
+                            str(sequence.name)[1:-1],  # seq
+                            str(segment.shot_name)[1:-1],  # shot
+                            CREATE_TASK_TYPE,  # task type
+                            str(WORKFILE_START_FRAME),  # start frame
+                            str(clip_duration),  # clip duration
+                            "0:0",  # handles
+                            shot_description,  # shot description
+                            str(segment.comment)[1:-1]  # task description
                         ]).setFlags(
                             QtCore.Qt.ItemIsEditable
                             | QtCore.Qt.ItemIsEnabled
                             | QtCore.Qt.ItemIsSelectable
                         )
-        # Select top item in tree
 
+        # Select top item in tree
         tree.setCurrentItem(tree.topLevelItem(0))
 
     def select_all():
@@ -206,7 +310,9 @@ def main_window(selection):
                     item.text(2),
                     item.text(3),
                     item.text(4),
-                    item.text(5)
+                    item.text(5),
+                    item.text(6),
+                    item.text(7)
                 ]
                 print(tree_line)
                 clips_info.append(tree_line)
@@ -226,24 +332,60 @@ def main_window(selection):
     window.move((resolution.width() / 2) - (window.frameSize().width() / 2),
                 (resolution.height() / 2) - (window.frameSize().height() / 2))
 
-    ## TreeWidget
-    headers = ['Sequence Name', 'Shot Name', 'Task Type',
-               'Task Status', 'Shot Description', 'Task Description']
-    tree = FlameTreeWidget(headers, window)
+    # TreeWidget
+    columns = {
+        "Sequence name": {
+            "columnWidth": 100,
+            "order": 0
+        },
+        "Shot name": {
+            "columnWidth": 100,
+            "order": 1
+        },
+        "Task type": {
+            "columnWidth": 100,
+            "order": 2
+        },
+        "Start frame": {
+            "columnWidth": 100,
+            "order": 3
+        },
+        "Clip duration": {
+            "columnWidth": 100,
+            "order": 4
+        },
+        "Handles": {
+            "columnWidth": 100,
+            "order": 5
+        },
+        "Shot description": {
+            "columnWidth": 300,
+            "order": 6
+        },
+        "Task description": {
+            "columnWidth": 300,
+            "order": 7
+        },
+    }
+    tree = FlameTreeWidget(columns.keys(), window)
 
     # Allow multiple items in tree to be selected
     tree.setSelectionMode(QtWidgets.QAbstractItemView.MultiSelection)
 
     # Set tree column width
-    tree.setColumnWidth(0, 200)
-    tree.setColumnWidth(1, 100)
-    tree.setColumnWidth(2, 100)
-    tree.setColumnWidth(3, 120)
-    tree.setColumnWidth(4, 270)
-    tree.setColumnWidth(5, 270)
+    for _name, _val in columns.items():
+        tree.setColumnWidth(
+            _val["order"],
+            _val["columnWidth"]
+        )
 
     # Prevent weird characters when shrinking tree columns
     tree.setTextElideMode(QtCore.Qt.ElideNone)
+
+    # input fields
+    hierarchy_label = FlameLabel(
+        'Parents template', 'normal', window)
+    hierarchy_template = FlameLineEdit(HIERARCHY_TEMPLATE, window)
 
     ## Button
     select_all_btn = FlameButton('Select All', select_all, window)
@@ -252,6 +394,8 @@ def main_window(selection):
     ## Window Layout
     gridbox = QtWidgets.QGridLayout()
     gridbox.setMargin(20)
+    gridbox.addWidget(hierarchy_label, 0, 0)
+    gridbox.addWidget(hierarchy_template, 0, 1)
     gridbox.addWidget(tree, 1, 0, 5, 1)
     gridbox.addWidget(select_all_btn, 1, 1)
     gridbox.addWidget(copy_btn, 2, 1)
