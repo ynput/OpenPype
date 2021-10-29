@@ -32,7 +32,7 @@ class SyncProjectListWidget(QtWidgets.QWidget):
     project_changed = QtCore.Signal()
     message_generated = QtCore.Signal(str)
 
-    REFRESH_SEC = 10000
+    refresh_msec = 10000
 
     def __init__(self, sync_server, parent):
         super(SyncProjectListWidget, self).__init__(parent)
@@ -58,8 +58,8 @@ class SyncProjectListWidget(QtWidgets.QWidget):
         layout.addWidget(project_list, 1)
 
         project_list.customContextMenuRequested.connect(self._on_context_menu)
-        project_list.selectionModel().currentChanged.connect(
-            self._on_index_change
+        project_list.selectionModel().selectionChanged.connect(
+            self._on_selection_changed
         )
 
         self.project_model = project_model
@@ -71,28 +71,43 @@ class SyncProjectListWidget(QtWidgets.QWidget):
         self.remote_site = None
         self.icons = {}
 
-        self.timer = QtCore.QTimer()
-        self.timer.timeout.connect(self.tick)
-        self.timer.start(self.REFRESH_SEC)
+        self._selection_changed = False
+        self._model_reset = False
 
-    def tick(self):
-        """
-            Triggers refresh of model.
-        """
-        self.refresh()
-        self.timer.start(self.REFRESH_SEC)
+        timer = QtCore.QTimer()
+        timer.setInterval(self.refresh_msec)
+        timer.timeout.connect(self.refresh)
+        timer.start()
 
-    def _on_index_change(self, new_idx, _old_idx):
-        project_name = new_idx.data(QtCore.Qt.DisplayRole)
+        self.timer = timer
 
+    def _on_selection_changed(self, new_selection, _old_selection):
+        # block involuntary selection changes
+        if self._selection_changed or self._model_reset:
+            return
+
+        indexes = new_selection.indexes()
+        if not indexes:
+            return
+
+        project_name = indexes[0].data(QtCore.Qt.DisplayRole)
+
+        if self.current_project == project_name:
+            return
+        self._selection_changed = True
         self.current_project = project_name
         self.project_changed.emit()
+        self.refresh()
+        self._selection_changed = False
 
     def refresh(self):
+        selected_index = None
         model = self.project_model
+        self._model_reset = True
         model.clear()
+        self._model_reset = False
 
-        project_name = None
+        selected_item = None
         for project_name in self.sync_server.sync_project_settings.\
                 keys():
             if self.sync_server.is_paused() or \
@@ -104,20 +119,34 @@ class SyncProjectListWidget(QtWidgets.QWidget):
             if project_name in self.sync_server.projects_processed:
                 icon = self._get_icon("refresh")
 
-            model.appendRow(QtGui.QStandardItem(icon, project_name))
+            item = QtGui.QStandardItem(icon, project_name)
+            model.appendRow(item)
+
+            if self.current_project == project_name:
+                selected_item = item
+
+        if selected_item:
+            selected_index = model.indexFromItem(selected_item)
 
         if len(self.sync_server.sync_project_settings.keys()) == 0:
             model.appendRow(QtGui.QStandardItem(lib.DUMMY_PROJECT))
 
-        self.current_project = self.project_list.currentIndex().data(
-            QtCore.Qt.DisplayRole
-        )
         if not self.current_project:
             self.current_project = model.item(0).data(QtCore.Qt.DisplayRole)
 
-        if project_name:
-            self.local_site = self.sync_server.get_active_site(project_name)
-            self.remote_site = self.sync_server.get_remote_site(project_name)
+        self.project_model = model
+
+        if selected_index and selected_index.isValid() and \
+                not self._selection_changed:
+            mode = QtCore.QItemSelectionModel.Select | \
+                   QtCore.QItemSelectionModel.Rows
+            self.project_list.selectionModel().select(selected_index, mode)
+
+        if self.current_project:
+            self.local_site = self.sync_server.get_active_site(
+                self.current_project)
+            self.remote_site = self.sync_server.get_remote_site(
+                self.current_project)
 
     def _can_edit(self):
         """Returns true if some site is user local site, eg. could edit"""
