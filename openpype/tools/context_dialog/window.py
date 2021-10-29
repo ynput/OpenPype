@@ -126,6 +126,10 @@ class ContextDialog(QtWidgets.QDialog):
 
         self._strict = False
 
+        # Values set by `set_context` method
+        self._set_context_project = None
+        self._set_context_asset = None
+
         # Output of dialog
         self._context_to_store = {
             "project": None,
@@ -154,6 +158,18 @@ class ContextDialog(QtWidgets.QDialog):
         self.accept()
 
 
+    def set_context(self, project_name=None, asset_name=None):
+        if project_name is None:
+            asset_name = None
+
+        self._set_context_project = project_name
+        self._set_context_asset = asset_name
+
+        self._context_to_store["project"] = project_name
+        self._context_to_store["asset"] = asset_name
+
+        self._set_refresh_on_next_show()
+
     def get_context(self):
         return self._context_to_store
 
@@ -166,6 +182,7 @@ def main(
 ):
     app = QtWidgets.QApplication([])
     window = ContextDialog()
+    window.set_context(project_name, asset_name)
     window.show()
     app.exec_()
 
