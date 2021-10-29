@@ -242,7 +242,7 @@ def main_window(selection):
                         # Add timeline segment to tree
                         QtWidgets.QTreeWidgetItem(tree, [
                             str(sequence.name)[1:-1],  # seq
-                            str(segment.shot_name)[1:-1],  # shot
+                            str(segment.name)[1:-1],  # shot
                             CREATE_TASK_TYPE,  # task type
                             str(WORKFILE_START_FRAME),  # start frame
                             str(clip_duration),  # clip duration
@@ -281,6 +281,15 @@ def main_window(selection):
                 six.reraise(tp, value, tb)
             return entity
 
+        def get_ftrack_entity(session, type, name, project_entity):
+            query = '{} where name is "{}" and project_id is "{}"'.format(
+                type, name, project_entity["id"])
+            return session.query(query).one()
+
+        def generate_parents_from_template(template):
+            template_split = template.split("/")
+            return template_split
+
         with maintained_ftrack_session() as session:
             print("Ftrack session is: {}".format(session))
 
@@ -296,24 +305,45 @@ def main_window(selection):
             clips_info = []
 
             for item in tree.selectedItems():
-                f_entity = create_ftrack_entity(
+                parents = generate_parents_from_template(
+                    hierarchy_template.text())
+                print(parents)
+
+                f_entity = get_ftrack_entity(
                     session,
                     "Shot",
                     item.text(1),
                     f_project
                 )
+                # if entity doesnt exist then create one
+                if not f_entity:
+                    f_entity = create_ftrack_entity(
+                        session,
+                        "Shot",
+                        item.text(1),
+                        f_project
+                    )
                 print("Shot entity is: {}".format(f_entity))
 
-                tree_line = [
-                    item.text(0),
-                    item.text(1),
-                    item.text(2),
-                    item.text(3),
-                    item.text(4),
-                    item.text(5),
-                    item.text(6),
-                    item.text(7)
-                ]
+                # solve handle start and end
+                handles = item.text(5)
+                if ":" in handles:
+                    _s, _e = handles.split(":")
+                    handles = (int(_s), int(_e))
+                else:
+                    handles = (int(handles), int(handles))
+
+                # populate full shot info
+                tree_line = {
+                    "sequence": item.text(0),
+                    "shot": item.text(1),
+                    "task": item.text(2),
+                    "frameStart": int(item.text(3)),
+                    "duration": int(item.text(4)),
+                    "handles": handles,
+                    "shotDescription": item.text(6),
+                    "taskDescription": item.text(7)
+                }
                 print(tree_line)
                 clips_info.append(tree_line)
 
@@ -321,7 +351,7 @@ def main_window(selection):
 
     # creating ui
     window = QtWidgets.QWidget()
-    window.setMinimumSize(500, 350)
+    window.setMinimumSize(1500, 600)
     window.setWindowTitle('Sequence Shots to Ftrack')
     window.setWindowFlags(QtCore.Qt.WindowStaysOnTopHint)
     window.setAttribute(QtCore.Qt.WA_DeleteOnClose)
@@ -367,7 +397,14 @@ def main_window(selection):
             "order": 7
         },
     }
-    tree = FlameTreeWidget(columns.keys(), window)
+    ordered_column_labels = columns.keys()
+    for _name, _value in columns.items():
+        ordered_column_labels.pop(_value["order"])
+        ordered_column_labels.insert(_value["order"], _name)
+
+    print(ordered_column_labels)
+
+    tree = FlameTreeWidget(ordered_column_labels, window)
 
     # Allow multiple items in tree to be selected
     tree.setSelectionMode(QtWidgets.QAbstractItemView.MultiSelection)
@@ -389,16 +426,17 @@ def main_window(selection):
 
     ## Button
     select_all_btn = FlameButton('Select All', select_all, window)
-    copy_btn = FlameButton('Send to Ftrack', send_to_ftrack, window)
+    ftrack_send_btn = FlameButton('Send to Ftrack', send_to_ftrack, window)
 
     ## Window Layout
     gridbox = QtWidgets.QGridLayout()
     gridbox.setMargin(20)
+    gridbox.setHorizontalSpacing(20)
     gridbox.addWidget(hierarchy_label, 0, 0)
-    gridbox.addWidget(hierarchy_template, 0, 1)
-    gridbox.addWidget(tree, 1, 0, 5, 1)
-    gridbox.addWidget(select_all_btn, 1, 1)
-    gridbox.addWidget(copy_btn, 2, 1)
+    gridbox.addWidget(hierarchy_template, 0, 1, 1, 4)
+    gridbox.addWidget(tree, 1, 0, 5, 5)
+    gridbox.addWidget(select_all_btn, 6, 3)
+    gridbox.addWidget(ftrack_send_btn, 6, 4)
 
     window.setLayout(gridbox)
     window.show()
