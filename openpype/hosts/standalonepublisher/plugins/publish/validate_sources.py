@@ -22,7 +22,7 @@ class ValidateSources(pyblish.api.InstancePlugin):
     def process(self, instance):
         self.log.info("instance {}".format(instance.data))
 
-        for repr in instance.data["representations"]:
+        for repr in instance.data.get("representations") or []:
             files = []
             if isinstance(repr["files"], str):
                 files.append(repr["files"])
