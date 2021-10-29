@@ -9,6 +9,9 @@ from avalon.vendor import qtawesome
 from avalon import style, io
 from . import lib
 from .constants import (
+    PROJECT_IS_ACTIVE_ROLE,
+    PROJECT_NAME_ROLE,
+    DEFAULT_PROJECT_LABEL,
     TASK_ORDER_ROLE,
     TASK_TYPE_ROLE,
     TASK_NAME_ROLE
@@ -503,6 +506,154 @@ class RecursiveSortFilterProxyModel(QtCore.QSortFilterProxyModel):
         return super(
             RecursiveSortFilterProxyModel, self
         ).filterAcceptsRow(row, parent)
+
+
+class ProjectModel(QtGui.QStandardItemModel):
+    def __init__(
+        self, dbcon=None, only_active=True, add_default_project=False,
+        *args, **kwargs
+    ):
+        super(ProjectModel, self).__init__(*args, **kwargs)
+
+        self.dbcon = dbcon
+
+        self._only_active = only_active
+        self._add_default_project = add_default_project
+
+        self._default_item = None
+        self._items_by_name = {}
+        # Model was at least once refreshed
+        # - for `set_dbcon` method
+        self._refreshed = False
+
+    def set_default_project_available(self, available=True):
+        if available is None:
+            available = not self._add_default_project
+
+        if self._add_default_project == available:
+            return
+
+        self._add_default_project = available
+        if not available and self._default_item is not None:
+            root_item = self.invisibleRootItem()
+            root_item.removeRow(self._default_item.row())
+            self._default_item = None
+
+    def set_only_active(self, only_active=True):
+        if only_active is None:
+            only_active = not self._only_active
+
+        if self._only_active == only_active:
+            return
+
+        self._only_active = only_active
+
+        if self._refreshed:
+            self.refresh()
+
+    def set_dbcon(self, dbcon):
+        """Change mongo connection."""
+        self.dbcon = dbcon
+        # Trigger refresh if was already refreshed
+        if self._refreshed:
+            self.refresh()
+
+    def project_name_is_available(self, project_name):
+        """Check availability of project name in current items."""
+        return project_name in self._items_by_name
+
+    def refresh(self):
+        # Change '_refreshed' state
+        self._refreshed = True
+        new_items = []
+        # Add default item to model if should
+        if self._add_default_project and self._default_item is None:
+            item = QtGui.QStandardItem(DEFAULT_PROJECT_LABEL)
+            item.setData(None, PROJECT_NAME_ROLE)
+            item.setData(True, PROJECT_IS_ACTIVE_ROLE)
+            new_items.append(item)
+            self._default_item = item
+
+        project_names = set()
+        if self.dbcon is not None:
+            for project_doc in self.dbcon.projects(
+                projection={"name": 1, "data.active": 1},
+                only_active=self._only_active
+            ):
+                project_name = project_doc["name"]
+                project_names.add(project_name)
+                if project_name in self._items_by_name:
+                    item = self._items_by_name[project_name]
+                else:
+                    item = QtGui.QStandardItem(project_name)
+
+                    self._items_by_name[project_name] = item
+                    new_items.append(item)
+
+                is_active = project_doc.get("data", {}).get("active", True)
+                item.setData(project_name, PROJECT_NAME_ROLE)
+                item.setData(is_active, PROJECT_IS_ACTIVE_ROLE)
+
+                if not is_active:
+                    font = item.font()
+                    font.setItalic(True)
+                    item.setFont(font)
+
+        root_item = self.invisibleRootItem()
+        for project_name in tuple(self._items_by_name.keys()):
+            if project_name not in project_names:
+                item = self._items_by_name.pop(project_name)
+                root_item.removeRow(item.row())
+
+        if new_items:
+            root_item.appendRows(new_items)
+
+
+class ProjectSortFilterProxy(QtCore.QSortFilterProxyModel):
+    def __init__(self, *args, **kwargs):
+        super(ProjectSortFilterProxy, self).__init__(*args, **kwargs)
+        self._filter_enabled = True
+
+    def lessThan(self, left_index, right_index):
+        if left_index.data(PROJECT_NAME_ROLE) is None:
+            return True
+
+        if right_index.data(PROJECT_NAME_ROLE) is None:
+            return False
+
+        left_is_active = left_index.data(PROJECT_IS_ACTIVE_ROLE)
+        right_is_active = right_index.data(PROJECT_IS_ACTIVE_ROLE)
+        if right_is_active == left_is_active:
+            return super(ProjectSortFilterProxy, self).lessThan(
+                left_index, right_index
+            )
+
+        if left_is_active:
+            return True
+        return False
+
+    def filterAcceptsRow(self, source_row, source_parent):
+        index = self.sourceModel().index(source_row, 0, source_parent)
+        if self._filter_enabled:
+            result = self._custom_index_filter(index)
+            if result is not None:
+                return result
+
+        return super(ProjectSortFilterProxy, self).filterAcceptsRow(
+            source_row, source_parent
+        )
+
+    def _custom_index_filter(self, index):
+        is_active = bool(index.data(PROJECT_IS_ACTIVE_ROLE))
+
+        return is_active
+
+    def is_filter_enabled(self):
+        return self._filter_enabled
+
+    def set_filter_enabled(self, value):
+        self._filter_enabled = value
+        self.invalidateFilter()
 
 
 class TasksModel(QtGui.QStandardItemModel):
