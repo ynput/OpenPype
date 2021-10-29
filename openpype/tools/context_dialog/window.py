@@ -131,6 +131,7 @@ class ContextDialog(QtWidgets.QDialog):
         self._set_context_asset = None
 
         self._first_show = True
+        self._refresh_on_next_show = True
 
         # Output of dialog
         self._context_to_store = {
@@ -143,12 +144,27 @@ class ContextDialog(QtWidgets.QDialog):
         self._strict = strict
         self._validate_strict()
 
+    def _set_refresh_on_next_show(self):
+        if self._refresh_on_next_show:
+            return
+
+        self._refresh_on_next_show = True
+        if self.isVisible():
+            self.refresh()
+
     def showEvent(self, event):
         super(ContextDialog, self).showEvent(event)
         if self._first_show:
             self._first_show = False
             self.setStyleSheet(style.load_stylesheet())
             self.resize(600, 700)
+
+        if self._refresh_on_next_show:
+            self.refresh()
+
+    def refresh(self):
+        """Load assets from database"""
+        self._refresh_on_next_show = False
 
     def _on_asset_refresh_timer(self):
         self._assets_widget.refresh()
