@@ -13,7 +13,7 @@
             "children": [
                 {
                     "type": "label",
-                    "label": "The list of existing default placeholders for the construction of paths:<br> {root[`root_name`]}, {project[name]}, {project[short]}, {hierarchy}, {asset}, {task[name]}, {task[type]}, {task[code]}, {family}, {subset}, {output}, {ext}, {thumbnail_root}, {_id}, {thumbnail_type} "
+                    "label": "The list of existing placeholders is available here:<br> https://openpype.io/docs/admin_settings_project_anatomy/#available-template-keys "
                 },
                 {
                     "type": "number",
