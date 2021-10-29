@@ -661,5 +661,5 @@ class TasksProxyModel(QtCore.QSortFilterProxyModel):
             return True
 
         if x_name == tuple(sorted((x_name, y_name)))[0]:
-            return False
-        return True
+            return True
+        return False
