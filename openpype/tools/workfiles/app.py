@@ -14,13 +14,15 @@ from avalon.tools import lib as tools_lib
 from avalon.tools.widgets import AssetWidget
 from avalon.tools.delegates import PrettyTimeDelegate
 
-from .model import (
+from openpype.tools.utils.constants import (
     TASK_NAME_ROLE,
-    TASK_TYPE_ROLE,
-    FilesModel,
+    TASK_TYPE_ROLE
+)
+from openpype.tools.utils.model import (
     TasksModel,
     TasksProxyModel
 )
+from .model import FilesModel
 from .view import FilesView
 
 from openpype.lib import (
