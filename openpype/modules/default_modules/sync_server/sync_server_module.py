@@ -816,25 +816,7 @@ class SyncServerModule(OpenPypeModule, ITrayModule):
             return
 
         self.lock = threading.Lock()
-
-        try:
-            self.enabled = False
-            self.sync_server_thread = SyncServerThread(self)
-
-            from .tray.app import SyncServerWindow
-            self.widget = SyncServerWindow(self)
-            self.enabled = True
-        except ValueError:
-            log.info("No system setting for sync. Not syncing.", exc_info=True)
-        except KeyError:
-            log.info((
-                "There are not set presets for SyncServer OR "
-                "Credentials provided are invalid, "
-                "no syncing possible").
-                format(str(self.sync_project_settings)), exc_info=True)
-        except:
-            log.error("Uncaught exception durin start of SyncServer",
-                      exc_info=True)
+        self.sync_server_thread = SyncServerThread(self)
 
     def tray_start(self):
         """
@@ -1619,7 +1601,24 @@ class SyncServerModule(OpenPypeModule, ITrayModule):
         return int(ld)
 
     def show_widget(self):
-        """Show dialog to enter credentials"""
+        """Show dialog for Sync Queue"""
+        try:
+            self.enabled = False
+            from .tray.app import SyncServerWindow
+            self.widget = SyncServerWindow(self)
+            self.enabled = True
+        except ValueError:
+            log.info("No system setting for sync. Not syncing.", exc_info=True)
+        except KeyError:
+            log.info((
+                "There are not set presets for SyncServer OR "
+                "Credentials provided are invalid, "
+                "no syncing possible").
+                format(str(self.sync_project_settings)), exc_info=True)
+        except:
+            log.error("Uncaught exception durin start of SyncServer",
+                      exc_info=True)
+
         self.widget.show()
 
     def _get_success_dict(self, new_file_id):
