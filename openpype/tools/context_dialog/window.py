@@ -148,6 +148,15 @@ class ContextDialog(QtWidgets.QDialog):
             "task": None
         }
 
+    def closeEvent(self, event):
+        if self._strict and not self._ok_btn.isEnabled():
+            event.ignore()
+            return
+
+        if self._strict:
+            self._confirm_values()
+        super(ContextDialog, self).closeEvent(event)
+
     def set_strict(self, strict):
         self._strict = strict
         self._validate_strict()
@@ -163,8 +172,8 @@ class ContextDialog(QtWidgets.QDialog):
     def _refresh_assets(self):
         if self._assets_refreshing:
             self._rerefresh_assets = True
-            return
-        self._assets_widget.refresh()
+        else:
+            self._on_asset_refresh_timer()
 
     def showEvent(self, event):
         super(ContextDialog, self).showEvent(event)
@@ -245,6 +254,7 @@ class ContextDialog(QtWidgets.QDialog):
             return
 
         self._dbcon.Session["AVALON_PROJECT"] = project_name
+
         self._refresh_assets()
         self._validate_strict()
 
