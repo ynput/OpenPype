@@ -22,15 +22,15 @@ class ValidateSources(pyblish.api.InstancePlugin):
     def process(self, instance):
         self.log.info("instance {}".format(instance.data))
 
-        for repr in instance.data.get("representations") or []:
+        for repre in instance.data.get("representations") or []:
             files = []
-            if isinstance(repr["files"], str):
-                files.append(repr["files"])
+            if isinstance(repre["files"], str):
+                files.append(repre["files"])
             else:
-                files = list(repr["files"])
+                files = list(repre["files"])
 
             for file_name in files:
-                source_file = os.path.join(repr["stagingDir"],
+                source_file = os.path.join(repre["stagingDir"],
                                            file_name)
 
                 if not os.path.exists(source_file):
