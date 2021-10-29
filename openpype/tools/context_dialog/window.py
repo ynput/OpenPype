@@ -130,6 +130,8 @@ class ContextDialog(QtWidgets.QDialog):
         self._set_context_project = None
         self._set_context_asset = None
 
+        self._first_show = True
+
         # Output of dialog
         self._context_to_store = {
             "project": None,
@@ -140,6 +142,13 @@ class ContextDialog(QtWidgets.QDialog):
     def set_strict(self, strict):
         self._strict = strict
         self._validate_strict()
+
+    def showEvent(self, event):
+        super(ContextDialog, self).showEvent(event)
+        if self._first_show:
+            self._first_show = False
+            self.setStyleSheet(style.load_stylesheet())
+            self.resize(600, 700)
 
     def _on_asset_refresh_timer(self):
         self._assets_widget.refresh()
