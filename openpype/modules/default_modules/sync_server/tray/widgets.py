@@ -136,8 +136,9 @@ class SyncProjectListWidget(QtWidgets.QWidget):
 
         self.project_model = model
 
-        if selected_index and selected_index.isValid() and \
-                not self._selection_changed:
+        if selected_index and \
+           selected_index.isValid() and \
+           not self._selection_changed:
             mode = QtCore.QItemSelectionModel.Select | \
                    QtCore.QItemSelectionModel.Rows
             self.project_list.selectionModel().select(selected_index, mode)
