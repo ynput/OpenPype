@@ -5,7 +5,7 @@ from contextlib import contextmanager
 
 # Constants
 WORKFILE_START_FRAME = 1001
-HIERARCHY_TEMPLATE = "shots/{sequence}"
+HIERARCHY_TEMPLATE = "shots[Folder]/{sequence}[Sequence]"
 CREATE_TASK_TYPE = "Compositing"
 
 
@@ -268,8 +268,10 @@ def main_window(selection):
         import flame
         import six
         import sys
+        import re
 
-        def create_ftrack_entity(session, type, name, parent):
+        def create_ftrack_entity(session, type, name, parent=None):
+            parent = parent or f_project
             entity = session.create(type, {
                 'name': name,
                 'parent': parent
@@ -283,20 +285,71 @@ def main_window(selection):
                 six.reraise(tp, value, tb)
             return entity
 
-        def get_ftrack_entity(session, type, name, project_entity):
+        def get_ftrack_entity(session, type, name, parent):
             query = '{} where name is "{}" and project_id is "{}"'.format(
-                type, name, project_entity["id"])
-            return session.query(query).one()
+                type, name, f_project["id"])
+
+            try:
+                entity = session.query(query).one()
+            except Exception:
+                entity = None
+
+            # if entity doesnt exist then create one
+            if not entity:
+                entity = create_ftrack_entity(
+                    session,
+                    type,
+                    name,
+                    parent
+                )
+
+            return entity
 
         def generate_parents_from_template(template):
-            template_split = template.split("/")
-            return template_split
+            parents = []
+            t_split = template.split("/")
+            replace_patern = re.compile(r"(\[.*\])")
+            type_patern = re.compile(r"\[(.*)\]")
 
+            for t_s in t_split:
+                match_type = type_patern.findall(t_s)
+                if not match_type:
+                    raise Exception((
+                        "Missing correct type flag in : {}"
+                        "/n Example: name[Type]").format(
+                            t_s)
+                    )
+                new_name = re.sub(replace_patern, "", t_s)
+                f_type = match_type.pop()
+
+                parents.append((new_name, f_type))
+
+            return parents
+
+        def create_task(task_type, parent):
+            existing_task = [
+                child for child in parent['children']
+                if child.entity_type.lower() == 'task'
+                if child['name'].lower() in task_type.lower()
+            ]
+            print(existing_task)
+            if existing_task:
+                return existing_task
+
+            # create task on shot
+            return session.create('Task', {
+                "name": task_type.lower(),
+                "type": task_type,
+                "parent": parent
+            })
+
+        # start procedure
         with maintained_ftrack_session() as session:
             print("Ftrack session is: {}".format(session))
 
             # get project name from flame current project
             project_name = flame.project.current_project.name
+
             # get project from ftrack -
             # ftrack project name has to be the same as flame project!
             query = 'Project where full_name is "{}"'.format(project_name)
@@ -304,52 +357,103 @@ def main_window(selection):
             print("Ftrack project is: {}".format(f_project))
 
             # Get all selected items from treewidget
-            clips_info = []
-
             for item in tree.selectedItems():
-                parents = generate_parents_from_template(
-                    hierarchy_template.text())
-                print(parents)
-
-                f_entity = get_ftrack_entity(
-                    session,
-                    "Shot",
-                    item.text(1),
-                    f_project
-                )
-                # if entity doesnt exist then create one
-                if not f_entity:
-                    f_entity = create_ftrack_entity(
-                        session,
-                        "Shot",
-                        item.text(1),
-                        f_project
-                    )
-                print("Shot entity is: {}".format(f_entity))
-
                 # solve handle start and end
                 handles = item.text(5)
                 if ":" in handles:
                     _s, _e = handles.split(":")
-                    handles = (int(_s), int(_e))
+                    handle_start = int(_s)
+                    handle_end = int(_e)
                 else:
-                    handles = (int(handles), int(handles))
+                    handle_start = int(handles)
+                    handle_end = int(handles)
+
+                # frame ranges
+                frame_start = int(item.text(3))
+                frame_duration = int(item.text(4))
+                frame_end = frame_start + frame_duration
+
+                # description
+                shot_description = item.text(6)
+                task_description = item.text(7)
+
+                # other
+                task_type = item.text(2)
+                shot_name = item.text(1)
+                sequence_name = item.text(0)
 
                 # populate full shot info
-                tree_line = {
-                    "sequence": item.text(0),
-                    "shot": item.text(1),
-                    "task": item.text(2),
-                    "frameStart": int(item.text(3)),
-                    "duration": int(item.text(4)),
-                    "handles": handles,
-                    "shotDescription": item.text(6),
-                    "taskDescription": item.text(7)
+                shot_attributes = {
+                    "sequence": sequence_name,
+                    "shot": shot_name,
+                    "task": task_type
                 }
-                print(tree_line)
-                clips_info.append(tree_line)
 
-            print("selected clips: {}".format(pformat(clips_info)))
+                # format hierarchy template
+                hierarchy_text = hierarchy_template.text()
+                hierarchy_text = hierarchy_text.format(**shot_attributes)
+                print(hierarchy_text)
+
+                # solve parents
+                parents = generate_parents_from_template(hierarchy_text)
+                print(parents)
+
+                # obtain shot parents entities
+                _parent = None
+                for _name, _type in parents:
+                    p_entity = get_ftrack_entity(
+                        session,
+                        _type,
+                        _name,
+                        _parent
+                    )
+                    print(p_entity)
+                    _parent = p_entity
+
+                # obtain shot ftrack entity
+                f_s_entity = get_ftrack_entity(
+                    session,
+                    "Shot",
+                    item.text(1),
+                    _parent
+                )
+                print("Shot entity is: {}".format(f_s_entity))
+
+                # create custom attributtes
+                custom_attrs = {
+                    "frameStart": frame_start,
+                    "frameEnd": frame_end,
+                    "handleStart": handle_start,
+                    "handleEnd": handle_end
+                }
+
+                # update custom attributes on shot entity
+                for key in custom_attrs:
+                    f_s_entity['custom_attributes'][key] = custom_attrs[key]
+
+                task_entity = create_task(task_type, f_s_entity)
+                print(task_entity)
+
+                # Create notes.
+                user = session.query(
+                    "User where username is \"{}\"".format(session.api_user)
+                ).first()
+
+                print(user)
+                print(shot_description)
+
+                f_s_entity.create_note(shot_description, author=user)
+
+                if task_description:
+                    task_entity.create_note(task_description, user)
+
+                try:
+                    session.commit()
+                except Exception:
+                    tp, value, tb = sys.exc_info()
+                    session.rollback()
+                    session._configure_locations()
+                    six.reraise(tp, value, tb)
 
     # creating ui
     window = QtWidgets.QWidget()
