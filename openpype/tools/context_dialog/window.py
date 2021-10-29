@@ -5,6 +5,7 @@ from Qt import QtWidgets, QtCore, QtGui
 from avalon.api import AvalonMongoDB
 
 from openpype import style
+from openpype.tools.utils.lib import center_window
 from openpype.tools.utils.widgets import AssetWidget
 from openpype.tools.utils.constants import (
     TASK_NAME_ROLE,
@@ -179,8 +180,10 @@ class ContextDialog(QtWidgets.QDialog):
         super(ContextDialog, self).showEvent(event)
         if self._first_show:
             self._first_show = False
+            # Set stylesheet and resize
             self.setStyleSheet(style.load_stylesheet())
             self.resize(600, 700)
+            center_window(self)
 
         if self._refresh_on_next_show:
             self.refresh()
