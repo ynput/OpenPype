@@ -1,4 +1,5 @@
 from Qt import QtWidgets, QtCore, QtGui
+from openpype import style
 
 
 class ContextDialog(QtWidgets.QDialog):
@@ -12,6 +13,18 @@ class ContextDialog(QtWidgets.QDialog):
     It is possible to predefine project and asset. In that case their widgets
     will have passed preselected values and will be disabled.
     """
+    def __init__(self, parent=None):
+        super(ContextDialog, self).__init__(parent)
+
+        self.setWindowTitle("Select Context")
+        self.setWindowIcon(QtGui.QIcon(style.app_icon_path()))
+
+        # Enable minimize and maximize for app
+        window_flags = QtCore.Qt.Window
+        if not parent:
+            window_flags |= QtCore.Qt.WindowStaysOnTopHint
+        self.setWindowFlags(window_flags)
+        self.setFocusPolicy(QtCore.Qt.StrongFocus)
 
 
 def main(
