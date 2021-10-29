@@ -345,6 +345,7 @@ def main(
 ):
     app = QtWidgets.QApplication([])
     window = ContextDialog()
+    window.set_strict(strict)
     window.set_context(project_name, asset_name)
     window.show()
     app.exec_()
