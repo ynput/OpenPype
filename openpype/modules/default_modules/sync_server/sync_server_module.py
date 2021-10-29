@@ -146,9 +146,9 @@ class SyncServerModule(OpenPypeModule, ITrayModule):
         if not site_name:
             site_name = self.DEFAULT_SITE
 
-        self.reset_provider_for_file(collection,
-                                     representation_id,
-                                     site_name=site_name, force=force)
+        self.reset_site_on_representation(collection,
+                                          representation_id,
+                                          site_name=site_name, force=force)
 
     # public facing API
     def remove_site(self, collection, representation_id, site_name,
@@ -170,10 +170,10 @@ class SyncServerModule(OpenPypeModule, ITrayModule):
         if not self.get_sync_project_setting(collection):
             raise ValueError("Project not configured")
 
-        self.reset_provider_for_file(collection,
-                                     representation_id,
-                                     site_name=site_name,
-                                     remove=True)
+        self.reset_site_on_representation(collection,
+                                          representation_id,
+                                          site_name=site_name,
+                                          remove=True)
         if remove_local_files:
             self._remove_local_file(collection, representation_id, site_name)
 
@@ -209,8 +209,8 @@ class SyncServerModule(OpenPypeModule, ITrayModule):
         """
         log.info("Pausing SyncServer for {}".format(representation_id))
         self._paused_representations.add(representation_id)
-        self.reset_provider_for_file(collection, representation_id,
-                                     site_name=site_name, pause=True)
+        self.reset_site_on_representation(collection, representation_id,
+                                          site_name=site_name, pause=True)
 
     def unpause_representation(self, collection, representation_id, site_name):
         """
@@ -229,8 +229,8 @@ class SyncServerModule(OpenPypeModule, ITrayModule):
         except KeyError:
             pass
         # self.paused_representations is not persistent
-        self.reset_provider_for_file(collection, representation_id,
-                                     site_name=site_name, pause=False)
+        self.reset_site_on_representation(collection, representation_id,
+                                          site_name=site_name, pause=False)
 
     def is_representation_paused(self, representation_id,
                                  check_parents=False, project_name=None):
@@ -1240,9 +1240,9 @@ class SyncServerModule(OpenPypeModule, ITrayModule):
 
         return -1, None
 
-    def reset_provider_for_file(self, collection, representation_id,
-                                side=None, file_id=None, site_name=None,
-                                remove=False, pause=None, force=False):
+    def reset_site_on_representation(self, collection, representation_id,
+                                     side=None, file_id=None, site_name=None,
+                                     remove=False, pause=None, force=False):
         """
             Reset information about synchronization for particular 'file_id'
             and provider.
