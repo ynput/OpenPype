@@ -11,6 +11,8 @@ import subprocess
 import os
 import glob
 import platform
+import tempfile
+import json
 
 
 class OpenPypeContextSelector:
@@ -91,8 +93,33 @@ class OpenPypeContextSelector:
         """
         op_exec = "openpype_gui"
         if platform.system().lower() == "windows":
-            op_exec = "openpype_gui.exe"
-        subprocess.check_output([self.openpype_root])
+            op_exec = "{}.exe".format(op_exec)
+
+        with tempfile.TemporaryFile() as tf:
+            args = list(self.openpype_root)
+            args.append("context_selector")
+            args.append(tf)
+            subprocess.check_output(args)
+            self.context = json.load(tf)
+
+        if not self.context or \
+                not self.context.project or \
+                not self.context.asset or \
+                not self.context.task:
+            self._show_rr_warning("Context selection failed.")
+            return
+
+    @staticmethod
+    def _show_rr_warning(text):
+        warning_dialog = rrGlobal.getGenericUI()
+        warning_dialog.addItem(rrGlobal.genUIType.label, "infoLabel", "")
+        warning_dialog.setText("infoLabel", text)
+        warning_dialog.addItem(
+            rrGlobal.genUIType.layoutH, "btnLayout", "")
+        warning_dialog.addItem(
+            rrGlobal.genUIType.closeButton, "Ok", "btnLayout")
+        warning_dialog.execute()
+        del warning_dialog
 
 
 selector = OpenPypeContextSelector()
