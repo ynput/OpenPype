@@ -1602,11 +1602,11 @@ class SyncServerModule(OpenPypeModule, ITrayModule):
 
     def show_widget(self):
         """Show dialog for Sync Queue"""
+        no_errors = False
         try:
-            self.enabled = False
             from .tray.app import SyncServerWindow
             self.widget = SyncServerWindow(self)
-            self.enabled = True
+            no_errors = True
         except ValueError:
             log.info("No system setting for sync. Not syncing.", exc_info=True)
         except KeyError:
@@ -1618,7 +1618,7 @@ class SyncServerModule(OpenPypeModule, ITrayModule):
         except:
             log.error("Uncaught exception durin start of SyncServer",
                       exc_info=True)
-
+        self.enabled = no_errors
         self.widget.show()
 
     def _get_success_dict(self, new_file_id):
