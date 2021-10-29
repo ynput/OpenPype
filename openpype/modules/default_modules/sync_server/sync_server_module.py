@@ -727,9 +727,9 @@ class SyncServerModule(OpenPypeModule, ITrayModule):
             self.enabled = False
         except KeyError:
             log.info((
-                         "There are not set presets for SyncServer OR "
-                         "Credentials provided are invalid, "
-                         "no syncing possible").
+                     "There are not set presets for SyncServer OR "
+                     "Credentials provided are invalid, "
+                     "no syncing possible").
                      format(str(self.sync_project_settings)), exc_info=True)
             self.enabled = False
 
