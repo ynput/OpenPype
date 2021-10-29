@@ -2,6 +2,8 @@ import os
 import json
 
 from Qt import QtWidgets, QtCore, QtGui
+from avalon.api import AvalonMongoDB
+
 from openpype import style
 
 
@@ -28,6 +30,8 @@ class ContextDialog(QtWidgets.QDialog):
             window_flags |= QtCore.Qt.WindowStaysOnTopHint
         self.setWindowFlags(window_flags)
         self.setFocusPolicy(QtCore.Qt.StrongFocus)
+
+        dbcon = AvalonMongoDB()
 
         # Output of dialog
         self._context_to_store = {
