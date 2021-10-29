@@ -1,13 +1,16 @@
 import logging
 from collections import defaultdict
 
-from avalon.vendor.Qt import QtWidgets, QtCore
+from Qt import QtWidgets, QtCore
 
 # TODO: expose this better in avalon core
 from avalon.tools import lib
 from avalon.tools.models import TreeModel
 
-from . import models
+from .models import (
+    AssetModel,
+    LookModel
+)
 from . import commands
 from . import views
 
@@ -30,7 +33,7 @@ class AssetOutliner(QtWidgets.QWidget):
         title.setAlignment(QtCore.Qt.AlignCenter)
         title.setStyleSheet("font-weight: bold; font-size: 12px")
 
-        model = models.AssetModel()
+        model = AssetModel()
         view = views.View()
         view.setModel(model)
         view.customContextMenuRequested.connect(self.right_mouse_menu)
@@ -201,7 +204,7 @@ class LookOutliner(QtWidgets.QWidget):
         title.setStyleSheet("font-weight: bold; font-size: 12px")
         title.setAlignment(QtCore.Qt.AlignCenter)
 
-        model = models.LookModel()
+        model = LookModel()
 
         # Proxy for dynamic sorting
         proxy = QtCore.QSortFilterProxyModel()
@@ -257,5 +260,3 @@ class LookOutliner(QtWidgets.QWidget):
         menu.addAction(apply_action)
 
         menu.exec_(globalpos)
-
-
