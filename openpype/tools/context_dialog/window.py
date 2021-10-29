@@ -137,6 +137,10 @@ class ContextDialog(QtWidgets.QDialog):
             "task": None
         }
 
+    def set_strict(self, strict):
+        self._strict = strict
+        self._validate_strict()
+
     def _on_asset_refresh_timer(self):
         self._assets_widget.refresh()
 
@@ -157,6 +161,15 @@ class ContextDialog(QtWidgets.QDialog):
         self._confirm_values()
         self.accept()
 
+
+    def _validate_strict(self):
+        if not self._strict:
+            if not self._ok_btn.isEnabled():
+                self._ok_btn.setEnabled(True)
+            return
+
+        enabled = True
+        self._ok_btn.setEnabled(enabled)
 
     def set_context(self, project_name=None, asset_name=None):
         if project_name is None:
