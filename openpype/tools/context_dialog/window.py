@@ -1,3 +1,6 @@
+import os
+import json
+
 from Qt import QtWidgets, QtCore, QtGui
 from openpype import style
 
@@ -26,6 +29,16 @@ class ContextDialog(QtWidgets.QDialog):
         self.setWindowFlags(window_flags)
         self.setFocusPolicy(QtCore.Qt.StrongFocus)
 
+        # Output of dialog
+        self._context_to_store = {
+            "project": None,
+            "asset": None,
+            "task": None
+        }
+
+    def get_context(self):
+        return self._context_to_store
+
 
 def main(
     path_to_store,
@@ -37,3 +50,12 @@ def main(
     window = ContextDialog()
     window.show()
     app.exec_()
+
+    data = window.get_context()
+
+    file_dir = os.path.dirname(path_to_store)
+    if not os.path.exists(file_dir):
+        os.makedirs(file_dir)
+
+    with open(path_to_store, "w") as stream:
+        json.dump(data, stream)
