@@ -771,6 +771,7 @@ class SyncServerModule(OpenPypeModule, ITrayModule):
             log.info("Stopping sync server server")
             self.sync_server_thread.is_running = False
             self.sync_server_thread.stop()
+            log.info("Sync server stopped")
         except Exception:
             log.warning(
                 "Error has happened during Killing sync server",

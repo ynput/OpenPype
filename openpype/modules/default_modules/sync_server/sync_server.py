@@ -246,6 +246,7 @@ class SyncServerThread(threading.Thread):
 
             asyncio.ensure_future(self.check_shutdown(), loop=self.loop)
             asyncio.ensure_future(self.sync_loop(), loop=self.loop)
+            log.info("Sync Server Started")
             self.loop.run_forever()
         except Exception:
             log.warning(

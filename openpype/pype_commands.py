@@ -3,7 +3,6 @@
 import os
 import sys
 import json
-from datetime import datetime
 import time
 
 from openpype.lib import PypeLogger
@@ -332,7 +331,16 @@ class PypeCommands:
 
     def syncserver(self, active_site):
         """Start running sync_server in background."""
+        import signal
         os.environ["SITE_SYNC_LOCAL_ID"] = active_site
+
+        def signal_handler(sig, frame):
+            print("You pressed Ctrl+C. Process ended.")
+            sync_server_module.server_exit()
+            sys.exit(0)
+
+        signal.signal(signal.SIGINT, signal_handler)
+        signal.signal(signal.SIGTERM, signal_handler)
 
         from openpype.modules import ModulesManager
 
