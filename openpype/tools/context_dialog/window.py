@@ -104,6 +104,7 @@ class ContextDialog(QtWidgets.QDialog):
         )
         assets_widget.selection_changed.connect(self._on_asset_change)
         assets_widget.refresh_triggered.connect(self._on_asset_refresh_trigger)
+        assets_widget.refreshed.connect(self._on_asset_widget_refresh_finished)
         task_view.selectionModel().selectionChanged.connect(
             self._on_task_change
         )
@@ -130,6 +131,13 @@ class ContextDialog(QtWidgets.QDialog):
         self._set_context_project = None
         self._set_context_asset = None
 
+        # Requirements for asset widget refresh
+        self._assets_timer = assets_timer
+        self._rerefresh_assets = True
+        self._assets_refreshing = False
+
+        # Helper attributes for handling of refresh
+        self._ignore_value_changes = False
         self._first_show = True
         self._refresh_on_next_show = True
 
@@ -152,6 +160,12 @@ class ContextDialog(QtWidgets.QDialog):
         if self.isVisible():
             self.refresh()
 
+    def _refresh_assets(self):
+        if self._assets_refreshing:
+            self._rerefresh_assets = True
+            return
+        self._assets_widget.refresh()
+
     def showEvent(self, event):
         super(ContextDialog, self).showEvent(event)
         if self._first_show:
@@ -166,17 +180,96 @@ class ContextDialog(QtWidgets.QDialog):
         """Load assets from database"""
         self._refresh_on_next_show = False
 
+        self._ignore_value_changes = True
+
+        select_project_name = self._dbcon.Session.get("AVALON_PROJECT")
+        self._project_model.refresh()
+        self._project_proxy.sort(0)
+
+        if self._set_context_project:
+            select_project_name = self._set_context_project
+            self._project_combobox.setEnabled(False)
+        else:
+            self._project_combobox.setEnabled(True)
+            if (
+                select_project_name is None
+                and self._project_proxy.rowCount() > 0
+            ):
+                index = self._project_proxy.index(0, 0)
+                select_project_name = index.data(PROJECT_NAME_ROLE)
+
+        self._ignore_value_changes = False
+
+        idx = self._project_combobox.findText(select_project_name)
+        if idx >= 0:
+            self._project_combobox.setCurrentIndex(idx)
+        self._dbcon.Session["AVALON_PROJECT"] = (
+            self._project_combobox.currentText()
+        )
+
+        self._refresh_assets()
+
     def _on_asset_refresh_timer(self):
         self._assets_widget.refresh()
 
+    def _on_asset_widget_refresh_finished(self):
+        self._assets_refreshing = False
+        if self._rerefresh_assets:
+            self._rerefresh_assets = False
+            self._assets_timer.start()
+            return
+
+        self._ignore_value_changes = True
+        if self._set_context_asset:
+            self._dbcon.Session["AVALON_ASSET"] = self._set_context_asset
+            self._assets_widget.setEnabled(False)
+            self._assets_widget.select_assets(self._set_context_asset)
+            self._set_asset_to_task_model()
+        else:
+            self._assets_widget.setEnabled(True)
+            self._assets_widget.set_current_asset_btn_visibility(False)
+
+        self._task_model.refresh()
+        self._task_proxy.sort(0, QtCore.Qt.AscendingOrder)
+
+        self._ignore_value_changes = False
+
+        self._validate_strict()
+
+    def _on_project_combo_change(self):
+        if self._ignore_value_changes:
+            return
+        project_name = self._project_combobox.currentText()
+
+        if self._dbcon.Session.get("AVALON_PROJECT") == project_name:
+            return
+
+        self._dbcon.Session["AVALON_PROJECT"] = project_name
+        self._refresh_assets()
+        self._validate_strict()
+
     def _on_asset_refresh_trigger(self):
+        self._assets_refreshing = True
         self._on_asset_change()
 
     def _on_asset_change(self):
+        """Selected assets have changed"""
+        if self._ignore_value_changes:
+            return
         self._set_asset_to_task_model()
 
     def _on_task_change(self):
-        pass
+        self._validate_strict()
+
+    def _set_asset_to_task_model(self):
+        # filter None docs they are silo
+        asset_docs = self._assets_widget.get_selected_assets()
+        asset_ids = [asset_doc["_id"] for asset_doc in asset_docs]
+        asset_id = None
+        if asset_ids:
+            asset_id = asset_ids[0]
+        self._task_model.set_asset_id(asset_id)
+
     def _confirm_values(self):
         self._context_to_store["project"] = self.get_selected_project()
         self._context_to_store["asset"] = self.get_selected_asset()
@@ -186,6 +279,22 @@ class ContextDialog(QtWidgets.QDialog):
         self._confirm_values()
         self.accept()
 
+    def get_selected_project(self):
+        return self._project_combobox.currentText()
+
+    def get_selected_asset(self):
+        asset_name = None
+        for asset_doc in self._assets_widget.get_selected_assets():
+            asset_name = asset_doc["name"]
+            break
+        return asset_name
+
+    def get_selected_task(self):
+        task_name = None
+        index = self._task_view.selectionModel().currentIndex()
+        if index.isValid():
+            task_name = index.data(TASK_NAME_ROLE)
+        return task_name
 
     def _validate_strict(self):
         if not self._strict:
@@ -194,6 +303,12 @@ class ContextDialog(QtWidgets.QDialog):
             return
 
         enabled = True
+        if not self._set_context_project and not self.get_selected_project():
+            enabled = False
+        elif not self._set_context_asset and not self.get_selected_asset():
+            enabled = False
+        elif not self.get_selected_task():
+            enabled = False
         self._ok_btn.setEnabled(enabled)
 
     def set_context(self, project_name=None, asset_name=None):
