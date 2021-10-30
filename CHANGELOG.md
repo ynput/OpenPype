@@ -1,8 +1,12 @@
 # Changelog
 
-## [3.6.0-nightly.1](https://github.com/pypeclub/OpenPype/tree/HEAD)
+## [3.6.0-nightly.2](https://github.com/pypeclub/OpenPype/tree/HEAD)
 
 [Full Changelog](https://github.com/pypeclub/OpenPype/compare/3.5.0...HEAD)
+
+**🆕 New features**
+
+- Flame: a host basic integration [\#2165](https://github.com/pypeclub/OpenPype/pull/2165)
 
 **🚀 Enhancements**
 
@@ -14,6 +18,7 @@
 
 **🐛 Bug fixes**
 
+- StandalonePublisher: Source validator don't expect representations [\#2190](https://github.com/pypeclub/OpenPype/pull/2190)
 - MacOS: Launching of applications may cause Permissions error [\#2175](https://github.com/pypeclub/OpenPype/pull/2175)
 - Blender: Fix 'Deselect All' with object not in 'Object Mode' [\#2163](https://github.com/pypeclub/OpenPype/pull/2163)
 - Tools: Stylesheets are applied after tool show [\#2161](https://github.com/pypeclub/OpenPype/pull/2161)
@@ -21,7 +26,6 @@
 - Maya: Fix hotbox broken by scriptsmenu [\#2151](https://github.com/pypeclub/OpenPype/pull/2151)
 - Ftrack: Ignore save warnings exception in Prepare project action [\#2150](https://github.com/pypeclub/OpenPype/pull/2150)
 - Loader thumbnails with smooth edges [\#2147](https://github.com/pypeclub/OpenPype/pull/2147)
-- Added validator for source files for Standalone Publisher [\#2138](https://github.com/pypeclub/OpenPype/pull/2138)
 
 **Merged pull requests:**
 
@@ -65,6 +69,7 @@
 
 **🐛 Bug fixes**
 
+- Added validator for source files for Standalone Publisher [\#2138](https://github.com/pypeclub/OpenPype/pull/2138)
 - Maya: fix model publishing [\#2130](https://github.com/pypeclub/OpenPype/pull/2130)
 - Fix - oiiotool wasn't recognized even if present [\#2129](https://github.com/pypeclub/OpenPype/pull/2129)
 - General: Disk mapping group [\#2120](https://github.com/pypeclub/OpenPype/pull/2120)
@@ -103,9 +108,6 @@
 - Loader: Families filtering [\#2043](https://github.com/pypeclub/OpenPype/pull/2043)
 - Settings UI: Project view enhancements [\#2042](https://github.com/pypeclub/OpenPype/pull/2042)
 - Settings for Nuke IncrementScriptVersion [\#2039](https://github.com/pypeclub/OpenPype/pull/2039)
-- Loader & Library loader: Use tools from OpenPype [\#2038](https://github.com/pypeclub/OpenPype/pull/2038)
-- Adding predefined project folders creation in PM [\#2030](https://github.com/pypeclub/OpenPype/pull/2030)
-- WebserverModule: Removed interface of webserver module [\#2028](https://github.com/pypeclub/OpenPype/pull/2028)
 
 **🐛 Bug fixes**
 
@@ -126,15 +128,13 @@
 **🚀 Enhancements**
 
 - Added possibility to configure of synchronization of workfile version… [\#2041](https://github.com/pypeclub/OpenPype/pull/2041)
+- Loader & Library loader: Use tools from OpenPype [\#2038](https://github.com/pypeclub/OpenPype/pull/2038)
 - General: Task types in profiles [\#2036](https://github.com/pypeclub/OpenPype/pull/2036)
 
 **🐛 Bug fixes**
 
 - Workfiles tool: Task selection [\#2040](https://github.com/pypeclub/OpenPype/pull/2040)
 - Ftrack: Delete old versions missing settings key [\#2037](https://github.com/pypeclub/OpenPype/pull/2037)
-- Nuke: typo on a button [\#2034](https://github.com/pypeclub/OpenPype/pull/2034)
-- Hiero: Fix "none" named tags [\#2033](https://github.com/pypeclub/OpenPype/pull/2033)
-- FFmpeg: Subprocess arguments as list [\#2032](https://github.com/pypeclub/OpenPype/pull/2032)
 
 ## [3.3.1](https://github.com/pypeclub/OpenPype/tree/3.3.1) (2021-08-20)
 
