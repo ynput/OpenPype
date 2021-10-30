@@ -81,7 +81,12 @@
                                     {
                                         "key": "family",
                                         "label": "Resulting family",
-                                        "type": "text"
+                                        "type": "enum",
+                                        "enum_items": [
+                                            {
+                                                "image": "image"
+                                            }
+                                        ]
                                     },
                                     {
                                         "type": "text",
