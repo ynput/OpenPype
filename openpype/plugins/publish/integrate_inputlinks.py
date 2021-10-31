@@ -20,7 +20,6 @@ class IntegrateInputLinks(pyblish.api.ContextPlugin):
 
             version_data = version_doc.get("data", {})
             families = version_data.get("families", [])
-            self.log.debug(families)
 
             if "workfile" in families:
                 workfile = instance
