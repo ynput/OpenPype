@@ -727,3 +727,7 @@ class RootsDictEntity(DictImmutableKeysEntity):
         self._project_value = value
         self._project_override_metadata = {}
         self.had_project_override = value is not NOT_SET
+
+
+class SyncServerSites(DictImmutableKeysEntity):
+    schema_types = ["sync-server-sites"]
