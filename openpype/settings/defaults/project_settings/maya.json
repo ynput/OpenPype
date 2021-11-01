@@ -156,6 +156,12 @@
         "CollectMayaRender": {
             "sync_workfile_version": false
         },
+        "ValidateInstancerContent": {
+            "enabled": true,
+            "optional": true,
+            "active": true,
+            "geometryHidden": true
+        },
         "ValidateInstanceInContext": {
             "enabled": true,
             "optional": true,
