@@ -3,10 +3,16 @@ from PySide2 import QtWidgets, QtCore
 from pprint import pformat
 from contextlib import contextmanager
 
+
 # Constants
 WORKFILE_START_FRAME = 1001
 HIERARCHY_TEMPLATE = "shots[Folder]/{sequence}[Sequence]"
 CREATE_TASK_TYPE = "Compositing"
+
+# Fill following constants or set them via environment variable
+FTRACK_API_KEY = None
+FTRACK_API_USER = None
+FTRACK_SERVER = None
 
 
 @contextmanager
@@ -56,9 +62,9 @@ def maintained_ftrack_session():
         return True
 
     # fill your own credentials
-    url = os.getenv("FTRACK_SERVER")
-    user = os.getenv("FTRACK_API_USER")
-    api = os.getenv("FTRACK_API_KEY")
+    url = FTRACK_SERVER or os.getenv("FTRACK_SERVER") or ""
+    user = FTRACK_API_USER or os.getenv("FTRACK_API_USER") or ""
+    api = FTRACK_API_KEY or os.getenv("FTRACK_API_KEY") or ""
 
     try:
         assert validate_credentials(url, user, api), (
@@ -326,22 +332,35 @@ def main_window(selection):
 
             return parents
 
+        def get_all_task_types():
+            tasks = {}
+            proj_template = f_project['project_schema']
+            temp_task_types = proj_template['_task_type_schema']['types']
+
+            for type in temp_task_types:
+                if type['name'] not in tasks:
+                    tasks[type['name']] = type
+
+            return tasks
+
         def create_task(task_type, parent):
             existing_task = [
                 child for child in parent['children']
                 if child.entity_type.lower() == 'task'
                 if child['name'].lower() in task_type.lower()
             ]
-            print(existing_task)
+
             if existing_task:
                 return existing_task
 
-            # create task on shot
-            return session.create('Task', {
+            task = session.create('Task', {
                 "name": task_type.lower(),
-                "type": task_type,
                 "parent": parent
             })
+            task_types = get_all_task_types()
+            task["type"] = task_types[task_type]
+
+            return task
 
         # start procedure
         with maintained_ftrack_session() as session:
@@ -432,15 +451,11 @@ def main_window(selection):
                     f_s_entity['custom_attributes'][key] = custom_attrs[key]
 
                 task_entity = create_task(task_type, f_s_entity)
-                print(task_entity)
 
                 # Create notes.
                 user = session.query(
                     "User where username is \"{}\"".format(session.api_user)
                 ).first()
-
-                print(user)
-                print(shot_description)
 
                 f_s_entity.create_note(shot_description, author=user)
 
@@ -530,6 +545,11 @@ def main_window(selection):
         'Parents template', 'normal', window)
     hierarchy_template = FlameLineEdit(HIERARCHY_TEMPLATE, window)
 
+    # input fields
+    start_frame_label = FlameLabel(
+        'Workfile start frame', 'normal', window)
+    start_frame = FlameLineEdit(WORKFILE_START_FRAME, window)
+
     ## Button
     select_all_btn = FlameButton('Select All', select_all, window)
     ftrack_send_btn = FlameButton('Send to Ftrack', send_to_ftrack, window)
@@ -539,7 +559,9 @@ def main_window(selection):
     gridbox.setMargin(20)
     gridbox.setHorizontalSpacing(20)
     gridbox.addWidget(hierarchy_label, 0, 0)
-    gridbox.addWidget(hierarchy_template, 0, 1, 1, 4)
+    gridbox.addWidget(hierarchy_template, 0, 1, 1, 2)
+    gridbox.addWidget(start_frame_label, 0, 3)
+    gridbox.addWidget(start_frame, 0, 3, 1, 1)
     gridbox.addWidget(tree, 1, 0, 5, 5)
     gridbox.addWidget(select_all_btn, 6, 3)
     gridbox.addWidget(ftrack_send_btn, 6, 4)
