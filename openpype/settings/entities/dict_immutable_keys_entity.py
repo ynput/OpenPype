@@ -737,6 +737,7 @@ class SyncServerSites(DictImmutableKeysEntity):
             self.is_group = True
 
         self.schema_data["children"] = []
+        self._sites_changed = False
 
         super(SyncServerSites, self)._item_initialization()
 
@@ -755,6 +756,7 @@ class SyncServerSites(DictImmutableKeysEntity):
 
         self._add_children(schema_data)
 
+        self._sites_changed = False
         self._set_children_values(state, ignore_missing_defaults)
 
         super(SyncServerSites, self).set_override_state(state, True)
@@ -808,6 +810,8 @@ class SyncServerSites(DictImmutableKeysEntity):
         return children
 
     def _set_children_values(self, state, ignore_missing_defaults):
+        current_site_names = set(self.non_gui_children.keys())
+
         if state >= OverrideState.DEFAULTS:
             default_value = self._default_value
             if default_value is NOT_SET:
@@ -832,6 +836,10 @@ class SyncServerSites(DictImmutableKeysEntity):
                 child_value = value.get(key, NOT_SET)
                 child_obj.update_studio_value(child_value)
 
+            if state is OverrideState.STUDIO:
+                value_keys = set(value.keys())
+                self._sites_changed = value_keys != current_site_names
+
         if state >= OverrideState.PROJECT:
             value = self._project_value
             if value is NOT_SET:
@@ -840,6 +848,10 @@ class SyncServerSites(DictImmutableKeysEntity):
             for key, child_obj in self.non_gui_children.items():
                 child_value = value.get(key, NOT_SET)
                 child_obj.update_project_value(child_value)
+
+            if state is OverrideState.PROJECT:
+                value_keys = set(value.keys())
+                self._sites_changed = value_keys != current_site_names
 
     def _update_current_metadata(self):
         """Override this method as this entity should not have metadata."""
