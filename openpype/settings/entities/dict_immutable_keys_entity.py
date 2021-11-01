@@ -730,6 +730,7 @@ class RootsDictEntity(DictImmutableKeysEntity):
 
 
 class SyncServerSites(DictImmutableKeysEntity):
+    """Dictionary enity for sync sites."""
     schema_types = ["sync-server-sites"]
 
     def _item_initialization(self):
@@ -737,6 +738,9 @@ class SyncServerSites(DictImmutableKeysEntity):
             self.is_group = True
 
         self.schema_data["children"] = []
+        # Site names changed or were removed
+        #   - to find out that site names was removed so project values
+        #       contain more data than should
         self._sites_changed = False
 
         super(SyncServerSites, self)._item_initialization()
@@ -802,6 +806,8 @@ class SyncServerSites(DictImmutableKeysEntity):
         )
 
         children = []
+        # Add 'enabled' for each site to be able know if should be used for
+        #   the project
         checkbox_child = {
             "type": "boolean",
             "key": "enabled",
