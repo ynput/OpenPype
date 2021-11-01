@@ -160,7 +160,6 @@
             "enabled": true,
             "optional": true,
             "active": true,
-            "geometryHidden": true
         },
         "ValidateInstanceInContext": {
             "enabled": true,

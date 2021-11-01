@@ -36,13 +36,6 @@
                     "key": "ValidateInstancerContent",
                     "label": "Validate Instancer Content"
                 }
-            ],
-            "children": [
-                {
-                    "type": "boolean",
-                    "key": "geometryHidden",
-                    "label": "Geometry Hidden"
-                }
             ]
         },
         {
