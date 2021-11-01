@@ -76,3 +76,28 @@ I've selected `vdb1` and went **OpenPype -> Create** and selected **VDB Cache**.
 geometry ROP in `/out` and sets its paths to output vdb files. During the publishing process
 whole dops are cooked.
 
+## Publishing Houdini Digital Assets (HDA)
+
+You can publish most of the nodes in Houdini as hda for easy interchange of data between Houdini instances or even
+other DCCs with Houdini Engine.
+
+## Creating HDA
+
+Simply select nodes you want to include in hda and go **OpenPype -> Create** and select **Houdini digital asset (hda)**.
+You can even use already existing hda as a selected node, and it will be published (see below for limitation).
+
+:::caution HDA Workflow limitations
+As long as the hda is of same type - it is created from different nodes but using the same (subset) name, everything
+is ok. But once you've published version of hda subset, you cannot change its type. For example, you create hda **Foo**
+from *Cube* and *Sphere* - it will create hda subset named `hdaFoo` with the same type. You publish it as version 1.
+Then you create version 2 with added *Torus*. Then you create version 3 from the scratch from completely different nodes,
+but still using resulting subset name `hdaFoo`. Everything still works as expected. But then you use already
+existing hda as a base, for example from different artist. Its type cannot be changed from what it was and so even if
+it is named `hdaFoo` it has different type. It could be published, but you would never load it and retain ability to
+switch versions between different hda types.
+:::
+
+## Loading HDA
+
+When you load hda, it will install its type in your hip file and add published version as its definition file. When
+you  switch version via Scene Manager, it will add its definition and set it as preferred.
