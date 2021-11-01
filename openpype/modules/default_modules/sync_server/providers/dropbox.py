@@ -101,9 +101,14 @@ class DropboxHandler(AbstractProvider):
             },
             # roots could be overriden only on Project level, User cannot
             {
-                'key': "roots",
-                'label': "Roots",
-                'type': 'dict'
+                "key": "roots",
+                "label": "Roots",
+                "type": "dict-roots",
+                "object_type": {
+                    "type": "path",
+                    "multiplatform": False,
+                    "multipath": False
+                }
             }
         ]
 
