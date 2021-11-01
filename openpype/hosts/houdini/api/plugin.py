@@ -1,6 +1,7 @@
 # -*- coding: utf-8 -*-
 """Houdini specific Avalon/Pyblish plugin definitions."""
 import sys
+from avalon.api import CreatorError
 from avalon import houdini
 import six
 
@@ -8,7 +9,7 @@ import hou
 from openpype.api import PypeCreatorMixin
 
 
-class OpenPypeCreatorError(Exception):
+class OpenPypeCreatorError(CreatorError):
     pass
 
 

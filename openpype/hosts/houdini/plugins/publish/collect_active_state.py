@@ -23,8 +23,10 @@ class CollectInstanceActiveState(pyblish.api.InstancePlugin):
             return
 
         # Check bypass state and reverse
+        active = True
         node = instance[0]
-        active = not node.isBypassed()
+        if hasattr(node, "isBypassed"):
+            active = not node.isBypassed()
 
         # Set instance active state
         instance.data.update(
