@@ -736,7 +736,6 @@ class SyncServerSites(DictImmutableKeysEntity):
         if self.group_item is None and not self.is_group:
             self.is_group = True
 
-        self._studio_overrides_should_be_overriden = False
         self.schema_data["children"] = []
 
         super(SyncServerSites, self)._item_initialization()
@@ -749,8 +748,10 @@ class SyncServerSites(DictImmutableKeysEntity):
         schema_data = copy.deepcopy(self.schema_data)
         children = self._get_children()
         schema_data["children"] = children
+
+        studio_overrides_should_be_overriden = False
         if state is OverrideState.STUDIO:
-            self._studio_overrides_should_be_overriden = bool(children)
+            studio_overrides_should_be_overriden = bool(children)
 
         self._add_children(schema_data)
 
@@ -758,18 +759,13 @@ class SyncServerSites(DictImmutableKeysEntity):
 
         super(SyncServerSites, self).set_override_state(state, True)
 
-        if state == OverrideState.STUDIO:
+        # Make sure studio overrides are set if should be
+        #   - defaults does not contain any children
+        #       project settings are based on studio settings
+        if studio_overrides_should_be_overriden:
             self.add_to_studio_default()
 
-    def on_child_change(self, child_obj):
-        if (
-            self._studio_overrides_should_be_overriden
-            and self._override_state is OverrideState.STUDIO
-            and not child_obj.has_studio_override
-        ):
-            self.add_to_studio_default()
 
-        return super(SyncServerSites, self).on_child_change(child_obj)
 
     def _get_children(self):
         from openpype_modules import sync_server
