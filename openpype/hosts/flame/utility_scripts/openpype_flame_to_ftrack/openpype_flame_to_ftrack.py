@@ -18,7 +18,6 @@ FTRACK_SERVER = None
 SCRIPT_DIR = os.path.dirname(__file__)
 EXPORT_PRESETS_DIR = os.path.join(SCRIPT_DIR, "export_preset")
 
-
 @contextmanager
 def maintained_ftrack_session():
     import ftrack_api
@@ -233,7 +232,52 @@ class FlameButton(QtWidgets.QPushButton):
                            'QPushButton:disabled {color: #747474; background-color: #353535; border-top: 1px solid #444444; border-bottom: 1px solid #242424}')
 
 
+class FlamePushButtonMenu(QtWidgets.QPushButton):
+    """
+    Custom Qt Flame Menu Push Button Widget
+
+    To use:
+
+    push_button_menu_options = ['Item 1', 'Item 2', 'Item 3', 'Item 4']
+    menu_push_button = FlamePushButtonMenu('push_button_name', push_button_menu_options, window)
+
+    or
+
+    push_button_menu_options = ['Item 1', 'Item 2', 'Item 3', 'Item 4']
+    menu_push_button = FlamePushButtonMenu(push_button_menu_options[0], push_button_menu_options, window)
+    """
+
+    def __init__(self, button_name, menu_options, parent_window, *args, **kwargs):
+        super(FlamePushButtonMenu, self).__init__(*args, **kwargs)
+        from functools import partial
+
+        self.setText(button_name)
+        self.setParent(parent_window)
+        self.setMinimumHeight(28)
+        self.setMinimumWidth(110)
+        self.setFocusPolicy(QtCore.Qt.NoFocus)
+        self.setStyleSheet('QPushButton {color: #9a9a9a; background-color: #24303d; font: 14px "Discreet"}'
+                           'QPushButton:disabled {color: #747474; background-color: #353535; border-top: 1px solid #444444; border-bottom: 1px solid #242424}')
+
+        def create_menu(option):
+            self.setText(option)
+
+        pushbutton_menu = QtWidgets.QMenu(parent_window)
+        pushbutton_menu.setFocusPolicy(QtCore.Qt.NoFocus)
+        pushbutton_menu.setStyleSheet('QMenu {color: #9a9a9a; background-color:#24303d; font: 14px "Discreet"}'
+                                      'QMenu::item:selected {color: #d9d9d9; background-color: #3a4551}')
+        for option in menu_options:
+            pushbutton_menu.addAction(option, partial(create_menu, option))
+
+        self.setMenu(pushbutton_menu)
+
+
 def main_window(selection):
+    import flame
+    import six
+    import sys
+    import re
+
     def timecode_to_frames(timecode, framerate):
 
         def _seconds(value):
@@ -306,13 +350,8 @@ def main_window(selection):
         tree.selectAll()
 
     def send_to_ftrack():
-        import flame
-        import six
-        import sys
-        import re
-
         def create_ftrack_entity(session, type, name, parent=None):
-            parent = parent or f_project
+            parent = parent or F_PROJ_ENTITY
             entity = session.create(type, {
                 'name': name,
                 'parent': parent
@@ -328,7 +367,7 @@ def main_window(selection):
 
         def get_ftrack_entity(session, type, name, parent):
             query = '{} where name is "{}" and project_id is "{}"'.format(
-                type, name, f_project["id"])
+                type, name, F_PROJ_ENTITY["id"])
 
             try:
                 entity = session.query(query).one()
@@ -381,8 +420,7 @@ def main_window(selection):
                 "name": task_type.lower(),
                 "parent": parent
             })
-            task_types = get_all_task_types(f_project)
-            task["type"] = task_types[task_type]
+            task["type"] = F_PROJ_TASK_TYPES[task_type]
 
             return task
 
@@ -399,15 +437,6 @@ def main_window(selection):
         with maintained_ftrack_session() as session, make_temp_dir() as tempdir_path:
             print("tempdir_path: {}".format(tempdir_path))
             print("Ftrack session is: {}".format(session))
-
-            # get project name from flame current project
-            project_name = flame.project.current_project.name
-
-            # get project from ftrack -
-            # ftrack project name has to be the same as flame project!
-            query = 'Project where full_name is "{}"'.format(project_name)
-            f_project = session.query(query).one()
-            print("Ftrack project is: {}".format(f_project))
 
             # get hanldes from gui input
             handles = handles_input.text()
@@ -561,60 +590,72 @@ def main_window(selection):
     # Prevent weird characters when shrinking tree columns
     tree.setTextElideMode(QtCore.Qt.ElideNone)
 
-    # input fields
-    hierarchy_label = FlameLabel(
-        'Parents template', 'normal', window)
-    hierarchy_template_input = FlameLineEdit(HIERARCHY_TEMPLATE, window)
+    with maintained_ftrack_session() as _session:
+        # input fields
+        hierarchy_label = FlameLabel(
+            'Parents template', 'normal', window)
+        hierarchy_template_input = FlameLineEdit(HIERARCHY_TEMPLATE, window)
 
-    start_frame_label = FlameLabel(
-        'Workfile start frame', 'normal', window)
-    start_frame_input = FlameLineEdit(str(WORKFILE_START_FRAME), window)
+        start_frame_label = FlameLabel(
+            'Workfile start frame', 'normal', window)
+        start_frame_input = FlameLineEdit(str(WORKFILE_START_FRAME), window)
 
-    handles_label = FlameLabel(
-        'Shot handles', 'normal', window)
-    handles_input = FlameLineEdit(str(5), window)
+        handles_label = FlameLabel(
+            'Shot handles', 'normal', window)
+        handles_input = FlameLineEdit(str(5), window)
 
-    task_type_label = FlameLabel(
-        'Create Task (type)', 'normal', window)
-    task_type_input = FlameLineEdit(CREATE_TASK_TYPE, window)
+        # get project name from flame current project
+        project_name = flame.project.current_project.name
 
-    ## Button
-    select_all_btn = FlameButton('Select All', select_all, window)
-    ftrack_send_btn = FlameButton('Send to Ftrack', send_to_ftrack, window)
+        # get project from ftrack -
+        # ftrack project name has to be the same as flame project!
+        query = 'Project where full_name is "{}"'.format(project_name)
 
-    ## Window Layout
-    prop_layout = QtWidgets.QGridLayout()
-    prop_layout.setHorizontalSpacing(30)
-    prop_layout.addWidget(hierarchy_label, 0, 0)
-    prop_layout.addWidget(hierarchy_template_input, 0, 1)
-    prop_layout.addWidget(start_frame_label, 1, 0)
-    prop_layout.addWidget(start_frame_input, 1, 1)
-    prop_layout.addWidget(handles_label, 2, 0)
-    prop_layout.addWidget(handles_input, 2, 1)
-    prop_layout.addWidget(task_type_label, 3, 0)
-    prop_layout.addWidget(task_type_input, 3, 1)
+        # globally used variables
+        F_PROJ_ENTITY = _session.query(query).one()
+        F_PROJ_TASK_TYPES = get_all_task_types(F_PROJ_ENTITY)
 
-    tree_layout = QtWidgets.QGridLayout()
-    tree_layout.addWidget(tree, 1, 0)
+        task_type_label = FlameLabel(
+            'Create Task (type)', 'normal', window)
+        task_type_input = FlamePushButtonMenu(
+            CREATE_TASK_TYPE, F_PROJ_TASK_TYPES, window)
 
-    hbox = QtWidgets.QHBoxLayout()
-    hbox.addWidget(select_all_btn)
-    hbox.addWidget(ftrack_send_btn)
+        ## Button
+        select_all_btn = FlameButton('Select All', select_all, window)
+        ftrack_send_btn = FlameButton('Send to Ftrack', send_to_ftrack, window)
 
-    main_frame = QtWidgets.QVBoxLayout()
-    main_frame.setMargin(20)
-    main_frame.addStretch(5)
-    main_frame.addLayout(prop_layout)
-    main_frame.addStretch(10)
-    main_frame.addLayout(tree_layout)
-    main_frame.addStretch(5)
-    main_frame.addLayout(hbox)
+        ## Window Layout
+        prop_layout = QtWidgets.QGridLayout()
+        prop_layout.setHorizontalSpacing(30)
+        prop_layout.addWidget(hierarchy_label, 0, 0)
+        prop_layout.addWidget(hierarchy_template_input, 0, 1)
+        prop_layout.addWidget(start_frame_label, 1, 0)
+        prop_layout.addWidget(start_frame_input, 1, 1)
+        prop_layout.addWidget(handles_label, 2, 0)
+        prop_layout.addWidget(handles_input, 2, 1)
+        prop_layout.addWidget(task_type_label, 3, 0)
+        prop_layout.addWidget(task_type_input, 3, 1)
 
+        tree_layout = QtWidgets.QGridLayout()
+        tree_layout.addWidget(tree, 1, 0)
 
-    window.setLayout(main_frame)
-    window.show()
+        hbox = QtWidgets.QHBoxLayout()
+        hbox.addWidget(select_all_btn)
+        hbox.addWidget(ftrack_send_btn)
 
-    timeline_info(selection)
+        main_frame = QtWidgets.QVBoxLayout()
+        main_frame.setMargin(20)
+        main_frame.addStretch(5)
+        main_frame.addLayout(prop_layout)
+        main_frame.addStretch(10)
+        main_frame.addLayout(tree_layout)
+        main_frame.addStretch(5)
+        main_frame.addLayout(hbox)
+
+        window.setLayout(main_frame)
+        window.show()
+
+        timeline_info(selection)
 
     return window
 
