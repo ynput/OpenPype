@@ -730,13 +730,25 @@ class RootsDictEntity(DictImmutableKeysEntity):
 
 
 class SyncServerSites(DictImmutableKeysEntity):
-    """Dictionary enity for sync sites."""
+    """Dictionary enity for sync sites.
+
+    Can be used only in project settings.
+
+    Is loading sites from system settings. Uses site name as key and by site's
+    provider loads project settings schemas calling method
+    `get_project_settings_schema` on provider.
+
+    Each provider have `enabled` boolean entity to be able know if site should
+    be enabled for the project. Enabled is by default set to False.
+    """
     schema_types = ["sync-server-sites"]
 
     def _item_initialization(self):
+        # Make sure this is a group
         if self.group_item is None and not self.is_group:
             self.is_group = True
 
+        # Fake children for `dict` validations
         self.schema_data["children"] = []
         # Site names changed or were removed
         #   - to find out that site names was removed so project values
@@ -746,11 +758,14 @@ class SyncServerSites(DictImmutableKeysEntity):
         super(SyncServerSites, self)._item_initialization()
 
     def set_override_state(self, state, ignore_missing_defaults):
+        # Cleanup children related attributes
         self.children = []
         self.non_gui_children = {}
         self.gui_layout = []
 
+        # Create copy of schema
         schema_data = copy.deepcopy(self.schema_data)
+        # Collect children
         children = self._get_children()
         schema_data["children"] = children
 
