@@ -1,4 +1,5 @@
 from __future__ import print_function
+import os
 from PySide2 import QtWidgets, QtCore
 from pprint import pformat
 from contextlib import contextmanager
@@ -13,6 +14,9 @@ CREATE_TASK_TYPE = "Compositing"
 FTRACK_API_KEY = None
 FTRACK_API_USER = None
 FTRACK_SERVER = None
+
+SCRIPT_DIR = os.path.dirname(__file__)
+EXPORT_PRESETS_DIR = os.path.join(SCRIPT_DIR, "export_preset")
 
 
 @contextmanager
@@ -82,6 +86,40 @@ def maintained_ftrack_session():
     finally:
         # close the session
         session.close()
+
+
+@contextmanager
+def make_temp_dir():
+    import tempfile
+    import shutil
+
+    try:
+        dirpath = tempfile.mkdtemp()
+
+        yield dirpath
+
+    except IOError as _error:
+        raise IOError(
+            "Not able to create temp dir file: {}".format(
+                _error
+            )
+        )
+
+    finally:
+        print(dirpath)
+        # shutil.rmtree(dirpath)
+
+
+def get_all_task_types(project_entity):
+    tasks = {}
+    proj_template = project_entity['project_schema']
+    temp_task_types = proj_template['_task_type_schema']['types']
+
+    for type in temp_task_types:
+        if type['name'] not in tasks:
+            tasks[type['name']] = type
+
+    return tasks
 
 
 class FlameLabel(QtWidgets.QLabel):
@@ -251,10 +289,7 @@ def main_window(selection):
                         QtWidgets.QTreeWidgetItem(tree, [
                             str(sequence.name)[1:-1],  # seq
                             str(segment.name)[1:-1],  # shot
-                            CREATE_TASK_TYPE,  # task type
-                            str(WORKFILE_START_FRAME),  # start frame
                             str(clip_duration),  # clip duration
-                            "0:0",  # handles
                             shot_description,  # shot description
                             str(segment.comment)[1:-1]  # task description
                         ]).setFlags(
@@ -332,17 +367,6 @@ def main_window(selection):
 
             return parents
 
-        def get_all_task_types():
-            tasks = {}
-            proj_template = f_project['project_schema']
-            temp_task_types = proj_template['_task_type_schema']['types']
-
-            for type in temp_task_types:
-                if type['name'] not in tasks:
-                    tasks[type['name']] = type
-
-            return tasks
-
         def create_task(task_type, parent):
             existing_task = [
                 child for child in parent['children']
@@ -357,13 +381,23 @@ def main_window(selection):
                 "name": task_type.lower(),
                 "parent": parent
             })
-            task_types = get_all_task_types()
+            task_types = get_all_task_types(f_project)
             task["type"] = task_types[task_type]
 
             return task
 
+        def export_thumbnail(sequence, tempdir_path):
+            export_preset = os.path.join(
+                EXPORT_PRESETS_DIR,
+                "openpype_seg_thumbnails_jpg.xml"
+            )
+            poster_frame_exporter = flame.PyExporter()
+            poster_frame_exporter.foreground = True
+            poster_frame_exporter.export(sequence, export_preset, tempdir_path)
+
         # start procedure
-        with maintained_ftrack_session() as session:
+        with maintained_ftrack_session() as session, make_temp_dir() as tempdir_path:
+            print("tempdir_path: {}".format(tempdir_path))
             print("Ftrack session is: {}".format(session))
 
             # get project name from flame current project
@@ -375,31 +409,30 @@ def main_window(selection):
             f_project = session.query(query).one()
             print("Ftrack project is: {}".format(f_project))
 
+            # get hanldes from gui input
+            handles = handles_input.text()
+            handle_start = int(handles)
+            handle_end = int(handles)
+
+            # get frame start from gui input
+            frame_start = int(start_frame_input.text())
+
+            # get task type from gui input
+            task_type = task_type_input.text()
+
             # Get all selected items from treewidget
             for item in tree.selectedItems():
-                # solve handle start and end
-                handles = item.text(5)
-                if ":" in handles:
-                    _s, _e = handles.split(":")
-                    handle_start = int(_s)
-                    handle_end = int(_e)
-                else:
-                    handle_start = int(handles)
-                    handle_end = int(handles)
-
                 # frame ranges
-                frame_start = int(item.text(3))
-                frame_duration = int(item.text(4))
+                frame_duration = int(item.text(2))
                 frame_end = frame_start + frame_duration
 
                 # description
-                shot_description = item.text(6)
-                task_description = item.text(7)
+                shot_description = item.text(3)
+                task_description = item.text(4)
 
                 # other
-                task_type = item.text(2)
-                shot_name = item.text(1)
                 sequence_name = item.text(0)
+                shot_name = item.text(1)
 
                 # populate full shot info
                 shot_attributes = {
@@ -409,7 +442,7 @@ def main_window(selection):
                 }
 
                 # format hierarchy template
-                hierarchy_text = hierarchy_template.text()
+                hierarchy_text = hierarchy_template_input.text()
                 hierarchy_text = hierarchy_text.format(**shot_attributes)
                 print(hierarchy_text)
 
@@ -486,36 +519,24 @@ def main_window(selection):
     # TreeWidget
     columns = {
         "Sequence name": {
-            "columnWidth": 100,
+            "columnWidth": 200,
             "order": 0
         },
         "Shot name": {
-            "columnWidth": 100,
+            "columnWidth": 200,
             "order": 1
-        },
-        "Task type": {
-            "columnWidth": 100,
-            "order": 2
-        },
-        "Start frame": {
-            "columnWidth": 100,
-            "order": 3
         },
         "Clip duration": {
             "columnWidth": 100,
-            "order": 4
-        },
-        "Handles": {
-            "columnWidth": 100,
-            "order": 5
+            "order": 2
         },
         "Shot description": {
-            "columnWidth": 300,
-            "order": 6
+            "columnWidth": 500,
+            "order": 3
         },
         "Task description": {
-            "columnWidth": 300,
-            "order": 7
+            "columnWidth": 500,
+            "order": 4
         },
     }
     ordered_column_labels = columns.keys()
@@ -543,30 +564,54 @@ def main_window(selection):
     # input fields
     hierarchy_label = FlameLabel(
         'Parents template', 'normal', window)
-    hierarchy_template = FlameLineEdit(HIERARCHY_TEMPLATE, window)
+    hierarchy_template_input = FlameLineEdit(HIERARCHY_TEMPLATE, window)
 
-    # input fields
     start_frame_label = FlameLabel(
         'Workfile start frame', 'normal', window)
-    start_frame = FlameLineEdit(WORKFILE_START_FRAME, window)
+    start_frame_input = FlameLineEdit(str(WORKFILE_START_FRAME), window)
+
+    handles_label = FlameLabel(
+        'Shot handles', 'normal', window)
+    handles_input = FlameLineEdit(str(5), window)
+
+    task_type_label = FlameLabel(
+        'Create Task (type)', 'normal', window)
+    task_type_input = FlameLineEdit(CREATE_TASK_TYPE, window)
 
     ## Button
     select_all_btn = FlameButton('Select All', select_all, window)
     ftrack_send_btn = FlameButton('Send to Ftrack', send_to_ftrack, window)
 
     ## Window Layout
-    gridbox = QtWidgets.QGridLayout()
-    gridbox.setMargin(20)
-    gridbox.setHorizontalSpacing(20)
-    gridbox.addWidget(hierarchy_label, 0, 0)
-    gridbox.addWidget(hierarchy_template, 0, 1, 1, 2)
-    gridbox.addWidget(start_frame_label, 0, 3)
-    gridbox.addWidget(start_frame, 0, 3, 1, 1)
-    gridbox.addWidget(tree, 1, 0, 5, 5)
-    gridbox.addWidget(select_all_btn, 6, 3)
-    gridbox.addWidget(ftrack_send_btn, 6, 4)
+    prop_layout = QtWidgets.QGridLayout()
+    prop_layout.setHorizontalSpacing(30)
+    prop_layout.addWidget(hierarchy_label, 0, 0)
+    prop_layout.addWidget(hierarchy_template_input, 0, 1)
+    prop_layout.addWidget(start_frame_label, 1, 0)
+    prop_layout.addWidget(start_frame_input, 1, 1)
+    prop_layout.addWidget(handles_label, 2, 0)
+    prop_layout.addWidget(handles_input, 2, 1)
+    prop_layout.addWidget(task_type_label, 3, 0)
+    prop_layout.addWidget(task_type_input, 3, 1)
 
-    window.setLayout(gridbox)
+    tree_layout = QtWidgets.QGridLayout()
+    tree_layout.addWidget(tree, 1, 0)
+
+    hbox = QtWidgets.QHBoxLayout()
+    hbox.addWidget(select_all_btn)
+    hbox.addWidget(ftrack_send_btn)
+
+    main_frame = QtWidgets.QVBoxLayout()
+    main_frame.setMargin(20)
+    main_frame.addStretch(5)
+    main_frame.addLayout(prop_layout)
+    main_frame.addStretch(10)
+    main_frame.addLayout(tree_layout)
+    main_frame.addStretch(5)
+    main_frame.addLayout(hbox)
+
+
+    window.setLayout(main_frame)
     window.show()
 
     timeline_info(selection)
