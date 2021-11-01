@@ -629,7 +629,7 @@ class RootsDictEntity(DictImmutableKeysEntity):
 
         self._add_children(schema_data)
 
-        self._set_children_values(state)
+        self._set_children_values(state, ignore_missing_defaults)
 
         super(RootsDictEntity, self).set_override_state(
             state, True
@@ -652,11 +652,14 @@ class RootsDictEntity(DictImmutableKeysEntity):
 
         return super(RootsDictEntity, self).on_child_change(child_obj)
 
-    def _set_children_values(self, state):
+    def _set_children_values(self, state, ignore_missing_defaults):
         if state >= OverrideState.DEFAULTS:
             default_value = self._default_value
             if default_value is NOT_SET:
-                if state > OverrideState.DEFAULTS:
+                if (
+                    not ignore_missing_defaults
+                    and state > OverrideState.DEFAULTS
+                ):
                     raise DefaultsNotDefined(self)
                 else:
                     default_value = {}
