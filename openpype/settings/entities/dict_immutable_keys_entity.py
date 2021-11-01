@@ -754,22 +754,12 @@ class SyncServerSites(DictImmutableKeysEntity):
         children = self._get_children()
         schema_data["children"] = children
 
-        studio_overrides_should_be_overriden = False
-        if state is OverrideState.STUDIO:
-            studio_overrides_should_be_overriden = bool(children)
-
         self._add_children(schema_data)
 
         self._sites_changed = False
         self._set_children_values(state, ignore_missing_defaults)
 
         super(SyncServerSites, self).set_override_state(state, True)
-
-        # Make sure studio overrides are set if should be
-        #   - defaults does not contain any children
-        #       project settings are based on studio settings
-        if studio_overrides_should_be_overriden:
-            self.add_to_studio_default()
 
     @property
     def has_unsaved_changes(self):
