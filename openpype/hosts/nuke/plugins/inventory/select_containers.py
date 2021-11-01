@@ -8,10 +8,10 @@ class SelectContainers(api.InventoryAction):
     color = "#d8d8d8"
 
     def process(self, containers):
-
+        import nuke
         import avalon.nuke
 
-        nodes = [i["_node"] for i in containers]
+        nodes = [nuke.toNode(i["objectName"]) for i in containers]
 
         with avalon.nuke.viewer_update_and_undo_stop():
             # clear previous_selection

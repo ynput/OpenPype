@@ -109,9 +109,7 @@ def _prores_codec_args(ffprobe_data, source_ffmpeg_cmd):
 
 
 def _h264_codec_args(ffprobe_data, source_ffmpeg_cmd):
-    output = []
-
-    output.extend(["-codec:v", "h264"])
+    output = ["-codec:v", "h264"]
 
     # Use arguments from source if are available source arguments
     if source_ffmpeg_cmd:
@@ -137,6 +135,32 @@ def _h264_codec_args(ffprobe_data, source_ffmpeg_cmd):
     return output
 
 
+def _dnxhd_codec_args(ffprobe_data, source_ffmpeg_cmd):
+    output = ["-codec:v", "dnxhd"]
+
+    # Use source profile (profiles in metadata are not usable in args directly)
+    profile = ffprobe_data.get("profile") or ""
+    # Lower profile and replace space with underscore
+    cleaned_profile = profile.lower().replace(" ", "_")
+    dnx_profiles = {
+        "dnxhd",
+        "dnxhr_lb",
+        "dnxhr_sq",
+        "dnxhr_hq",
+        "dnxhr_hqx",
+        "dnxhr_444"
+    }
+    if cleaned_profile in dnx_profiles:
+        output.extend(["-profile:v", cleaned_profile])
+
+    pix_fmt = ffprobe_data.get("pix_fmt")
+    if pix_fmt:
+        output.extend(["-pix_fmt", pix_fmt])
+
+    output.extend(["-g", "1"])
+    return output
+
+
 def get_codec_args(ffprobe_data, source_ffmpeg_cmd):
     codec_name = ffprobe_data.get("codec_name")
     # Codec "prores"
@@ -146,6 +170,10 @@ def get_codec_args(ffprobe_data, source_ffmpeg_cmd):
     # Codec "h264"
     if codec_name == "h264":
         return _h264_codec_args(ffprobe_data, source_ffmpeg_cmd)
+
+    # Coded DNxHD
+    if codec_name == "dnxhd":
+        return _dnxhd_codec_args(ffprobe_data, source_ffmpeg_cmd)
 
     output = []
     if codec_name:

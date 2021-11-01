@@ -1,8 +1,40 @@
 # Changelog
 
-## [3.5.0-nightly.6](https://github.com/pypeclub/OpenPype/tree/HEAD)
+## [3.6.0-nightly.2](https://github.com/pypeclub/OpenPype/tree/HEAD)
 
-[Full Changelog](https://github.com/pypeclub/OpenPype/compare/3.4.1...HEAD)
+[Full Changelog](https://github.com/pypeclub/OpenPype/compare/3.5.0...HEAD)
+
+**🆕 New features**
+
+- Flame: a host basic integration [\#2165](https://github.com/pypeclub/OpenPype/pull/2165)
+
+**🚀 Enhancements**
+
+- Tools: Experimental tools [\#2167](https://github.com/pypeclub/OpenPype/pull/2167)
+- Loader: Refactor and use OpenPype stylesheets [\#2166](https://github.com/pypeclub/OpenPype/pull/2166)
+- Add loader for linked smart objects in photoshop [\#2149](https://github.com/pypeclub/OpenPype/pull/2149)
+- Burnins: DNxHD profiles handling [\#2142](https://github.com/pypeclub/OpenPype/pull/2142)
+- Tools: Single access point for host tools [\#2139](https://github.com/pypeclub/OpenPype/pull/2139)
+
+**🐛 Bug fixes**
+
+- StandalonePublisher: Source validator don't expect representations [\#2190](https://github.com/pypeclub/OpenPype/pull/2190)
+- MacOS: Launching of applications may cause Permissions error [\#2175](https://github.com/pypeclub/OpenPype/pull/2175)
+- Blender: Fix 'Deselect All' with object not in 'Object Mode' [\#2163](https://github.com/pypeclub/OpenPype/pull/2163)
+- Tools: Stylesheets are applied after tool show [\#2161](https://github.com/pypeclub/OpenPype/pull/2161)
+- Maya: Collect render - fix UNC path support 🐛 [\#2158](https://github.com/pypeclub/OpenPype/pull/2158)
+- Maya: Fix hotbox broken by scriptsmenu [\#2151](https://github.com/pypeclub/OpenPype/pull/2151)
+- Ftrack: Ignore save warnings exception in Prepare project action [\#2150](https://github.com/pypeclub/OpenPype/pull/2150)
+- Loader thumbnails with smooth edges [\#2147](https://github.com/pypeclub/OpenPype/pull/2147)
+
+**Merged pull requests:**
+
+- Bump pillow from 8.2.0 to 8.3.2 [\#2162](https://github.com/pypeclub/OpenPype/pull/2162)
+- Bump axios from 0.21.1 to 0.21.4 in /website [\#2059](https://github.com/pypeclub/OpenPype/pull/2059)
+
+## [3.5.0](https://github.com/pypeclub/OpenPype/tree/3.5.0) (2021-10-17)
+
+[Full Changelog](https://github.com/pypeclub/OpenPype/compare/CI/3.5.0-nightly.8...3.5.0)
 
 **Deprecated:**
 
@@ -10,12 +42,18 @@
 
 **🆕 New features**
 
+- Added project and task into context change message in Maya [\#2131](https://github.com/pypeclub/OpenPype/pull/2131)
+- Add ExtractBurnin to photoshop review [\#2124](https://github.com/pypeclub/OpenPype/pull/2124)
+- PYPE-1218 - changed namespace to contain subset name in Maya [\#2114](https://github.com/pypeclub/OpenPype/pull/2114)
 - Added running configurable disk mapping command before start of OP [\#2091](https://github.com/pypeclub/OpenPype/pull/2091)
 - SFTP provider [\#2073](https://github.com/pypeclub/OpenPype/pull/2073)
 - Maya: Validate setdress top group [\#2068](https://github.com/pypeclub/OpenPype/pull/2068)
 
 **🚀 Enhancements**
 
+- Maya: make rig validators configurable in settings [\#2137](https://github.com/pypeclub/OpenPype/pull/2137)
+- Settings: Updated readme for entity types in settings [\#2132](https://github.com/pypeclub/OpenPype/pull/2132)
+- Nuke: unified clip loader [\#2128](https://github.com/pypeclub/OpenPype/pull/2128)
 - Settings UI: Project model refreshing and sorting [\#2104](https://github.com/pypeclub/OpenPype/pull/2104)
 - Create Read From Rendered - Disable Relative paths by default [\#2093](https://github.com/pypeclub/OpenPype/pull/2093)
 - Added choosing different dirmap mapping if workfile synched locally [\#2088](https://github.com/pypeclub/OpenPype/pull/2088)
@@ -31,50 +69,45 @@
 
 **🐛 Bug fixes**
 
+- Added validator for source files for Standalone Publisher [\#2138](https://github.com/pypeclub/OpenPype/pull/2138)
+- Maya: fix model publishing [\#2130](https://github.com/pypeclub/OpenPype/pull/2130)
+- Fix - oiiotool wasn't recognized even if present [\#2129](https://github.com/pypeclub/OpenPype/pull/2129)
 - General: Disk mapping group [\#2120](https://github.com/pypeclub/OpenPype/pull/2120)
 - Hiero: publishing effect first time makes wrong resources path [\#2115](https://github.com/pypeclub/OpenPype/pull/2115)
 - Add startup script for Houdini Core.  [\#2110](https://github.com/pypeclub/OpenPype/pull/2110)
 - TVPaint: Behavior name of loop also accept repeat [\#2109](https://github.com/pypeclub/OpenPype/pull/2109)
 - Ftrack: Project settings save custom attributes skip unknown attributes [\#2103](https://github.com/pypeclub/OpenPype/pull/2103)
+- Blender: Fix NoneType error when animation\_data is missing for a rig [\#2101](https://github.com/pypeclub/OpenPype/pull/2101)
 - Fix broken import in sftp provider [\#2100](https://github.com/pypeclub/OpenPype/pull/2100)
 - Global: Fix docstring on publish plugin extract review [\#2097](https://github.com/pypeclub/OpenPype/pull/2097)
+- Delivery Action Files Sequence fix [\#2096](https://github.com/pypeclub/OpenPype/pull/2096)
 - General: Cloud mongo ca certificate issue [\#2095](https://github.com/pypeclub/OpenPype/pull/2095)
 - TVPaint: Creator use context from workfile [\#2087](https://github.com/pypeclub/OpenPype/pull/2087)
 - Blender: fix texture missing when publishing blend files [\#2085](https://github.com/pypeclub/OpenPype/pull/2085)
 - General: Startup validations oiio tool path fix on linux [\#2083](https://github.com/pypeclub/OpenPype/pull/2083)
 - Deadline: Collect deadline server does not check existence of deadline key [\#2082](https://github.com/pypeclub/OpenPype/pull/2082)
 - Blender: fixed Curves with modifiers in Rigs [\#2081](https://github.com/pypeclub/OpenPype/pull/2081)
+- Nuke UI scaling [\#2077](https://github.com/pypeclub/OpenPype/pull/2077)
 - Maya: Fix multi-camera renders [\#2065](https://github.com/pypeclub/OpenPype/pull/2065)
 - Fix Sync Queue when project disabled [\#2063](https://github.com/pypeclub/OpenPype/pull/2063)
 
 **Merged pull requests:**
 
-- Blender: Fix NoneType error when animation\_data is missing for a rig [\#2101](https://github.com/pypeclub/OpenPype/pull/2101)
-- Delivery Action Files Sequence fix [\#2096](https://github.com/pypeclub/OpenPype/pull/2096)
 - Bump pywin32 from 300 to 301 [\#2086](https://github.com/pypeclub/OpenPype/pull/2086)
-- Nuke UI scaling [\#2077](https://github.com/pypeclub/OpenPype/pull/2077)
 
 ## [3.4.1](https://github.com/pypeclub/OpenPype/tree/3.4.1) (2021-09-23)
 
 [Full Changelog](https://github.com/pypeclub/OpenPype/compare/CI/3.4.1-nightly.1...3.4.1)
 
-**🆕 New features**
-
-- Settings: Flag project as deactivated and hide from tools' view [\#2008](https://github.com/pypeclub/OpenPype/pull/2008)
-
 **🚀 Enhancements**
 
 - General: Startup validations [\#2054](https://github.com/pypeclub/OpenPype/pull/2054)
 - Nuke: proxy mode validator [\#2052](https://github.com/pypeclub/OpenPype/pull/2052)
+- Ftrack: Removed ftrack interface [\#2049](https://github.com/pypeclub/OpenPype/pull/2049)
 - Settings UI: Deffered set value on entity [\#2044](https://github.com/pypeclub/OpenPype/pull/2044)
 - Loader: Families filtering [\#2043](https://github.com/pypeclub/OpenPype/pull/2043)
 - Settings UI: Project view enhancements [\#2042](https://github.com/pypeclub/OpenPype/pull/2042)
 - Settings for Nuke IncrementScriptVersion [\#2039](https://github.com/pypeclub/OpenPype/pull/2039)
-- Loader & Library loader: Use tools from OpenPype [\#2038](https://github.com/pypeclub/OpenPype/pull/2038)
-- Adding predefined project folders creation in PM [\#2030](https://github.com/pypeclub/OpenPype/pull/2030)
-- WebserverModule: Removed interface of webserver module [\#2028](https://github.com/pypeclub/OpenPype/pull/2028)
-- TimersManager: Removed interface of timers manager [\#2024](https://github.com/pypeclub/OpenPype/pull/2024)
-- Feature Maya import asset from scene inventory [\#2018](https://github.com/pypeclub/OpenPype/pull/2018)
 
 **🐛 Bug fixes**
 
@@ -92,43 +125,16 @@
 
 [Full Changelog](https://github.com/pypeclub/OpenPype/compare/CI/3.4.0-nightly.6...3.4.0)
 
-### 📖 Documentation
-
-- Documentation: Ftrack launch argsuments update [\#2014](https://github.com/pypeclub/OpenPype/pull/2014)
-
-**🆕 New features**
-
-- Nuke: Compatibility with Nuke 13 [\#2003](https://github.com/pypeclub/OpenPype/pull/2003)
-
 **🚀 Enhancements**
 
-- Ftrack: Removed ftrack interface [\#2049](https://github.com/pypeclub/OpenPype/pull/2049)
 - Added possibility to configure of synchronization of workfile version… [\#2041](https://github.com/pypeclub/OpenPype/pull/2041)
+- Loader & Library loader: Use tools from OpenPype [\#2038](https://github.com/pypeclub/OpenPype/pull/2038)
 - General: Task types in profiles [\#2036](https://github.com/pypeclub/OpenPype/pull/2036)
-- Console interpreter: Handle invalid sizes on initialization [\#2022](https://github.com/pypeclub/OpenPype/pull/2022)
-- Ftrack: Show OpenPype versions in event server status [\#2019](https://github.com/pypeclub/OpenPype/pull/2019)
-- General: Staging icon [\#2017](https://github.com/pypeclub/OpenPype/pull/2017)
-- Ftrack: Sync to avalon actions have jobs [\#2015](https://github.com/pypeclub/OpenPype/pull/2015)
-- Modules: Connect method is not required [\#2009](https://github.com/pypeclub/OpenPype/pull/2009)
-- Settings UI: Number with configurable steps [\#2001](https://github.com/pypeclub/OpenPype/pull/2001)
-- Moving project folder structure creation out of ftrack module \#1989 [\#1996](https://github.com/pypeclub/OpenPype/pull/1996)
-- Configurable items for providers without Settings [\#1987](https://github.com/pypeclub/OpenPype/pull/1987)
-- Global: Example addons [\#1986](https://github.com/pypeclub/OpenPype/pull/1986)
-- Standalone Publisher: Extract harmony zip handle workfile template [\#1982](https://github.com/pypeclub/OpenPype/pull/1982)
 
 **🐛 Bug fixes**
 
 - Workfiles tool: Task selection [\#2040](https://github.com/pypeclub/OpenPype/pull/2040)
 - Ftrack: Delete old versions missing settings key [\#2037](https://github.com/pypeclub/OpenPype/pull/2037)
-- Nuke: typo on a button [\#2034](https://github.com/pypeclub/OpenPype/pull/2034)
-- Hiero: Fix "none" named tags [\#2033](https://github.com/pypeclub/OpenPype/pull/2033)
-- FFmpeg: Subprocess arguments as list [\#2032](https://github.com/pypeclub/OpenPype/pull/2032)
-- General: Fix Python 2 breaking line [\#2016](https://github.com/pypeclub/OpenPype/pull/2016)
-- Bugfix/webpublisher task type [\#2006](https://github.com/pypeclub/OpenPype/pull/2006)
-- Nuke thumbnails generated from middle of the sequence [\#1992](https://github.com/pypeclub/OpenPype/pull/1992)
-- Nuke: last version from path gets correct version [\#1990](https://github.com/pypeclub/OpenPype/pull/1990)
-- nuke, resolve, hiero: precollector order lest then 0.5 [\#1984](https://github.com/pypeclub/OpenPype/pull/1984)
-- Last workfile with multiple work templates [\#1981](https://github.com/pypeclub/OpenPype/pull/1981)
 
 ## [3.3.1](https://github.com/pypeclub/OpenPype/tree/3.3.1) (2021-08-20)
 

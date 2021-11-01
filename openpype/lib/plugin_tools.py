@@ -6,6 +6,7 @@ import logging
 import re
 import json
 import tempfile
+import distutils
 
 from .execute import run_subprocess
 from .profiles_filtering import filter_profiles
@@ -377,7 +378,7 @@ def oiio_supported():
     """
         Checks if oiiotool is configured for this platform.
 
-        Expects full path to executable.
+        Triggers simple subprocess, handles exception if fails.
 
         'should_decompress' will throw exception if configured,
         but not present or not working.
@@ -385,7 +386,10 @@ def oiio_supported():
             (bool)
     """
     oiio_path = get_oiio_tools_path()
-    if not oiio_path or not os.path.exists(oiio_path):
+    if oiio_path:
+        oiio_path = distutils.spawn.find_executable(oiio_path)
+
+    if not oiio_path:
         log.debug("OIIOTool is not configured or not present at {}".
                   format(oiio_path))
         return False
@@ -483,3 +487,48 @@ def should_decompress(file_url):
             "compression: \"dwab\"" in output
 
     return False
+
+
+def parse_json(path):
+    """Parses json file at 'path' location
+
+        Returns:
+            (dict) or None if unparsable
+        Raises:
+            AsssertionError if 'path' doesn't exist
+    """
+    path = path.strip('\"')
+    assert os.path.isfile(path), (
+        "Path to json file doesn't exist. \"{}\"".format(path)
+    )
+    data = None
+    with open(path, "r") as json_file:
+        try:
+            data = json.load(json_file)
+        except Exception as exc:
+            log.error(
+                "Error loading json: "
+                "{} - Exception: {}".format(path, exc)
+            )
+    return data
+
+
+def get_batch_asset_task_info(ctx):
+    """Parses context data from webpublisher's batch metadata
+
+        Returns:
+            (tuple): asset, task_name (Optional), task_type
+    """
+    task_type = "default_task_type"
+    task_name = None
+    asset = None
+
+    if ctx["type"] == "task":
+        items = ctx["path"].split('/')
+        asset = items[-2]
+        task_name = ctx["name"]
+        task_type = ctx["attributes"]["type"]
+    else:
+        asset = ctx["name"]
+
+    return asset, task_name, task_type

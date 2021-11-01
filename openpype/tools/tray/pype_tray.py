@@ -268,7 +268,6 @@ class SystemTrayIcon(QtWidgets.QSystemTrayIcon):
 
         # Set modules
         self.tray_man = TrayManager(self, self.parent)
-        self.tray_man.initialize_modules()
 
         # Add menu to Context of SystemTrayIcon
         self.setContextMenu(self.menu)
@@ -290,6 +289,17 @@ class SystemTrayIcon(QtWidgets.QSystemTrayIcon):
         self._click_timer = click_timer
         self._doubleclick = False
         self._click_pos = None
+
+        self._initializing_modules = False
+
+    @property
+    def initializing_modules(self):
+        return self._initializing_modules
+
+    def initialize_modules(self):
+        self._initializing_modules = True
+        self.tray_man.initialize_modules()
+        self._initializing_modules = False
 
     def _click_timer_timeout(self):
         self._click_timer.stop()
@@ -334,38 +344,48 @@ class SystemTrayIcon(QtWidgets.QSystemTrayIcon):
         QtCore.QCoreApplication.exit()
 
 
-class TrayMainWindow(QtWidgets.QMainWindow):
-    """ TrayMainWindow is base of Pype application.
-
-    Every widget should have set this window as parent because
-    QSystemTrayIcon widget is not allowed to be a parent of any widget.
-    """
-
+class PypeTrayStarter(QtCore.QObject):
     def __init__(self, app):
-        super(TrayMainWindow, self).__init__()
-        self.app = app
+        app.setQuitOnLastWindowClosed(False)
+        self._app = app
+        self._splash = None
 
-        self.tray_widget = SystemTrayIcon(self)
-        self.tray_widget.show()
+        main_window = QtWidgets.QMainWindow()
+        tray_widget = SystemTrayIcon(main_window)
 
+        start_timer = QtCore.QTimer()
+        start_timer.setInterval(100)
+        start_timer.start()
 
-class PypeTrayApplication(QtWidgets.QApplication):
-    """Qt application manages application's control flow."""
+        start_timer.timeout.connect(self._on_start_timer)
 
-    def __init__(self):
-        super(PypeTrayApplication, self).__init__(sys.argv)
-        # Allows to close widgets without exiting app
-        self.setQuitOnLastWindowClosed(False)
+        self._main_window = main_window
+        self._tray_widget = tray_widget
+        self._timer_counter = 0
+        self._start_timer = start_timer
 
-        # Sets up splash
-        splash_widget = self.set_splash()
+    def _on_start_timer(self):
+        if self._timer_counter == 0:
+            self._timer_counter += 1
+            splash = self._get_splash()
+            splash.show()
+            self._tray_widget.show()
 
-        splash_widget.show()
-        self.processEvents()
-        self.main_window = TrayMainWindow(self)
-        splash_widget.hide()
+        elif self._timer_counter == 1:
+            self._timer_counter += 1
+            self._tray_widget.initialize_modules()
 
-    def set_splash(self):
+        elif not self._tray_widget.initializing_modules:
+            splash = self._get_splash()
+            splash.hide()
+            self._start_timer.stop()
+
+    def _get_splash(self):
+        if self._splash is None:
+            self._splash = self._create_splash()
+        return self._splash
+
+    def _create_splash(self):
         splash_pix = QtGui.QPixmap(resources.get_openpype_splash_filepath())
         splash = QtWidgets.QSplashScreen(splash_pix)
         splash.setMask(splash_pix.mask())
@@ -377,7 +397,12 @@ class PypeTrayApplication(QtWidgets.QApplication):
 
 
 def main():
-    app = PypeTrayApplication()
+    app = QtWidgets.QApplication.instance()
+    if not app:
+        app = QtWidgets.QApplication([])
+
+    starter = PypeTrayStarter(app)
+
     # TODO remove when pype.exe will have an icon
     if os.name == "nt":
         import ctypes

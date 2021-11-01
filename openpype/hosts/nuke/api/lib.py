@@ -7,7 +7,6 @@ from collections import OrderedDict
 
 
 from avalon import api, io, lib
-from openpype.tools import workfiles
 import avalon.nuke
 from avalon.nuke import lib as anlib
 from avalon.nuke import (
@@ -24,7 +23,7 @@ from openpype.api import (
     get_current_project_settings,
     ApplicationManager
 )
-
+from openpype.tools.utils import host_tools
 import nuke
 
 from .utils import set_context_favorites
@@ -1032,27 +1031,6 @@ class WorkfileSettings(object):
             log.error(msg)
             nuke.message(msg)
 
-        bbox = self._asset_entity.get('data', {}).get('crop')
-
-        if bbox:
-            try:
-                x, y, r, t = bbox.split(".")
-                data.update(
-                    {
-                        "x": int(x),
-                        "y": int(y),
-                        "r": int(r),
-                        "t": int(t),
-                    }
-                )
-            except Exception as e:
-                bbox = None
-                msg = ("{}:{} \nFormat:Crop need to be set with dots, "
-                       "example: 0.0.1920.1080, "
-                       "/nSetting to default").format(__name__, e)
-                log.error(msg)
-                nuke.message(msg)
-
         existing_format = None
         for format in nuke.formats():
             if data["name"] == format.name():
@@ -1064,12 +1042,6 @@ class WorkfileSettings(object):
             existing_format.setWidth(data["width"])
             existing_format.setHeight(data["height"])
             existing_format.setPixelAspect(data["pixel_aspect"])
-
-            if bbox:
-                existing_format.setX(data["x"])
-                existing_format.setY(data["y"])
-                existing_format.setR(data["r"])
-                existing_format.setT(data["t"])
         else:
             format_string = self.make_format_string(**data)
             log.info("Creating new format: {}".format(format_string))
@@ -1689,7 +1661,7 @@ def launch_workfiles_app():
 
     if not opnl.workfiles_launched:
         opnl.workfiles_launched = True
-        workfiles.show(os.environ["AVALON_WORKDIR"])
+        host_tools.show_workfiles()
 
 
 def process_workfile_builder():

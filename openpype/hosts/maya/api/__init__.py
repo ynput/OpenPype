@@ -8,7 +8,7 @@ from avalon import api as avalon
 from avalon import pipeline
 from avalon.maya import suspended_refresh
 from avalon.maya.pipeline import IS_HEADLESS
-from openpype.tools import workfiles
+from openpype.tools.utils import host_tools
 from pyblish import api as pyblish
 from openpype.lib import any_outdated
 import openpype.hosts.maya
@@ -208,14 +208,10 @@ def on_init(_):
     launch_workfiles = os.environ.get("WORKFILES_STARTUP")
 
     if launch_workfiles:
-        safe_deferred(launch_workfiles_app)
+        safe_deferred(host_tools.show_workfiles)
 
     if not IS_HEADLESS:
         safe_deferred(override_toolbox_ui)
-
-
-def launch_workfiles_app():
-    workfiles.show(os.environ["AVALON_WORKDIR"])
 
 
 def on_before_save(return_code, _):
@@ -313,9 +309,15 @@ def on_task_changed(*args):
         lib.set_context_settings()
         lib.update_content_on_context_change()
 
+    msg = "  project: {}\n  asset: {}\n  task:{}".format(
+        avalon.Session["AVALON_PROJECT"],
+        avalon.Session["AVALON_ASSET"],
+        avalon.Session["AVALON_TASK"]
+    )
+
     lib.show_message(
         "Context was changed",
-        ("Context was changed to {}".format(avalon.Session["AVALON_ASSET"])),
+        ("Context was changed to:\n{}".format(msg)),
     )
 
 
