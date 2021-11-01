@@ -106,7 +106,7 @@ class DropboxHandler(AbstractProvider):
                 "type": "dict-roots",
                 "object_type": {
                     "type": "path",
-                    "multiplatform": False,
+                    "multiplatform": True,
                     "multipath": False
                 }
             }
