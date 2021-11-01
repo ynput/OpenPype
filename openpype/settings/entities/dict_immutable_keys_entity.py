@@ -767,7 +767,23 @@ class SyncServerSites(DictImmutableKeysEntity):
         if studio_overrides_should_be_overriden:
             self.add_to_studio_default()
 
+    @property
+    def has_unsaved_changes(self):
+        if self._sites_changed:
+            return True
+        return super(SyncServerSites, self).has_unsaved_changes
 
+    @property
+    def has_studio_override(self):
+        if self._sites_changed:
+            return True
+        return super(SyncServerSites, self).has_studio_override
+
+    @property
+    def has_project_override(self):
+        if self._sites_changed:
+            return True
+        return super(SyncServerSites, self).has_project_override
 
     def _get_children(self):
         from openpype_modules import sync_server
