@@ -782,8 +782,6 @@ class SyncServerSites(DictImmutableKeysEntity):
     def _get_children(self):
         from openpype_modules import sync_server
 
-        from openpype_modules.sync_server.providers import lib as lib_providers
-
         # Load system settings to find out all created sites
         modules_entity = self.get_entity_from_path("system_settings/modules")
         sync_server_settings_entity = modules_entity.get("sync_server")
