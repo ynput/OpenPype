@@ -275,8 +275,7 @@ def on_open(_):
 
             # Show outdated pop-up
             def _on_show_inventory():
-                import avalon.tools.sceneinventory as tool
-                tool.show(parent=parent)
+                host_tools.show_scene_inventory(parent=parent)
 
             dialog = popup.Popup(parent=parent)
             dialog.setWindowTitle("Maya scene has outdated content")

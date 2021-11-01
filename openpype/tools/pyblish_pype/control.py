@@ -7,7 +7,6 @@ an active window manager; such as via Travis-CI.
 """
 import os
 import sys
-import traceback
 import inspect
 import logging
 
