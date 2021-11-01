@@ -793,7 +793,7 @@ class SyncServerSites(DictImmutableKeysEntity):
             sites_entity = sync_server_settings_entity["sites"]
             for site_name, provider_entity in sites_entity.items():
                 provider_name = provider_entity["provider"].value
-                provider_children = (
+                provider_children = copy.deepcopy(
                     project_settings_schema.get(provider_name)
                 ) or []
                 provider_children.insert(0, copy.deepcopy(checkbox_child))
