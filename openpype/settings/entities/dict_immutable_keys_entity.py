@@ -572,7 +572,7 @@ class RootsDictEntity(DictImmutableKeysEntity):
             object_type = {"type": object_type}
         self.object_type = object_type
 
-        if not self.is_group:
+        if self.group_item is None and not self.is_group:
             self.is_group = True
 
         schema_data = copy.deepcopy(self.schema_data)
@@ -733,7 +733,7 @@ class SyncServerSites(DictImmutableKeysEntity):
     schema_types = ["sync-server-sites"]
 
     def _item_initialization(self):
-        if not self.is_group:
+        if self.group_item is None and not self.is_group:
             self.is_group = True
 
         self._studio_overrides_should_be_overriden = False
