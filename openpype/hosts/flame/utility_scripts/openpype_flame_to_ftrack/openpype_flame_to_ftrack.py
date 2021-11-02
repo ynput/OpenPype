@@ -804,11 +804,11 @@ def main_window(selection):
         task_type_input = FlamePushButtonMenu(
             cfg_d["create_task_type"], F_PROJ_TASK_TYPES, window)
 
-        ## Button
+        # Button
         select_all_btn = FlameButton('Select All', select_all, window)
         ftrack_send_btn = FlameButton('Send to Ftrack', send_to_ftrack, window)
 
-        ## left props
+        # left props
         prop_layout_l = QtWidgets.QGridLayout()
         prop_layout_l.setHorizontalSpacing(30)
         prop_layout_l.addWidget(shot_name_label, 0, 0)
