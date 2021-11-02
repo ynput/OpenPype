@@ -6,6 +6,7 @@ import appdirs
 import requests
 import six
 import sys
+from pprint import pprint
 
 from maya import cmds
 import maya.app.renderSetup.model.renderSetup as renderSetup
@@ -81,12 +82,20 @@ class CreateRender(plugin.Creator):
     }
 
     _image_prefixes = {
-        'mentalray': 'maya/<Scene>/<RenderLayer>/<RenderLayer>_<RenderPass>',
+        'mentalray': 'maya/<Scene>/<RenderLayer>/<RenderLayer>{aov_separator}<RenderPass>',  # noqa
         'vray': 'maya/<scene>/<Layer>/<Layer>',
-        'arnold': 'maya/<Scene>/<RenderLayer>/<RenderLayer>_<RenderPass>',
-        'renderman': 'maya/<Scene>/<layer>/<layer>_<aov>',
-        'redshift': 'maya/<Scene>/<RenderLayer>/<RenderLayer>_<RenderPass>'
+        'arnold': 'maya/<Scene>/<RenderLayer>/<RenderLayer>{aov_separator}<RenderPass>',  # noqa
+        'renderman': 'maya/<Scene>/<layer>/<layer>{aov_separator}<aov>',
+        'redshift': 'maya/<Scene>/<RenderLayer>/<RenderLayer>{aov_separator}<RenderPass>'  # noqa
     }
+
+    _aov_chars = {
+        "dot": ".",
+        "dash": "-",
+        "underscore": "_"
+    }
+
+    _project_settings = None
 
     def __init__(self, *args, **kwargs):
         """Constructor."""
@@ -95,12 +104,24 @@ class CreateRender(plugin.Creator):
         if not deadline_settings["enabled"]:
             self.deadline_servers = {}
             return
-        project_settings = get_project_settings(Session["AVALON_PROJECT"])
+        self._project_settings = get_project_settings(
+            Session["AVALON_PROJECT"])
+
+        # project_settings/maya/create/CreateRender/aov_separator
+        try:
+            self.aov_separator = self._aov_chars[(
+                self._project_settings["maya"]
+                                      ["create"]
+                                      ["CreateRender"]
+                                      ["aov_separator"]
+            )]
+        except KeyError:
+            self.aov_separator = "_"
+
         try:
             default_servers = deadline_settings["deadline_urls"]
             project_servers = (
-                project_settings["deadline"]
-                                ["deadline_servers"]
+                self._project_settings["deadline"]["deadline_servers"]
             )
             self.deadline_servers = {
                 k: default_servers[k]
@@ -409,8 +430,10 @@ class CreateRender(plugin.Creator):
             renderer (str): Renderer name.
 
         """
+        prefix = self._image_prefixes[renderer]
+        prefix = prefix.replace("{aov_separator}", self.aov_separator)
         cmds.setAttr(self._image_prefix_nodes[renderer],
-                     self._image_prefixes[renderer],
+                     prefix,
                      type="string")
 
         asset = get_asset()
@@ -446,37 +469,22 @@ class CreateRender(plugin.Creator):
 
             self._set_global_output_settings()
 
-    @staticmethod
-    def _set_renderer_option(renderer_node, arg=None, value=None):
-        # type: (str, str, str) -> str
-        """Set option on renderer node.
-
-        If renderer settings node doesn't exists, it is created first.
-
-        Args:
-             renderer_node (str): Renderer name.
-             arg (str, optional): Argument name.
-             value (str, optional): Argument value.
-
-        Returns:
-            str: Renderer settings node.
-
-        """
-        settings = cmds.ls(type=renderer_node)
-        result = settings[0] if settings else cmds.createNode(renderer_node)
-        cmds.setAttr(arg.format(result), value)
-        return result
-
     def _set_vray_settings(self, asset):
         # type: (dict) -> None
         """Sets important settings for Vray."""
-        node = self._set_renderer_option(
-            "VRaySettingsNode", "{}.fileNameRenderElementSeparator", "_"
+        settings = cmds.ls(type="VRaySettingsNode")
+        node = settings[0] if settings else cmds.createNode("VRaySettingsNode")
+
+        # set separator
+        cmds.setAttr(
+            "{}.fileNameRenderElementSeparator".format(node),
+            self.aov_separator,
+            type="string"
         )
 
         # set format to exr
         cmds.setAttr(
-            "{}.imageFormatStr".format(node), 5)
+            "{}.imageFormatStr".format(node), "exr", type="string")
 
         # animType
         cmds.setAttr(
