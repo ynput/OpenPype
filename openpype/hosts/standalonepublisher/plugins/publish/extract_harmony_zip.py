@@ -221,10 +221,19 @@ class ExtractHarmonyZip(openpype.api.Extractor):
         # Setup the data needed to form a valid work path filename
         anatomy = openpype.api.Anatomy()
         project_entity = instance.context.data["projectEntity"]
+        asset_entity = io.find_one({
+            "type": "asset",
+            "name": instance.data["asset"]
+        })
 
-        task_name = instance.data.get("task").get("name")
-        task_type = instance.data.get("task").get("type")
-        task_short = instance.data.get("task").get("short")
+        task_name = instance.data.get("task")
+        task_type = asset_entity["data"]["tasks"][task_name].get("type")
+
+        if task_type:
+            task_short = project_entity["config"]["tasks"].get(
+                task_type, {}).get("short_name")
+        else:
+            task_short = None
 
         data = {
             "root": api.registered_root(),
