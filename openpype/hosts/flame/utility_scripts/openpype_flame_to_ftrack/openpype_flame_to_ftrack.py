@@ -209,10 +209,45 @@ def export_thumbnail(sequence, tempdir_path):
         EXPORT_PRESETS_DIR,
         "openpype_seg_thumbnails_jpg.xml"
     )
-    print(export_preset)
     poster_frame_exporter = flame.PyExporter()
     poster_frame_exporter.foreground = True
     poster_frame_exporter.export(sequence, export_preset, tempdir_path)
+
+
+def export_video(sequence, tempdir_path):
+    import flame
+    export_preset = os.path.join(
+        EXPORT_PRESETS_DIR,
+        "openpype_seg_video_h264.xml"
+    )
+    poster_frame_exporter = flame.PyExporter()
+    poster_frame_exporter.foreground = True
+    poster_frame_exporter.export(sequence, export_preset, tempdir_path)
+
+
+def timecode_to_frames(timecode, framerate):
+    def _seconds(value):
+        if isinstance(value, str):
+            _zip_ft = zip((3600, 60, 1, 1 / framerate), value.split(':'))
+            return sum(f * float(t) for f, t in _zip_ft)
+        elif isinstance(value, (int, float)):
+            return value / framerate
+        return 0
+
+    def _frames(seconds):
+        return seconds * framerate
+
+    def tc_to_frames(_timecode, start=None):
+        return _frames(_seconds(_timecode) - _seconds(start))
+
+    if '+' in timecode:
+        timecode = timecode.replace('+', ':')
+    elif '#' in timecode:
+        timecode = timecode.replace('#', ':')
+
+    frames = int(round(tc_to_frames(timecode, start='00:00:00:00')))
+
+    return frames
 
 
 class FlameLabel(QtWidgets.QLabel):
@@ -399,34 +434,7 @@ def main_window(selection):
     import sys
     import re
 
-    def timecode_to_frames(timecode, framerate):
-
-        def _seconds(value):
-            if isinstance(value, str):
-                _zip_ft = zip((3600, 60, 1, 1 / framerate), value.split(':'))
-                return sum(f * float(t) for f, t in _zip_ft)
-            elif isinstance(value, (int, float)):
-                return value / framerate
-            return 0
-
-        def _frames(seconds):
-            return seconds * framerate
-
-        def timecode_to_frames(_timecode, start=None):
-            return _frames(_seconds(_timecode) - _seconds(start))
-
-        if '+' in timecode:
-            timecode = timecode.replace('+', ':')
-        elif '#' in timecode:
-            timecode = timecode.replace('#', ':')
-
-        frames = int(round(timecode_to_frames(timecode, start='00:00:00:00')))
-
-        return frames
-
     def timeline_info(selection):
-        import flame
-
         # identificar as informacoes dos segmentos na timeline
         for sequence in selection:
             frame_rate = float(str(sequence.frame_rate)[:-4])
@@ -545,7 +553,9 @@ def main_window(selection):
 
             return task
 
-        # start procedure
+        '''
+        ##################### start procedure
+        '''
         _cfg_data_back = {}
 
         # get shot name template from gui input
@@ -578,7 +588,6 @@ def main_window(selection):
             "source_resolution": (
                 "1" if source_resolution_btn.isChecked() else "0")
         }
-        #########################################################
 
         # add cfg data back to settings.ini
         set_config(_cfg_data_back, "main")
@@ -590,7 +599,16 @@ def main_window(selection):
 
             for seq in selection:
                 export_thumbnail(seq, tempdir_path)
+                export_video(seq, tempdir_path)
                 break
+
+            temp_files = os.listdir(tempdir_path)
+            thumbnails = [f for f in temp_files if "jpg" in f]
+            videos = [f for f in temp_files if "mov" in f]
+
+            print(temp_files)
+            print(thumbnails)
+            print(videos)
 
             # Get all selected items from treewidget
             for item in tree.selectedItems():
@@ -605,6 +623,17 @@ def main_window(selection):
                 # other
                 sequence_name = item.text(0)
                 shot_name = item.text(1)
+
+                # get component files
+                thumb_f = next((f for f in thumbnails if shot_name in f), None)
+                video_f = next((f for f in videos if shot_name in f), None)
+                print(thumb_f)
+                print(video_f)
+
+                thumb_fp = os.path.join(tempdir_path, thumb_f)
+                video_fp = os.path.join(tempdir_path, video_f)
+                print(thumb_fp)
+                print(video_fp)
 
                 # populate full shot info
                 shot_attributes = {
