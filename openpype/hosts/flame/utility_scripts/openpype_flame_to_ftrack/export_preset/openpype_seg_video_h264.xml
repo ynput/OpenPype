@@ -27,7 +27,7 @@
     </sequence>
     <movie>
         <fileType>QuickTime</fileType>
-        <namePattern>&lt;segment name&gt;_&lt;video codec&gt;</namePattern>
+        <namePattern>&lt;segment name&gt;</namePattern>
         <yuvHeadroom>0</yuvHeadroom>
         <yuvColourSpace>PCS_709</yuvColourSpace>
         <operationalPattern>None</operationalPattern>
