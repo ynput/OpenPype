@@ -3,12 +3,10 @@ import os
 from PySide2 import QtWidgets, QtCore
 from pprint import pformat
 from contextlib import contextmanager
+from xml.etree import ElementTree as ET
+import ConfigParser as CP
+import io
 
-
-# Constants
-WORKFILE_START_FRAME = 1001
-HIERARCHY_TEMPLATE = "shots[Folder]/{sequence}[Sequence]"
-CREATE_TASK_TYPE = "Compositing"
 
 # Fill following constants or set them via environment variable
 FTRACK_API_KEY = None
@@ -17,6 +15,8 @@ FTRACK_SERVER = None
 
 SCRIPT_DIR = os.path.dirname(__file__)
 EXPORT_PRESETS_DIR = os.path.join(SCRIPT_DIR, "export_preset")
+CONFIG_DIR = os.path.join(os.path.expanduser("~/.openpype"), "config")
+
 
 @contextmanager
 def maintained_ftrack_session():
@@ -98,15 +98,82 @@ def make_temp_dir():
         yield dirpath
 
     except IOError as _error:
-        raise IOError(
-            "Not able to create temp dir file: {}".format(
-                _error
-            )
-        )
+        raise IOError("Not able to create temp dir file: {}".format(_error))
 
     finally:
         print(dirpath)
-        # shutil.rmtree(dirpath)
+        shutil.rmtree(dirpath)
+
+
+@contextmanager
+def get_config(section=None):
+    cfg_file_path = os.path.join(CONFIG_DIR, "settings.ini")
+
+    # create config dir
+    if not os.path.exists(CONFIG_DIR):
+        print("making dirs at: `{}`".format(CONFIG_DIR))
+        os.makedirs(CONFIG_DIR, mode=0o777)
+
+    # write default data to settings.ini
+    if not os.path.exists(cfg_file_path):
+        default_cfg = cfg_default()
+        config = CP.RawConfigParser()
+        config.readfp(io.BytesIO(default_cfg))
+        with open(cfg_file_path, 'wb') as cfg_file:
+            config.write(cfg_file)
+
+    try:
+        config = CP.RawConfigParser()
+        config.read(cfg_file_path)
+        if section:
+            _cfg_data = {
+                k: v
+                for s in config.sections()
+                for k, v in config.items(s)
+                if s == section
+            }
+        else:
+            _cfg_data = {s: dict(config.items(s)) for s in config.sections()}
+
+        yield _cfg_data
+
+    except IOError as _error:
+        raise IOError('Not able to read settings.ini file: {}'.format(_error))
+
+    finally:
+        pass
+
+
+def set_config(cfg_data, section=None):
+    cfg_file_path = os.path.join(CONFIG_DIR, "settings.ini")
+
+    config = CP.RawConfigParser()
+    config.read(cfg_file_path)
+
+    try:
+        if not section:
+            for section in cfg_data:
+                for key, value in cfg_data[section].items():
+                    config.set(section, key, value)
+        else:
+            for key, value in cfg_data.items():
+                config.set(section, key, value)
+
+        with open(cfg_file_path, 'wb') as cfg_file:
+            config.write(cfg_file)
+
+    except IOError as _error:
+        raise IOError('Not able to write settings.ini file: {}'.format(_error))
+
+
+def cfg_default():
+    return """
+[main]
+workfile_start_frame = 1001
+shot_handles = 0
+hierarchy_template = shots[Folder]/{sequence}[Sequence]
+create_task_type = Compositing
+"""
 
 
 def get_all_task_types(project_entity):
@@ -119,6 +186,18 @@ def get_all_task_types(project_entity):
             tasks[type['name']] = type
 
     return tasks
+
+
+def export_thumbnail(sequence, tempdir_path):
+    import flame
+    export_preset = os.path.join(
+        EXPORT_PRESETS_DIR,
+        "openpype_seg_thumbnails_jpg.xml"
+    )
+    print(export_preset)
+    poster_frame_exporter = flame.PyExporter()
+    poster_frame_exporter.foreground = True
+    poster_frame_exporter.export(sequence, export_preset, tempdir_path)
 
 
 class FlameLabel(QtWidgets.QLabel):
@@ -424,30 +503,39 @@ def main_window(selection):
 
             return task
 
-        def export_thumbnail(sequence, tempdir_path):
-            export_preset = os.path.join(
-                EXPORT_PRESETS_DIR,
-                "openpype_seg_thumbnails_jpg.xml"
-            )
-            poster_frame_exporter = flame.PyExporter()
-            poster_frame_exporter.foreground = True
-            poster_frame_exporter.export(sequence, export_preset, tempdir_path)
-
         # start procedure
-        with maintained_ftrack_session() as session, make_temp_dir() as tempdir_path:
+        _cfg_data_back = {}
+        # get hierarchy from gui input
+        hierarchy_text = hierarchy_template_input.text()
+
+        # get hanldes from gui input
+        handles = handles_input.text()
+
+        # get frame start from gui input
+        frame_start = int(start_frame_input.text())
+
+        # get task type from gui input
+        task_type = task_type_input.text()
+
+        _cfg_data_back = {
+            "workfile_start_frame": str(frame_start),
+            "shot_handles": handles,
+            "hierarchy_template": hierarchy_text,
+            "create_task_type": task_type
+        }
+        #########################################################
+        print(pformat(_cfg_data_back))
+        # add cfg data back to settings.ini
+        set_config(_cfg_data_back, "main")
+
+        with maintained_ftrack_session() as session, \
+                make_temp_dir() as tempdir_path:
             print("tempdir_path: {}".format(tempdir_path))
             print("Ftrack session is: {}".format(session))
 
-            # get hanldes from gui input
-            handles = handles_input.text()
-            handle_start = int(handles)
-            handle_end = int(handles)
-
-            # get frame start from gui input
-            frame_start = int(start_frame_input.text())
-
-            # get task type from gui input
-            task_type = task_type_input.text()
+            for seq in selection:
+                export_thumbnail(seq, tempdir_path)
+                break
 
             # Get all selected items from treewidget
             for item in tree.selectedItems():
@@ -471,12 +559,11 @@ def main_window(selection):
                 }
 
                 # format hierarchy template
-                hierarchy_text = hierarchy_template_input.text()
-                hierarchy_text = hierarchy_text.format(**shot_attributes)
-                print(hierarchy_text)
+                _hierarchy_text = hierarchy_text.format(**shot_attributes)
+                print(_hierarchy_text)
 
                 # solve parents
-                parents = generate_parents_from_template(hierarchy_text)
+                parents = generate_parents_from_template(_hierarchy_text)
                 print(parents)
 
                 # obtain shot parents entities
@@ -504,8 +591,8 @@ def main_window(selection):
                 custom_attrs = {
                     "frameStart": frame_start,
                     "frameEnd": frame_end,
-                    "handleStart": handle_start,
-                    "handleEnd": handle_end
+                    "handleStart": int(handles),
+                    "handleEnd": int(handles)
                 }
 
                 # update custom attributes on shot entity
@@ -590,19 +677,21 @@ def main_window(selection):
     # Prevent weird characters when shrinking tree columns
     tree.setTextElideMode(QtCore.Qt.ElideNone)
 
-    with maintained_ftrack_session() as _session:
+    with maintained_ftrack_session() as _session, get_config("main") as cfg_d:
         # input fields
         hierarchy_label = FlameLabel(
             'Parents template', 'normal', window)
-        hierarchy_template_input = FlameLineEdit(HIERARCHY_TEMPLATE, window)
+        hierarchy_template_input = FlameLineEdit(
+            cfg_d["hierarchy_template"], window)
 
         start_frame_label = FlameLabel(
             'Workfile start frame', 'normal', window)
-        start_frame_input = FlameLineEdit(str(WORKFILE_START_FRAME), window)
+        start_frame_input = FlameLineEdit(
+            cfg_d["workfile_start_frame"], window)
 
         handles_label = FlameLabel(
             'Shot handles', 'normal', window)
-        handles_input = FlameLineEdit(str(5), window)
+        handles_input = FlameLineEdit(cfg_d["shot_handles"], window)
 
         # get project name from flame current project
         project_name = flame.project.current_project.name
@@ -618,7 +707,7 @@ def main_window(selection):
         task_type_label = FlameLabel(
             'Create Task (type)', 'normal', window)
         task_type_input = FlamePushButtonMenu(
-            CREATE_TASK_TYPE, F_PROJ_TASK_TYPES, window)
+            cfg_d["create_task_type"], F_PROJ_TASK_TYPES, window)
 
         ## Button
         select_all_btn = FlameButton('Select All', select_all, window)
