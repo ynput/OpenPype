@@ -173,6 +173,7 @@ workfile_start_frame = 1001
 shot_handles = 0
 hierarchy_template = shots[Folder]/{sequence}[Sequence]
 create_task_type = Compositing
+source_resolution = 0
 """
 
 
@@ -277,12 +278,14 @@ class FlameTreeWidget(QtWidgets.QTreeWidget):
         self.sortByColumn(0, QtCore.Qt.AscendingOrder)
         self.setAlternatingRowColors(True)
         self.setFocusPolicy(QtCore.Qt.NoFocus)
-        self.setStyleSheet('QTreeWidget {color: #9a9a9a; background-color: #2a2a2a; alternate-background-color: #2d2d2d; font: 14px "Discreet"}'
-                           'QTreeWidget::item:selected {color: #d9d9d9; background-color: #474747; border: 1px solid #111111}'
-                           'QHeaderView {color: #9a9a9a; background-color: #393939; font: 14px "Discreet"}'
-                           'QTreeWidget::item:selected {selection-background-color: #111111}'
-                           'QMenu {color: #9a9a9a; background-color: #24303d; font: 14px "Discreet"}'
-                           'QMenu::item:selected {color: #d9d9d9; background-color: #3a4551}')
+        self.setStyleSheet(
+            'QTreeWidget {color: #9a9a9a; background-color: #2a2a2a; alternate-background-color: #2d2d2d; font: 14px "Discreet"}'
+            'QTreeWidget::item:selected {color: #d9d9d9; background-color: #474747; border: 1px solid #111111}'
+            'QHeaderView {color: #9a9a9a; background-color: #393939; font: 14px "Discreet"}'
+            'QTreeWidget::item:selected {selection-background-color: #111111}'
+            'QMenu {color: #9a9a9a; background-color: #24303d; font: 14px "Discreet"}'
+            'QMenu::item:selected {color: #d9d9d9; background-color: #3a4551}'
+        )
         self.verticalScrollBar().setStyleSheet('color: #818181')
         self.horizontalScrollBar().setStyleSheet('color: #818181')
         self.setHeaderLabels(tree_headers)
@@ -309,6 +312,31 @@ class FlameButton(QtWidgets.QPushButton):
         self.setStyleSheet('QPushButton {color: #9a9a9a; background-color: #424142; border-top: 1px inset #555555; border-bottom: 1px inset black; font: 14px "Discreet"}'
                            'QPushButton:pressed {color: #d9d9d9; background-color: #4f4f4f; border-top: 1px inset #666666; font: italic}'
                            'QPushButton:disabled {color: #747474; background-color: #353535; border-top: 1px solid #444444; border-bottom: 1px solid #242424}')
+
+
+class FlamePushButton(QtWidgets.QPushButton):
+    """
+    Custom Qt Flame Push Button Widget
+
+    To use:
+
+    pushbutton = FlamePushButton(' Button Name', True_or_False, window)
+    """
+
+    def __init__(self, button_name, button_checked, parent_window, *args, **kwargs):
+        super(FlamePushButton, self).__init__(*args, **kwargs)
+
+        self.setText(button_name)
+        self.setParent(parent_window)
+        self.setCheckable(True)
+        self.setChecked(button_checked)
+        self.setMinimumSize(155, 28)
+        self.setMaximumSize(155, 28)
+        self.setFocusPolicy(QtCore.Qt.NoFocus)
+        self.setStyleSheet('QPushButton {color: #9a9a9a; background-color: qlineargradient(x1: 0, y1: 0, x2: 1, y2: 0, stop: .93 #424142, stop: .94 #2e3b48); text-align: left; border-top: 1px inset #555555; border-bottom: 1px inset black; font: 14px "Discreet"}'
+                           'QPushButton:checked {color: #d9d9d9; background-color: qlineargradient(x1: 0, y1: 0, x2: 1, y2: 0, stop: .93 #4f4f4f, stop: .94 #5a7fb4); font: italic; border: 1px inset black; border-bottom: 1px inset #404040; border-right: 1px inset #404040}'
+                           'QPushButton:disabled {color: #6a6a6a; background-color: qlineargradient(x1: 0, y1: 0, x2: 1, y2: 0, stop: .93 #383838, stop: .94 #353535); font: light; border-top: 1px solid #575757; border-bottom: 1px solid #242424; border-right: 1px solid #353535; border-left: 1px solid #353535}'
+                           'QToolTip {color: black; background-color: #ffffde; border: black solid 1px}')
 
 
 class FlamePushButtonMenu(QtWidgets.QPushButton):
@@ -521,10 +549,12 @@ def main_window(selection):
             "workfile_start_frame": str(frame_start),
             "shot_handles": handles,
             "hierarchy_template": hierarchy_text,
-            "create_task_type": task_type
+            "create_task_type": task_type,
+            "source_resolution": (
+                "1" if source_resolution_btn.isChecked() else "0")
         }
         #########################################################
-        print(pformat(_cfg_data_back))
+
         # add cfg data back to settings.ini
         set_config(_cfg_data_back, "main")
 
@@ -693,6 +723,12 @@ def main_window(selection):
             'Shot handles', 'normal', window)
         handles_input = FlameLineEdit(cfg_d["shot_handles"], window)
 
+        source_resolution_btn = FlamePushButton(
+            'Source resolutuion', bool(int(cfg_d["source_resolution"])),
+            window
+        )
+
+
         # get project name from flame current project
         project_name = flame.project.current_project.name
 
@@ -713,35 +749,45 @@ def main_window(selection):
         select_all_btn = FlameButton('Select All', select_all, window)
         ftrack_send_btn = FlameButton('Send to Ftrack', send_to_ftrack, window)
 
-        ## Window Layout
-        prop_layout = QtWidgets.QGridLayout()
-        prop_layout.setHorizontalSpacing(30)
-        prop_layout.addWidget(hierarchy_label, 0, 0)
-        prop_layout.addWidget(hierarchy_template_input, 0, 1)
-        prop_layout.addWidget(start_frame_label, 1, 0)
-        prop_layout.addWidget(start_frame_input, 1, 1)
-        prop_layout.addWidget(handles_label, 2, 0)
-        prop_layout.addWidget(handles_input, 2, 1)
-        prop_layout.addWidget(task_type_label, 3, 0)
-        prop_layout.addWidget(task_type_input, 3, 1)
+        ## left props
+        prop_layout_l = QtWidgets.QGridLayout()
+        prop_layout_l.setHorizontalSpacing(30)
+        prop_layout_l.addWidget(hierarchy_label, 0, 0)
+        prop_layout_l.addWidget(hierarchy_template_input, 0, 1)
+        prop_layout_l.addWidget(start_frame_label, 1, 0)
+        prop_layout_l.addWidget(start_frame_input, 1, 1)
+        prop_layout_l.addWidget(handles_label, 2, 0)
+        prop_layout_l.addWidget(handles_input, 2, 1)
+        prop_layout_l.addWidget(task_type_label, 3, 0)
+        prop_layout_l.addWidget(task_type_input, 3, 1)
 
-        tree_layout = QtWidgets.QGridLayout()
-        tree_layout.addWidget(tree, 1, 0)
+        # right props
+        prop_widget_r = QtWidgets.QWidget(window)
+        prop_layout_r = QtWidgets.QGridLayout(prop_widget_r)
+        prop_layout_r.setHorizontalSpacing(30)
+        prop_layout_r.setAlignment(
+            QtCore.Qt.AlignLeft | QtCore.Qt.AlignTop)
+        prop_layout_r.setContentsMargins(0, 0, 0, 0)
+        prop_layout_r.addWidget(source_resolution_btn, 0, 0)
+
+        prop_main_layout = QtWidgets.QHBoxLayout()
+        prop_main_layout.addLayout(prop_layout_l, 1)
+        prop_main_layout.addSpacing(20)
+        prop_main_layout.addWidget(prop_widget_r, 1)
 
         hbox = QtWidgets.QHBoxLayout()
         hbox.addWidget(select_all_btn)
         hbox.addWidget(ftrack_send_btn)
 
-        main_frame = QtWidgets.QVBoxLayout()
+        main_frame = QtWidgets.QVBoxLayout(window)
         main_frame.setMargin(20)
         main_frame.addStretch(5)
-        main_frame.addLayout(prop_layout)
+        main_frame.addLayout(prop_main_layout)
         main_frame.addStretch(10)
-        main_frame.addLayout(tree_layout)
+        main_frame.addWidget(tree)
         main_frame.addStretch(5)
         main_frame.addLayout(hbox)
 
-        window.setLayout(main_frame)
         window.show()
 
         timeline_info(selection)
