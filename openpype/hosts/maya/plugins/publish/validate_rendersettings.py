@@ -148,7 +148,7 @@ class ValidateRenderSettings(pyblish.api.InstancePlugin):
                 node = vray_settings[0]
 
             scene_sep = cmds.getAttr(
-                    "{}.fileNameRenderElementSeparator".format(node))
+                "{}.fileNameRenderElementSeparator".format(node))
             if scene_sep != instance.data.get("aovSeparator", "_"):
                 cls.log.error("AOV separator is not set correctly.")
                 invalid = True

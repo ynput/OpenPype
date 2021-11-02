@@ -6,7 +6,6 @@ import appdirs
 import requests
 import six
 import sys
-from pprint import pprint
 
 from maya import cmds
 import maya.app.renderSetup.model.renderSetup as renderSetup
