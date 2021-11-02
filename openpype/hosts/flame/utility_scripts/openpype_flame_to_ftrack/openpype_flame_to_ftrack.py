@@ -171,6 +171,7 @@ def cfg_default():
 [main]
 workfile_start_frame = 1001
 shot_handles = 0
+shot_name_template = {sequence}_{shot}
 hierarchy_template = shots[Folder]/{sequence}[Sequence]
 create_task_type = Compositing
 source_resolution = 0
@@ -521,7 +522,7 @@ def main_window(selection):
             ]
 
             if existing_task:
-                return existing_task
+                return existing_task.pop()
 
             task = session.create('Task', {
                 "name": task_type.lower(),
@@ -533,6 +534,10 @@ def main_window(selection):
 
         # start procedure
         _cfg_data_back = {}
+
+        # get shot name template from gui input
+        shot_name_template = shot_name_template_input.text()
+
         # get hierarchy from gui input
         hierarchy_text = hierarchy_template_input.text()
 
@@ -552,6 +557,7 @@ def main_window(selection):
         fps = fps_input.text()
 
         _cfg_data_back = {
+            "shot_name_template": shot_name_template,
             "workfile_start_frame": str(frame_start),
             "shot_handles": handles,
             "hierarchy_template": hierarchy_text,
@@ -594,6 +600,9 @@ def main_window(selection):
                     "task": task_type
                 }
 
+                # format shot name template
+                _shot_name = shot_name_template.format(**shot_attributes)
+
                 # format hierarchy template
                 _hierarchy_text = hierarchy_text.format(**shot_attributes)
                 print(_hierarchy_text)
@@ -618,7 +627,7 @@ def main_window(selection):
                 f_s_entity = get_ftrack_entity(
                     session,
                     "Shot",
-                    item.text(1),
+                    _shot_name,
                     _parent
                 )
                 print("Shot entity is: {}".format(f_s_entity))
@@ -726,6 +735,11 @@ def main_window(selection):
             break
 
         # input fields
+        shot_name_label = FlameLabel(
+            'Shot name template', 'normal', window)
+        shot_name_template_input = FlameLineEdit(
+            cfg_d["shot_name_template"], window)
+
         hierarchy_label = FlameLabel(
             'Parents template', 'normal', window)
         hierarchy_template_input = FlameLineEdit(
@@ -784,14 +798,16 @@ def main_window(selection):
         ## left props
         prop_layout_l = QtWidgets.QGridLayout()
         prop_layout_l.setHorizontalSpacing(30)
-        prop_layout_l.addWidget(hierarchy_label, 0, 0)
-        prop_layout_l.addWidget(hierarchy_template_input, 0, 1)
-        prop_layout_l.addWidget(start_frame_label, 1, 0)
-        prop_layout_l.addWidget(start_frame_input, 1, 1)
-        prop_layout_l.addWidget(handles_label, 2, 0)
-        prop_layout_l.addWidget(handles_input, 2, 1)
-        prop_layout_l.addWidget(task_type_label, 3, 0)
-        prop_layout_l.addWidget(task_type_input, 3, 1)
+        prop_layout_l.addWidget(shot_name_label, 0, 0)
+        prop_layout_l.addWidget(shot_name_template_input, 0, 1)
+        prop_layout_l.addWidget(hierarchy_label, 1, 0)
+        prop_layout_l.addWidget(hierarchy_template_input, 1, 1)
+        prop_layout_l.addWidget(start_frame_label, 2, 0)
+        prop_layout_l.addWidget(start_frame_input, 2, 1)
+        prop_layout_l.addWidget(handles_label, 3, 0)
+        prop_layout_l.addWidget(handles_input, 3, 1)
+        prop_layout_l.addWidget(task_type_label, 4, 0)
+        prop_layout_l.addWidget(task_type_input, 4, 1)
 
         # right props
         prop_widget_r = QtWidgets.QWidget(window)
@@ -821,11 +837,8 @@ def main_window(selection):
 
         main_frame = QtWidgets.QVBoxLayout(window)
         main_frame.setMargin(20)
-        main_frame.addStretch(5)
         main_frame.addLayout(prop_main_layout)
-        main_frame.addStretch(10)
         main_frame.addWidget(tree)
-        main_frame.addStretch(5)
         main_frame.addLayout(hbox)
 
         window.show()
@@ -852,5 +865,4 @@ def get_media_panel_custom_ui_actions():
                 }
             ]
         }
-
     ]
