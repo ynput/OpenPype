@@ -419,7 +419,7 @@ def main_window(selection):
             for ver in sequence.versions:
                 for tracks in ver.tracks:
                     for segment in tracks.segments:
-                        print(segment.type)
+                        print(segment.attributes)
                         # get clip frame duration
                         record_duration = str(segment.record_duration)[1:-1]
                         clip_duration = timecode_to_frames(
@@ -545,6 +545,12 @@ def main_window(selection):
         # get task type from gui input
         task_type = task_type_input.text()
 
+        # get resolution from gui inputs
+        width = width_input.text()
+        height = height_input.text()
+        pixel_aspect = pixel_aspect_input.text()
+        fps = fps_input.text()
+
         _cfg_data_back = {
             "workfile_start_frame": str(frame_start),
             "shot_handles": handles,
@@ -622,7 +628,11 @@ def main_window(selection):
                     "frameStart": frame_start,
                     "frameEnd": frame_end,
                     "handleStart": int(handles),
-                    "handleEnd": int(handles)
+                    "handleEnd": int(handles),
+                    "resolutionWidth": int(width),
+                    "resolutionHeight": int(height),
+                    "pixelAspect": float(pixel_aspect),
+                    "fps": float(fps)
                 }
 
                 # update custom attributes on shot entity
@@ -708,6 +718,13 @@ def main_window(selection):
     tree.setTextElideMode(QtCore.Qt.ElideNone)
 
     with maintained_ftrack_session() as _session, get_config("main") as cfg_d:
+
+        for select in selection:
+            seq_height = select.height
+            seq_width = select.width
+            fps = float(str(select.frame_rate)[:-4])
+            break
+
         # input fields
         hierarchy_label = FlameLabel(
             'Parents template', 'normal', window)
@@ -728,6 +745,21 @@ def main_window(selection):
             window
         )
 
+        width_label = FlameLabel(
+            'Sequence width', 'normal', window)
+        width_input = FlameLineEdit(str(seq_width), window)
+
+        height_label = FlameLabel(
+            'Sequence height', 'normal', window)
+        height_input = FlameLineEdit(str(seq_height), window)
+
+        pixel_aspect_label = FlameLabel(
+            'Pixel aspect ratio', 'normal', window)
+        pixel_aspect_input = FlameLineEdit(str(1.00), window)
+
+        fps_label = FlameLabel(
+            'Frame rate', 'normal', window)
+        fps_input = FlameLineEdit(str(fps), window)
 
         # get project name from flame current project
         project_name = flame.project.current_project.name
@@ -769,6 +801,14 @@ def main_window(selection):
             QtCore.Qt.AlignLeft | QtCore.Qt.AlignTop)
         prop_layout_r.setContentsMargins(0, 0, 0, 0)
         prop_layout_r.addWidget(source_resolution_btn, 0, 0)
+        prop_layout_r.addWidget(width_label, 1, 0)
+        prop_layout_r.addWidget(width_input, 1, 1)
+        prop_layout_r.addWidget(height_label, 2, 0)
+        prop_layout_r.addWidget(height_input, 2, 1)
+        prop_layout_r.addWidget(pixel_aspect_label, 3, 0)
+        prop_layout_r.addWidget(pixel_aspect_input, 3, 1)
+        prop_layout_r.addWidget(fps_label, 4, 0)
+        prop_layout_r.addWidget(fps_input, 4, 1)
 
         prop_main_layout = QtWidgets.QHBoxLayout()
         prop_main_layout.addLayout(prop_layout_l, 1)
