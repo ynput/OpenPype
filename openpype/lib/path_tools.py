@@ -258,7 +258,7 @@ class HostDirmap:
                            " destination directory."))
                 break
             except RuntimeError:
-                log.error("invalid path {} -> {}, mapping not registered".format(  #noqa
+                log.error("invalid path {} -> {}, mapping not registered".format(  # noqa: E501
                     sp, mapping["destination-path"][k]
                 ))
                 continue
@@ -272,10 +272,8 @@ class HostDirmap:
 
         mapping = local_mapping or \
             self.project_settings[self.host_name][dirmap_label]["paths"] or {}
-        mapping_enabled = self.project_settings[self.host_name]\
-                                               [dirmap_label]\
-                                               ["enabled"] \
-            or bool(local_mapping)
+        enbled = self.project_settings[self.host_name][dirmap_label]["enabled"]
+        mapping_enabled = enbled or bool(local_mapping)
 
         if not mapping or not mapping_enabled:
             return []
@@ -330,9 +328,9 @@ class HostDirmap:
                 if os.path.isdir(value):
                     try:
                         mapping["destination-path"] = [value]
-                        mapping["source-path"] = [sync_settings["sites"]\
-                                                               [remote_site]\
-                                                               ["root"]\
+                        mapping["source-path"] = [sync_settings["sites"]
+                                                               [remote_site]
+                                                               ["root"]
                                                                [root_name]]
                     except IndexError:
                         # missing corresponding destination path
