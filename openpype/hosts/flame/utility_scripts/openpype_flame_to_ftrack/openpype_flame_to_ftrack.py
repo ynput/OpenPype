@@ -7,21 +7,34 @@ from xml.etree import ElementTree as ET
 import ConfigParser as CP
 import io
 
-
 # Fill following constants or set them via environment variable
+FTRACK_MODULE_PATH = None
 FTRACK_API_KEY = None
 FTRACK_API_USER = None
 FTRACK_SERVER = None
 
 SCRIPT_DIR = os.path.dirname(__file__)
 EXPORT_PRESETS_DIR = os.path.join(SCRIPT_DIR, "export_preset")
-CONFIG_DIR = os.path.join(os.path.expanduser("~/.openpype"), "config")
+CONFIG_DIR = os.path.join(os.path.expanduser(
+    "~/.openpype"), "openpype_flame_to_ftrack")
+
+
+def import_ftrack_api():
+    try:
+        import ftrack_api
+        return ftrack_api
+    except ImportError:
+        import sys
+        ftrk_m_p = FTRACK_MODULE_PATH or os.getenv("FTRACK_MODULE_PATH")
+        sys.path.append(ftrk_m_p)
+        import ftrack_api
+        return ftrack_api
 
 
 @contextmanager
 def maintained_ftrack_session():
-    import ftrack_api
     import os
+    ftrack_api = import_ftrack_api()
 
     def validate_credentials(url, user, api):
         first_validation = True
