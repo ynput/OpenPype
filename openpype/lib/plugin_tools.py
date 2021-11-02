@@ -28,17 +28,15 @@ class TaskNotSetError(KeyError):
         super(TaskNotSetError, self).__init__(msg)
 
 
-def _get_subset_name(
+def get_subset_name_with_asset_doc(
     family,
     variant,
     task_name,
-    asset_id,
     asset_doc,
-    project_name,
-    host_name,
-    default_template,
-    dynamic_data,
-    dbcon
+    project_name=None,
+    host_name=None,
+    default_template=None,
+    dynamic_data=None
 ):
     """Calculate subset name based on passed context and OpenPype settings.
 
@@ -54,8 +52,6 @@ def _get_subset_name(
         family (str): Instance family.
         variant (str): In most of cases it is user input during creation.
         task_name (str): Task name on which context is instance created.
-        asset_id (ObjectId): Id of object. Is optional if `asset_doc` is
-            passed.
         asset_doc (dict): Queried asset document with it's tasks in data.
             Used to get task type.
         project_name (str): Name of project on which is instance created.
@@ -84,25 +80,6 @@ def _get_subset_name(
 
         project_name = avalon.api.Session["AVALON_PROJECT"]
 
-    # Query asset document if was not passed
-    if asset_doc is None:
-        if dbcon is None:
-            from avalon.api import AvalonMongoDB
-
-            dbcon = AvalonMongoDB()
-            dbcon.Session["AVALON_PROJECT"] = project_name
-
-        dbcon.install()
-
-        asset_doc = dbcon.find_one(
-            {
-                "type": "asset",
-                "_id": asset_id
-            },
-            {
-                "data.tasks": True
-            }
-        ) or {}
     asset_tasks = asset_doc.get("data", {}).get("tasks") or {}
     task_info = asset_tasks.get(task_name) or {}
     task_type = task_info.get("type")
@@ -144,34 +121,6 @@ def _get_subset_name(
     return template.format(**prepare_template_data(fill_pairs))
 
 
-def get_subset_name_with_asset_doc(
-    family,
-    variant,
-    task_name,
-    asset_doc,
-    project_name=None,
-    host_name=None,
-    default_template=None,
-    dynamic_data=None,
-    dbcon=None
-):
-    """Calculate subset name using OpenPype settings.
-
-    This variant of function expects already queried asset document.
-    """
-    return _get_subset_name(
-        family, variant,
-        task_name,
-        None,
-        asset_doc,
-        project_name,
-        host_name,
-        default_template,
-        dynamic_data,
-        dbcon
-    )
-
-
 def get_subset_name(
     family,
     variant,
@@ -190,17 +139,28 @@ def get_subset_name(
     This is legacy function should be replaced with
     `get_subset_name_with_asset_doc` where asset document is expected.
     """
-    return _get_subset_name(
+    if dbcon is None:
+        from avalon.api import AvalonMongoDB
+
+        dbcon = AvalonMongoDB()
+        dbcon.Session["AVALON_PROJECT"] = project_name
+
+    dbcon.install()
+
+    asset_doc = dbcon.find_one(
+        {"_id": asset_id},
+        {"data.tasks": True}
+    ) or {}
+
+    return get_subset_name_with_asset_doc(
         family,
         variant,
         task_name,
-        asset_id,
-        None,
+        asset_doc,
         project_name,
         host_name,
         default_template,
-        dynamic_data,
-        dbcon
+        dynamic_data
     )
 
 
@@ -578,3 +538,48 @@ def should_decompress(file_url):
             "compression: \"dwab\"" in output
 
     return False
+
+
+def parse_json(path):
+    """Parses json file at 'path' location
+
+        Returns:
+            (dict) or None if unparsable
+        Raises:
+            AsssertionError if 'path' doesn't exist
+    """
+    path = path.strip('\"')
+    assert os.path.isfile(path), (
+        "Path to json file doesn't exist. \"{}\"".format(path)
+    )
+    data = None
+    with open(path, "r") as json_file:
+        try:
+            data = json.load(json_file)
+        except Exception as exc:
+            log.error(
+                "Error loading json: "
+                "{} - Exception: {}".format(path, exc)
+            )
+    return data
+
+
+def get_batch_asset_task_info(ctx):
+    """Parses context data from webpublisher's batch metadata
+
+        Returns:
+            (tuple): asset, task_name (Optional), task_type
+    """
+    task_type = "default_task_type"
+    task_name = None
+    asset = None
+
+    if ctx["type"] == "task":
+        items = ctx["path"].split('/')
+        asset = items[-2]
+        task_name = ctx["name"]
+        task_type = ctx["attributes"]["type"]
+    else:
+        asset = ctx["name"]
+
+    return asset, task_name, task_type

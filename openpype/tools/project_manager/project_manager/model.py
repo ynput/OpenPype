@@ -1456,7 +1456,11 @@ class HierarchyModel(QtCore.QAbstractItemModel):
             return
 
         raw_data = mime_data.data("application/copy_task")
-        encoded_data = QtCore.QByteArray.fromRawData(raw_data)
+        if isinstance(raw_data, QtCore.QByteArray):
+            # Raw data are already QByteArrat and we don't have to load them
+            encoded_data = raw_data
+        else:
+            encoded_data = QtCore.QByteArray.fromRawData(raw_data)
         stream = QtCore.QDataStream(encoded_data, QtCore.QIODevice.ReadOnly)
         text = stream.readQString()
         try:

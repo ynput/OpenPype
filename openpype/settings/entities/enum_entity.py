@@ -8,7 +8,7 @@ from .lib import (
 
 
 class BaseEnumEntity(InputEntity):
-    def _item_initalization(self):
+    def _item_initialization(self):
         self.multiselection = True
         self.value_on_not_set = None
         self.enum_items = None
@@ -70,7 +70,7 @@ class BaseEnumEntity(InputEntity):
 class EnumEntity(BaseEnumEntity):
     schema_types = ["enum"]
 
-    def _item_initalization(self):
+    def _item_initialization(self):
         self.multiselection = self.schema_data.get("multiselection", False)
         self.enum_items = self.schema_data.get("enum_items")
         # Default is optional and non breaking attribute
@@ -143,6 +143,7 @@ class HostsEnumEntity(BaseEnumEntity):
         "aftereffects",
         "blender",
         "celaction",
+        "flame",
         "fusion",
         "harmony",
         "hiero",
@@ -156,7 +157,7 @@ class HostsEnumEntity(BaseEnumEntity):
         "standalonepublisher"
     ]
 
-    def _item_initalization(self):
+    def _item_initialization(self):
         self.multiselection = self.schema_data.get("multiselection", True)
         use_empty_value = False
         if not self.multiselection:
@@ -249,7 +250,7 @@ class HostsEnumEntity(BaseEnumEntity):
 class AppsEnumEntity(BaseEnumEntity):
     schema_types = ["apps-enum"]
 
-    def _item_initalization(self):
+    def _item_initialization(self):
         self.multiselection = True
         self.value_on_not_set = []
         self.enum_items = []
@@ -316,7 +317,7 @@ class AppsEnumEntity(BaseEnumEntity):
 class ToolsEnumEntity(BaseEnumEntity):
     schema_types = ["tools-enum"]
 
-    def _item_initalization(self):
+    def _item_initialization(self):
         self.multiselection = True
         self.value_on_not_set = []
         self.enum_items = []
@@ -375,7 +376,7 @@ class ToolsEnumEntity(BaseEnumEntity):
 class TaskTypeEnumEntity(BaseEnumEntity):
     schema_types = ["task-types-enum"]
 
-    def _item_initalization(self):
+    def _item_initialization(self):
         self.multiselection = self.schema_data.get("multiselection", True)
         if self.multiselection:
             self.valid_value_types = (list, )
@@ -451,7 +452,7 @@ class TaskTypeEnumEntity(BaseEnumEntity):
 class DeadlineUrlEnumEntity(BaseEnumEntity):
     schema_types = ["deadline_url-enum"]
 
-    def _item_initalization(self):
+    def _item_initialization(self):
         self.multiselection = self.schema_data.get("multiselection", True)
 
         self.enum_items = []
@@ -502,7 +503,7 @@ class DeadlineUrlEnumEntity(BaseEnumEntity):
 class AnatomyTemplatesEnumEntity(BaseEnumEntity):
     schema_types = ["anatomy-templates-enum"]
 
-    def _item_initalization(self):
+    def _item_initialization(self):
         self.multiselection = False
 
         self.enum_items = []

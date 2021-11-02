@@ -9,7 +9,7 @@ from openpype.hosts.maya.api import lib
 from avalon import io, api
 
 
-import vray_proxies
+from .vray_proxies import get_alembic_ids_cache
 
 log = logging.getLogger(__name__)
 
@@ -146,7 +146,7 @@ def create_items_from_nodes(nodes):
         vray_proxy_nodes = cmds.ls(nodes, type="VRayProxy")
         for vp in vray_proxy_nodes:
             path = cmds.getAttr("{}.fileName".format(vp))
-            ids = vray_proxies.get_alembic_ids_cache(path)
+            ids = get_alembic_ids_cache(path)
             parent_id = {}
             for k, _ in ids.items():
                 pid = k.split(":")[0]
