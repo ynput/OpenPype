@@ -213,9 +213,10 @@ class HostDirmap:
             on_dirmap_enabled: run host code for enabling dirmap
             do_dirmap: run host code to do actual remapping
     """
-    def __init__(self, host_name, project_settings):
+    def __init__(self, host_name, project_settings, sync_module=None):
         self.host_name = host_name
         self.project_settings = project_settings
+        self.sync_module = sync_module  # to limit reinit of Modules
 
     @abc.abstractmethod
     def on_enable_dirmap(self):
@@ -240,24 +241,12 @@ class HostDirmap:
             project_settings (dict): Settings for current project.
 
         """
-        local_mapping = self._get_local_sync_dirmap(self.project_settings)
-        dirmap_label = "{}-dirmap".format(self.host_name)
-        if not self.project_settings[self.host_name].get(dirmap_label) and \
-                not local_mapping:
+        mapping = self.get_mappings(self.project_settings)
+        if not mapping:
             return
 
-        mapping = local_mapping or \
-            self.project_settings[self.host_name][dirmap_label]["paths"] or {}
-        mapping_enabled = self.project_settings[self.host_name]\
-                                               [dirmap_label]\
-                                               ["enabled"] \
-            or bool(local_mapping)
-
-        if not mapping or not mapping_enabled:
-            return
-        if mapping.get("source-path") and mapping_enabled is True:
-            log.info("Processing directory mapping ...")
-            self.on_enable_dirmap()
+        log.info("Processing directory mapping ...")
+        self.on_enable_dirmap()
 
         for k, sp in enumerate(mapping["source-path"]):
             try:
@@ -273,6 +262,24 @@ class HostDirmap:
                     sp, mapping["destination-path"][k]
                 ))
                 continue
+
+    def get_mappings(self, project_settings):
+        local_mapping = self._get_local_sync_dirmap(project_settings)
+        dirmap_label = "{}-dirmap".format(self.host_name)
+        if not self.project_settings[self.host_name].get(dirmap_label) and \
+                not local_mapping:
+            return []
+
+        mapping = local_mapping or \
+            self.project_settings[self.host_name][dirmap_label]["paths"] or {}
+        mapping_enabled = self.project_settings[self.host_name]\
+                                               [dirmap_label]\
+                                               ["enabled"] \
+            or bool(local_mapping)
+
+        if not mapping or not mapping_enabled:
+            return []
+        return mapping
 
     def _get_local_sync_dirmap(self, project_settings):
         """
@@ -294,24 +301,25 @@ class HostDirmap:
             return mapping
 
         from openpype.settings.lib import get_site_local_overrides
-        from openpype.modules import ModulesManager
 
-        manager = ModulesManager()
-        sync_module = manager.modules_by_name["sync_server"]
+        if not self.sync_module:
+            from openpype.modules import ModulesManager
+            manager = ModulesManager()
+            self.sync_module = manager.modules_by_name["sync_server"]
 
         project_name = os.getenv("AVALON_PROJECT")
 
-        active_site = sync_module.get_local_normalized_site(
-            sync_module.get_active_site(project_name))
-        remote_site = sync_module.get_local_normalized_site(
-            sync_module.get_remote_site(project_name))
+        active_site = self.sync_module.get_local_normalized_site(
+            self.sync_module.get_active_site(project_name))
+        remote_site = self.sync_module.get_local_normalized_site(
+            self.sync_module.get_remote_site(project_name))
         log.debug("active {} - remote {}".format(active_site, remote_site))
 
         if active_site == "local" \
-                and project_name in sync_module.get_enabled_projects()\
+                and project_name in self.sync_module.get_enabled_projects()\
                 and active_site != remote_site:
 
-            sync_settings = sync_module.get_sync_project_setting(
+            sync_settings = self.sync_module.get_sync_project_setting(
                 os.getenv("AVALON_PROJECT"), exclude_locals=False,
                 cached=False)
             log.debug(json.dumps(sync_settings, indent=4))
