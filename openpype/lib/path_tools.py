@@ -2,6 +2,8 @@ import json
 import logging
 import os
 import re
+import abc
+import six
 
 
 from .anatomy import Anatomy
@@ -196,3 +198,141 @@ def get_project_basic_paths(project_name):
     if isinstance(folder_structure, str):
         folder_structure = json.loads(folder_structure)
     return _list_path_items(folder_structure)
+
+
+@six.add_metaclass(abc.ABCMeta)
+class HostDirmap:
+    """
+        Abstract class for running dirmap on a workfile in a host.
+
+        Dirmap is used to translate paths inside of host workfile from one
+        OS to another. (Eg. arstist created workfile on Win, different artists
+        opens same file on Linux.)
+
+        Expects methods to be implemented inside of host:
+            on_dirmap_enabled: run host code for enabling dirmap
+            do_dirmap: run host code to do actual remapping
+    """
+    def __init__(self, host_name, project_settings):
+        self.host_name = host_name
+        self.project_settings = project_settings
+
+    @abc.abstractmethod
+    def on_enable_dirmap(self):
+        """
+            Run host dependent operation for enabling dirmap if necessary.
+        """
+
+    @abc.abstractmethod
+    def dirmap_routine(self, source_path, destination_path):
+        """
+            Run host dependent remapping from source_path to destination_path
+        """
+
+    def process_dirmap(self):
+        # type: (dict) -> None
+        """Go through all paths in Settings and set them using `dirmap`.
+
+            If artists has Site Sync enabled, take dirmap mapping directly from
+            Local Settings when artist is syncing workfile locally.
+
+        Args:
+            project_settings (dict): Settings for current project.
+
+        """
+        local_mapping = self._get_local_sync_dirmap(self.project_settings)
+        dirmap_label = "{}-dirmap".format(self.host_name)
+        if not self.project_settings[self.host_name].get(dirmap_label) and \
+                not local_mapping:
+            return
+
+        mapping = local_mapping or \
+            self.project_settings[self.host_name][dirmap_label]["paths"] or {}
+        mapping_enabled = self.project_settings[self.host_name]\
+                                               [dirmap_label]\
+                                               ["enabled"] \
+            or bool(local_mapping)
+
+        if not mapping or not mapping_enabled:
+            return
+        if mapping.get("source-path") and mapping_enabled is True:
+            log.info("Processing directory mapping ...")
+            self.on_enable_dirmap()
+
+        for k, sp in enumerate(mapping["source-path"]):
+            try:
+                print("{} -> {}".format(sp, mapping["destination-path"][k]))
+                self.dirmap_routine(sp, mapping["destination-path"][k])
+            except IndexError:
+                # missing corresponding destination path
+                log.error(("invalid dirmap mapping, missing corresponding"
+                           " destination directory."))
+                break
+            except RuntimeError:
+                log.error("invalid path {} -> {}, mapping not registered".format(  #noqa
+                    sp, mapping["destination-path"][k]
+                ))
+                continue
+
+    def _get_local_sync_dirmap(self, project_settings):
+        """
+            Returns dirmap if synch to local project is enabled.
+
+            Only valid mapping is from roots of remote site to local site set
+            in Local Settings.
+
+            Args:
+                project_settings (dict)
+            Returns:
+                dict : { "source-path": [XXX], "destination-path": [YYYY]}
+        """
+        import json
+        mapping = {}
+
+        if not project_settings["global"]["sync_server"]["enabled"]:
+            log.debug("Site Sync not enabled")
+            return mapping
+
+        from openpype.settings.lib import get_site_local_overrides
+        from openpype.modules import ModulesManager
+
+        manager = ModulesManager()
+        sync_module = manager.modules_by_name["sync_server"]
+
+        project_name = os.getenv("AVALON_PROJECT")
+
+        active_site = sync_module.get_local_normalized_site(
+            sync_module.get_active_site(project_name))
+        remote_site = sync_module.get_local_normalized_site(
+            sync_module.get_remote_site(project_name))
+        log.debug("active {} - remote {}".format(active_site, remote_site))
+
+        if active_site == "local" \
+                and project_name in sync_module.get_enabled_projects()\
+                and active_site != remote_site:
+
+            sync_settings = sync_module.get_sync_project_setting(
+                os.getenv("AVALON_PROJECT"), exclude_locals=False,
+                cached=False)
+            log.debug(json.dumps(sync_settings, indent=4))
+
+            overrides = get_site_local_overrides(os.getenv("AVALON_PROJECT"),
+                                                 active_site)
+            for root_name, value in overrides.items():
+                if os.path.isdir(value):
+                    try:
+                        mapping["destination-path"] = [value]
+                        mapping["source-path"] = [sync_settings["sites"]\
+                                                               [remote_site]\
+                                                               ["root"]\
+                                                               [root_name]]
+                    except IndexError:
+                        # missing corresponding destination path
+                        log.debug("overrides".format(overrides))
+                        log.error(
+                            ("invalid dirmap mapping, missing corresponding"
+                             " destination directory."))
+                        break
+
+            log.debug("local sync mapping:: {}".format(mapping))
+        return mapping
