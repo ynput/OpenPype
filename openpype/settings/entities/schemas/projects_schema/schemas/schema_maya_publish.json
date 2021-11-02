@@ -323,6 +323,10 @@
                         {
                             "key": "ValidateTransformZero",
                             "label": "ValidateTransformZero"
+                        },
+                        {
+                            "key": "ValidateUniqueNames",
+                            "label": "ValidateUniqueNames"
                         }
                     ]
                 }
