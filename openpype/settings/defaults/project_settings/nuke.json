@@ -9,7 +9,7 @@
         }
     },
     "nuke-dirmap": {
-        "enabled": true,
+        "enabled": false,
         "paths": {
             "source-path": [],
             "destination-path": []
