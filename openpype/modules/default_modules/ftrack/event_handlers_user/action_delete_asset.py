@@ -1,7 +1,6 @@
 import collections
 import uuid
 from datetime import datetime
-from queue import Queue
 
 from bson.objectid import ObjectId
 from openpype_modules.ftrack.lib import BaseAction, statics_icon
@@ -473,12 +472,12 @@ class DeleteAssetSubset(BaseAction):
                         continue
                     ftrack_ids_to_delete.append(ftrack_id)
 
-            children_queue = Queue()
+            children_queue = collections.deque()
             for mongo_id in assets_to_delete:
-                children_queue.put(mongo_id)
+                children_queue.append(mongo_id)
 
-            while not children_queue.empty():
-                mongo_id = children_queue.get()
+            while children_queue:
+                mongo_id = children_queue.popleft()
                 if mongo_id in asset_ids_to_archive:
                     continue
 
@@ -494,7 +493,7 @@ class DeleteAssetSubset(BaseAction):
                 for child in children:
                     child_id = child["_id"]
                     if child_id not in asset_ids_to_archive:
-                        children_queue.put(child_id)
+                        children_queue.append(child_id)
 
         # Prepare names of assets in ftrack and ids of subsets in mongo
         asset_names_to_delete = []
