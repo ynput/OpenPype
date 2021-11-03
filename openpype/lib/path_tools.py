@@ -339,13 +339,12 @@ class HostDirmap:
             overrides = get_site_local_overrides(os.getenv("AVALON_PROJECT"),
                                                  active_site)
             for root_name, value in overrides.items():
+                remote_site_dir = \
+                    sync_settings["sites"][remote_site]["root"][root_name]
                 if os.path.isdir(value):
                     try:
                         mapping["destination-path"] = [value]
-                        mapping["source-path"] = [sync_settings["sites"]
-                                                               [remote_site]
-                                                               ["root"]
-                                                               [root_name]]
+                        mapping["source-path"] = [remote_site_dir]
                     except IndexError:
                         # missing corresponding destination path
                         log.debug("overrides".format(overrides))
