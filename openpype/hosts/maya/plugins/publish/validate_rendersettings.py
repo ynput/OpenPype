@@ -314,10 +314,13 @@ class ValidateRenderSettings(pyblish.api.InstancePlugin):
                 else:
                     node = vray_settings[0]
 
+                cmds.optionMenuGrp("vrayRenderElementSeparator",
+                                   v=instance.data.get("aovSeparator", "_"))
                 cmds.setAttr(
                     "{}.fileNameRenderElementSeparator".format(
                         node),
-                    instance.data.get("aovSeparator", "_")
+                    instance.data.get("aovSeparator", "_"),
+                    type="string"
                 )
 
             if renderer == "redshift":

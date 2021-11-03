@@ -475,12 +475,13 @@ class CreateRender(plugin.Creator):
         node = settings[0] if settings else cmds.createNode("VRaySettingsNode")
 
         # set separator
+        # set it in vray menu
+        cmds.optionMenuGrp("vrayRenderElementSeparator", v=self.aov_separator)
         cmds.setAttr(
             "{}.fileNameRenderElementSeparator".format(node),
             self.aov_separator,
             type="string"
         )
-
         # set format to exr
         cmds.setAttr(
             "{}.imageFormatStr".format(node), "exr", type="string")
