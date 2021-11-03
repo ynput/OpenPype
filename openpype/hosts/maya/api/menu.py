@@ -111,6 +111,35 @@ def deferred():
         if workfile_action:
             top_menu.removeAction(workfile_action)
 
+    def modify_resolution():
+        # Find the pipeline menu
+        top_menu = _get_menu()
+
+        # Try to find resolution tool action in the menu
+        resolution_action = None
+        for action in top_menu.actions():
+            if action.text() == "Reset Resolution":
+                resolution_action = action
+                break
+
+        # Add at the top of menu if "Work Files" action was not found
+        after_action = ""
+        if resolution_action:
+            # Use action's object name for `insertAfter` argument
+            after_action = resolution_action.objectName()
+
+        # Insert action to menu
+        cmds.menuItem(
+            "Reset Resolution",
+            parent=pipeline._menu,
+            command=lambda *args: lib.reset_scene_resolution(),
+            insertAfter=after_action
+        )
+
+        # Remove replaced action
+        if resolution_action:
+            top_menu.removeAction(resolution_action)
+
     def remove_project_manager():
         top_menu = _get_menu()
 
@@ -167,6 +196,7 @@ def deferred():
     add_look_assigner_item()
     add_experimental_item()
     modify_workfiles()
+    modify_resolution()
     remove_project_manager()
     add_colorspace()
     add_scripts_menu()
