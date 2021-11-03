@@ -23,6 +23,7 @@ class OpenPypeContextSelector:
         self.context = None
 
         op_path = os.environ.get("OPENPYPE_ROOT")
+        print("initializing ... {}".format(op_path))
         if not op_path:
             print("Warning: OpenPype root is not found.")
 
@@ -46,8 +47,7 @@ class OpenPypeContextSelector:
                             "  - found OpenPype installation {}".format(
                                 op_path))
                     else:
-                        print("Error: OpenPype was not found.")
-                        op_path = None
+                        raise Exception("Error: OpenPype was not found.")
 
         self.openpype_root = op_path
 
@@ -96,10 +96,11 @@ class OpenPypeContextSelector:
             op_exec = "{}.exe".format(op_exec)
 
         with tempfile.TemporaryFile() as tf:
-            args = list(self.openpype_root)
-            args.append("context_selector")
-            args.append(tf)
-            subprocess.check_output(args)
+            op_args = [os.path.join(self.openpype_root, op_exec),
+                    "contextselection", tf.name]
+
+            print(">>> running {}".format(op_args))
+            subprocess.call(op_args)
             self.context = json.load(tf)
 
         if not self.context or \
@@ -122,5 +123,6 @@ class OpenPypeContextSelector:
         del warning_dialog
 
 
+print("running selector")
 selector = OpenPypeContextSelector()
 selector.process_job()
