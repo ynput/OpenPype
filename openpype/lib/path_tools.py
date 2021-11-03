@@ -218,6 +218,8 @@ class HostDirmap:
         self.project_settings = project_settings
         self.sync_module = sync_module  # to limit reinit of Modules
 
+        self._mapping = None  # cache mapping
+
     @abc.abstractmethod
     def on_enable_dirmap(self):
         """
@@ -241,17 +243,21 @@ class HostDirmap:
             project_settings (dict): Settings for current project.
 
         """
-        mapping = self.get_mappings(self.project_settings)
-        if not mapping:
+        if not self._mapping:
+            self._mapping = self.get_mappings(self.project_settings)
+        if not self._mapping:
             return
 
         log.info("Processing directory mapping ...")
         self.on_enable_dirmap()
+        log.info("mapping:: {}".format(self._mapping))
 
-        for k, sp in enumerate(mapping["source-path"]):
+        for k, sp in enumerate(self._mapping["source-path"]):
             try:
-                print("{} -> {}".format(sp, mapping["destination-path"][k]))
-                self.dirmap_routine(sp, mapping["destination-path"][k])
+                print("{} -> {}".format(sp,
+                                        self._mapping["destination-path"][k]))
+                self.dirmap_routine(sp,
+                                    self._mapping["destination-path"][k])
             except IndexError:
                 # missing corresponding destination path
                 log.error(("invalid dirmap mapping, missing corresponding"
@@ -259,11 +265,16 @@ class HostDirmap:
                 break
             except RuntimeError:
                 log.error("invalid path {} -> {}, mapping not registered".format(  # noqa: E501
-                    sp, mapping["destination-path"][k]
+                    sp, self._mapping["destination-path"][k]
                 ))
                 continue
 
     def get_mappings(self, project_settings):
+        """Get translation from source-path to destination-path.
+
+            It checks if Site Sync is enabled and user chose to use local
+            site, in that case configuration in Local Settings takes precedence
+        """
         local_mapping = self._get_local_sync_dirmap(project_settings)
         dirmap_label = "{}-dirmap".format(self.host_name)
         if not self.project_settings[self.host_name].get(dirmap_label) and \
@@ -275,8 +286,11 @@ class HostDirmap:
         enbled = self.project_settings[self.host_name][dirmap_label]["enabled"]
         mapping_enabled = enbled or bool(local_mapping)
 
-        if not mapping or not mapping_enabled:
+        if not mapping or not mapping_enabled or \
+                not mapping.get("destination-path") or \
+                not mapping.get("source-path"):
             return []
+
         return mapping
 
     def _get_local_sync_dirmap(self, project_settings):

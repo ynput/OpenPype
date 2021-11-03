@@ -24,6 +24,10 @@ from openpype.api import (
     ApplicationManager
 )
 from openpype.tools.utils import host_tools
+from openpype.lib.path_tools import HostDirmap
+from openpype.settings import get_project_settings
+from openpype.modules import ModulesManager
+
 import nuke
 
 from .utils import set_context_favorites
@@ -1795,3 +1799,60 @@ def recreate_instance(origin_node, avalon_data=None):
             dn.setInput(0, new_node)
 
     return new_node
+
+
+class NukeDirmap(HostDirmap):
+    def __init__(self, host_name, project_settings, sync_module, file_name):
+        """
+            Args:
+                host_name (str): Nuke
+                project_settings (dict): settings of current project
+                sync_module (SyncServerModule): to limit reinitialization
+                file_name (str): full path of referenced file from workfiles
+        """
+        self.host_name = host_name
+        self.project_settings = project_settings
+        self.file_name = file_name
+        self.sync_module = sync_module
+
+        self._mapping = None  # cache mapping
+
+    def on_enable_dirmap(self):
+        pass
+
+    def dirmap_routine(self, source_path, destination_path):
+        log.debug("{}: {}->{}".format(self.file_name,
+                                      source_path, destination_path))
+        self.file_name = self.file_name.replace(source_path, destination_path)
+
+
+class DirmapCache:
+    """Caching class to get settings and sync_module easily and only once."""
+    _project_settings = None
+    _sync_module = None
+
+    @classmethod
+    def project_settings(cls):
+        if cls._project_settings is None:
+            cls._project_settings = get_project_settings(
+                os.getenv("AVALON_PROJECT"))
+        return cls._project_settings
+
+    @classmethod
+    def sync_module(cls):
+        if cls._sync_module is None:
+            cls._sync_module = ModulesManager().modules_by_name["sync_server"]
+        return cls._sync_module
+
+
+def dirmap_file_name_filter(file_name):
+    """Nuke callback function with single full path argument.
+
+        Checks project settings for potential mapping from source to dest.
+    """
+    dirmap_processor = NukeDirmap("nuke",
+                                  DirmapCache.project_settings(),
+                                  DirmapCache.sync_module(),
+                                  file_name)
+    dirmap_processor.process_dirmap()
+    return dirmap_processor.file_name
