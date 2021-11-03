@@ -197,6 +197,10 @@ class SubsetWidget(QtWidgets.QWidget):
         column = model.Columns.index("time")
         view.setItemDelegateForColumn(column, time_delegate)
 
+        avail_delegate = AvailabilityDelegate(self.dbcon, view)
+        column = model.Columns.index("repre_info")
+        view.setItemDelegateForColumn(column, avail_delegate)
+
         layout = QtWidgets.QVBoxLayout(self)
         layout.setContentsMargins(0, 0, 0, 0)
         layout.addLayout(top_bar_layout)
@@ -1578,3 +1582,54 @@ def _load_subsets_by_loader(loader, subset_contexts, options,
                 ))
 
     return error_info
+
+
+class AvailabilityDelegate(QtWidgets.QStyledItemDelegate):
+    """
+        Prints icons and downloaded representation ration for both sides.
+    """
+
+    def __init__(self, dbcon, parent=None):
+        super(AvailabilityDelegate, self).__init__(parent)
+        self.icons = {}
+
+    def paint(self, painter, option, index):
+        super(AvailabilityDelegate, self).paint(painter, option, index)
+        option = QtWidgets.QStyleOptionViewItem(option)
+        option.showDecorationSelected = True
+
+        # provider = index.data(lib.ProviderRole)
+        # value = index.data(lib.ProgressRole)
+        # date_value = index.data(lib.DateRole)
+        # is_failed = index.data(lib.FailedRole)
+
+        provider_local = "local"
+        provider_remote = "gdrive"
+
+        # idx = 0
+        # for provider in [provider_local, provider_remote]:
+        #     idx += 1
+        #     if not self.icons.get(provider):
+        #         resource_path = os.path.dirname(__file__)
+        #         resource_path = os.path.join(resource_path, "..",
+        #                                      "providers", "resources")
+        #         pix_url = "{}/{}.png".format(resource_path, provider)
+        #         pixmap = QtGui.QPixmap(pix_url)
+        #         self.icons[provider] = pixmap
+        #     else:
+        #         pixmap = self.icons[provider]
+        #
+        #     padding = 10 * idx
+        #     point = QtCore.QPoint(option.rect.x() + padding,
+        #                           option.rect.y() +
+        #                           (option.rect.height() - pixmap.height()) / 2)
+        #     painter.drawPixmap(point, pixmap)
+
+        painter.drawText(
+            option.rect,
+            option.displayAlignment,
+            "fook"
+        )
+
+        def displayText(self, value, locale):
+            pass
