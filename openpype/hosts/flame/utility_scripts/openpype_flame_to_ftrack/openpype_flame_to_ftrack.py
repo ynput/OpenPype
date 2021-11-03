@@ -187,7 +187,6 @@ shot_handles = 0
 shot_name_template = {sequence}_{shot}
 hierarchy_template = shots[Folder]/{sequence}[Sequence]
 create_task_type = Compositing
-source_resolution = 0
 """
 
 
@@ -402,12 +401,11 @@ class FlamePushButtonMenu(QtWidgets.QPushButton):
     push_button_menu_options = ['Item 1', 'Item 2', 'Item 3', 'Item 4']
     menu_push_button = FlamePushButtonMenu(push_button_menu_options[0], push_button_menu_options, window)
     """
+    selection_changed = QtCore.Signal(str)
 
     def __init__(self, button_name, menu_options, parent_window, *args, **kwargs):
         super(FlamePushButtonMenu, self).__init__(*args, **kwargs)
-        from functools import partial
 
-        self.setText(button_name)
         self.setParent(parent_window)
         self.setMinimumHeight(28)
         self.setMinimumWidth(110)
@@ -415,17 +413,31 @@ class FlamePushButtonMenu(QtWidgets.QPushButton):
         self.setStyleSheet('QPushButton {color: #9a9a9a; background-color: #24303d; font: 14px "Discreet"}'
                            'QPushButton:disabled {color: #747474; background-color: #353535; border-top: 1px solid #444444; border-bottom: 1px solid #242424}')
 
-        def create_menu(option):
-            self.setText(option)
 
         pushbutton_menu = QtWidgets.QMenu(parent_window)
         pushbutton_menu.setFocusPolicy(QtCore.Qt.NoFocus)
         pushbutton_menu.setStyleSheet('QMenu {color: #9a9a9a; background-color:#24303d; font: 14px "Discreet"}'
                                       'QMenu::item:selected {color: #d9d9d9; background-color: #3a4551}')
-        for option in menu_options:
-            pushbutton_menu.addAction(option, partial(create_menu, option))
 
+        self._pushbutton_menu = pushbutton_menu
         self.setMenu(pushbutton_menu)
+        self.set_menu_options(menu_options, button_name)
+
+    def set_menu_options(self, menu_options, current_option=None):
+        self._pushbutton_menu.clear()
+        current_option = current_option or menu_options[0]
+
+        for option in menu_options:
+            action = self._pushbutton_menu.addAction(option)
+            action.triggered.connect(self._on_action_trigger)
+
+        if current_option is not None:
+            self.setText(current_option)
+
+    def _on_action_trigger(self):
+        action = self.sender()
+        self.setText(action.text())
+        self.selection_changed.emit(action.text())
 
 
 def main_window(selection):
@@ -433,6 +445,10 @@ def main_window(selection):
     import six
     import sys
     import re
+
+    def _on_project_changed(project_name):
+        task_types = TASK_TYPES_ALL[project_name]
+        task_type_input.set_menu_options(task_types)
 
     def timeline_info(selection):
         # identificar as informacoes dos segmentos na timeline
@@ -593,9 +609,7 @@ def main_window(selection):
             "workfile_start_frame": str(frame_start),
             "shot_handles": handles,
             "hierarchy_template": hierarchy_text,
-            "create_task_type": task_type,
-            "source_resolution": (
-                "1" if source_resolution_btn.isChecked() else "0")
+            "create_task_type": task_type
         }
 
         # add cfg data back to settings.ini
@@ -805,10 +819,6 @@ def main_window(selection):
             'Shot handles', 'normal', window)
         handles_input = FlameLineEdit(cfg_d["shot_handles"], window)
 
-        source_resolution_btn = FlamePushButton(
-            'Source resolutuion', bool(int(cfg_d["source_resolution"])),
-            window
-        )
         width_label = FlameLabel(
             'Sequence width', 'normal', window)
         width_input = FlameLineEdit(str(seq_width), window)
@@ -833,7 +843,7 @@ def main_window(selection):
         query = 'Project where full_name is "{}"'.format(project_name)
 
         # globally used variables
-        F_PROJ_ENTITY = _session.query(query).one()
+        F_PROJ_ENTITY = _session.query(query).first()
 
         proj_selector = bool(not F_PROJ_ENTITY)
 
@@ -842,17 +852,19 @@ def main_window(selection):
                 "Project where status is active").all()
             F_PROJ_ENTITY = all_projects[0]
             project_names = [p["full_name"] for p in all_projects]
+            TASK_TYPES_ALL = {p["full_name"]: get_all_task_types(p).keys() for p in all_projects}
             project_select_label = FlameLabel(
                 'Select Ftrack project', 'normal', window)
             project_select_input = FlamePushButtonMenu(
                 F_PROJ_ENTITY["full_name"], project_names, window)
+            project_select_input.selection_changed.connect(_on_project_changed)
 
         F_PROJ_TASK_TYPES = get_all_task_types(F_PROJ_ENTITY)
 
         task_type_label = FlameLabel(
             'Create Task (type)', 'normal', window)
         task_type_input = FlamePushButtonMenu(
-            cfg_d["create_task_type"], F_PROJ_TASK_TYPES, window)
+            cfg_d["create_task_type"], F_PROJ_TASK_TYPES.keys(), window)
 
         # Button
         select_all_btn = FlameButton('Select All', select_all, window)
@@ -884,7 +896,6 @@ def main_window(selection):
         prop_layout_r.setAlignment(
             QtCore.Qt.AlignLeft | QtCore.Qt.AlignTop)
         prop_layout_r.setContentsMargins(0, 0, 0, 0)
-        prop_layout_r.addWidget(source_resolution_btn, 0, 0)
         prop_layout_r.addWidget(width_label, 1, 0)
         prop_layout_r.addWidget(width_input, 1, 1)
         prop_layout_r.addWidget(height_label, 2, 0)
