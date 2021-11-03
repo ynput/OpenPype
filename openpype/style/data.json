@@ -58,6 +58,19 @@
                 "hover": "rgba(168, 175, 189, 0.3)",
                 "selected-hover": "rgba(168, 175, 189, 0.7)"
             }
+        },
+        "publisher": {
+            "error": "#AA5050",
+            "success": "#458056",
+            "warning": "#ffc671",
+            "list-view-group": {
+                "bg": "#434a56",
+                "bg-hover": "rgba(168, 175, 189, 0.3)",
+                "bg-selected-hover": "rgba(92, 173, 214, 0.4)",
+                "bg-expander": "#2C313A",
+                "bg-expander-hover": "#2d6c9f",
+                "bg-expander-selected-hover": "#3784c5"
+            }
         }
     }
 }
