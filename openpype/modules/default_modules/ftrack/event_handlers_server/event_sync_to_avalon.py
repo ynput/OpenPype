@@ -191,7 +191,9 @@ class SyncToAvalonEvent(BaseEvent):
             self._avalon_ents_by_ftrack_id = {}
             proj, ents = self.avalon_entities
             if proj:
-                ftrack_id = proj["data"]["ftrackId"]
+                ftrack_id = proj["data"].get("ftrackId")
+                if ftrack_id is None:
+                    ftrack_id = self._update_project_ftrack_id()
                 self._avalon_ents_by_ftrack_id[ftrack_id] = proj
                 for ent in ents:
                     ftrack_id = ent["data"].get("ftrackId")
@@ -199,6 +201,16 @@ class SyncToAvalonEvent(BaseEvent):
                         continue
                     self._avalon_ents_by_ftrack_id[ftrack_id] = ent
         return self._avalon_ents_by_ftrack_id
+
+    def _update_project_ftrack_id(self):
+        ftrack_id = self.cur_project["id"]
+
+        self.dbcon.update_one(
+            {"type": "project"},
+            {"$set": {"data.ftrackId": ftrack_id}}
+        )
+
+        return ftrack_id
 
     @property
     def avalon_subsets_by_parents(self):
