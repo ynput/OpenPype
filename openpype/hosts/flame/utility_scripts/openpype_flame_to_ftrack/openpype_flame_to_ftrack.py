@@ -1,5 +1,8 @@
 from __future__ import print_function
 import os
+import six
+import sys
+import re
 from PySide2 import QtWidgets, QtCore
 from pprint import pformat
 from contextlib import contextmanager
@@ -12,6 +15,9 @@ FTRACK_MODULE_PATH = None
 FTRACK_API_KEY = None
 FTRACK_API_USER = None
 FTRACK_SERVER = None
+
+TEMP_DIR_DATA_PATH = None
+F_PROJ_ENTITY = None
 
 SCRIPT_DIR = os.path.dirname(__file__)
 EXPORT_PRESETS_DIR = os.path.join(SCRIPT_DIR, "export_preset")
@@ -92,9 +98,9 @@ def maintained_ftrack_session():
             api_key=api
         )
         yield session
-    except Exception as _E:
-        print(
-            "ERROR: {}".format(_E))
+    except Exception:
+        tp, value, tb = sys.exc_info()
+        six.reraise(tp, value, tb)
     finally:
         # close the session
         session.close()
@@ -103,7 +109,6 @@ def maintained_ftrack_session():
 @contextmanager
 def make_temp_dir():
     import tempfile
-    import shutil
 
     try:
         dirpath = tempfile.mkdtemp()
@@ -114,8 +119,7 @@ def make_temp_dir():
         raise IOError("Not able to create temp dir file: {}".format(_error))
 
     finally:
-        print(dirpath)
-        shutil.rmtree(dirpath)
+        pass
 
 
 @contextmanager
@@ -413,7 +417,6 @@ class FlamePushButtonMenu(QtWidgets.QPushButton):
         self.setStyleSheet('QPushButton {color: #9a9a9a; background-color: #24303d; font: 14px "Discreet"}'
                            'QPushButton:disabled {color: #747474; background-color: #353535; border-top: 1px solid #444444; border-bottom: 1px solid #242424}')
 
-
         pushbutton_menu = QtWidgets.QMenu(parent_window)
         pushbutton_menu.setFocusPolicy(QtCore.Qt.NoFocus)
         pushbutton_menu.setStyleSheet('QMenu {color: #9a9a9a; background-color:#24303d; font: 14px "Discreet"}'
@@ -442,9 +445,8 @@ class FlamePushButtonMenu(QtWidgets.QPushButton):
 
 def main_window(selection):
     import flame
-    import six
-    import sys
-    import re
+    global TEMP_DIR_DATA_PATH
+    global F_PROJ_ENTITY
 
     def _on_project_changed(project_name):
         task_types = TASK_TYPES_ALL[project_name]
@@ -494,8 +496,28 @@ def main_window(selection):
 
         tree.selectAll()
 
+    def remove_temp_data():
+        global TEMP_DIR_DATA_PATH
+        import shutil
+        if TEMP_DIR_DATA_PATH:
+            shutil.rmtree(TEMP_DIR_DATA_PATH)
+        TEMP_DIR_DATA_PATH = None
+
+    def generate_temp_data():
+        global TEMP_DIR_DATA_PATH
+        if TEMP_DIR_DATA_PATH:
+            return True
+
+        with make_temp_dir() as tempdir_path:
+            for seq in selection:
+                export_thumbnail(seq, tempdir_path)
+                export_video(seq, tempdir_path)
+                TEMP_DIR_DATA_PATH = tempdir_path
+                break
+
     def send_to_ftrack():
         def create_ftrack_entity(session, type, name, parent=None):
+            global F_PROJ_ENTITY
             parent = parent or F_PROJ_ENTITY
             entity = session.create(type, {
                 'name': name,
@@ -511,6 +533,7 @@ def main_window(selection):
             return entity
 
         def get_ftrack_entity(session, type, name, parent):
+            global F_PROJ_ENTITY
             query = '{} where name is "{}" and project_id is "{}"'.format(
                 type, name, F_PROJ_ENTITY["id"])
 
@@ -577,7 +600,7 @@ def main_window(selection):
             selected_project_name = project_select_input.text()
             F_PROJ_ENTITY = next(
                 (p for p in all_projects
-                 if p["full_name"] is selected_project_name),
+                 if p["full_name"] in selected_project_name),
                 None
             )
 
@@ -615,17 +638,12 @@ def main_window(selection):
         # add cfg data back to settings.ini
         set_config(_cfg_data_back, "main")
 
-        with maintained_ftrack_session() as session, \
-                make_temp_dir() as tempdir_path:
-            print("tempdir_path: {}".format(tempdir_path))
+        with maintained_ftrack_session() as session:
             print("Ftrack session is: {}".format(session))
 
-            for seq in selection:
-                export_thumbnail(seq, tempdir_path)
-                export_video(seq, tempdir_path)
-                break
+            generate_temp_data()
 
-            temp_files = os.listdir(tempdir_path)
+            temp_files = os.listdir(TEMP_DIR_DATA_PATH)
             thumbnails = [f for f in temp_files if "jpg" in f]
             videos = [f for f in temp_files if "mov" in f]
 
@@ -653,8 +671,8 @@ def main_window(selection):
                 print(thumb_f)
                 print(video_f)
 
-                thumb_fp = os.path.join(tempdir_path, thumb_f)
-                video_fp = os.path.join(tempdir_path, video_f)
+                thumb_fp = os.path.join(TEMP_DIR_DATA_PATH, thumb_f)
+                video_fp = os.path.join(TEMP_DIR_DATA_PATH, video_f)
                 print(thumb_fp)
                 print(video_fp)
 
@@ -852,7 +870,8 @@ def main_window(selection):
                 "Project where status is active").all()
             F_PROJ_ENTITY = all_projects[0]
             project_names = [p["full_name"] for p in all_projects]
-            TASK_TYPES_ALL = {p["full_name"]: get_all_task_types(p).keys() for p in all_projects}
+            TASK_TYPES_ALL = {p["full_name"]: get_all_task_types(
+                p).keys() for p in all_projects}
             project_select_label = FlameLabel(
                 'Select Ftrack project', 'normal', window)
             project_select_input = FlamePushButtonMenu(
@@ -868,6 +887,9 @@ def main_window(selection):
 
         # Button
         select_all_btn = FlameButton('Select All', select_all, window)
+        remove_temp_data_btn = FlameButton(
+            'Remove temp data', remove_temp_data, window)
+
         ftrack_send_btn = FlameButton('Send to Ftrack', send_to_ftrack, window)
 
         # left props
@@ -913,6 +935,7 @@ def main_window(selection):
 
         # buttons layout
         hbox = QtWidgets.QHBoxLayout()
+        hbox.addWidget(remove_temp_data_btn)
         hbox.addWidget(select_all_btn)
         hbox.addWidget(ftrack_send_btn)
 
