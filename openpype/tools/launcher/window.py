@@ -8,8 +8,7 @@ from avalon.api import AvalonMongoDB
 from openpype import style
 from openpype.api import resources
 
-from avalon.tools import lib as tools_lib
-from avalon.tools.widgets import AssetWidget
+from openpype.tools.utils.widgets import AssetWidget
 from avalon.vendor import qtawesome
 from .models import ProjectModel
 from .lib import get_action_label, ProjectHandler
