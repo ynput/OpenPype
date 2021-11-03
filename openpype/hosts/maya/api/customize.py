@@ -1,10 +1,16 @@
 """A set of commands that install overrides to Maya's UI"""
 
-import maya.cmds as mc
-import maya.mel as mel
-from functools import partial
 import os
 import logging
+
+from functools import partial
+
+import maya.cmds as mc
+import maya.mel as mel
+
+from avalon.maya import pipeline
+from openpype.api import resources
+from openpype.tools.utils import host_tools
 
 
 log = logging.getLogger(__name__)
@@ -69,38 +75,7 @@ def override_component_mask_commands():
 
 def override_toolbox_ui():
     """Add custom buttons in Toolbox as replacement for Maya web help icon."""
-    inventory = None
-    loader = None
-    launch_workfiles_app = None
-    mayalookassigner = None
-    try:
-        import avalon.tools.sceneinventory as inventory
-    except Exception:
-        log.warning("Could not import SceneInventory tool")
-
-    try:
-        import openpype.tools.loader as loader
-    except Exception:
-        log.warning("Could not import Loader tool")
-
-    try:
-        from avalon.maya.pipeline import launch_workfiles_app
-    except Exception:
-        log.warning("Could not import Workfiles tool")
-
-    try:
-        from openpype.tools import mayalookassigner
-    except Exception:
-        log.warning("Could not import Maya Look assigner tool")
-
-    from openpype.api import resources
-
     icons = resources.get_resource("icons")
-
-    if not any((
-        mayalookassigner, launch_workfiles_app, loader, inventory
-    )):
-        return
 
     # Ensure the maya web icon on toolbox exists
     web_button = "ToolBox|MainToolboxLayout|mayaWebButton"
@@ -120,14 +95,23 @@ def override_toolbox_ui():
     # Create our controls
     background_color = (0.267, 0.267, 0.267)
     controls = []
-    if mayalookassigner:
+    look_assigner = None
+    try:
+        look_assigner = host_tools.get_tool_by_name(
+            "lookassigner",
+            parent=pipeline._parent
+        )
+    except Exception:
+        log.warning("Couldn't create Look assigner window.", exc_info=True)
+
+    if look_assigner is not None:
         controls.append(
             mc.iconTextButton(
                 "pype_toolbox_lookmanager",
                 annotation="Look Manager",
                 label="Look Manager",
                 image=os.path.join(icons, "lookmanager.png"),
-                command=lambda: mayalookassigner.show(),
+                command=host_tools.show_look_assigner,
                 bgc=background_color,
                 width=icon_size,
                 height=icon_size,
@@ -135,50 +119,53 @@ def override_toolbox_ui():
             )
         )
 
-    if launch_workfiles_app:
-        controls.append(
-            mc.iconTextButton(
-                "pype_toolbox_workfiles",
-                annotation="Work Files",
-                label="Work Files",
-                image=os.path.join(icons, "workfiles.png"),
-                command=lambda: launch_workfiles_app(),
-                bgc=background_color,
-                width=icon_size,
-                height=icon_size,
-                parent=parent
-            )
+    controls.append(
+        mc.iconTextButton(
+            "pype_toolbox_workfiles",
+            annotation="Work Files",
+            label="Work Files",
+            image=os.path.join(icons, "workfiles.png"),
+            command=lambda: host_tools.show_workfiles(
+                parent=pipeline._parent
+            ),
+            bgc=background_color,
+            width=icon_size,
+            height=icon_size,
+            parent=parent
         )
+    )
 
-    if loader:
-        controls.append(
-            mc.iconTextButton(
-                "pype_toolbox_loader",
-                annotation="Loader",
-                label="Loader",
-                image=os.path.join(icons, "loader.png"),
-                command=lambda: loader.show(use_context=True),
-                bgc=background_color,
-                width=icon_size,
-                height=icon_size,
-                parent=parent
-            )
+    controls.append(
+        mc.iconTextButton(
+            "pype_toolbox_loader",
+            annotation="Loader",
+            label="Loader",
+            image=os.path.join(icons, "loader.png"),
+            command=lambda: host_tools.show_loader(
+                parent=pipeline._parent, use_context=True
+            ),
+            bgc=background_color,
+            width=icon_size,
+            height=icon_size,
+            parent=parent
         )
+    )
 
-    if inventory:
-        controls.append(
-            mc.iconTextButton(
-                "pype_toolbox_manager",
-                annotation="Inventory",
-                label="Inventory",
-                image=os.path.join(icons, "inventory.png"),
-                command=lambda: inventory.show(),
-                bgc=background_color,
-                width=icon_size,
-                height=icon_size,
-                parent=parent
-            )
+    controls.append(
+        mc.iconTextButton(
+            "pype_toolbox_manager",
+            annotation="Inventory",
+            label="Inventory",
+            image=os.path.join(icons, "inventory.png"),
+            command=lambda: host_tools.show_scene_inventory(
+                parent=pipeline._parent
+            ),
+            bgc=background_color,
+            width=icon_size,
+            height=icon_size,
+            parent=parent
         )
+    )
 
     # Add the buttons on the bottom and stack
     # them above each other with side padding

@@ -95,6 +95,30 @@ def get_local_collection_with_name(name):
     return None
 
 
+def deselect_all():
+    """Deselect all objects in the scene.
+
+    Blender gives context error if trying to deselect object that it isn't
+    in object mode.
+    """
+    modes = []
+    active = bpy.context.view_layer.objects.active
+
+    for obj in bpy.data.objects:
+        if obj.mode != 'OBJECT':
+            modes.append((obj, obj.mode))
+            bpy.context.view_layer.objects.active = obj
+            bpy.ops.object.mode_set(mode='OBJECT')
+
+    bpy.ops.object.select_all(action='DESELECT')
+
+    for p in modes:
+        bpy.context.view_layer.objects.active = p[0]
+        bpy.ops.object.mode_set(mode=p[1])
+
+    bpy.context.view_layer.objects.active = active
+
+
 class Creator(PypeCreatorMixin, blender.Creator):
     pass
 

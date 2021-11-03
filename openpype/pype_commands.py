@@ -3,11 +3,18 @@
 import os
 import sys
 import json
-import click
-from datetime import datetime
+import time
 
 from openpype.lib import PypeLogger
 from openpype.api import get_app_environments_for_context
+from openpype.lib.plugin_tools import parse_json, get_batch_asset_task_info
+from openpype.lib.remote_publish import (
+    get_webpublish_conn,
+    start_webpublish_log,
+    publish_and_log,
+    fail_batch,
+    find_variant_key
+)
 
 
 class PypeCommands:
@@ -122,8 +129,114 @@ class PypeCommands:
         uninstall()
 
     @staticmethod
+    def remotepublishfromapp(project, batch_dir, host, user, targets=None):
+        """Opens installed variant of 'host' and run remote publish there.
+
+            Currently implemented and tested for Photoshop where customer
+            wants to process uploaded .psd file and publish collected layers
+            from there.
+
+            Checks if no other batches are running (status =='in_progress). If
+            so, it sleeps for SLEEP (this is separate process),
+            waits for WAIT_FOR seconds altogether.
+
+            Requires installed host application on the machine.
+
+            Runs publish process as user would, in automatic fashion.
+        """
+        SLEEP = 5  # seconds for another loop check for concurrently runs
+        WAIT_FOR = 300  # seconds to wait for conc. runs
+
+        from openpype import install, uninstall
+        from openpype.api import Logger
+
+        log = Logger.get_logger()
+
+        log.info("remotepublishphotoshop command")
+
+        install()
+
+        from openpype.lib import ApplicationManager
+        application_manager = ApplicationManager()
+
+        found_variant_key = find_variant_key(application_manager, host)
+
+        app_name = "{}/{}".format(host, found_variant_key)
+
+        batch_data = None
+        if batch_dir and os.path.exists(batch_dir):
+            batch_data = parse_json(os.path.join(batch_dir, "manifest.json"))
+
+        if not batch_data:
+            raise ValueError(
+                "Cannot parse batch meta in {} folder".format(batch_dir))
+
+        asset, task_name, _task_type = get_batch_asset_task_info(
+            batch_data["context"])
+
+        # processing from app expects JUST ONE task in batch and 1 workfile
+        task_dir_name = batch_data["tasks"][0]
+        task_data = parse_json(os.path.join(batch_dir, task_dir_name,
+                                            "manifest.json"))
+
+        workfile_path = os.path.join(batch_dir,
+                                     task_dir_name,
+                                     task_data["files"][0])
+
+        print("workfile_path {}".format(workfile_path))
+
+        _, batch_id = os.path.split(batch_dir)
+        dbcon = get_webpublish_conn()
+        # safer to start logging here, launch might be broken altogether
+        _id = start_webpublish_log(dbcon, batch_id, user)
+
+        in_progress = True
+        slept_times = 0
+        while in_progress:
+            batches_in_progress = list(dbcon.find({
+                "status": "in_progress"
+            }))
+            if len(batches_in_progress) > 1:
+                if slept_times * SLEEP >= WAIT_FOR:
+                    fail_batch(_id, batches_in_progress, dbcon)
+
+                print("Another batch running, sleeping for a bit")
+                time.sleep(SLEEP)
+                slept_times += 1
+            else:
+                in_progress = False
+
+        # must have for proper launch of app
+        env = get_app_environments_for_context(
+            project,
+            asset,
+            task_name,
+            app_name
+        )
+        os.environ.update(env)
+
+        os.environ["OPENPYPE_PUBLISH_DATA"] = batch_dir
+        os.environ["IS_HEADLESS"] = "true"
+        # must pass identifier to update log lines for a batch
+        os.environ["BATCH_LOG_ID"] = str(_id)
+
+        data = {
+            "last_workfile_path": workfile_path,
+            "start_last_workfile": True
+        }
+
+        launched_app = application_manager.launch(app_name, **data)
+
+        while launched_app.poll() is None:
+            time.sleep(0.5)
+
+        uninstall()
+
+    @staticmethod
     def remotepublish(project, batch_path, host, user, targets=None):
         """Start headless publishing.
+
+        Used to publish rendered assets, workfiles etc.
 
         Publish use json from passed paths argument.
 
@@ -145,7 +258,6 @@ class PypeCommands:
 
         from openpype import install, uninstall
         from openpype.api import Logger
-        from openpype.lib import OpenPypeMongoConnection
 
         # Register target and host
         import pyblish.api
@@ -177,62 +289,11 @@ class PypeCommands:
 
         log.info("Running publish ...")
 
-        # Error exit as soon as any error occurs.
-        error_format = "Failed {plugin.__name__}: {error} -- {error.traceback}"
-
-        mongo_client = OpenPypeMongoConnection.get_mongo_client()
-        database_name = os.environ["OPENPYPE_DATABASE_NAME"]
-        dbcon = mongo_client[database_name]["webpublishes"]
-
         _, batch_id = os.path.split(batch_path)
-        _id = dbcon.insert_one({
-            "batch_id": batch_id,
-            "start_date": datetime.now(),
-            "user": user,
-            "status": "in_progress"
-        }).inserted_id
+        dbcon = get_webpublish_conn()
+        _id = start_webpublish_log(dbcon, batch_id, user)
 
-        log_lines = []
-        for result in pyblish.util.publish_iter():
-            for record in result["records"]:
-                log_lines.append("{}: {}".format(
-                    result["plugin"].label, record.msg))
-
-            if result["error"]:
-                log.error(error_format.format(**result))
-                uninstall()
-                log_lines.append(error_format.format(**result))
-                dbcon.update_one(
-                    {"_id": _id},
-                    {"$set":
-                        {
-                            "finish_date": datetime.now(),
-                            "status": "error",
-                            "log": os.linesep.join(log_lines)
-
-                        }}
-                )
-                sys.exit(1)
-            else:
-                dbcon.update_one(
-                    {"_id": _id},
-                    {"$set":
-                        {
-                            "progress": max(result["progress"], 0.95),
-                            "log": os.linesep.join(log_lines)
-                        }}
-                )
-
-        dbcon.update_one(
-            {"_id": _id},
-            {"$set":
-                {
-                    "finish_date": datetime.now(),
-                    "status": "finished_ok",
-                    "progress": 1,
-                    "log": os.linesep.join(log_lines)
-                }}
-        )
+        publish_and_log(dbcon, _id, log)
 
         log.info("Publish finished.")
         uninstall()

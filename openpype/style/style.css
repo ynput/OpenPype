@@ -57,10 +57,15 @@ QAbstractSpinBox:focus, QLineEdit:focus, QPlainTextEdit:focus, QTextEdit:focus{
     border-color: {color:border-focus};
 }
 
+/* Checkbox */
+QCheckBox {
+    background: transparent;
+}
+
 /* Buttons */
 QPushButton {
     text-align:center center;
-    border: 1px solid transparent;
+    border: 0px solid transparent;
     border-radius: 0.2em;
     padding: 3px 5px 3px 5px;
     background: {color:bg-buttons};
@@ -86,15 +91,15 @@ QPushButton::menu-indicator  {
 }
 
 QToolButton {
-    border: none;
-    background: transparent;
+    border: 0px solid transparent;
+    background: {color:bg-buttons};
     border-radius: 0.2em;
     padding: 2px;
 }
 
 QToolButton:hover {
-    background: #333840;
-    border-color: {color:border-hover};
+    background: {color:bg-button-hover};
+    color: {color:font-hover};
 }
 
 QToolButton:disabled {
@@ -104,14 +109,15 @@ QToolButton:disabled {
 QToolButton[popupMode="1"], QToolButton[popupMode="MenuButtonPopup"] {
     /* make way for the popup button */
     padding-right: 20px;
-    border: 1px solid {color:bg-buttons};
 }
 
 QToolButton::menu-button {
     width: 16px;
-    /* Set border only of left side. */
+    background: transparent;
     border: 1px solid transparent;
-    border-left: 1px solid {color:bg-buttons};
+    border-left: 1px solid qlineargradient(x1:0, y1:0, x2:0, y2:1, stop: 0 transparent, stop:0.2 {color:font}, stop:0.8 {color:font}, stop: 1 transparent);
+    padding: 3px 0px 3px 0px;
+    border-radius: 0;
 }
 
 QToolButton::menu-arrow {
@@ -200,12 +206,28 @@ QComboBox::down-arrow, QComboBox::down-arrow:on, QComboBox::down-arrow:hover, QC
 }
 
 /* Splitter */
-QSplitter {
-    border: none;
+QSplitter::handle {
+    border: 3px solid transparent;
 }
 
-QSplitter::handle {
-    border: 1px dotted {color:bg-menu-separator};
+QSplitter::handle:horizontal {
+    /* must be single like because of Nuke*/
+    background: qlineargradient(x1:0, y1:0, x2:1, y2:0,stop:0.3 rgba(0, 0, 0, 0),stop:0.5 {color:bg-splitter},stop:0.7 rgba(0, 0, 0, 0));
+}
+
+QSplitter::handle:vertical {
+    /* must be single like because of Nuke*/
+    background: qlineargradient(x1:0, y1:0, x2:0, y2:1,stop:0.3 rgba(0, 0, 0, 0),stop:0.5 {color:bg-splitter},stop:0.7 rgba(0, 0, 0, 0));
+}
+
+QSplitter::handle:horizontal:hover {
+    /* must be single like because of Nuke*/
+    background: qlineargradient(x1:0, y1:0, x2:1, y2:0,stop:0.3 rgba(0, 0, 0, 0),stop:0.5 {color:bg-splitter-hover},stop:0.7 rgba(0, 0, 0, 0));
+}
+
+QSplitter::handle:vertical:hover {
+    /* must be single like because of Nuke*/
+    background: qlineargradient(x1:0, y1:0, x2:0, y2:1,stop:0.3 rgba(0, 0, 0, 0),stop:0.5 {color:bg-splitter-hover},stop:0.7 rgba(0, 0, 0, 0));
 }
 
 /* SLider */
@@ -232,18 +254,15 @@ QSlider::groove:focus {
     border-color: {color:border-focus};
 }
 QSlider::handle {
-    background: qlineargradient(
-        x1: 0, y1: 0.5,
-        x2: 1, y2: 0.5,
-        stop: 0 {palette:blue-base},
-        stop: 1 {palette:green-base}
-    );
+    /* must be single like because of Nuke*/
+    background: qlineargradient(x1: 0, y1: 0.5, x2: 1, y2: 0.5,stop: 0 {palette:blue-base},stop: 1 {palette:green-base});
     border: 1px solid #5c5c5c;
     width: 10px;
     height: 10px;
 
     border-radius: 5px;
 }
+
 QSlider::handle:horizontal {
     margin: -2px 0;
 }
@@ -252,12 +271,8 @@ QSlider::handle:vertical {
 }
 
 QSlider::handle:disabled {
-    background: qlineargradient(
-        x1:0, y1:0,
-        x2:1, y2:1,
-        stop:0 {color:bg-buttons},
-        stop:1 {color:bg-buttons-disabled}
-    );
+    /* must be single like because of Nuke*/
+    background: qlineargradient(x1:0, y1:0,x2:1, y2:1,stop:0 {color:bg-buttons},stop:1 {color:bg-buttons-disabled});
 }
 
 /* Tab widget*/
@@ -275,19 +290,15 @@ QTabBar::tab {
     border-left: 3px solid transparent;
     border-top: 1px solid {color:border};
     border-right: 1px solid {color:border};
-    background: qlineargradient(
-        x1: 0, y1: 1, x2: 0, y2: 0,
-        stop: 0.5 {color:bg}, stop: 1.0 {color:bg-inputs}
-    );
+    /* must be single like because of Nuke*/
+    background: qlineargradient(x1: 0, y1: 1, x2: 0, y2: 0,stop: 0.5 {color:bg}, stop: 1.0 {color:bg-inputs});
 }
 
 QTabBar::tab:selected {
     background: {color:grey-lighter};
     border-left: 3px solid {color:border-focus};
-    background: qlineargradient(
-        x1: 0, y1: 1, x2: 0, y2: 0,
-        stop: 0.5 {color:bg}, stop: 1.0 {color:border}
-    );
+    /* must be single like because of Nuke*/
+    background: qlineargradient(x1: 0, y1: 1, x2: 0, y2: 0,stop: 0.5 {color:bg}, stop: 1.0 {color:border});
 }
 
 QTabBar::tab:!selected {
@@ -335,6 +346,15 @@ QHeaderView::section:first {
 QHeaderView::section:last {
     border-right: none;
 }
+
+QHeaderView::down-arrow {
+    image: url(:/openpype/images/down_arrow.png);
+}
+
+QHeaderView::up-arrow {
+    image: url(:/openpype/images/up_arrow.png);
+}
+
 /* Views QListView QTreeView QTableView */
 QAbstractItemView {
     border: 0px solid {color:border};
@@ -393,22 +413,41 @@ QAbstractItemView::branch:open:has-children:has-siblings {
 QAbstractItemView::branch:open:has-children:!has-siblings:hover,
 QAbstractItemView::branch:open:has-children:has-siblings:hover {
     border-image: none;
-    image: url(:/openpype/images//branch_open_on.png);
+    image: url(:/openpype/images/branch_open_on.png);
     background: transparent;
 }
 
 QAbstractItemView::branch:has-children:!has-siblings:closed,
 QAbstractItemView::branch:closed:has-children:has-siblings {
     border-image: none;
-    image: url(:/openpype/images//branch_closed.png);
+    image: url(:/openpype/images/branch_closed.png);
     background: transparent;
 }
 QAbstractItemView::branch:has-children:!has-siblings:closed:hover,
 QAbstractItemView::branch:closed:has-children:has-siblings:hover {
     border-image: none;
-    image: url(:/openpype/images//branch_closed_on.png);
+    image: url(:/openpype/images/branch_closed_on.png);
     background: transparent;
 }
+
+QAbstractItemView::branch:has-siblings:!adjoins-item {
+    border-image: none;
+    image: url(:/openpype/images/transparent.png);
+    background: transparent;
+}
+
+QAbstractItemView::branch:has-siblings:adjoins-item {
+    border-image: none;
+    image: url(:/openpype/images/transparent.png);
+    background: transparent;
+}
+
+QAbstractItemView::branch:!has-children:!has-siblings:adjoins-item {
+    border-image: none;
+    image: url(:/openpype/images/transparent.png);
+    background: transparent;
+}
+
 
 /* Progress bar */
 QProgressBar {
@@ -425,12 +464,8 @@ QProgressBar:vertical {
 }
 
 QProgressBar::chunk {
-    background: qlineargradient(
-        x1: 0, y1: 0.5,
-        x2: 1, y2: 0.5,
-        stop: 0 {palette:blue-base},
-        stop: 1 {palette:green-base}
-    );
+    /* must be single like because of Nuke*/
+    background: qlineargradient(x1: 0, y1: 0.5,x2: 1, y2: 0.5,stop: 0 {palette:blue-base},stop: 1 {palette:green-base});
 }
 
 /* Scroll bars */
@@ -542,7 +577,9 @@ QScrollBar::add-page:vertical, QScrollBar::sub-page:vertical {
     background: {color:bg-menu-separator};
 }
 
-#IconBtn {}
+#IconButton {
+    padding: 4px 4px 4px 4px;
+}
 
 /* Password dialog*/
 #PasswordBtn {
@@ -564,6 +601,13 @@ QScrollBar::add-page:vertical, QScrollBar::sub-page:vertical {
     padding-top: 3px;
     padding-bottom: 3px;
     padding-right: 3px;
+}
+
+#InfoText {
+    padding-left: 30px;
+    padding-top: 20px;
+    background: transparent;
+    border: 1px solid {color:border};
 }
 
 #TypeEditor, #ToolEditor, #NameEditor, #NumberEditor {
@@ -628,4 +672,183 @@ QScrollBar::add-page:vertical, QScrollBar::sub-page:vertical {
 /* Python console interpreter */
 #PythonInterpreterOutput, #PythonCodeEditor {
     font-family: "Roboto Mono";
+}
+
+#SubsetView::item, #RepresentationView:item {
+    padding: 5px 1px;
+    border: 0px;
+}
+
+#OptionalActionBody, #OptionalActionOption {
+    background: transparent;
+}
+
+#OptionalActionBody[state="hover"], #OptionalActionOption[state="hover"] {
+    background: {color:bg-view-hover};
+}
+
+/* New Create/Publish UI */
+#PublishLogConsole {
+    font-family: "Roboto Mono";
+}
+
+#VariantInput[state="new"], #VariantInput[state="new"]:focus, #VariantInput[state="new"]:hover {
+    border-color: {color:publisher:success};
+}
+#VariantInput[state="invalid"], #VariantInput[state="invalid"]:focus, #VariantInput[state="invalid"]:hover {
+    border-color: {color:publisher:error};
+}
+
+#VariantInput[state="empty"], #VariantInput[state="empty"]:focus, #VariantInput[state="empty"]:hover {
+    border-color: {color:bg-inputs};
+}
+
+#VariantInput[state="exists"], #VariantInput[state="exists"]:focus, #VariantInput[state="exists"]:hover {
+    border-color: #4E76BB;
+}
+
+#MultipleItemView {
+    background: transparent;
+    border: none;
+}
+
+#MultipleItemView:item {
+    background: {color:bg-view-selection};
+    border-radius: 0.4em;
+}
+
+#InstanceListView::item {
+    border-radius: 0.3em;
+    margin: 1px;
+}
+#InstanceListGroupWidget {
+    border: none;
+    background: transparent;
+}
+
+#CardViewWidget {
+    background: {color:bg-buttons};
+    border-radius: 0.2em;
+}
+#CardViewWidget:hover {
+    background: {color:bg-button-hover};
+}
+#CardViewWidget[state="selected"] {
+    background: {color:bg-view-selection};
+}
+
+#ListViewSubsetName[state="invalid"] {
+    color: {color:publisher:error};
+}
+
+#PublishFrame {
+    background: rgba(0, 0, 0, 127);
+}
+#PublishFrame[state="1"] {
+    background: rgb(22, 25, 29);
+}
+#PublishFrame[state="2"] {
+    background: {color:bg};
+}
+
+#PublishInfoFrame {
+    background: {color:bg};
+    border: 2px solid black;
+    border-radius: 0.3em;
+}
+
+#PublishInfoFrame[state="-1"] {
+    background: rgb(194, 226, 236);
+}
+
+#PublishInfoFrame[state="0"] {
+	background: {color:publisher:error};
+}
+
+#PublishInfoFrame[state="1"] {
+	background: {color:publisher:success};
+}
+
+#PublishInfoFrame[state="2"] {
+	background: {color:publisher:warning};
+}
+
+#PublishInfoFrame QLabel {
+    color: black;
+    font-style: bold;
+}
+
+#PublishInfoMainLabel {
+    font-size: 12pt;
+}
+
+#PublishContextLabel {
+    font-size: 13pt;
+}
+
+#ValidationActionButton {
+    border-radius: 0.2em;
+    padding: 4px 6px 4px 6px;
+    background: {color:bg-buttons};
+}
+
+#ValidationActionButton:hover {
+    background: {color:bg-button-hover};
+    color: {color:font-hover};
+}
+
+#ValidationActionButton:disabled {
+    background: {color:bg-buttons-disabled};
+}
+
+#ValidationErrorTitleFrame {
+    background: {color:bg-inputs};
+    border-left: 4px solid transparent;
+}
+
+#ValidationErrorTitleFrame:hover {
+    border-left-color: {color:border};
+}
+
+#ValidationErrorTitleFrame[selected="1"] {
+    background: {color:bg};
+    border-left-color: {palette:blue-light};
+}
+
+#ValidationErrorInstanceList {
+    border-radius: 0;
+}
+
+#ValidationErrorInstanceList::item {
+    border-bottom: 1px solid {color:border};
+    border-left: 1px solid {color:border};
+}
+
+#TasksCombobox[state="invalid"], #AssetNameInput[state="invalid"] {
+    border-color: {color:publisher:error};
+}
+
+#PublishProgressBar[state="0"]::chunk {
+    background: {color:bg-buttons};
+}
+
+#PublishDetailViews {
+    background: transparent;
+}
+#PublishDetailViews::item {
+    margin: 1px 0px 1px 0px;
+}
+#PublishCommentInput {
+    padding: 0.2em;
+}
+#FamilyIconLabel {
+    font-size: 14pt;
+}
+#ArrowBtn, #ArrowBtn:disabled, #ArrowBtn:hover {
+    background: transparent;
+}
+
+#NiceCheckbox {
+    /* Default size hint of NiceCheckbox is defined by font size. */
+    font-size: 7pt;
 }

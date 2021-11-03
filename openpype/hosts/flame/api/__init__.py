@@ -1,0 +1,3 @@
+"""
+OpenPype Autodesk Flame api
+"""
