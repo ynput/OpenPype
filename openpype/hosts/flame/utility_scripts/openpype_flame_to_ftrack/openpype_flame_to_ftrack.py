@@ -556,6 +556,15 @@ def main_window(selection):
         '''
         ##################### start procedure
         '''
+        # resolve active project and add it to F_PROJ_ENTITY
+        if proj_selector:
+            selected_project_name = project_select_input.text()
+            F_PROJ_ENTITY = next(
+                (p for p in all_projects
+                 if p["full_name"] is selected_project_name),
+                None
+            )
+
         _cfg_data_back = {}
 
         # get shot name template from gui input
@@ -800,7 +809,6 @@ def main_window(selection):
             'Source resolutuion', bool(int(cfg_d["source_resolution"])),
             window
         )
-
         width_label = FlameLabel(
             'Sequence width', 'normal', window)
         width_input = FlameLineEdit(str(seq_width), window)
@@ -826,6 +834,19 @@ def main_window(selection):
 
         # globally used variables
         F_PROJ_ENTITY = _session.query(query).one()
+
+        proj_selector = bool(not F_PROJ_ENTITY)
+
+        if proj_selector:
+            all_projects = _session.query(
+                "Project where status is active").all()
+            F_PROJ_ENTITY = all_projects[0]
+            project_names = [p["full_name"] for p in all_projects]
+            project_select_label = FlameLabel(
+                'Select Ftrack project', 'normal', window)
+            project_select_input = FlamePushButtonMenu(
+                F_PROJ_ENTITY["full_name"], project_names, window)
+
         F_PROJ_TASK_TYPES = get_all_task_types(F_PROJ_ENTITY)
 
         task_type_label = FlameLabel(
@@ -838,18 +859,23 @@ def main_window(selection):
         ftrack_send_btn = FlameButton('Send to Ftrack', send_to_ftrack, window)
 
         # left props
+        v_shift = 0
         prop_layout_l = QtWidgets.QGridLayout()
         prop_layout_l.setHorizontalSpacing(30)
-        prop_layout_l.addWidget(shot_name_label, 0, 0)
-        prop_layout_l.addWidget(shot_name_template_input, 0, 1)
-        prop_layout_l.addWidget(hierarchy_label, 1, 0)
-        prop_layout_l.addWidget(hierarchy_template_input, 1, 1)
-        prop_layout_l.addWidget(start_frame_label, 2, 0)
-        prop_layout_l.addWidget(start_frame_input, 2, 1)
-        prop_layout_l.addWidget(handles_label, 3, 0)
-        prop_layout_l.addWidget(handles_input, 3, 1)
-        prop_layout_l.addWidget(task_type_label, 4, 0)
-        prop_layout_l.addWidget(task_type_input, 4, 1)
+        if proj_selector:
+            prop_layout_l.addWidget(project_select_label, v_shift, 0)
+            prop_layout_l.addWidget(project_select_input, v_shift, 1)
+            v_shift += 1
+        prop_layout_l.addWidget(shot_name_label, (v_shift + 0), 0)
+        prop_layout_l.addWidget(shot_name_template_input, (v_shift + 0), 1)
+        prop_layout_l.addWidget(hierarchy_label, (v_shift + 1), 0)
+        prop_layout_l.addWidget(hierarchy_template_input, (v_shift + 1), 1)
+        prop_layout_l.addWidget(start_frame_label, (v_shift + 2), 0)
+        prop_layout_l.addWidget(start_frame_input, (v_shift + 2), 1)
+        prop_layout_l.addWidget(handles_label, (v_shift + 3), 0)
+        prop_layout_l.addWidget(handles_input, (v_shift + 3), 1)
+        prop_layout_l.addWidget(task_type_label, (v_shift + 4), 0)
+        prop_layout_l.addWidget(task_type_input, (v_shift + 4), 1)
 
         # right props
         prop_widget_r = QtWidgets.QWidget(window)
@@ -868,15 +894,18 @@ def main_window(selection):
         prop_layout_r.addWidget(fps_label, 4, 0)
         prop_layout_r.addWidget(fps_input, 4, 1)
 
+        # prop layout
         prop_main_layout = QtWidgets.QHBoxLayout()
         prop_main_layout.addLayout(prop_layout_l, 1)
         prop_main_layout.addSpacing(20)
         prop_main_layout.addWidget(prop_widget_r, 1)
 
+        # buttons layout
         hbox = QtWidgets.QHBoxLayout()
         hbox.addWidget(select_all_btn)
         hbox.addWidget(ftrack_send_btn)
 
+        # put all layouts together
         main_frame = QtWidgets.QVBoxLayout(window)
         main_frame.setMargin(20)
         main_frame.addLayout(prop_main_layout)
