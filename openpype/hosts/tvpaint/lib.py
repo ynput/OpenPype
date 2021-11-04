@@ -484,6 +484,89 @@ def cleanup_rendered_layers(filepaths_by_layer_id):
             os.remove(filepath)
 
 
+def composite_rendered_layers(
+    layers_data, filepaths_by_layer_id,
+    range_start, range_end,
+    dst_filepaths_by_frame, cleanup=True
+):
+    """Composite multiple rendered layers by their position.
+
+    Result is single frame sequence with transparency matching content
+    created in TVPaint. Missing source filepaths are replaced with transparent
+    images but at least one image must be rendered and exist.
+
+    Function can be used even if single layer was created to fill transparent
+    filepaths.
+
+    Args:
+        layers_data(list): Layers data loaded from TVPaint.
+        filepaths_by_layer_id(dict): Rendered filepaths stored by frame index
+            per layer id. Used as source for compositing.
+        range_start(int): First frame of rendered range.
+        range_end(int): Last frame of rendered range.
+        dst_filepaths_by_frame(dict): Output filepaths by frame where final
+            image after compositing will be stored. Path must not clash with
+            source filepaths.
+        cleanup(bool): Remove all source filepaths when done with compositing.
+    """
+    # Prepare layers by their position
+    #   - position tells in which order will compositing happen
+    layer_ids_by_position = {}
+    for layer in layers_data:
+        layer_position = layer["position"]
+        layer_ids_by_position[layer_position] = layer["layer_id"]
+
+    # Sort layer positions
+    sorted_positions = tuple(sorted(layer_ids_by_position.keys()))
+    # Prepare variable where filepaths without any rendered content
+    #   - transparent will be created
+    transparent_filepaths = set()
+    # Store first final filepath
+    first_dst_filepath = None
+    for frame_idx in range(range_start, range_end + 1):
+        dst_filepath = dst_filepaths_by_frame[frame_idx]
+        src_filepaths = []
+        for layer_position in sorted_positions:
+            layer_id = layer_ids_by_position[layer_position]
+            filepaths_by_frame = filepaths_by_layer_id[layer_id]
+            src_filepath = filepaths_by_frame.get(frame_idx)
+            if src_filepath is not None:
+                src_filepaths.append(src_filepath)
+
+        if not src_filepaths:
+            transparent_filepaths.add(dst_filepath)
+            continue
+
+        # Store first destionation filepath to be used for transparent images
+        if first_dst_filepath is None:
+            first_dst_filepath = dst_filepath
+
+        if len(src_filepaths) == 1:
+            src_filepath = src_filepaths[0]
+            if cleanup:
+                os.rename(src_filepath, dst_filepath)
+            else:
+                copy_render_file(src_filepath, dst_filepath)
+
+        else:
+            composite_images(src_filepaths, dst_filepath)
+
+    # Store first transparent filepath to be able copy it
+    transparent_filepath = None
+    for dst_filepath in transparent_filepaths:
+        if transparent_filepath is None:
+            create_transparent_image_from_source(
+                first_dst_filepath, dst_filepath
+            )
+            transparent_filepath = dst_filepath
+        else:
+            copy_render_file(transparent_filepath, dst_filepath)
+
+    # Remove all files that were used as source for compositing
+    if cleanup:
+        cleanup_rendered_layers(filepaths_by_layer_id)
+
+
 def composite_images(input_image_paths, output_filepath):
     """Composite images in order from passed list.
 
