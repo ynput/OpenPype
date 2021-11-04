@@ -280,7 +280,6 @@ class HostDirmap:
         if not self.project_settings[self.host_name].get(dirmap_label) and \
                 not local_mapping:
             return []
-
         mapping = local_mapping or \
             self.project_settings[self.host_name][dirmap_label]["paths"] or {}
         enbled = self.project_settings[self.host_name][dirmap_label]["enabled"]
@@ -290,7 +289,6 @@ class HostDirmap:
                 not mapping.get("destination-path") or \
                 not mapping.get("source-path"):
             return []
-
         return mapping
 
     def _get_local_sync_dirmap(self, project_settings):
@@ -334,24 +332,25 @@ class HostDirmap:
             sync_settings = self.sync_module.get_sync_project_setting(
                 os.getenv("AVALON_PROJECT"), exclude_locals=False,
                 cached=False)
-            log.debug(json.dumps(sync_settings, indent=4))
 
-            overrides = get_site_local_overrides(os.getenv("AVALON_PROJECT"),
-                                                 active_site)
-            for root_name, value in overrides.items():
-                remote_site_dir = \
+            active_overrides = get_site_local_overrides(
+                os.getenv("AVALON_PROJECT"), active_site)
+            remote_overrides = get_site_local_overrides(
+                os.getenv("AVALON_PROJECT"), remote_site)
+
+            log.debug("local overrides".format(active_overrides))
+            log.debug("remote overrides".format(remote_overrides))
+            for root_name, active_site_dir in active_overrides.items():
+                remote_site_dir = remote_overrides.get(root_name) or\
                     sync_settings["sites"][remote_site]["root"][root_name]
-                if os.path.isdir(value):
-                    try:
-                        mapping["destination-path"] = [value]
-                        mapping["source-path"] = [remote_site_dir]
-                    except IndexError:
-                        # missing corresponding destination path
-                        log.debug("overrides".format(overrides))
-                        log.error(
-                            ("invalid dirmap mapping, missing corresponding"
-                             " destination directory."))
-                        break
+                if os.path.isdir(active_site_dir):
+                    if not mapping.get("destination-path"):
+                        mapping["destination-path"] = []
+                    mapping["destination-path"].append(active_site_dir)
+
+                    if not mapping.get("source-path"):
+                        mapping["source-path"] = []
+                    mapping["source-path"].append(remote_site_dir)
 
             log.debug("local sync mapping:: {}".format(mapping))
         return mapping
