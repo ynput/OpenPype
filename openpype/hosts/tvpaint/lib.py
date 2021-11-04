@@ -1,3 +1,5 @@
+import os
+import shutil
 from PIL import Image, ImageDraw
 
 
@@ -441,3 +443,21 @@ def create_transparent_image_from_source(src_filepath, dst_filepath):
     painter = ImageDraw.Draw(img_obj)
     painter.rectangle((0, 0, *img_obj.size), fill=(0, 0, 0, 0))
     img_obj.save(dst_filepath)
+
+
+def fill_reference_frames(frame_references, filepaths_by_frame):
+    # Store path to first transparent image if there is any
+    for frame_idx, ref_idx in frame_references.items():
+        # Frame referencing to self should be rendered and used as source
+        #   and reference indexes with None can't be filled
+        if ref_idx is None or frame_idx == ref_idx:
+            continue
+
+        # Get destination filepath
+        src_filepath = filepaths_by_frame[ref_idx]
+        dst_filepath = filepaths_by_frame[ref_idx]
+
+        if hasattr(os, "link"):
+            os.link(src_filepath, dst_filepath)
+        else:
+            shutil.copy(src_filepath, dst_filepath)
