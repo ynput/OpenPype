@@ -506,8 +506,7 @@ def get_workdir_data(project_doc, asset_doc, task_name, host_name):
 
 
 def get_workdir_with_workdir_data(
-    workdir_data, anatomy=None, project_name=None,
-    template_key=None, dbcon=None
+    workdir_data, anatomy=None, project_name=None, template_key=None
 ):
     """Fill workdir path from entered data and project's anatomy.
 
@@ -659,7 +658,7 @@ def create_workfile_doc(asset_doc, task_name, filename, workdir, dbcon=None):
     anatomy = Anatomy(project_doc["name"])
     # Get workdir path (result is anatomy.TemplateResult)
     template_workdir = get_workdir_with_workdir_data(
-        workdir_data, anatomy, dbcon=dbcon
+        workdir_data, anatomy
     )
     template_workdir_path = str(template_workdir).replace("\\", "/")
 
