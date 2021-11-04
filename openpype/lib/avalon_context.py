@@ -542,9 +542,9 @@ def get_workdir_with_workdir_data(
 
     if not template_key:
         template_key = get_workfile_template_key(
-            workdir_data["task"].get("type"),
+            workdir_data["task"]["type"],
             workdir_data["app"],
-            project_name=workdir_data["project"]["name"],
+            project_name=workdir_data["project"]["name"]
         )
 
     anatomy_filled = anatomy.format(workdir_data)
