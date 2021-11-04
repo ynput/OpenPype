@@ -1,7 +1,6 @@
 import os
 import os.path
 import time
-import paramiko
 import threading
 import platform
 
@@ -13,6 +12,7 @@ log = Logger().get_logger("SyncServer")
 pysftp = None
 try:
     import pysftp
+    import paramiko
 except (ImportError, SyntaxError):
     pass
 
