@@ -6,8 +6,8 @@ from avalon.vendor import qtawesome
 
 from .delegates import ActionDelegate
 from . import lib
-from .models import TaskModel, ActionModel, ProjectModel
-from .flickcharm import FlickCharm
+from .models import TaskModel, ActionModel
+from openpype.tools.flickcharm import FlickCharm
 from .constants import (
     ACTION_ROLE,
     GROUP_ROLE,

@@ -100,6 +100,55 @@ def publish_and_log(dbcon, _id, log, close_plugin_name=None):
     )
 
 
+def fail_batch(_id, batches_in_progress, dbcon):
+    """Set current batch as failed as there are some stuck batches."""
+    running_batches = [str(batch["_id"])
+                       for batch in batches_in_progress
+                       if batch["_id"] != _id]
+    msg = "There are still running batches {}\n". \
+        format("\n".join(running_batches))
+    msg += "Ask admin to check them and reprocess current batch"
+    dbcon.update_one(
+        {"_id": _id},
+        {"$set":
+            {
+                "finish_date": datetime.now(),
+                "status": "error",
+                "log": msg
+
+            }}
+    )
+    raise ValueError(msg)
+
+
+def find_variant_key(application_manager, host):
+    """Searches for latest installed variant for 'host'
+
+        Args:
+            application_manager (ApplicationManager)
+            host (str)
+        Returns
+            (string) (optional)
+        Raises:
+            (ValueError) if no variant found
+    """
+    app_group = application_manager.app_groups.get(host)
+    if not app_group or not app_group.enabled:
+        raise ValueError("No application {} configured".format(host))
+
+    found_variant_key = None
+    # finds most up-to-date variant if any installed
+    for variant_key, variant in app_group.variants.items():
+        for executable in variant.executables:
+            if executable.exists():
+                found_variant_key = variant_key
+
+    if not found_variant_key:
+        raise ValueError("No executable for {} found".format(host))
+
+    return found_variant_key
+
+
 def _get_close_plugin(close_plugin_name, log):
     if close_plugin_name:
         plugins = pyblish.api.discover()

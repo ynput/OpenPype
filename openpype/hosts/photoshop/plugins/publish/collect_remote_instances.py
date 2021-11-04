@@ -106,12 +106,12 @@ class CollectRemoteInstances(pyblish.api.ContextPlugin):
         for mapping in self.color_code_mapping:
             if mapping["color_code"] and \
                     layer.color_code not in mapping["color_code"]:
-                break
+                continue
 
             if mapping["layer_name_regex"] and \
                     not any(re.search(pattern, layer.name)
                for pattern in mapping["layer_name_regex"]):
-                break
+                continue
 
             family_list.append(mapping["family"])
             subset_name_list.append(mapping["subset_template_name"])
@@ -127,7 +127,6 @@ class CollectRemoteInstances(pyblish.api.ContextPlugin):
                              format(layer.name))
             self.log.warning("Only first family used!")
             family_list[:] = family_list[0]
-
         if subset_name_list:
             resolved_subset_template = subset_name_list.pop()
         if family_list:
