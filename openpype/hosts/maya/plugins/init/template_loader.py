@@ -2,11 +2,16 @@ from openpype.plugins.load.abstract_load_template import AbstractTemplateLoader
 import importlib
 
 cmds = None
+
+
 def init_cmds():
     global cmds
     cmds = cmds or importlib.import_module('maya').cmds
 
-ATTRIBUTES = ['builder_type', 'representation', 'families', 'repre_name', 'asset', 'hierarchy', 'loader', 'order']
+
+ATTRIBUTES = ['builder_type', 'representation', 'families',
+              'repre_name', 'asset', 'hierarchy', 'loader', 'order']
+
 
 class TemplateLoader(AbstractTemplateLoader):
 
@@ -29,7 +34,8 @@ class TemplateLoader(AbstractTemplateLoader):
         return placeholder['builder_type'] == "context_asset"
 
     @staticmethod
-    def get_valid_representations_id_for_placeholder(representations, placeholder):
+    def get_valid_representations_id_for_placeholder(
+            representations, placeholder):
         if len(representations) < 1:
             return []
 
@@ -37,18 +43,17 @@ class TemplateLoader(AbstractTemplateLoader):
             placeholder['families'] == r['context']['family']
             and placeholder['repre_name'] == r['context']['representation']
             and placeholder['representation'] == r['context']['subset']
-            )]
+        )]
 
         if len(repres) < 1:
-            raise ValueError("No representation found for {} with:\n"
-                  "rerpresentation : {}\n"
-                  "representation name : {}\n"
-                  "Are you sure representations have been published ?".format(
-                      placeholder['builder_type'],
-                      placeholder['representation'],
-                      placeholder['repre_name']
-                      )
-                    )
+            raise ValueError(
+                "No representation found for {} with:\n"
+                "representation : {}\n"
+                "representation name : {}\n"
+                "Are you sure representations have been published ?".format(
+                    placeholder['builder_type'],
+                    placeholder['representation'],
+                    placeholder['repre_name']))
         return repres
 
     @staticmethod
@@ -58,7 +63,8 @@ class TemplateLoader(AbstractTemplateLoader):
         if cmds.nodeType(node) != 'transform':
             nodeParent = nodeParent.rpartition('|')[0]
 
-        child = map(lambda x: x.replace('__', '_:').replace('_CON', ''), containers)
+        child = map(lambda x: x.replace(
+            '__', '_:').replace('_CON', ''), containers)
         cmds.parent(child, nodeParent)
 
     @staticmethod
@@ -68,22 +74,27 @@ class TemplateLoader(AbstractTemplateLoader):
 
     @staticmethod
     def is_valid_placeholder(node):
-        missing_attributes = [attr for attr in ATTRIBUTES if not cmds.attributeQuery(attr, node=node, exists=True)]
+        missing_attributes = [attr for attr in ATTRIBUTES
+                              if not cmds.attributeQuery(
+                                  attr, node=node, exists=True)]
         if missing_attributes:
-            print("Ignoring '{}': Invalid template placeholder. Node miss attribute : {}".format(node, ", ".join(missing_attributes)))
+            print("Ignoring '{}': Invalid template placeholder. Node miss \
+                attribute : {}".format(node, ", ".join(missing_attributes)))
             return False
 
         return True
 
     @staticmethod
     def _get_placeholder_loader_name(placeholder):
-         return placeholder['loader']
+        return placeholder['loader']
 
     @staticmethod
     def _get_node_data(node):
         user_data = dict()
         for attr in ATTRIBUTES:
-            user_data[attr] = cmds.getAttr('{}.{}'.format(node, attr), asString=True)
+            user_data[attr] = cmds.getAttr(
+                '{}.{}'.format(node, attr),
+                asString=True)
         user_data['node'] = node
 
         return user_data
