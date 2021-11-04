@@ -1,11 +1,6 @@
-from avalon import api, io
-from avalon.maya import lib
 from maya import cmds, mel
 from avalon import maya
 from openpype.plugins.load.abstract_load_template import AbstractTemplateLoader
-import maya.cmds as cmds
-from avalon import maya
-from avalon.maya import lib
 
 
 class TemplateLoader(AbstractTemplateLoader):
