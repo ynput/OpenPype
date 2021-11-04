@@ -471,6 +471,19 @@ def copy_render_file(src_path, dst_path):
         shutil.copy(src_path, dst_path)
 
 
+def cleanup_rendered_layers(filepaths_by_layer_id):
+    """Delete all files for each individual layer files after compositing."""
+    # Collect all filepaths from data
+    all_filepaths = []
+    for filepaths_by_frame in filepaths_by_layer_id.values():
+        all_filepaths.extend(filepaths_by_frame.values())
+
+    # Loop over loop
+    for filepath in set(all_filepaths):
+        if filepath is not None and os.path.exists(filepath):
+            os.remove(filepath)
+
+
 def composite_images(input_image_paths, output_filepath):
     """Composite images in order from passed list.
 
