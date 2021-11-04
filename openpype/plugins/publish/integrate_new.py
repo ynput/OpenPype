@@ -1030,6 +1030,7 @@ class IntegrateAssetNew(pyblish.api.InstancePlugin):
         local_site = 'studio'  # default
         remote_site = None
         always_accesible = []
+        sync_project_presets = None
 
         rec = {
             "_id": io.ObjectId(),
@@ -1090,6 +1091,7 @@ class IntegrateAssetNew(pyblish.api.InstancePlugin):
         return rec
 
     def _get_sites(self, sync_project_presets):
+        """Returns tuple (local_site, remote_site)"""
         local_site_id = openpype.api.get_local_site_id()
         local_site = sync_project_presets["config"]. \
             get("active_site", "studio").strip()
