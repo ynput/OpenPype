@@ -1,5 +1,6 @@
 import avalon
-from openpype.hosts.maya.plugins.init.template_loader import TemplateLoader as maya_TemplateLoader
+from openpype.hosts.maya.plugins.init.template_loader \
+    import TemplateLoader as maya_TemplateLoader
 
 
 def get_concrete_template_loader():
