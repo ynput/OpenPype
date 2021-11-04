@@ -357,7 +357,7 @@ def calculate_layers_extraction_data(
 
     Args:
         layers_data(list): Layers data loaded from TVPaint.
-        exposure_frames_by_id(dict): Exposure frames of layers stored by
+        exposure_frames_by_layer_id(dict): Exposure frames of layers stored by
             layer id.
         behavior_by_layer_id(dict): Pre and Post behavior of layers stored by
             layer id.
@@ -365,13 +365,15 @@ def calculate_layers_extraction_data(
         range_end(int): Last frame of rendered range.
         skip_not_visible(bool): Skip calculations for hidden layers (Skipped
             by default).
+        filename_prefix(str): Prefix before filename.
+        ext(str): Extension which filenames will have ('.png' is default).
 
     Returns:
         dict: Prepared data for rendering by layer position.
     """
     # Make sure layer ids are strings
     #   backwards compatibility when layer ids were integers
-    backwards_id_conversion(exposure_frames_by_id)
+    backwards_id_conversion(exposure_frames_by_layer_id)
     backwards_id_conversion(behavior_by_layer_id)
 
     layer_template = get_layer_pos_filename_template(
@@ -386,7 +388,7 @@ def calculate_layers_extraction_data(
         layer_id = str(orig_layer_id)
 
         # Skip if does not have any exposure frames (empty layer)
-        exposure_frames = exposure_frames_by_id[layer_id]
+        exposure_frames = exposure_frames_by_layer_id[layer_id]
         if not exposure_frames:
             continue
 
