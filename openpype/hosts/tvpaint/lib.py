@@ -5,8 +5,8 @@ def backwards_id_conversion(data_by_layer_id):
             data_by_layer_id[str(key)] = data_by_layer_id.pop(key)
 
 
-def get_base_filename_template(frame_end, ext=None):
-    """Get filetemplate for rendered files.
+def get_frame_filename_template(frame_end, filename_prefix=None, ext=None):
+    """Get file template with frame key for rendered files.
 
     This is simple template contains `{frame}{ext}` for sequential outputs
     and `single_file{ext}` for single file output. Output is rendered to
@@ -321,11 +321,13 @@ def calculate_layer_frame_references(
 
 def calculate_layers_extraction_data(
     layers_data,
-    exposure_frames_by_id,
+    exposure_frames_by_layer_id,
     behavior_by_layer_id,
     range_start,
     range_end,
-    skip_not_visible=True
+    skip_not_visible=True,
+    filename_prefix=None,
+    ext=None
 ):
     """Calculate extraction data for passed layers data.
 
@@ -364,8 +366,10 @@ def calculate_layers_extraction_data(
     backwards_id_conversion(exposure_frames_by_id)
     backwards_id_conversion(behavior_by_layer_id)
 
-    base_template = get_base_filename_template(range_end)
-    layer_template = get_layer_filename_template(base_template)
+    frame_template = get_frame_filename_template(
+        range_end, filename_prefix, ext
+    )
+    layer_template = get_layer_filename_template(frame_template)
     output = {}
     for layer_data in layers_data:
         if skip_not_visible and not layer_data["visible"]:
