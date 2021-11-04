@@ -4,6 +4,7 @@ from datetime import datetime
 import threading
 import platform
 import copy
+from collections import deque
 
 from avalon.api import AvalonMongoDB
 
@@ -120,6 +121,11 @@ class SyncServerModule(OpenPypeModule, ITrayModule):
 
         self._connection = None
 
+        # list of long blocking tasks
+        self.long_running_tasks = deque()
+        # projects that long tasks are running on
+        self.projects_processed = set()
+
     """ Start of Public API """
     def add_site(self, collection, representation_id, site_name=None,
                  force=False):
@@ -196,6 +202,105 @@ class SyncServerModule(OpenPypeModule, ITrayModule):
 
         for repre in representations:
             self.remove_site(collection, repre.get("_id"), site_name, True)
+
+    def create_validate_project_task(self, collection, site_name):
+        """Adds metadata about project files validation on a queue.
+
+            This process will loop through all representation and check if
+            their files actually exist on an active site.
+
+            This might be useful for edge cases when artists is switching
+            between sites, remote site is actually physically mounted and
+            active site has same file urls etc.
+
+            Task will run on a asyncio loop, shouldn't be blocking.
+        """
+        task = {
+            "type": "validate",
+            "project_name": collection,
+            "func": lambda: self.validate_project(collection, site_name)
+        }
+        self.projects_processed.add(collection)
+        self.long_running_tasks.append(task)
+
+    def validate_project(self, collection, site_name, remove_missing=False):
+        """
+            Validate 'collection' of 'site_name' and its local files
+
+            If file present and not marked with a 'site_name' in DB, DB is
+            updated with site name and file modified date.
+
+            Args:
+                module (SyncServerModule)
+                collection (string): project name
+                site_name (string): active site name
+                remove_missing (bool): if True remove sites in DB if missing
+                    physically
+        """
+        self.log.debug("Validation of {} for {} started".format(collection,
+                                                                site_name))
+        query = {
+            "type": "representation"
+        }
+
+        representations = list(
+            self.connection.database[collection].find(query))
+        if not representations:
+            self.log.debug("No repre found")
+            return
+
+        sites_added = 0
+        sites_removed = 0
+        for repre in representations:
+            repre_id = repre["_id"]
+            for repre_file in repre.get("files", []):
+                try:
+                    has_site = site_name in [site["name"]
+                                             for site in repre_file["sites"]]
+                except TypeError:
+                    self.log.debug("Structure error in {}".format(repre_id))
+                    continue
+
+                if has_site and not remove_missing:
+                    continue
+
+                file_path = repre_file.get("path", "")
+                local_file_path = self.get_local_file_path(collection,
+                                                           site_name,
+                                                           file_path)
+
+                if local_file_path and os.path.exists(local_file_path):
+                    self.log.debug("Adding site {} for {}".format(site_name,
+                                                                  repre_id))
+                    if not has_site:
+                        query = {
+                            "_id": repre_id
+                        }
+                        created_dt = datetime.fromtimestamp(
+                            os.path.getmtime(local_file_path))
+                        elem = {"name": site_name,
+                                "created_dt": created_dt}
+                        self._add_site(collection, query, [repre], elem,
+                                       site_name=site_name,
+                                       file_id=repre_file["_id"])
+                        sites_added += 1
+                else:
+                    if has_site and remove_missing:
+                        self.log.debug("Removing site {} for {}".
+                                       format(site_name, repre_id))
+                        self.reset_provider_for_file(collection,
+                                                     repre_id,
+                                                     file_id=repre_file["_id"],
+                                                     remove=True)
+                        sites_removed += 1
+
+        if sites_added % 100 == 0:
+            self.log.debug("Sites added {}".format(sites_added))
+
+        self.log.debug("Validation of {} for {} ended".format(collection,
+                                                              site_name))
+        self.log.info("Sites added {}, sites removed {}".format(sites_added,
+                                                                sites_removed))
 
     def pause_representation(self, collection, representation_id, site_name):
         """
@@ -719,19 +824,8 @@ class SyncServerModule(OpenPypeModule, ITrayModule):
 
         self.lock = threading.Lock()
 
-        try:
-            self.sync_server_thread = SyncServerThread(self)
+        self.sync_server_thread = SyncServerThread(self)
 
-        except ValueError:
-            log.info("No system setting for sync. Not syncing.", exc_info=True)
-            self.enabled = False
-        except KeyError:
-            log.info((
-                     "There are not set presets for SyncServer OR "
-                     "Credentials provided are invalid, "
-                     "no syncing possible").
-                     format(str(self.sync_project_settings)), exc_info=True)
-            self.enabled = False
 
     def tray_start(self):
         """
@@ -1359,7 +1453,7 @@ class SyncServerModule(OpenPypeModule, ITrayModule):
         found = False
         for repre_file in representation.pop().get("files"):
             for site in repre_file.get("sites"):
-                if site["name"] == site_name:
+                if site.get("name") == site_name:
                     found = True
                     break
         if not found:
@@ -1410,13 +1504,20 @@ class SyncServerModule(OpenPypeModule, ITrayModule):
         self._update_site(collection, query, update, arr_filter)
 
     def _add_site(self, collection, query, representation, elem, site_name,
-                  force=False):
+                  force=False, file_id=None):
         """
             Adds 'site_name' to 'representation' on 'collection'
+
+            Args:
+                representation (list of 1 dict)
+                file_id (ObjectId)
 
             Use 'force' to remove existing or raises ValueError
         """
         for repre_file in representation.pop().get("files"):
+            if file_id and file_id != repre_file["_id"]:
+                continue
+
             for site in repre_file.get("sites"):
                 if site["name"] == site_name:
                     if force:
@@ -1429,11 +1530,19 @@ class SyncServerModule(OpenPypeModule, ITrayModule):
                         log.info(msg)
                         raise ValueError(msg)
 
-        update = {
-            "$push": {"files.$[].sites": elem}
-        }
+        if not file_id:
+            update = {
+                "$push": {"files.$[].sites": elem}
+            }
 
-        arr_filter = []
+            arr_filter = []
+        else:
+            update = {
+                "$push": {"files.$[f].sites": elem}
+            }
+            arr_filter = [
+                {'f._id': file_id}
+            ]
 
         self._update_site(collection, query, update, arr_filter)
 
@@ -1508,7 +1617,24 @@ class SyncServerModule(OpenPypeModule, ITrayModule):
         return int(ld)
 
     def show_widget(self):
-        """Show dialog to enter credentials"""
+        """Show dialog for Sync Queue"""
+        no_errors = False
+        try:
+            from .tray.app import SyncServerWindow
+            self.widget = SyncServerWindow(self)
+            no_errors = True
+        except ValueError:
+            log.info("No system setting for sync. Not syncing.", exc_info=True)
+        except KeyError:
+            log.info((
+                "There are not set presets for SyncServer OR "
+                "Credentials provided are invalid, "
+                "no syncing possible").
+                format(str(self.sync_project_settings)), exc_info=True)
+        except:
+            log.error("Uncaught exception durin start of SyncServer",
+                      exc_info=True)
+        self.enabled = no_errors
         self.widget.show()
 
     def _get_success_dict(self, new_file_id):

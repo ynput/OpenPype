@@ -65,7 +65,7 @@ class RootEntity(BaseItemEntity):
         super(RootEntity, self).__init__(schema_data)
         self._require_restart_callbacks = []
         self._item_ids_require_restart = set()
-        self._item_initalization()
+        self._item_initialization()
         if reset:
             self.reset()
 
@@ -176,7 +176,7 @@ class RootEntity(BaseItemEntity):
         for child_obj in added_children:
             self.gui_layout.append(child_obj)
 
-    def _item_initalization(self):
+    def _item_initialization(self):
         # Store `self` to `root_item` for children entities
         self.root_item = self
 

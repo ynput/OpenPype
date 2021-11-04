@@ -11,7 +11,9 @@ from openpype.lib.plugin_tools import parse_json, get_batch_asset_task_info
 from openpype.lib.remote_publish import (
     get_webpublish_conn,
     start_webpublish_log,
-    publish_and_log
+    publish_and_log,
+    fail_batch,
+    find_variant_key
 )
 
 
@@ -124,10 +126,17 @@ class PypeCommands:
             wants to process uploaded .psd file and publish collected layers
             from there.
 
+            Checks if no other batches are running (status =='in_progress). If
+            so, it sleeps for SLEEP (this is separate process),
+            waits for WAIT_FOR seconds altogether.
+
             Requires installed host application on the machine.
 
             Runs publish process as user would, in automatic fashion.
         """
+        SLEEP = 5  # seconds for another loop check for concurrently runs
+        WAIT_FOR = 300  # seconds to wait for conc. runs
+
         from openpype import install, uninstall
         from openpype.api import Logger
 
@@ -140,25 +149,12 @@ class PypeCommands:
         from openpype.lib import ApplicationManager
         application_manager = ApplicationManager()
 
-        app_group = application_manager.app_groups.get(host)
-        if not app_group or not app_group.enabled:
-            raise ValueError("No application {} configured".format(host))
-
-        found_variant_key = None
-        # finds most up-to-date variant if any installed
-        for variant_key, variant in app_group.variants.items():
-            for executable in variant.executables:
-                if executable.exists():
-                    found_variant_key = variant_key
-
-        if not found_variant_key:
-            raise ValueError("No executable for {} found".format(host))
+        found_variant_key = find_variant_key(application_manager, host)
 
         app_name = "{}/{}".format(host, found_variant_key)
 
         batch_data = None
         if batch_dir and os.path.exists(batch_dir):
-            # TODO check if batch manifest is same as tasks manifests
             batch_data = parse_json(os.path.join(batch_dir, "manifest.json"))
 
         if not batch_data:
@@ -168,10 +164,37 @@ class PypeCommands:
         asset, task_name, _task_type = get_batch_asset_task_info(
             batch_data["context"])
 
+        # processing from app expects JUST ONE task in batch and 1 workfile
+        task_dir_name = batch_data["tasks"][0]
+        task_data = parse_json(os.path.join(batch_dir, task_dir_name,
+                                            "manifest.json"))
+
         workfile_path = os.path.join(batch_dir,
-                                     batch_data["task"],
-                                     batch_data["files"][0])
+                                     task_dir_name,
+                                     task_data["files"][0])
+
         print("workfile_path {}".format(workfile_path))
+
+        _, batch_id = os.path.split(batch_dir)
+        dbcon = get_webpublish_conn()
+        # safer to start logging here, launch might be broken altogether
+        _id = start_webpublish_log(dbcon, batch_id, user)
+
+        in_progress = True
+        slept_times = 0
+        while in_progress:
+            batches_in_progress = list(dbcon.find({
+                "status": "in_progress"
+            }))
+            if len(batches_in_progress) > 1:
+                if slept_times * SLEEP >= WAIT_FOR:
+                    fail_batch(_id, batches_in_progress, dbcon)
+
+                print("Another batch running, sleeping for a bit")
+                time.sleep(SLEEP)
+                slept_times += 1
+            else:
+                in_progress = False
 
         # must have for proper launch of app
         env = get_app_environments_for_context(
@@ -181,11 +204,6 @@ class PypeCommands:
             app_name
         )
         os.environ.update(env)
-
-        _, batch_id = os.path.split(batch_dir)
-        dbcon = get_webpublish_conn()
-        # safer to start logging here, launch might be broken altogether
-        _id = start_webpublish_log(dbcon, batch_id, user)
 
         os.environ["OPENPYPE_PUBLISH_DATA"] = batch_dir
         os.environ["IS_HEADLESS"] = "true"

@@ -208,6 +208,25 @@
 }
 ```
 
+## dict-roots
+- entity can be used only in Project settings
+- keys of dictionary are based on current project roots
+- they are not updated "live" it is required to save root changes and then
+    modify values on this entity
+    # TODO do live updates
+```
+{
+    "type": "dict-roots",
+    "key": "roots",
+    "label": "Roots",
+    "object_type": {
+        "type": "path",
+        "multiplatform": true,
+        "multipath": false
+    }
+}
+```
+
 ## dict-conditional
 - is similar to `dict` but has always available one enum entity
     - the enum entity has single selection and it's value define other children entities
