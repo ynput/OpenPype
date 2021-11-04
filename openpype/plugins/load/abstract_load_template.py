@@ -4,8 +4,10 @@ from openpype.settings import get_project_settings
 from openpype.lib import Anatomy
 from openpype.lib import get_linked_assets
 
-#### Copy from BuildWorkfile in avalon_context.py
-#### TODO : Move those function into a lib
+# Copy from BuildWorkfile in avalon_context.py
+# TODO : Move those function into a lib
+
+
 def _collect_last_version_repres(asset_entities):
     """Collect subsets, versions and representations for asset_entities.
 
@@ -101,19 +103,21 @@ def _collect_last_version_repres(asset_entities):
 
     return output
 
+
 def get_loader_by_name():
 
     loaders_by_name = {}
     for loader in avalon.api.discover(avalon.api.Loader):
-            loader_name = loader.__name__
-            if loader_name in loaders_by_name:
-                raise KeyError(
-                    "Duplicated loader name {0}!".format(loader_name)
-                )
-            loaders_by_name[loader_name] = loader
+        loader_name = loader.__name__
+        if loader_name in loaders_by_name:
+            raise KeyError(
+                "Duplicated loader name {0}!".format(loader_name)
+            )
+        loaders_by_name[loader_name] = loader
     return loaders_by_name
 
 ##############################
+
 
 class AbstractTemplateLoader(object):
     """
@@ -157,20 +161,28 @@ class AbstractTemplateLoader(object):
         current_dcc = avalon.io.Session["AVALON_APP"]
         current_task = avalon.io.Session["AVALON_TASK"]
 
-        for profile in project_settings[current_dcc]['workfile_build']['profiles']:
+        for profile in project_settings[current_dcc]['workfile_build'][
+                'profiles']:
             if current_task in profile['task_types']:
                 path = profile['path']
                 break
         else:
-            raise ValueError("No matching profile found for task '{}' in DCC '{}'".format(current_task, current_dcc))
+            raise ValueError(
+                "No matching profile found for task '{}' in DCC '{}'".format(
+                    current_task, current_dcc))
         try:
             solved_path = os.path.normpath(anatomy.path_remapper(path))
 
         except KeyError as missing_key:
-            raise KeyError("Could not solve key '{}' in template path '{}'".format(missing_key, path))
+            raise KeyError(
+                "Could not solve key '{}' in template path '{}'".format(
+                    missing_key, path))
 
         if not os.path.exists(solved_path):
-            raise IOError("Template found in openPype settings for task '{}' with DCC '{}' does not exists. (Not found : {})".format(current_task, current_dcc, solved_path))
+            raise IOError(
+                "Template found in openPype settings for task '{}' with DCC \
+                '{}' does not exists. (Not found : {})".format(
+                    current_task, current_dcc, solved_path))
         return solved_path
 
     def __init__(self):
@@ -205,20 +217,24 @@ class AbstractTemplateLoader(object):
 
         for placeholder in placeholders:
             loader_name = self._get_placeholder_loader_name(placeholder)
-            representations = current_representations if self.is_placeholder_context(placeholder) else linked_representations
-            for representation in self.get_valid_representations_id_for_placeholder(representations, placeholder):
+            representations = current_representations \
+                if self.is_placeholder_context(placeholder) \
+                else linked_representations
+            for representation in \
+                self.get_valid_representations_id_for_placeholder(
+                    representations, placeholder):
                 container = avalon.api.load(
-                        loaders_by_name[loader_name],
-                        representation
-                    )
+                    loaders_by_name[loader_name],
+                    representation
+                )
                 self.switch(container, placeholder)
             self.clean_placeholder(placeholder)
 
     def get_representations(self, entities):
         """Parse avalon entities to get representations"""
         return [subset['version']['repres'] for entity in entities.values()
-                  for subset in entity['subsets'].values()
-                  if entity['asset_entity']['_id']]
+                for subset in entity['subsets'].values()
+                if entity['asset_entity']['_id']]
 
     @staticmethod
     def get_valid_representations_id_for_placeholder(self, representation):
@@ -245,8 +261,10 @@ class AbstractTemplateLoader(object):
             str: Solved template path
 
         Raises:
-            ValueError: No profile found from settings for current avalon session
-            KeyError: Could not solve path because a key does not exists in avalon context
+            ValueError: No profile found from settings for current avalon
+                session
+            KeyError: Could not solve path because a key does not exists
+                in avalon context
             IOError: Solved path does not exists on current filesystem
         """
         raise NotImplementedError
@@ -269,7 +287,8 @@ class AbstractTemplateLoader(object):
         Import template in dcc
 
         Args:
-            template_path (str): fullpath to current task and dcc's template file
+            template_path (str): fullpath to current task and dcc's template
+                file
         """
         raise NotImplementedError
 
