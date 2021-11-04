@@ -1,4 +1,4 @@
-from maya import cmds, mel
+from maya import cmds
 from avalon import maya
 from openpype.plugins.load.abstract_load_template import AbstractTemplateLoader
 
