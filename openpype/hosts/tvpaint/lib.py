@@ -329,6 +329,22 @@ def calculate_layers_extraction_data(
 ):
     """Calculate extraction data for passed layers data.
 
+    ```
+    {
+        <layer_id>: {
+            "frame_references": {...},
+            "filenames_by_frame_index": {...}
+        },
+        ...
+    }
+    ```
+
+    Frame references contains frame index reference to rendered frame index.
+
+    Filename by frame index represents filename under which should be frame
+    stored. Directory is not handled here because each usage may need different
+    approach.
+
     Args:
         layers_data(list): Layers data loaded from TVPaint.
         exposure_frames_by_id(dict): Exposure frames of layers stored by
@@ -355,7 +371,8 @@ def calculate_layers_extraction_data(
         if skip_not_visible and not layer_data["visible"]:
             continue
 
-        layer_id = str(layer_data["layer_id"])
+        orig_layer_id = layer_data["layer_id"]
+        layer_id = str(orig_layer_id)
 
         # Skip if does not have any exposure frames (empty layer)
         exposure_frames = exposure_frames_by_id[layer_id]
@@ -402,8 +419,7 @@ def calculate_layers_extraction_data(
             )
 
         # Store objects under the layer id
-        #   so if layer is skipped at any part they will be there
-        output[layer_position] = {
+        output[orig_layer_id] = {
             "frame_references": frame_references,
             "filenames_by_frame_index": filenames_by_frame_index
         }
