@@ -18,13 +18,16 @@ def get_frame_filename_template(frame_end, filename_prefix=None, ext=None):
     if frame_end_str_len > frame_padding:
         frame_padding = frame_end_str_len
 
-    if ext is None:
-        ext = ".png"
-    return "{{frame:0>{}}}{}".format(frame_padding, ext)
+    ext = ext or ".png"
+    filename_prefix = filename_prefix or ""
+
+    return "{}{{frame:0>{}}}{}".format(filename_prefix, frame_padding, ext)
 
 
-def get_layer_filename_template(base_template):
-    return "pos_{pos}." + base_template
+def get_layer_pos_filename_template(range_end, filename_prefix=None, ext=None):
+    filename_prefix = filename_prefix or ""
+    new_filename_prefix = filename_prefix + "pos_{pos}."
+    return get_frame_filename_template(range_end, new_filename_prefix, ext)
 
 
 def _calculate_pre_behavior_copy(
@@ -366,10 +369,9 @@ def calculate_layers_extraction_data(
     backwards_id_conversion(exposure_frames_by_id)
     backwards_id_conversion(behavior_by_layer_id)
 
-    frame_template = get_frame_filename_template(
+    layer_template = get_layer_pos_filename_template(
         range_end, filename_prefix, ext
     )
-    layer_template = get_layer_filename_template(frame_template)
     output = {}
     for layer_data in layers_data:
         if skip_not_visible and not layer_data["visible"]:
