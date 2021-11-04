@@ -7,6 +7,7 @@ import maya.cmds as cmds
 from avalon import maya
 from avalon.maya import lib
 
+
 class TemplateLoader(AbstractTemplateLoader):
     """Import action for Maya (unmanaged)
 
@@ -25,19 +26,19 @@ class TemplateLoader(AbstractTemplateLoader):
     color = "#775555"
 
     def load_template(self):
-        
+
         choice = self.display_warning()
         if choice is False:
             return
 
         with maya.maintained_selection():
-            cmds.file(self.template_path,
-                      i=True,
-                      preserveReferences=True,
-                      returnNewNodes=True,
-                      groupReference=True,
-                     )
-
+            cmds.file(
+                self.template_path,
+                i=True,
+                preserveReferences=True,
+                returnNewNodes=True,
+                groupReference=True,
+            )
 
     def load(self, context, name=None, namespace=None, data=None):
 
@@ -56,8 +57,9 @@ class TemplateLoader(AbstractTemplateLoader):
             bool
 
         """
-        return True #Court circuit ici
-        #TODO: Recoder le display warning pour vérifier task in progress, les publish manquant, etc
+        return True  # Court circuit ici
+        # TODO: Recoder le display warning pour vérifier task in progress,
+        # les publish manquant, etc
         from avalon.vendor.Qt import QtWidgets
 
         accept = QtWidgets.QMessageBox.Ok
