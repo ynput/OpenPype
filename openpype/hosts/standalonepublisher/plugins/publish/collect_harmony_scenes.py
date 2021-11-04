@@ -54,12 +54,8 @@ class CollectHarmonyScenes(pyblish.api.InstancePlugin):
             asset_entity = context.data["assetEntity"]
 
             task_type = asset_entity["data"]["tasks"].get(task, {}).get("type")
-
-            if task_type:
-                task_code = project_entity["config"]["tasks"][task_type][
-                    "short_name"]
-            else:
-                task_code = None
+            project_task_types = project_entity["config"]["tasks"]
+            task_code = project_task_types.get(task_type, {}).get("short_name")
 
             # updating hierarchy data
             anatomy_data_new.update({

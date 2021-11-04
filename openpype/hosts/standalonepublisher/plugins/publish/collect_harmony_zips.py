@@ -47,12 +47,8 @@ class CollectHarmonyZips(pyblish.api.InstancePlugin):
             self.log.info("Copied data: {}".format(new_instance.data))
 
             task_type = asset_data["data"]["tasks"].get(task, {}).get("type")
-
-            if task_type:
-                task_code = project_entity["config"]["tasks"][task_type][
-                    "short_name"]
-            else:
-                task_code = None
+            project_task_types = project_entity["config"]["tasks"]
+            task_code = project_task_types.get(task_type, {}).get("short_name")
 
             # fix anatomy data
             anatomy_data_new = copy.deepcopy(anatomy_data)
@@ -65,7 +61,7 @@ class CollectHarmonyZips(pyblish.api.InstancePlugin):
                         "type": task_type,
                         "short": task_code,
                     },
-                    "subset": subset_name,
+                    "subset": subset_name
                 }
             )
 

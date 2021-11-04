@@ -482,10 +482,8 @@ def get_workdir_data(project_doc, asset_doc, task_name, host_name):
 
     task_type = asset_doc['data']['tasks'].get(task_name, {}).get('type')
 
-    if task_type:
-        task_code = project_doc['config']['tasks'][task_type]['short_name']
-    else:
-        task_code = None
+    project_task_types = project_doc["config"]["tasks"]
+    task_code = project_task_types.get(task_type, {}).get("short_name")
 
     data = {
         "project": {
