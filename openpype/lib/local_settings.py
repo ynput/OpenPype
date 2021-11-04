@@ -524,8 +524,8 @@ def get_local_site_id():
     """
     # override local id from environment
     # used for background syncing
-    if os.environ.get("SITE_SYNC_LOCAL_ID"):
-        return os.environ["SITE_SYNC_LOCAL_ID"]
+    if os.environ.get("OPENPYPE_LOCAL_ID"):
+        return os.environ["OPENPYPE_LOCAL_ID"]
 
     registry = OpenPypeSettingsRegistry()
     try:
