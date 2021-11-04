@@ -1030,25 +1030,6 @@ class IntegrateAssetNew(pyblish.api.InstancePlugin):
         local_site = 'studio'  # default
         remote_site = None
         always_accesible = []
-        alternate_sites = set()
-        system_sync_server_presets = instance.context.data["system_settings"]\
-                                                          ["modules"]\
-                                                          ["sync_server"]
-        log.debug("system_sett:: {}".format(system_sync_server_presets))
-        if system_sync_server_presets["enabled"]:
-            sync_project_presets = (instance.context.data["project_settings"]
-                                                         ["global"]
-                                                         ["sync_server"])
-
-            if sync_project_presets["enabled"]:
-                local_site, remote_site = self._get_sites(sync_project_presets)
-
-                sites = system_sync_server_presets.get("sites", {})
-                log.debug("sites:: {}".format(sites))
-                for site_name, site_info in sites.items():
-                    for added_site in [local_site, remote_site]:
-                        if added_site in site_info.get("alternative_sites",[]):
-                            alternate_sites.add(site_name)
 
         rec = {
             "_id": io.ObjectId(),
@@ -1063,28 +1044,48 @@ class IntegrateAssetNew(pyblish.api.InstancePlugin):
         if sites:
             rec["sites"] = sites
         else:
-            already_attached_sites = set()
+            system_sync_server_presets = (
+                instance.context.data["system_settings"]
+                                     ["modules"]
+                                     ["sync_server"])
+            log.debug("system_sett:: {}".format(system_sync_server_presets))
+
+            if system_sync_server_presets["enabled"]:
+                sync_project_presets = (
+                    instance.context.data["project_settings"]
+                                         ["global"]
+                                         ["sync_server"])
+
+            if sync_project_presets and sync_project_presets["enabled"]:
+                local_site, remote_site = self._get_sites(sync_project_presets)
+
+                always_accesible = sync_project_presets["config"]. \
+                    get("always_accessible_on", [])
+
+            already_attached_sites = {}
             meta = {"name": local_site, "created_dt": datetime.now()}
             rec["sites"] = [meta]
-            already_attached_sites.add(meta["name"])
+            already_attached_sites[meta["name"]] = meta["created_dt"]
 
-            if remote_site:
+            if sync_project_presets and sync_project_presets["enabled"]:
+                # add remote
                 meta = {"name": remote_site.strip()}
                 rec["sites"].append(meta)
-                already_attached_sites.add(meta["name"])
+                already_attached_sites[meta["name"]] = None
 
-            # add skeleton for site where it should be always synced to
-            for always_on_site in always_accesible:
-                if always_on_site not in [local_site, remote_site]:
-                    meta = {"name": always_on_site.strip()}
-                    rec["sites"].append(meta)
-                    already_attached_sites.add(meta["name"])
+                # add skeleton for site where it should be always synced to
+                for always_on_site in always_accesible:
+                    if always_on_site not in already_attached_sites.keys():
+                        meta = {"name": always_on_site.strip()}
+                        rec["sites"].append(meta)
+                        already_attached_sites[meta["name"]] = None
 
-            log.debug("alternate_sites:: {}".format(alternate_sites))
-            for alt_site in alternate_sites:
-                if alt_site not in already_attached_sites:
-                    meta = {"name": local_site, "created_dt": datetime.now()}
-                    rec["sites"].append(meta)
+                # add alternative sites
+                rec = self._add_alternative_sites(system_sync_server_presets,
+                                                  already_attached_sites,
+                                                  rec)
+
+            log.debug("final sites:: {}".format(rec["sites"]))
 
         return rec
 
@@ -1092,8 +1093,7 @@ class IntegrateAssetNew(pyblish.api.InstancePlugin):
         local_site_id = openpype.api.get_local_site_id()
         local_site = sync_project_presets["config"]. \
             get("active_site", "studio").strip()
-        always_accesible = sync_project_presets["config"]. \
-            get("always_accessible_on", [])
+
         if local_site == 'local':
             local_site = local_site_id
 
@@ -1105,6 +1105,32 @@ class IntegrateAssetNew(pyblish.api.InstancePlugin):
             remote_site = local_site_id
 
         return local_site, remote_site
+
+    def _add_alternative_sites(self,
+                               system_sync_server_presets,
+                               already_attached_sites,
+                               rec):
+        """Loop through all configured sites and add alternatives.
+
+            See SyncServerModule.handle_alternate_site
+        """
+        conf_sites = system_sync_server_presets.get("sites", {})
+
+        for site_name, site_info in conf_sites.items():
+            alt_sites = set(site_info.get("alternative_sites", []))
+            for added_site in already_attached_sites.keys():
+                if added_site in alt_sites:
+                    if site_name in already_attached_sites.keys():
+                        continue
+                    meta = {"name": site_name}
+                    real_created = already_attached_sites[added_site]
+                    # alt site inherits state of 'created_dt'
+                    if real_created:
+                        meta["created_dt"] = real_created
+                    rec["sites"].append(meta)
+                    already_attached_sites[meta["name"]] = real_created
+
+        return rec
 
     def handle_destination_files(self, integrated_file_sizes, mode):
         """ Clean destination files
