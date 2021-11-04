@@ -443,86 +443,181 @@ class FlamePushButtonMenu(QtWidgets.QPushButton):
         self.setText(action.text())
         self.selection_changed.emit(action.text())
 
+
 class FtrackComponentCreator:
     default_location = "ftrack.server"
     ftrack_locations = {}
 
     def __init__(self, session):
         self.session = session
-        self.get_ftrack_location()
+        self._get_ftrack_location()
 
-    def create_comonent(self, parent, component_data):
-        location = self.get_ftrack_location
+    def create_comonent(self, parent, data, assetversion_entity=None):
+        location = self._get_ftrack_location()
 
-        file_path = component_data["file_path"]
-        name = component_data["name"]
+        file_path = data["file_path"]
 
         # get extension
         file = os.path.basename(file_path)
-        _name, ext = os.path.splitext(file)
+        _n, ext = os.path.splitext(file)
 
-        _component_data = {
+        name = "ftrackreview-mp4" if "mov" in ext else "thumbnail"
+
+        component_data = {
             "name": name,
             "file_path": file_path,
             "file_type": ext,
-            "location": location,
-            "overwrite": True
-
+            "location": location
         }
 
-        if name != "thumnail":
-            duration = component_data["duration"]
-            handles = component_data["handles"]
-            fps = component_data["fps"]
-            _component_data.update({
-                "name": "ftrackreview-mp4",
+        if name == "ftrackreview-mp4":
+            duration = data["duration"]
+            handles = data["handles"]
+            fps = data["fps"]
+            component_data.update({
                 "metadata": {'ftr_meta': json.dumps({
                     'frameIn': int(0),
                     'frameOut': int(duration + handles),
                     'frameRate': float(fps)})}
             })
 
-        component_item = {
-            "component_data": _component_data,
-            "thumbnail": bool(name == "thumbnail")
-            }
+        if not assetversion_entity:
+            # get assettype entity from session
+            assettype_entity = self._get_assettype({"short": "reference"})
 
-        # get assettype entity from session
-        assettype_entity = self.get_assettype({"short": "reference"})
+            # get or create asset entity from session
+            asset_entity = self._get_asset({
+                "name": "plateReference",
+                "type": assettype_entity,
+                "parent": parent
+            })
 
-        # get or create asset entity from session
-        asset_entity = self.get_asset(
-            assettype_entity, {"name": "plateReference"})
-        # commit if created
-
-        # get or create assetversion entity from session
-        assetversion_entity = self.get_assetversion(
-            asset_entity, {"version": 1})
-        # commit if created
+            # get or create assetversion entity from session
+            assetversion_entity = self._get_assetversion({
+                "version": 1,
+                "asset": asset_entity
+            })
 
         # get or create component entity
-        # overwrite existing members in component enity
-        # - get data for member from `ftrack.origin` location
+        self._set_component(component_data, {
+            "name": name,
+            "version": assetversion_entity,
+        })
 
-    def get_assettype(self, parent, data):
-        pass
+        return assetversion_entity
 
-    def get_asset(self, parent, data):
-        pass
+    def _overwrite_members(self, entity, data):
+        origin_location = self._get_ftrack_location("ftrack.origin")
+        location = data.pop("location")
 
-    def get_assetversion(self, parent, data):
-        pass
+        # Removing existing members from location
+        components = list(entity.get("members", []))
+        components += [entity]
+        for component in components:
+            for loc in component["component_locations"]:
+                if location["id"] == loc["location_id"]:
+                    location.remove_component(
+                        component, recursive=False
+                    )
 
-    def commit(self):
+        # Deleting existing members on component entity
+        for member in entity.get("members", []):
+            self.session.delete(member)
+            del(member)
+
+        self._commit()
+
+        # Reset members in memory
+        if "members" in entity.keys():
+            entity["members"] = []
+
+        entity["file_type"] = data["file_type"]
+
+        origin_location.add_component(
+            entity, data["file_path"]
+        )
+
+        # Add components to location.
+        location.add_component(
+            entity, origin_location, recursive=True)
+
+    def _get_assettype(self, data):
+        return self.session.query(
+            self._query("AssetType", data)).first()
+
+    def _set_component(self, comp_data, base_data):
+        component_metadata = comp_data.pop("metadata", {})
+
+        component_entity = self.session.query(
+            self._query("Component", base_data)
+        ).first()
+
+        if component_entity:
+            # overwrite existing members in component enity
+            # - get data for member from `ftrack.origin` location
+            self._overwrite_members(component_entity, comp_data)
+            return
+
+        assetversion_entity = base_data["version"]
+        location = comp_data.pop("location")
+
+        component_entity = assetversion_entity.create_component(
+            comp_data["file_path"],
+            data=comp_data,
+            location=location
+        )
+
+        # Adding metadata
+        existing_component_metadata = component_entity["metadata"]
+        existing_component_metadata.update(component_metadata)
+        component_entity["metadata"] = existing_component_metadata
+
+        if comp_data["name"] == "thumbnail":
+            assetversion_entity["thumbnail_id"] = component_entity["id"]
+
+        self._commit()
+
+    def _get_asset(self, data):
+        # first find already created
+        asset_entity = self.session.query(
+            self._query("Asset", data)
+        ).first()
+
+        if asset_entity:
+            return asset_entity
+
+        asset_entity = self.session.create("Asset", data)
+
+        # _commit if created
+        self._commit()
+
+        return asset_entity
+
+    def _get_assetversion(self, data):
+        assetversion_entity = self.session.query(
+                self._query("AssetVersion", data)
+        ).first()
+
+        if assetversion_entity:
+            return assetversion_entity
+
+        assetversion_entity = self.session.create("AssetVersion", data)
+
+        # _commit if created
+        self._commit()
+
+        return assetversion_entity
+
+    def _commit(self):
         try:
-            self.session.commit()
+            self.session._commit()
         except Exception:
             tp, value, tb = sys.exc_info()
             self.session.rollback()
             self.session._configure_locations()
             six.reraise(tp, value, tb)
 
-    def get_ftrack_location(self, name=None):
+    def _get_ftrack_location(self, name=None):
         if name in self.ftrack_locations:
             return self.ftrack_locations[name]
 
@@ -531,6 +626,48 @@ class FtrackComponentCreator:
         ).one()
         self.ftrack_locations[name] = location
         return location
+
+    def _query(self, entitytype, data):
+        """ Generate a query expression from data supplied.
+
+        If a value is not a string, we'll add the id of the entity to the
+        query.
+
+        Args:
+            entitytype (str): The type of entity to query.
+            data (dict): The data to identify the entity.
+            exclusions (list): All keys to exclude from the query.
+
+        Returns:
+            str: String query to use with "session.query"
+        """
+        queries = []
+        if sys.version_info[0] < 3:
+            for key, value in data.iteritems():
+                if not isinstance(value, (basestring, int)):
+                    print("value: {}".format(value))
+                    if "id" in value.keys():
+                        queries.append(
+                            "{0}.id is \"{1}\"".format(key, value["id"])
+                        )
+                else:
+                    queries.append("{0} is \"{1}\"".format(key, value))
+        else:
+            for key, value in data.items():
+                if not isinstance(value, (str, int)):
+                    print("value: {}".format(value))
+                    if "id" in value.keys():
+                        queries.append(
+                            "{0}.id is \"{1}\"".format(key, value["id"])
+                        )
+                else:
+                    queries.append("{0} is \"{1}\"".format(key, value))
+
+        query = (
+            "select id from " + entitytype + " where " + " and ".join(queries)
+        )
+        print(query)
+        return query
 
 
 def main_window(selection):
@@ -614,7 +751,7 @@ def main_window(selection):
                 'parent': parent
             })
             try:
-                session.commit()
+                session._commit()
             except Exception:
                 tp, value, tb = sys.exc_info()
                 session.rollback()
@@ -731,6 +868,8 @@ def main_window(selection):
         with maintained_ftrack_session() as session:
             print("Ftrack session is: {}".format(session))
 
+            component_creator = FtrackComponentCreator(session)
+
             generate_temp_data()
 
             temp_files = os.listdir(TEMP_DIR_DATA_PATH)
@@ -805,6 +944,22 @@ def main_window(selection):
                 )
                 print("Shot entity is: {}".format(f_s_entity))
 
+                # first create thumbnail and get version entity
+                assetversion_entity = component_creator.create_comonent(
+                    f_s_entity, {
+                        "file_path": thumb_fp
+                    }
+                )
+                # secondly add video to version entity
+                component_creator.create_comonent(
+                    f_s_entity, {
+                        "file_path": video_fp,
+                        "duration": frame_duration,
+                        "handles": int(handles),
+                        "fps": float(fps)
+                    }, assetversion_entity
+                )
+
                 # create custom attributtes
                 custom_attrs = {
                     "frameStart": frame_start,
@@ -834,7 +989,7 @@ def main_window(selection):
                     task_entity.create_note(task_description, user)
 
                 try:
-                    session.commit()
+                    session._commit()
                 except Exception:
                     tp, value, tb = sys.exc_info()
                     session.rollback()
