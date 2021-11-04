@@ -1,8 +1,7 @@
 import os
 import os.path
 import time
-import sys
-import six
+import paramiko
 import threading
 import platform
 
@@ -37,7 +36,6 @@ class SFTPHandler(AbstractProvider):
 
     def __init__(self, project_name, site_name, tree=None, presets=None):
         self.presets = None
-        self.active = False
         self.project_name = project_name
         self.site_name = site_name
         self.root = None
@@ -64,7 +62,6 @@ class SFTPHandler(AbstractProvider):
         self.sftp_key_pass = provider_presets["sftp_key_pass"]
 
         self._tree = None
-        self.active = True
 
     @property
     def conn(self):
@@ -80,7 +77,9 @@ class SFTPHandler(AbstractProvider):
         Returns:
             (boolean)
         """
-        return self.conn is not None
+        return self.presets.get(self.CODE) and \
+            self.presets[self.CODE].get("sftp_host") and \
+            self.conn is not None
 
     @classmethod
     def get_system_settings_schema(cls):
@@ -108,7 +107,7 @@ class SFTPHandler(AbstractProvider):
         editable = [
             # credentials could be overriden on Project or User level
             {
-                'key': "sftp_server",
+                'key': "sftp_host",
                 'label': "SFTP host name",
                 'type': 'text'
             },
@@ -421,7 +420,10 @@ class SFTPHandler(AbstractProvider):
         if self.sftp_key_pass:
             conn_params['private_key_pass'] = self.sftp_key_pass
 
-        return pysftp.Connection(**conn_params)
+        try:
+            return pysftp.Connection(**conn_params)
+        except paramiko.ssh_exception.SSHException:
+            log.warning("Couldn't connect", exc_info=True)
 
     def _mark_progress(self, collection, file, representation, server, site,
                        source_path, target_path, direction):
