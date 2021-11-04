@@ -772,7 +772,7 @@ class SyncServerModule(OpenPypeModule, ITrayModule):
         return enabled_projects
 
     def handle_alternate_site(self, collection, representation, processed_site,
-                              file_id):
+                              file_id, synced_file_id):
         """
             For special use cases where one site vendors another.
 
@@ -789,6 +789,8 @@ class SyncServerModule(OpenPypeModule, ITrayModule):
                 representation (dict)
                 processed_site (str): real site_name of published/uploaded file
                 file_id (ObjectId): DB id of file handled
+                synced_file_id (str): id of the created file returned
+                    by provider
         """
         sites = self.sync_system_settings.get("sites", {})
         for site_name, site_info in sites.items():
@@ -796,7 +798,10 @@ class SyncServerModule(OpenPypeModule, ITrayModule):
                 query = {
                     "_id": representation["_id"]
                 }
-                elem = {"name": "sftp", "created_dt": datetime.now()}
+                elem = {"name": "sftp",
+                        "created_dt": datetime.now(),
+                        "id": synced_file_id}
+
                 self.log.debug("Adding alternate {} to {}".format(
                     site_name, representation["_id"]))
                 self._add_site(collection, query,
