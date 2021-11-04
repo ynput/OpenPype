@@ -212,6 +212,8 @@ class CollectAnatomyInstanceData(pyblish.api.ContextPlugin):
         project_doc = context.data["projectEntity"]
         context_asset_doc = context.data["assetEntity"]
 
+        project_task_types = project_doc["config"]["tasks"]
+
         for instance in context:
             version_number = instance.data.get("version")
             # If version is not specified for instance or context
@@ -238,9 +240,20 @@ class CollectAnatomyInstanceData(pyblish.api.ContextPlugin):
                 anatomy_updates["hierarchy"] = "/".join(parents)
 
             # Task
-            task_info = instance.data.get("task")
-            if task_info:
-                anatomy_updates["task"] = task_info
+            task_name = instance.data.get("task")
+            if task_name:
+                asset_tasks = asset_doc["data"]["tasks"]
+                task_type = asset_tasks.get(task_name, {}).get("type")
+                task_code = (
+                    project_task_types
+                    .get(task_type, {})
+                    .get("short_name")
+                )
+                anatomy_updates["task"] = {
+                    "name": task_name,
+                    "type": task_type,
+                    "short": task_code
+                }
 
             # Additional data
             resolution_width = instance.data.get("resolutionWidth")
