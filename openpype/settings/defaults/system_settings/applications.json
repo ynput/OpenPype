@@ -107,7 +107,10 @@
                 "windows": "",
                 "darwin": "",
                 "linux": ""
-            }
+            },
+            "FLAME_WIRETAP_HOSTNAME": "",
+            "FLAME_WIRETAP_VOLUME": "stonefs",
+            "FLAME_WIRETAP_GROUP": "staff"
         },
         "variants": {
             "2021": {
