@@ -358,6 +358,38 @@
                     ]
                 }
             ]
+        },
+        {
+            "key": "maya",
+            "type": "dict",
+            "label": "Maya",
+            "children": [    
+                {
+                    "key": "colorManagementPreference",
+                    "type": "dict",
+                    "label": "Color Managment Preference",
+                    "collapsible": false,
+                    "children": [
+                        {
+                            "type": "path",
+                            "key": "configFilePath",
+                            "label": "OCIO Config File Path",
+                            "multiplatform": true,
+                            "multipath": true
+                        },
+                        {
+                            "type": "text",
+                            "key": "renderSpace",
+                            "label": "Rendering Space"
+                        },
+                        {
+                            "type": "text",
+                            "key": "viewTransform",
+                            "label": "Viewer Transform"
+                        }
+                    ]
+            }
+            ]
         }
     ]
 }

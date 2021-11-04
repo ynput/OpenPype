@@ -1,15 +1,20 @@
 # Changelog
 
-## [3.6.0-nightly.2](https://github.com/pypeclub/OpenPype/tree/HEAD)
+## [3.6.0-nightly.3](https://github.com/pypeclub/OpenPype/tree/HEAD)
 
 [Full Changelog](https://github.com/pypeclub/OpenPype/compare/3.5.0...HEAD)
 
 **🆕 New features**
 
 - Flame: a host basic integration [\#2165](https://github.com/pypeclub/OpenPype/pull/2165)
+- Houdini: simple HDA workflow [\#2072](https://github.com/pypeclub/OpenPype/pull/2072)
 
 **🚀 Enhancements**
 
+- Delivery: Check 'frame' key in template for sequence delivery [\#2196](https://github.com/pypeclub/OpenPype/pull/2196)
+- Usage of tools code [\#2185](https://github.com/pypeclub/OpenPype/pull/2185)
+- Settings: Dictionary based on project roots [\#2184](https://github.com/pypeclub/OpenPype/pull/2184)
+- Subset name: Be able to pass asset document to get subset name [\#2179](https://github.com/pypeclub/OpenPype/pull/2179)
 - Tools: Experimental tools [\#2167](https://github.com/pypeclub/OpenPype/pull/2167)
 - Loader: Refactor and use OpenPype stylesheets [\#2166](https://github.com/pypeclub/OpenPype/pull/2166)
 - Add loader for linked smart objects in photoshop [\#2149](https://github.com/pypeclub/OpenPype/pull/2149)
@@ -18,6 +23,7 @@
 
 **🐛 Bug fixes**
 
+- Project Manager: Fix copying of tasks [\#2191](https://github.com/pypeclub/OpenPype/pull/2191)
 - StandalonePublisher: Source validator don't expect representations [\#2190](https://github.com/pypeclub/OpenPype/pull/2190)
 - MacOS: Launching of applications may cause Permissions error [\#2175](https://github.com/pypeclub/OpenPype/pull/2175)
 - Blender: Fix 'Deselect All' with object not in 'Object Mode' [\#2163](https://github.com/pypeclub/OpenPype/pull/2163)
@@ -26,6 +32,7 @@
 - Maya: Fix hotbox broken by scriptsmenu [\#2151](https://github.com/pypeclub/OpenPype/pull/2151)
 - Ftrack: Ignore save warnings exception in Prepare project action [\#2150](https://github.com/pypeclub/OpenPype/pull/2150)
 - Loader thumbnails with smooth edges [\#2147](https://github.com/pypeclub/OpenPype/pull/2147)
+- Added validator for source files for Standalone Publisher [\#2138](https://github.com/pypeclub/OpenPype/pull/2138)
 
 **Merged pull requests:**
 
@@ -69,7 +76,6 @@
 
 **🐛 Bug fixes**
 
-- Added validator for source files for Standalone Publisher [\#2138](https://github.com/pypeclub/OpenPype/pull/2138)
 - Maya: fix model publishing [\#2130](https://github.com/pypeclub/OpenPype/pull/2130)
 - Fix - oiiotool wasn't recognized even if present [\#2129](https://github.com/pypeclub/OpenPype/pull/2129)
 - General: Disk mapping group [\#2120](https://github.com/pypeclub/OpenPype/pull/2120)
@@ -106,8 +112,6 @@
 - Ftrack: Removed ftrack interface [\#2049](https://github.com/pypeclub/OpenPype/pull/2049)
 - Settings UI: Deffered set value on entity [\#2044](https://github.com/pypeclub/OpenPype/pull/2044)
 - Loader: Families filtering [\#2043](https://github.com/pypeclub/OpenPype/pull/2043)
-- Settings UI: Project view enhancements [\#2042](https://github.com/pypeclub/OpenPype/pull/2042)
-- Settings for Nuke IncrementScriptVersion [\#2039](https://github.com/pypeclub/OpenPype/pull/2039)
 
 **🐛 Bug fixes**
 
@@ -124,17 +128,6 @@
 ## [3.4.0](https://github.com/pypeclub/OpenPype/tree/3.4.0) (2021-09-17)
 
 [Full Changelog](https://github.com/pypeclub/OpenPype/compare/CI/3.4.0-nightly.6...3.4.0)
-
-**🚀 Enhancements**
-
-- Added possibility to configure of synchronization of workfile version… [\#2041](https://github.com/pypeclub/OpenPype/pull/2041)
-- Loader & Library loader: Use tools from OpenPype [\#2038](https://github.com/pypeclub/OpenPype/pull/2038)
-- General: Task types in profiles [\#2036](https://github.com/pypeclub/OpenPype/pull/2036)
-
-**🐛 Bug fixes**
-
-- Workfiles tool: Task selection [\#2040](https://github.com/pypeclub/OpenPype/pull/2040)
-- Ftrack: Delete old versions missing settings key [\#2037](https://github.com/pypeclub/OpenPype/pull/2037)
 
 ## [3.3.1](https://github.com/pypeclub/OpenPype/tree/3.3.1) (2021-08-20)
 

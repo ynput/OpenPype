@@ -275,6 +275,10 @@
                             "label": "ValidateMeshLaminaFaces"
                         },
                         {
+                            "key": "ValidateMeshNgons",
+                            "label": "ValidateMeshNgons"
+                        },
+                        {
                             "key": "ValidateMeshNonManifold",
                             "label": "ValidateMeshNonManifold"
                         },
