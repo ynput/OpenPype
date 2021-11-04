@@ -216,6 +216,8 @@ class CollectAnatomyInstanceData(pyblish.api.ContextPlugin):
 
         project_task_types = project_doc["config"]["tasks"]
 
+        project_task_types = project_doc["config"]["tasks"]
+
         for instance in context:
             if self.follow_workfile_version:
                 version_number = context.data('version')
