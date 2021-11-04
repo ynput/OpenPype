@@ -862,19 +862,7 @@ class SyncServerModule(OpenPypeModule, ITrayModule):
 
         self.lock = threading.Lock()
 
-        try:
-            self.sync_server_thread = SyncServerThread(self)
-
-        except ValueError:
-            log.info("No system setting for sync. Not syncing.", exc_info=True)
-            self.enabled = False
-        except KeyError:
-            log.info((
-                     "There are not set presets for SyncServer OR "
-                     "Credentials provided are invalid, "
-                     "no syncing possible").
-                     format(str(self.sync_project_settings)), exc_info=True)
-            self.enabled = False
+        self.sync_server_thread = SyncServerThread(self)
 
     def tray_start(self):
         """
