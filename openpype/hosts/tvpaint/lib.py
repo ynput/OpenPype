@@ -1,3 +1,6 @@
+from PIL import Image, ImageDraw
+
+
 def backwards_id_conversion(data_by_layer_id):
     """Convert layer ids to strings from integers."""
     for key in tuple(data_by_layer_id.keys()):
@@ -430,3 +433,11 @@ def calculate_layers_extraction_data(
             "filenames_by_frame_index": filenames_by_frame_index
         }
     return output
+
+
+def create_transparent_image_from_source(src_filepath, dst_filepath):
+    """Create transparent image of same type and size as source image."""
+    img_obj = Image.open(src_filepath)
+    painter = ImageDraw.Draw(img_obj)
+    painter.rectangle((0, 0, *img_obj.size), fill=(0, 0, 0, 0))
+    img_obj.save(dst_filepath)
