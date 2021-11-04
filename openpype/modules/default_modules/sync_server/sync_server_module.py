@@ -109,6 +109,7 @@ class SyncServerModule(OpenPypeModule, ITrayModule):
 
         # some parts of code need to run sequentially, not in async
         self.lock = None
+        self._sync_system_settings = None
         # settings for all enabled projects for sync
         self._sync_project_settings = None
         self.sync_server_thread = None  # asyncio requires new thread
@@ -769,6 +770,38 @@ class SyncServerModule(OpenPypeModule, ITrayModule):
                     enabled_projects.append(project_name)
 
         return enabled_projects
+
+    def handle_alternate_site(self, collection, representation, processed_site,
+                              file_id):
+        """
+            For special use cases where one site vendors another.
+
+            Current use case is sftp site vendoring (exposing) same data as
+            regular site (studio). Each site is accessible for different
+            audience. 'studio' for artists in a studio, 'sftp' for externals.
+
+            Change of file status on one site actually means same change on
+            'alternate' site. (eg. artists publish to 'studio', 'sftp' is using
+            same location >> file is accesible on 'sftp' site right away.
+
+            Args:
+                collection (str): name of project
+                representation (dict)
+                processed_site (str): real site_name of published/uploaded file
+                file_id (ObjectId): DB id of file handled
+        """
+        sites = self.sync_system_settings.get("sites", {})
+        for site_name, site_info in sites.items():
+            if processed_site in site_info.get("alternative_sites", []):
+                query = {
+                    "_id": representation["_id"]
+                }
+                elem = {"name": "sftp", "created_dt": datetime.now()}
+                self.log.debug("Adding alternate {} to {}".format(
+                    site_name, representation["_id"]))
+                self._add_site(collection, query,
+                               [representation], elem,
+                               site_name, file_id=file_id, force=True)
     """ End of Public API """
 
     def get_local_file_path(self, collection, site_name, file_path):
@@ -920,6 +953,14 @@ class SyncServerModule(OpenPypeModule, ITrayModule):
         return self._connection
 
     @property
+    def sync_system_settings(self):
+        if self._sync_system_settings is None:
+            self._sync_system_settings = get_system_settings()["modules"].\
+                get("sync_server")
+
+        return self._sync_system_settings
+
+    @property
     def sync_project_settings(self):
         if self._sync_project_settings is None:
             self.set_sync_project_settings()
@@ -1004,9 +1045,7 @@ class SyncServerModule(OpenPypeModule, ITrayModule):
                 (dict): {'studio': {'provider':'local_drive'...},
                          'MY_LOCAL': {'provider':....}}
         """
-        sys_sett = get_system_settings()
-        sync_sett = sys_sett["modules"].get("sync_server")
-
+        sync_sett = self.sync_system_settings
         project_enabled = True
         if project_name:
             project_enabled = project_name in self.get_enabled_projects()
@@ -1064,8 +1103,7 @@ class SyncServerModule(OpenPypeModule, ITrayModule):
             if provider:
                 return provider
 
-        sys_sett = get_system_settings()
-        sync_sett = sys_sett["modules"].get("sync_server")
+        sync_sett = self.sync_system_settings
         for site, detail in sync_sett.get("sites", {}).items():
             sites[site] = detail.get("provider")
 
@@ -1434,9 +1472,12 @@ class SyncServerModule(OpenPypeModule, ITrayModule):
         update = {
             "$set": {"files.$[f].sites.$[s]": elem}
         }
+        if not isinstance(file_id, ObjectId):
+            file_id = ObjectId(file_id)
+
         arr_filter = [
             {'s.name': site_name},
-            {'f._id': ObjectId(file_id)}
+            {'f._id': file_id}
         ]
 
         self._update_site(collection, query, update, arr_filter)

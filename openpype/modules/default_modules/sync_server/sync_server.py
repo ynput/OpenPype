@@ -80,6 +80,10 @@ async def upload(module, collection, file, representation, provider_name,
                                          remote_site_name,
                                          True
                                          )
+
+    module.handle_alternate_site(collection, representation, remote_site_name,
+                                 file["_id"])
+
     return file_id
 
 
@@ -131,6 +135,10 @@ async def download(module, collection, file, representation, provider_name,
                                          local_site,
                                          True
                                          )
+
+    module.handle_alternate_site(collection, representation, remote_site_name,
+                                 file["_id"])
+
     return file_id
 
 
