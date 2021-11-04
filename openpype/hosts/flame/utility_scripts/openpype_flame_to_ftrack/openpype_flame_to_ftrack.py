@@ -3,6 +3,7 @@ import os
 import six
 import sys
 import re
+import json
 from PySide2 import QtWidgets, QtCore
 from pprint import pformat
 from contextlib import contextmanager
@@ -441,6 +442,95 @@ class FlamePushButtonMenu(QtWidgets.QPushButton):
         action = self.sender()
         self.setText(action.text())
         self.selection_changed.emit(action.text())
+
+class FtrackComponentCreator:
+    default_location = "ftrack.server"
+    ftrack_locations = {}
+
+    def __init__(self, session):
+        self.session = session
+        self.get_ftrack_location()
+
+    def create_comonent(self, parent, component_data):
+        location = self.get_ftrack_location
+
+        file_path = component_data["file_path"]
+        name = component_data["name"]
+
+        # get extension
+        file = os.path.basename(file_path)
+        _name, ext = os.path.splitext(file)
+
+        _component_data = {
+            "name": name,
+            "file_path": file_path,
+            "file_type": ext,
+            "location": location,
+            "overwrite": True
+
+        }
+
+        if name != "thumnail":
+            duration = component_data["duration"]
+            handles = component_data["handles"]
+            fps = component_data["fps"]
+            _component_data.update({
+                "name": "ftrackreview-mp4",
+                "metadata": {'ftr_meta': json.dumps({
+                    'frameIn': int(0),
+                    'frameOut': int(duration + handles),
+                    'frameRate': float(fps)})}
+            })
+
+        component_item = {
+            "component_data": _component_data,
+            "thumbnail": bool(name == "thumbnail")
+            }
+
+        # get assettype entity from session
+        assettype_entity = self.get_assettype({"short": "reference"})
+
+        # get or create asset entity from session
+        asset_entity = self.get_asset(
+            assettype_entity, {"name": "plateReference"})
+        # commit if created
+
+        # get or create assetversion entity from session
+        assetversion_entity = self.get_assetversion(
+            asset_entity, {"version": 1})
+        # commit if created
+
+        # get or create component entity
+        # overwrite existing members in component enity
+        # - get data for member from `ftrack.origin` location
+
+    def get_assettype(self, parent, data):
+        pass
+
+    def get_asset(self, parent, data):
+        pass
+
+    def get_assetversion(self, parent, data):
+        pass
+
+    def commit(self):
+        try:
+            self.session.commit()
+        except Exception:
+            tp, value, tb = sys.exc_info()
+            self.session.rollback()
+            self.session._configure_locations()
+            six.reraise(tp, value, tb)
+
+    def get_ftrack_location(self, name=None):
+        if name in self.ftrack_locations:
+            return self.ftrack_locations[name]
+
+        location = self.session.query(
+            'Location where name is "{}"'.format(name)
+        ).one()
+        self.ftrack_locations[name] = location
+        return location
 
 
 def main_window(selection):
