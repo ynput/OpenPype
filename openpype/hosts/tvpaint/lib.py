@@ -461,3 +461,11 @@ def fill_reference_frames(frame_references, filepaths_by_frame):
             os.link(src_filepath, dst_filepath)
         else:
             shutil.copy(src_filepath, dst_filepath)
+
+
+def copy_render_file(src_path, dst_path):
+    """Create copy file of an image."""
+    if hasattr(os, "link"):
+        os.link(src_path, dst_path)
+    else:
+        shutil.copy(src_path, dst_path)
