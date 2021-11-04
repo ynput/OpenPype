@@ -350,7 +350,7 @@ class PypeCommands:
     def syncserver(self, active_site):
         """Start running sync_server in background."""
         import signal
-        os.environ["SITE_SYNC_LOCAL_ID"] = active_site
+        os.environ["OPENPYPE_LOCAL_ID"] = active_site
 
         def signal_handler(sig, frame):
             print("You pressed Ctrl+C. Process ended.")

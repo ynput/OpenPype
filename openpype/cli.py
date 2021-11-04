@@ -337,7 +337,7 @@ def syncserver(debug, active_site):
         Process mimics OP Tray with specific 'active_site' name, all
         configuration for this "dummy" user comes from Setting or Local
         Settings (configured by starting OP Tray with env
-        var SITE_SYNC_LOCAL_ID set to 'active_site'.
+        var OPENPYPE_LOCAL_ID set to 'active_site'.
     """
     if debug:
         os.environ['OPENPYPE_DEBUG'] = '3'
