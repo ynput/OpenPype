@@ -1246,23 +1246,12 @@ def prepare_context_environments(data):
 
     anatomy = data["anatomy"]
 
-    asset_tasks = asset_doc.get("data", {}).get("tasks") or {}
-    task_info = asset_tasks.get(task_name) or {}
-    task_type = task_info.get("type")
+    task_type = workdir_data["task"]["type"]
     # Temp solution how to pass task type to `_prepare_last_workfile`
     data["task_type"] = task_type
 
-    workfile_template_key = get_workfile_template_key(
-        task_type,
-        app.host_name,
-        project_name=project_name,
-        project_settings=project_settings
-    )
-
     try:
-        workdir = get_workdir_with_workdir_data(
-            workdir_data, anatomy, template_key=workfile_template_key
-        )
+        workdir = get_workdir_with_workdir_data(workdir_data, anatomy)
 
     except Exception as exc:
         raise ApplicationLaunchFailed(
