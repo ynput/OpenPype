@@ -1295,10 +1295,10 @@ def prepare_context_environments(data):
     )
     data["env"].update(context_env)
 
-    _prepare_last_workfile(data, workdir, workfile_template_key)
+    _prepare_last_workfile(data, workdir)
 
 
-def _prepare_last_workfile(data, workdir, workfile_template_key):
+def _prepare_last_workfile(data, workdir):
     """last workfile workflow preparation.
 
     Function check if should care about last workfile workflow and tries
