@@ -34,7 +34,7 @@ class ExtractThumbnail(openpype.api.Extractor):
         )
         override_viewport_options = (
             capture_preset['Viewport Options']['override_viewport_options']
-            )
+        )
 
         try:
             preset = lib.load_capture_preset(data=capture_preset)
