@@ -2,10 +2,14 @@ import os
 import tempfile
 import inspect
 import copy
+import json
+import time
 from uuid import uuid4
 from abc import ABCMeta, abstractmethod, abstractproperty
 
 import six
+
+from openpype.api import PypeLogger
 
 
 TMP_FILE_PREFIX = "opw_tvp_"
@@ -222,20 +226,17 @@ class CollectSceneData(BaseCommand):
 
 
 class TVPaintCommands:
-    def __init__(self, workfile, commands=None, communicator=None):
-        if not commands:
-            commands = []
-
+    def __init__(self, workfile):
+        self._log = None
         self._workfile = workfile
         self._commands = []
-        self._communicator = communicator
         self._command_classes_by_name = None
 
-        self.commands_from_data(commands)
-
     @property
-    def communicator(self):
-        return self._communicator
+    def log(self):
+        if self._log is None:
+            self._log = PypeLogger.get_logger(self.__class__.__name__)
+        return self._log
 
     @property
     def classes_by_name(self):
@@ -250,11 +251,97 @@ class TVPaintCommands:
                     continue
 
                 if inspect.isabstract(attr):
-                    print("Skipping abstract class {}".format(attr.__name__))
+                    self.log.debug(
+                        "Skipping abstract class {}".format(attr.__name__)
+                    )
                 command_classes_by_name[attr.name] = attr
             self._command_classes_by_name = command_classes_by_name
 
         return self._command_classes_by_name
+
+    def add_command(self, command):
+        command.set_parent(self)
+        self._commands.append(command)
+
+    def result(self):
+        return [
+            command.result()
+            for command in self._commands
+        ]
+
+
+class SenderTVPaintCommand(TVPaintCommands):
+    def __init__(self, workfile, job_queue_module):
+        super().__init__(workfile)
+
+        self._job_queue_module = job_queue_module
+
+    def commands_data(self):
+        return [
+            command.command_data()
+            for command in self._commands
+        ]
+
+    def to_job_data(self):
+        return {
+            "workfile": self._workfile,
+            "function": "commands",
+            "commands": self.commands_data()
+        }
+
+    def set_result(self, result):
+        commands_by_id = {
+            command.id: command
+            for command in self._commands
+        }
+
+        for item in result:
+            command = commands_by_id[item["id"]]
+            command.set_result(item["result"])
+            command.set_done()
+
+    def _send_job(self):
+        # Send job data to job queue server
+        job_data = self.to_job_data()
+        self.log.debug("Sending job to JobQueue server.\n{}".format(
+            json.dumps(job_data, indent=4)
+        ))
+        job_id = self._job_queue_module.send_job("tvpaint", job_data)
+        self.log.info((
+            "Job sent to JobQueue server and got id \"{}\"."
+            " Waiting for finishing the job."
+        ).format(job_id))
+
+        return job_id
+
+    def send_job_and_wait(self):
+        job_id = self._send_job()
+        while True:
+            job_status = self._job_queue_module.get_job_status(job_id)
+            if job_status["done"]:
+                break
+            time.sleep(0.3)
+
+        # Check if job state is done
+        if job_status["state"] != "done":
+            raise JobFailed(job_status)
+
+        self.set_result(job_status["result"])
+
+        self.log.debug("Job is done and result is stored.")
+
+
+class ProcessTVPaintCommands(TVPaintCommands):
+    def __init__(self, workfile, commands, communicator):
+        super(ProcessTVPaintCommands, self).__init__(workfile)
+
+        self._communicator = communicator
+
+        self.commands_from_data(commands)
+
+    @property
+    def communicator(self):
+        return self._communicator
 
     def commands_from_data(self, commands_data):
         for command_data in commands_data:
@@ -264,9 +351,18 @@ class TVPaintCommands:
             command = klass.from_existing(command_data)
             self.add_command(command)
 
-    def add_command(self, command):
-        command.set_parent(self)
-        self._commands.append(command)
+    def execute_george(self, george_script):
+        return self.communicator.execute_george(george_script)
+
+    def execute_george_through_file(self, george_script):
+        temporary_file = tempfile.NamedTemporaryFile(
+            mode="w", prefix=TMP_FILE_PREFIX, suffix=".grg", delete=False
+        )
+        temporary_file.write(george_script)
+        temporary_file.close()
+        temp_file_path = temporary_file.name.replace("\\", "/")
+        self.execute_george("tv_runscript {}".format(temp_file_path))
+        os.remove(temp_file_path)
 
     def _open_workfile(self):
         workfile = self._workfile.replace("\\", "/")
@@ -285,35 +381,3 @@ class TVPaintCommands:
             command.execute()
             command.set_done()
         self._close_workfile()
-
-    def commands_data(self):
-        return [
-            command.command_data()
-            for command in self._commands
-        ]
-
-    def to_job_data(self):
-        return {
-            "workfile": self._workfile,
-            "function": "commands",
-            "commands": self.commands_data()
-        }
-
-    def result(self):
-        return [
-            command.result()
-            for command in self._commands
-        ]
-
-    def execute_george(self, george_script):
-        return self.communicator.execute_george(george_script)
-
-    def execute_george_through_file(self, george_script):
-        temporary_file = tempfile.NamedTemporaryFile(
-            mode="w", prefix=TMP_FILE_PREFIX, suffix=".grg", delete=False
-        )
-        temporary_file.write(george_script)
-        temporary_file.close()
-        temp_file_path = temporary_file.name.replace("\\", "/")
-        self.execute_george("tv_runscript {}".format(temp_file_path))
-        os.remove(temp_file_path)

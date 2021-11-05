@@ -3,7 +3,8 @@ from .worker_job import (
     ExecuteSimpleGeorgeScript,
     ExecuteGeorgeScript,
     CollectSceneData,
-    TVPaintCommands
+    SenderTVPaintCommands,
+    ProcessTVPaintCommands
 )
 
 
@@ -12,5 +13,6 @@ __all__ = (
     "ExecuteSimpleGeorgeScript",
     "ExecuteGeorgeScript",
     "CollectSceneData",
-    "TVPaintCommands"
+    "SenderTVPaintCommands",
+    "ProcessTVPaintCommands"
 )
