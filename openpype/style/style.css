@@ -389,6 +389,10 @@ QHeaderView::section:first {
 QHeaderView::section:last {
     border-right: none;
 }
+QHeaderView::section:only-one {
+    border-left: none;
+    border-right: none;
+}
 
 QHeaderView::down-arrow {
     image: url(:/openpype/images/down_arrow.png);
