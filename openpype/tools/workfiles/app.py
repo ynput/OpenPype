@@ -424,6 +424,7 @@ class FilesWidget(QtWidgets.QWidget):
     """A widget displaying files that allows to save and open files."""
     file_selected = QtCore.Signal(str)
     workfile_created = QtCore.Signal(str)
+    file_opened = QtCore.Signal()
 
     def __init__(self, parent=None):
         super(FilesWidget, self).__init__(parent=parent)
@@ -614,7 +615,7 @@ class FilesWidget(QtWidgets.QWidget):
 
         self._enter_session()
         host.open_file(filepath)
-        self.window().close()
+        self.file_opened.emit()
 
     def save_changes_prompt(self):
         self._messagebox = messagebox = QtWidgets.QMessageBox()
@@ -992,6 +993,7 @@ class Window(QtWidgets.QMainWindow):
         tasks_widget.task_changed.connect(self.on_task_changed)
         files_widget.file_selected.connect(self.on_file_select)
         files_widget.workfile_created.connect(self.on_workfile_create)
+        files_widget.file_opened.connect(self._on_file_opened)
         side_panel.save_clicked.connect(self.on_side_panel_save)
 
         self.home_page_widget = home_page_widget
@@ -1057,6 +1059,9 @@ class Window(QtWidgets.QMainWindow):
 
     def on_workfile_create(self, filepath):
         self._create_workfile_doc(filepath)
+
+    def _on_file_opened(self):
+        self.close()
 
     def on_side_panel_save(self):
         workfile_doc, data = self.side_panel.get_workfile_data()
