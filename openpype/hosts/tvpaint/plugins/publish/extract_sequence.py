@@ -317,7 +317,6 @@ class ExtractSequence(pyblish.api.Extractor):
         """
         self.log.debug("Preparing data for rendering.")
 
-        calculate_layers_extraction_data()
         # Map layers by position
         layers_by_position = {}
         layers_by_id = {}
