@@ -421,6 +421,12 @@ class SyncServerThread(threading.Thread):
             periodically.
         """
         while self.is_running:
+            if self.module.long_running_tasks:
+                task = self.module.long_running_tasks.pop()
+                log.info("starting long running")
+                await self.loop.run_in_executor(None, task["func"])
+                log.info("finished long running")
+                self.module.projects_processed.remove(task["project_name"])
             await asyncio.sleep(0.5)
         tasks = [task for task in asyncio.all_tasks() if
                  task is not asyncio.current_task()]

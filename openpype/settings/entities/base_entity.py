@@ -510,7 +510,7 @@ class BaseItemEntity(BaseEntity):
         pass
 
     @abstractmethod
-    def _item_initalization(self):
+    def _item_initialization(self):
         """Entity specific initialization process."""
         pass
 
@@ -920,7 +920,7 @@ class ItemEntity(BaseItemEntity):
             _default_label_wrap["collapsed"]
         )
 
-        self._item_initalization()
+        self._item_initialization()
 
     def save(self):
         """Call save on root item."""

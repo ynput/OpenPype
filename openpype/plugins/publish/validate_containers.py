@@ -9,9 +9,9 @@ class ShowInventory(pyblish.api.Action):
     on = "failed"
 
     def process(self, context, plugin):
-        from avalon.tools import sceneinventory
+        from openpype.tools.utils import host_tools
 
-        sceneinventory.show()
+        host_tools.show_scene_inventory()
 
 
 class ValidateContainers(pyblish.api.ContextPlugin):
