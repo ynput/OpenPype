@@ -292,24 +292,27 @@ def run_disk_mapping_commands(mongo_url):
         return
 
     mappings = disk_mapping.get(low_platform) or []
-    if low_platform == "windows":
-        command = "subst"
-    else:
-        command = "ln -s"
     for source, destination in mappings:
-        args = [command, destination.rstrip('/'), source.rstrip('/')]
-        _print("disk mapping args:: {}".format(args))
-        try:
-            output = subprocess.Popen(args)
-            if output.returncode and output.returncode != 0:
-                exc_msg = "Executing args was not successful: \"{}\"".format(
-                    args)
+        destination = destination.rstrip('/')
+        source = source.rstrip('/')
+        if low_platform == "windows":
+            args = ["subst", destination, source]
+            _print("disk mapping args:: {}".format(args))
+            try:
+                output = subprocess.Popen(args)
+                if output.returncode and output.returncode != 0:
+                    exc_msg = "Executing was not successful: \"{}\"".format(
+                        args)
 
-                raise RuntimeError(exc_msg)
-        except TypeError:
-            _print("Error in mapping drive")
-            raise
-
+                    raise RuntimeError(exc_msg)
+            except TypeError:
+                _print("Error in mapping drive")
+                raise
+        else:
+            if not os.path.exists(destination):
+                os.symlink(source, destination)
+            else:
+                _print("Destination {} already exists".format(destination))
 
 def set_avalon_environments():
     """Set avalon specific environments.
