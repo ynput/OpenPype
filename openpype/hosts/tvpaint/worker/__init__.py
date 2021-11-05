@@ -1,4 +1,5 @@
 from .worker_job import (
+    JobFailed,
     ExecuteSimpleGeorgeScript,
     ExecuteGeorgeScript,
     CollectSceneData,
@@ -7,6 +8,7 @@ from .worker_job import (
 
 
 __all__ = (
+    "JobFailed",
     "ExecuteSimpleGeorgeScript",
     "ExecuteGeorgeScript",
     "CollectSceneData",

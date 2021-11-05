@@ -11,6 +11,21 @@ import six
 TMP_FILE_PREFIX = "opw_tvp_"
 
 
+class JobFailed(Exception):
+    """Raised when job was sent and finished unsuccessfully."""
+    def __init__(self, job_status):
+        job_state = job_status["state"]
+        job_message = job_status["message"] or "Unknown issue"
+        error_msg = (
+            "Job didn't finish properly."
+            " Job state: \"{}\" | Job message: \"{}\""
+        ).format(job_state, job_message)
+
+        self.job_status = job_status
+
+        super().__init__(error_msg)
+
+
 @six.add_metaclass(ABCMeta)
 class BaseCommand:
     @abstractproperty
