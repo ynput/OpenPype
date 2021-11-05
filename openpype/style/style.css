@@ -368,8 +368,8 @@ QTabBar::tab:only-one {
 }
 
 QHeaderView {
-    border: none;
-    border-radius: 2px;
+    border: 0px solid {color:border};
+    border-radius: 0px;
     margin: 0px;
     padding: 0px;
 }
@@ -454,7 +454,7 @@ QAbstractItemView::indicator:indeterminate:disabled, QCheckBox::indicator:indete
 /* Views QListView QTreeView QTableView */
 QAbstractItemView {
     border: 0px solid {color:border};
-    border-radius: 0.2em;
+    border-radius: 0px;
     background: {color:bg-view};
     alternate-background-color: {color:bg-view-alternate};
     /* Mac shows selection color on branches. */
@@ -469,6 +469,7 @@ QAbstractItemView::item {
 QAbstractItemView:disabled{
     background: {color:bg-view-disabled};
     alternate-background-color: {color:bg-view-alternate-disabled};
+    border: 1px solid {color:border};
 }
 
 QAbstractItemView::item:hover {
