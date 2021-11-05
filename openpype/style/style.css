@@ -273,24 +273,9 @@ QSplitter::handle {
     border: 3px solid transparent;
 }
 
-QSplitter::handle:horizontal {
+QSplitter::handle:horizontal, QSplitter::handle:vertical, QSplitter::handle:horizontal:hover, QSplitter::handle:vertical:hover {
     /* must be single like because of Nuke*/
-    background: qlineargradient(x1:0, y1:0, x2:1, y2:0,stop:0.3 rgba(0, 0, 0, 0),stop:0.5 {color:bg-splitter},stop:0.7 rgba(0, 0, 0, 0));
-}
-
-QSplitter::handle:vertical {
-    /* must be single like because of Nuke*/
-    background: qlineargradient(x1:0, y1:0, x2:0, y2:1,stop:0.3 rgba(0, 0, 0, 0),stop:0.5 {color:bg-splitter},stop:0.7 rgba(0, 0, 0, 0));
-}
-
-QSplitter::handle:horizontal:hover {
-    /* must be single like because of Nuke*/
-    background: qlineargradient(x1:0, y1:0, x2:1, y2:0,stop:0.3 rgba(0, 0, 0, 0),stop:0.5 {color:bg-splitter-hover},stop:0.7 rgba(0, 0, 0, 0));
-}
-
-QSplitter::handle:vertical:hover {
-    /* must be single like because of Nuke*/
-    background: qlineargradient(x1:0, y1:0, x2:0, y2:1,stop:0.3 rgba(0, 0, 0, 0),stop:0.5 {color:bg-splitter-hover},stop:0.7 rgba(0, 0, 0, 0));
+    background: transparent;
 }
 
 /* SLider */
