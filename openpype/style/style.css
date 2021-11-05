@@ -57,6 +57,69 @@ QAbstractSpinBox:focus, QLineEdit:focus, QPlainTextEdit:focus, QTextEdit:focus{
     border-color: {color:border-focus};
 }
 
+QAbstractSpinBox:up-button {
+    margin: 0px;
+    background-color: transparent;
+    subcontrol-origin: border;
+    subcontrol-position: top right;
+    border-top-right-radius: 0.3em;
+    border-top: 0px solid transparent;
+    border-right: 0px solid transparent;
+    border-left: 1px solid {color:border};
+    border-bottom: 1px solid {color:border};
+}
+
+QAbstractSpinBox:down-button {
+    margin: 0px;
+    background-color: transparent;
+    subcontrol-origin: border;
+    subcontrol-position: bottom right;
+    border-bottom-right-radius: 0.3em;
+    border-bottom: 0px solid transparent;
+    border-right: 0px solid transparent;
+    border-left: 1px solid {color:border};
+    border-top: 1px solid {color:border};
+}
+
+QAbstractSpinBox:up-button:focus, QAbstractSpinBox:down-button:focus {
+    border-color: {color:border-focus};
+}
+QAbstractSpinBox::up-arrow, QAbstractSpinBox::up-arrow:off {
+    image: url(:/openpype/images/up_arrow.png);
+    width: 0.5em;
+    height: 1em;
+    border-width: 1px;
+}
+QAbstractSpinBox::up-arrow:hover {
+    image: url(:/openpype/images/up_arrow_on.png);
+    bottom: 1;
+}
+QAbstractSpinBox::up-arrow:disabled {
+    image: url(:/openpype/images/up_arrow_disabled.png);
+}
+QAbstractSpinBox::up-arrow:pressed {
+    image: url(:/openpype/images/up_arrow_on.png);
+    bottom: 0;
+}
+
+QAbstractSpinBox::down-arrow, QAbstractSpinBox::down-arrow:off {
+    image: url(:/openpype/images/down_arrow.png);
+    width: 0.5em;
+    height: 1em;
+    border-width: 1px;
+}
+QAbstractSpinBox::down-arrow:hover {
+    image: url(:/openpype/images/down_arrow_on.png);
+    bottom: 1;
+}
+QAbstractSpinBox::down-arrow:disabled {
+    image: url(:/openpype/images/down_arrow_disabled.png);
+}
+QAbstractSpinBox::down-arrow:hover:pressed {
+    image: url(:/openpype/images/down_arrow_on.png);
+    bottom: 0;
+}
+
 /* Checkbox */
 QCheckBox {
     background: transparent;
