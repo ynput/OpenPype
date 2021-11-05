@@ -33,7 +33,7 @@ class FlamePrelaunch(PreLaunchHook):
         """Hook entry method."""
         project_doc = self.data["project_doc"]
         user_name = get_openpype_username()
-        hostname = socket.gethostname()
+        hostname = socket.gethostname()  # not returning wiretap host name
 
         self.log.debug("Collected user \"{}\"".format(user_name))
         self.log.info(pformat(project_doc))

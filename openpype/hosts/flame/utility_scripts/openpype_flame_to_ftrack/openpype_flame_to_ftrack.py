@@ -452,7 +452,8 @@ class FtrackComponentCreator:
         self.session = session
         self._get_ftrack_location()
 
-    def create_comonent(self, parent, data, assetversion_entity=None):
+    def create_comonent(self, shot_entity, data, assetversion_entity=None):
+        self.shot_entity = shot_entity
         location = self._get_ftrack_location()
 
         file_path = data["file_path"]
@@ -489,7 +490,7 @@ class FtrackComponentCreator:
             asset_entity = self._get_asset({
                 "name": "plateReference",
                 "type": assettype_entity,
-                "parent": parent
+                "parent": self.shot_entity
             })
 
             # get or create assetversion entity from session
@@ -573,6 +574,7 @@ class FtrackComponentCreator:
         component_entity["metadata"] = existing_component_metadata
 
         if comp_data["name"] == "thumbnail":
+            self.shot_entity["thumbnail_id"] = component_entity["id"]
             assetversion_entity["thumbnail_id"] = component_entity["id"]
 
         self._commit()
@@ -595,7 +597,7 @@ class FtrackComponentCreator:
 
     def _get_assetversion(self, data):
         assetversion_entity = self.session.query(
-                self._query("AssetVersion", data)
+            self._query("AssetVersion", data)
         ).first()
 
         if assetversion_entity:
@@ -610,7 +612,7 @@ class FtrackComponentCreator:
 
     def _commit(self):
         try:
-            self.session._commit()
+            self.session.commit()
         except Exception:
             tp, value, tb = sys.exc_info()
             self.session.rollback()
@@ -618,6 +620,8 @@ class FtrackComponentCreator:
             six.reraise(tp, value, tb)
 
     def _get_ftrack_location(self, name=None):
+        name = name or self.default_location
+
         if name in self.ftrack_locations:
             return self.ftrack_locations[name]
 
@@ -751,7 +755,7 @@ def main_window(selection):
                 'parent': parent
             })
             try:
-                session._commit()
+                session.commit()
             except Exception:
                 tp, value, tb = sys.exc_info()
                 session.rollback()
@@ -989,7 +993,7 @@ def main_window(selection):
                     task_entity.create_note(task_description, user)
 
                 try:
-                    session._commit()
+                    session.commit()
                 except Exception:
                     tp, value, tb = sys.exc_info()
                     session.rollback()
