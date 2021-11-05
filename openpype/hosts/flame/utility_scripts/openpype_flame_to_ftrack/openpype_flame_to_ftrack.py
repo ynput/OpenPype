@@ -28,6 +28,7 @@ CONFIG_DIR = os.path.join(os.path.expanduser(
 
 sys.path.append(PACKAGE_DIR)
 
+
 def import_ftrack_api():
     try:
         import ftrack_api
@@ -208,27 +209,41 @@ def get_all_task_types(project_entity):
 
     return tasks
 
+def configure_preset(file_path, data):
+    split_fp = os.path.splitext(file_path)
+    new_file_path = split_fp[0] + "_tmp" + split_fp[-1]
+    with open(file_path, "r") as datafile:
+        tree = ET.parse(datafile)
+        for key, value in data.items():
+            for element in tree.findall(".//{}".format(key)):
+                print(element)
+                element.text = str(value)
+        tree.write(new_file_path)
 
-def export_thumbnail(sequence, tempdir_path):
+    return new_file_path
+
+def export_thumbnail(sequence, tempdir_path, data):
     import flame
     export_preset = os.path.join(
         EXPORT_PRESETS_DIR,
         "openpype_seg_thumbnails_jpg.xml"
     )
+    new_path = configure_preset(export_preset, data)
     poster_frame_exporter = flame.PyExporter()
     poster_frame_exporter.foreground = True
-    poster_frame_exporter.export(sequence, export_preset, tempdir_path)
+    poster_frame_exporter.export(sequence, new_path, tempdir_path)
 
 
-def export_video(sequence, tempdir_path):
+def export_video(sequence, tempdir_path, data):
     import flame
     export_preset = os.path.join(
         EXPORT_PRESETS_DIR,
         "openpype_seg_video_h264.xml"
     )
+    new_path = configure_preset(export_preset, data)
     poster_frame_exporter = flame.PyExporter()
     poster_frame_exporter.foreground = True
-    poster_frame_exporter.export(sequence, export_preset, tempdir_path)
+    poster_frame_exporter.export(sequence, new_path, tempdir_path)
 
 
 def timecode_to_frames(timecode, framerate):
@@ -547,15 +562,15 @@ def main_window(selection):
             shutil.rmtree(TEMP_DIR_DATA_PATH)
         TEMP_DIR_DATA_PATH = None
 
-    def generate_temp_data():
+    def generate_temp_data(change_preset_data):
         global TEMP_DIR_DATA_PATH
         if TEMP_DIR_DATA_PATH:
             return True
 
         with make_temp_dir() as tempdir_path:
             for seq in selection:
-                export_thumbnail(seq, tempdir_path)
-                export_video(seq, tempdir_path)
+                export_thumbnail(seq, tempdir_path, change_preset_data)
+                export_video(seq, tempdir_path, change_preset_data)
                 TEMP_DIR_DATA_PATH = tempdir_path
                 break
 
@@ -687,7 +702,9 @@ def main_window(selection):
 
             component_creator = FtrackComponentCreator(session)
 
-            generate_temp_data()
+            generate_temp_data({
+                    "nbHandles": handles
+                })
 
             temp_files = os.listdir(TEMP_DIR_DATA_PATH)
             thumbnails = [f for f in temp_files if "jpg" in f]
