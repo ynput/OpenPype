@@ -298,12 +298,15 @@ def run_disk_mapping_commands(mongo_url):
 
         if low_platform == "windows":
             args = ["subst", destination, source]
+        elif low_platform == "darwin":
+            scr = "do shell script \"ln -s {} {}\" with administrator privileges".format(source, destination)  # noqa: E501
+            args = ["osascript", "-e", scr]
         else:
             args = ["sudo", "ln", "-s", source, destination]
 
         _print("disk mapping args:: {}".format(args))
         try:
-            output = subprocess.Popen(args)
+            output = subprocess.call(args)
             if output.returncode and output.returncode != 0:
                 exc_msg = "Executing was not successful: \"{}\"".format(
                     args)
