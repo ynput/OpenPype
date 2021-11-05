@@ -291,35 +291,29 @@ def run_disk_mapping_commands(mongo_url):
     if not disk_mapping:
         return
 
+    if low_platform == "windows":
+        command = ["subst"]
+    else:
+        command = ["sudo", "ln", "-s"]
+
     mappings = disk_mapping.get(low_platform) or []
     for source, destination in mappings:
         destination = destination.rstrip('/')
         source = source.rstrip('/')
-        if low_platform == "windows":
-            args = ["subst", destination, source]
-            _print("disk mapping args:: {}".format(args))
-            try:
-                output = subprocess.Popen(args)
-                if output.returncode and output.returncode != 0:
-                    exc_msg = "Executing was not successful: \"{}\"".format(
-                        args)
+        args = command + [destination, source]
+        _print("disk mapping args:: {}".format(args))
+        try:
+            output = subprocess.Popen(args)
+            if output.returncode and output.returncode != 0:
+                exc_msg = "Executing was not successful: \"{}\"".format(
+                    args)
 
-                    raise RuntimeError(exc_msg)
-            except TypeError as exc:
-                _print("Error {} in mapping drive {}, {}".format(str(exc),
-                                                                 source,
-                                                                 destination))
-                raise
-        else:
-            _print("disk mapping {}->{}".format(source, destination))
-            if not os.path.exists(destination):
-                try:
-                    os.symlink(source, destination)
-                except OSError as exc:
-                    _print("Error {} in mapping drive {}, {}".format(
-                        str(exc), source, destination))
-            else:
-                _print("Destination {} already exists".format(destination))
+                raise RuntimeError(exc_msg)
+        except TypeError as exc:
+            _print("Error {} in mapping drive {}, {}".format(str(exc),
+                                                             source,
+                                                             destination))
+            raise
 
 def set_avalon_environments():
     """Set avalon specific environments.
