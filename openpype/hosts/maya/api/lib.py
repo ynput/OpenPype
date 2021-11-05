@@ -2183,7 +2183,7 @@ def load_capture_preset(data=None):
     for key in preset['Display Options']:
         if key.startswith('background'):
             disp_options[key] = preset['Display Options'][key]
-            if len(disp_options[key]) == 4 :
+            if len(disp_options[key]) == 4:
                 disp_options[key][0] = (float(disp_options[key][0])/255)
                 disp_options[key][1] = (float(disp_options[key][1])/255)
                 disp_options[key][2] = (float(disp_options[key][2])/255)
