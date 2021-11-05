@@ -350,7 +350,7 @@ class ExtractSequence(pyblish.api.Extractor):
         filepaths_by_layer_id = {}
         for layer_id, render_data in extraction_data_by_layer_id.items():
             layer = layers_by_id[layer_id]
-            filepaths_by_layer_id = self._render_layer(
+            filepaths_by_layer_id[layer_id] = self._render_layer(
                 render_data, layer, output_dir
             )
 
@@ -431,7 +431,7 @@ class ExtractSequence(pyblish.api.Extractor):
             if frame_idx != ref_idx:
                 continue
 
-            frames_to_render.append(frame_idx)
+            frames_to_render.append(str(frame_idx))
             # Go to frame
             george_script_lines.append("tv_layerImage {}".format(frame_idx))
             # Store image to output

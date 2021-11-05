@@ -6,7 +6,7 @@ from PIL import Image, ImageDraw
 def backwards_id_conversion(data_by_layer_id):
     """Convert layer ids to strings from integers."""
     for key in tuple(data_by_layer_id.keys()):
-        if not isinstance(str):
+        if not isinstance(key, str):
             data_by_layer_id[str(key)] = data_by_layer_id.pop(key)
 
 
@@ -247,7 +247,7 @@ def _cleanup_frame_references(output_idx_by_frame_idx):
     """
     for frame_idx in tuple(output_idx_by_frame_idx.keys()):
         reference_idx = output_idx_by_frame_idx[frame_idx]
-        if reference_idx == frame_idx:
+        if reference_idx is None or reference_idx == frame_idx:
             continue
 
         real_reference_idx = reference_idx
@@ -457,7 +457,7 @@ def fill_reference_frames(frame_references, filepaths_by_frame):
 
         # Get destination filepath
         src_filepath = filepaths_by_frame[ref_idx]
-        dst_filepath = filepaths_by_frame[ref_idx]
+        dst_filepath = filepaths_by_frame[frame_idx]
 
         if hasattr(os, "link"):
             os.link(src_filepath, dst_filepath)
