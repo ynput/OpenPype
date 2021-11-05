@@ -1,12 +1,5 @@
-from openpype.plugins.load.abstract_load_template import AbstractTemplateLoader
-import importlib
-
-cmds = None
-
-
-def init_cmds():
-    global cmds
-    cmds = cmds or importlib.import_module('maya').cmds
+from openpype.lib.abstract_load_template import AbstractTemplateLoader
+from maya import cmds
 
 
 ATTRIBUTES = ['builder_type', 'representation', 'families',
@@ -14,10 +7,6 @@ ATTRIBUTES = ['builder_type', 'representation', 'families',
 
 
 class TemplateLoader(AbstractTemplateLoader):
-
-    def __init__(self):
-        init_cmds()
-        super(TemplateLoader, self).__init__()
 
     def import_template(self, path):
         self.newNodes = cmds.file(path, i=True, returnNewNodes=True)

@@ -1,18 +1,24 @@
 import avalon
-from openpype.hosts.maya.plugins.init.template_loader \
-    import TemplateLoader as maya_TemplateLoader
-
+import importlib
 
 def get_concrete_template_loader():
-    concrete_loaders = {
-        'maya': maya_TemplateLoader
+    concrete_loaders_modules = {
+        'maya': 'openpype.hosts.maya.api.template_loader'
     }
 
     dcc = avalon.io.Session['AVALON_APP']
-    loader = concrete_loaders.get(dcc)
-    if not loader:
-        raise ValueError('DCC not found for template')
-    return loader
+    module_path = concrete_loaders_modules.get(dcc, None)
+
+    if not module_path:
+        raise ValueError("Template not found for DCC '{}'".format(dcc))
+
+    module = importlib.import_module(module_path)
+    if not hasattr(module, 'TemplateLoader'):
+        raise ValueError("Linked module '{}' does not implement a template loader".format(module_path))
+
+    concrete_loader = module.TemplateLoader
+
+    return concrete_loader
 
 
 class BuildWorkfileTemplate:
