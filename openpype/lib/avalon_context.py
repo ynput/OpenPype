@@ -482,10 +482,8 @@ def get_workdir_data(project_doc, asset_doc, task_name, host_name):
 
     task_type = asset_doc['data']['tasks'].get(task_name, {}).get('type')
 
-    if task_type:
-        task_code = project_doc['config']['tasks'][task_type]['short_name']
-    else:
-        task_code = None
+    project_task_types = project_doc["config"]["tasks"]
+    task_code = project_task_types.get(task_type, {}).get("short_name")
 
     data = {
         "project": {
@@ -506,8 +504,7 @@ def get_workdir_data(project_doc, asset_doc, task_name, host_name):
 
 
 def get_workdir_with_workdir_data(
-    workdir_data, anatomy=None, project_name=None,
-    template_key=None, dbcon=None
+    workdir_data, anatomy=None, project_name=None, template_key=None
 ):
     """Fill workdir path from entered data and project's anatomy.
 
@@ -543,9 +540,9 @@ def get_workdir_with_workdir_data(
 
     if not template_key:
         template_key = get_workfile_template_key(
-            workdir_data["task"].get("type"),
+            workdir_data["task"]["type"],
             workdir_data["app"],
-            project_name=workdir_data["project"]["name"],
+            project_name=workdir_data["project"]["name"]
         )
 
     anatomy_filled = anatomy.format(workdir_data)
@@ -659,7 +656,7 @@ def create_workfile_doc(asset_doc, task_name, filename, workdir, dbcon=None):
     anatomy = Anatomy(project_doc["name"])
     # Get workdir path (result is anatomy.TemplateResult)
     template_workdir = get_workdir_with_workdir_data(
-        workdir_data, anatomy, dbcon=dbcon
+        workdir_data, anatomy
     )
     template_workdir_path = str(template_workdir).replace("\\", "/")
 
