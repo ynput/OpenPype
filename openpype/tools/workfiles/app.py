@@ -8,8 +8,9 @@ import datetime
 
 import Qt
 from Qt import QtWidgets, QtCore
-from avalon import style, io, api, pipeline
+from avalon import io, api, pipeline
 
+from openpype import style
 from openpype.tools.utils.lib import (
     schedule, qt_app_context
 )
@@ -631,7 +632,7 @@ class FilesWidget(QtWidgets.QWidget):
 
         # Parenting the QMessageBox to the Widget seems to crash
         # so we skip parenting and explicitly apply the stylesheet.
-        messagebox.setStyleSheet(style.load_stylesheet())
+        messagebox.setStyle(self.style())
 
         result = messagebox.exec_()
         if result == messagebox.Yes:
@@ -1003,12 +1004,18 @@ class Window(QtWidgets.QMainWindow):
         self.files_widget = files_widget
         self.side_panel = side_panel
 
-        self.refresh()
-
         # Force focus on the open button by default, required for Houdini.
         files_widget.btn_open.setFocus()
 
         self.resize(1200, 600)
+
+        self._first_show = True
+
+    def showEvent(self, event):
+        super(Window, self).showEvent(event)
+        if self._first_show:
+            self._first_show = False
+            self.setStyleSheet(style.load_stylesheet())
 
     def keyPressEvent(self, event):
         """Custom keyPressEvent.
@@ -1198,7 +1205,6 @@ def show(root=None, debug=False, parent=None, use_context=True, save=True):
         window.set_save_enabled(save)
 
         window.show()
-        window.setStyleSheet(style.load_stylesheet())
 
         module.window = window
 
