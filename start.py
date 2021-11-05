@@ -305,12 +305,19 @@ def run_disk_mapping_commands(mongo_url):
                         args)
 
                     raise RuntimeError(exc_msg)
-            except TypeError:
-                _print("Error in mapping drive")
+            except TypeError as exc:
+                _print("Error {} in mapping drive {}, {}".format(str(exc),
+                                                                 source,
+                                                                 destination))
                 raise
         else:
+            _print("disk mapping {}->{}".format(source, destination))
             if not os.path.exists(destination):
-                os.symlink(source, destination)
+                try:
+                    os.symlink(source, destination)
+                except OSError as exc:
+                    _print("Error {} in mapping drive {}, {}".format(
+                        str(exc), source, destination))
             else:
                 _print("Destination {} already exists".format(destination))
 
