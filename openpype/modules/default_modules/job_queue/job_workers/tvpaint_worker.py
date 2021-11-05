@@ -2,7 +2,7 @@ import signal
 import time
 import asyncio
 
-from openpype.hosts.tvpaint.worker import TVPaintCommands
+from openpype.hosts.tvpaint.worker import ProcessTVPaintCommands
 from avalon.tvpaint.communication_server import (
     BaseCommunicator,
     CommunicationWrapper
@@ -69,7 +69,7 @@ class WorkerCommunicator(BaseCommunicator):
         job_data = job["data"]
         workfile = job_data["workfile"]
         if job_data.get("function") == "commands":
-            commands = TVPaintCommands(
+            commands = ProcessTVPaintCommands(
                 workfile, job_data["commands"], self
             )
             commands.execute()
