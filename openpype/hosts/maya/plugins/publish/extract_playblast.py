@@ -45,6 +45,7 @@ class ExtractPlayblast(openpype.api.Extractor):
         # get cameras
         camera = instance.data['review_camera']
 
+        override_viewport_options = self.capture_preset['Viewport Options']['override_viewport_options']
         preset = lib.load_capture_preset(data=self.capture_preset)
 
 
@@ -91,6 +92,12 @@ class ExtractPlayblast(openpype.api.Extractor):
             preset['viewer'] = False
 
             self.log.info('using viewport preset: {}'.format(preset))
+            
+            # Update preset with current panel setting
+            # if override_viewport_options is turned off
+            if not override_viewport_options :
+                panel_preset = capture.parse_active_view()
+                preset.update(panel_preset)
 
             path = capture.capture(**preset)
 
