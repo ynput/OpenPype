@@ -120,11 +120,6 @@ QAbstractSpinBox::down-arrow:hover:pressed {
     bottom: 0;
 }
 
-/* Checkbox */
-QCheckBox {
-    background: transparent;
-}
-
 /* Buttons */
 QPushButton {
     text-align:center center;
@@ -401,6 +396,55 @@ QHeaderView::down-arrow {
 
 QHeaderView::up-arrow {
     image: url(:/openpype/images/up_arrow.png);
+}
+
+/* Checkboxes */
+QCheckBox {
+    background: transparent;
+}
+
+QCheckBox::indicator {
+    width: 16px;
+    height: 16px;
+}
+
+QAbstractItemView::indicator:checked, QCheckBox::indicator:checked {
+    image: url(:/openpype/images/checkbox_checked.png);
+}
+QAbstractItemView::indicator:checked:focus, QCheckBox::indicator:checked:focus {
+    image: url(:/openpype/images/checkbox_checked_focus.png);
+}
+QAbstractItemView::indicator:checked:hover, QAbstractItemView::indicator:checked:pressed, QCheckBox::indicator:checked:hover, QCheckBox::indicator:checked:pressed {
+    image: url(:/openpype/images/checkbox_checked_hover.png);
+}
+QAbstractItemView::indicator:checked:disabled, QCheckBox::indicator:checked:disabled {
+    image: url(:/openpype/images/checkbox_checked_disabled.png);
+}
+
+QAbstractItemView::indicator:unchecked, QCheckBox::indicator:unchecked {
+    image: url(:/openpype/images/checkbox_unchecked.png);
+}
+QAbstractItemView::indicator:unchecked:focus, QCheckBox::indicator:unchecked:focus {
+    image: url(:/openpype/images/checkbox_unchecked_focus.png);
+}
+QAbstractItemView::indicator:unchecked:hover, QAbstractItemView::indicator:unchecked:pressed, QCheckBox::indicator:unchecked:hover, QCheckBox::indicator:unchecked:pressed {
+    image: url(:/openpype/images/checkbox_unchecked_hover.png);
+}
+QAbstractItemView::indicator:unchecked:disabled, QCheckBox::indicator:unchecked:disabled {
+    image: url(:/openpype/images/checkbox_unchecked_disabled.png);
+}
+
+QAbstractItemView::indicator:indeterminate, QCheckBox::indicator:indeterminate {
+    image: url(:/openpype/images/checkbox_indeterminate.png);
+}
+QAbstractItemView::indicator:indeterminate:focus, QCheckBox::indicator:indeterminate:focus {
+    image: url(:/openpype/images/checkbox_indeterminate_focus.png);
+}
+QAbstractItemView::indicator:indeterminate:hover, QAbstractItemView::indicator:indeterminate:pressed, QCheckBox::indicator:indeterminate:hover, QCheckBox::indicator:indeterminate:pressed {
+    image: url(:/openpype/images/checkbox_indeterminate_hover.png);
+}
+QAbstractItemView::indicator:indeterminate:disabled, QCheckBox::indicator:indeterminate:disabled {
+    image: url(:/openpype/images/checkbox_indeterminate_disabled.png);
 }
 
 /* Views QListView QTreeView QTableView */
