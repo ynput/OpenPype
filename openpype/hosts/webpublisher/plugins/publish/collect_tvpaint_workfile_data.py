@@ -7,12 +7,12 @@ Provides:
     Instance
 """
 import json
+import time
 import pyblish.api
 from openpype.hosts.tvpaint.worker import (
-    TVPaintCommands,
+    SenderTVPaintCommands,
     CollectSceneData
 )
-from avalon.tvpaint import CommunicationWrapper
 
 
 class CollectTVPaintWorkfileData(pyblish.api.InstancePlugin):
@@ -29,36 +29,13 @@ class CollectTVPaintWorkfileData(pyblish.api.InstancePlugin):
         job_queue_module = modules["job_queue"]
 
         # Prepare tvpaint command
-        commands = TVPaintCommands(workfile, CommunicationWrapper.communicator)
-        commands.append(CollectSceneData())
+        collect_scene_data_command = CollectSceneData()
+        # Create TVPaint sender commands
+        commands = SenderTVPaintCommands(workfile, job_queue_module)
+        commands.add_command(collect_scene_data_command)
 
-        # Send job data to job queue server
-        job_data = commands.to_job_data()
-        self.debug("Sending job to JobQueue server.\n{}".format(
-            json.dumps(job_data, indent=4)
-        ))
-        job_id = job_queue_module.send_job("tvpaint", job_data)
-        self.log.info((
-            "Job sent to JobQueue server and got id \"{}\"."
-            " Waiting for finishing the job."
-        ).format(job_id))
-        # Wait for job to be finished
-        while True:
-            job_status = job_queue_module.get_job_status(job_id)
-            if job_status["done"]:
-                break
+        # Send job and wait for answer
+        commands.send_job_and_wait()
 
-        # Check if job state is done
-        if job_status["state"] != "done":
-            message = job_status["message"] or "Unknown issue"
-            raise ValueError(
-                "Job didn't finish properly."
-                " Job state: \"{}\" | Job message: \"{}\"".format(
-                    job_status["state"],
-                    message
-                )
-            )
-        job_result = job_status["result"]
-
-        self.log.debug("Job is done with result.\n{}".format(job_result))
-        instance.data["sceneData"] = job_result
+        # Store result
+        instance.data["sceneData"] = collect_scene_data_command.result()
