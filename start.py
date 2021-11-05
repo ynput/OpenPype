@@ -306,12 +306,13 @@ def run_disk_mapping_commands(mongo_url):
 
         _print("disk mapping args:: {}".format(args))
         try:
-            output = subprocess.Popen(args)
-            if output.returncode and output.returncode != 0:
-                exc_msg = "Executing was not successful: \"{}\"".format(
-                    args)
+            if not os.path.exists(destination):
+                output = subprocess.Popen(args)
+                if output.returncode and output.returncode != 0:
+                    exc_msg = "Executing was not successful: \"{}\"".format(
+                        args)
 
-                raise RuntimeError(exc_msg)
+                    raise RuntimeError(exc_msg)
         except TypeError as exc:
             _print("Error {} in mapping drive {}, {}".format(str(exc),
                                                              source,
