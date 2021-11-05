@@ -130,6 +130,9 @@ class NameWindow(QtWidgets.QDialog):
 
         # Extensions combobox
         ext_combo = QtWidgets.QComboBox(inputs_widget)
+        # Add styled delegate to use stylesheets
+        ext_delegate = QtWidgets.QStyledItemDelegate()
+        ext_combo.setItemDelegate(ext_delegate)
         ext_combo.addItems(self.host.file_extensions())
 
         # Build inputs
@@ -185,6 +188,7 @@ class NameWindow(QtWidgets.QDialog):
         self.preview_label = preview_label
         self.subversion_input = subversion_input
         self.ext_combo = ext_combo
+        self._ext_delegate = ext_delegate
 
         self.refresh()
 
