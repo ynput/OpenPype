@@ -380,6 +380,11 @@ class FtrackComponentCreator:
         ).first()
 
         if component_entity:
+            # Adding metadata
+            existing_component_metadata = component_entity["metadata"]
+            existing_component_metadata.update(component_metadata)
+            component_entity["metadata"] = existing_component_metadata
+
             # overwrite existing members in component enity
             # - get data for member from `ftrack.origin` location
             self._overwrite_members(component_entity, comp_data)
