@@ -586,3 +586,43 @@ def composite_images(input_image_paths, output_filepath):
         else:
             img_obj.alpha_composite(_img_obj)
     img_obj.save(output_filepath)
+
+
+def rename_filepaths_by_frame_start(
+    filepaths_by_frame, range_start, range_end, new_frame_start
+):
+    """Change frames in filenames of finished images to new frame start."""
+    # Skip if source first frame is same as destination first frame
+    if range_start == new_frame_start:
+        return
+
+    # Calculate frame end
+    new_frame_end = range_end + (new_frame_start - range_start)
+    # Create filename template
+    filename_template = get_frame_filename_template(
+        max(range_end, new_frame_end)
+    )
+
+    # Use differnet ranges based on Mark In and output Frame Start values
+    # - this is to make sure that filename renaming won't affect files that
+    #   are not renamed yet
+    if range_start < new_frame_start:
+        source_range = range(range_end, range_start - 1, -1)
+        output_range = range(new_frame_end, new_frame_start - 1, -1)
+    else:
+        # This is less possible situation as frame start will be in most
+        #   cases higher than Mark In.
+        source_range = range(range_start, range_end + 1)
+        output_range = range(new_frame_start, new_frame_end + 1)
+
+    new_dst_filepaths = {}
+    for src_frame, dst_frame in zip(source_range, output_range):
+        src_filepath = filepaths_by_frame[src_frame]
+        src_dirpath = os.path.dirname(src_filepath)
+        dst_filename = filename_template.format(frame=dst_frame)
+        dst_filepath = os.path.join(src_dirpath, dst_filename)
+
+        os.rename(src_filepath, dst_filepath)
+
+        new_dst_filepaths[dst_frame] = dst_filepath
+    return new_dst_filepaths
