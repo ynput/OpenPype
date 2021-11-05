@@ -291,16 +291,16 @@ def run_disk_mapping_commands(mongo_url):
     if not disk_mapping:
         return
 
-    if low_platform == "windows":
-        command = ["subst"]
-    else:
-        command = ["sudo", "ln", "-s"]
-
     mappings = disk_mapping.get(low_platform) or []
     for source, destination in mappings:
         destination = destination.rstrip('/')
         source = source.rstrip('/')
-        args = command + [destination, source]
+
+        if low_platform == "windows":
+            args = ["subst", destination, source]
+        else:
+            args = ["sudo", "ln", "-s", source, destination]
+
         _print("disk mapping args:: {}".format(args))
         try:
             output = subprocess.Popen(args)
