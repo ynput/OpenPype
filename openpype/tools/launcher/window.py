@@ -20,7 +20,7 @@ from .widgets import (
     SlidePageWidget
 )
 
-from .flickcharm import FlickCharm
+from openpype.tools.flickcharm import FlickCharm
 
 
 class ProjectIconView(QtWidgets.QListView):

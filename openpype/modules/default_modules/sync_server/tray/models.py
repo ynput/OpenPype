@@ -124,7 +124,8 @@ class _SyncRepresentationModel(QtCore.QAbstractTableModel):
 
         if not representations:
             self.query = self.get_query(load_records)
-            representations = self.dbcon.aggregate(self.query)
+            representations = self.dbcon.aggregate(pipeline=self.query,
+                                                   allowDiskUse=True)
 
         self.add_page_records(self.active_site, self.remote_site,
                               representations)
@@ -159,7 +160,8 @@ class _SyncRepresentationModel(QtCore.QAbstractTableModel):
         items_to_fetch = min(self._total_records - self._rec_loaded,
                              self.PAGE_SIZE)
         self.query = self.get_query(self._rec_loaded)
-        representations = self.dbcon.aggregate(self.query)
+        representations = self.dbcon.aggregate(pipeline=self.query,
+                                               allowDiskUse=True)
         self.beginInsertRows(index,
                              self._rec_loaded,
                              self._rec_loaded + items_to_fetch - 1)
@@ -192,16 +194,16 @@ class _SyncRepresentationModel(QtCore.QAbstractTableModel):
         else:
             order = -1
 
-        backup_sort = dict(self.sort)
+        backup_sort = dict(self.sort_criteria)
 
-        self.sort = {self.SORT_BY_COLUMN[index]: order}  # reset
+        self.sort_criteria = {self.SORT_BY_COLUMN[index]: order}  # reset
         # add last one
         for key, val in backup_sort.items():
             if key != '_id' and key != self.SORT_BY_COLUMN[index]:
-                self.sort[key] = val
+                self.sort_criteria[key] = val
                 break
         # add default one
-        self.sort['_id'] = 1
+        self.sort_criteria['_id'] = 1
 
         self.query = self.get_query()
         # import json
@@ -209,7 +211,8 @@ class _SyncRepresentationModel(QtCore.QAbstractTableModel):
         #           replace('False', 'false').\
         #           replace('True', 'true').replace('None', 'null'))
 
-        representations = self.dbcon.aggregate(self.query)
+        representations = self.dbcon.aggregate(pipeline=self.query,
+                                               allowDiskUse=True)
         self.refresh(representations)
 
     def set_word_filter(self, word_filter):
@@ -440,12 +443,13 @@ class SyncRepresentationSummaryModel(_SyncRepresentationModel):
         self.active_site = self.sync_server.get_active_site(self.project)
         self.remote_site = self.sync_server.get_remote_site(self.project)
 
-        self.sort = self.DEFAULT_SORT
+        self.sort_criteria = self.DEFAULT_SORT
 
         self.query = self.get_query()
         self.default_query = list(self.get_query())
 
-        representations = self.dbcon.aggregate(self.query)
+        representations = self.dbcon.aggregate(pipeline=self.query,
+                                               allowDiskUse=True)
         self.refresh(representations)
 
         self.timer = QtCore.QTimer()
@@ -732,7 +736,7 @@ class SyncRepresentationSummaryModel(_SyncRepresentationModel):
             )
 
         aggr.extend(
-            [{"$sort": self.sort},
+            [{"$sort": self.sort_criteria},
              {
                 '$facet': {
                     'paginatedResults': [{'$skip': self._rec_loaded},
@@ -970,10 +974,11 @@ class SyncRepresentationDetailModel(_SyncRepresentationModel):
         self.active_site = self.sync_server.get_active_site(self.project)
         self.remote_site = self.sync_server.get_remote_site(self.project)
 
-        self.sort = self.DEFAULT_SORT
+        self.sort_criteria = self.DEFAULT_SORT
 
         self.query = self.get_query()
-        representations = self.dbcon.aggregate(self.query)
+        representations = self.dbcon.aggregate(pipeline=self.query,
+                                               allowDiskUse=True)
         self.refresh(representations)
 
         self.timer = QtCore.QTimer()
@@ -1235,7 +1240,7 @@ class SyncRepresentationDetailModel(_SyncRepresentationModel):
             print(self.column_filtering)
 
         aggr.extend([
-            {"$sort": self.sort},
+            {"$sort": self.sort_criteria},
             {
                 '$facet': {
                     'paginatedResults': [{'$skip': self._rec_loaded},

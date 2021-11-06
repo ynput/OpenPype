@@ -63,7 +63,14 @@ class ExperimentalTools:
     """
     def __init__(self, parent=None, host_name=None, filter_hosts=None):
         # Definition of experimental tools
-        experimental_tools = []
+        experimental_tools = [
+            ExperimentalTool(
+                "publisher",
+                "New publisher",
+                self._show_publisher,
+                "Combined creation and publishing into one tool."
+            )
+        ]
 
         # --- Example tool (callback will just print on click) ---
         # def example_callback(*args):
@@ -110,6 +117,8 @@ class ExperimentalTools:
         self._tools = experimental_tools
         self._parent_widget = parent
 
+        self._publisher_tool = None
+
     @property
     def tools(self):
         """Tools in list.
@@ -140,3 +149,13 @@ class ExperimentalTools:
         for identifier, eperimental_tool in self.tools_by_identifier.items():
             enabled = experimental_settings.get(identifier, False)
             eperimental_tool.set_enabled(enabled)
+
+    def _show_publisher(self):
+        if self._publisher_tool is None:
+            from openpype.tools import publisher
+
+            self._publisher_tool = publisher.PublisherWindow(
+                parent=self._parent_widget
+            )
+
+        self._publisher_tool.show()
