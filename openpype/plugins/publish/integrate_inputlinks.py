@@ -9,6 +9,27 @@ class IntegrateInputLinks(pyblish.api.ContextPlugin):
     label = "Connect Dependency InputLinks"
 
     def process(self, context):
+        """Connect dependency links for all instances, globally
+
+        Code steps:
+        * filter out instances that has "versionEntity" entry in data
+        * find workfile instance within context
+        * if workfile found:
+            - link all `loadedVersions` as input of the workfile
+            - link workfile as input of all publishing instances
+        * else:
+            - show "no workfile" warning
+        * link instances' inputs if it's data has "inputVersions" entry
+        * Write into database
+
+        inputVersions:
+            The "inputVersions" in instance.data should be a list of
+            version document's Id (str or ObjectId), which are the
+            dependencies of the publishing instance that should be
+            extracted from working scene by the DCC specific publish
+            plugin.
+
+        """
         workfile = None
         publishing = []
 
@@ -57,6 +78,17 @@ class IntegrateInputLinks(pyblish.api.ContextPlugin):
         self.write_links_to_database(context)
 
     def add_link(self, link_type, input_id, version_doc):
+        """Add dependency link data into version document
+
+        Args:
+            link_type (str): Type of link, one of 'reference' or 'generative'
+            input_id (str or ObjectId): Document Id of input version
+            version_doc (dict): The version document that takes the input
+
+        Returns:
+            None
+
+        """
         from collections import OrderedDict
         from avalon import io
         # NOTE:
@@ -74,6 +106,12 @@ class IntegrateInputLinks(pyblish.api.ContextPlugin):
         version_doc["data"]["inputLinks"].append(link)
 
     def write_links_to_database(self, context):
+        """Iter instances in context to update database
+
+        If `versionEntity.data.inputLinks` not None in `instance.data`, doc
+        in database will be updated.
+
+        """
         from avalon import io
 
         for instance in context:
