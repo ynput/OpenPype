@@ -7,7 +7,7 @@ from Qt import QtWidgets, QtCore
 from openpype.hosts.maya.api.lib import assign_look_by_version
 
 from avalon import style, io
-from avalon.tools import lib
+from openpype.tools.utils.lib import qt_app_context
 
 from maya import cmds
 # old api for MFileIO
@@ -258,7 +258,7 @@ def show():
     mainwindow = next(widget for widget in top_level_widgets
                       if widget.objectName() == "MayaWindow")
 
-    with lib.application():
+    with qt_app_context():
         window = App(parent=mainwindow)
         window.setStyleSheet(style.load_stylesheet())
         window.show()

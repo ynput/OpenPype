@@ -255,6 +255,11 @@
             "optional": true,
             "active": true
         },
+        "ValidateMeshNgons": {
+            "enabled": false,
+            "optional": true,
+            "active": true
+        },
         "ValidateMeshNonManifold": {
             "enabled": false,
             "optional": true,

@@ -50,9 +50,14 @@ class LocalDriveHandler(AbstractProvider):
         # for non 'studio' sites, 'studio' is configured in Anatomy
         editable = [
             {
-                'key': "roots",
-                'label': "Roots",
-                'type': 'dict'
+                "key": "roots",
+                "label": "Roots",
+                "type": "dict-roots",
+                "object_type": {
+                    "type": "path",
+                    "multiplatform": True,
+                    "multipath": False
+                }
             }
         ]
         return editable
