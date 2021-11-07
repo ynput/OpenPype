@@ -34,6 +34,10 @@ class IntegrateInputLinks(pyblish.api.ContextPlugin):
         publishing = []
 
         for instance in context:
+            if not instance.data.get("publish", True):
+                # Skip inactive instances
+                continue
+
             version_doc = instance.data.get("versionEntity")
             if not version_doc:
                 self.log.debug("Instance %s doesn't have version." % instance)
@@ -75,7 +79,8 @@ class IntegrateInputLinks(pyblish.api.ContextPlugin):
                     version_doc=instance.data["versionEntity"],
                 )
 
-        self.write_links_to_database(context)
+        publishing.append(workfile)
+        self.write_links_to_database(publishing)
 
     def add_link(self, link_type, input_id, version_doc):
         """Add dependency link data into version document
@@ -105,7 +110,7 @@ class IntegrateInputLinks(pyblish.api.ContextPlugin):
             version_doc["data"]["inputLinks"] = []
         version_doc["data"]["inputLinks"].append(link)
 
-    def write_links_to_database(self, context):
+    def write_links_to_database(self, instances):
         """Iter instances in context to update database
 
         If `versionEntity.data.inputLinks` not None in `instance.data`, doc
@@ -114,7 +119,7 @@ class IntegrateInputLinks(pyblish.api.ContextPlugin):
         """
         from avalon import io
 
-        for instance in context:
+        for instance in instances:
             version_doc = instance.data.get("versionEntity")
             if version_doc is None:
                 continue
