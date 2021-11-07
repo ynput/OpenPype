@@ -1,5 +1,5 @@
 
-from Qt import QtWidgets, QtCore, QtGui
+from Qt import QtWidgets
 
 
 class SimpleLinkView(QtWidgets.QWidget):
