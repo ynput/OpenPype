@@ -535,6 +535,8 @@ class Templates:
     key_padding_pattern = re.compile(r"([^:]+)\S+[><]\S+")
     sub_dict_pattern = re.compile(r"([^\[\]]+)")
     optional_pattern = re.compile(r"(<.*?[^{0]*>)[^0-9]*?")
+    key_in_function = re.compile(r"([^:]+)\S+[|]\S+")
+    key_and_function = re.compile(r"([^:|\"]+)")
 
     inner_key_pattern = re.compile(r"(\{@.*?[^{}0]*\})")
     inner_key_name_pattern = re.compile(r"\{@(.*?[^{}0]*)\}")
@@ -993,8 +995,13 @@ class Templates:
             orig_key = group[1:-1]
             key = str(orig_key)
             key_padding = list(self.key_padding_pattern.findall(key))
+            key_in_function = list(self.key_in_function.findall(key))#catch key of function
+
             if key_padding:
                 key = key_padding[0]
+
+            if key_in_function:
+                key = key_in_function[0]
 
             validation_result = self._validate_data_key(key, data)
             missing_key = validation_result["missing_key"]
@@ -1008,6 +1015,10 @@ class Templates:
             if missing_key is not None:
                 missing_required.append(missing_key)
                 replace_keys.append(key)
+                continue
+
+            if key_in_function:
+                replace_keys.append(orig_key)
                 continue
 
             try:
@@ -1039,6 +1050,28 @@ class Templates:
                 replace_key_src_curly, replace_key_dst_curly
             )
             final_data[replace_key_dst] = replace_key_src_curly
+
+        for key in replace_keys:
+            attrs_function = self.key_and_function.findall(key)
+            if len(attrs_function) <= 1:
+                final_data[key] = "{" + key + "}"
+                continue
+
+            replace_key_dst = "-->".join(attrs_function)
+            replace_key_dst_curly = "{" + replace_key_dst + "}"
+            replace_key_src_curly = "{" + key + "}"
+            template = template.replace(
+                replace_key_src_curly, replace_key_dst_curly
+            )
+            function_name = attrs_function[1]
+            function_attrs = attrs_function[2:]
+            try:
+                value = data[attrs_function[0]]
+                new_value = getattr(value, attrs_function[1])(*function_attrs)
+                final_data[replace_key_dst] = new_value
+            except AttributeError as e:
+                missing_required.append(key)
+                replace_keys.append(key)
 
         solved = len(missing_required) == 0 and len(invalid_required) == 0
 
