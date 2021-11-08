@@ -4,7 +4,7 @@ import copy
 import pyblish.api
 from avalon import io
 
-from openpype.lib import get_subset_name
+from openpype.lib import get_subset_name_with_asset_doc
 
 
 class CollectInstances(pyblish.api.ContextPlugin):
@@ -70,16 +70,10 @@ class CollectInstances(pyblish.api.ContextPlugin):
                 # - not sure if it's good idea to require asset id in
                 #   get_subset_name?
                 asset_name = context.data["workfile_context"]["asset"]
-                asset_doc = io.find_one(
-                    {
-                        "type": "asset",
-                        "name": asset_name
-                    },
-                    {"_id": 1}
-                )
-                asset_id = None
-                if asset_doc:
-                    asset_id = asset_doc["_id"]
+                asset_doc = io.find_one({
+                    "type": "asset",
+                    "name": asset_name
+                })
 
                 # Project name from workfile context
                 project_name = context.data["workfile_context"]["project"]
@@ -88,11 +82,11 @@ class CollectInstances(pyblish.api.ContextPlugin):
                 # Use empty variant value
                 variant = ""
                 task_name = io.Session["AVALON_TASK"]
-                new_subset_name = get_subset_name(
+                new_subset_name = get_subset_name_with_asset_doc(
                     family,
                     variant,
                     task_name,
-                    asset_id,
+                    asset_doc,
                     project_name,
                     host_name
                 )

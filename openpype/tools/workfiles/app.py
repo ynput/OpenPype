@@ -10,17 +10,21 @@ import Qt
 from Qt import QtWidgets, QtCore
 from avalon import style, io, api, pipeline
 
-from avalon.tools import lib as tools_lib
-from avalon.tools.widgets import AssetWidget
-from avalon.tools.delegates import PrettyTimeDelegate
+from openpype.tools.utils.lib import (
+    schedule, qt_app_context
+)
+from openpype.tools.utils.widgets import AssetWidget
+from openpype.tools.utils.delegates import PrettyTimeDelegate
 
-from .model import (
+from openpype.tools.utils.constants import (
     TASK_NAME_ROLE,
-    TASK_TYPE_ROLE,
-    FilesModel,
+    TASK_TYPE_ROLE
+)
+from openpype.tools.utils.models import (
     TasksModel,
     TasksProxyModel
 )
+from .model import FilesModel
 from .view import FilesView
 
 from openpype.lib import (
@@ -359,6 +363,7 @@ class TasksWidget(QtWidgets.QWidget):
             self._last_selected_task = current
 
         self._tasks_model.set_asset(asset_doc)
+        self._tasks_proxy.sort(0, QtCore.Qt.AscendingOrder)
 
         if self._last_selected_task:
             self.select_task(self._last_selected_task)
@@ -786,7 +791,7 @@ class FilesWidget(QtWidgets.QWidget):
         self.files_model.refresh()
 
         if self.auto_select_latest_modified:
-            tools_lib.schedule(self._select_last_modified_file, 100)
+            schedule(self._select_last_modified_file, 100)
 
     def on_context_menu(self, point):
         index = self.files_view.indexAt(point)
@@ -1023,10 +1028,10 @@ class Window(QtWidgets.QMainWindow):
 
     def on_task_changed(self):
         # Since we query the disk give it slightly more delay
-        tools_lib.schedule(self._on_task_changed, 100, channel="mongo")
+        schedule(self._on_task_changed, 100, channel="mongo")
 
     def on_asset_changed(self):
-        tools_lib.schedule(self._on_asset_changed, 50, channel="mongo")
+        schedule(self._on_asset_changed, 50, channel="mongo")
 
     def on_file_select(self, filepath):
         asset_docs = self.assets_widget.get_selected_assets()
@@ -1181,7 +1186,7 @@ def show(root=None, debug=False, parent=None, use_context=True, save=True):
         api.Session["AVALON_ASSET"] = "Mock"
         api.Session["AVALON_TASK"] = "Testing"
 
-    with tools_lib.application():
+    with qt_app_context():
         window = Window(parent=parent)
         window.refresh()
 
