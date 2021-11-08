@@ -16,13 +16,15 @@ from openpype.tools.utils.lib import (
 from openpype.tools.utils.widgets import AssetWidget
 from openpype.tools.utils.delegates import PrettyTimeDelegate
 
-from .model import (
+from openpype.tools.utils.constants import (
     TASK_NAME_ROLE,
-    TASK_TYPE_ROLE,
-    FilesModel,
+    TASK_TYPE_ROLE
+)
+from openpype.tools.utils.models import (
     TasksModel,
     TasksProxyModel
 )
+from .model import FilesModel
 from .view import FilesView
 
 from openpype.lib import (
@@ -361,6 +363,7 @@ class TasksWidget(QtWidgets.QWidget):
             self._last_selected_task = current
 
         self._tasks_model.set_asset(asset_doc)
+        self._tasks_proxy.sort(0, QtCore.Qt.AscendingOrder)
 
         if self._last_selected_task:
             self.select_task(self._last_selected_task)

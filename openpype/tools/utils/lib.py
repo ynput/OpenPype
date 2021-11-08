@@ -13,6 +13,16 @@ from openpype.api import get_project_settings
 from openpype.lib import filter_profiles
 
 
+def center_window(window):
+    """Move window to center of it's screen."""
+    desktop = QtWidgets.QApplication.desktop()
+    screen_idx = desktop.screenNumber(window)
+    screen_geo = desktop.screenGeometry(screen_idx)
+    geo = window.frameGeometry()
+    geo.moveCenter(screen_geo.center())
+    window.move(geo.topLeft())
+
+
 def format_version(value, hero_version=False):
     """Formats integer to displayable version name"""
     label = "v{0:03d}".format(value)
