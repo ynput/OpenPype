@@ -1067,7 +1067,7 @@ class Templates:
             function_attrs = attrs_function[2:]
             try:
                 value = data[attrs_function[0]]
-                new_value = getattr(value, attrs_function[1])(*function_attrs)
+                new_value = getattr(value, function_name)(*function_attrs)
                 final_data[replace_key_dst] = new_value
             except AttributeError:
                 missing_required.append(key)
