@@ -15,7 +15,12 @@ from openpype.tools.utils.models import TreeModel, Item
 from openpype.tools.utils import lib
 
 from openpype.modules import ModulesManager
-from openpype_modules.sync_server.tray import roles
+from openpype.tools.utils.constants import (
+    LOCAL_PROVIDER_ROLE,
+    REMOTE_PROVIDER_ROLE,
+    LOCAL_PROGRESS_ROLE,
+    REMOTE_PROGRESS_ROLE
+)
 
 
 def is_filtering_recursible():
@@ -668,8 +673,8 @@ class SubsetsModel(TreeModel, BaseRepresentationModel):
         if not index.isValid():
             return
 
+        item = index.internalPointer()
         if role == self.SortDescendingRole:
-            item = index.internalPointer()
             if item.get("isGroup"):
                 # Ensure groups be on top when sorting by descending order
                 prefix = "2"
@@ -685,7 +690,6 @@ class SubsetsModel(TreeModel, BaseRepresentationModel):
             return prefix + order
 
         if role == self.SortAscendingRole:
-            item = index.internalPointer()
             if item.get("isGroup"):
                 # Ensure groups be on top when sorting by ascending order
                 prefix = "0"
@@ -703,14 +707,12 @@ class SubsetsModel(TreeModel, BaseRepresentationModel):
         if role == QtCore.Qt.DisplayRole:
             if index.column() == self.columns_index["family"]:
                 # Show familyLabel instead of family
-                item = index.internalPointer()
                 return item.get("familyLabel", None)
 
         elif role == QtCore.Qt.DecorationRole:
 
             # Add icon to subset column
             if index.column() == self.columns_index["subset"]:
-                item = index.internalPointer()
                 if item.get("isGroup") or item.get("isMerged"):
                     return item["icon"]
                 else:
@@ -718,25 +720,31 @@ class SubsetsModel(TreeModel, BaseRepresentationModel):
 
             # Add icon to family column
             if index.column() == self.columns_index["family"]:
-                item = index.internalPointer()
                 return item.get("familyIcon", None)
 
         elif role == QtCore.Qt.ForegroundRole:
-            item = index.internalPointer()
             version_doc = item.get("version_document")
             if version_doc and version_doc.get("type") == "hero_version":
                 if not version_doc["is_from_latest"]:
                     return self.not_last_hero_brush
 
-        elif role == roles.ProgressRole:
-            item = index.internalPointer()
+        elif role == LOCAL_PROGRESS_ROLE:
             if not item.get("isGroup"):
-                return {"active": item.get("repre_info_local"),
-                        "remote": item.get("repre_info_remote")}
+                return item.get("repre_info_local")
+            else:
+                return None
 
-        elif role == roles.ProviderRole:
-            return {"active": self.active_provider,
-                    "remote": self.remote_provider}
+        elif role == REMOTE_PROGRESS_ROLE:
+            if not item.get("isGroup"):
+                return item.get("repre_info_remote")
+            else:
+                return None
+
+        elif role == LOCAL_PROVIDER_ROLE:
+            return self.active_provider
+
+        elif role == REMOTE_PROVIDER_ROLE:
+            return self.remote_provider
 
         return super(SubsetsModel, self).data(index, role)
 

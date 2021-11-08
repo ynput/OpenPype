@@ -31,7 +31,12 @@ from .model import (
 )
 from . import lib
 
-from openpype_modules.sync_server.tray import roles
+from openpype.tools.utils.constants import (
+    LOCAL_PROVIDER_ROLE,
+    REMOTE_PROVIDER_ROLE,
+    LOCAL_PROGRESS_ROLE,
+    REMOTE_PROGRESS_ROLE
+)
 
 
 class OverlayFrame(QtWidgets.QFrame):
@@ -1600,24 +1605,19 @@ class AvailabilityDelegate(QtWidgets.QStyledItemDelegate):
         option = QtWidgets.QStyleOptionViewItem(option)
         option.showDecorationSelected = True
 
+        provider_active = index.data(LOCAL_PROVIDER_ROLE)
+        provider_remote = index.data(REMOTE_PROVIDER_ROLE)
 
-        print("roles.ProviderRole:: {}".format(roles.ProviderRole))
-        providers = index.data(roles.ProviderRole)
-        values = index.data(roles.ProgressRole)
-        print("providers:: {}".format(providers))
-        if not values:  # group lines
+        availability_active = index.data(LOCAL_PROGRESS_ROLE)
+        availability_remote = index.data(REMOTE_PROGRESS_ROLE)
+
+        if not availability_active or not availability_remote:  # group lines
             return
-
-        provider_active = providers["active"]
-        provider_remote = providers["remote"]
-
-        availability_active = values["active"]
-        availability_remote = values["remote"]
 
         idx = 0
         height = width = 24
         for value, provider in [(availability_active, provider_active),
-                         (availability_remote, provider_remote)]:
+                                (availability_remote, provider_remote)]:
             icon = self.icons.get(provider)
             if not icon:
                 continue
