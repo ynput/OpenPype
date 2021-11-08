@@ -194,28 +194,21 @@ class CollectSceneData(BaseCommand):
 
         groups_data = get_groups_data(communicator=self.communicator)
         layers_data = get_layers_data(communicator=self.communicator)
-        layers_by_id = {
-            layer_data["layer_id"]: layer_data
+        layer_ids = [
+            layer_data["layer_id"]
             for layer_data in layers_data
-        }
-        layer_ids = tuple(layers_by_id.keys())
-        pre_post_beh = get_layers_pre_post_behavior(
+        ]
+        pre_post_beh_by_layer_id = get_layers_pre_post_behavior(
             layer_ids, communicator=self.communicator
         )
-        exposure_frames = get_layers_exposure_frames(
+        exposure_frames_by_layer_id = get_layers_exposure_frames(
             layer_ids, layers_data, communicator=self.communicator
         )
-        output_layers_data = []
-        for layer_data in layers_data:
-            layer_id = layer_data["layer_id"]
-            layer_data["exposure_frames"] = exposure_frames[layer_id]
-            behaviors = pre_post_beh[layer_id]
-            for key, value in behaviors.items():
-                layer_data[key] = value
-            output_layers_data.append(layer_data)
 
         self._result = {
-            "layers_data": output_layers_data,
+            "layers_data": layers_data,
+            "exposure_frames_by_layer_id": exposure_frames_by_layer_id,
+            "pre_post_beh_by_layer_id": pre_post_beh_by_layer_id,
             "groups_data": groups_data,
             "scene_data": get_scene_data(self.communicator)
         }
