@@ -4,11 +4,11 @@ import logging
 
 from aiohttp import web
 
-log = logging.getLogger(__name__)
-
 from .jobs import JobQueue
 from .job_queue_route import JobQueueResource
 from .workers_rpc_route import WorkerRpc
+
+log = logging.getLogger(__name__)
 
 
 class WebServerManager:
