@@ -1,4 +1,3 @@
-from Qt import QtCore
 import attr
 import abc
 import six
@@ -18,14 +17,6 @@ STATUS = {
 }
 
 DUMMY_PROJECT = "No project configured"
-
-ProviderRole = QtCore.Qt.UserRole + 2
-ProgressRole = QtCore.Qt.UserRole + 4
-DateRole = QtCore.Qt.UserRole + 6
-FailedRole = QtCore.Qt.UserRole + 8
-HeaderNameRole = QtCore.Qt.UserRole + 10
-FullItemRole = QtCore.Qt.UserRole + 12
-EditIconRole = QtCore.Qt.UserRole + 14
 
 
 @six.add_metaclass(abc.ABCMeta)

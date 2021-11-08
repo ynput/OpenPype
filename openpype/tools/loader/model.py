@@ -15,6 +15,7 @@ from openpype.tools.utils.models import TreeModel, Item
 from openpype.tools.utils import lib
 
 from openpype.modules import ModulesManager
+from openpype_modules.sync_server.tray import roles
 
 
 def is_filtering_recursible():
@@ -333,7 +334,6 @@ class SubsetsModel(TreeModel, BaseRepresentationModel):
         repre_info = version_data.get("repre_info")
         if repre_info:
             item["repre_info"] = repre_info
-            item["repre_icon"] = version_data.get("repre_icon")
 
     def _fetch(self):
         asset_docs = self.dbcon.find(
@@ -445,14 +445,16 @@ class SubsetsModel(TreeModel, BaseRepresentationModel):
             for _subset_id, doc in last_versions_by_subset_id.items():
                 version_ids.add(doc["_id"])
 
-            site = self.active_site
-            query = self._repre_per_version_pipeline(list(version_ids), site)
+            query = self._repre_per_version_pipeline(list(version_ids),
+                                                     self.active_site,
+                                                     self.remote_site)
 
             repre_info = {}
             for doc in self.dbcon.aggregate(query):
                 if self._doc_fetching_stop:
                     return
-                doc["provider"] = self.active_provider
+                doc["active_provider"] = self.active_provider
+                doc["remote_provider"] = self.remote_provider
                 repre_info[doc["_id"]] = doc
 
             self._doc_payload["repre_info_by_version_id"] = repre_info
@@ -719,16 +721,22 @@ class SubsetsModel(TreeModel, BaseRepresentationModel):
                 item = index.internalPointer()
                 return item.get("familyIcon", None)
 
-            if index.column() == self.columns_index.get("repre_info"):
-                item = index.internalPointer()
-                return item.get("repre_icon", None)
-
         elif role == QtCore.Qt.ForegroundRole:
             item = index.internalPointer()
             version_doc = item.get("version_document")
             if version_doc and version_doc.get("type") == "hero_version":
                 if not version_doc["is_from_latest"]:
                     return self.not_last_hero_brush
+
+        elif role == roles.ProgressRole:
+            item = index.internalPointer()
+            if not item.get("isGroup"):
+                return {"active": item.get("repre_info_local"),
+                        "remote": item.get("repre_info_remote")}
+
+        elif role == roles.ProviderRole:
+            return {"active": self.active_provider,
+                    "remote": self.remote_provider}
 
         return super(SubsetsModel, self).data(index, role)
 
@@ -759,19 +767,25 @@ class SubsetsModel(TreeModel, BaseRepresentationModel):
         return data
 
     def _get_repre_dict(self, repre_info):
-        """Returns icon and str representation of availability"""
+        """Returns str representation of availability"""
         data = {}
         if repre_info:
             repres_str = "{}/{}".format(
-                int(math.floor(float(repre_info['avail_repre']))),
+                int(math.floor(float(repre_info['avail_repre_local']))),
                 int(math.floor(float(repre_info['repre_count']))))
 
-            data["repre_info"] = repres_str
-            data["repre_icon"] = self.repre_icons.get(self.active_provider)
+            data["repre_info_local"] = repres_str
+
+            repres_str = "{}/{}".format(
+                int(math.floor(float(repre_info['avail_repre_remote']))),
+                int(math.floor(float(repre_info['repre_count']))))
+
+            data["repre_info_remote"] = repres_str
 
         return data
 
-    def _repre_per_version_pipeline(self, version_ids, site):
+    def _repre_per_version_pipeline(self, version_ids,
+                                    active_site, remote_site):
         query = [
             {"$match": {"parent": {"$in": version_ids},
                         "type": "representation",
@@ -780,7 +794,13 @@ class SubsetsModel(TreeModel, BaseRepresentationModel):
             {'$addFields': {
                 'order_local': {
                     '$filter': {'input': '$files.sites', 'as': 'p',
-                                'cond': {'$eq': ['$$p.name', site]}
+                                'cond': {'$eq': ['$$p.name', active_site]}
+                                }}
+            }},
+            {'$addFields': {
+                'order_remote': {
+                    '$filter': {'input': '$files.sites', 'as': 'p',
+                                'cond': {'$eq': ['$$p.name', remote_site]}
                                 }}
             }},
             {'$addFields': {
@@ -795,19 +815,32 @@ class SubsetsModel(TreeModel, BaseRepresentationModel):
                               ]}
                               ]}, 0]}
             }},
+            {'$addFields': {
+                'progress_remote': {"$arrayElemAt": [{
+                    '$cond': [{'$size': "$order_remote.progress"},
+                              "$order_remote.progress",
+                              # if exists created_dt count is as available
+                              {'$cond': [
+                                  {'$size': "$order_remote.created_dt"},
+                                  [1],
+                                  [0]
+                              ]}
+                              ]}, 0]}
+            }},
             {'$group': {  # first group by repre
                 '_id': '$_id',
                 'parent': {'$first': '$parent'},
-                'files_count': {'$sum': 1},
-                'files_avail': {'$sum': "$progress_local"},
-                'avail_ratio': {'$first': {
-                    '$divide': [{'$sum': "$progress_local"}, {'$sum': 1}]}}
+                'avail_ratio_local': {'$first': {
+                    '$divide': [{'$sum': "$progress_local"}, {'$sum': 1}]}},
+                'avail_ratio_remote': {'$first': {
+                    '$divide': [{'$sum': "$progress_remote"}, {'$sum': 1}]}}
             }},
             {'$group': {  # second group by parent, eg version_id
                 '_id': '$parent',
                 'repre_count': {'$sum': 1},  # total representations
                 # fully available representation for site
-                'avail_repre': {'$sum': "$avail_ratio"}
+                'avail_repre_local': {'$sum': "$avail_ratio_local"},
+                'avail_repre_remote': {'$sum': "$avail_ratio_remote"},
             }},
         ]
         return query

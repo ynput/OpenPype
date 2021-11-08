@@ -31,6 +31,8 @@ from .model import (
 )
 from . import lib
 
+from openpype_modules.sync_server.tray import roles
+
 
 class OverlayFrame(QtWidgets.QFrame):
     def __init__(self, label, parent):
@@ -1591,45 +1593,50 @@ class AvailabilityDelegate(QtWidgets.QStyledItemDelegate):
 
     def __init__(self, dbcon, parent=None):
         super(AvailabilityDelegate, self).__init__(parent)
-        self.icons = {}
+        self.icons = tools_lib.get_repre_icons()
 
     def paint(self, painter, option, index):
         super(AvailabilityDelegate, self).paint(painter, option, index)
         option = QtWidgets.QStyleOptionViewItem(option)
         option.showDecorationSelected = True
 
-        # provider = index.data(lib.ProviderRole)
-        # value = index.data(lib.ProgressRole)
-        # date_value = index.data(lib.DateRole)
-        # is_failed = index.data(lib.FailedRole)
 
-        provider_local = "local"
-        provider_remote = "gdrive"
+        print("roles.ProviderRole:: {}".format(roles.ProviderRole))
+        providers = index.data(roles.ProviderRole)
+        values = index.data(roles.ProgressRole)
+        print("providers:: {}".format(providers))
+        if not values:  # group lines
+            return
 
-        # idx = 0
-        # for provider in [provider_local, provider_remote]:
-        #     idx += 1
-        #     if not self.icons.get(provider):
-        #         resource_path = os.path.dirname(__file__)
-        #         resource_path = os.path.join(resource_path, "..",
-        #                                      "providers", "resources")
-        #         pix_url = "{}/{}.png".format(resource_path, provider)
-        #         pixmap = QtGui.QPixmap(pix_url)
-        #         self.icons[provider] = pixmap
-        #     else:
-        #         pixmap = self.icons[provider]
-        #
-        #     padding = 10 * idx
-        #     point = QtCore.QPoint(option.rect.x() + padding,
-        #                           option.rect.y() +
-        #                           (option.rect.height() - pixmap.height()) / 2)
-        #     painter.drawPixmap(point, pixmap)
+        provider_active = providers["active"]
+        provider_remote = providers["remote"]
 
-        painter.drawText(
-            option.rect,
-            option.displayAlignment,
-            "fook"
-        )
+        availability_active = values["active"]
+        availability_remote = values["remote"]
 
-        def displayText(self, value, locale):
-            pass
+        idx = 0
+        height = width = 24
+        for value, provider in [(availability_active, provider_active),
+                         (availability_remote, provider_remote)]:
+            icon = self.icons.get(provider)
+            if not icon:
+                continue
+
+            pixmap = icon.pixmap(icon.actualSize(QtCore.QSize(height, width)))
+            padding = 10 + (70 * idx)
+            point = QtCore.QPoint(option.rect.x() + padding,
+                                  option.rect.y() +
+                                  (option.rect.height() - pixmap.height()) / 2)
+            painter.drawPixmap(point, pixmap)
+
+            text_rect = option.rect.translated(padding + width + 10, 0)
+            painter.drawText(
+                text_rect,
+                option.displayAlignment,
+                value
+            )
+
+            idx += 1
+
+    def displayText(self, value, locale):
+        pass
