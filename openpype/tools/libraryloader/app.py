@@ -198,6 +198,8 @@ class LibraryLoaderWindow(QtWidgets.QDialog):
             else:
                 self.resize(1300, 700)
 
+            tools_lib.center_window(self)
+
         if not self._initial_refresh:
             self._initial_refresh = True
             self.refresh()
