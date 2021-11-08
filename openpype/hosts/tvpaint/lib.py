@@ -1,5 +1,6 @@
 import os
 import shutil
+import collections
 from PIL import Image, ImageDraw
 
 
@@ -247,6 +248,7 @@ def _cleanup_frame_references(output_idx_by_frame_idx):
     """
     for frame_idx in tuple(output_idx_by_frame_idx.keys()):
         reference_idx = output_idx_by_frame_idx[frame_idx]
+        # Skip transparent frames
         if reference_idx is None or reference_idx == frame_idx:
             continue
 
@@ -261,6 +263,55 @@ def _cleanup_frame_references(output_idx_by_frame_idx):
 
         if real_reference_idx != reference_idx:
             output_idx_by_frame_idx[frame_idx] = real_reference_idx
+
+
+def _cleanup_out_range_frames(output_idx_by_frame_idx, range_start, range_end):
+    """Cleanup frame references to frames out of passed range.
+
+    First available frame in range is used
+    ```
+    // Example input. Range 2-3
+    {
+        1: 1,
+        2: 1,
+        3: 1
+    }
+    // Result
+    {
+        2: 2, // Redirect to self as is first that refence out range
+        3: 2 // Redirect to first redirected frame
+    }
+    ```
+    Result is dictionary where keys leads to frame that should be rendered.
+    """
+    in_range_frames_by_out_frames = collections.defaultdict(set)
+    out_range_frames = set()
+    for frame_idx in tuple(output_idx_by_frame_idx.keys()):
+        # Skip frames that are already out of range
+        if frame_idx < range_start or frame_idx > range_end:
+            out_range_frames.add(frame_idx)
+            continue
+
+        reference_idx = output_idx_by_frame_idx[frame_idx]
+        # Skip transparent frames
+        if reference_idx is None:
+            continue
+
+        # Skip references in range
+        if reference_idx < range_start or reference_idx > range_end:
+            in_range_frames_by_out_frames[reference_idx].add(frame_idx)
+
+    for reference_idx in tuple(in_range_frames_by_out_frames.keys()):
+        frame_indexes = in_range_frames_by_out_frames.pop(reference_idx)
+        new_reference = None
+        for frame_idx in frame_indexes:
+            if new_reference is None:
+                new_reference = frame_idx
+            output_idx_by_frame_idx[frame_idx] = new_reference
+
+    # Finally remove out of range frames
+    for frame_idx in out_range_frames:
+        output_idx_by_frame_idx.pop(frame_idx)
 
 
 def calculate_layer_frame_references(
@@ -323,6 +374,9 @@ def calculate_layer_frame_references(
     )
     # Cleanup of referenced frames
     _cleanup_frame_references(output_idx_by_frame_idx)
+
+    # Remove frames out of range
+    _cleanup_out_range_frames(output_idx_by_frame_idx, range_start, range_end)
 
     return output_idx_by_frame_idx
 
