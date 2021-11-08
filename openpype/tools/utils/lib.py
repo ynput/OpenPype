@@ -20,6 +20,8 @@ def center_window(window):
     screen_geo = desktop.screenGeometry(screen_idx)
     geo = window.frameGeometry()
     geo.moveCenter(screen_geo.center())
+    if geo.y() < screen_geo.y():
+        geo.setY(screen_geo.y())
     window.move(geo.topLeft())
 
 
