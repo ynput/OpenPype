@@ -22,7 +22,7 @@ def format_version(value, hero_version=False):
 
 
 @contextlib.contextmanager
-def application():
+def qt_app_context():
     app = QtWidgets.QApplication.instance()
 
     if not app:
@@ -33,6 +33,10 @@ def application():
     else:
         print("Using existing QApplication..")
         yield app
+
+
+# Backwards compatibility
+application = qt_app_context
 
 
 class SharedObjects:
