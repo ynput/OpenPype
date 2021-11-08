@@ -995,7 +995,7 @@ class Templates:
             orig_key = group[1:-1]
             key = str(orig_key)
             key_padding = list(self.key_padding_pattern.findall(key))
-            key_in_function = list(self.key_in_function.findall(key))#catch key of function
+            key_in_function = list(self.key_in_function.findall(key))
 
             if key_padding:
                 key = key_padding[0]
