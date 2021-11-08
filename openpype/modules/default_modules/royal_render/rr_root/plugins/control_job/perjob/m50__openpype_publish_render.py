@@ -22,6 +22,10 @@ class OpenPypeContextSelector:
         self.job = rr.getJob()
         self.context = None
 
+        self.openpype_executable = "openpype_gui"
+        if platform.system().lower() == "windows":
+            op_exec = "{}.exe".format(self.openpype_executable)
+
         op_path = os.environ.get("OPENPYPE_ROOT")
         print("initializing ... {}".format(op_path))
         if not op_path:
@@ -84,6 +88,9 @@ class OpenPypeContextSelector:
         if not self.context:
             self.show()
 
+        self.context["user"] = self.job.userName
+        self.process_job()
+
     def show(self):
         """Show UI for context selection.
 
@@ -91,24 +98,30 @@ class OpenPypeContextSelector:
         itself.
 
         """
-        op_exec = "openpype_gui"
-        if platform.system().lower() == "windows":
-            op_exec = "{}.exe".format(op_exec)
+        tf = tempfile.TemporaryFile(delete=False)
+        context_file = tf.name
+        op_args = [os.path.join(self.openpype_root, self.openpype_executable),
+                   "contextselection", tf.name]
 
-        with tempfile.TemporaryFile() as tf:
-            op_args = [os.path.join(self.openpype_root, op_exec),
-                    "contextselection", tf.name]
+        tf.close()
+        print(">>> running {}".format(op_args))
 
-            print(">>> running {}".format(op_args))
-            subprocess.call(op_args)
-            self.context = json.load(tf)
+        subprocess.call(op_args)
+
+        with open(context_file, "r") as cf:
+            self.context = json.load(cf)
+
+        os.unlink(context_file)
+        print(">>> context: {}".format(self.context))
 
         if not self.context or \
-                not self.context.project or \
-                not self.context.asset or \
-                not self.context.task:
+                not self.context.get("project") or \
+                not self.context.get("asset") or \
+                not self.context.get("task"):
             self._show_rr_warning("Context selection failed.")
             return
+
+        self.context["app_name"] = self.job.renderer.name
 
     @staticmethod
     def _show_rr_warning(text):
@@ -121,6 +134,23 @@ class OpenPypeContextSelector:
             rrGlobal.genUIType.closeButton, "Ok", "btnLayout")
         warning_dialog.execute()
         del warning_dialog
+
+    def run_publish(self):
+        """Run publish process."""
+        env = dict()
+        env["AVALON_PROJECT"] = self.context.get("project")
+        env["AVALON_ASSET"] = self.context.get("asset")
+        env["AVALON_TASK"] = self.context.get("task")
+        env["AVALON_APP_NAME"] = self.context.get("app_name")
+
+        args = list()
+        args.append(
+            os.path.join(self.openpype_root, self.openpype_executable))
+        args.append("publish")
+        args.append("-t")
+        args.append(self.job.imageDir)
+        print(">>> running {}".format(args))
+        subprocess.call(args)
 
 
 print("running selector")

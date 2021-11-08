@@ -73,15 +73,22 @@ class PypeCommands:
         Raises:
             RuntimeError: When there is no path to process.
         """
-        if not any(paths):
-            raise RuntimeError("No publish paths specified")
-
+        from openpype.modules import ModulesManager
         from openpype import install, uninstall
         from openpype.api import Logger
 
         # Register target and host
         import pyblish.api
         import pyblish.util
+
+        manager = ModulesManager()
+        enabled_modules = manager.get_enabled_modules()
+        for module in enabled_modules:
+            if hasattr(module, "get_plugin_paths"):
+                pyblish.api.register_plugin_path(module.get_plugin_paths())
+
+        if not any(paths):
+            raise RuntimeError("No publish paths specified")
 
         env = get_app_environments_for_context(
             os.environ["AVALON_PROJECT"],
@@ -95,12 +102,13 @@ class PypeCommands:
 
         install()
 
-        pyblish.api.register_target("filesequence")
         pyblish.api.register_host("shell")
 
         if targets:
             for target in targets:
                 pyblish.api.register_target(target)
+        else:
+            pyblish.api.register_target("filesequence")
 
         os.environ["OPENPYPE_PUBLISH_DATA"] = os.pathsep.join(paths)
 
