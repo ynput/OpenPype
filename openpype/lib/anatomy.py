@@ -1069,9 +1069,10 @@ class Templates:
                 value = data[attrs_function[0]]
                 new_value = getattr(value, attrs_function[1])(*function_attrs)
                 final_data[replace_key_dst] = new_value
-            except AttributeError as e:
+            except AttributeError:
                 missing_required.append(key)
-                replace_keys.append(key)
+            except TypeError as e:
+                invalid_required.append(e)
 
         solved = len(missing_required) == 0 and len(invalid_required) == 0
 
