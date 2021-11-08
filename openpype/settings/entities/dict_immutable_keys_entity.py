@@ -4,7 +4,8 @@ import collections
 from .lib import (
     WRAPPER_TYPES,
     OverrideState,
-    NOT_SET
+    NOT_SET,
+    STRING_TYPE
 )
 from openpype.settings.constants import (
     METADATA_KEYS,
@@ -18,6 +19,7 @@ from . import (
     GUIEntity
 )
 from .exceptions import (
+    DefaultsNotDefined,
     SchemaDuplicatedKeys,
     EntitySchemaError,
     InvalidKeySymbols
@@ -172,7 +174,7 @@ class DictImmutableKeysEntity(ItemEntity):
         for child_obj in added_children:
             self.gui_layout.append(child_obj)
 
-    def _item_initalization(self):
+    def _item_initialization(self):
         self._default_metadata = NOT_SET
         self._studio_override_metadata = NOT_SET
         self._project_override_metadata = NOT_SET
@@ -547,3 +549,373 @@ class DictImmutableKeysEntity(ItemEntity):
         super(DictImmutableKeysEntity, self).reset_callbacks()
         for child_entity in self.children:
             child_entity.reset_callbacks()
+
+
+class RootsDictEntity(DictImmutableKeysEntity):
+    """Entity that adds ability to fill value for roots of current project.
+
+    Value schema is defined by `object_type`.
+
+    It is not possible to change override state (Studio values will always
+    contain studio overrides and same for project). That is because roots can
+    be totally different for each project.
+    """
+    _origin_schema_data = None
+    schema_types = ["dict-roots"]
+
+    def _item_initialization(self):
+        origin_schema_data = self.schema_data
+
+        self.separate_items = origin_schema_data.get("separate_items", True)
+        object_type = origin_schema_data.get("object_type")
+        if isinstance(object_type, STRING_TYPE):
+            object_type = {"type": object_type}
+        self.object_type = object_type
+
+        if self.group_item is None and not self.is_group:
+            self.is_group = True
+
+        schema_data = copy.deepcopy(self.schema_data)
+        schema_data["children"] = []
+
+        self.schema_data = schema_data
+        self._origin_schema_data = origin_schema_data
+
+        self._default_value = NOT_SET
+        self._studio_value = NOT_SET
+        self._project_value = NOT_SET
+
+        super(RootsDictEntity, self)._item_initialization()
+
+    def schema_validations(self):
+        if self.object_type is None:
+            reason = (
+                "Missing children definitions for root values"
+                " ('object_type' not filled)."
+            )
+            raise EntitySchemaError(self, reason)
+
+        if not isinstance(self.object_type, dict):
+            reason = (
+                "Children definitions for root values must be dictionary"
+                " ('object_type' is \"{}\")."
+            ).format(str(type(self.object_type)))
+            raise EntitySchemaError(self, reason)
+
+        super(RootsDictEntity, self).schema_validations()
+
+    def set_override_state(self, state, ignore_missing_defaults):
+        self.children = []
+        self.non_gui_children = {}
+        self.gui_layout = []
+
+        roots_entity = self.get_entity_from_path(
+            "project_anatomy/roots"
+        )
+        children = []
+        first = True
+        for key in roots_entity.keys():
+            if first:
+                first = False
+            elif self.separate_items:
+                children.append({"type": "separator"})
+            child = copy.deepcopy(self.object_type)
+            child["key"] = key
+            child["label"] = key
+            children.append(child)
+
+        schema_data = copy.deepcopy(self.schema_data)
+        schema_data["children"] = children
+
+        self._add_children(schema_data)
+
+        self._set_children_values(state, ignore_missing_defaults)
+
+        super(RootsDictEntity, self).set_override_state(
+            state, True
+        )
+
+        if state == OverrideState.STUDIO:
+            self.add_to_studio_default()
+
+        elif state == OverrideState.PROJECT:
+            self.add_to_project_override()
+
+    def on_child_change(self, child_obj):
+        if self._override_state is OverrideState.STUDIO:
+            if not child_obj.has_studio_override:
+                self.add_to_studio_default()
+
+        elif self._override_state is OverrideState.PROJECT:
+            if not child_obj.has_project_override:
+                self.add_to_project_override()
+
+        return super(RootsDictEntity, self).on_child_change(child_obj)
+
+    def _set_children_values(self, state, ignore_missing_defaults):
+        if state >= OverrideState.DEFAULTS:
+            default_value = self._default_value
+            if default_value is NOT_SET:
+                if (
+                    not ignore_missing_defaults
+                    and state > OverrideState.DEFAULTS
+                ):
+                    raise DefaultsNotDefined(self)
+                else:
+                    default_value = {}
+
+            for key, child_obj in self.non_gui_children.items():
+                child_value = default_value.get(key, NOT_SET)
+                child_obj.update_default_value(child_value)
+
+        if state >= OverrideState.STUDIO:
+            value = self._studio_value
+            if value is NOT_SET:
+                value = {}
+
+            for key, child_obj in self.non_gui_children.items():
+                child_value = value.get(key, NOT_SET)
+                child_obj.update_studio_value(child_value)
+
+        if state >= OverrideState.PROJECT:
+            value = self._project_value
+            if value is NOT_SET:
+                value = {}
+
+            for key, child_obj in self.non_gui_children.items():
+                child_value = value.get(key, NOT_SET)
+                child_obj.update_project_value(child_value)
+
+    def _update_current_metadata(self):
+        """Override this method as this entity should not have metadata."""
+        self._metadata_are_modified = False
+        self._current_metadata = {}
+
+    def update_default_value(self, value):
+        """Update default values.
+
+        Not an api method, should be called by parent.
+        """
+        value = self._check_update_value(value, "default")
+        value, _ = self._prepare_value(value)
+
+        self._default_value = value
+        self._default_metadata = {}
+        self.has_default_value = value is not NOT_SET
+
+    def update_studio_value(self, value):
+        """Update studio override values.
+
+        Not an api method, should be called by parent.
+        """
+        value = self._check_update_value(value, "studio override")
+        value, _ = self._prepare_value(value)
+
+        self._studio_value = value
+        self._studio_override_metadata = {}
+        self.had_studio_override = value is not NOT_SET
+
+    def update_project_value(self, value):
+        """Update project override values.
+
+        Not an api method, should be called by parent.
+        """
+
+        value = self._check_update_value(value, "project override")
+        value, _metadata = self._prepare_value(value)
+
+        self._project_value = value
+        self._project_override_metadata = {}
+        self.had_project_override = value is not NOT_SET
+
+
+class SyncServerSites(DictImmutableKeysEntity):
+    """Dictionary enity for sync sites.
+
+    Can be used only in project settings.
+
+    Is loading sites from system settings. Uses site name as key and by site's
+    provider loads project settings schemas calling method
+    `get_project_settings_schema` on provider.
+
+    Each provider have `enabled` boolean entity to be able know if site should
+    be enabled for the project. Enabled is by default set to False.
+    """
+    schema_types = ["sync-server-sites"]
+
+    def _item_initialization(self):
+        # Make sure this is a group
+        if self.group_item is None and not self.is_group:
+            self.is_group = True
+
+        # Fake children for `dict` validations
+        self.schema_data["children"] = []
+        # Site names changed or were removed
+        #   - to find out that site names was removed so project values
+        #       contain more data than should
+        self._sites_changed = False
+
+        super(SyncServerSites, self)._item_initialization()
+
+    def set_override_state(self, state, ignore_missing_defaults):
+        # Cleanup children related attributes
+        self.children = []
+        self.non_gui_children = {}
+        self.gui_layout = []
+
+        # Create copy of schema
+        schema_data = copy.deepcopy(self.schema_data)
+        # Collect children
+        children = self._get_children()
+        schema_data["children"] = children
+
+        self._add_children(schema_data)
+
+        self._sites_changed = False
+        self._set_children_values(state, ignore_missing_defaults)
+
+        super(SyncServerSites, self).set_override_state(state, True)
+
+    @property
+    def has_unsaved_changes(self):
+        if self._sites_changed:
+            return True
+        return super(SyncServerSites, self).has_unsaved_changes
+
+    @property
+    def has_studio_override(self):
+        if self._sites_changed:
+            return True
+        return super(SyncServerSites, self).has_studio_override
+
+    @property
+    def has_project_override(self):
+        if self._sites_changed:
+            return True
+        return super(SyncServerSites, self).has_project_override
+
+    def _get_children(self):
+        from openpype_modules import sync_server
+
+        # Load system settings to find out all created sites
+        modules_entity = self.get_entity_from_path("system_settings/modules")
+        sync_server_settings_entity = modules_entity.get("sync_server")
+
+        # Get project settings configurations for all providers
+        project_settings_schema = (
+            sync_server
+            .SyncServerModule
+            .get_project_settings_schema()
+        )
+
+        children = []
+        # Add 'enabled' for each site to be able know if should be used for
+        #   the project
+        checkbox_child = {
+            "type": "boolean",
+            "key": "enabled",
+            "default": False
+        }
+        if sync_server_settings_entity is not None:
+            sites_entity = sync_server_settings_entity["sites"]
+            for site_name, provider_entity in sites_entity.items():
+                provider_name = provider_entity["provider"].value
+                provider_children = copy.deepcopy(
+                    project_settings_schema.get(provider_name)
+                ) or []
+                provider_children.insert(0, copy.deepcopy(checkbox_child))
+                children.append({
+                    "type": "dict",
+                    "key": site_name,
+                    "label": site_name,
+                    "checkbox_key": "enabled",
+                    "children": provider_children
+                })
+
+        return children
+
+    def _set_children_values(self, state, ignore_missing_defaults):
+        current_site_names = set(self.non_gui_children.keys())
+
+        if state >= OverrideState.DEFAULTS:
+            default_value = self._default_value
+            if default_value is NOT_SET:
+                if (
+                    not ignore_missing_defaults
+                    and state > OverrideState.DEFAULTS
+                ):
+                    raise DefaultsNotDefined(self)
+                else:
+                    default_value = {}
+
+            for key, child_obj in self.non_gui_children.items():
+                child_value = default_value.get(key, NOT_SET)
+                child_obj.update_default_value(child_value)
+
+        if state >= OverrideState.STUDIO:
+            value = self._studio_value
+            if value is NOT_SET:
+                value = {}
+
+            for key, child_obj in self.non_gui_children.items():
+                child_value = value.get(key, NOT_SET)
+                child_obj.update_studio_value(child_value)
+
+            if state is OverrideState.STUDIO:
+                value_keys = set(value.keys())
+                self._sites_changed = value_keys != current_site_names
+
+        if state >= OverrideState.PROJECT:
+            value = self._project_value
+            if value is NOT_SET:
+                value = {}
+
+            for key, child_obj in self.non_gui_children.items():
+                child_value = value.get(key, NOT_SET)
+                child_obj.update_project_value(child_value)
+
+            if state is OverrideState.PROJECT:
+                value_keys = set(value.keys())
+                self._sites_changed = value_keys != current_site_names
+
+    def _update_current_metadata(self):
+        """Override this method as this entity should not have metadata."""
+        self._metadata_are_modified = False
+        self._current_metadata = {}
+
+    def update_default_value(self, value):
+        """Update default values.
+
+        Not an api method, should be called by parent.
+        """
+        value = self._check_update_value(value, "default")
+        value, _ = self._prepare_value(value)
+
+        self._default_value = value
+        self._default_metadata = {}
+        self.has_default_value = value is not NOT_SET
+
+    def update_studio_value(self, value):
+        """Update studio override values.
+
+        Not an api method, should be called by parent.
+        """
+        value = self._check_update_value(value, "studio override")
+        value, _ = self._prepare_value(value)
+
+        self._studio_value = value
+        self._studio_override_metadata = {}
+        self.had_studio_override = value is not NOT_SET
+
+    def update_project_value(self, value):
+        """Update project override values.
+
+        Not an api method, should be called by parent.
+        """
+
+        value = self._check_update_value(value, "project override")
+        value, _metadata = self._prepare_value(value)
+
+        self._project_value = value
+        self._project_override_metadata = {}
+        self.had_project_override = value is not NOT_SET
