@@ -1,4 +1,3 @@
-from Qt import QtCore
 import attr
 import abc
 import six
@@ -18,14 +17,6 @@ STATUS = {
 }
 
 DUMMY_PROJECT = "No project configured"
-
-ProviderRole = QtCore.Qt.UserRole + 2
-ProgressRole = QtCore.Qt.UserRole + 4
-DateRole = QtCore.Qt.UserRole + 6
-FailedRole = QtCore.Qt.UserRole + 8
-HeaderNameRole = QtCore.Qt.UserRole + 10
-FullItemRole = QtCore.Qt.UserRole + 12
-EditIconRole = QtCore.Qt.UserRole + 14
 
 
 @six.add_metaclass(abc.ABCMeta)
@@ -161,7 +152,7 @@ def translate_provider_for_icon(sync_server, project, site):
     return sync_server.get_provider_for_site(site=site)
 
 
-def get_item_by_id(model, object_id):
+def get_value_from_id_by_role(model, object_id, role):
+    """Return value from item with 'object_id' with 'role'."""
     index = model.get_index(object_id)
-    item = model.data(index, FullItemRole)
-    return item
+    return model.data(index, role)
