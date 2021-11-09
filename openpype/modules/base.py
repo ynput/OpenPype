@@ -431,6 +431,28 @@ class OpenPypeModule:
         """
         return {}
 
+    def cli(self, module_click_group):
+        """Add commands to click group.
+
+        The best practise is to create click group for whole module which is
+        used to separate commands.
+
+        class MyPlugin(OpenPypeModule):
+            ...
+            def cli(self, module_click_group):
+                module_click_group.add_command(cli_main)
+
+
+        @click.group(<module name>, help="<Any help shown in cmd>")
+        def cli_main():
+            pass
+
+        @cli_main.command()
+        def mycommand():
+            print("my_command")
+        """
+        pass
+
 
 class OpenPypeAddOn(OpenPypeModule):
     # Enable Addon by default
