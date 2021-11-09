@@ -245,9 +245,27 @@
             "collapsible": true,
             "children": [
                 {
+                    "type": "label",
+                    "label": "Address of machine where job queue server is running."
+                },
+                {
                     "type": "text",
                     "key": "server_url",
                     "label": "Server Rest URL"
+                },
+                {
+                    "type": "separator"
+                },
+                {
+                    "type": "label",
+                    "label": "Work root is used as temporary directory for workers where source is copied and render output can be stored."
+                },
+                {
+                    "key": "work_root",
+                    "label": "Work root",
+                    "type": "path",
+                    "multipath": false,
+                    "multiplatform": true
                 }
             ]
         },

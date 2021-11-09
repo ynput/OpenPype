@@ -180,6 +180,11 @@
         "enabled": false
     },
     "job_queue": {
-        "server_url": ""
+        "server_url": "",
+        "work_root": {
+            "windows": "",
+            "darwin": "",
+            "linux": ""
+        }
     }
 }
