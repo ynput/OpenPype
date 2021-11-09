@@ -12,11 +12,8 @@ import clique
 import tempfile
 from avalon import io
 import pyblish.api
-from openpype.lib import (
-    prepare_template_data,
-    OpenPypeMongoConnection
-)
-from openpype.lib.plugin_tools import parse_json, get_batch_asset_task_info
+from openpype.lib import prepare_template_data
+from openpype.lib.plugin_tools import parse_json
 
 
 class CollectPublishedFiles(pyblish.api.ContextPlugin):
