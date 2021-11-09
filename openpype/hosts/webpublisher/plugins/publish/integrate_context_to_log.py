@@ -28,11 +28,11 @@ class IntegrateContextToLog(pyblish.api.ContextPlugin):
                         "batch_id": instance.data.get("batch_id"),
                         "status": "in_progress"
                     },
-                    {"$set":
-                        {
+                    {
+                        "$set": {
                             "path": instance.data.get("ctx_path")
-
-                        }}
+                        }
+                    }
                 )
 
                 return
