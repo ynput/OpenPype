@@ -409,3 +409,11 @@ class FtrackModule(
             return 0
         hours_logged = (task_entity["time_logged"] / 60) / 60
         return hours_logged
+
+    def get_credentials(self):
+        # type: () -> tuple
+        """Get local Ftrack credentials."""
+        from .lib import credentials
+
+        cred = credentials.get_credentials(self.ftrack_url)
+        return cred.get("username"), cred.get("api_key")
