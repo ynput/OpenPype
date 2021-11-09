@@ -251,8 +251,6 @@ class PypeCommands:
         if not batch_path:
             raise RuntimeError("No publish paths specified")
 
-        from openpype import install, uninstall
-
         # Register target and host
         import pyblish.api
         import pyblish.util
@@ -261,10 +259,10 @@ class PypeCommands:
 
         log.info("remotepublish command")
 
-        install()
+        host_name = "webpublisher"
+        os.environ["AVALON_APP"] = host_name
 
-        if host:
-            pyblish.api.register_host(host)
+        pyblish.api.register_host(host_name)
 
         if targets:
             if isinstance(targets, str):
@@ -274,7 +272,6 @@ class PypeCommands:
 
         os.environ["OPENPYPE_PUBLISH_DATA"] = batch_path
         os.environ["AVALON_PROJECT"] = project
-        os.environ["AVALON_APP"] = host
 
         import avalon.api
         from openpype.hosts.webpublisher import api as webpublisher
@@ -290,7 +287,6 @@ class PypeCommands:
         publish_and_log(dbcon, _id, log)
 
         log.info("Publish finished.")
-        uninstall()
 
     @staticmethod
     def extractenvironments(output_json_path, project, asset, task, app):
