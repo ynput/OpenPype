@@ -17,6 +17,7 @@ class CollectTVPaintWorkfileData(pyblish.api.InstancePlugin):
     label = "Collect TVPaint Workfile data"
     order = pyblish.api.CollectorOrder + 0.1
     hosts = ["webpublisher"]
+    targets = ["tvpaint"]
     # TODO add families filter
 
     def process(self, instance):

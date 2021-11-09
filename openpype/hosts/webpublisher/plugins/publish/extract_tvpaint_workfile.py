@@ -25,6 +25,7 @@ class ExtractTVPaintSequences(pyblish.api.Extractor):
     label = "Extract TVPaint Sequences"
     hosts = ["webpublisher"]
     families = ["review", "renderPass", "renderLayer"]
+    targets = ["tvpaint"]
 
     # Modifiable with settings
     review_bg = [255, 255, 255, 255]
