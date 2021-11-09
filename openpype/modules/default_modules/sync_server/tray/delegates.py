@@ -10,7 +10,10 @@ from openpype.tools.utils.constants import (
     LOCAL_PROGRESS_ROLE,
     REMOTE_PROGRESS_ROLE,
     LOCAL_DATE_ROLE,
-    REMOTE_DATE_ROLE
+    REMOTE_DATE_ROLE,
+    LOCAL_FAILED_ROLE,
+    REMOTE_FAILED_ROLE,
+    EDIT_ICON_ROLE
 )
 
 log = PypeLogger().get_logger("SyncServer")
@@ -23,7 +26,7 @@ class PriorityDelegate(QtWidgets.QStyledItemDelegate):
 
         if option.widget.selectionModel().isSelected(index) or \
                 option.state & QtWidgets.QStyle.State_MouseOver:
-            edit_icon = index.data(lib.EditIconRole)
+            edit_icon = index.data(EDIT_ICON_ROLE)
             if not edit_icon:
                 return
 
@@ -47,7 +50,7 @@ class PriorityDelegate(QtWidgets.QStyledItemDelegate):
         editor = PriorityLineEdit(
             parent,
             option.widget.selectionModel().selectedRows())
-        editor.setFocus(True)
+        editor.setFocus()
         return editor
 
     def setModelData(self, editor, model, index):
@@ -98,12 +101,12 @@ class ImageDelegate(QtWidgets.QStyledItemDelegate):
             provider = index.data(LOCAL_PROVIDER_ROLE)
             value = index.data(LOCAL_PROGRESS_ROLE)
             date_value = index.data(LOCAL_DATE_ROLE)
+            is_failed = index.data(LOCAL_FAILED_ROLE)
         else:
             provider = index.data(REMOTE_PROVIDER_ROLE)
             value = index.data(REMOTE_PROGRESS_ROLE)
             date_value = index.data(REMOTE_DATE_ROLE)
-
-        is_failed = index.data(lib.FailedRole)
+            is_failed = index.data(REMOTE_FAILED_ROLE)
 
         if not self.icons.get(provider):
             resource_path = os.path.dirname(__file__)
