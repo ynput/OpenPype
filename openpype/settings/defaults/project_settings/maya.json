@@ -320,6 +320,11 @@
             "optional": true,
             "active": true
         },
+        "ValidateUniqueNames": {
+            "enabled": false,
+            "optional": true,
+            "active": true
+        },
         "ValidateRigContents": {
             "enabled": false,
             "optional": true,
