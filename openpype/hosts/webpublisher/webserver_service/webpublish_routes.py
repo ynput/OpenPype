@@ -224,7 +224,7 @@ class WebpublisherBatchPublishEndpoint(_RestApiEndpoint):
             "project": content["project_name"],
             "user": content["user"],
 
-            "targets": None
+            "targets": ["filespublish"]
         }
 
         if content.get("studio_processing"):
