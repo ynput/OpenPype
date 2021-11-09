@@ -242,13 +242,12 @@ class PypeCommands:
             raise RuntimeError("No publish paths specified")
 
         from openpype import install, uninstall
-        from openpype.api import Logger
 
         # Register target and host
         import pyblish.api
         import pyblish.util
 
-        log = Logger.get_logger()
+        log = PypeLogger.get_logger()
 
         log.info("remotepublish command")
 
