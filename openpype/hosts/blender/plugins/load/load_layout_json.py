@@ -92,6 +92,10 @@ class JsonLayoutLoader(plugin.AssetLoader):
                 'animation_asset': asset
             }
 
+            if element.get('animation'):
+                options['animation_file'] = str(Path(libpath).with_suffix(
+                    '')) + "." + element.get('animation')
+
             # This should return the loaded asset, but the load call will be
             # added to the queue to run in the Blender main thread, so
             # at this time it will not return anything. The assets will be

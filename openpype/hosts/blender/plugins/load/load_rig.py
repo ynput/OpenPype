@@ -7,6 +7,7 @@ from typing import Dict, List, Optional
 import bpy
 
 from avalon import api
+from avalon.blender import lib as avalon_lib
 from avalon.blender.pipeline import AVALON_CONTAINERS
 from avalon.blender.pipeline import AVALON_CONTAINER_ID
 from avalon.blender.pipeline import AVALON_PROPERTY
@@ -196,12 +197,14 @@ class BlendRigLoader(plugin.AssetLoader):
         plugin.deselect_all()
 
         create_animation = False
+        anim_file = None
 
         if options is not None:
             parent = options.get('parent')
             transform = options.get('transform')
             action = options.get('action')
             create_animation = options.get('create_animation')
+            anim_file = options.get('animation_file')
 
             if parent and transform:
                 location = transform.get('translation')
@@ -253,6 +256,26 @@ class BlendRigLoader(plugin.AssetLoader):
             )
 
             plugin.deselect_all()
+
+        if anim_file:
+            bpy.ops.import_scene.fbx(filepath=anim_file)
+
+            imported = avalon_lib.get_selection()
+
+            armature = [
+                o for o in asset_group.children if o.type == 'ARMATURE'][0]
+
+            imported_group = [
+                o for o in imported if o.type == 'EMPTY'][0]
+
+            for obj in imported:
+                if obj.type == 'ARMATURE':
+                    if not armature.animation_data:
+                        armature.animation_data_create()
+                    armature.animation_data.action = obj.animation_data.action
+
+            self._remove(imported_group)
+            bpy.data.objects.remove(imported_group)
 
         bpy.context.scene.collection.objects.link(asset_group)
 
