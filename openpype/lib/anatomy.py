@@ -535,7 +535,7 @@ class Templates:
     key_padding_pattern = re.compile(r"([^:]+)\S+[><]\S+")
     sub_dict_pattern = re.compile(r"([^\[\]]+)")
     optional_pattern = re.compile(r"(<.*?[^{0]*>)[^0-9]*?")
-    key_and_function_pattern = re.compile(r"(\S+)\.(\S+)\((\S+)\)")
+    key_and_function_pattern = re.compile(r"(\S+)\.(\S+)\((\S+)?\)")
     inner_key_pattern = re.compile(r"(\{@.*?[^{}0]*\})")
     inner_key_name_pattern = re.compile(r"\{@(.*?[^{}0]*)\}")
 
@@ -1064,7 +1064,8 @@ class Templates:
                 replace_key_src_curly, replace_key_dst_curly
             )
             function_name = attrs_function[1]
-            function_attrs = attrs_function[2].split(",")
+            function_attrs = attrs_function[2].split(",") \
+                if attrs_function[2] else []
             try:
                 value = data[attrs_function[0]]
                 new_value = getattr(value, function_name)(*function_attrs)

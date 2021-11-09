@@ -95,6 +95,10 @@ We have a few required anatomy templates for OpenPype to work properly, however 
 </div>
 </div>
 
+### Templates method
+
+Template key can be suffixed with a string method like this: `{key.function(args1,args2,...)}`
+For example: `{asset.upper ()}` will give `ASSET_NAME`.
 
 ## Attributes
 
