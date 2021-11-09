@@ -206,21 +206,23 @@ class AbstractTemplateLoader(object):
         })
 
         linked_asset_entities = get_linked_assets(current_asset_entity)
-        version_repres = _collect_last_version_repres([current_asset_entity] + linked_asset_entities)
+        version_repres = _collect_last_version_repres(
+            [current_asset_entity] + linked_asset_entities)
 
-        linked_representations_by_id = {representation['_id'] : representation
-            for asset in version_repres.values()
-            for subset in asset['subsets'].values()
-            for representation in subset['version']['repres']}
+        linked_representations_by_id = {representation['_id']: representation
+                                        for asset in version_repres.values()
+                                        for subset in asset['subsets'].values()
+                                        for representation in subset['version']['repres']}
         context_representations_by_id = dict()
 
         for k in linked_representations_by_id.keys():
             if linked_representations_by_id[k]['context']['asset'] == current_asset:
-                context_representations_by_id[k] = linked_representations_by_id.pop(k)
+                context_representations_by_id[k] = linked_representations_by_id.pop(
+                    k)
 
         placeholders = map(placeholder_class, self.get_template_nodes())
-        placeholders = filter(lambda ph : ph.is_valid, placeholders)
-        placeholders = sorted(placeholders, key=lambda ph : ph.order)
+        placeholders = filter(lambda ph: ph.is_valid, placeholders)
+        placeholders = sorted(placeholders, key=lambda ph: ph.order)
 
         for placeholder in placeholders:
             if placeholder.data['builder_type'] == 'context_asset':
@@ -257,9 +259,12 @@ class AbstractTemplateLoader(object):
             str: Solved template path
         """
         raise NotImplementedError
+
+
 class AbstractPlaceholder:
 
-    attributes = {'builder_type', 'family', 'representation', 'order', 'loader'}
+    attributes = {'builder_type', 'family',
+                  'representation', 'order', 'loader'}
     optional_attributes = {}
 
     def __init__(self, node):
