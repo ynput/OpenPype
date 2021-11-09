@@ -147,16 +147,13 @@ class PypeCommands:
         SLEEP = 5  # seconds for another loop check for concurrently runs
         WAIT_FOR = 300  # seconds to wait for conc. runs
 
-        from openpype import install, uninstall
         from openpype.api import Logger
+        from openpype.lib import ApplicationManager
 
         log = Logger.get_logger()
 
         log.info("remotepublishphotoshop command")
 
-        install()
-
-        from openpype.lib import ApplicationManager
         application_manager = ApplicationManager()
 
         found_variant_key = find_variant_key(application_manager, host)
@@ -229,8 +226,6 @@ class PypeCommands:
 
         while launched_app.poll() is None:
             time.sleep(0.5)
-
-        uninstall()
 
     @staticmethod
     def remotepublish(project, batch_path, host, user, targets=None):
