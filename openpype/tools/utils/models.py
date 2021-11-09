@@ -8,6 +8,14 @@ from Qt import QtCore, QtGui
 from avalon.vendor import qtawesome
 from avalon import style, io
 from . import lib
+from .constants import (
+    PROJECT_IS_ACTIVE_ROLE,
+    PROJECT_NAME_ROLE,
+    DEFAULT_PROJECT_LABEL,
+    TASK_ORDER_ROLE,
+    TASK_TYPE_ROLE,
+    TASK_NAME_ROLE
+)
 
 log = logging.getLogger(__name__)
 
@@ -498,3 +506,311 @@ class RecursiveSortFilterProxyModel(QtCore.QSortFilterProxyModel):
         return super(
             RecursiveSortFilterProxyModel, self
         ).filterAcceptsRow(row, parent)
+
+
+class ProjectModel(QtGui.QStandardItemModel):
+    def __init__(
+        self, dbcon=None, only_active=True, add_default_project=False,
+        *args, **kwargs
+    ):
+        super(ProjectModel, self).__init__(*args, **kwargs)
+
+        self.dbcon = dbcon
+
+        self._only_active = only_active
+        self._add_default_project = add_default_project
+
+        self._default_item = None
+        self._items_by_name = {}
+        # Model was at least once refreshed
+        # - for `set_dbcon` method
+        self._refreshed = False
+
+    def set_default_project_available(self, available=True):
+        if available is None:
+            available = not self._add_default_project
+
+        if self._add_default_project == available:
+            return
+
+        self._add_default_project = available
+        if not available and self._default_item is not None:
+            root_item = self.invisibleRootItem()
+            root_item.removeRow(self._default_item.row())
+            self._default_item = None
+
+    def set_only_active(self, only_active=True):
+        if only_active is None:
+            only_active = not self._only_active
+
+        if self._only_active == only_active:
+            return
+
+        self._only_active = only_active
+
+        if self._refreshed:
+            self.refresh()
+
+    def set_dbcon(self, dbcon):
+        """Change mongo connection."""
+        self.dbcon = dbcon
+        # Trigger refresh if was already refreshed
+        if self._refreshed:
+            self.refresh()
+
+    def project_name_is_available(self, project_name):
+        """Check availability of project name in current items."""
+        return project_name in self._items_by_name
+
+    def refresh(self):
+        # Change '_refreshed' state
+        self._refreshed = True
+        new_items = []
+        # Add default item to model if should
+        if self._add_default_project and self._default_item is None:
+            item = QtGui.QStandardItem(DEFAULT_PROJECT_LABEL)
+            item.setData(None, PROJECT_NAME_ROLE)
+            item.setData(True, PROJECT_IS_ACTIVE_ROLE)
+            new_items.append(item)
+            self._default_item = item
+
+        project_names = set()
+        if self.dbcon is not None:
+            for project_doc in self.dbcon.projects(
+                projection={"name": 1, "data.active": 1},
+                only_active=self._only_active
+            ):
+                project_name = project_doc["name"]
+                project_names.add(project_name)
+                if project_name in self._items_by_name:
+                    item = self._items_by_name[project_name]
+                else:
+                    item = QtGui.QStandardItem(project_name)
+
+                    self._items_by_name[project_name] = item
+                    new_items.append(item)
+
+                is_active = project_doc.get("data", {}).get("active", True)
+                item.setData(project_name, PROJECT_NAME_ROLE)
+                item.setData(is_active, PROJECT_IS_ACTIVE_ROLE)
+
+                if not is_active:
+                    font = item.font()
+                    font.setItalic(True)
+                    item.setFont(font)
+
+        root_item = self.invisibleRootItem()
+        for project_name in tuple(self._items_by_name.keys()):
+            if project_name not in project_names:
+                item = self._items_by_name.pop(project_name)
+                root_item.removeRow(item.row())
+
+        if new_items:
+            root_item.appendRows(new_items)
+
+
+class ProjectSortFilterProxy(QtCore.QSortFilterProxyModel):
+    def __init__(self, *args, **kwargs):
+        super(ProjectSortFilterProxy, self).__init__(*args, **kwargs)
+        self._filter_enabled = True
+
+    def lessThan(self, left_index, right_index):
+        if left_index.data(PROJECT_NAME_ROLE) is None:
+            return True
+
+        if right_index.data(PROJECT_NAME_ROLE) is None:
+            return False
+
+        left_is_active = left_index.data(PROJECT_IS_ACTIVE_ROLE)
+        right_is_active = right_index.data(PROJECT_IS_ACTIVE_ROLE)
+        if right_is_active == left_is_active:
+            return super(ProjectSortFilterProxy, self).lessThan(
+                left_index, right_index
+            )
+
+        if left_is_active:
+            return True
+        return False
+
+    def filterAcceptsRow(self, source_row, source_parent):
+        index = self.sourceModel().index(source_row, 0, source_parent)
+        if self._filter_enabled:
+            result = self._custom_index_filter(index)
+            if result is not None:
+                return result
+
+        return super(ProjectSortFilterProxy, self).filterAcceptsRow(
+            source_row, source_parent
+        )
+
+    def _custom_index_filter(self, index):
+        is_active = bool(index.data(PROJECT_IS_ACTIVE_ROLE))
+
+        return is_active
+
+    def is_filter_enabled(self):
+        return self._filter_enabled
+
+    def set_filter_enabled(self, value):
+        self._filter_enabled = value
+        self.invalidateFilter()
+
+
+class TasksModel(QtGui.QStandardItemModel):
+    """A model listing the tasks combined for a list of assets"""
+    def __init__(self, dbcon, parent=None):
+        super(TasksModel, self).__init__(parent=parent)
+        self.dbcon = dbcon
+        self._default_icon = qtawesome.icon(
+            "fa.male",
+            color=style.colors.default
+        )
+        self._no_tasks_icon = qtawesome.icon(
+            "fa.exclamation-circle",
+            color=style.colors.mid
+        )
+        self._cached_icons = {}
+        self._project_task_types = {}
+
+        self._last_asset_id = None
+
+        self.refresh()
+
+    def refresh(self):
+        if self.dbcon.Session.get("AVALON_PROJECT"):
+            self._refresh_task_types()
+            self.set_asset_id(self._last_asset_id)
+        else:
+            self.clear()
+
+    def _refresh_task_types(self):
+        # Get the project configured icons from database
+        project = self.dbcon.find_one(
+            {"type": "project"},
+            {"config.tasks"}
+        )
+        tasks = project["config"].get("tasks") or {}
+        self._project_task_types = tasks
+
+    def _try_get_awesome_icon(self, icon_name):
+        icon = None
+        if icon_name:
+            try:
+                icon = qtawesome.icon(
+                    "fa.{}".format(icon_name),
+                    color=style.colors.default
+                )
+
+            except Exception:
+                pass
+        return icon
+
+    def headerData(self, section, orientation, role):
+        # Show nice labels in the header
+        if (
+            role == QtCore.Qt.DisplayRole
+            and orientation == QtCore.Qt.Horizontal
+        ):
+            if section == 0:
+                return "Tasks"
+
+        return super(TasksModel, self).headerData(section, orientation, role)
+
+    def _get_icon(self, task_icon, task_type_icon):
+        if task_icon in self._cached_icons:
+            return self._cached_icons[task_icon]
+
+        icon = self._try_get_awesome_icon(task_icon)
+        if icon is not None:
+            self._cached_icons[task_icon] = icon
+            return icon
+
+        if task_type_icon in self._cached_icons:
+            icon = self._cached_icons[task_type_icon]
+            self._cached_icons[task_icon] = icon
+            return icon
+
+        icon = self._try_get_awesome_icon(task_type_icon)
+        if icon is None:
+            icon = self._default_icon
+
+        self._cached_icons[task_icon] = icon
+        self._cached_icons[task_type_icon] = icon
+
+        return icon
+
+    def set_asset_id(self, asset_id):
+        asset_doc = None
+        if asset_id:
+            asset_doc = self.dbcon.find_one(
+                {"_id": asset_id},
+                {"data.tasks": True}
+            )
+        self.set_asset(asset_doc)
+
+    def set_asset(self, asset_doc):
+        """Set assets to track by their database id
+
+        Arguments:
+            asset_doc (dict): Asset document from MongoDB.
+        """
+        self.clear()
+
+        if not asset_doc:
+            self._last_asset_id = None
+            return
+
+        self._last_asset_id = asset_doc["_id"]
+
+        asset_tasks = asset_doc.get("data", {}).get("tasks") or {}
+        items = []
+        for task_name, task_info in asset_tasks.items():
+            task_icon = task_info.get("icon")
+            task_type = task_info.get("type")
+            task_order = task_info.get("order")
+            task_type_info = self._project_task_types.get(task_type) or {}
+            task_type_icon = task_type_info.get("icon")
+            icon = self._get_icon(task_icon, task_type_icon)
+
+            label = "{} ({})".format(task_name, task_type or "type N/A")
+            item = QtGui.QStandardItem(label)
+            item.setData(task_name, TASK_NAME_ROLE)
+            item.setData(task_type, TASK_TYPE_ROLE)
+            item.setData(task_order, TASK_ORDER_ROLE)
+            item.setData(icon, QtCore.Qt.DecorationRole)
+            item.setFlags(QtCore.Qt.ItemIsEnabled | QtCore.Qt.ItemIsSelectable)
+            items.append(item)
+
+        if not items:
+            item = QtGui.QStandardItem("No task")
+            item.setData(self._no_tasks_icon, QtCore.Qt.DecorationRole)
+            item.setFlags(QtCore.Qt.NoItemFlags)
+            items.append(item)
+
+        self.invisibleRootItem().appendRows(items)
+
+
+class TasksProxyModel(QtCore.QSortFilterProxyModel):
+    def lessThan(self, x_index, y_index):
+        x_order = x_index.data(TASK_ORDER_ROLE)
+        y_order = y_index.data(TASK_ORDER_ROLE)
+        if x_order is not None and y_order is not None:
+            if x_order < y_order:
+                return True
+            if x_order > y_order:
+                return False
+
+        elif x_order is None and y_order is not None:
+            return True
+
+        elif y_order is None and x_order is not None:
+            return False
+
+        x_name = x_index.data(QtCore.Qt.DisplayRole)
+        y_name = y_index.data(QtCore.Qt.DisplayRole)
+        if x_name == y_name:
+            return True
+
+        if x_name == tuple(sorted((x_name, y_name)))[0]:
+            return True
+        return False

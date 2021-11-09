@@ -1012,8 +1012,6 @@
         },
         "variants": {
             "2020": {
-                "enabled": true,
-                "variant_label": "2020",
                 "executables": {
                     "windows": [
                         "C:\\Program Files\\Adobe\\Adobe Photoshop 2020\\Photoshop.exe"
@@ -1029,11 +1027,24 @@
                 "environment": {}
             },
             "2021": {
-                "enabled": true,
-                "variant_label": "2021",
                 "executables": {
                     "windows": [
                         "C:\\Program Files\\Adobe\\Adobe Photoshop 2021\\Photoshop.exe"
+                    ],
+                    "darwin": [],
+                    "linux": []
+                },
+                "arguments": {
+                    "windows": [],
+                    "darwin": [],
+                    "linux": []
+                },
+                "environment": {}
+            },
+            "2022": {
+                "executables": {
+                    "windows": [
+                        "C:\\Program Files\\Adobe\\Adobe Photoshop 2022\\Photoshop.exe"
                     ],
                     "darwin": [],
                     "linux": []
