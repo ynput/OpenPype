@@ -49,16 +49,15 @@ class PypeCommands:
         manager = ModulesManager()
         log = PypeLogger.get_logger("AddModulesCLI")
         for module in manager.modules:
-            if hasattr(module, "cli"):
-                try:
-                    module.cli(click_func)
+            try:
+                module.cli(click_func)
 
-                except Exception:
-                    log.warning(
-                        "Failed to add cli command for module \"{}\"".format(
-                            module.name
-                        )
+            except Exception:
+                log.warning(
+                    "Failed to add cli command for module \"{}\"".format(
+                        module.name
                     )
+                )
         return click_func
 
     @staticmethod
