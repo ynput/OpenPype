@@ -1,6 +1,5 @@
 from __future__ import print_function
 import os
-import six
 import sys
 import re
 import json
@@ -19,6 +18,7 @@ FTRACK_SERVER = None
 
 TEMP_DIR_DATA_PATH = None
 F_PROJ_ENTITY = None
+COMPONENTS_DONE = []
 
 SCRIPT_DIR = os.path.dirname(__file__)
 PACKAGE_DIR = os.path.join(SCRIPT_DIR, "flame_to_ftrack_modules")
@@ -209,6 +209,7 @@ def get_all_task_types(project_entity):
 
     return tasks
 
+
 def configure_preset(file_path, data):
     split_fp = os.path.splitext(file_path)
     new_file_path = split_fp[0] + "_tmp" + split_fp[-1]
@@ -221,6 +222,7 @@ def configure_preset(file_path, data):
         tree.write(new_file_path)
 
     return new_file_path
+
 
 def export_thumbnail(sequence, tempdir_path, data):
     import flame
@@ -270,6 +272,7 @@ def timecode_to_frames(timecode, framerate):
 
     return frames
 
+
 class FtrackComponentCreator:
     default_location = "ftrack.server"
     ftrack_locations = {}
@@ -277,6 +280,10 @@ class FtrackComponentCreator:
     def __init__(self, session):
         self.session = session
         self._get_ftrack_location()
+
+    def close(self):
+        self.ftrack_locations = {}
+        self.session = None
 
     def create_comonent(self, shot_entity, data, assetversion_entity=None):
         self.shot_entity = shot_entity
@@ -304,7 +311,7 @@ class FtrackComponentCreator:
             component_data.update({
                 "metadata": {'ftr_meta': json.dumps({
                     'frameIn': int(0),
-                    'frameOut': int(duration + handles),
+                    'frameOut': int(duration + (handles * 2)),
                     'frameRate': float(fps)})}
             })
 
@@ -380,14 +387,14 @@ class FtrackComponentCreator:
         ).first()
 
         if component_entity:
+            # overwrite existing members in component enity
+            # - get data for member from `ftrack.origin` location
+            self._overwrite_members(component_entity, comp_data)
+
             # Adding metadata
             existing_component_metadata = component_entity["metadata"]
             existing_component_metadata.update(component_metadata)
             component_entity["metadata"] = existing_component_metadata
-
-            # overwrite existing members in component enity
-            # - get data for member from `ftrack.origin` location
-            self._overwrite_members(component_entity, comp_data)
             return
 
         assetversion_entity = base_data["version"]
@@ -511,6 +518,7 @@ def main_window(selection):
 
     global TEMP_DIR_DATA_PATH
     global F_PROJ_ENTITY
+    global COMPONENTS_DONE
 
     def _on_project_changed(project_name):
         task_types = TASK_TYPES_ALL[project_name]
@@ -524,6 +532,8 @@ def main_window(selection):
                 for tracks in ver.tracks:
                     for segment in tracks.segments:
                         print(segment.attributes)
+                        if str(segment.name)[1:-1] == "":
+                            continue
                         # get clip frame duration
                         record_duration = str(segment.record_duration)[1:-1]
                         clip_duration = timecode_to_frames(
@@ -561,11 +571,16 @@ def main_window(selection):
         tree.selectAll()
 
     def remove_temp_data():
-        global TEMP_DIR_DATA_PATH
         import shutil
+        global TEMP_DIR_DATA_PATH
+        global COMPONENTS_DONE
+
+        COMPONENTS_DONE = []
+
         if TEMP_DIR_DATA_PATH:
             shutil.rmtree(TEMP_DIR_DATA_PATH)
         TEMP_DIR_DATA_PATH = None
+
 
     def generate_temp_data(change_preset_data):
         global TEMP_DIR_DATA_PATH
@@ -707,9 +722,10 @@ def main_window(selection):
 
             component_creator = FtrackComponentCreator(session)
 
+
             generate_temp_data({
-                    "nbHandles": handles
-                })
+                "nbHandles": handles
+            })
 
             temp_files = os.listdir(TEMP_DIR_DATA_PATH)
             thumbnails = [f for f in temp_files if "jpg" in f]
@@ -736,15 +752,21 @@ def main_window(selection):
                 # get component files
                 thumb_f = next((f for f in thumbnails if shot_name in f), None)
                 video_f = next((f for f in videos if shot_name in f), None)
-                print(thumb_f)
-                print(video_f)
-
                 thumb_fp = os.path.join(TEMP_DIR_DATA_PATH, thumb_f)
                 video_fp = os.path.join(TEMP_DIR_DATA_PATH, video_f)
                 print(thumb_fp)
                 print(video_fp)
 
-                # populate full shot info
+                print("processed comps: {}".format(COMPONENTS_DONE))
+                processed = False
+                if thumb_f not in COMPONENTS_DONE:
+                    COMPONENTS_DONE.append(thumb_f)
+                else:
+                    processed = True
+
+                print("processed: {}".format(processed))
+
+                 # populate full shot info
                 shot_attributes = {
                     "sequence": sequence_name,
                     "shot": shot_name,
@@ -783,21 +805,23 @@ def main_window(selection):
                 )
                 print("Shot entity is: {}".format(f_s_entity))
 
-                # first create thumbnail and get version entity
-                assetversion_entity = component_creator.create_comonent(
-                    f_s_entity, {
-                        "file_path": thumb_fp
-                    }
-                )
-                # secondly add video to version entity
-                component_creator.create_comonent(
-                    f_s_entity, {
-                        "file_path": video_fp,
-                        "duration": frame_duration,
-                        "handles": int(handles),
-                        "fps": float(fps)
-                    }, assetversion_entity
-                )
+                if not processed:
+                    # first create thumbnail and get version entity
+                    assetversion_entity = component_creator.create_comonent(
+                        f_s_entity, {
+                            "file_path": thumb_fp
+                        }
+                    )
+
+                    # secondly add video to version entity
+                    component_creator.create_comonent(
+                        f_s_entity, {
+                            "file_path": video_fp,
+                            "duration": frame_duration,
+                            "handles": int(handles),
+                            "fps": float(fps)
+                        }, assetversion_entity
+                    )
 
                 # create custom attributtes
                 custom_attrs = {
@@ -834,6 +858,8 @@ def main_window(selection):
                     session.rollback()
                     session._configure_locations()
                     six.reraise(tp, value, tb)
+
+            component_creator.close()
 
     # creating ui
     window = QtWidgets.QWidget()
@@ -970,11 +996,13 @@ def main_window(selection):
             cfg_d["create_task_type"], F_PROJ_TASK_TYPES.keys(), window)
 
         # Button
-        select_all_btn = uiwidgets.FlameButton('Select All', select_all, window)
+        select_all_btn = uiwidgets.FlameButton(
+            'Select All', select_all, window)
         remove_temp_data_btn = uiwidgets.FlameButton(
             'Remove temp data', remove_temp_data, window)
 
-        ftrack_send_btn = uiwidgets.FlameButton('Send to Ftrack', send_to_ftrack, window)
+        ftrack_send_btn = uiwidgets.FlameButton(
+            'Send to Ftrack', send_to_ftrack, window)
 
         # left props
         v_shift = 0
