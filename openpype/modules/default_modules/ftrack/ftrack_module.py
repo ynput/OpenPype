@@ -416,10 +416,7 @@ class FtrackModule(
         click_group.add_command(cli_main)
 
 
-@click.group(
-    FtrackModule.name,
-    help="Application job server. Can be used as render farm."
-)
+@click.group(FtrackModule.name, help="Ftrack module related commands.")
 def cli_main():
     pass
 
