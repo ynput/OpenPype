@@ -1,34 +1,24 @@
 import avalon
 import importlib
 
-def get_concrete_template_loader():
-    concrete_loaders_modules = {
+concrete_loaders_modules = {
         'maya': 'openpype.hosts.maya.api.template_loader'
     }
-
-    dcc = avalon.io.Session['AVALON_APP']
-    module_path = concrete_loaders_modules.get(dcc, None)
-
-    if not module_path:
-        raise ValueError("Template not found for DCC '{}'".format(dcc))
-
-    module = importlib.import_module(module_path)
-    if not hasattr(module, 'TemplateLoader'):
-        raise ValueError("Linked module '{}' does not implement a template loader".format(module_path))
-
-    concrete_loader = module.TemplateLoader
-
-    return concrete_loader
-
-
 class BuildWorkfileTemplate:
     # log = logging.getLogger("BuildWorkfile")
 
     def process(self):
-        containers = self.build_workfile()
+        dcc = avalon.io.Session['AVALON_APP']
+        module_path = concrete_loaders_modules.get(dcc, None)
 
-        return containers
+        if not module_path:
+            raise ValueError("Template not found for DCC '{}'".format(dcc))
 
-    def build_workfile(self):
-        concrete = get_concrete_template_loader()
-        instance = concrete()
+        module = importlib.import_module(module_path)
+        if not hasattr(module, 'TemplateLoader'):
+            raise ValueError("Linked module '{}' does not implement a template loader".format(module_path))
+        if not hasattr(module, 'Placeholder'):
+            raise ValueError("Linked module '{}' does not implement a placeholder template".format(module_path))
+        reload(module)
+        concrete_loader = module.TemplateLoader
+        concrete_loader(module.Placeholder)
