@@ -1,5 +1,4 @@
 import os
-import shutil
 import copy
 import tempfile
 
@@ -13,7 +12,7 @@ from openpype.hosts.tvpaint.lib import (
     composite_rendered_layers,
     rename_filepaths_by_frame_start
 )
-from PIL import Image, ImageDraw
+from PIL import Image
 
 
 class ExtractSequence(pyblish.api.Extractor):
