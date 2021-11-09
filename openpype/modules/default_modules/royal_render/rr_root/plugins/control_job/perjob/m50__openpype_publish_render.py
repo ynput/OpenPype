@@ -90,7 +90,7 @@ class OpenPypeContextSelector:
             self.show()
 
         self.context["user"] = self.job.userName
-        self.process_job()
+        self.run_publish()
 
     def show(self):
         """Show UI for context selection.
@@ -105,7 +105,7 @@ class OpenPypeContextSelector:
                    "contextselection", tf.name]
 
         tf.close()
-        print(">>> running {}".format(op_args))
+        print(">>> running {}".format(" ".join(op_args)))
 
         subprocess.call(op_args)
 
@@ -138,20 +138,25 @@ class OpenPypeContextSelector:
 
     def run_publish(self):
         """Run publish process."""
-        env = dict()
-        env["AVALON_PROJECT"] = self.context.get("project")
-        env["AVALON_ASSET"] = self.context.get("asset")
-        env["AVALON_TASK"] = self.context.get("task")
-        env["AVALON_APP_NAME"] = self.context.get("app_name")
+        env = {'AVALON_PROJECT': str(self.context.get("project")),
+               "AVALON_ASSET": str(self.context.get("asset")),
+               "AVALON_TASK": str(self.context.get("task")),
+               "AVALON_APP_NAME": str(self.context.get("app_name"))}
 
-        args = list()
-        args.append(
-            os.path.join(self.openpype_root, self.openpype_executable))
-        args.append("publish")
-        args.append("-t")
-        args.append(self.job.imageDir)
-        print(">>> running {}".format(args))
-        subprocess.call(args)
+        print(">>> setting environment:")
+        for k, v in env.items():
+            print("    {}: {}".format(k, v))
+        args = [os.path.join(self.openpype_root, self.openpype_executable),
+                'publish', '-t', "rr_control", self.job.imageDir]
+
+        print(">>> running {}".format(" ".join(args)))
+        out = None
+        try:
+            out = subprocess.check_output(args, env=env)
+        except subprocess.CalledProcessError as e:
+            self._show_rr_warning(" Publish failed [ {} ]\n{}".format(
+                e.returncode, out
+            ))
 
 
 print("running selector")

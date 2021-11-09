@@ -80,12 +80,14 @@ class PypeCommands:
         # Register target and host
         import pyblish.api
         import pyblish.util
+        from pprint import pprint
 
         manager = ModulesManager()
-        enabled_modules = manager.get_enabled_modules()
-        for module in enabled_modules:
-            if hasattr(module, "get_plugin_paths"):
-                pyblish.api.register_plugin_path(module.get_plugin_paths())
+
+        publish_paths = manager.collect_plugin_paths()["publish"]
+
+        for path in publish_paths:
+            pyblish.api.register_plugin_path(path)
 
         if not any(paths):
             raise RuntimeError("No publish paths specified")
@@ -106,6 +108,7 @@ class PypeCommands:
 
         if targets:
             for target in targets:
+                print(f"setting target: {target}")
                 pyblish.api.register_target(target)
         else:
             pyblish.api.register_target("filesequence")
@@ -116,6 +119,11 @@ class PypeCommands:
 
         # Error exit as soon as any error occurs.
         error_format = "Failed {plugin.__name__}: {error} -- {error.traceback}"
+
+        plugins = pyblish.api.discover()
+        print("Using plugins:")
+        for plugin in plugins:
+            print(plugin)
 
         for result in pyblish.util.publish_iter():
             if result["error"]:

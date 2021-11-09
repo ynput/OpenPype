@@ -167,6 +167,12 @@
             "ffmpeg": 48
         }
     },
+    "royalrender": {
+        "enabled": false,
+        "rr_paths": {
+            "default": ""
+        }
+    },
     "log_viewer": {
         "enabled": true
     },

@@ -9,8 +9,6 @@ from openpype_interfaces import IPluginPaths
 class RoyalRenderModule(OpenPypeModule, IPluginPaths):
     """Class providing basic Royal Render implementation logic."""
     name = "royalrender"
-    _api = None
-    settings = None
 
     @property
     def api(self):
@@ -24,6 +22,7 @@ class RoyalRenderModule(OpenPypeModule, IPluginPaths):
     def __init__(self, manager, settings):
         # type: (openpype.modules.base.ModulesManager, dict) -> None
         self.rr_paths = {}
+        self._api = None
         self.settings = settings
         super(RoyalRenderModule, self).__init__(manager, settings)
 
@@ -34,8 +33,8 @@ class RoyalRenderModule(OpenPypeModule, IPluginPaths):
         self.rr_paths = rr_settings.get("rr_paths")
 
     @staticmethod
-    def get_plugin_paths(self):
-        # type: (None) -> dict
+    def get_plugin_paths():
+        # type: () -> dict
         """Royal Render plugin paths.
 
         Returns:
