@@ -58,7 +58,7 @@ class LayoutLoader(api.Loader):
 
         return None
 
-    def _process_family(self, assets, classname, transform):
+    def _process_family(self, assets, classname, transform, inst_name=None):
         ar = unreal.AssetRegistryHelpers.get_asset_registry()
 
         actors = []
@@ -70,6 +70,17 @@ class LayoutLoader(api.Loader):
                     obj,
                     transform.get('translation')
                 )
+                if inst_name:
+                    try:
+                        # Rename method leads to crash
+                        # actor.rename(name=inst_name)
+
+                        # The label works, although it make it slightly more
+                        # complicated to check for the names, as we need to
+                        # loop through all the actors in the level
+                        actor.set_actor_label(inst_name)
+                    except Exception as e:
+                        print(e)
                 actor.set_actor_rotation(unreal.Rotator(
                     umath.radians_to_degrees(
                         transform.get('rotation').get('x')),
@@ -221,10 +232,10 @@ class LayoutLoader(api.Loader):
 
                     if family == 'model':
                         actors = self._process_family(
-                            assets, 'StaticMesh', transform)
+                            assets, 'StaticMesh', transform, inst)
                     elif family == 'rig':
                         actors = self._process_family(
-                            assets, 'SkeletalMesh', transform)
+                            assets, 'SkeletalMesh', transform, inst)
                         actors_dict[inst] = actors
 
                 if family == 'rig':
@@ -433,16 +444,17 @@ class LayoutLoader(api.Loader):
 
                             if family == 'model':
                                 actors = self._process_family(
-                                    assets, 'StaticMesh', transform)
+                                    assets, 'StaticMesh', transform, inst)
                             elif family == 'rig':
                                 actors = self._process_family(
-                                    assets, 'SkeletalMesh', transform)
+                                    assets, 'SkeletalMesh', transform, inst)
                                 actors_dict[inst] = actors
 
                         if family == 'rig':
                             # Finds skeleton among the imported assets
                             for asset in assets:
-                                obj = ar.get_asset_by_object_path(asset).get_asset()
+                                obj = ar.get_asset_by_object_path(
+                                    asset).get_asset()
                                 if obj.get_class().get_name() == 'Skeleton':
                                     skeleton = obj
                                     if skeleton:
