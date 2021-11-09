@@ -12,6 +12,7 @@ from avalon.api import AvalonMongoDB
 from openpype.lib import OpenPypeMongoConnection
 from openpype_modules.avalon_apps.rest_api import _RestApiEndpoint
 from openpype.lib.plugin_tools import parse_json
+from openpype.settings import get_project_settings
 
 from openpype.lib import PypeLogger
 
@@ -275,5 +276,24 @@ class PublishesStatusEndpoint(_RestApiEndpoint):
         return Response(
             status=200,
             body=self.resource.encode(output),
+            content_type="application/json"
+        )
+
+
+class ConfiguredExtensionsEndpoint(_RestApiEndpoint):
+    """Returns list of extensions which have mapping to family."""
+    async def get(self, project_name=None) -> Response:
+        sett = get_project_settings(project_name)
+
+        configured = []
+        collect_conf = sett["webpublisher"]["publish"]["CollectPublishedFiles"]
+        for _, mapping in collect_conf.get("task_type_to_family", {}).items():
+            for _family, config in mapping.items():
+                configured.extend(config["extensions"])
+        configured = set(configured)
+
+        return Response(
+            status=200,
+            body=self.resource.encode(sorted(list(configured))),
             content_type="application/json"
         )
