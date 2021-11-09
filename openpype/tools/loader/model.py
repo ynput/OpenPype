@@ -18,8 +18,8 @@ from openpype.modules import ModulesManager
 from openpype.tools.utils.constants import (
     LOCAL_PROVIDER_ROLE,
     REMOTE_PROVIDER_ROLE,
-    LOCAL_PROGRESS_ROLE,
-    REMOTE_PROGRESS_ROLE
+    LOCAL_AVAILABILITY_ROLE,
+    REMOTE_AVAILABILITY_ROLE
 )
 
 
@@ -728,13 +728,13 @@ class SubsetsModel(TreeModel, BaseRepresentationModel):
                 if not version_doc["is_from_latest"]:
                     return self.not_last_hero_brush
 
-        elif role == LOCAL_PROGRESS_ROLE:
+        elif role == LOCAL_AVAILABILITY_ROLE:
             if not item.get("isGroup"):
                 return item.get("repre_info_local")
             else:
                 return None
 
-        elif role == REMOTE_PROGRESS_ROLE:
+        elif role == REMOTE_AVAILABILITY_ROLE:
             if not item.get("isGroup"):
                 return item.get("repre_info_remote")
             else:

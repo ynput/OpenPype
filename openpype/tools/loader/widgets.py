@@ -34,8 +34,8 @@ from . import lib
 from openpype.tools.utils.constants import (
     LOCAL_PROVIDER_ROLE,
     REMOTE_PROVIDER_ROLE,
-    LOCAL_PROGRESS_ROLE,
-    REMOTE_PROGRESS_ROLE
+    LOCAL_AVAILABILITY_ROLE,
+    REMOTE_AVAILABILITY_ROLE
 )
 
 
@@ -1608,8 +1608,8 @@ class AvailabilityDelegate(QtWidgets.QStyledItemDelegate):
         provider_active = index.data(LOCAL_PROVIDER_ROLE)
         provider_remote = index.data(REMOTE_PROVIDER_ROLE)
 
-        availability_active = index.data(LOCAL_PROGRESS_ROLE)
-        availability_remote = index.data(REMOTE_PROGRESS_ROLE)
+        availability_active = index.data(LOCAL_AVAILABILITY_ROLE)
+        availability_remote = index.data(REMOTE_AVAILABILITY_ROLE)
 
         if not availability_active or not availability_remote:  # group lines
             return
