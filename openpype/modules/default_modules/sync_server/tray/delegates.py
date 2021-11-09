@@ -4,6 +4,15 @@ from Qt import QtCore, QtWidgets, QtGui
 from openpype.lib import PypeLogger
 from . import lib
 
+from openpype.tools.utils.constants import (
+    LOCAL_PROVIDER_ROLE,
+    REMOTE_PROVIDER_ROLE,
+    LOCAL_PROGRESS_ROLE,
+    REMOTE_PROGRESS_ROLE,
+    LOCAL_DATE_ROLE,
+    REMOTE_DATE_ROLE
+)
+
 log = PypeLogger().get_logger("SyncServer")
 
 
@@ -71,18 +80,29 @@ class ImageDelegate(QtWidgets.QStyledItemDelegate):
         Prints icon of site and progress of synchronization
     """
 
-    def __init__(self, parent=None):
+    def __init__(self, parent=None, side=None):
         super(ImageDelegate, self).__init__(parent)
         self.icons = {}
+        self.side = side
 
     def paint(self, painter, option, index):
         super(ImageDelegate, self).paint(painter, option, index)
         option = QtWidgets.QStyleOptionViewItem(option)
         option.showDecorationSelected = True
 
-        provider = index.data(lib.ProviderRole)
-        value = index.data(lib.ProgressRole)
-        date_value = index.data(lib.DateRole)
+        if not self.side:
+            log.warning("No side provided, delegate won't work")
+            return
+
+        if self.side == 'local':
+            provider = index.data(LOCAL_PROVIDER_ROLE)
+            value = index.data(LOCAL_PROGRESS_ROLE)
+            date_value = index.data(LOCAL_DATE_ROLE)
+        else:
+            provider = index.data(REMOTE_PROVIDER_ROLE)
+            value = index.data(REMOTE_PROGRESS_ROLE)
+            date_value = index.data(REMOTE_DATE_ROLE)
+
         is_failed = index.data(lib.FailedRole)
 
         if not self.icons.get(provider):

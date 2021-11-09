@@ -591,11 +591,11 @@ class SyncRepresentationSummaryWidget(_SyncRepresentationWidget):
         table_view.viewport().setAttribute(QtCore.Qt.WA_Hover, True)
 
         column = table_view.model().get_header_index("local_site")
-        delegate = delegates.ImageDelegate(self)
+        delegate = delegates.ImageDelegate(self, side="local")
         table_view.setItemDelegateForColumn(column, delegate)
 
         column = table_view.model().get_header_index("remote_site")
-        delegate = delegates.ImageDelegate(self)
+        delegate = delegates.ImageDelegate(self, side="remote")
         table_view.setItemDelegateForColumn(column, delegate)
 
         column = table_view.model().get_header_index("priority")

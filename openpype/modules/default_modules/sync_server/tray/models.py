@@ -13,6 +13,19 @@ from openpype.api import get_local_site_id
 
 from . import lib
 
+from openpype.tools.utils.constants import (
+    LOCAL_PROVIDER_ROLE,
+    REMOTE_PROVIDER_ROLE,
+    LOCAL_PROGRESS_ROLE,
+    REMOTE_PROGRESS_ROLE,
+    HEADER_NAME_ROLE,
+    EDIT_ICON_ROLE,
+    LOCAL_DATE_ROLE,
+    REMOTE_DATE_ROLE,
+    LOCAL_FAILED_ROLE,
+    REMOTE_FAILED_ROLE
+)
+
 
 log = PypeLogger().get_logger("SyncServer")
 
@@ -68,7 +81,7 @@ class _SyncRepresentationModel(QtCore.QAbstractTableModel):
             if orientation == Qt.Horizontal:
                 return self.COLUMN_LABELS[section][1]
 
-        if role == lib.HeaderNameRole:
+        if role == HEADER_NAME_ROLE:
             if orientation == Qt.Horizontal:
                 return self.COLUMN_LABELS[section][0]  # return name
 
@@ -459,37 +472,34 @@ class SyncRepresentationSummaryModel(_SyncRepresentationModel):
     def data(self, index, role):
         item = self._data[index.row()]
 
-        if role == lib.FullItemRole:
-            return item
-
         header_value = self._header[index.column()]
-        if role == lib.ProviderRole:
-            if header_value == 'local_site':
-                return item.local_provider
-            if header_value == 'remote_site':
-                return item.remote_provider
+        if role == LOCAL_PROVIDER_ROLE:
+            return item.local_provider
 
-        if role == lib.ProgressRole:
-            if header_value == 'local_site':
-                return item.local_progress
-            if header_value == 'remote_site':
-                return item.remote_progress
+        if role == REMOTE_PROVIDER_ROLE:
+            return item.remote_provider
 
-        if role == lib.DateRole:
-            if header_value == 'local_site':
-                if item.created_dt:
-                    return pretty_timestamp(item.created_dt)
-            if header_value == 'remote_site':
-                if item.sync_dt:
-                    return pretty_timestamp(item.sync_dt)
+        if role == LOCAL_PROGRESS_ROLE:
+            return item.local_progress
 
-        if role == lib.FailedRole:
-            if header_value == 'local_site':
-                return item.status == lib.STATUS[2] and \
-                    item.local_progress < 1
-            if header_value == 'remote_site':
-                return item.status == lib.STATUS[2] and \
-                    item.remote_progress < 1
+        if role == REMOTE_PROGRESS_ROLE:
+            return item.remote_progress
+
+        if role == LOCAL_DATE_ROLE:
+            if item.created_dt:
+                return pretty_timestamp(item.created_dt)
+
+        if role == REMOTE_DATE_ROLE:
+            if item.sync_dt:
+                return pretty_timestamp(item.sync_dt)
+
+        if role == LOCAL_FAILED_ROLE:
+            return item.status == lib.STATUS[2] and \
+                   item.local_progress < 1
+
+        if role == REMOTE_FAILED_ROLE:
+            return item.status == lib.STATUS[2] and \
+                   item.remote_progress < 1
 
         if role in (Qt.DisplayRole, Qt.EditRole):
             # because of ImageDelegate
@@ -498,7 +508,7 @@ class SyncRepresentationSummaryModel(_SyncRepresentationModel):
 
             return attr.asdict(item)[self._header[index.column()]]
 
-        if role == lib.EditIconRole:
+        if role == EDIT_ICON_ROLE:
             if self.can_edit and header_value in self.EDITABLE_COLUMNS:
                 return self.edit_icon
 
@@ -988,37 +998,34 @@ class SyncRepresentationDetailModel(_SyncRepresentationModel):
     def data(self, index, role):
         item = self._data[index.row()]
 
-        if role == lib.FullItemRole:
-            return item
-
         header_value = self._header[index.column()]
-        if role == lib.ProviderRole:
-            if header_value == 'local_site':
-                return item.local_provider
-            if header_value == 'remote_site':
-                return item.remote_provider
+        if role == LOCAL_PROVIDER_ROLE:
+            return item.local_provider
 
-        if role == lib.ProgressRole:
-            if header_value == 'local_site':
-                return item.local_progress
-            if header_value == 'remote_site':
-                return item.remote_progress
+        if role == REMOTE_PROVIDER_ROLE:
+            return item.remote_provider
 
-        if role == lib.DateRole:
-            if header_value == 'local_site':
-                if item.created_dt:
-                    return pretty_timestamp(item.created_dt)
-            if header_value == 'remote_site':
-                if item.sync_dt:
-                    return pretty_timestamp(item.sync_dt)
+        if role == LOCAL_PROGRESS_ROLE:
+            return item.local_progress
 
-        if role == lib.FailedRole:
-            if header_value == 'local_site':
-                return item.status == lib.STATUS[2] and \
-                    item.local_progress < 1
-            if header_value == 'remote_site':
-                return item.status == lib.STATUS[2] and \
-                    item.remote_progress < 1
+        if role == REMOTE_PROGRESS_ROLE:
+            return item.remote_progress
+
+        if role == LOCAL_DATE_ROLE:
+            if item.created_dt:
+                return pretty_timestamp(item.created_dt)
+
+        if role == REMOTE_DATE_ROLE:
+            if item.sync_dt:
+                return pretty_timestamp(item.sync_dt)
+
+        if role == LOCAL_FAILED_ROLE:
+            return item.status == lib.STATUS[2] and \
+                item.local_progress < 1
+
+        if role == REMOTE_FAILED_ROLE:
+            return item.status == lib.STATUS[2] and \
+                item.remote_progress < 1
 
         if role in (Qt.DisplayRole, Qt.EditRole):
             # because of ImageDelegate
@@ -1027,7 +1034,7 @@ class SyncRepresentationDetailModel(_SyncRepresentationModel):
 
             return attr.asdict(item)[self._header[index.column()]]
 
-        if role == lib.EditIconRole:
+        if role == EDIT_ICON_ROLE:
             if self.can_edit and header_value in self.EDITABLE_COLUMNS:
                 return self.edit_icon
 
