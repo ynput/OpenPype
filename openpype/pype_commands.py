@@ -218,7 +218,7 @@ class PypeCommands:
             time.sleep(0.5)
 
     @staticmethod
-    def remotepublish(project, batch_path, host, user, targets=None):
+    def remotepublish(project, batch_path, user, targets=None):
         """Start headless publishing.
 
         Used to publish rendered assets, workfiles etc.
@@ -230,10 +230,9 @@ class PypeCommands:
                 per call of remotepublish
             batch_path (str): Path batch folder. Contains subfolders with
                 resources (workfile, another subfolder 'renders' etc.)
-            targets (string): What module should be targeted
-                (to choose validator for example)
-            host (string)
             user (string): email address for webpublisher
+            targets (list): Pyblish targets
+                (to choose validator for example)
 
         Raises:
             RuntimeError: When there is no path to process.
