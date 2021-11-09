@@ -258,7 +258,7 @@ class BlendRigLoader(plugin.AssetLoader):
             plugin.deselect_all()
 
         if anim_file:
-            bpy.ops.import_scene.fbx(filepath=anim_file)
+            bpy.ops.import_scene.fbx(filepath=anim_file, anim_offset=0.0)
 
             imported = avalon_lib.get_selection()
 
