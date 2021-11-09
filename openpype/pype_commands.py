@@ -360,6 +360,3 @@ class PypeCommands:
         cmd = "pytest {} {} {}".format(folder, mark_str, pyargs_str)
         print("Running {}".format(cmd))
         subprocess.run(cmd)
-
-    def show_context_selector(self):
-        ...

@@ -24,7 +24,8 @@ class OpenPypeContextSelector:
 
         self.openpype_executable = "openpype_gui"
         if platform.system().lower() == "windows":
-            op_exec = "{}.exe".format(self.openpype_executable)
+            self.openpype_executable = "{}.exe".format(
+                self.openpype_executable)
 
         op_path = os.environ.get("OPENPYPE_ROOT")
         print("initializing ... {}".format(op_path))
