@@ -1,16 +1,23 @@
 from openpype.lib.abstract_load_template import AbstractTemplateLoader, AbstractPlaceholder
 from maya import cmds
 
+PLACEHOLDER_SET = 'PLACEHOLDERS_SET'
+
 
 class TemplateLoader(AbstractTemplateLoader):
 
     def import_template(self, path):
+        if cmds.objExists(PLACEHOLDER_SET):
+            raise ValueError("Build already generated. Please clean scene")
+        cmds.sets(name=PLACEHOLDER_SET, empty=True)
         self.new_nodes = cmds.file(path, i=True, returnNewNodes=True)
+        cmds.setAttr(PLACEHOLDER_SET + '.hiddenInOutliner', True)
 
     @staticmethod
     def get_template_nodes():
         attributes = cmds.ls('*.builder_type', long=True)
         return [attribute.rpartition('.')[0] for attribute in attributes]
+
 
 class Placeholder(AbstractPlaceholder):
 
@@ -33,8 +40,7 @@ class Placeholder(AbstractPlaceholder):
             user_data[attr] = cmds.getAttr(
                 node + '.' + attribute_name,
                 asString=True)
-        user_data['node'] = node
-        user_data['parent'] = cmds.listRelatives(node, parent=True)
+        user_data['parent'], _, user_data['node'] = node.rpartition('|')
 
         self.data = user_data
 
@@ -44,4 +50,10 @@ class Placeholder(AbstractPlaceholder):
         cmds.parent(roots, self.data['parent'])
 
     def clean(self):
-        cmds.delete(self.data['node'])
+        node = self.data['node'].rpartition('|')[2]
+        cmds.setAttr(node + '.parent', self.data['parent'], type='string')
+
+        cmds.parent(node, world=True)
+        cmds.sets(node, addElement=PLACEHOLDER_SET)
+        cmds.hide(node)
+        cmds.setAttr(node + '.hiddenInOutliner', True)

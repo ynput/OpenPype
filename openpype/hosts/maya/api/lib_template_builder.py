@@ -40,4 +40,7 @@ def create_place_holder():
     cmds.setAttr(place_holder_name +
                  ".optional_settings.hierarchy", '*', type='string')
 
+    cmds.addAttr(place_holder_name, longName="parent",
+                 hidden=True, dataType='string')
+
     return place_holder_name
