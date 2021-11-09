@@ -176,23 +176,56 @@ class TaskNode(Node):
 class WebpublisherBatchPublishEndpoint(_RestApiEndpoint):
     """Triggers headless publishing of batch."""
     async def post(self, request) -> Response:
-        # for postprocessing in host, currently only PS
-        host_map = {"photoshop": [".psd", ".psb"]}
+        # Validate existence of openpype executable
+        openpype_app = self.resource.executable
+        if not openpype_app or not os.path.exists(openpype_app):
+            msg = "Non existent OpenPype executable {}".format(openpype_app)
+            raise RuntimeError(msg)
 
+        # for postprocessing in host, currently only PS
         output = {}
         log.info("WebpublisherBatchPublishEndpoint called")
         content = await request.json()
 
-        batch_path = os.path.join(self.resource.upload_dir,
-                                  content["batch"])
+        # Each filter have extensions which are checked on first task item
+        #   - first filter with extensions that are on first task is used
+        #   - filter defines command and can extend arguments dictionary
+        # This is used only if 'studio_processing' is enabled on batch
+        studio_processing_filters = [
+            # TVPaint filter
+            {
+                "extensions": [".tvpp"],
+                "command": "remotepublish",
+                "arguments": {
+                    "targets": ["tvpaint"]
+                }
+            },
+            # Photoshop filter
+            {
+                "extensions": [".psd", ".psb"],
+                "command": "remotepublishfromapp",
+                "arguments": {
+                    # Command 'remotepublishfromapp' requires --host argument
+                    "host": "photoshop",
+                    # Make sure targets are set to None for cases that default
+                    #   would change
+                    # - targets argument is not used in 'remotepublishfromapp'
+                    "targets": None
+                }
+            }
+        ]
 
-        add_args = {
-            "host": "webpublisher",
-            "project": content["project_name"],
-            "user": content["user"]
-        }
+        batch_path = os.path.join(self.resource.upload_dir, content["batch"])
 
+        # Default command and arguments
         command = "remotepublish"
+        add_args = {
+            # All commands need 'project' and 'user'
+            "project": content["project_name"],
+            "user": content["user"],
+
+            "targets": None
+        }
 
         if content.get("studio_processing"):
             log.info("Post processing called")
@@ -208,32 +241,34 @@ class WebpublisherBatchPublishEndpoint(_RestApiEndpoint):
                 raise ValueError(
                     "Cannot parse batch meta in {} folder".format(task_data))
 
-            command = "remotepublishfromapp"
-            for host, extensions in host_map.items():
-                for ext in extensions:
-                    for file_name in task_data["files"]:
-                        if ext in file_name:
-                            add_args["host"] = host
-                            break
+            for process_filter in studio_processing_filters:
+                filter_extensions = process_filter.get("extensions") or []
+                for file_name in task_data["files"]:
+                    file_ext = os.path.splitext(file_name)[-1].lower()
+                    if file_ext in filter_extensions:
+                        # Change command
+                        command = process_filter["command"]
+                        # Update arguments
+                        add_args.update(
+                            process_filter.get("arguments") or {}
+                        )
+                        break
 
-            if not add_args.get("host"):
-                raise ValueError(
-                    "Couldn't discern host from {}".format(task_data["files"]))
-
-        openpype_app = self.resource.executable
         args = [
             openpype_app,
             command,
             batch_path
         ]
 
-        if not openpype_app or not os.path.exists(openpype_app):
-            msg = "Non existent OpenPype executable {}".format(openpype_app)
-            raise RuntimeError(msg)
-
         for key, value in add_args.items():
-            args.append("--{}".format(key))
-            args.append(value)
+            # Skip key values where value is None
+            if value is not None:
+                args.append("--{}".format(key))
+                # Extend list into arguments (targets can be a list)
+                if isinstance(value, (tuple, list)):
+                    args.extend(value)
+                else:
+                    args.append(value)
 
         log.info("args:: {}".format(args))
 
