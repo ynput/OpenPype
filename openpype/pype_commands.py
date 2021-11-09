@@ -243,12 +243,16 @@ class PypeCommands:
         # Register target and host
         import pyblish.api
         import pyblish.util
+        import avalon.api
+        from openpype.hosts.webpublisher import api as webpublisher
 
         log = PypeLogger.get_logger()
 
         log.info("remotepublish command")
 
         host_name = "webpublisher"
+        os.environ["OPENPYPE_PUBLISH_DATA"] = batch_path
+        os.environ["AVALON_PROJECT"] = project
         os.environ["AVALON_APP"] = host_name
 
         pyblish.api.register_host(host_name)
@@ -258,12 +262,6 @@ class PypeCommands:
                 targets = [targets]
             for target in targets:
                 pyblish.api.register_target(target)
-
-        os.environ["OPENPYPE_PUBLISH_DATA"] = batch_path
-        os.environ["AVALON_PROJECT"] = project
-
-        import avalon.api
-        from openpype.hosts.webpublisher import api as webpublisher
 
         avalon.api.install(webpublisher)
 
