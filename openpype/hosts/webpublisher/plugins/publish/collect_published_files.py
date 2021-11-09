@@ -29,6 +29,7 @@ class CollectPublishedFiles(pyblish.api.ContextPlugin):
     order = pyblish.api.CollectorOrder - 0.490
     label = "Collect rendered frames"
     host = ["webpublisher"]
+    targets = ["filespublish"]
 
     # from Settings
     task_type_to_family = {}
