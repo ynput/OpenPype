@@ -3,7 +3,7 @@ import asyncio
 import aiohttp
 from aiohttp_json_rpc import JsonRpc
 from aiohttp_json_rpc.protocol import (
-    encode_request, encode_error, decode_msg, JsonRpcMsgTyp
+    encode_error, decode_msg, JsonRpcMsgTyp
 )
 from aiohttp_json_rpc.exceptions import RpcError
 from .workers import Worker
