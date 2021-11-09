@@ -1823,7 +1823,12 @@ class NukeDirmap(HostDirmap):
     def dirmap_routine(self, source_path, destination_path):
         log.debug("{}: {}->{}".format(self.file_name,
                                       source_path, destination_path))
-        self.file_name = self.file_name.replace(source_path, destination_path)
+        if platform.system().lower() == "windows":
+            self.file_name = self.file_name.lower().replace(
+                source_path.lower(), destination_path.lower())
+        else:
+            self.file_name = self.file_name.replace(
+                source_path, destination_path)
 
 
 class DirmapCache:
