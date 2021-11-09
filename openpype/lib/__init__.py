@@ -130,6 +130,7 @@ from .applications import (
 from .plugin_tools import (
     TaskNotSetError,
     get_subset_name,
+    get_subset_name_with_asset_doc,
     prepare_template_data,
     filter_pyblish_plugins,
     set_plugin_attributes_from_settings,
@@ -249,6 +250,7 @@ __all__ = [
 
     "TaskNotSetError",
     "get_subset_name",
+    "get_subset_name_with_asset_doc",
     "filter_pyblish_plugins",
     "set_plugin_attributes_from_settings",
     "source_hash",

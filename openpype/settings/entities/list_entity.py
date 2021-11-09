@@ -149,7 +149,7 @@ class ListEntity(EndpointEntity):
             return list(value)
         return NOT_SET
 
-    def _item_initalization(self):
+    def _item_initialization(self):
         self.valid_value_types = (list, )
         self.children = []
         self.value_on_not_set = []

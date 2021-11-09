@@ -255,6 +255,11 @@
             "optional": true,
             "active": true
         },
+        "ValidateMeshNgons": {
+            "enabled": false,
+            "optional": true,
+            "active": true
+        },
         "ValidateMeshNonManifold": {
             "enabled": false,
             "optional": true,
@@ -310,7 +315,17 @@
             "optional": true,
             "active": true
         },
+        "ValidateShapeZero": {
+            "enabled": false,
+            "optional": true,
+            "active": true
+        },
         "ValidateTransformZero": {
+            "enabled": false,
+            "optional": true,
+            "active": true
+        },
+        "ValidateUniqueNames": {
             "enabled": false,
             "optional": true,
             "active": true

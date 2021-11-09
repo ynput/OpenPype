@@ -210,6 +210,7 @@ class LoaderWindow(QtWidgets.QDialog):
                 self.resize(1800, 900)
             else:
                 self.resize(1300, 700)
+            lib.center_window(self)
 
     # -------------------------------
     # Delay calling blocking methods
