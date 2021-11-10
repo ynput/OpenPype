@@ -67,6 +67,18 @@ class JobQueueModule(OpenPypeModule):
     def get_work_root(self):
         self._work_root_mapping.get(platform.system().lower())
 
+    @classmethod
+    def get_work_root_from_settings(cls):
+        module_settings = get_system_settings()["modules"]
+        work_root_mapping = module_settings.get(cls.name, {}).get("work_root")
+        if not work_root_mapping:
+            work_root_mapping = {
+                "windows": "",
+                "linux": "",
+                "darwin": ""
+            }
+        return work_root_mapping.get(platform.system().lower())
+
     @property
     def server_url(self):
         return self._server_url
