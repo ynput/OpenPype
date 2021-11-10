@@ -3,7 +3,7 @@ Requires:
     CollectTVPaintWorkfileData
 
 Provides:
-    Instance
+    Instances
 """
 import os
 import re
@@ -13,8 +13,8 @@ import pyblish.api
 from openpype.lib import get_subset_name_with_asset_doc
 
 
-class CollectTVPaintWorkfileData(pyblish.api.InstancePlugin):
-    label = "Collect TVPaint Workfile data"
+class CollectTVPaintInstances(pyblish.api.InstancePlugin):
+    label = "Collect TVPaint Instances"
     order = pyblish.api.CollectorOrder + 0.1
     hosts = ["webpublisher"]
     targets = ["tvpaint"]
