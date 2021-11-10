@@ -71,8 +71,18 @@ class AnimationFBXLoader(api.Loader):
 
         if instance_name:
             automated = True
-            actor_name = 'PersistentLevel.' + instance_name
-            actor = unreal.EditorLevelLibrary.get_actor_reference(actor_name)
+            # Old method to get the actor
+            # actor_name = 'PersistentLevel.' + instance_name
+            # actor = unreal.EditorLevelLibrary.get_actor_reference(actor_name)
+            actors = unreal.EditorLevelLibrary.get_all_level_actors()
+            for a in actors:
+                if a.get_class().get_name() != "SkeletalMeshActor":
+                    continue
+                if a.get_actor_label() == instance_name:
+                    actor = a
+                    break
+            if not actor:
+                raise Exception(f"Could not find actor {instance_name}")
             skeleton = actor.skeletal_mesh_component.skeletal_mesh.skeleton
             task.options.set_editor_property('skeleton', skeleton)
 
