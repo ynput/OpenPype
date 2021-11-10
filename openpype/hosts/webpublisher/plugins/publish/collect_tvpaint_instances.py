@@ -13,7 +13,7 @@ import pyblish.api
 from openpype.lib import get_subset_name_with_asset_doc
 
 
-class CollectTVPaintInstances(pyblish.api.InstancePlugin):
+class CollectTVPaintInstances(pyblish.api.ContextPlugin):
     label = "Collect TVPaint Instances"
     order = pyblish.api.CollectorOrder + 0.1
     hosts = ["webpublisher"]

@@ -22,7 +22,7 @@ from openpype.hosts.tvpaint.worker import (
 )
 
 
-class CollectTVPaintWorkfileData(pyblish.api.InstancePlugin):
+class CollectTVPaintWorkfileData(pyblish.api.ContextPlugin):
     label = "Collect TVPaint Workfile data"
     order = pyblish.api.CollectorOrder
     hosts = ["webpublisher"]
@@ -30,7 +30,7 @@ class CollectTVPaintWorkfileData(pyblish.api.InstancePlugin):
 
     def process(self, context):
         # Get JobQueue module
-        modules = context.context.data["openPypeModules"]
+        modules = context.data["openPypeModules"]
         job_queue_module = modules["job_queue"]
 
         context_staging_dir = self._create_context_staging_dir(
