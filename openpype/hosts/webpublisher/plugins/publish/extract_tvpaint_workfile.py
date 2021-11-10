@@ -49,7 +49,7 @@ class ExtractTVPaintSequences(pyblish.api.Extractor):
         handle_end = context.data["handleEnd"]
 
         # Get JobQueue module
-        modules = context.context.data["openPypeModules"]
+        modules = context.data["openPypeModules"]
         job_queue_module = modules["job_queue"]
 
         tvpaint_commands = SenderTVPaintCommands(
@@ -66,7 +66,7 @@ class ExtractTVPaintSequences(pyblish.api.Extractor):
 
         after_render_instances = []
         for instance in context:
-            self.log.info("* Preparing commands for  instance \"{}\"".format(
+            self.log.info("* Preparing commands for instance \"{}\"".format(
                 instance.data["label"]
             ))
             # Get all layers and filter out not visible

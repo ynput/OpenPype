@@ -15,7 +15,7 @@ from openpype.lib import get_subset_name_with_asset_doc
 
 class CollectTVPaintInstances(pyblish.api.ContextPlugin):
     label = "Collect TVPaint Instances"
-    order = pyblish.api.CollectorOrder + 0.1
+    order = pyblish.api.CollectorOrder - 0.35
     hosts = ["webpublisher"]
     targets = ["tvpaint"]
 
@@ -81,6 +81,10 @@ class CollectTVPaintInstances(pyblish.api.ContextPlugin):
                 continue
 
             result = layer_name_regex.search(layer["name"])
+            # Layer name not matching layer name regex
+            #   should raise an exception?
+            if result is None:
+                continue
             render_layer = result.group("layer")
             variant = result.group("variant")
 
@@ -127,12 +131,12 @@ class CollectTVPaintInstances(pyblish.api.ContextPlugin):
                 dynamic_data=dynamic_data
             )
             instance = self._create_render_layer_instance(
-                context, subset_name, layers
+                context, layers, subset_name
             )
             new_instances.append(instance)
 
         # Set data same for all instances
-        scene_fps = context.data["sceneFps"]
+        scene_fps = context.data["sceneData"]["sceneFps"]
         frame_start = context.data.get("frameStart")
         frame_end = context.data.get("frameEnd")
 
@@ -196,19 +200,13 @@ class CollectTVPaintInstances(pyblish.api.ContextPlugin):
     def _create_render_pass_instance(self, context, layer, subset_name):
         # Global instance data modifications
         # Fill families
-        instance_label = "{} [{}-{}]".format(
-            subset_name,
-            context.data["sceneMarkIn"] + 1,
-            context.data["sceneMarkOut"] + 1
-        )
-
         return context.create_instance(**{
+            "name": subset_name,
             "subset": subset_name,
-            "label": instance_label,
+            "label": subset_name,
             "family": self.render_pass_family,
             # Add `review` family for thumbnail integration
             "families": [self.render_pass_family, "review"],
-            "fps": context.data["sceneFps"],
             "representations": [],
             "layers": [layer]
         })
@@ -216,19 +214,13 @@ class CollectTVPaintInstances(pyblish.api.ContextPlugin):
     def _create_render_layer_instance(self, context, layers, subset_name):
         # Global instance data modifications
         # Fill families
-        instance_label = "{} [{}-{}]".format(
-            subset_name,
-            context.data["sceneMarkIn"] + 1,
-            context.data["sceneMarkOut"] + 1
-        )
-
         return context.create_instance(**{
+            "name": subset_name,
             "subset": subset_name,
-            "label": instance_label,
+            "label": subset_name,
             "family": self.render_pass_family,
             # Add `review` family for thumbnail integration
             "families": [self.render_pass_family, "review"],
-            "fps": context.data["sceneFps"],
             "representations": [],
             "layers": layers
         })

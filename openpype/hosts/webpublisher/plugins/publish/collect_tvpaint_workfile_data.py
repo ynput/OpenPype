@@ -24,7 +24,7 @@ from openpype.hosts.tvpaint.worker import (
 
 class CollectTVPaintWorkfileData(pyblish.api.ContextPlugin):
     label = "Collect TVPaint Workfile data"
-    order = pyblish.api.CollectorOrder
+    order = pyblish.api.CollectorOrder - 0.4
     hosts = ["webpublisher"]
     targets = ["tvpaint"]
 
@@ -88,7 +88,7 @@ class CollectTVPaintWorkfileData(pyblish.api.ContextPlugin):
     def _create_context_staging_dir(self, job_queue_module):
         jobs_root = job_queue_module.get_jobs_root()
         if not jobs_root:
-            raise ValueError("Work root in JobQueue module is not set.")
+            raise ValueError("Job Queue root is not set.")
 
         if not os.path.exists(jobs_root):
             os.makedirs(jobs_root)
