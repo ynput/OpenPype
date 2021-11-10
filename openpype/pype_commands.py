@@ -137,16 +137,13 @@ class PypeCommands:
         SLEEP = 5  # seconds for another loop check for concurrently runs
         WAIT_FOR = 300  # seconds to wait for conc. runs
 
-        from openpype import install, uninstall
         from openpype.api import Logger
+        from openpype.lib import ApplicationManager
 
         log = Logger.get_logger()
 
         log.info("remotepublishphotoshop command")
 
-        install()
-
-        from openpype.lib import ApplicationManager
         application_manager = ApplicationManager()
 
         found_variant_key = find_variant_key(application_manager, host)
@@ -220,10 +217,8 @@ class PypeCommands:
         while launched_app.poll() is None:
             time.sleep(0.5)
 
-        uninstall()
-
     @staticmethod
-    def remotepublish(project, batch_path, host, user, targets=None):
+    def remotepublish(project, batch_path, user, targets=None):
         """Start headless publishing.
 
         Used to publish rendered assets, workfiles etc.
@@ -235,10 +230,9 @@ class PypeCommands:
                 per call of remotepublish
             batch_path (str): Path batch folder. Contains subfolders with
                 resources (workfile, another subfolder 'renders' etc.)
-            targets (string): What module should be targeted
-                (to choose validator for example)
-            host (string)
             user (string): email address for webpublisher
+            targets (list): Pyblish targets
+                (to choose validator for example)
 
         Raises:
             RuntimeError: When there is no path to process.
@@ -246,34 +240,28 @@ class PypeCommands:
         if not batch_path:
             raise RuntimeError("No publish paths specified")
 
-        from openpype import install, uninstall
-        from openpype.api import Logger
-
         # Register target and host
         import pyblish.api
         import pyblish.util
+        import avalon.api
+        from openpype.hosts.webpublisher import api as webpublisher
 
-        log = Logger.get_logger()
+        log = PypeLogger.get_logger()
 
         log.info("remotepublish command")
 
-        install()
+        host_name = "webpublisher"
+        os.environ["OPENPYPE_PUBLISH_DATA"] = batch_path
+        os.environ["AVALON_PROJECT"] = project
+        os.environ["AVALON_APP"] = host_name
 
-        if host:
-            pyblish.api.register_host(host)
+        pyblish.api.register_host(host_name)
 
         if targets:
             if isinstance(targets, str):
                 targets = [targets]
             for target in targets:
                 pyblish.api.register_target(target)
-
-        os.environ["OPENPYPE_PUBLISH_DATA"] = batch_path
-        os.environ["AVALON_PROJECT"] = project
-        os.environ["AVALON_APP"] = host
-
-        import avalon.api
-        from openpype.hosts.webpublisher import api as webpublisher
 
         avalon.api.install(webpublisher)
 
@@ -286,7 +274,6 @@ class PypeCommands:
         publish_and_log(dbcon, _id, log)
 
         log.info("Publish finished.")
-        uninstall()
 
     @staticmethod
     def extractenvironments(output_json_path, project, asset, task, app):

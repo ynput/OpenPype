@@ -166,7 +166,7 @@ def publish(debug, paths, targets):
 @click.option("-p", "--project", help="Project")
 @click.option("-t", "--targets", help="Targets", default=None,
               multiple=True)
-def remotepublishfromapp(debug, project, path, host, targets=None, user=None):
+def remotepublishfromapp(debug, project, path, host, user=None, targets=None):
     """Start CLI publishing.
 
     Publish collects json from paths provided as an argument.
@@ -174,18 +174,19 @@ def remotepublishfromapp(debug, project, path, host, targets=None, user=None):
     """
     if debug:
         os.environ['OPENPYPE_DEBUG'] = '3'
-    PypeCommands.remotepublishfromapp(project, path, host, user,
-                                      targets=targets)
+    PypeCommands.remotepublishfromapp(
+        project, path, host, user, targets=targets
+    )
+
 
 @main.command()
 @click.argument("path")
 @click.option("-d", "--debug", is_flag=True, help="Print debug messages")
-@click.option("-h", "--host", help="Host")
 @click.option("-u", "--user", help="User email address")
 @click.option("-p", "--project", help="Project")
 @click.option("-t", "--targets", help="Targets", default=None,
               multiple=True)
-def remotepublish(debug, project, path, host, targets=None, user=None):
+def remotepublish(debug, project, path, user=None, targets=None):
     """Start CLI publishing.
 
     Publish collects json from paths provided as an argument.
@@ -193,7 +194,7 @@ def remotepublish(debug, project, path, host, targets=None, user=None):
     """
     if debug:
         os.environ['OPENPYPE_DEBUG'] = '3'
-    PypeCommands.remotepublish(project, path, host, user, targets=targets)
+    PypeCommands.remotepublish(project, path, user, targets=targets)
 
 
 @main.command()
