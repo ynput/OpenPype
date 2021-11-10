@@ -10,6 +10,7 @@ from abc import ABCMeta, abstractmethod, abstractproperty
 import six
 
 from openpype.api import PypeLogger
+from openpype.modules import ModulesManager
 
 
 TMP_FILE_PREFIX = "opw_tvp_"
@@ -212,11 +213,15 @@ class CollectSceneData(BaseCommand):
 
 
 class TVPaintCommands:
-    def __init__(self, workfile):
+    def __init__(self, workfile, job_queue_module=None):
         self._log = None
         self._workfile = workfile
         self._commands = []
         self._command_classes_by_name = None
+        if job_queue_module is None:
+            manager = ModulesManager()
+            job_queue_module = manager.modules_by_name["job_queue"]
+        self._job_queue_module = job_queue_module
 
     @property
     def log(self):
@@ -257,11 +262,6 @@ class TVPaintCommands:
 
 
 class SenderTVPaintCommand(TVPaintCommands):
-    def __init__(self, workfile, job_queue_module):
-        super().__init__(workfile)
-
-        self._job_queue_module = job_queue_module
-
     def commands_data(self):
         return [
             command.command_data()
