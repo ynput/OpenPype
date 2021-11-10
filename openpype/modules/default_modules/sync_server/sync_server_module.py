@@ -1039,8 +1039,8 @@ class SyncServerModule(OpenPypeModule, ITrayModule):
 
         sys_sett = get_system_settings()
         sync_sett = sys_sett["modules"].get("sync_server")
-        for site, detail in sync_sett.get("sites", {}).items():
-            sites[site] = detail.get("provider")
+        for conf_site, detail in sync_sett.get("sites", {}).items():
+            sites[conf_site] = detail.get("provider")
 
         return sites.get(site, 'N/A')
 
