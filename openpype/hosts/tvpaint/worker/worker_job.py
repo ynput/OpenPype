@@ -55,6 +55,11 @@ class BaseCommand:
         self._command_data = data
         self._done = False
 
+    def work_root(self):
+        if self._parent is None:
+            return None
+        return self._parent.work_root()
+
     def set_parent(self, parent):
         self._parent = parent
 
@@ -222,6 +227,9 @@ class TVPaintCommands:
             manager = ModulesManager()
             job_queue_module = manager.modules_by_name["job_queue"]
         self._job_queue_module = job_queue_module
+
+    def work_root(self):
+        return self._job_queue_module.get_work_root_from_settings()
 
     @property
     def log(self):
