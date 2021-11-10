@@ -127,21 +127,18 @@ class ExecuteGeorgeScript(BaseCommand):
     name = "execute_george_through_file"
 
     def __init__(
-        self, script, tmp_file_keys=None, output_dirs=None, data=None
+        self, script, tmp_file_keys=None, root_dir_key=None, data=None
     ):
         data = data or {}
         if not tmp_file_keys:
             tmp_file_keys = data.get("tmp_file_keys") or []
 
-        if not output_dirs:
-            output_dirs = data.get("output_dirs") or {}
-
         data["script"] = script
         data["tmp_file_keys"] = tmp_file_keys
-        data["output_dirs"] = output_dirs
+        data["root_dir_key"] = root_dir_key
         self._script = script
         self._tmp_file_keys = tmp_file_keys
-        self._output_dirs = output_dirs
+        self._root_dir_key = root_dir_key
         super().__init__(data)
 
     def execute(self):
@@ -156,10 +153,6 @@ class ExecuteGeorgeScript(BaseCommand):
             self._script.replace(format_key, output_path)
             filepath_by_key[key] = output_path
 
-        for key, dir_path in self._output_dirs.items():
-            format_key = "{" + key + "}"
-            dir_path = dir_path.replace("\\", "/")
-            self._script.replace(format_key, dir_path)
 
         self.execute_george_through_file(self._script)
 
@@ -176,8 +169,8 @@ class ExecuteGeorgeScript(BaseCommand):
     def from_existing(cls, data):
         script = data.pop("script")
         tmp_file_keys = data.pop("tmp_file_keys", None)
-        output_dirs = data.pop("output_dirs", None)
-        return cls(script, tmp_file_keys, output_dirs, data)
+        root_dir_key = data.pop("root_dir_key", None)
+        return cls(script, tmp_file_keys, root_dir_key, data)
 
 
 class CollectSceneData(BaseCommand):
