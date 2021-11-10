@@ -19,14 +19,14 @@ class JobQueueModule(OpenPypeModule):
         server_url = modules_settings.get("server_url") or ""
 
         self._server_url = self.url_conversion(server_url)
-        work_root_mapping = modules_settings.get("work_root")
-        if not work_root_mapping:
-            work_root_mapping = {
+        jobs_root_mapping = modules_settings.get("jobs_root")
+        if not jobs_root_mapping:
+            jobs_root_mapping = {
                 "windows": "",
                 "linux": "",
                 "darwin": ""
             }
-        self._work_root_mapping = work_root_mapping
+        self._jobs_root_mapping = jobs_root_mapping
 
         # Is always enabled
         #   - the module does nothing until is used
@@ -61,23 +61,23 @@ class JobQueueModule(OpenPypeModule):
 
         return urlunsplit(url_parts)
 
-    def get_work_root_mapping(self):
-        return copy.deepcopy(self._work_root_mapping)
+    def get_jobs_root_mapping(self):
+        return copy.deepcopy(self._jobs_root_mapping)
 
-    def get_work_root(self):
-        self._work_root_mapping.get(platform.system().lower())
+    def get_jobs_root(self):
+        self._jobs_root_mapping.get(platform.system().lower())
 
     @classmethod
-    def get_work_root_from_settings(cls):
+    def get_jobs_root_from_settings(cls):
         module_settings = get_system_settings()["modules"]
-        work_root_mapping = module_settings.get(cls.name, {}).get("work_root")
-        if not work_root_mapping:
-            work_root_mapping = {
+        jobs_root_mapping = module_settings.get(cls.name, {}).get("jobs_root")
+        if not jobs_root_mapping:
+            jobs_root_mapping = {
                 "windows": "",
                 "linux": "",
                 "darwin": ""
             }
-        return work_root_mapping.get(platform.system().lower())
+        return jobs_root_mapping.get(platform.system().lower())
 
     @property
     def server_url(self):

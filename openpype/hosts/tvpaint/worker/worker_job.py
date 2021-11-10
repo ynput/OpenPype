@@ -55,10 +55,10 @@ class BaseCommand:
         self._command_data = data
         self._done = False
 
-    def work_root(self):
+    def job_queue_root(self):
         if self._parent is None:
             return None
-        return self._parent.work_root()
+        return self._parent.job_queue_root()
 
     def set_parent(self, parent):
         self._parent = parent
@@ -160,9 +160,9 @@ class ExecuteGeorgeScript(BaseCommand):
             filepath_by_key[key] = output_path
 
         if self._root_dir_key:
-            work_root = self.work_root()
+            job_queue_root = self.job_queue_root()
             format_key = "{" + self._root_dir_key + "}"
-            self._script.replace(format_key, work_root.replace("\\", "/"))
+            self._script.replace(format_key, job_queue_root.replace("\\", "/"))
 
         self.execute_george_through_file(self._script)
 
@@ -232,8 +232,8 @@ class TVPaintCommands:
             job_queue_module = manager.modules_by_name["job_queue"]
         self._job_queue_module = job_queue_module
 
-    def work_root(self):
-        return self._job_queue_module.get_work_root_from_settings()
+    def job_queue_root(self):
+        return self._job_queue_module.get_jobs_root_from_settings()
 
     @property
     def log(self):

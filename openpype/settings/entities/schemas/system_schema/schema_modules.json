@@ -258,11 +258,11 @@
                 },
                 {
                     "type": "label",
-                    "label": "Work root is used as temporary directory for workers where source is copied and render output can be stored."
+                    "label": "Jobs root is used as temporary directory for workers where source is copied and render output can be stored."
                 },
                 {
-                    "key": "work_root",
-                    "label": "Work root",
+                    "key": "jobs_root",
+                    "label": "Jobs root",
                     "type": "path",
                     "multipath": false,
                     "multiplatform": true

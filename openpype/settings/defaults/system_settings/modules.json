@@ -181,7 +181,7 @@
     },
     "job_queue": {
         "server_url": "",
-        "work_root": {
+        "jobs_root": {
             "windows": "",
             "darwin": "",
             "linux": ""

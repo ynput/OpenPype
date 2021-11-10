@@ -34,7 +34,7 @@ class CollectTVPaintWorkfileData(pyblish.api.InstancePlugin):
         job_queue_module = modules["job_queue"]
 
         context_staging_dir = self._create_context_staging_dir(
-            context, job_queue_module
+            job_queue_module
         )
         workfile_path = self._extract_workfile_path(
             context, context_staging_dir
@@ -85,16 +85,16 @@ class CollectTVPaintWorkfileData(pyblish.api.InstancePlugin):
         context.data["layersExposureFrames"] = exposure_frames_by_layer_id
         context.data["layersPrePostBehavior"] = pre_post_beh_by_layer_id
 
-    def _create_context_staging_dir(self, context, job_queue_module):
-        work_root = job_queue_module.get_work_root()
-        if not work_root:
+    def _create_context_staging_dir(self, job_queue_module):
+        jobs_root = job_queue_module.get_jobs_root()
+        if not jobs_root:
             raise ValueError("Work root in JobQueue module is not set.")
 
-        if not os.path.exists(work_root):
-            os.makedirs(work_root)
+        if not os.path.exists(jobs_root):
+            os.makedirs(jobs_root)
 
         random_folder_name = str(uuid.uuid4())
-        full_path = os.path.join(work_root, random_folder_name)
+        full_path = os.path.join(jobs_root, random_folder_name)
         if not os.path.exists(full_path):
             os.makedirs(full_path)
         return full_path
