@@ -57,9 +57,67 @@ QAbstractSpinBox:focus, QLineEdit:focus, QPlainTextEdit:focus, QTextEdit:focus{
     border-color: {color:border-focus};
 }
 
-/* Checkbox */
-QCheckBox {
-    background: transparent;
+QAbstractSpinBox:up-button {
+    margin: 0px;
+    background-color: transparent;
+    subcontrol-origin: border;
+    subcontrol-position: top right;
+    border-top-right-radius: 0.3em;
+    border-top: 0px solid transparent;
+    border-right: 0px solid transparent;
+    border-left: 1px solid {color:border};
+    border-bottom: 1px solid {color:border};
+}
+
+QAbstractSpinBox:down-button {
+    margin: 0px;
+    background-color: transparent;
+    subcontrol-origin: border;
+    subcontrol-position: bottom right;
+    border-bottom-right-radius: 0.3em;
+    border-bottom: 0px solid transparent;
+    border-right: 0px solid transparent;
+    border-left: 1px solid {color:border};
+    border-top: 1px solid {color:border};
+}
+
+QAbstractSpinBox:up-button:focus, QAbstractSpinBox:down-button:focus {
+    border-color: {color:border-focus};
+}
+QAbstractSpinBox::up-arrow, QAbstractSpinBox::up-arrow:off {
+    image: url(:/openpype/images/up_arrow.png);
+    width: 0.5em;
+    height: 1em;
+    border-width: 1px;
+}
+QAbstractSpinBox::up-arrow:hover {
+    image: url(:/openpype/images/up_arrow_on.png);
+    bottom: 1;
+}
+QAbstractSpinBox::up-arrow:disabled {
+    image: url(:/openpype/images/up_arrow_disabled.png);
+}
+QAbstractSpinBox::up-arrow:pressed {
+    image: url(:/openpype/images/up_arrow_on.png);
+    bottom: 0;
+}
+
+QAbstractSpinBox::down-arrow, QAbstractSpinBox::down-arrow:off {
+    image: url(:/openpype/images/down_arrow.png);
+    width: 0.5em;
+    height: 1em;
+    border-width: 1px;
+}
+QAbstractSpinBox::down-arrow:hover {
+    image: url(:/openpype/images/down_arrow_on.png);
+    bottom: 1;
+}
+QAbstractSpinBox::down-arrow:disabled {
+    image: url(:/openpype/images/down_arrow_disabled.png);
+}
+QAbstractSpinBox::down-arrow:hover:pressed {
+    image: url(:/openpype/images/down_arrow_on.png);
+    bottom: 0;
 }
 
 /* Buttons */
@@ -210,24 +268,9 @@ QSplitter::handle {
     border: 3px solid transparent;
 }
 
-QSplitter::handle:horizontal {
+QSplitter::handle:horizontal, QSplitter::handle:vertical, QSplitter::handle:horizontal:hover, QSplitter::handle:vertical:hover {
     /* must be single like because of Nuke*/
-    background: qlineargradient(x1:0, y1:0, x2:1, y2:0,stop:0.3 rgba(0, 0, 0, 0),stop:0.5 {color:bg-splitter},stop:0.7 rgba(0, 0, 0, 0));
-}
-
-QSplitter::handle:vertical {
-    /* must be single like because of Nuke*/
-    background: qlineargradient(x1:0, y1:0, x2:0, y2:1,stop:0.3 rgba(0, 0, 0, 0),stop:0.5 {color:bg-splitter},stop:0.7 rgba(0, 0, 0, 0));
-}
-
-QSplitter::handle:horizontal:hover {
-    /* must be single like because of Nuke*/
-    background: qlineargradient(x1:0, y1:0, x2:1, y2:0,stop:0.3 rgba(0, 0, 0, 0),stop:0.5 {color:bg-splitter-hover},stop:0.7 rgba(0, 0, 0, 0));
-}
-
-QSplitter::handle:vertical:hover {
-    /* must be single like because of Nuke*/
-    background: qlineargradient(x1:0, y1:0, x2:0, y2:1,stop:0.3 rgba(0, 0, 0, 0),stop:0.5 {color:bg-splitter-hover},stop:0.7 rgba(0, 0, 0, 0));
+    background: transparent;
 }
 
 /* SLider */
@@ -325,8 +368,8 @@ QTabBar::tab:only-one {
 }
 
 QHeaderView {
-    border: none;
-    border-radius: 2px;
+    border: 0px solid {color:border};
+    border-radius: 0px;
     margin: 0px;
     padding: 0px;
 }
@@ -346,6 +389,10 @@ QHeaderView::section:first {
 QHeaderView::section:last {
     border-right: none;
 }
+QHeaderView::section:only-one {
+    border-left: none;
+    border-right: none;
+}
 
 QHeaderView::down-arrow {
     image: url(:/openpype/images/down_arrow.png);
@@ -355,10 +402,59 @@ QHeaderView::up-arrow {
     image: url(:/openpype/images/up_arrow.png);
 }
 
+/* Checkboxes */
+QCheckBox {
+    background: transparent;
+}
+
+QCheckBox::indicator {
+    width: 16px;
+    height: 16px;
+}
+
+QAbstractItemView::indicator:checked, QCheckBox::indicator:checked {
+    image: url(:/openpype/images/checkbox_checked.png);
+}
+QAbstractItemView::indicator:checked:focus, QCheckBox::indicator:checked:focus {
+    image: url(:/openpype/images/checkbox_checked_focus.png);
+}
+QAbstractItemView::indicator:checked:hover, QAbstractItemView::indicator:checked:pressed, QCheckBox::indicator:checked:hover, QCheckBox::indicator:checked:pressed {
+    image: url(:/openpype/images/checkbox_checked_hover.png);
+}
+QAbstractItemView::indicator:checked:disabled, QCheckBox::indicator:checked:disabled {
+    image: url(:/openpype/images/checkbox_checked_disabled.png);
+}
+
+QAbstractItemView::indicator:unchecked, QCheckBox::indicator:unchecked {
+    image: url(:/openpype/images/checkbox_unchecked.png);
+}
+QAbstractItemView::indicator:unchecked:focus, QCheckBox::indicator:unchecked:focus {
+    image: url(:/openpype/images/checkbox_unchecked_focus.png);
+}
+QAbstractItemView::indicator:unchecked:hover, QAbstractItemView::indicator:unchecked:pressed, QCheckBox::indicator:unchecked:hover, QCheckBox::indicator:unchecked:pressed {
+    image: url(:/openpype/images/checkbox_unchecked_hover.png);
+}
+QAbstractItemView::indicator:unchecked:disabled, QCheckBox::indicator:unchecked:disabled {
+    image: url(:/openpype/images/checkbox_unchecked_disabled.png);
+}
+
+QAbstractItemView::indicator:indeterminate, QCheckBox::indicator:indeterminate {
+    image: url(:/openpype/images/checkbox_indeterminate.png);
+}
+QAbstractItemView::indicator:indeterminate:focus, QCheckBox::indicator:indeterminate:focus {
+    image: url(:/openpype/images/checkbox_indeterminate_focus.png);
+}
+QAbstractItemView::indicator:indeterminate:hover, QAbstractItemView::indicator:indeterminate:pressed, QCheckBox::indicator:indeterminate:hover, QCheckBox::indicator:indeterminate:pressed {
+    image: url(:/openpype/images/checkbox_indeterminate_hover.png);
+}
+QAbstractItemView::indicator:indeterminate:disabled, QCheckBox::indicator:indeterminate:disabled {
+    image: url(:/openpype/images/checkbox_indeterminate_disabled.png);
+}
+
 /* Views QListView QTreeView QTableView */
 QAbstractItemView {
     border: 0px solid {color:border};
-    border-radius: 0.2em;
+    border-radius: 0px;
     background: {color:bg-view};
     alternate-background-color: {color:bg-view-alternate};
     /* Mac shows selection color on branches. */
@@ -373,6 +469,7 @@ QAbstractItemView::item {
 QAbstractItemView:disabled{
     background: {color:bg-view-disabled};
     alternate-background-color: {color:bg-view-alternate-disabled};
+    border: 1px solid {color:border};
 }
 
 QAbstractItemView::item:hover {

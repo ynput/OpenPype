@@ -307,6 +307,12 @@ class PypeCommands:
 
         project_manager.main()
 
+    @staticmethod
+    def contextselection(output_path, project_name, asset_name, strict):
+        from openpype.tools.context_dialog import main
+
+        main(output_path, project_name, asset_name, strict)
+
     def texture_copy(self, project, asset, path):
         pass
 

@@ -325,8 +325,16 @@
                             "label": "ValidateShapeRenderStats"
                         },
                         {
+                            "key": "ValidateShapeZero",
+                            "label": "ValidateShapeZero"
+                        },
+                        {
                             "key": "ValidateTransformZero",
                             "label": "ValidateTransformZero"
+                        },
+                        {
+                            "key": "ValidateUniqueNames",
+                            "label": "ValidateUniqueNames"
                         }
                     ]
                 }

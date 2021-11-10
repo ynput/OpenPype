@@ -31,6 +31,13 @@ from .model import (
 )
 from . import lib
 
+from openpype.tools.utils.constants import (
+    LOCAL_PROVIDER_ROLE,
+    REMOTE_PROVIDER_ROLE,
+    LOCAL_AVAILABILITY_ROLE,
+    REMOTE_AVAILABILITY_ROLE
+)
+
 
 class OverlayFrame(QtWidgets.QFrame):
     def __init__(self, label, parent):
@@ -196,6 +203,10 @@ class SubsetWidget(QtWidgets.QWidget):
         time_delegate = PrettyTimeDelegate(view)
         column = model.Columns.index("time")
         view.setItemDelegateForColumn(column, time_delegate)
+
+        avail_delegate = AvailabilityDelegate(self.dbcon, view)
+        column = model.Columns.index("repre_info")
+        view.setItemDelegateForColumn(column, avail_delegate)
 
         layout = QtWidgets.QVBoxLayout(self)
         layout.setContentsMargins(0, 0, 0, 0)
@@ -1578,3 +1589,54 @@ def _load_subsets_by_loader(loader, subset_contexts, options,
                 ))
 
     return error_info
+
+
+class AvailabilityDelegate(QtWidgets.QStyledItemDelegate):
+    """
+        Prints icons and downloaded representation ration for both sides.
+    """
+
+    def __init__(self, dbcon, parent=None):
+        super(AvailabilityDelegate, self).__init__(parent)
+        self.icons = tools_lib.get_repre_icons()
+
+    def paint(self, painter, option, index):
+        super(AvailabilityDelegate, self).paint(painter, option, index)
+        option = QtWidgets.QStyleOptionViewItem(option)
+        option.showDecorationSelected = True
+
+        provider_active = index.data(LOCAL_PROVIDER_ROLE)
+        provider_remote = index.data(REMOTE_PROVIDER_ROLE)
+
+        availability_active = index.data(LOCAL_AVAILABILITY_ROLE)
+        availability_remote = index.data(REMOTE_AVAILABILITY_ROLE)
+
+        if not availability_active or not availability_remote:  # group lines
+            return
+
+        idx = 0
+        height = width = 24
+        for value, provider in [(availability_active, provider_active),
+                                (availability_remote, provider_remote)]:
+            icon = self.icons.get(provider)
+            if not icon:
+                continue
+
+            pixmap = icon.pixmap(icon.actualSize(QtCore.QSize(height, width)))
+            padding = 10 + (70 * idx)
+            point = QtCore.QPoint(option.rect.x() + padding,
+                                  option.rect.y() +
+                                  (option.rect.height() - pixmap.height()) / 2)
+            painter.drawPixmap(point, pixmap)
+
+            text_rect = option.rect.translated(padding + width + 10, 0)
+            painter.drawText(
+                text_rect,
+                option.displayAlignment,
+                value
+            )
+
+            idx += 1
+
+    def displayText(self, value, locale):
+        pass
