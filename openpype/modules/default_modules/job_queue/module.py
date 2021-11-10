@@ -1,5 +1,7 @@
 import sys
 import json
+import copy
+import platform
 if sys.version_info[0] == 2:
     from urlparse import urlsplit, urlunsplit
 else:
@@ -17,6 +19,17 @@ class JobQueueModule(OpenPypeModule):
         server_url = modules_settings.get("server_url") or ""
 
         self._server_url = self.url_conversion(server_url)
+        work_root_mapping = modules_settings.get("work_root")
+        if not work_root_mapping:
+            work_root_mapping = {
+                "windows": "",
+                "linux": "",
+                "darwin": ""
+            }
+        self._work_root_mapping = work_root_mapping
+
+        # Is always enabled
+        #   - the module does nothing until is used
         self.enabled = True
 
     @staticmethod
@@ -47,6 +60,12 @@ class JobQueueModule(OpenPypeModule):
                 url_parts[0] = "http"
 
         return urlunsplit(url_parts)
+
+    def get_work_root_mapping(self):
+        return copy.deepcopy(self._work_root_mapping)
+
+    def get_work_root(self):
+        self._work_root_mapping.get(platform.system().lower())
 
     @property
     def server_url(self):
