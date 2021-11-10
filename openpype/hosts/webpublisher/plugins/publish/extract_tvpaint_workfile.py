@@ -31,12 +31,16 @@ class ExtractTVPaintSequences(pyblish.api.Extractor):
     review_bg = [255, 255, 255, 255]
 
     def process(self, context):
-        scene_data = context["sceneData"]
+        # Get workfle path
+        workfile_path = context.data["workfilePath"]
+        # Prepare scene data
+        scene_data = context.data["sceneData"]
         scene_mark_in = scene_data["sceneMarkIn"]
         scene_mark_out = scene_data["sceneMarkOut"]
         scene_start_frame = scene_data["sceneStartFrame"]
         scene_bg_color = scene_data["sceneBgColor"]
 
+        # Prepare layers behavior
         behavior_by_layer_id = context.data["layersPrePostBehavior"]
         exposure_frames_by_layer_id = context.data["layersExposureFrames"]
 
@@ -44,7 +48,13 @@ class ExtractTVPaintSequences(pyblish.api.Extractor):
         handle_start = context.data["handleStart"]
         handle_end = context.data["handleEnd"]
 
-        tvpaint_commands = SenderTVPaintCommands()
+        # Get JobQueue module
+        modules = context.context.data["openPypeModules"]
+        job_queue_module = modules["job_queue"]
+
+        tvpaint_commands = SenderTVPaintCommands(
+            workfile_path, job_queue_module
+        )
 
         # Change scene Start Frame to 0 to prevent frame index issues
         #   - issue is that TVPaint versions deal with frame indexes in a
