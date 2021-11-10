@@ -159,6 +159,10 @@ class ExecuteGeorgeScript(BaseCommand):
             self._script.replace(format_key, output_path)
             filepath_by_key[key] = output_path
 
+        if self._root_dir_key:
+            work_root = self.work_root()
+            format_key = "{" + self._root_dir_key + "}"
+            self._script.replace(format_key, work_root.replace("\\", "/"))
 
         self.execute_george_through_file(self._script)
 
