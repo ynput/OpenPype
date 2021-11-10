@@ -282,6 +282,34 @@ def projectmanager():
     PypeCommands().launch_project_manager()
 
 
+@main.command()
+@click.argument("output_path")
+@click.option("--project", help="Define project context")
+@click.option("--asset", help="Define asset in project (project must be set)")
+@click.option(
+    "--strict",
+    is_flag=True,
+    help="Full context must be set otherwise dialog can't be closed."
+)
+def contextselection(
+    output_path,
+    project,
+    asset,
+    strict
+):
+    """Show Qt dialog to select context.
+
+    Context is project name, asset name and task name. The result is stored
+    into json file which path is passed in first argument.
+    """
+    PypeCommands.contextselection(
+        output_path,
+        project,
+        asset,
+        strict
+    )
+
+
 @main.command(
     context_settings=dict(
         ignore_unknown_options=True,

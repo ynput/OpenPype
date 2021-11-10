@@ -43,7 +43,7 @@
         "bg-view-header": "#373D48",
         "bg-view-hover": "rgba(168, 175, 189, .3)",
         "bg-view-alternate": "rgb(36, 42, 50)",
-        "bg-view-disabled": "#434a56",
+        "bg-view-disabled": "#2C313A",
         "bg-view-alternate-disabled": "#2C313A",
         "bg-view-selection": "rgba(92, 173, 214, .4)",
         "bg-view-selection-hover": "rgba(92, 173, 214, .8)",
