@@ -273,7 +273,7 @@ class TVPaintCommands:
         ]
 
 
-class SenderTVPaintCommand(TVPaintCommands):
+class SenderTVPaintCommands(TVPaintCommands):
     def commands_data(self):
         return [
             command.command_data()
