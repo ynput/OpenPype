@@ -1,8 +1,6 @@
 import os
 import os.path
 import time
-import sys
-import six
 import threading
 import platform
 
@@ -14,6 +12,7 @@ log = Logger().get_logger("SyncServer")
 pysftp = None
 try:
     import pysftp
+    import paramiko
 except (ImportError, SyntaxError):
     pass
 
@@ -49,22 +48,15 @@ class SFTPHandler(AbstractProvider):
                         format(site_name))
             return
 
-        provider_presets = self.presets.get(self.CODE)
-        if not provider_presets:
-            msg = "Sync Server: No provider presets for {}".format(self.CODE)
-            log.warning(msg)
-            return
-
         # store to instance for reconnect
-        self.sftp_host = provider_presets["sftp_host"]
-        self.sftp_port = provider_presets["sftp_port"]
-        self.sftp_user = provider_presets["sftp_user"]
-        self.sftp_pass = provider_presets["sftp_pass"]
-        self.sftp_key = provider_presets["sftp_key"]
-        self.sftp_key_pass = provider_presets["sftp_key_pass"]
+        self.sftp_host = presets["sftp_host"]
+        self.sftp_port = presets["sftp_port"]
+        self.sftp_user = presets["sftp_user"]
+        self.sftp_pass = presets["sftp_pass"]
+        self.sftp_key = presets["sftp_key"]
+        self.sftp_key_pass = presets["sftp_key_pass"]
 
         self._tree = None
-        self.active = True
 
     @property
     def conn(self):
@@ -80,7 +72,7 @@ class SFTPHandler(AbstractProvider):
         Returns:
             (boolean)
         """
-        return self.conn is not None
+        return self.presets["enabled"] and self.conn is not None
 
     @classmethod
     def get_system_settings_schema(cls):
@@ -108,7 +100,7 @@ class SFTPHandler(AbstractProvider):
         editable = [
             # credentials could be overriden on Project or User level
             {
-                'key': "sftp_server",
+                'key': "sftp_host",
                 'label': "SFTP host name",
                 'type': 'text'
             },
@@ -130,7 +122,8 @@ class SFTPHandler(AbstractProvider):
             {
                 'key': "sftp_key",
                 'label': "SFTP user ssh key",
-                'type': 'path'
+                'type': 'path',
+                "multiplatform": True
             },
             {
                 'key': "sftp_key_pass",
@@ -144,7 +137,7 @@ class SFTPHandler(AbstractProvider):
                 "type": "dict-roots",
                 "object_type": {
                     "type": "path",
-                    "multiplatform": True,
+                    "multiplatform": False,
                     "multipath": False
                 }
             }
@@ -176,7 +169,8 @@ class SFTPHandler(AbstractProvider):
             {
                 'key': "sftp_key",
                 'label': "SFTP user ssh key",
-                'type': 'path'
+                'type': 'path',
+                "multiplatform": True
             },
             {
                 'key': "sftp_key_pass",
@@ -199,7 +193,7 @@ class SFTPHandler(AbstractProvider):
             Format is importing for usage of python's format ** approach
         """
         # roots cannot be locally overridden
-        return self.presets['root']
+        return self.presets['roots']
 
     def get_tree(self):
         """
@@ -426,7 +420,10 @@ class SFTPHandler(AbstractProvider):
         if self.sftp_key_pass:
             conn_params['private_key_pass'] = self.sftp_key_pass
 
-        return pysftp.Connection(**conn_params)
+        try:
+            return pysftp.Connection(**conn_params)
+        except paramiko.ssh_exception.SSHException:
+            log.warning("Couldn't connect", exc_info=True)
 
     def _mark_progress(self, collection, file, representation, server, site,
                        source_path, target_path, direction):
