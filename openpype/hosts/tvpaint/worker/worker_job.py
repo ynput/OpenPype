@@ -86,6 +86,9 @@ class BaseCommand:
         self._result = result
 
     def result(self):
+        return copy.deepcopy(self._result)
+
+    def response_data(self):
         return {
             "id": self.id,
             "result": self._result,
@@ -272,6 +275,12 @@ class TVPaintCommands:
             for command in self._commands
         ]
 
+    def response_data(self):
+        return [
+            command.response_data()
+            for command in self._commands
+        ]
+
 
 class SenderTVPaintCommands(TVPaintCommands):
     def commands_data(self):
@@ -318,7 +327,7 @@ class SenderTVPaintCommands(TVPaintCommands):
             job_status = self._job_queue_module.get_job_status(job_id)
             if job_status["done"]:
                 break
-            time.sleep(0.3)
+            time.sleep(1)
 
         # Check if job state is done
         if job_status["state"] != "done":

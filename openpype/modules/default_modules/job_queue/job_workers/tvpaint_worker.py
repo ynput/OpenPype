@@ -75,7 +75,7 @@ class WorkerCommunicator(BaseCommunicator):
             commands.execute()
             success = True
             message = "Executed"
-            data = commands.result()
+            data = commands.response_data()
 
         self._worker_connection.finish_job(success, message, data)
 
