@@ -1823,9 +1823,11 @@ class NukeDirmap(HostDirmap):
     def dirmap_routine(self, source_path, destination_path):
         log.debug("{}: {}->{}".format(self.file_name,
                                       source_path, destination_path))
+        source_path = source_path.lower().replace(os.sep, '/')
+        destination_path = destination_path.lower().replace(os.sep, '/')
         if platform.system().lower() == "windows":
             self.file_name = self.file_name.lower().replace(
-                source_path.lower(), destination_path.lower())
+                source_path, destination_path)
         else:
             self.file_name = self.file_name.replace(
                 source_path, destination_path)
@@ -1860,4 +1862,6 @@ def dirmap_file_name_filter(file_name):
                                   DirmapCache.sync_module(),
                                   file_name)
     dirmap_processor.process_dirmap()
-    return dirmap_processor.file_name
+    if os.path.exists(dirmap_processor.file_name):
+        return dirmap_processor.file_name
+    return file_name
