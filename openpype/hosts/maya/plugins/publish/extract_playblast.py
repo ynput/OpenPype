@@ -46,10 +46,10 @@ class ExtractPlayblast(openpype.api.Extractor):
         camera = instance.data['review_camera']
 
         override_viewport_options = (
-            self.capture_preset['Viewport Options']['override_viewport_options']
+            self.capture_preset['Viewport Options']
+                               ['override_viewport_options']
         )
         preset = lib.load_capture_preset(data=self.capture_preset)
-
 
         preset['camera'] = camera
         preset['start_frame'] = start
