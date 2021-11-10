@@ -60,7 +60,7 @@ class PypeCommands:
         standalonepublish.main()
 
     @staticmethod
-    def publish(paths, targets=None):
+    def publish(paths, targets=None, gui=False):
         """Start headless publishing.
 
         Publish use json from passed paths argument.
@@ -69,6 +69,7 @@ class PypeCommands:
             paths (list): Paths to jsons.
             targets (string): What module should be targeted
                 (to choose validator for example)
+            gui (bool): Show publish UI.
 
         Raises:
             RuntimeError: When there is no path to process.
@@ -76,6 +77,8 @@ class PypeCommands:
         from openpype.modules import ModulesManager
         from openpype import install, uninstall
         from openpype.api import Logger
+        from openpype.tools.utils.host_tools import show_publish
+        from openpype.tools.utils.lib import qt_app_context
 
         # Register target and host
         import pyblish.api
@@ -125,14 +128,18 @@ class PypeCommands:
         for plugin in plugins:
             print(plugin)
 
-        for result in pyblish.util.publish_iter():
-            if result["error"]:
-                log.error(error_format.format(**result))
-                uninstall()
-                sys.exit(1)
+        if gui:
+            with qt_app_context():
+                show_publish()
+        else:
+            for result in pyblish.util.publish_iter():
+                if result["error"]:
+                    log.error(error_format.format(**result))
+                    # uninstall()
+                    sys.exit(1)
 
         log.info("Publish finished.")
-        uninstall()
+        # uninstall()
 
     @staticmethod
     def remotepublishfromapp(project, batch_dir, host, user, targets=None):

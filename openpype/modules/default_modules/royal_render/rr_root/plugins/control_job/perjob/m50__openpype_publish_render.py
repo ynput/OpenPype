@@ -8,6 +8,7 @@ run it needs `OPENPYPE_ROOT` to be set to know where to execute OpenPype.
 import rr  # noqa
 import rrGlobal  # noqa
 import subprocess
+from subprocess import list2cmdline
 import os
 import glob
 import platform
@@ -44,7 +45,7 @@ class OpenPypeContextSelector:
                     # try to find in user local context
                     op_path = os.path.join(
                         os.environ.get("LOCALAPPDATA"),
-                        "Programs"
+                        "Programs",
                         "OpenPype", "openpype_console.exe"
                     )
                     if os.path.exists(op_path):
@@ -122,7 +123,8 @@ class OpenPypeContextSelector:
             self._show_rr_warning("Context selection failed.")
             return
 
-        self.context["app_name"] = self.job.renderer.name
+        # self.context["app_name"] = self.job.renderer.name
+        self.context["app_name"] = "maya/2020"
 
     @staticmethod
     def _show_rr_warning(text):
@@ -147,12 +149,14 @@ class OpenPypeContextSelector:
         for k, v in env.items():
             print("    {}: {}".format(k, v))
         args = [os.path.join(self.openpype_root, self.openpype_executable),
-                'publish', '-t', "rr_control", self.job.imageDir]
+                'publish', '-t', "rr_control", "--gui", self.job.imageDir]
 
         print(">>> running {}".format(" ".join(args)))
         out = None
+        orig = os.environ.copy()
+        orig.update(env)
         try:
-            out = subprocess.check_output(args, env=env)
+            subprocess.call(args, env=orig)
         except subprocess.CalledProcessError as e:
             self._show_rr_warning(" Publish failed [ {} ]\n{}".format(
                 e.returncode, out
