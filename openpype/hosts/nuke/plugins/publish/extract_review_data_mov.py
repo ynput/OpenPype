@@ -35,7 +35,7 @@ class ExtractReviewDataMov(openpype.api.Extractor):
         self.log.info("Creating staging dir...")
 
         if "representations" not in instance.data:
-            instance.data["representations"] = list()
+            instance.data["representations"] = []
 
         staging_dir = os.path.normpath(
             os.path.dirname(instance.data['path']))
