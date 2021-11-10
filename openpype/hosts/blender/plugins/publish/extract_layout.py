@@ -209,7 +209,7 @@ class ExtractLayout(openpype.api.Extractor):
         if len(fbx_files) == 1:
             fbx_representation = {
                 'name': 'fbx',
-                'ext': 'fbx',
+                'ext': '000.fbx',
                 'files': fbx_files[0],
                 "stagingDir": stagingdir,
             }
