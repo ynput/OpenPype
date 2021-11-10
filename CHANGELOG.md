@@ -1,6 +1,6 @@
 # Changelog
 
-## [3.6.0-nightly.4](https://github.com/pypeclub/OpenPype/tree/HEAD)
+## [3.6.0-nightly.5](https://github.com/pypeclub/OpenPype/tree/HEAD)
 
 [Full Changelog](https://github.com/pypeclub/OpenPype/compare/3.5.0...HEAD)
 
@@ -9,10 +9,17 @@
 - Maya : Colorspace configuration  [\#2170](https://github.com/pypeclub/OpenPype/pull/2170)
 - Blender: Added support for audio [\#2168](https://github.com/pypeclub/OpenPype/pull/2168)
 - Flame: a host basic integration [\#2165](https://github.com/pypeclub/OpenPype/pull/2165)
+- Houdini: simple HDA workflow [\#2072](https://github.com/pypeclub/OpenPype/pull/2072)
 
 **🚀 Enhancements**
 
+- Add both side availability on Site Sync sites to Loader [\#2220](https://github.com/pypeclub/OpenPype/pull/2220)
+- Tools: Center loader and library loader on show [\#2219](https://github.com/pypeclub/OpenPype/pull/2219)
+- Maya : Validate shape zero [\#2212](https://github.com/pypeclub/OpenPype/pull/2212)
+- Maya : validate unique names [\#2211](https://github.com/pypeclub/OpenPype/pull/2211)
+- Tools: OpenPype stylesheet in workfiles tool [\#2208](https://github.com/pypeclub/OpenPype/pull/2208)
 - Ftrack: Replace Queue with deque in event handlers logic [\#2204](https://github.com/pypeclub/OpenPype/pull/2204)
+- Tools: New select context dialog [\#2200](https://github.com/pypeclub/OpenPype/pull/2200)
 - Maya : Validate mesh ngons [\#2199](https://github.com/pypeclub/OpenPype/pull/2199)
 - Delivery: Check 'frame' key in template for sequence delivery [\#2196](https://github.com/pypeclub/OpenPype/pull/2196)
 - Usage of tools code [\#2185](https://github.com/pypeclub/OpenPype/pull/2185)
@@ -21,11 +28,11 @@
 - Tools: Experimental tools [\#2167](https://github.com/pypeclub/OpenPype/pull/2167)
 - Loader: Refactor and use OpenPype stylesheets [\#2166](https://github.com/pypeclub/OpenPype/pull/2166)
 - Add loader for linked smart objects in photoshop [\#2149](https://github.com/pypeclub/OpenPype/pull/2149)
-- Burnins: DNxHD profiles handling [\#2142](https://github.com/pypeclub/OpenPype/pull/2142)
-- Tools: Single access point for host tools [\#2139](https://github.com/pypeclub/OpenPype/pull/2139)
 
 **🐛 Bug fixes**
 
+- Maya : multiple subsets review broken [\#2210](https://github.com/pypeclub/OpenPype/pull/2210)
+- Fix - different command used for Linux and Mac OS [\#2207](https://github.com/pypeclub/OpenPype/pull/2207)
 - Tools: Workfiles tool don't use avalon widgets [\#2205](https://github.com/pypeclub/OpenPype/pull/2205)
 - Ftrack: Fill missing ftrack id on mongo project [\#2203](https://github.com/pypeclub/OpenPype/pull/2203)
 - Project Manager: Fix copying of tasks [\#2191](https://github.com/pypeclub/OpenPype/pull/2191)
@@ -34,10 +41,7 @@
 - MacOS: Launching of applications may cause Permissions error [\#2175](https://github.com/pypeclub/OpenPype/pull/2175)
 - Maya: Aspect ratio [\#2174](https://github.com/pypeclub/OpenPype/pull/2174)
 - Blender: Fix 'Deselect All' with object not in 'Object Mode' [\#2163](https://github.com/pypeclub/OpenPype/pull/2163)
-- Tools: Stylesheets are applied after tool show [\#2161](https://github.com/pypeclub/OpenPype/pull/2161)
-- Maya: Collect render - fix UNC path support 🐛 [\#2158](https://github.com/pypeclub/OpenPype/pull/2158)
 - Maya: Fix hotbox broken by scriptsmenu [\#2151](https://github.com/pypeclub/OpenPype/pull/2151)
-- Ftrack: Ignore save warnings exception in Prepare project action [\#2150](https://github.com/pypeclub/OpenPype/pull/2150)
 - Added validator for source files for Standalone Publisher [\#2138](https://github.com/pypeclub/OpenPype/pull/2138)
 
 **Merged pull requests:**
@@ -45,7 +49,6 @@
 - Settings: Site sync project settings improvement [\#2193](https://github.com/pypeclub/OpenPype/pull/2193)
 - Add validate active site button to sync queue on a project [\#2176](https://github.com/pypeclub/OpenPype/pull/2176)
 - Bump pillow from 8.2.0 to 8.3.2 [\#2162](https://github.com/pypeclub/OpenPype/pull/2162)
-- Bump axios from 0.21.1 to 0.21.4 in /website [\#2059](https://github.com/pypeclub/OpenPype/pull/2059)
 
 ## [3.5.0](https://github.com/pypeclub/OpenPype/tree/3.5.0) (2021-10-17)
 
@@ -62,8 +65,6 @@
 - PYPE-1218 - changed namespace to contain subset name in Maya [\#2114](https://github.com/pypeclub/OpenPype/pull/2114)
 - Added running configurable disk mapping command before start of OP [\#2091](https://github.com/pypeclub/OpenPype/pull/2091)
 - SFTP provider [\#2073](https://github.com/pypeclub/OpenPype/pull/2073)
-- Houdini: simple HDA workflow [\#2072](https://github.com/pypeclub/OpenPype/pull/2072)
-- Maya: Validate setdress top group [\#2068](https://github.com/pypeclub/OpenPype/pull/2068)
 
 **🚀 Enhancements**
 
@@ -79,8 +80,6 @@
 - Global: add global validators to settings [\#2078](https://github.com/pypeclub/OpenPype/pull/2078)
 - Use CRF for burnin when available [\#2070](https://github.com/pypeclub/OpenPype/pull/2070)
 - Project manager: Filter first item after selection of project [\#2069](https://github.com/pypeclub/OpenPype/pull/2069)
-- Nuke: Adding `still` image family workflow [\#2064](https://github.com/pypeclub/OpenPype/pull/2064)
-- Maya: validate authorized loaded plugins [\#2062](https://github.com/pypeclub/OpenPype/pull/2062)
 
 **🐛 Bug fixes**
 
@@ -102,8 +101,6 @@
 - Deadline: Collect deadline server does not check existence of deadline key [\#2082](https://github.com/pypeclub/OpenPype/pull/2082)
 - Blender: fixed Curves with modifiers in Rigs [\#2081](https://github.com/pypeclub/OpenPype/pull/2081)
 - Nuke UI scaling [\#2077](https://github.com/pypeclub/OpenPype/pull/2077)
-- Maya: Fix multi-camera renders [\#2065](https://github.com/pypeclub/OpenPype/pull/2065)
-- Fix Sync Queue when project disabled [\#2063](https://github.com/pypeclub/OpenPype/pull/2063)
 
 **Merged pull requests:**
 
@@ -112,11 +109,6 @@
 ## [3.4.1](https://github.com/pypeclub/OpenPype/tree/3.4.1) (2021-09-23)
 
 [Full Changelog](https://github.com/pypeclub/OpenPype/compare/CI/3.4.1-nightly.1...3.4.1)
-
-**🐛 Bug fixes**
-
-- Timers manger: Typo fix [\#2058](https://github.com/pypeclub/OpenPype/pull/2058)
-- Hiero: Editorial fixes [\#2057](https://github.com/pypeclub/OpenPype/pull/2057)
 
 ## [3.4.0](https://github.com/pypeclub/OpenPype/tree/3.4.0) (2021-09-17)
 
