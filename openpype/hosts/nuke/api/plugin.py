@@ -97,8 +97,7 @@ class NukeLoader(api.Loader):
         return dependent_nodes
 
 
-
-class ExporterReview:
+class ExporterReview(object):
     """
     Base class object for generating review data from Nuke
 
@@ -107,7 +106,6 @@ class ExporterReview:
         instance (pyblish.instance): instance of pyblish context
 
     """
-    _temp_nodes = []
     data = dict({
         "representations": list()
     })
@@ -120,6 +118,7 @@ class ExporterReview:
         self.log = klass.log
         self.instance = instance
         self.bake_colorspace = instance.data["bakeColorspace"]
+        self.bake_viewer_input = instance.data["bakeViewerInput"]
         self.path_in = self.instance.data.get("path", None)
         self.staging_dir = self.instance.data["stagingDir"]
         self.collection = self.instance.data.get("collection", None)
@@ -198,12 +197,6 @@ class ExporterReview:
 
             return ipn
 
-    def clean_nodes(self):
-        for node in self._temp_nodes:
-            nuke.delete(node)
-        self._temp_nodes = []
-        self.log.info("Deleted nodes...")
-
 
 class ExporterReviewLut(ExporterReview):
     """
@@ -215,6 +208,7 @@ class ExporterReviewLut(ExporterReview):
 
 
     """
+    _temp_nodes = []
 
     def __init__(self,
                  klass,
@@ -225,8 +219,7 @@ class ExporterReviewLut(ExporterReview):
                  lut_size=None,
                  lut_style=None):
         # initialize parent class
-        ExporterReview.__init__(self, klass, instance)
-        self._temp_nodes = []
+        super(ExporterReviewLut, self).__init__(klass, instance)
 
         # deal with now lut defined in viewer lut
         if hasattr(klass, "viewer_lut_raw"):
@@ -249,6 +242,12 @@ class ExporterReviewLut(ExporterReview):
         self.path = os.path.join(
             self.staging_dir, self.file).replace("\\", "/")
 
+    def clean_nodes(self):
+        for node in self._temp_nodes:
+            nuke.delete(node)
+        self._temp_nodes = []
+        self.log.info("Deleted nodes...")
+
     def generate_lut(self):
         # ---------- start nodes creation
 
@@ -260,23 +259,26 @@ class ExporterReviewLut(ExporterReview):
         self.previous_node = cms_node
         self.log.debug("CMSTestPattern...   `{}`".format(self._temp_nodes))
 
-        # Node View Process
-        ipn = self.get_view_process_node()
-        if ipn is not None:
-            # connect
-            ipn.setInput(0, self.previous_node)
-            self._temp_nodes.append(ipn)
-            self.previous_node = ipn
-            self.log.debug("ViewProcess...   `{}`".format(self._temp_nodes))
+        if self.bake_colorspace:
+            # Node View Process
+            if self.bake_viewer_input:
+                ipn = self.get_view_process_node()
+                if ipn is not None:
+                    # connect
+                    ipn.setInput(0, self.previous_node)
+                    self._temp_nodes.append(ipn)
+                    self.previous_node = ipn
+                    self.log.debug(
+                        "ViewProcess...   `{}`".format(self._temp_nodes))
 
-        if not self.viewer_lut_raw:
-            # OCIODisplay
-            dag_node = nuke.createNode("OCIODisplay")
-            # connect
-            dag_node.setInput(0, self.previous_node)
-            self._temp_nodes.append(dag_node)
-            self.previous_node = dag_node
-            self.log.debug("OCIODisplay...   `{}`".format(self._temp_nodes))
+            if not self.viewer_lut_raw:
+                # OCIODisplay
+                dag_node = nuke.createNode("OCIODisplay")
+                # connect
+                dag_node.setInput(0, self.previous_node)
+                self._temp_nodes.append(dag_node)
+                self.previous_node = dag_node
+                self.log.debug("OCIODisplay...   `{}`".format(self._temp_nodes))
 
         # GenerateLUT
         gen_lut_node = nuke.createNode("GenerateLUT")
@@ -319,6 +321,7 @@ class ExporterReviewMov(ExporterReview):
         instance (pyblish.instance): instance of pyblish context
 
     """
+    _temp_nodes = {}
 
     def __init__(self,
                  klass,
@@ -327,13 +330,9 @@ class ExporterReviewMov(ExporterReview):
                  ext=None,
                  ):
         # initialize parent class
-        ExporterReview.__init__(self, klass, instance)
-
+        super(ExporterReviewMov, self).__init__(klass, instance)
         # passing presets for nodes to self
-        if hasattr(klass, "nodes"):
-            self.nodes = klass.nodes
-        else:
-            self.nodes = {}
+        self.nodes = klass.nodes if hasattr(klass, "nodes") else {}
 
         # deal with now lut defined in viewer lut
         self.viewer_lut_raw = klass.viewer_lut_raw
@@ -352,6 +351,12 @@ class ExporterReviewMov(ExporterReview):
         self.file = self.fhead + self.name + ".{}".format(self.ext)
         self.path = os.path.join(
             self.staging_dir, self.file).replace("\\", "/")
+
+    def clean_nodes(self, node_name):
+        for node in self._temp_nodes[node_name]:
+            nuke.delete(node)
+        self._temp_nodes[node_name] = []
+        self.log.info("Deleted nodes...")
 
     def render(self, render_node_name):
         self.log.info("Rendering...  ")
@@ -376,6 +381,8 @@ class ExporterReviewMov(ExporterReview):
         return path
 
     def generate_mov(self, farm=False):
+        subset = self.instance.data["subset"]
+        self._temp_nodes[subset] = []
         # ---------- start nodes creation
 
         # Read node
@@ -388,20 +395,23 @@ class ExporterReviewMov(ExporterReview):
         r_node["colorspace"].setValue(self.write_colorspace)
 
         # connect
-        self._temp_nodes.append(r_node)
+        self._temp_nodes[subset].append(r_node)
         self.previous_node = r_node
-        self.log.debug("Read...   `{}`".format(self._temp_nodes))
+        self.log.debug("Read...   `{}`".format(self._temp_nodes[subset]))
 
         # only create colorspace baking if toggled on
         if self.bake_colorspace:
-            # View Process node
-            ipn = self.get_view_process_node()
-            if ipn is not None:
-                # connect
-                ipn.setInput(0, self.previous_node)
-                self._temp_nodes.append(ipn)
-                self.previous_node = ipn
-                self.log.debug("ViewProcess...   `{}`".format(self._temp_nodes))
+            if self.bake_viewer_input:
+                # View Process node
+                ipn = self.get_view_process_node()
+                if ipn is not None:
+                    # connect
+                    ipn.setInput(0, self.previous_node)
+                    self._temp_nodes[subset].append(ipn)
+                    self.previous_node = ipn
+                    self.log.debug(
+                        "ViewProcess...   `{}`".format(
+                            self._temp_nodes[subset]))
 
             if not self.viewer_lut_raw:
                 colorspaces = [
@@ -411,7 +421,7 @@ class ExporterReviewMov(ExporterReview):
                 if any(colorspaces):
                     # OCIOColorSpace with controled output
                     dag_node = nuke.createNode("OCIOColorSpace")
-                    self._temp_nodes.append(dag_node)
+                    self._temp_nodes[subset].append(dag_node)
                     for c in colorspaces:
                         test = dag_node["out_colorspace"].setValue(str(c))
                         if test:
@@ -427,9 +437,10 @@ class ExporterReviewMov(ExporterReview):
 
                 # connect
                 dag_node.setInput(0, self.previous_node)
-                self._temp_nodes.append(dag_node)
+                self._temp_nodes[subset].append(dag_node)
                 self.previous_node = dag_node
-                self.log.debug("OCIODisplay...   `{}`".format(self._temp_nodes))
+                self.log.debug("OCIODisplay...   `{}`".format(
+                    self._temp_nodes[subset]))
 
         # Write node
         write_node = nuke.createNode("Write")
@@ -452,8 +463,8 @@ class ExporterReviewMov(ExporterReview):
         write_node["raw"].setValue(1)
         # connect
         write_node.setInput(0, self.previous_node)
-        self._temp_nodes.append(write_node)
-        self.log.debug("Write...   `{}`".format(self._temp_nodes))
+        self._temp_nodes[subset].append(write_node)
+        self.log.debug("Write...   `{}`".format(self._temp_nodes[subset]))
         # ---------- end nodes creation
 
         # ---------- render or save to nk
@@ -475,7 +486,7 @@ class ExporterReviewMov(ExporterReview):
 
         self.log.debug("Representation...   `{}`".format(self.data))
 
-        # ---------- Clean up
-        self.clean_nodes()
+        self.clean_nodes(subset)
         nuke.scriptSave()
+
         return self.data
