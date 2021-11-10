@@ -544,8 +544,7 @@ def add_rendering_knobs(node, farm=True):
     Return:
         node (obj): with added knobs
     '''
-    knob_options = [
-            "Use existing frames", "Local"]
+    knob_options = ["Use existing frames", "Local"]
     if farm:
         knob_options.append("On farm")
 
@@ -568,6 +567,7 @@ def add_review_knob(node):
     if "review" not in node.knobs():
         knob = nuke.Boolean_Knob("review", "Review")
         knob.setValue(True)
+        knob.setFlag(nuke.STARTLINE)
         node.addKnob(knob)
     return node
 
@@ -583,6 +583,10 @@ def add_bake_colorspace_knob(node):
     '''
     if "bake_colorspace" not in node.knobs():
         knob = nuke.Boolean_Knob("bake_colorspace", "Bake colorspace")
+        knob.setValue(True)
+        node.addKnob(knob)
+    if "bake_viewer_input" not in node.knobs():
+        knob = nuke.Boolean_Knob("bake_viewer_input", "Bake viewer input")
         knob.setValue(True)
         node.addKnob(knob)
     return node
