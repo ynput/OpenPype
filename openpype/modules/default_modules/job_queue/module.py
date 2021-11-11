@@ -12,12 +12,13 @@ TVPaint before we know all data about the file that should be processed.
 
 ## Idea
 Idea is that there is a server, workers and workstation/s which need to process
-something on a worker. All of them must have access to job queue root which
-can be set in settings. Root is used as temp where files needed for job are
-stored before sending it or result files are stored when job is done.
+something on a worker.
 
-Workers and workstation/s must have access to server through ip adress to it's
+Workers and workstation/s must have access to server through adress to it's
 running instance. Workers use WebSockets and workstations are using HTTP calls.
+Also both of them must have access to job queue root which is set in
+settings. Root is used as temp where files needed for job can be stored before
+sending the job or where result files are stored when job is done.
 
 Server's address must be set in settings when is running so workers and
 workstations know where to send or receive jobs.
