@@ -2,10 +2,6 @@ import sys
 import json
 import copy
 import platform
-if sys.version_info[0] == 2:
-    from urlparse import urlsplit, urlunsplit
-else:
-    from urllib.parse import urlsplit, urlunsplit
 
 import click
 from openpype.modules import OpenPypeModule
@@ -34,6 +30,11 @@ class JobQueueModule(OpenPypeModule):
 
     @staticmethod
     def url_conversion(url, ws=False):
+        if sys.version_info[0] == 2:
+            from urlparse import urlsplit, urlunsplit
+        else:
+            from urllib.parse import urlsplit, urlunsplit
+
         if not url:
             return url
 

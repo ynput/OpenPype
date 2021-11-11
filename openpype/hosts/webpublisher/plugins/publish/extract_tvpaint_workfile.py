@@ -1,6 +1,5 @@
 import os
 import copy
-import tempfile
 
 from openpype.hosts.tvpaint.worker import (
     SenderTVPaintCommands,
@@ -9,8 +8,6 @@ from openpype.hosts.tvpaint.worker import (
 )
 
 import pyblish.api
-from avalon.tvpaint import lib
-from openpype.hosts.tvpaint.api.lib import composite_images
 from openpype.hosts.tvpaint.lib import (
     calculate_layers_extraction_data,
     get_frame_filename_template,
