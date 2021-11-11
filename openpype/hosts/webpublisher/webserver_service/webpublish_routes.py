@@ -20,10 +20,15 @@ log = PypeLogger.get_logger("WebServer")
 
 class RestApiResource:
     """Resource carrying needed info and Avalon DB connection for publish."""
-    def __init__(self, server_manager, executable, upload_dir):
+    def __init__(self, server_manager, executable, upload_dir,
+                 studio_task_queue=None):
         self.server_manager = server_manager
         self.upload_dir = upload_dir
         self.executable = executable
+
+        if studio_task_queue is None:
+            studio_task_queue = collections.deque().dequeu
+        self.studio_task_queue = studio_task_queue
 
         self.dbcon = AvalonMongoDB()
         self.dbcon.install()
@@ -182,8 +187,6 @@ class WebpublisherBatchPublishEndpoint(_RestApiEndpoint):
             msg = "Non existent OpenPype executable {}".format(openpype_app)
             raise RuntimeError(msg)
 
-        # for postprocessing in host, currently only PS
-        output = {}
         log.info("WebpublisherBatchPublishEndpoint called")
         content = await request.json()
 
@@ -225,13 +228,13 @@ class WebpublisherBatchPublishEndpoint(_RestApiEndpoint):
             batch_data = parse_json(os.path.join(batch_path, "manifest.json"))
             if not batch_data:
                 raise ValueError(
-                    "Cannot parse batch meta in {} folder".format(batch_path))
+                    "Cannot parse batch manifest in {}".format(batch_path))
             task_dir_name = batch_data["tasks"][0]
             task_data = parse_json(os.path.join(batch_path, task_dir_name,
                                                 "manifest.json"))
             if not task_data:
                 raise ValueError(
-                    "Cannot parse batch meta in {} folder".format(task_data))
+                    "Cannot parse task manifest in {}".format(task_data))
 
             for process_filter in studio_processing_filters:
                 filter_extensions = process_filter.get("extensions") or []
@@ -263,11 +266,14 @@ class WebpublisherBatchPublishEndpoint(_RestApiEndpoint):
                     args.append(value)
 
         log.info("args:: {}".format(args))
+        if content.get("studio_processing"):
+            log.debug("Adding to queue")
+            self.resource.studio_task_queue.append(args)
+        else:
+            subprocess.call(args)
 
-        subprocess.call(args)
         return Response(
             status=200,
-            body=self.resource.encode(output),
             content_type="application/json"
         )
 
