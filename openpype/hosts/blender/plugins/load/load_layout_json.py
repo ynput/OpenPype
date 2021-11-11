@@ -108,20 +108,22 @@ class JsonLayoutLoader(plugin.AssetLoader):
                 options=options
             )
 
-        # Create the camera asset and the camera instance
-        creator_plugin = lib.get_creator_by_name("CreateCamera")
-        if not creator_plugin:
-            raise ValueError("Creator plugin \"CreateCamera\" was "
-                             "not found.")
+        # Camera creation when loading a layout is not necessary for now,
+        # but the code is worth keeping in case we need it in the future.
+        # # Create the camera asset and the camera instance
+        # creator_plugin = lib.get_creator_by_name("CreateCamera")
+        # if not creator_plugin:
+        #     raise ValueError("Creator plugin \"CreateCamera\" was "
+        #                      "not found.")
 
-        api.create(
-            creator_plugin,
-            name="camera",
-            # name=f"{unique_number}_{subset}_animation",
-            asset=asset,
-            options={"useSelection": False}
-            # data={"dependencies": str(context["representation"]["_id"])}
-        )
+        # api.create(
+        #     creator_plugin,
+        #     name="camera",
+        #     # name=f"{unique_number}_{subset}_animation",
+        #     asset=asset,
+        #     options={"useSelection": False}
+        #     # data={"dependencies": str(context["representation"]["_id"])}
+        # )
 
     def process_asset(self,
                       context: dict,
