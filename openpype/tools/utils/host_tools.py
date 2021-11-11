@@ -55,8 +55,6 @@ class HostToolsHelper:
 
     def show_workfiles(self, parent=None, use_context=None, save=None):
         """Workfiles tool for changing context and saving workfiles."""
-        from avalon import style
-
         if use_context is None:
             use_context = True
 
@@ -80,7 +78,6 @@ class HostToolsHelper:
         # Pull window to the front.
         workfiles_tool.raise_()
         workfiles_tool.activateWindow()
-        workfiles_tool.setStyleSheet(style.load_stylesheet())
 
     def get_loader_tool(self, parent):
         """Create, cache and return loader tool window."""

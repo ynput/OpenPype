@@ -8,8 +8,9 @@ import datetime
 
 import Qt
 from Qt import QtWidgets, QtCore
-from avalon import style, io, api, pipeline
+from avalon import io, api, pipeline
 
+from openpype import style
 from openpype.tools.utils.lib import (
     schedule, qt_app_context
 )
@@ -131,6 +132,9 @@ class NameWindow(QtWidgets.QDialog):
 
         # Extensions combobox
         ext_combo = QtWidgets.QComboBox(inputs_widget)
+        # Add styled delegate to use stylesheets
+        ext_delegate = QtWidgets.QStyledItemDelegate()
+        ext_combo.setItemDelegate(ext_delegate)
         ext_combo.addItems(self.host.file_extensions())
 
         # Build inputs
@@ -186,6 +190,7 @@ class NameWindow(QtWidgets.QDialog):
         self.preview_label = preview_label
         self.subversion_input = subversion_input
         self.ext_combo = ext_combo
+        self._ext_delegate = ext_delegate
 
         self.refresh()
 
@@ -426,6 +431,7 @@ class FilesWidget(QtWidgets.QWidget):
     """A widget displaying files that allows to save and open files."""
     file_selected = QtCore.Signal(str)
     workfile_created = QtCore.Signal(str)
+    file_opened = QtCore.Signal()
 
     def __init__(self, parent=None):
         super(FilesWidget, self).__init__(parent=parent)
@@ -616,7 +622,7 @@ class FilesWidget(QtWidgets.QWidget):
 
         self._enter_session()
         host.open_file(filepath)
-        self.window().close()
+        self.file_opened.emit()
 
     def save_changes_prompt(self):
         self._messagebox = messagebox = QtWidgets.QMessageBox()
@@ -634,7 +640,7 @@ class FilesWidget(QtWidgets.QWidget):
 
         # Parenting the QMessageBox to the Widget seems to crash
         # so we skip parenting and explicitly apply the stylesheet.
-        messagebox.setStyleSheet(style.load_stylesheet())
+        messagebox.setStyle(self.style())
 
         result = messagebox.exec_()
         if result == messagebox.Yes:
@@ -994,6 +1000,7 @@ class Window(QtWidgets.QMainWindow):
         tasks_widget.task_changed.connect(self.on_task_changed)
         files_widget.file_selected.connect(self.on_file_select)
         files_widget.workfile_created.connect(self.on_workfile_create)
+        files_widget.file_opened.connect(self._on_file_opened)
         side_panel.save_clicked.connect(self.on_side_panel_save)
 
         self.home_page_widget = home_page_widget
@@ -1006,12 +1013,18 @@ class Window(QtWidgets.QMainWindow):
         self.files_widget = files_widget
         self.side_panel = side_panel
 
-        self.refresh()
-
         # Force focus on the open button by default, required for Houdini.
         files_widget.btn_open.setFocus()
 
         self.resize(1200, 600)
+
+        self._first_show = True
+
+    def showEvent(self, event):
+        super(Window, self).showEvent(event)
+        if self._first_show:
+            self._first_show = False
+            self.setStyleSheet(style.load_stylesheet())
 
     def keyPressEvent(self, event):
         """Custom keyPressEvent.
@@ -1053,6 +1066,9 @@ class Window(QtWidgets.QMainWindow):
 
     def on_workfile_create(self, filepath):
         self._create_workfile_doc(filepath)
+
+    def _on_file_opened(self):
+        self.close()
 
     def on_side_panel_save(self):
         workfile_doc, data = self.side_panel.get_workfile_data()
@@ -1201,7 +1217,6 @@ def show(root=None, debug=False, parent=None, use_context=True, save=True):
         window.set_save_enabled(save)
 
         window.show()
-        window.setStyleSheet(style.load_stylesheet())
 
         module.window = window
 
