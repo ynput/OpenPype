@@ -15,7 +15,6 @@ from openpype.modules import (
 )
 # Import interface defined by this addon to be able find other addons using it
 from openpype_interfaces import (
-    IExampleInterface,
     IPluginPaths,
     ITrayAction
 )
@@ -75,19 +74,6 @@ class ExampleAddon(OpenPypeAddOn, IPluginPaths, ITrayAction):
 
         self._create_dialog()
 
-    def connect_with_modules(self, enabled_modules):
-        """Method where you should find connected modules.
-
-        It is triggered by OpenPype modules manager at the best possible time.
-        Some addons and modules may required to connect with other modules
-        before their main logic is executed so changes would require to restart
-        whole process.
-        """
-        self._connected_modules = []
-        for module in enabled_modules:
-            if isinstance(module, IExampleInterface):
-                self._connected_modules.append(module)
-
     def _create_dialog(self):
         # Don't recreate dialog if already exists
         if self._dialog is not None:
@@ -106,8 +92,6 @@ class ExampleAddon(OpenPypeAddOn, IPluginPaths, ITrayAction):
         """
         # Make sure dialog is created
         self._create_dialog()
-        # Change value of dialog by current state
-        self._dialog.set_connected_modules(self.get_connected_modules())
         # Show dialog
         self._dialog.open()
 
