@@ -1,3 +1,40 @@
+"""Job queue OpenPype module was created for remote execution of commands.
+
+## Why is needed
+Primarily created for hosts which are not easilly controlled from command line
+or in headless mode and is easier to keep one process of host running listening
+for jobs to do.
+
+### Example
+One of examples is TVPaint which does not have headless mode, can run only one
+process at one time and it's impossible to know what should be executed inside
+TVPaint before we know all data about the file that should be processed.
+
+## Idea
+Idea is that there is a server, workers and workstation/s which need to process
+something on a worker. All of them must have access to job queue root which
+can be set in settings. Root is used as temp where files needed for job are
+stored before sending it or result files are stored when job is done.
+
+Workers and workstation/s must have access to server through ip adress to it's
+running instance. Workers use WebSockets and workstations are using HTTP calls.
+
+Server's address must be set in settings when is running so workers and
+workstations know where to send or receive jobs.
+
+## Command line commands
+### start_server
+- start server which is handles jobs
+- it is possible to specify port and host address (default is localhost:8079)
+
+### start_worker
+- start worker which will process jobs
+- has required possitional argument which is application name from OpenPype
+    settings e.g. 'tvpaint/11-5' ('tvpaint' is group '11-5' is variant)
+- it is possible to specify server url but url from settings is used when not
+    passed (this is added mainly for developing purposes)
+"""
+
 import sys
 import json
 import copy
