@@ -44,6 +44,13 @@ class WorkerClient(JsonRpcClient):
 
 
 class WorkerJobsConnection:
+    """WS connection to Job server.
+
+    Helper class to create a connection to process jobs from job server.
+
+    To be able receive jobs is needed to create a connection and then register
+    as worker for specific host.
+    """
     retry_time_seconds = 5
 
     def __init__(self, server_url, host_name, loop=None):
@@ -73,6 +80,7 @@ class WorkerJobsConnection:
         return None
 
     def finish_job(self, success=True, message=None, data=None):
+        """Worker finished job and sets the result which is send to server."""
         if self.client is None:
             print((
                 "Couldn't sent job status to server because"
@@ -82,6 +90,7 @@ class WorkerJobsConnection:
             self.client.finish_job(success, message, data)
 
     async def main_loop(self, register_worker=True):
+        """Main loop of connection which keep connection to server alive."""
         self._is_running = True
 
         while not self._stopped:
@@ -156,6 +165,7 @@ class WorkerJobsConnection:
         await self._stop_cleanup()
 
     def register_as_worker(self):
+        """Register as worker ready to work on server side."""
         asyncio.ensure_future(self._register_as_worker(), loop=self._loop)
 
     async def _register_as_worker(self):
