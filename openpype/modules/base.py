@@ -333,6 +333,15 @@ def _load_modules():
             # - check manifest and content of manifest
             try:
                 if os.path.isdir(fullpath):
+                    # Module without init file can't be used as OpenPype module
+                    #   because the module class could not be imported
+                    init_file = os.path.join(fullpath, "__init__.py")
+                    if not os.path.exists(init_file):
+                        log.info((
+                            "Skipping module directory because of"
+                            " missing \"__init__.py\" file. \"{}\""
+                        ).format(fullpath))
+                        continue
                     import_module_from_dirpath(dirpath, filename, modules_key)
 
                 elif ext in (".py", ):
