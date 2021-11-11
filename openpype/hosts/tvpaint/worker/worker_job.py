@@ -136,22 +136,26 @@ class ExecuteGeorgeScript(BaseCommand):
     name = "execute_george_through_file"
 
     def __init__(
-        self, script, tmp_file_keys=None, root_dir_key=None, data=None
+        self, script_lines, tmp_file_keys=None, root_dir_key=None, data=None
     ):
         data = data or {}
         if not tmp_file_keys:
             tmp_file_keys = data.get("tmp_file_keys") or []
 
-        data["script"] = script
+        data["script_lines"] = script_lines
         data["tmp_file_keys"] = tmp_file_keys
         data["root_dir_key"] = root_dir_key
-        self._script = script
+        self._script_lines = script_lines
         self._tmp_file_keys = tmp_file_keys
         self._root_dir_key = root_dir_key
         super().__init__(data)
 
     def execute(self):
         filepath_by_key = {}
+        script = self._script_lines
+        if isinstance(script, list):
+            script = "\n".join(script)
+
         for key in self._tmp_file_keys:
             output_file = tempfile.NamedTemporaryFile(
                 mode="w", prefix=TMP_FILE_PREFIX, suffix=".txt", delete=False
@@ -159,15 +163,17 @@ class ExecuteGeorgeScript(BaseCommand):
             output_file.close()
             format_key = "{" + key + "}"
             output_path = output_file.name.replace("\\", "/")
-            self._script.replace(format_key, output_path)
+            script = script.replace(format_key, output_path)
             filepath_by_key[key] = output_path
 
         if self._root_dir_key:
             job_queue_root = self.job_queue_root()
             format_key = "{" + self._root_dir_key + "}"
-            self._script.replace(format_key, job_queue_root.replace("\\", "/"))
+            script = script.replace(
+                format_key, job_queue_root.replace("\\", "/")
+            )
 
-        self.execute_george_through_file(self._script)
+        self.execute_george_through_file(script)
 
         result = {}
         for key, filepath in filepath_by_key.items():
@@ -180,10 +186,10 @@ class ExecuteGeorgeScript(BaseCommand):
 
     @classmethod
     def from_existing(cls, data):
-        script = data.pop("script")
+        script_lines = data.pop("script_lines")
         tmp_file_keys = data.pop("tmp_file_keys", None)
         root_dir_key = data.pop("root_dir_key", None)
-        return cls(script, tmp_file_keys, root_dir_key, data)
+        return cls(script_lines, tmp_file_keys, root_dir_key, data)
 
 
 class CollectSceneData(BaseCommand):

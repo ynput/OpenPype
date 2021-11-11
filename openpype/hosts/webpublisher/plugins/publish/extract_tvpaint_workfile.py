@@ -24,8 +24,12 @@ from PIL import Image
 class ExtractTVPaintSequences(pyblish.api.Extractor):
     label = "Extract TVPaint Sequences"
     hosts = ["webpublisher"]
-    families = ["review", "renderPass", "renderLayer"]
     targets = ["tvpaint"]
+
+    # Context plugin does not have families filtering
+    families_filter = ["review", "renderPass", "renderLayer"]
+
+    job_queue_root_key = "jobs_root"
 
     # Modifiable with settings
     review_bg = [255, 255, 255, 255]
@@ -33,6 +37,9 @@ class ExtractTVPaintSequences(pyblish.api.Extractor):
     def process(self, context):
         # Get workfle path
         workfile_path = context.data["workfilePath"]
+        jobs_root = context.data["jobsRoot"]
+        jobs_root_slashed = jobs_root.replace("\\", "/")
+
         # Prepare scene data
         scene_data = context.data["sceneData"]
         scene_mark_in = scene_data["sceneMarkIn"]
@@ -64,8 +71,20 @@ class ExtractTVPaintSequences(pyblish.api.Extractor):
             ExecuteSimpleGeorgeScript("tv_startframe 0")
         )
 
+        root_key_replacement = "{" + self.job_queue_root_key + "}"
         after_render_instances = []
         for instance in context:
+            instance_families = set(instance.data.get("families", []))
+            instance_families.add(instance.data["family"])
+            valid = False
+            for family in instance_families:
+                if family in self.families_filter:
+                    valid = True
+                    break
+
+            if not valid:
+                continue
+
             self.log.info("* Preparing commands for instance \"{}\"".format(
                 instance.data["label"]
             ))
@@ -89,12 +108,12 @@ class ExtractTVPaintSequences(pyblish.api.Extractor):
                 )
             )
 
-            # TODO handle this whole staging dir properly
             # Staging dir must be created during collection
-            output_dir = instance.data["stagingDir"]
-            src_root = "c:/"
-            dst_root = "{worker_root}"
-            work_output_dir = output_dir.replace(src_root, dst_root)
+            staging_dir = instance.data["stagingDir"].replace("\\", "/")
+
+            job_root_template = staging_dir.replace(
+                jobs_root_slashed, root_key_replacement
+            )
 
             # Frame start/end may be stored as float
             frame_start = int(instance.data["frameStart"])
@@ -126,18 +145,18 @@ class ExtractTVPaintSequences(pyblish.api.Extractor):
 
             # -----------------------------------------------------------------
             self.log.debug(
-                "Files will be rendered to folder: {}".format(output_dir)
+                "Files will be rendered to folder: {}".format(staging_dir)
             )
 
             output_filepaths_by_frame_idx = {}
             for frame_idx in range(mark_in, mark_out + 1):
                 filename = filename_template.format(frame=frame_idx)
-                filepath = os.path.join(output_dir, filename)
+                filepath = os.path.join(staging_dir, filename)
                 output_filepaths_by_frame_idx[frame_idx] = filepath
 
             # Prepare data for post render processing
             post_render_data = {
-                "output_dir": output_dir,
+                "output_dir": staging_dir,
                 "layers": filtered_layers,
                 "output_filepaths_by_frame_idx": output_filepaths_by_frame_idx,
                 "instance": instance,
@@ -152,7 +171,7 @@ class ExtractTVPaintSequences(pyblish.api.Extractor):
             if instance.data["family"] == "review":
                 self.add_render_review_command(
                     tvpaint_commands, mark_in, mark_out, scene_bg_color,
-                    work_output_dir, filename_template
+                    job_root_template, filename_template
                 )
                 continue
 
@@ -166,7 +185,8 @@ class ExtractTVPaintSequences(pyblish.api.Extractor):
             )
             filepaths_by_layer_id = self.add_render_command(
                 tvpaint_commands,
-                work_output_dir,
+                job_root_template,
+                staging_dir,
                 filtered_layers,
                 extraction_data_by_layer_id
             )
@@ -325,7 +345,7 @@ class ExtractTVPaintSequences(pyblish.api.Extractor):
         mark_in,
         mark_out,
         scene_bg_color,
-        work_output_dir,
+        job_root_template,
         filename_template
     ):
         """ Export images from TVPaint using `tv_savesequence` command.
@@ -340,15 +360,17 @@ class ExtractTVPaintSequences(pyblish.api.Extractor):
         self.log.debug("Preparing data for rendering.")
         bg_color = self._get_review_bg_color()
         first_frame_filepath = "/".join([
-            work_output_dir,
+            job_root_template,
             filename_template.format(frame=mark_in)
-        ]).replace("\\", "/")
+        ])
 
         george_script_lines = [
             # Change bg color to color from settings
             "tv_background \"color\" {} {} {}".format(*bg_color),
             "tv_SaveMode \"PNG\"",
-            "export_path = \"{}\"".format(first_frame_filepath),
+            "export_path = \"{}\"".format(
+                first_frame_filepath.replace("\\", "/")
+            ),
             "tv_savesequence '\"'export_path'\"' {} {}".format(
                 mark_in, mark_out
             )
@@ -366,13 +388,17 @@ class ExtractTVPaintSequences(pyblish.api.Extractor):
             george_script_lines.append(" ".join(orig_color_command))
 
         tvpaint_commands.add_command(
-            ExecuteGeorgeScript("\n".join(george_script_lines))
+            ExecuteGeorgeScript(
+                george_script_lines,
+                root_dir_key=self.job_queue_root_key
+            )
         )
 
     def add_render_command(
         self,
         tvpaint_commands,
-        work_output_dir,
+        job_root_template,
+        staging_dir,
         layers,
         extraction_data_by_layer_id
     ):
@@ -402,20 +428,26 @@ class ExtractTVPaintSequences(pyblish.api.Extractor):
             filenames_by_frame_index = render_data["filenames_by_frame_index"]
 
             filepaths_by_frame = {}
+            command_filepath_by_frame = {}
             for frame_idx, ref_idx in frame_references.items():
                 # None reference is skipped because does not have source
                 if ref_idx is None:
                     filepaths_by_frame[frame_idx] = None
                     continue
                 filename = filenames_by_frame_index[frame_idx]
-                dst_path = "/".join([work_output_dir, filename])
-                filepaths_by_frame[frame_idx] = dst_path
-                if frame_idx != ref_idx:
-                    continue
 
-            filepaths_by_layer_id[layer_id] = self._add_render_layer_command(
-                tvpaint_commands, layer, filepaths_by_frame
+                filepaths_by_frame[frame_idx] = os.path.join(
+                    staging_dir, filename
+                )
+                if frame_idx == ref_idx:
+                    command_filepath_by_frame[frame_idx] = "/".join(
+                        [job_root_template, filename]
+                    )
+
+            self._add_render_layer_command(
+                tvpaint_commands, layer, command_filepath_by_frame
             )
+            filepaths_by_layer_id[layer_id] = filepaths_by_frame
 
         return filepaths_by_layer_id
 
@@ -430,7 +462,6 @@ class ExtractTVPaintSequences(pyblish.api.Extractor):
             "tv_SaveMode \"PNG\""
         ]
 
-        filepaths_by_frame = {}
         for frame_idx, filepath in filepaths_by_frame.items():
             if filepath is None:
                 continue
@@ -438,12 +469,16 @@ class ExtractTVPaintSequences(pyblish.api.Extractor):
             # Go to frame
             george_script_lines.append("tv_layerImage {}".format(frame_idx))
             # Store image to output
-            george_script_lines.append("tv_saveimage \"{}\"".format(filepath))
+            george_script_lines.append(
+                "tv_saveimage \"{}\"".format(filepath.replace("\\", "/"))
+            )
 
         tvpaint_commands.add_command(
-            ExecuteGeorgeScript("\n".join(george_script_lines))
+            ExecuteGeorgeScript(
+                george_script_lines,
+                root_dir_key=self.job_queue_root_key
+            )
         )
-        return filepaths_by_frame
 
     def _finish_layer_render(
         self,

@@ -15,7 +15,7 @@ from openpype.lib import get_subset_name_with_asset_doc
 
 class CollectTVPaintInstances(pyblish.api.ContextPlugin):
     label = "Collect TVPaint Instances"
-    order = pyblish.api.CollectorOrder - 0.35
+    order = pyblish.api.CollectorOrder + 0.2
     hosts = ["webpublisher"]
     targets = ["tvpaint"]
 
@@ -136,14 +136,10 @@ class CollectTVPaintInstances(pyblish.api.ContextPlugin):
             new_instances.append(instance)
 
         # Set data same for all instances
-        scene_fps = context.data["sceneData"]["sceneFps"]
         frame_start = context.data.get("frameStart")
         frame_end = context.data.get("frameEnd")
 
         for instance in new_instances:
-            if instance.data.get("fps") is None:
-                instance.data["fps"] = scene_fps
-
             if (
                 instance.data.get("frameStart") is None
                 or instance.data.get("frameEnd") is None
@@ -157,6 +153,12 @@ class CollectTVPaintInstances(pyblish.api.ContextPlugin):
             if instance.data.get("task") is None:
                 instance.data["task"] = task_name
 
+            if "representations" not in instance.data:
+                instance.data["representations"] = []
+
+            if "source" not in instance.data:
+                instance.data["source"] = "webpublisher"
+
     def _create_workfile_instance(self, context, subset_name):
         workfile_path = context.data["workfilePath"]
         staging_dir = os.path.dirname(workfile_path)
@@ -168,7 +170,7 @@ class CollectTVPaintInstances(pyblish.api.ContextPlugin):
             "label": subset_name,
             "subset": subset_name,
             "family": self.workfile_family,
-            "families": [self.workfile_family],
+            "families": [],
             "stagingDir": staging_dir,
             "representations": [{
                 "name": ext.lstrip("."),
@@ -179,8 +181,7 @@ class CollectTVPaintInstances(pyblish.api.ContextPlugin):
         })
 
     def _create_review_instance(self, context, subset_name):
-        context_staging_dir = context.data["contextStagingDir"]
-        staging_dir = os.path.join(context_staging_dir, subset_name)
+        staging_dir = self._create_staging_dir(context, subset_name)
         layers_data = context.data["layersData"]
         # Filter hidden layers
         filtered_layers_data = [
@@ -193,11 +194,13 @@ class CollectTVPaintInstances(pyblish.api.ContextPlugin):
             "label": subset_name,
             "subset": subset_name,
             "family": self.review_family,
+            "families": [],
             "layers": filtered_layers_data,
             "stagingDir": staging_dir
         })
 
     def _create_render_pass_instance(self, context, layer, subset_name):
+        staging_dir = self._create_staging_dir(context, subset_name)
         # Global instance data modifications
         # Fill families
         return context.create_instance(**{
@@ -208,10 +211,12 @@ class CollectTVPaintInstances(pyblish.api.ContextPlugin):
             # Add `review` family for thumbnail integration
             "families": [self.render_pass_family, "review"],
             "representations": [],
-            "layers": [layer]
+            "layers": [layer],
+            "stagingDir": staging_dir
         })
 
     def _create_render_layer_instance(self, context, layers, subset_name):
+        staging_dir = self._create_staging_dir(context, subset_name)
         # Global instance data modifications
         # Fill families
         return context.create_instance(**{
@@ -222,5 +227,13 @@ class CollectTVPaintInstances(pyblish.api.ContextPlugin):
             # Add `review` family for thumbnail integration
             "families": [self.render_pass_family, "review"],
             "representations": [],
-            "layers": layers
+            "layers": layers,
+            "stagingDir": staging_dir
         })
+
+    def _create_staging_dir(self, context, subset_name):
+        context_staging_dir = context.data["contextStagingDir"]
+        staging_dir = os.path.join(context_staging_dir, subset_name)
+        if not os.path.exists(staging_dir):
+            os.makedirs(staging_dir)
+        return staging_dir
