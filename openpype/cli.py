@@ -61,6 +61,10 @@ def tray(debug=False):
 @main.group(help="Run command line arguments of OpenPype modules")
 @click.pass_context
 def module(ctx):
+    """Module specific commands created dynamically.
+
+    These commands are generated dynamically by currently loaded addon/modules.
+    """
     pass
 
 
