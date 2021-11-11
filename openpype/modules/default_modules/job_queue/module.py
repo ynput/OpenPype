@@ -148,7 +148,7 @@ class JobQueueModule(OpenPypeModule):
 
     @classmethod
     def _start_tvpaint_worker(cls, app, server_url):
-        from .job_workers.tvpaint_worker import main
+        from openpype.hosts.tvpaint.worker import main
 
         executable = app.find_executable()
         if not executable:

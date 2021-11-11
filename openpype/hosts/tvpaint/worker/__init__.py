@@ -7,6 +7,7 @@ from .worker_job import (
     ProcessTVPaintCommands
 )
 
+from .worker import main
 
 __all__ = (
     "JobFailed",
@@ -14,5 +15,7 @@ __all__ = (
     "ExecuteGeorgeScript",
     "CollectSceneData",
     "SenderTVPaintCommands",
-    "ProcessTVPaintCommands"
+    "ProcessTVPaintCommands",
+
+    "main"
 )

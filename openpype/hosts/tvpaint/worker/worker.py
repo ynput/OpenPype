@@ -2,15 +2,20 @@ import signal
 import time
 import asyncio
 
-from openpype.hosts.tvpaint.worker import ProcessTVPaintCommands
 from avalon.tvpaint.communication_server import (
     BaseCommunicator,
     CommunicationWrapper
 )
-from .base_worker import WorkerJobsConnection
+from openpype_modules.job_queue.job_workers import WorkerJobsConnection
+
+from .worker_job import ProcessTVPaintCommands
 
 
-class WorkerCommunicator(BaseCommunicator):
+class TVPaintWorkerCommunicator(BaseCommunicator):
+    """Modified commuicator which cares about processing jobs.
+
+    Received jobs are send to TVPaint by parsing 'ProcessTVPaintCommands'.
+    """
     def __init__(self, server_url):
         super().__init__()
 
@@ -19,6 +24,7 @@ class WorkerCommunicator(BaseCommunicator):
         self._worker_connection = None
 
     def _start_webserver(self):
+        """Create connection to workers server before TVPaint server."""
         loop = self.websocket_server.loop
         self._worker_connection = WorkerJobsConnection(
             self._server_url, "tvpaint", loop
@@ -32,15 +38,18 @@ class WorkerCommunicator(BaseCommunicator):
 
     def _on_client_connect(self, *args, **kwargs):
         super()._on_client_connect(*args, **kwargs)
+        # Register as "ready to work" worker
         self._worker_connection.register_as_worker()
 
     def stop(self):
+        """Stop worker connection and TVPaint server."""
         self._worker_connection.stop()
         self.return_code = 0
         super().stop()
 
     @property
     def current_job(self):
+        """Retrieve job which should be processed."""
         if self._worker_connection:
             return self._worker_connection.current_job
         return None
@@ -63,23 +72,33 @@ class WorkerCommunicator(BaseCommunicator):
         if job is None:
             return
 
+        # Prepare variables used for sendig
         success = False
         message = "Unknown function"
         data = None
         job_data = job["data"]
         workfile = job_data["workfile"]
+        # Currently can process only "commands" function
         if job_data.get("function") == "commands":
-            commands = ProcessTVPaintCommands(
-                workfile, job_data["commands"], self
-            )
-            commands.execute()
-            success = True
-            message = "Executed"
-            data = commands.response_data()
+            try:
+                commands = ProcessTVPaintCommands(
+                    workfile, job_data["commands"], self
+                )
+                commands.execute()
+                data = commands.response_data()
+                success = True
+                message = "Executed"
+
+            except Exception as exc:
+                message = "Error on worker: {}".format(str(exc))
 
         self._worker_connection.finish_job(success, message, data)
 
     def main_loop(self):
+        """Main loop where jobs are processed.
+
+        Server is stopped by killing this process or TVPaint process.
+        """
         while self.server_is_running:
             if self._check_process():
                 self._process_job()
@@ -89,7 +108,7 @@ class WorkerCommunicator(BaseCommunicator):
 
 
 def _start_tvpaint(tvpaint_executable_path, server_url):
-    communicator = WorkerCommunicator(server_url)
+    communicator = TVPaintWorkerCommunicator(server_url)
     CommunicationWrapper.set_communicator(communicator)
     communicator.launch([tvpaint_executable_path])
 
