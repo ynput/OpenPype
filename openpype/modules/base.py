@@ -107,12 +107,9 @@ class _InterfacesClass(_ModuleClass):
             if attr_name in ("__path__", "__file__"):
                 return None
 
-            # Fake Interface if is not missing
-            self.__attributes__[attr_name] = type(
-                attr_name,
-                (MissingInteface, ),
-                {}
-            )
+            raise ImportError((
+                "cannot import name '{}' from 'openpype_interfaces'"
+            ).format(attr_name))
 
         return self.__attributes__[attr_name]
 
