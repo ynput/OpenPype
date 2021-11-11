@@ -329,14 +329,6 @@ class OpenPypeInterface:
     pass
 
 
-class MissingInteface(OpenPypeInterface):
-    """Class representing missing interface class.
-
-    Used when interface is not available from currently registered paths.
-    """
-    pass
-
-
 @six.add_metaclass(ABCMeta)
 class OpenPypeModule:
     """Base class of pype module.
