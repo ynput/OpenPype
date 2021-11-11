@@ -6,7 +6,7 @@ class CollectRRPathFromInstance(pyblish.api.InstancePlugin):
     """Collect RR Path from instance."""
 
     order = pyblish.api.CollectorOrder
-    label = "Deadline Webservice from the Instance"
+    label = "Royal Render Path from the Instance"
     families = ["rendering"]
 
     def process(self, instance):

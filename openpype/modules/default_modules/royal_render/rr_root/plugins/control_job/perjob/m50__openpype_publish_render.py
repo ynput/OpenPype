@@ -148,8 +148,12 @@ class OpenPypeContextSelector:
         print(">>> setting environment:")
         for k, v in env.items():
             print("    {}: {}".format(k, v))
+
         args = [os.path.join(self.openpype_root, self.openpype_executable),
-                'publish', '-t', "rr_control", "--gui", self.job.imageDir]
+                'publish', '-t', "rr_control", "--gui",
+                os.path.join(self.job.imageDir,
+                             os.path.dirname(self.job.imageFileName))
+                ]
 
         print(">>> running {}".format(" ".join(args)))
         out = None

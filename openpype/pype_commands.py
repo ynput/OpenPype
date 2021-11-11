@@ -83,7 +83,10 @@ class PypeCommands:
         # Register target and host
         import pyblish.api
         import pyblish.util
-        from pprint import pprint
+
+        log = Logger.get_logger()
+
+        install()
 
         manager = ModulesManager()
 
@@ -103,10 +106,6 @@ class PypeCommands:
         )
         os.environ.update(env)
 
-        log = Logger.get_logger()
-
-        install()
-
         pyblish.api.register_host("shell")
 
         if targets:
@@ -120,9 +119,6 @@ class PypeCommands:
 
         log.info("Running publish ...")
 
-        # Error exit as soon as any error occurs.
-        error_format = "Failed {plugin.__name__}: {error} -- {error.traceback}"
-
         plugins = pyblish.api.discover()
         print("Using plugins:")
         for plugin in plugins:
@@ -132,6 +128,10 @@ class PypeCommands:
             with qt_app_context():
                 show_publish()
         else:
+            # Error exit as soon as any error occurs.
+            error_format = ("Failed {plugin.__name__}: "
+                            "{error} -- {error.traceback}")
+
             for result in pyblish.util.publish_iter():
                 if result["error"]:
                     log.error(error_format.format(**result))
@@ -139,7 +139,6 @@ class PypeCommands:
                     sys.exit(1)
 
         log.info("Publish finished.")
-        # uninstall()
 
     @staticmethod
     def remotepublishfromapp(project, batch_dir, host, user, targets=None):
