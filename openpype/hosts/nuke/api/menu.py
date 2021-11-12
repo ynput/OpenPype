@@ -1,6 +1,7 @@
 import os
 import nuke
 from avalon.api import Session
+from avalon.nuke.pipeline import get_main_window
 
 from .lib import WorkfileSettings
 from openpype.api import Logger, BuildWorkfile, get_current_project_settings
@@ -25,7 +26,7 @@ def install():
     menu.removeItem(rm_item[1].name())
     menu.addCommand(
         name,
-        host_tools.show_workfiles,
+        lambda: host_tools.show_workfiles(parent=get_main_window()),
         index=2
     )
     menu.addSeparator(index=3)
