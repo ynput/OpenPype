@@ -158,7 +158,9 @@ def extractenvironments(output_json_path, project, asset, task, app):
 @click.option("-d", "--debug", is_flag=True, help="Print debug messages")
 @click.option("-t", "--targets", help="Targets module", default=None,
               multiple=True)
-def publish(debug, paths, targets):
+@click.option("-g", "--gui", is_flag=True,
+              help="Show Publish UI", default=False)
+def publish(debug, paths, targets, gui):
     """Start CLI publishing.
 
     Publish collects json from paths provided as an argument.
@@ -166,7 +168,7 @@ def publish(debug, paths, targets):
     """
     if debug:
         os.environ['OPENPYPE_DEBUG'] = '3'
-    PypeCommands.publish(list(paths), targets)
+    PypeCommands.publish(list(paths), targets, gui)
 
 
 @main.command()
