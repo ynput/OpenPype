@@ -8,7 +8,6 @@ run it needs `OPENPYPE_ROOT` to be set to know where to execute OpenPype.
 import rr  # noqa
 import rrGlobal  # noqa
 import subprocess
-from subprocess import list2cmdline
 import os
 import glob
 import platform
@@ -156,14 +155,13 @@ class OpenPypeContextSelector:
                 ]
 
         print(">>> running {}".format(" ".join(args)))
-        out = None
         orig = os.environ.copy()
         orig.update(env)
         try:
             subprocess.call(args, env=orig)
         except subprocess.CalledProcessError as e:
-            self._show_rr_warning(" Publish failed [ {} ]\n{}".format(
-                e.returncode, out
+            self._show_rr_warning(" Publish failed [ {} ]".format(
+                e.returncode
             ))
 
 

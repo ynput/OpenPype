@@ -67,26 +67,13 @@ def collect(root,
 
 
 class CollectSequencesFromJob(pyblish.api.ContextPlugin):
-    """Gather file sequences from working directory
+    """Gather file sequences from job directory.
 
-    When "FILESEQUENCE" environment variable is set these paths (folders or
-    .json files) are parsed for image sequences. Otherwise the current
-    working directory is searched for file sequences.
-
-    The json configuration may have the optional keys:
-        asset (str): The asset to publish to. If not provided fall back to
-            api.Session["AVALON_ASSET"]
-        subset (str): The subset to publish to. If not provided the sequence's
-            head (up to frame number) will be used.
-        frame_start (int): The start frame for the sequence
-        frame_end (int): The end frame for the sequence
-        root (str): The path to collect from (can be relative to the .json)
-        regex (str): A regex for the sequence filename
-        exclude_regex (str): A regex for filename to exclude from collection
-        metadata (dict): Custom metadata for instance.data["metadata"]
+    When "OPENPYPE_PUBLISH_DATA" environment variable is set these paths
+    (folders or .json files) are parsed for image sequences. Otherwise the
+    current working directory is searched for file sequences.
 
     """
-
     order = pyblish.api.CollectorOrder
     targets = ["rr_control"]
     label = "Collect Rendered Frames"
