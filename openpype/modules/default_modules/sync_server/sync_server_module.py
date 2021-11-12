@@ -793,20 +793,34 @@ class SyncServerModule(OpenPypeModule, ITrayModule):
                     by provider
         """
         sites = self.sync_system_settings.get("sites", {})
-        for site_name, site_info in sites.items():
-            if processed_site in site_info.get("alternative_sites", []):
-                query = {
-                    "_id": representation["_id"]
-                }
-                elem = {"name": "sftp",
-                        "created_dt": datetime.now(),
-                        "id": synced_file_id}
+        sites[self.DEFAULT_SITE] = {"provider": "local_drive",
+                                    "alternative_sites": []}
 
-                self.log.debug("Adding alternate {} to {}".format(
-                    site_name, representation["_id"]))
-                self._add_site(collection, query,
-                               [representation], elem,
-                               site_name, file_id=file_id, force=True)
+        alternate_sites = []
+        for site_name, site_info in sites.items():
+            conf_alternative_sites = site_info.get("alternative_sites", [])
+            if processed_site in conf_alternative_sites:
+                alternate_sites.append(site_name)
+                continue
+            if processed_site == site_name and conf_alternative_sites:
+                alternate_sites.extend(conf_alternative_sites)
+                continue
+
+        alternate_sites = set(alternate_sites)
+
+        for alt_site in alternate_sites:
+            query = {
+                "_id": representation["_id"]
+            }
+            elem = {"name": alt_site,
+                    "created_dt": datetime.now(),
+                    "id": synced_file_id}
+
+            self.log.debug("Adding alternate {} to {}".format(
+                alt_site, representation["_id"]))
+            self._add_site(collection, query,
+                           [representation], elem,
+                           site_name, file_id=file_id, force=True)
     """ End of Public API """
 
     def get_local_file_path(self, collection, site_name, file_path):
