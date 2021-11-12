@@ -37,6 +37,10 @@ opnl.workfiles_launched = False
 opnl._node_tab_name = "{}".format(os.getenv("AVALON_LABEL") or "Avalon")
 
 
+def get_nuke_imageio_settings():
+    return get_anatomy_settings(opnl.project_name)["imageio"]["nuke"]
+
+
 def get_created_node_imageio_setting(**kwarg):
     ''' Get preset data for dataflow (fileType, compression, bitDepth)
     '''
@@ -47,8 +51,7 @@ def get_created_node_imageio_setting(**kwarg):
     assert any([creator, nodeclass]), nuke.message(
         "`{}`: Missing mandatory kwargs `host`, `cls`".format(__file__))
 
-    imageio = get_anatomy_settings(opnl.project_name)["imageio"]
-    imageio_nodes = imageio["nuke"]["nodes"]["requiredNodes"]
+    imageio_nodes = get_nuke_imageio_settings()["nodes"]["requiredNodes"]
 
     imageio_node = None
     for node in imageio_nodes:
@@ -66,8 +69,7 @@ def get_imageio_input_colorspace(filename):
     ''' Get input file colorspace based on regex in settings.
     '''
     imageio_regex_inputs = (
-        get_anatomy_settings(opnl.project_name)
-        ["imageio"]["nuke"]["regexInputs"]["inputs"])
+        get_nuke_imageio_settings()["regexInputs"]["inputs"])
 
     preset_clrsp = None
     for regexInput in imageio_regex_inputs:
@@ -478,7 +480,6 @@ def create_write_node(name, data, input=None, prenodes=None,
 
     if review:
         add_review_knob(GN)
-        add_bake_colorspace_knob(GN)
 
     # add divider
     GN.addKnob(nuke.Text_Knob('', 'Rendering'))
@@ -566,27 +567,6 @@ def add_review_knob(node):
     '''
     if "review" not in node.knobs():
         knob = nuke.Boolean_Knob("review", "Review")
-        knob.setValue(True)
-        knob.setFlag(nuke.STARTLINE)
-        node.addKnob(knob)
-    return node
-
-
-def add_bake_colorspace_knob(node):
-    ''' Adds additional bake colorspace knob to given node
-
-    Arguments:
-        node (obj): nuke node object to be fixed
-
-    Return:
-        node (obj): with added knob
-    '''
-    if "bake_colorspace" not in node.knobs():
-        knob = nuke.Boolean_Knob("bake_colorspace", "Bake colorspace")
-        knob.setValue(True)
-        node.addKnob(knob)
-    if "bake_viewer_input" not in node.knobs():
-        knob = nuke.Boolean_Knob("bake_viewer_input", "Bake viewer input")
         knob.setValue(True)
         node.addKnob(knob)
     return node
@@ -923,8 +903,7 @@ class WorkfileSettings(object):
         ''' Setting colorpace following presets
         '''
         # get imageio
-        imageio = get_anatomy_settings(opnl.project_name)["imageio"]
-        nuke_colorspace = imageio["nuke"]
+        nuke_colorspace = get_nuke_imageio_settings()
 
         try:
             self.set_root_colorspace(nuke_colorspace["workfile"])
