@@ -470,4 +470,3 @@ def eventserver(
         clockify_api_key,
         clockify_workspace
     )
- 

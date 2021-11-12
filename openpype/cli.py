@@ -360,8 +360,8 @@ def runtests(folder, mark, pyargs):
     """Run all automatic tests after proper initialization via start.py"""
     PypeCommands().run_tests(folder, mark, pyargs)
 
-    
-@main.command()    
+
+@main.command()
 @click.option("-d", "--debug",
               is_flag=True, help=("Run process in debug mode"))
 @click.option("-a", "--active_site", required=True,
