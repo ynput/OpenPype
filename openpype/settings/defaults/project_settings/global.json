@@ -49,6 +49,7 @@
                                 "burnin",
                                 "ftrackreview"
                             ],
+                            "burnins": [],
                             "ffmpeg_args": {
                                 "video_filters": [],
                                 "audio_filters": [],
