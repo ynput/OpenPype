@@ -1,8 +1,10 @@
+import collections
 import time
 import os
 from datetime import datetime
 import requests
 import json
+import subprocess
 
 from openpype.lib import PypeLogger
 
@@ -31,10 +33,13 @@ def run_webserver(*args, **kwargs):
     port = kwargs.get("port") or 8079
     server_manager = webserver_module.create_new_server_manager(port, host)
     webserver_url = server_manager.url
+    # queue for remotepublishfromapp tasks
+    studio_task_queue = collections.deque()
 
     resource = RestApiResource(server_manager,
                                upload_dir=kwargs["upload_dir"],
-                               executable=kwargs["executable"])
+                               executable=kwargs["executable"],
+                               studio_task_queue=studio_task_queue)
     projects_endpoint = WebpublisherProjectsEndpoint(resource)
     server_manager.add_route(
         "GET",
@@ -88,6 +93,10 @@ def run_webserver(*args, **kwargs):
         if time.time() - last_reprocessed > 20:
             reprocess_failed(kwargs["upload_dir"], webserver_url)
             last_reprocessed = time.time()
+        if studio_task_queue:
+            args = studio_task_queue.popleft()
+            subprocess.call(args)  # blocking call
+
         time.sleep(1.0)
 
 

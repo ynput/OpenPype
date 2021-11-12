@@ -57,6 +57,17 @@ def tray(debug=False):
     PypeCommands().launch_tray(debug)
 
 
+@PypeCommands.add_modules
+@main.group(help="Run command line arguments of OpenPype modules")
+@click.pass_context
+def module(ctx):
+    """Module specific commands created dynamically.
+
+    These commands are generated dynamically by currently loaded addon/modules.
+    """
+    pass
+
+
 @main.command()
 @click.option("-d", "--debug", is_flag=True, help="Print debug messages")
 @click.option("--ftrack-url", envvar="FTRACK_SERVER",
