@@ -213,7 +213,7 @@ QSlider::handle:vertical {
 #SideLineWidget[state="child-overriden-modified"] {border-color: #106aa2;}
 #SideLineWidget[state="child-overriden-modified"]:hover {border-color: #189aea;}
 
-#MainWidget {
+#SettingsMainWidget {
     background: #141a1f;
 }
 

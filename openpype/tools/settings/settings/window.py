@@ -25,7 +25,7 @@ class MainWidget(QtWidgets.QWidget):
 
         self._password_dialog = None
 
-        self.setObjectName("MainWidget")
+        self.setObjectName("SettingsMainWidget")
         self.setWindowTitle("OpenPype Settings")
 
         self.resize(self.widget_width, self.widget_height)
