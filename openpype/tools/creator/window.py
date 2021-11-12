@@ -5,10 +5,10 @@ import re
 from Qt import QtWidgets, QtCore, QtGui
 
 from avalon import api, io
-from avalon.tools import lib
 
 from openpype import style
 from openpype.api import get_current_project_settings
+from openpype.tools.utils.lib import qt_app_context
 
 from .widgets import (
     CreateErrorMessageBox,
@@ -29,8 +29,6 @@ module.window = None
 
 
 class CreatorWindow(QtWidgets.QDialog):
-    stateChanged = QtCore.Signal(bool)
-
     def __init__(self, parent=None):
         super(CreatorWindow, self).__init__(parent)
         self.setWindowTitle("Instance Creator")
@@ -99,20 +97,24 @@ class CreatorWindow(QtWidgets.QDialog):
         msg_timer.setSingleShot(True)
         msg_timer.setInterval(5000)
 
+        validation_timer = QtCore.QTimer()
+        validation_timer.setSingleShot(True)
+        validation_timer.setInterval(300)
+
         msg_timer.timeout.connect(self._on_msg_timer)
-        create_btn.clicked.connect(self.on_create)
-        variant_input.returnPressed.connect(self.on_create)
-        variant_input.textChanged.connect(self.on_data_changed)
+        validation_timer.timeout.connect(self._on_validation_timer)
+
+        create_btn.clicked.connect(self._on_create)
+        variant_input.returnPressed.connect(self._on_create)
+        variant_input.textChanged.connect(self._on_data_changed)
         variant_input.report.connect(self.echo)
-        asset_name_input.textChanged.connect(self.on_data_changed)
+        asset_name_input.textChanged.connect(self._on_data_changed)
         listing.currentItemChanged.connect(self._on_creator_change)
 
-        self.stateChanged.connect(self._on_state_changed)
+        # Store valid states and
+        self._is_valid = False
+        create_btn.setEnabled(self._is_valid)
 
-        # Store internal states in here
-        self.state = {
-            "valid": False
-        }
         self._first_show = True
 
         # Message dialog when something goes wrong during creation
@@ -131,16 +133,18 @@ class CreatorWindow(QtWidgets.QDialog):
 
         self._msg_label = msg_label
 
+        self._validation_timer = validation_timer
         self._msg_timer = msg_timer
 
         # Defaults
         self.resize(300, 500)
         variant_input.setFocus()
-        create_btn.setEnabled(False)
 
-    def _on_state_changed(self, state):
-        self.state["valid"] = state
-        self._create_btn.setEnabled(state)
+    def _set_valid_state(self, valid):
+        if self._is_valid == valid:
+            return
+        self._is_valid = valid
+        self._create_btn.setEnabled(valid)
 
     def _on_creator_change(self, index):
         self.on_selection_changed(index)
@@ -185,7 +189,15 @@ class CreatorWindow(QtWidgets.QDialog):
     def _on_action_clicked(self, action):
         self._variant_input.setText(action.text())
 
-    def _on_data_changed(self):
+    def _on_data_changed(self, *args):
+        # Set invalid state until it's reconfirmed to be valid by the
+        # scheduled callback so any form of creation is held back until
+        # valid again
+        self._set_valid_state(False)
+
+        self._validation_timer.start()
+
+    def _on_validation_timer(self):
         item = self._creators_view.currentItem()
         user_input_text = self._variant_input.text()
         asset_name = self._asset_name_input.text()
@@ -195,7 +207,7 @@ class CreatorWindow(QtWidgets.QDialog):
             self._build_menu()
             item.setData(ExistsRole, False)
             self.echo("Asset name is required ..")
-            self.stateChanged.emit(False)
+            self._set_valid_state(False)
             return
 
         # Get the asset from the database which match with the name
@@ -205,102 +217,103 @@ class CreatorWindow(QtWidgets.QDialog):
         )
         # Get plugin
         plugin = item.data(PluginRole)
-        if asset_doc and plugin:
-            project_name = io.Session["AVALON_PROJECT"]
-            asset_id = asset_doc["_id"]
-            task_name = io.Session["AVALON_TASK"]
-
-            # Calculate subset name with Creator plugin
-            subset_name = plugin.get_subset_name(
-                user_input_text, task_name, asset_id, project_name
-            )
-            # Force replacement of prohibited symbols
-            # QUESTION should Creator care about this and here should be only
-            #   validated with schema regex?
-
-            # Allow curly brackets in subset name for dynamic keys
-            curly_left = "__cbl__"
-            curly_right = "__cbr__"
-            tmp_subset_name = (
-                subset_name
-                .replace("{", curly_left)
-                .replace("}", curly_right)
-            )
-            # Replace prohibited symbols
-            tmp_subset_name = re.sub(
-                "[^{}]+".format(SubsetAllowedSymbols),
-                "",
-                tmp_subset_name
-            )
-            subset_name = (
-                tmp_subset_name
-                .replace(curly_left, "{")
-                .replace(curly_right, "}")
-            )
-            self._subset_name_input.setText(subset_name)
-
-            # Get all subsets of the current asset
-            subset_docs = io.find(
-                {
-                    "type": "subset",
-                    "parent": asset_id
-                },
-                {"name": 1}
-            )
-            existing_subset_names = set(subset_docs.distinct("name"))
-            existing_subset_names_low = set(
-                _name.lower()
-                for _name in existing_subset_names
-            )
-
-            # Defaults to dropdown
-            defaults = []
-            # Check if Creator plugin has set defaults
-            if (
-                plugin.defaults
-                and isinstance(plugin.defaults, (list, tuple, set))
-            ):
-                defaults = list(plugin.defaults)
-
-            # Replace
-            compare_regex = re.compile(re.sub(
-                user_input_text, "(.+)", subset_name, flags=re.IGNORECASE
-            ))
-            subset_hints = set()
-            if user_input_text:
-                for _name in existing_subset_names:
-                    _result = compare_regex.search(_name)
-                    if _result:
-                        subset_hints |= set(_result.groups())
-
-            if subset_hints:
-                if defaults:
-                    defaults.append(SEPARATOR)
-                defaults.extend(subset_hints)
-            self._build_menu(defaults)
-
-            # Indicate subset existence
-            if not user_input_text:
-                self._variant_input.as_empty()
-            elif subset_name.lower() in existing_subset_names_low:
-                # validate existence of subset name with lowered text
-                #   - "renderMain" vs. "rensermain" mean same path item for
-                #   windows
-                self._variant_input.as_exists()
-            else:
-                self._variant_input.as_new()
-
-            item.setData(ExistsRole, True)
-
-        else:
+        if not asset_doc or not plugin:
             subset_name = user_input_text
-            self._build_menu([])
+            self._build_menu()
             item.setData(ExistsRole, False)
 
             if not plugin:
                 self.echo("No registered families ..")
             else:
                 self.echo("Asset '%s' not found .." % asset_name)
+            self._set_valid_state(False)
+            return
+
+        project_name = io.Session["AVALON_PROJECT"]
+        asset_id = asset_doc["_id"]
+        task_name = io.Session["AVALON_TASK"]
+
+        # Calculate subset name with Creator plugin
+        subset_name = plugin.get_subset_name(
+            user_input_text, task_name, asset_id, project_name
+        )
+        # Force replacement of prohibited symbols
+        # QUESTION should Creator care about this and here should be only
+        #   validated with schema regex?
+
+        # Allow curly brackets in subset name for dynamic keys
+        curly_left = "__cbl__"
+        curly_right = "__cbr__"
+        tmp_subset_name = (
+            subset_name
+            .replace("{", curly_left)
+            .replace("}", curly_right)
+        )
+        # Replace prohibited symbols
+        tmp_subset_name = re.sub(
+            "[^{}]+".format(SubsetAllowedSymbols),
+            "",
+            tmp_subset_name
+        )
+        subset_name = (
+            tmp_subset_name
+            .replace(curly_left, "{")
+            .replace(curly_right, "}")
+        )
+        self._subset_name_input.setText(subset_name)
+
+        # Get all subsets of the current asset
+        subset_docs = io.find(
+            {
+                "type": "subset",
+                "parent": asset_id
+            },
+            {"name": 1}
+        )
+        existing_subset_names = set(subset_docs.distinct("name"))
+        existing_subset_names_low = set(
+            _name.lower()
+            for _name in existing_subset_names
+        )
+
+        # Defaults to dropdown
+        defaults = []
+        # Check if Creator plugin has set defaults
+        if (
+            plugin.defaults
+            and isinstance(plugin.defaults, (list, tuple, set))
+        ):
+            defaults = list(plugin.defaults)
+
+        # Replace
+        compare_regex = re.compile(re.sub(
+            user_input_text, "(.+)", subset_name, flags=re.IGNORECASE
+        ))
+        subset_hints = set()
+        if user_input_text:
+            for _name in existing_subset_names:
+                _result = compare_regex.search(_name)
+                if _result:
+                    subset_hints |= set(_result.groups())
+
+        if subset_hints:
+            if defaults:
+                defaults.append(SEPARATOR)
+            defaults.extend(subset_hints)
+        self._build_menu(defaults)
+
+        # Indicate subset existence
+        if not user_input_text:
+            self._variant_input.as_empty()
+        elif subset_name.lower() in existing_subset_names_low:
+            # validate existence of subset name with lowered text
+            #   - "renderMain" vs. "rensermain" mean same path item for
+            #   windows
+            self._variant_input.as_exists()
+        else:
+            self._variant_input.as_new()
+
+        item.setData(ExistsRole, True)
 
         # Update the valid state
         valid = (
@@ -308,16 +321,7 @@ class CreatorWindow(QtWidgets.QDialog):
             item.data(QtCore.Qt.ItemIsEnabled) and
             item.data(ExistsRole)
         )
-        self.stateChanged.emit(valid)
-
-    def on_data_changed(self, *args):
-
-        # Set invalid state until it's reconfirmed to be valid by the
-        # scheduled callback so any form of creation is held back until
-        # valid again
-        self.stateChanged.emit(False)
-
-        lib.schedule(self._on_data_changed, 500, channel="gui")
+        self._set_valid_state(valid)
 
     def on_selection_changed(self, *args):
         item = self._creators_view.currentItem()
@@ -338,7 +342,7 @@ class CreatorWindow(QtWidgets.QDialog):
 
         self._variant_input.setText(default)
 
-        self.on_data_changed()
+        self._on_data_changed()
 
     def keyPressEvent(self, event):
         """Custom keyPressEvent.
@@ -409,9 +413,9 @@ class CreatorWindow(QtWidgets.QDialog):
         if not item:
             listing.setCurrentItem(listing.item(0))
 
-    def on_create(self):
+    def _on_create(self):
         # Do not allow creation in an invalid state
-        if not self.state["valid"]:
+        if not self._is_valid:
             return
 
         item = self._creators_view.currentItem()
@@ -503,7 +507,7 @@ def show(debug=False, parent=None):
         api.Session["AVALON_PROJECT"] = any_project["name"]
         module.project = any_project["name"]
 
-    with lib.application():
+    with qt_app_context():
         window = CreatorWindow(parent)
         window.refresh()
         window.show()
