@@ -461,3 +461,8 @@ QAbstractItemView::item:selected:!active {
     border-radius: 5px;
     background: #21252B;;
 }
+
+#NiceCheckbox {
+    /* Default size hint of NiceCheckbox is defined by font size. */
+    font-size: 7pt;
+}

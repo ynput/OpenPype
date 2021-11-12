@@ -6,6 +6,7 @@ from avalon.mongodb import (
     AvalonMongoDB
 )
 
+from openpype.widgets.nice_checkbox import NiceCheckbox
 from openpype.settings.lib import get_system_settings
 from .constants import (
     DEFAULT_PROJECT_LABEL,
@@ -421,197 +422,12 @@ class GridLabelWidget(QtWidgets.QWidget):
         return super(GridLabelWidget, self).mouseReleaseEvent(event)
 
 
-class NiceCheckboxMoveWidget(QtWidgets.QFrame):
-    def __init__(self, height, border_width, parent):
-        super(NiceCheckboxMoveWidget, self).__init__(parent=parent)
-
-        self.checkstate = False
-
-        self.half_size = int(height / 2)
-        self.full_size = self.half_size * 2
-        self.border_width = border_width
-        self.setFixedHeight(self.full_size)
-        self.setFixedWidth(self.full_size)
-
-        self.setStyleSheet((
-            "background: #444444;border-style: none;"
-            "border-radius: {};border-width:{}px;"
-        ).format(self.half_size, self.border_width))
-
-    def update_position(self):
-        parent_rect = self.parent().rect()
-        if self.checkstate is True:
-            pos_x = (
-                parent_rect.x()
-                + parent_rect.width()
-                - self.full_size
-                - self.border_width
-            )
-        else:
-            pos_x = parent_rect.x() + self.border_width
-
-        pos_y = parent_rect.y() + int(
-            parent_rect.height() / 2 - self.half_size
-        )
-        self.setGeometry(pos_x, pos_y, self.width(), self.height())
-
-    def state_offset(self):
-        diff_x = (
-            self.parent().rect().width()
-            - self.full_size
-            - (2 * self.border_width)
-        )
-        return QtCore.QPoint(diff_x, 0)
-
-    def change_position(self, checkstate):
-        self.checkstate = checkstate
-
-        self.update_position()
-
-    def resizeEvent(self, event):
-        super().resizeEvent(event)
-        self.update_position()
-
-
-class NiceCheckbox(QtWidgets.QFrame):
-    stateChanged = QtCore.Signal(int)
-    checked_bg_color = QtGui.QColor(69, 128, 86)
-    unchecked_bg_color = QtGui.QColor(170, 80, 80)
+class SettingsNiceCheckbox(NiceCheckbox):
     focused_in = QtCore.Signal()
-
-    def set_bg_color(self, color):
-        self._bg_color = color
-        self.setStyleSheet(self._stylesheet_template.format(
-            color.red(), color.green(), color.blue()
-        ))
-
-    def bg_color(self):
-        return self._bg_color
-
-    bgcolor = QtCore.Property(QtGui.QColor, bg_color, set_bg_color)
-
-    def __init__(self, checked=True, height=30, *args, **kwargs):
-        super(NiceCheckbox, self).__init__(*args, **kwargs)
-
-        self._checkstate = checked
-        if checked:
-            bg_color = self.checked_bg_color
-        else:
-            bg_color = self.unchecked_bg_color
-
-        self.half_height = int(height / 2)
-        height = self.half_height * 2
-        tenth_height = int(height / 10)
-
-        self.setFixedHeight(height)
-        self.setFixedWidth((height - tenth_height) * 2)
-
-        move_item_size = height - (2 * tenth_height)
-
-        self.move_item = NiceCheckboxMoveWidget(
-            move_item_size, tenth_height, self
-        )
-        self.move_item.change_position(self._checkstate)
-
-        self._stylesheet_template = (
-            "border-radius: {}px;"
-            "border-width: {}px;"
-            "background: #333333;"
-            "border-style: solid;"
-            "border-color: #555555;"
-        ).format(self.half_height, tenth_height)
-        self._stylesheet_template += "background: rgb({},{},{});"
-
-        self.set_bg_color(bg_color)
-
-    def resizeEvent(self, event):
-        super(NiceCheckbox, self).resizeEvent(event)
-        self.move_item.update_position()
-
-    def show(self, *args, **kwargs):
-        super(NiceCheckbox, self).show(*args, **kwargs)
-        self.move_item.update_position()
-
-    def checkState(self):
-        if self._checkstate:
-            return QtCore.Qt.Checked
-        else:
-            return QtCore.Qt.Unchecked
-
-    def _on_checkstate_change(self):
-        self.stateChanged.emit(self.checkState())
-
-        move_start_value = self.move_item.pos()
-        offset = self.move_item.state_offset()
-        if self._checkstate is True:
-            move_end_value = move_start_value + offset
-        else:
-            move_end_value = move_start_value - offset
-        move_animation = QtCore.QPropertyAnimation(
-            self.move_item, b"pos", self
-        )
-        move_animation.setDuration(150)
-        move_animation.setEasingCurve(QtCore.QEasingCurve.OutQuad)
-        move_animation.setStartValue(move_start_value)
-        move_animation.setEndValue(move_end_value)
-
-        color_animation = QtCore.QPropertyAnimation(
-            self, b"bgcolor"
-        )
-        color_animation.setDuration(150)
-        if self._checkstate is True:
-            color_animation.setStartValue(self.unchecked_bg_color)
-            color_animation.setEndValue(self.checked_bg_color)
-        else:
-            color_animation.setStartValue(self.checked_bg_color)
-            color_animation.setEndValue(self.unchecked_bg_color)
-
-        anim_group = QtCore.QParallelAnimationGroup(self)
-        anim_group.addAnimation(move_animation)
-        anim_group.addAnimation(color_animation)
-
-        def _finished():
-            self.move_item.change_position(self._checkstate)
-
-        anim_group.finished.connect(_finished)
-        anim_group.start()
-
-    def isChecked(self):
-        return self._checkstate
-
-    def setChecked(self, checked):
-        if checked == self._checkstate:
-            return
-        self._checkstate = checked
-        self._on_checkstate_change()
-
-    def setCheckState(self, state=None):
-        if state is None:
-            checkstate = not self._checkstate
-        elif state == QtCore.Qt.Checked:
-            checkstate = True
-        elif state == QtCore.Qt.Unchecked:
-            checkstate = False
-        else:
-            return
-
-        if checkstate == self._checkstate:
-            return
-
-        self._checkstate = checkstate
-
-        self._on_checkstate_change()
 
     def mousePressEvent(self, event):
         self.focused_in.emit()
-        super(NiceCheckbox, self).mousePressEvent(event)
-
-    def mouseReleaseEvent(self, event):
-        if event.button() == QtCore.Qt.LeftButton:
-            self.setCheckState()
-            event.accept()
-            return
-        return super(NiceCheckbox, self).mouseReleaseEvent(event)
+        super(SettingsNiceCheckbox, self).mousePressEvent(event)
 
 
 class ProjectModel(QtGui.QStandardItemModel):
