@@ -57,6 +57,17 @@ def tray(debug=False):
     PypeCommands().launch_tray(debug)
 
 
+@PypeCommands.add_modules
+@main.group(help="Run command line arguments of OpenPype modules")
+@click.pass_context
+def module(ctx):
+    """Module specific commands created dynamically.
+
+    These commands are generated dynamically by currently loaded addon/modules.
+    """
+    pass
+
+
 @main.command()
 @click.option("-d", "--debug", is_flag=True, help="Print debug messages")
 @click.option("--ftrack-url", envvar="FTRACK_SERVER",
@@ -349,8 +360,27 @@ def runtests(folder, mark, pyargs):
     """Run all automatic tests after proper initialization via start.py"""
     PypeCommands().run_tests(folder, mark, pyargs)
 
+    
+@main.command()    
+@click.option("-d", "--debug",
+              is_flag=True, help=("Run process in debug mode"))
+@click.option("-a", "--active_site", required=True,
+              help="Name of active stie")
+def syncserver(debug, active_site):
+    """Run sync site server in background.
 
-@main.command()
-def context_selector():
-    """Show widget to show context selector."""
-    PypeCommands().show_context_selector()
+        Some Site Sync use cases need to expose site to another one.
+        For example if majority of artists work in studio, they are not using
+        SS at all, but if you want to expose published assets to 'studio' site
+        to SFTP for only a couple of artists, some background process must
+        mark published assets to live on multiple sites (they might be
+        physically in same location - mounted shared disk).
+
+        Process mimics OP Tray with specific 'active_site' name, all
+        configuration for this "dummy" user comes from Setting or Local
+        Settings (configured by starting OP Tray with env
+        var OPENPYPE_LOCAL_ID set to 'active_site'.
+    """
+    if debug:
+        os.environ['OPENPYPE_DEBUG'] = '3'
+    PypeCommands().syncserver(active_site)

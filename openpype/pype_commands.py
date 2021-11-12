@@ -42,6 +42,25 @@ class PypeCommands:
         settings.main(user_role)
 
     @staticmethod
+    def add_modules(click_func):
+        """Modules/Addons can add their cli commands dynamically."""
+        from openpype.modules import ModulesManager
+
+        manager = ModulesManager()
+        log = PypeLogger.get_logger("AddModulesCLI")
+        for module in manager.modules:
+            try:
+                module.cli(click_func)
+
+            except Exception:
+                log.warning(
+                    "Failed to add cli command for module \"{}\"".format(
+                        module.name
+                    )
+                )
+        return click_func
+
+    @staticmethod
     def launch_eventservercli(*args):
         from openpype_modules.ftrack.ftrack_server.event_server_cli import (
             run_event_server
@@ -361,3 +380,28 @@ class PypeCommands:
         cmd = "pytest {} {} {}".format(folder, mark_str, pyargs_str)
         print("Running {}".format(cmd))
         subprocess.run(cmd)
+
+    def syncserver(self, active_site):
+        """Start running sync_server in background."""
+        import signal
+        os.environ["OPENPYPE_LOCAL_ID"] = active_site
+
+        def signal_handler(sig, frame):
+            print("You pressed Ctrl+C. Process ended.")
+            sync_server_module.server_exit()
+            sys.exit(0)
+
+        signal.signal(signal.SIGINT, signal_handler)
+        signal.signal(signal.SIGTERM, signal_handler)
+
+        from openpype.modules import ModulesManager
+
+        manager = ModulesManager()
+        sync_server_module = manager.modules_by_name["sync_server"]
+
+        sync_server_module.server_init()
+        sync_server_module.server_start()
+
+        import time
+        while True:
+            time.sleep(1.0)
