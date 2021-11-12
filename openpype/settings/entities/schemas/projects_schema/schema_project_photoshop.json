@@ -67,7 +67,17 @@
                                         "type": "list",
                                         "key": "color_code",
                                         "label": "Color codes for layers",
-                                        "object_type": "text"
+                                        "type": "enum",
+                                        "multiselection": true,
+                                        "enum_items": [
+                                            { "red": "red" },
+                                            { "orange": "orange" },
+                                            { "yellowColor": "yellow" },
+                                            { "grain": "green" },
+                                            { "blue": "blue" },
+                                            { "violet": "violet" },
+                                            { "gray": "gray" }
+                                        ]
                                     },
                                     {
                                         "type": "list",
