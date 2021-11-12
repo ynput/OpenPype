@@ -3,7 +3,11 @@ import os
 
 from avalon.tvpaint import lib, pipeline, get_current_workfile_context
 from avalon import api, io
-import openpype
+from openpype.lib import (
+    get_workfile_template_key_from_context,
+    get_workdir_data
+)
+from openpype.api import Anatomy
 
 
 class LoadWorkfile(pipeline.Loader):
@@ -15,6 +19,13 @@ class LoadWorkfile(pipeline.Loader):
     label = "Load Workfile"
 
     def load(self, context, name, namespace, options):
+        # Load context of current workfile as first thing
+        #   - which context and extension has
+        host = api.registered_host()
+        current_file = host.current_file()
+
+        context = get_current_workfile_context()
+
         filepath = self.fname.replace("\\", "/")
 
         if not os.path.exists(filepath):
@@ -28,35 +39,35 @@ class LoadWorkfile(pipeline.Loader):
         lib.execute_george_through_file(george_script)
 
         # Save workfile.
-        host = api.registered_host()
+        host_name = "tvpaint"
+        asset_name = context["asset"]
+        task_name = context["task"]
 
-        project = io.find_one({
+        project_doc = io.find_one({
             "type": "project"
         })
-        context = get_current_workfile_context()
-        template_key = openpype.lib.get_workfile_template_key_from_context(
-            context["asset"],
-            context["task"],
-            host,
-            project_name=project["name"]
+        asset_doc = io.find_one({
+            "type": "asset",
+            "name": asset_name
+        })
+        project_name = project_doc["name"]
+
+        template_key = get_workfile_template_key_from_context(
+            asset_name,
+            task_name,
+            host_name,
+            project_name=project_name,
+            dbcon=io
         )
-        anatomy = openpype.Anatomy(project["name"])
-        data = {
-            "project": {
-                "name": project["name"],
-                "code": project["data"].get("code")
-            },
-            "asset": context["asset"],
-            "task": context["task"],
-            "version": 1,
-            "user": getpass.getuser(),
-            "root": anatomy.roots,
-            "hierarchy": openpype.lib.get_hierarchy()
-        }
+        anatomy = Anatomy(project_name)
+
+        data = get_workdir_data(project_doc, asset_doc, task_name, host_name)
+        data["roots"] = anatomy.roots
+        data["user"] = getpass.getuser()
+
         template = anatomy.templates[template_key]["file"]
 
         # Define saving file extension
-        current_file = host.current_file()
         if current_file:
             # Match the extension of current file
             _, extension = os.path.splitext(current_file)
