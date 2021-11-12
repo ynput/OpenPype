@@ -820,7 +820,7 @@ class SyncServerModule(OpenPypeModule, ITrayModule):
                 alt_site, representation["_id"]))
             self._add_site(collection, query,
                            [representation], elem,
-                           site_name, file_id=file_id, force=True)
+                           alt_site, file_id=file_id, force=True)
     """ End of Public API """
 
     def get_local_file_path(self, collection, site_name, file_path):

@@ -136,7 +136,7 @@ async def download(module, collection, file, representation, provider_name,
                                          True
                                          )
 
-    module.handle_alternate_site(collection, representation, remote_site_name,
+    module.handle_alternate_site(collection, representation, local_site,
                                  file["_id"], file_id)
 
     return file_id
