@@ -170,7 +170,11 @@
     "royalrender": {
         "enabled": false,
         "rr_paths": {
-            "default": ""
+            "default": {
+                "windows": "",
+                "darwin": "",
+                "linux": ""
+            }
         }
     },
     "log_viewer": {
