@@ -1,9 +1,10 @@
 import os
 import json
 import collections
-import openpype
-from openpype.modules import OpenPypeModule
 
+import click
+
+from openpype.modules import OpenPypeModule
 from openpype_interfaces import (
     ITrayModule,
     IPluginPaths,
@@ -230,7 +231,13 @@ class FtrackModule(
             return
 
         import ftrack_api
-        from openpype_modules.ftrack.lib import get_openpype_attr
+        from openpype_modules.ftrack.lib import (
+            get_openpype_attr,
+            default_custom_attributes_definition,
+            CUST_ATTR_TOOLS,
+            CUST_ATTR_APPLICATIONS,
+            CUST_ATTR_INTENT
+        )
 
         try:
             session = self.create_ftrack_session()
@@ -255,6 +262,15 @@ class FtrackModule(
 
         project_id = project_entity["id"]
 
+        ca_defs = default_custom_attributes_definition()
+        hierarchical_attrs = ca_defs.get("is_hierarchical") or {}
+        project_attrs = ca_defs.get("show") or {}
+        ca_keys = (
+            set(hierarchical_attrs.keys())
+            | set(project_attrs.keys())
+            | {CUST_ATTR_TOOLS, CUST_ATTR_APPLICATIONS, CUST_ATTR_INTENT}
+        )
+
         cust_attr, hier_attr = get_openpype_attr(session)
         cust_attr_by_key = {attr["key"]: attr for attr in cust_attr}
         hier_attrs_by_key = {attr["key"]: attr for attr in hier_attr}
@@ -262,6 +278,9 @@ class FtrackModule(
         failed = {}
         missing = {}
         for key, value in attributes_changes.items():
+            if key not in ca_keys:
+                continue
+
             configuration = hier_attrs_by_key.get(key)
             if not configuration:
                 configuration = cust_attr_by_key.get(key)
@@ -354,7 +373,7 @@ class FtrackModule(
         return self.tray_module.validate()
 
     def tray_exit(self):
-        return self.tray_module.stop_action_server()
+        self.tray_module.tray_exit()
 
     def set_credentials_to_env(self, username, api_key):
         os.environ["FTRACK_API_USER"] = username or ""
@@ -379,3 +398,67 @@ class FtrackModule(
     def timer_stopped(self):
         if self._timers_manager_module is not None:
             self._timers_manager_module.timer_stopped(self.id)
+
+    def get_task_time(self, project_name, asset_name, task_name):
+        session = self.create_ftrack_session()
+        query = (
+            'Task where name is "{}"'
+            ' and parent.name is "{}"'
+            ' and project.full_name is "{}"'
+        ).format(task_name, asset_name, project_name)
+        task_entity = session.query(query).first()
+        if not task_entity:
+            return 0
+        hours_logged = (task_entity["time_logged"] / 60) / 60
+        return hours_logged
+
+    def cli(self, click_group):
+        click_group.add_command(cli_main)
+
+
+@click.group(FtrackModule.name, help="Ftrack module related commands.")
+def cli_main():
+    pass
+
+
+@cli_main.command()
+@click.option("-d", "--debug", is_flag=True, help="Print debug messages")
+@click.option("--ftrack-url", envvar="FTRACK_SERVER",
+              help="Ftrack server url")
+@click.option("--ftrack-user", envvar="FTRACK_API_USER",
+              help="Ftrack api user")
+@click.option("--ftrack-api-key", envvar="FTRACK_API_KEY",
+              help="Ftrack api key")
+@click.option("--legacy", is_flag=True,
+              help="run event server without mongo storing")
+@click.option("--clockify-api-key", envvar="CLOCKIFY_API_KEY",
+              help="Clockify API key.")
+@click.option("--clockify-workspace", envvar="CLOCKIFY_WORKSPACE",
+              help="Clockify workspace")
+def eventserver(
+    debug,
+    ftrack_url,
+    ftrack_user,
+    ftrack_api_key,
+    legacy,
+    clockify_api_key,
+    clockify_workspace
+):
+    """Launch ftrack event server.
+
+    This should be ideally used by system service (such us systemd or upstart
+    on linux and window service).
+    """
+    if debug:
+        os.environ["OPENPYPE_DEBUG"] = "3"
+
+    from .ftrack_server.event_server_cli import run_event_server
+
+    return run_event_server(
+        ftrack_url,
+        ftrack_user,
+        ftrack_api_key,
+        legacy,
+        clockify_api_key,
+        clockify_workspace
+    )

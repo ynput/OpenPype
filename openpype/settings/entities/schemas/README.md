@@ -2,7 +2,7 @@
 
 ## Basic rules
 - configurations does not define GUI, but GUI defines configurations!
-- output is always json (yaml is not needed for anatomy templates anymore)
+- output is always json serializable
 - GUI schema has multiple input types, all inputs are represented by a dictionary
 - each input may have "input modifiers" (keys in dictionary) that are required or optional
     - only required modifier for all input items is key `"type"` which says what type of item it is
@@ -13,16 +13,16 @@
     - `"is_group"` - define that all values under key in hierarchy will be overriden if any value is modified, this information is also stored to overrides
         - this keys is not allowed for all inputs as they may have not reason for that
         - key is validated, can be only once in hierarchy but is not required
-- currently there are `system configurations` and `project configurations`
+- currently there are `system settings` and `project settings`
 
 ## Inner schema
 - GUI schemas are huge json files, to be able to split whole configuration into multiple schema there's type `schema`
-- system configuration schemas are stored in `~/tools/settings/settings/gui_schemas/system_schema/` and project configurations in `~/tools/settings/settings/gui_schemas/projects_schema/`
+- system configuration schemas are stored in `~/openpype/settings/entities/schemas/system_schema/` and project configurations in `~/openpype/settings/entities/schemas/projects_schema/`
 - each schema name is filename of json file except extension (without ".json")
 - if content is dictionary content will be used as `schema` else will be used as `schema_template`
 
 ### schema
-- can have only key `"children"` which is list of strings, each string should represent another schema (order matters) string represebts name of the schema
+- can have only key `"children"` which is list of strings, each string should represent another schema (order matters) string represents name of the schema
 - will just paste schemas from other schema file in order of "children" list
 
 ```
@@ -32,8 +32,9 @@
 }
 ```
 
-### schema_template
+### template
 - allows to define schema "templates" to not duplicate same content multiple times
+- legacy name is `schema_template` (still usable)
 ```javascript
 // EXAMPLE json file content (filename: example_template.json)
 [
@@ -59,11 +60,11 @@
 // EXAMPLE usage of the template in schema
 {
     "type": "dict",
-    "key": "schema_template_examples",
+    "key": "template_examples",
     "label": "Schema template examples",
     "children": [
         {
-            "type": "schema_template",
+            "type": "template",
             // filename of template (example_template.json)
             "name": "example_template",
             "template_data": {
@@ -72,7 +73,7 @@
                 "multipath_executables": false
             }
         }, {
-            "type": "schema_template",
+            "type": "template",
             "name": "example_template",
             "template_data": {
                 "host_label": "Maya 2020",
@@ -98,8 +99,16 @@
     ...
 }
 ```
-- Unfilled fields can be also used for non string values, in that case value must contain only one key and value for fill must contain right type.
+- Unfilled fields can be also used for non string values(e.g. dictionary), in that case value must contain only one key and value for fill must contain right type.
 ```javascript
+// Passed data
+{
+    "executable_multiplatform": {
+        "type": "schema",
+        "name": "my_multiplatform_schema"
+    }
+}
+// Template content
 {
     ...
     // Allowed
@@ -121,32 +130,34 @@
     "name": "project_settings/global"
 }
 ```
-- all valid `ModuleSettingsDef` classes where calling of `get_settings_schemas`
+- all valid `BaseModuleSettingsDef` classes where calling of `get_settings_schemas`
     will return dictionary where is key "project_settings/global" with schemas
     will extend and replace this item
-- works almost the same way as templates
+- dynamic schemas work almost the same way as templates
     - one item can be replaced by multiple items (or by 0 items)
 - goal is to dynamically loaded settings of OpenPype addons without having
     their schemas or default values in main repository
+    - values of these schemas are saved using the `BaseModuleSettingsDef` methods
+- easiest is to use `JsonFilesSettingsDef` which has full implementation of storing default values to json files all you have to implement is method `get_settings_root_path` which should return path to root directory where settings schema can be found and will be saved
 
 ## Basic Dictionary inputs
 - these inputs wraps another inputs into {key: value} relation
 
 ## dict
-- this is another dictionary input wrapping more inputs but visually makes them different
-- item may be used as widget (in `list` or `dict-modifiable`)
+- this is dictionary type wrapping more inputs with keys defined in schema
+- may be used as dynamic children (e.g. in `list` or `dict-modifiable`)
     - in that case the only key modifier is `children` which is list of it's keys
     - USAGE: e.g. List of dictionaries where each dictionary have same structure.
-- item may be with or without `"label"` if is not used as widget
-    - required keys are `"key"` under which will be stored
-    - without label it is just wrap item holding `"key"`
-        - can't have `"is_group"` key set to True as it breaks visual override showing
-    - if `"label"` is entetered there which will be shown in GUI
-        - item with label can be collapsible
-            - that can be set with key `"collapsible"` as `True`/`False` (Default: `True`)
-                - with key `"collapsed"` as `True`/`False` can be set that is collapsed when GUI is opened (Default: `False`)
-        - it is possible to add darker background with `"highlight_content"` (Default: `False`)
-            - darker background has limits of maximum applies after 3-4 nested highlighted items there is not difference in the color
+- if is not used as dynamic children then must have defined `"key"` under which are it's values stored
+- may be with or without `"label"` (only for GUI)
+    - `"label"` must be set to be able mark item as group with `"is_group"` key set to True
+- item with label can visually wrap it's children
+    - this option is enabled by default to turn off set `"use_label_wrap"` to `False`
+    - label wrap is by default collapsible
+        - that can be set with key `"collapsible"` to `True`/`False`
+        - with key `"collapsed"` as `True`/`False` can be set that is collapsed when GUI is opened (Default: `False`)
+    - it is possible to add lighter background with `"highlight_content"` (Default: `False`)
+        - lighter background has limits of maximum applies after 3-4 nested highlighted items there is not much difference in the color
     - output is dictionary `{the "key": children values}`
 ```
 # Example
@@ -197,9 +208,28 @@
 }
 ```
 
+## dict-roots
+- entity can be used only in Project settings
+- keys of dictionary are based on current project roots
+- they are not updated "live" it is required to save root changes and then
+    modify values on this entity
+    # TODO do live updates
+```
+{
+    "type": "dict-roots",
+    "key": "roots",
+    "label": "Roots",
+    "object_type": {
+        "type": "path",
+        "multiplatform": true,
+        "multipath": false
+    }
+}
+```
+
 ## dict-conditional
-- is similar to `dict` but has only one child entity that will be always available
-- the one entity is enumerator of possible values and based on value of the entity are defined and used other children entities
+- is similar to `dict` but has always available one enum entity
+    - the enum entity has single selection and it's value define other children entities
 - each value of enumerator have defined children that will be used
     - there is no way how to have shared entities across multiple enum items
 - value from enumerator is also stored next to other values
@@ -207,22 +237,27 @@
     - `enum_key` must match key regex and any enum item can't have children with same key
     - `enum_label` is label of the entity for UI purposes
 - enum items are define with `enum_children`
-    - it's a list where each item represents enum item
+    - it's a list where each item represents single item for the enum
     - all items in `enum_children` must have at least `key` key which represents value stored under `enum_key`
-    - items can define `label` for UI purposes
+    - enum items can define `label` for UI purposes
     - most important part is that item can define `children` key where are definitions of it's children (`children` value works the same way as in `dict`)
 - to set default value for `enum_key` set it with `enum_default`
 - entity must have defined `"label"` if is not used as widget
-- is set as group if any parent is not group
-- if `"label"` is entetered there which will be shown in GUI
-    - item with label can be collapsible
-        - that can be set with key `"collapsible"` as `True`/`False` (Default: `True`)
-            - with key `"collapsed"` as `True`/`False` can be set that is collapsed when GUI is opened (Default: `False`)
-    - it is possible to add darker background with `"highlight_content"` (Default: `False`)
-        - darker background has limits of maximum applies after 3-4 nested highlighted items there is not difference in the color
-    - output is dictionary `{the "key": children values}`
+- is set as group if any parent is not group (can't have children as group)
+- may be with or without `"label"` (only for GUI)
+    - `"label"` must be set to be able mark item as group with `"is_group"` key set to True
+- item with label can visually wrap it's children
+    - this option is enabled by default to turn off set `"use_label_wrap"` to `False`
+    - label wrap is by default collapsible
+        - that can be set with key `"collapsible"` to `True`/`False`
+        - with key `"collapsed"` as `True`/`False` can be set that is collapsed when GUI is opened (Default: `False`)
+    - it is possible to add lighter background with `"highlight_content"` (Default: `False`)
+        - lighter background has limits of maximum applies after 3-4 nested highlighted items there is not much difference in the color
 - for UI porposes was added `enum_is_horizontal` which will make combobox appear next to children inputs instead of on top of them (Default: `False`)
     - this has extended ability of `enum_on_right` which will move combobox to right side next to children widgets (Default: `False`)
+- output is dictionary `{the "key": children values}`
+- using this type as template item for list type can be used to create infinite hierarchies
+
 ```
 # Example
 {
@@ -298,8 +333,8 @@ How output of the schema could look like on save:
 ```
 
 ## Inputs for setting any kind of value (`Pure` inputs)
-- all these input must have defined `"key"` under which will be stored and `"label"` which will be shown next to input
-    - unless they are used in different types of inputs (later) "as widgets" in that case `"key"` and `"label"` are not required as there is not place where to set them
+- all inputs must have defined `"key"` if are not used as dynamic item
+    - they can also have defined `"label"`
 
 ### boolean
 - simple checkbox, nothing more to set
@@ -355,21 +390,15 @@ How output of the schema could look like on save:
 ```
 
 ### path-input
-- enhanced text input
-    - does not allow to enter backslash, is auto-converted to forward slash
-    - may be added another validations, like do not allow end path with slash
 - this input is implemented to add additional features to text input
-- this is meant to be used in proxy input `path-widget`
+- this is meant to be used in proxy input `path`
     - DO NOT USE this input in schema please
 
 ### raw-json
 - a little bit enhanced text input for raw json
+- can store dictionary (`{}`) or list (`[]`) but not both
+    - by default stores dictionary to change it to list set `is_list` to `True`
 - has validations of json format
-    - empty value is invalid value, always must be json serializable
-    - valid value types are list `[]` and dictionary `{}`
-- schema also defines valid value type
-    - by default it is dictionary
-    - to be able use list it is required to define `is_list` to `true`
 - output can be stored as string
     - this is to allow any keys in dictionary
     - set key `store_as_string` to `true`
@@ -385,7 +414,7 @@ How output of the schema could look like on save:
 ```
 
 ### enum
-- returns value of single on multiple items from predefined values
+- enumeration of values that are predefined in schema
 - multiselection can be allowed with setting key `"multiselection"` to `True` (Default: `False`)
 - values are defined under value of key `"enum_items"` as list
     - each item in list is simple dictionary where value is label and key is value which will be stored
@@ -415,6 +444,8 @@ How output of the schema could look like on save:
 - have only single selection mode
 - it is possible to define default value `default`
     - `"work"` is used if default value is not specified
+- enum values are not updated on the fly it is required to save templates and
+    reset settings to recache values
 ```
 {
     "key": "host",
@@ -448,6 +479,42 @@ How output of the schema could look like on save:
     ]
 }
 ```
+
+### apps-enum
+- enumeration of available application and their variants from system settings
+    - applications without host name are excluded
+- can be used only in project settings
+- has only `multiselection`
+- used only in project anatomy
+```
+{
+    "type": "apps-enum",
+    "key": "applications",
+    "label": "Applications"
+}
+```
+
+### tools-enum
+- enumeration of available tools and their variants from system settings
+- can be used only in project settings
+- has only `multiselection`
+- used only in project anatomy
+```
+{
+    "type": "tools-enum",
+    "key": "tools_env",
+    "label": "Tools"
+}
+```
+
+### task-types-enum
+- enumeration of task types from current project
+- enum values are not updated on the fly and modifications of task types on project require save and reset to be propagated to this enum
+- has set `multiselection` to `True` but can be changed to `False` in schema
+
+### deadline_url-enum
+- deadline module specific enumerator using deadline system settings to fill it's values
+- TODO: move this type to deadline module
 
 ## Inputs for setting value using Pure inputs
 - these inputs also have required `"key"`
@@ -594,7 +661,7 @@ How output of the schema could look like on save:
 }
 ```
 
-### path-widget
+### path
 - input for paths, use `path-input` internally
 - has 2 input modifiers `"multiplatform"` and `"multipath"`
     - `"multiplatform"` - adds `"windows"`, `"linux"` and `"darwin"` path inputs result is dictionary
@@ -685,12 +752,13 @@ How output of the schema could look like on save:
 }
 ```
 
-### splitter
-- visual splitter of items (more divider than splitter)
+### separator
+- legacy name is `splitter` (still usable)
+- visual separator of items (more divider than separator)
 
 ```
 {
-    "type": "splitter"
+    "type": "separator"
 }
 ```
 

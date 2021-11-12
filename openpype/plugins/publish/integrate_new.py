@@ -63,6 +63,7 @@ class IntegrateAssetNew(pyblish.api.InstancePlugin):
                 "animation",
                 "model",
                 "mayaAscii",
+                "mayaScene",
                 "setdress",
                 "layout",
                 "ass",
@@ -98,7 +99,8 @@ class IntegrateAssetNew(pyblish.api.InstancePlugin):
                 "camerarig",
                 "redshiftproxy",
                 "effect",
-                "xgen"
+                "xgen",
+                "hda"
                 ]
     exclude_families = ["clip"]
     db_representation_context_keys = [

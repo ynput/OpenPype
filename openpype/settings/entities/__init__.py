@@ -110,7 +110,11 @@ from .enum_entity import (
 )
 
 from .list_entity import ListEntity
-from .dict_immutable_keys_entity import DictImmutableKeysEntity
+from .dict_immutable_keys_entity import (
+    DictImmutableKeysEntity,
+    RootsDictEntity,
+    SyncServerSites
+)
 from .dict_mutable_keys_entity import DictMutableKeysEntity
 from .dict_conditional import (
     DictConditionalEntity,
@@ -169,6 +173,8 @@ __all__ = (
     "ListEntity",
 
     "DictImmutableKeysEntity",
+    "RootsDictEntity",
+    "SyncServerSites",
 
     "DictMutableKeysEntity",
 

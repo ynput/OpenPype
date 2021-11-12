@@ -80,7 +80,8 @@ class AbstractProvider:
             representation (dict): complete repre containing 'file'
             site (str): site name
         Returns:
-            (string) file_id of created file, raises exception
+            (string) file_id of created/modified file ,
+                throws FileExistsError, FileNotFoundError exceptions
         """
         pass
 
@@ -103,7 +104,8 @@ class AbstractProvider:
             representation (dict): complete repre containing 'file'
             site (str): site name
         Returns:
-            None
+            (string) file_id of created/modified file ,
+                throws FileExistsError, FileNotFoundError exceptions
         """
         pass
 
@@ -199,5 +201,9 @@ class AbstractProvider:
                 msg = "Error in resolving local root from anatomy"
                 log.error(msg)
                 raise ValueError(msg)
+        except IndexError:
+            msg = "Path {} contains unfillable placeholder"
+            log.error(msg)
+            raise ValueError(msg)
 
         return path

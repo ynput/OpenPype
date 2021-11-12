@@ -1,8 +1,10 @@
 """Functions useful for delivery action or loader"""
 import os
 import shutil
+import glob
 import clique
 import collections
+
 
 def collect_frames(files):
     """
@@ -228,10 +230,40 @@ def process_sequence(
         Returns:
             (collections.defaultdict , int)
     """
-    if not os.path.exists(src_path):
+
+    def hash_path_exist(myPath):
+        res = myPath.replace('#', '*')
+        glob_search_results = glob.glob(res)
+        if len(glob_search_results) > 0:
+            return True
+        else:
+            return False
+
+    if not hash_path_exist(src_path):
         msg = "{} doesn't exist for {}".format(src_path,
                                                repre["_id"])
         report_items["Source file was not found"].append(msg)
+        return report_items, 0
+
+    delivery_templates = anatomy.templates.get("delivery") or {}
+    delivery_template = delivery_templates.get(template_name)
+    if delivery_template is None:
+        msg = (
+            "Delivery template \"{}\" in anatomy of project \"{}\""
+            " was not found"
+        ).format(template_name, anatomy.project_name)
+        report_items[""].append(msg)
+        return report_items, 0
+
+    # Check if 'frame' key is available in template which is required
+    #   for sequence delivery
+    if "{frame" not in delivery_template:
+        msg = (
+            "Delivery template \"{}\" in anatomy of project \"{}\""
+            "does not contain '{{frame}}' key to fill. Delivery of sequence"
+            " can't be processed."
+        ).format(template_name, anatomy.project_name)
+        report_items[""].append(msg)
         return report_items, 0
 
     dir_path, file_name = os.path.split(str(src_path))

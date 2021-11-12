@@ -95,11 +95,11 @@
         },
         {
             "type": "dict",
-            "key": "schema_template_exaples",
+            "key": "template_exaples",
             "label": "Schema template examples",
             "children": [
                 {
-                    "type": "schema_template",
+                    "type": "template",
                     "name": "example_template",
                     "template_data": {
                         "host_label": "Application 1",
@@ -108,7 +108,7 @@
                     }
                 },
                 {
-                    "type": "schema_template",
+                    "type": "template",
                     "name": "example_template",
                     "template_data": {
                         "host_label": "Application 2",

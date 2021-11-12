@@ -8,11 +8,12 @@ from avalon import api as avalon
 from avalon import pipeline
 from avalon.maya import suspended_refresh
 from avalon.maya.pipeline import IS_HEADLESS
-from openpype.tools import workfiles
+from openpype.tools.utils import host_tools
 from pyblish import api as pyblish
 from openpype.lib import any_outdated
 import openpype.hosts.maya
 from openpype.hosts.maya.lib import copy_workspace_mel
+from openpype.lib.path_tools import HostDirmap
 from . import menu, lib
 
 log = logging.getLogger("openpype.hosts.maya")
@@ -30,7 +31,8 @@ def install():
 
     project_settings = get_project_settings(os.getenv("AVALON_PROJECT"))
     # process path mapping
-    process_dirmap(project_settings)
+    dirmap_processor = MayaDirmap("maya", project_settings)
+    dirmap_processor.process_dirmap()
 
     pyblish.register_plugin_path(PUBLISH_PATH)
     avalon.register_plugin_path(avalon.Loader, LOAD_PATH)
@@ -58,40 +60,6 @@ def install():
 
     log.info("Setting default family states for loader..")
     avalon.data["familiesStateToggled"] = ["imagesequence"]
-
-
-def process_dirmap(project_settings):
-    # type: (dict) -> None
-    """Go through all paths in Settings and set them using `dirmap`.
-
-    Args:
-        project_settings (dict): Settings for current project.
-
-    """
-    if not project_settings["maya"].get("maya-dirmap"):
-        return
-    mapping = project_settings["maya"]["maya-dirmap"]["paths"] or {}
-    mapping_enabled = project_settings["maya"]["maya-dirmap"]["enabled"]
-    if not mapping or not mapping_enabled:
-        return
-    if mapping.get("source-path") and mapping_enabled is True:
-        log.info("Processing directory mapping ...")
-        cmds.dirmap(en=True)
-    for k, sp in enumerate(mapping["source-path"]):
-        try:
-            print("{} -> {}".format(sp, mapping["destination-path"][k]))
-            cmds.dirmap(m=(sp, mapping["destination-path"][k]))
-            cmds.dirmap(m=(mapping["destination-path"][k], sp))
-        except IndexError:
-            # missing corresponding destination path
-            log.error(("invalid dirmap mapping, missing corresponding"
-                       " destination directory."))
-            break
-        except RuntimeError:
-            log.error("invalid path {} -> {}, mapping not registered".format(
-                sp, mapping["destination-path"][k]
-            ))
-            continue
 
 
 def uninstall():
@@ -138,14 +106,10 @@ def on_init(_):
     launch_workfiles = os.environ.get("WORKFILES_STARTUP")
 
     if launch_workfiles:
-        safe_deferred(launch_workfiles_app)
+        safe_deferred(host_tools.show_workfiles)
 
     if not IS_HEADLESS:
         safe_deferred(override_toolbox_ui)
-
-
-def launch_workfiles_app():
-    workfiles.show(os.environ["AVALON_WORKDIR"])
 
 
 def on_before_save(return_code, _):
@@ -209,8 +173,7 @@ def on_open(_):
 
             # Show outdated pop-up
             def _on_show_inventory():
-                import avalon.tools.sceneinventory as tool
-                tool.show(parent=parent)
+                host_tools.show_scene_inventory(parent=parent)
 
             dialog = popup.Popup(parent=parent)
             dialog.setWindowTitle("Maya scene has outdated content")
@@ -243,9 +206,15 @@ def on_task_changed(*args):
         lib.set_context_settings()
         lib.update_content_on_context_change()
 
+    msg = "  project: {}\n  asset: {}\n  task:{}".format(
+        avalon.Session["AVALON_PROJECT"],
+        avalon.Session["AVALON_ASSET"],
+        avalon.Session["AVALON_TASK"]
+    )
+
     lib.show_message(
         "Context was changed",
-        ("Context was changed to {}".format(avalon.Session["AVALON_ASSET"])),
+        ("Context was changed to:\n{}".format(msg)),
     )
 
 
@@ -255,3 +224,12 @@ def before_workfile_save(workfile_path):
 
     workdir = os.path.dirname(workfile_path)
     copy_workspace_mel(workdir)
+
+
+class MayaDirmap(HostDirmap):
+    def on_enable_dirmap(self):
+        cmds.dirmap(en=True)
+
+    def dirmap_routine(self, source_path, destination_path):
+        cmds.dirmap(m=(source_path, destination_path))
+        cmds.dirmap(m=(destination_path, source_path))

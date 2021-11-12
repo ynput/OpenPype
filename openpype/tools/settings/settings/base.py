@@ -214,7 +214,8 @@ class BaseWidget(QtWidgets.QWidget):
     def _paste_value_actions(self, menu):
         output = []
         # Allow paste of value only if were copied from this UI
-        mime_data = QtWidgets.QApplication.clipboard().mimeData()
+        clipboard = QtWidgets.QApplication.clipboard()
+        mime_data = clipboard.mimeData()
         mime_value = mime_data.data("application/copy_settings_value")
         # Skip if there is nothing to do
         if not mime_value:

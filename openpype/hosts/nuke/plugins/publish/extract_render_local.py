@@ -17,7 +17,7 @@ class NukeRenderLocal(openpype.api.Extractor):
     order = pyblish.api.ExtractorOrder
     label = "Render Local"
     hosts = ["nuke"]
-    families = ["render.local", "prerender.local"]
+    families = ["render.local", "prerender.local", "still.local"]
 
     def process(self, instance):
         families = instance.data["families"]
@@ -66,13 +66,23 @@ class NukeRenderLocal(openpype.api.Extractor):
             instance.data["representations"] = []
 
         collected_frames = os.listdir(out_dir)
-        repre = {
-            'name': ext,
-            'ext': ext,
-            'frameStart': "%0{}d".format(len(str(last_frame))) % first_frame,
-            'files': collected_frames,
-            "stagingDir": out_dir
-        }
+
+        if len(collected_frames) == 1:
+            repre = {
+                'name': ext,
+                'ext': ext,
+                'files': collected_frames.pop(),
+                "stagingDir": out_dir
+            }
+        else:
+            repre = {
+                'name': ext,
+                'ext': ext,
+                'frameStart': "%0{}d".format(
+                    len(str(last_frame))) % first_frame,
+                'files': collected_frames,
+                "stagingDir": out_dir
+            }
         instance.data["representations"].append(repre)
 
         self.log.info("Extracted instance '{0}' to: {1}".format(
@@ -89,6 +99,9 @@ class NukeRenderLocal(openpype.api.Extractor):
             instance.data['family'] = 'prerender'
             families.remove('prerender.local')
             families.insert(0, "prerender")
+        elif "still.local" in families:
+            instance.data['family'] = 'image'
+            families.remove('still.local')
         instance.data["families"] = families
 
         collections, remainder = clique.assemble(collected_frames)

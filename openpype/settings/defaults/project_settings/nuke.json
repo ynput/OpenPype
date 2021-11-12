@@ -8,6 +8,13 @@
             "build_workfile": "ctrl+alt+b"
         }
     },
+    "nuke-dirmap": {
+        "enabled": false,
+        "paths": {
+            "source-path": [],
+            "destination-path": []
+        }
+    },
     "create": {
         "CreateWriteRender": {
             "fpath_template": "{work}/renders/nuke/{subset}/{subset}.{frame}.{ext}",
@@ -37,6 +44,11 @@
                 "source",
                 "render"
             ]
+        },
+        "ValidateInstanceInContext": {
+            "enabled": true,
+            "optional": true,
+            "active": true
         },
         "ValidateContainers": {
             "enabled": true,
@@ -112,59 +124,20 @@
     "load": {
         "LoadImage": {
             "enabled": true,
-            "families": [
-                "render2d",
-                "source",
-                "plate",
-                "render",
-                "prerender",
-                "review",
-                "image"
-            ],
-            "representations": [
+            "_representations": [
                 "exr",
                 "dpx",
                 "jpg",
                 "jpeg",
                 "png",
-                "psd"
+                "psd",
+                "tiff"
             ],
             "node_name_template": "{class_name}_{ext}"
         },
-        "LoadMov": {
+        "LoadClip": {
             "enabled": true,
-            "families": [
-                "source",
-                "plate",
-                "render",
-                "prerender",
-                "review"
-            ],
-            "representations": [
-                "mov",
-                "review",
-                "mp4",
-                "h264"
-            ],
-            "node_name_template": "{class_name}_{ext}"
-        },
-        "LoadSequence": {
-            "enabled": true,
-            "families": [
-                "render2d",
-                "source",
-                "plate",
-                "render",
-                "prerender",
-                "review"
-            ],
-            "representations": [
-                "exr",
-                "dpx",
-                "jpg",
-                "jpeg",
-                "png"
-            ],
+            "_representations": [],
             "node_name_template": "{class_name}_{ext}"
         }
     },

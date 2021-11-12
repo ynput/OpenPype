@@ -7,6 +7,20 @@
         {
             "type": "dict",
             "collapsible": true,
+            "key": "CollectAnatomyInstanceData",
+            "label": "Collect Anatomy Instance Data",
+            "is_group": true,
+            "children": [
+                {
+                    "type": "boolean",
+                    "key": "follow_workfile_version",
+                    "label": "Follow workfile version"
+                }
+            ]
+        },
+        {
+            "type": "dict",
+            "collapsible": true,
             "checkbox_key": "enabled",
             "key": "ValidateEditorialAssetName",
             "label": "Validate Editorial Asset Name",
@@ -25,12 +39,21 @@
             ]
         },
         {
+            "type": "schema_template",
+            "name": "template_publish_plugin",
+            "template_data": [
+                {
+                    "key": "ValidateVersion",
+                    "label": "Validate Version"
+                }
+            ]
+        },
+        {
             "type": "dict",
-            "collapsible": true,
-            "checkbox_key": "enabled",
-            "key": "ValidateVersion",
-            "label": "Validate Version",
+            "label": "Validate Intent",
+            "key": "ValidateIntent",
             "is_group": true,
+            "checkbox_key": "enabled",
             "children": [
                 {
                     "type": "boolean",
@@ -38,9 +61,43 @@
                     "label": "Enabled"
                 },
                 {
-                    "type": "boolean",
-                    "key": "optional",
-                    "label": "Optional"
+                    "type": "label",
+                    "label": "Validate if Publishing intent was selected. It is possible to disable validation for specific publishing context with profiles."
+                },
+                {
+                    "type": "list",
+                    "collapsible": true,
+                    "key": "profiles",
+                    "object_type": {
+                        "type": "dict",
+                        "children": [
+                            {
+                                "key": "hosts",
+                                "label": "Host names",
+                                "type": "hosts-enum",
+                                "multiselection": true
+                            },
+                            {
+                                "key": "task_types",
+                                "label": "Task types",
+                                "type": "task-types-enum"
+                            },
+                            {
+                                "key": "tasks",
+                                "label": "Task names",
+                                "type": "list",
+                                "object_type": "text"
+                            },
+                            {
+                                "type": "separator"
+                            },
+                            {
+                                "key": "validate",
+                                "label": "Validate",
+                                "type": "boolean"
+                            }
+                        ]
+                    }
                 }
             ]
         },

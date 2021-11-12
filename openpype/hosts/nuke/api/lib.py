@@ -7,7 +7,6 @@ from collections import OrderedDict
 
 
 from avalon import api, io, lib
-from openpype.tools import workfiles
 import avalon.nuke
 from avalon.nuke import lib as anlib
 from avalon.nuke import (
@@ -24,6 +23,10 @@ from openpype.api import (
     get_current_project_settings,
     ApplicationManager
 )
+from openpype.tools.utils import host_tools
+from openpype.lib.path_tools import HostDirmap
+from openpype.settings import get_project_settings
+from openpype.modules import ModulesManager
 
 import nuke
 
@@ -288,14 +291,15 @@ def script_name():
 def add_button_write_to_read(node):
     name = "createReadNode"
     label = "Create Read From Rendered"
-    value = "import write_to_read;write_to_read.write_to_read(nuke.thisNode())"
+    value = "import write_to_read;\
+        write_to_read.write_to_read(nuke.thisNode(), allow_relative=False)"
     knob = nuke.PyScript_Knob(name, label, value)
     knob.clearFlag(nuke.STARTLINE)
     node.addKnob(knob)
 
 
 def create_write_node(name, data, input=None, prenodes=None,
-                      review=True, linked_knobs=None):
+                      review=True, linked_knobs=None, farm=True):
     ''' Creating write node which is group node
 
     Arguments:
@@ -421,7 +425,15 @@ def create_write_node(name, data, input=None, prenodes=None,
                             ))
                         continue
 
-                    if knob and value:
+                    if not knob and not value:
+                        continue
+
+                    log.info((knob, value))
+
+                    if isinstance(value, str):
+                        if "[" in value:
+                            now_node[knob].setExpression(value)
+                    else:
                         now_node[knob].setValue(value)
 
                 # connect to previous node
@@ -466,7 +478,7 @@ def create_write_node(name, data, input=None, prenodes=None,
     # imprinting group node
     anlib.set_avalon_knob_data(GN, data["avalon"])
     anlib.add_publish_knob(GN)
-    add_rendering_knobs(GN)
+    add_rendering_knobs(GN, farm)
 
     if review:
         add_review_knob(GN)
@@ -526,7 +538,7 @@ def create_write_node(name, data, input=None, prenodes=None,
     return GN
 
 
-def add_rendering_knobs(node):
+def add_rendering_knobs(node, farm=True):
     ''' Adds additional rendering knobs to given node
 
     Arguments:
@@ -535,9 +547,13 @@ def add_rendering_knobs(node):
     Return:
         node (obj): with added knobs
     '''
+    knob_options = [
+            "Use existing frames", "Local"]
+    if farm:
+        knob_options.append("On farm")
+
     if "render" not in node.knobs():
-        knob = nuke.Enumeration_Knob("render", "", [
-            "Use existing frames", "Local", "On farm"])
+        knob = nuke.Enumeration_Knob("render", "", knob_options)
         knob.clearFlag(nuke.STARTLINE)
         node.addKnob(knob)
     return node
@@ -1019,27 +1035,6 @@ class WorkfileSettings(object):
             log.error(msg)
             nuke.message(msg)
 
-        bbox = self._asset_entity.get('data', {}).get('crop')
-
-        if bbox:
-            try:
-                x, y, r, t = bbox.split(".")
-                data.update(
-                    {
-                        "x": int(x),
-                        "y": int(y),
-                        "r": int(r),
-                        "t": int(t),
-                    }
-                )
-            except Exception as e:
-                bbox = None
-                msg = ("{}:{} \nFormat:Crop need to be set with dots, "
-                       "example: 0.0.1920.1080, "
-                       "/nSetting to default").format(__name__, e)
-                log.error(msg)
-                nuke.message(msg)
-
         existing_format = None
         for format in nuke.formats():
             if data["name"] == format.name():
@@ -1051,12 +1046,6 @@ class WorkfileSettings(object):
             existing_format.setWidth(data["width"])
             existing_format.setHeight(data["height"])
             existing_format.setPixelAspect(data["pixel_aspect"])
-
-            if bbox:
-                existing_format.setX(data["x"])
-                existing_format.setY(data["y"])
-                existing_format.setR(data["r"])
-                existing_format.setT(data["t"])
         else:
             format_string = self.make_format_string(**data)
             log.info("Creating new format: {}".format(format_string))
@@ -1676,7 +1665,7 @@ def launch_workfiles_app():
 
     if not opnl.workfiles_launched:
         opnl.workfiles_launched = True
-        workfiles.show(os.environ["AVALON_WORKDIR"])
+        host_tools.show_workfiles()
 
 
 def process_workfile_builder():
@@ -1810,3 +1799,69 @@ def recreate_instance(origin_node, avalon_data=None):
             dn.setInput(0, new_node)
 
     return new_node
+
+
+class NukeDirmap(HostDirmap):
+    def __init__(self, host_name, project_settings, sync_module, file_name):
+        """
+            Args:
+                host_name (str): Nuke
+                project_settings (dict): settings of current project
+                sync_module (SyncServerModule): to limit reinitialization
+                file_name (str): full path of referenced file from workfiles
+        """
+        self.host_name = host_name
+        self.project_settings = project_settings
+        self.file_name = file_name
+        self.sync_module = sync_module
+
+        self._mapping = None  # cache mapping
+
+    def on_enable_dirmap(self):
+        pass
+
+    def dirmap_routine(self, source_path, destination_path):
+        log.debug("{}: {}->{}".format(self.file_name,
+                                      source_path, destination_path))
+        source_path = source_path.lower().replace(os.sep, '/')
+        destination_path = destination_path.lower().replace(os.sep, '/')
+        if platform.system().lower() == "windows":
+            self.file_name = self.file_name.lower().replace(
+                source_path, destination_path)
+        else:
+            self.file_name = self.file_name.replace(
+                source_path, destination_path)
+
+
+class DirmapCache:
+    """Caching class to get settings and sync_module easily and only once."""
+    _project_settings = None
+    _sync_module = None
+
+    @classmethod
+    def project_settings(cls):
+        if cls._project_settings is None:
+            cls._project_settings = get_project_settings(
+                os.getenv("AVALON_PROJECT"))
+        return cls._project_settings
+
+    @classmethod
+    def sync_module(cls):
+        if cls._sync_module is None:
+            cls._sync_module = ModulesManager().modules_by_name["sync_server"]
+        return cls._sync_module
+
+
+def dirmap_file_name_filter(file_name):
+    """Nuke callback function with single full path argument.
+
+        Checks project settings for potential mapping from source to dest.
+    """
+    dirmap_processor = NukeDirmap("nuke",
+                                  DirmapCache.project_settings(),
+                                  DirmapCache.sync_module(),
+                                  file_name)
+    dirmap_processor.process_dirmap()
+    if os.path.exists(dirmap_processor.file_name):
+        return dirmap_processor.file_name
+    return file_name

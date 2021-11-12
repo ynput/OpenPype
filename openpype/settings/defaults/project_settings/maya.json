@@ -8,16 +8,10 @@
         "yetiRig": "ma"
     },
     "maya-dirmap": {
-        "enabled": true,
+        "enabled": false,
         "paths": {
-            "source-path": [
-                "foo1",
-                "foo2"
-            ],
-            "destination-path": [
-                "bar1",
-                "bar2"
-            ]
+            "source-path": [],
+            "destination-path": []
         }
     },
     "scriptsmenu": {
@@ -156,6 +150,11 @@
         "CollectMayaRender": {
             "sync_workfile_version": false
         },
+        "ValidateInstanceInContext": {
+            "enabled": true,
+            "optional": true,
+            "active": true
+        },
         "ValidateContainers": {
             "enabled": true,
             "optional": true,
@@ -168,6 +167,11 @@
         "ValidateAttributes": {
             "enabled": false,
             "attributes": {}
+        },
+        "ValidateLoadedPlugin": {
+            "enabled": false,
+            "whitelist_native_plugins": false,
+            "authorized_plugins": []
         },
         "ValidateRenderSettings": {
             "arnold_render_attributes": [],
@@ -245,6 +249,11 @@
             "optional": true,
             "active": true
         },
+        "ValidateMeshNgons": {
+            "enabled": false,
+            "optional": true,
+            "active": true
+        },
         "ValidateMeshNonManifold": {
             "enabled": false,
             "optional": true,
@@ -300,7 +309,32 @@
             "optional": true,
             "active": true
         },
+        "ValidateShapeZero": {
+            "enabled": false,
+            "optional": true,
+            "active": true
+        },
         "ValidateTransformZero": {
+            "enabled": false,
+            "optional": true,
+            "active": true
+        },
+        "ValidateUniqueNames": {
+            "enabled": false,
+            "optional": true,
+            "active": true
+        },
+        "ValidateRigContents": {
+            "enabled": false,
+            "optional": true,
+            "active": true
+        },
+        "ValidateRigJointsHidden": {
+            "enabled": false,
+            "optional": true,
+            "active": true
+        },
+        "ValidateRigControllers": {
             "enabled": false,
             "optional": true,
             "active": true
@@ -474,6 +508,12 @@
                 255
             ],
             "mayaAscii": [
+                67,
+                174,
+                255,
+                255
+            ],
+            "mayaScene": [
                 67,
                 174,
                 255,

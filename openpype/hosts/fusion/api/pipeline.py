@@ -3,7 +3,6 @@ Basic avalon integration
 """
 import os
 
-from openpype.tools import workfiles
 from avalon import api as avalon
 from pyblish import api as pyblish
 from openpype.api import Logger
@@ -98,14 +97,3 @@ def on_pyblish_instance_toggled(instance, new_value, old_value):
             current = attrs["TOOLB_PassThrough"]
             if current != passthrough:
                 tool.SetAttrs({"TOOLB_PassThrough": passthrough})
-
-
-def launch_workfiles_app(*args):
-    workdir = os.environ["AVALON_WORKDIR"]
-    workfiles.show(workdir)
-
-
-def publish(parent):
-    """Shorthand to publish from within host"""
-    from avalon.tools import publish
-    return publish.show(parent)

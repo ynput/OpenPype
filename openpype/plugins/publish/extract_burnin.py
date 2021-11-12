@@ -1,6 +1,5 @@
 import os
 import re
-import subprocess
 import json
 import copy
 import tempfile
@@ -46,7 +45,8 @@ class ExtractBurnin(openpype.api.Extractor):
         "aftereffects",
         "tvpaint",
         "webpublisher",
-        "aftereffects"
+        "aftereffects",
+        "photoshop"
         # "resolve"
     ]
     optional = True
@@ -158,6 +158,11 @@ class ExtractBurnin(openpype.api.Extractor):
             filled_anatomy = anatomy.format_all(burnin_data)
             burnin_data["anatomy"] = filled_anatomy.get_solved()
 
+            # Add context data burnin_data.
+            burnin_data["custom"] = (
+                instance.data.get("custom_burnin_data") or {}
+            )
+
             # Add source camera name to burnin data
             camera_name = repre.get("camera_name")
             if camera_name:
@@ -226,7 +231,8 @@ class ExtractBurnin(openpype.api.Extractor):
                     "options": copy.deepcopy(burnin_options),
                     "values": burnin_values,
                     "full_input_path": temp_data["full_input_paths"][0],
-                    "first_frame": temp_data["first_frame"]
+                    "first_frame": temp_data["first_frame"],
+                    "ffmpeg_cmd": new_repre.get("ffmpeg_cmd", "")
                 }
 
                 self.log.debug(

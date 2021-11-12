@@ -30,8 +30,8 @@ class ExtractReview(pyblish.api.InstancePlugin):
     otherwise the representation is ignored.
 
     All new representations are created and encoded by ffmpeg following
-    presets found in `pype-config/presets/plugins/global/
-    publish.json:ExtractReview:outputs`.
+    presets found in OpenPype Settings interface at
+    `project_settings/global/publish/ExtractReview/profiles:outputs`.
     """
 
     label = "Extract Review"
@@ -241,7 +241,8 @@ class ExtractReview(pyblish.api.InstancePlugin):
                     "outputName": output_name,
                     "outputDef": output_def,
                     "frameStartFtrack": temp_data["output_frame_start"],
-                    "frameEndFtrack": temp_data["output_frame_end"]
+                    "frameEndFtrack": temp_data["output_frame_end"],
+                    "ffmpeg_cmd": subprcs_cmd
                 })
 
                 # Force to pop these key if are in new repre
@@ -648,6 +649,8 @@ class ExtractReview(pyblish.api.InstancePlugin):
             AssertionError: if more then one collection is obtained.
 
         """
+        start_frame = int(start_frame)
+        end_frame = int(end_frame)
         collections = clique.assemble(files)[0]
         assert len(collections) == 1, "Multiple collections found."
         col = collections[0]

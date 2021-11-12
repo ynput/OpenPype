@@ -57,6 +57,17 @@ def tray(debug=False):
     PypeCommands().launch_tray(debug)
 
 
+@PypeCommands.add_modules
+@main.group(help="Run command line arguments of OpenPype modules")
+@click.pass_context
+def module(ctx):
+    """Module specific commands created dynamically.
+
+    These commands are generated dynamically by currently loaded addon/modules.
+    """
+    pass
+
+
 @main.command()
 @click.option("-d", "--debug", is_flag=True, help="Print debug messages")
 @click.option("--ftrack-url", envvar="FTRACK_SERVER",
@@ -166,7 +177,7 @@ def publish(debug, paths, targets):
 @click.option("-p", "--project", help="Project")
 @click.option("-t", "--targets", help="Targets", default=None,
               multiple=True)
-def remotepublish(debug, project, path, host, targets=None, user=None):
+def remotepublishfromapp(debug, project, path, host, user=None, targets=None):
     """Start CLI publishing.
 
     Publish collects json from paths provided as an argument.
@@ -174,7 +185,27 @@ def remotepublish(debug, project, path, host, targets=None, user=None):
     """
     if debug:
         os.environ['OPENPYPE_DEBUG'] = '3'
-    PypeCommands.remotepublish(project, path, host, user, targets=targets)
+    PypeCommands.remotepublishfromapp(
+        project, path, host, user, targets=targets
+    )
+
+
+@main.command()
+@click.argument("path")
+@click.option("-d", "--debug", is_flag=True, help="Print debug messages")
+@click.option("-u", "--user", help="User email address")
+@click.option("-p", "--project", help="Project")
+@click.option("-t", "--targets", help="Targets", default=None,
+              multiple=True)
+def remotepublish(debug, project, path, user=None, targets=None):
+    """Start CLI publishing.
+
+    Publish collects json from paths provided as an argument.
+    More than one path is allowed.
+    """
+    if debug:
+        os.environ['OPENPYPE_DEBUG'] = '3'
+    PypeCommands.remotepublish(project, path, user, targets=targets)
 
 
 @main.command()
@@ -263,6 +294,34 @@ def projectmanager():
     PypeCommands().launch_project_manager()
 
 
+@main.command()
+@click.argument("output_path")
+@click.option("--project", help="Define project context")
+@click.option("--asset", help="Define asset in project (project must be set)")
+@click.option(
+    "--strict",
+    is_flag=True,
+    help="Full context must be set otherwise dialog can't be closed."
+)
+def contextselection(
+    output_path,
+    project,
+    asset,
+    strict
+):
+    """Show Qt dialog to select context.
+
+    Context is project name, asset name and task name. The result is stored
+    into json file which path is passed in first argument.
+    """
+    PypeCommands.contextselection(
+        output_path,
+        project,
+        asset,
+        strict
+    )
+
+
 @main.command(
     context_settings=dict(
         ignore_unknown_options=True,
@@ -283,3 +342,18 @@ def run(script):
         args_string = " ".join(args[1:])
         print(f"... running: {script} {args_string}")
         runpy.run_path(script, run_name="__main__", )
+
+
+@main.command()
+@click.argument("folder", nargs=-1)
+@click.option("-m",
+              "--mark",
+              help="Run tests marked by",
+              default=None)
+@click.option("-p",
+              "--pyargs",
+              help="Run tests from package",
+              default=None)
+def runtests(folder, mark, pyargs):
+    """Run all automatic tests after proper initialization via start.py"""
+    PypeCommands().run_tests(folder, mark, pyargs)

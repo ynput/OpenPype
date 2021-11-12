@@ -1,12 +1,20 @@
 {
     "publish": {
+        "CollectAnatomyInstanceData": {
+            "follow_workfile_version": false
+        },
         "ValidateEditorialAssetName": {
             "enabled": true,
             "optional": false
         },
         "ValidateVersion": {
             "enabled": true,
-            "optional": false
+            "optional": false,
+            "active": true
+        },
+        "ValidateIntent": {
+            "enabled": false,
+            "profiles": []
         },
         "IntegrateHeroVersion": {
             "enabled": true,
@@ -19,7 +27,7 @@
                 "animation",
                 "setdress",
                 "layout",
-                "mayaAscii"
+                "mayaScene"
             ]
         },
         "ExtractJpegEXR": {

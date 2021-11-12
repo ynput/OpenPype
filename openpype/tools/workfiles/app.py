@@ -8,19 +8,24 @@ import datetime
 
 import Qt
 from Qt import QtWidgets, QtCore
-from avalon import style, io, api, pipeline
+from avalon import io, api, pipeline
 
-from avalon.tools import lib as tools_lib
-from avalon.tools.widgets import AssetWidget
-from avalon.tools.delegates import PrettyTimeDelegate
+from openpype import style
+from openpype.tools.utils.lib import (
+    schedule, qt_app_context
+)
+from openpype.tools.utils.widgets import AssetWidget
+from openpype.tools.utils.delegates import PrettyTimeDelegate
 
-from .model import (
+from openpype.tools.utils.constants import (
     TASK_NAME_ROLE,
-    TASK_TYPE_ROLE,
-    FilesModel,
+    TASK_TYPE_ROLE
+)
+from openpype.tools.utils.models import (
     TasksModel,
     TasksProxyModel
 )
+from .model import FilesModel
 from .view import FilesView
 
 from openpype.lib import (
@@ -127,6 +132,9 @@ class NameWindow(QtWidgets.QDialog):
 
         # Extensions combobox
         ext_combo = QtWidgets.QComboBox(inputs_widget)
+        # Add styled delegate to use stylesheets
+        ext_delegate = QtWidgets.QStyledItemDelegate()
+        ext_combo.setItemDelegate(ext_delegate)
         ext_combo.addItems(self.host.file_extensions())
 
         # Build inputs
@@ -182,6 +190,7 @@ class NameWindow(QtWidgets.QDialog):
         self.preview_label = preview_label
         self.subversion_input = subversion_input
         self.ext_combo = ext_combo
+        self._ext_delegate = ext_delegate
 
         self.refresh()
 
@@ -359,6 +368,7 @@ class TasksWidget(QtWidgets.QWidget):
             self._last_selected_task = current
 
         self._tasks_model.set_asset(asset_doc)
+        self._tasks_proxy.sort(0, QtCore.Qt.AscendingOrder)
 
         if self._last_selected_task:
             self.select_task(self._last_selected_task)
@@ -421,6 +431,7 @@ class FilesWidget(QtWidgets.QWidget):
     """A widget displaying files that allows to save and open files."""
     file_selected = QtCore.Signal(str)
     workfile_created = QtCore.Signal(str)
+    file_opened = QtCore.Signal()
 
     def __init__(self, parent=None):
         super(FilesWidget, self).__init__(parent=parent)
@@ -611,7 +622,7 @@ class FilesWidget(QtWidgets.QWidget):
 
         self._enter_session()
         host.open_file(filepath)
-        self.window().close()
+        self.file_opened.emit()
 
     def save_changes_prompt(self):
         self._messagebox = messagebox = QtWidgets.QMessageBox()
@@ -629,7 +640,7 @@ class FilesWidget(QtWidgets.QWidget):
 
         # Parenting the QMessageBox to the Widget seems to crash
         # so we skip parenting and explicitly apply the stylesheet.
-        messagebox.setStyleSheet(style.load_stylesheet())
+        messagebox.setStyle(self.style())
 
         result = messagebox.exec_()
         if result == messagebox.Yes:
@@ -786,7 +797,7 @@ class FilesWidget(QtWidgets.QWidget):
         self.files_model.refresh()
 
         if self.auto_select_latest_modified:
-            tools_lib.schedule(self._select_last_modified_file, 100)
+            schedule(self._select_last_modified_file, 100)
 
     def on_context_menu(self, point):
         index = self.files_view.indexAt(point)
@@ -944,7 +955,10 @@ class Window(QtWidgets.QMainWindow):
     def __init__(self, parent=None):
         super(Window, self).__init__(parent=parent)
         self.setWindowTitle(self.title)
-        self.setWindowFlags(QtCore.Qt.Window | QtCore.Qt.WindowCloseButtonHint)
+        window_flags = QtCore.Qt.Window | QtCore.Qt.WindowCloseButtonHint
+        if not parent:
+            window_flags |= QtCore.Qt.WindowStaysOnTopHint
+        self.setWindowFlags(window_flags)
 
         # Create pages widget and set it as central widget
         pages_widget = QtWidgets.QStackedWidget(self)
@@ -986,6 +1000,7 @@ class Window(QtWidgets.QMainWindow):
         tasks_widget.task_changed.connect(self.on_task_changed)
         files_widget.file_selected.connect(self.on_file_select)
         files_widget.workfile_created.connect(self.on_workfile_create)
+        files_widget.file_opened.connect(self._on_file_opened)
         side_panel.save_clicked.connect(self.on_side_panel_save)
 
         self.home_page_widget = home_page_widget
@@ -998,12 +1013,18 @@ class Window(QtWidgets.QMainWindow):
         self.files_widget = files_widget
         self.side_panel = side_panel
 
-        self.refresh()
-
         # Force focus on the open button by default, required for Houdini.
         files_widget.btn_open.setFocus()
 
         self.resize(1200, 600)
+
+        self._first_show = True
+
+    def showEvent(self, event):
+        super(Window, self).showEvent(event)
+        if self._first_show:
+            self._first_show = False
+            self.setStyleSheet(style.load_stylesheet())
 
     def keyPressEvent(self, event):
         """Custom keyPressEvent.
@@ -1015,12 +1036,15 @@ class Window(QtWidgets.QMainWindow):
 
         """
 
+    def set_save_enabled(self, enabled):
+        self.files_widget.btn_save.setEnabled(enabled)
+
     def on_task_changed(self):
         # Since we query the disk give it slightly more delay
-        tools_lib.schedule(self._on_task_changed, 100, channel="mongo")
+        schedule(self._on_task_changed, 100, channel="mongo")
 
     def on_asset_changed(self):
-        tools_lib.schedule(self._on_asset_changed, 50, channel="mongo")
+        schedule(self._on_asset_changed, 50, channel="mongo")
 
     def on_file_select(self, filepath):
         asset_docs = self.assets_widget.get_selected_assets()
@@ -1042,6 +1066,9 @@ class Window(QtWidgets.QMainWindow):
 
     def on_workfile_create(self, filepath):
         self._create_workfile_doc(filepath)
+
+    def _on_file_opened(self):
+        self.close()
 
     def on_side_panel_save(self):
         workfile_doc, data = self.side_panel.get_workfile_data()
@@ -1175,7 +1202,7 @@ def show(root=None, debug=False, parent=None, use_context=True, save=True):
         api.Session["AVALON_ASSET"] = "Mock"
         api.Session["AVALON_TASK"] = "Testing"
 
-    with tools_lib.application():
+    with qt_app_context():
         window = Window(parent=parent)
         window.refresh()
 
@@ -1187,10 +1214,9 @@ def show(root=None, debug=False, parent=None, use_context=True, save=True):
             }
             window.set_context(context)
 
-        window.files_widget.btn_save.setEnabled(save)
+        window.set_save_enabled(save)
 
         window.show()
-        window.setStyleSheet(style.load_stylesheet())
 
         module.window = window
 

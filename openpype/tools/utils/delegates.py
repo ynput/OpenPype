@@ -7,6 +7,7 @@ import Qt
 from Qt import QtWidgets, QtGui, QtCore
 
 from avalon.lib import HeroVersionType
+from openpype.style import get_objected_colors
 from .models import (
     AssetModel,
     TreeModel
@@ -23,6 +24,19 @@ log = logging.getLogger(__name__)
 
 class AssetDelegate(QtWidgets.QItemDelegate):
     bar_height = 3
+
+    def __init__(self, *args, **kwargs):
+        super(AssetDelegate, self).__init__(*args, **kwargs)
+        asset_view_colors = get_objected_colors()["loader"]["asset-view"]
+        self._selected_color = (
+            asset_view_colors["selected"].get_qcolor()
+        )
+        self._hover_color = (
+            asset_view_colors["hover"].get_qcolor()
+        )
+        self._selected_hover_color = (
+            asset_view_colors["selected-hover"].get_qcolor()
+        )
 
     def sizeHint(self, option, index):
         result = super(AssetDelegate, self).sizeHint(option, index)
@@ -66,17 +80,20 @@ class AssetDelegate(QtWidgets.QItemDelegate):
             counter += 1
 
         # Background
-        bg_color = QtGui.QColor(60, 60, 60)
         if option.state & QtWidgets.QStyle.State_Selected:
             if len(subset_colors) == 0:
                 item_rect.setTop(item_rect.top() + (self.bar_height / 2))
+
             if option.state & QtWidgets.QStyle.State_MouseOver:
-                bg_color.setRgb(70, 70, 70)
+                bg_color = self._selected_hover_color
+            else:
+                bg_color = self._selected_color
         else:
             item_rect.setTop(item_rect.top() + (self.bar_height / 2))
             if option.state & QtWidgets.QStyle.State_MouseOver:
-                bg_color.setAlpha(100)
+                bg_color = self._hover_color
             else:
+                bg_color = QtGui.QColor()
                 bg_color.setAlpha(0)
 
         # When not needed to do a rounded corners (easier and without

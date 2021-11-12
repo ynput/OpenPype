@@ -17,6 +17,11 @@ from openpype.api import (
 from openpype.lib import get_pype_execute_args
 from openpype.modules import TrayModulesManager
 from openpype import style
+from openpype.settings import (
+    SystemSettings,
+    ProjectSettings,
+    DefaultsNotDefined
+)
 
 from .pype_info_widget import PypeInfoWidget
 
@@ -113,6 +118,54 @@ class TrayManager:
         main_thread_timer.start()
 
         self.main_thread_timer = main_thread_timer
+
+        # For storing missing settings dialog
+        self._settings_validation_dialog = None
+
+        self.execute_in_main_thread(self._startup_validations)
+
+    def _startup_validations(self):
+        """Run possible startup validations."""
+        self._validate_settings_defaults()
+
+    def _validate_settings_defaults(self):
+        valid = True
+        try:
+            SystemSettings()
+            ProjectSettings()
+
+        except DefaultsNotDefined:
+            valid = False
+
+        if valid:
+            return
+
+        title = "Settings miss default values"
+        msg = (
+            "Your OpenPype will not work as expected! \n"
+            "Some default values in settigs are missing. \n\n"
+            "Please contact OpenPype team."
+        )
+        msg_box = QtWidgets.QMessageBox(
+            QtWidgets.QMessageBox.Warning,
+            title,
+            msg,
+            QtWidgets.QMessageBox.Ok,
+            flags=QtCore.Qt.Dialog
+        )
+        icon = QtGui.QIcon(resources.get_openpype_icon_filepath())
+        msg_box.setWindowIcon(icon)
+        msg_box.setStyleSheet(style.load_stylesheet())
+        msg_box.buttonClicked.connect(self._post_validate_settings_defaults)
+
+        self._settings_validation_dialog = msg_box
+
+        msg_box.show()
+
+    def _post_validate_settings_defaults(self):
+        widget = self._settings_validation_dialog
+        self._settings_validation_dialog = None
+        widget.deleteLater()
 
     def show_tray_message(self, title, message, icon=None, msecs=None):
         """Show tray message.
@@ -215,7 +268,6 @@ class SystemTrayIcon(QtWidgets.QSystemTrayIcon):
 
         # Set modules
         self.tray_man = TrayManager(self, self.parent)
-        self.tray_man.initialize_modules()
 
         # Add menu to Context of SystemTrayIcon
         self.setContextMenu(self.menu)
@@ -236,6 +288,18 @@ class SystemTrayIcon(QtWidgets.QSystemTrayIcon):
 
         self._click_timer = click_timer
         self._doubleclick = False
+        self._click_pos = None
+
+        self._initializing_modules = False
+
+    @property
+    def initializing_modules(self):
+        return self._initializing_modules
+
+    def initialize_modules(self):
+        self._initializing_modules = True
+        self.tray_man.initialize_modules()
+        self._initializing_modules = False
 
     def _click_timer_timeout(self):
         self._click_timer.stop()
@@ -248,13 +312,17 @@ class SystemTrayIcon(QtWidgets.QSystemTrayIcon):
             self._show_context_menu()
 
     def _show_context_menu(self):
-        pos = QtGui.QCursor().pos()
+        pos = self._click_pos
+        self._click_pos = None
+        if pos is None:
+            pos = QtGui.QCursor().pos()
         self.contextMenu().popup(pos)
 
     def on_systray_activated(self, reason):
         # show contextMenu if left click
         if reason == QtWidgets.QSystemTrayIcon.Trigger:
             if self.tray_man.doubleclick_callback:
+                self._click_pos = QtGui.QCursor().pos()
                 self._click_timer.start()
             else:
                 self._show_context_menu()
@@ -276,38 +344,48 @@ class SystemTrayIcon(QtWidgets.QSystemTrayIcon):
         QtCore.QCoreApplication.exit()
 
 
-class TrayMainWindow(QtWidgets.QMainWindow):
-    """ TrayMainWindow is base of Pype application.
-
-    Every widget should have set this window as parent because
-    QSystemTrayIcon widget is not allowed to be a parent of any widget.
-    """
-
+class PypeTrayStarter(QtCore.QObject):
     def __init__(self, app):
-        super(TrayMainWindow, self).__init__()
-        self.app = app
+        app.setQuitOnLastWindowClosed(False)
+        self._app = app
+        self._splash = None
 
-        self.tray_widget = SystemTrayIcon(self)
-        self.tray_widget.show()
+        main_window = QtWidgets.QMainWindow()
+        tray_widget = SystemTrayIcon(main_window)
 
+        start_timer = QtCore.QTimer()
+        start_timer.setInterval(100)
+        start_timer.start()
 
-class PypeTrayApplication(QtWidgets.QApplication):
-    """Qt application manages application's control flow."""
+        start_timer.timeout.connect(self._on_start_timer)
 
-    def __init__(self):
-        super(PypeTrayApplication, self).__init__(sys.argv)
-        # Allows to close widgets without exiting app
-        self.setQuitOnLastWindowClosed(False)
+        self._main_window = main_window
+        self._tray_widget = tray_widget
+        self._timer_counter = 0
+        self._start_timer = start_timer
 
-        # Sets up splash
-        splash_widget = self.set_splash()
+    def _on_start_timer(self):
+        if self._timer_counter == 0:
+            self._timer_counter += 1
+            splash = self._get_splash()
+            splash.show()
+            self._tray_widget.show()
 
-        splash_widget.show()
-        self.processEvents()
-        self.main_window = TrayMainWindow(self)
-        splash_widget.hide()
+        elif self._timer_counter == 1:
+            self._timer_counter += 1
+            self._tray_widget.initialize_modules()
 
-    def set_splash(self):
+        elif not self._tray_widget.initializing_modules:
+            splash = self._get_splash()
+            splash.hide()
+            self._start_timer.stop()
+
+    def _get_splash(self):
+        if self._splash is None:
+            self._splash = self._create_splash()
+        return self._splash
+
+    def _create_splash(self):
         splash_pix = QtGui.QPixmap(resources.get_openpype_splash_filepath())
         splash = QtWidgets.QSplashScreen(splash_pix)
         splash.setMask(splash_pix.mask())
@@ -319,7 +397,12 @@ class PypeTrayApplication(QtWidgets.QApplication):
 
 
 def main():
-    app = PypeTrayApplication()
+    app = QtWidgets.QApplication.instance()
+    if not app:
+        app = QtWidgets.QApplication([])
+
+    starter = PypeTrayStarter(app)
+
     # TODO remove when pype.exe will have an icon
     if os.name == "nt":
         import ctypes
