@@ -949,3 +949,174 @@ QScrollBar::add-page:vertical, QScrollBar::sub-page:vertical {
     /* Default size hint of NiceCheckbox is defined by font size. */
     font-size: 7pt;
 }
+
+/* Settings - NOT USED YET
+- we need to define font family for settings UI */
+
+#SettingsMainWidget {
+    background: #141a1f;
+}
+
+#SettingsToolIconBtn {
+    border: 0px solid #bfccd6;
+    background-color: transparent;
+}
+
+#SettingsToolBtn {
+    border: 1px solid #bfccd6;
+    border-radius: 10px;
+    background-color: transparent;
+}
+
+#SettingsToolBtn:hover {
+    border-color: #189aea;
+    color: #46b1f3;
+    background-color: transparent;
+}
+#SettingsToolBtn:disabled {
+    background-color: #464b54;
+}
+
+#ExpandToggleBtn {
+    background: transparent;
+}
+
+#SettingsLabel {
+    background: transparent;
+    color: #969b9e;
+}
+#SettingsLabel:hover {color: #b8c1c5;}
+#SettingsLabel[state="studio"] {color: #73C990;}
+#SettingsLabel[state="studio"]:hover {color: #ffffff;}
+#SettingsLabel[state="modified"] {color: #189aea;}
+#SettingsLabel[state="modified"]:hover {color: #46b1f3;}
+#SettingsLabel[state="overriden-modified"] {color: #189aea;}
+#SettingsLabel[state="overriden-modified"]:hover {color: #46b1f3;}
+#SettingsLabel[state="overriden"] {color: #ff8c1a;}
+#SettingsLabel[state="overriden"]:hover {color: #ffa64d;}
+#SettingsLabel[state="invalid"] {color: #ad2e2e;}
+#SettingsLabel[state="invalid"]:hover {color: #ad2e2e;}
+
+/* TODO Replace these with explicit widget types if possible */
+QWidget[input-state="studio"] {border-color: #858a94;}
+QWidget[input-state="modified"] {border-color: #189aea;}
+QWidget[input-state="overriden-modified"] {border-color: #189aea;}
+QWidget[input-state="overriden"] {border-color: #ff8c1a;}
+QWidget[input-state="invalid"] {border-color: #ad2e2e;}
+
+#GroupWidget {
+    border-bottom: 1px solid #21252B;
+}
+
+#ProjectListWidget QListView {
+    border: 1px solid #464b54;
+    background: #21252B;
+}
+
+#ProjectListWidget QListView:disabled {
+    background: #282C34;
+}
+
+#ProjectListWidget QListView::item:disabled {
+    color: #4e5254;
+}
+
+#ProjectListWidget QLabel {
+    background: transparent;
+    font-weight: bold;
+}
+
+#MultiSelectionComboBox {
+    font-size: 12px;
+}
+
+#DictKey[state="studio"] {border-color: #464b54;}
+#DictKey[state="modified"] {border-color: #189aea;}
+#DictKey[state="overriden"] {border-color: #00f;}
+#DictKey[state="overriden-modified"] {border-color: #0f0;}
+#DictKey[state="invalid"] {border-color: #ad2e2e;}
+
+#ExpandLabel {
+    font-weight: bold;
+}
+#ExpandLabel:hover {
+    color: #b8c1c5;
+}
+
+#ContentWidget {
+    background-color: transparent;
+}
+#ContentWidget[content_state="hightlighted"] {
+    background-color: rgba(19, 26, 32, 15%);
+}
+
+#SideLineWidget {
+    background-color: #333942;
+    border-style: solid;
+    border-color: #4e5254;
+    border-left-width: 3px;
+    border-bottom-width: 0px;
+    border-right-width: 0px;
+    border-top-width: 0px;
+}
+
+#SideLineWidget:hover {
+    border-color: #7d8386;
+}
+
+#SideLineWidget[state="child-studio"] {border-color: #56a06f;}
+#SideLineWidget[state="child-studio"]:hover {border-color: #73C990;}
+
+#SideLineWidget[state="child-modified"] {border-color: #106aa2;}
+#SideLineWidget[state="child-modified"]:hover {border-color: #189aea;}
+
+#SideLineWidget[state="child-invalid"] {border-color: #ad2e2e;}
+#SideLineWidget[state="child-invalid"]:hover {border-color: #c93636;}
+
+#SideLineWidget[state="child-overriden"] {border-color: #e67300;}
+#SideLineWidget[state="child-overriden"]:hover {border-color: #ff8c1a;}
+
+#SideLineWidget[state="child-overriden-modified"] {border-color: #106aa2;}
+#SideLineWidget[state="child-overriden-modified"]:hover {border-color: #189aea;}
+
+#DictAsWidgetBody {
+    background: transparent;
+}
+#DictAsWidgetBody[show_borders="1"] {
+    border: 1px solid #4e5254;
+    border-radius: 5px;
+}
+
+#ShadowWidget {
+    font-size: 36pt;
+}
+
+#BreadcrumbsPathInput {
+    padding: 2px;
+    font-size: 9pt;
+}
+
+#BreadcrumbsButton {
+    padding-right: 12px;
+    font-size: 9pt;
+    background: transparent;
+}
+
+#BreadcrumbsButton[empty="1"] {
+    padding-right: 0px;
+}
+
+#BreadcrumbsButton::menu-button {
+    border: none;
+    width: 12px;
+    background: rgba(127, 127, 127, 60);
+}
+#BreadcrumbsButton::menu-button:hover {
+    background: rgba(127, 127, 127, 90);
+}
+
+#BreadcrumbsPanel {
+    border: 1px solid #4e5254;
+    border-radius: 5px;
+    background: #21252B;;
+}
