@@ -47,19 +47,13 @@ class SFTPHandler(AbstractProvider):
                         format(site_name))
             return
 
-        provider_presets = self.presets.get(self.CODE)
-        if not provider_presets:
-            msg = "Sync Server: No provider presets for {}".format(self.CODE)
-            log.warning(msg)
-            return
-
         # store to instance for reconnect
-        self.sftp_host = provider_presets["sftp_host"]
-        self.sftp_port = provider_presets["sftp_port"]
-        self.sftp_user = provider_presets["sftp_user"]
-        self.sftp_pass = provider_presets["sftp_pass"]
-        self.sftp_key = provider_presets["sftp_key"]
-        self.sftp_key_pass = provider_presets["sftp_key_pass"]
+        self.sftp_host = presets["sftp_host"]
+        self.sftp_port = presets["sftp_port"]
+        self.sftp_user = presets["sftp_user"]
+        self.sftp_pass = presets["sftp_pass"]
+        self.sftp_key = presets["sftp_key"]
+        self.sftp_key_pass = presets["sftp_key_pass"]
 
         self._tree = None
 
@@ -77,9 +71,7 @@ class SFTPHandler(AbstractProvider):
         Returns:
             (boolean)
         """
-        return self.presets.get(self.CODE) and \
-            self.presets[self.CODE].get("sftp_host") and \
-            self.conn is not None
+        return self.presets["enabled"] and self.conn is not None
 
     @classmethod
     def get_system_settings_schema(cls):
@@ -129,7 +121,8 @@ class SFTPHandler(AbstractProvider):
             {
                 'key': "sftp_key",
                 'label': "SFTP user ssh key",
-                'type': 'path'
+                'type': 'path',
+                "multiplatform": True
             },
             {
                 'key': "sftp_key_pass",
@@ -143,7 +136,7 @@ class SFTPHandler(AbstractProvider):
                 "type": "dict-roots",
                 "object_type": {
                     "type": "path",
-                    "multiplatform": True,
+                    "multiplatform": False,
                     "multipath": False
                 }
             }
@@ -175,7 +168,8 @@ class SFTPHandler(AbstractProvider):
             {
                 'key': "sftp_key",
                 'label': "SFTP user ssh key",
-                'type': 'path'
+                'type': 'path',
+                "multiplatform": True
             },
             {
                 'key': "sftp_key_pass",
@@ -198,7 +192,7 @@ class SFTPHandler(AbstractProvider):
             Format is importing for usage of python's format ** approach
         """
         # roots cannot be locally overridden
-        return self.presets['root']
+        return self.presets['roots']
 
     def get_tree(self):
         """
