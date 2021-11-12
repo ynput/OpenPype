@@ -9,6 +9,8 @@ class InstanceDetail(QtWidgets.QWidget):
         super(InstanceDetail, self).__init__(parent)
 
         details_widget = QtWidgets.QPlainTextEdit(self)
+        details_widget.setObjectName("SubsetManagerDetailsText")
+
         save_btn = QtWidgets.QPushButton("Save", self)
 
         self._block_changes = False
@@ -46,12 +48,18 @@ class InstanceDetail(QtWidgets.QWidget):
         if valid is None:
             valid = self.is_valid()
 
-        style_sheet = ""
-        if not valid:
-            style_sheet = "border-color: #ff0000;"
+        self._save_btn.setEnabled(valid)
+        self._set_invalid_detail(valid)
 
-        self.save_btn.setEnabled(valid)
-        self._details_widget.setStyleSheet(style_sheet)
+    def _set_invalid_detail(self, valid):
+        state = ""
+        if not valid:
+            state = "invalid"
+
+        current_state = self._details_widget.property("state")
+        if current_state != state:
+            self._details_widget.setProperty("state", state)
+            self._details_widget.style().polish(self._details_widget)
 
     def set_details(self, container, item_id):
         self._item_id = item_id
