@@ -142,8 +142,7 @@ class ProcessSubmittedJobOnFarm(pyblish.api.InstancePlugin):
     instance_transfer = {
         "slate": ["slateFrame"],
         "review": ["lutPath"],
-        "render2d": ["bakeScriptPath", "bakeRenderPath",
-                     "bakeWriteNodeName", "version"],
+        "render2d": ["bakingNukeScripts", "version"],
         "renderlayer": ["convertToScanline"]
     }
 
@@ -505,9 +504,9 @@ class ProcessSubmittedJobOnFarm(pyblish.api.InstancePlugin):
         """
         representations = []
         collections, remainders = clique.assemble(exp_files)
-        bake_render_path = instance.get("bakeRenderPath", [])
+        bake_renders = instance.get("bakingNukeScripts", [])
 
-        # create representation for every collected sequence
+        # create representation for every collected sequento ce
         for collection in collections:
             ext = collection.tail.lstrip(".")
             preview = False
@@ -523,7 +522,7 @@ class ProcessSubmittedJobOnFarm(pyblish.api.InstancePlugin):
                             preview = True
                             break
 
-            if bake_render_path:
+            if bake_renders:
                 preview = False
 
             staging = os.path.dirname(list(collection)[0])
@@ -595,7 +594,8 @@ class ProcessSubmittedJobOnFarm(pyblish.api.InstancePlugin):
                 })
                 self._solve_families(instance, True)
 
-            if remainder in bake_render_path:
+            if (bake_renders
+                    and remainder in bake_renders[0]["bakeRenderPath"]):
                 rep.update({
                     "fps": instance.get("fps"),
                     "tags": ["review", "delete"]
