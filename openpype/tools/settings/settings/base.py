@@ -472,6 +472,7 @@ class GUIWidget(BaseWidget):
     def _create_label_ui(self):
         label = self.entity["label"]
         label_widget = QtWidgets.QLabel(label, self)
+        label_widget.setObjectName("SettingsLabel")
 
         layout = QtWidgets.QHBoxLayout(self)
         layout.setContentsMargins(0, 5, 0, 5)
@@ -513,6 +514,7 @@ class MockUpWidget(BaseWidget):
     def create_ui(self):
         label = "Mockup widget for entity {}".format(self.entity.path)
         label_widget = QtWidgets.QLabel(label, self)
+        label_widget.setObjectName("SettingsLabel")
 
         layout = QtWidgets.QHBoxLayout(self)
         layout.setContentsMargins(0, 5, 0, 5)

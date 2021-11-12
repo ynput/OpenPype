@@ -59,23 +59,27 @@ QComboBox QAbstractItemView::item {
 QToolButton {
     background: transparent;
 }
-
 QLabel {
     background: transparent;
     color: #969b9e;
 }
-QLabel:hover {color: #b8c1c5;}
 
-QLabel[state="studio"] {color: #73C990;}
-QLabel[state="studio"]:hover {color: #ffffff;}
-QLabel[state="modified"] {color: #189aea;}
-QLabel[state="modified"]:hover {color: #46b1f3;}
-QLabel[state="overriden-modified"] {color: #189aea;}
-QLabel[state="overriden-modified"]:hover {color: #46b1f3;}
-QLabel[state="overriden"] {color: #ff8c1a;}
-QLabel[state="overriden"]:hover {color: #ffa64d;}
-QLabel[state="invalid"] {color: #ad2e2e;}
-QLabel[state="invalid"]:hover {color: #ad2e2e;}
+#SettingsLabel {
+    background: transparent;
+    color: #969b9e;
+}
+#SettingsLabel:hover {color: #b8c1c5;}
+
+#SettingsLabel[state="studio"] {color: #73C990;}
+#SettingsLabel[state="studio"]:hover {color: #ffffff;}
+#SettingsLabel[state="modified"] {color: #189aea;}
+#SettingsLabel[state="modified"]:hover {color: #46b1f3;}
+#SettingsLabel[state="overriden-modified"] {color: #189aea;}
+#SettingsLabel[state="overriden-modified"]:hover {color: #46b1f3;}
+#SettingsLabel[state="overriden"] {color: #ff8c1a;}
+#SettingsLabel[state="overriden"]:hover {color: #ffa64d;}
+#SettingsLabel[state="invalid"] {color: #ad2e2e;}
+#SettingsLabel[state="invalid"]:hover {color: #ad2e2e;}
 
 
 QWidget[input-state="studio"] {border-color: #858a94;}
