@@ -132,8 +132,13 @@ class SettingsComboBox(QtWidgets.QComboBox):
     def __init__(self, *args, **kwargs):
         super(SettingsComboBox, self).__init__(*args, **kwargs)
 
+        delegate = QtWidgets.QStyledItemDelegate()
+        self.setItemDelegate(delegate)
+
         self.currentIndexChanged.connect(self._on_change)
         self.setFocusPolicy(QtCore.Qt.StrongFocus)
+
+        self._delegate = delegate
 
     def wheelEvent(self, event):
         if self.hasFocus():

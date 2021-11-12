@@ -456,6 +456,8 @@ class _SiteCombobox(QtWidgets.QWidget):
             self
         )
         combobox_input = QtWidgets.QComboBox(self)
+        combobox_delegate = QtWidgets.QStyledItemDelegate()
+        combobox_input.setItemDelegate(combobox_delegate)
 
         main_layout = QtWidgets.QHBoxLayout(self)
         main_layout.addWidget(label_widget)
@@ -464,6 +466,7 @@ class _SiteCombobox(QtWidgets.QWidget):
         combobox_input.currentIndexChanged.connect(self._on_index_change)
         self.label_widget = label_widget
         self.combobox_input = combobox_input
+        self._combobox_delegate = combobox_delegate
 
     def _set_current_text(self, text):
         index = None
