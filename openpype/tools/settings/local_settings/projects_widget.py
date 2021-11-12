@@ -6,10 +6,7 @@ from openpype.settings.constants import (
     PROJECT_ANATOMY_KEY,
     DEFAULT_PROJECT_KEY
 )
-from .widgets import (
-    SpacerWidget,
-    ProxyLabelWidget
-)
+from .widgets import ProxyLabelWidget
 from .constants import (
     LABEL_REMOVE_DEFAULT,
     LABEL_ADD_DEFAULT,
@@ -238,9 +235,9 @@ class SitesWidget(QtWidgets.QWidget):
 
         comboboxes_layout = QtWidgets.QHBoxLayout(comboboxes_widget)
         comboboxes_layout.setContentsMargins(0, 0, 0, 0)
-        comboboxes_layout.addWidget(active_site_widget)
-        comboboxes_layout.addWidget(remote_site_widget)
-        comboboxes_layout.addWidget(SpacerWidget(comboboxes_widget), 1)
+        comboboxes_layout.addWidget(active_site_widget, 0)
+        comboboxes_layout.addWidget(remote_site_widget, 0)
+        comboboxes_layout.addStretch(1)
 
         content_widget = QtWidgets.QWidget(self)
         content_layout = QtWidgets.QVBoxLayout(content_widget)
@@ -385,7 +382,7 @@ class SitesWidget(QtWidgets.QWidget):
             self.input_objects[site_name] = site_input_objects
 
         # Add spacer so other widgets are squeezed to top
-        self.content_layout.addWidget(SpacerWidget(self), 1)
+        self.content_layout.addStretch(1)
 
     def _on_input_value_change(self, site_name, key):
         if (
@@ -782,7 +779,7 @@ class RootSiteWidget(QtWidgets.QWidget):
 
         main_layout = QtWidgets.QVBoxLayout(self)
         main_layout.addWidget(sites_widget)
-        main_layout.addWidget(SpacerWidget(self), 1)
+        main_layout.addStretch(1)
 
         self.sites_widget = sites_widget
 
