@@ -259,7 +259,9 @@ class SitesWidget(QtWidgets.QWidget):
     def _clear_widgets(self):
         while self.content_layout.count():
             item = self.content_layout.itemAt(0)
-            item.widget().hide()
+            widget = item.widget()
+            if widget is not None:
+                widget.setVisible(False)
             self.content_layout.removeItem(item)
         self.input_objects = {}
 
