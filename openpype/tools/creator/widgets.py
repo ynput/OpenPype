@@ -1,5 +1,4 @@
-from ...vendor.Qt import QtWidgets, QtCore
-from ... import style
+from Qt import QtWidgets, QtCore
 
 
 class CreateErrorMessageBox(QtWidgets.QDialog):
@@ -18,8 +17,6 @@ class CreateErrorMessageBox(QtWidgets.QDialog):
         self.setWindowFlags(
             self.windowFlags() | QtCore.Qt.WindowStaysOnTopHint
         )
-
-        self.setStyleSheet(style.load_stylesheet())
 
         body_layout = QtWidgets.QVBoxLayout(self)
 

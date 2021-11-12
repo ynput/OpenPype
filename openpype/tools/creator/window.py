@@ -3,13 +3,13 @@ import inspect
 import traceback
 import re
 
-from ...vendor.Qt import QtWidgets, QtCore, QtGui
-from ...vendor import qtawesome
-from ...vendor import six
-from ... import api, io, style
+from Qt import QtWidgets, QtCore, QtGui
+from avalon.vendor import qtawesome
+import six
+from avalon import api, io, style
 
 from .widgets import CreateErrorMessageBox
-from .. import lib
+from avalon.tools import lib
 from openpype.api import get_current_project_settings
 
 module = sys.modules[__name__]
