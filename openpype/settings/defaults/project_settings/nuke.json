@@ -8,6 +8,13 @@
             "build_workfile": "ctrl+alt+b"
         }
     },
+    "nuke-dirmap": {
+        "enabled": false,
+        "paths": {
+            "source-path": [],
+            "destination-path": []
+        }
+    },
     "create": {
         "CreateWriteRender": {
             "fpath_template": "{work}/renders/nuke/{subset}/{subset}.{frame}.{ext}",
