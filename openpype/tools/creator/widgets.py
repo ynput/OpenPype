@@ -1,7 +1,15 @@
 import re
+import inspect
+
 from Qt import QtWidgets, QtCore, QtGui
 
-from .constants import SubsetAllowedSymbols
+from avalon.vendor import qtawesome
+
+from .constants import (
+    PluginRole,
+    FamilyRole,
+    SubsetAllowedSymbols
+)
 
 
 class CreateErrorMessageBox(QtWidgets.QDialog):
@@ -105,7 +113,7 @@ class SubsetNameValidator(QtGui.QRegExpValidator):
         return invalid
 
 
-class SubsetNameLineEdit(QtWidgets.QLineEdit):
+class VariantLineEdit(QtWidgets.QLineEdit):
     report = QtCore.Signal(str)
     colors = {
         "empty": (QtGui.QColor("#78879b"), ""),
@@ -114,7 +122,7 @@ class SubsetNameLineEdit(QtWidgets.QLineEdit):
     }
 
     def __init__(self, *args, **kwargs):
-        super(SubsetNameLineEdit, self).__init__(*args, **kwargs)
+        super(VariantLineEdit, self).__init__(*args, **kwargs)
 
         validator = SubsetNameValidator()
         self.setValidator(validator)
@@ -166,3 +174,98 @@ class SubsetNameLineEdit(QtWidgets.QLineEdit):
     status_color = QtCore.Property(
         QtGui.QColor, _get_status_color, _set_status_color
     )
+
+
+class FamilyDescriptionWidget(QtWidgets.QWidget):
+    """A family description widget.
+
+    Shows a family icon, family name and a help description.
+    Used in creator header.
+
+     _________________
+    |  ____           |
+    | |icon| FAMILY   |
+    | |____| help     |
+    |_________________|
+
+    """
+
+    SIZE = 35
+
+    def __init__(self, parent=None):
+        super(FamilyDescriptionWidget, self).__init__(parent=parent)
+
+        # Header font
+        font = QtGui.QFont()
+        font.setBold(True)
+        font.setPointSize(14)
+
+        layout = QtWidgets.QHBoxLayout(self)
+        layout.setContentsMargins(0, 0, 0, 0)
+
+        icon = QtWidgets.QLabel()
+        icon.setSizePolicy(QtWidgets.QSizePolicy.Maximum,
+                           QtWidgets.QSizePolicy.Maximum)
+
+        # Add 4 pixel padding to avoid icon being cut off
+        icon.setFixedWidth(self.SIZE + 4)
+        icon.setFixedHeight(self.SIZE + 4)
+        icon.setStyleSheet("""
+        QLabel {
+            padding-right: 5px;
+        }
+        """)
+
+        label_layout = QtWidgets.QVBoxLayout()
+        label_layout.setSpacing(0)
+
+        family = QtWidgets.QLabel("family")
+        family.setFont(font)
+        family.setAlignment(QtCore.Qt.AlignBottom | QtCore.Qt.AlignLeft)
+
+        help = QtWidgets.QLabel("help")
+        help.setAlignment(QtCore.Qt.AlignTop | QtCore.Qt.AlignLeft)
+
+        label_layout.addWidget(family)
+        label_layout.addWidget(help)
+
+        layout.addWidget(icon)
+        layout.addLayout(label_layout)
+
+        self.help = help
+        self.family = family
+        self.icon = icon
+
+    def set_item(self, item):
+        """Update elements to display information of a family item.
+
+        Args:
+            item (dict): A family item as registered with name, help and icon
+
+        Returns:
+            None
+
+        """
+        if not item:
+            return
+
+        # Support a font-awesome icon
+        plugin = item.data(PluginRole)
+        icon_name = getattr(plugin, "icon", None) or "info-circle"
+        try:
+            icon = qtawesome.icon("fa.{}".format(icon_name), color="white")
+            pixmap = icon.pixmap(self.SIZE, self.SIZE)
+        except Exception:
+            print("BUG: Couldn't load icon \"fa.{}\"".format(str(icon_name)))
+            # Create transparent pixmap
+            pixmap = QtGui.QPixmap()
+            pixmap.fill(QtCore.Qt.transparent)
+        pixmap = pixmap.scaled(self.SIZE, self.SIZE)
+
+        # Parse a clean line from the Creator's docstring
+        docstring = inspect.getdoc(plugin)
+        help = docstring.splitlines()[0] if docstring else ""
+
+        self.icon.setPixmap(pixmap)
+        self.family.setText(item.data(FamilyRole))
+        self.help.setText(help)

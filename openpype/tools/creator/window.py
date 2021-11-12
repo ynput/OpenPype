@@ -1,26 +1,27 @@
 import sys
-import inspect
 import traceback
 import re
 
 from Qt import QtWidgets, QtCore, QtGui
 
-from avalon.vendor import qtawesome
-from avalon import api, io, style
+from avalon import api, io
 from avalon.tools import lib
 
+from openpype import style
 from openpype.api import get_current_project_settings
 
 from .widgets import (
     CreateErrorMessageBox,
-    SubsetNameLineEdit
+    VariantLineEdit,
+    FamilyDescriptionWidget
 )
 from .constants import (
     FamilyRole,
     ExistsRole,
     PluginRole,
     SubsetAllowedSymbols,
-    Separator
+    SEPARATOR,
+    SEPARATORS
 )
 
 module = sys.modules[__name__]
@@ -39,26 +40,16 @@ class CreatorWindow(QtWidgets.QDialog):
                 self.windowFlags() | QtCore.Qt.WindowStaysOnTopHint
             )
 
-        # Store internal states in here
-        self.state = {
-            "valid": False
-        }
-        # Message dialog when something goes wrong during creation
-        self.message_dialog = None
+        creator_info = FamilyDescriptionWidget(parent=self)
 
-        body = QtWidgets.QWidget()
-        lists = QtWidgets.QWidget()
-        footer = QtWidgets.QWidget()
-
-        container = QtWidgets.QWidget()
-
-        listing = QtWidgets.QListWidget()
+        listing = QtWidgets.QListWidget(self)
         listing.setSortingEnabled(True)
-        asset = QtWidgets.QLineEdit()
-        name = SubsetNameLineEdit()
-        result = QtWidgets.QLineEdit()
-        result.setStyleSheet("color: gray;")
-        result.setEnabled(False)
+
+        asset_name_input = QtWidgets.QLineEdit(self)
+        variant_input = VariantLineEdit(self)
+        subset_name_input = QtWidgets.QLineEdit(self)
+        subset_name_input.setStyleSheet("color: gray;")
+        subset_name_input.setEnabled(False)
 
         # region Menu for default subset names
 
@@ -70,91 +61,92 @@ class CreatorWindow(QtWidgets.QDialog):
         # endregion
 
         name_layout = QtWidgets.QHBoxLayout()
-        name_layout.addWidget(name)
+        name_layout.addWidget(variant_input)
         name_layout.addWidget(subset_button)
         name_layout.setSpacing(3)
         name_layout.setContentsMargins(0, 0, 0, 0)
 
-        layout = QtWidgets.QVBoxLayout(container)
+        body_layout = QtWidgets.QVBoxLayout()
+        body_layout.setContentsMargins(0, 0, 0, 0)
 
-        header = FamilyDescriptionWidget(parent=self)
-        layout.addWidget(header)
+        body_layout.addWidget(creator_info, 0)
+        body_layout.addWidget(QtWidgets.QLabel("Family", self), 0)
+        body_layout.addWidget(listing, 1)
+        body_layout.addWidget(QtWidgets.QLabel("Asset", self), 0)
+        body_layout.addWidget(asset_name_input, 0)
+        body_layout.addWidget(QtWidgets.QLabel("Subset", self), 0)
+        body_layout.addLayout(name_layout, 0)
+        body_layout.addWidget(subset_name_input, 0)
 
-        layout.addWidget(QtWidgets.QLabel("Family"))
-        layout.addWidget(listing)
-        layout.addWidget(QtWidgets.QLabel("Asset"))
-        layout.addWidget(asset)
-        layout.addWidget(QtWidgets.QLabel("Subset"))
-        layout.addLayout(name_layout)
-        layout.addWidget(result)
-        layout.setContentsMargins(0, 0, 0, 0)
-
-        options = QtWidgets.QWidget()
-
-        useselection_chk = QtWidgets.QCheckBox("Use selection")
+        useselection_chk = QtWidgets.QCheckBox("Use selection", self)
         useselection_chk.setCheckState(QtCore.Qt.Checked)
 
-        layout = QtWidgets.QGridLayout(options)
-        layout.setContentsMargins(0, 0, 0, 0)
-        layout.addWidget(useselection_chk, 1, 1)
+        create_btn = QtWidgets.QPushButton("Create", self)
+        # Need to store error_msg to prevent garbage collection
+        msg_label = QtWidgets.QLabel(self)
 
-        layout = QtWidgets.QHBoxLayout(lists)
-        layout.addWidget(container)
-        layout.setContentsMargins(0, 0, 0, 0)
-
-        layout = QtWidgets.QVBoxLayout(body)
-        layout.addWidget(lists)
-        layout.addWidget(options, 0, QtCore.Qt.AlignLeft)
-        layout.setContentsMargins(0, 0, 0, 0)
-
-        create_btn = QtWidgets.QPushButton("Create")
-        # Need to store error_msg to prevent garbage collection.
-        self.error_msg = QtWidgets.QLabel()
-        self.error_msg.setFixedHeight(20)
-
-        layout = QtWidgets.QVBoxLayout(footer)
-        layout.addWidget(create_btn)
-        layout.addWidget(self.error_msg)
-        layout.setContentsMargins(0, 0, 0, 0)
+        footer_layout = QtWidgets.QVBoxLayout()
+        footer_layout.addWidget(create_btn, 0)
+        footer_layout.addWidget(msg_label, 0)
+        footer_layout.setContentsMargins(0, 0, 0, 0)
 
         layout = QtWidgets.QVBoxLayout(self)
-        layout.addWidget(body)
-        layout.addWidget(footer)
+        layout.addLayout(body_layout, 1)
+        layout.addWidget(useselection_chk, 0, QtCore.Qt.AlignLeft)
+        layout.addLayout(footer_layout, 0)
 
-        self.data = {
-            "Create Button": create_btn,
-            "Listing": listing,
-            "Use Selection Checkbox": useselection_chk,
-            "Subset": name,
-            "Subset Menu": subset_menu,
-            "Result": result,
-            "Asset": asset,
-            "Error Message": self.error_msg,
-        }
+        msg_timer = QtCore.QTimer()
+        msg_timer.setSingleShot(True)
+        msg_timer.setInterval(5000)
 
-        for _name, widget in self.data.items():
-            widget.setObjectName(_name)
-
+        msg_timer.timeout.connect(self._on_msg_timer)
         create_btn.clicked.connect(self.on_create)
-        name.returnPressed.connect(self.on_create)
-        name.textChanged.connect(self.on_data_changed)
-        name.report.connect(self.echo)
-        asset.textChanged.connect(self.on_data_changed)
-        listing.currentItemChanged.connect(self.on_selection_changed)
-        listing.currentItemChanged.connect(header.set_item)
+        variant_input.returnPressed.connect(self.on_create)
+        variant_input.textChanged.connect(self.on_data_changed)
+        variant_input.report.connect(self.echo)
+        asset_name_input.textChanged.connect(self.on_data_changed)
+        listing.currentItemChanged.connect(self._on_creator_change)
 
         self.stateChanged.connect(self._on_state_changed)
 
+        # Store internal states in here
+        self.state = {
+            "valid": False
+        }
+        self._first_show = True
+
+        # Message dialog when something goes wrong during creation
+        self._message_dialog = None
+
+        self._creator_info = creator_info
+        self._create_btn = create_btn
+        self._useselection_chk = useselection_chk
+        self._variant_input = variant_input
+        self._subset_name_input = subset_name_input
+        self._asset_name_input = asset_name_input
+        self._creators_view = listing
+
+        self._subset_btn = subset_button
+        self._subset_menu = subset_menu
+
+        self._msg_label = msg_label
+
+        self._msg_timer = msg_timer
+
         # Defaults
         self.resize(300, 500)
-        name.setFocus()
+        variant_input.setFocus()
         create_btn.setEnabled(False)
 
     def _on_state_changed(self, state):
         self.state["valid"] = state
-        self.data["Create Button"].setEnabled(state)
+        self._create_btn.setEnabled(state)
 
-    def _build_menu(self, default_names):
+    def _on_creator_change(self, index):
+        self.on_selection_changed(index)
+        self._creator_info.set_item(index)
+
+    def _build_menu(self, default_names=None):
         """Create optional predefined subset names
 
         Args:
@@ -163,9 +155,11 @@ class CreatorWindow(QtWidgets.QDialog):
         Returns:
              None
         """
+        if not default_names:
+            default_names = []
 
-        menu = self.data["Subset Menu"]
-        button = menu.parent()
+        menu = self._subset_menu
+        button = self._subset_btn
 
         # Get and destroy the action group
         group = button.findChild(QtWidgets.QActionGroup)
@@ -180,7 +174,7 @@ class CreatorWindow(QtWidgets.QDialog):
         # Build new action group
         group = QtWidgets.QActionGroup(button)
         for name in default_names:
-            if name == Separator:
+            if name in SEPARATORS:
                 menu.addSeparator()
                 continue
             action = group.addAction(name)
@@ -189,22 +183,16 @@ class CreatorWindow(QtWidgets.QDialog):
         group.triggered.connect(self._on_action_clicked)
 
     def _on_action_clicked(self, action):
-        name = self.data["Subset"]
-        name.setText(action.text())
+        self._variant_input.setText(action.text())
 
     def _on_data_changed(self):
-        listing = self.data["Listing"]
-        asset_name = self.data["Asset"]
-        subset = self.data["Subset"]
-        result = self.data["Result"]
-
-        item = listing.currentItem()
-        user_input_text = subset.text()
-        asset_name = asset_name.text()
+        item = self._creators_view.currentItem()
+        user_input_text = self._variant_input.text()
+        asset_name = self._asset_name_input.text()
 
         # Early exit if no asset name
         if not asset_name.strip():
-            self._build_menu([])
+            self._build_menu()
             item.setData(ExistsRole, False)
             self.echo("Asset name is required ..")
             self.stateChanged.emit(False)
@@ -249,7 +237,7 @@ class CreatorWindow(QtWidgets.QDialog):
                 .replace(curly_left, "{")
                 .replace(curly_right, "}")
             )
-            result.setText(subset_name)
+            self._subset_name_input.setText(subset_name)
 
             # Get all subsets of the current asset
             subset_docs = io.find(
@@ -287,20 +275,20 @@ class CreatorWindow(QtWidgets.QDialog):
 
             if subset_hints:
                 if defaults:
-                    defaults.append(Separator)
+                    defaults.append(SEPARATOR)
                 defaults.extend(subset_hints)
             self._build_menu(defaults)
 
             # Indicate subset existence
             if not user_input_text:
-                subset.as_empty()
+                self._variant_input.as_empty()
             elif subset_name.lower() in existing_subset_names_low:
                 # validate existence of subset name with lowered text
                 #   - "renderMain" vs. "rensermain" mean same path item for
                 #   windows
-                subset.as_exists()
+                self._variant_input.as_exists()
             else:
-                subset.as_new()
+                self._variant_input.as_new()
 
             item.setData(ExistsRole, True)
 
@@ -332,8 +320,7 @@ class CreatorWindow(QtWidgets.QDialog):
         lib.schedule(self._on_data_changed, 500, channel="gui")
 
     def on_selection_changed(self, *args):
-        name = self.data["Subset"]
-        item = self.data["Listing"].currentItem()
+        item = self._creators_view.currentItem()
 
         plugin = item.data(PluginRole)
         if plugin is None:
@@ -349,7 +336,7 @@ class CreatorWindow(QtWidgets.QDialog):
             else:
                 default = "Default"
 
-        name.setText(default)
+        self._variant_input.setText(default)
 
         self.on_data_changed()
 
@@ -362,11 +349,17 @@ class CreatorWindow(QtWidgets.QDialog):
         whilst trying to name an instance.
 
         """
+        pass
+
+    def showEvent(self, event):
+        super(CreatorWindow, self).showEvent(event)
+        if self._first_show:
+            self._first_show = False
+            self.setStyleSheet(style.load_stylesheet())
 
     def refresh(self):
-        listing = self.data["Listing"]
-        asset = self.data["Asset"]
-        asset.setText(api.Session["AVALON_ASSET"])
+        listing = self._creators_view
+        self._asset_name_input.setText(api.Session["AVALON_ASSET"])
 
         listing.clear()
 
@@ -417,33 +410,28 @@ class CreatorWindow(QtWidgets.QDialog):
             listing.setCurrentItem(listing.item(0))
 
     def on_create(self):
-
         # Do not allow creation in an invalid state
         if not self.state["valid"]:
             return
 
-        asset = self.data["Asset"]
-        listing = self.data["Listing"]
-        result = self.data["Result"]
-
-        item = listing.currentItem()
+        item = self._creators_view.currentItem()
         if item is None:
             return
 
-        subset_name = result.text()
-        asset = asset.text()
+        subset_name = self._subset_name_input.text()
+        asset_name = self._asset_name_input.text()
         family = item.data(FamilyRole)
         Creator = item.data(PluginRole)
-        use_selection = self.data["Use Selection Checkbox"].isChecked()
+        use_selection = self._useselection_chk.isChecked()
 
-        variant = self.data["Subset"].text()
+        variant = self._variant_input.text()
 
         error_info = None
         try:
             api.create(
                 Creator,
                 subset_name,
-                asset,
+                asset_name,
                 options={"useSelection": use_selection},
                 data={"variant": variant}
             )
@@ -463,116 +451,21 @@ class CreatorWindow(QtWidgets.QDialog):
 
         if error_info:
             box = CreateErrorMessageBox(
-                family, subset_name, asset, *error_info
+                family, subset_name, asset_name, *error_info
             )
             box.show()
             # Store dialog so is not garbage collected before is shown
-            self.message_dialog = box
+            self._message_dialog = box
 
         else:
             self.echo("Created %s .." % subset_name)
 
+    def _on_msg_timer(self):
+        self._msg_label.setText("")
+
     def echo(self, message):
-        widget = self.data["Error Message"]
-        widget.setText(str(message))
-        widget.show()
-
-        lib.schedule(lambda: widget.setText(""), 5000, channel="message")
-
-
-class FamilyDescriptionWidget(QtWidgets.QWidget):
-    """A family description widget.
-
-    Shows a family icon, family name and a help description.
-    Used in creator header.
-
-     _________________
-    |  ____           |
-    | |icon| FAMILY   |
-    | |____| help     |
-    |_________________|
-
-    """
-
-    SIZE = 35
-
-    def __init__(self, parent=None):
-        super(FamilyDescriptionWidget, self).__init__(parent=parent)
-
-        # Header font
-        font = QtGui.QFont()
-        font.setBold(True)
-        font.setPointSize(14)
-
-        layout = QtWidgets.QHBoxLayout(self)
-        layout.setContentsMargins(0, 0, 0, 0)
-
-        icon = QtWidgets.QLabel()
-        icon.setSizePolicy(QtWidgets.QSizePolicy.Maximum,
-                           QtWidgets.QSizePolicy.Maximum)
-
-        # Add 4 pixel padding to avoid icon being cut off
-        icon.setFixedWidth(self.SIZE + 4)
-        icon.setFixedHeight(self.SIZE + 4)
-        icon.setStyleSheet("""
-        QLabel {
-            padding-right: 5px;
-        }
-        """)
-
-        label_layout = QtWidgets.QVBoxLayout()
-        label_layout.setSpacing(0)
-
-        family = QtWidgets.QLabel("family")
-        family.setFont(font)
-        family.setAlignment(QtCore.Qt.AlignBottom | QtCore.Qt.AlignLeft)
-
-        help = QtWidgets.QLabel("help")
-        help.setAlignment(QtCore.Qt.AlignTop | QtCore.Qt.AlignLeft)
-
-        label_layout.addWidget(family)
-        label_layout.addWidget(help)
-
-        layout.addWidget(icon)
-        layout.addLayout(label_layout)
-
-        self.help = help
-        self.family = family
-        self.icon = icon
-
-    def set_item(self, item):
-        """Update elements to display information of a family item.
-
-        Args:
-            item (dict): A family item as registered with name, help and icon
-
-        Returns:
-            None
-
-        """
-        if not item:
-            return
-
-        # Support a font-awesome icon
-        plugin = item.data(PluginRole)
-        icon_name = getattr(plugin, "icon", None) or "info-circle"
-        try:
-            icon = qtawesome.icon("fa.{}".format(icon_name), color="white")
-            pixmap = icon.pixmap(self.SIZE, self.SIZE)
-        except Exception:
-            print("BUG: Couldn't load icon \"fa.{}\"".format(str(icon_name)))
-            # Create transparent pixmap
-            pixmap = QtGui.QPixmap()
-            pixmap.fill(QtCore.Qt.transparent)
-        pixmap = pixmap.scaled(self.SIZE, self.SIZE)
-
-        # Parse a clean line from the Creator's docstring
-        docstring = inspect.getdoc(plugin)
-        help = docstring.splitlines()[0] if docstring else ""
-
-        self.icon.setPixmap(pixmap)
-        self.family.setText(item.data(FamilyRole))
-        self.help.setText(help)
+        self._msg_label.setText(str(message))
+        self._msg_timer.start()
 
 
 def show(debug=False, parent=None):
