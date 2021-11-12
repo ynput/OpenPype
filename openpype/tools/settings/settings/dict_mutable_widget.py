@@ -375,7 +375,7 @@ class ModifiableDictItem(QtWidgets.QWidget):
             "fa.edit", QtCore.Qt.lightGray, QtCore.Qt.white
         )
         edit_btn.setFocusPolicy(QtCore.Qt.ClickFocus)
-        edit_btn.setProperty("btn-type", "tool-item-icon")
+        edit_btn.setObjectName("SettingsToolIconBtn")
         edit_btn.setFixedHeight(BTN_FIXED_SIZE)
 
         confirm_btn = create_confirm_btn(self)

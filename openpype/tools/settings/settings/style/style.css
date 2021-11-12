@@ -108,7 +108,7 @@ QPushButton:hover {
     background-color: #464b54;
 }
 
-QPushButton[btn-type="tool-item-icon"] {
+#SettingsToolIconBtn {
     border: 0px solid #bfccd6;
     background-color: transparent;
 }
