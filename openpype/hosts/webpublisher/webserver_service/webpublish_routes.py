@@ -205,7 +205,10 @@ class WebpublisherBatchPublishEndpoint(_RestApiEndpoint):
                     # Make sure targets are set to None for cases that default
                     #   would change
                     # - targets argument is not used in 'remotepublishfromapp'
-                    "targets": None
+                    "targets": None,
+                    # does publish need to be handled by a queue, eg. only
+                    # single process running concurrently?
+                    "add_to_queue": True
                 }
             }
         ]
@@ -222,6 +225,7 @@ class WebpublisherBatchPublishEndpoint(_RestApiEndpoint):
             "targets": ["filespublish"]
         }
 
+        add_to_queue = False
         if content.get("studio_processing"):
             log.info("Post processing called")
 
@@ -247,6 +251,7 @@ class WebpublisherBatchPublishEndpoint(_RestApiEndpoint):
                         add_args.update(
                             process_filter.get("arguments") or {}
                         )
+                        add_to_queue = process_filter["add_to_queue"]
                         break
 
         args = [
@@ -266,7 +271,7 @@ class WebpublisherBatchPublishEndpoint(_RestApiEndpoint):
                     args.append(value)
 
         log.info("args:: {}".format(args))
-        if content.get("studio_processing"):
+        if add_to_queue:
             log.debug("Adding to queue")
             self.resource.studio_task_queue.append(args)
         else:
