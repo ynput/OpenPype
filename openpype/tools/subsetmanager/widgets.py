@@ -1,5 +1,5 @@
 import json
-from ...vendor.Qt import QtWidgets, QtCore
+from Qt import QtWidgets, QtCore
 
 
 class InstanceDetail(QtWidgets.QWidget):
@@ -20,15 +20,15 @@ class InstanceDetail(QtWidgets.QWidget):
         layout.addWidget(details_widget, 1)
         layout.addWidget(save_btn, 0, QtCore.Qt.AlignRight)
 
-        save_btn.clicked.connect(self.on_save)
+        save_btn.clicked.connect(self._on_save_clicked)
         details_widget.textChanged.connect(self._on_text_change)
 
-        self.details_widget = details_widget
-        self.save_btn = save_btn
+        self._details_widget = details_widget
+        self._save_btn = save_btn
 
         self.set_editable(False)
 
-    def on_save(self):
+    def _on_save_clicked(self):
         if self.is_valid():
             self.save_triggered.emit()
 
@@ -41,8 +41,8 @@ class InstanceDetail(QtWidgets.QWidget):
         if not self._item_id:
             editable = False
 
-        self.save_btn.setVisible(editable)
-        self.details_widget.setReadOnly(not editable)
+        self._save_btn.setVisible(editable)
+        self._details_widget.setReadOnly(not editable)
         if valid is None:
             valid = self.is_valid()
 
@@ -51,7 +51,7 @@ class InstanceDetail(QtWidgets.QWidget):
             style_sheet = "border-color: #ff0000;"
 
         self.save_btn.setEnabled(valid)
-        self.details_widget.setStyleSheet(style_sheet)
+        self._details_widget.setStyleSheet(style_sheet)
 
     def set_details(self, container, item_id):
         self._item_id = item_id
@@ -64,14 +64,14 @@ class InstanceDetail(QtWidgets.QWidget):
                 text = str(container)
 
         self._block_changes = True
-        self.details_widget.setPlainText(text)
+        self._details_widget.setPlainText(text)
         self._block_changes = False
 
         self.update_state()
 
     def instance_data_from_text(self):
         try:
-            jsoned = json.loads(self.details_widget.toPlainText())
+            jsoned = json.loads(self._details_widget.toPlainText())
         except Exception:
             jsoned = None
         return jsoned
@@ -83,7 +83,7 @@ class InstanceDetail(QtWidgets.QWidget):
         if not self._item_id:
             return True
 
-        value = self.details_widget.toPlainText()
+        value = self._details_widget.toPlainText()
         valid = False
         try:
             jsoned = json.loads(value)
