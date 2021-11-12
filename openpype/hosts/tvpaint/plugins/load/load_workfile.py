@@ -40,8 +40,12 @@ class LoadWorkfile(pipeline.Loader):
 
         # Save workfile.
         host_name = "tvpaint"
-        asset_name = context["asset"]
-        task_name = context["task"]
+        asset_name = context.get("asset")
+        task_name = context.get("task")
+        # Far cases when there is workfile without context
+        if not asset_name:
+            asset_name = io.Session["AVALON_ASSET"]
+            task_name = io.Session["AVALON_TASK"]
 
         project_doc = io.find_one({
             "type": "project"
@@ -62,7 +66,7 @@ class LoadWorkfile(pipeline.Loader):
         anatomy = Anatomy(project_name)
 
         data = get_workdir_data(project_doc, asset_doc, task_name, host_name)
-        data["roots"] = anatomy.roots
+        data["root"] = anatomy.roots
         data["user"] = getpass.getuser()
 
         template = anatomy.templates[template_key]["file"]
