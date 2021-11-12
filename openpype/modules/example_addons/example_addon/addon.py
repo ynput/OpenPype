@@ -8,10 +8,12 @@ in global space here until are required or used.
 """
 
 import os
+import click
 
 from openpype.modules import (
     JsonFilesSettingsDef,
-    OpenPypeAddOn
+    OpenPypeAddOn,
+    ModulesManager
 )
 # Import interface defined by this addon to be able find other addons using it
 from openpype_interfaces import (
@@ -114,3 +116,32 @@ class ExampleAddon(OpenPypeAddOn, IPluginPaths, ITrayAction):
         return {
             "publish": [os.path.join(current_dir, "plugins", "publish")]
         }
+
+    def cli(self, click_group):
+        click_group.add_command(cli_main)
+
+
+@click.group(ExampleAddon.name, help="Example addon dynamic cli commands.")
+def cli_main():
+    pass
+
+
+@cli_main.command()
+def nothing():
+    """Does nothing but print a message."""
+    print("You've triggered \"nothing\" command.")
+
+
+@cli_main.command()
+def show_dialog():
+    """Show ExampleAddon dialog.
+
+    We don't have access to addon directly through cli so we have to create
+    it again.
+    """
+    from openpype.tools.utils.lib import qt_app_context
+
+    manager = ModulesManager()
+    example_addon = manager.modules_by_name[ExampleAddon.name]
+    with qt_app_context():
+        example_addon.show_dialog()

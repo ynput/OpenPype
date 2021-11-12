@@ -42,6 +42,25 @@ class PypeCommands:
         settings.main(user_role)
 
     @staticmethod
+    def add_modules(click_func):
+        """Modules/Addons can add their cli commands dynamically."""
+        from openpype.modules import ModulesManager
+
+        manager = ModulesManager()
+        log = PypeLogger.get_logger("AddModulesCLI")
+        for module in manager.modules:
+            try:
+                module.cli(click_func)
+
+            except Exception:
+                log.warning(
+                    "Failed to add cli command for module \"{}\"".format(
+                        module.name
+                    )
+                )
+        return click_func
+
+    @staticmethod
     def launch_eventservercli(*args):
         from openpype_modules.ftrack.ftrack_server.event_server_cli import (
             run_event_server
