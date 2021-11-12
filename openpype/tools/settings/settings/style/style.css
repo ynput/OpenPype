@@ -113,8 +113,8 @@ QPushButton:hover {
     background-color: transparent;
 }
 
-QPushButton[btn-type="expand-toggle"] {
-    background: #21252B;
+#ExpandToggleBtn {
+    background: transparent;
 }
 
 /* SLider */

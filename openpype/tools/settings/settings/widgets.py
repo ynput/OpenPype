@@ -180,7 +180,7 @@ class ExpandingWidget(QtWidgets.QWidget):
 
         button_size = QtCore.QSize(5, 5)
         button_toggle = QtWidgets.QToolButton(parent=side_line_widget)
-        button_toggle.setProperty("btn-type", "expand-toggle")
+        button_toggle.setObjectName("ExpandToggleBtn")
         button_toggle.setIconSize(button_size)
         button_toggle.setArrowType(QtCore.Qt.RightArrow)
         button_toggle.setCheckable(True)
