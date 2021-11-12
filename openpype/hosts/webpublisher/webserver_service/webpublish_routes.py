@@ -205,11 +205,11 @@ class WebpublisherBatchPublishEndpoint(_RestApiEndpoint):
                     # Make sure targets are set to None for cases that default
                     #   would change
                     # - targets argument is not used in 'remotepublishfromapp'
-                    "targets": None,
-                    # does publish need to be handled by a queue, eg. only
-                    # single process running concurrently?
-                    "add_to_queue": True
-                }
+                    "targets": None
+                },
+                # does publish need to be handled by a queue, eg. only
+                # single process running concurrently?
+                "add_to_queue": True
             }
         ]
 
