@@ -325,7 +325,7 @@ class ConfiguredExtensionsEndpoint(_RestApiEndpoint):
             "file_exts": set(),
             "sequence_exts": set(),
             # workfiles that could have "Studio Procesing" hardcoded for now
-            "studio_exts": set("psd", "psb", "tvpp", "tvp")
+            "studio_exts": set(["psd", "psb", "tvpp", "tvp"])
         }
         collect_conf = sett["webpublisher"]["publish"]["CollectPublishedFiles"]
         for _, mapping in collect_conf.get("task_type_to_family", {}).items():
