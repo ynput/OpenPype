@@ -35,6 +35,8 @@ class RestApiResource:
             return value.isoformat()
         if isinstance(value, ObjectId):
             return str(value)
+        if isinstance(value, set):
+            return list(value)
         raise TypeError(value)
 
     @classmethod
@@ -281,19 +283,31 @@ class PublishesStatusEndpoint(_RestApiEndpoint):
 
 
 class ConfiguredExtensionsEndpoint(_RestApiEndpoint):
-    """Returns list of extensions which have mapping to family."""
+    """Returns dict of extensions which have mapping to family.
+
+        Returns:
+        {
+            "file_exts": [],
+            "sequence_exts": []
+        }
+    """
     async def get(self, project_name=None) -> Response:
         sett = get_project_settings(project_name)
 
-        configured = []
+        configured = {
+            "file_exts": set(),
+            "sequence_exts": set()
+        }
         collect_conf = sett["webpublisher"]["publish"]["CollectPublishedFiles"]
         for _, mapping in collect_conf.get("task_type_to_family", {}).items():
             for _family, config in mapping.items():
-                configured.extend(config["extensions"])
-        configured = set(configured)
+                if config["is_sequence"]:
+                    configured["sequence_exts"].update(config["extensions"])
+                else:
+                    configured["file_exts"].update(config["extensions"])
 
         return Response(
             status=200,
-            body=self.resource.encode(sorted(list(configured))),
+            body=self.resource.encode(dict(configured)),
             content_type="application/json"
         )
