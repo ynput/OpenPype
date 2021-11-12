@@ -180,6 +180,9 @@ QSlider::handle:vertical {
 #ExpandLabel {
     font-weight: bold;
 }
+#ExpandLabel:hover {
+    color: #b8c1c5;
+}
 
 #ContentWidget {
     background-color: transparent;
