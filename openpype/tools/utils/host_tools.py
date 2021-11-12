@@ -144,12 +144,8 @@ class HostToolsHelper:
 
     def show_subset_manager(self, parent=None):
         """Show tool display/remove existing created instances."""
-        from avalon import style
-
         subset_manager_tool = self.get_subset_manager_tool(parent)
         subset_manager_tool.show()
-
-        subset_manager_tool.setStyleSheet(style.load_stylesheet())
 
         # Pull window to the front.
         subset_manager_tool.raise_()
