@@ -25,8 +25,8 @@ class EmptyListItem(QtWidgets.QWidget):
         add_btn.setFixedSize(BTN_FIXED_SIZE, BTN_FIXED_SIZE)
         remove_btn.setFixedSize(BTN_FIXED_SIZE, BTN_FIXED_SIZE)
 
-        add_btn.setProperty("btn-type", "tool-item")
-        remove_btn.setProperty("btn-type", "tool-item")
+        add_btn.setObjectName("SettingsToolBtn")
+        remove_btn.setObjectName("SettingsToolBtn")
 
         layout = QtWidgets.QHBoxLayout(self)
         layout.setContentsMargins(0, 0, 0, 0)
@@ -74,10 +74,10 @@ class ListItem(QtWidgets.QWidget):
         up_btn.setFixedSize(BTN_FIXED_SIZE, BTN_FIXED_SIZE)
         down_btn.setFixedSize(BTN_FIXED_SIZE, BTN_FIXED_SIZE)
 
-        add_btn.setProperty("btn-type", "tool-item")
-        remove_btn.setProperty("btn-type", "tool-item")
-        up_btn.setProperty("btn-type", "tool-item")
-        down_btn.setProperty("btn-type", "tool-item")
+        add_btn.setObjectName("SettingsToolBtn")
+        remove_btn.setObjectName("SettingsToolBtn")
+        up_btn.setObjectName("SettingsToolBtn")
+        down_btn.setObjectName("SettingsToolBtn")
 
         add_btn.clicked.connect(self._on_add_clicked)
         remove_btn.clicked.connect(self._on_remove_clicked)

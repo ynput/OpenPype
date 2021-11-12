@@ -94,15 +94,18 @@ QPushButton:hover {
     border: 1px solid #fff;
     color: #fff;
 }
-QPushButton[btn-type="tool-item"] {
+#SettingsToolBtn {
+    background: transparent;
     border: 1px solid #bfccd6;
     border-radius: 10px;
 }
-
-QPushButton[btn-type="tool-item"]:hover {
+#SettingsToolBtn:hover {
     border-color: #189aea;
     color: #46b1f3;
     background-color: transparent;
+}
+#SettingsToolBtn:disabled {
+    background-color: #464b54;
 }
 
 QPushButton[btn-type="tool-item-icon"] {

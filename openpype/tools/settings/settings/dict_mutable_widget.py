@@ -81,7 +81,7 @@ class PaintHelper:
 def create_add_btn(parent):
     add_btn = QtWidgets.QPushButton("+", parent)
     add_btn.setFocusPolicy(QtCore.Qt.ClickFocus)
-    add_btn.setProperty("btn-type", "tool-item")
+    add_btn.setObjectName("SettingsToolBtn")
     add_btn.setFixedSize(BTN_FIXED_SIZE, BTN_FIXED_SIZE)
     return add_btn
 
@@ -89,7 +89,7 @@ def create_add_btn(parent):
 def create_remove_btn(parent):
     remove_btn = QtWidgets.QPushButton("-", parent)
     remove_btn.setFocusPolicy(QtCore.Qt.ClickFocus)
-    remove_btn.setProperty("btn-type", "tool-item")
+    remove_btn.setObjectName("SettingsToolBtn")
     remove_btn.setFixedSize(BTN_FIXED_SIZE, BTN_FIXED_SIZE)
     return remove_btn
 
@@ -102,7 +102,7 @@ def create_confirm_btn(parent):
     )
     confirm_btn.setIcon(icon)
     confirm_btn.setFocusPolicy(QtCore.Qt.ClickFocus)
-    confirm_btn.setProperty("btn-type", "tool-item")
+    confirm_btn.setObjectName("SettingsToolBtn")
     confirm_btn.setFixedSize(BTN_FIXED_SIZE, BTN_FIXED_SIZE)
     return confirm_btn
 
