@@ -20,9 +20,9 @@ module = sys.modules[__name__]
 module.window = None
 
 
-class Window(QtWidgets.QDialog):
+class SubsetManagerWindow(QtWidgets.QDialog):
     def __init__(self, parent=None):
-        super(Window, self).__init__(parent=parent)
+        super(SubsetManagerWindow, self).__init__(parent=parent)
         self.setWindowTitle("Subset Manager 0.1")
         self.setObjectName("SubsetManager")
         if not parent:
@@ -177,8 +177,8 @@ class Window(QtWidgets.QDialog):
             editable = hasattr(host, "save_instances")
         self.details_widget.set_editable(editable)
 
-    def show(self, *args, **kwargs):
-        super(Window, self).show(*args, **kwargs)
+    def showEvent(self, *args, **kwargs):
+        super(SubsetManagerWindow, self).showEvent(*args, **kwargs)
         if self._first_show:
             self._first_show = False
             self.refresh()

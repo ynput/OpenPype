@@ -1,9 +1,9 @@
-from .app import (
+from .window import (
     show,
-    Window
+    SubsetManagerWindow
 )
 
 __all__ = (
     "show",
-    "Window"
+    "SubsetManagerWindow"
 )
