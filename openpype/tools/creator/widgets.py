@@ -5,11 +5,7 @@ from Qt import QtWidgets, QtCore, QtGui
 
 from avalon.vendor import qtawesome
 
-from .constants import (
-    PluginRole,
-    FamilyRole,
-    SubsetAllowedSymbols
-)
+from openpype.pipeline.create import SUBSET_NAME_ALLOWED_SYMBOLS
 
 
 class CreateErrorMessageBox(QtWidgets.QDialog):
@@ -89,7 +85,7 @@ class CreateErrorMessageBox(QtWidgets.QDialog):
 
 class SubsetNameValidator(QtGui.QRegExpValidator):
     invalid = QtCore.Signal(set)
-    pattern = "^[{}]*$".format(SubsetAllowedSymbols)
+    pattern = "^[{}]*$".format(SUBSET_NAME_ALLOWED_SYMBOLS)
 
     def __init__(self):
         reg = QtCore.QRegExp(self.pattern)
@@ -236,7 +232,7 @@ class FamilyDescriptionWidget(QtWidgets.QWidget):
         self.family = family
         self.icon = icon
 
-    def set_item(self, item):
+    def set_item(self, creator_plugin):
         """Update elements to display information of a family item.
 
         Args:
@@ -246,12 +242,14 @@ class FamilyDescriptionWidget(QtWidgets.QWidget):
             None
 
         """
-        if not item:
+        if not creator_plugin:
+            self.icon.setPixmap(None)
+            self.family.setText("")
+            self.help.setText("")
             return
 
         # Support a font-awesome icon
-        plugin = item.data(PluginRole)
-        icon_name = getattr(plugin, "icon", None) or "info-circle"
+        icon_name = getattr(creator_plugin, "icon", None) or "info-circle"
         try:
             icon = qtawesome.icon("fa.{}".format(icon_name), color="white")
             pixmap = icon.pixmap(self.SIZE, self.SIZE)
@@ -263,9 +261,9 @@ class FamilyDescriptionWidget(QtWidgets.QWidget):
         pixmap = pixmap.scaled(self.SIZE, self.SIZE)
 
         # Parse a clean line from the Creator's docstring
-        docstring = inspect.getdoc(plugin)
+        docstring = inspect.getdoc(creator_plugin)
         help = docstring.splitlines()[0] if docstring else ""
 
         self.icon.setPixmap(pixmap)
-        self.family.setText(item.data(FamilyRole))
+        self.family.setText(creator_plugin.family)
         self.help.setText(help)

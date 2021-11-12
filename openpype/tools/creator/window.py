@@ -9,17 +9,17 @@ from avalon import api, io
 from openpype import style
 from openpype.api import get_current_project_settings
 from openpype.tools.utils.lib import qt_app_context
+from openpype.pipeline.create import SUBSET_NAME_ALLOWED_SYMBOLS
 
+from .model import CreatorsModel
 from .widgets import (
     CreateErrorMessageBox,
     VariantLineEdit,
     FamilyDescriptionWidget
 )
 from .constants import (
-    FamilyRole,
-    ExistsRole,
-    PluginRole,
-    SubsetAllowedSymbols,
+    ITEM_ID_ROLE,
+    FAMILY_ROLE,
     SEPARATOR,
     SEPARATORS
 )
@@ -40,8 +40,13 @@ class CreatorWindow(QtWidgets.QDialog):
 
         creator_info = FamilyDescriptionWidget(parent=self)
 
-        listing = QtWidgets.QListWidget(self)
-        listing.setSortingEnabled(True)
+        creators_model = CreatorsModel()
+
+        creators_proxy = QtCore.QSortFilterProxyModel()
+        creators_proxy.setSourceModel(creators_model)
+
+        creators_view = QtWidgets.QListView(self)
+        creators_view.setModel(creators_proxy)
 
         asset_name_input = QtWidgets.QLineEdit(self)
         variant_input = VariantLineEdit(self)
@@ -49,14 +54,10 @@ class CreatorWindow(QtWidgets.QDialog):
         subset_name_input.setStyleSheet("color: gray;")
         subset_name_input.setEnabled(False)
 
-        # region Menu for default subset names
-
         subset_button = QtWidgets.QPushButton()
         subset_button.setFixedWidth(18)
         subset_menu = QtWidgets.QMenu(subset_button)
         subset_button.setMenu(subset_menu)
-
-        # endregion
 
         name_layout = QtWidgets.QHBoxLayout()
         name_layout.addWidget(variant_input)
@@ -69,7 +70,7 @@ class CreatorWindow(QtWidgets.QDialog):
 
         body_layout.addWidget(creator_info, 0)
         body_layout.addWidget(QtWidgets.QLabel("Family", self), 0)
-        body_layout.addWidget(listing, 1)
+        body_layout.addWidget(creators_view, 1)
         body_layout.addWidget(QtWidgets.QLabel("Asset", self), 0)
         body_layout.addWidget(asset_name_input, 0)
         body_layout.addWidget(QtWidgets.QLabel("Subset", self), 0)
@@ -109,7 +110,9 @@ class CreatorWindow(QtWidgets.QDialog):
         variant_input.textChanged.connect(self._on_data_changed)
         variant_input.report.connect(self.echo)
         asset_name_input.textChanged.connect(self._on_data_changed)
-        listing.currentItemChanged.connect(self._on_creator_change)
+        creators_view.selectionModel().currentChanged.connect(
+            self._on_selection_changed
+        )
 
         # Store valid states and
         self._is_valid = False
@@ -126,7 +129,10 @@ class CreatorWindow(QtWidgets.QDialog):
         self._variant_input = variant_input
         self._subset_name_input = subset_name_input
         self._asset_name_input = asset_name_input
-        self._creators_view = listing
+
+        self._creators_model = creators_model
+        self._creators_proxy = creators_proxy
+        self._creators_view = creators_view
 
         self._subset_btn = subset_button
         self._subset_menu = subset_menu
@@ -145,10 +151,6 @@ class CreatorWindow(QtWidgets.QDialog):
             return
         self._is_valid = valid
         self._create_btn.setEnabled(valid)
-
-    def _on_creator_change(self, index):
-        self.on_selection_changed(index)
-        self._creator_info.set_item(index)
 
     def _build_menu(self, default_names=None):
         """Create optional predefined subset names
@@ -198,31 +200,33 @@ class CreatorWindow(QtWidgets.QDialog):
         self._validation_timer.start()
 
     def _on_validation_timer(self):
-        item = self._creators_view.currentItem()
+        index = self._creators_view.currentIndex()
+        item_id = index.data(ITEM_ID_ROLE)
+        creator_plugin = self._creators_model.get_creator_by_id(item_id)
         user_input_text = self._variant_input.text()
         asset_name = self._asset_name_input.text()
 
         # Early exit if no asset name
         if not asset_name.strip():
             self._build_menu()
-            item.setData(ExistsRole, False)
             self.echo("Asset name is required ..")
             self._set_valid_state(False)
             return
 
-        # Get the asset from the database which match with the name
-        asset_doc = io.find_one(
-            {"name": asset_name, "type": "asset"},
-            projection={"_id": 1}
-        )
+        asset_doc = None
+        if creator_plugin:
+            # Get the asset from the database which match with the name
+            asset_doc = io.find_one(
+                {"name": asset_name, "type": "asset"},
+                projection={"_id": 1}
+            )
+
         # Get plugin
-        plugin = item.data(PluginRole)
-        if not asset_doc or not plugin:
+        if not asset_doc or not creator_plugin:
             subset_name = user_input_text
             self._build_menu()
-            item.setData(ExistsRole, False)
 
-            if not plugin:
+            if not creator_plugin:
                 self.echo("No registered families ..")
             else:
                 self.echo("Asset '%s' not found .." % asset_name)
@@ -234,7 +238,7 @@ class CreatorWindow(QtWidgets.QDialog):
         task_name = io.Session["AVALON_TASK"]
 
         # Calculate subset name with Creator plugin
-        subset_name = plugin.get_subset_name(
+        subset_name = creator_plugin.get_subset_name(
             user_input_text, task_name, asset_id, project_name
         )
         # Force replacement of prohibited symbols
@@ -251,7 +255,7 @@ class CreatorWindow(QtWidgets.QDialog):
         )
         # Replace prohibited symbols
         tmp_subset_name = re.sub(
-            "[^{}]+".format(SubsetAllowedSymbols),
+            "[^{}]+".format(SUBSET_NAME_ALLOWED_SYMBOLS),
             "",
             tmp_subset_name
         )
@@ -280,10 +284,10 @@ class CreatorWindow(QtWidgets.QDialog):
         defaults = []
         # Check if Creator plugin has set defaults
         if (
-            plugin.defaults
-            and isinstance(plugin.defaults, (list, tuple, set))
+            creator_plugin.defaults
+            and isinstance(creator_plugin.defaults, (list, tuple, set))
         ):
-            defaults = list(plugin.defaults)
+            defaults = list(creator_plugin.defaults)
 
         # Replace
         compare_regex = re.compile(re.sub(
@@ -313,30 +317,32 @@ class CreatorWindow(QtWidgets.QDialog):
         else:
             self._variant_input.as_new()
 
-        item.setData(ExistsRole, True)
-
         # Update the valid state
-        valid = (
-            subset_name.strip() != "" and
-            item.data(QtCore.Qt.ItemIsEnabled) and
-            item.data(ExistsRole)
-        )
+        valid = subset_name.strip() != ""
+
         self._set_valid_state(valid)
 
-    def on_selection_changed(self, *args):
-        item = self._creators_view.currentItem()
+    def _on_selection_changed(self, old_idx, new_idx):
+        index = self._creators_view.currentIndex()
+        item_id = index.data(ITEM_ID_ROLE)
 
-        plugin = item.data(PluginRole)
-        if plugin is None:
+        creator_plugin = self._creators_model.get_creator_by_id(item_id)
+
+        self._creator_info.set_item(creator_plugin)
+
+        if creator_plugin is None:
             return
 
         default = None
-        if hasattr(plugin, "get_default_variant"):
-            default = plugin.get_default_variant()
+        if hasattr(creator_plugin, "get_default_variant"):
+            default = creator_plugin.get_default_variant()
 
         if not default:
-            if plugin.defaults and isinstance(plugin.defaults, list):
-                default = plugin.defaults[0]
+            if (
+                creator_plugin.defaults
+                and isinstance(creator_plugin.defaults, list)
+            ):
+                default = creator_plugin.defaults[0]
             else:
                 default = "Default"
 
@@ -362,30 +368,9 @@ class CreatorWindow(QtWidgets.QDialog):
             self.setStyleSheet(style.load_stylesheet())
 
     def refresh(self):
-        listing = self._creators_view
         self._asset_name_input.setText(api.Session["AVALON_ASSET"])
 
-        listing.clear()
-
-        has_families = False
-
-        creators = api.discover(api.Creator)
-
-        for creator in creators:
-            label = creator.label or creator.family
-            item = QtWidgets.QListWidgetItem(label)
-            item.setData(QtCore.Qt.ItemIsEnabled, True)
-            item.setData(FamilyRole, creator.family)
-            item.setData(PluginRole, creator)
-            item.setData(ExistsRole, False)
-            listing.addItem(item)
-
-            has_families = True
-
-        if not has_families:
-            item = QtWidgets.QListWidgetItem("No registered families")
-            item.setData(QtCore.Qt.ItemIsEnabled, False)
-            listing.addItem(item)
+        self._creators_model.reset()
 
         pype_project_setting = (
             get_current_project_settings()
@@ -394,38 +379,44 @@ class CreatorWindow(QtWidgets.QDialog):
             ["creator"]
             ["families_smart_select"]
         )
-        item = None
-        family_type = None
-        task_name = io.Session.get('AVALON_TASK', None)
+        current_index = None
+        family = None
+        task_name = io.Session.get("AVALON_TASK", None)
+        lowered_task_name = task_name.lower()
         if task_name:
-            for key, value in pype_project_setting.items():
-                for t_name in value:
-                    if t_name in task_name.lower():
-                        family_type = key
+            for _family, _task_names in pype_project_setting.items():
+                _low_task_names = {name.lower() for name in _task_names}
+                for _task_name in _low_task_names:
+                    if _task_name in lowered_task_name:
+                        family = _family
                         break
-                if family_type:
+                if family:
                     break
-            if family_type:
-                items = listing.findItems(family_type, QtCore.Qt.MatchExactly)
-                if len(items) > 0:
-                    item = items[0]
-                    listing.setCurrentItem(item)
-        if not item:
-            listing.setCurrentItem(listing.item(0))
+
+        if family:
+            indexes = self._creators_model.get_indexes_by_family(family)
+            if indexes:
+                index = indexes[0]
+                current_index = self._creators_proxy.mapFromSource(index)
+
+        if current_index is None or not current_index.isValid():
+            current_index = self._creators_proxy.index(0, 0)
+
+        self._creators_view.setCurrentIndex(current_index)
 
     def _on_create(self):
         # Do not allow creation in an invalid state
         if not self._is_valid:
             return
 
-        item = self._creators_view.currentItem()
-        if item is None:
+        index = self._creators_view.currentIndex()
+        item_id = index.data(ITEM_ID_ROLE)
+        creator_plugin = self._creators_model.get_creator_by_id(item_id)
+        if creator_plugin is None:
             return
 
         subset_name = self._subset_name_input.text()
         asset_name = self._asset_name_input.text()
-        family = item.data(FamilyRole)
-        Creator = item.data(PluginRole)
         use_selection = self._useselection_chk.isChecked()
 
         variant = self._variant_input.text()
@@ -433,7 +424,7 @@ class CreatorWindow(QtWidgets.QDialog):
         error_info = None
         try:
             api.create(
-                Creator,
+                creator_plugin,
                 subset_name,
                 asset_name,
                 options={"useSelection": use_selection},
@@ -455,7 +446,7 @@ class CreatorWindow(QtWidgets.QDialog):
 
         if error_info:
             box = CreateErrorMessageBox(
-                family, subset_name, asset_name, *error_info
+                creator_plugin.family, subset_name, asset_name, *error_info
             )
             box.show()
             # Store dialog so is not garbage collected before is shown

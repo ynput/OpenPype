@@ -1,9 +1,8 @@
 from Qt import QtCore
 
 
-FamilyRole = QtCore.Qt.UserRole + 3
-ExistsRole = QtCore.Qt.UserRole + 4
-PluginRole = QtCore.Qt.UserRole + 5
+FAMILY_ROLE = QtCore.Qt.UserRole + 1
+ITEM_ID_ROLE = QtCore.Qt.UserRole + 2
 
 SEPARATOR = "---"
 SEPARATORS = {"---", "---separator---"}
