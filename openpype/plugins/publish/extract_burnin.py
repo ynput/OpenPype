@@ -110,6 +110,9 @@ class ExtractBurnin(openpype.api.Extractor):
             ).format(host_name, family, task_name))
             return
 
+        self.log.debug("profile: {}".format(
+            profile))
+
         # Pre-filter burnin definitions by instance families
         burnin_defs = self.filter_burnins_defs(profile, instance)
         if not burnin_defs:
@@ -126,18 +129,44 @@ class ExtractBurnin(openpype.api.Extractor):
 
         anatomy = instance.context.data["anatomy"]
         scriptpath = self.burnin_script_path()
+
         # Executable args that will execute the script
         # [pype executable, *pype script, "run"]
         executable_args = get_pype_execute_args("run", scriptpath)
 
+        from pprint import pformat
+        self.log.debug(pformat(instance.data["representations"]))
+
         for idx, repre in enumerate(tuple(instance.data["representations"])):
             self.log.debug("repre ({}): `{}`".format(idx + 1, repre["name"]))
+
+            repre_burnin_links = repre.get("burnins", [])
+
             if not self.repres_is_valid(repre):
                 continue
 
+            self.log.debug("repre_burnin_links: {}".format(
+                repre_burnin_links))
+
+            self.log.debug("burnin_defs.keys(): {}".format(
+                burnin_defs.keys()))
+
+            # Filter output definition by `burnin` represetation key
+            repre_linked_burnins = {
+                name: output for name, output in burnin_defs.items()
+                if name in repre_burnin_links
+            }
+            self.log.debug("repre_linked_burnins: {}".format(
+                repre_linked_burnins))
+
+            # if any match then replace burnin defs and follow tag filtering
+            _burnin_defs = copy.deepcopy(burnin_defs)
+            if repre_linked_burnins:
+                _burnin_defs = repre_linked_burnins
+
             # Filter output definition by representation tags (optional)
             repre_burnin_defs = self.filter_burnins_by_tags(
-                burnin_defs, repre["tags"]
+                _burnin_defs, repre["tags"]
             )
             if not repre_burnin_defs:
                 self.log.info((
@@ -281,14 +310,16 @@ class ExtractBurnin(openpype.api.Extractor):
             # NOTE we maybe can keep source representation if necessary
             instance.data["representations"].remove(repre)
 
-            # Delete input files
-            for filepath in files_to_delete:
-                if os.path.exists(filepath):
-                    os.remove(filepath)
-                    self.log.debug("Removed: \"{}\"".format(filepath))
+        self.log.debug("Files to delete: {}".format(files_to_delete))
 
-            if do_decompress and os.path.exists(decompressed_dir):
-                shutil.rmtree(decompressed_dir)
+        # Delete input files
+        for filepath in files_to_delete:
+            if os.path.exists(filepath):
+                os.remove(filepath)
+                self.log.debug("Removed: \"{}\"".format(filepath))
+
+        if do_decompress and os.path.exists(decompressed_dir):
+            shutil.rmtree(decompressed_dir)
 
     def _get_burnin_options(self):
         # Prepare burnin options

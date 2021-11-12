@@ -180,6 +180,9 @@ class ExtractReview(pyblish.api.InstancePlugin):
                 if "tags" not in output_def:
                     output_def["tags"] = []
 
+                if "burnins" not in output_def:
+                    output_def["burnins"] = []
+
                 # Create copy of representation
                 new_repre = copy.deepcopy(repre)
 
@@ -191,6 +194,17 @@ class ExtractReview(pyblish.api.InstancePlugin):
                 for tag in output_def["tags"]:
                     if tag not in new_repre["tags"]:
                         new_repre["tags"].append(tag)
+
+                # Add burnin link from output definition to representation
+                for burnin in output_def["burnins"]:
+                    if burnin not in new_repre.get("burnins", []):
+                        if not new_repre.get("burnins"):
+                            new_repre["burnins"] = []
+                        new_repre["burnins"].append(str(burnin))
+
+                self.log.debug(
+                    "Linked burnins: `{}`".format(new_repre["burnins"])
+                )
 
                 self.log.debug(
                     "New representation tags: `{}`".format(new_repre["tags"])
@@ -232,7 +246,10 @@ class ExtractReview(pyblish.api.InstancePlugin):
                     for f in files_to_clean:
                         os.unlink(f)
 
-                output_name = output_def["filename_suffix"]
+                output_name = new_repre.get("outputName", "")
+                if output_name:
+                    output_name += "_"
+                output_name += output_def["filename_suffix"]
                 if temp_data["without_handles"]:
                     output_name += "_noHandles"
 
