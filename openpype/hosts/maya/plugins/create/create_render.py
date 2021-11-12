@@ -21,6 +21,7 @@ from openpype.api import (
 from openpype.modules import ModulesManager
 
 from avalon.api import Session
+from avalon.api import CreatorError
 
 
 class CreateRender(plugin.Creator):
@@ -476,7 +477,21 @@ class CreateRender(plugin.Creator):
 
         # set separator
         # set it in vray menu
-        cmds.optionMenuGrp("vrayRenderElementSeparator", v=self.aov_separator)
+        if cmds.optionMenuGrp("vrayRenderElementSeparator", exists=True,
+                              q=True):
+            items = cmds.optionMenuGrp(
+                "vrayRenderElementSeparator", ill=True, query=True)
+
+            separators = [cmds.menuItem(i, label=True, query=True) for i in items]  # noqa: E501
+            try:
+                sep_idx = separators.index(self.aov_separator)
+            except ValueError:
+                raise CreatorError(
+                    "AOV character {} not in {}".format(
+                        self.aov_separator, separators))
+
+            cmds.optionMenuGrp(
+                "vrayRenderElementSeparator", sl=sep_idx + 1, edit=True)
         cmds.setAttr(
             "{}.fileNameRenderElementSeparator".format(node),
             self.aov_separator,

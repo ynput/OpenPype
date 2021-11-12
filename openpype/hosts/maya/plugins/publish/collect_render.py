@@ -172,6 +172,18 @@ class CollectMayaRender(pyblish.api.ContextPlugin):
             if renderer.startswith("renderman"):
                 renderer = "renderman"
 
+            try:
+                aov_separator = self._aov_chars[(
+                    context.data["project_settings"]
+                    ["create"]
+                    ["CreateRender"]
+                    ["aov_separator"]
+                )]
+            except KeyError:
+                aov_separator = "_"
+
+            render_instance.data["aovSeparator"] = aov_separator
+
             # return all expected files for all cameras and aovs in given
             # frame range
             layer_render_products = get_layer_render_products(
