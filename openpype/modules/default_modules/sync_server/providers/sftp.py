@@ -36,7 +36,6 @@ class SFTPHandler(AbstractProvider):
 
     def __init__(self, project_name, site_name, tree=None, presets=None):
         self.presets = None
-        self.active = False
         self.project_name = project_name
         self.site_name = site_name
         self.root = None

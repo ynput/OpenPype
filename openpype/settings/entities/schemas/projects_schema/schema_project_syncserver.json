@@ -27,14 +27,23 @@
                     "label": "Loop Delay"
                 },
                 {
+                    "type": "list",
+                    "key": "always_accessible_on",
+                    "label": "Always accessible on sites",
+                    "object_type": "text"
+                },
+                {
+                    "type": "splitter"
+                },
+                {
                     "type": "text",
                     "key": "active_site",
-                    "label": "Active Site"
+                    "label": "User Default Active Site"
                 },
                 {
                     "type": "text",
                     "key": "remote_site",
-                    "label": "Remote Site"
+                    "label": "User Default Remote Site"
                 }
             ]
         },
