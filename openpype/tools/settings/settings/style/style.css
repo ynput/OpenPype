@@ -173,7 +173,7 @@ QSlider::handle:vertical {
 #DictKey[state="overriden-modified"] {border-color: #0f0;}
 #DictKey[state="invalid"] {border-color: #ad2e2e;}
 
-#DictLabel {
+#ExpandLabel {
     font-weight: bold;
 }
 

@@ -187,7 +187,7 @@ class ExpandingWidget(QtWidgets.QWidget):
         button_toggle.setChecked(False)
 
         label_widget = QtWidgets.QLabel(label, parent=side_line_widget)
-        label_widget.setObjectName("DictLabel")
+        label_widget.setObjectName("ExpandLabel")
 
         before_label_widget = QtWidgets.QWidget(side_line_widget)
         before_label_layout = QtWidgets.QHBoxLayout(before_label_widget)
