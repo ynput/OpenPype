@@ -1029,6 +1029,7 @@ class IntegrateAssetNew(pyblish.api.InstancePlugin):
         """
         local_site = 'studio'  # default
         remote_site = None
+        always_accesible = []
         sync_server_presets = None
 
         if (instance.context.data["system_settings"]
@@ -1043,6 +1044,8 @@ class IntegrateAssetNew(pyblish.api.InstancePlugin):
             if sync_server_presets["enabled"]:
                 local_site = sync_server_presets["config"].\
                     get("active_site", "studio").strip()
+                always_accesible = sync_server_presets["config"].\
+                    get("always_accessible_on", [])
                 if local_site == 'local':
                     local_site = local_site_id
 
@@ -1072,6 +1075,12 @@ class IntegrateAssetNew(pyblish.api.InstancePlugin):
             if remote_site:
                 meta = {"name": remote_site.strip()}
                 rec["sites"].append(meta)
+
+            # add skeleton for site where it should be always synced to
+            for always_on_site in always_accesible:
+                if always_on_site not in [local_site, remote_site]:
+                    meta = {"name": always_on_site.strip()}
+                    rec["sites"].append(meta)
 
         return rec
 

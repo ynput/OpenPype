@@ -322,6 +322,7 @@
         "config": {
             "retry_cnt": "3",
             "loop_delay": "60",
+            "always_accessible_on": [],
             "active_site": "studio",
             "remote_site": "studio"
         },

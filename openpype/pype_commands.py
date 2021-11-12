@@ -358,3 +358,28 @@ class PypeCommands:
         cmd = "pytest {} {} {}".format(folder, mark_str, pyargs_str)
         print("Running {}".format(cmd))
         subprocess.run(cmd)
+
+    def syncserver(self, active_site):
+        """Start running sync_server in background."""
+        import signal
+        os.environ["OPENPYPE_LOCAL_ID"] = active_site
+
+        def signal_handler(sig, frame):
+            print("You pressed Ctrl+C. Process ended.")
+            sync_server_module.server_exit()
+            sys.exit(0)
+
+        signal.signal(signal.SIGINT, signal_handler)
+        signal.signal(signal.SIGTERM, signal_handler)
+
+        from openpype.modules import ModulesManager
+
+        manager = ModulesManager()
+        sync_server_module = manager.modules_by_name["sync_server"]
+
+        sync_server_module.server_init()
+        sync_server_module.server_start()
+
+        import time
+        while True:
+            time.sleep(1.0)

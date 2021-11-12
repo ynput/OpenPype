@@ -140,3 +140,42 @@ Beware that ssh key expects OpenSSH format (`.pem`) not a Putty format (`.ppk`)!
 
 If a studio needs to use other services for cloud storage, or want to implement totally different storage providers, they can do so by writing their own provider plugin. We're working on a developer documentation, however, for now we recommend looking at `abstract_provider.py`and `gdrive.py` inside `openpype/modules/sync_server/providers` and using it as a template.
 
+### Running Site Sync in background
+
+Site Sync server synchronizes new published files from artist machine into configured remote location by default.
+
+There might be a use case where you need to synchronize between "non-artist" sites, for example between studio site and cloud. In this case
+you need to run Site Sync as a background process from a command line (via service etc) 24/7.
+
+To configure all sites where all published files should be synced eventually you need to configure `project_settings/global/sync_server/config/always_accessible_on` property in Settins (per project) first.
+
+![Set another non artist remote site](assets/site_sync_always_on.png)
+
+This is an example of:
+- Site Sync is enabled for a project
+- default active and remote sites are set to `studio` - eg. standard process: everyone is working in a studio, publishing to shared location etc.
+- (but this also allows any of the artists to work remotely, they would change their active site in their own Local Settings to `local` and configure local root.
+  This would result in everything artist publishes is saved first onto his local folder AND synchronized to `studio` site eventually.)
+- everything exported must also be eventually uploaded to `sftp` site
+
+This eventual synchronization between `studio` and `sftp` sites must be physically handled by background process.
+
+As current implementation relies heavily on Settings and Local Settings, background process for a specific site ('studio' for example) must be configured via Tray first to `syncserver` command to work.
+
+To do this:
+
+- run OP `Tray` with environment variable OPENPYPE_LOCAL_ID set to name of active (source) site. In most use cases it would be studio (for cases of backups of everything published to studio site to different cloud site etc.)
+- start `Tray`
+- check `Local ID` in information dialog after clicking on version number in the Tray
+- open `Local Settings` in the `Tray`
+- configure for each project necessary active site and remote site
+- close `Tray`
+- run OP from a command line with `syncserver` and `--active_site` arguments
+
+
+This is an example how to trigger background synching process where active (source) site is `studio`. 
+(It is expected that OP is installed on a machine, `openpype_console` is on PATH. If not, add full path to executable.
+)
+```shell
+openpype_console syncserver --active_site studio
+```

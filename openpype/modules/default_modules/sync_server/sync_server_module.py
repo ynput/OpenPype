@@ -152,9 +152,9 @@ class SyncServerModule(OpenPypeModule, ITrayModule):
         if not site_name:
             site_name = self.DEFAULT_SITE
 
-        self.reset_provider_for_file(collection,
-                                     representation_id,
-                                     site_name=site_name, force=force)
+        self.reset_site_on_representation(collection,
+                                          representation_id,
+                                          site_name=site_name, force=force)
 
     # public facing API
     def remove_site(self, collection, representation_id, site_name,
@@ -176,10 +176,10 @@ class SyncServerModule(OpenPypeModule, ITrayModule):
         if not self.get_sync_project_setting(collection):
             raise ValueError("Project not configured")
 
-        self.reset_provider_for_file(collection,
-                                     representation_id,
-                                     site_name=site_name,
-                                     remove=True)
+        self.reset_site_on_representation(collection,
+                                          representation_id,
+                                          site_name=site_name,
+                                          remove=True)
         if remove_local_files:
             self._remove_local_file(collection, representation_id, site_name)
 
@@ -314,8 +314,8 @@ class SyncServerModule(OpenPypeModule, ITrayModule):
         """
         log.info("Pausing SyncServer for {}".format(representation_id))
         self._paused_representations.add(representation_id)
-        self.reset_provider_for_file(collection, representation_id,
-                                     site_name=site_name, pause=True)
+        self.reset_site_on_representation(collection, representation_id,
+                                          site_name=site_name, pause=True)
 
     def unpause_representation(self, collection, representation_id, site_name):
         """
@@ -334,8 +334,8 @@ class SyncServerModule(OpenPypeModule, ITrayModule):
         except KeyError:
             pass
         # self.paused_representations is not persistent
-        self.reset_provider_for_file(collection, representation_id,
-                                     site_name=site_name, pause=False)
+        self.reset_site_on_representation(collection, representation_id,
+                                          site_name=site_name, pause=False)
 
     def is_representation_paused(self, representation_id,
                                  check_parents=False, project_name=None):
@@ -799,12 +799,19 @@ class SyncServerModule(OpenPypeModule, ITrayModule):
 
     def tray_init(self):
         """
-            Actual initialization of Sync Server.
+            Actual initialization of Sync Server for Tray.
 
             Called when tray is initialized, it checks if module should be
             enabled. If not, no initialization necessary.
         """
-        # import only in tray, because of Python2 hosts
+        self.server_init()
+
+        from .tray.app import SyncServerWindow
+        self.widget = SyncServerWindow(self)
+
+    def server_init(self):
+        """Actual initialization of Sync Server."""
+        # import only in tray or Python3, because of Python2 hosts
         from .sync_server import SyncServerThread
 
         if not self.enabled:
@@ -816,7 +823,9 @@ class SyncServerModule(OpenPypeModule, ITrayModule):
             return
 
         self.lock = threading.Lock()
+
         self.sync_server_thread = SyncServerThread(self)
+
 
     def tray_start(self):
         """
@@ -829,6 +838,9 @@ class SyncServerModule(OpenPypeModule, ITrayModule):
         Returns:
             None
         """
+        self.server_start()
+
+    def server_start(self):
         if self.sync_project_settings and self.enabled:
             self.sync_server_thread.start()
         else:
@@ -841,6 +853,9 @@ class SyncServerModule(OpenPypeModule, ITrayModule):
 
             Called from Module Manager
         """
+        self.server_exit()
+
+    def server_exit(self):
         if not self.sync_server_thread:
             return
 
@@ -850,6 +865,7 @@ class SyncServerModule(OpenPypeModule, ITrayModule):
             log.info("Stopping sync server server")
             self.sync_server_thread.is_running = False
             self.sync_server_thread.stop()
+            log.info("Sync server stopped")
         except Exception:
             log.warning(
                 "Error has happened during Killing sync server",
@@ -1319,9 +1335,9 @@ class SyncServerModule(OpenPypeModule, ITrayModule):
 
         return -1, None
 
-    def reset_provider_for_file(self, collection, representation_id,
-                                side=None, file_id=None, site_name=None,
-                                remove=False, pause=None, force=False):
+    def reset_site_on_representation(self, collection, representation_id,
+                                     side=None, file_id=None, site_name=None,
+                                     remove=False, pause=None, force=False):
         """
             Reset information about synchronization for particular 'file_id'
             and provider.
