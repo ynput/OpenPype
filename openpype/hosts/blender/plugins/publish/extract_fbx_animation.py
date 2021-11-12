@@ -123,7 +123,7 @@ class ExtractAnimationFBX(api.Extractor):
         json_path = os.path.join(stagingdir, json_filename)
 
         json_dict = {
-            "instance_name": asset_group.get(AVALON_PROPERTY).get("namespace")
+            "instance_name": asset_group.get(AVALON_PROPERTY).get("objectName")
         }
 
         # collection = instance.data.get("name")

@@ -10,6 +10,7 @@ from avalon import api
 from avalon.blender.pipeline import AVALON_CONTAINERS
 from avalon.blender.pipeline import AVALON_CONTAINER_ID
 from avalon.blender.pipeline import AVALON_PROPERTY
+from openpype import lib
 from openpype.hosts.blender.api import plugin
 
 
@@ -59,7 +60,9 @@ class BlendLayoutLoader(plugin.AssetLoader):
             library = bpy.data.libraries.get(bpy.path.basename(libpath))
             bpy.data.libraries.remove(library)
 
-    def _process(self, libpath, asset_group, group_name, actions):
+    def _process(
+        self, libpath, asset_group, group_name, asset, representation, actions
+    ):
         with bpy.data.libraries.load(
             libpath, link=True, relative=False
         ) as (data_from, data_to):
@@ -106,7 +109,7 @@ class BlendLayoutLoader(plugin.AssetLoader):
             parent.objects.link(obj)
 
         for obj in objects:
-            local_obj = plugin.prepare_data(obj, group_name)
+            local_obj = plugin.prepare_data(obj)
 
             action = None
 
@@ -125,11 +128,12 @@ class BlendLayoutLoader(plugin.AssetLoader):
                     if material_slot.material:
                         plugin.prepare_data(material_slot.material, group_name)
             elif local_obj.type == 'ARMATURE':
-                plugin.prepare_data(local_obj.data, group_name)
+                plugin.prepare_data(local_obj.data)
 
                 if action is not None:
                     local_obj.animation_data.action = action
-                elif local_obj.animation_data.action is not None:
+                elif (local_obj.animation_data and
+                      local_obj.animation_data.action is not None):
                     plugin.prepare_data(
                         local_obj.animation_data.action, group_name)
 
@@ -139,6 +143,21 @@ class BlendLayoutLoader(plugin.AssetLoader):
                         for v in d.driver.variables:
                             for t in v.targets:
                                 t.id = local_obj
+
+            elif local_obj.type == 'EMPTY':
+                creator_plugin = lib.get_creator_by_name("CreateAnimation")
+                if not creator_plugin:
+                    raise ValueError("Creator plugin \"CreateAnimation\" was "
+                                     "not found.")
+
+                api.create(
+                    creator_plugin,
+                    name=local_obj.name.split(':')[-1] + "_animation",
+                    asset=asset,
+                    options={"useSelection": False,
+                             "asset_group": local_obj},
+                    data={"dependencies": representation}
+                )
 
             if not local_obj.get(AVALON_PROPERTY):
                 local_obj[AVALON_PROPERTY] = dict()
@@ -168,6 +187,7 @@ class BlendLayoutLoader(plugin.AssetLoader):
         libpath = self.fname
         asset = context["asset"]["name"]
         subset = context["subset"]["name"]
+        representation = str(context["representation"]["_id"])
 
         asset_name = plugin.asset_name(asset, subset)
         unique_number = plugin.get_unique_number(asset, subset)
@@ -183,7 +203,8 @@ class BlendLayoutLoader(plugin.AssetLoader):
         asset_group.empty_display_type = 'SINGLE_ARROW'
         avalon_container.objects.link(asset_group)
 
-        objects = self._process(libpath, asset_group, group_name, None)
+        objects = self._process(
+            libpath, asset_group, group_name, asset, representation, None)
 
         for child in asset_group.children:
             if child.get(AVALON_PROPERTY):

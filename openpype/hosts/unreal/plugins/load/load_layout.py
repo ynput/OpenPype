@@ -504,7 +504,7 @@ class LayoutLoader(api.Loader):
         EditorAssetLibrary.delete_directory(path)
 
         asset_content = EditorAssetLibrary.list_assets(
-            parent_path, recursive=False
+            parent_path, recursive=False, include_folder=True
         )
 
         if len(asset_content) == 0:
