@@ -342,7 +342,7 @@ class HostDirmap:
             log.debug("remote overrides".format(remote_overrides))
             for root_name, active_site_dir in active_overrides.items():
                 remote_site_dir = remote_overrides.get(root_name) or\
-                    sync_settings["sites"][remote_site]["roots"][root_name]
+                    sync_settings["sites"][remote_site]["root"][root_name]
                 if os.path.isdir(active_site_dir):
                     if not mapping.get("destination-path"):
                         mapping["destination-path"] = []

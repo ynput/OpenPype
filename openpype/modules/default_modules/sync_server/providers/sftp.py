@@ -131,7 +131,7 @@ class SFTPHandler(AbstractProvider):
             },
             # roots could be overriden only on Project leve, User cannot
             {
-                "key": "roots",
+                "key": "root",
                 "label": "Roots",
                 "type": "dict-roots",
                 "object_type": {

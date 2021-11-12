@@ -129,7 +129,7 @@ class GDriveHandler(AbstractProvider):
             },
             # roots could be overriden only on Project leve, User cannot
             {
-                "key": "roots",
+                "key": "root",
                 "label": "Roots",
                 "type": "dict-roots",
                 "object_type": {
@@ -174,7 +174,7 @@ class GDriveHandler(AbstractProvider):
             Format is importing for usage of python's format ** approach
         """
         # GDrive roots cannot be locally overridden
-        return self.presets['roots']
+        return self.presets['root']
 
     def get_tree(self):
         """
