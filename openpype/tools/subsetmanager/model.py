@@ -34,6 +34,8 @@ class InstanceModel(QtGui.QStandardItemModel):
             item_id = str(uuid.uuid4())
             label = instance_data.get("label") or instance_data["subset"]
             item = QtGui.QStandardItem(label)
+            item.setEnabled(True)
+            item.setEditable(False)
             item.setData(item_id, ITEM_ID_ROLE)
             items.append(item)
             self._instances_by_item_id[item_id] = instance_data
