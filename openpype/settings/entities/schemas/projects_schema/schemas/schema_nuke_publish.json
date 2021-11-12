@@ -200,6 +200,11 @@
                             },
                             {
                                 "type": "text",
+                                "key": "extension",
+                                "label": "File extension"
+                            },
+                            {
+                                "type": "text",
                                 "key": "viewer_process_override",
                                 "label": "Viewer Process colorspace profile override"
                             },
@@ -214,8 +219,14 @@
                                 "label": "Bake Viewer Input Process (LUTs)"
                             },
                             {
-                                "key": "add_taggs",
-                                "label": "Add tags to representations",
+                                "key": "add_families",
+                                "label": "Add additional families to instance",
+                                "type": "list",
+                                "object_type": "text"
+                            },
+                            {
+                                "key": "add_tags",
+                                "label": "Add additional tags to representations",
                                 "type": "list",
                                 "object_type": "text"
                             }

@@ -74,21 +74,6 @@ class PreCollectNukeInstances(pyblish.api.ContextPlugin):
             if review:
                 families.append("review")
 
-                # deside if to bake or not to bake
-                baking = True
-                if "bake_colorspace" in node.knobs():
-                    baking = node["bake_colorspace"].value()
-
-                if baking:
-                    families.append("bake_viewer")
-
-                viewer_input = True
-                if "bake_viewer_input" in node.knobs():
-                    viewer_input = node["bake_viewer_input"].value()
-
-                if viewer_input:
-                    families.append("bake_viewer_input")
-
             # Add all nodes in group instances.
             if node.Class() == "Group":
                 # only alter families for render family
@@ -157,9 +142,7 @@ class PreCollectNukeInstances(pyblish.api.ContextPlugin):
                 "resolutionWidth": resolution_width,
                 "resolutionHeight": resolution_height,
                 "pixelAspect": pixel_aspect,
-                "review": review,
-                "bakeColorspace": baking,
-                "bakeViewerInput": viewer_input
+                "review": review
 
             })
             self.log.info("collected instance: {}".format(instance.data))

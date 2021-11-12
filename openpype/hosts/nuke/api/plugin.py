@@ -117,8 +117,6 @@ class ExporterReview(object):
 
         self.log = klass.log
         self.instance = instance
-        self.bake_colorspace = instance.data["bakeColorspace"]
-        self.bake_viewer_input = instance.data["bakeViewerInput"]
         self.path_in = self.instance.data.get("path", None)
         self.staging_dir = self.instance.data["stagingDir"]
         self.collection = self.instance.data.get("collection", None)
@@ -146,11 +144,10 @@ class ExporterReview(object):
             self.fhead = self.fhead.replace("#", "")[:-1]
 
     def get_representation_data(self, tags=None, range=False):
-        add_tags = []
-        if tags:
-            add_tags = tags
+        add_tags = tags or []
 
         repre = {
+            'outputName': self.name,
             'name': self.name,
             'ext': self.ext,
             'files': self.file,
@@ -166,7 +163,7 @@ class ExporterReview(object):
 
         self.data["representations"].append(repre)
 
-    def get_view_process_node(self):
+    def get_view_input_process_node(self):
         """
         Will get any active view process.
 
@@ -196,6 +193,11 @@ class ExporterReview(object):
             ipn = nuke.selectedNode()
 
             return ipn
+
+    def get_imageio_baking_profile(self):
+        from . import lib as opnlib
+        nuke_imageio = opnlib.get_nuke_imageio_settings()
+        return nuke_imageio["baking"]["viewerProcess"]
 
 
 class ExporterReviewLut(ExporterReview):
@@ -249,6 +251,10 @@ class ExporterReviewLut(ExporterReview):
         self.log.info("Deleted nodes...")
 
     def generate_lut(self):
+        bake_viewer_process = kwargs["bake_viewer_process"]
+        bake_viewer_input_process_node = kwargs[
+            "bake_viewer_input_process"]
+
         # ---------- start nodes creation
 
         # CMSTestPattern
@@ -259,10 +265,10 @@ class ExporterReviewLut(ExporterReview):
         self.previous_node = cms_node
         self.log.debug("CMSTestPattern...   `{}`".format(self._temp_nodes))
 
-        if self.bake_colorspace:
+        if bake_viewer_process:
             # Node View Process
-            if self.bake_viewer_input:
-                ipn = self.get_view_process_node()
+            if bake_viewer_input_process_node:
+                ipn = self.get_view_input_process_node()
                 if ipn is not None:
                     # connect
                     ipn.setInput(0, self.previous_node)
@@ -336,8 +342,6 @@ class ExporterReviewMov(ExporterReview):
 
         # deal with now lut defined in viewer lut
         self.viewer_lut_raw = klass.viewer_lut_raw
-        self.bake_colorspace_fallback = klass.bake_colorspace_fallback
-        self.bake_colorspace_main = klass.bake_colorspace_main
         self.write_colorspace = instance.data["colorspace"]
 
         self.name = name or "baked"
@@ -380,7 +384,26 @@ class ExporterReviewMov(ExporterReview):
         self.log.info("Nodes exported...")
         return path
 
-    def generate_mov(self, farm=False):
+    def generate_mov(self, farm=False, **kwargs):
+        bake_viewer_process = kwargs["bake_viewer_process"]
+        bake_viewer_input_process_node = kwargs[
+            "bake_viewer_input_process"]
+        viewer_process_override = kwargs[
+            "viewer_process_override"]
+
+        baking_view_profile = (
+            viewer_process_override or self.get_imageio_baking_profile())
+
+        fps = self.instance.context.data["fps"]
+
+        self.log.debug(">> baking_view_profile   `{}`".format(
+            baking_view_profile))
+
+        add_tags = kwargs.get("add_tags", [])
+
+        self.log.info(
+            "__ add_tags: `{0}`".format(add_tags))
+
         subset = self.instance.data["subset"]
         self._temp_nodes[subset] = []
         # ---------- start nodes creation
@@ -400,10 +423,10 @@ class ExporterReviewMov(ExporterReview):
         self.log.debug("Read...   `{}`".format(self._temp_nodes[subset]))
 
         # only create colorspace baking if toggled on
-        if self.bake_colorspace:
-            if self.bake_viewer_input:
+        if bake_viewer_process:
+            if bake_viewer_input_process_node:
                 # View Process node
-                ipn = self.get_view_process_node()
+                ipn = self.get_view_input_process_node()
                 if ipn is not None:
                     # connect
                     ipn.setInput(0, self.previous_node)
@@ -414,26 +437,9 @@ class ExporterReviewMov(ExporterReview):
                             self._temp_nodes[subset]))
 
             if not self.viewer_lut_raw:
-                colorspaces = [
-                    self.bake_colorspace_main, self.bake_colorspace_fallback
-                ]
-
-                if any(colorspaces):
-                    # OCIOColorSpace with controled output
-                    dag_node = nuke.createNode("OCIOColorSpace")
-                    self._temp_nodes[subset].append(dag_node)
-                    for c in colorspaces:
-                        test = dag_node["out_colorspace"].setValue(str(c))
-                        if test:
-                            self.log.info(
-                                "Baking in colorspace...   `{}`".format(c))
-                            break
-
-                    if not test:
-                        dag_node = nuke.createNode("OCIODisplay")
-                else:
-                    # OCIODisplay
-                    dag_node = nuke.createNode("OCIODisplay")
+                # OCIODisplay
+                dag_node = nuke.createNode("OCIODisplay")
+                dag_node["view"].setValue(str(baking_view_profile))
 
                 # connect
                 dag_node.setInput(0, self.previous_node)
@@ -445,11 +451,11 @@ class ExporterReviewMov(ExporterReview):
         # Write node
         write_node = nuke.createNode("Write")
         self.log.debug("Path: {}".format(self.path))
-        write_node["file"].setValue(self.path)
-        write_node["file_type"].setValue(self.ext)
+        write_node["file"].setValue(str(self.path))
+        write_node["file_type"].setValue(str(self.ext))
 
         # Knobs `meta_codec` and `mov64_codec` are not available on centos.
-        # TODO change this to use conditions, if possible.
+        # TODO should't this come from settings on outputs?
         try:
             write_node["meta_codec"].setValue("ap4h")
         except Exception:
@@ -457,8 +463,10 @@ class ExporterReviewMov(ExporterReview):
 
         try:
             write_node["mov64_codec"].setValue("ap4h")
+            write_node["mov64_fps"].setValue(float(fps))
         except Exception:
             self.log.info("`mov64_codec` knob was not found")
+
         write_node["mov64_write_timecode"].setValue(1)
         write_node["raw"].setValue(1)
         # connect
@@ -480,7 +488,7 @@ class ExporterReviewMov(ExporterReview):
             self.render(write_node.name())
             # ---------- generate representation data
             self.get_representation_data(
-                tags=["review", "delete"],
+                tags=["review", "delete"] + add_tags,
                 range=True
             )
 
