@@ -480,7 +480,7 @@ class GUIWidget(BaseWidget):
 
     def _create_separator_ui(self):
         splitter_item = QtWidgets.QWidget(self)
-        splitter_item.setObjectName("SplitterItem")
+        splitter_item.setObjectName("Separator")
         splitter_item.setMinimumHeight(self.separator_height)
         splitter_item.setMaximumHeight(self.separator_height)
 

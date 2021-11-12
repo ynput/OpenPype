@@ -229,7 +229,7 @@ QSlider::handle:vertical {
     border-radius: 5px;
 }
 
-#SplitterItem {
+#Separator {
     background-color: #21252B;
 }
 
