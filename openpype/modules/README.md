@@ -22,6 +22,10 @@ OpenPype modules should contain separated logic of specific kind of implementati
 - `__init__` should not be overridden and `initialize` should not do time consuming part but only prepare base data about module
  - also keep in mind that they may be initialized in headless mode
 - connection with other modules is made with help of interfaces
+- `cli` method - add cli commands specific for the module
+    - command line arguments are handled using `click` python module
+    - `cli` method should expect single argument which is click group on which can be called any group specific methods (e.g. `add_command` to add another click group as children see `ExampleAddon`)
+    - it is possible to add trigger cli commands using `./openpype_console module <module_name> <command> *args`
 
 ## Addon class `OpenPypeAddOn`
 - inherits from `OpenPypeModule` but is enabled by default and doesn't have to implement `initialize` and `connect_with_modules` methods

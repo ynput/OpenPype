@@ -1,8 +1,10 @@
 import os
 import json
 import collections
-from openpype.modules import OpenPypeModule
 
+import click
+
+from openpype.modules import OpenPypeModule
 from openpype_interfaces import (
     ITrayModule,
     IPluginPaths,
@@ -409,3 +411,54 @@ class FtrackModule(
             return 0
         hours_logged = (task_entity["time_logged"] / 60) / 60
         return hours_logged
+
+    def cli(self, click_group):
+        click_group.add_command(cli_main)
+
+
+@click.group(FtrackModule.name, help="Ftrack module related commands.")
+def cli_main():
+    pass
+
+
+@cli_main.command()
+@click.option("-d", "--debug", is_flag=True, help="Print debug messages")
+@click.option("--ftrack-url", envvar="FTRACK_SERVER",
+              help="Ftrack server url")
+@click.option("--ftrack-user", envvar="FTRACK_API_USER",
+              help="Ftrack api user")
+@click.option("--ftrack-api-key", envvar="FTRACK_API_KEY",
+              help="Ftrack api key")
+@click.option("--legacy", is_flag=True,
+              help="run event server without mongo storing")
+@click.option("--clockify-api-key", envvar="CLOCKIFY_API_KEY",
+              help="Clockify API key.")
+@click.option("--clockify-workspace", envvar="CLOCKIFY_WORKSPACE",
+              help="Clockify workspace")
+def eventserver(
+    debug,
+    ftrack_url,
+    ftrack_user,
+    ftrack_api_key,
+    legacy,
+    clockify_api_key,
+    clockify_workspace
+):
+    """Launch ftrack event server.
+
+    This should be ideally used by system service (such us systemd or upstart
+    on linux and window service).
+    """
+    if debug:
+        os.environ["OPENPYPE_DEBUG"] = "3"
+
+    from .ftrack_server.event_server_cli import run_event_server
+
+    return run_event_server(
+        ftrack_url,
+        ftrack_user,
+        ftrack_api_key,
+        legacy,
+        clockify_api_key,
+        clockify_workspace
+    )

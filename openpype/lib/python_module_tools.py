@@ -22,6 +22,9 @@ def import_filepath(filepath, module_name=None):
     if module_name is None:
         module_name = os.path.splitext(os.path.basename(filepath))[0]
 
+    # Make sure it is not 'unicode' in Python 2
+    module_name = str(module_name)
+
     # Prepare module object where content of file will be parsed
     module = types.ModuleType(module_name)
 
