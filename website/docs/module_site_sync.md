@@ -27,6 +27,38 @@ To use synchronization, *Site Sync* needs to be enabled globally in **OpenPype S
 
 ![Configure module](assets/site_sync_system.png)
 
+### Sites 
+
+By default there are two sites created for each OpenPype installation:
+- **studio** - default site - usually a centralized mounted disk accessible to all artists. Studio site is used if Site Sync is disabled.
+- **local** - each workstation or server running OpenPype Tray receives its own with unique site name. Workstation refers to itself as "local"however all other sites will see it under it's unique ID.
+
+Artists can explore their site ID by opening OpenPype Info tool by clicking on a version number in the tray app. 
+
+Many different sites can be created and configured on the system level, and some or all can be assigned to each project.
+
+Each OpenPype Tray app works with two sites at one time. (Sites can be the same, and no synching is done in this setup).
+
+Sites could be configured differently per project basis. 
+
+Each new site needs to be created first in `System Settings`. Most important feature of site is its Provider, select one from already prepared Providers.
+
+#### Alternative sites 
+
+This attribute is meant for special use cases only.
+
+One of the use cases is sftp site vendoring (exposing) same data as regular site (studio). Each site is accessible for different audience. 'studio' for artists in a studio via shared disk, 'sftp' for externals via sftp server with mounted 'studio' drive.
+
+Change of file status on one site actually means same change on 'alternate' site occured too. (eg. artists publish to 'studio', 'sftp' is using
+same location >> file is accessible on 'sftp' site right away, no need to sync it anyhow.)
+
+##### Example
+![Configure module](assets/site_sync_system_sites.png)
+Admin created new `sftp` site which is handled by `SFTP` provider. Somewhere in the studio SFTP server is deployed on a machine that has access to `studio` drive.
+
+Alternative sites work both way:
+- everything published to `studio` is accessible on a `sftp` site too
+- everything published to `sftp` (most probably via artist's local disk - artists publishes locally, representation is marked to be synced to `sftp`. Immediately after it is synced, it is marked to be available on `studio` too for artists in the studio to use.)
 
 ## Project Settings
 
@@ -43,21 +75,6 @@ Each user should configure root folder for their 'local' site via **Local Settin
 Artists can also override which site they use as active and remote if need be. 
 
 ![Local overrides](assets/site_sync_local_setting.png)
-
-
-## Sites 
-
-By default there are two sites created for each OpenPype installation:
-- **studio** - default site - usually a centralized mounted disk accessible to all artists. Studio site is used if Site Sync is disabled.
-- **local** - each workstation or server running OpenPype Tray receives its own with unique site name. Workstation refers to itself as "local"however all other sites will see it under it's unique ID.
-
-Artists can explore their site ID by opening OpenPype Info tool by clicking on a version number in the tray app. 
-
-Many different sites can be created and configured on the system level, and some or all can be assigned to each project.
-
-Each OpenPype Tray app works with two sites at one time. (Sites can be the same, and no synching is done in this setup).
-
-Sites could be configured differently per project basis. 
 
 
 ## Providers

@@ -154,7 +154,7 @@ class SyncProjectListWidget(QtWidgets.QWidget):
            selected_index.isValid() and \
            not self._selection_changed:
             mode = QtCore.QItemSelectionModel.Select | \
-                   QtCore.QItemSelectionModel.Rows
+                QtCore.QItemSelectionModel.Rows
             self.project_list.selectionModel().select(selected_index, mode)
 
         if self.current_project:
