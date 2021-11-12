@@ -17,11 +17,10 @@ class ClosePS(pyblish.api.ContextPlugin):
     active = True
 
     hosts = ["photoshop"]
+    targets = ["remotepublish"]
 
     def process(self, context):
         self.log.info("ClosePS")
-        if not os.environ.get("IS_HEADLESS"):
-            return
 
         stub = photoshop.stub()
         self.log.info("Shutting down PS")
