@@ -1120,9 +1120,10 @@ class IntegrateAssetNew(pyblish.api.InstancePlugin):
 
         for site_name, site_info in conf_sites.items():
             alt_sites = set(site_info.get("alternative_sites", []))
-            for added_site in already_attached_sites.keys():
+            already_attached_keys = list(already_attached_sites.keys())
+            for added_site in already_attached_keys:
                 if added_site in alt_sites:
-                    if site_name in already_attached_sites.keys():
+                    if site_name in already_attached_keys:
                         continue
                     meta = {"name": site_name}
                     real_created = already_attached_sites[added_site]
