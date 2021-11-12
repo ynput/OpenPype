@@ -1,5 +1,8 @@
 {
     "publish": {
+        "CollectAnatomyInstanceData": {
+            "follow_workfile_version": false
+        },
         "ValidateEditorialAssetName": {
             "enabled": true,
             "optional": false
