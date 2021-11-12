@@ -87,16 +87,16 @@ class SubsetNameValidator(QtGui.QRegExpValidator):
         reg = QtCore.QRegExp(self.pattern)
         super(SubsetNameValidator, self).__init__(reg)
 
-    def validate(self, input, pos):
-        results = super(SubsetNameValidator, self).validate(input, pos)
+    def validate(self, text, pos):
+        results = super(SubsetNameValidator, self).validate(text, pos)
         if results[0] == self.Invalid:
-            self.invalid.emit(self.invalid_chars(input))
+            self.invalid.emit(self.invalid_chars(text))
         return results
 
-    def invalid_chars(self, input):
+    def invalid_chars(self, text):
         invalid = set()
         re_valid = re.compile(self.pattern)
-        for char in input:
+        for char in text:
             if char == " ":
                 invalid.add("' '")
                 continue
