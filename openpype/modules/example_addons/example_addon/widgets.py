@@ -9,7 +9,8 @@ class MyExampleDialog(QtWidgets.QDialog):
 
         self.setWindowTitle("Connected modules")
 
-        label_widget = QtWidgets.QLabel(self)
+        msg = "This is example dialog of example addon."
+        label_widget = QtWidgets.QLabel(msg, self)
 
         ok_btn = QtWidgets.QPushButton("OK", self)
         btns_layout = QtWidgets.QHBoxLayout()
@@ -28,12 +29,3 @@ class MyExampleDialog(QtWidgets.QDialog):
 
     def _on_ok_clicked(self):
         self.done(1)
-
-    def set_connected_modules(self, connected_modules):
-        if connected_modules:
-            message = "\n".join(connected_modules)
-        else:
-            message = (
-                "Other enabled modules/addons are not using my interface."
-            )
-        self._label_widget.setText(message)

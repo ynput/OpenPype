@@ -32,6 +32,9 @@ class ExtractThumbnail(openpype.api.Extractor):
         capture_preset = (
             instance.context.data["project_settings"]['maya']['publish']['ExtractPlayblast']['capture_preset']
         )
+        override_viewport_options = (
+            capture_preset['Viewport Options']['override_viewport_options']
+        )
 
         try:
             preset = lib.load_capture_preset(data=capture_preset)
@@ -85,6 +88,12 @@ class ExtractThumbnail(openpype.api.Extractor):
             # viewer opening call to allow a signal to trigger between
             # playblast and viewer
             preset['viewer'] = False
+
+            # Update preset with current panel setting
+            # if override_viewport_options is turned off
+            if not override_viewport_options:
+                panel_preset = capture.parse_active_view()
+                preset.update(panel_preset)
 
             path = capture.capture(**preset)
             playblast = self._fix_playblast_output_path(path)
