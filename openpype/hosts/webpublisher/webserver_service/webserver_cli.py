@@ -16,7 +16,8 @@ from .webpublish_routes import (
     WebpublisherHiearchyEndpoint,
     WebpublisherProjectsEndpoint,
     BatchStatusEndpoint,
-    PublishesStatusEndpoint
+    PublishesStatusEndpoint,
+    ConfiguredExtensionsEndpoint
 )
 
 
@@ -52,6 +53,13 @@ def run_webserver(*args, **kwargs):
         "GET",
         "/api/hierarchy/{project_name}",
         hiearchy_endpoint.dispatch
+    )
+
+    configured_ext_endpoint = ConfiguredExtensionsEndpoint(resource)
+    server_manager.add_route(
+        "GET",
+        "/api/webpublish/configured_ext/{project_name}",
+        configured_ext_endpoint.dispatch
     )
 
     # triggers publish
