@@ -3,6 +3,7 @@ from Qt import QtWidgets, QtCore, QtGui
 from avalon import style
 from avalon.vendor import qtawesome
 
+from .views import DeselectableTreeView
 from .constants import (
     TASK_ORDER_ROLE,
     TASK_TYPE_ROLE,
@@ -195,7 +196,7 @@ class TasksWidget(QtWidgets.QWidget):
     def __init__(self, dbcon, parent=None):
         super(TasksWidget, self).__init__(parent)
 
-        tasks_view = QtWidgets.QTreeView(self)
+        tasks_view = DeselectableTreeView(self)
         tasks_view.setIndentation(0)
         tasks_view.setSortingEnabled(True)
         tasks_view.setEditTriggers(QtWidgets.QTreeView.NoEditTriggers)
