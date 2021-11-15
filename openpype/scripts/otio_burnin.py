@@ -494,8 +494,6 @@ def example(input_path, output_path):
         'bg_opacity': 0.5,
         'font_size': 52
     }
-    # First frame in burnin
-    start_frame = 2000
     # Options init sets burnin look
     burnin = ModifiedBurnins(input_path, options_init=options_init)
     # Static text
