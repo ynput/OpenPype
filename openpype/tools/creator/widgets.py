@@ -5,6 +5,7 @@ from Qt import QtWidgets, QtCore, QtGui
 
 from avalon.vendor import qtawesome
 
+from openpype import style
 from openpype.pipeline.create import SUBSET_NAME_ALLOWED_SYMBOLS
 
 
@@ -71,6 +72,10 @@ class CreateErrorMessageBox(QtWidgets.QDialog):
         button_box.accepted.connect(self._on_accept)
         footer_layout.addWidget(button_box, alignment=QtCore.Qt.AlignRight)
         body_layout.addWidget(footer_widget)
+
+    def showEvent(self, event):
+        self.setStyleSheet(style.load_stylesheet())
+        super(CreateErrorMessageBox, self).showEvent(event)
 
     def _on_accept(self):
         self.close()
