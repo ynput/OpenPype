@@ -90,9 +90,6 @@ class ActionBar(QtWidgets.QWidget):
         self.project_handler = project_handler
         self.dbcon = dbcon
 
-        layout = QtWidgets.QHBoxLayout(self)
-        layout.setContentsMargins(8, 0, 8, 0)
-
         view = QtWidgets.QListView(self)
         view.setProperty("mode", "icon")
         view.setObjectName("IconView")
@@ -116,6 +113,8 @@ class ActionBar(QtWidgets.QWidget):
         )
         view.setItemDelegate(delegate)
 
+        layout = QtWidgets.QHBoxLayout(self)
+        layout.setContentsMargins(0, 0, 0, 0)
         layout.addWidget(view)
 
         self.model = model
