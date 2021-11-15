@@ -197,6 +197,10 @@ class AssetsPanel(QtWidgets.QWidget):
         btn_size = self.project_bar.height()
         self._btn_back.setFixedSize(QtCore.QSize(btn_size, btn_size))
 
+    def select_task_name(self, task_name):
+        self._on_asset_changed()
+        self._tasks_widget.select_task_name(task_name)
+
     def on_project_changed(self):
         self.session_changed.emit()
 
@@ -448,5 +452,4 @@ class LauncherWindow(QtWidgets.QDialog):
 
         if task_name:
             # requires a forced refresh first
-            self.asset_panel.on_asset_changed()
-            self.asset_panel.tasks_widget.select_task(task_name)
+            self.asset_panel.select_task_name(task_name)
