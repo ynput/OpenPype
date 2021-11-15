@@ -97,7 +97,7 @@ class DropboxHandler(AbstractProvider):
             },
             # roots could be overriden only on Project level, User cannot
             {
-                "key": "roots",
+                "key": "root",
                 "label": "Roots",
                 "type": "dict-roots",
                 "object_type": {
@@ -389,7 +389,7 @@ class DropboxHandler(AbstractProvider):
                      {"root": {"root_ONE": "value", "root_TWO":"value}}
             Format is importing for usage of python's format ** approach
         """
-        return self.presets['roots']
+        return self.presets['root']
 
     def resolve_path(self, path, root_config=None, anatomy=None):
         """
