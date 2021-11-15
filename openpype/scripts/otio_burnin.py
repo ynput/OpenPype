@@ -162,28 +162,29 @@ def _dnxhd_codec_args(stream_data, source_ffmpeg_cmd):
 
 
 def get_codec_args(ffprobe_data, source_ffmpeg_cmd):
-    codec_name = ffprobe_data.get("codec_name")
+    stream_data = ffprobe_data["streams"][0]
+    codec_name = stream_data.get("codec_name")
     # Codec "prores"
     if codec_name == "prores":
-        return _prores_codec_args(ffprobe_data, source_ffmpeg_cmd)
+        return _prores_codec_args(stream_data, source_ffmpeg_cmd)
 
     # Codec "h264"
     if codec_name == "h264":
-        return _h264_codec_args(ffprobe_data, source_ffmpeg_cmd)
+        return _h264_codec_args(stream_data, source_ffmpeg_cmd)
 
     # Coded DNxHD
     if codec_name == "dnxhd":
-        return _dnxhd_codec_args(ffprobe_data, source_ffmpeg_cmd)
+        return _dnxhd_codec_args(stream_data, source_ffmpeg_cmd)
 
     output = []
     if codec_name:
         output.extend(["-codec:v", codec_name])
 
-    bit_rate = ffprobe_data.get("bit_rate")
+    bit_rate = stream_data.get("bit_rate")
     if bit_rate:
         output.extend(["-b:v", bit_rate])
 
-    pix_fmt = ffprobe_data.get("pix_fmt")
+    pix_fmt = stream_data.get("pix_fmt")
     if pix_fmt:
         output.extend(["-pix_fmt", pix_fmt])
 
@@ -685,8 +686,9 @@ def burnins_from_data(
         ffmpeg_args.append("-g 1")
 
     else:
-        ffprobe_data = burnin._streams[0]
-        ffmpeg_args.extend(get_codec_args(ffprobe_data, source_ffmpeg_cmd))
+        ffmpeg_args.extend(
+            get_codec_args(burnin.ffprobe_data, source_ffmpeg_cmd)
+        )
 
     # Use group one (same as `-intra` argument, which is deprecated)
     ffmpeg_args_str = " ".join(ffmpeg_args)
