@@ -3,11 +3,12 @@ import sys
 
 from Qt import QtWidgets, QtCore
 from avalon.vendor import qtawesome
-from avalon import io, api, style
-
+from avalon import io, api
 
 from avalon.tools import lib as tools_lib
 from avalon.tools.delegates import VersionDelegate
+
+from openpype import style
 
 from .proxy import FilterProxyModel
 from .model import InventoryModel
@@ -94,7 +95,6 @@ class SceneInventoryWindow(QtWidgets.QDialog):
                 "version": version_delegate
             }
         }
-
         # set some nice default widths for the view
         self.view.setColumnWidth(0, 250)  # name
         self.view.setColumnWidth(1, 55)  # version
@@ -103,6 +103,14 @@ class SceneInventoryWindow(QtWidgets.QDialog):
         self.view.setColumnWidth(4, 100)  # namespace
 
         self.family_config_cache.refresh()
+
+        self._first_show = True
+
+    def showEvent(self, event):
+        super(SceneInventoryWindow, self).showEvent(event)
+        if self._first_show:
+            self._first_show = False
+            self.setStyleSheet(style.load_stylesheet())
 
     def keyPressEvent(self, event):
         """Custom keyPressEvent.
@@ -161,7 +169,6 @@ def show(root=None, debug=False, parent=None, items=None):
 
     with tools_lib.application():
         window = SceneInventoryWindow(parent)
-        window.setStyleSheet(style.load_stylesheet())
         window.show()
         window.refresh(items=items)
 
