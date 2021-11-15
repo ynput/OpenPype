@@ -14,11 +14,8 @@ class FilterProxyModel(QtCore.QSortFilterProxyModel):
         self._hierarchy_view = False
 
     def filterAcceptsRow(self, row, parent):
-
         model = self.sourceModel()
-        source_index = model.index(row,
-                                   self.filterKeyColumn(),
-                                   parent)
+        source_index = model.index(row, self.filterKeyColumn(), parent)
 
         # Always allow bottom entries (individual containers), since their
         # parent group hidden if it wouldn't have been validated.
@@ -97,13 +94,12 @@ class FilterProxyModel(QtCore.QSortFilterProxyModel):
         if is_outdated:
             return True
 
-        elif self._hierarchy_view:
+        if self._hierarchy_view:
             for _node in lib.walk_hierarchy(node):
                 if outdated(_node):
                     return True
-            return False
-        else:
-            return False
+
+        return False
 
     def _matches(self, row, parent, pattern):
         """Return whether row matches regex pattern.

@@ -25,6 +25,11 @@ class SceneInventoryWindow(QtWidgets.QDialog):
     def __init__(self, parent=None):
         super(SceneInventoryWindow, self).__init__(parent)
 
+        if not parent:
+            self.setWindowFlags(
+                self.windowFlags() | QtCore.Qt.WindowStaysOnTopHint
+            )
+
         self.resize(1100, 480)
         self.setWindowTitle(
             "Scene Inventory 1.0 - {}".format(
@@ -34,21 +39,19 @@ class SceneInventoryWindow(QtWidgets.QDialog):
         self.setObjectName("SceneInventory")
         self.setProperty("saveWindowPref", True)  # Maya only property!
 
-        layout = QtWidgets.QVBoxLayout(self)
-
         # region control
-        control_layout = QtWidgets.QHBoxLayout()
-        filter_label = QtWidgets.QLabel("Search")
-        text_filter = QtWidgets.QLineEdit()
+        filter_label = QtWidgets.QLabel("Search", self)
+        text_filter = QtWidgets.QLineEdit(self)
 
-        outdated_only = QtWidgets.QCheckBox("Filter to outdated")
+        outdated_only = QtWidgets.QCheckBox("Filter to outdated", self)
         outdated_only.setToolTip("Show outdated files only")
         outdated_only.setChecked(False)
 
         icon = qtawesome.icon("fa.refresh", color="white")
-        refresh_button = QtWidgets.QPushButton()
+        refresh_button = QtWidgets.QPushButton(self)
         refresh_button.setIcon(icon)
 
+        control_layout = QtWidgets.QHBoxLayout()
         control_layout.addWidget(filter_label)
         control_layout.addWidget(text_filter)
         control_layout.addWidget(outdated_only)
@@ -59,7 +62,11 @@ class SceneInventoryWindow(QtWidgets.QDialog):
 
         model = InventoryModel(self.family_config_cache)
         proxy = FilterProxyModel()
-        view = View()
+        proxy.setSourceModel(model)
+        proxy.setDynamicSortFilter(True)
+        proxy.setFilterCaseSensitivity(QtCore.Qt.CaseInsensitive)
+
+        view = View(self)
         view.setModel(proxy)
 
         # apply delegates
@@ -67,6 +74,7 @@ class SceneInventoryWindow(QtWidgets.QDialog):
         column = model.Columns.index("version")
         view.setItemDelegateForColumn(column, version_delegate)
 
+        layout = QtWidgets.QVBoxLayout(self)
         layout.addLayout(control_layout)
         layout.addWidget(view)
 
@@ -84,11 +92,6 @@ class SceneInventoryWindow(QtWidgets.QDialog):
         view.data_changed.connect(self.refresh)
         view.hierarchy_view.connect(self.model.set_hierarchy_view)
         view.hierarchy_view.connect(self.proxy.set_hierarchy_view)
-
-        # proxy settings
-        proxy.setSourceModel(self.model)
-        proxy.setDynamicSortFilter(True)
-        proxy.setFilterCaseSensitivity(QtCore.Qt.CaseInsensitive)
 
         self.data = {
             "delegates": {
