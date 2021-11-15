@@ -124,20 +124,18 @@ class AssetsPanel(QtWidgets.QWidget):
 
         self.dbcon = dbcon
 
-        # project bar
-        project_bar_widget = QtWidgets.QWidget(self)
-
-        layout = QtWidgets.QHBoxLayout(project_bar_widget)
-        layout.setSpacing(4)
-
+        # Project bar
         btn_back_icon = qtawesome.icon("fa.angle-left", color="white")
-        btn_back = QtWidgets.QPushButton(project_bar_widget)
+        btn_back = QtWidgets.QPushButton(self)
         btn_back.setIcon(btn_back_icon)
 
-        project_bar = ProjectBar(project_handler, project_bar_widget)
+        project_bar = ProjectBar(project_handler, self)
 
-        layout.addWidget(btn_back)
-        layout.addWidget(project_bar)
+        project_bar_layout = QtWidgets.QHBoxLayout()
+        project_bar_layout.setContentsMargins(0, 0, 0, 0)
+        project_bar_layout.setSpacing(4)
+        project_bar_layout.addWidget(btn_back)
+        project_bar_layout.addWidget(project_bar)
 
         # assets
         assets_proxy_widgets = QtWidgets.QWidget(self)
@@ -173,7 +171,7 @@ class AssetsPanel(QtWidgets.QWidget):
         layout = QtWidgets.QVBoxLayout(self)
         layout.setContentsMargins(0, 0, 0, 0)
         layout.setSpacing(0)
-        layout.addWidget(project_bar_widget)
+        layout.addLayout(project_bar_layout)
         layout.addWidget(body)
 
         # signals
