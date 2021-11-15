@@ -226,8 +226,8 @@ class FtrackModule(
         if not project_name:
             return
 
-        attributes_changes = changes.get("attributes")
-        if not attributes_changes:
+        new_attr_values = new_value.get("attributes")
+        if not new_attr_values:
             return
 
         import ftrack_api
@@ -277,7 +277,7 @@ class FtrackModule(
 
         failed = {}
         missing = {}
-        for key, value in attributes_changes.items():
+        for key, value in new_attr_values.items():
             if key not in ca_keys:
                 continue
 
