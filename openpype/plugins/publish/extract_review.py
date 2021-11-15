@@ -247,6 +247,7 @@ class ExtractReview(pyblish.api.InstancePlugin):
                         os.unlink(f)
 
                 output_name = new_repre.get("outputName", "")
+                output_ext = new_repre["ext"]
                 if output_name:
                     output_name += "_"
                 output_name += output_def["filename_suffix"]
@@ -254,7 +255,7 @@ class ExtractReview(pyblish.api.InstancePlugin):
                     output_name += "_noHandles"
 
                 new_repre.update({
-                    "name": output_def["filename_suffix"],
+                    "name": "{}_{}".format(output_name, output_ext),
                     "outputName": output_name,
                     "outputDef": output_def,
                     "frameStartFtrack": temp_data["output_frame_start"],
