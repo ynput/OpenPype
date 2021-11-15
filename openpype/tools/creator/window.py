@@ -368,7 +368,7 @@ class CreatorWindow(QtWidgets.QDialog):
             self.setStyleSheet(style.load_stylesheet())
 
     def refresh(self):
-        self._asset_name_input.setText(api.Session["AVALON_ASSET"])
+        self._asset_name_input.setText(io.Session["AVALON_ASSET"])
 
         self._creators_model.reset()
 
