@@ -37,7 +37,7 @@ TIMECODE_KEY = "{timecode}"
 SOURCE_TIMECODE_KEY = "{source_timecode}"
 
 
-def _streams(source):
+def _get_ffprobe_data(source):
     """Reimplemented from otio burnins to be able use full path to ffprobe
     :param str source: source media file
     :rtype: [{}, ...]
@@ -47,7 +47,7 @@ def _streams(source):
     out = proc.communicate()[0]
     if proc.returncode != 0:
         raise RuntimeError("Failed to run: %s" % command)
-    return json.loads(out)['streams']
+    return json.loads(out)
 
 
 def get_fps(str_value):
@@ -244,15 +244,16 @@ class ModifiedBurnins(ffmpeg_burnins.Burnins):
     }
 
     def __init__(
-        self, source, streams=None, options_init=None, first_frame=None
+        self, source, ffprobe_data=None, options_init=None, first_frame=None
     ):
-        if not streams:
-            streams = _streams(source)
+        if not ffprobe_data:
+            ffprobe_data = _get_ffprobe_data(source)
 
+        self.ffprobe_data = ffprobe_data
         self.first_frame = first_frame
         self.input_args = []
 
-        super().__init__(source, streams)
+        super().__init__(source, ffprobe_data["streams"])
 
         if options_init:
             self.options_init.update(options_init)
@@ -564,11 +565,11 @@ def burnins_from_data(
         "shot": "sh0010"
     }
     """
-    streams = None
+    ffprobe_data = None
     if full_input_path:
-        streams = _streams(full_input_path)
+        ffprobe_data = _get_ffprobe_data(full_input_path)
 
-    burnin = ModifiedBurnins(input_path, streams, options, first_frame)
+    burnin = ModifiedBurnins(input_path, ffprobe_data, options, first_frame)
 
     frame_start = data.get("frame_start")
     frame_end = data.get("frame_end")
