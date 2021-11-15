@@ -351,12 +351,24 @@ class FtrackModule(
         if "server_url" not in session_kwargs:
             session_kwargs["server_url"] = self.ftrack_url
 
-        if "api_key" not in session_kwargs or "api_user" not in session_kwargs:
+        api_key = session_kwargs.get("api_key")
+        api_user = session_kwargs.get("api_user")
+        # First look into environments
+        # - both OpenPype tray and ftrack event server should have set them
+        # - ftrack event server may crash when credentials are tried to load
+        #   from keyring
+        if not api_key or not api_user:
+            api_key = os.environ.get("FTRACK_API_KEY")
+            api_user = os.environ.get("FTRACK_API_USER")
+
+        if not api_key or not api_user:
             from .lib import credentials
             cred = credentials.get_credentials()
-            session_kwargs["api_user"] = cred.get("username")
-            session_kwargs["api_key"] = cred.get("api_key")
+            api_user = cred.get("username")
+            api_key = cred.get("api_key")
 
+        session_kwargs["api_user"] = api_user
+        session_kwargs["api_key"] = api_key
         return ftrack_api.Session(**session_kwargs)
 
     def tray_init(self):
