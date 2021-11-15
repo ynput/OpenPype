@@ -281,17 +281,15 @@ class LauncherWindow(QtWidgets.QDialog):
         actions_bar = ActionBar(project_handler, self.dbcon, self)
 
         # statusbar
-        statusbar = QtWidgets.QWidget()
-        layout = QtWidgets.QHBoxLayout(statusbar)
-
         message_label = QtWidgets.QLabel()
         message_label.setFixedHeight(15)
 
         action_history = ActionHistory()
         action_history.setStatusTip("Show Action History")
 
-        layout.addWidget(message_label)
-        layout.addWidget(action_history)
+        status_layout = QtWidgets.QHBoxLayout()
+        status_layout.addWidget(message_label, 1)
+        status_layout.addWidget(action_history, 0)
 
         # Vertically split Pages and Actions
         body = QtWidgets.QSplitter()
@@ -312,9 +310,9 @@ class LauncherWindow(QtWidgets.QDialog):
 
         layout = QtWidgets.QVBoxLayout(self)
         layout.addWidget(body)
-        layout.addWidget(statusbar)
         layout.setSpacing(0)
         layout.setContentsMargins(0, 0, 0, 0)
+        layout.addLayout(status_layout)
 
         self.project_handler = project_handler
 
