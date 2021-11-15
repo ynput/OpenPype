@@ -196,17 +196,17 @@ class FamilyDescriptionWidget(QtWidgets.QWidget):
         font.setBold(True)
         font.setPointSize(14)
 
-        layout = QtWidgets.QHBoxLayout(self)
-        layout.setContentsMargins(0, 0, 0, 0)
-
-        icon = QtWidgets.QLabel()
-        icon.setSizePolicy(QtWidgets.QSizePolicy.Maximum,
-                           QtWidgets.QSizePolicy.Maximum)
+        icon_label = QtWidgets.QLabel(self)
+        icon_label.setObjectName("FamilyIconLabel")
+        icon_label.setSizePolicy(
+            QtWidgets.QSizePolicy.Maximum,
+            QtWidgets.QSizePolicy.Maximum
+        )
 
         # Add 4 pixel padding to avoid icon being cut off
-        icon.setFixedWidth(self.SIZE + 4)
-        icon.setFixedHeight(self.SIZE + 4)
-        icon.setStyleSheet("""
+        icon_label.setFixedWidth(self.SIZE + 4)
+        icon_label.setFixedHeight(self.SIZE + 4)
+        icon_label.setStyleSheet("""
         QLabel {
             padding-right: 5px;
         }
@@ -215,22 +215,24 @@ class FamilyDescriptionWidget(QtWidgets.QWidget):
         label_layout = QtWidgets.QVBoxLayout()
         label_layout.setSpacing(0)
 
-        family = QtWidgets.QLabel("family")
-        family.setFont(font)
-        family.setAlignment(QtCore.Qt.AlignBottom | QtCore.Qt.AlignLeft)
+        family_label = QtWidgets.QLabel(self)
+        family_label.setFont(font)
+        family_label.setAlignment(QtCore.Qt.AlignBottom | QtCore.Qt.AlignLeft)
 
-        help = QtWidgets.QLabel("help")
-        help.setAlignment(QtCore.Qt.AlignTop | QtCore.Qt.AlignLeft)
+        help_label = QtWidgets.QLabel(self)
+        help_label.setAlignment(QtCore.Qt.AlignTop | QtCore.Qt.AlignLeft)
 
-        label_layout.addWidget(family)
+        label_layout.addWidget(family_label)
         label_layout.addWidget(help)
 
-        layout.addWidget(icon)
+        layout = QtWidgets.QHBoxLayout(self)
+        layout.setContentsMargins(0, 0, 0, 0)
+        layout.addWidget(icon_label)
         layout.addLayout(label_layout)
 
-        self.help = help
-        self.family = family
-        self.icon = icon
+        self._help_label = help_label
+        self._family_label = family_label
+        self._icon_label = icon_label
 
     def set_item(self, creator_plugin):
         """Update elements to display information of a family item.
@@ -243,9 +245,9 @@ class FamilyDescriptionWidget(QtWidgets.QWidget):
 
         """
         if not creator_plugin:
-            self.icon.setPixmap(None)
-            self.family.setText("")
-            self.help.setText("")
+            self._icon_label.setPixmap(None)
+            self._family_label.setText("")
+            self._help_label.setText("")
             return
 
         # Support a font-awesome icon
@@ -262,8 +264,8 @@ class FamilyDescriptionWidget(QtWidgets.QWidget):
 
         # Parse a clean line from the Creator's docstring
         docstring = inspect.getdoc(creator_plugin)
-        help = docstring.splitlines()[0] if docstring else ""
+        creator_help = docstring.splitlines()[0] if docstring else ""
 
-        self.icon.setPixmap(pixmap)
-        self.family.setText(creator_plugin.family)
-        self.help.setText(help)
+        self._icon_label.setPixmap(pixmap)
+        self._family_label.setText(creator_plugin.family)
+        self._help_label.setText(creator_help)
