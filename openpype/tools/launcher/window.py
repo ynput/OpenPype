@@ -92,8 +92,6 @@ class ProjectsPanel(QtWidgets.QWidget):
     def __init__(self, project_handler, parent=None):
         super(ProjectsPanel, self).__init__(parent=parent)
 
-        layout = QtWidgets.QVBoxLayout(self)
-
         view = ProjectIconView(parent=self)
         view.setSelectionMode(QtWidgets.QListView.NoSelection)
         flick = FlickCharm(parent=self)
@@ -101,6 +99,8 @@ class ProjectsPanel(QtWidgets.QWidget):
 
         view.setModel(project_handler.model)
 
+        layout = QtWidgets.QVBoxLayout(self)
+        layout.setContentsMargins(0, 0, 0, 0)
         layout.addWidget(view)
 
         view.clicked.connect(self.on_clicked)
@@ -146,11 +146,12 @@ class AssetsPanel(QtWidgets.QWidget):
         assets_widget.view.setVerticalScrollMode(
             assets_widget.view.ScrollPerPixel
         )
-        assets_layout.addWidget(assets_widget)
 
-        # tasks
+        # Tasks widget
         tasks_widget = TasksWidget(self.dbcon, self)
-        body = QtWidgets.QSplitter()
+
+        # Body
+        body = QtWidgets.QSplitter(self)
         body.setContentsMargins(0, 0, 0, 0)
         body.setSizePolicy(
             QtWidgets.QSizePolicy.Expanding,
@@ -165,7 +166,6 @@ class AssetsPanel(QtWidgets.QWidget):
         # main layout
         layout = QtWidgets.QVBoxLayout(self)
         layout.setContentsMargins(0, 0, 0, 0)
-        layout.setSpacing(0)
         layout.addLayout(project_bar_layout)
         layout.addWidget(body)
 
@@ -281,10 +281,9 @@ class LauncherWindow(QtWidgets.QDialog):
         actions_bar = ActionBar(project_handler, self.dbcon, self)
 
         # statusbar
-        message_label = QtWidgets.QLabel()
-        message_label.setFixedHeight(15)
+        message_label = QtWidgets.QLabel(self)
 
-        action_history = ActionHistory()
+        action_history = ActionHistory(self)
         action_history.setStatusTip("Show Action History")
 
         status_layout = QtWidgets.QHBoxLayout()
@@ -292,7 +291,7 @@ class LauncherWindow(QtWidgets.QDialog):
         status_layout.addWidget(action_history, 0)
 
         # Vertically split Pages and Actions
-        body = QtWidgets.QSplitter()
+        body = QtWidgets.QSplitter(self)
         body.setContentsMargins(0, 0, 0, 0)
         body.setSizePolicy(
             QtWidgets.QSizePolicy.Expanding,
@@ -310,8 +309,6 @@ class LauncherWindow(QtWidgets.QDialog):
 
         layout = QtWidgets.QVBoxLayout(self)
         layout.addWidget(body)
-        layout.setSpacing(0)
-        layout.setContentsMargins(0, 0, 0, 0)
         layout.addLayout(status_layout)
 
         self.project_handler = project_handler
