@@ -1,7 +1,9 @@
-from .app import (
+from .window import (
     show,
+    SceneInventoryWindow
 )
 
-__all__ = [
+__all__ = (
     "show",
-]
+    "SceneInventoryWindow"
+)

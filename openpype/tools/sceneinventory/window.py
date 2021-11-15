@@ -1799,11 +1799,11 @@ class SwitchAssetDialog(QtWidgets.QDialog):
         self.close()
 
 
-class Window(QtWidgets.QDialog):
+class SceneInventoryWindow(QtWidgets.QDialog):
     """Scene Inventory window"""
 
     def __init__(self, parent=None):
-        QtWidgets.QDialog.__init__(self, parent)
+        super(SceneInventoryWindow, self).__init__(parent)
 
         self.resize(1100, 480)
         self.setWindowTitle(
@@ -1941,7 +1941,7 @@ def show(root=None, debug=False, parent=None, items=None):
             api.Session["AVALON_PROJECT"] = os.environ.get("AVALON_PROJECT")
 
     with tools_lib.application():
-        window = Window(parent)
+        window = SceneInventoryWindow(parent)
         window.setStyleSheet(style.load_stylesheet())
         window.show()
         window.refresh(items=items)
