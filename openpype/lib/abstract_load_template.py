@@ -49,7 +49,8 @@ class AbstractTemplateLoader(object):
         project_settings = get_project_settings(project)
         current_dcc = avalon.io.Session["AVALON_APP"]
         current_task = avalon.io.Session["AVALON_TASK"]
-        profiles = project_settings[current_dcc]['workfile_build']['profiles']
+        build_info = project_settings[current_dcc]['templated_workfile_build']
+        profiles = build_info['profiles']
 
         for profile in profiles:
             if current_task in profile['task_types']:

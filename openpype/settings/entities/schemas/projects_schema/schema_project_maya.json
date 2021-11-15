@@ -11,11 +11,11 @@
             "label": "Extension Mapping",
             "use_label_wrap": true,
             "object_type": {
-                                "type": "text"
-                            }
+                "type": "text"
+            }
         },
         {
-           "type": "dict",
+            "type": "dict",
             "collapsible": true,
             "checkbox_key": "enabled",
             "key": "maya-dirmap",
@@ -66,6 +66,10 @@
         {
             "type": "schema",
             "name": "schema_workfile_build"
+        },
+        {
+            "type": "schema",
+            "name": "schema_templated_workfile_build"
         },
         {
             "type": "schema",
