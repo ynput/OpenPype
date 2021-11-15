@@ -1,4 +1,5 @@
-from openpype.lib.abstract_load_template import AbstractTemplateLoader, AbstractPlaceholder
+from openpype.lib.abstract_load_template import AbstractTemplateLoader,\
+    AbstractPlaceholder
 from maya import cmds
 
 PLACEHOLDER_SET = 'PLACEHOLDERS_SET'
@@ -44,9 +45,9 @@ class Placeholder(AbstractPlaceholder):
 
         self.data = user_data
 
-    def parent(self, containers):
-        roots = [container.partition(
-            '__')[0] + "_:_GRP" for container in containers]
+    def parent_in_hierarchy(self, containers):
+        roots = [container.partition('__')[0] + "_:_GRP"
+                 for container in containers]
         cmds.parent(roots, self.data['parent'])
 
     def clean(self):
