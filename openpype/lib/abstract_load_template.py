@@ -8,31 +8,40 @@ from openpype.lib import Anatomy, get_linked_assets, get_loaders_by_name,\
 
 class AbstractTemplateLoader(object):
     """
-    Property returning template path. Avoiding getter.
-    Getting template path from open pype settings
-    bassing on current avalon session
-    and solving the path variables if needed.
+    Abstraction of Template Loader.
 
     Properties:
-        template_path (str) :
+        template_path : property to get current template path
 
     Methods:
-        get_representations
-        get_valid_representations_id_for_placeholder
-        validate_representation
-        _get_node_data
-        import_template
-        switch
-        get_template_nodes
+        import_template : Abstract Method. Used to load template,
+            depending on current dcc
+        get_template_nodes : Abstract Method. Used to query nodes acting
+            as placeholders. Depending on current dcc
     """
+
+    def __init__(self, placeholder_class):
+
+        self.import_template(self.template_path)
+
+        loaders_by_name = get_loaders_by_name()
+
+        # Skip if there is no loader
+        if not loaders_by_name:
+            self.log.warning("There are no registered loaders.")
+            return
+
+        current_asset = avalon.io.Session["AVALON_ASSET"]
+        self.populate_template(current_asset,
+                               loaders_by_name,
+                               placeholder_class)
 
     @property
     def template_path(self):
         """
-        Property returning template path. Avoiding getter.
-        Getting template path from open pype settings
-        bassing on current avalon session
-        and solving the path variables if needed.
+        Property returning template path. Avoiding setter.
+        Getting template path from open pype settings based on current avalon
+        session and solving the path variables if needed.
 
         Returns:
             str: Solved template path
@@ -81,19 +90,19 @@ class AbstractTemplateLoader(object):
                     current_task, current_dcc, solved_path))
         return solved_path
 
-    def __init__(self, placeholder_class):
+    def populate_template(self, current_asset,
+                          loaders_by_name, placeholder_class):
+        """
+        Use template placeholders to load assets and parent them in hierarchy
 
-        self.import_template(self.template_path)
+        Arguments :
+            current_asset (str):
+            loader_by_name (dict(name:loader)):
+            placeholder_class (AbstractPlaceHolder):
 
-        loaders_by_name = get_loaders_by_name()
-
-        # Skip if there is no loader
-        if not loaders_by_name:
-            self.log.warning("There are no registered loaders.")
-            return
-
-        current_asset = avalon.io.Session["AVALON_ASSET"]
-
+        Returns:
+            None
+        """
         current_asset_entity = avalon.io.find_one({
             "type": "asset",
             "name": current_asset
@@ -119,7 +128,6 @@ class AbstractTemplateLoader(object):
             else:
                 linked_representations_by_id[k] = representations_by_id[k]
 
-        # Def placeholders
         placeholders = map(placeholder_class, self.get_template_nodes())
         valid_placeholders = filter(placeholder_class.is_valid, placeholders)
         sorted_placeholders = sorted(valid_placeholders,
@@ -152,28 +160,53 @@ class AbstractTemplateLoader(object):
 
     def import_template(self, template_path):
         """
-        Import template in dcc
+        Import template in current dcc
 
         Args:
-            template_path (str): fullpath to current task and dcc's template
-                file
+            template_path (str): fullpath to current task and
+                dcc's template file
+
+        Return:
+            None
         """
         raise NotImplementedError
 
     def get_template_nodes(self):
         """
-        Property returning template path. forbidding user to set.
-        Getting template path from open pype settings
-        bassing on current avalon session
-        and solving the path variables if needed.
+        Returning a list of nodes acting as DCC placeholders for
+        templating. The data representation is by user.
+        AbstractLoadTemplate (and LoadTemplate) won't directly manipulate nodes
+
+        Args :
+            None
 
         Returns:
-            str: Solved template path
+            list(AnyNode): Solved template path
         """
         raise NotImplementedError
 
 
 class AbstractPlaceholder:
+    """Abstraction of placeholders logic
+
+    Properties:
+        attributes: A list of mandatory attribute to decribe placeholder
+            and assets to load.
+        optional_attributes: A list of optional attribute to decribe
+            placeholder and assets to load
+        loader: Name of linked loader to use while loading assets
+        is_context: Is placeholder linked
+            to context asset (or to linked assets)
+
+    Methods:
+        is_repres_valid:
+        loader:
+        order:
+        is_valid:
+        get_data:
+        parent_in_hierachy:
+
+    """
 
     attributes = {'builder_type', 'family',
                   'representation', 'order', 'loader'}
@@ -183,29 +216,80 @@ class AbstractPlaceholder:
         self.get_data(node)
 
     def get_data(self, node):
+        """
+        Collect placeholders information.
+
+        Args:
+            node (AnyNode): A unique node decided by Placeholder implementation
+        """
         raise NotImplementedError
 
     def order(self):
+        """Get placeholder order to sort them by priority
+        Priority is lowset first, highest last
+        (ex:
+            1: First to load
+            100: Last to load)
+
+        Returns:
+            Int: Order priority
+        """
         return self.data.get('order')
 
     @property
     def loader(self):
+        """Return placeholder loader type
+
+        Returns:
+            string: Loader name
+        """
         return self.data.get('loader')
 
     @property
     def is_context(self):
+        """Return placeholder type
+        context_asset: For loading current asset
+        linked_asset: For loading linked assets
+
+        Returns:
+            bool: true if placeholder is a context placeholder
+        """
         return self.data.get('builder_type') == 'context_asset'
 
     def is_valid(self):
+        """Test validity of placeholder
+        i.e.: every attributes exists in placeholder data
+
+        Returns:
+            Bool: True if every attributes are a key of data
+        """
         return set(self.attributes).issubset(self.data.keys())
 
     def parent_in_hierarchy(self, containers):
+        """Place container in correct hierarchy
+        given by placeholder
+
+        Args:
+            containers (String): Container name returned back by
+                placeholder's loader.
+        """
         raise NotImplementedError
 
     def clean(self):
+        """Clean placeholder from hierarchy after loading assets.
+        """
         raise NotImplementedError
 
     def is_repres_valid(self, representation):
+        """Check that given representation correspond to current
+        placeholders values in data
+
+        Args:
+            representation (dict): Representations in avalon BDD
+
+        Returns:
+            Bool: True if representation correspond to placeholder data
+        """
         data = self.data
 
         rep_asset = representation['context']['asset']
