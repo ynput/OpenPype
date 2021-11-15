@@ -213,7 +213,7 @@ class TasksWidget(QtWidgets.QWidget):
         layout.addWidget(tasks_view)
 
         selection_model = tasks_view.selectionModel()
-        selection_model.currentChanged.connect(self.task_changed)
+        selection_model.selectionChanged.connect(self._on_task_change)
 
         self._tasks_model = tasks_model
         self._tasks_proxy = tasks_proxy
@@ -293,3 +293,6 @@ class TasksWidget(QtWidgets.QWidget):
         if index.isValid() and selection_model.isSelected(index):
             return index.data(TASK_TYPE_ROLE)
         return None
+
+    def _on_task_change(self):
+        self.task_changed.emit()
