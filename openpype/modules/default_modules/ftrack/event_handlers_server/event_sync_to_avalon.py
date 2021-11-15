@@ -194,6 +194,7 @@ class SyncToAvalonEvent(BaseEvent):
                 ftrack_id = proj["data"].get("ftrackId")
                 if ftrack_id is None:
                     ftrack_id = self._update_project_ftrack_id()
+                    proj["data"]["ftrackId"] = ftrack_id
                 self._avalon_ents_by_ftrack_id[ftrack_id] = proj
                 for ent in ents:
                     ftrack_id = ent["data"].get("ftrackId")
