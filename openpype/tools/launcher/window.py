@@ -9,13 +9,14 @@ from openpype import style
 from openpype.api import resources
 
 from openpype.tools.utils.widgets import AssetWidget
+from openpype.tools.utils.tasks_widget import TasksWidget
+
 from avalon.vendor import qtawesome
 from .models import ProjectModel
 from .lib import get_action_label, ProjectHandler
 from .widgets import (
     ProjectBar,
     ActionBar,
-    TasksWidget,
     ActionHistory,
     SlidePageWidget
 )
@@ -186,7 +187,7 @@ class AssetsPanel(QtWidgets.QWidget):
         self.project_handler = project_handler
         self.project_bar = project_bar
         self.assets_widget = assets_widget
-        self.tasks_widget = tasks_widget
+        self._tasks_widget = tasks_widget
         self._btn_back = btn_back
 
     def showEvent(self, event):
@@ -241,10 +242,10 @@ class AssetsPanel(QtWidgets.QWidget):
         asset_id = None
         if asset_doc:
             asset_id = asset_doc["_id"]
-        self.tasks_widget.set_asset(asset_id)
+        self._tasks_widget.set_asset_id(asset_id)
 
     def _on_task_change(self):
-        task_name = self.tasks_widget.get_current_task()
+        task_name = self._tasks_widget.get_selected_task_name()
         self.dbcon.Session["AVALON_TASK"] = task_name
         self.session_changed.emit()
 
