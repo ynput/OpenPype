@@ -69,10 +69,10 @@ def get_fps(str_value):
     return str(fps)
 
 
-def _prores_codec_args(ffprobe_data, source_ffmpeg_cmd):
+def _prores_codec_args(stream_data, source_ffmpeg_cmd):
     output = []
 
-    tags = ffprobe_data.get("tags") or {}
+    tags = stream_data.get("tags") or {}
     encoder = tags.get("encoder") or ""
     if encoder.endswith("prores_ks"):
         codec_name = "prores_ks"
@@ -85,7 +85,7 @@ def _prores_codec_args(ffprobe_data, source_ffmpeg_cmd):
 
     output.extend(["-codec:v", codec_name])
 
-    pix_fmt = ffprobe_data.get("pix_fmt")
+    pix_fmt = stream_data.get("pix_fmt")
     if pix_fmt:
         output.extend(["-pix_fmt", pix_fmt])
 
@@ -99,7 +99,7 @@ def _prores_codec_args(ffprobe_data, source_ffmpeg_cmd):
             "ap4h": "4444",
             "ap4x": "4444xq"
         }
-        codec_tag_str = ffprobe_data.get("codec_tag_string")
+        codec_tag_str = stream_data.get("codec_tag_string")
         if codec_tag_str:
             profile = codec_tag_to_profile_map.get(codec_tag_str)
             if profile:
@@ -108,7 +108,7 @@ def _prores_codec_args(ffprobe_data, source_ffmpeg_cmd):
     return output
 
 
-def _h264_codec_args(ffprobe_data, source_ffmpeg_cmd):
+def _h264_codec_args(stream_data, source_ffmpeg_cmd):
     output = ["-codec:v", "h264"]
 
     # Use arguments from source if are available source arguments
@@ -125,7 +125,7 @@ def _h264_codec_args(ffprobe_data, source_ffmpeg_cmd):
             if arg in copy_args:
                 output.extend([arg, args[idx + 1]])
 
-    pix_fmt = ffprobe_data.get("pix_fmt")
+    pix_fmt = stream_data.get("pix_fmt")
     if pix_fmt:
         output.extend(["-pix_fmt", pix_fmt])
 
@@ -135,11 +135,11 @@ def _h264_codec_args(ffprobe_data, source_ffmpeg_cmd):
     return output
 
 
-def _dnxhd_codec_args(ffprobe_data, source_ffmpeg_cmd):
+def _dnxhd_codec_args(stream_data, source_ffmpeg_cmd):
     output = ["-codec:v", "dnxhd"]
 
     # Use source profile (profiles in metadata are not usable in args directly)
-    profile = ffprobe_data.get("profile") or ""
+    profile = stream_data.get("profile") or ""
     # Lower profile and replace space with underscore
     cleaned_profile = profile.lower().replace(" ", "_")
     dnx_profiles = {
@@ -153,7 +153,7 @@ def _dnxhd_codec_args(ffprobe_data, source_ffmpeg_cmd):
     if cleaned_profile in dnx_profiles:
         output.extend(["-profile:v", cleaned_profile])
 
-    pix_fmt = ffprobe_data.get("pix_fmt")
+    pix_fmt = stream_data.get("pix_fmt")
     if pix_fmt:
         output.extend(["-pix_fmt", pix_fmt])
 
