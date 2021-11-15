@@ -3,8 +3,6 @@ from Qt import QtGui, QtCore
 
 from avalon import api
 
-from openpype.api import get_current_project_settings
-
 from . constants import (
     FAMILY_ROLE,
     ITEM_ID_ROLE

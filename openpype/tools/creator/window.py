@@ -2,7 +2,7 @@ import sys
 import traceback
 import re
 
-from Qt import QtWidgets, QtCore, QtGui
+from Qt import QtWidgets, QtCore
 
 from avalon import api, io
 
