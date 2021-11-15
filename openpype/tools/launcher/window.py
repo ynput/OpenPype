@@ -137,13 +137,8 @@ class AssetsPanel(QtWidgets.QWidget):
         project_bar_layout.addWidget(btn_back)
         project_bar_layout.addWidget(project_bar)
 
-        # assets
-        assets_proxy_widgets = QtWidgets.QWidget(self)
-        assets_proxy_widgets.setContentsMargins(0, 0, 0, 0)
-        assets_layout = QtWidgets.QVBoxLayout(assets_proxy_widgets)
-        assets_widget = AssetWidget(
-            dbcon=self.dbcon, parent=assets_proxy_widgets
-        )
+        # Assets widget
+        assets_widget = AssetWidget(dbcon=self.dbcon, parent=self)
 
         # Make assets view flickable
         flick = FlickCharm(parent=self)
@@ -162,7 +157,7 @@ class AssetsPanel(QtWidgets.QWidget):
             QtWidgets.QSizePolicy.Expanding
         )
         body.setOrientation(QtCore.Qt.Horizontal)
-        body.addWidget(assets_proxy_widgets)
+        body.addWidget(assets_widget)
         body.addWidget(tasks_widget)
         body.setStretchFactor(0, 100)
         body.setStretchFactor(1, 65)
