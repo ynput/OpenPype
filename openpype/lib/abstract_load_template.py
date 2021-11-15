@@ -3,7 +3,7 @@ import re
 import avalon
 from openpype.settings import get_project_settings
 from openpype.lib import Anatomy, get_linked_assets, get_loaders_by_name,\
-        collect_last_version_repres
+    collect_last_version_repres
 
 
 class AbstractTemplateLoader(object):
@@ -62,8 +62,12 @@ class AbstractTemplateLoader(object):
             )
 
         try:
-            # while solved_path != new_solved_path
-            solved_path = os.path.normpath(anatomy.path_remapper(path))
+            solved_path = None
+            while True:
+                solved_path = anatomy.path_remapper(path)
+                if solved_path == path:
+                    break
+                path = solved_path
         except KeyError as missing_key:
             raise KeyError(
                 "Could not solve key '{}' in template path '{}'".format(
@@ -88,43 +92,62 @@ class AbstractTemplateLoader(object):
             return
 
         current_asset = avalon.io.Session["AVALON_ASSET"]
+
         current_asset_entity = avalon.io.find_one({
             "type": "asset",
             "name": current_asset
         })
 
         linked_asset_entities = get_linked_assets(current_asset_entity)
+        assets_to_load = {asset['name'] for asset in linked_asset_entities}
         version_repres = collect_last_version_repres(
             [current_asset_entity] + linked_asset_entities)
 
-        linked_representations_by_id = {representation['_id']: representation
-                                        for asset in version_repres.values()
-                                        for subset in asset['subsets'].values()
-                                        for representation in subset['version']['repres']}
+        representations_by_id = {
+            representation['_id']: representation
+            for asset in version_repres.values()
+            for subset in asset['subsets'].values()
+            for representation in subset['version']['repres']}
+
         context_representations_by_id = dict()
+        linked_representations_by_id = dict()
+        for k in representations_by_id.keys():
+            asset = representations_by_id[k]['context']['asset']
+            if asset == current_asset:
+                context_representations_by_id[k] = representations_by_id[k]
+            else:
+                linked_representations_by_id[k] = representations_by_id[k]
 
-        for k in linked_representations_by_id.keys():
-            if linked_representations_by_id[k]['context']['asset'] == current_asset:
-                context_representations_by_id[k] = linked_representations_by_id.pop(
-                    k)
-
+        # Def placeholders
         placeholders = map(placeholder_class, self.get_template_nodes())
-        placeholders = filter(lambda ph: ph.is_valid, placeholders)
-        placeholders = sorted(placeholders, key=lambda ph: ph.order)
+        valid_placeholders = filter(placeholder_class.is_valid, placeholders)
+        sorted_placeholders = sorted(valid_placeholders,
+                                     key=placeholder_class.order)
 
-        for placeholder in placeholders:
+        loaded_assets = set()
+        for placeholder in sorted_placeholders:
             if placeholder.data['builder_type'] == 'context_asset':
                 representations_by_id = context_representations_by_id
+                assets_to_load.add(current_asset)
             else:
                 representations_by_id = linked_representations_by_id
-            for representation_id, representation in representations_by_id.items():
+            for items in representations_by_id.items():
+                representation_id, representation = items
                 if not placeholder.is_repres_valid(representation):
                     continue
                 container = avalon.api.load(
                     loaders_by_name[placeholder.loader],
                     representation_id)
-                placeholder.parent(container)
+                placeholder.parent_in_hierarchy(container)
+                loaded_assets.add(representation['context']['asset'])
             placeholder.clean()
+
+        if not loaded_assets == assets_to_load:
+            unloaded = assets_to_load - loaded_assets
+            print("Error found while loading {}".format(unloaded))
+            print("It's possible that a needed asset wasn't published")
+            print("or that the build template is malformed, "
+                  "continue at your own risks.")
 
     def import_template(self, template_path):
         """
@@ -161,7 +184,6 @@ class AbstractPlaceholder:
     def get_data(self, node):
         raise NotImplementedError
 
-    @property
     def order(self):
         return self.data.get('order')
 
@@ -173,24 +195,26 @@ class AbstractPlaceholder:
     def is_context(self):
         return self.data.get('builder_type') == 'context_asset'
 
-    @property
     def is_valid(self):
         return set(self.attributes).issubset(self.data.keys())
 
-    def parent(self, containers):
+    def parent_in_hierarchy(self, containers):
         raise NotImplementedError
 
     def clean(self):
         raise NotImplementedError
 
     def is_repres_valid(self, representation):
-        representation_context = representation['context']
+        data = self.data
 
-        is_valid = bool(re.match(
-            self.data.get('asset', ''), representation_context['asset']))
-        is_valid &= bool(re.match(
-            self.data.get('hierarchy', ''), representation_context['hierarchy']))
-        is_valid &= self.data['representation'] == representation_context['representation']
-        is_valid &= self.data['family'] == representation_context['family']
+        rep_asset = representation['context']['asset']
+        rep_name = representation['context']['representation']
+        rep_hierarchy = representation['context']['hierarchy']
+        rep_family = representation['context']['family']
+
+        is_valid = bool(re.match(data.get('asset', ''), rep_asset))
+        is_valid &= bool(re.match(data.get('hierarchy', ''), rep_hierarchy))
+        is_valid &= data['representation'] == rep_name
+        is_valid &= data['family'] == rep_family
 
         return is_valid
