@@ -38,6 +38,8 @@ class CollectAnatomyInstanceData(pyblish.api.ContextPlugin):
     order = pyblish.api.CollectorOrder + 0.49
     label = "Collect Anatomy Instance data"
 
+    follow_workfile_version = False
+
     def process(self, context):
         self.log.info("Collecting anatomy data for all instances.")
 
@@ -213,7 +215,10 @@ class CollectAnatomyInstanceData(pyblish.api.ContextPlugin):
         context_asset_doc = context.data["assetEntity"]
 
         for instance in context:
-            version_number = instance.data.get("version")
+            if self.follow_workfile_version:
+                version_number = context.data('version')
+            else:
+                version_number = instance.data.get("version")
             # If version is not specified for instance or context
             if version_number is None:
                 # TODO we should be able to change default version by studio
