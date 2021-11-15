@@ -586,7 +586,97 @@
         "profiles": [
             {
                 "task_types": [],
-                "path": "C:\\path\\to\\template"
+                "tasks": [
+                    "Lighting"
+                ],
+                "current_context": [
+                    {
+                        "subset_name_filters": [
+                            "\".+[Mm]ain\""
+                        ],
+                        "families": [
+                            "model"
+                        ],
+                        "repre_names": [
+                            "abc",
+                            "ma"
+                        ],
+                        "loaders": [
+                            "ReferenceLoader"
+                        ]
+                    },
+                    {
+                        "subset_name_filters": [],
+                        "families": [
+                            "animation",
+                            "pointcache"
+                        ],
+                        "repre_names": [
+                            "abc"
+                        ],
+                        "loaders": [
+                            "ReferenceLoader"
+                        ]
+                    },
+                    {
+                        "subset_name_filters": [],
+                        "families": [
+                            "rendersetup"
+                        ],
+                        "repre_names": [
+                            "json"
+                        ],
+                        "loaders": [
+                            "RenderSetupLoader"
+                        ]
+                    },
+                    {
+                        "subset_name_filters": [],
+                        "families": [
+                            "camera"
+                        ],
+                        "repre_names": [
+                            "abc"
+                        ],
+                        "loaders": [
+                            "ReferenceLoader"
+                        ]
+                    }
+                ],
+                "linked_assets": [
+                    {
+                        "subset_name_filters": [],
+                        "families": [
+                            "sedress"
+                        ],
+                        "repre_names": [
+                            "ma"
+                        ],
+                        "loaders": [
+                            "ReferenceLoader"
+                        ]
+                    },
+                    {
+                        "subset_name_filters": [],
+                        "families": [
+                            "ArnoldStandin"
+                        ],
+                        "repre_names": [
+                            "ass"
+                        ],
+                        "loaders": [
+                            "assLoader"
+                        ]
+                    }
+                ]
+            }
+        ]
+    },
+    "templated_workfile_build": {
+        "profiles": [
+            {
+                "task_types": [],
+                "path": "path\\to\\template"
             }
         ]
     },
