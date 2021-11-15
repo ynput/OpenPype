@@ -1,13 +1,8 @@
 # Changelog
 
-## [3.6.0-nightly.6](https://github.com/pypeclub/OpenPype/tree/HEAD)
+## [3.6.0](https://github.com/pypeclub/OpenPype/tree/3.6.0) (2021-11-15)
 
-[Full Changelog](https://github.com/pypeclub/OpenPype/compare/3.5.0...HEAD)
-
-### 📖 Documentation
-
-- Add alternative sites for Site Sync [\#2206](https://github.com/pypeclub/OpenPype/pull/2206)
-- Add command line way of running site sync server [\#2188](https://github.com/pypeclub/OpenPype/pull/2188)
+[Full Changelog](https://github.com/pypeclub/OpenPype/compare/3.5.0...3.6.0)
 
 **🆕 New features**
 
@@ -29,6 +24,7 @@
 - Maya : Validate shape zero [\#2212](https://github.com/pypeclub/OpenPype/pull/2212)
 - Maya : validate unique names [\#2211](https://github.com/pypeclub/OpenPype/pull/2211)
 - Tools: OpenPype stylesheet in workfiles tool [\#2208](https://github.com/pypeclub/OpenPype/pull/2208)
+- Add alternative sites for Site Sync [\#2206](https://github.com/pypeclub/OpenPype/pull/2206)
 - Ftrack: Replace Queue with deque in event handlers logic [\#2204](https://github.com/pypeclub/OpenPype/pull/2204)
 - Tools: New select context dialog [\#2200](https://github.com/pypeclub/OpenPype/pull/2200)
 - Maya : Validate mesh ngons [\#2199](https://github.com/pypeclub/OpenPype/pull/2199)
@@ -38,7 +34,6 @@
 - Usage of tools code [\#2185](https://github.com/pypeclub/OpenPype/pull/2185)
 - Settings: Dictionary based on project roots [\#2184](https://github.com/pypeclub/OpenPype/pull/2184)
 - Subset name: Be able to pass asset document to get subset name [\#2179](https://github.com/pypeclub/OpenPype/pull/2179)
-- Loader: Refactor and use OpenPype stylesheets [\#2166](https://github.com/pypeclub/OpenPype/pull/2166)
 
 **🐛 Bug fixes**
 
@@ -58,6 +53,10 @@
 - Maya: review viewport settings [\#2177](https://github.com/pypeclub/OpenPype/pull/2177)
 - Maya: Aspect ratio [\#2174](https://github.com/pypeclub/OpenPype/pull/2174)
 
+### 📖 Documentation
+
+- Add command line way of running site sync server [\#2188](https://github.com/pypeclub/OpenPype/pull/2188)
+
 ## [3.5.0](https://github.com/pypeclub/OpenPype/tree/3.5.0) (2021-10-17)
 
 [Full Changelog](https://github.com/pypeclub/OpenPype/compare/CI/3.5.0-nightly.8...3.5.0)
@@ -74,7 +73,6 @@
 
 **🚀 Enhancements**
 
-- Burnins: DNxHD profiles handling [\#2142](https://github.com/pypeclub/OpenPype/pull/2142)
 - Maya: make rig validators configurable in settings [\#2137](https://github.com/pypeclub/OpenPype/pull/2137)
 - Settings: Updated readme for entity types in settings [\#2132](https://github.com/pypeclub/OpenPype/pull/2132)
 - Nuke: unified clip loader [\#2128](https://github.com/pypeclub/OpenPype/pull/2128)
@@ -82,6 +80,7 @@
 
 **🐛 Bug fixes**
 
+- Maya: Fix hotbox broken by scriptsmenu [\#2151](https://github.com/pypeclub/OpenPype/pull/2151)
 - Maya: fix model publishing [\#2130](https://github.com/pypeclub/OpenPype/pull/2130)
 - Fix - oiiotool wasn't recognized even if present [\#2129](https://github.com/pypeclub/OpenPype/pull/2129)
 - General: Disk mapping group [\#2120](https://github.com/pypeclub/OpenPype/pull/2120)
