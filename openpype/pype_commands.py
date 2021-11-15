@@ -199,14 +199,19 @@ class PypeCommands:
         os.environ["OPENPYPE_PUBLISH_DATA"] = batch_dir
         # must pass identifier to update log lines for a batch
         os.environ["BATCH_LOG_ID"] = str(_id)
-        os.environ["IS_HEADLESS"] = 'true'
+        os.environ["HEADLESS_PUBLISH"] = 'true'  # to use in app lib
 
         pyblish.api.register_host(host_name)
         if targets:
             if isinstance(targets, str):
                 targets = [targets]
+            current_targets = os.environ.get("PYBLISH_TARGETS", "").split(
+                os.pathsep)
             for target in targets:
-                pyblish.api.register_target(target)
+                current_targets.append(target)
+
+            os.environ["PYBLISH_TARGETS"] = os.pathsep.join(
+                set(current_targets))
 
         data = {
             "last_workfile_path": workfile_path,
