@@ -585,6 +585,10 @@ class SyncToAvalonEvent(BaseEvent):
                     continue
                 ftrack_id = ftrack_id[0]
 
+            # Skip deleted projects
+            if action == "remove" and entityType == "show":
+                return True
+
             # task modified, collect parent id of task, handle separately
             if entity_type.lower() == "task":
                 changes = ent_info.get("changes") or {}
