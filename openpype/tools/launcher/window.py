@@ -176,10 +176,10 @@ class AssetsPanel(QtWidgets.QWidget):
         layout.addWidget(body)
 
         # signals
-        project_handler.project_changed.connect(self.on_project_changed)
-        assets_widget.selection_changed.connect(self.on_asset_changed)
-        assets_widget.refreshed.connect(self.on_asset_changed)
-        tasks_widget.task_changed.connect(self.on_task_change)
+        project_handler.project_changed.connect(self._on_project_changed)
+        assets_widget.selection_changed.connect(self._on_asset_changed)
+        assets_widget.refreshed.connect(self._on_asset_changed)
+        tasks_widget.task_changed.connect(self._on_task_change)
 
         btn_back.clicked.connect(self.back_clicked)
 
@@ -201,12 +201,12 @@ class AssetsPanel(QtWidgets.QWidget):
         self._on_asset_changed()
         self._tasks_widget.select_task_name(task_name)
 
-    def on_project_changed(self):
+    def _on_project_changed(self):
         self.session_changed.emit()
 
         self.assets_widget.refresh()
 
-    def on_asset_changed(self):
+    def _on_asset_changed(self):
         """Callback on asset selection changed
 
         This updates the task view.
@@ -243,7 +243,7 @@ class AssetsPanel(QtWidgets.QWidget):
             asset_id = asset_doc["_id"]
         self.tasks_widget.set_asset(asset_id)
 
-    def on_task_change(self):
+    def _on_task_change(self):
         task_name = self.tasks_widget.get_current_task()
         self.dbcon.Session["AVALON_TASK"] = task_name
         self.session_changed.emit()
