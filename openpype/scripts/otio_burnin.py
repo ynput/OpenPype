@@ -597,6 +597,14 @@ def burnins_from_data(
     if source_timecode is None:
         source_timecode = stream.get("tags", {}).get("timecode")
 
+    if source_timecode is None:
+        # Use "format" key from ffprobe data
+        #   - this is used e.g. in mxf extension
+        input_format = burnin.ffprobe_data.get("format") or {}
+        source_timecode = input_format.get("timecode")
+        if source_timecode is None:
+            source_timecode = input_format.get("tags", {}).get("timecode")
+
     if source_timecode is not None:
         data[SOURCE_TIMECODE_KEY[1:-1]] = SOURCE_TIMECODE_KEY
 
