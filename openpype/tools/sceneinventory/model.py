@@ -2,13 +2,13 @@ import logging
 
 from collections import defaultdict
 
-from ... import api, io, style, schema
-from ...vendor.Qt import QtCore, QtGui
-from ...vendor import qtawesome
+from Qt import QtCore, QtGui
+from avalon import api, io, style, schema
+from avalon.vendor import qtawesome
 
-from .. import lib as tools_lib
-from ...lib import HeroVersionType
-from ..models import TreeModel, Item
+from avalon.tools import lib as tools_lib
+from avalon.lib import HeroVersionType
+from avalon.tools.models import TreeModel, Item
 
 from . import lib
 
