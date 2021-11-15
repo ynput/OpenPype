@@ -30,7 +30,7 @@ class CollectTVPaintInstances(pyblish.api.ContextPlugin):
     # Set by settings
     # Regex must constain 'layer' and 'variant' groups which are extracted from
     #   name when instances are created
-    layer_name_regex = r"(?P<layer>L[0-9]{3}_\w+)_(?P<variant>.+)"
+    layer_name_regex = r"(?P<layer>L[0-9]{3}_\w+)_(?P<pass>.+)"
 
     def process(self, context):
         # Prepare compiled regex
@@ -74,7 +74,9 @@ class CollectTVPaintInstances(pyblish.api.ContextPlugin):
         )
         new_instances.append(review_instance)
 
-        layers_by_render_layer = {}
+        # Get render layers and passes from TVPaint layers
+        #   - it's based on regex extraction
+        layers_by_layer_and_pass = {}
         for layer in layers_data:
             # Filter only visible layers
             if not layer["visible"]:
@@ -86,32 +88,46 @@ class CollectTVPaintInstances(pyblish.api.ContextPlugin):
             if result is None:
                 continue
             render_layer = result.group("layer")
-            variant = result.group("variant")
+            render_pass = result.group("pass")
 
-            if render_layer not in layers_by_render_layer:
-                layers_by_render_layer[render_layer] = []
-            layers_by_render_layer[render_layer].append(copy.deepcopy(layer))
-            dynamic_data = {
-                "render_pass": variant,
-                "render_layer": render_layer,
-                # Override family for subset name
-                "family": "render"
-            }
-
-            subset_name = get_subset_name_with_asset_doc(
-                self.render_pass_family,
-                variant,
-                task_name,
-                asset_doc,
-                project_name,
-                host_name,
-                dynamic_data=dynamic_data
+            render_pass_maping = layers_by_layer_and_pass.get(
+                render_layer
             )
+            if render_pass_maping is None:
+                render_pass_maping = {}
+                layers_by_layer_and_pass[render_layer] = render_pass_maping
 
-            instance = self._create_render_pass_instance(
-                context, layer, subset_name
-            )
-            new_instances.append(instance)
+            if render_pass not in render_pass_maping:
+                render_pass_maping[render_pass] = []
+            render_pass_maping[render_pass].append(copy.deepcopy(layer))
+
+        layers_by_render_layer = {}
+        for render_layer, render_passes in layers_by_layer_and_pass.items():
+            render_layer_layers = []
+            layers_by_render_layer[render_layer] = render_layer_layers
+            for render_pass, layers in render_passes.items():
+                render_layer_layers.extend(copy.deepcopy(layers))
+                dynamic_data = {
+                    "render_pass": render_pass,
+                    "render_layer": render_layer,
+                    # Override family for subset name
+                    "family": "render"
+                }
+
+                subset_name = get_subset_name_with_asset_doc(
+                    self.render_pass_family,
+                    render_pass,
+                    task_name,
+                    asset_doc,
+                    project_name,
+                    host_name,
+                    dynamic_data=dynamic_data
+                )
+
+                instance = self._create_render_pass_instance(
+                    context, layers, subset_name
+                )
+                new_instances.append(instance)
 
         for render_layer, layers in layers_by_render_layer.items():
             variant = render_layer
@@ -199,7 +215,7 @@ class CollectTVPaintInstances(pyblish.api.ContextPlugin):
             "stagingDir": staging_dir
         })
 
-    def _create_render_pass_instance(self, context, layer, subset_name):
+    def _create_render_pass_instance(self, context, layers, subset_name):
         staging_dir = self._create_staging_dir(context, subset_name)
         # Global instance data modifications
         # Fill families
@@ -211,7 +227,7 @@ class CollectTVPaintInstances(pyblish.api.ContextPlugin):
             # Add `review` family for thumbnail integration
             "families": [self.render_pass_family, "review"],
             "representations": [],
-            "layers": [layer],
+            "layers": layers,
             "stagingDir": staging_dir
         })
 
