@@ -765,6 +765,11 @@ QScrollBar::add-page:vertical, QScrollBar::sub-page:vertical {
     border: 1px solid {color:border};
     border-radius: 0.1em;
 }
+/* Subset Manager */
+#SubsetManagerDetailsText {}
+#SubsetManagerDetailsText[state="invalid"] {
+    border: 1px solid #ff0000;
+}
 
 /* Python console interpreter */
 #PythonInterpreterOutput, #PythonCodeEditor {

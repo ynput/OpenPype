@@ -129,21 +129,19 @@ class HostToolsHelper:
     def get_subset_manager_tool(self, parent):
         """Create, cache and return subset manager tool window."""
         if self._subset_manager_tool is None:
-            from avalon.tools.subsetmanager import Window
+            from openpype.tools.subsetmanager import SubsetManagerWindow
 
-            subset_manager_window = Window(parent=parent or self._parent)
+            subset_manager_window = SubsetManagerWindow(
+                parent=parent or self._parent
+            )
             self._subset_manager_tool = subset_manager_window
 
         return self._subset_manager_tool
 
     def show_subset_manager(self, parent=None):
         """Show tool display/remove existing created instances."""
-        from avalon import style
-
         subset_manager_tool = self.get_subset_manager_tool(parent)
         subset_manager_tool.show()
-
-        subset_manager_tool.setStyleSheet(style.load_stylesheet())
 
         # Pull window to the front.
         subset_manager_tool.raise_()

@@ -50,7 +50,7 @@ class LocalDriveHandler(AbstractProvider):
         # for non 'studio' sites, 'studio' is configured in Anatomy
         editable = [
             {
-                "key": "roots",
+                "key": "root",
                 "label": "Roots",
                 "type": "dict-roots",
                 "object_type": {
@@ -73,7 +73,7 @@ class LocalDriveHandler(AbstractProvider):
         """
         editable = [
             {
-                'key': "roots",
+                'key': "root",
                 'label': "Roots",
                 'type': 'dict'
             }
