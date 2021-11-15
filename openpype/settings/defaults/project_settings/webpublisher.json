@@ -117,7 +117,7 @@
             }
         },
         "CollectTVPaintInstances": {
-            "layer_name_regex": "(?P<layer>L[0-9]{3}_\\w+)_(?P<variant>.+)"
+            "layer_name_regex": "(?P<layer>L[0-9]{3}_\\w+)_(?P<pass>.+)"
         }
     }
 }
