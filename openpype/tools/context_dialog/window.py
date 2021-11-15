@@ -79,7 +79,7 @@ class ContextDialog(QtWidgets.QDialog):
 
         # Add widgets to main splitter
         main_splitter.addWidget(left_side_widget)
-        main_splitter.addWidget(tasks_widgets)
+        main_splitter.addWidget(tasks_widget)
 
         # Set stretch of both sides
         main_splitter.setStretchFactor(0, 7)
