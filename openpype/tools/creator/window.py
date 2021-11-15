@@ -19,7 +19,6 @@ from .widgets import (
 )
 from .constants import (
     ITEM_ID_ROLE,
-    FAMILY_ROLE,
     SEPARATOR,
     SEPARATORS
 )
@@ -38,7 +37,7 @@ class CreatorWindow(QtWidgets.QDialog):
                 self.windowFlags() | QtCore.Qt.WindowStaysOnTopHint
             )
 
-        creator_info = FamilyDescriptionWidget(parent=self)
+        creator_info = FamilyDescriptionWidget(self)
 
         creators_model = CreatorsModel()
 
@@ -51,7 +50,6 @@ class CreatorWindow(QtWidgets.QDialog):
         asset_name_input = QtWidgets.QLineEdit(self)
         variant_input = VariantLineEdit(self)
         subset_name_input = QtWidgets.QLineEdit(self)
-        subset_name_input.setStyleSheet("color: gray;")
         subset_name_input.setEnabled(False)
 
         subset_button = QtWidgets.QPushButton()

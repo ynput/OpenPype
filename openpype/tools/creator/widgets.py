@@ -191,13 +191,7 @@ class FamilyDescriptionWidget(QtWidgets.QWidget):
     def __init__(self, parent=None):
         super(FamilyDescriptionWidget, self).__init__(parent=parent)
 
-        # Header font
-        font = QtGui.QFont()
-        font.setBold(True)
-        font.setPointSize(14)
-
         icon_label = QtWidgets.QLabel(self)
-        icon_label.setObjectName("FamilyIconLabel")
         icon_label.setSizePolicy(
             QtWidgets.QSizePolicy.Maximum,
             QtWidgets.QSizePolicy.Maximum
@@ -206,27 +200,23 @@ class FamilyDescriptionWidget(QtWidgets.QWidget):
         # Add 4 pixel padding to avoid icon being cut off
         icon_label.setFixedWidth(self.SIZE + 4)
         icon_label.setFixedHeight(self.SIZE + 4)
-        icon_label.setStyleSheet("""
-        QLabel {
-            padding-right: 5px;
-        }
-        """)
 
         label_layout = QtWidgets.QVBoxLayout()
         label_layout.setSpacing(0)
 
         family_label = QtWidgets.QLabel(self)
-        family_label.setFont(font)
+        family_label.setObjectName("CreatorFamilyLabel")
         family_label.setAlignment(QtCore.Qt.AlignBottom | QtCore.Qt.AlignLeft)
 
         help_label = QtWidgets.QLabel(self)
         help_label.setAlignment(QtCore.Qt.AlignTop | QtCore.Qt.AlignLeft)
 
         label_layout.addWidget(family_label)
-        label_layout.addWidget(help)
+        label_layout.addWidget(help_label)
 
         layout = QtWidgets.QHBoxLayout(self)
         layout.setContentsMargins(0, 0, 0, 0)
+        layout.setSpacing(5)
         layout.addWidget(icon_label)
         layout.addLayout(label_layout)
 
