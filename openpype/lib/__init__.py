@@ -84,6 +84,8 @@ from .avalon_context import (
     get_hierarchy,
     get_linked_assets,
     get_latest_version,
+    get_loaders_by_name,
+    collect_last_version_repres,
 
     get_workfile_template_key,
     get_workfile_template_key_from_context,

@@ -2,120 +2,8 @@ import os
 import re
 import avalon
 from openpype.settings import get_project_settings
-from openpype.lib import Anatomy
-from openpype.lib import get_linked_assets
-
-# Copy from BuildWorkfile in avalon_context.py
-# TODO : Move those function into a lib
-
-
-def _collect_last_version_repres(asset_entities):
-    """Collect subsets, versions and representations for asset_entities.
-
-    Args:
-        asset_entities (list): Asset entities for which want to find data
-
-    Returns:
-        (dict): collected entities
-
-    Example output:
-    ```
-    {
-        {Asset ID}: {
-            "asset_entity": <AssetEntity>,
-            "subsets": {
-                {Subset ID}: {
-                    "subset_entity": <SubsetEntity>,
-                    "version": {
-                        "version_entity": <VersionEntity>,
-                        "repres": [
-                            <RepreEntity1>, <RepreEntity2>, ...
-                        ]
-                    }
-                },
-                ...
-            }
-        },
-        ...
-    }
-    output[asset_id]["subsets"][subset_id]["version"]["repres"]
-    ```
-    """
-
-    if not asset_entities:
-        return {}
-
-    asset_entity_by_ids = {asset["_id"]: asset for asset in asset_entities}
-
-    subsets = list(avalon.io.find({
-        "type": "subset",
-        "parent": {"$in": asset_entity_by_ids.keys()}
-    }))
-    subset_entity_by_ids = {subset["_id"]: subset for subset in subsets}
-
-    sorted_versions = list(avalon.io.find({
-        "type": "version",
-        "parent": {"$in": subset_entity_by_ids.keys()}
-    }).sort("name", -1))
-
-    subset_id_with_latest_version = []
-    last_versions_by_id = {}
-    for version in sorted_versions:
-        subset_id = version["parent"]
-        if subset_id in subset_id_with_latest_version:
-            continue
-        subset_id_with_latest_version.append(subset_id)
-        last_versions_by_id[version["_id"]] = version
-
-    repres = avalon.io.find({
-        "type": "representation",
-        "parent": {"$in": last_versions_by_id.keys()}
-    })
-
-    output = {}
-    for repre in repres:
-        version_id = repre["parent"]
-        version = last_versions_by_id[version_id]
-
-        subset_id = version["parent"]
-        subset = subset_entity_by_ids[subset_id]
-
-        asset_id = subset["parent"]
-        asset = asset_entity_by_ids[asset_id]
-
-        if asset_id not in output:
-            output[asset_id] = {
-                "asset_entity": asset,
-                "subsets": {}
-            }
-
-        if subset_id not in output[asset_id]["subsets"]:
-            output[asset_id]["subsets"][subset_id] = {
-                "subset_entity": subset,
-                "version": {
-                    "version_entity": version,
-                    "repres": []
-                }
-            }
-
-        output[asset_id]["subsets"][subset_id]["version"]["repres"].append(
-            repre
-        )
-
-    return output
-
-
-def get_loader_by_name():
-
-    loaders_by_name = {}
-    for loader in avalon.api.discover(avalon.api.Loader):
-        loader_name = loader.__name__
-        if loader_name in loaders_by_name:
-            raise KeyError(
-                "Duplicated loader name {0}!".format(loader_name)
-            )
-        loaders_by_name[loader_name] = loader
-    return loaders_by_name
+from openpype.lib import Anatomy, get_linked_assets, get_loaders_by_name,\
+        collect_last_version_repres
 
 
 class AbstractTemplateLoader(object):
@@ -192,7 +80,7 @@ class AbstractTemplateLoader(object):
 
         self.import_template(self.template_path)
 
-        loaders_by_name = get_loader_by_name()
+        loaders_by_name = get_loaders_by_name()
 
         # Skip if there is no loader
         if not loaders_by_name:
@@ -206,7 +94,7 @@ class AbstractTemplateLoader(object):
         })
 
         linked_asset_entities = get_linked_assets(current_asset_entity)
-        version_repres = _collect_last_version_repres(
+        version_repres = collect_last_version_repres(
             [current_asset_entity] + linked_asset_entities)
 
         linked_representations_by_id = {representation['_id']: representation
