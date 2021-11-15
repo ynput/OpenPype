@@ -6,8 +6,21 @@ PLACEHOLDER_SET = 'PLACEHOLDERS_SET'
 
 
 class TemplateLoader(AbstractTemplateLoader):
+    """Concrete implementation of AbstractTemplateLoader for maya
+
+    """
 
     def import_template(self, path):
+        """Import template into current scene.
+        Block if a template is already loaded.
+
+        Args:
+            path (str): A path to current template (usually given by
+            get_template_path implementation)
+
+        Raises:
+            ValueError: "Build already generated"
+        """
         if cmds.objExists(PLACEHOLDER_SET):
             raise ValueError("Build already generated. Please clean scene")
         cmds.sets(name=PLACEHOLDER_SET, empty=True)
@@ -21,6 +34,9 @@ class TemplateLoader(AbstractTemplateLoader):
 
 
 class Placeholder(AbstractPlaceholder):
+    """Concrete implementation of AbstractPlaceholder for maya
+
+    """
 
     optional_attributes = {'asset', 'subset', 'hierarchy'}
 
@@ -46,11 +62,24 @@ class Placeholder(AbstractPlaceholder):
         self.data = user_data
 
     def parent_in_hierarchy(self, containers):
+        """Parent loaded container to placeholder's parent
+        ie : Set loaded content as placeholder's sibling
+
+        Args:
+            containers (String): Placeholder loaded containers
+        """
         roots = [container.partition('__')[0] + "_:_GRP"
                  for container in containers]
         cmds.parent(roots, self.data['parent'])
 
     def clean(self):
+        """Hide placeholder
+        parent them to root
+        add them to placeholder set
+        and register placeholder's parent
+        to keep placeholder info available
+        for future use
+        """
         node = self.data['node'].rpartition('|')[2]
         cmds.setAttr(node + '.parent', self.data['parent'], type='string')
 
