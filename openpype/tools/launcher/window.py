@@ -245,6 +245,7 @@ class AssetsPanel(QtWidgets.QWidget):
 
 class LauncherWindow(QtWidgets.QDialog):
     """Launcher interface"""
+    message_timeout = 5000
 
     def __init__(self, parent=None):
         super(LauncherWindow, self).__init__(parent)
@@ -311,15 +312,11 @@ class LauncherWindow(QtWidgets.QDialog):
         layout.addWidget(body)
         layout.addLayout(status_layout)
 
-        self.project_handler = project_handler
+        message_timer = QtCore.QTimer()
+        message_timer.setInterval(self.message_timeout)
+        message_timer.setSingleShot(True)
 
-        self.message_label = message_label
-        self.project_panel = project_panel
-        self.asset_panel = asset_panel
-        self.actions_bar = actions_bar
-        self.action_history = action_history
-        self.page_slider = page_slider
-        self._page = 0
+        message_timer.timeout.connect(self._on_message_timeout)
 
         # signals
         actions_bar.action_clicked.connect(self.on_action_clicked)
@@ -330,6 +327,19 @@ class LauncherWindow(QtWidgets.QDialog):
         asset_panel.session_changed.connect(self.on_session_changed)
 
         self.resize(520, 740)
+
+        self._page = 0
+
+        self._message_timer = message_timer
+
+        self.project_handler = project_handler
+
+        self._message_label = message_label
+        self.project_panel = project_panel
+        self.asset_panel = asset_panel
+        self.actions_bar = actions_bar
+        self.action_history = action_history
+        self.page_slider = page_slider
 
     def showEvent(self, event):
         self.project_handler.set_active(True)
@@ -356,9 +366,12 @@ class LauncherWindow(QtWidgets.QDialog):
         self._page = page
         self.page_slider.slide_view(page, direction=direction)
 
+    def _on_message_timeout(self):
+        self._message_label.setText("")
+
     def echo(self, message):
-        self.message_label.setText(str(message))
-        QtCore.QTimer.singleShot(5000, lambda: self.message_label.setText(""))
+        self._message_label.setText(str(message))
+        self._message_timer.start()
         self.log.debug(message)
 
     def on_session_changed(self):
