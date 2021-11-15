@@ -79,7 +79,7 @@ class ContextDialog(QtWidgets.QDialog):
 
         # Add widgets to main splitter
         main_splitter.addWidget(left_side_widget)
-        main_splitter.addWidget(task_widgets)
+        main_splitter.addWidget(tasks_widgets)
 
         # Set stretch of both sides
         main_splitter.setStretchFactor(0, 7)
@@ -271,7 +271,7 @@ class ContextDialog(QtWidgets.QDialog):
             self._dbcon.Session["AVALON_ASSET"] = self._set_context_asset
             self._assets_widget.setEnabled(False)
             self._assets_widget.select_assets(self._set_context_asset)
-            self._set_asset_to_task_widget()
+            self._set_asset_to_tasks_widget()
         else:
             self._assets_widget.setEnabled(True)
             self._assets_widget.set_current_asset_btn_visibility(False)
@@ -304,12 +304,12 @@ class ContextDialog(QtWidgets.QDialog):
         """Selected assets have changed"""
         if self._ignore_value_changes:
             return
-        self._set_asset_to_task_widget()
+        self._set_asset_to_tasks_widget()
 
     def _on_task_change(self):
         self._validate_strict()
 
-    def _set_asset_to_task_widget(self):
+    def _set_asset_to_tasks_widget(self):
         # filter None docs they are silo
         asset_docs = self._assets_widget.get_selected_assets()
         asset_ids = [asset_doc["_id"] for asset_doc in asset_docs]
