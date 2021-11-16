@@ -771,6 +771,25 @@ QScrollBar::add-page:vertical, QScrollBar::sub-page:vertical {
     border: 1px solid #ff0000;
 }
 
+/* Scene Inventory*/
+#ButtonWithMenu {
+    padding-right: 16px;
+    border: 1px solid #4A4949;
+    border-radius: 2px;
+}
+#ButtonWithMenu::menu-button {
+    border: 1px solid #4A4949;
+    width: 12px;
+    border-top-left-radius: 0px;
+    border-top-right-radius: 2px;
+    border-bottom-right-radius: 2px;
+    border-bottom-left-radius: 0px;
+}
+
+#ButtonWithMenu[state="1"], #ButtonWithMenu[state="1"]::menu-button, #ButtonWithMenu[state="1"]::menu-button:hover {
+    border-color: green;
+}
+
 /* Python console interpreter */
 #PythonInterpreterOutput, #PythonCodeEditor {
     font-family: "Roboto Mono";

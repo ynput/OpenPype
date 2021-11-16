@@ -1,6 +1,39 @@
 from Qt import QtWidgets, QtCore
 
 
+class ButtonWithMenu(QtWidgets.QToolButton):
+    def __init__(self, parent=None):
+        super(ButtonWithMenu, self).__init__(parent)
+
+        self.setObjectName("ButtonWithMenu")
+
+        self.setPopupMode(self.MenuButtonPopup)
+        menu = QtWidgets.QMenu(self)
+
+        self.setMenu(menu)
+
+        self._menu = menu
+        self._actions = []
+
+    def menu(self):
+        return self._menu
+
+    def clear_actions(self):
+        if self._menu is not None:
+            self._menu.clear()
+        self._actions = []
+
+    def add_action(self, action):
+        self._actions.append(action)
+        self._menu.addAction(action)
+
+    def _on_action_trigger(self):
+        action = self.sender()
+        if action not in self._actions:
+            return
+        action.trigger()
+
+
 class SearchComboBox(QtWidgets.QComboBox):
     """Searchable ComboBox with empty placeholder value as first value"""
 
