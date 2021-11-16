@@ -219,12 +219,6 @@
                                 "label": "Bake Viewer Input Process (LUTs)"
                             },
                             {
-                                "key": "add_families",
-                                "label": "Add additional families to instance",
-                                "type": "list",
-                                "object_type": "text"
-                            },
-                            {
                                 "key": "add_tags",
                                 "label": "Add additional tags to representations",
                                 "type": "list",
