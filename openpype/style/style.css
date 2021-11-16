@@ -961,7 +961,7 @@ QScrollBar::add-page:vertical, QScrollBar::sub-page:vertical {
 
 #SettingsToolBtn:hover {
     border-color: #189aea;
-    color: #46b1f3;
+    color: {color:settings:modified-light};
     background-color: transparent;
 }
 #SettingsToolBtn:disabled {
@@ -977,23 +977,22 @@ QScrollBar::add-page:vertical, QScrollBar::sub-page:vertical {
     color: #969b9e;
 }
 #SettingsLabel:hover {color: #b8c1c5;}
-#SettingsLabel[state="studio"] {color: #73C990;}
-#SettingsLabel[state="studio"]:hover {color: #ffffff;}
-#SettingsLabel[state="modified"] {color: #189aea;}
-#SettingsLabel[state="modified"]:hover {color: #46b1f3;}
-#SettingsLabel[state="overriden-modified"] {color: #189aea;}
-#SettingsLabel[state="overriden-modified"]:hover {color: #46b1f3;}
-#SettingsLabel[state="overriden"] {color: #ff8c1a;}
-#SettingsLabel[state="overriden"]:hover {color: #ffa64d;}
-#SettingsLabel[state="invalid"] {color: #ad2e2e;}
-#SettingsLabel[state="invalid"]:hover {color: #ad2e2e;}
+#SettingsLabel[state="studio"] {color: {color:settings:studio-light};}
+#SettingsLabel[state="studio"]:hover {color: {color:settings:studio-label-hover};}
+#SettingsLabel[state="modified"] {color: {color:settings:modified-mid};}
+#SettingsLabel[state="modified"]:hover {color: {color:settings:modified-light};}
+#SettingsLabel[state="overriden-modified"] {color: {color:settings:modified-mid};}
+#SettingsLabel[state="overriden-modified"]:hover {color: {color:settings:modified-light};}
+#SettingsLabel[state="overriden"] {color: {color:settings:project-mid};}
+#SettingsLabel[state="overriden"]:hover {color: {color:settings:project-light};}
+#SettingsLabel[state="invalid"] {color:{color:settings:invalid-dark};}
+#SettingsLabel[state="invalid"]:hover {color: {color:settings:invalid-dark};}
 
 /* TODO Replace these with explicit widget types if possible */
-QWidget[input-state="studio"] {border-color: #858a94;}
-QWidget[input-state="modified"] {border-color: #189aea;}
-QWidget[input-state="overriden-modified"] {border-color: #189aea;}
-QWidget[input-state="overriden"] {border-color: #ff8c1a;}
-QWidget[input-state="invalid"] {border-color: #ad2e2e;}
+QWidget[input-state="modified"] {border-color: {color:settings:modified-mid};}
+QWidget[input-state="overriden-modified"] {border-color: {color:settings:modified-mid};}
+QWidget[input-state="overriden"] {border-color: {color:settings:project-mid};}
+QWidget[input-state="invalid"] {border-color: {color:settings:invalid-dark};}
 
 #GroupWidget {
     border-bottom: 1px solid #21252B;
@@ -1008,11 +1007,8 @@ QWidget[input-state="invalid"] {border-color: #ad2e2e;}
     font-size: 12px;
 }
 
-#DictKey[state="studio"] {border-color: #464b54;}
-#DictKey[state="modified"] {border-color: #189aea;}
-#DictKey[state="overriden"] {border-color: #00f;}
-#DictKey[state="overriden-modified"] {border-color: #0f0;}
-#DictKey[state="invalid"] {border-color: #ad2e2e;}
+#DictKey[state="modified"] {border-color: {color:settings:modified-mid};}
+#DictKey[state="invalid"] {border-color: {color:settings:invalid-dark};}
 
 #ExpandLabel {
     font-weight: bold;
@@ -1025,7 +1021,7 @@ QWidget[input-state="invalid"] {border-color: #ad2e2e;}
     background-color: transparent;
 }
 #ContentWidget[content_state="hightlighted"] {
-    background-color: rgba(19, 26, 32, 15%);
+    background-color: {color:settings:content-hightlighted};
 }
 
 #SideLineWidget {
@@ -1042,20 +1038,20 @@ QWidget[input-state="invalid"] {border-color: #ad2e2e;}
     border-color: #7d8386;
 }
 
-#SideLineWidget[state="child-studio"] {border-color: #56a06f;}
-#SideLineWidget[state="child-studio"]:hover {border-color: #73C990;}
+#SideLineWidget[state="child-studio"] {border-color: {color:settings:studio-dark};}
+#SideLineWidget[state="child-studio"]:hover {border-color: {color:settings:studio-light};}
 
-#SideLineWidget[state="child-modified"] {border-color: #106aa2;}
-#SideLineWidget[state="child-modified"]:hover {border-color: #189aea;}
+#SideLineWidget[state="child-modified"] {border-color: {color:settings:modified-dark};}
+#SideLineWidget[state="child-modified"]:hover {border-color: {color:settings:modified-mid};}
 
-#SideLineWidget[state="child-invalid"] {border-color: #ad2e2e;}
-#SideLineWidget[state="child-invalid"]:hover {border-color: #c93636;}
+#SideLineWidget[state="child-invalid"] {border-color: {color:settings:invalid-dark};}
+#SideLineWidget[state="child-invalid"]:hover {border-color: {color:settings:invalid-light};}
 
-#SideLineWidget[state="child-overriden"] {border-color: #e67300;}
-#SideLineWidget[state="child-overriden"]:hover {border-color: #ff8c1a;}
+#SideLineWidget[state="child-overriden"] {border-color: {color:settings:project-dark};}
+#SideLineWidget[state="child-overriden"]:hover {border-color: {color:settings:project-mid};}
 
-#SideLineWidget[state="child-overriden-modified"] {border-color: #106aa2;}
-#SideLineWidget[state="child-overriden-modified"]:hover {border-color: #189aea;}
+#SideLineWidget[state="child-overriden-modified"] {border-color: {color:settings:modified-dark};}
+#SideLineWidget[state="child-overriden-modified"]:hover {border-color: {color:settings:modified-mid};}
 
 #DictAsWidgetBody {
     background: transparent;
@@ -1087,16 +1083,16 @@ QWidget[input-state="invalid"] {border-color: #ad2e2e;}
 #BreadcrumbsButton::menu-button {
     border: none;
     width: 12px;
-    background: rgba(127, 127, 127, 60);
+    background: {color:settings:breadcrumbs-btn-bg};
 }
 #BreadcrumbsButton::menu-button:hover {
-    background: rgba(127, 127, 127, 90);
+    background: {color:settings:breadcrumbs-btn-bg-hover};
 }
 
 #BreadcrumbsPanel {
     border: 1px solid #4e5254;
     border-radius: 5px;
-    background: #21252B;;
+    background: #21252B;
 }
 
 /* Globally used names */
