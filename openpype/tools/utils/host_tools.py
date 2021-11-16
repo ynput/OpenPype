@@ -156,7 +156,9 @@ class HostToolsHelper:
         if self._scene_inventory_tool is None:
             from openpype.tools.sceneinventory import SceneInventoryWindow
 
-            scene_inventory_window = SceneInventoryWindow(parent=parent or self._parent)
+            scene_inventory_window = SceneInventoryWindow(
+                parent=parent or self._parent
+            )
             self._scene_inventory_tool = scene_inventory_window
 
         return self._scene_inventory_tool
