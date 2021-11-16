@@ -669,15 +669,6 @@ QScrollBar::add-page:vertical, QScrollBar::sub-page:vertical {
     background: none;
 }
 
-/* Globally used names */
-#Separator {
-    background: {color:bg-menu-separator};
-}
-
-#IconButton {
-    padding: 4px 4px 4px 4px;
-}
-
 /* Password dialog*/
 #PasswordBtn {
     border: none;
@@ -950,11 +941,6 @@ QScrollBar::add-page:vertical, QScrollBar::sub-page:vertical {
     background: transparent;
 }
 
-#NiceCheckbox {
-    /* Default size hint of NiceCheckbox is defined by font size. */
-    font-size: 7pt;
-}
-
 /* Settings - NOT USED YET
 - we need to define font family for settings UI */
 
@@ -1124,4 +1110,18 @@ QWidget[input-state="invalid"] {border-color: #ad2e2e;}
     border: 1px solid #4e5254;
     border-radius: 5px;
     background: #21252B;;
+}
+
+/* Globally used names */
+#Separator {
+    background: {color:bg-menu-separator};
+}
+
+#IconButton {
+    padding: 4px 4px 4px 4px;
+}
+
+#NiceCheckbox {
+    /* Default size hint of NiceCheckbox is defined by font size. */
+    font-size: 7pt;
 }
