@@ -20,7 +20,7 @@ Enabled vs Disabled logic in most of stylesheets
 
 * {
     font-size: 9pt;
-    font-family: "Spartan";
+    font-family: "Noto Sans";
     font-weight: 450;
     outline: none;
 }
@@ -773,7 +773,7 @@ QScrollBar::add-page:vertical, QScrollBar::sub-page:vertical {
 
 /* Python console interpreter */
 #PythonInterpreterOutput, #PythonCodeEditor {
-    font-family: "Roboto Mono";
+    font-family: "Noto Sans Mono";
 }
 
 #SubsetView::item, #RepresentationView:item {
@@ -791,7 +791,7 @@ QScrollBar::add-page:vertical, QScrollBar::sub-page:vertical {
 
 /* New Create/Publish UI */
 #PublishLogConsole {
-    font-family: "Roboto Mono";
+    font-family: "Noto Sans Mono";
 }
 
 #VariantInput[state="new"], #VariantInput[state="new"]:focus, #VariantInput[state="new"]:hover {

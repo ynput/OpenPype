@@ -128,9 +128,13 @@ def _load_font():
         _FONT_IDS = []
         fonts_dirpath = os.path.join(current_dir, "fonts")
         font_dirs = []
-        font_dirs.append(os.path.join(fonts_dirpath, "Montserrat"))
-        font_dirs.append(os.path.join(fonts_dirpath, "Spartan"))
-        font_dirs.append(os.path.join(fonts_dirpath, "RobotoMono", "static"))
+        font_dirs.append(os.path.join(fonts_dirpath, "Noto_Sans"))
+        font_dirs.append(os.path.join(
+            fonts_dirpath,
+            "Noto_Sans_Mono",
+            "static",
+            "NotoSansMono"
+        ))
 
         loaded_fonts = []
         for font_dir in font_dirs:
