@@ -12,6 +12,11 @@ from openpype import style
 
 from .proxy import FilterProxyModel
 from .model import InventoryModel
+from openpype.tools.utils.lib import (
+    qt_app_context,
+    preserve_expanded_rows,
+    preserve_selection
+)
 from .view import SceneInvetoryView
 
 
@@ -95,7 +100,7 @@ class SceneInventoryWindow(QtWidgets.QDialog):
 
         self.filter = text_filter
         self.outdated_only = outdated_only
-        self.view = view
+        self._view = view
         self.refresh_button = refresh_button
         self.model = model
         self.proxy = proxy
@@ -122,16 +127,20 @@ class SceneInventoryWindow(QtWidgets.QDialog):
         """
 
     def refresh(self, items=None):
-        with tools_lib.preserve_expanded_rows(tree_view=self.view,
-                                              role=self.model.UniqueRole):
-            with tools_lib.preserve_selection(tree_view=self.view,
-                                              role=self.model.UniqueRole,
-                                              current_index=False):
+        with preserve_expanded_rows(
+            tree_view=self._view,
+            role=self.model.UniqueRole
+        ):
+            with preserve_selection(
+                tree_view=self._view,
+                role=self.model.UniqueRole,
+                current_index=False
+            ):
+                kwargs = {"items": items}
                 if self.view._hierarchy_view:
-                    self.model.refresh(selected=self.view._selected,
-                                       items=items)
-                else:
-                    self.model.refresh(items=items)
+                    # TODO do not touch view's inner attribute
+                    kwargs["selected"] = self.view._selected
+                self.model.refresh(**kwargs)
 
 
 def show(root=None, debug=False, parent=None, items=None):
@@ -166,7 +175,7 @@ def show(root=None, debug=False, parent=None, items=None):
         else:
             api.Session["AVALON_PROJECT"] = os.environ.get("AVALON_PROJECT")
 
-    with tools_lib.application():
+    with qt_app_context():
         window = SceneInventoryWindow(parent)
         window.show()
         window.refresh(items=items)
