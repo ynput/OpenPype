@@ -1029,29 +1029,8 @@ class IntegrateAssetNew(pyblish.api.InstancePlugin):
         """
         local_site = 'studio'  # default
         remote_site = None
-        sync_server_presets = None
-
-        if (instance.context.data["system_settings"]
-                                 ["modules"]
-                                 ["sync_server"]
-                                 ["enabled"]):
-            sync_server_presets = (instance.context.data["project_settings"]
-                                                        ["global"]
-                                                        ["sync_server"])
-
-            local_site_id = openpype.api.get_local_site_id()
-            if sync_server_presets["enabled"]:
-                local_site = sync_server_presets["config"].\
-                    get("active_site", "studio").strip()
-                if local_site == 'local':
-                    local_site = local_site_id
-
-                remote_site = sync_server_presets["config"].get("remote_site")
-                if remote_site == local_site:
-                    remote_site = None
-
-                if remote_site == 'local':
-                    remote_site = local_site_id
+        always_accesible = []
+        sync_project_presets = None
 
         rec = {
             "_id": io.ObjectId(),
@@ -1066,12 +1045,93 @@ class IntegrateAssetNew(pyblish.api.InstancePlugin):
         if sites:
             rec["sites"] = sites
         else:
+            system_sync_server_presets = (
+                instance.context.data["system_settings"]
+                                     ["modules"]
+                                     ["sync_server"])
+            log.debug("system_sett:: {}".format(system_sync_server_presets))
+
+            if system_sync_server_presets["enabled"]:
+                sync_project_presets = (
+                    instance.context.data["project_settings"]
+                                         ["global"]
+                                         ["sync_server"])
+
+            if sync_project_presets and sync_project_presets["enabled"]:
+                local_site, remote_site = self._get_sites(sync_project_presets)
+
+                always_accesible = sync_project_presets["config"]. \
+                    get("always_accessible_on", [])
+
+            already_attached_sites = {}
             meta = {"name": local_site, "created_dt": datetime.now()}
             rec["sites"] = [meta]
+            already_attached_sites[meta["name"]] = meta["created_dt"]
 
-            if remote_site:
+            if sync_project_presets and sync_project_presets["enabled"]:
+                # add remote
                 meta = {"name": remote_site.strip()}
                 rec["sites"].append(meta)
+                already_attached_sites[meta["name"]] = None
+
+                # add skeleton for site where it should be always synced to
+                for always_on_site in always_accesible:
+                    if always_on_site not in already_attached_sites.keys():
+                        meta = {"name": always_on_site.strip()}
+                        rec["sites"].append(meta)
+                        already_attached_sites[meta["name"]] = None
+
+                # add alternative sites
+                rec = self._add_alternative_sites(system_sync_server_presets,
+                                                  already_attached_sites,
+                                                  rec)
+
+            log.debug("final sites:: {}".format(rec["sites"]))
+
+        return rec
+
+    def _get_sites(self, sync_project_presets):
+        """Returns tuple (local_site, remote_site)"""
+        local_site_id = openpype.api.get_local_site_id()
+        local_site = sync_project_presets["config"]. \
+            get("active_site", "studio").strip()
+
+        if local_site == 'local':
+            local_site = local_site_id
+
+        remote_site = sync_project_presets["config"].get("remote_site")
+        if remote_site == local_site:
+            remote_site = None
+
+        if remote_site == 'local':
+            remote_site = local_site_id
+
+        return local_site, remote_site
+
+    def _add_alternative_sites(self,
+                               system_sync_server_presets,
+                               already_attached_sites,
+                               rec):
+        """Loop through all configured sites and add alternatives.
+
+            See SyncServerModule.handle_alternate_site
+        """
+        conf_sites = system_sync_server_presets.get("sites", {})
+
+        for site_name, site_info in conf_sites.items():
+            alt_sites = set(site_info.get("alternative_sites", []))
+            already_attached_keys = list(already_attached_sites.keys())
+            for added_site in already_attached_keys:
+                if added_site in alt_sites:
+                    if site_name in already_attached_keys:
+                        continue
+                    meta = {"name": site_name}
+                    real_created = already_attached_sites[added_site]
+                    # alt site inherits state of 'created_dt'
+                    if real_created:
+                        meta["created_dt"] = real_created
+                    rec["sites"].append(meta)
+                    already_attached_sites[meta["name"]] = real_created
 
         return rec
 

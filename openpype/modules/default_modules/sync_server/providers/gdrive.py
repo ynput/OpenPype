@@ -73,13 +73,7 @@ class GDriveHandler(AbstractProvider):
                      format(site_name))
             return
 
-        provider_presets = self.presets.get(self.CODE)
-        if not provider_presets:
-            msg = "Sync Server: No provider presets for {}".format(self.CODE)
-            log.info(msg)
-            return
-
-        cred_path = self.presets[self.CODE].get("credentials_url", {}).\
+        cred_path = self.presets.get("credentials_url", {}).\
             get(platform.system().lower()) or ''
         if not os.path.exists(cred_path):
             msg = "Sync Server: No credentials for gdrive provider " + \
@@ -87,10 +81,12 @@ class GDriveHandler(AbstractProvider):
             log.info(msg)
             return
 
-        self.service = self._get_gd_service(cred_path)
+        self.service = None
+        if self.presets["enabled"]:
+            self.service = self._get_gd_service(cred_path)
 
-        self._tree = tree
-        self.active = True
+            self._tree = tree
+            self.active = True
 
     def is_active(self):
         """
@@ -98,7 +94,7 @@ class GDriveHandler(AbstractProvider):
         Returns:
             (boolean)
         """
-        return self.service is not None
+        return self.presets["enabled"] and self.service is not None
 
     @classmethod
     def get_system_settings_schema(cls):
@@ -125,18 +121,20 @@ class GDriveHandler(AbstractProvider):
         editable = [
             # credentials could be overriden on Project or User level
             {
-                'key': "credentials_url",
-                'label': "Credentials url",
-                'type': 'text'
+                "type": "path",
+                "key": "credentials_url",
+                "label": "Credentials url",
+                "multiplatform": True,
+                "placeholder": "Credentials url"
             },
             # roots could be overriden only on Project leve, User cannot
             {
-                "key": "roots",
+                "key": "root",
                 "label": "Roots",
                 "type": "dict-roots",
                 "object_type": {
                     "type": "path",
-                    "multiplatform": True,
+                    "multiplatform": False,
                     "multipath": False
                 }
             }
