@@ -1,10 +1,7 @@
 import os
 import platform
 from openpype.modules import OpenPypeModule
-from openpype_interfaces import (
-    ITimersManager,
-    ITrayService
-)
+from openpype_interfaces import ITrayService
 from avalon.api import AvalonMongoDB
 
 

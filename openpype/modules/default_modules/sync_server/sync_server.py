@@ -80,6 +80,10 @@ async def upload(module, collection, file, representation, provider_name,
                                          remote_site_name,
                                          True
                                          )
+
+    module.handle_alternate_site(collection, representation, remote_site_name,
+                                 file["_id"], file_id)
+
     return file_id
 
 
@@ -131,6 +135,10 @@ async def download(module, collection, file, representation, provider_name,
                                          local_site,
                                          True
                                          )
+
+    module.handle_alternate_site(collection, representation, local_site,
+                                 file["_id"], file_id)
+
     return file_id
 
 
@@ -246,6 +254,7 @@ class SyncServerThread(threading.Thread):
 
             asyncio.ensure_future(self.check_shutdown(), loop=self.loop)
             asyncio.ensure_future(self.sync_loop(), loop=self.loop)
+            log.info("Sync Server Started")
             self.loop.run_forever()
         except Exception:
             log.warning(
