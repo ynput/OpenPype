@@ -48,9 +48,11 @@ class SceneInventoryWindow(QtWidgets.QDialog):
         filter_label = QtWidgets.QLabel("Search", self)
         text_filter = QtWidgets.QLineEdit(self)
 
-        outdated_only = QtWidgets.QCheckBox("Filter to outdated", self)
-        outdated_only.setToolTip("Show outdated files only")
-        outdated_only.setChecked(False)
+        outdated_only_checkbox = QtWidgets.QCheckBox(
+            "Filter to outdated", self
+        )
+        outdated_only_checkbox.setToolTip("Show outdated files only")
+        outdated_only_checkbox.setChecked(False)
 
         icon = qtawesome.icon("fa.refresh", color="white")
         refresh_button = QtWidgets.QPushButton(self)
@@ -59,7 +61,7 @@ class SceneInventoryWindow(QtWidgets.QDialog):
         control_layout = QtWidgets.QHBoxLayout()
         control_layout.addWidget(filter_label)
         control_layout.addWidget(text_filter)
-        control_layout.addWidget(outdated_only)
+        control_layout.addWidget(outdated_only_checkbox)
         control_layout.addWidget(refresh_button)
 
         # endregion control
@@ -92,14 +94,12 @@ class SceneInventoryWindow(QtWidgets.QDialog):
 
         # signals
         text_filter.textChanged.connect(proxy.setFilterRegExp)
-        outdated_only.stateChanged.connect(proxy.set_filter_outdated)
+        outdated_only_checkbox.stateChanged.connect(proxy.set_filter_outdated)
         refresh_button.clicked.connect(self.refresh)
         view.data_changed.connect(self.refresh)
         view.hierarchy_view.connect(model.set_hierarchy_view)
         view.hierarchy_view.connect(proxy.set_hierarchy_view)
 
-        self.filter = text_filter
-        self.outdated_only = outdated_only
         self._view = view
         self.refresh_button = refresh_button
         self.model = model
