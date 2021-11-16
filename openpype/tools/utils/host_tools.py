@@ -150,21 +150,20 @@ class HostToolsHelper:
     def get_scene_inventory_tool(self, parent):
         """Create, cache and return scene inventory tool window."""
         if self._scene_inventory_tool is None:
-            from avalon.tools.sceneinventory.app import Window
+            from openpype.tools.sceneinventory import SceneInventoryWindow
 
-            scene_inventory_window = Window(parent=parent or self._parent)
+            scene_inventory_window = SceneInventoryWindow(
+                parent=parent or self._parent
+            )
             self._scene_inventory_tool = scene_inventory_window
 
         return self._scene_inventory_tool
 
     def show_scene_inventory(self, parent=None):
         """Show tool maintain loaded containers."""
-        from avalon import style
-
         scene_inventory_tool = self.get_scene_inventory_tool(parent)
         scene_inventory_tool.show()
         scene_inventory_tool.refresh()
-        scene_inventory_tool.setStyleSheet(style.load_stylesheet())
 
         # Pull window to the front.
         scene_inventory_tool.raise_()
