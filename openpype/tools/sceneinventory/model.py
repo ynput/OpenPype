@@ -6,11 +6,14 @@ from Qt import QtCore, QtGui
 from avalon import api, io, style, schema
 from avalon.vendor import qtawesome
 
-from avalon.tools import lib as tools_lib
 from avalon.lib import HeroVersionType
 from avalon.tools.models import TreeModel, Item
 
-from . import lib
+from .lib import (
+    get_site_icons,
+    walk_hierarchy,
+    get_progress_for_repre
+)
 
 from openpype.modules import ModulesManager
 
@@ -37,7 +40,7 @@ class InventoryModel(TreeModel):
         manager = ModulesManager()
         sync_server = manager.modules_by_name["sync_server"]
         self.sync_enabled = sync_server.enabled
-        self._icons = {}
+        self._site_icons = {}
         self.active_site = self.remote_site = None
         self.active_provider = self.remote_provider = None
 
@@ -66,11 +69,11 @@ class InventoryModel(TreeModel):
         self.active_provider = active_provider
         self.remote_site = remote_site
         self.remote_provider = remote_provider
-        self._icons = tools_lib.get_repre_icons()
+        self._site_icons = get_site_icons()
         if "active_site" not in self.Columns:
             self.Columns.append("active_site")
         if "remote_site" not in self.Columns:
-            self.Columns.extend("remote_site")
+            self.Columns.append("remote_site")
 
     def outdated(self, item):
         value = item.get("version")
@@ -106,7 +109,7 @@ class InventoryModel(TreeModel):
                     if self._hierarchy_view:
                         # If current group is not outdated, check if any
                         # outdated children.
-                        for _node in lib.walk_hierarchy(item):
+                        for _node in walk_hierarchy(item):
                             if self.outdated(_node):
                                 return self.CHILD_OUTDATED_COLOR
                 else:
@@ -114,7 +117,7 @@ class InventoryModel(TreeModel):
                     if self._hierarchy_view:
                         # Although this is not a group item, we still need
                         # to distinguish which one contain outdated child.
-                        for _node in lib.walk_hierarchy(item):
+                        for _node in walk_hierarchy(item):
                             if self.outdated(_node):
                                 return self.CHILD_OUTDATED_COLOR.darker(150)
 
@@ -142,9 +145,9 @@ class InventoryModel(TreeModel):
             if item.get("isGroupNode"):
                 column_name = self.Columns[index.column()]
                 if column_name == 'active_site':
-                    return self._icons.get(item.get('active_site_provider'))
+                    return self._site_icons.get(item.get('active_site_provider'))
                 if column_name == 'remote_site':
-                    return self._icons.get(item.get('remote_site_provider'))
+                    return self._site_icons.get(item.get('remote_site_provider'))
 
         if role == QtCore.Qt.DisplayRole and item.get("isGroupNode"):
             column_name = self.Columns[index.column()]
@@ -395,7 +398,7 @@ class InventoryModel(TreeModel):
             group_node["isGroupNode"] = True
 
             if self.sync_enabled:
-                progress = tools_lib.get_progress_for_repre(
+                progress = get_progress_for_repre(
                     representation, self.active_site, self.remote_site
                 )
                 group_node["active_site"] = self.active_site
