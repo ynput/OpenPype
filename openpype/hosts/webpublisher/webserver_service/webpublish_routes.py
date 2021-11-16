@@ -12,6 +12,7 @@ from avalon.api import AvalonMongoDB
 from openpype.lib import OpenPypeMongoConnection
 from openpype_modules.avalon_apps.rest_api import _RestApiEndpoint
 from openpype.lib.plugin_tools import parse_json
+from openpype.settings import get_project_settings
 
 from openpype.lib import PypeLogger
 
@@ -39,6 +40,8 @@ class RestApiResource:
             return value.isoformat()
         if isinstance(value, ObjectId):
             return str(value)
+        if isinstance(value, set):
+            return list(value)
         raise TypeError(value)
 
     @classmethod
@@ -313,5 +316,38 @@ class PublishesStatusEndpoint(_RestApiEndpoint):
         return Response(
             status=200,
             body=self.resource.encode(output),
+            content_type="application/json"
+        )
+
+
+class ConfiguredExtensionsEndpoint(_RestApiEndpoint):
+    """Returns dict of extensions which have mapping to family.
+
+        Returns:
+        {
+            "file_exts": [],
+            "sequence_exts": []
+        }
+    """
+    async def get(self, project_name=None) -> Response:
+        sett = get_project_settings(project_name)
+
+        configured = {
+            "file_exts": set(),
+            "sequence_exts": set(),
+            # workfiles that could have "Studio Procesing" hardcoded for now
+            "studio_exts": set(["psd", "psb", "tvpp", "tvp"])
+        }
+        collect_conf = sett["webpublisher"]["publish"]["CollectPublishedFiles"]
+        for _, mapping in collect_conf.get("task_type_to_family", {}).items():
+            for _family, config in mapping.items():
+                if config["is_sequence"]:
+                    configured["sequence_exts"].update(config["extensions"])
+                else:
+                    configured["file_exts"].update(config["extensions"])
+
+        return Response(
+            status=200,
+            body=self.resource.encode(dict(configured)),
             content_type="application/json"
         )
