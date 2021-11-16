@@ -158,7 +158,7 @@ def _format_tiles(
     return out, cfg
 
 
-def get_renderer_variables(renderlayer, root):
+def get_renderer_variables(renderlayer, root, override=False):
     """Retrieve the extension which has been set in the VRay settings.
 
     Will return None if the current renderer is not VRay
@@ -179,6 +179,10 @@ def get_renderer_variables(renderlayer, root):
     padding = cmds.getAttr("{}.{}".format(render_attrs["node"],
                                           render_attrs["padding"]))
 
+    if override:
+        workspace = cmds.workspace(q=True, rootDirectory=True)
+        cmds.workspace(root, openWorkspace=True)
+
     filename_0 = cmds.renderSettings(
         fullPath=True,
         gin="#" * int(padding),
@@ -186,6 +190,10 @@ def get_renderer_variables(renderlayer, root):
         layer=renderlayer or lib.get_current_renderlayer())[0]
     filename_0 = re.sub('_<RenderPass>', '_beauty',
                         filename_0, flags=re.IGNORECASE)
+
+    if override:
+        cmds.workspace(workspace, openWorkspace=True)
+
     prefix_attr = "defaultRenderGlobals.imageFilePrefix"
     if renderer == "vray":
         renderlayer = renderlayer.split("_")[-1]
@@ -393,6 +401,11 @@ class MayaSubmitDeadline(pyblish.api.InstancePlugin):
 
         self.log.debug(filepath)
 
+        override_output = False
+        override_output_path = instance.data.get('overrideOutput')
+        if override_output_path:
+            override_output = True
+
         # Gather needed data ------------------------------------------------
         default_render_file = instance.context.data.get('project_settings')\
             .get('maya')\
@@ -402,12 +415,14 @@ class MayaSubmitDeadline(pyblish.api.InstancePlugin):
         filename = os.path.basename(filepath)
         comment = context.data.get("comment", "")
         dirname = os.path.join(workspace, default_render_file)
+        if override_output:
+            dirname = override_output_path
         renderlayer = instance.data['setMembers']       # rs_beauty
         deadline_user = context.data.get("user", getpass.getuser())
         jobname = "%s - %s" % (filename, instance.name)
 
         # Get the variables depending on the renderer
-        render_variables = get_renderer_variables(renderlayer, dirname)
+        render_variables = get_renderer_variables(renderlayer, dirname, override_output)
         filename_0 = render_variables["filename_0"]
         if self.use_published:
             new_scene = os.path.splitext(filename)[0]

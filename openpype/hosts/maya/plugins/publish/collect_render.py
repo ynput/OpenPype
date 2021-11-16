@@ -426,6 +426,11 @@ class CollectMayaRender(pyblish.api.ContextPlugin):
             key = "Whitelist" if attributes["whitelist"] else "Blacklist"
             options["renderGlobals"][key] = machine_list
 
+        # Override Output
+        override_output = attributes["overrideOutput"]
+        if override_output:
+            options["overrideOutput"] = override_output
+
         # Suspend publish job
         state = "Suspended" if attributes["suspendPublishJob"] else "Active"
         options["publishJobState"] = state

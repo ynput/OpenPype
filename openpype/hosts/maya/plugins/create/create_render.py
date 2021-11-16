@@ -174,6 +174,7 @@ class CreateRender(plugin.Creator):
                     ])
 
             cmds.setAttr("{}.machineList".format(self.instance), lock=True)
+            cmds.setAttr("{}.overrideOutput".format(self.instance), lock=False)
             self._rs = renderSetup.instance()
             layers = self._rs.getRenderLayers()
             if use_selection:
@@ -265,6 +266,7 @@ class CreateRender(plugin.Creator):
         self.data["framesPerTask"] = 1
         self.data["whitelist"] = False
         self.data["machineList"] = ""
+        self.data["overrideOutput"] = ""
         self.data["useMayaBatch"] = False
         self.data["tileRendering"] = False
         self.data["tilesX"] = 2
