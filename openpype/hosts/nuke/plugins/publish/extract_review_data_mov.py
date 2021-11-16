@@ -75,13 +75,6 @@ class ExtractReviewDataMov(openpype.api.Extractor):
                     "Baking output `{}` with settings: {}".format(
                         o_name, o_data))
 
-                # add additional families
-                add_families = o_data["add_families"]
-                for adf in add_families:
-                    if adf in instance.data["families"]:
-                        continue
-                    instance.data["families"].append(adf)
-
                 # create exporter instance
                 exporter = plugin.ExporterReviewMov(
                     self, instance, o_name, o_data["extension"])
