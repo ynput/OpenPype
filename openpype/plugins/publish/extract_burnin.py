@@ -134,9 +134,6 @@ class ExtractBurnin(openpype.api.Extractor):
         # [pype executable, *pype script, "run"]
         executable_args = get_pype_execute_args("run", scriptpath)
 
-        from pprint import pformat
-        self.log.debug(pformat(instance.data["representations"]))
-
         for idx, repre in enumerate(tuple(instance.data["representations"])):
             self.log.debug("repre ({}): `{}`".format(idx + 1, repre["name"]))
 

@@ -112,4 +112,5 @@ class ExtractReviewDataMov(openpype.api.Extractor):
                 instance.data["representations"] += data["representations"]
 
                 self.log.debug(
-                    "_ representations: {}".format(instance.data["representations"]))
+                    "_ representations: {}".format(
+                        instance.data["representations"]))
