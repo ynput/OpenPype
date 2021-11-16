@@ -123,22 +123,28 @@ class FilterProxyModel(QtCore.QSortFilterProxyModel):
             if re.search(pattern, key, re.IGNORECASE):
                 return True
 
-        if not matches(row, parent, pattern):
-            # Also allow if any of the children matches
-            source_index = model.index(row, column, parent)
-            rows = model.rowCount(source_index)
+        if matches(row, parent, pattern):
+            return True
 
-            if not any(matches(i, source_index, pattern)
-                       for i in range(rows)):
+        # Also allow if any of the children matches
+        source_index = model.index(row, column, parent)
+        rows = model.rowCount(source_index)
 
-                if self._hierarchy_view:
-                    for i in range(rows):
-                        child_i = model.index(i, column, source_index)
-                        child_rows = model.rowCount(child_i)
-                        return any(self._matches(ch_i, child_i, pattern)
-                                   for ch_i in range(child_rows))
+        if any(
+            matches(idx, source_index, pattern)
+            for idx in range(rows)
+        ):
+            return True
 
-                else:
-                    return False
+        if not self._hierarchy_view:
+            return False
+
+        for i in range(rows):
+            child_i = model.index(i, column, source_index)
+            child_rows = model.rowCount(child_i)
+            return any(
+                self._matches(ch_i, child_i, pattern)
+                for ch_i in range(child_rows)
+            )
 
         return True

@@ -41,33 +41,36 @@ class InventoryModel(TreeModel):
         self.active_site = self.remote_site = None
         self.active_provider = self.remote_provider = None
 
-        if self.sync_enabled:
-            project = io.Session['AVALON_PROJECT']
-            active_site = sync_server.get_active_site(project)
-            remote_site = sync_server.get_remote_site(project)
+        if not self.sync_enabled:
+            return
 
-            # TODO refactor
-            active_provider = \
-                sync_server.get_provider_for_site(project,
-                                                  active_site)
-            if active_site == 'studio':
-                active_provider = 'studio'  # sanitized for icon
+        project_name = io.Session["AVALON_PROJECT"]
+        active_site = sync_server.get_active_site(project_name)
+        remote_site = sync_server.get_remote_site(project_name)
 
-            remote_provider = \
-                sync_server.get_provider_for_site(project,
-                                                  remote_site)
-            if remote_site == 'studio':
-                remote_provider = 'studio'
+        active_provider = "studio"
+        remote_provider = "studio"
+        if active_site != "studio":
+            # sanitized for icon
+            active_provider = sync_server.get_provider_for_site(
+                project_name, active_site
+            )
 
-            # self.sync_server = sync_server
-            self.active_site = active_site
-            self.active_provider = active_provider
-            self.remote_site = remote_site
-            self.remote_provider = remote_provider
-            self._icons = tools_lib.get_repre_icons()
-            if 'active_site' not in self.Columns and \
-                    'remote_site' not in self.Columns:
-                self.Columns.extend(['active_site', 'remote_site'])
+        if remote_site != "studio":
+            remote_provider = sync_server.get_provider_for_site(
+                project_name, remote_site
+            )
+
+        # self.sync_server = sync_server
+        self.active_site = active_site
+        self.active_provider = active_provider
+        self.remote_site = remote_site
+        self.remote_provider = remote_provider
+        self._icons = tools_lib.get_repre_icons()
+        if "active_site" not in self.Columns:
+            self.Columns.append("active_site")
+        if "remote_site" not in self.Columns:
+            self.Columns.extend("remote_site")
 
     def outdated(self, item):
         value = item.get("version")
@@ -79,7 +82,6 @@ class InventoryModel(TreeModel):
         return True
 
     def data(self, index, role):
-
         if not index.isValid():
             return
 
@@ -128,10 +130,10 @@ class InventoryModel(TreeModel):
                 color = item.get("color", style.colors.default)
                 if item.get("isGroupNode"):  # group-item
                     return qtawesome.icon("fa.folder", color=color)
-                elif item.get("isNotSet"):
+                if item.get("isNotSet"):
                     return qtawesome.icon("fa.exclamation-circle", color=color)
-                else:
-                    return qtawesome.icon("fa.file-o", color=color)
+
+                return qtawesome.icon("fa.file-o", color=color)
 
             if index.column() == 3:
                 # Family icon
@@ -393,9 +395,9 @@ class InventoryModel(TreeModel):
             group_node["isGroupNode"] = True
 
             if self.sync_enabled:
-                progress = tools_lib.get_progress_for_repre(representation,
-                                                            self.active_site,
-                                                            self.remote_site)
+                progress = tools_lib.get_progress_for_repre(
+                    representation, self.active_site, self.remote_site
+                )
                 group_node["active_site"] = self.active_site
                 group_node["active_site_provider"] = self.active_provider
                 group_node["remote_site"] = self.remote_site

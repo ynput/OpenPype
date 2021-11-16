@@ -20,12 +20,12 @@ DEFAULT_COLOR = "#fb9c15"
 log = logging.getLogger("SceneInventory")
 
 
-class View(QtWidgets.QTreeView):
+class SceneInvetoryView(QtWidgets.QTreeView):
     data_changed = QtCore.Signal()
     hierarchy_view = QtCore.Signal(bool)
 
     def __init__(self, parent=None):
-        super(View, self).__init__(parent=parent)
+        super(SceneInvetoryView, self).__init__(parent=parent)
 
         # view settings
         self.setIndentation(12)
@@ -33,7 +33,7 @@ class View(QtWidgets.QTreeView):
         self.setSortingEnabled(True)
         self.setSelectionMode(self.ExtendedSelection)
         self.setContextMenuPolicy(QtCore.Qt.CustomContextMenu)
-        self.customContextMenuRequested.connect(self.show_right_mouse_menu)
+        self.customContextMenuRequested.connect(self._show_right_mouse_menu)
         self._hierarchy_view = False
         self._selected = None
 
@@ -41,7 +41,7 @@ class View(QtWidgets.QTreeView):
         self.sync_server = manager.modules_by_name["sync_server"]
         self.sync_enabled = self.sync_server.enabled
 
-    def enter_hierarchy(self, items):
+    def _enter_hierarchy(self, items):
         self._selected = set(i["objectName"] for i in items)
         self._hierarchy_view = True
         self.hierarchy_view.emit(True)
@@ -53,13 +53,13 @@ class View(QtWidgets.QTreeView):
         }
         """)
 
-    def leave_hierarchy(self):
+    def _leave_hierarchy(self):
         self._hierarchy_view = False
         self.hierarchy_view.emit(False)
         self.data_changed.emit()
         self.setStyleSheet("QTreeView {}")
 
-    def build_item_menu_for_selection(self, items, menu):
+    def _build_item_menu_for_selection(self, items, menu):
         if not items:
             return
 
@@ -267,7 +267,7 @@ class View(QtWidgets.QTreeView):
             menu
         )
         set_version_action.triggered.connect(
-            lambda: self.show_version_dialog(items))
+            lambda: self._show_version_dialog(items))
 
         # switch asset
         switch_asset_icon = qtawesome.icon("fa.sitemap", color=DEFAULT_COLOR)
@@ -277,13 +277,13 @@ class View(QtWidgets.QTreeView):
             menu
         )
         switch_asset_action.triggered.connect(
-            lambda: self.show_switch_dialog(items))
+            lambda: self._show_switch_dialog(items))
 
         # remove
         remove_icon = qtawesome.icon("fa.remove", color=DEFAULT_COLOR)
         remove_action = QtWidgets.QAction(remove_icon, "Remove items", menu)
         remove_action.triggered.connect(
-            lambda: self.show_remove_warning_dialog(items))
+            lambda: self._show_remove_warning_dialog(items))
 
         # add the actions
         if switch_to_versioned:
@@ -302,12 +302,9 @@ class View(QtWidgets.QTreeView):
 
         menu.addAction(remove_action)
 
-        menu.addSeparator()
+        self._handle_sync_server(menu, repre_ids)
 
-        if self.sync_enabled:
-            menu = self.handle_sync_server(menu, repre_ids)
-
-    def handle_sync_server(self, menu, repre_ids):
+    def _handle_sync_server(self, menu, repre_ids):
         """
             Adds actions for download/upload when SyncServer is enabled
 
@@ -317,6 +314,11 @@ class View(QtWidgets.QTreeView):
             Returns:
                 (OptionMenu)
         """
+        if not self.sync_enabled:
+            return
+
+        menu.addSeparator()
+
         download_icon = qtawesome.icon("fa.download", color=DEFAULT_COLOR)
         download_active_action = QtWidgets.QAction(
             download_icon,
@@ -338,8 +340,6 @@ class View(QtWidgets.QTreeView):
         menu.addAction(download_active_action)
         menu.addAction(upload_remote_action)
 
-        return menu
-
     def _add_sites(self, repre_ids, side):
         """
             (Re)sync all 'repre_ids' to specific site.
@@ -351,20 +351,29 @@ class View(QtWidgets.QTreeView):
                 repre_ids (list)
                 side (str): 'active_site'|'remote_site'
         """
-        project = io.Session["AVALON_PROJECT"]
-        active_site = self.sync_server.get_active_site(project)
-        remote_site = self.sync_server.get_remote_site(project)
+        project_name = io.Session["AVALON_PROJECT"]
+        active_site = self.sync_server.get_active_site(project_name)
+        remote_site = self.sync_server.get_remote_site(project_name)
 
+        repre_docs = io.find({
+            "type": "representation",
+            "_id": {"$in": repre_ids}
+        })
+        repre_docs_by_id = {
+            repre_doc["_id"]: repre_doc
+            for repre_doc in repre_docs
+        }
         for repre_id in repre_ids:
-            representation = io.find_one({"type": "representation",
-                                          "_id": repre_id})
-            if not representation:
+            repre_doc = repre_docs_by_id.get(repre_id)
+            if not repre_doc:
                 continue
 
-            progress = tools_lib.get_progress_for_repre(representation,
-                                                        active_site,
-                                                        remote_site)
-            if side == 'active_site':
+            progress = tools_lib.get_progress_for_repre(
+                repre_doc,
+                active_site,
+                remote_site
+            )
+            if side == "active_site":
                 # check opposite from added site, must be 1 or unable to sync
                 check_progress = progress[remote_site]
                 site = active_site
@@ -373,17 +382,22 @@ class View(QtWidgets.QTreeView):
                 site = remote_site
 
             if check_progress == 1:
-                self.sync_server.add_site(project, repre_id, site, force=True)
+                self.sync_server.add_site(
+                    project_name, repre_id, site, force=True
+                )
 
         self.data_changed.emit()
 
-    def build_item_menu(self, items):
+    def _build_item_menu(self, items=None):
         """Create menu for the selected items"""
+
+        if not items:
+            items = []
 
         menu = QtWidgets.QMenu(self)
 
         # add the actions
-        self.build_item_menu_for_selection(items, menu)
+        self._build_item_menu_for_selection(items, menu)
 
         # These two actions should be able to work without selection
         # expand all items
@@ -397,16 +411,15 @@ class View(QtWidgets.QTreeView):
         menu.addAction(expandall_action)
         menu.addAction(collapse_action)
 
-        custom_actions = self.get_custom_actions(containers=items)
+        custom_actions = self._get_custom_actions(containers=items)
         if custom_actions:
             submenu = QtWidgets.QMenu("Actions", self)
             for action in custom_actions:
-
                 color = action.color or DEFAULT_COLOR
                 icon = qtawesome.icon("fa.%s" % action.icon, color=color)
                 action_item = QtWidgets.QAction(icon, action.label, submenu)
                 action_item.triggered.connect(
-                    partial(self.process_custom_action, action, items))
+                    partial(self._process_custom_action, action, items))
 
                 submenu.addAction(action_item)
 
@@ -420,7 +433,7 @@ class View(QtWidgets.QTreeView):
                 "Back to Full-View",
                 menu
             )
-            back_to_flat_action.triggered.connect(self.leave_hierarchy)
+            back_to_flat_action.triggered.connect(self._leave_hierarchy)
 
         # send items to hierarchy view
         enter_hierarchy_icon = qtawesome.icon("fa.indent", color="#d8d8d8")
@@ -430,7 +443,7 @@ class View(QtWidgets.QTreeView):
             menu
         )
         enter_hierarchy_action.triggered.connect(
-            lambda: self.enter_hierarchy(items))
+            lambda: self._enter_hierarchy(items))
 
         if items:
             menu.addAction(enter_hierarchy_action)
@@ -440,7 +453,7 @@ class View(QtWidgets.QTreeView):
 
         return menu
 
-    def get_custom_actions(self, containers):
+    def _get_custom_actions(self, containers):
         """Get the registered Inventory Actions
 
         Args:
@@ -466,7 +479,7 @@ class View(QtWidgets.QTreeView):
 
         return sorted(compatible, key=sorter)
 
-    def process_custom_action(self, action, containers):
+    def _process_custom_action(self, action, containers):
         """Run action and if results are returned positive update the view
 
         If the result is list or dict, will select view items by the result.
@@ -484,13 +497,14 @@ class View(QtWidgets.QTreeView):
             self.data_changed.emit()
 
             if isinstance(result, (list, set)):
-                self.select_items_by_action(result)
+                self._select_items_by_action(result)
 
             if isinstance(result, dict):
-                self.select_items_by_action(result["objectNames"],
-                                            result["options"])
+                self._select_items_by_action(
+                    result["objectNames"], result["options"]
+                )
 
-    def select_items_by_action(self, object_names, options=None):
+    def _select_items_by_action(self, object_names, options=None):
         """Select view items by the result of action
 
         Args:
@@ -507,8 +521,10 @@ class View(QtWidgets.QTreeView):
             self.clearSelection()
 
         object_names = set(object_names)
-        if (self._hierarchy_view and
-                not self._selected.issuperset(object_names)):
+        if (
+            self._hierarchy_view
+            and not self._selected.issuperset(object_names)
+        ):
             # If any container not in current cherry-picked view, update
             # view before selecting them.
             self._selected.update(object_names)
@@ -539,7 +555,7 @@ class View(QtWidgets.QTreeView):
             if len(object_names) == 0:
                 break
 
-    def show_right_mouse_menu(self, pos):
+    def _show_right_mouse_menu(self, pos):
         """Display the menu when at the position of the item clicked"""
 
         globalpos = self.viewport().mapToGlobal(pos)
@@ -547,7 +563,7 @@ class View(QtWidgets.QTreeView):
         if not self.selectionModel().hasSelection():
             print("No selection")
             # Build menu without selection, feed an empty list
-            menu = self.build_item_menu([])
+            menu = self._build_item_menu()
             menu.exec_(globalpos)
             return
 
@@ -562,7 +578,7 @@ class View(QtWidgets.QTreeView):
         indices.append(active)
 
         # Extend to the sub-items
-        all_indices = self.extend_to_children(indices)
+        all_indices = self._extend_to_children(indices)
         items = [dict(i.data(InventoryModel.ItemRole)) for i in all_indices
                  if i.parent().isValid()]
 
@@ -570,7 +586,7 @@ class View(QtWidgets.QTreeView):
             # Ensure no group item
             items = [n for n in items if not n.get("isGroupNode")]
 
-        menu = self.build_item_menu(items)
+        menu = self._build_item_menu(items)
         menu.exec_(globalpos)
 
     def get_indices(self):
@@ -578,7 +594,7 @@ class View(QtWidgets.QTreeView):
         selection_model = self.selectionModel()
         return selection_model.selectedRows()
 
-    def extend_to_children(self, indices):
+    def _extend_to_children(self, indices):
         """Extend the indices to the children indices.
 
         Top-level indices are extended to its children indices. Sub-items
@@ -615,7 +631,7 @@ class View(QtWidgets.QTreeView):
 
         return list(subitems)
 
-    def show_version_dialog(self, items):
+    def _show_version_dialog(self, items):
         """Create a dialog with the available versions for the selected file
 
         Args:
@@ -709,24 +725,25 @@ class View(QtWidgets.QTreeView):
             # refresh model when done
             self.data_changed.emit()
 
-    def show_switch_dialog(self, items):
+    def _show_switch_dialog(self, items):
         """Display Switch dialog"""
         dialog = SwitchAssetDialog(self, items)
         dialog.switched.connect(self.data_changed.emit)
         dialog.show()
 
-    def show_remove_warning_dialog(self, items):
+    def _show_remove_warning_dialog(self, items):
         """Prompt a dialog to inform the user the action will remove items"""
 
         accept = QtWidgets.QMessageBox.Ok
         buttons = accept | QtWidgets.QMessageBox.Cancel
 
-        message = ("Are you sure you want to remove "
-                   "{} item(s)".format(len(items)))
-        state = QtWidgets.QMessageBox.question(self, "Are you sure?",
-                                               message,
-                                               buttons=buttons,
-                                               defaultButton=accept)
+        state = QtWidgets.QMessageBox.question(
+            self,
+            "Are you sure?",
+            "Are you sure you want to remove {} item(s)".format(len(items)),
+            buttons=buttons,
+            defaultButton=accept
+        )
 
         if state != accept:
             return
@@ -755,16 +772,18 @@ class View(QtWidgets.QTreeView):
         dialog.setStyleSheet(style.load_stylesheet())
         dialog.setWindowTitle("Update failed")
 
-        switch_btn = dialog.addButton("Switch Asset",
-                                      QtWidgets.QMessageBox.ActionRole)
-        switch_btn.clicked.connect(lambda: self.show_switch_dialog(items))
+        switch_btn = dialog.addButton(
+            "Switch Asset",
+            QtWidgets.QMessageBox.ActionRole
+        )
+        switch_btn.clicked.connect(lambda: self._show_switch_dialog(items))
 
         dialog.addButton(QtWidgets.QMessageBox.Cancel)
 
-        msg = "Version update to '{}' ".format(version_str) + \
-              "failed as representation doesn't exist.\n\n" \
-              "Please update to version with a valid " \
-              "representation OR \n use 'Switch Asset' button " \
-              "to change asset."
+        msg = (
+            "Version update to '{}' failed as representation doesn't exist."
+            "\n\nPlease update to version with a valid representation"
+            " OR \n use 'Switch Asset' button to change asset."
+        ).format(version_str)
         dialog.setText(msg)
         dialog.exec_()

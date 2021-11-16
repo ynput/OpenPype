@@ -12,7 +12,7 @@ from openpype import style
 
 from .proxy import FilterProxyModel
 from .model import InventoryModel
-from .view import View
+from .view import SceneInvetoryView
 
 
 module = sys.modules[__name__]
@@ -66,8 +66,15 @@ class SceneInventoryWindow(QtWidgets.QDialog):
         proxy.setDynamicSortFilter(True)
         proxy.setFilterCaseSensitivity(QtCore.Qt.CaseInsensitive)
 
-        view = View(self)
+        view = SceneInvetoryView(self)
         view.setModel(proxy)
+
+        # set some nice default widths for the view
+        view.setColumnWidth(0, 250)  # name
+        view.setColumnWidth(1, 55)   # version
+        view.setColumnWidth(2, 55)   # count
+        view.setColumnWidth(3, 150)  # family
+        view.setColumnWidth(4, 100)  # namespace
 
         # apply delegates
         version_delegate = VersionDelegate(io, self)
@@ -78,32 +85,21 @@ class SceneInventoryWindow(QtWidgets.QDialog):
         layout.addLayout(control_layout)
         layout.addWidget(view)
 
+        # signals
+        text_filter.textChanged.connect(proxy.setFilterRegExp)
+        outdated_only.stateChanged.connect(proxy.set_filter_outdated)
+        refresh_button.clicked.connect(self.refresh)
+        view.data_changed.connect(self.refresh)
+        view.hierarchy_view.connect(model.set_hierarchy_view)
+        view.hierarchy_view.connect(proxy.set_hierarchy_view)
+
         self.filter = text_filter
         self.outdated_only = outdated_only
         self.view = view
         self.refresh_button = refresh_button
         self.model = model
         self.proxy = proxy
-
-        # signals
-        text_filter.textChanged.connect(self.proxy.setFilterRegExp)
-        outdated_only.stateChanged.connect(self.proxy.set_filter_outdated)
-        refresh_button.clicked.connect(self.refresh)
-        view.data_changed.connect(self.refresh)
-        view.hierarchy_view.connect(self.model.set_hierarchy_view)
-        view.hierarchy_view.connect(self.proxy.set_hierarchy_view)
-
-        self.data = {
-            "delegates": {
-                "version": version_delegate
-            }
-        }
-        # set some nice default widths for the view
-        self.view.setColumnWidth(0, 250)  # name
-        self.view.setColumnWidth(1, 55)  # version
-        self.view.setColumnWidth(2, 55)  # count
-        self.view.setColumnWidth(3, 150)  # family
-        self.view.setColumnWidth(4, 100)  # namespace
+        self._version_delegate = version_delegate
 
         self.family_config_cache.refresh()
 
