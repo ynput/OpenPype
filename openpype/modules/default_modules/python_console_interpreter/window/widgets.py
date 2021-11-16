@@ -186,7 +186,7 @@ class PythonTabWidget(QtWidgets.QWidget):
 
         self.setFocusProxy(code_input)
 
-        add_tab_btn = QtWidgets.QPushButton("Add tab", self)
+        add_tab_btn = QtWidgets.QPushButton("Add tab...", self)
         add_tab_btn.setToolTip("Add new tab")
 
         execute_btn = QtWidgets.QPushButton("Execute", self)
