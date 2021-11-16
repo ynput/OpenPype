@@ -9,13 +9,15 @@ from avalon.tools import lib as tools_lib
 from avalon.tools.delegates import VersionDelegate
 
 from openpype import style
-
-from .proxy import FilterProxyModel
-from .model import InventoryModel
 from openpype.tools.utils.lib import (
     qt_app_context,
     preserve_expanded_rows,
     preserve_selection
+)
+
+from .model import (
+    InventoryModel,
+    FilterProxyModel
 )
 from .view import SceneInvetoryView
 
