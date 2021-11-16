@@ -463,17 +463,25 @@ class PythonInterpreterWidget(QtWidgets.QWidget):
             return
 
         menu = QtWidgets.QMenu(self._tab_widget)
+
         add_tab_action = QtWidgets.QAction("Add tab...", menu)
+        add_tab_action.setToolTip("Add new tab")
+
         rename_tab_action = QtWidgets.QAction("Rename...", menu)
+        rename_tab_action.setToolTip("Rename tab")
+
         duplicate_tab_action = QtWidgets.QAction("Duplicate...", menu)
+        duplicate_tab_action.setToolTip("Duplicate code to new tab")
+
+        close_tab_action = QtWidgets.QAction("Close", menu)
+        close_tab_action.setToolTip("Close tab and lose content")
+        close_tab_action.setEnabled(self._tab_widget.tabsClosable())
+
         menu.addAction(add_tab_action)
         menu.addAction(rename_tab_action)
         menu.addAction(duplicate_tab_action)
+        menu.addAction(close_tab_action)
 
-        close_tab_action = None
-        if self._tab_widget.tabsClosable():
-            close_tab_action = QtWidgets.QAction("Close", menu)
-            menu.addAction(close_tab_action)
         result = menu.exec_(global_point)
         if result is None:
             return
