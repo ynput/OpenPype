@@ -7,7 +7,7 @@ PROJECT_IS_ACTIVE_ROLE = QtCore.Qt.UserRole + 102
 
 TASK_NAME_ROLE = QtCore.Qt.UserRole + 301
 TASK_TYPE_ROLE = QtCore.Qt.UserRole + 302
-TASK_ORDER_ROLE = QtCore.Qt.UserRole + 403
+TASK_ORDER_ROLE = QtCore.Qt.UserRole + 303
 
 LOCAL_PROVIDER_ROLE = QtCore.Qt.UserRole + 500  # provider of active site
 REMOTE_PROVIDER_ROLE = QtCore.Qt.UserRole + 501  # provider of remote site

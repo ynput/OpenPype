@@ -15,16 +15,9 @@ from openpype.tools.utils.lib import (
     schedule, qt_app_context
 )
 from openpype.tools.utils.widgets import AssetWidget
+from openpype.tools.utils.tasks_widget import TasksWidget
 from openpype.tools.utils.delegates import PrettyTimeDelegate
 
-from openpype.tools.utils.constants import (
-    TASK_NAME_ROLE,
-    TASK_TYPE_ROLE
-)
-from openpype.tools.utils.models import (
-    TasksModel,
-    TasksProxyModel
-)
 from .model import FilesModel
 from .view import FilesView
 
@@ -321,110 +314,6 @@ class NameWindow(QtWidgets.QDialog):
             self.preview_label.setText(
                 "<font color='green'>{0}</font>".format(work_file)
             )
-
-
-class TasksWidget(QtWidgets.QWidget):
-    """Widget showing active Tasks"""
-
-    task_changed = QtCore.Signal()
-
-    def __init__(self, dbcon=None, parent=None):
-        super(TasksWidget, self).__init__(parent)
-
-        tasks_view = QtWidgets.QTreeView(self)
-        tasks_view.setIndentation(0)
-        tasks_view.setSortingEnabled(True)
-        if dbcon is None:
-            dbcon = io
-
-        tasks_model = TasksModel(dbcon)
-        tasks_proxy = TasksProxyModel()
-        tasks_proxy.setSourceModel(tasks_model)
-        tasks_view.setModel(tasks_proxy)
-
-        layout = QtWidgets.QVBoxLayout(self)
-        layout.setContentsMargins(0, 0, 0, 0)
-        layout.addWidget(tasks_view)
-
-        selection_model = tasks_view.selectionModel()
-        selection_model.currentChanged.connect(self.task_changed)
-
-        self._tasks_model = tasks_model
-        self._tasks_proxy = tasks_proxy
-        self._tasks_view = tasks_view
-
-        self._last_selected_task = None
-
-    def set_asset(self, asset_doc):
-        # Asset deselected
-        if asset_doc is None:
-            return
-
-        # Try and preserve the last selected task and reselect it
-        # after switching assets. If there's no currently selected
-        # asset keep whatever the "last selected" was prior to it.
-        current = self.get_current_task_name()
-        if current:
-            self._last_selected_task = current
-
-        self._tasks_model.set_asset(asset_doc)
-        self._tasks_proxy.sort(0, QtCore.Qt.AscendingOrder)
-
-        if self._last_selected_task:
-            self.select_task(self._last_selected_task)
-
-        # Force a task changed emit.
-        self.task_changed.emit()
-
-    def select_task(self, task_name):
-        """Select a task by name.
-
-        If the task does not exist in the current model then selection is only
-        cleared.
-
-        Args:
-            task (str): Name of the task to select.
-
-        """
-        task_view_model = self._tasks_view.model()
-        if not task_view_model:
-            return
-
-        # Clear selection
-        selection_model = self._tasks_view.selectionModel()
-        selection_model.clearSelection()
-
-        # Select the task
-        mode = selection_model.Select | selection_model.Rows
-        for row in range(task_view_model.rowCount()):
-            index = task_view_model.index(row, 0)
-            name = index.data(TASK_NAME_ROLE)
-            if name == task_name:
-                selection_model.select(index, mode)
-
-                # Set the currently active index
-                self._tasks_view.setCurrentIndex(index)
-                break
-
-    def get_current_task_name(self):
-        """Return name of task at current index (selected)
-
-        Returns:
-            str: Name of the current task.
-
-        """
-        index = self._tasks_view.currentIndex()
-        selection_model = self._tasks_view.selectionModel()
-        if index.isValid() and selection_model.isSelected(index):
-            return index.data(TASK_NAME_ROLE)
-        return None
-
-    def get_current_task_type(self):
-        index = self._tasks_view.currentIndex()
-        selection_model = self._tasks_view.selectionModel()
-        if index.isValid() and selection_model.isSelected(index):
-            return index.data(TASK_TYPE_ROLE)
-        return None
 
 
 class FilesWidget(QtWidgets.QWidget):
@@ -1052,7 +941,7 @@ class Window(QtWidgets.QMainWindow):
         if asset_docs:
             asset_doc = asset_docs[0]
 
-        task_name = self.tasks_widget.get_current_task_name()
+        task_name = self.tasks_widget.get_selected_task_name()
 
         workfile_doc = None
         if asset_doc and task_name and filepath:
@@ -1082,7 +971,7 @@ class Window(QtWidgets.QMainWindow):
     def _get_current_workfile_doc(self, filepath=None):
         if filepath is None:
             filepath = self.files_widget._get_selected_filepath()
-        task_name = self.tasks_widget.get_current_task_name()
+        task_name = self.tasks_widget.get_selected_task_name()
         asset_docs = self.assets_widget.get_selected_assets()
         if not task_name or not asset_docs or not filepath:
             return
@@ -1113,18 +1002,16 @@ class Window(QtWidgets.QMainWindow):
                     "name": asset,
                     "type": "asset"
                 },
-                {
-                    "data.tasks": 1
-                }
-            )
+                {"_id": 1}
+            ) or {}
 
             # Select the asset
             self.assets_widget.select_assets([asset], expand=True)
 
-            self.tasks_widget.set_asset(asset_document)
+            self.tasks_widget.set_asset_id(asset_document.get("_id"))
 
         if "task" in context:
-            self.tasks_widget.select_task(context["task"])
+            self.tasks_widget.select_task_name(context["task"])
 
     def refresh(self):
         # Refresh asset widget
@@ -1134,7 +1021,7 @@ class Window(QtWidgets.QMainWindow):
 
     def _on_asset_changed(self):
         asset = self.assets_widget.get_selected_assets() or None
-
+        asset_id = None
         if not asset:
             # Force disable the other widgets if no
             # active selection
@@ -1142,16 +1029,17 @@ class Window(QtWidgets.QMainWindow):
             self.files_widget.setEnabled(False)
         else:
             asset = asset[0]
+            asset_id = asset.get("_id")
             self.tasks_widget.setEnabled(True)
 
-        self.tasks_widget.set_asset(asset)
+        self.tasks_widget.set_asset_id(asset_id)
 
     def _on_task_changed(self):
         asset = self.assets_widget.get_selected_assets() or None
         if asset is not None:
             asset = asset[0]
-        task_name = self.tasks_widget.get_current_task_name()
-        task_type = self.tasks_widget.get_current_task_type()
+        task_name = self.tasks_widget.get_selected_task_name()
+        task_type = self.tasks_widget.get_selected_task_type()
 
         self.tasks_widget.setEnabled(bool(asset))
 
