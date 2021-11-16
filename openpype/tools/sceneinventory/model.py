@@ -145,10 +145,13 @@ class InventoryModel(TreeModel):
 
             if item.get("isGroupNode"):
                 column_name = self.Columns[index.column()]
-                if column_name == 'active_site':
-                    return self._site_icons.get(item.get('active_site_provider'))
-                if column_name == 'remote_site':
-                    return self._site_icons.get(item.get('remote_site_provider'))
+                if column_name == "active_site":
+                    provider = item.get("active_site_provider")
+                    return self._site_icons.get(provider)
+
+                if column_name == "remote_site":
+                    provider = item.get("remote_site_provider")
+                    return self._site_icons.get(provider)
 
         if role == QtCore.Qt.DisplayRole and item.get("isGroupNode"):
             column_name = self.Columns[index.column()]
