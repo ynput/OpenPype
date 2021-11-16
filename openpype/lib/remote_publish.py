@@ -11,6 +11,21 @@ from openpype.lib.mongo import OpenPypeMongoConnection
 from openpype.lib.plugin_tools import parse_json
 
 
+def headless_publish(log):
+    """Runs publish in a opened host with a context and closes Python process.
+
+        Host is being closed via ClosePS pyblish plugin which triggers 'exit'
+        method in ConsoleTrayApp.
+    """
+    dbcon = get_webpublish_conn()
+    _id = os.environ.get("BATCH_LOG_ID")
+    if not _id:
+        log.warning("Unable to store log records, batch will be unfinished!")
+        return
+
+    publish_and_log(dbcon, _id, log, 'CloseAE')
+
+
 def get_webpublish_conn():
     """Get connection to OP 'webpublishes' collection."""
     mongo_client = OpenPypeMongoConnection.get_mongo_client()
