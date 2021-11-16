@@ -765,6 +765,7 @@ QScrollBar::add-page:vertical, QScrollBar::sub-page:vertical {
 /* Python console interpreter */
 #PythonInterpreterOutput, #PythonCodeEditor {
     font-family: "Roboto Mono";
+    border-radius: 0px;
 }
 
 #SubsetView::item, #RepresentationView:item {
