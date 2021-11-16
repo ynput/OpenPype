@@ -999,19 +999,6 @@ QWidget[input-state="invalid"] {border-color: #ad2e2e;}
     border-bottom: 1px solid #21252B;
 }
 
-#ProjectListWidget QListView {
-    border: 1px solid #464b54;
-    background: #21252B;
-}
-
-#ProjectListWidget QListView:disabled {
-    background: #282C34;
-}
-
-#ProjectListWidget QListView::item:disabled {
-    color: #4e5254;
-}
-
 #ProjectListWidget QLabel {
     background: transparent;
     font-weight: bold;
