@@ -243,9 +243,9 @@ class SubsetsModel(TreeModel, BaseRepresentationModel):
 
                 # update availability on active site when version changes
                 if self.sync_server.enabled and version:
-                    site = self.active_site
                     query = self._repre_per_version_pipeline([version["_id"]],
-                                                             site)
+                                                             self.active_site,
+                                                             self.remote_site)
                     docs = list(self.dbcon.aggregate(query))
                     if docs:
                         repre = docs.pop()
