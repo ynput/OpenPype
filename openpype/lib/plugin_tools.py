@@ -537,14 +537,14 @@ def should_decompress(file_url):
                 "--info", "-v", file_url])
             return "compression: \"dwaa\"" in output or \
                 "compression: \"dwab\"" in output
-        except RuntimeError as _E:
+        except RuntimeError:
             _name, ext = os.path.splitext(file_url)
-            if ext in [".mxf"]:
-                # TODO: should't the list of allowed extensions be
-                # taken from an OIIO variable of supported formats
-                return False
-            else:
-                raise RuntimeError(_E)
+            # TODO: should't the list of allowed extensions be
+            #     taken from an OIIO variable of supported formats
+            if ext not in [".mxf"]:
+                # Reraise exception
+                raise
+            return False
     return False
 
 
