@@ -71,6 +71,10 @@ class SwitchAssetDialog(QtWidgets.QDialog):
         main_layout.addWidget(repre_label, 2, 2)
         # Btn column
         main_layout.addWidget(accept_btn, 1, 3)
+        main_layout.setColumnStretch(0, 1)
+        main_layout.setColumnStretch(1, 1)
+        main_layout.setColumnStretch(2, 1)
+        main_layout.setColumnStretch(3, 0)
 
         assets_combox.currentIndexChanged.connect(
             self._combobox_value_changed
