@@ -325,47 +325,38 @@ QTabWidget::pane {
 
 /* move to the right to not mess with borders of widget underneath */
 QTabWidget::tab-bar {
-    left: 2px;
+    alignment: left;
 }
 
 QTabBar::tab {
-    padding: 5px;
-    border-left: 3px solid transparent;
     border-top: 1px solid {color:border};
+    border-left: 1px solid {color:border};
     border-right: 1px solid {color:border};
-    /* must be single like because of Nuke*/
-    background: qlineargradient(x1: 0, y1: 1, x2: 0, y2: 0,stop: 0.5 {color:bg}, stop: 1.0 {color:bg-inputs});
+    padding: 5px;
+    background: {color:tab-widget:bg};
+    color: {color:tab-widget:color};
 }
 
 QTabBar::tab:selected {
-    background: {color:grey-lighter};
-    border-left: 3px solid {color:border-focus};
-    /* must be single like because of Nuke*/
-    background: qlineargradient(x1: 0, y1: 1, x2: 0, y2: 0,stop: 0.5 {color:bg}, stop: 1.0 {color:border});
+    border-left-color: {color:tab-widget:bg-selected};
+    border-right-color: {color:tab-widget:bg-selected};
+    border-top-color: {color:border-focus};
+    background: {color:tab-widget:bg-selected};
+    color: {color:tab-widget:color-selected};
 }
 
-QTabBar::tab:!selected {
-    background: {color:grey-light};
-}
-
+QTabBar::tab:!selected {}
 QTabBar::tab:!selected:hover {
-    background: {color:grey-lighter};
+    background: {color:tab-widget:bg-hover};
+    color: {color:tab-widget:color-hover};
 }
-QTabBar::tab:first {
-    border-left: 1px solid {color:border};
+QTabBar::tab:first {}
+QTabBar::tab:first:selected {}
+QTabBar::tab:last:!selected {
+    border-right: 1px solid {color:border};
 }
-QTabBar::tab:first:selected {
-    margin-left: 0;
-    border-left: 3px solid {color:border-focus};
-}
-
-QTabBar::tab:last:selected {
-    margin-right: 0;
-}
-
-QTabBar::tab:only-one {
-    margin: 0;
-}
+QTabBar::tab:last:selected {}
+QTabBar::tab:only-one {}
 
 QHeaderView {
     border: 0px solid {color:border};
