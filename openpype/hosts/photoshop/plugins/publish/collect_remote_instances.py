@@ -21,6 +21,7 @@ class CollectRemoteInstances(pyblish.api.ContextPlugin):
     label = "Instances"
     order = pyblish.api.CollectorOrder
     hosts = ["photoshop"]
+    targets = ["remotepublish"]
 
     # configurable by Settings
     color_code_mapping = []
@@ -28,9 +29,6 @@ class CollectRemoteInstances(pyblish.api.ContextPlugin):
     def process(self, context):
         self.log.info("CollectRemoteInstances")
         self.log.info("mapping:: {}".format(self.color_code_mapping))
-        if not os.environ.get("IS_HEADLESS"):
-            self.log.debug("Not headless publishing, skipping.")
-            return
 
         # parse variant if used in webpublishing, comes from webpublisher batch
         batch_dir = os.environ.get("OPENPYPE_PUBLISH_DATA")

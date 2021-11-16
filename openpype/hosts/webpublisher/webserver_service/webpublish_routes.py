@@ -11,7 +11,7 @@ from avalon.api import AvalonMongoDB
 
 from openpype.lib import OpenPypeMongoConnection
 from openpype_modules.avalon_apps.rest_api import _RestApiEndpoint
-from openpype.lib.plugin_tools import parse_json
+from openpype.lib.remote_publish import get_task_data
 from openpype.settings import get_project_settings
 
 from openpype.lib import PypeLogger
@@ -208,7 +208,7 @@ class WebpublisherBatchPublishEndpoint(_RestApiEndpoint):
                     # Make sure targets are set to None for cases that default
                     #   would change
                     # - targets argument is not used in 'remotepublishfromapp'
-                    "targets": None
+                    "targets": ["remotepublish"]
                 },
                 # does publish need to be handled by a queue, eg. only
                 # single process running concurrently?
@@ -216,7 +216,7 @@ class WebpublisherBatchPublishEndpoint(_RestApiEndpoint):
             }
         ]
 
-        batch_path = os.path.join(self.resource.upload_dir, content["batch"])
+        batch_dir = os.path.join(self.resource.upload_dir, content["batch"])
 
         # Default command and arguments
         command = "remotepublish"
@@ -230,18 +230,9 @@ class WebpublisherBatchPublishEndpoint(_RestApiEndpoint):
 
         add_to_queue = False
         if content.get("studio_processing"):
-            log.info("Post processing called")
+            log.info("Post processing called for {}".format(batch_dir))
 
-            batch_data = parse_json(os.path.join(batch_path, "manifest.json"))
-            if not batch_data:
-                raise ValueError(
-                    "Cannot parse batch manifest in {}".format(batch_path))
-            task_dir_name = batch_data["tasks"][0]
-            task_data = parse_json(os.path.join(batch_path, task_dir_name,
-                                                "manifest.json"))
-            if not task_data:
-                raise ValueError(
-                    "Cannot parse task manifest in {}".format(task_data))
+            task_data = get_task_data(batch_dir)
 
             for process_filter in studio_processing_filters:
                 filter_extensions = process_filter.get("extensions") or []
@@ -260,7 +251,7 @@ class WebpublisherBatchPublishEndpoint(_RestApiEndpoint):
         args = [
             openpype_app,
             command,
-            batch_path
+            batch_dir
         ]
 
         for key, value in add_args.items():
