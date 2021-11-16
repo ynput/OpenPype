@@ -463,13 +463,32 @@ class PythonInterpreterWidget(QtWidgets.QWidget):
             return
 
         menu = QtWidgets.QMenu(self._tab_widget)
-        menu.addAction("Rename")
+        add_tab_action = QtWidgets.QAction("Add tab...", menu)
+        rename_tab_action = QtWidgets.QAction("Rename...", menu)
+        duplicate_tab_action = QtWidgets.QAction("Duplicate...", menu)
+        menu.addAction(add_tab_action)
+        menu.addAction(rename_tab_action)
+        menu.addAction(duplicate_tab_action)
+
+        close_tab_action = None
+        if self._tab_widget.tabsClosable():
+            close_tab_action = QtWidgets.QAction("Close", menu)
+            menu.addAction(close_tab_action)
         result = menu.exec_(global_point)
         if result is None:
             return
 
-        if result.text() == "Rename":
+        if result is rename_tab_action:
             self._rename_tab_req(tab_idx)
+
+        elif result is add_tab_action:
+            self._on_add_requested()
+
+        elif result is duplicate_tab_action:
+            self._duplicate_requested(tab_idx)
+
+        elif result is close_tab_action:
+            self._on_tab_close_req(tab_idx)
 
     def _rename_tab_req(self, tab_idx):
         dialog = TabNameDialog(self)
@@ -478,6 +497,16 @@ class PythonInterpreterWidget(QtWidgets.QWidget):
         tab_name = dialog.result()
         if tab_name:
             self._tab_widget.setTabText(tab_idx, tab_name)
+
+    def _duplicate_requested(self, tab_idx=None):
+        if tab_idx is None:
+            tab_idx = self._tab_widget.currentIndex()
+
+        src_widget = self._tab_widget.widget(tab_idx)
+        dst_widget = self._add_tab()
+        if dst_widget is None:
+            return
+        dst_widget.set_code(src_widget.get_code())
 
     def _on_tab_mid_click(self, global_point):
         point = self._tab_widget.mapFromGlobal(global_point)
@@ -530,11 +559,16 @@ class PythonInterpreterWidget(QtWidgets.QWidget):
             self._append_lines(lines)
 
     def _on_add_requested(self):
+        self._add_tab()
+
+    def _add_tab(self):
         dialog = TabNameDialog(self)
         dialog.exec_()
         tab_name = dialog.result()
         if tab_name:
-            self.add_tab(tab_name)
+            return self.add_tab(tab_name)
+
+        return None
 
     def _on_before_execute(self, code_text):
         at_max = self._output_widget.vertical_scroll_at_max()
