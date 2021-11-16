@@ -22,7 +22,7 @@ log = logging.getLogger("SceneInventory")
 
 class SceneInvetoryView(QtWidgets.QTreeView):
     data_changed = QtCore.Signal()
-    hierarchy_view = QtCore.Signal(bool)
+    hierarchy_view_changed = QtCore.Signal(bool)
 
     def __init__(self, parent=None):
         super(SceneInvetoryView, self).__init__(parent=parent)
@@ -41,10 +41,15 @@ class SceneInvetoryView(QtWidgets.QTreeView):
         self.sync_server = manager.modules_by_name["sync_server"]
         self.sync_enabled = self.sync_server.enabled
 
+    def _set_hierarchy_view(self, enabled):
+        if enabled == self._hierarchy_view:
+            return
+        self._hierarchy_view = enabled
+        self.hierarchy_view_changed.emit(enabled)
+
     def _enter_hierarchy(self, items):
         self._selected = set(i["objectName"] for i in items)
-        self._hierarchy_view = True
-        self.hierarchy_view.emit(True)
+        self._set_hierarchy_view(True)
         self.data_changed.emit()
         self.expandToDepth(1)
         self.setStyleSheet("""
@@ -54,8 +59,7 @@ class SceneInvetoryView(QtWidgets.QTreeView):
         """)
 
     def _leave_hierarchy(self):
-        self._hierarchy_view = False
-        self.hierarchy_view.emit(False)
+        self._set_hierarchy_view(False)
         self.data_changed.emit()
         self.setStyleSheet("QTreeView {}")
 
@@ -189,8 +193,9 @@ class SceneInvetoryView(QtWidgets.QTreeView):
                         try:
                             api.update(item, version_name)
                         except AssertionError:
-                            self._show_version_error_dialog(version_name,
-                                                            [item])
+                            self._show_version_error_dialog(
+                                version_name, [item]
+                            )
                             log.warning("Update failed", exc_info=True)
 
                 self.data_changed.emit()

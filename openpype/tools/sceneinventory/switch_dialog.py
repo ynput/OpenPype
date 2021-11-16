@@ -1,10 +1,13 @@
 import collections
+import logging
 from Qt import QtWidgets, QtCore
 
-from avalon import io, api, style
+from avalon import io, api
 from avalon.vendor import qtawesome
 
 from .widgets import SearchComboBox
+
+log = logging.getLogger("SwitchAssetDialog")
 
 
 class ValidationState:
@@ -969,19 +972,16 @@ class SwitchAssetDialog(QtWidgets.QDialog):
             try:
                 api.switch(container, repre_doc)
             except Exception:
-                log.warning(
-                    (
-                        "Couldn't switch asset."
-                        "See traceback for more information."
-                    ),
-                    exc_info=True
+                msg = (
+                    "Couldn't switch asset."
+                    "See traceback for more information."
                 )
-                dialog = QtWidgets.QMessageBox()
-                dialog.setStyleSheet(style.load_stylesheet())
+                log.warning(msg, exc_info=True)
+                dialog = QtWidgets.QMessageBox(self)
                 dialog.setWindowTitle("Switch asset failed")
-                msg = "Switch asset failed. "\
-                      "Search console log for more details"
-                dialog.setText(msg)
+                dialog.setText(
+                    "Switch asset failed. Search console log for more details"
+                )
                 dialog.exec_()
 
         self.switched.emit()

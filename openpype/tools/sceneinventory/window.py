@@ -5,14 +5,13 @@ from Qt import QtWidgets, QtCore
 from avalon.vendor import qtawesome
 from avalon import io, api
 
-from avalon.tools import lib as tools_lib
-from avalon.tools.delegates import VersionDelegate
-
 from openpype import style
+from openpype.tools.utils.delegates import VersionDelegate
 from openpype.tools.utils.lib import (
     qt_app_context,
     preserve_expanded_rows,
-    preserve_selection
+    preserve_selection,
+    FamilyConfigCache
 )
 
 from .model import (
@@ -37,14 +36,13 @@ class SceneInventoryWindow(QtWidgets.QDialog):
                 self.windowFlags() | QtCore.Qt.WindowStaysOnTopHint
             )
 
-        self.resize(1100, 480)
-        self.setWindowTitle(
-            "Scene Inventory 1.0 - {}".format(
-                os.getenv("AVALON_PROJECT") or "<Project not set>"
-            )
-        )
+        project_name = os.getenv("AVALON_PROJECT") or "<Project not set>"
+        self.setWindowTitle("Scene Inventory 1.0 - {}".format(project_name))
         self.setObjectName("SceneInventory")
-        self.setProperty("saveWindowPref", True)  # Maya only property!
+        # Maya only property
+        self.setProperty("saveWindowPref", True)
+
+        self.resize(1100, 480)
 
         # region control
         filter_label = QtWidgets.QLabel("Search", self)
@@ -67,9 +65,9 @@ class SceneInventoryWindow(QtWidgets.QDialog):
         control_layout.addWidget(refresh_button)
 
         # endregion control
-        self.family_config_cache = tools_lib.global_family_cache()
+        family_config_cache = FamilyConfigCache(io)
 
-        model = InventoryModel(self.family_config_cache)
+        model = InventoryModel(family_config_cache)
         proxy = FilterProxyModel()
         proxy.setSourceModel(model)
         proxy.setDynamicSortFilter(True)
@@ -95,22 +93,26 @@ class SceneInventoryWindow(QtWidgets.QDialog):
         layout.addWidget(view)
 
         # signals
-        text_filter.textChanged.connect(proxy.setFilterRegExp)
-        outdated_only_checkbox.stateChanged.connect(proxy.set_filter_outdated)
-        refresh_button.clicked.connect(self.refresh)
+        text_filter.textChanged.connect(self._on_text_filter_change)
+        outdated_only_checkbox.stateChanged.connect(
+            self._on_outdated_state_change
+        )
+        view.hierarchy_view_changed.connect(
+            self._on_hiearchy_view_change
+        )
         view.data_changed.connect(self.refresh)
-        view.hierarchy_view.connect(model.set_hierarchy_view)
-        view.hierarchy_view.connect(proxy.set_hierarchy_view)
+        refresh_button.clicked.connect(self.refresh)
 
+        self._outdated_only_checkbox = outdated_only_checkbox
         self._view = view
-        self.refresh_button = refresh_button
-        self.model = model
-        self.proxy = proxy
+        self._model = model
+        self._proxy = proxy
         self._version_delegate = version_delegate
-
-        self.family_config_cache.refresh()
+        self._family_config_cache = family_config_cache
 
         self._first_show = True
+
+        family_config_cache.refresh()
 
     def showEvent(self, event):
         super(SceneInventoryWindow, self).showEvent(event)
@@ -131,18 +133,30 @@ class SceneInventoryWindow(QtWidgets.QDialog):
     def refresh(self, items=None):
         with preserve_expanded_rows(
             tree_view=self._view,
-            role=self.model.UniqueRole
+            role=self._model.UniqueRole
         ):
             with preserve_selection(
                 tree_view=self._view,
-                role=self.model.UniqueRole,
+                role=self._model.UniqueRole,
                 current_index=False
             ):
                 kwargs = {"items": items}
-                if self.view._hierarchy_view:
-                    # TODO do not touch view's inner attribute
-                    kwargs["selected"] = self.view._selected
-                self.model.refresh(**kwargs)
+                # TODO do not touch view's inner attribute
+                if self._view._hierarchy_view:
+                    kwargs["selected"] = self._view._selected
+                self._model.refresh(**kwargs)
+
+    def _on_hiearchy_view_change(self, enabled):
+        self._proxy.set_hierarchy_view(enabled)
+        self._model.set_hierarchy_view(enabled)
+
+    def _on_text_filter_change(self, text_filter):
+        self._proxy.setFilterRegExp(text_filter)
+
+    def _on_outdated_state_change(self):
+        self._proxy.set_filter_outdated(
+            self._outdated_only_checkbox.isChecked()
+        )
 
 
 def show(root=None, debug=False, parent=None, items=None):
