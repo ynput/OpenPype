@@ -458,7 +458,7 @@ class AssetModel(QtGui.QStandardItemModel):
         self._stop_fetch_thread()
 
     def _threaded_fetch(self):
-        asset_docs = self._fetch_asset_docs() or []
+        asset_docs = self._fetch_asset_docs()
         if not self._refreshing:
             return
 
@@ -469,14 +469,14 @@ class AssetModel(QtGui.QStandardItemModel):
 
     def _fetch_asset_docs(self):
         if not self.dbcon.Session.get("AVALON_PROJECT"):
-            return
+            return []
 
         project_doc = self.dbcon.find_one(
             {"type": "project"},
             {"_id": True}
         )
         if not project_doc:
-            return
+            return []
 
         # Get all assets sorted by name
         return list(self.dbcon.find(
