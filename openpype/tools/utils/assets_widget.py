@@ -281,6 +281,7 @@ class AssetModel(QtGui.QStandardItemModel):
         super(AssetModel, self).__init__(parent=parent)
         self.dbcon = dbcon
 
+        self._refreshing = False
         self._doc_fetching_thread = None
         self._doc_fetching_stop = False
         self._doc_payload = []
@@ -330,17 +331,20 @@ class AssetModel(QtGui.QStandardItemModel):
     def refresh(self, force=False):
         """Refresh the data for the model."""
         # Skip fetch if there is already other thread fetching documents
-        if self._doc_fetching_thread is not None:
+        if self._refreshing:
             if not force:
                 return
-            self._stop_fetch_thread()
+            self.stop_refresh()
 
         # Fetch documents from mongo
         # Restart payload
+        self._refreshing = True
         self._doc_payload = []
-        self._doc_fetching_stop = False
         self._doc_fetching_thread = DynamicQThread(self._threaded_fetch)
         self._doc_fetching_thread.start()
+
+    def stop_refresh(self):
+        self._stop_fetch_thread()
 
     def clear_underlines(self):
         for asset_id in tuple(self._items_with_color_by_id.keys()):
@@ -357,6 +361,11 @@ class AssetModel(QtGui.QStandardItemModel):
             item.setData(colors, ASSET_UNDERLINE_COLORS_ROLE)
 
     def _on_docs_fetched(self):
+        if not self._refreshing:
+            root_item = self.invisibleRootItem()
+            root_item.removeRows(0, root_item.rowCount())
+            return
+
         asset_docs = self._doc_payload
 
         asset_ids = set()
@@ -450,7 +459,7 @@ class AssetModel(QtGui.QStandardItemModel):
 
     def _threaded_fetch(self):
         asset_docs = self._fetch_asset_docs() or []
-        if self._doc_fetching_stop:
+        if not self._refreshing:
             return
 
         self._doc_payload = asset_docs
@@ -476,8 +485,8 @@ class AssetModel(QtGui.QStandardItemModel):
         ))
 
     def _stop_fetch_thread(self):
+        self._refreshing = False
         if self._doc_fetching_thread is not None:
-            self._doc_fetching_stop = True
             while self._doc_fetching_thread.isRunning():
                 time.sleep(0.01)
             self._doc_fetching_thread = None
@@ -561,6 +570,9 @@ class AssetsWidget(QtWidgets.QWidget):
 
     def refresh(self):
         self._refresh_model()
+
+    def stop_refresh(self):
+        self._model.stop_refresh()
 
     def set_current_session_asset(self):
         asset_name = self.dbcon.Session.get("AVALON_ASSET")
