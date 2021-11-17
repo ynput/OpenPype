@@ -7,7 +7,6 @@ from avalon.api import AvalonMongoDB
 from openpype import style
 from openpype.tools.utils.lib import center_window
 from openpype.tools.utils.assets_widget import SingleSelectAssetsWidget
-from openpype.tools.utils.widgets import AssetWidget
 from openpype.tools.utils.constants import (
     PROJECT_NAME_ROLE
 )
