@@ -407,7 +407,8 @@ class LibraryLoaderWindow(QtWidgets.QDialog):
         self.data["state"]["assetIds"] = asset_ids
 
         # reset repre list
-        self._repres_widget.set_version_ids([])
+        if self._repres_widget:
+            self._repres_widget.set_version_ids([])
 
     def _subsetschanged(self):
         asset_ids = self.data["state"]["assetIds"]
@@ -497,7 +498,8 @@ class LibraryLoaderWindow(QtWidgets.QDialog):
         self._thumbnail_widget.set_thumbnail(thumbnail_docs)
 
         version_ids = [doc["_id"] for doc in version_docs or []]
-        self._repres_widget.set_version_ids(version_ids)
+        if self._repres_widget:
+            self._repres_widget.set_version_ids(version_ids)
 
     def _set_context(self, context, refresh=True):
         """Set the selection in the interface using a context.

@@ -50,7 +50,7 @@ class LocalDriveHandler(AbstractProvider):
         # for non 'studio' sites, 'studio' is configured in Anatomy
         editable = [
             {
-                "key": "roots",
+                "key": "root",
                 "label": "Roots",
                 "type": "dict-roots",
                 "object_type": {
@@ -73,7 +73,7 @@ class LocalDriveHandler(AbstractProvider):
         """
         editable = [
             {
-                'key': "roots",
+                'key': "root",
                 'label': "Roots",
                 'type': 'dict'
             }
@@ -89,6 +89,7 @@ class LocalDriveHandler(AbstractProvider):
         if not os.path.isfile(source_path):
             raise FileNotFoundError("Source file {} doesn't exist."
                                     .format(source_path))
+
         if overwrite:
             thread = threading.Thread(target=self._copy,
                                       args=(source_path, target_path))
@@ -181,7 +182,10 @@ class LocalDriveHandler(AbstractProvider):
 
     def _copy(self, source_path, target_path):
         print("copying {}->{}".format(source_path, target_path))
-        shutil.copy(source_path, target_path)
+        try:
+            shutil.copy(source_path, target_path)
+        except shutil.SameFileError:
+            print("same files, skipping")
 
     def _mark_progress(self, collection, file, representation, server, site,
                        source_path, target_path, direction):

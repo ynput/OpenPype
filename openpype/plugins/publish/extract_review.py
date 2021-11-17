@@ -649,6 +649,8 @@ class ExtractReview(pyblish.api.InstancePlugin):
             AssertionError: if more then one collection is obtained.
 
         """
+        start_frame = int(start_frame)
+        end_frame = int(end_frame)
         collections = clique.assemble(files)[0]
         assert len(collections) == 1, "Multiple collections found."
         col = collections[0]

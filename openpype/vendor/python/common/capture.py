@@ -116,6 +116,8 @@ def capture(camera=None,
     if not cmds.objExists(camera):
         raise RuntimeError("Camera does not exist: {0}".format(camera))
 
+    if width and height :
+        maintain_aspect_ratio = False
     width = width or cmds.getAttr("defaultResolution.width")
     height = height or cmds.getAttr("defaultResolution.height")
     if maintain_aspect_ratio:
