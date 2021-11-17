@@ -335,7 +335,7 @@ class ExtractLook(openpype.api.Extractor):
                 files_metadata[filepath]["color_space"] = "raw"
 
             if do_maketx:
-                color_space = "raw"
+                color_space = "Raw"
 
             source, mode, texture_hash = self._process_texture(
                 filepath,
@@ -383,11 +383,11 @@ class ExtractLook(openpype.api.Extractor):
                 color_space = cmds.getAttr(color_space_attr)
             except ValueError:
                 # node doesn't have color space attribute
-                color_space = "raw"
+                color_space = "Raw"
             else:
                 if files_metadata[source]["color_space"] == "raw":
                     # set color space to raw if we linearized it
-                    color_space = "raw"
+                    color_space = "Raw"
                 # Remap file node filename to destination
                 remap[color_space_attr] = color_space
             attr = resource["attribute"]
