@@ -154,13 +154,13 @@ Fill in the necessary fields (the optional fields are regex filters)
 - **Save your template**
 
 
- **2. Make a template**
+ **2. Configure Template**
 
 - **Go to Studio settings > Project > Your DCC > Templated Build Settings**
 - Add a profile for your task and enter path to your template
 ![Dirmap settings](assets/settings/template_build_workfile.png)
 
-3. Build your workfile:
+**3. Build your workfile**
 
 - Open maya
 
