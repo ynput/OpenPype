@@ -120,3 +120,52 @@ raw json.
 You can configure path mapping using Maya `dirmap` command. This will add bi-directional mapping between
 list of paths specified in **Settings**. You can find it in **Settings -> Project Settings -> Maya -> Maya Directory Mapping**
 ![Dirmap settings](assets/maya-admin_dirmap_settings.png)
+
+## Templated Build Workfile
+
+Building a workfile using a template designed by users. Helping to assert homogeneous subsets hierarchy and imports. Template stored as file easy to define, change and customize for production needs.
+
+ **1. Make a template**
+
+Make your template. Add families and everything needed for your tasks. Here is an example template for the modeling task using a placeholder to import a gauge.
+
+![Dirmap settings](assets/maya-workfile-outliner.png)
+
+If needed, you can add placeholders when the template needs to load some assets. **OpenPype > Template Builder > Create Placeholder**
+
+![Dirmap settings](assets/maya-create_placeholder.png)
+
+- **Configure placeholders**
+
+Fill in the necessary fields (the optional fields are regex filters)
+![Dirmap settings](assets/maya-placeholder_new.png)
+
+
+    - Builder type: Wether the the placeholder should load current asset representations or linked assets representations
+
+    - Representation: Representation that will be loaded (ex: ma, abc, png, etc...)
+
+    - Family: Family of the representation to load (main, look, image, etc ...)
+
+    - Loader: Placeholder loader name that will be used to load corresponding representations
+
+    - Order: Priority for current placeholder loader (priority is lowest first, highet last)
+
+- **Save your template**
+
+
+ **2. Make a template**
+
+- **Go to Studio settings > Project > Your DCC > Templated Build Settings**
+- Add a profile for your task and enter path to your template
+![Dirmap settings](assets/settings/template_build_workfile.png)
+
+3. Build your workfile:
+
+- Open maya
+
+- Build your workfile
+
+![Dirmap settings](assets/maya-build_workfile_from_template.png)
+
+

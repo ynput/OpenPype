@@ -214,6 +214,11 @@ const maya_features = [
     label: "Plugins Support",
     description:"OpenPYPE plays well with Arnold, Vray, Redshift and Yeti. With more plugins added upon client requests.",
     docs: "docs/artist_hosts_maya#working-with-yeti-in-pype"
+  },
+  {
+    label: "Templated Build Workfile",
+    description:"Build a workfile based on the task and project using a template designed by users.",
+    docs: "docs/admin_hosts_maya#templated-build-workfile"
   }
 ]
 
