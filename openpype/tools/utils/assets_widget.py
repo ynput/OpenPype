@@ -291,6 +291,10 @@ class AssetModel(QtGui.QStandardItemModel):
         self._items_with_color_by_id = {}
         self._items_by_asset_id = {}
 
+    @property
+    def refreshing(self):
+        return self._refreshing
+
     def get_index_by_asset_id(self, asset_id):
         item = self._items_by_asset_id.get(asset_id)
         if item is not None:
@@ -570,6 +574,10 @@ class AssetsWidget(QtWidgets.QWidget):
         self._view = view
 
         self.model_selection = {}
+
+    @property
+    def refreshing(self):
+        return self._model.refreshing
 
     def refresh(self):
         self._refresh_model()
