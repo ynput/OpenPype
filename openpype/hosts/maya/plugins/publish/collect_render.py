@@ -41,6 +41,7 @@ Provides:
 
 import re
 import os
+import platform
 import json
 
 from maya import cmds
@@ -255,6 +256,11 @@ class CollectMayaRender(pyblish.api.ContextPlugin):
                     common_publish_meta_path, part)
                 if part == expected_layer_name:
                     break
+            
+            # TODO: replace this terrible linux hotfix with real solution :) 
+            if platform.system() == "Linux":
+                common_publish_meta_path = "/" + common_publish_meta_path
+
             self.log.info(
                 "Publish meta path: {}".format(common_publish_meta_path))
 
