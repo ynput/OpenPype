@@ -62,19 +62,18 @@ class HostToolsHelper:
             save = True
 
         workfiles_tool = self.get_workfiles_tool(parent)
-        if use_context:
-            context = {
-                "asset": avalon.api.Session["AVALON_ASSET"],
-                "silo": avalon.api.Session["AVALON_SILO"],
-                "task": avalon.api.Session["AVALON_TASK"]
-            }
-            workfiles_tool.set_context(context)
+        workfiles_tool.set_save_enabled(save)
 
-        if save:
-            workfiles_tool.set_save_enabled(save)
+        if not workfiles_tool.isVisible():
+            workfiles_tool.show()
 
-        workfiles_tool.refresh()
-        workfiles_tool.show()
+            if use_context:
+                context = {
+                    "asset": avalon.api.Session["AVALON_ASSET"],
+                    "task": avalon.api.Session["AVALON_TASK"]
+                }
+                workfiles_tool.set_context(context)
+
         # Pull window to the front.
         workfiles_tool.raise_()
         workfiles_tool.activateWindow()
