@@ -383,7 +383,9 @@ class AssetModel(QtGui.QStandardItemModel):
         asset_items_queue = collections.deque()
         asset_items_queue.append((None, root_item))
 
-        removed_asset_ids = set()
+        removed_asset_ids = (
+            set(self._items_by_asset_id.keys()) - set(asset_docs_by_id.keys())
+        )
         while asset_items_queue:
             parent_id, parent_item = asset_items_queue.popleft()
             children_ids = asset_ids_by_parents[parent_id]
@@ -395,8 +397,6 @@ class AssetModel(QtGui.QStandardItemModel):
                 asset_id = child_item.data(ASSET_ID_ROLE)
                 if asset_id not in children_ids:
                     parent_item.removeRow(row)
-                    if asset_id not in asset_docs_by_id:
-                        removed_asset_ids.add(asset_id)
                     continue
 
                 children_ids.remove(asset_id)
