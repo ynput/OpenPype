@@ -605,3 +605,21 @@ class AssetsWidget(QtWidgets.QWidget):
             self._view.expand(self._proxy.parent(index))
             selection_model.select(index, mode)
         self._view.setCurrentIndex(valid_indexes[0])
+
+
+class SingleSelectAssetsWidget(AssetsWidget):
+    def get_selected_asset_id(self):
+        """Return the asset item of the current selection."""
+        selection_model = self._view.selectionModel()
+        indexes = selection_model.selectedRows()
+        for index in indexes:
+            return index.data(ASSET_ID_ROLE)
+        return None
+
+    def get_selected_asset_name(self):
+        """Return the asset document of the current selection."""
+        selection_model = self._view.selectionModel()
+        indexes = selection_model.selectedRows()
+        for index in indexes:
+            return index.data(ASSET_NAME_ROLE)
+        return None
