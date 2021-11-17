@@ -1,3 +1,4 @@
+import time
 import collections
 
 import Qt
@@ -8,11 +9,12 @@ from avalon.vendor import qtawesome
 
 from openpype.style import get_objected_colors
 
-from .lib import DynamicQThread
 from .views import (
     TreeViewSpinner,
     DeselectableTreeView
 )
+from .models import RecursiveSortFilterProxyModel
+from .lib import DynamicQThread
 
 if Qt.__binding__ == "PySide":
     from PySide.QtGui import QStyleOptionViewItemV4
@@ -458,3 +460,148 @@ class AssetModel(QtGui.QStandardItemModel):
             while self._doc_fetching_thread.isRunning():
                 time.sleep(0.01)
             self._doc_fetching_thread = None
+
+
+class AssetsWidget(QtWidgets.QWidget):
+    """A Widget to display a tree of assets with filter
+
+    To list the assets of the active project:
+        >>> # widget = AssetsWidget()
+        >>> # widget.refresh()
+        >>> # widget.show()
+
+    """
+
+    # on model refresh
+    refresh_triggered = QtCore.Signal()
+    refreshed = QtCore.Signal()
+    # on view selection change
+    selection_changed = QtCore.Signal()
+
+    def __init__(self, dbcon, parent=None):
+        super(AssetsWidget, self).__init__(parent=parent)
+
+        self.dbcon = dbcon
+
+        # Tree View
+        model = AssetModel(dbcon=self.dbcon, parent=self)
+        proxy = RecursiveSortFilterProxyModel()
+        proxy.setSourceModel(model)
+        proxy.setFilterCaseSensitivity(QtCore.Qt.CaseInsensitive)
+
+        view = AssetsView(self)
+        view.setModel(proxy)
+
+        current_asset_icon = qtawesome.icon(
+            "fa.arrow-down", color=style.colors.light
+        )
+        current_asset_btn = QtWidgets.QPushButton(self)
+        current_asset_btn.setIcon(current_asset_icon)
+        current_asset_btn.setToolTip("Go to Asset from current Session")
+        # Hide by default
+        current_asset_btn.setVisible(False)
+
+        refresh_icon = qtawesome.icon("fa.refresh", color=style.colors.light)
+        refresh_btn = QtWidgets.QPushButton(self)
+        refresh_btn.setIcon(refresh_icon)
+        refresh_btn.setToolTip("Refresh items")
+
+        filter_input = QtWidgets.QLineEdit(self)
+        filter_input.setPlaceholderText("Filter assets..")
+
+        # Header
+        header_layout = QtWidgets.QHBoxLayout()
+        header_layout.addWidget(filter_input)
+        header_layout.addWidget(current_asset_btn)
+        header_layout.addWidget(refresh_btn)
+
+        # Layout
+        layout = QtWidgets.QVBoxLayout(self)
+        layout.setContentsMargins(0, 0, 0, 0)
+        layout.setSpacing(4)
+        layout.addLayout(header_layout)
+        layout.addWidget(view)
+
+        # Signals/Slots
+        filter_input.textChanged.connect(self._on_filter_text_change)
+
+        selection_model = view.selectionModel()
+        selection_model.selectionChanged.connect(self._on_selection_change)
+        refresh_btn.clicked.connect(self.refresh)
+        current_asset_btn.clicked.connect(self.set_current_session_asset)
+        model.refreshed.connect(self._on_model_refresh)
+
+        self._current_asset_btn = current_asset_btn
+        self._model = model
+        self._proxy = proxy
+        self._view = view
+
+        self.model_selection = {}
+
+    def refresh(self):
+        self._refresh_model()
+
+    def set_current_session_asset(self):
+        asset_name = self.dbcon.Session.get("AVALON_ASSET")
+        if asset_name:
+            self.select_asset_by_name(asset_name)
+
+    def set_current_asset_btn_visibility(self, visible=None):
+        """Hide set current asset button.
+
+        Not all tools support using of current context asset.
+        """
+        if visible is None:
+            visible = not self._current_asset_btn.isVisible()
+        self._current_asset_btn.setVisible(visible)
+
+    def select_asset(self, asset_id):
+        index = self._model.get_index_by_asset_id(asset_id)
+        new_index = self._proxy.mapFromSource(index)
+        self._select_indexes([new_index])
+
+    def select_asset_by_name(self, asset_name):
+        index = self._model.get_index_by_asset_name(asset_name)
+        new_index = self._proxy.mapFromSource(index)
+        self._select_indexes([new_index])
+
+    def _on_selection_change(self):
+        self.selection_changed.emit()
+
+    def _on_filter_text_change(self, new_text):
+        self._proxy.setFilterFixedString(new_text)
+
+    def _on_model_refresh(self, has_item):
+        self._proxy.sort(0)
+        self._set_loading_state(loading=False, empty=not has_item)
+        self.refreshed.emit()
+
+    def _refresh_model(self):
+        # Store selection
+        self._set_loading_state(loading=True, empty=True)
+
+        # Trigger signal before refresh is called
+        self.refresh_triggered.emit()
+        # Refresh model
+        self._model.refresh()
+
+    def _set_loading_state(self, loading, empty):
+        self._view.set_loading_state(loading, empty)
+
+    def _select_indexes(self, indexes):
+        valid_indexes = [
+            index
+            for index in indexes
+            if index.isValid()
+        ]
+        if not valid_indexes:
+            return
+
+        selection_model = self._view.selectionModel()
+        selection_model.clearSelection()
+
+        mode = selection_model.Select | selection_model.Rows
+        for index in valid_indexes:
+            self._view.expand(self._proxy.parent(index))
+            selection_model.select(index, mode)
+        self._view.setCurrentIndex(valid_indexes[0])
