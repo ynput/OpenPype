@@ -452,7 +452,7 @@ class AssetModel(QtGui.QStandardItemModel):
                 icon = qtawesome.icon(full_icon_name, color=icon_color)
                 item.setData(icon, QtCore.Qt.DecorationRole)
 
-            except Exception as exception:
+            except Exception:
                 pass
 
         self.refreshed.emit(bool(self._items_by_asset_id))
