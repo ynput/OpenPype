@@ -13,6 +13,23 @@ from openpype.api import get_local_site_id
 
 from . import lib
 
+from openpype.tools.utils.constants import (
+    LOCAL_PROVIDER_ROLE,
+    REMOTE_PROVIDER_ROLE,
+    LOCAL_PROGRESS_ROLE,
+    REMOTE_PROGRESS_ROLE,
+    HEADER_NAME_ROLE,
+    EDIT_ICON_ROLE,
+    LOCAL_DATE_ROLE,
+    REMOTE_DATE_ROLE,
+    LOCAL_FAILED_ROLE,
+    REMOTE_FAILED_ROLE,
+    STATUS_ROLE,
+    PATH_ROLE,
+    ERROR_ROLE,
+    TRIES_ROLE
+)
+
 
 log = PypeLogger().get_logger("SyncServer")
 
@@ -68,9 +85,67 @@ class _SyncRepresentationModel(QtCore.QAbstractTableModel):
             if orientation == Qt.Horizontal:
                 return self.COLUMN_LABELS[section][1]
 
-        if role == lib.HeaderNameRole:
+        if role == HEADER_NAME_ROLE:
             if orientation == Qt.Horizontal:
                 return self.COLUMN_LABELS[section][0]  # return name
+
+    def data(self, index, role):
+        item = self._data[index.row()]
+
+        header_value = self._header[index.column()]
+        if role == LOCAL_PROVIDER_ROLE:
+            return item.local_provider
+
+        if role == REMOTE_PROVIDER_ROLE:
+            return item.remote_provider
+
+        if role == LOCAL_PROGRESS_ROLE:
+            return item.local_progress
+
+        if role == REMOTE_PROGRESS_ROLE:
+            return item.remote_progress
+
+        if role == LOCAL_DATE_ROLE:
+            if item.created_dt:
+                return pretty_timestamp(item.created_dt)
+
+        if role == REMOTE_DATE_ROLE:
+            if item.sync_dt:
+                return pretty_timestamp(item.sync_dt)
+
+        if role == LOCAL_FAILED_ROLE:
+            return item.status == lib.STATUS[2] and \
+                item.local_progress < 1
+
+        if role == REMOTE_FAILED_ROLE:
+            return item.status == lib.STATUS[2] and \
+                item.remote_progress < 1
+
+        if role in (Qt.DisplayRole, Qt.EditRole):
+            # because of ImageDelegate
+            if header_value in ['remote_site', 'local_site']:
+                return ""
+
+            return attr.asdict(item)[self._header[index.column()]]
+
+        if role == EDIT_ICON_ROLE:
+            if self.can_edit and header_value in self.EDITABLE_COLUMNS:
+                return self.edit_icon
+
+        if role == PATH_ROLE:
+            return item.path
+
+        if role == ERROR_ROLE:
+            return item.error
+
+        if role == TRIES_ROLE:
+            return item.tries
+
+        if role == STATUS_ROLE:
+            return item.status
+
+        if role == Qt.UserRole:
+            return item._id
 
     @property
     def can_edit(self):
@@ -124,7 +199,8 @@ class _SyncRepresentationModel(QtCore.QAbstractTableModel):
 
         if not representations:
             self.query = self.get_query(load_records)
-            representations = self.dbcon.aggregate(self.query)
+            representations = self.dbcon.aggregate(pipeline=self.query,
+                                                   allowDiskUse=True)
 
         self.add_page_records(self.active_site, self.remote_site,
                               representations)
@@ -159,7 +235,8 @@ class _SyncRepresentationModel(QtCore.QAbstractTableModel):
         items_to_fetch = min(self._total_records - self._rec_loaded,
                              self.PAGE_SIZE)
         self.query = self.get_query(self._rec_loaded)
-        representations = self.dbcon.aggregate(self.query)
+        representations = self.dbcon.aggregate(pipeline=self.query,
+                                               allowDiskUse=True)
         self.beginInsertRows(index,
                              self._rec_loaded,
                              self._rec_loaded + items_to_fetch - 1)
@@ -192,16 +269,16 @@ class _SyncRepresentationModel(QtCore.QAbstractTableModel):
         else:
             order = -1
 
-        backup_sort = dict(self.sort)
+        backup_sort = dict(self.sort_criteria)
 
-        self.sort = {self.SORT_BY_COLUMN[index]: order}  # reset
+        self.sort_criteria = {self.SORT_BY_COLUMN[index]: order}  # reset
         # add last one
         for key, val in backup_sort.items():
             if key != '_id' and key != self.SORT_BY_COLUMN[index]:
-                self.sort[key] = val
+                self.sort_criteria[key] = val
                 break
         # add default one
-        self.sort['_id'] = 1
+        self.sort_criteria['_id'] = 1
 
         self.query = self.get_query()
         # import json
@@ -209,7 +286,8 @@ class _SyncRepresentationModel(QtCore.QAbstractTableModel):
         #           replace('False', 'false').\
         #           replace('True', 'true').replace('None', 'null'))
 
-        representations = self.dbcon.aggregate(self.query)
+        representations = self.dbcon.aggregate(pipeline=self.query,
+                                               allowDiskUse=True)
         self.refresh(representations)
 
     def set_word_filter(self, word_filter):
@@ -440,66 +518,18 @@ class SyncRepresentationSummaryModel(_SyncRepresentationModel):
         self.active_site = self.sync_server.get_active_site(self.project)
         self.remote_site = self.sync_server.get_remote_site(self.project)
 
-        self.sort = self.DEFAULT_SORT
+        self.sort_criteria = self.DEFAULT_SORT
 
         self.query = self.get_query()
         self.default_query = list(self.get_query())
 
-        representations = self.dbcon.aggregate(self.query)
+        representations = self.dbcon.aggregate(pipeline=self.query,
+                                               allowDiskUse=True)
         self.refresh(representations)
 
         self.timer = QtCore.QTimer()
         self.timer.timeout.connect(self.tick)
         self.timer.start(self.REFRESH_SEC)
-
-    def data(self, index, role):
-        item = self._data[index.row()]
-
-        if role == lib.FullItemRole:
-            return item
-
-        header_value = self._header[index.column()]
-        if role == lib.ProviderRole:
-            if header_value == 'local_site':
-                return item.local_provider
-            if header_value == 'remote_site':
-                return item.remote_provider
-
-        if role == lib.ProgressRole:
-            if header_value == 'local_site':
-                return item.local_progress
-            if header_value == 'remote_site':
-                return item.remote_progress
-
-        if role == lib.DateRole:
-            if header_value == 'local_site':
-                if item.created_dt:
-                    return pretty_timestamp(item.created_dt)
-            if header_value == 'remote_site':
-                if item.sync_dt:
-                    return pretty_timestamp(item.sync_dt)
-
-        if role == lib.FailedRole:
-            if header_value == 'local_site':
-                return item.status == lib.STATUS[2] and \
-                    item.local_progress < 1
-            if header_value == 'remote_site':
-                return item.status == lib.STATUS[2] and \
-                    item.remote_progress < 1
-
-        if role in (Qt.DisplayRole, Qt.EditRole):
-            # because of ImageDelegate
-            if header_value in ['remote_site', 'local_site']:
-                return ""
-
-            return attr.asdict(item)[self._header[index.column()]]
-
-        if role == lib.EditIconRole:
-            if self.can_edit and header_value in self.EDITABLE_COLUMNS:
-                return self.edit_icon
-
-        if role == Qt.UserRole:
-            return item._id
 
     def add_page_records(self, local_site, remote_site, representations):
         """
@@ -732,7 +762,7 @@ class SyncRepresentationSummaryModel(_SyncRepresentationModel):
             )
 
         aggr.extend(
-            [{"$sort": self.sort},
+            [{"$sort": self.sort_criteria},
              {
                 '$facet': {
                     'paginatedResults': [{'$skip': self._rec_loaded},
@@ -970,64 +1000,16 @@ class SyncRepresentationDetailModel(_SyncRepresentationModel):
         self.active_site = self.sync_server.get_active_site(self.project)
         self.remote_site = self.sync_server.get_remote_site(self.project)
 
-        self.sort = self.DEFAULT_SORT
+        self.sort_criteria = self.DEFAULT_SORT
 
         self.query = self.get_query()
-        representations = self.dbcon.aggregate(self.query)
+        representations = self.dbcon.aggregate(pipeline=self.query,
+                                               allowDiskUse=True)
         self.refresh(representations)
 
         self.timer = QtCore.QTimer()
         self.timer.timeout.connect(self.tick)
         self.timer.start(SyncRepresentationSummaryModel.REFRESH_SEC)
-
-    def data(self, index, role):
-        item = self._data[index.row()]
-
-        if role == lib.FullItemRole:
-            return item
-
-        header_value = self._header[index.column()]
-        if role == lib.ProviderRole:
-            if header_value == 'local_site':
-                return item.local_provider
-            if header_value == 'remote_site':
-                return item.remote_provider
-
-        if role == lib.ProgressRole:
-            if header_value == 'local_site':
-                return item.local_progress
-            if header_value == 'remote_site':
-                return item.remote_progress
-
-        if role == lib.DateRole:
-            if header_value == 'local_site':
-                if item.created_dt:
-                    return pretty_timestamp(item.created_dt)
-            if header_value == 'remote_site':
-                if item.sync_dt:
-                    return pretty_timestamp(item.sync_dt)
-
-        if role == lib.FailedRole:
-            if header_value == 'local_site':
-                return item.status == lib.STATUS[2] and \
-                    item.local_progress < 1
-            if header_value == 'remote_site':
-                return item.status == lib.STATUS[2] and \
-                    item.remote_progress < 1
-
-        if role in (Qt.DisplayRole, Qt.EditRole):
-            # because of ImageDelegate
-            if header_value in ['remote_site', 'local_site']:
-                return ""
-
-            return attr.asdict(item)[self._header[index.column()]]
-
-        if role == lib.EditIconRole:
-            if self.can_edit and header_value in self.EDITABLE_COLUMNS:
-                return self.edit_icon
-
-        if role == Qt.UserRole:
-            return item._id
 
     def add_page_records(self, local_site, remote_site, representations):
         """
@@ -1235,7 +1217,7 @@ class SyncRepresentationDetailModel(_SyncRepresentationModel):
             print(self.column_filtering)
 
         aggr.extend([
-            {"$sort": self.sort},
+            {"$sort": self.sort_criteria},
             {
                 '$facet': {
                     'paginatedResults': [{'$skip': self._rec_loaded},

@@ -8,16 +8,10 @@
         "yetiRig": "ma"
     },
     "maya-dirmap": {
-        "enabled": true,
+        "enabled": false,
         "paths": {
-            "source-path": [
-                "foo1",
-                "foo2"
-            ],
-            "destination-path": [
-                "bar1",
-                "bar2"
-            ]
+            "source-path": [],
+            "destination-path": []
         }
     },
     "scriptsmenu": {
@@ -255,6 +249,11 @@
             "optional": true,
             "active": true
         },
+        "ValidateMeshNgons": {
+            "enabled": false,
+            "optional": true,
+            "active": true
+        },
         "ValidateMeshNonManifold": {
             "enabled": false,
             "optional": true,
@@ -310,7 +309,17 @@
             "optional": true,
             "active": true
         },
+        "ValidateShapeZero": {
+            "enabled": false,
+            "optional": true,
+            "active": true
+        },
         "ValidateTransformZero": {
+            "enabled": false,
+            "optional": true,
+            "active": true
+        },
+        "ValidateUniqueNames": {
             "enabled": false,
             "optional": true,
             "active": true

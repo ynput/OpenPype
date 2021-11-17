@@ -37,7 +37,8 @@ class ExtractBlend(openpype.api.Extractor):
                         if tree.type == 'SHADER':
                             for node in tree.nodes:
                                 if node.bl_idname == 'ShaderNodeTexImage':
-                                    node.image.pack()
+                                    if node.image:
+                                        node.image.pack()
 
         bpy.data.libraries.write(filepath, data_blocks)
 

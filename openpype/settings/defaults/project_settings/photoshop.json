@@ -30,8 +30,7 @@
         },
         "ExtractReview": {
             "jpg_options": {
-                "tags": [
-                ]
+                "tags": []
             },
             "mov_options": {
                 "tags": [

@@ -107,7 +107,7 @@ class DictConditionalEntity(ItemEntity):
         for _key, _value in new_value.items():
             self.non_gui_children[self.current_enum][_key].set(_value)
 
-    def _item_initalization(self):
+    def _item_initialization(self):
         self._default_metadata = NOT_SET
         self._studio_override_metadata = NOT_SET
         self._project_override_metadata = NOT_SET
@@ -762,6 +762,17 @@ class SyncServerProviders(DictConditionalEntity):
 
         enum_children = []
         for provider_code, configurables in system_settings_schema.items():
+            # any site could be exposed or vendorized by different site
+            # eg studio site content could be mapped on sftp site, single file
+            # accessible via 2 different protocols (sites)
+            configurables.append(
+                {
+                    "type": "list",
+                    "key": "alternative_sites",
+                    "label": "Alternative sites",
+                    "object_type": "text"
+                }
+            )
             label = provider_code_to_label.get(provider_code) or provider_code
 
             enum_children.append({

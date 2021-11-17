@@ -362,7 +362,7 @@ class NumberEntity(InputEntity):
     float_number_regex = re.compile(r"^\d+\.\d+$")
     int_number_regex = re.compile(r"^\d+$")
 
-    def _item_initalization(self):
+    def _item_initialization(self):
         self.minimum = self.schema_data.get("minimum", -99999)
         self.maximum = self.schema_data.get("maximum", 99999)
         self.decimal = self.schema_data.get("decimal", 0)
@@ -420,7 +420,7 @@ class NumberEntity(InputEntity):
 class BoolEntity(InputEntity):
     schema_types = ["boolean"]
 
-    def _item_initalization(self):
+    def _item_initialization(self):
         self.valid_value_types = (bool, )
         value_on_not_set = self.convert_to_valid_type(
             self.schema_data.get("default", True)
@@ -431,7 +431,7 @@ class BoolEntity(InputEntity):
 class TextEntity(InputEntity):
     schema_types = ["text"]
 
-    def _item_initalization(self):
+    def _item_initialization(self):
         self.valid_value_types = (STRING_TYPE, )
         self.value_on_not_set = ""
 
@@ -449,7 +449,7 @@ class TextEntity(InputEntity):
 class PathInput(InputEntity):
     schema_types = ["path-input"]
 
-    def _item_initalization(self):
+    def _item_initialization(self):
         self.valid_value_types = (STRING_TYPE, )
         self.value_on_not_set = ""
 
@@ -460,7 +460,7 @@ class PathInput(InputEntity):
 class RawJsonEntity(InputEntity):
     schema_types = ["raw-json"]
 
-    def _item_initalization(self):
+    def _item_initialization(self):
         # Schema must define if valid value is dict or list
         store_as_string = self.schema_data.get("store_as_string", False)
         is_list = self.schema_data.get("is_list", False)

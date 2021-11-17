@@ -1,8 +1,10 @@
 import os
 import json
 import collections
-from openpype.modules import OpenPypeModule
 
+import click
+
+from openpype.modules import OpenPypeModule
 from openpype_interfaces import (
     ITrayModule,
     IPluginPaths,
@@ -224,8 +226,8 @@ class FtrackModule(
         if not project_name:
             return
 
-        attributes_changes = changes.get("attributes")
-        if not attributes_changes:
+        new_attr_values = new_value.get("attributes")
+        if not new_attr_values:
             return
 
         import ftrack_api
@@ -275,7 +277,7 @@ class FtrackModule(
 
         failed = {}
         missing = {}
-        for key, value in attributes_changes.items():
+        for key, value in new_attr_values.items():
             if key not in ca_keys:
                 continue
 
@@ -349,12 +351,24 @@ class FtrackModule(
         if "server_url" not in session_kwargs:
             session_kwargs["server_url"] = self.ftrack_url
 
-        if "api_key" not in session_kwargs or "api_user" not in session_kwargs:
+        api_key = session_kwargs.get("api_key")
+        api_user = session_kwargs.get("api_user")
+        # First look into environments
+        # - both OpenPype tray and ftrack event server should have set them
+        # - ftrack event server may crash when credentials are tried to load
+        #   from keyring
+        if not api_key or not api_user:
+            api_key = os.environ.get("FTRACK_API_KEY")
+            api_user = os.environ.get("FTRACK_API_USER")
+
+        if not api_key or not api_user:
             from .lib import credentials
             cred = credentials.get_credentials()
-            session_kwargs["api_user"] = cred.get("username")
-            session_kwargs["api_key"] = cred.get("api_key")
+            api_user = cred.get("username")
+            api_key = cred.get("api_key")
 
+        session_kwargs["api_user"] = api_user
+        session_kwargs["api_key"] = api_key
         return ftrack_api.Session(**session_kwargs)
 
     def tray_init(self):
@@ -409,3 +423,62 @@ class FtrackModule(
             return 0
         hours_logged = (task_entity["time_logged"] / 60) / 60
         return hours_logged
+
+    def get_credentials(self):
+        # type: () -> tuple
+        """Get local Ftrack credentials."""
+        from .lib import credentials
+
+        cred = credentials.get_credentials(self.ftrack_url)
+        return cred.get("username"), cred.get("api_key")
+
+    def cli(self, click_group):
+        click_group.add_command(cli_main)
+
+
+@click.group(FtrackModule.name, help="Ftrack module related commands.")
+def cli_main():
+    pass
+
+
+@cli_main.command()
+@click.option("-d", "--debug", is_flag=True, help="Print debug messages")
+@click.option("--ftrack-url", envvar="FTRACK_SERVER",
+              help="Ftrack server url")
+@click.option("--ftrack-user", envvar="FTRACK_API_USER",
+              help="Ftrack api user")
+@click.option("--ftrack-api-key", envvar="FTRACK_API_KEY",
+              help="Ftrack api key")
+@click.option("--legacy", is_flag=True,
+              help="run event server without mongo storing")
+@click.option("--clockify-api-key", envvar="CLOCKIFY_API_KEY",
+              help="Clockify API key.")
+@click.option("--clockify-workspace", envvar="CLOCKIFY_WORKSPACE",
+              help="Clockify workspace")
+def eventserver(
+    debug,
+    ftrack_url,
+    ftrack_user,
+    ftrack_api_key,
+    legacy,
+    clockify_api_key,
+    clockify_workspace
+):
+    """Launch ftrack event server.
+
+    This should be ideally used by system service (such us systemd or upstart
+    on linux and window service).
+    """
+    if debug:
+        os.environ["OPENPYPE_DEBUG"] = "3"
+
+    from .ftrack_server.event_server_cli import run_event_server
+
+    return run_event_server(
+        ftrack_url,
+        ftrack_user,
+        ftrack_api_key,
+        legacy,
+        clockify_api_key,
+        clockify_workspace
+    )

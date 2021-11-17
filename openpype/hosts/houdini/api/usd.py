@@ -4,8 +4,8 @@ import contextlib
 
 import logging
 from Qt import QtCore, QtGui
-from avalon.tools.widgets import AssetWidget
-from avalon import style
+from openpype.tools.utils.widgets import AssetWidget
+from avalon import style, io
 
 from pxr import Sdf
 
@@ -31,7 +31,7 @@ def pick_asset(node):
     # Construct the AssetWidget as a frameless popup so it automatically
     # closes when clicked outside of it.
     global tool
-    tool = AssetWidget(silo_creatable=False)
+    tool = AssetWidget(io)
     tool.setContentsMargins(5, 5, 5, 5)
     tool.setWindowTitle("Pick Asset")
     tool.setStyleSheet(style.load_stylesheet())
@@ -41,8 +41,6 @@ def pick_asset(node):
     # Select the current asset if there is any
     name = parm.eval()
     if name:
-        from avalon import io
-
         db_asset = io.find_one({"name": name, "type": "asset"})
         if db_asset:
             silo = db_asset.get("silo")
