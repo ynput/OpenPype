@@ -364,6 +364,8 @@ class AssetModel(QtGui.QStandardItemModel):
         if not self._refreshing:
             root_item = self.invisibleRootItem()
             root_item.removeRows(0, root_item.rowCount())
+            self._items_by_asset_id = {}
+            self._items_with_color_by_id = {}
             return
 
         asset_docs = self._doc_payload
