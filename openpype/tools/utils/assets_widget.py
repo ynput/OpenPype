@@ -518,6 +518,7 @@ class AssetsWidget(QtWidgets.QWidget):
         proxy = RecursiveSortFilterProxyModel()
         proxy.setSourceModel(model)
         proxy.setFilterCaseSensitivity(QtCore.Qt.CaseInsensitive)
+        proxy.setSortCaseSensitivity(QtCore.Qt.CaseInsensitive)
 
         view = AssetsView(self)
         view.setModel(proxy)
