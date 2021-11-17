@@ -8,6 +8,7 @@ from avalon import style
 from avalon.vendor import qtawesome
 
 from openpype.style import get_objected_colors
+from openpype.tools.flickcharm import FlickCharm
 
 from .views import (
     TreeViewSpinner,
@@ -37,6 +38,26 @@ class AssetsView(TreeViewSpinner, DeselectableTreeView):
         self.setIndentation(15)
         self.setContextMenuPolicy(QtCore.Qt.CustomContextMenu)
         self.setHeaderHidden(True)
+
+        self._flick_charm_activated = False
+        self._flick_charm = FlickCharm(parent=self)
+        self._before_flick_scroll_mode = None
+
+    def activate_flick_charm(self):
+        if self._flick_charm_activated:
+            return
+        self._flick_charm_activated = True
+        self._before_flick_scroll_mode = self.verticalScrollMode()
+        self._flick_charm.activateOn(self)
+        self.setVerticalScrollMode(self.ScrollPerPixel)
+
+    def deactivate_flick_charm(self):
+        if not self._flick_charm_activated:
+            return
+        self._flick_charm_activated = False
+        self._flick_charm.deactivateFrom(self)
+        if self._before_flick_scroll_mode is not None:
+            self.setVerticalScrollMode(self._before_flick_scroll_mode)
 
     def mousePressEvent(self, event):
         index = self.indexAt(event.pos())
@@ -564,6 +585,12 @@ class AssetsWidget(QtWidgets.QWidget):
         index = self._model.get_index_by_asset_name(asset_name)
         new_index = self._proxy.mapFromSource(index)
         self._select_indexes([new_index])
+
+    def activate_flick_charm(self):
+        self._view.activate_flick_charm()
+
+    def deactivate_flick_charm(self):
+        self._view.deactivate_flick_charm()
 
     def _on_selection_change(self):
         self.selection_changed.emit()
