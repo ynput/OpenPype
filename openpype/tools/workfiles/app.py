@@ -991,7 +991,7 @@ class Window(QtWidgets.QMainWindow):
             workdir, filename = os.path.split(filepath)
             asset_docs = self.assets_widget.get_selected_assets()
             asset_doc = asset_docs[0]
-            task_name = self.tasks_widget.get_current_task_name()
+            task_name = self.tasks_widget.get_selected_task_name()
             create_workfile_doc(asset_doc, task_name, filename, workdir, io)
 
     def set_context(self, context):
