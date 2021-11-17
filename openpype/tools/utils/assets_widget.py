@@ -623,3 +623,58 @@ class SingleSelectAssetsWidget(AssetsWidget):
         for index in indexes:
             return index.data(ASSET_NAME_ROLE)
         return None
+
+
+class MultiSelectAssetsWidget(AssetsWidget):
+    def __init__(self, *args, **kwargs):
+        super(MultiSelectAssetsWidget, self).__init__(*args, **kwargs)
+        delegate = UnderlinesAssetDelegate()
+
+        self._view.setSelectionMode(QtWidgets.QTreeView.ExtendedSelection)
+        self._view.setItemDelegate(delegate)
+
+        self._delegate = delegate
+
+    def get_selected_asset_ids(self):
+        """Return the asset item of the current selection."""
+        selection_model = self._view.selectionModel()
+        indexes = selection_model.selectedRows()
+        return [
+            index.data(ASSET_ID_ROLE)
+            for index in indexes
+        ]
+
+    def get_selected_asset_names(self):
+        """Return the asset document of the current selection."""
+        selection_model = self._view.selectionModel()
+        indexes = selection_model.selectedRows()
+        return [
+            index.data(ASSET_NAME_ROLE)
+            for index in indexes
+        ]
+
+    def select_assets(self, asset_ids):
+        indexes = self._model.get_indexes_by_asset_ids(asset_ids)
+        new_indexes = [
+            self._proxy.mapFromSource(index)
+            for index in indexes
+        ]
+        self._select_indexes(new_indexes)
+
+    def select_assets_by_name(self, asset_names):
+        indexes = self._model.get_indexes_by_asset_names(asset_names)
+        new_indexes = [
+            self._proxy.mapFromSource(index)
+            for index in indexes
+        ]
+        self._select_indexes(new_indexes)
+
+    def clear_underlines(self):
+        self._model.clear_underlines()
+
+        self._view.updateGeometries()
+
+    def set_underline_colors(self, colors_by_asset_id):
+        self._model.set_underline_colors(colors_by_asset_id)
+        # Trigger repaint
+        self._view.updateGeometries()
