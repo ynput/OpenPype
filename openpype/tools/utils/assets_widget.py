@@ -5,6 +5,11 @@ from .views import (
     DeselectableTreeView
 )
 
+ASSET_ID_ROLE = QtCore.Qt.UserRole + 1
+ASSET_NAME_ROLE = QtCore.Qt.UserRole + 2
+ASSET_LABEL_ROLE = QtCore.Qt.UserRole + 3
+ASSET_UNDERLINE_COLORS_ROLE = QtCore.Qt.UserRole + 4
+
 
 class AssetsView(TreeViewSpinner, DeselectableTreeView):
     """Item view.
