@@ -25,7 +25,7 @@ class TestPublishInPhotoshop(PublishTest):
     ]
 
     APP = "photoshop"
-    APP_VARIANT = "2020"
+    APP_VARIANT = "2021"
 
     APP_NAME = "{}/{}".format(APP, APP_VARIANT)
 
