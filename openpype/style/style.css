@@ -19,7 +19,7 @@ Enabled vs Disabled logic in most of stylesheets
 */
 
 * {
-    font-size: 9pt;
+    font-size: 10pt;
     font-family: "Noto Sans";
     font-weight: 450;
     outline: none;
@@ -735,7 +735,7 @@ QScrollBar::add-page:vertical, QScrollBar::sub-page:vertical {
 /* Launcher specific stylesheets */
 #IconView[mode="icon"] {
     /* font size can't be set on items */
-    font-size: 8pt;
+    font-size: 9pt;
     border: 0px;
     padding: 0px;
     margin: 0px;
