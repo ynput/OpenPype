@@ -169,7 +169,7 @@ class UnderlinesAssetDelegate(QtWidgets.QItemDelegate):
         pen.setWidth(0)
         painter.setPen(pen)
         painter.setBrush(QtGui.QBrush(bg_color))
-        painter.drawRoundedRect(option.rect, 3, 3)
+        painter.drawRect(option.rect)
 
         if option.state & QtWidgets.QStyle.State_Selected:
             for color, subset_rect in subset_rects:
