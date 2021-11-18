@@ -104,7 +104,7 @@ class ProcessSubmittedJobOnFarm(pyblish.api.InstancePlugin):
     families = ["render.farm", "prerender.farm",
                 "renderlayer", "imagesequence", "vrayscene"]
 
-    aov_filter = {"maya": [r".*(?:\.|_)*([Bb]eauty)(?:\.|_)*.*"],
+    aov_filter = {"maya": [r".*(?:[\._-])*([Bb]eauty)(?:[\.|_])*.*"],
                   "aftereffects": [r".*"],  # for everything from AE
                   "harmony": [r".*"],  # for everything from AE
                   "celaction": [r".*"]}

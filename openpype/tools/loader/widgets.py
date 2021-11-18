@@ -794,19 +794,23 @@ class ThumbnailWidget(QtWidgets.QLabel):
             QtCore.Qt.SmoothTransformation
         )
 
-    def set_thumbnail(self, entity=None):
-        if not entity:
+    def set_thumbnail(self, doc_id=None):
+        if not doc_id:
             self.set_pixmap()
             return
 
-        if isinstance(entity, (list, tuple)):
-            if len(entity) == 1:
-                entity = entity[0]
-            else:
+        if isinstance(doc_id, (list, tuple)):
+            if len(doc_id) < 1:
                 self.set_pixmap()
                 return
+            doc_id = doc_id[0]
 
-        thumbnail_id = entity.get("data", {}).get("thumbnail_id")
+        doc = self.dbcon.find_one(
+            {"_id": doc_id},
+            {"data.thumbnail_id"}
+        )
+
+        thumbnail_id = doc.get("data", {}).get("thumbnail_id")
         if thumbnail_id == self.current_thumb_id:
             if self.current_thumbnail is None:
                 self.set_pixmap()

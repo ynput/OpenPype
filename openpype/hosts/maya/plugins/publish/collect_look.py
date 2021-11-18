@@ -532,7 +532,7 @@ class CollectLook(pyblish.api.InstancePlugin):
             color_space = cmds.getAttr(color_space_attr)
         except ValueError:
             # node doesn't have colorspace attribute
-            color_space = "raw"
+            color_space = "Raw"
         # Compare with the computed file path, e.g. the one with the <UDIM>
         # pattern in it, to generate some logging information about this
         # difference

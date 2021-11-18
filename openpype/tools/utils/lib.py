@@ -445,6 +445,30 @@ class GroupsConfig:
         return ordered_groups, subset_docs_without_group, subset_docs_by_group
 
 
+class DynamicQThread(QtCore.QThread):
+    """QThread which can run any function with argument and kwargs.
+
+    Args:
+        func (function): Function which will be called.
+        args (tuple): Arguments which will be passed to function.
+        kwargs (tuple): Keyword arguments which will be passed to function.
+        parent (QObject): Parent of thread.
+    """
+    def __init__(self, func, args=None, kwargs=None, parent=None):
+        super(DynamicQThread, self).__init__(parent)
+        if args is None:
+            args = tuple()
+        if kwargs is None:
+            kwargs = {}
+        self._func = func
+        self._args = args
+        self._kwargs = kwargs
+
+    def run(self):
+        """Execute the function with arguments."""
+        self._func(*self._args, **self._kwargs)
+
+
 def create_qthread(func, *args, **kwargs):
     class Thread(QtCore.QThread):
         def run(self):
