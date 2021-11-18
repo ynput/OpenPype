@@ -349,6 +349,9 @@ class BoolWidget(InputWidget):
     def _on_value_change(self):
         if self.ignore_input_changes:
             return
+        self.start_value_timer()
+
+    def _on_value_change_timer(self):
         self.entity.set(self.input_field.isChecked())
 
 
