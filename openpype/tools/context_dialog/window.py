@@ -113,9 +113,7 @@ class ContextDialog(QtWidgets.QDialog):
         assets_widget.selection_changed.connect(self._on_asset_change)
         assets_widget.refresh_triggered.connect(self._on_asset_refresh_trigger)
         assets_widget.refreshed.connect(self._on_asset_widget_refresh_finished)
-        tasks_widget.task_changed.selectionChanged.connect(
-            self._on_task_change
-        )
+        tasks_widget.task_changed.connect(self._on_task_change)
         ok_btn.clicked.connect(self._on_ok_click)
 
         self._dbcon = dbcon

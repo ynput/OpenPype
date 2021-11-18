@@ -38,6 +38,7 @@ class App(QtWidgets.QWidget):
 
         # Store callback references
         self._callbacks = []
+        self._connections_set_up = False
 
         filename = get_workfile()
 
@@ -46,16 +47,9 @@ class App(QtWidgets.QWidget):
         self.setWindowFlags(QtCore.Qt.Window)
         self.setParent(parent)
 
-        # Force to delete the window on close so it triggers
-        # closeEvent only once. Otherwise it's retriggered when
-        # the widget gets garbage collected.
-        self.setAttribute(QtCore.Qt.WA_DeleteOnClose)
-
         self.resize(750, 500)
 
         self.setup_ui()
-
-        self.setup_connections()
 
         # Force refresh check on initialization
         self._on_renderlayer_switch()
@@ -111,6 +105,16 @@ class App(QtWidgets.QWidget):
         asset_outliner.view.setColumnWidth(0, 200)
         look_outliner.view.setColumnWidth(0, 150)
 
+        asset_outliner.selection_changed.connect(
+            self.on_asset_selection_changed)
+
+        asset_outliner.refreshed.connect(
+            lambda: self.echo("Loaded assets..")
+        )
+
+        look_outliner.menu_apply_action.connect(self.on_process_selected)
+        remove_unused_btn.clicked.connect(remove_unused_looks)
+
         # Open widgets
         self.asset_outliner = asset_outliner
         self.look_outliner = look_outliner
@@ -123,15 +127,8 @@ class App(QtWidgets.QWidget):
 
     def setup_connections(self):
         """Connect interactive widgets with actions"""
-
-        self.asset_outliner.selection_changed.connect(
-            self.on_asset_selection_changed)
-
-        self.asset_outliner.refreshed.connect(
-            lambda: self.echo("Loaded assets.."))
-
-        self.look_outliner.menu_apply_action.connect(self.on_process_selected)
-        self.remove_unused.clicked.connect(remove_unused_looks)
+        if self._connections_set_up:
+            return
 
         # Maya renderlayer switch callback
         callback = om.MEventMessage.addEventCallback(
@@ -139,14 +136,23 @@ class App(QtWidgets.QWidget):
             self._on_renderlayer_switch
         )
         self._callbacks.append(callback)
+        self._connections_set_up = True
 
-    def closeEvent(self, event):
-
+    def remove_connection(self):
         # Delete callbacks
         for callback in self._callbacks:
             om.MMessage.removeCallback(callback)
 
-        return super(App, self).closeEvent(event)
+        self._callbacks = []
+        self._connections_set_up = False
+
+    def showEvent(self, event):
+        self.setup_connections()
+        super(App, self).showEvent(event)
+
+    def closeEvent(self, event):
+        self.remove_connection()
+        super(App, self).closeEvent(event)
 
     def _on_renderlayer_switch(self, *args):
         """Callback that updates on Maya renderlayer switch"""
