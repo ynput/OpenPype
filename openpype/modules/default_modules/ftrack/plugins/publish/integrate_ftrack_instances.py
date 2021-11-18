@@ -122,6 +122,51 @@ class IntegrateFtrackInstance(pyblish.api.InstancePlugin):
         # Components data
         component_list = []
         
+        # Create review components
+        # Change asset name of each new component for review
+        first_review_repre = True
+        for repre in review_representations:
+            frame_start = repre.get("frameStartFtrack")
+            frame_end = repre.get("frameEndFtrack")
+            if frame_start is None or frame_end is None:
+                frame_start = instance.data["frameStart"]
+                frame_end = instance.data["frameEnd"]
+
+            # Frame end of uploaded video file should be duration in frames
+            # - frame start is always 0
+            # - frame end is duration in frames
+            duration = frame_end - frame_start + 1
+
+            fps = repre.get("fps")
+            if fps is None:
+                fps = instance_fps
+
+            # Create copy of base comp item and append it
+            component_item = copy.deepcopy(base_component_item)
+            # Change location
+            component_item["component_path"] = repre["published_path"]
+            # Change component data
+            component_item["component_data"] = {
+                # Default component name is "main".
+                "name": "ftrackreview-mp4",
+                "metadata": {
+                    "ftr_meta": json.dumps({
+                        "frameIn": 0,
+                        "frameOut": int(duration),
+                        "frameRate": float(fps)
+                    })
+                }
+            }
+            if first_review_repre:
+                first_review_repre = False
+            else:
+                # Add representation name to asset name of "not first" review
+                component_item["asset_data"]["name"] += repre["name"].title()
+
+            # Set location
+            component_item["component_location"] = ftrack_server_location
+            # Add item to component list
+            component_list.append(component_item)
 
         # Create thumbnail components
         # TODO what if there is multiple thumbnails?
