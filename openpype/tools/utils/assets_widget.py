@@ -14,6 +14,7 @@ from .views import (
     TreeViewSpinner,
     DeselectableTreeView
 )
+from .widgets import PlaceholderLineEdit
 from .models import RecursiveSortFilterProxyModel
 from .lib import DynamicQThread
 
@@ -602,7 +603,7 @@ class AssetsWidget(QtWidgets.QWidget):
         refresh_btn.setIcon(refresh_icon)
         refresh_btn.setToolTip("Refresh items")
 
-        filter_input = QtWidgets.QLineEdit(self)
+        filter_input = PlaceholderLineEdit(self)
         filter_input.setPlaceholderText("Filter assets..")
 
         # Header
