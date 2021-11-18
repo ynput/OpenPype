@@ -66,6 +66,32 @@ class IntegrateFtrackInstance(pyblish.api.InstancePlugin):
             ).format(str(instance)))
             return
 
+        # Prepare FPS
+        instance_fps = instance.data.get("fps")
+        if instance_fps is None:
+            instance_fps = instance.context.data["fps"]
+
+        # Base of component item data
+        # - create a copy of this object when want to use it
+        base_component_item = {
+            "assettype_data": {
+                "short": asset_type,
+            },
+            "asset_data": {
+                "name": instance.data["subset"],
+            },
+            "assetversion_data": {
+                "version": version_number,
+                "comment": instance.context.data.get("comment") or ""
+            },
+            "component_overwrite": False,
+            # This can be change optionally
+            "thumbnail": False,
+            # These must be changed for each component
+            "component_data": None,
+            "component_path": None,
+            "component_location": None
+        }
         componentList = []
         ft_session = instance.context.data["ftrackSession"]
 
