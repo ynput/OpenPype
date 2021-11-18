@@ -8,6 +8,7 @@ import pyblish.api
 
 from openpype import uninstall
 from openpype.lib.mongo import OpenPypeMongoConnection
+from openpype.lib.plugin_tools import parse_json
 
 
 def get_webpublish_conn():
@@ -31,7 +32,8 @@ def start_webpublish_log(dbcon, batch_id, user):
         "batch_id": batch_id,
         "start_date": datetime.now(),
         "user": user,
-        "status": "in_progress"
+        "status": "in_progress",
+        "progress": 0.0
     }).inserted_id
 
 
@@ -157,3 +159,28 @@ def _get_close_plugin(close_plugin_name, log):
                 return plugin
 
     log.warning("Close plugin not found, app might not close.")
+
+
+def get_task_data(batch_dir):
+    """Return parsed data from first task manifest.json
+
+        Used for `remotepublishfromapp` command where batch contains only
+        single task with publishable workfile.
+
+        Returns:
+            (dict)
+        Throws:
+            (ValueError) if batch or task manifest not found or broken
+    """
+    batch_data = parse_json(os.path.join(batch_dir, "manifest.json"))
+    if not batch_data:
+        raise ValueError(
+            "Cannot parse batch meta in {} folder".format(batch_dir))
+    task_dir_name = batch_data["tasks"][0]
+    task_data = parse_json(os.path.join(batch_dir, task_dir_name,
+                                        "manifest.json"))
+    if not task_data:
+        raise ValueError(
+            "Cannot parse batch meta in {} folder".format(task_data))
+
+    return task_data
