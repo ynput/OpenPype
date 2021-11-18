@@ -123,6 +123,16 @@ class IntegrateFtrackInstance(pyblish.api.InstancePlugin):
         component_list = []
         
 
+        # Add others representations as component
+        for repre in other_representations:
+            # Create copy of base comp item and append it
+            component_item = copy.deepcopy(base_component_item)
+            component_item["component_data"] = {
+                "name": repre["name"]
+            }
+            component_item["component_location"] = unmanaged_location
+            component_list.append(component_item)
+
         def json_obj_parser(obj):
             return str(obj)
 
