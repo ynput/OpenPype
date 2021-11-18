@@ -21,7 +21,7 @@ F_PROJ_ENTITY = None
 COMPONENTS_DONE = []
 
 SCRIPT_DIR = os.path.dirname(__file__)
-PACKAGE_DIR = os.path.join(SCRIPT_DIR, "flame_to_ftrack_modules")
+PACKAGE_DIR = os.path.join(SCRIPT_DIR, "modules")
 EXPORT_PRESETS_DIR = os.path.join(SCRIPT_DIR, "export_preset")
 CONFIG_DIR = os.path.join(os.path.expanduser(
     "~/.openpype"), "openpype_flame_to_ftrack")
