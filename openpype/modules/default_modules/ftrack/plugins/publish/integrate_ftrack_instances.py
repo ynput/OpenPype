@@ -1,54 +1,55 @@
-import pyblish.api
-import json
 import os
+import json
+import pyblish.api
 
 
 class IntegrateFtrackInstance(pyblish.api.InstancePlugin):
-    """Collect ftrack component data
+    """Collect ftrack component data (not integrate yet).
 
     Add ftrack component list to instance.
-
-
     """
 
     order = pyblish.api.IntegratorOrder + 0.48
-    label = 'Integrate Ftrack Component'
+    label = "Integrate Ftrack Component"
     families = ["ftrack"]
 
-    family_mapping = {'camera': 'cam',
-                      'look': 'look',
-                      'mayaascii': 'scene',
-                      'model': 'geo',
-                      'rig': 'rig',
-                      'setdress': 'setdress',
-                      'pointcache': 'cache',
-                      'render': 'render',
-                      'render2d': 'render',
-                      'nukescript': 'comp',
-                      'write': 'render',
-                      'review': 'mov',
-                      'plate': 'img',
-                      'audio': 'audio',
-                      'workfile': 'scene',
-                      'animation': 'cache',
-                      'image': 'img',
-                      'reference': 'reference'
-                      }
+    family_mapping = {
+        "camera": "cam",
+        "look": "look",
+        "mayaascii": "scene",
+        "model": "geo",
+        "rig": "rig",
+        "setdress": "setdress",
+        "pointcache": "cache",
+        "render": "render",
+        "render2d": "render",
+        "nukescript": "comp",
+        "write": "render",
+        "review": "mov",
+        "plate": "img",
+        "audio": "audio",
+        "workfile": "scene",
+        "animation": "cache",
+        "image": "img",
+        "reference": "reference"
+    }
 
     def process(self, instance):
         self.ftrack_locations = {}
-        self.log.debug('instance {}'.format(instance))
+        self.log.debug("instance {}".format(instance))
 
-        if instance.data.get('version'):
-            version_number = int(instance.data.get('version'))
-        else:
+        instance_version = instance.data.get("version")
+        if instance_version is None:
             raise ValueError("Instance version not set")
 
-        family = instance.data['family'].lower()
+        version_number = int(instance_version)
+
+        family = instance.data["family"]
+        family_low = instance.data["family"].lower()
 
         asset_type = instance.data.get("ftrackFamily")
-        if not asset_type and family in self.family_mapping:
-            asset_type = self.family_mapping[family]
+        if not asset_type and family_low in self.family_mapping:
+            asset_type = self.family_mapping[family_low]
 
         # Ignore this instance if neither "ftrackFamily" or a family mapping is
         # found.
