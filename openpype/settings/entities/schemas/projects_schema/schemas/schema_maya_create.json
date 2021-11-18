@@ -46,6 +46,18 @@
                     "key": "defaults",
                     "label": "Default Subsets",
                     "object_type": "text"
+                },
+                {
+                    "key": "aov_separator",
+                    "label": "AOV Separator character",
+                    "type": "enum",
+                    "multiselection": false,
+                    "default": "underscore",
+                    "enum_items": [
+                        {"dash":  "- (dash)"},
+                        {"underscore":  "_ (underscore)"},
+                        {"dot": ". (dot)"}
+                    ]
                 }
             ]
         },

@@ -62,6 +62,12 @@ class CollectMayaRender(pyblish.api.ContextPlugin):
     label = "Collect Render Layers"
     sync_workfile_version = False
 
+    _aov_chars = {
+        "dot": ".",
+        "dash": "-",
+        "underscore": "_"
+    }
+
     def process(self, context):
         """Entry point to collector."""
         render_instance = None
@@ -167,6 +173,18 @@ class CollectMayaRender(pyblish.api.ContextPlugin):
             if renderer.startswith("renderman"):
                 renderer = "renderman"
 
+            try:
+                aov_separator = self._aov_chars[(
+                    context.data["project_settings"]
+                    ["create"]
+                    ["CreateRender"]
+                    ["aov_separator"]
+                )]
+            except KeyError:
+                aov_separator = "_"
+
+            render_instance.data["aovSeparator"] = aov_separator
+
             # return all expected files for all cameras and aovs in given
             # frame range
             layer_render_products = get_layer_render_products(
@@ -267,6 +285,17 @@ class CollectMayaRender(pyblish.api.ContextPlugin):
             self.log.info(full_exp_files)
             self.log.info("collecting layer: {}".format(layer_name))
             # Get layer specific settings, might be overrides
+
+            try:
+                aov_separator = self._aov_chars[(
+                    context.data["project_settings"]
+                    ["create"]
+                    ["CreateRender"]
+                    ["aov_separator"]
+                )]
+            except KeyError:
+                aov_separator = "_"
+
             data = {
                 "subset": expected_layer_name,
                 "attachTo": attach_to,
@@ -308,7 +337,8 @@ class CollectMayaRender(pyblish.api.ContextPlugin):
                     "convertToScanline") or False,
                 "useReferencedAovs": render_instance.data.get(
                     "useReferencedAovs") or render_instance.data.get(
-                        "vrayUseReferencedAovs") or False
+                        "vrayUseReferencedAovs") or False,
+                "aovSeparator": aov_separator
             }
 
             if deadline_url:
