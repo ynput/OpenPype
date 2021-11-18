@@ -29,8 +29,10 @@ ASSET_UNDERLINE_COLORS_ROLE = QtCore.Qt.UserRole + 4
 
 
 class AssetsView(TreeViewSpinner, DeselectableTreeView):
-    """Item view.
-    This implements a context menu.
+    """Asset items view.
+
+    Adds abilities to deselect, show loading spinner and add flick charm (scroll
+    by mouse/touchpad click and move).
     """
 
     def __init__(self, parent=None):
@@ -71,6 +73,14 @@ class AssetsView(TreeViewSpinner, DeselectableTreeView):
         super(AssetsView, self).mousePressEvent(event)
 
     def set_loading_state(self, loading, empty):
+        """Change loading state.
+
+        TODO: Separate into 2 individual methods.
+
+        Args:
+            loading(bool): Is loading.
+            empty(bool): Is model empty.
+        """
         if self.is_loading != loading:
             if loading:
                 self.spinner.repaintNeeded.connect(
@@ -85,6 +95,12 @@ class AssetsView(TreeViewSpinner, DeselectableTreeView):
 
 
 class UnderlinesAssetDelegate(QtWidgets.QItemDelegate):
+    """Item delegate drawing bars under asset name.
+
+    This is used in loader and library loader tools. Multiselection of assets
+    may group subsets by name under colored groups. Selected color groups are
+    then propagated back to selected assets as underlines.
+    """
     bar_height = 3
 
     def __init__(self, *args, **kwargs):
@@ -101,6 +117,7 @@ class UnderlinesAssetDelegate(QtWidgets.QItemDelegate):
         )
 
     def sizeHint(self, option, index):
+        """Add bar height to size hint."""
         result = super(UnderlinesAssetDelegate, self).sizeHint(option, index)
         height = result.height()
         result.setHeight(height + self.bar_height)
@@ -108,6 +125,7 @@ class UnderlinesAssetDelegate(QtWidgets.QItemDelegate):
         return result
 
     def paint(self, painter, option, index):
+        """Replicate painting of an item and draw color bars if needed."""
         # Qt4 compat
         if Qt.__binding__ in ("PySide", "PyQt4"):
             option = QStyleOptionViewItemV4(option)
@@ -252,12 +270,21 @@ class UnderlinesAssetDelegate(QtWidgets.QItemDelegate):
 
 
 class AssetModel(QtGui.QStandardItemModel):
-    """A model listing assets in the silo in the active project.
+    """A model listing assets in the active project.
 
     The assets are displayed in a treeview, they are visually parented by
     a `visualParent` field in the database containing an `_id` to a parent
     asset.
 
+    Asset document may have defined label, icon or icon color.
+
+    Loading of data for model happens in thread which means that refresh
+    is not sequential. When refresh is triggered it is required to listen for
+    'refreshed' signal.
+
+    Args:
+        dbcon (AvalonMongoDB): Ready to use connection to mongo with.
+        parent (QObject): Parent Qt object.
     """
 
     _doc_fetched = QtCore.Signal()
@@ -361,6 +388,9 @@ class AssetModel(QtGui.QStandardItemModel):
             item.setData(colors, ASSET_UNDERLINE_COLORS_ROLE)
 
     def _on_docs_fetched(self):
+        # Make sure refreshing did not change
+        # - since this line is refreshing sequential and
+        #   triggering of new refresh will happen when this method is done
         if not self._refreshing:
             root_item = self.invisibleRootItem()
             root_item.removeRows(0, root_item.rowCount())
@@ -439,12 +469,14 @@ class AssetModel(QtGui.QStandardItemModel):
             if new_items:
                 parent_item.appendRows(new_items)
 
+        # Remove cache of removed items
         for asset_id in removed_asset_ids:
             self._items_by_asset_id.pop(asset_id)
             if asset_id in self._items_with_color_by_id:
                 self._items_with_color_by_id.pop(asset_id)
 
         # Refresh data
+        # - all items refresh all data except id
         for asset_id, item in self._items_by_asset_id.items():
             asset_doc = asset_docs_by_id[asset_id]
 
@@ -518,13 +550,21 @@ class AssetModel(QtGui.QStandardItemModel):
 
 
 class AssetsWidget(QtWidgets.QWidget):
-    """A Widget to display a tree of assets with filter
+    """Base widget to display a tree of assets with filter.
 
-    To list the assets of the active project:
-        >>> # widget = AssetsWidget()
-        >>> # widget.refresh()
-        >>> # widget.show()
+    Assets have only one column and are sorted by name.
 
+    Refreshing of assets happens in thread so calling 'refresh' method
+    is not sequential. To capture moment when refreshing is finished listen
+    to 'refreshed' signal.
+
+    To capture selection changes listen to 'selection_changed' signal. It won't
+    send any information about new selection as it may be different based on
+    inheritance changes.
+
+    Args:
+        dbcon (AvalonMongoDB): Connection to avalon mongo db.
+        parent (QWidget): Parent Qt widget.
     """
 
     # on model refresh
@@ -677,8 +717,12 @@ class AssetsWidget(QtWidgets.QWidget):
 
 
 class SingleSelectAssetsWidget(AssetsWidget):
+    """Single selection asset widget.
+
+    Contain single selection specific api methods.
+    """
     def get_selected_asset_id(self):
-        """Return the asset item of the current selection."""
+        """Currently selected asset id."""
         selection_model = self._view.selectionModel()
         indexes = selection_model.selectedRows()
         for index in indexes:
@@ -686,7 +730,7 @@ class SingleSelectAssetsWidget(AssetsWidget):
         return None
 
     def get_selected_asset_name(self):
-        """Return the asset document of the current selection."""
+        """Currently selected asset name."""
         selection_model = self._view.selectionModel()
         indexes = selection_model.selectedRows()
         for index in indexes:
@@ -695,17 +739,22 @@ class SingleSelectAssetsWidget(AssetsWidget):
 
 
 class MultiSelectAssetsWidget(AssetsWidget):
+    """Multiselection asset widget.
+
+    Main purpose is for loader and library loader. If another tool would use
+    multiselection assets this widget should be split and loader's logic
+    separated.
+    """
     def __init__(self, *args, **kwargs):
         super(MultiSelectAssetsWidget, self).__init__(*args, **kwargs)
-        delegate = UnderlinesAssetDelegate()
-
         self._view.setSelectionMode(QtWidgets.QTreeView.ExtendedSelection)
-        self._view.setItemDelegate(delegate)
 
+        delegate = UnderlinesAssetDelegate()
+        self._view.setItemDelegate(delegate)
         self._delegate = delegate
 
     def get_selected_asset_ids(self):
-        """Return the asset item of the current selection."""
+        """Currently selected asset ids."""
         selection_model = self._view.selectionModel()
         indexes = selection_model.selectedRows()
         return [
@@ -714,7 +763,7 @@ class MultiSelectAssetsWidget(AssetsWidget):
         ]
 
     def get_selected_asset_names(self):
-        """Return the asset document of the current selection."""
+        """Currently selected asset names."""
         selection_model = self._view.selectionModel()
         indexes = selection_model.selectedRows()
         return [
@@ -723,6 +772,11 @@ class MultiSelectAssetsWidget(AssetsWidget):
         ]
 
     def select_assets(self, asset_ids):
+        """Select assets by their ids.
+
+        Args:
+            asset_ids (list): List of asset ids.
+        """
         indexes = self._model.get_indexes_by_asset_ids(asset_ids)
         new_indexes = [
             self._proxy.mapFromSource(index)
@@ -731,6 +785,11 @@ class MultiSelectAssetsWidget(AssetsWidget):
         self._select_indexes(new_indexes)
 
     def select_assets_by_name(self, asset_names):
+        """Select assets by their names.
+
+        Args:
+            asset_names (list): List of asset names.
+        """
         indexes = self._model.get_indexes_by_asset_names(asset_names)
         new_indexes = [
             self._proxy.mapFromSource(index)
@@ -739,11 +798,18 @@ class MultiSelectAssetsWidget(AssetsWidget):
         self._select_indexes(new_indexes)
 
     def clear_underlines(self):
+        """Clear underlines in asset items."""
         self._model.clear_underlines()
 
         self._view.updateGeometries()
 
     def set_underline_colors(self, colors_by_asset_id):
+        """Change underline colors for passed assets.
+
+        Args:
+            colors_by_asset_id (dict): Key is asset id and value is list
+                of underline colors.
+        """
         self._model.set_underline_colors(colors_by_asset_id)
         # Trigger repaint
         self._view.updateGeometries()
