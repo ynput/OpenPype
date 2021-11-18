@@ -103,6 +103,12 @@ class SwitchAssetDialog(QtWidgets.QDialog):
 
         self._accept_btn = accept_btn
 
+        self.setMinimumWidth(self.MIN_WIDTH)
+
+        # Set default focus to accept button so you don't directly type in
+        # first asset field, this also allows to see the placeholder value.
+        accept_btn.setFocus()
+
         self.content_loaders = set()
         self.content_assets = {}
         self.content_subsets = {}
@@ -130,12 +136,6 @@ class SwitchAssetDialog(QtWidgets.QDialog):
         self._items = items
         self._prepare_content_data()
         self.refresh(True)
-
-        self.setMinimumWidth(self.MIN_WIDTH)
-
-        # Set default focus to accept button so you don't directly type in
-        # first asset field, this also allows to see the placeholder value.
-        accept_btn.setFocus()
 
     def _prepare_content_data(self):
         repre_ids = set()
