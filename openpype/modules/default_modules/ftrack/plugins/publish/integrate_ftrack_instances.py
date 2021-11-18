@@ -111,6 +111,14 @@ class IntegrateFtrackInstance(pyblish.api.InstancePlugin):
             else:
                 other_representations.append(repre)
 
+        # Prepare ftrack locations
+        unmanaged_location = ft_session.query(
+            "Location where name is \"ftrack.unmanaged\""
+        ).one()
+        ftrack_server_location = ft_session.query(
+            "Location where name is \"ftrack.server\""
+        ).one()
+
         for comp in instance.data['representations']:
             self.log.debug('component {}'.format(comp))
 
