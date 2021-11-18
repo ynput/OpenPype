@@ -722,14 +722,13 @@ QScrollBar::add-page:vertical, QScrollBar::sub-page:vertical {
 }
 
 #CompleterView::item {
-    padding: 2px 4px 2px 4px;
-    border-left: 3px solid {color:bg-view};
-}
-
-#CompleterView::item:hover {
-    border-left-color: {palette:blue-base};
-    background: {color:bg-view-selection};
+    background: {color:bg-view-hover};
     color: {color:font};
+    padding-left: 0px;
+}
+/*#CompleterView::item:selected:hover {*/
+#CompleterView::item:hover {
+    background: {color:bg-view-hover};
 }
 
 /* Launcher specific stylesheets */
