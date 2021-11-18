@@ -326,9 +326,6 @@ class DictImmutableKeysWidget(BaseWidget):
 
 class BoolWidget(InputWidget):
     def _add_inputs_to_layout(self):
-        checkbox_height = self.style().pixelMetric(
-            QtWidgets.QStyle.PM_IndicatorHeight
-        )
         self.input_field = SettingsNiceCheckbox(parent=self.content_widget)
 
         self.content_layout.addWidget(self.input_field, 0)
