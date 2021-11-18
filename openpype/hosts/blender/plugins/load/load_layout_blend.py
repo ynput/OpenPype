@@ -86,12 +86,16 @@ class BlendLayoutLoader(plugin.AssetLoader):
         objects = []
         nodes = list(container.children)
 
-        for obj in nodes:
-            obj.parent = asset_group
+        allowed_types = ['ARMATURE', 'MESH', 'EMPTY']
 
         for obj in nodes:
-            objects.append(obj)
-            nodes.extend(list(obj.children))
+            if obj.type in allowed_types:
+                obj.parent = asset_group
+
+        for obj in nodes:
+            if obj.type in allowed_types:
+                objects.append(obj)
+                nodes.extend(list(obj.children))
 
         objects.reverse()
 
@@ -117,7 +121,7 @@ class BlendLayoutLoader(plugin.AssetLoader):
                 action = actions.get(local_obj.name, None)
 
             if local_obj.type == 'MESH':
-                plugin.prepare_data(local_obj.data, group_name)
+                plugin.prepare_data(local_obj.data)
 
                 if obj != local_obj:
                     for constraint in constraints:
@@ -126,16 +130,18 @@ class BlendLayoutLoader(plugin.AssetLoader):
 
                 for material_slot in local_obj.material_slots:
                     if material_slot.material:
-                        plugin.prepare_data(material_slot.material, group_name)
+                        plugin.prepare_data(material_slot.material)
             elif local_obj.type == 'ARMATURE':
                 plugin.prepare_data(local_obj.data)
 
                 if action is not None:
+                    if local_obj.animation_data is None:
+                        local_obj.animation_data_create()
                     local_obj.animation_data.action = action
                 elif (local_obj.animation_data and
                       local_obj.animation_data.action is not None):
                     plugin.prepare_data(
-                        local_obj.animation_data.action, group_name)
+                        local_obj.animation_data.action)
 
                 # Set link the drivers to the local object
                 if local_obj.data.animation_data:
@@ -167,7 +173,62 @@ class BlendLayoutLoader(plugin.AssetLoader):
 
         objects.reverse()
 
-        bpy.data.orphans_purge(do_local_ids=False)
+        armatures = [
+            obj for obj in bpy.data.objects 
+            if obj.type == 'ARMATURE' and obj.library is None]
+        arm_act = {}
+
+        # The armatures with an animation need to be at the center of the
+        # scene to be hooked correctly by the curves modifiers.
+        for armature in armatures:
+            if armature.animation_data and armature.animation_data.action:
+                arm_act[armature] = armature.animation_data.action
+                armature.animation_data.action = None
+                armature.location = (0.0, 0.0, 0.0)
+                for bone in armature.pose.bones:
+                    bone.location = (0.0, 0.0, 0.0)
+                    bone.rotation_euler = (0.0, 0.0, 0.0)
+
+        curves = [obj for obj in data_to.objects if obj.type == 'CURVE']
+
+        for curve in curves:
+            rig_name = curve.name.split(':')[0]
+            rig_obj = bpy.data.objects.get(rig_name)
+
+            local_obj = plugin.prepare_data(curve)
+            plugin.prepare_data(local_obj.data)
+
+            # Curves need to reset the hook, but to do that they need to be
+            # in the view layer.
+            parent.objects.link(local_obj)
+            plugin.deselect_all()
+            local_obj.select_set(True)
+            bpy.context.view_layer.objects.active = local_obj
+            bpy.ops.object.mode_set(mode='EDIT')
+            bpy.ops.object.hook_reset()
+            bpy.ops.object.mode_set(mode='OBJECT')
+            parent.objects.unlink(local_obj)
+
+            local_obj.use_fake_user = True
+
+            for mod in local_obj.modifiers:
+                mod.object = bpy.data.objects.get(f"{mod.object.name}")
+
+            if not local_obj.get(AVALON_PROPERTY):
+                local_obj[AVALON_PROPERTY] = dict()
+
+            avalon_info = local_obj[AVALON_PROPERTY]
+            avalon_info.update({"container_name": group_name})
+
+            local_obj.parent = rig_obj
+            objects.append(local_obj)
+
+        for armature in armatures:
+            if arm_act.get(armature):
+                armature.animation_data.action = arm_act[armature]
+
+        while bpy.data.orphans_purge(do_local_ids=False):
+            pass
 
         plugin.deselect_all()
 
