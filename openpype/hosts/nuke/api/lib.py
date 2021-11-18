@@ -1654,6 +1654,8 @@ def launch_workfiles_app():
     from openpype.lib import (
         env_value_to_bool
     )
+    from avalon.nuke.pipeline import get_main_window
+
     # get all imortant settings
     open_at_start = env_value_to_bool(
         env_key="OPENPYPE_WORKFILE_TOOL_ON_START",
@@ -1665,7 +1667,8 @@ def launch_workfiles_app():
 
     if not opnl.workfiles_launched:
         opnl.workfiles_launched = True
-        host_tools.show_workfiles()
+        main_window = get_main_window()
+        host_tools.show_workfiles(parent=main_window)
 
 
 def process_workfile_builder():
