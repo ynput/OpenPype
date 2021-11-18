@@ -1,4 +1,5 @@
 from Qt import QtWidgets, QtCore
+from openpype import style
 
 
 class ButtonWithMenu(QtWidgets.QToolButton):
@@ -37,23 +38,31 @@ class ButtonWithMenu(QtWidgets.QToolButton):
 class SearchComboBox(QtWidgets.QComboBox):
     """Searchable ComboBox with empty placeholder value as first value"""
 
-    def __init__(self, parent=None):
+    def __init__(self, parent):
         super(SearchComboBox, self).__init__(parent)
 
         self.setEditable(True)
         self.setInsertPolicy(self.NoInsert)
 
-        # Apply completer settings
+        combobox_delegate = QtWidgets.QStyledItemDelegate(self)
+        self.setItemDelegate(combobox_delegate)
+
         completer = self.completer()
-        completer.setCompletionMode(completer.PopupCompletion)
+        completer.setCompletionMode(
+            QtWidgets.QCompleter.PopupCompletion
+        )
         completer.setCaseSensitivity(QtCore.Qt.CaseInsensitive)
 
-        # Force style sheet on popup menu
-        # It won't take the parent stylesheet for some reason
-        # todo: better fix for completer popup stylesheet
-        # if module.window:
-        #     popup = completer.popup()
-        #     popup.setStyleSheet(module.window.styleSheet())
+        completer_view = completer.popup()
+        completer_view.setObjectName("CompleterView")
+        completer_delegate = QtWidgets.QStyledItemDelegate(completer_view)
+        completer_view.setItemDelegate(completer_delegate)
+        completer_view.setStyleSheet(style.load_stylesheet())
+
+        self._combobox_delegate = combobox_delegate
+
+        self._completer_delegate = completer_delegate
+        self._completer = completer
 
     def set_placeholder(self, placeholder):
         self.lineEdit().setPlaceholderText(placeholder)
