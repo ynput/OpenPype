@@ -32,8 +32,8 @@ ASSET_UNDERLINE_COLORS_ROLE = QtCore.Qt.UserRole + 4
 class AssetsView(TreeViewSpinner, DeselectableTreeView):
     """Asset items view.
 
-    Adds abilities to deselect, show loading spinner and add flick charm (scroll
-    by mouse/touchpad click and move).
+    Adds abilities to deselect, show loading spinner and add flick charm
+    (scroll by mouse/touchpad click and move).
     """
 
     def __init__(self, parent=None):
