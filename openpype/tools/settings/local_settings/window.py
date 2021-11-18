@@ -1,7 +1,7 @@
 import logging
 from Qt import QtWidgets, QtGui
 
-from ..settings import style
+from openpype import style
 
 from openpype.settings.lib import (
     get_local_settings,

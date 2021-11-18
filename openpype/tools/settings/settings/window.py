@@ -5,7 +5,7 @@ from .categories import (
     ProjectWidget
 )
 from .widgets import ShadowWidget, RestartDialog
-from . import style
+from openpype import style
 
 from openpype.lib import is_admin_password_required
 from openpype.widgets import PasswordDialog
