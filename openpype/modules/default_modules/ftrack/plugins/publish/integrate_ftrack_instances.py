@@ -92,7 +92,7 @@ class IntegrateFtrackInstance(pyblish.api.InstancePlugin):
             "component_path": None,
             "component_location": None
         }
-        componentList = []
+
         ft_session = instance.context.data["ftrackSession"]
 
         # Filter types of representations
@@ -119,6 +119,8 @@ class IntegrateFtrackInstance(pyblish.api.InstancePlugin):
             "Location where name is \"ftrack.server\""
         ).one()
 
+        # Components data
+        component_list = []
         for comp in instance.data['representations']:
             self.log.debug('component {}'.format(comp))
 
@@ -256,7 +258,7 @@ class IntegrateFtrackInstance(pyblish.api.InstancePlugin):
                 componentList.append(component_item_src)
 
         self.log.debug('componentsList: {}'.format(str(componentList)))
-        instance.data["ftrackComponentsList"] = componentList
+        instance.data["ftrackComponentsList"] = component_list
 
     def get_ftrack_location(self, name, session):
         if name in self.ftrack_locations:
