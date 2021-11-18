@@ -204,7 +204,8 @@ class WebpublisherBatchPublishEndpoint(_RestApiEndpoint):
                 "command": "remotepublish",
                 "arguments": {
                     "targets": ["tvpaint"]
-                }
+                },
+                "add_to_queue": False
             },
             # Photoshop filter
             {
