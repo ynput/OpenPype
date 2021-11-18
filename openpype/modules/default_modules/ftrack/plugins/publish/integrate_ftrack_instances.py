@@ -159,16 +159,16 @@ class IntegrateFtrackInstance(pyblish.api.InstancePlugin):
                     })
                 }
             }
+            # Create copy of item before setting location or changing asset
+            src_components_to_add.append(
+                (repre, copy.deepcopy(review_item))
+            )
             if first_review_repre:
                 first_review_repre = False
             else:
                 # Add representation name to asset name of "not first" review
                 review_item["asset_data"]["name"] += repre["name"].title()
 
-            # Create copy of item before setting location
-            src_components_to_add.append(
-                (repre, copy.deepcopy(review_item))
-            )
             # Set location
             review_item["component_location"] = ftrack_server_location
             # Add item to component list
