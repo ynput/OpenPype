@@ -100,8 +100,8 @@ class VersionRepacker:
 
         file_list = VersionRepacker._filter_dir(self.version_path, [])
         progress_bar = enlighten.Counter(
-                total=len(file_list), desc="Calculating checksums",
-                nits="%", color="green")
+            total=len(file_list), desc="Calculating checksums",
+            nits="%", color="green")
         for file in file_list:
             checksums.append((
                 VersionRepacker.sha256sum(file.as_posix()),
