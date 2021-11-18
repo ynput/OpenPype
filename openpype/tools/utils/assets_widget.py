@@ -179,25 +179,16 @@ class UnderlinesAssetDelegate(QtWidgets.QItemDelegate):
 
         # When not needed to do a rounded corners (easier and without
         #   painter restore):
-        # painter.fillRect(
-        #     item_rect,
-        #     QtGui.QBrush(bg_color)
-        # )
-        pen = painter.pen()
-        pen.setStyle(QtCore.Qt.NoPen)
-        pen.setWidth(0)
-        painter.setPen(pen)
-        painter.setBrush(QtGui.QBrush(bg_color))
-        painter.drawRect(option.rect)
+        painter.fillRect(
+            option.rect,
+            QtGui.QBrush(bg_color)
+        )
 
         if option.state & QtWidgets.QStyle.State_Selected:
             for color, subset_rect in subset_rects:
                 if not color or not subset_rect:
                     continue
                 painter.fillRect(subset_rect, QtGui.QBrush(color))
-
-        painter.restore()
-        painter.save()
 
         # Icon
         icon_index = index.model().index(
