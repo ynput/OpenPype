@@ -211,6 +211,8 @@ class OpenPypeVersion(semver.VersionInfo):
         if not m:
             return None
         version = OpenPypeVersion.parse(string[m.start():m.end()])
+        if "staging" in m.group("buildmetadata"):
+            version.staging = True
         return version
 
     @classmethod
@@ -1172,7 +1174,7 @@ class BootstrapRepos:
             name = item.name if item.is_dir() else item.stem
             result = OpenPypeVersion.version_in_str(name)
 
-            if result[0]:
+            if result:
                 detected_version: OpenPypeVersion
                 detected_version = result
 

@@ -94,7 +94,7 @@ class VersionRepacker:
             return
 
         self._print(f"Detected version is {version}")
-        self._print(f"Recalculating checksums ...", 2)
+        self._print("Recalculating checksums ...", 2)
 
         checksums = []
 

@@ -387,7 +387,7 @@ def syncserver(debug, active_site):
 
 
 @main.command()
-@click.argument("directory", help="OpenPype version directory")
+@click.argument("directory")
 def repack_version(directory):
     """Repack OpenPype version from directory.
 
