@@ -144,11 +144,11 @@ class IntegrateFtrackInstance(pyblish.api.InstancePlugin):
                 fps = instance_fps
 
             # Create copy of base comp item and append it
-            component_item = copy.deepcopy(base_component_item)
+            review_item = copy.deepcopy(base_component_item)
             # Change location
-            component_item["component_path"] = repre["published_path"]
+            review_item["component_path"] = repre["published_path"]
             # Change component data
-            component_item["component_data"] = {
+            review_item["component_data"] = {
                 # Default component name is "main".
                 "name": "ftrackreview-mp4",
                 "metadata": {
@@ -163,16 +163,16 @@ class IntegrateFtrackInstance(pyblish.api.InstancePlugin):
                 first_review_repre = False
             else:
                 # Add representation name to asset name of "not first" review
-                component_item["asset_data"]["name"] += repre["name"].title()
+                review_item["asset_data"]["name"] += repre["name"].title()
 
             # Create copy of item before setting location
             src_components_to_add.append(
-                (repre, copy.deepcopy(component_item))
+                (repre, copy.deepcopy(review_item))
             )
             # Set location
-            component_item["component_location"] = ftrack_server_location
+            review_item["component_location"] = ftrack_server_location
             # Add item to component list
-            component_list.append(component_item)
+            component_list.append(review_item)
 
         # Create thumbnail components
         # TODO what if there is multiple thumbnails?
@@ -189,42 +189,42 @@ class IntegrateFtrackInstance(pyblish.api.InstancePlugin):
                 )
 
             # Create copy of base comp item and append it
-            component_item = copy.deepcopy(base_component_item)
-            component_item["component_path"] = repre["published_path"]
-            component_item["component_data"] = {
+            thumbnail_item = copy.deepcopy(base_component_item)
+            thumbnail_item["component_path"] = repre["published_path"]
+            thumbnail_item["component_data"] = {
                 "name": "thumbnail"
             }
-            component_item["thumbnail"] = True
+            thumbnail_item["thumbnail"] = True
             # Create copy of item before setting location
             src_components_to_add.append(
-                (repre, copy.deepcopy(component_item))
+                (repre, copy.deepcopy(thumbnail_item))
             )
             # Set location
-            component_item["component_location"] = ftrack_server_location
+            thumbnail_item["component_location"] = ftrack_server_location
             # Add item to component list
-            component_list.append(component_item)
+            component_list.append(thumbnail_item)
 
         # Add source components for review and thubmnail components
-        for repre, component_item in src_components_to_add:
+        for repre, copy_src_item in src_components_to_add:
             # Make sure thumbnail is disabled
-            component_item["thumbnail"] = False
+            copy_src_item["thumbnail"] = False
             # Set location
-            component_item["component_location"] = unmanaged_location
+            copy_src_item["component_location"] = unmanaged_location
             # Modify name of component to have suffix "_src"
-            component_data = component_item["component_data"]
+            component_data = copy_src_item["component_data"]
             component_name = component_data["name"]
             component_data["name"] = component_name + "_src"
-            component_list.append(component_item)
+            component_list.append(copy_src_item)
 
         # Add others representations as component
         for repre in other_representations:
             # Create copy of base comp item and append it
-            component_item = copy.deepcopy(base_component_item)
-            component_item["component_data"] = {
+            other_item = copy.deepcopy(base_component_item)
+            other_item["component_data"] = {
                 "name": repre["name"]
             }
-            component_item["component_location"] = unmanaged_location
-            component_list.append(component_item)
+            other_item["component_location"] = unmanaged_location
+            component_list.append(other_item)
 
         def json_obj_parser(obj):
             return str(obj)
