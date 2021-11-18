@@ -4,14 +4,12 @@
 import enlighten
 import blessed
 from pathlib import Path
-import os
 import platform
-from zipfile import ZipFile, BadZipFile
-from typing import Union, Callable, List, Tuple
+from zipfile import ZipFile
+from typing import List
 import hashlib
 import sys
 from igniter.bootstrap_repos import OpenPypeVersion
-import re
 
 
 class VersionRepacker:
