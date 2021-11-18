@@ -510,6 +510,7 @@ class SwitchAssetDialog(QtWidgets.QDialog):
                 selected_subset
             )
 
+        # [ ] [ ] [x]
         return self._get_current_output_repre_ids_oox(selected_repre)
 
     def _get_current_output_repre_ids_xxx(
@@ -716,7 +717,6 @@ class SwitchAssetDialog(QtWidgets.QDialog):
         return [repre_doc["_id"] for repre_doc in repre_docs]
 
     def _get_current_output_repre_ids_oox(self, selected_repre):
-        # [ ] [ ] [x]
         repre_docs = io.find(
             {
                 "name": selected_repre,
