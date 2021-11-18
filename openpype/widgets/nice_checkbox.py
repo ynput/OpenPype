@@ -73,15 +73,6 @@ class NiceCheckbox(QtWidgets.QFrame):
         self._draw_icons = draw_icons
         self.repaint()
 
-    def _checkbox_size_hint(self):
-        checkbox_height = self.style().pixelMetric(
-            QtWidgets.QStyle.PM_IndicatorHeight
-        )
-        checkbox_height += checkbox_height % 2
-        width = (2 * checkbox_height) - (checkbox_height / 5)
-        new_size = QtCore.QSize(width, checkbox_height)
-        return new_size
-
     def sizeHint(self):
         height = self.fontMetrics().height()
         width = self.get_width_hint_by_height(height)
