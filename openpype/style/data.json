@@ -83,19 +83,25 @@
         "settings": {
             "invalid-light": "#C93636",
             "invalid-dark": "#AD2E2E",
+
             "modified-light": "#46b1f3",
             "modified-mid": "#189AEA",
             "modified-dark": "#106AA2",
+
             "studio-light": "#73C990",
             "studio-dark": "#56a06f",
             "studio-label-hover": "#FFFFFF",
+
             "project-light": "#FFA64D",
             "project-mid": "#FF8C1A",
             "project-dark": "#E67300",
+
             "breadcrumbs-btn-bg": "rgba(127, 127, 127, 60)",
             "breadcrumbs-btn-bg-hover": "rgba(127, 127, 127, 90)",
+
             "content-hightlighted": "rgba(19, 26, 32, 15)",
-            "tool-btn-color": "#21252B"
+            "tool-btn-color": "#21252B",
+            "focus-border": "#839caf"
         }
     }
 }

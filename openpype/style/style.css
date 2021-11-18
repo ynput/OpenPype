@@ -968,6 +968,9 @@ QScrollBar::add-page:vertical, QScrollBar::sub-page:vertical {
 #SettingsMainWidget {
     background: #141a1f;
 }
+#SettingsMainWidget QAbstractSpinBox:focus, #SettingsMainWidget QLineEdit:focus, #SettingsMainWidget QPlainTextEdit:focus, #SettingsMainWidget QTextEdit:focus {
+    border-color: {color:settings:focus-border};
+}
 
 #SettingsToolIconBtn {
     border: 0px solid #bfccd6;
