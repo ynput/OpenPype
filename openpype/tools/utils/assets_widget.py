@@ -368,12 +368,11 @@ class AssetModel(QtGui.QStandardItemModel):
             self._items_with_color_by_id = {}
             return
 
-        asset_docs = self._doc_payload
-
+        # Collect asset documents as needed
         asset_ids = set()
         asset_docs_by_id = {}
         asset_ids_by_parents = collections.defaultdict(set)
-        for asset_doc in asset_docs:
+        for asset_doc in self._doc_payload:
             asset_id = asset_doc["_id"]
             asset_data = asset_doc.get("data") or {}
             parent_id = asset_data.get("visualParent")
@@ -381,36 +380,60 @@ class AssetModel(QtGui.QStandardItemModel):
             asset_docs_by_id[asset_id] = asset_doc
             asset_ids_by_parents[parent_id].add(asset_id)
 
-        root_item = self.invisibleRootItem()
-        asset_items_queue = collections.deque()
-        asset_items_queue.append((None, root_item))
-
+        # Prepare removed asset ids
         removed_asset_ids = (
             set(self._items_by_asset_id.keys()) - set(asset_docs_by_id.keys())
         )
+
+        # Prepare queue for adding new items
+        asset_items_queue = collections.deque()
+
+        # Queue starts with root item and 'visualParent' None
+        root_item = self.invisibleRootItem()
+        asset_items_queue.append((None, root_item))
+
         while asset_items_queue:
+            # Get item from queue
             parent_id, parent_item = asset_items_queue.popleft()
+            # Skip if there are no children
             children_ids = asset_ids_by_parents[parent_id]
             if not children_ids:
                 continue
 
+            # Go through current children of parent item
+            # - find out items that were deleted and skip creation of already
+            #   existing items
             for row in reversed(range(parent_item.rowCount())):
                 child_item = parent_item.child(row, 0)
                 asset_id = child_item.data(ASSET_ID_ROLE)
+                # Remove item that is not available
                 if asset_id not in children_ids:
-                    parent_item.removeRow(row)
+                    if asset_id in removed_asset_ids:
+                        # Remove and destroy row
+                        parent_item.removeRow(row)
+                    else:
+                        # Just take the row from parent without destroying
+                        parent_item.takeRow(row)
                     continue
 
+                # Remove asset id from `children_ids` set
+                #   - is used as set for creation of "new items"
                 children_ids.remove(asset_id)
+                # Add existing children to queue
                 asset_items_queue.append((asset_id, child_item))
 
             new_items = []
             for asset_id in children_ids:
-                item = QtGui.QStandardItem()
-                item.setEditable(False)
-                item.setData(asset_id, ASSET_ID_ROLE)
+                # Look for item in cache (maybe parent changed)
+                item = self._items_by_asset_id.get(asset_id)
+                # Create new item if was not found
+                if item is None:
+                    item = QtGui.QStandardItem()
+                    item.setEditable(False)
+                    item.setData(asset_id, ASSET_ID_ROLE)
+                    self._items_by_asset_id[asset_id] = item
                 new_items.append(item)
-                self._items_by_asset_id[asset_id] = item
+                # Add item to queue
                 asset_items_queue.append((asset_id, item))
 
             if new_items:
