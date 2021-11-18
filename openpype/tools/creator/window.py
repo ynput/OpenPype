@@ -45,6 +45,7 @@ class CreatorWindow(QtWidgets.QDialog):
         creators_proxy.setSourceModel(creators_model)
 
         creators_view = QtWidgets.QListView(self)
+        creators_view.setObjectName("CreatorsView")
         creators_view.setModel(creators_proxy)
 
         asset_name_input = QtWidgets.QLineEdit(self)

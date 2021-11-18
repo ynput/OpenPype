@@ -773,6 +773,10 @@ QScrollBar::add-page:vertical, QScrollBar::sub-page:vertical {
 }
 
 /* Creator */
+#CreatorsView::item {
+    padding: 1px 5px;
+}
+
 #CreatorFamilyLabel {
     font-size: 10pt;
     font-weight: bold;
