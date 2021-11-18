@@ -121,7 +121,9 @@ class IntegrateFtrackInstance(pyblish.api.InstancePlugin):
 
         # Components data
         component_list = []
-        
+        # Components that will be duplicated to unmanaged location
+        src_components_to_add = []
+
         # Create review components
         # Change asset name of each new component for review
         first_review_repre = True
@@ -163,6 +165,10 @@ class IntegrateFtrackInstance(pyblish.api.InstancePlugin):
                 # Add representation name to asset name of "not first" review
                 component_item["asset_data"]["name"] += repre["name"].title()
 
+            # Create copy of item before setting location
+            src_components_to_add.append(
+                (repre, copy.deepcopy(component_item))
+            )
             # Set location
             component_item["component_location"] = ftrack_server_location
             # Add item to component list
@@ -187,9 +193,25 @@ class IntegrateFtrackInstance(pyblish.api.InstancePlugin):
                 "name": "thumbnail"
             }
             component_item["thumbnail"] = True
+            # Create copy of item before setting location
+            src_components_to_add.append(
+                (repre, copy.deepcopy(component_item))
+            )
             # Set location
             component_item["component_location"] = ftrack_server_location
             # Add item to component list
+            component_list.append(component_item)
+
+        # Add source components for review and thubmnail components
+        for repre, component_item in src_components_to_add:
+            # Make sure thumbnail is disabled
+            component_item["thumbnail"] = False
+            # Set location
+            component_item["component_location"] = unmanaged_location
+            # Modify name of component to have suffix "_src"
+            component_data = component_item["component_data"]
+            component_name = component_data["name"]
+            component_data["name"] = component_name + "_src"
             component_list.append(component_item)
 
         # Add others representations as component
