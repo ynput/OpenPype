@@ -95,6 +95,22 @@ class IntegrateFtrackInstance(pyblish.api.InstancePlugin):
         componentList = []
         ft_session = instance.context.data["ftrackSession"]
 
+        # Filter types of representations
+        review_representations = []
+        thumbnail_representations = []
+        other_representations = []
+        for repre in instance_repres:
+            self.log.debug("Representation {}".format(repre))
+            repre_tags = repre.get("tags") or []
+            if repre.get("thumbnail") or "thumbnail" in repre_tags:
+                thumbnail_representations.append(repre)
+
+            elif "ftrackreview" in repre_tags:
+                review_representations.append(repre)
+
+            else:
+                other_representations.append(repre)
+
         for comp in instance.data['representations']:
             self.log.debug('component {}'.format(comp))
 
