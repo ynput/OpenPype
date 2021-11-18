@@ -265,16 +265,12 @@ class AssetModel(QtGui.QStandardItemModel):
 
     # Asset document projection
     _asset_projection = {
-        "type": 1,
-        "schema": 1,
         "name": 1,
         "parent": 1,
         "data.visualParent": 1,
         "data.label": 1,
-        "data.tags": 1,
         "data.icon": 1,
-        "data.color": 1,
-        "data.deprecated": 1
+        "data.color": 1
     }
 
     def __init__(self, dbcon, parent=None):
