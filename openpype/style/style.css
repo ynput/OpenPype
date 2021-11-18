@@ -1013,10 +1013,18 @@ QScrollBar::add-page:vertical, QScrollBar::sub-page:vertical {
 #SettingsLabel[state="invalid"]:hover {color: {color:settings:invalid-dark};}
 
 /* TODO Replace these with explicit widget types if possible */
-QWidget[input-state="modified"] {border-color: {color:settings:modified-mid};}
-QWidget[input-state="overriden-modified"] {border-color: {color:settings:modified-mid};}
-QWidget[input-state="overriden"] {border-color: {color:settings:project-mid};}
-QWidget[input-state="invalid"] {border-color: {color:settings:invalid-dark};}
+#SettingsMainWidget QWidget[input-state="modified"] {
+    border-color: {color:settings:modified-mid};
+}
+#SettingsMainWidget QWidget[input-state="overriden-modified"] {
+    border-color: {color:settings:modified-mid};
+}
+#SettingsMainWidget QWidget[input-state="overriden"] {
+    border-color: {color:settings:project-mid};
+}
+#SettingsMainWidget QWidget[input-state="invalid"] {
+    border-color: {color:settings:invalid-dark};
+}
 
 #GroupWidget {
     border-bottom: 1px solid #21252B;
