@@ -188,6 +188,8 @@ class IntegrateFtrackInstance(pyblish.api.InstancePlugin):
                     repre["stagingDir"], filename
                 )
 
+            # Create copy of base comp item and append it
+            component_item = copy.deepcopy(base_component_item)
             component_item["component_path"] = repre["published_path"]
             component_item["component_data"] = {
                 "name": "thumbnail"
