@@ -58,7 +58,7 @@ class TestPublishInAfterEffects(PublishTest):
     @pytest.fixture(scope="module")
     def startup_scripts(self, monkeypatch_session, download_test_data):
         """Points AfterEffects to userSetup file from input data"""
-        os.environ["HEADLESS_PUBLISH"] = "true"
+        pass
 
     def test_db_asserts(self, dbcon, publish_finished):
         """Host and input data dependent expected results in DB."""
