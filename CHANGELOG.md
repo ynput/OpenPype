@@ -1,8 +1,8 @@
 # Changelog
 
-## [3.6.2-nightly.2](https://github.com/pypeclub/OpenPype/tree/HEAD)
+## [3.6.2](https://github.com/pypeclub/OpenPype/tree/3.6.2) (2021-11-18)
 
-[Full Changelog](https://github.com/pypeclub/OpenPype/compare/3.6.1...HEAD)
+[Full Changelog](https://github.com/pypeclub/OpenPype/compare/3.6.1...3.6.2)
 
 **🚀 Enhancements**
 
@@ -24,6 +24,7 @@
 - Standalone: editorial not publishing thumbnails on all subsets [\#2258](https://github.com/pypeclub/OpenPype/pull/2258)
 - Burnins: Support mxf metadata [\#2247](https://github.com/pypeclub/OpenPype/pull/2247)
 - Maya: Support for configurable AOV separator characters [\#2197](https://github.com/pypeclub/OpenPype/pull/2197)
+- Maya: texture colorspace modes in looks [\#2195](https://github.com/pypeclub/OpenPype/pull/2195)
 
 ## [3.6.1](https://github.com/pypeclub/OpenPype/tree/3.6.1) (2021-11-16)
 
@@ -36,11 +37,6 @@
 ## [3.6.0](https://github.com/pypeclub/OpenPype/tree/3.6.0) (2021-11-15)
 
 [Full Changelog](https://github.com/pypeclub/OpenPype/compare/CI/3.6.0-nightly.6...3.6.0)
-
-### 📖 Documentation
-
-- Add alternative sites for Site Sync [\#2206](https://github.com/pypeclub/OpenPype/pull/2206)
-- Add command line way of running site sync server [\#2188](https://github.com/pypeclub/OpenPype/pull/2188)
 
 **🆕 New features**
 
@@ -62,6 +58,7 @@
 - Maya : Validate shape zero [\#2212](https://github.com/pypeclub/OpenPype/pull/2212)
 - Maya : validate unique names [\#2211](https://github.com/pypeclub/OpenPype/pull/2211)
 - Tools: OpenPype stylesheet in workfiles tool [\#2208](https://github.com/pypeclub/OpenPype/pull/2208)
+- Add alternative sites for Site Sync [\#2206](https://github.com/pypeclub/OpenPype/pull/2206)
 - Ftrack: Replace Queue with deque in event handlers logic [\#2204](https://github.com/pypeclub/OpenPype/pull/2204)
 - Tools: New select context dialog [\#2200](https://github.com/pypeclub/OpenPype/pull/2200)
 - Maya : Validate mesh ngons [\#2199](https://github.com/pypeclub/OpenPype/pull/2199)
@@ -85,11 +82,14 @@
 - Fix - different command used for Linux and Mac OS [\#2207](https://github.com/pypeclub/OpenPype/pull/2207)
 - Tools: Workfiles tool don't use avalon widgets [\#2205](https://github.com/pypeclub/OpenPype/pull/2205)
 - Ftrack: Fill missing ftrack id on mongo project [\#2203](https://github.com/pypeclub/OpenPype/pull/2203)
-- Maya: texture colorspace modes in looks [\#2195](https://github.com/pypeclub/OpenPype/pull/2195)
 - Project Manager: Fix copying of tasks [\#2191](https://github.com/pypeclub/OpenPype/pull/2191)
 - Blender: Fix trying to pack an image when the shader node has no texture [\#2183](https://github.com/pypeclub/OpenPype/pull/2183)
 - Maya: review viewport settings [\#2177](https://github.com/pypeclub/OpenPype/pull/2177)
 - Maya: Aspect ratio [\#2174](https://github.com/pypeclub/OpenPype/pull/2174)
+
+### 📖 Documentation
+
+- Add command line way of running site sync server [\#2188](https://github.com/pypeclub/OpenPype/pull/2188)
 
 ## [3.5.0](https://github.com/pypeclub/OpenPype/tree/3.5.0) (2021-10-17)
 
