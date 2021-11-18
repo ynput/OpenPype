@@ -713,14 +713,13 @@ QScrollBar::add-page:vertical, QScrollBar::sub-page:vertical {
 }
 
 #CompleterView::item {
-    padding: 2px 4px 2px 4px;
-    border-left: 3px solid {color:bg-view};
+    background: {color:bg-view-hover};
+    color: {color:font};
+    padding-left: 0px;
 }
 
 #CompleterView::item:hover {
-    border-left-color: {palette:blue-base};
-    background: {color:bg-view-selection};
-    color: {color:font};
+    background: {color:bg-view-hover};
 }
 
 /* Launcher specific stylesheets */
@@ -760,6 +759,25 @@ QScrollBar::add-page:vertical, QScrollBar::sub-page:vertical {
 #SubsetManagerDetailsText {}
 #SubsetManagerDetailsText[state="invalid"] {
     border: 1px solid #ff0000;
+}
+
+/* Scene Inventory*/
+#ButtonWithMenu {
+    padding-right: 16px;
+    border: 1px solid #4A4949;
+    border-radius: 2px;
+}
+#ButtonWithMenu::menu-button {
+    border: 1px solid #4A4949;
+    width: 12px;
+    border-top-left-radius: 0px;
+    border-top-right-radius: 2px;
+    border-bottom-right-radius: 2px;
+    border-bottom-left-radius: 0px;
+}
+
+#ButtonWithMenu[state="1"], #ButtonWithMenu[state="1"]::menu-button, #ButtonWithMenu[state="1"]::menu-button:hover {
+    border-color: green;
 }
 
 /* Python console interpreter */
