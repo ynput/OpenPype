@@ -755,13 +755,24 @@ QScrollBar::add-page:vertical, QScrollBar::sub-page:vertical {
     border: 1px solid {color:border};
     border-radius: 0.1em;
 }
+
 /* Subset Manager */
 #SubsetManagerDetailsText {}
 #SubsetManagerDetailsText[state="invalid"] {
     border: 1px solid #ff0000;
 }
 
-/* Scene Inventory*/
+/* Creator */
+#CreatorsView::item {
+    padding: 1px 5px;
+}
+
+#CreatorFamilyLabel {
+    font-size: 10pt;
+    font-weight: bold;
+}
+
+/* Scene Inventory */
 #ButtonWithMenu {
     padding-right: 16px;
     border: 1px solid #4A4949;

@@ -108,22 +108,18 @@ class HostToolsHelper:
     def get_creator_tool(self, parent):
         """Create, cache and return creator tool window."""
         if self._creator_tool is None:
-            from avalon.tools.creator.app import Window
+            from openpype.tools.creator import CreatorWindow
 
-            creator_window = Window(parent=parent or self._parent)
+            creator_window = CreatorWindow(parent=parent or self._parent)
             self._creator_tool = creator_window
 
         return self._creator_tool
 
     def show_creator(self, parent=None):
         """Show tool to create new instantes for publishing."""
-        from avalon import style
-
         creator_tool = self.get_creator_tool(parent)
         creator_tool.refresh()
         creator_tool.show()
-
-        creator_tool.setStyleSheet(style.load_stylesheet())
 
         # Pull window to the front.
         creator_tool.raise_()
