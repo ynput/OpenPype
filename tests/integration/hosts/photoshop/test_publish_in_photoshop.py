@@ -57,6 +57,7 @@ class TestPublishInPhotoshop(PublishTest):
     def startup_scripts(self, monkeypatch_session, download_test_data):
         """Points Maya to userSetup file from input data"""
         os.environ["IS_HEADLESS"] = "true"
+        os.environ["IS_TEST"] = "true"
 
     def test_db_asserts(self, dbcon, publish_finished):
         """Host and input data dependent expected results in DB."""
