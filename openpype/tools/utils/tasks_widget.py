@@ -226,10 +226,6 @@ class TasksWidget(QtWidgets.QWidget):
         self._tasks_model.refresh()
 
     def set_asset_id(self, asset_id):
-        # Asset deselected
-        if asset_id is None:
-            return
-
         # Try and preserve the last selected task and reselect it
         # after switching assets. If there's no currently selected
         # asset keep whatever the "last selected" was prior to it.

@@ -6,7 +6,7 @@ from avalon.api import AvalonMongoDB
 
 from openpype import style
 from openpype.tools.utils.lib import center_window
-from openpype.tools.utils.widgets import AssetWidget
+from openpype.tools.utils.assets_widget import SingleSelectAssetsWidget
 from openpype.tools.utils.constants import (
     PROJECT_NAME_ROLE
 )
@@ -65,8 +65,8 @@ class ContextDialog(QtWidgets.QDialog):
         project_combobox.setModel(project_proxy)
 
         # Assets widget
-        assets_widget = AssetWidget(
-            dbcon, multiselection=False, parent=left_side_widget
+        assets_widget = SingleSelectAssetsWidget(
+            dbcon, parent=left_side_widget
         )
 
         left_side_layout = QtWidgets.QVBoxLayout(left_side_widget)
@@ -113,9 +113,7 @@ class ContextDialog(QtWidgets.QDialog):
         assets_widget.selection_changed.connect(self._on_asset_change)
         assets_widget.refresh_triggered.connect(self._on_asset_refresh_trigger)
         assets_widget.refreshed.connect(self._on_asset_widget_refresh_finished)
-        tasks_widget.task_changed.selectionChanged.connect(
-            self._on_task_change
-        )
+        tasks_widget.task_changed.connect(self._on_task_change)
         ok_btn.clicked.connect(self._on_ok_click)
 
         self._dbcon = dbcon
@@ -311,11 +309,8 @@ class ContextDialog(QtWidgets.QDialog):
 
     def _set_asset_to_tasks_widget(self):
         # filter None docs they are silo
-        asset_docs = self._assets_widget.get_selected_assets()
-        asset_ids = [asset_doc["_id"] for asset_doc in asset_docs]
-        asset_id = None
-        if asset_ids:
-            asset_id = asset_ids[0]
+        asset_id = self._assets_widget.get_selected_asset_id()
+
         self._tasks_widget.set_asset_id(asset_id)
 
     def _confirm_values(self):
@@ -336,11 +331,7 @@ class ContextDialog(QtWidgets.QDialog):
 
     def get_selected_asset(self):
         """Currently selected asset in asset widget."""
-        asset_name = None
-        for asset_doc in self._assets_widget.get_selected_assets():
-            asset_name = asset_doc["name"]
-            break
-        return asset_name
+        return self._assets_widget.get_selected_asset_name()
 
     def get_selected_task(self):
         """Currently selected task."""
