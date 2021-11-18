@@ -160,9 +160,7 @@ class IntegrateFtrackInstance(pyblish.api.InstancePlugin):
                 }
             }
             # Create copy of item before setting location or changing asset
-            src_components_to_add.append(
-                (repre, copy.deepcopy(review_item))
-            )
+            src_components_to_add.append(copy.deepcopy(review_item))
             if first_review_repre:
                 first_review_repre = False
             else:
@@ -196,16 +194,14 @@ class IntegrateFtrackInstance(pyblish.api.InstancePlugin):
             }
             thumbnail_item["thumbnail"] = True
             # Create copy of item before setting location
-            src_components_to_add.append(
-                (repre, copy.deepcopy(thumbnail_item))
-            )
+            src_components_to_add.append(copy.deepcopy(thumbnail_item))
             # Set location
             thumbnail_item["component_location"] = ftrack_server_location
             # Add item to component list
             component_list.append(thumbnail_item)
 
         # Add source components for review and thubmnail components
-        for repre, copy_src_item in src_components_to_add:
+        for copy_src_item in src_components_to_add:
             # Make sure thumbnail is disabled
             copy_src_item["thumbnail"] = False
             # Set location
