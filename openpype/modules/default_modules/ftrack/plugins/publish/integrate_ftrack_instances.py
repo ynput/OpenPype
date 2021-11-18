@@ -54,6 +54,16 @@ class IntegrateFtrackInstance(pyblish.api.InstancePlugin):
         # Ignore this instance if neither "ftrackFamily" or a family mapping is
         # found.
         if not asset_type:
+            self.log.info((
+                "Family \"{}\" does not match any asset type mapping"
+            ).format(family))
+            return
+
+        instance_repres = instance.data.get("representations")
+        if not instance_repres:
+            self.log.info((
+                "Skipping instance. Does not have any representations {}"
+            ).format(str(instance)))
             return
 
         componentList = []
