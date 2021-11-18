@@ -358,7 +358,7 @@ class SwitchAssetDialog(QtWidgets.QDialog):
             if (
                 hasattr(loader_plugin, "is_utility")
                 and loader_plugin.is_utility
-             ):
+            ):
                 continue
             available_loaders.append(loader_plugin)
 
