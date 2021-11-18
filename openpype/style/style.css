@@ -726,7 +726,7 @@ QScrollBar::add-page:vertical, QScrollBar::sub-page:vertical {
     color: {color:font};
     padding-left: 0px;
 }
-/*#CompleterView::item:selected:hover {*/
+
 #CompleterView::item:hover {
     background: {color:bg-view-hover};
 }
