@@ -226,14 +226,16 @@ class NiceCheckbox(QtWidgets.QFrame):
 
     def _on_animation_timeout(self):
         if self._checkstate == QtCore.Qt.Checked:
-            self._current_step += 1
             if self._current_step == self._steps:
                 self._animation_timer.stop()
+                return
+            self._current_step += 1
 
         elif self._checkstate == QtCore.Qt.Unchecked:
-            self._current_step -= 1
             if self._current_step == 0:
                 self._animation_timer.stop()
+                return
+            self._current_step -= 1
 
         else:
             if self._current_step < self._middle_step:
