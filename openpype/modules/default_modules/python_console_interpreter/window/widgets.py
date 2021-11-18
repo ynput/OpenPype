@@ -176,6 +176,7 @@ class PythonCodeEditor(QtWidgets.QPlainTextEdit):
 
 
 class PythonTabWidget(QtWidgets.QWidget):
+    add_tab_requested = QtCore.Signal()
     before_execute = QtCore.Signal(str)
 
     def __init__(self, parent):
@@ -185,11 +186,15 @@ class PythonTabWidget(QtWidgets.QWidget):
 
         self.setFocusProxy(code_input)
 
+        add_tab_btn = QtWidgets.QPushButton("Add tab...", self)
+        add_tab_btn.setToolTip("Add new tab")
+
         execute_btn = QtWidgets.QPushButton("Execute", self)
         execute_btn.setToolTip("Execute command (Ctrl + Enter)")
 
         btns_layout = QtWidgets.QHBoxLayout()
         btns_layout.setContentsMargins(0, 0, 0, 0)
+        btns_layout.addWidget(add_tab_btn)
         btns_layout.addStretch(1)
         btns_layout.addWidget(execute_btn)
 
@@ -198,11 +203,15 @@ class PythonTabWidget(QtWidgets.QWidget):
         layout.addWidget(code_input, 1)
         layout.addLayout(btns_layout, 0)
 
+        add_tab_btn.clicked.connect(self._on_add_tab_clicked)
         execute_btn.clicked.connect(self._on_execute_clicked)
         code_input.execute_requested.connect(self.execute)
 
         self._code_input = code_input
         self._interpreter = InteractiveInterpreter()
+
+    def _on_add_tab_clicked(self):
+        self.add_tab_requested.emit()
 
     def _on_execute_clicked(self):
         self.execute()
@@ -352,9 +361,6 @@ class PythonInterpreterWidget(QtWidgets.QWidget):
         tab_widget.setTabsClosable(False)
         tab_widget.setContextMenuPolicy(QtCore.Qt.CustomContextMenu)
 
-        add_tab_btn = QtWidgets.QPushButton("+", tab_widget)
-        tab_widget.setCornerWidget(add_tab_btn, QtCore.Qt.TopLeftCorner)
-
         widgets_splitter = QtWidgets.QSplitter(self)
         widgets_splitter.setOrientation(QtCore.Qt.Vertical)
         widgets_splitter.addWidget(output_widget)
@@ -371,14 +377,12 @@ class PythonInterpreterWidget(QtWidgets.QWidget):
         line_check_timer.setInterval(200)
 
         line_check_timer.timeout.connect(self._on_timer_timeout)
-        add_tab_btn.clicked.connect(self._on_add_clicked)
         tab_bar.right_clicked.connect(self._on_tab_right_click)
         tab_bar.double_clicked.connect(self._on_tab_double_click)
         tab_bar.mid_clicked.connect(self._on_tab_mid_click)
         tab_widget.tabCloseRequested.connect(self._on_tab_close_req)
 
         self._widgets_splitter = widgets_splitter
-        self._add_tab_btn = add_tab_btn
         self._output_widget = output_widget
         self._tab_widget = tab_widget
         self._line_check_timer = line_check_timer
@@ -459,13 +463,40 @@ class PythonInterpreterWidget(QtWidgets.QWidget):
             return
 
         menu = QtWidgets.QMenu(self._tab_widget)
-        menu.addAction("Rename")
+
+        add_tab_action = QtWidgets.QAction("Add tab...", menu)
+        add_tab_action.setToolTip("Add new tab")
+
+        rename_tab_action = QtWidgets.QAction("Rename...", menu)
+        rename_tab_action.setToolTip("Rename tab")
+
+        duplicate_tab_action = QtWidgets.QAction("Duplicate...", menu)
+        duplicate_tab_action.setToolTip("Duplicate code to new tab")
+
+        close_tab_action = QtWidgets.QAction("Close", menu)
+        close_tab_action.setToolTip("Close tab and lose content")
+        close_tab_action.setEnabled(self._tab_widget.tabsClosable())
+
+        menu.addAction(add_tab_action)
+        menu.addAction(rename_tab_action)
+        menu.addAction(duplicate_tab_action)
+        menu.addAction(close_tab_action)
+
         result = menu.exec_(global_point)
         if result is None:
             return
 
-        if result.text() == "Rename":
+        if result is rename_tab_action:
             self._rename_tab_req(tab_idx)
+
+        elif result is add_tab_action:
+            self._on_add_requested()
+
+        elif result is duplicate_tab_action:
+            self._duplicate_requested(tab_idx)
+
+        elif result is close_tab_action:
+            self._on_tab_close_req(tab_idx)
 
     def _rename_tab_req(self, tab_idx):
         dialog = TabNameDialog(self)
@@ -474,6 +505,16 @@ class PythonInterpreterWidget(QtWidgets.QWidget):
         tab_name = dialog.result()
         if tab_name:
             self._tab_widget.setTabText(tab_idx, tab_name)
+
+    def _duplicate_requested(self, tab_idx=None):
+        if tab_idx is None:
+            tab_idx = self._tab_widget.currentIndex()
+
+        src_widget = self._tab_widget.widget(tab_idx)
+        dst_widget = self._add_tab()
+        if dst_widget is None:
+            return
+        dst_widget.set_code(src_widget.get_code())
 
     def _on_tab_mid_click(self, global_point):
         point = self._tab_widget.mapFromGlobal(global_point)
@@ -525,12 +566,17 @@ class PythonInterpreterWidget(QtWidgets.QWidget):
                 lines.append(self.ansi_escape.sub("", line))
             self._append_lines(lines)
 
-    def _on_add_clicked(self):
+    def _on_add_requested(self):
+        self._add_tab()
+
+    def _add_tab(self):
         dialog = TabNameDialog(self)
         dialog.exec_()
         tab_name = dialog.result()
         if tab_name:
-            self.add_tab(tab_name)
+            return self.add_tab(tab_name)
+
+        return None
 
     def _on_before_execute(self, code_text):
         at_max = self._output_widget.vertical_scroll_at_max()
@@ -562,6 +608,7 @@ class PythonInterpreterWidget(QtWidgets.QWidget):
     def add_tab(self, tab_name, index=None):
         widget = PythonTabWidget(self)
         widget.before_execute.connect(self._on_before_execute)
+        widget.add_tab_requested.connect(self._on_add_requested)
         if index is None:
             if self._tab_widget.count() > 0:
                 index = self._tab_widget.currentIndex() + 1

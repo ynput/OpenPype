@@ -11,7 +11,8 @@ from avalon.api import AvalonMongoDB
 
 from openpype.lib import OpenPypeMongoConnection
 from openpype_modules.avalon_apps.rest_api import _RestApiEndpoint
-from openpype.lib.plugin_tools import parse_json
+from openpype.lib.remote_publish import get_task_data
+from openpype.settings import get_project_settings
 
 from openpype.lib import PypeLogger
 
@@ -20,10 +21,15 @@ log = PypeLogger.get_logger("WebServer")
 
 class RestApiResource:
     """Resource carrying needed info and Avalon DB connection for publish."""
-    def __init__(self, server_manager, executable, upload_dir):
+    def __init__(self, server_manager, executable, upload_dir,
+                 studio_task_queue=None):
         self.server_manager = server_manager
         self.upload_dir = upload_dir
         self.executable = executable
+
+        if studio_task_queue is None:
+            studio_task_queue = collections.deque().dequeu
+        self.studio_task_queue = studio_task_queue
 
         self.dbcon = AvalonMongoDB()
         self.dbcon.install()
@@ -34,6 +40,8 @@ class RestApiResource:
             return value.isoformat()
         if isinstance(value, ObjectId):
             return str(value)
+        if isinstance(value, set):
+            return list(value)
         raise TypeError(value)
 
     @classmethod
@@ -182,8 +190,6 @@ class WebpublisherBatchPublishEndpoint(_RestApiEndpoint):
             msg = "Non existent OpenPype executable {}".format(openpype_app)
             raise RuntimeError(msg)
 
-        # for postprocessing in host, currently only PS
-        output = {}
         log.info("WebpublisherBatchPublishEndpoint called")
         content = await request.json()
 
@@ -210,12 +216,15 @@ class WebpublisherBatchPublishEndpoint(_RestApiEndpoint):
                     # Make sure targets are set to None for cases that default
                     #   would change
                     # - targets argument is not used in 'remotepublishfromapp'
-                    "targets": None
-                }
+                    "targets": ["remotepublish"]
+                },
+                # does publish need to be handled by a queue, eg. only
+                # single process running concurrently?
+                "add_to_queue": True
             }
         ]
 
-        batch_path = os.path.join(self.resource.upload_dir, content["batch"])
+        batch_dir = os.path.join(self.resource.upload_dir, content["batch"])
 
         # Default command and arguments
         command = "remotepublish"
@@ -227,19 +236,11 @@ class WebpublisherBatchPublishEndpoint(_RestApiEndpoint):
             "targets": ["filespublish"]
         }
 
+        add_to_queue = False
         if content.get("studio_processing"):
-            log.info("Post processing called")
+            log.info("Post processing called for {}".format(batch_dir))
 
-            batch_data = parse_json(os.path.join(batch_path, "manifest.json"))
-            if not batch_data:
-                raise ValueError(
-                    "Cannot parse batch meta in {} folder".format(batch_path))
-            task_dir_name = batch_data["tasks"][0]
-            task_data = parse_json(os.path.join(batch_path, task_dir_name,
-                                                "manifest.json"))
-            if not task_data:
-                raise ValueError(
-                    "Cannot parse batch meta in {} folder".format(task_data))
+            task_data = get_task_data(batch_dir)
 
             for process_filter in studio_processing_filters:
                 filter_extensions = process_filter.get("extensions") or []
@@ -252,12 +253,13 @@ class WebpublisherBatchPublishEndpoint(_RestApiEndpoint):
                         add_args.update(
                             process_filter.get("arguments") or {}
                         )
+                        add_to_queue = process_filter["add_to_queue"]
                         break
 
         args = [
             openpype_app,
             command,
-            batch_path
+            batch_dir
         ]
 
         for key, value in add_args.items():
@@ -271,11 +273,14 @@ class WebpublisherBatchPublishEndpoint(_RestApiEndpoint):
                     args.append(value)
 
         log.info("args:: {}".format(args))
+        if add_to_queue:
+            log.debug("Adding to queue")
+            self.resource.studio_task_queue.append(args)
+        else:
+            subprocess.call(args)
 
-        subprocess.call(args)
         return Response(
             status=200,
-            body=self.resource.encode(output),
             content_type="application/json"
         )
 
@@ -310,5 +315,38 @@ class PublishesStatusEndpoint(_RestApiEndpoint):
         return Response(
             status=200,
             body=self.resource.encode(output),
+            content_type="application/json"
+        )
+
+
+class ConfiguredExtensionsEndpoint(_RestApiEndpoint):
+    """Returns dict of extensions which have mapping to family.
+
+        Returns:
+        {
+            "file_exts": [],
+            "sequence_exts": []
+        }
+    """
+    async def get(self, project_name=None) -> Response:
+        sett = get_project_settings(project_name)
+
+        configured = {
+            "file_exts": set(),
+            "sequence_exts": set(),
+            # workfiles that could have "Studio Procesing" hardcoded for now
+            "studio_exts": set(["psd", "psb", "tvpp", "tvp"])
+        }
+        collect_conf = sett["webpublisher"]["publish"]["CollectPublishedFiles"]
+        for _, mapping in collect_conf.get("task_type_to_family", {}).items():
+            for _family, config in mapping.items():
+                if config["is_sequence"]:
+                    configured["sequence_exts"].update(config["extensions"])
+                else:
+                    configured["file_exts"].update(config["extensions"])
+
+        return Response(
+            status=200,
+            body=self.resource.encode(dict(configured)),
             content_type="application/json"
         )

@@ -167,6 +167,16 @@
             "ffmpeg": 48
         }
     },
+    "royalrender": {
+        "enabled": false,
+        "rr_paths": {
+            "default": {
+                "windows": "",
+                "darwin": "",
+                "linux": ""
+            }
+        }
+    },
     "log_viewer": {
         "enabled": true
     },

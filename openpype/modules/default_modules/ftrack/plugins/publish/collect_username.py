@@ -27,16 +27,12 @@ class CollectUsername(pyblish.api.ContextPlugin):
     order = pyblish.api.CollectorOrder - 0.488
     label = "Collect ftrack username"
     hosts = ["webpublisher", "photoshop"]
+    targets = ["remotepublish", "filespublish"]
 
     _context = None
 
     def process(self, context):
         self.log.info("CollectUsername")
-        # photoshop could be triggered remotely in webpublisher fashion
-        if os.environ["AVALON_APP"] == "photoshop":
-            if not os.environ.get("IS_HEADLESS"):
-                self.log.debug("Regular process, skipping")
-                return
 
         os.environ["FTRACK_API_USER"] = os.environ["FTRACK_BOT_API_USER"]
         os.environ["FTRACK_API_KEY"] = os.environ["FTRACK_BOT_API_KEY"]

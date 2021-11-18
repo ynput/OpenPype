@@ -182,6 +182,31 @@
         },
         {
             "type": "dict",
+            "key": "royalrender",
+            "label": "Royal Render",
+            "require_restart": true,
+            "collapsible": true,
+            "checkbox_key": "enabled",
+            "children": [
+                {
+                    "type": "boolean",
+                    "key": "enabled",
+                    "label": "Enabled"
+                },
+                {
+                    "type": "dict-modifiable",
+                    "object_type": {
+                        "type": "path",
+                        "multiplatform": true
+                    },
+                    "key": "rr_paths",
+                    "required_keys": ["default"],
+                    "label": "Royal Render Root Paths"
+                }
+            ]
+        },
+        {
+            "type": "dict",
             "key": "log_viewer",
             "label": "Logging",
             "collapsible": true,
