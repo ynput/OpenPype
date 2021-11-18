@@ -150,7 +150,7 @@ class NiceCheckbox(QtWidgets.QFrame):
         if self._animation_timer.isActive():
             self._animation_timer.stop()
 
-        if self.isEnabled():
+        if self.isVisible() and self.isEnabled():
             # Start animation
             self._animation_timer.start(self._animation_timeout)
         else:
