@@ -307,16 +307,16 @@ class ExtractBurnin(openpype.api.Extractor):
             # NOTE we maybe can keep source representation if necessary
             instance.data["representations"].remove(repre)
 
-        self.log.debug("Files to delete: {}".format(files_to_delete))
+            self.log.debug("Files to delete: {}".format(files_to_delete))
 
-        # Delete input files
-        for filepath in files_to_delete:
-            if os.path.exists(filepath):
-                os.remove(filepath)
-                self.log.debug("Removed: \"{}\"".format(filepath))
+            # Delete input files
+            for filepath in files_to_delete:
+                if os.path.exists(filepath):
+                    os.remove(filepath)
+                    self.log.debug("Removed: \"{}\"".format(filepath))
 
-        if do_decompress and os.path.exists(decompressed_dir):
-            shutil.rmtree(decompressed_dir)
+            if do_decompress and os.path.exists(decompressed_dir):
+                shutil.rmtree(decompressed_dir)
 
     def _get_burnin_options(self):
         # Prepare burnin options
