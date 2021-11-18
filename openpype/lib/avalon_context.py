@@ -7,6 +7,7 @@ import platform
 import logging
 import collections
 import functools
+import getpass
 
 from openpype.settings import get_project_settings
 from .anatomy import Anatomy
@@ -479,22 +480,31 @@ def get_workdir_data(project_doc, asset_doc, task_name, host_name):
     """
     hierarchy = "/".join(asset_doc["data"]["parents"])
 
+    task_type = asset_doc['data']['tasks'].get(task_name, {}).get('type')
+
+    project_task_types = project_doc["config"]["tasks"]
+    task_code = project_task_types.get(task_type, {}).get("short_name")
+
     data = {
         "project": {
             "name": project_doc["name"],
             "code": project_doc["data"].get("code")
         },
-        "task": task_name,
+        "task": {
+            "name": task_name,
+            "type": task_type,
+            "short": task_code,
+        },
         "asset": asset_doc["name"],
         "app": host_name,
-        "hierarchy": hierarchy
+        "user": getpass.getuser(),
+        "hierarchy": hierarchy,
     }
     return data
 
 
 def get_workdir_with_workdir_data(
-    workdir_data, anatomy=None, project_name=None,
-    template_key=None, dbcon=None
+    workdir_data, anatomy=None, project_name=None, template_key=None
 ):
     """Fill workdir path from entered data and project's anatomy.
 
@@ -529,12 +539,10 @@ def get_workdir_with_workdir_data(
         anatomy = Anatomy(project_name)
 
     if not template_key:
-        template_key = get_workfile_template_key_from_context(
-            workdir_data["asset"],
-            workdir_data["task"],
+        template_key = get_workfile_template_key(
+            workdir_data["task"]["type"],
             workdir_data["app"],
-            project_name=workdir_data["project"]["name"],
-            dbcon=dbcon
+            project_name=workdir_data["project"]["name"]
         )
 
     anatomy_filled = anatomy.format(workdir_data)
@@ -648,7 +656,7 @@ def create_workfile_doc(asset_doc, task_name, filename, workdir, dbcon=None):
     anatomy = Anatomy(project_doc["name"])
     # Get workdir path (result is anatomy.TemplateResult)
     template_workdir = get_workdir_with_workdir_data(
-        workdir_data, anatomy, dbcon=dbcon
+        workdir_data, anatomy
     )
     template_workdir_path = str(template_workdir).replace("\\", "/")
 

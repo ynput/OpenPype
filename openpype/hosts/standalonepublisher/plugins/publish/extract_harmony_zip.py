@@ -11,7 +11,7 @@ import zipfile
 import pyblish.api
 from avalon import api, io
 import openpype.api
-from openpype.lib import get_workfile_template_key_from_context
+from openpype.lib import get_workfile_template_key
 
 
 class ExtractHarmonyZip(openpype.api.Extractor):
@@ -31,8 +31,10 @@ class ExtractHarmonyZip(openpype.api.Extractor):
 
     # Presets
     create_workfile = True
-    default_task = "harmonyIngest"
-    default_task_type = "Ingest"
+    default_task = {
+        "name": "harmonyIngest",
+        "type": "Ingest",
+    }
     default_task_status = "Ingested"
     assetversion_status = "Ingested"
 
@@ -219,6 +221,19 @@ class ExtractHarmonyZip(openpype.api.Extractor):
         # Setup the data needed to form a valid work path filename
         anatomy = openpype.api.Anatomy()
         project_entity = instance.context.data["projectEntity"]
+        asset_entity = io.find_one({
+            "type": "asset",
+            "name": instance.data["asset"]
+        })
+
+        task_name = instance.data.get("task")
+        task_type = asset_entity["data"]["tasks"][task_name].get("type")
+
+        if task_type:
+            task_short = project_entity["config"]["tasks"].get(
+                task_type, {}).get("short_name")
+        else:
+            task_short = None
 
         data = {
             "root": api.registered_root(),
@@ -229,18 +244,20 @@ class ExtractHarmonyZip(openpype.api.Extractor):
             "asset": instance.data["asset"],
             "hierarchy": openpype.api.get_hierarchy(instance.data["asset"]),
             "family": instance.data["family"],
-            "task": instance.data.get("task"),
+            "task": {
+                "name": task_name,
+                "type": task_type,
+                "short": task_short,
+            },
             "subset": instance.data["subset"],
             "version": 1,
             "ext": "zip",
         }
         host_name = "harmony"
-        template_name = get_workfile_template_key_from_context(
-            instance.data["asset"],
-            instance.data.get("task"),
+        template_name = get_workfile_template_key(
+            instance.data.get("task").get("type"),
             host_name,
             project_name=project_entity["name"],
-            dbcon=io
         )
 
         # Get a valid work filename first with version 1

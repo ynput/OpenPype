@@ -856,6 +856,7 @@ def get_anatomy_settings(
         apply_local_settings_on_anatomy_settings(
             result, local_settings, project_name, site_name
         )
+
     return result
 
 

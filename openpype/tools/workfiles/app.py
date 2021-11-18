@@ -59,20 +59,39 @@ class NameWindow(QtWidgets.QDialog):
 
         # Set work file data for template formatting
         asset_name = session["AVALON_ASSET"]
+        task_name = session["AVALON_TASK"]
         project_doc = io.find_one(
             {"type": "project"},
             {
                 "name": True,
-                "data.code": True
+                "data.code": True,
+                "config.tasks": True,
             }
         )
+        asset_doc = io.find_one(
+            {
+                "type": "asset",
+                "name": asset_name
+            },
+            {"data.tasks": True}
+        )
+
+        task_type = asset_doc["data"]["tasks"].get(task_name, {}).get("type")
+
+        project_task_types = project_doc["config"]["tasks"]
+        task_short = project_task_types.get(task_type, {}).get("short_name")
+
         self.data = {
             "project": {
                 "name": project_doc["name"],
                 "code": project_doc["data"].get("code")
             },
             "asset": asset_name,
-            "task": session["AVALON_TASK"],
+            "task": {
+                "name": task_name,
+                "type": task_type,
+                "short": task_short,
+            },
             "version": 1,
             "user": getpass.getuser(),
             "comment": "",
