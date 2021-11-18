@@ -123,6 +123,30 @@ class IntegrateFtrackInstance(pyblish.api.InstancePlugin):
         component_list = []
         
 
+        # Create thumbnail components
+        # TODO what if there is multiple thumbnails?
+        for repre in thumbnail_representations:
+            if not repre.get("published_path"):
+                comp_files = repre["files"]
+                if isinstance(comp_files, (tuple, list, set)):
+                    filename = comp_files[0]
+                else:
+                    filename = comp_files
+
+                repre["published_path"] = os.path.join(
+                    repre["stagingDir"], filename
+                )
+
+            component_item["component_path"] = repre["published_path"]
+            component_item["component_data"] = {
+                "name": "thumbnail"
+            }
+            component_item["thumbnail"] = True
+            # Set location
+            component_item["component_location"] = ftrack_server_location
+            # Add item to component list
+            component_list.append(component_item)
+
         # Add others representations as component
         for repre in other_representations:
             # Create copy of base comp item and append it
