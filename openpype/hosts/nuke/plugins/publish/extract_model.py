@@ -33,6 +33,7 @@ class ExtractModel(openpype.api.Extractor):
             pformat(instance.data)))
 
         rm_nodes = list()
+        model_node = instance[0]
         self.log.info("Crating additional nodes")
         subset = instance.data["subset"]
         staging_dir = self.staging_dir(instance)
@@ -49,6 +50,9 @@ class ExtractModel(openpype.api.Extractor):
         file_path = os.path.join(staging_dir, filename).replace("\\", "/")
 
         with anlib.maintained_selection():
+            # select model node
+            anlib.select_nodes([model_node])
+
             # create write geo node
             wg_n = nuke.createNode("WriteGeo")
             wg_n["file"].setValue(file_path)
