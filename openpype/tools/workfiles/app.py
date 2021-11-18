@@ -8,19 +8,17 @@ import datetime
 
 import Qt
 from Qt import QtWidgets, QtCore
-from avalon import style, io, api, pipeline
+from avalon import io, api, pipeline
 
-from avalon.tools import lib as tools_lib
-from avalon.tools.widgets import AssetWidget
-from avalon.tools.delegates import PrettyTimeDelegate
-
-from .model import (
-    TASK_NAME_ROLE,
-    TASK_TYPE_ROLE,
-    FilesModel,
-    TasksModel,
-    TasksProxyModel
+from openpype import style
+from openpype.tools.utils.lib import (
+    schedule, qt_app_context
 )
+from openpype.tools.utils.widgets import AssetWidget
+from openpype.tools.utils.tasks_widget import TasksWidget
+from openpype.tools.utils.delegates import PrettyTimeDelegate
+
+from .model import FilesModel
 from .view import FilesView
 
 from openpype.lib import (
@@ -127,6 +125,9 @@ class NameWindow(QtWidgets.QDialog):
 
         # Extensions combobox
         ext_combo = QtWidgets.QComboBox(inputs_widget)
+        # Add styled delegate to use stylesheets
+        ext_delegate = QtWidgets.QStyledItemDelegate()
+        ext_combo.setItemDelegate(ext_delegate)
         ext_combo.addItems(self.host.file_extensions())
 
         # Build inputs
@@ -182,6 +183,7 @@ class NameWindow(QtWidgets.QDialog):
         self.preview_label = preview_label
         self.subversion_input = subversion_input
         self.ext_combo = ext_combo
+        self._ext_delegate = ext_delegate
 
         self.refresh()
 
@@ -314,113 +316,11 @@ class NameWindow(QtWidgets.QDialog):
             )
 
 
-class TasksWidget(QtWidgets.QWidget):
-    """Widget showing active Tasks"""
-
-    task_changed = QtCore.Signal()
-
-    def __init__(self, dbcon=None, parent=None):
-        super(TasksWidget, self).__init__(parent)
-
-        tasks_view = QtWidgets.QTreeView(self)
-        tasks_view.setIndentation(0)
-        tasks_view.setSortingEnabled(True)
-        if dbcon is None:
-            dbcon = io
-
-        tasks_model = TasksModel(dbcon)
-        tasks_proxy = TasksProxyModel()
-        tasks_proxy.setSourceModel(tasks_model)
-        tasks_view.setModel(tasks_proxy)
-
-        layout = QtWidgets.QVBoxLayout(self)
-        layout.setContentsMargins(0, 0, 0, 0)
-        layout.addWidget(tasks_view)
-
-        selection_model = tasks_view.selectionModel()
-        selection_model.currentChanged.connect(self.task_changed)
-
-        self._tasks_model = tasks_model
-        self._tasks_proxy = tasks_proxy
-        self._tasks_view = tasks_view
-
-        self._last_selected_task = None
-
-    def set_asset(self, asset_doc):
-        # Asset deselected
-        if asset_doc is None:
-            return
-
-        # Try and preserve the last selected task and reselect it
-        # after switching assets. If there's no currently selected
-        # asset keep whatever the "last selected" was prior to it.
-        current = self.get_current_task_name()
-        if current:
-            self._last_selected_task = current
-
-        self._tasks_model.set_asset(asset_doc)
-
-        if self._last_selected_task:
-            self.select_task(self._last_selected_task)
-
-        # Force a task changed emit.
-        self.task_changed.emit()
-
-    def select_task(self, task_name):
-        """Select a task by name.
-
-        If the task does not exist in the current model then selection is only
-        cleared.
-
-        Args:
-            task (str): Name of the task to select.
-
-        """
-        task_view_model = self._tasks_view.model()
-        if not task_view_model:
-            return
-
-        # Clear selection
-        selection_model = self._tasks_view.selectionModel()
-        selection_model.clearSelection()
-
-        # Select the task
-        mode = selection_model.Select | selection_model.Rows
-        for row in range(task_view_model.rowCount()):
-            index = task_view_model.index(row, 0)
-            name = index.data(TASK_NAME_ROLE)
-            if name == task_name:
-                selection_model.select(index, mode)
-
-                # Set the currently active index
-                self._tasks_view.setCurrentIndex(index)
-                break
-
-    def get_current_task_name(self):
-        """Return name of task at current index (selected)
-
-        Returns:
-            str: Name of the current task.
-
-        """
-        index = self._tasks_view.currentIndex()
-        selection_model = self._tasks_view.selectionModel()
-        if index.isValid() and selection_model.isSelected(index):
-            return index.data(TASK_NAME_ROLE)
-        return None
-
-    def get_current_task_type(self):
-        index = self._tasks_view.currentIndex()
-        selection_model = self._tasks_view.selectionModel()
-        if index.isValid() and selection_model.isSelected(index):
-            return index.data(TASK_TYPE_ROLE)
-        return None
-
-
 class FilesWidget(QtWidgets.QWidget):
     """A widget displaying files that allows to save and open files."""
     file_selected = QtCore.Signal(str)
     workfile_created = QtCore.Signal(str)
+    file_opened = QtCore.Signal()
 
     def __init__(self, parent=None):
         super(FilesWidget, self).__init__(parent=parent)
@@ -611,7 +511,7 @@ class FilesWidget(QtWidgets.QWidget):
 
         self._enter_session()
         host.open_file(filepath)
-        self.window().close()
+        self.file_opened.emit()
 
     def save_changes_prompt(self):
         self._messagebox = messagebox = QtWidgets.QMessageBox()
@@ -629,7 +529,7 @@ class FilesWidget(QtWidgets.QWidget):
 
         # Parenting the QMessageBox to the Widget seems to crash
         # so we skip parenting and explicitly apply the stylesheet.
-        messagebox.setStyleSheet(style.load_stylesheet())
+        messagebox.setStyle(self.style())
 
         result = messagebox.exec_()
         if result == messagebox.Yes:
@@ -786,7 +686,7 @@ class FilesWidget(QtWidgets.QWidget):
         self.files_model.refresh()
 
         if self.auto_select_latest_modified:
-            tools_lib.schedule(self._select_last_modified_file, 100)
+            schedule(self._select_last_modified_file, 100)
 
     def on_context_menu(self, point):
         index = self.files_view.indexAt(point)
@@ -989,6 +889,7 @@ class Window(QtWidgets.QMainWindow):
         tasks_widget.task_changed.connect(self.on_task_changed)
         files_widget.file_selected.connect(self.on_file_select)
         files_widget.workfile_created.connect(self.on_workfile_create)
+        files_widget.file_opened.connect(self._on_file_opened)
         side_panel.save_clicked.connect(self.on_side_panel_save)
 
         self.home_page_widget = home_page_widget
@@ -1001,12 +902,18 @@ class Window(QtWidgets.QMainWindow):
         self.files_widget = files_widget
         self.side_panel = side_panel
 
-        self.refresh()
-
         # Force focus on the open button by default, required for Houdini.
         files_widget.btn_open.setFocus()
 
         self.resize(1200, 600)
+
+        self._first_show = True
+
+    def showEvent(self, event):
+        super(Window, self).showEvent(event)
+        if self._first_show:
+            self._first_show = False
+            self.setStyleSheet(style.load_stylesheet())
 
     def keyPressEvent(self, event):
         """Custom keyPressEvent.
@@ -1023,10 +930,10 @@ class Window(QtWidgets.QMainWindow):
 
     def on_task_changed(self):
         # Since we query the disk give it slightly more delay
-        tools_lib.schedule(self._on_task_changed, 100, channel="mongo")
+        schedule(self._on_task_changed, 100, channel="mongo")
 
     def on_asset_changed(self):
-        tools_lib.schedule(self._on_asset_changed, 50, channel="mongo")
+        schedule(self._on_asset_changed, 50, channel="mongo")
 
     def on_file_select(self, filepath):
         asset_docs = self.assets_widget.get_selected_assets()
@@ -1034,7 +941,7 @@ class Window(QtWidgets.QMainWindow):
         if asset_docs:
             asset_doc = asset_docs[0]
 
-        task_name = self.tasks_widget.get_current_task_name()
+        task_name = self.tasks_widget.get_selected_task_name()
 
         workfile_doc = None
         if asset_doc and task_name and filepath:
@@ -1049,6 +956,9 @@ class Window(QtWidgets.QMainWindow):
     def on_workfile_create(self, filepath):
         self._create_workfile_doc(filepath)
 
+    def _on_file_opened(self):
+        self.close()
+
     def on_side_panel_save(self):
         workfile_doc, data = self.side_panel.get_workfile_data()
         if not workfile_doc:
@@ -1061,7 +971,7 @@ class Window(QtWidgets.QMainWindow):
     def _get_current_workfile_doc(self, filepath=None):
         if filepath is None:
             filepath = self.files_widget._get_selected_filepath()
-        task_name = self.tasks_widget.get_current_task_name()
+        task_name = self.tasks_widget.get_selected_task_name()
         asset_docs = self.assets_widget.get_selected_assets()
         if not task_name or not asset_docs or not filepath:
             return
@@ -1081,7 +991,7 @@ class Window(QtWidgets.QMainWindow):
             workdir, filename = os.path.split(filepath)
             asset_docs = self.assets_widget.get_selected_assets()
             asset_doc = asset_docs[0]
-            task_name = self.tasks_widget.get_current_task_name()
+            task_name = self.tasks_widget.get_selected_task_name()
             create_workfile_doc(asset_doc, task_name, filename, workdir, io)
 
     def set_context(self, context):
@@ -1092,18 +1002,16 @@ class Window(QtWidgets.QMainWindow):
                     "name": asset,
                     "type": "asset"
                 },
-                {
-                    "data.tasks": 1
-                }
-            )
+                {"_id": 1}
+            ) or {}
 
             # Select the asset
             self.assets_widget.select_assets([asset], expand=True)
 
-            self.tasks_widget.set_asset(asset_document)
+            self.tasks_widget.set_asset_id(asset_document.get("_id"))
 
         if "task" in context:
-            self.tasks_widget.select_task(context["task"])
+            self.tasks_widget.select_task_name(context["task"])
 
     def refresh(self):
         # Refresh asset widget
@@ -1113,7 +1021,7 @@ class Window(QtWidgets.QMainWindow):
 
     def _on_asset_changed(self):
         asset = self.assets_widget.get_selected_assets() or None
-
+        asset_id = None
         if not asset:
             # Force disable the other widgets if no
             # active selection
@@ -1121,16 +1029,17 @@ class Window(QtWidgets.QMainWindow):
             self.files_widget.setEnabled(False)
         else:
             asset = asset[0]
+            asset_id = asset.get("_id")
             self.tasks_widget.setEnabled(True)
 
-        self.tasks_widget.set_asset(asset)
+        self.tasks_widget.set_asset_id(asset_id)
 
     def _on_task_changed(self):
         asset = self.assets_widget.get_selected_assets() or None
         if asset is not None:
             asset = asset[0]
-        task_name = self.tasks_widget.get_current_task_name()
-        task_type = self.tasks_widget.get_current_task_type()
+        task_name = self.tasks_widget.get_selected_task_name()
+        task_type = self.tasks_widget.get_selected_task_type()
 
         self.tasks_widget.setEnabled(bool(asset))
 
@@ -1181,7 +1090,7 @@ def show(root=None, debug=False, parent=None, use_context=True, save=True):
         api.Session["AVALON_ASSET"] = "Mock"
         api.Session["AVALON_TASK"] = "Testing"
 
-    with tools_lib.application():
+    with qt_app_context():
         window = Window(parent=parent)
         window.refresh()
 
@@ -1196,7 +1105,6 @@ def show(root=None, debug=False, parent=None, use_context=True, save=True):
         window.set_save_enabled(save)
 
         window.show()
-        window.setStyleSheet(style.load_stylesheet())
 
         module.window = window
 

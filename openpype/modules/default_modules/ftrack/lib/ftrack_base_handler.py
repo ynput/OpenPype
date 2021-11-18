@@ -570,9 +570,15 @@ class BaseHandler(object):
 
         if low_entity_type == "assetversion":
             asset = entity["asset"]
+            parent = None
             if asset:
                 parent = asset["parent"]
-                if parent:
+
+            if parent:
+                if parent.entity_type.lower() == "project":
+                    return parent
+
+                if "project" in parent:
                     return parent["project"]
 
         project_data = entity["link"][0]

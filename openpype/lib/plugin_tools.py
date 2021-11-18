@@ -28,17 +28,44 @@ class TaskNotSetError(KeyError):
         super(TaskNotSetError, self).__init__(msg)
 
 
-def get_subset_name(
+def get_subset_name_with_asset_doc(
     family,
     variant,
     task_name,
-    asset_id,
+    asset_doc,
     project_name=None,
     host_name=None,
     default_template=None,
-    dynamic_data=None,
-    dbcon=None
+    dynamic_data=None
 ):
+    """Calculate subset name based on passed context and OpenPype settings.
+
+    Subst name templates are defined in `project_settings/global/tools/creator
+    /subset_name_profiles` where are profiles with host name, family, task name
+    and task type filters. If context does not match any profile then
+    `DEFAULT_SUBSET_TEMPLATE` is used as default template.
+
+    That's main reason why so many arguments are required to calculate subset
+    name.
+
+    Args:
+        family (str): Instance family.
+        variant (str): In most of cases it is user input during creation.
+        task_name (str): Task name on which context is instance created.
+        asset_doc (dict): Queried asset document with it's tasks in data.
+            Used to get task type.
+        project_name (str): Name of project on which is instance created.
+            Important for project settings that are loaded.
+        host_name (str): One of filtering criteria for template profile
+            filters.
+        default_template (str): Default template if any profile does not match
+            passed context. Constant 'DEFAULT_SUBSET_TEMPLATE' is used if
+            is not passed.
+        dynamic_data (dict): Dynamic data specific for a creator which creates
+            instance.
+        dbcon (AvalonMongoDB): Mongo connection to be able query asset document
+            if 'asset_doc' is not passed.
+    """
     if not family:
         return ""
 
@@ -53,25 +80,6 @@ def get_subset_name(
 
         project_name = avalon.api.Session["AVALON_PROJECT"]
 
-    # Function should expect asset document instead of asset id
-    # - that way `dbcon` is not needed
-    if dbcon is None:
-        from avalon.api import AvalonMongoDB
-
-        dbcon = AvalonMongoDB()
-        dbcon.Session["AVALON_PROJECT"] = project_name
-
-    dbcon.install()
-
-    asset_doc = dbcon.find_one(
-        {
-            "type": "asset",
-            "_id": asset_id
-        },
-        {
-            "data.tasks": True
-        }
-    )
     asset_tasks = asset_doc.get("data", {}).get("tasks") or {}
     task_info = asset_tasks.get(task_name) or {}
     task_type = task_info.get("type")
@@ -111,6 +119,49 @@ def get_subset_name(
             fill_pairs[key] = value
 
     return template.format(**prepare_template_data(fill_pairs))
+
+
+def get_subset_name(
+    family,
+    variant,
+    task_name,
+    asset_id,
+    project_name=None,
+    host_name=None,
+    default_template=None,
+    dynamic_data=None,
+    dbcon=None
+):
+    """Calculate subset name using OpenPype settings.
+
+    This variant of function expects asset id as argument.
+
+    This is legacy function should be replaced with
+    `get_subset_name_with_asset_doc` where asset document is expected.
+    """
+    if dbcon is None:
+        from avalon.api import AvalonMongoDB
+
+        dbcon = AvalonMongoDB()
+        dbcon.Session["AVALON_PROJECT"] = project_name
+
+    dbcon.install()
+
+    asset_doc = dbcon.find_one(
+        {"_id": asset_id},
+        {"data.tasks": True}
+    ) or {}
+
+    return get_subset_name_with_asset_doc(
+        family,
+        variant,
+        task_name,
+        asset_doc,
+        project_name,
+        host_name,
+        default_template,
+        dynamic_data
+    )
 
 
 def prepare_template_data(fill_pairs):
@@ -487,3 +538,48 @@ def should_decompress(file_url):
             "compression: \"dwab\"" in output
 
     return False
+
+
+def parse_json(path):
+    """Parses json file at 'path' location
+
+        Returns:
+            (dict) or None if unparsable
+        Raises:
+            AsssertionError if 'path' doesn't exist
+    """
+    path = path.strip('\"')
+    assert os.path.isfile(path), (
+        "Path to json file doesn't exist. \"{}\"".format(path)
+    )
+    data = None
+    with open(path, "r") as json_file:
+        try:
+            data = json.load(json_file)
+        except Exception as exc:
+            log.error(
+                "Error loading json: "
+                "{} - Exception: {}".format(path, exc)
+            )
+    return data
+
+
+def get_batch_asset_task_info(ctx):
+    """Parses context data from webpublisher's batch metadata
+
+        Returns:
+            (tuple): asset, task_name (Optional), task_type
+    """
+    task_type = "default_task_type"
+    task_name = None
+    asset = None
+
+    if ctx["type"] == "task":
+        items = ctx["path"].split('/')
+        asset = items[-2]
+        task_name = ctx["name"]
+        task_type = ctx["attributes"]["type"]
+    else:
+        asset = ctx["name"]
+
+    return asset, task_name, task_type

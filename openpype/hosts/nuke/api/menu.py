@@ -84,6 +84,12 @@ def install():
     )
     log.debug("Adding menu item: {}".format(name))
 
+    # Add experimental tools action
+    menu.addSeparator()
+    menu.addCommand(
+        "Experimental tools...",
+        host_tools.show_experimental_tools_dialog
+    )
 
     # adding shortcuts
     add_shortcuts_from_presets()

@@ -46,6 +46,71 @@
                 {
                     "type": "dict",
                     "collapsible": true,
+                    "is_group": true,
+                    "key": "CollectRemoteInstances",
+                    "label": "Collect Instances for Webpublish",
+                    "children": [
+                        {
+                            "type": "label",
+                            "label": "Set color for publishable layers, set publishable families."
+                        },
+                        {
+                            "type": "list",
+                            "key": "color_code_mapping",
+                            "label": "Color code mappings",
+                            "use_label_wrap": false,
+                            "collapsible": false,
+                            "object_type": {
+                                "type": "dict",
+                                "children": [
+                                    {
+                                        "type": "list",
+                                        "key": "color_code",
+                                        "label": "Color codes for layers",
+                                        "type": "enum",
+                                        "multiselection": true,
+                                        "enum_items": [
+                                            { "red": "red" },
+                                            { "orange": "orange" },
+                                            { "yellowColor": "yellow" },
+                                            { "grain": "green" },
+                                            { "blue": "blue" },
+                                            { "violet": "violet" },
+                                            { "gray": "gray" }
+                                        ]
+                                    },
+                                    {
+                                        "type": "list",
+                                        "key": "layer_name_regex",
+                                        "label": "Layer name regex",
+                                        "object_type": "text"
+                                    },
+                                    {
+                                        "type": "splitter"
+                                    },
+                                    {
+                                        "key": "family",
+                                        "label": "Resulting family",
+                                        "type": "enum",
+                                        "enum_items": [
+                                            {
+                                                "image": "image"
+                                            }
+                                        ]
+                                    },
+                                    {
+                                        "type": "text",
+                                        "key": "subset_template_name",
+                                        "label": "Subset template name"
+                                    }
+                                ]
+                            }
+                        }
+                    ]
+                },
+                {
+                    "type": "dict",
+                    "collapsible": true,
                     "key": "ExtractImage",
                     "label": "Extract Image",
                     "children": [

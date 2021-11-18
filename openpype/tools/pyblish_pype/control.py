@@ -7,7 +7,6 @@ an active window manager; such as via Travis-CI.
 """
 import os
 import sys
-import traceback
 import inspect
 import logging
 
@@ -191,7 +190,9 @@ class Controller(QtCore.QObject):
 
         plugins = pyblish.api.discover()
 
-        targets = pyblish.logic.registered_targets() or ["default"]
+        targets = set(pyblish.logic.registered_targets())
+        targets.add("default")
+        targets = list(targets)
         plugins_by_targets = pyblish.logic.plugins_by_targets(plugins, targets)
 
         _plugins = []

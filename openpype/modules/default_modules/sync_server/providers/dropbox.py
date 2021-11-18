@@ -24,25 +24,19 @@ class DropboxHandler(AbstractProvider):
             )
             return
 
-        provider_presets = self.presets.get(self.CODE)
-        if not provider_presets:
-            msg = "Sync Server: No provider presets for {}".format(self.CODE)
-            log.info(msg)
-            return
-
-        token = self.presets[self.CODE].get("token", "")
+        token = self.presets.get("token", "")
         if not token:
             msg = "Sync Server: No access token for dropbox provider"
             log.info(msg)
             return
 
-        team_folder_name = self.presets[self.CODE].get("team_folder_name", "")
+        team_folder_name = self.presets.get("team_folder_name", "")
         if not team_folder_name:
             msg = "Sync Server: No team folder name for dropbox provider"
             log.info(msg)
             return
 
-        acting_as_member = self.presets[self.CODE].get("acting_as_member", "")
+        acting_as_member = self.presets.get("acting_as_member", "")
         if not acting_as_member:
             msg = (
                 "Sync Server: No acting member for dropbox provider"
@@ -51,13 +45,15 @@ class DropboxHandler(AbstractProvider):
             return
 
         self.dbx = None
-        try:
-            self.dbx = self._get_service(
-                token, acting_as_member, team_folder_name
-            )
-        except Exception as e:
-            log.info("Could not establish dropbox object: {}".format(e))
-            return
+
+        if self.presets["enabled"]:
+            try:
+                self.dbx = self._get_service(
+                    token, acting_as_member, team_folder_name
+                )
+            except Exception as e:
+                log.info("Could not establish dropbox object: {}".format(e))
+                return
 
         super(AbstractProvider, self).__init__()
 
@@ -101,9 +97,14 @@ class DropboxHandler(AbstractProvider):
             },
             # roots could be overriden only on Project level, User cannot
             {
-                'key': "roots",
-                'label': "Roots",
-                'type': 'dict'
+                "key": "root",
+                "label": "Roots",
+                "type": "dict-roots",
+                "object_type": {
+                    "type": "path",
+                    "multiplatform": False,
+                    "multipath": False
+                }
             }
         ]
 
@@ -164,7 +165,7 @@ class DropboxHandler(AbstractProvider):
         Returns:
             (boolean)
         """
-        return self.dbx is not None
+        return self.presets["enabled"] and self.dbx is not None
 
     @classmethod
     def get_configurable_items(cls):
