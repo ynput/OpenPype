@@ -6,16 +6,14 @@ from avalon.api import AvalonMongoDB
 
 from openpype import style
 from openpype.tools.utils.lib import center_window
-from openpype.tools.utils.widgets import AssetWidget
+from openpype.tools.utils.assets_widget import SingleSelectAssetsWidget
 from openpype.tools.utils.constants import (
-    TASK_NAME_ROLE,
     PROJECT_NAME_ROLE
 )
+from openpype.tools.utils.tasks_widget import TasksWidget
 from openpype.tools.utils.models import (
     ProjectModel,
-    ProjectSortFilterProxy,
-    TasksModel,
-    TasksProxyModel
+    ProjectSortFilterProxy
 )
 
 
@@ -67,8 +65,8 @@ class ContextDialog(QtWidgets.QDialog):
         project_combobox.setModel(project_proxy)
 
         # Assets widget
-        assets_widget = AssetWidget(
-            dbcon, multiselection=False, parent=left_side_widget
+        assets_widget = SingleSelectAssetsWidget(
+            dbcon, parent=left_side_widget
         )
 
         left_side_layout = QtWidgets.QVBoxLayout(left_side_widget)
@@ -77,15 +75,11 @@ class ContextDialog(QtWidgets.QDialog):
         left_side_layout.addWidget(assets_widget)
 
         # Right side of window contains only tasks
-        task_view = QtWidgets.QListView(main_splitter)
-        task_model = TasksModel(dbcon)
-        task_proxy = TasksProxyModel()
-        task_proxy.setSourceModel(task_model)
-        task_view.setModel(task_proxy)
+        tasks_widget = TasksWidget(dbcon, main_splitter)
 
         # Add widgets to main splitter
         main_splitter.addWidget(left_side_widget)
-        main_splitter.addWidget(task_view)
+        main_splitter.addWidget(tasks_widget)
 
         # Set stretch of both sides
         main_splitter.setStretchFactor(0, 7)
@@ -119,9 +113,7 @@ class ContextDialog(QtWidgets.QDialog):
         assets_widget.selection_changed.connect(self._on_asset_change)
         assets_widget.refresh_triggered.connect(self._on_asset_refresh_trigger)
         assets_widget.refreshed.connect(self._on_asset_widget_refresh_finished)
-        task_view.selectionModel().selectionChanged.connect(
-            self._on_task_change
-        )
+        tasks_widget.task_changed.connect(self._on_task_change)
         ok_btn.clicked.connect(self._on_ok_click)
 
         self._dbcon = dbcon
@@ -133,9 +125,7 @@ class ContextDialog(QtWidgets.QDialog):
 
         self._assets_widget = assets_widget
 
-        self._task_view = task_view
-        self._task_model = task_model
-        self._task_proxy = task_proxy
+        self._tasks_widget = tasks_widget
 
         self._ok_btn = ok_btn
 
@@ -279,15 +269,13 @@ class ContextDialog(QtWidgets.QDialog):
             self._dbcon.Session["AVALON_ASSET"] = self._set_context_asset
             self._assets_widget.setEnabled(False)
             self._assets_widget.select_assets(self._set_context_asset)
-            self._set_asset_to_task_model()
+            self._set_asset_to_tasks_widget()
         else:
             self._assets_widget.setEnabled(True)
             self._assets_widget.set_current_asset_btn_visibility(False)
 
         # Refresh tasks
-        self._task_model.refresh()
-        # Sort tasks
-        self._task_proxy.sort(0, QtCore.Qt.AscendingOrder)
+        self._tasks_widget.refresh()
 
         self._ignore_value_changes = False
 
@@ -314,20 +302,16 @@ class ContextDialog(QtWidgets.QDialog):
         """Selected assets have changed"""
         if self._ignore_value_changes:
             return
-        self._set_asset_to_task_model()
+        self._set_asset_to_tasks_widget()
 
     def _on_task_change(self):
         self._validate_strict()
 
-    def _set_asset_to_task_model(self):
+    def _set_asset_to_tasks_widget(self):
         # filter None docs they are silo
-        asset_docs = self._assets_widget.get_selected_assets()
-        asset_ids = [asset_doc["_id"] for asset_doc in asset_docs]
-        asset_id = None
-        if asset_ids:
-            asset_id = asset_ids[0]
-        self._task_model.set_asset_id(asset_id)
-        self._task_proxy.sort(0, QtCore.Qt.AscendingOrder)
+        asset_id = self._assets_widget.get_selected_asset_id()
+
+        self._tasks_widget.set_asset_id(asset_id)
 
     def _confirm_values(self):
         """Store values to output."""
@@ -347,19 +331,11 @@ class ContextDialog(QtWidgets.QDialog):
 
     def get_selected_asset(self):
         """Currently selected asset in asset widget."""
-        asset_name = None
-        for asset_doc in self._assets_widget.get_selected_assets():
-            asset_name = asset_doc["name"]
-            break
-        return asset_name
+        return self._assets_widget.get_selected_asset_name()
 
     def get_selected_task(self):
         """Currently selected task."""
-        task_name = None
-        index = self._task_view.selectionModel().currentIndex()
-        if index.isValid():
-            task_name = index.data(TASK_NAME_ROLE)
-        return task_name
+        return self._tasks_widget.get_selected_task_name()
 
     def _validate_strict(self):
         if not self._strict:

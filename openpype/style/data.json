@@ -18,7 +18,6 @@
         "green-light": "hsl(155, 80%, 80%)"
     },
     "color": {
-
         "font": "#D3D8DE",
         "font-hover": "#F0F2F5",
         "font-disabled": "#99A3B2",
@@ -50,7 +49,16 @@
 
         "border": "#373D48",
         "border-hover": "rgba(168, 175, 189, .3)",
-        "border-focus": "hsl(200, 60%, 60%)",
+        "border-focus": "rgb(92, 173, 214)",
+
+        "tab-widget": {
+            "bg": "#21252B",
+            "bg-selected": "#434a56",
+            "bg-hover": "#373D48",
+            "color": "#99A3B2",
+            "color-selected": "#F0F2F5",
+            "color-hover": "#F0F2F5"
+        },
 
         "loader": {
             "asset-view": {

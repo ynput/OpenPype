@@ -12,6 +12,12 @@ class ValidateEditorialAssetName(pyblish.api.ContextPlugin):
 
     order = pyblish.api.ValidatorOrder
     label = "Validate Editorial Asset Name"
+    hosts = [
+        "hiero",
+        "standalonepublisher",
+        "resolve",
+        "flame"
+    ]
 
     def process(self, context):
 
