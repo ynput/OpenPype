@@ -211,7 +211,7 @@ class OpenPypeVersion(semver.VersionInfo):
         if not m:
             return None
         version = OpenPypeVersion.parse(string[m.start():m.end()])
-        if "staging" in m.group("buildmetadata"):
+        if "staging" in string[m.start():m.end()]:
             version.staging = True
         return version
 
@@ -570,6 +570,8 @@ class BootstrapRepos:
                 and string with reason as second.
 
         """
+        if os.getenv("OPENPYPE_DONT_VALIDATE_VERSION"):
+            return True, "Disabled validation"
         if not path.exists():
             return False, "Path doesn't exist"
 
@@ -614,7 +616,7 @@ class BootstrapRepos:
             files_in_zip = zip_file.namelist()
             files_in_zip.remove("checksums")
             files_in_zip = set(files_in_zip)
-        files_in_checksum = set([file[1] for file in checksums])
+        files_in_checksum = {file[1] for file in checksums}
         diff = files_in_zip.difference(files_in_checksum)
         if diff:
             return False, f"Missing files {diff}"
@@ -638,7 +640,7 @@ class BootstrapRepos:
         ]
         files_in_dir.remove("checksums")
         files_in_dir = set(files_in_dir)
-        files_in_checksum = set([file[1] for file in checksums])
+        files_in_checksum = {file[1] for file in checksums}
 
         for file in checksums:
             file_name = file[1]

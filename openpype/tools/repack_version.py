@@ -94,6 +94,8 @@ class VersionRepacker:
             return
 
         self._print(f"Detected version is {version}")
+        # replace version in version.py
+        self._replace_version(version, self.version_path)
         self._print("Recalculating checksums ...", 2)
 
         checksums = []
@@ -115,14 +117,13 @@ class VersionRepacker:
             total=len(checksums), desc="Zipping directory",
             nits="%", color=(56, 211, 159))
 
-        with ZipFile(self.zip_path, "w") as zip_file:
-            checksums = []
+        zip_filename = self.zip_path / f"openpype-v{version}.zip"
+        with ZipFile(zip_filename, "w") as zip_file:
 
             for item in checksums:
-
-                processed_path = item[0]
-                self._print(f"- processing {processed_path}")
-
+                if item[1].as_posix() == "checksums":
+                    progress_bar.update()
+                    continue
                 zip_file.write(item[2], item[1])
                 progress_bar.update()
 
@@ -135,6 +136,28 @@ class VersionRepacker:
             zip_file.writestr("checksums", checksums_str)
             # test if zip is ok
             zip_file.testzip()
+        self._print(f"All done, you can find new zip here: {zip_filename}")
+
+    @staticmethod
+    def _replace_version(version: OpenPypeVersion, path: Path):
+        """Replace version in version.py.
+
+        Args:
+            version (OpenPypeVersion): OpenPype version to set
+            path (Path): Path to unzipped version.
+
+        """
+        with open(path / "openpype" / "version.py", "r") as op_version_file:
+            replacement = ""
+
+            for line in op_version_file:
+                stripped_line = line.strip()
+                if stripped_line.strip().startswith("__version__ ="):
+                    line = f'__version__ = "{version}"\n'
+                replacement += line
+
+        with open(path / "openpype" / "version.py", "w") as op_version_file:
+            op_version_file.write(replacement)
 
 
 if __name__ == '__main__':
