@@ -1,18 +1,29 @@
 # Changelog
 
-## [3.6.2-nightly.1](https://github.com/pypeclub/OpenPype/tree/HEAD)
+## [3.6.2-nightly.2](https://github.com/pypeclub/OpenPype/tree/HEAD)
 
 [Full Changelog](https://github.com/pypeclub/OpenPype/compare/3.6.1...HEAD)
 
 **🚀 Enhancements**
 
+- Tools: Assets widget [\#2265](https://github.com/pypeclub/OpenPype/pull/2265)
+- SceneInventory: Choose loader in asset switcher [\#2262](https://github.com/pypeclub/OpenPype/pull/2262)
+- Style: New fonts in OpenPype style [\#2256](https://github.com/pypeclub/OpenPype/pull/2256)
 - Tools: SceneInventory in OpenPype  [\#2255](https://github.com/pypeclub/OpenPype/pull/2255)
 - Tools: Tasks widget [\#2251](https://github.com/pypeclub/OpenPype/pull/2251)
+- Tools: Creator in OpenPype [\#2244](https://github.com/pypeclub/OpenPype/pull/2244)
 - Added endpoint for configured extensions [\#2221](https://github.com/pypeclub/OpenPype/pull/2221)
 
 **🐛 Bug fixes**
 
+- Tools: Parenting of tools in Nuke and Hiero [\#2266](https://github.com/pypeclub/OpenPype/pull/2266)
+- limiting validator to specific editorial hosts [\#2264](https://github.com/pypeclub/OpenPype/pull/2264)
+- Tools: Select Context dialog attribute fix [\#2261](https://github.com/pypeclub/OpenPype/pull/2261)
+- Maya: Render publishing fails on linux [\#2260](https://github.com/pypeclub/OpenPype/pull/2260)
+- LookAssigner: Fix tool reopen [\#2259](https://github.com/pypeclub/OpenPype/pull/2259)
+- Standalone: editorial not publishing thumbnails on all subsets [\#2258](https://github.com/pypeclub/OpenPype/pull/2258)
 - Burnins: Support mxf metadata [\#2247](https://github.com/pypeclub/OpenPype/pull/2247)
+- Maya: Support for configurable AOV separator characters [\#2197](https://github.com/pypeclub/OpenPype/pull/2197)
 
 ## [3.6.1](https://github.com/pypeclub/OpenPype/tree/3.6.1) (2021-11-16)
 
@@ -74,6 +85,7 @@
 - Fix - different command used for Linux and Mac OS [\#2207](https://github.com/pypeclub/OpenPype/pull/2207)
 - Tools: Workfiles tool don't use avalon widgets [\#2205](https://github.com/pypeclub/OpenPype/pull/2205)
 - Ftrack: Fill missing ftrack id on mongo project [\#2203](https://github.com/pypeclub/OpenPype/pull/2203)
+- Maya: texture colorspace modes in looks [\#2195](https://github.com/pypeclub/OpenPype/pull/2195)
 - Project Manager: Fix copying of tasks [\#2191](https://github.com/pypeclub/OpenPype/pull/2191)
 - Blender: Fix trying to pack an image when the shader node has no texture [\#2183](https://github.com/pypeclub/OpenPype/pull/2183)
 - Maya: review viewport settings [\#2177](https://github.com/pypeclub/OpenPype/pull/2177)
@@ -86,21 +98,11 @@
 **🆕 New features**
 
 - Added project and task into context change message in Maya [\#2131](https://github.com/pypeclub/OpenPype/pull/2131)
-- Add ExtractBurnin to photoshop review [\#2124](https://github.com/pypeclub/OpenPype/pull/2124)
-- PYPE-1218 - changed namespace to contain subset name in Maya [\#2114](https://github.com/pypeclub/OpenPype/pull/2114)
 
 **🚀 Enhancements**
 
 - Maya: make rig validators configurable in settings [\#2137](https://github.com/pypeclub/OpenPype/pull/2137)
 - Settings: Updated readme for entity types in settings [\#2132](https://github.com/pypeclub/OpenPype/pull/2132)
-- Nuke: unified clip loader [\#2128](https://github.com/pypeclub/OpenPype/pull/2128)
-
-**🐛 Bug fixes**
-
-- Maya: fix model publishing [\#2130](https://github.com/pypeclub/OpenPype/pull/2130)
-- Fix - oiiotool wasn't recognized even if present [\#2129](https://github.com/pypeclub/OpenPype/pull/2129)
-- General: Disk mapping group [\#2120](https://github.com/pypeclub/OpenPype/pull/2120)
-- Hiero: publishing effect first time makes wrong resources path [\#2115](https://github.com/pypeclub/OpenPype/pull/2115)
 
 ## [3.4.1](https://github.com/pypeclub/OpenPype/tree/3.4.1) (2021-09-23)
 
