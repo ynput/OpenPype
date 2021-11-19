@@ -192,7 +192,7 @@ class SFTPHandler(AbstractProvider):
             Format is importing for usage of python's format ** approach
         """
         # roots cannot be locally overridden
-        return self.presets['roots']
+        return self.presets['root']
 
     def get_tree(self):
         """
