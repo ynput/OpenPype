@@ -659,7 +659,7 @@ class FilesWidget(QtWidgets.QWidget):
         self.host.save_file(file_path)
 
         self.set_asset_task(
-            self._asse_id, self._task_name, self._task_type
+            self._asset_id, self._task_name, self._task_type
         )
 
         pipeline.emit("after.workfile.save", [file_path])
