@@ -4,13 +4,13 @@ import os
 import sys
 
 try:
-    from app import FlameToFtrackPanel
+    from panel_app import FlameToFtrackPanel
 except ImportError:
     SCRIPT_DIR = os.path.dirname(__file__)
     PACKAGE_DIR = os.path.join(SCRIPT_DIR, "modules")
     sys.path.append(PACKAGE_DIR)
 
-    from app import FlameToFtrackPanel
+    from panel_app import FlameToFtrackPanel
 
 def scope_sequence(selection):
     import flame

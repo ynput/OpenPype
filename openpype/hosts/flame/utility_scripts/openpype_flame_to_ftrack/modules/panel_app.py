@@ -3,12 +3,12 @@ from PySide2 import QtWidgets, QtCore
 import uiwidgets
 import flame
 
-from .ftrack_lib import (
+from ftrack_lib import (
     maintained_ftrack_session,
     FtrackEntityOperator,
     FtrackComponentCreator
 )
-from .utils import (
+from app_utils import (
     get_config,
     set_config,
     get_all_task_types,
@@ -19,7 +19,7 @@ from .utils import (
 )
 
 
-class FlameToFtrackPanel(QtWidgets.QWidget()):
+class FlameToFtrackPanel(object):
     temp_data_dir = None
     project_entity = None
     task_types = {}
@@ -50,17 +50,16 @@ class FlameToFtrackPanel(QtWidgets.QWidget()):
         },
     }
 
-    def __init__(self, selection, *args, **kwargs):
-        super(FlameToFtrackPanel, self).__init__(*args, **kwargs)
+    def __init__(self, selection):
 
         self.selection = selection
+        self.window = QtWidgets.QWidget()
         # creating ui
-        self.setMinimumSize(1500, 600)
-        self.setWindowTitle('Sequence Shots to Ftrack')
-        self.setWindowFlags(QtCore.Qt.WindowStaysOnTopHint)
-        self.setAttribute(QtCore.Qt.WA_DeleteOnClose)
-        self.setStyleSheet('background-color: #313131')
-
+        self.window.setMinimumSize(1500, 600)
+        self.window.setWindowTitle('Sequence Shots to Ftrack')
+        self.window.setWindowFlags(QtCore.Qt.WindowStaysOnTopHint)
+        self.window.setAttribute(QtCore.Qt.WA_DeleteOnClose)
+        self.window.setStyleSheet('background-color: #313131')
 
         self._create_tree_widget()
         self._set_sequence_params()
@@ -81,54 +80,54 @@ class FlameToFtrackPanel(QtWidgets.QWidget()):
 
             # input fields
             self.shot_name_label = uiwidgets.FlameLabel(
-                'Shot name template', 'normal', self)
+                'Shot name template', 'normal', self.window)
             self.shot_name_template_input = uiwidgets.FlameLineEdit(
-                cfg_d["shot_name_template"], self)
+                cfg_d["shot_name_template"], self.window)
 
             self.hierarchy_label = uiwidgets.FlameLabel(
-                'Parents template', 'normal', self)
+                'Parents template', 'normal', self.window)
             self.hierarchy_template_input = uiwidgets.FlameLineEdit(
-                cfg_d["hierarchy_template"], self)
+                cfg_d["hierarchy_template"], self.window)
 
             self.start_frame_label = uiwidgets.FlameLabel(
-                'Workfile start frame', 'normal', self)
+                'Workfile start frame', 'normal', self.window)
             self.start_frame_input = uiwidgets.FlameLineEdit(
-                cfg_d["workfile_start_frame"], self)
+                cfg_d["workfile_start_frame"], self.window)
 
             self.handles_label = uiwidgets.FlameLabel(
-                'Shot handles', 'normal', self)
+                'Shot handles', 'normal', self.window)
             self.handles_input = uiwidgets.FlameLineEdit(
-                cfg_d["shot_handles"], self)
+                cfg_d["shot_handles"], self.window)
 
             self.width_label = uiwidgets.FlameLabel(
-                'Sequence width', 'normal', self)
+                'Sequence width', 'normal', self.window)
             self.width_input = uiwidgets.FlameLineEdit(
-                str(self.seq_width), self)
+                str(self.seq_width), self.window)
 
             self.height_label = uiwidgets.FlameLabel(
-                'Sequence height', 'normal', self)
+                'Sequence height', 'normal', self.window)
             self.height_input = uiwidgets.FlameLineEdit(
-                str(self.seq_height), self)
+                str(self.seq_height), self.window)
 
             self.pixel_aspect_label = uiwidgets.FlameLabel(
-                'Pixel aspect ratio', 'normal', self)
+                'Pixel aspect ratio', 'normal', self.window)
             self.pixel_aspect_input = uiwidgets.FlameLineEdit(
-                str(1.00), self)
+                str(1.00), self.window)
 
             self.fps_label = uiwidgets.FlameLabel(
-                'Frame rate', 'normal', self)
+                'Frame rate', 'normal', self.window)
             self.fps_input = uiwidgets.FlameLineEdit(
-                str(self.fps), self)
+                str(self.fps), self.window)
 
             # Button
             self.select_all_btn = uiwidgets.FlameButton(
-                'Select All', self.select_all, self)
+                'Select All', self.select_all, self.window)
 
             self.remove_temp_data_btn = uiwidgets.FlameButton(
-                'Remove temp data', self.remove_temp_data, self)
+                'Remove temp data', self.remove_temp_data, self.window)
 
             self.ftrack_send_btn = uiwidgets.FlameButton(
-                'Send to Ftrack', self._send_to_ftrack, self)
+                'Send to Ftrack', self._send_to_ftrack, self.window)
 
     def _generate_layouts(self):
         # left props
@@ -199,9 +198,9 @@ class FlameToFtrackPanel(QtWidgets.QWidget()):
         self.task_types = get_all_task_types(self.project_entity)
 
         self.task_type_label = uiwidgets.FlameLabel(
-            'Create Task (type)', 'normal', self)
+            'Create Task (type)', 'normal', self.window)
         self.task_type_input = uiwidgets.FlamePushButtonMenu(
-            cfg_d["create_task_type"], self.task_types.keys(), self)
+            cfg_d["create_task_type"], self.task_types.keys(), self.window)
 
     def _create_project_widget(self):
 
@@ -226,9 +225,9 @@ class FlameToFtrackPanel(QtWidgets.QWidget()):
                 self.all_task_types = {p["full_name"]: get_all_task_types(
                     p).keys() for p in self.all_projects}
                 self.project_select_label = uiwidgets.FlameLabel(
-                    'Select Ftrack project', 'normal', self)
+                    'Select Ftrack project', 'normal', self.window)
                 self.project_select_input = uiwidgets.FlamePushButtonMenu(
-                    self.project_entity["full_name"], project_names, self)
+                    self.project_entity["full_name"], project_names, self.window)
                 self.project_select_input.selection_changed.connect(
                     self._on_project_changed)
 
@@ -238,7 +237,8 @@ class FlameToFtrackPanel(QtWidgets.QWidget()):
             ordered_column_labels.pop(_value["order"])
             ordered_column_labels.insert(_value["order"], _name)
 
-        self.tree = uiwidgets.FlameTreeWidget(ordered_column_labels, self)
+        self.tree = uiwidgets.FlameTreeWidget(
+            ordered_column_labels, self.window)
 
         # Allow multiple items in tree to be selected
         self.tree.setSelectionMode(QtWidgets.QAbstractItemView.MultiSelection)
