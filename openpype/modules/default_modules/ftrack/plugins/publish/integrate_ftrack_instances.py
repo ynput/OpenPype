@@ -124,9 +124,46 @@ class IntegrateFtrackInstance(pyblish.api.InstancePlugin):
         # Components that will be duplicated to unmanaged location
         src_components_to_add = []
 
+        # Create thumbnail components
+        # TODO what if there is multiple thumbnails?
+        first_thumbnail_component = None
+        for repre in thumbnail_representations:
+            published_path = repre.get("published_path")
+            if not published_path:
+                comp_files = repre["files"]
+                if isinstance(comp_files, (tuple, list, set)):
+                    filename = comp_files[0]
+                else:
+                    filename = comp_files
+
+                published_path = os.path.join(
+                    repre["stagingDir"], filename
+                )
+                if not os.path.exists(published_path):
+                    continue
+                repre["published_path"] = published_path
+
+            # Create copy of base comp item and append it
+            thumbnail_item = copy.deepcopy(base_component_item)
+            thumbnail_item["component_path"] = repre["published_path"]
+            thumbnail_item["component_data"] = {
+                "name": "thumbnail"
+            }
+            thumbnail_item["thumbnail"] = True
+            # Create copy of item before setting location
+            src_components_to_add.append(copy.deepcopy(thumbnail_item))
+            # Create copy of first thumbnail
+            if first_thumbnail_component is None:
+                first_thumbnail_component = copy.deepcopy(thumbnail_item)
+            # Set location
+            thumbnail_item["component_location"] = ftrack_server_location
+            # Add item to component list
+            component_list.append(thumbnail_item)
+
         # Create review components
         # Change asset name of each new component for review
-        first_review_repre = True
+        is_first_review_repre = True
+        not_first_components = []
         for repre in review_representations:
             frame_start = repre.get("frameStartFtrack")
             frame_end = repre.get("frameEndFtrack")
@@ -161,51 +198,33 @@ class IntegrateFtrackInstance(pyblish.api.InstancePlugin):
             }
             # Create copy of item before setting location or changing asset
             src_components_to_add.append(copy.deepcopy(review_item))
-            if first_review_repre:
-                first_review_repre = False
+            if is_first_review_repre:
+                is_first_review_repre = False
             else:
                 # Add representation name to asset name of "not first" review
                 asset_name = review_item["asset_data"]["name"]
                 review_item["asset_data"]["name"] = "_".join(
                     (asset_name, repre["name"])
                 )
+                not_first_components.append(review_item)
 
             # Set location
             review_item["component_location"] = ftrack_server_location
             # Add item to component list
             component_list.append(review_item)
 
-        # Create thumbnail components
-        # TODO what if there is multiple thumbnails?
-        for repre in thumbnail_representations:
-            published_path = repre.get("published_path")
-            if not published_path:
-                comp_files = repre["files"]
-                if isinstance(comp_files, (tuple, list, set)):
-                    filename = comp_files[0]
-                else:
-                    filename = comp_files
-
-                published_path = os.path.join(
-                    repre["stagingDir"], filename
+        # Duplicate thumbnail component for all not first reviews
+        if first_thumbnail_component is not None:
+            for component_item in not_first_components:
+                asset_name = component_item["asset_data"]["name"]
+                new_thumbnail_component = copy.deepcopy(
+                    first_thumbnail_component
                 )
-                if not os.path.exists(published_path):
-                    continue
-                repre["published_path"] = published_path
-
-            # Create copy of base comp item and append it
-            thumbnail_item = copy.deepcopy(base_component_item)
-            thumbnail_item["component_path"] = repre["published_path"]
-            thumbnail_item["component_data"] = {
-                "name": "thumbnail"
-            }
-            thumbnail_item["thumbnail"] = True
-            # Create copy of item before setting location
-            src_components_to_add.append(copy.deepcopy(thumbnail_item))
-            # Set location
-            thumbnail_item["component_location"] = ftrack_server_location
-            # Add item to component list
-            component_list.append(thumbnail_item)
+                new_thumbnail_component["asset_data"]["name"] = asset_name
+                new_thumbnail_component["component_location"] = (
+                    ftrack_server_location
+                )
+                component_list.append(new_thumbnail_component)
 
         # Add source components for review and thubmnail components
         for copy_src_item in src_components_to_add:
