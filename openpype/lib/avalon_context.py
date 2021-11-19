@@ -465,6 +465,7 @@ def get_workfile_template_key(
     return default
 
 
+# TODO rename function as is not just "work" specific
 def get_workdir_data(project_doc, asset_doc, task_name, host_name):
     """Prepare data for workdir template filling from entered information.
 
