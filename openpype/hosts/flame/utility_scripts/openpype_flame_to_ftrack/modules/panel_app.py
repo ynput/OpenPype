@@ -434,9 +434,9 @@ class FlameToFtrackPanel(object):
     def _fix_resolution(self):
         # Center window in linux
         resolution = QtWidgets.QDesktopWidget().screenGeometry()
-        self.move(
-            (resolution.width() / 2) - (self.frameSize().width() / 2),
-            (resolution.height() / 2) - (self.frameSize().height() / 2))
+        self.window.move(
+            (resolution.width() / 2) - (self.window.frameSize().width() / 2),
+            (resolution.height() / 2) - (self.window.frameSize().height() / 2))
 
     def _on_project_changed(self):
         task_types = self.all_task_types[self.project_name]

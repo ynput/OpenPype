@@ -2,6 +2,7 @@ import os
 import sys
 import six
 import re
+import json
 from contextlib import contextmanager
 
 # Fill following constants or set them via environment variable
@@ -127,13 +128,13 @@ class FtrackComponentCreator:
             duration = data["duration"]
             handles = data["handles"]
             fps = data["fps"]
-            component_data.update({
-                "metadata": {'ftr_meta': json.dumps({
+            component_data["metadata"] = {
+                'ftr_meta': json.dumps({
                     'frameIn': int(0),
                     'frameOut': int(duration + (handles * 2)),
-                    'frameRate': float(fps)})}
-            })
-
+                    'frameRate': float(fps)
+                })
+            }
         if not assetversion_entity:
             # get assettype entity from session
             assettype_entity = self._get_assettype({"short": "reference"})
