@@ -17,7 +17,6 @@ from .utils import (
     export_video,
     timecode_to_frames
 )
-from pprint import pformat
 
 
 class FlameToFtrackPanel(QtWidgets.QWidget()):
@@ -254,8 +253,7 @@ class FlameToFtrackPanel(QtWidgets.QWidget()):
         # Prevent weird characters when shrinking tree columns
         self.tree.setTextElideMode(QtCore.Qt.ElideNone)
 
-    def _send_to_ftrack(self):
-        # resolve active project and add it to self.project_entity
+    def _resolve_project_entity(self):
         if self.project_selector_enabled:
             selected_project_name = self.project_select_input.text()
             self.project_entity = next(
@@ -264,13 +262,22 @@ class FlameToFtrackPanel(QtWidgets.QWidget()):
                 None
             )
 
-        _cfg_data_back = {}
+    def _save_ui_state_to_cfg(self):
+        _cfg_data_back = {
+            "shot_name_template": self.shot_name_template_input.text(),
+            "workfile_start_frame": self.start_frame_input.text(),
+            "shot_handles": self.handles_input.text(),
+            "hierarchy_template": self.hierarchy_template_input.text(),
+            "create_task_type": self.task_type_input.text()
+        }
 
-        # get shot name template from gui input
-        shot_name_template = self.shot_name_template_input.text()
+        # add cfg data back to settings.ini
+        set_config(_cfg_data_back, "main")
 
-        # get hierarchy from gui input
-        hierarchy_text = self.hierarchy_template_input.text()
+    def _send_to_ftrack(self):
+        # resolve active project and add it to self.project_entity
+        self._resolve_project_entity()
+        self._save_ui_state_to_cfg()
 
         # get hanldes from gui input
         handles = self.handles_input.text()
@@ -282,21 +289,7 @@ class FlameToFtrackPanel(QtWidgets.QWidget()):
         task_type = self.task_type_input.text()
 
         # get resolution from gui inputs
-        width = self.width_input.text()
-        height = self.height_input.text()
-        pixel_aspect = self.pixel_aspect_input.text()
         fps = self.fps_input.text()
-
-        _cfg_data_back = {
-            "shot_name_template": shot_name_template,
-            "workfile_start_frame": str(frame_start),
-            "shot_handles": handles,
-            "hierarchy_template": hierarchy_text,
-            "create_task_type": task_type
-        }
-
-        # add cfg data back to settings.ini
-        set_config(_cfg_data_back, "main")
 
         with maintained_ftrack_session() as session:
             print("Ftrack session is: {}".format(session))
@@ -356,10 +349,12 @@ class FlameToFtrackPanel(QtWidgets.QWidget()):
                 }
 
                 # format shot name template
-                _shot_name = shot_name_template.format(**shot_attributes)
+                _shot_name = self.shot_name_template_input.text().format(
+                    **shot_attributes)
 
                 # format hierarchy template
-                _hierarchy_text = hierarchy_text.format(**shot_attributes)
+                _hierarchy_text = self.hierarchy_template_input.text().format(
+                    **shot_attributes)
                 print(_hierarchy_text)
 
                 # solve parents
@@ -411,9 +406,9 @@ class FlameToFtrackPanel(QtWidgets.QWidget()):
                     "frameEnd": frame_end,
                     "handleStart": int(handles),
                     "handleEnd": int(handles),
-                    "resolutionWidth": int(width),
-                    "resolutionHeight": int(height),
-                    "pixelAspect": float(pixel_aspect),
+                    "resolutionWidth": int(self.width_input.text()),
+                    "resolutionHeight": int(self.height_input.text()),
+                    "pixelAspect": float(self.pixel_aspect_input.text()),
                     "fps": float(fps)
                 }
 
