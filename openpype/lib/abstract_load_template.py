@@ -1,12 +1,17 @@
 import os
 import re
 import avalon
+from abc import ABCMeta, abstractmethod
+
+import six
+
 from openpype.settings import get_project_settings
 from openpype.lib import Anatomy, get_linked_assets, get_loaders_by_name,\
     collect_last_version_repres
 
 
-class AbstractTemplateLoader(object):
+@six.add_metaclass(ABCMeta)
+class AbstractTemplateLoader:
     """
     Abstraction of Template Loader.
 
@@ -85,8 +90,8 @@ class AbstractTemplateLoader(object):
 
         if not os.path.exists(solved_path):
             raise IOError(
-                "Template found in openPype settings for task '{}' with DCC \
-                '{}' does not exists. (Not found : {})".format(
+                "Template found in openPype settings for task '{}' with DCC "
+                "'{}' does not exists. (Not found : {})".format(
                     current_task, current_dcc, solved_path))
         return solved_path
 
@@ -158,6 +163,7 @@ class AbstractTemplateLoader(object):
             print("or that the build template is malformed, "
                   "continue at your own risks.")
 
+    @abstractmethod
     def import_template(self, template_path):
         """
         Import template in current dcc
@@ -169,8 +175,9 @@ class AbstractTemplateLoader(object):
         Return:
             None
         """
-        raise NotImplementedError
+        pass
 
+    @abstractmethod
     def get_template_nodes(self):
         """
         Returning a list of nodes acting as DCC placeholders for
@@ -183,9 +190,10 @@ class AbstractTemplateLoader(object):
         Returns:
             list(AnyNode): Solved template path
         """
-        raise NotImplementedError
+        pass
 
 
+@six.add_metaclass(ABCMeta)
 class AbstractPlaceholder:
     """Abstraction of placeholders logic
 
@@ -215,6 +223,7 @@ class AbstractPlaceholder:
     def __init__(self, node):
         self.get_data(node)
 
+    @abstractmethod
     def get_data(self, node):
         """
         Collect placeholders information.
@@ -265,6 +274,7 @@ class AbstractPlaceholder:
         """
         return set(self.attributes).issubset(self.data.keys())
 
+    @abstractmethod
     def parent_in_hierarchy(self, containers):
         """Place container in correct hierarchy
         given by placeholder
@@ -275,6 +285,7 @@ class AbstractPlaceholder:
         """
         raise NotImplementedError
 
+    @abstractmethod
     def clean(self):
         """Clean placeholder from hierarchy after loading assets.
         """
