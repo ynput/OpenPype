@@ -71,18 +71,24 @@ def ffprobe_streams(path_to_file, logger=None):
         "Getting information about input \"{}\".".format(path_to_file)
     )
     args = [
-        "\"{}\"".format(get_ffmpeg_tool_path("ffprobe")),
-        "-v quiet",
-        "-print_format json",
+        get_ffmpeg_tool_path("ffprobe"),
+        "-hide_banner",
+        "-loglevel", "fatal",
+        "-show_error",
         "-show_format",
         "-show_streams",
-        "\"{}\"".format(path_to_file)
+        "-show_programs",
+        "-show_chapters",
+        "-show_private_data",
+        "-print_format", "json",
+        path_to_file
     ]
-    command = " ".join(args)
-    logger.debug("FFprobe command: \"{}\"".format(command))
+
+    logger.debug("FFprobe command: {}".format(
+        subprocess.list2cmdline(args)
+    ))
     popen = subprocess.Popen(
-        command,
-        shell=True,
+        args,
         stdout=subprocess.PIPE,
         stderr=subprocess.PIPE
     )
