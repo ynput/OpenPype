@@ -22,7 +22,8 @@ class TemplateLoader(AbstractTemplateLoader):
             ValueError: "Build already generated"
         """
         if cmds.objExists(PLACEHOLDER_SET):
-            raise ValueError("Build already generated. Please clean scene")
+            raise ValueError("Build already generated. Please clean scene if "
+                             "you really want to rebuild. (File>New Scene)")
         cmds.sets(name=PLACEHOLDER_SET, empty=True)
         self.new_nodes = cmds.file(path, i=True, returnNewNodes=True)
         cmds.setAttr(PLACEHOLDER_SET + '.hiddenInOutliner', True)
