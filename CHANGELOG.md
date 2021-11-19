@@ -1,8 +1,16 @@
 # Changelog
 
+## [3.6.3](https://github.com/pypeclub/OpenPype/tree/3.6.3) (2021-11-19)
+
+[Full Changelog](https://github.com/pypeclub/OpenPype/compare/3.6.2...3.6.3)
+
+**🐛 Bug fixes**
+
+- Deadline: Fix publish targets [\#2280](https://github.com/pypeclub/OpenPype/pull/2280)
+
 ## [3.6.2](https://github.com/pypeclub/OpenPype/tree/3.6.2) (2021-11-18)
 
-[Full Changelog](https://github.com/pypeclub/OpenPype/compare/3.6.1...3.6.2)
+[Full Changelog](https://github.com/pypeclub/OpenPype/compare/CI/3.6.2-nightly.2...3.6.2)
 
 **🚀 Enhancements**
 
@@ -23,8 +31,8 @@
 - LookAssigner: Fix tool reopen [\#2259](https://github.com/pypeclub/OpenPype/pull/2259)
 - Standalone: editorial not publishing thumbnails on all subsets [\#2258](https://github.com/pypeclub/OpenPype/pull/2258)
 - Burnins: Support mxf metadata [\#2247](https://github.com/pypeclub/OpenPype/pull/2247)
+- Fix - enum for color coding in PS [\#2234](https://github.com/pypeclub/OpenPype/pull/2234)
 - Maya: Support for configurable AOV separator characters [\#2197](https://github.com/pypeclub/OpenPype/pull/2197)
-- Maya: texture colorspace modes in looks [\#2195](https://github.com/pypeclub/OpenPype/pull/2195)
 
 ## [3.6.1](https://github.com/pypeclub/OpenPype/tree/3.6.1) (2021-11-16)
 
@@ -75,13 +83,13 @@
 - Ftrack: Session creation and Prepare project [\#2245](https://github.com/pypeclub/OpenPype/pull/2245)
 - Added queue for studio processing in PS [\#2237](https://github.com/pypeclub/OpenPype/pull/2237)
 - Python 2: Unicode to string conversion [\#2236](https://github.com/pypeclub/OpenPype/pull/2236)
-- Fix - enum for color coding in PS [\#2234](https://github.com/pypeclub/OpenPype/pull/2234)
 - Pyblish Tool: Fix targets handling [\#2232](https://github.com/pypeclub/OpenPype/pull/2232)
 - Ftrack: Base event fix of 'get\_project\_from\_entity' method [\#2214](https://github.com/pypeclub/OpenPype/pull/2214)
 - Maya : multiple subsets review broken [\#2210](https://github.com/pypeclub/OpenPype/pull/2210)
 - Fix - different command used for Linux and Mac OS [\#2207](https://github.com/pypeclub/OpenPype/pull/2207)
 - Tools: Workfiles tool don't use avalon widgets [\#2205](https://github.com/pypeclub/OpenPype/pull/2205)
 - Ftrack: Fill missing ftrack id on mongo project [\#2203](https://github.com/pypeclub/OpenPype/pull/2203)
+- Maya: texture colorspace modes in looks [\#2195](https://github.com/pypeclub/OpenPype/pull/2195)
 - Project Manager: Fix copying of tasks [\#2191](https://github.com/pypeclub/OpenPype/pull/2191)
 - Blender: Fix trying to pack an image when the shader node has no texture [\#2183](https://github.com/pypeclub/OpenPype/pull/2183)
 - Maya: review viewport settings [\#2177](https://github.com/pypeclub/OpenPype/pull/2177)
@@ -94,15 +102,6 @@
 ## [3.5.0](https://github.com/pypeclub/OpenPype/tree/3.5.0) (2021-10-17)
 
 [Full Changelog](https://github.com/pypeclub/OpenPype/compare/CI/3.5.0-nightly.8...3.5.0)
-
-**🆕 New features**
-
-- Added project and task into context change message in Maya [\#2131](https://github.com/pypeclub/OpenPype/pull/2131)
-
-**🚀 Enhancements**
-
-- Maya: make rig validators configurable in settings [\#2137](https://github.com/pypeclub/OpenPype/pull/2137)
-- Settings: Updated readme for entity types in settings [\#2132](https://github.com/pypeclub/OpenPype/pull/2132)
 
 ## [3.4.1](https://github.com/pypeclub/OpenPype/tree/3.4.1) (2021-09-23)
 
