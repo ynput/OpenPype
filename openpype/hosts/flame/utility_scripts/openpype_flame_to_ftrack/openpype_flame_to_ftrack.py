@@ -4,13 +4,15 @@ import os
 import sys
 
 try:
-    from panel_app import FlameToFtrackPanel
+    import panel_app
+    reload(panel_app)
 except ImportError:
     SCRIPT_DIR = os.path.dirname(__file__)
     PACKAGE_DIR = os.path.join(SCRIPT_DIR, "modules")
     sys.path.append(PACKAGE_DIR)
 
-    from panel_app import FlameToFtrackPanel
+    import panel_app
+
 
 def scope_sequence(selection):
     import flame
@@ -25,7 +27,7 @@ def get_media_panel_custom_ui_actions():
                 {
                     "name": "Create Shots",
                     "isVisible": scope_sequence,
-                    "execute": FlameToFtrackPanel
+                    "execute": panel_app.FlameToFtrackPanel
                 }
             ]
         }

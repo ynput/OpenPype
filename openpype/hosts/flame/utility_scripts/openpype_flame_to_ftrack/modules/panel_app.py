@@ -3,19 +3,15 @@ from PySide2 import QtWidgets, QtCore
 import uiwidgets
 import flame
 
+import ftrack_lib
+reload(ftrack_lib)
+import app_utils
+reload(app_utils)
+
 from ftrack_lib import (
     maintained_ftrack_session,
     FtrackEntityOperator,
     FtrackComponentCreator
-)
-from app_utils import (
-    get_config,
-    set_config,
-    get_all_task_types,
-    make_temp_dir,
-    export_thumbnail,
-    export_video,
-    timecode_to_frames
 )
 
 
@@ -51,7 +47,7 @@ class FlameToFtrackPanel(object):
     }
 
     def __init__(self, selection):
-
+        print(selection)
         self.selection = selection
         self.window = QtWidgets.QWidget()
         # creating ui
@@ -61,21 +57,23 @@ class FlameToFtrackPanel(object):
         self.window.setAttribute(QtCore.Qt.WA_DeleteOnClose)
         self.window.setStyleSheet('background-color: #313131')
 
-        self._create_tree_widget()
-        self._set_sequence_params()
+        with maintained_ftrack_session() as session:
+            self._create_project_widget(session)
+            self._create_tree_widget()
+            self._set_sequence_params()
+            self._generate_widgets()
+            print(5)
+            self._generate_layouts()
+            print(6)
+            self._timeline_info()
+            print(7)
+            self._fix_resolution()
+            print(8)
 
-        self._create_project_widget()
-
-        self._generate_widgets()
-
-        self._generate_layouts()
-
-        self._timeline_info()
-
-        self._fix_resolution()
+        self.window.show()
 
     def _generate_widgets(self):
-        with get_config("main") as cfg_d:
+        with app_utils.get_config("main") as cfg_d:
             self._create_task_type_widget(cfg_d)
 
             # input fields
@@ -153,7 +151,7 @@ class FlameToFtrackPanel(object):
             self.task_type_input, (v_shift + 4), 1)
 
         # right props
-        prop_widget_r = QtWidgets.QWidget(self)
+        prop_widget_r = QtWidgets.QWidget(self.window)
         prop_layout_r = QtWidgets.QGridLayout(prop_widget_r)
         prop_layout_r.setHorizontalSpacing(30)
         prop_layout_r.setAlignment(
@@ -181,7 +179,7 @@ class FlameToFtrackPanel(object):
         hbox.addWidget(self.ftrack_send_btn)
 
         # put all layouts together
-        main_frame = QtWidgets.QVBoxLayout(self)
+        main_frame = QtWidgets.QVBoxLayout(self.window)
         main_frame.setMargin(20)
         main_frame.addLayout(prop_main_layout)
         main_frame.addWidget(self.tree)
@@ -195,41 +193,41 @@ class FlameToFtrackPanel(object):
             break
 
     def _create_task_type_widget(self, cfg_d):
-        self.task_types = get_all_task_types(self.project_entity)
+        print(self.project_entity)
+        self.task_types = app_utils.get_all_task_types(self.project_entity)
 
         self.task_type_label = uiwidgets.FlameLabel(
             'Create Task (type)', 'normal', self.window)
         self.task_type_input = uiwidgets.FlamePushButtonMenu(
             cfg_d["create_task_type"], self.task_types.keys(), self.window)
 
-    def _create_project_widget(self):
+    def _create_project_widget(self, session):
 
-        with maintained_ftrack_session() as session:
-            # get project name from flame current project
-            self.project_name = flame.project.current_project.name
+        # get project name from flame current project
+        self.project_name = flame.project.current_project.name
 
-            # get project from ftrack -
-            # ftrack project name has to be the same as flame project!
-            query = 'Project where full_name is "{}"'.format(self.project_name)
+        # get project from ftrack -
+        # ftrack project name has to be the same as flame project!
+        query = 'Project where full_name is "{}"'.format(self.project_name)
 
-            # globally used variables
-            self.project_entity = session.query(query).first()
+        # globally used variables
+        self.project_entity = session.query(query).first()
 
-            self.project_selector_enabled = bool(not self.project_entity)
+        self.project_selector_enabled = bool(not self.project_entity)
 
-            if self.project_selector_enabled:
-                self.all_projects = session.query(
-                    "Project where status is active").all()
-                self.project_entity = self.all_projects[0]
-                project_names = [p["full_name"] for p in self.all_projects]
-                self.all_task_types = {p["full_name"]: get_all_task_types(
-                    p).keys() for p in self.all_projects}
-                self.project_select_label = uiwidgets.FlameLabel(
-                    'Select Ftrack project', 'normal', self.window)
-                self.project_select_input = uiwidgets.FlamePushButtonMenu(
-                    self.project_entity["full_name"], project_names, self.window)
-                self.project_select_input.selection_changed.connect(
-                    self._on_project_changed)
+        if self.project_selector_enabled:
+            self.all_projects = session.query(
+                "Project where status is active").all()
+            self.project_entity = self.all_projects[0]
+            project_names = [p["full_name"] for p in self.all_projects]
+            self.all_task_types = {p["full_name"]: app_utils.get_all_task_types(
+                p).keys() for p in self.all_projects}
+            self.project_select_label = uiwidgets.FlameLabel(
+                'Select Ftrack project', 'normal', self.window)
+            self.project_select_input = uiwidgets.FlamePushButtonMenu(
+                self.project_entity["full_name"], project_names, self.window)
+            self.project_select_input.selection_changed.connect(
+                self._on_project_changed)
 
     def _create_tree_widget(self):
         ordered_column_labels = self.columns.keys()
@@ -272,7 +270,7 @@ class FlameToFtrackPanel(object):
         }
 
         # add cfg data back to settings.ini
-        set_config(_cfg_data_back, "main")
+        app_utils.set_config(_cfg_data_back, "main")
 
     def _send_to_ftrack(self):
         # resolve active project and add it to self.project_entity
@@ -456,7 +454,7 @@ class FlameToFtrackPanel(object):
                             continue
                         # get clip frame duration
                         record_duration = str(segment.record_duration)[1:-1]
-                        clip_duration = timecode_to_frames(
+                        clip_duration = app_utils.timecode_to_frames(
                             record_duration, frame_rate)
 
                         # populate shot source metadata
@@ -500,9 +498,9 @@ class FlameToFtrackPanel(object):
         if self.temp_data_dir:
             return True
 
-        with make_temp_dir() as tempdir_path:
+        with app_utils.make_temp_dir() as tempdir_path:
             for seq in self.selection:
-                export_thumbnail(seq, tempdir_path, change_preset_data)
-                export_video(seq, tempdir_path, change_preset_data)
+                app_utils.export_thumbnail(seq, tempdir_path, change_preset_data)
+                app_utils.export_video(seq, tempdir_path, change_preset_data)
                 self.temp_data_dir = tempdir_path
                 break
