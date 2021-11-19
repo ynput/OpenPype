@@ -178,16 +178,20 @@ class IntegrateFtrackInstance(pyblish.api.InstancePlugin):
         # Create thumbnail components
         # TODO what if there is multiple thumbnails?
         for repre in thumbnail_representations:
-            if not repre.get("published_path"):
+            published_path = repre.get("published_path")
+            if not published_path:
                 comp_files = repre["files"]
                 if isinstance(comp_files, (tuple, list, set)):
                     filename = comp_files[0]
                 else:
                     filename = comp_files
 
-                repre["published_path"] = os.path.join(
+                published_path = os.path.join(
                     repre["stagingDir"], filename
                 )
+                if not os.path.exists(published_path):
+                    continue
+                repre["published_path"] = published_path
 
             # Create copy of base comp item and append it
             thumbnail_item = copy.deepcopy(base_component_item)
@@ -217,12 +221,16 @@ class IntegrateFtrackInstance(pyblish.api.InstancePlugin):
 
         # Add others representations as component
         for repre in other_representations:
+            published_path = repre.get("published_path")
+            if not published_path:
+                continue
             # Create copy of base comp item and append it
             other_item = copy.deepcopy(base_component_item)
             other_item["component_data"] = {
                 "name": repre["name"]
             }
             other_item["component_location"] = unmanaged_location
+            other_item["component_path"] = published_path
             component_list.append(other_item)
 
         def json_obj_parser(obj):
