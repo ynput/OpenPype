@@ -165,7 +165,10 @@ class IntegrateFtrackInstance(pyblish.api.InstancePlugin):
                 first_review_repre = False
             else:
                 # Add representation name to asset name of "not first" review
-                review_item["asset_data"]["name"] += repre["name"].title()
+                asset_name = review_item["asset_data"]["name"]
+                review_item["asset_data"]["name"] = "_".join(
+                    (asset_name, repre["name"])
+                )
 
             # Set location
             review_item["component_location"] = ftrack_server_location
