@@ -16,22 +16,24 @@ from ftrack_lib import (
 
 class MainWindow(QtWidgets.QWidget):
     can_close = True
-    def __init__(self, *args, **kwargs):
+    def __init__(self, klass, *args, **kwargs):
         super(MainWindow, self).__init__(*args, **kwargs)
+        self.panel_class = klass
+
     def closeEvent(self, event):
-        print("______>>>____ closing app")
-        print(event)
-        if self.can_close:
-            event.accept()
-        else:
-            event.ignore()
+        # clear all temp data
+        print("Removing temp data")
+        self.panel_class.clear_temp_data()
+
+        # now the panel can be closed
+        event.accept()
 
 class FlameToFtrackPanel(object):
     temp_data_dir = None
+    processed_components = []
     project_entity = None
     task_types = {}
     all_task_types = {}
-    processed_components = []
 
     # TreeWidget
     columns = {
@@ -60,7 +62,7 @@ class FlameToFtrackPanel(object):
     def __init__(self, selection):
         print(selection)
         self.selection = selection
-        self.window = MainWindow()
+        self.window = MainWindow(self)
         # creating ui
         self.window.setMinimumSize(1500, 600)
         self.window.setWindowTitle('Sequence Shots to Ftrack')
@@ -133,7 +135,7 @@ class FlameToFtrackPanel(object):
                 'Select All', self.select_all, self.window)
 
             self.remove_temp_data_btn = uiwidgets.FlameButton(
-                'Remove temp data', self.remove_temp_data, self.window)
+                'Remove temp data', self.clear_temp_data, self.window)
 
             self.ftrack_send_btn = uiwidgets.FlameButton(
                 'Send to Ftrack', self._send_to_ftrack, self.window)
@@ -498,12 +500,14 @@ class FlameToFtrackPanel(object):
     def select_all(self, ):
         self.tree.selectAll()
 
-    def remove_temp_data(self, ):
+    def clear_temp_data(self):
         import shutil
 
         if self.temp_data_dir:
             shutil.rmtree(self.temp_data_dir)
         self.temp_data_dir = None
+        self.processed_components = []
+        print("All Temp data were destroied ...")
 
     def generate_temp_data(self, change_preset_data):
         if self.temp_data_dir:
