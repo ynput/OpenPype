@@ -14,6 +14,17 @@ from ftrack_lib import (
     FtrackComponentCreator
 )
 
+class MainWindow(QtWidgets.QWidget):
+    can_close = True
+    def __init__(self, *args, **kwargs):
+        super(MainWindow, self).__init__(*args, **kwargs)
+    def closeEvent(self, event):
+        print("______>>>____ closing app")
+        print(event)
+        if self.can_close:
+            event.accept()
+        else:
+            event.ignore()
 
 class FlameToFtrackPanel(object):
     temp_data_dir = None
@@ -49,7 +60,7 @@ class FlameToFtrackPanel(object):
     def __init__(self, selection):
         print(selection)
         self.selection = selection
-        self.window = QtWidgets.QWidget()
+        self.window = MainWindow()
         # creating ui
         self.window.setMinimumSize(1500, 600)
         self.window.setWindowTitle('Sequence Shots to Ftrack')
