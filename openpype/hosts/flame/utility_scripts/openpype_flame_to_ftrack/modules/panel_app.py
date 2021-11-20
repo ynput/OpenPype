@@ -61,6 +61,9 @@ class FlameToFtrackPanel(object):
 
     def __init__(self, selection):
         print(selection)
+        print(self.processed_components)
+        self.processed_components = []
+        print(self.processed_components)
         self.selection = selection
         self.window = MainWindow(self)
         # creating ui
@@ -501,12 +504,13 @@ class FlameToFtrackPanel(object):
         self.tree.selectAll()
 
     def clear_temp_data(self):
+        self.processed_components = []
+
         import shutil
 
         if self.temp_data_dir:
             shutil.rmtree(self.temp_data_dir)
         self.temp_data_dir = None
-        self.processed_components = []
         print("All Temp data were destroied ...")
 
     def generate_temp_data(self, change_preset_data):
