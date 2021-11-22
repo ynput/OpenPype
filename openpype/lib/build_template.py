@@ -11,15 +11,17 @@ def build_workfile_template(self):
     module_path = concrete_loaders_modules.get(host_name, None)
 
     if not module_path:
-        raise ValueError("Template not found for host '{}'".format(host_name))
+        raise NotImplementedError(
+            "Template not found for host '{}'".format(host_name)
+        )
 
     module = importlib.import_module(module_path)
     if not hasattr(module, 'TemplateLoader'):
-        raise ValueError(
+        raise NotImplementedError(
             "Linked module '{}' does not "
             "implement a template loader".format(module_path))
     if not hasattr(module, 'Placeholder'):
-        raise ValueError(
+        raise NotImplementedError(
             "Linked module '{}' does not "
             "implement a placeholder template".format(module_path))
     concrete_loader = module.TemplateLoader
