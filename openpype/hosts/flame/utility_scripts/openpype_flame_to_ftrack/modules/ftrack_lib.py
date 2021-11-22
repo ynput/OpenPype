@@ -92,7 +92,7 @@ class FtrackComponentCreator:
 
 
     def generate_temp_data(self, selection, temp_folder, change_preset_data):
-        print(">>>>> self.temp_dir: " + self.temp_dir)
+        print(">>>>> self.temp_dir: " + str(self.temp_dir))
         print(">>>>> self.thumbnails: " + str(self.thumbnails))
         print(">>>>> self.videos: " + str(self.videos))
 
@@ -110,12 +110,12 @@ class FtrackComponentCreator:
                 self.temp_dir = tempdir_path
                 return tempdir_path
 
-    def get_thumb_path(shot_name):
+    def get_thumb_path(self, shot_name):
         # get component files
         thumb_f = next((f for f in self.thumbnails if shot_name in f), None)
         return os.path.join(self.temp_dir, thumb_f)
 
-    def get_video_path(shot_name):
+    def get_video_path(self, shot_name):
         # get component files
         video_f = next((f for f in self.videos if shot_name in f), None)
         return os.path.join(self.temp_dir, video_f)
