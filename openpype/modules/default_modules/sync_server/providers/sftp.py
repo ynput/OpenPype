@@ -421,7 +421,8 @@ class SFTPHandler(AbstractProvider):
 
         try:
             return pysftp.Connection(**conn_params)
-        except paramiko.ssh_exception.SSHException:
+        except (paramiko.ssh_exception.SSHException,
+                pysftp.exceptions.ConnectionException):
             log.warning("Couldn't connect", exc_info=True)
 
     def _mark_progress(self, collection, file, representation, server, site,
