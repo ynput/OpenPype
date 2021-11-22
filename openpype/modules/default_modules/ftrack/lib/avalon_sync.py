@@ -1192,59 +1192,58 @@ class SyncEntitiesFactory:
                 data[key] = val
 
             if ftrack_id == self.ft_project_id:
-                project_name = entity["full_name"]
-                data["code"] = entity["name"]
+                ent_path_items = [ent["name"] for ent in entity["link"]]
+                parents = ent_path_items[1:len(ent_path_items) - 1:]
+
+                data["parents"] = parents
+                data["tasks"] = self.entities_dict[ftrack_id].pop("tasks", {})
                 self.entities_dict[ftrack_id]["final_entity"]["data"] = data
-                self.entities_dict[ftrack_id]["final_entity"]["type"] = (
-                    "project"
-                )
-
-                proj_schema = entity["project_schema"]
-                task_types = proj_schema["_task_type_schema"]["types"]
-                proj_apps, warnings = get_project_apps(
-                    data.pop("applications", [])
-                )
-                for msg, items in warnings.items():
-                    if not msg or not items:
-                        continue
-                    self.report_items["warning"][msg] = items
-
-                current_project_anatomy_data = get_anatomy_settings(
-                    project_name, exclude_locals=True
-                )
-                anatomy_tasks = current_project_anatomy_data["tasks"]
-                tasks = {}
-                default_type_data = {
-                    "short_name": ""
-                }
-                for task_type in task_types:
-                    task_type_name = task_type["name"]
-                    tasks[task_type_name] = copy.deepcopy(
-                        anatomy_tasks.get(task_type_name)
-                        or default_type_data
-                    )
-
-                project_config = {
-                    "tasks": tasks,
-                    "apps": proj_apps
-                }
-                for key, value in current_project_anatomy_data.items():
-                    if key in project_config or key == "attributes":
-                        continue
-                    project_config[key] = value
-
-                self.entities_dict[ftrack_id]["final_entity"]["config"] = (
-                    project_config
-                )
+                self.entities_dict[ftrack_id]["final_entity"]["type"] = "asset"
                 continue
-
-            ent_path_items = [ent["name"] for ent in entity["link"]]
-            parents = ent_path_items[1:len(ent_path_items) - 1:]
-
-            data["parents"] = parents
-            data["tasks"] = self.entities_dict[ftrack_id].pop("tasks", {})
+            project_name = entity["full_name"]
+            data["code"] = entity["name"]
             self.entities_dict[ftrack_id]["final_entity"]["data"] = data
-            self.entities_dict[ftrack_id]["final_entity"]["type"] = "asset"
+            self.entities_dict[ftrack_id]["final_entity"]["type"] = (
+                "project"
+            )
+
+            proj_schema = entity["project_schema"]
+            task_types = proj_schema["_task_type_schema"]["types"]
+            proj_apps, warnings = get_project_apps(
+                data.pop("applications", [])
+            )
+            for msg, items in warnings.items():
+                if not msg or not items:
+                    continue
+                self.report_items["warning"][msg] = items
+
+            current_project_anatomy_data = get_anatomy_settings(
+                project_name, exclude_locals=True
+            )
+            anatomy_tasks = current_project_anatomy_data["tasks"]
+            tasks = {}
+            default_type_data = {
+                "short_name": ""
+            }
+            for task_type in task_types:
+                task_type_name = task_type["name"]
+                tasks[task_type_name] = copy.deepcopy(
+                    anatomy_tasks.get(task_type_name)
+                    or default_type_data
+                )
+
+            project_config = {
+                "tasks": tasks,
+                "apps": proj_apps
+            }
+            for key, value in current_project_anatomy_data.items():
+                if key in project_config or key == "attributes":
+                    continue
+                project_config[key] = value
+
+            self.entities_dict[ftrack_id]["final_entity"]["config"] = (
+                project_config
+            )
 
         if not_set_ids:
             self.log.debug((
