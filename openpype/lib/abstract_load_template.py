@@ -55,11 +55,11 @@ class AbstractTemplateLoader:
             str: Solved template path
 
         Raises:
-            ValueError: No profile found from settings for current avalon
-                session
+            TemplateProfileNotFound: No profile found from settings for
+                current avalon session
             KeyError: Could not solve path because a key does not exists
                 in avalon context
-            IOError: Solved path does not exists on current filesystem
+            TemplateNotFound: Solved path does not exists on current filesystem
         """
         project_name = avalon.io.Session["AVALON_PROJECT"]
         anatomy = Anatomy(project_name)
@@ -84,7 +84,7 @@ class AbstractTemplateLoader:
             path = prf['path']
             break
         else:
-            raise ValueError(
+            raise TemplateProfileNotFound(
                 "No matching profile found for task '{}' of type '{}' "
                 "with host '{}'".format(task_name, task_type, host_name)
             )
@@ -102,7 +102,7 @@ class AbstractTemplateLoader:
                     missing_key, path))
 
         if not os.path.exists(solved_path):
-            raise IOError(
+            raise TemplateNotFound(
                 "Template found in openPype settings for task '{}' with host "
                 "'{}' does not exists. (Not found : {})".format(
                     task_name, host_name, solved_path))
@@ -250,7 +250,7 @@ class AbstractPlaceholder:
         Args:
             node (AnyNode): A unique node decided by Placeholder implementation
         """
-        raise NotImplementedError
+        pass
 
     def order(self):
         """Get placeholder order to sort them by priority
@@ -302,13 +302,13 @@ class AbstractPlaceholder:
             containers (String): Container name returned back by
                 placeholder's loader.
         """
-        raise NotImplementedError
+        pass
 
     @abstractmethod
     def clean(self):
         """Clean placeholder from hierarchy after loading assets.
         """
-        raise NotImplementedError
+        pass
 
     def is_repres_valid(self, representation):
         """Check that given representation correspond to current
@@ -333,3 +333,14 @@ class AbstractPlaceholder:
         is_valid &= data['family'] == rep_family
 
         return is_valid
+
+
+class TemplateNotFound(Exception):
+    """Exception raised when template does not exist."""
+    pass
+
+
+class TemplateProfileNotFound(Exception):
+    """Exception raised when current profile
+    doesn't match any template profile"""
+    pass
