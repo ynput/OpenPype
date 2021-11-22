@@ -20,7 +20,7 @@ class ValidateWorkfileData(pyblish.api.ContextPlugin):
 
         scene_data = context.data["sceneData"]
         scene_mark_in = scene_data["sceneMarkIn"]
-        scene_mark_out = scene_data["sceneMarkIn"]
+        scene_mark_out = scene_data["sceneMarkOut"]
 
         expected_range = (
             (frame_end - frame_start + 1)
