@@ -1171,14 +1171,14 @@ class SyncEntitiesFactory:
 
     def prepare_ftrack_ent_data(self):
         not_set_ids = []
-        for id, entity_dict in self.entities_dict.items():
+        for ftrack_id, entity_dict in self.entities_dict.items():
             entity = entity_dict["entity"]
             if entity is None:
-                not_set_ids.append(id)
+                not_set_ids.append(ftrack_id)
                 continue
 
-            self.entities_dict[id]["final_entity"] = {}
-            self.entities_dict[id]["final_entity"]["name"] = (
+            self.entities_dict[ftrack_id]["final_entity"] = {}
+            self.entities_dict[ftrack_id]["final_entity"]["name"] = (
                 entity_dict["name"]
             )
             data = {}
@@ -1191,11 +1191,13 @@ class SyncEntitiesFactory:
             for key, val in entity_dict.get("hier_attrs", []).items():
                 data[key] = val
 
-            if id == self.ft_project_id:
+            if ftrack_id == self.ft_project_id:
                 project_name = entity["full_name"]
                 data["code"] = entity["name"]
-                self.entities_dict[id]["final_entity"]["data"] = data
-                self.entities_dict[id]["final_entity"]["type"] = "project"
+                self.entities_dict[ftrack_id]["final_entity"]["data"] = data
+                self.entities_dict[ftrack_id]["final_entity"]["type"] = (
+                    "project"
+                )
 
                 proj_schema = entity["project_schema"]
                 task_types = proj_schema["_task_type_schema"]["types"]
@@ -1231,7 +1233,7 @@ class SyncEntitiesFactory:
                         continue
                     project_config[key] = value
 
-                self.entities_dict[id]["final_entity"]["config"] = (
+                self.entities_dict[ftrack_id]["final_entity"]["config"] = (
                     project_config
                 )
                 continue
@@ -1240,9 +1242,9 @@ class SyncEntitiesFactory:
             parents = ent_path_items[1:len(ent_path_items) - 1:]
 
             data["parents"] = parents
-            data["tasks"] = self.entities_dict[id].pop("tasks", {})
-            self.entities_dict[id]["final_entity"]["data"] = data
-            self.entities_dict[id]["final_entity"]["type"] = "asset"
+            data["tasks"] = self.entities_dict[ftrack_id].pop("tasks", {})
+            self.entities_dict[ftrack_id]["final_entity"]["data"] = data
+            self.entities_dict[ftrack_id]["final_entity"]["type"] = "asset"
 
         if not_set_ids:
             self.log.debug((
