@@ -22,7 +22,7 @@ from .custom_attributes import get_openpype_attr
 
 from bson.objectid import ObjectId
 from bson.errors import InvalidId
-from pymongo import UpdateOne
+from pymongo import UpdateOne, ReplaceOne
 import ftrack_api
 
 log = Logger.get_logger(__name__)
@@ -341,6 +341,7 @@ class SyncEntitiesFactory:
         }
 
         self.create_list = []
+        self.unarchive_list = []
         self.updates = collections.defaultdict(dict)
 
         self.avalon_project = None
@@ -1807,9 +1808,26 @@ class SyncEntitiesFactory:
         for ftrack_id in self.create_ftrack_ids:
             # CHECK it is possible that entity was already created
             # because is parent of another entity which was processed first
-            if ftrack_id in self.ftrack_avalon_mapper:
-                continue
-            self.create_avalon_entity(ftrack_id)
+            if ftrack_id not in self.ftrack_avalon_mapper:
+                self.create_avalon_entity(ftrack_id)
+
+        unarchive_writes = []
+        for item in self.unarchive_list:
+            mongo_id = item["_id"]
+            unarchive_writes.append(ReplaceOne(
+                {"_id": mongo_id},
+                item
+            ))
+            av_ent_path_items = item["data"]["parents"]
+            av_ent_path_items.append(item["name"])
+            av_ent_path = "/".join(av_ent_path_items)
+            self.log.debug(
+                "Entity was unarchived <{}>".format(av_ent_path)
+            )
+            self.remove_from_archived(mongo_id)
+
+        if unarchive_writes:
+            self.dbcon.bulk_write(unarchive_writes)
 
         if len(self.create_list) > 0:
             self.dbcon.insert_many(self.create_list)
@@ -1900,14 +1918,8 @@ class SyncEntitiesFactory:
 
         if unarchive is False:
             self.create_list.append(item)
-            return
-        # If unarchive then replace entity data in database
-        self.dbcon.replace_one({"_id": new_id}, item)
-        self.remove_from_archived(mongo_id)
-        av_ent_path_items = item["data"]["parents"]
-        av_ent_path_items.append(item["name"])
-        av_ent_path = "/".join(av_ent_path_items)
-        self.log.debug("Entity was unarchived <{}>".format(av_ent_path))
+        else:
+            self.unarchive_list.append(item)
 
     def check_unarchivation(self, ftrack_id, mongo_id, name):
         archived_by_id = self.avalon_archived_by_id.get(mongo_id)
