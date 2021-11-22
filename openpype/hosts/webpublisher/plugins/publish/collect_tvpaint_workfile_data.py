@@ -13,6 +13,7 @@ Provides:
 """
 import os
 import uuid
+import json
 import shutil
 import pyblish.api
 from openpype.lib.plugin_tools import parse_json
@@ -67,7 +68,7 @@ class CollectTVPaintWorkfileData(pyblish.api.ContextPlugin):
 
         # Store results
         # scene data store the same way as TVPaint collector
-        context.data["sceneData"] = {
+        scene_data = {
             "sceneWidth": scene_data["width"],
             "sceneHeight": scene_data["height"],
             "scenePixelAspect": scene_data["pixel_aspect"],
@@ -82,11 +83,27 @@ class CollectTVPaintWorkfileData(pyblish.api.ContextPlugin):
             "sceneStartFrame": scene_data["start_frame"],
             "sceneBgColor": scene_data["bg_color"]
         }
+        context.data["sceneData"] = scene_data
         # Store only raw data
         context.data["groupsData"] = groups_data
         context.data["layersData"] = layers_data
         context.data["layersExposureFrames"] = exposure_frames_by_layer_id
         context.data["layersPrePostBehavior"] = pre_post_beh_by_layer_id
+
+        self.log.debug(
+            (
+                "Collected data"
+                "\nScene data: {}"
+                "\nLayers data: {}"
+                "\nExposure frames: {}"
+                "\nPre/Post behavior: {}"
+            ).format(
+                json.dumps(scene_data, indent=4),
+                json.dumps(layers_data, indent=4),
+                json.dumps(exposure_frames_by_layer_id, indent=4),
+                json.dumps(pre_post_beh_by_layer_id, indent=4)
+            )
+        )
 
     def _create_context_staging_dir(self, jobs_root):
         if not os.path.exists(jobs_root):
