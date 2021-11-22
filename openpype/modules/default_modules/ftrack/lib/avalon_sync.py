@@ -1170,6 +1170,33 @@ class SyncEntitiesFactory:
                         entity
                     )
 
+    def _get_input_links(self, ftrack_ids):
+        tupled_ids = tuple(ftrack_ids)
+        mapping_by_to_id = {
+            ftrack_id: set()
+            for ftrack_id in tupled_ids
+        }
+        ids_len = len(tupled_ids)
+        chunk_size = int(5000 / ids_len)
+        all_links = []
+        for idx in range(0, ids_len, chunk_size):
+            entity_ids_joined = join_query_keys(
+                tupled_ids[idx:idx + chunk_size]
+            )
+
+            all_links.extend(self.session.query((
+                "select from_id, to_id from"
+                " TypedContextLink where to_id in ({})"
+            ).format(entity_ids_joined)).all())
+
+        for context_link in all_links:
+            to_id = context_link["to_id"]
+            from_id = context_link["from_id"]
+            if from_id == to_id:
+                continue
+            mapping_by_to_id[to_id].add(from_id)
+        return mapping_by_to_id
+
     def prepare_ftrack_ent_data(self):
         not_set_ids = []
         for ftrack_id, entity_dict in self.entities_dict.items():
@@ -1434,6 +1461,28 @@ class SyncEntitiesFactory:
             entity_dict = self.entities_dict.pop(_ftrack_id, {"children": []})
             for child_id in entity_dict["children"]:
                 children_queue.append(child_id)
+
+    def set_input_links(self):
+        ftrack_ids = set(self.create_ftrack_ids) | set(self.update_ftrack_ids)
+
+        input_links_by_ftrack_id = self._get_input_links(ftrack_ids)
+
+        for ftrack_id in ftrack_ids:
+            input_links = []
+            final_entity = self.entities_dict[ftrack_id]["final_entity"]
+            final_entity["data"]["inputLinks"] = input_links
+            link_ids = input_links_by_ftrack_id[ftrack_id]
+            if not link_ids:
+                continue
+
+            for ftrack_link_id in link_ids:
+                mongo_id = self.ftrack_avalon_mapper.get(ftrack_link_id)
+                if mongo_id is not None:
+                    input_links.append({
+                        "_id": ObjectId(mongo_id),
+                        "linkedBy": "ftrack",
+                        "type": "breakdown"
+                    })
 
     def prepare_changes(self):
         self.log.debug("* Preparing changes for avalon/ftrack")
@@ -1810,6 +1859,8 @@ class SyncEntitiesFactory:
             # because is parent of another entity which was processed first
             if ftrack_id not in self.ftrack_avalon_mapper:
                 self.create_avalon_entity(ftrack_id)
+
+        self.set_input_links()
 
         unarchive_writes = []
         for item in self.unarchive_list:
