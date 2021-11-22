@@ -27,19 +27,18 @@ class AbstractTemplateLoader:
 
     def __init__(self, placeholder_class):
 
-        self.import_template(self.template_path)
-
-        loaders_by_name = get_loaders_by_name()
+        self.loaders_by_name = get_loaders_by_name()
+        self.current_asset = avalon.io.Session["AVALON_ASSET"]
+        self.placeholder_class = placeholder_class
 
         # Skip if there is no loader
-        if not loaders_by_name:
+        if not self.loaders_by_name:
             self.log.warning("There are no registered loaders.")
             return
 
-        current_asset = avalon.io.Session["AVALON_ASSET"]
-        self.populate_template(current_asset,
-                               loaders_by_name,
-                               placeholder_class)
+    def process(self):
+        self.import_template(self.template_path)
+        self.populate_template()
 
     @property
     def template_path(self):
@@ -95,8 +94,7 @@ class AbstractTemplateLoader:
                     current_task, current_dcc, solved_path))
         return solved_path
 
-    def populate_template(self, current_asset,
-                          loaders_by_name, placeholder_class):
+    def populate_template(self):
         """
         Use template placeholders to load assets and parent them in hierarchy
 
@@ -108,6 +106,9 @@ class AbstractTemplateLoader:
         Returns:
             None
         """
+        placeholder_class = self.placeholder_class
+        loaders_by_name = self.loaders_by_name
+        current_asset = self.current_asset
         current_asset_entity = avalon.io.find_one({
             "type": "asset",
             "name": current_asset

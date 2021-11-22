@@ -45,7 +45,7 @@ from .lib.avalon_context import (
 )
 
 from .lib.build_template import (
-    BuildWorkfileTemplate
+    build_workfile_template
 )
 
 from . import resources
@@ -80,6 +80,7 @@ __all__ = [
     "get_anatomy_settings",
     "get_environments",
     "get_project_basic_paths",
+    "build_workfile_template",
 
     "SystemSettings",
 
@@ -93,7 +94,6 @@ __all__ = [
     "get_default_components",
     "ApplicationManager",
     "BuildWorkfile",
-    "BuildWorkfileTemplate",
 
     # Resources
     "resources",
