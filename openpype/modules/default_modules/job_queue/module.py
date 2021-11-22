@@ -104,7 +104,7 @@ class JobQueueModule(OpenPypeModule):
         return copy.deepcopy(self._jobs_root_mapping)
 
     def get_jobs_root(self):
-        self._jobs_root_mapping.get(platform.system().lower())
+        return self._jobs_root_mapping.get(platform.system().lower())
 
     @classmethod
     def get_jobs_root_from_settings(cls):
