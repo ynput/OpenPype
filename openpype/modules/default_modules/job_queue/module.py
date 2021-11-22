@@ -53,18 +53,36 @@ class JobQueueModule(OpenPypeModule):
         server_url = modules_settings.get("server_url") or ""
 
         self._server_url = self.url_conversion(server_url)
-        jobs_root_mapping = modules_settings.get("jobs_root")
-        if not jobs_root_mapping:
-            jobs_root_mapping = {
-                "windows": "",
-                "linux": "",
-                "darwin": ""
-            }
+        jobs_root_mapping = self._roots_mapping_conversion(
+            modules_settings.get("jobs_root")
+        )
+
         self._jobs_root_mapping = jobs_root_mapping
 
         # Is always enabled
         #   - the module does nothing until is used
         self.enabled = True
+
+    @classmethod
+    def _root_conversion(cls, root_path):
+        """Make sure root path does not end with slash."""
+        # Return empty string if path is invalid
+        if not root_path:
+            return ""
+
+        # Remove all slashes
+        while root_path.endswith("/") or root_path.endswith("\\"):
+            root_path = root_path[:-1]
+        return root_path
+
+    @classmethod
+    def _roots_mapping_conversion(cls, roots_mapping):
+        roots_mapping = roots_mapping or {}
+        for platform_name in ("windows", "linux", "darwin"):
+            roots_mapping[platform_name] = cls._root_conversion(
+                roots_mapping.get(platform_name)
+            )
+        return roots_mapping
 
     @staticmethod
     def url_conversion(url, ws=False):
@@ -110,13 +128,9 @@ class JobQueueModule(OpenPypeModule):
     def get_jobs_root_from_settings(cls):
         module_settings = get_system_settings()["modules"]
         jobs_root_mapping = module_settings.get(cls.name, {}).get("jobs_root")
-        if not jobs_root_mapping:
-            jobs_root_mapping = {
-                "windows": "",
-                "linux": "",
-                "darwin": ""
-            }
-        return jobs_root_mapping.get(platform.system().lower())
+        converted_mapping = cls._roots_mapping_conversion(jobs_root_mapping)
+
+        return converted_mapping[platform.system().lower()]
 
     @property
     def server_url(self):
