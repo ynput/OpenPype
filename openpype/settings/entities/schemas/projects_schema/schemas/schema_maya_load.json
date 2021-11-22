@@ -32,6 +32,11 @@
                 },
                 {
                     "type": "color",
+                    "label": "Animlib:",
+                    "key": "animlib"
+                },
+                {
+                    "type": "color",
                     "label": "Arnold Standin:",
                     "key": "ass"
                 },

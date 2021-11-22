@@ -10,13 +10,9 @@ class CollectAnimLibData(pyblish.api.InstancePlugin):
 
     """
 
-    order = pyblish.api.CollectorOrder + 0.2
+    order = pyblish.api.CollectorOrder
     label = 'Collect AnimLib Data'
     families = ["animlib"]
 
     def process(self, instance):
-        # make ftrack publishable
-        if instance.data.get('families'):
-            instance.data['families'].append('ftrack')
-        else:
-            instance.data['families'] = ['ftrack']
+        pass

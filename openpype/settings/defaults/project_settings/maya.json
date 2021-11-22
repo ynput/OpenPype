@@ -44,6 +44,17 @@
                 "Main"
             ]
         },
+        "CreateAnimlib": {
+            "enabled": true,
+            "defaults": [
+                "Main"
+            ],
+            "exportdir":{
+                "windows": "{root}/Animlib",
+                "darwin": "{root}/Animlib",
+                "linux": "{root}/Animlib"
+            }
+        },
         "CreateAnimation": {
             "enabled": true,
             "defaults": [
@@ -489,6 +500,12 @@
                 30,
                 255
             ],
+            "animlib": [
+                94,
+                209,
+                30,
+                255
+            ],
             "ass": [
                 249,
                 135,
@@ -588,6 +605,18 @@
                         ],
                         "repre_names": [
                             "abc"
+                        ],
+                        "loaders": [
+                            "ReferenceLoader"
+                        ]
+                    },
+                    {
+                        "subset_name_filters": [],
+                        "families": [
+                            "animlib"
+                        ],
+                        "repre_names": [
+                            "ma"
                         ],
                         "loaders": [
                             "ReferenceLoader"

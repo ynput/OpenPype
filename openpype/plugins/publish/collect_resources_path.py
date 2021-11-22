@@ -24,6 +24,7 @@ class CollectResourcesPath(pyblish.api.InstancePlugin):
                 "pointcache",
                 "camera",
                 "animation",
+                "animlib",
                 "model",
                 "mayaAscii",
                 "mayaScene",

@@ -61,6 +61,7 @@ class IntegrateAssetNew(pyblish.api.InstancePlugin):
                 "pointcache",
                 "camera",
                 "animation",
+                "animlib",
                 "model",
                 "mayaAscii",
                 "mayaScene",

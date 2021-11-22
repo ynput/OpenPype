@@ -465,6 +465,7 @@ maya outliner colours for various families
   "rig": [0.144, 0.443, 0.463],
   "pointcache": [0.368, 0.821, 0.117],
   "animation": [0.368, 0.821, 0.117],
+  "animlib": [0.368, 0.821, 0.117],
   "ass": [1.0, 0.332, 0.312],
   "camera": [0.447, 0.312, 1.0],
   "fbx": [1.0, 0.931, 0.312],

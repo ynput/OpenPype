@@ -15,12 +15,22 @@ class CreateAnimLib(plugin.Creator):
     icon = "wheelchair"
     defaults = ['Main']
 
-    def process(self):
+    def __init__(self, *args, **kwargs):
+        super(CreateAnimLib, self).__init__(*args, **kwargs)
 
-        with lib.undo_chunk():
-            instance = super(CreateAnimLib, self).process()
+        # get basic animation data : start / end / handles / steps
+        anim_data = lib.collect_animation_data()
+        anim_data.pop("step")
+        anim_data.pop("handles")
+        for key, value in anim_data.items():
+            self.data[key] = value
 
-            self.log.info("Creating AnimLib instance set up ...")
-            controls = cmds.sets(name="controls_SET", empty=True)
-            # pointcache = cmds.sets(name="out_SET", empty=True)
-            cmds.sets([controls, pointcache], forceElement=instance)
+        # time = mutils.selectedObjectsFrameRange(objects)
+        # start, end = time
+        # # Check frame range
+        # if start is None or end is None:
+        #     msg = "Please specify a start and end frame!"
+        #     raise AnimationTransferError(msg)
+        # self.data["start"] = start
+        # self.data["end"] = end
+

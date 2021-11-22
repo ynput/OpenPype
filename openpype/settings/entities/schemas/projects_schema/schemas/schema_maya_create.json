@@ -32,6 +32,32 @@
         {
             "type": "dict",
             "collapsible": true,
+            "key": "CreateAnimlib",
+            "label": "Create Animlib",
+            "checkbox_key": "enabled",
+            "children": [
+                {
+                    "type": "boolean",
+                    "key": "enabled",
+                    "label": "Enabled"
+                },
+                {
+                    "type": "list",
+                    "key": "defaults",
+                    "label": "Default Subsets",
+                    "object_type": "text"
+                },
+                {
+                    "type": "path",
+                    "key": "exportdir",
+                    "label": "Export Directory",
+                    "multiplatform": true
+                }
+            ]
+        },
+        {
+            "type": "dict",
+            "collapsible": true,
             "key": "CreateRender",
             "label": "Create Render",
             "checkbox_key": "enabled",
