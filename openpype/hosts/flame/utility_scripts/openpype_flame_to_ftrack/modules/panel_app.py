@@ -74,9 +74,13 @@ class FlameToFtrackPanel(object):
         self.window.setStyleSheet('background-color: #313131')
 
         with maintained_ftrack_session() as session:
+            print(1)
             self._create_project_widget(session)
+            print(2)
             self._create_tree_widget()
+            print(3)
             self._set_sequence_params()
+            print(4)
             self._generate_widgets()
             print(5)
             self._generate_layouts()
@@ -312,17 +316,13 @@ class FlameToFtrackPanel(object):
                 session, self.project_entity)
             component_creator = FtrackComponentCreator(session)
 
-            self.generate_temp_data({
-                "nbHandles": handles
-            })
-
-            temp_files = os.listdir(self.temp_data_dir)
-            thumbnails = [f for f in temp_files if "jpg" in f]
-            videos = [f for f in temp_files if "mov" in f]
-
-            print(temp_files)
-            print(thumbnails)
-            print(videos)
+            self.temp_data_dir = component_creator.generate_temp_data(
+                self.selection,
+                self.temp_data_dir,
+                {
+                    "nbHandles": handles
+                }
+            )
 
             # Get all selected items from treewidget
             for item in self.tree.selectedItems():
@@ -338,18 +338,13 @@ class FlameToFtrackPanel(object):
                 sequence_name = item.text(0)
                 shot_name = item.text(1)
 
-                # get component files
-                thumb_f = next((f for f in thumbnails if shot_name in f), None)
-                video_f = next((f for f in videos if shot_name in f), None)
-                thumb_fp = os.path.join(self.temp_data_dir, thumb_f)
-                video_fp = os.path.join(self.temp_data_dir, video_f)
-                print(thumb_fp)
-                print(video_fp)
+                thumb_fp = component_creator.get_thumb_path(shot_name)
+                video_fp = component_creator.get_video_path(shot_name)
 
                 print("processed comps: {}".format(self.processed_components))
                 processed = False
-                if thumb_f not in self.processed_components:
-                    self.processed_components.append(thumb_f)
+                if thumb_fp not in self.processed_components:
+                    self.processed_components.append(thumb_fp)
                 else:
                     processed = True
 
@@ -504,22 +499,11 @@ class FlameToFtrackPanel(object):
         self.tree.selectAll()
 
     def clear_temp_data(self):
-        self.processed_components = []
-
         import shutil
+
+        self.processed_components = []
 
         if self.temp_data_dir:
             shutil.rmtree(self.temp_data_dir)
         self.temp_data_dir = None
         print("All Temp data were destroied ...")
-
-    def generate_temp_data(self, change_preset_data):
-        if self.temp_data_dir:
-            return True
-
-        with app_utils.make_temp_dir() as tempdir_path:
-            for seq in self.selection:
-                app_utils.export_thumbnail(seq, tempdir_path, change_preset_data)
-                app_utils.export_video(seq, tempdir_path, change_preset_data)
-                self.temp_data_dir = tempdir_path
-                break

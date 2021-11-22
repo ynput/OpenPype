@@ -5,6 +5,9 @@ import re
 import json
 from contextlib import contextmanager
 
+import app_utils
+reload(app_utils)
+
 # Fill following constants or set them via environment variable
 FTRACK_MODULE_PATH = None
 FTRACK_API_KEY = None
@@ -96,10 +99,43 @@ def maintained_ftrack_session():
 class FtrackComponentCreator:
     default_location = "ftrack.server"
     ftrack_locations = {}
+    thumbnails = []
+    videos = []
+    temp_dir = None
 
     def __init__(self, session):
         self.session = session
         self._get_ftrack_location()
+
+
+    def generate_temp_data(self, selection, temp_folder, change_preset_data):
+        print(">>>>> self.temp_dir: " + self.temp_dir)
+        print(">>>>> self.thumbnails: " + str(self.thumbnails))
+        print(">>>>> self.videos: " + str(self.videos))
+
+        if temp_folder == self.temp_dir:
+            return temp_folder
+
+        with app_utils.make_temp_dir() as tempdir_path:
+            for seq in selection:
+                app_utils.export_thumbnail(
+                    seq, tempdir_path, change_preset_data)
+                app_utils.export_video(seq, tempdir_path, change_preset_data)
+                temp_files = os.listdir(temp_folder)
+                self.thumbnails = [f for f in temp_files if "jpg" in f]
+                self.videos = [f for f in temp_files if "mov" in f]
+                self.temp_dir = tempdir_path
+                return tempdir_path
+
+    def get_thumb_path(shot_name):
+        # get component files
+        thumb_f = next((f for f in self.thumbnails if shot_name in f), None)
+        return os.path.join(self.temp_dir, thumb_f)
+
+    def get_video_path(shot_name):
+        # get component files
+        video_f = next((f for f in self.videos if shot_name in f), None)
+        return os.path.join(self.temp_dir, video_f)
 
     def close(self):
         self.ftrack_locations = {}
