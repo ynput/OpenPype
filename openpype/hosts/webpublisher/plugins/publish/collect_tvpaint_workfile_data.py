@@ -26,7 +26,7 @@ class CollectTVPaintWorkfileData(pyblish.api.ContextPlugin):
     label = "Collect TVPaint Workfile data"
     order = pyblish.api.CollectorOrder - 0.4
     hosts = ["webpublisher"]
-    targets = ["tvpaint"]
+    targets = ["tvpaint_worker"]
 
     def process(self, context):
         # Get JobQueue module

@@ -21,7 +21,7 @@ from PIL import Image
 class ExtractTVPaintSequences(pyblish.api.Extractor):
     label = "Extract TVPaint Sequences"
     hosts = ["webpublisher"]
-    targets = ["tvpaint"]
+    targets = ["tvpaint_worker"]
 
     # Context plugin does not have families filtering
     families_filter = ["review", "renderPass", "renderLayer"]

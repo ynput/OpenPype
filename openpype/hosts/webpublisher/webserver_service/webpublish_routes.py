@@ -203,7 +203,7 @@ class WebpublisherBatchPublishEndpoint(_RestApiEndpoint):
                 "extensions": [".tvpp"],
                 "command": "remotepublish",
                 "arguments": {
-                    "targets": ["tvpaint"]
+                    "targets": ["tvpaint_worker"]
                 },
                 "add_to_queue": False
             },

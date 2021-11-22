@@ -17,7 +17,7 @@ class CollectTVPaintInstances(pyblish.api.ContextPlugin):
     label = "Collect TVPaint Instances"
     order = pyblish.api.CollectorOrder + 0.2
     hosts = ["webpublisher"]
-    targets = ["tvpaint"]
+    targets = ["tvpaint_worker"]
 
     workfile_family = "workfile"
     workfile_variant = ""
