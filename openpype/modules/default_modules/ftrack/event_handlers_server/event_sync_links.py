@@ -12,6 +12,7 @@ from openpype_modules.ftrack.lib import (
 
 
 class SyncLinksToAvalon(BaseEvent):
+    """Synchronize inpug linkts to avalon documents."""
     # Run after sync to avalon event handler
     priority = 110
 
@@ -36,6 +37,7 @@ class SyncLinksToAvalon(BaseEvent):
             elif entityType == "dependency":
                 dependency_changes.append(entity_info)
 
+        # Care only about dependency changes
         if not dependency_changes:
             return
 
