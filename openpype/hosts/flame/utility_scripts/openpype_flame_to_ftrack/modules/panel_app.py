@@ -516,4 +516,5 @@ class FlameToFtrackPanel(object):
         print("All Temp data were destroied ...")
 
     def close(self):
+        self._save_ui_state_to_cfg()
         self.session.close()
