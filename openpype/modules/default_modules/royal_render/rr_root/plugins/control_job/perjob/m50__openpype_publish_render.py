@@ -148,11 +148,26 @@ class OpenPypeContextSelector:
         for k, v in env.items():
             print("    {}: {}".format(k, v))
 
+        publishing_paths = [os.path.join(self.job.imageDir,
+                                         os.path.dirname(
+                                             self.job.imageFileName))]
+
+        # add additional channels
+        channel_idx = 0
+        channel = self.job.channelFileName(channel_idx)
+        while channel:
+            channel_path = os.path.dirname(
+                os.path.join(self.job.imageDir, channel))
+            if channel_path not in publishing_paths:
+                publishing_paths.append(channel_path)
+            channel_idx += 1
+            channel = self.job.channelFileName(channel_idx)
+
         args = [os.path.join(self.openpype_root, self.openpype_executable),
-                'publish', '-t', "rr_control", "--gui",
-                os.path.join(self.job.imageDir,
-                             os.path.dirname(self.job.imageFileName))
+                'publish', '-t', "rr_control", "--gui"
                 ]
+
+        args += publishing_paths
 
         print(">>> running {}".format(" ".join(args)))
         orig = os.environ.copy()
