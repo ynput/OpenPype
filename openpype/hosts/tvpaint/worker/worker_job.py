@@ -385,7 +385,7 @@ class SenderTVPaintCommands(TVPaintCommands):
         It is expected that worker will add it's root before passed workfile.
         """
         new_workfile = workfile.replace("\\", "/")
-        job_queue_root = self.job_queue_root.replace("\\", "/")
+        job_queue_root = self.job_queue_root().replace("\\", "/")
         if job_queue_root not in new_workfile:
             raise ValueError((
                 "Workfile is not located in JobQueue root."
@@ -476,7 +476,7 @@ class ProcessTVPaintCommands(TVPaintCommands):
     def _prepare_workfile(self, workfile):
         """Preprend job queue root before passed workfile."""
         workfile = workfile.replace("\\", "/")
-        job_queue_root = self.job_queue_root.replace("\\", "/")
+        job_queue_root = self.job_queue_root().replace("\\", "/")
         new_workfile = "/".join([job_queue_root, workfile])
         while "//" in new_workfile:
             new_workfile = new_workfile.replace("//", "/")
