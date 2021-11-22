@@ -422,7 +422,8 @@ class MayaSubmitDeadline(pyblish.api.InstancePlugin):
         jobname = "%s - %s" % (filename, instance.name)
 
         # Get the variables depending on the renderer
-        render_variables = get_renderer_variables(renderlayer, dirname, override_output)
+        render_variables = get_renderer_variables(renderlayer, dirname,
+                                                  override_output)
         filename_0 = render_variables["filename_0"]
         if self.use_published:
             new_scene = os.path.splitext(filename)[0]
