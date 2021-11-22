@@ -7,11 +7,11 @@ concrete_loaders_modules = {
 
 
 def build_workfile_template(self):
-    dcc = avalon.io.Session['AVALON_APP']
-    module_path = concrete_loaders_modules.get(dcc, None)
+    host_name = avalon.io.Session['AVALON_APP']
+    module_path = concrete_loaders_modules.get(host_name, None)
 
     if not module_path:
-        raise ValueError("Template not found for DCC '{}'".format(dcc))
+        raise ValueError("Template not found for host '{}'".format(host_name))
 
     module = importlib.import_module(module_path)
     if not hasattr(module, 'TemplateLoader'):

@@ -20,9 +20,9 @@ class AbstractTemplateLoader:
 
     Methods:
         import_template : Abstract Method. Used to load template,
-            depending on current dcc
+            depending on current host
         get_template_nodes : Abstract Method. Used to query nodes acting
-            as placeholders. Depending on current dcc
+            as placeholders. Depending on current host
     """
 
     def __init__(self, placeholder_class):
@@ -185,11 +185,11 @@ class AbstractTemplateLoader:
     @abstractmethod
     def import_template(self, template_path):
         """
-        Import template in current dcc
+        Import template in current host
 
         Args:
             template_path (str): fullpath to current task and
-                dcc's template file
+                host's template file
 
         Return:
             None
@@ -199,7 +199,7 @@ class AbstractTemplateLoader:
     @abstractmethod
     def get_template_nodes(self):
         """
-        Returning a list of nodes acting as DCC placeholders for
+        Returning a list of nodes acting as host placeholders for
         templating. The data representation is by user.
         AbstractLoadTemplate (and LoadTemplate) won't directly manipulate nodes
 
