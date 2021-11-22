@@ -30,6 +30,10 @@ class AbstractTemplateLoader:
         self.loaders_by_name = get_loaders_by_name()
         self.current_asset = avalon.io.Session["AVALON_ASSET"]
         self.placeholder_class = placeholder_class
+        self.current_asset_docs = avalon.io.find_one({
+            "type": "asset",
+            "name": self.current_asset
+        })
 
         # Skip if there is no loader
         if not self.loaders_by_name:
@@ -57,22 +61,32 @@ class AbstractTemplateLoader:
                 in avalon context
             IOError: Solved path does not exists on current filesystem
         """
-        project = avalon.io.Session["AVALON_PROJECT"]
-        anatomy = Anatomy(project)
-        project_settings = get_project_settings(project)
-        current_dcc = avalon.io.Session["AVALON_APP"]
-        current_task = avalon.io.Session["AVALON_TASK"]
-        build_info = project_settings[current_dcc]['templated_workfile_build']
+        project_name = avalon.io.Session["AVALON_PROJECT"]
+        anatomy = Anatomy(project_name)
+        project_settings = get_project_settings(project_name)
+        host_name = avalon.io.Session["AVALON_APP"]
+        task_name = avalon.io.Session["AVALON_TASK"]
+        task_type = (
+            self.current_asset_docs
+            .get("data", {})
+            .get("tasks", {})
+            .get(task_name, {})
+            .get("type")
+        )
+        build_info = project_settings[host_name]['templated_workfile_build']
         profiles = build_info['profiles']
 
-        for profile in profiles:
-            if current_task in profile['task_types']:
-                path = profile['path']
-                break
+        for prf in profiles:
+            if prf['task_types'] and task_type not in prf['task_types']:
+                continue
+            if prf['task_names'] and task_name not in prf['task_names']:
+                continue
+            path = prf['path']
+            break
         else:
             raise ValueError(
-                "No matching profile found for task '{}' in DCC '{}'".format(
-                    current_task, current_dcc)
+                "No matching profile found for task '{}' of type '{}' "
+                "with host '{}'".format(task_name, task_type, host_name)
             )
 
         try:
@@ -89,9 +103,9 @@ class AbstractTemplateLoader:
 
         if not os.path.exists(solved_path):
             raise IOError(
-                "Template found in openPype settings for task '{}' with DCC "
+                "Template found in openPype settings for task '{}' with host "
                 "'{}' does not exists. (Not found : {})".format(
-                    current_task, current_dcc, solved_path))
+                    task_name, host_name, solved_path))
         return solved_path
 
     def populate_template(self):
@@ -106,24 +120,16 @@ class AbstractTemplateLoader:
         Returns:
             None
         """
-        placeholder_class = self.placeholder_class
         loaders_by_name = self.loaders_by_name
         current_asset = self.current_asset
-        current_asset_entity = avalon.io.find_one({
-            "type": "asset",
-            "name": current_asset
-        })
+        current_asset_docs = self.current_asset_docs
 
-        linked_asset_entities = get_linked_assets(current_asset_entity)
-        assets_to_load = {asset['name'] for asset in linked_asset_entities}
+        linked_asset_docs = get_linked_assets(current_asset_docs)
+        assets_to_load = {asset['name'] for asset in linked_asset_docs}
         version_repres = collect_last_version_repres(
-            [current_asset_entity] + linked_asset_entities)
+            [current_asset_docs] + linked_asset_docs)
 
-        representations_by_id = {
-            representation['_id']: representation
-            for asset in version_repres.values()
-            for subset in asset['subsets'].values()
-            for representation in subset['version']['repres']}
+        representations_by_id = self.get_representations_by_id(version_repres)
 
         context_representations_by_id = dict()
         linked_representations_by_id = dict()
@@ -134,10 +140,7 @@ class AbstractTemplateLoader:
             else:
                 linked_representations_by_id[k] = representations_by_id[k]
 
-        placeholders = map(placeholder_class, self.get_template_nodes())
-        valid_placeholders = filter(placeholder_class.is_valid, placeholders)
-        sorted_placeholders = sorted(valid_placeholders,
-                                     key=placeholder_class.order)
+        sorted_placeholders = self.get_sorted_placeholders()
 
         loaded_assets = set()
         for placeholder in sorted_placeholders:
@@ -163,6 +166,21 @@ class AbstractTemplateLoader:
             print("It's possible that a needed asset wasn't published")
             print("or that the build template is malformed, "
                   "continue at your own risks.")
+
+    def get_sorted_placeholders(self):
+        placeholder_class = self.placeholder_class
+        placeholders = map(placeholder_class, self.get_template_nodes())
+        valid_placeholders = filter(placeholder_class.is_valid, placeholders)
+        sorted_placeholders = sorted(valid_placeholders,
+                                     key=placeholder_class.order)
+        return sorted_placeholders
+
+    def get_representations_by_id(self, version_representations):
+        return {
+            representation['_id']: representation
+            for asset in version_representations.values()
+            for subset in asset['subsets'].values()
+            for representation in subset['version']['repres']}
 
     @abstractmethod
     def import_template(self, template_path):

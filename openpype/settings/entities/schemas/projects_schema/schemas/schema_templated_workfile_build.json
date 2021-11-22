@@ -17,6 +17,12 @@
                         "type": "task-types-enum"
                     },
                     {
+                        "key": "task_names",
+                        "label": "Task names",
+                        "type": "list",
+                        "object_type": "text"
+                    },
+                    {
                         "key": "path",
                         "label": "Path to template",
                         "type": "text"

@@ -676,6 +676,7 @@
         "profiles": [
             {
                 "task_types": [],
+                "task_names": [],
                 "path": "path\\to\\template"
             }
         ]
