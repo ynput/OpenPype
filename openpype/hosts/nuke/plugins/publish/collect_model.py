@@ -19,8 +19,7 @@ class CollectModel(pyblish.api.InstancePlugin):
         # add family to familiess
         instance.data["families"].insert(0, instance.data["family"])
         # make label nicer
-        instance.data["label"] = "{0} ({1} nodes)".format(
-            grpn.name(), len(instance) - 1)
+        instance.data["label"] = grpn.name()
 
         # Get frame range
         handle_start = instance.context.data["handleStart"]

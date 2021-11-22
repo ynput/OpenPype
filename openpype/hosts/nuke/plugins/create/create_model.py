@@ -22,7 +22,39 @@ class CreateModel(plugin.PypeCreator):
         nodes = list()
         if (self.options or {}).get("useSelection"):
             nodes = self.nodes
+            for n in nodes :
+                n['selected'].setValue(0)
+            end_nodes = list()
 
+            # get the latest nodes in tree for selecion
+            for n in nodes:
+                x = n
+                end = 0
+                while end == 0:
+                    try:
+                        x = x.dependent()[0]
+                    except:
+                        end_node = x
+                        end = 1
+                end_nodes.append(end_node)
+
+            # set end_nodes
+            end_nodes = list(set(end_nodes))
+
+            # check if nodes is 3d nodes
+            for n in end_nodes :
+                n['selected'].setValue(1)
+                sn = nuke.createNode("Scene")
+                if not sn.input(0) :
+                    end_nodes.remove(n)
+                nuke.delete(sn)
+
+            # loop over end nodes
+            for n in end_nodes :
+                n['selected'].setValue(1)
+
+            self.nodes = nuke.selectedNodes()
+            nodes = self.nodes
             if len(nodes) >= 1:
                 # loop selected nodes
                 for n in nodes:
