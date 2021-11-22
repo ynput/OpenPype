@@ -9,11 +9,13 @@ except Exception:
     commonmark = None
 from Qt import QtWidgets, QtCore, QtGui
 
-from openpype.pipeline.create import CreatorError
+from openpype.pipeline.create import (
+    CreatorError,
+    SUBSET_NAME_ALLOWED_SYMBOLS
+)
 
 from .widgets import IconValuePixmapLabel
 from ..constants import (
-    SUBSET_NAME_ALLOWED_SYMBOLS,
     VARIANT_TOOLTIP,
     CREATOR_IDENTIFIER_ROLE,
     FAMILY_ROLE

@@ -384,3 +384,15 @@ def syncserver(debug, active_site):
     if debug:
         os.environ['OPENPYPE_DEBUG'] = '3'
     PypeCommands().syncserver(active_site)
+
+
+@main.command()
+@click.argument("directory")
+def repack_version(directory):
+    """Repack OpenPype version from directory.
+
+    This command will re-create zip file from specified directory,
+    recalculating file checksums. It will try to use version detected in
+    directory name.
+    """
+    PypeCommands().repack_version(directory)

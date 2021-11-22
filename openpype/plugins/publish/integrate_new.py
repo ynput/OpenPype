@@ -172,21 +172,26 @@ class IntegrateAssetNew(pyblish.api.InstancePlugin):
             anatomy_data["hierarchy"] = hierarchy
 
         # Make sure task name in anatomy data is same as on instance.data
-        task_name = instance.data.get("task")
-        if task_name:
-            anatomy_data["task"] = task_name
-        else:
-            # Just set 'task_name' variable to context task
-            task_name = anatomy_data["task"]
-
-        # Find task type for current task name
-        # - this should be already prepared on instance
         asset_tasks = (
             asset_entity.get("data", {}).get("tasks")
         ) or {}
-        task_info = asset_tasks.get(task_name) or {}
-        task_type = task_info.get("type")
-        instance.data["task_type"] = task_type
+        task_name = instance.data.get("task")
+        if task_name:
+            task_info = asset_tasks.get(task_name) or {}
+            task_type = task_info.get("type")
+
+            project_task_types = project_entity["config"]["tasks"]
+            task_code = project_task_types.get(task_type, {}).get("short_name")
+            anatomy_data["task"] = {
+                "name": task_name,
+                "type": task_type,
+                "short": task_code
+            }
+
+        else:
+            # Just set 'task_name' variable to context task
+            task_name = anatomy_data["task"]["name"]
+            task_type = anatomy_data["task"]["type"]
 
         # Fill family in anatomy data
         anatomy_data["family"] = instance.data.get("family")
@@ -804,11 +809,8 @@ class IntegrateAssetNew(pyblish.api.InstancePlugin):
         #   - is there a chance that task name is not filled in anatomy
         #       data?
         #   - should we use context task in that case?
-        task_name = (
-            instance.data["anatomyData"]["task"]
-            or io.Session["AVALON_TASK"]
-        )
-        task_type = instance.data["task_type"]
+        task_name = instance.data["anatomyData"]["task"]["name"]
+        task_type = instance.data["anatomyData"]["task"]["type"]
         filtering_criteria = {
             "families": instance.data["family"],
             "hosts": instance.context.data["hostName"],

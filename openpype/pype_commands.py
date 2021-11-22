@@ -392,3 +392,10 @@ class PypeCommands:
         import time
         while True:
             time.sleep(1.0)
+
+    def repack_version(self, directory):
+        """Repacking OpenPype version."""
+        from openpype.tools.repack_version import VersionRepacker
+
+        version_packer = VersionRepacker(directory)
+        version_packer.process()

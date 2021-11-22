@@ -8,7 +8,7 @@ from avalon.api import AvalonMongoDB
 from openpype import style
 from openpype.api import resources
 
-from openpype.tools.utils.widgets import AssetWidget
+from openpype.tools.utils.assets_widget import SingleSelectAssetsWidget
 from openpype.tools.utils.tasks_widget import TasksWidget
 
 from avalon.vendor import qtawesome
@@ -138,14 +138,9 @@ class AssetsPanel(QtWidgets.QWidget):
         project_bar_layout.addWidget(project_bar)
 
         # Assets widget
-        assets_widget = AssetWidget(dbcon=self.dbcon, parent=self)
-
+        assets_widget = SingleSelectAssetsWidget(dbcon=self.dbcon, parent=self)
         # Make assets view flickable
-        flick = FlickCharm(parent=self)
-        flick.activateOn(assets_widget.view)
-        assets_widget.view.setVerticalScrollMode(
-            assets_widget.view.ScrollPerPixel
-        )
+        assets_widget.activate_flick_charm()
 
         # Tasks widget
         tasks_widget = TasksWidget(self.dbcon, self)
@@ -183,6 +178,9 @@ class AssetsPanel(QtWidgets.QWidget):
         self._tasks_widget = tasks_widget
         self._btn_back = btn_back
 
+    def select_asset(self, asset_name):
+        self.assets_widget.select_asset_by_name(asset_name)
+
     def showEvent(self, event):
         super(AssetsPanel, self).showEvent(event)
 
@@ -206,35 +204,15 @@ class AssetsPanel(QtWidgets.QWidget):
         This updates the task view.
         """
 
-        asset_name = None
-        asset_silo = None
-
         # Check asset on current index and selected assets
-        asset_doc = self.assets_widget.get_active_asset_document()
-        selected_asset_docs = self.assets_widget.get_selected_assets()
-        # If there are not asset selected docs then active asset is not
-        # selected
-        if not selected_asset_docs:
-            asset_doc = None
-        elif asset_doc:
-            # If selected asset doc and current asset are not same than
-            # something bad happened
-            if selected_asset_docs[0]["_id"] != asset_doc["_id"]:
-                asset_doc = None
-
-        if asset_doc:
-            asset_name = asset_doc["name"]
-            asset_silo = asset_doc.get("silo")
+        asset_id = self.assets_widget.get_selected_asset_id()
+        asset_name = self.assets_widget.get_selected_asset_name()
 
         self.dbcon.Session["AVALON_TASK"] = None
         self.dbcon.Session["AVALON_ASSET"] = asset_name
-        self.dbcon.Session["AVALON_SILO"] = asset_silo
 
         self.session_changed.emit()
 
-        asset_id = None
-        if asset_doc:
-            asset_id = asset_doc["_id"]
         self._tasks_widget.set_asset_id(asset_id)
 
     def _on_task_change(self):
@@ -431,7 +409,6 @@ class LauncherWindow(QtWidgets.QDialog):
 
     def set_session(self, session):
         project_name = session.get("AVALON_PROJECT")
-        silo = session.get("AVALON_SILO")
         asset_name = session.get("AVALON_ASSET")
         task_name = session.get("AVALON_TASK")
 
@@ -446,11 +423,8 @@ class LauncherWindow(QtWidgets.QDialog):
                     index
                 )
 
-        if silo:
-            self.asset_panel.assets_widget.set_silo(silo)
-
         if asset_name:
-            self.asset_panel.assets_widget.select_assets([asset_name])
+            self.asset_panel.select_asset(asset_name)
 
         if task_name:
             # requires a forced refresh first

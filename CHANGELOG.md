@@ -1,26 +1,62 @@
 # Changelog
 
-## [3.6.2-nightly.1](https://github.com/pypeclub/OpenPype/tree/HEAD)
+## [3.7.0-nightly.1](https://github.com/pypeclub/OpenPype/tree/HEAD)
 
-[Full Changelog](https://github.com/pypeclub/OpenPype/compare/3.6.1...HEAD)
+[Full Changelog](https://github.com/pypeclub/OpenPype/compare/3.6.3...HEAD)
+
+**🆕 New features**
+
+- OpenPypeV3: add key task type, task shortname and user to path templating construction [\#2157](https://github.com/pypeclub/OpenPype/pull/2157)
 
 **🚀 Enhancements**
 
-- Tools: SceneInventory in OpenPype  [\#2255](https://github.com/pypeclub/OpenPype/pull/2255)
-- Tools: Tasks widget [\#2251](https://github.com/pypeclub/OpenPype/pull/2251)
-- Added endpoint for configured extensions [\#2221](https://github.com/pypeclub/OpenPype/pull/2221)
+- Ftrack: Remove unused clean component plugin [\#2269](https://github.com/pypeclub/OpenPype/pull/2269)
+- Houdini: Add experimental tools action [\#2267](https://github.com/pypeclub/OpenPype/pull/2267)
 
 **🐛 Bug fixes**
 
+- Nuke: Anatomy fill data use task as dictionary [\#2278](https://github.com/pypeclub/OpenPype/pull/2278)
+- Bug: fix variable name \_asset\_id in workfiles application [\#2274](https://github.com/pypeclub/OpenPype/pull/2274)
+- Version handling fixes [\#2272](https://github.com/pypeclub/OpenPype/pull/2272)
+
+## [3.6.3](https://github.com/pypeclub/OpenPype/tree/3.6.3) (2021-11-19)
+
+[Full Changelog](https://github.com/pypeclub/OpenPype/compare/CI/3.6.3-nightly.1...3.6.3)
+
+**🐛 Bug fixes**
+
+- Deadline: Fix publish targets [\#2280](https://github.com/pypeclub/OpenPype/pull/2280)
+
+## [3.6.2](https://github.com/pypeclub/OpenPype/tree/3.6.2) (2021-11-18)
+
+[Full Changelog](https://github.com/pypeclub/OpenPype/compare/CI/3.6.2-nightly.2...3.6.2)
+
+**🚀 Enhancements**
+
+- Tools: Assets widget [\#2265](https://github.com/pypeclub/OpenPype/pull/2265)
+- SceneInventory: Choose loader in asset switcher [\#2262](https://github.com/pypeclub/OpenPype/pull/2262)
+- Style: New fonts in OpenPype style [\#2256](https://github.com/pypeclub/OpenPype/pull/2256)
+- Tools: SceneInventory in OpenPype  [\#2255](https://github.com/pypeclub/OpenPype/pull/2255)
+- Tools: Tasks widget [\#2251](https://github.com/pypeclub/OpenPype/pull/2251)
+- Tools: Creator in OpenPype [\#2244](https://github.com/pypeclub/OpenPype/pull/2244)
+- Usage of tools code [\#2185](https://github.com/pypeclub/OpenPype/pull/2185)
+
+**🐛 Bug fixes**
+
+- Tools: Parenting of tools in Nuke and Hiero [\#2266](https://github.com/pypeclub/OpenPype/pull/2266)
+- limiting validator to specific editorial hosts [\#2264](https://github.com/pypeclub/OpenPype/pull/2264)
+- Tools: Select Context dialog attribute fix [\#2261](https://github.com/pypeclub/OpenPype/pull/2261)
+- Maya: Render publishing fails on linux [\#2260](https://github.com/pypeclub/OpenPype/pull/2260)
+- LookAssigner: Fix tool reopen [\#2259](https://github.com/pypeclub/OpenPype/pull/2259)
+- Standalone: editorial not publishing thumbnails on all subsets [\#2258](https://github.com/pypeclub/OpenPype/pull/2258)
+- Loader doesn't allow changing of version before loading [\#2254](https://github.com/pypeclub/OpenPype/pull/2254)
 - Burnins: Support mxf metadata [\#2247](https://github.com/pypeclub/OpenPype/pull/2247)
+- Maya: Support for configurable AOV separator characters [\#2197](https://github.com/pypeclub/OpenPype/pull/2197)
+- Maya: texture colorspace modes in looks [\#2195](https://github.com/pypeclub/OpenPype/pull/2195)
 
 ## [3.6.1](https://github.com/pypeclub/OpenPype/tree/3.6.1) (2021-11-16)
 
 [Full Changelog](https://github.com/pypeclub/OpenPype/compare/CI/3.6.1-nightly.1...3.6.1)
-
-**🐛 Bug fixes**
-
-- Loader doesn't allow changing of version before loading [\#2254](https://github.com/pypeclub/OpenPype/pull/2254)
 
 ## [3.6.0](https://github.com/pypeclub/OpenPype/tree/3.6.0) (2021-11-15)
 
@@ -46,6 +82,7 @@
 - Add a "following workfile versioning" option on publish [\#2225](https://github.com/pypeclub/OpenPype/pull/2225)
 - Modules: Module can add cli commands [\#2224](https://github.com/pypeclub/OpenPype/pull/2224)
 - Webpublisher: Separate webpublisher logic [\#2222](https://github.com/pypeclub/OpenPype/pull/2222)
+- Added endpoint for configured extensions [\#2221](https://github.com/pypeclub/OpenPype/pull/2221)
 - Add both side availability on Site Sync sites to Loader [\#2220](https://github.com/pypeclub/OpenPype/pull/2220)
 - Tools: Center loader and library loader on show [\#2219](https://github.com/pypeclub/OpenPype/pull/2219)
 - Maya : Validate shape zero [\#2212](https://github.com/pypeclub/OpenPype/pull/2212)
@@ -57,7 +94,6 @@
 - Dirmap in Nuke [\#2198](https://github.com/pypeclub/OpenPype/pull/2198)
 - Delivery: Check 'frame' key in template for sequence delivery [\#2196](https://github.com/pypeclub/OpenPype/pull/2196)
 - Settings: Site sync project settings improvement [\#2193](https://github.com/pypeclub/OpenPype/pull/2193)
-- Usage of tools code [\#2185](https://github.com/pypeclub/OpenPype/pull/2185)
 - Settings: Dictionary based on project roots [\#2184](https://github.com/pypeclub/OpenPype/pull/2184)
 - Subset name: Be able to pass asset document to get subset name [\#2179](https://github.com/pypeclub/OpenPype/pull/2179)
 
@@ -82,25 +118,6 @@
 ## [3.5.0](https://github.com/pypeclub/OpenPype/tree/3.5.0) (2021-10-17)
 
 [Full Changelog](https://github.com/pypeclub/OpenPype/compare/CI/3.5.0-nightly.8...3.5.0)
-
-**🆕 New features**
-
-- Added project and task into context change message in Maya [\#2131](https://github.com/pypeclub/OpenPype/pull/2131)
-- Add ExtractBurnin to photoshop review [\#2124](https://github.com/pypeclub/OpenPype/pull/2124)
-- PYPE-1218 - changed namespace to contain subset name in Maya [\#2114](https://github.com/pypeclub/OpenPype/pull/2114)
-
-**🚀 Enhancements**
-
-- Maya: make rig validators configurable in settings [\#2137](https://github.com/pypeclub/OpenPype/pull/2137)
-- Settings: Updated readme for entity types in settings [\#2132](https://github.com/pypeclub/OpenPype/pull/2132)
-- Nuke: unified clip loader [\#2128](https://github.com/pypeclub/OpenPype/pull/2128)
-
-**🐛 Bug fixes**
-
-- Maya: fix model publishing [\#2130](https://github.com/pypeclub/OpenPype/pull/2130)
-- Fix - oiiotool wasn't recognized even if present [\#2129](https://github.com/pypeclub/OpenPype/pull/2129)
-- General: Disk mapping group [\#2120](https://github.com/pypeclub/OpenPype/pull/2120)
-- Hiero: publishing effect first time makes wrong resources path [\#2115](https://github.com/pypeclub/OpenPype/pull/2115)
 
 ## [3.4.1](https://github.com/pypeclub/OpenPype/tree/3.4.1) (2021-09-23)
 

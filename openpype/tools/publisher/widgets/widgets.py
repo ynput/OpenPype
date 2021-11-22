@@ -9,7 +9,7 @@ from avalon.vendor import qtawesome
 
 from openpype.widgets.attribute_defs import create_widget_for_attr_def
 from openpype.tools.flickcharm import FlickCharm
-
+from openpype.pipeline.create import SUBSET_NAME_ALLOWED_SYMBOLS
 from .models import (
     AssetsHierarchyModel,
     TasksModel,
@@ -21,7 +21,6 @@ from .icons import (
 )
 
 from ..constants import (
-    SUBSET_NAME_ALLOWED_SYMBOLS,
     VARIANT_TOOLTIP
 )
 
