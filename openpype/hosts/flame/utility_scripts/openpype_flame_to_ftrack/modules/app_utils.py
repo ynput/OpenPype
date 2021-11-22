@@ -99,18 +99,6 @@ create_task_type = Compositing
 """
 
 
-def get_all_task_types(project_entity):
-    tasks = {}
-    proj_template = project_entity['project_schema']
-    temp_task_types = proj_template['_task_type_schema']['types']
-
-    for type in temp_task_types:
-        if type['name'] not in tasks:
-            tasks[type['name']] = type
-
-    return tasks
-
-
 def configure_preset(file_path, data):
     split_fp = os.path.splitext(file_path)
     new_file_path = split_fp[0] + "_tmp" + split_fp[-1]

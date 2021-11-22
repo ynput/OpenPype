@@ -9,7 +9,7 @@ import app_utils
 reload(app_utils)
 
 from ftrack_lib import (
-    maintained_ftrack_session,
+    get_ftrack_session,
     FtrackEntityOperator,
     FtrackComponentCreator
 )
@@ -24,11 +24,13 @@ class MainWindow(QtWidgets.QWidget):
         # clear all temp data
         print("Removing temp data")
         self.panel_class.clear_temp_data()
+        self.panel_class.close()
 
         # now the panel can be closed
         event.accept()
 
 class FlameToFtrackPanel(object):
+    session = None
     temp_data_dir = None
     processed_components = []
     project_entity = None
@@ -62,8 +64,12 @@ class FlameToFtrackPanel(object):
     def __init__(self, selection):
         print(selection)
         print(self.processed_components)
+
+        self.session = get_ftrack_session()
+
         self.processed_components = []
         print(self.processed_components)
+
         self.selection = selection
         self.window = MainWindow(self)
         # creating ui
@@ -73,79 +79,80 @@ class FlameToFtrackPanel(object):
         self.window.setAttribute(QtCore.Qt.WA_DeleteOnClose)
         self.window.setStyleSheet('background-color: #313131')
 
-        with maintained_ftrack_session() as session:
-            print(1)
-            self._create_project_widget(session)
-            print(2)
-            self._create_tree_widget()
-            print(3)
-            self._set_sequence_params()
-            print(4)
-            self._generate_widgets()
-            print(5)
-            self._generate_layouts()
-            print(6)
-            self._timeline_info()
-            print(7)
-            self._fix_resolution()
-            print(8)
+        print(1)
+        self._create_project_widget()
+        print(2)
+        self._create_tree_widget()
+        print(3)
+        self._set_sequence_params()
+        print(4)
+        self._generate_widgets()
+        print(5)
+        self._generate_layouts()
+        print(6)
+        self._timeline_info()
+        print(7)
+        self._fix_resolution()
+        print(8)
 
         self.window.show()
 
     def _generate_widgets(self):
-        with app_utils.get_config("main") as cfg_d:
-            self._create_task_type_widget(cfg_d)
+        with app_utils.get_config("main") as cfg_data:
+            cfg_d = cfg_data
 
-            # input fields
-            self.shot_name_label = uiwidgets.FlameLabel(
-                'Shot name template', 'normal', self.window)
-            self.shot_name_template_input = uiwidgets.FlameLineEdit(
-                cfg_d["shot_name_template"], self.window)
+        self._create_task_type_widget(cfg_d)
 
-            self.hierarchy_label = uiwidgets.FlameLabel(
-                'Parents template', 'normal', self.window)
-            self.hierarchy_template_input = uiwidgets.FlameLineEdit(
-                cfg_d["hierarchy_template"], self.window)
+        # input fields
+        self.shot_name_label = uiwidgets.FlameLabel(
+            'Shot name template', 'normal', self.window)
+        self.shot_name_template_input = uiwidgets.FlameLineEdit(
+            cfg_d["shot_name_template"], self.window)
 
-            self.start_frame_label = uiwidgets.FlameLabel(
-                'Workfile start frame', 'normal', self.window)
-            self.start_frame_input = uiwidgets.FlameLineEdit(
-                cfg_d["workfile_start_frame"], self.window)
+        self.hierarchy_label = uiwidgets.FlameLabel(
+            'Parents template', 'normal', self.window)
+        self.hierarchy_template_input = uiwidgets.FlameLineEdit(
+            cfg_d["hierarchy_template"], self.window)
 
-            self.handles_label = uiwidgets.FlameLabel(
-                'Shot handles', 'normal', self.window)
-            self.handles_input = uiwidgets.FlameLineEdit(
-                cfg_d["shot_handles"], self.window)
+        self.start_frame_label = uiwidgets.FlameLabel(
+            'Workfile start frame', 'normal', self.window)
+        self.start_frame_input = uiwidgets.FlameLineEdit(
+            cfg_d["workfile_start_frame"], self.window)
 
-            self.width_label = uiwidgets.FlameLabel(
-                'Sequence width', 'normal', self.window)
-            self.width_input = uiwidgets.FlameLineEdit(
-                str(self.seq_width), self.window)
+        self.handles_label = uiwidgets.FlameLabel(
+            'Shot handles', 'normal', self.window)
+        self.handles_input = uiwidgets.FlameLineEdit(
+            cfg_d["shot_handles"], self.window)
 
-            self.height_label = uiwidgets.FlameLabel(
-                'Sequence height', 'normal', self.window)
-            self.height_input = uiwidgets.FlameLineEdit(
-                str(self.seq_height), self.window)
+        self.width_label = uiwidgets.FlameLabel(
+            'Sequence width', 'normal', self.window)
+        self.width_input = uiwidgets.FlameLineEdit(
+            str(self.seq_width), self.window)
 
-            self.pixel_aspect_label = uiwidgets.FlameLabel(
-                'Pixel aspect ratio', 'normal', self.window)
-            self.pixel_aspect_input = uiwidgets.FlameLineEdit(
-                str(1.00), self.window)
+        self.height_label = uiwidgets.FlameLabel(
+            'Sequence height', 'normal', self.window)
+        self.height_input = uiwidgets.FlameLineEdit(
+            str(self.seq_height), self.window)
 
-            self.fps_label = uiwidgets.FlameLabel(
-                'Frame rate', 'normal', self.window)
-            self.fps_input = uiwidgets.FlameLineEdit(
-                str(self.fps), self.window)
+        self.pixel_aspect_label = uiwidgets.FlameLabel(
+            'Pixel aspect ratio', 'normal', self.window)
+        self.pixel_aspect_input = uiwidgets.FlameLineEdit(
+            str(1.00), self.window)
 
-            # Button
-            self.select_all_btn = uiwidgets.FlameButton(
-                'Select All', self.select_all, self.window)
+        self.fps_label = uiwidgets.FlameLabel(
+            'Frame rate', 'normal', self.window)
+        self.fps_input = uiwidgets.FlameLineEdit(
+            str(self.fps), self.window)
 
-            self.remove_temp_data_btn = uiwidgets.FlameButton(
-                'Remove temp data', self.clear_temp_data, self.window)
+        # Button
+        self.select_all_btn = uiwidgets.FlameButton(
+            'Select All', self.select_all, self.window)
 
-            self.ftrack_send_btn = uiwidgets.FlameButton(
-                'Send to Ftrack', self._send_to_ftrack, self.window)
+        self.remove_temp_data_btn = uiwidgets.FlameButton(
+            'Remove temp data', self.clear_temp_data, self.window)
+
+        self.ftrack_send_btn = uiwidgets.FlameButton(
+            'Send to Ftrack', self._send_to_ftrack, self.window)
 
     def _generate_layouts(self):
         # left props
@@ -214,14 +221,15 @@ class FlameToFtrackPanel(object):
 
     def _create_task_type_widget(self, cfg_d):
         print(self.project_entity)
-        self.task_types = app_utils.get_all_task_types(self.project_entity)
+        self.task_types = ftrack_lib.get_project_task_types(
+            self.project_entity)
 
         self.task_type_label = uiwidgets.FlameLabel(
             'Create Task (type)', 'normal', self.window)
         self.task_type_input = uiwidgets.FlamePushButtonMenu(
             cfg_d["create_task_type"], self.task_types.keys(), self.window)
 
-    def _create_project_widget(self, session):
+    def _create_project_widget(self):
 
         # get project name from flame current project
         self.project_name = flame.project.current_project.name
@@ -231,17 +239,19 @@ class FlameToFtrackPanel(object):
         query = 'Project where full_name is "{}"'.format(self.project_name)
 
         # globally used variables
-        self.project_entity = session.query(query).first()
+        self.project_entity = self.session.query(query).first()
 
         self.project_selector_enabled = bool(not self.project_entity)
 
         if self.project_selector_enabled:
-            self.all_projects = session.query(
+            self.all_projects = self.session.query(
                 "Project where status is active").all()
             self.project_entity = self.all_projects[0]
             project_names = [p["full_name"] for p in self.all_projects]
-            self.all_task_types = {p["full_name"]: app_utils.get_all_task_types(
-                p).keys() for p in self.all_projects}
+            self.all_task_types = {
+                p["full_name"]: ftrack_lib.get_project_task_types(p).keys()
+                for p in self.all_projects
+            }
             self.project_select_label = uiwidgets.FlameLabel(
                 'Select Ftrack project', 'normal', self.window)
             self.project_select_input = uiwidgets.FlamePushButtonMenu(
@@ -309,138 +319,135 @@ class FlameToFtrackPanel(object):
         # get resolution from gui inputs
         fps = self.fps_input.text()
 
-        with maintained_ftrack_session() as session:
-            print("Ftrack session is: {}".format(session))
+        entity_operator = FtrackEntityOperator(
+            self.session, self.project_entity)
+        component_creator = FtrackComponentCreator(self.session)
 
-            entity_operator = FtrackEntityOperator(
-                session, self.project_entity)
-            component_creator = FtrackComponentCreator(session)
+        self.temp_data_dir = component_creator.generate_temp_data(
+            self.selection,
+            self.temp_data_dir,
+            {
+                "nbHandles": handles
+            }
+        )
 
-            self.temp_data_dir = component_creator.generate_temp_data(
-                self.selection,
-                self.temp_data_dir,
-                {
-                    "nbHandles": handles
-                }
-            )
+        # Get all selected items from treewidget
+        for item in self.tree.selectedItems():
+            # frame ranges
+            frame_duration = int(item.text(2))
+            frame_end = frame_start + frame_duration
 
-            # Get all selected items from treewidget
-            for item in self.tree.selectedItems():
-                # frame ranges
-                frame_duration = int(item.text(2))
-                frame_end = frame_start + frame_duration
+            # description
+            shot_description = item.text(3)
+            task_description = item.text(4)
 
-                # description
-                shot_description = item.text(3)
-                task_description = item.text(4)
+            # other
+            sequence_name = item.text(0)
+            shot_name = item.text(1)
 
-                # other
-                sequence_name = item.text(0)
-                shot_name = item.text(1)
+            thumb_fp = component_creator.get_thumb_path(shot_name)
+            video_fp = component_creator.get_video_path(shot_name)
 
-                thumb_fp = component_creator.get_thumb_path(shot_name)
-                video_fp = component_creator.get_video_path(shot_name)
+            print("processed comps: {}".format(self.processed_components))
+            processed = False
+            if thumb_fp not in self.processed_components:
+                self.processed_components.append(thumb_fp)
+            else:
+                processed = True
 
-                print("processed comps: {}".format(self.processed_components))
-                processed = False
-                if thumb_fp not in self.processed_components:
-                    self.processed_components.append(thumb_fp)
-                else:
-                    processed = True
+            print("processed: {}".format(processed))
 
-                print("processed: {}".format(processed))
+            # populate full shot info
+            shot_attributes = {
+                "sequence": sequence_name,
+                "shot": shot_name,
+                "task": task_type
+            }
 
-                # populate full shot info
-                shot_attributes = {
-                    "sequence": sequence_name,
-                    "shot": shot_name,
-                    "task": task_type
-                }
+            # format shot name template
+            _shot_name = self.shot_name_template_input.text().format(
+                **shot_attributes)
 
-                # format shot name template
-                _shot_name = self.shot_name_template_input.text().format(
-                    **shot_attributes)
+            # format hierarchy template
+            _hierarchy_text = self.hierarchy_template_input.text().format(
+                **shot_attributes)
+            print(_hierarchy_text)
 
-                # format hierarchy template
-                _hierarchy_text = self.hierarchy_template_input.text().format(
-                    **shot_attributes)
-                print(_hierarchy_text)
+            # solve parents
+            parents = entity_operator.create_parents(_hierarchy_text)
+            print(parents)
 
-                # solve parents
-                parents = entity_operator.create_parents(_hierarchy_text)
-                print(parents)
-
-                # obtain shot parents entities
-                _parent = None
-                for _name, _type in parents:
-                    p_entity = entity_operator.get_ftrack_entity(
-                        session,
-                        _type,
-                        _name,
-                        _parent
-                    )
-                    print(p_entity)
-                    _parent = p_entity
-
-                # obtain shot ftrack entity
-                f_s_entity = entity_operator.get_ftrack_entity(
-                    session,
-                    "Shot",
-                    _shot_name,
+            # obtain shot parents entities
+            _parent = None
+            for _name, _type in parents:
+                p_entity = entity_operator.get_ftrack_entity(
+                    self.session,
+                    _type,
+                    _name,
                     _parent
                 )
-                print("Shot entity is: {}".format(f_s_entity))
+                print(p_entity)
+                _parent = p_entity
 
-                if not processed:
-                    # first create thumbnail and get version entity
-                    assetversion_entity = component_creator.create_comonent(
-                        f_s_entity, {
-                            "file_path": thumb_fp
-                        }
-                    )
+            # obtain shot ftrack entity
+            f_s_entity = entity_operator.get_ftrack_entity(
+                self.session,
+                "Shot",
+                _shot_name,
+                _parent
+            )
+            print("Shot entity is: {}".format(f_s_entity))
 
-                    # secondly add video to version entity
-                    component_creator.create_comonent(
-                        f_s_entity, {
-                            "file_path": video_fp,
-                            "duration": frame_duration,
-                            "handles": int(handles),
-                            "fps": float(fps)
-                        }, assetversion_entity
-                    )
+            if not processed:
+                # first create thumbnail and get version entity
+                assetversion_entity = component_creator.create_comonent(
+                    f_s_entity, {
+                        "file_path": thumb_fp
+                    }
+                )
 
-                # create custom attributtes
-                custom_attrs = {
-                    "frameStart": frame_start,
-                    "frameEnd": frame_end,
-                    "handleStart": int(handles),
-                    "handleEnd": int(handles),
-                    "resolutionWidth": int(self.width_input.text()),
-                    "resolutionHeight": int(self.height_input.text()),
-                    "pixelAspect": float(self.pixel_aspect_input.text()),
-                    "fps": float(fps)
-                }
+                # secondly add video to version entity
+                component_creator.create_comonent(
+                    f_s_entity, {
+                        "file_path": video_fp,
+                        "duration": frame_duration,
+                        "handles": int(handles),
+                        "fps": float(fps)
+                    }, assetversion_entity
+                )
 
-                # update custom attributes on shot entity
-                for key in custom_attrs:
-                    f_s_entity['custom_attributes'][key] = custom_attrs[key]
+            # create custom attributtes
+            custom_attrs = {
+                "frameStart": frame_start,
+                "frameEnd": frame_end,
+                "handleStart": int(handles),
+                "handleEnd": int(handles),
+                "resolutionWidth": int(self.width_input.text()),
+                "resolutionHeight": int(self.height_input.text()),
+                "pixelAspect": float(self.pixel_aspect_input.text()),
+                "fps": float(fps)
+            }
 
-                task_entity = entity_operator.create_task(
-                    task_type, self.task_types, f_s_entity)
+            # update custom attributes on shot entity
+            for key in custom_attrs:
+                f_s_entity['custom_attributes'][key] = custom_attrs[key]
 
-                # Create notes.
-                user = session.query(
-                    "User where username is \"{}\"".format(session.api_user)
-                ).first()
+            task_entity = entity_operator.create_task(
+                task_type, self.task_types, f_s_entity)
 
-                f_s_entity.create_note(shot_description, author=user)
+            # Create notes.
+            user = self.session.query(
+                "User where username is \"{}\"".format(self.session.api_user)
+            ).first()
 
-                if task_description:
-                    task_entity.create_note(task_description, user)
+            f_s_entity.create_note(shot_description, author=user)
 
-                entity_operator.commit()
+            if task_description:
+                task_entity.create_note(task_description, user)
 
-            component_creator.close()
+            entity_operator.commit()
+
+        component_creator.close()
 
     def _fix_resolution(self):
         # Center window in linux
@@ -507,3 +514,6 @@ class FlameToFtrackPanel(object):
             shutil.rmtree(self.temp_data_dir)
         self.temp_data_dir = None
         print("All Temp data were destroied ...")
+
+    def close(self):
+        self.session.close()
