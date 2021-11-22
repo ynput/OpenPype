@@ -22,7 +22,7 @@ class CreateModel(plugin.PypeCreator):
         nodes = list()
         if (self.options or {}).get("useSelection"):
             nodes = self.nodes
-            for n in nodes :
+            for n in nodes:
                 n['selected'].setValue(0)
             end_nodes = list()
 
@@ -42,15 +42,15 @@ class CreateModel(plugin.PypeCreator):
             end_nodes = list(set(end_nodes))
 
             # check if nodes is 3d nodes
-            for n in end_nodes :
+            for n in end_nodes:
                 n['selected'].setValue(1)
                 sn = nuke.createNode("Scene")
-                if not sn.input(0) :
+                if not sn.input(0):
                     end_nodes.remove(n)
                 nuke.delete(sn)
 
             # loop over end nodes
-            for n in end_nodes :
+            for n in end_nodes:
                 n['selected'].setValue(1)
 
             self.nodes = nuke.selectedNodes()
