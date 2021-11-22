@@ -328,7 +328,7 @@ class SyncEntitiesFactory:
             server_url=self._server_url,
             api_key=self._api_key,
             api_user=self._api_user,
-            auto_connect_event_hub=True
+            auto_connect_event_hub=False
         )
 
         self.duplicates = {}
