@@ -3,7 +3,12 @@ from uuid import uuid4
 from Qt import QtWidgets, QtCore, QtGui
 
 from .base import BaseWidget
-from .lib import create_deffered_value_change_timer
+from .lib import (
+    create_deffered_value_change_timer,
+    create_add_btn,
+    create_remove_btn,
+    create_confirm_btn
+)
 from .widgets import (
     ExpandingWidget,
     IconButton
@@ -19,92 +24,6 @@ KEY_INPUT_TOOLTIP = (
     "Keys can't be duplicated and may contain alphabetical character (a-Z)"
     "\nnumerical characters (0-9) dash (\"-\") or underscore (\"_\")."
 )
-
-
-class PaintHelper:
-    cached_icons = {}
-
-    @classmethod
-    def _draw_image(cls, width, height, brush):
-        image = QtGui.QPixmap(width, height)
-        image.fill(QtCore.Qt.transparent)
-
-        icon_path_stroker = QtGui.QPainterPathStroker()
-        icon_path_stroker.setCapStyle(QtCore.Qt.RoundCap)
-        icon_path_stroker.setJoinStyle(QtCore.Qt.RoundJoin)
-        icon_path_stroker.setWidth(height / 5)
-
-        painter = QtGui.QPainter(image)
-        painter.setPen(QtCore.Qt.transparent)
-        painter.setBrush(brush)
-        rect = QtCore.QRect(0, 0, image.width(), image.height())
-        fifteenth = rect.height() / 15
-        # Left point
-        p1 = QtCore.QPoint(
-            rect.x() + (5 * fifteenth),
-            rect.y() + (9 * fifteenth)
-        )
-        # Middle bottom point
-        p2 = QtCore.QPoint(
-            rect.center().x(),
-            rect.y() + (11 * fifteenth)
-        )
-        # Top right point
-        p3 = QtCore.QPoint(
-            rect.x() + (10 * fifteenth),
-            rect.y() + (5 * fifteenth)
-        )
-
-        path = QtGui.QPainterPath(p1)
-        path.lineTo(p2)
-        path.lineTo(p3)
-
-        stroked_path = icon_path_stroker.createStroke(path)
-        painter.drawPath(stroked_path)
-
-        painter.end()
-
-        return image
-
-    @classmethod
-    def get_confirm_icon(cls, width, height):
-        key = "{}x{}-confirm_image".format(width, height)
-        icon = cls.cached_icons.get(key)
-
-        if icon is None:
-            image = cls._draw_image(width, height, QtCore.Qt.white)
-            icon = QtGui.QIcon(image)
-            cls.cached_icons[key] = icon
-        return icon
-
-
-def create_add_btn(parent):
-    add_btn = QtWidgets.QPushButton("+", parent)
-    add_btn.setFocusPolicy(QtCore.Qt.ClickFocus)
-    add_btn.setObjectName("SettingsToolBtn")
-    add_btn.setFixedSize(BTN_FIXED_SIZE, BTN_FIXED_SIZE)
-    return add_btn
-
-
-def create_remove_btn(parent):
-    remove_btn = QtWidgets.QPushButton("-", parent)
-    remove_btn.setFocusPolicy(QtCore.Qt.ClickFocus)
-    remove_btn.setObjectName("SettingsToolBtn")
-    remove_btn.setFixedSize(BTN_FIXED_SIZE, BTN_FIXED_SIZE)
-    return remove_btn
-
-
-def create_confirm_btn(parent):
-    confirm_btn = QtWidgets.QPushButton(parent)
-
-    icon = PaintHelper.get_confirm_icon(
-        BTN_FIXED_SIZE, BTN_FIXED_SIZE
-    )
-    confirm_btn.setIcon(icon)
-    confirm_btn.setFocusPolicy(QtCore.Qt.ClickFocus)
-    confirm_btn.setObjectName("SettingsToolBtn")
-    confirm_btn.setFixedSize(BTN_FIXED_SIZE, BTN_FIXED_SIZE)
-    return confirm_btn
 
 
 class ModifiableDictEmptyItem(QtWidgets.QWidget):
