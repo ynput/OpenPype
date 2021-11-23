@@ -258,19 +258,40 @@ def get_hierarchy(asset_name=None):
     return "/".join(hierarchy_items)
 
 
-@with_avalon
-def get_linked_assets(asset_entity):
-    """Return linked assets for `asset_entity` from DB
+def get_linked_asset_ids(asset_doc):
+    """Return linked asset ids for `asset_doc` from DB
 
-        Args:
-            asset_entity (dict): asset document from DB
+    Args:
+        asset_doc (dict): Asset document from DB.
 
-        Returns:
-            (list) of MongoDB documents
+    Returns:
+        (list): MongoDB ids of input links.
     """
-    inputs = asset_entity["data"].get("inputs", [])
-    inputs = [avalon.io.find_one({"_id": x}) for x in inputs]
-    return inputs
+    output = []
+    if not asset_doc:
+        return output
+
+    input_links = asset_doc["data"].get("inputsLinks") or []
+    if input_links:
+        output = [item["_id"] for item in input_links]
+    return output
+
+
+@with_avalon
+def get_linked_assets(asset_doc):
+    """Return linked assets for `asset_doc` from DB
+
+    Args:
+        asset_doc (dict): Asset document from DB
+
+    Returns:
+        (list) Asset documents of input links for passed asset doc.
+    """
+    link_ids = get_linked_asset_ids(asset_doc)
+    if not link_ids:
+        return []
+
+    return list(avalon.io.find({"_id": {"$in": link_ids}}))
 
 
 @with_avalon
