@@ -1071,10 +1071,12 @@ class IntegrateAssetNew(pyblish.api.InstancePlugin):
             already_attached_sites[meta["name"]] = meta["created_dt"]
 
             if sync_project_presets and sync_project_presets["enabled"]:
-                # add remote
-                meta = {"name": remote_site.strip()}
-                rec["sites"].append(meta)
-                already_attached_sites[meta["name"]] = None
+                if remote_site and \
+                        remote_site not in already_attached_sites.keys():
+                    # add remote
+                    meta = {"name": remote_site.strip()}
+                    rec["sites"].append(meta)
+                    already_attached_sites[meta["name"]] = None
 
                 # add skeleton for site where it should be always synced to
                 for always_on_site in always_accesible:
@@ -1102,8 +1104,6 @@ class IntegrateAssetNew(pyblish.api.InstancePlugin):
             local_site = local_site_id
 
         remote_site = sync_project_presets["config"].get("remote_site")
-        if remote_site == local_site:
-            remote_site = None
 
         if remote_site == 'local':
             remote_site = local_site_id
