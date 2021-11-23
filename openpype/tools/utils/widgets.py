@@ -38,6 +38,32 @@ class PlaceholderLineEdit(QtWidgets.QLineEdit):
                 self.setPalette(filter_palette)
 
 
+class ImageButton(QtWidgets.QPushButton):
+    """PushButton with icon and size of font.
+
+    Using font metrics height as icon size reference.
+
+    TODO:
+    - handle changes of screen (different resolution)
+    """
+
+    def __init__(self, *args, **kwargs):
+        super(ImageButton, self).__init__(*args, **kwargs)
+        self.setObjectName("ImageButton")
+
+    def _change_size(self):
+        font_height = self.fontMetrics().height()
+        self.setIconSize(QtCore.QSize(font_height, font_height))
+
+    def showEvent(self, event):
+        super(ImageButton, self).showEvent(event)
+
+        self._change_size()
+
+    def sizeHint(self):
+        return self.iconSize()
+
+
 class AssetWidget(QtWidgets.QWidget):
     """A Widget to display a tree of assets with filter
 
