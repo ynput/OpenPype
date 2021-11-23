@@ -6,8 +6,16 @@ from avalon.mongodb import (
     AvalonMongoDB
 )
 
+from openpype.style import get_objected_colors
+from openpype.tools.utils.widgets import ImageButton
+from openpype.tools.utils.lib import paint_image_with_color
+
 from openpype.widgets.nice_checkbox import NiceCheckbox
 from openpype.settings.lib import get_system_settings
+from .images import (
+    get_pixmap,
+    get_image
+)
 from .constants import (
     DEFAULT_PROJECT_LABEL,
     PROJECT_NAME_ROLE,
@@ -30,6 +38,78 @@ class SettingsPlainTextEdit(QtWidgets.QPlainTextEdit):
     def focusInEvent(self, event):
         super(SettingsPlainTextEdit, self).focusInEvent(event)
         self.focused_in.emit()
+
+
+class SettingsToolBtn(ImageButton):
+    _mask_pixmap = None
+    _cached_icons = {}
+
+    def __init__(self, btn_type, parent):
+        super(SettingsToolBtn, self).__init__(parent)
+
+        icon, hover_icon = self._get_icon_type(btn_type)
+
+        self.setIcon(icon)
+
+        self._icon = icon
+        self._hover_icon = hover_icon
+
+    @classmethod
+    def _get_icon_type(cls, btn_type):
+        if btn_type not in cls._cached_icons:
+            settings_colors = get_objected_colors()["settings"]
+            normal_color = settings_colors["image-btn"].get_qcolor()
+            hover_color = settings_colors["image-btn-hover"].get_qcolor()
+            disabled_color = settings_colors["image-btn-disabled"].get_qcolor()
+
+            image = get_image("{}.png".format(btn_type))
+
+            pixmap = paint_image_with_color(image, normal_color)
+            hover_pixmap = paint_image_with_color(image, hover_color)
+            disabled_pixmap = paint_image_with_color(image, disabled_color)
+
+            icon = QtGui.QIcon(pixmap)
+            hover_icon = QtGui.QIcon(hover_pixmap)
+            icon.addPixmap(
+                disabled_pixmap, QtGui.QIcon.Disabled, QtGui.QIcon.On
+            )
+            icon.addPixmap(
+                disabled_pixmap, QtGui.QIcon.Disabled, QtGui.QIcon.Off
+            )
+            hover_icon.addPixmap(
+                disabled_pixmap, QtGui.QIcon.Disabled, QtGui.QIcon.On
+            )
+            hover_icon.addPixmap(
+                disabled_pixmap, QtGui.QIcon.Disabled, QtGui.QIcon.Off
+            )
+            cls._cached_icons[btn_type] = icon, hover_icon
+        return cls._cached_icons[btn_type]
+
+    def enterEvent(self, event):
+        self.setIcon(self._hover_icon)
+        super(SettingsToolBtn, self).enterEvent(event)
+
+    def leaveEvent(self, event):
+        self.setIcon(self._icon)
+        super(SettingsToolBtn, self).leaveEvent(event)
+
+    @classmethod
+    def _get_mask_pixmap(cls):
+        if cls._mask_pixmap is None:
+            mask_pixmap = get_pixmap("mask.png")
+            cls._mask_pixmap = mask_pixmap
+        return cls._mask_pixmap
+
+    def _change_size(self):
+        super(SettingsToolBtn, self)._change_size()
+        size = self.iconSize()
+        scaled = self._get_mask_pixmap().scaled(
+            size.width(),
+            size.height(),
+            QtCore.Qt.IgnoreAspectRatio,
+            QtCore.Qt.SmoothTransformation
+        )
+        self.setMask(scaled.mask())
 
 
 class ShadowWidget(QtWidgets.QWidget):
