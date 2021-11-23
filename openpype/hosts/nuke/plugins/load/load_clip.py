@@ -251,8 +251,7 @@ class LoadClip(plugin.NukeLoader):
                 "handleStart": str(self.handle_start),
                 "handleEnd": str(self.handle_end),
                 "fps": str(version_data.get("fps")),
-                "author": version_data.get("author"),
-                "outputDir": version_data.get("outputDir"),
+                "author": version_data.get("author")
             }
 
             # change color of read_node
