@@ -100,8 +100,10 @@
             "breadcrumbs-btn-bg-hover": "rgba(127, 127, 127, 90)",
 
             "content-hightlighted": "rgba(19, 26, 32, 15)",
-            "tool-btn-color": "#21252B",
-            "focus-border": "#839caf"
+            "focus-border": "#839caf",
+            "image-btn": "#bfccd6",
+            "image-btn-hover": "#189aea",
+            "image-btn-disabled": "#bfccd6"
         }
     }
 }
