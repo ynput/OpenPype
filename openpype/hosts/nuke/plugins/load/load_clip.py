@@ -67,6 +67,9 @@ class LoadClip(plugin.NukeLoader):
 
     def load(self, context, name, namespace, options):
 
+        # reste container id so it is always unique for each instance
+        self.reset_container_id()
+
         is_sequence = len(context["representation"]["files"]) > 1
 
         file = self.fname.replace("\\", "/")
