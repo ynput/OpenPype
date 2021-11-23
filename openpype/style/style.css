@@ -1144,7 +1144,7 @@ QScrollBar::add-page:vertical, QScrollBar::sub-page:vertical {
 #ImageButton {
     padding: 0;
     background: transparent;
-    font-size: 12pt;
+    font-size: 11pt;
 }
 
 #ImageButton:disabled {
