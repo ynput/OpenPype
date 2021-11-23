@@ -1,7 +1,6 @@
 from Qt import QtWidgets, QtCore
 
 from openpype.tools.settings import (
-    BTN_FIXED_SIZE,
     CHILD_OFFSET
 )
 
