@@ -1,11 +1,10 @@
-from openpype.lib.abstract_load_template import AbstractTemplateLoader,\
-    AbstractPlaceholder
+import openpype.lib
 from maya import cmds
 
 PLACEHOLDER_SET = 'PLACEHOLDERS_SET'
 
 
-class TemplateLoader(AbstractTemplateLoader):
+class MayaTemplateLoader(openpype.lib.AbstractTemplateLoader):
     """Concrete implementation of AbstractTemplateLoader for maya
 
     """
@@ -34,7 +33,7 @@ class TemplateLoader(AbstractTemplateLoader):
         return [attribute.rpartition('.')[0] for attribute in attributes]
 
 
-class Placeholder(AbstractPlaceholder):
+class MayaPlaceholder(openpype.lib.AbstractPlaceholder):
     """Concrete implementation of AbstractPlaceholder for maya
 
     """

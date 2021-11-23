@@ -170,6 +170,11 @@ from .pype_info import (
     get_build_version
 )
 
+from .abstract_template_loader import (
+    AbstractPlaceholder,
+    AbstractTemplateLoader
+)
+
 terminal = Terminal
 
 __all__ = [
@@ -297,4 +302,7 @@ __all__ = [
 
     "get_openpype_version",
     "get_build_version",
+
+    "AbstractPlaceholder",
+    "AbstractTemplateLoader"
 ]
