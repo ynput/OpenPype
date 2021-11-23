@@ -1,4 +1,6 @@
 
+from collections import OrderedDict
+from avalon import io
 import pyblish.api
 
 
@@ -94,8 +96,6 @@ class IntegrateInputLinks(pyblish.api.ContextPlugin):
             None
 
         """
-        from collections import OrderedDict
-        from avalon import io
         # NOTE:
         # using OrderedDict() here is just for ensuring field order between
         # python versions, if we ever need to use mongodb operation '$addToSet'
@@ -117,8 +117,6 @@ class IntegrateInputLinks(pyblish.api.ContextPlugin):
         in database will be updated.
 
         """
-        from avalon import io
-
         for instance in instances:
             version_doc = instance.data.get("versionEntity")
             if version_doc is None:

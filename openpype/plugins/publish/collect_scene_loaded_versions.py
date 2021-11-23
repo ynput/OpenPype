@@ -1,5 +1,6 @@
 
 import pyblish.api
+from avalon import api, io
 
 
 class CollectSceneLoadedVersions(pyblish.api.ContextPlugin):
@@ -22,8 +23,6 @@ class CollectSceneLoadedVersions(pyblish.api.ContextPlugin):
     ]
 
     def process(self, context):
-        from avalon import api, io
-
         host = api.registered_host()
         if host is None:
             self.log.warn("No registered host.")
