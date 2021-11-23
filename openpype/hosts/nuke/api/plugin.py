@@ -49,8 +49,11 @@ def get_review_presets_config():
 
 class NukeLoader(api.Loader):
     container_id_knob = "containerId"
-    container_id = ''.join(random.choice(
-        string.ascii_uppercase + string.digits) for _ in range(10))
+    container_id = None
+
+    def reset_container_id(self):
+        self.container_id = ''.join(random.choice(
+            string.ascii_uppercase + string.digits) for _ in range(10))
 
     def get_container_id(self, node):
         id_knob = node.knobs().get(self.container_id_knob)
@@ -67,13 +70,16 @@ class NukeLoader(api.Loader):
         source_id = self.get_container_id(node)
 
         if source_id:
-            node[self.container_id_knob].setValue(self.container_id)
+            node[self.container_id_knob].setValue(source_id)
         else:
             HIDEN_FLAG = 0x00040000
             _knob = anlib.Knobby(
                 "String_Knob",
                 self.container_id,
-                flags=[nuke.READ_ONLY, HIDEN_FLAG])
+                flags=[
+                    nuke.READ_ONLY,
+                    HIDEN_FLAG
+                ])
             knob = _knob.create(self.container_id_knob)
             node.addKnob(knob)
 
