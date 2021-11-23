@@ -135,8 +135,7 @@ class LinkAsGroup(api.Loader):
             "source": version["data"].get("source"),
             "handles": version["data"].get("handles"),
             "fps": version["data"].get("fps"),
-            "author": version["data"].get("author"),
-            "outputDir": version["data"].get("outputDir"),
+            "author": version["data"].get("author")
         })
 
         # Update the imprinted representation
