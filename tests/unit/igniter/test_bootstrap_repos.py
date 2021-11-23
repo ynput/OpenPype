@@ -140,7 +140,7 @@ def test_search_string_for_openpype_version(printer):
     ]
     for ver_string in strings:
         printer(f"testing {ver_string[0]} should be {ver_string[1]}")
-        assert OpenPypeVersion.version_in_str(ver_string[0])[0] == \
+        assert OpenPypeVersion.version_in_str(ver_string[0]) == \
             ver_string[1]
 
 

@@ -18,7 +18,7 @@ from openpype.api import (
     BuildWorkfile,
     get_version_from_path,
     get_anatomy_settings,
-    get_hierarchy,
+    get_workdir_data,
     get_asset,
     get_current_project_settings,
     ApplicationManager
@@ -268,15 +268,21 @@ def format_anatomy(data):
     if not version:
         file = script_name()
         data["version"] = get_version_from_path(file)
-    project_document = io.find_one({"type": "project"})
+
+    project_doc = io.find_one({"type": "project"})
+    asset_doc = io.find_one({
+        "type": "asset",
+        "name": data["avalon"]["asset"]
+    })
+    task_name = os.environ["AVALON_TASK"]
+    host_name = os.environ["AVALON_APP"]
+    context_data = get_workdir_data(
+        project_doc, asset_doc, task_name, host_name
+    )
+    data.update(context_data)
     data.update({
         "subset": data["avalon"]["subset"],
-        "asset": data["avalon"]["asset"],
-        "task": os.environ["AVALON_TASK"],
         "family": data["avalon"]["family"],
-        "project": {"name": project_document["name"],
-                    "code": project_document["data"].get("code", '')},
-        "hierarchy": get_hierarchy(),
         "frame": "#" * padding,
     })
     return anatomy.format(data)

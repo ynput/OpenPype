@@ -1,8 +1,35 @@
 # Changelog
 
+## [3.7.0-nightly.1](https://github.com/pypeclub/OpenPype/tree/HEAD)
+
+[Full Changelog](https://github.com/pypeclub/OpenPype/compare/3.6.3...HEAD)
+
+**🆕 New features**
+
+- OpenPypeV3: add key task type, task shortname and user to path templating construction [\#2157](https://github.com/pypeclub/OpenPype/pull/2157)
+
+**🚀 Enhancements**
+
+- Ftrack: Remove unused clean component plugin [\#2269](https://github.com/pypeclub/OpenPype/pull/2269)
+- Houdini: Add experimental tools action [\#2267](https://github.com/pypeclub/OpenPype/pull/2267)
+
+**🐛 Bug fixes**
+
+- Nuke: Anatomy fill data use task as dictionary [\#2278](https://github.com/pypeclub/OpenPype/pull/2278)
+- Bug: fix variable name \_asset\_id in workfiles application [\#2274](https://github.com/pypeclub/OpenPype/pull/2274)
+- Version handling fixes [\#2272](https://github.com/pypeclub/OpenPype/pull/2272)
+
+## [3.6.3](https://github.com/pypeclub/OpenPype/tree/3.6.3) (2021-11-19)
+
+[Full Changelog](https://github.com/pypeclub/OpenPype/compare/CI/3.6.3-nightly.1...3.6.3)
+
+**🐛 Bug fixes**
+
+- Deadline: Fix publish targets [\#2280](https://github.com/pypeclub/OpenPype/pull/2280)
+
 ## [3.6.2](https://github.com/pypeclub/OpenPype/tree/3.6.2) (2021-11-18)
 
-[Full Changelog](https://github.com/pypeclub/OpenPype/compare/3.6.1...3.6.2)
+[Full Changelog](https://github.com/pypeclub/OpenPype/compare/CI/3.6.2-nightly.2...3.6.2)
 
 **🚀 Enhancements**
 
@@ -12,7 +39,7 @@
 - Tools: SceneInventory in OpenPype  [\#2255](https://github.com/pypeclub/OpenPype/pull/2255)
 - Tools: Tasks widget [\#2251](https://github.com/pypeclub/OpenPype/pull/2251)
 - Tools: Creator in OpenPype [\#2244](https://github.com/pypeclub/OpenPype/pull/2244)
-- Added endpoint for configured extensions [\#2221](https://github.com/pypeclub/OpenPype/pull/2221)
+- Usage of tools code [\#2185](https://github.com/pypeclub/OpenPype/pull/2185)
 
 **🐛 Bug fixes**
 
@@ -22,6 +49,7 @@
 - Maya: Render publishing fails on linux [\#2260](https://github.com/pypeclub/OpenPype/pull/2260)
 - LookAssigner: Fix tool reopen [\#2259](https://github.com/pypeclub/OpenPype/pull/2259)
 - Standalone: editorial not publishing thumbnails on all subsets [\#2258](https://github.com/pypeclub/OpenPype/pull/2258)
+- Loader doesn't allow changing of version before loading [\#2254](https://github.com/pypeclub/OpenPype/pull/2254)
 - Burnins: Support mxf metadata [\#2247](https://github.com/pypeclub/OpenPype/pull/2247)
 - Maya: Support for configurable AOV separator characters [\#2197](https://github.com/pypeclub/OpenPype/pull/2197)
 - Maya: texture colorspace modes in looks [\#2195](https://github.com/pypeclub/OpenPype/pull/2195)
@@ -30,13 +58,14 @@
 
 [Full Changelog](https://github.com/pypeclub/OpenPype/compare/CI/3.6.1-nightly.1...3.6.1)
 
-**🐛 Bug fixes**
-
-- Loader doesn't allow changing of version before loading [\#2254](https://github.com/pypeclub/OpenPype/pull/2254)
-
 ## [3.6.0](https://github.com/pypeclub/OpenPype/tree/3.6.0) (2021-11-15)
 
 [Full Changelog](https://github.com/pypeclub/OpenPype/compare/CI/3.6.0-nightly.6...3.6.0)
+
+### 📖 Documentation
+
+- Add alternative sites for Site Sync [\#2206](https://github.com/pypeclub/OpenPype/pull/2206)
+- Add command line way of running site sync server [\#2188](https://github.com/pypeclub/OpenPype/pull/2188)
 
 **🆕 New features**
 
@@ -53,19 +82,18 @@
 - Add a "following workfile versioning" option on publish [\#2225](https://github.com/pypeclub/OpenPype/pull/2225)
 - Modules: Module can add cli commands [\#2224](https://github.com/pypeclub/OpenPype/pull/2224)
 - Webpublisher: Separate webpublisher logic [\#2222](https://github.com/pypeclub/OpenPype/pull/2222)
+- Added endpoint for configured extensions [\#2221](https://github.com/pypeclub/OpenPype/pull/2221)
 - Add both side availability on Site Sync sites to Loader [\#2220](https://github.com/pypeclub/OpenPype/pull/2220)
 - Tools: Center loader and library loader on show [\#2219](https://github.com/pypeclub/OpenPype/pull/2219)
 - Maya : Validate shape zero [\#2212](https://github.com/pypeclub/OpenPype/pull/2212)
 - Maya : validate unique names [\#2211](https://github.com/pypeclub/OpenPype/pull/2211)
 - Tools: OpenPype stylesheet in workfiles tool [\#2208](https://github.com/pypeclub/OpenPype/pull/2208)
-- Add alternative sites for Site Sync [\#2206](https://github.com/pypeclub/OpenPype/pull/2206)
 - Ftrack: Replace Queue with deque in event handlers logic [\#2204](https://github.com/pypeclub/OpenPype/pull/2204)
 - Tools: New select context dialog [\#2200](https://github.com/pypeclub/OpenPype/pull/2200)
 - Maya : Validate mesh ngons [\#2199](https://github.com/pypeclub/OpenPype/pull/2199)
 - Dirmap in Nuke [\#2198](https://github.com/pypeclub/OpenPype/pull/2198)
 - Delivery: Check 'frame' key in template for sequence delivery [\#2196](https://github.com/pypeclub/OpenPype/pull/2196)
 - Settings: Site sync project settings improvement [\#2193](https://github.com/pypeclub/OpenPype/pull/2193)
-- Usage of tools code [\#2185](https://github.com/pypeclub/OpenPype/pull/2185)
 - Settings: Dictionary based on project roots [\#2184](https://github.com/pypeclub/OpenPype/pull/2184)
 - Subset name: Be able to pass asset document to get subset name [\#2179](https://github.com/pypeclub/OpenPype/pull/2179)
 
@@ -87,22 +115,9 @@
 - Maya: review viewport settings [\#2177](https://github.com/pypeclub/OpenPype/pull/2177)
 - Maya: Aspect ratio [\#2174](https://github.com/pypeclub/OpenPype/pull/2174)
 
-### 📖 Documentation
-
-- Add command line way of running site sync server [\#2188](https://github.com/pypeclub/OpenPype/pull/2188)
-
 ## [3.5.0](https://github.com/pypeclub/OpenPype/tree/3.5.0) (2021-10-17)
 
 [Full Changelog](https://github.com/pypeclub/OpenPype/compare/CI/3.5.0-nightly.8...3.5.0)
-
-**🆕 New features**
-
-- Added project and task into context change message in Maya [\#2131](https://github.com/pypeclub/OpenPype/pull/2131)
-
-**🚀 Enhancements**
-
-- Maya: make rig validators configurable in settings [\#2137](https://github.com/pypeclub/OpenPype/pull/2137)
-- Settings: Updated readme for entity types in settings [\#2132](https://github.com/pypeclub/OpenPype/pull/2132)
 
 ## [3.4.1](https://github.com/pypeclub/OpenPype/tree/3.4.1) (2021-09-23)
 
