@@ -1,5 +1,14 @@
 # Changelog
 
+
+## [3.6.4](https://github.com/pypeclub/OpenPype/tree/3.6.4) (2021-11-23)
+
+[Full Changelog](https://github.com/pypeclub/OpenPype/compare/3.6.3...3.6.4)
+
+**🐛 Bug fixes**
+
+- Nuke: inventory update removes all loaded read nodes [\#2294](https://github.com/pypeclub/OpenPype/pull/2294)
+
 ## [3.6.3](https://github.com/pypeclub/OpenPype/tree/3.6.3) (2021-11-19)
 
 [Full Changelog](https://github.com/pypeclub/OpenPype/compare/3.6.2...3.6.3)
