@@ -1219,7 +1219,7 @@ class SyncEntitiesFactory:
             for key, val in entity_dict.get("hier_attrs", []).items():
                 data[key] = val
 
-            if ftrack_id == self.ft_project_id:
+            if ftrack_id != self.ft_project_id:
                 ent_path_items = [ent["name"] for ent in entity["link"]]
                 parents = ent_path_items[1:len(ent_path_items) - 1:]
 
