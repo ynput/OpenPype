@@ -96,7 +96,7 @@ class FtrackComponentCreator:
         print(">>>>> self.thumbnails: " + str(self.thumbnails))
         print(">>>>> self.videos: " + str(self.videos))
 
-        if temp_folder == self.temp_dir:
+        if self.temp_dir:
             return temp_folder
 
         with app_utils.make_temp_dir() as tempdir_path:
