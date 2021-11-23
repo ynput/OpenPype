@@ -16,6 +16,7 @@ from pype.modules.ftrack.lib import avalon_sync
 from pype.modules.ftrack.lib.avalon_sync import (
     CUST_ATTR_ID_KEY, CUST_ATTR_AUTO_SYNC, EntitySchemas
 )
+from pype.modules.ftrack.lib import query_custom_attributes
 import ftrack_api
 from pype.modules.ftrack import BaseEvent
 
@@ -26,7 +27,7 @@ class SyncToAvalonEvent(BaseEvent):
 
     dbcon = AvalonMongoDB()
 
-    interest_entTypes = ["show", "task"]
+    interest_entTypes = ["show", "task", "dependency"]
     ignore_ent_types = ["Milestone"]
     ignore_keys = ["statusid", "thumbid"]
 
@@ -582,6 +583,18 @@ class SyncToAvalonEvent(BaseEvent):
                             ent_info["changes"].pop(ent_key, None)
                             ent_info["keys"].remove(ent_key)
                     entities_by_action["update"][ftrack_id] = _ent_info
+
+            # dependency added means updating the avalon entity.
+            if entity_type.lower() == "typedcontextlink":
+                if action in ["add", "remove"]:
+                    # Ftrack id is the link, so we need to fetch the entity
+                    # linked to, which is the parent of the link.
+                    ftrack_id = ent_info["parents"][1]["entityId"]
+                    entities_by_action["update"][ftrack_id] = ent_info
+                    found_actions.add(action)
+
+                continue
+
             # regular change process handles all other than Tasks
             found_actions.add(action)
             entities_by_action[action][ftrack_id] = ent_info
@@ -1759,6 +1772,45 @@ class SyncToAvalonEvent(BaseEvent):
                         exc_info=True
                     )
 
+    def process_dependency(self, ftrack_id, ent_info, mongo_id):
+        # Query to find all links for passed ftrack ids
+        # - we care about 'from_id' and 'to_id'
+        link_query = (
+            "select from_id, to_id from TypedContextLink where to_id is {}"
+        ).format(ftrack_id)
+        # Prepare query string of ftrack ids that we need
+        links = self.process_session.query(link_query).all()
+        ftrack_ids = []
+        for link in links:
+            ftrack_ids.append(link["from_id"])
+
+        # Query to get attribute definition of `avalon_mongo_id`
+        avalon_mongo_attr_query = (
+            "select id from CustomAttributeConfiguration where"
+            " key is \"avalon_mongo_id\""
+        )
+        attr_def = self.process_session.query(avalon_mongo_attr_query).first()
+
+        # Check if exists
+        if not attr_def:
+            return
+
+        items = query_custom_attributes(
+            self.process_session,
+            [attr_def["id"]],
+            ftrack_ids
+        )
+        inputs = []
+        for item in items:
+            if item["value"] is not None:
+                inputs.append(ObjectId(item["value"]))
+
+        if "data" not in self.updates[mongo_id]:
+            self.updates[mongo_id]["data"] = {}
+
+        self.updates[mongo_id]["data"]["inputs"] = inputs
+        self.log.debug("Updated inputs: {}".format(inputs))
+
     def process_updated(self):
         """
             Only custom attributes changes should get here
@@ -1811,6 +1863,9 @@ class SyncToAvalonEvent(BaseEvent):
             ent_path = self.get_ent_path(ftrack_id)
             if entType == "show":
                 ent_cust_attrs = cust_attrs_by_obj_id.get("show")
+            elif entType.lower() == "dependency":
+                self.process_dependency(ftrack_id, ent_info, mongo_id)
+                continue
             else:
                 obj_type_id = ent_info["objectTypeId"]
                 ent_cust_attrs = cust_attrs_by_obj_id.get(obj_type_id)
