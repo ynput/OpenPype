@@ -24,11 +24,6 @@ class CollectSceneLoadedVersions(pyblish.api.ContextPlugin):
     def process(self, context):
         from avalon import api, io
 
-        current_file = context.data.get("currentFile")
-        if not current_file:
-            self.log.warn("No work file collected.")
-            return
-
         host = api.registered_host()
         if host is None:
             self.log.warn("No registered host.")
