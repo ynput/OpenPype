@@ -181,6 +181,11 @@ from .openpype_version import (
     is_current_version_higher_than_expected
 )
 
+from .abstract_template_loader import (
+    AbstractPlaceholder,
+    AbstractTemplateLoader
+)
+
 terminal = Terminal
 
 __all__ = [
@@ -317,4 +322,7 @@ __all__ = [
     "is_running_from_build",
     "is_running_staging",
     "is_current_version_studio_latest",
+
+    "AbstractPlaceholder",
+    "AbstractTemplateLoader"
 ]
