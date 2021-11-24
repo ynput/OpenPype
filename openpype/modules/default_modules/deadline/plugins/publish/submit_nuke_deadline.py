@@ -1,10 +1,11 @@
 import os
+import re
 import json
 import getpass
 
+import requests
+
 from avalon import api
-from avalon.vendor import requests
-import re
 import pyblish.api
 import nuke
 

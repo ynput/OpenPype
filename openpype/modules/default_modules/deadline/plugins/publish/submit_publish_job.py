@@ -5,10 +5,11 @@ import os
 import json
 import re
 from copy import copy, deepcopy
+import requests
+import clique
 import openpype.api
 
 from avalon import api, io
-from avalon.vendor import requests, clique
 
 import pyblish.api
 

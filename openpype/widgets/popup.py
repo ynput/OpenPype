@@ -3,7 +3,7 @@ import logging
 import contextlib
 
 
-from avalon.vendor.Qt import QtCore, QtWidgets, QtGui
+from Qt import QtCore, QtWidgets, QtGui
 
 log = logging.getLogger(__name__)
 
