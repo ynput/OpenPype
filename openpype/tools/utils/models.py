@@ -1,7 +1,5 @@
 import re
-import time
 import logging
-import collections
 
 import Qt
 from Qt import QtCore, QtGui
