@@ -379,7 +379,7 @@ class ConfirmProjectDeletion(QtWidgets.QDialog):
         self._confirm_input = confirm_input
         self._result = 0
 
-        self.setMinimumWidth(450)
+        self.setMinimumWidth(480)
         self.setMaximumWidth(650)
         self.setMaximumHeight(250)
 
@@ -391,6 +391,8 @@ class ConfirmProjectDeletion(QtWidgets.QDialog):
         """Reset result on show."""
         super(ConfirmProjectDeletion, self).showEvent(event)
         self._result = 0
+        minimum_size_hint = self.minimumSizeHint()
+        self.resize(self.width(), minimum_size_hint.height() + 30)
 
     def result(self):
         """Get result of dialog 1 for confirm 0 for cancel."""
