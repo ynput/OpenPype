@@ -353,31 +353,6 @@ class NiceCheckbox(QtWidgets.QFrame):
 
         under_mouse = self.isEnabled() and self._under_mouse
 
-        shadow_x = checker_rect.x()
-        shadow_y = checker_rect.y() + margin_size_c
-        shadow_size = min(
-            frame_rect.right() - shadow_x,
-            frame_rect.bottom() - shadow_y,
-            checker_size + (2 * margin_size_c)
-        )
-        shadow_rect = QtCore.QRect(
-            checker_rect.x(),
-            shadow_y,
-            shadow_size,
-            shadow_size
-        )
-
-        shadow_brush = QtGui.QRadialGradient(
-            shadow_rect.center(),
-            shadow_rect.height() / 2
-        )
-        shadow_brush.setColorAt(0.6, QtCore.Qt.black)
-        shadow_brush.setColorAt(1, QtCore.Qt.transparent)
-
-        painter.setPen(QtCore.Qt.transparent)
-        painter.setBrush(shadow_brush)
-        painter.drawEllipse(shadow_rect)
-
         painter.setBrush(checker_color)
         painter.drawEllipse(checker_rect)
 
