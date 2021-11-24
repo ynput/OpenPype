@@ -263,6 +263,38 @@
             ]
         },
         {
+            "type": "dict",
+            "key": "job_queue",
+            "label": "Job Queue",
+            "require_restart": true,
+            "collapsible": true,
+            "children": [
+                {
+                    "type": "label",
+                    "label": "Address of machine where job queue server is running."
+                },
+                {
+                    "type": "text",
+                    "key": "server_url",
+                    "label": "Server Rest URL"
+                },
+                {
+                    "type": "separator"
+                },
+                {
+                    "type": "label",
+                    "label": "Jobs root is used as temporary directory for workers where source is copied and render output can be stored."
+                },
+                {
+                    "key": "jobs_root",
+                    "label": "Jobs root",
+                    "type": "path",
+                    "multipath": false,
+                    "multiplatform": true
+                }
+            ]
+        },
+        {
             "type": "dynamic_schema",
             "name": "system_settings/modules"
         }

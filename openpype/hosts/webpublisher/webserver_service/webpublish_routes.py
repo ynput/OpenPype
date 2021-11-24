@@ -198,6 +198,15 @@ class WebpublisherBatchPublishEndpoint(_RestApiEndpoint):
         #   - filter defines command and can extend arguments dictionary
         # This is used only if 'studio_processing' is enabled on batch
         studio_processing_filters = [
+            # TVPaint filter
+            {
+                "extensions": [".tvpp"],
+                "command": "remotepublish",
+                "arguments": {
+                    "targets": ["tvpaint_worker"]
+                },
+                "add_to_queue": False
+            },
             # Photoshop filter
             {
                 "extensions": [".psd", ".psb"],
