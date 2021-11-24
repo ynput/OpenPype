@@ -2,8 +2,10 @@ from avalon.vendor import qtawesome
 
 
 class ResourceCache:
+    # TODO use colors from OpenPype style
     colors = {
         "standard": "#bfccd6",
+        "disabled": "#969696",
         "new": "#2d9a4c",
         "warning": "#c83232"
     }
@@ -58,8 +60,9 @@ class ResourceCache:
                 },
                 "refresh": qtawesome.icon(
                     "fa.refresh",
-                    color=cls.colors["standard"]
-                )
+                    color=cls.colors["standard"],
+                    color_disabled=cls.colors["disabled"]
+                ),
             }
         return cls.icons
 
