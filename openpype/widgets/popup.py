@@ -3,7 +3,7 @@ import logging
 import contextlib
 
 
-from Qt import QtCore, QtWidgets, QtGui
+from Qt import QtCore, QtWidgets
 
 log = logging.getLogger(__name__)
 
