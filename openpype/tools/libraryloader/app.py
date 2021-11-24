@@ -555,7 +555,7 @@ def show(
         import traceback
         sys.excepthook = lambda typ, val, tb: traceback.print_last()
 
-    with tools_lib.application():
+    with tools_lib.qt_app_context():
         window = LibraryLoaderWindow(
             parent, icon, show_projects, show_libraries
         )

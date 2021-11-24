@@ -631,7 +631,7 @@ def show(debug=False, parent=None, use_context=False):
         api.Session["AVALON_PROJECT"] = any_project["name"]
         module.project = any_project["name"]
 
-    with lib.application():
+    with lib.qt_app_context():
         window = LoaderWindow(parent)
         window.show()
 
