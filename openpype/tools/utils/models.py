@@ -11,10 +11,7 @@ from . import lib
 from .constants import (
     PROJECT_IS_ACTIVE_ROLE,
     PROJECT_NAME_ROLE,
-    DEFAULT_PROJECT_LABEL,
-    TASK_ORDER_ROLE,
-    TASK_TYPE_ROLE,
-    TASK_NAME_ROLE
+    DEFAULT_PROJECT_LABEL
 )
 
 log = logging.getLogger(__name__)
