@@ -53,21 +53,36 @@ class ExtractReviewDataMov(openpype.api.Extractor):
                 f_families = o_data["filter"]["families"]
                 f_task_types = o_data["filter"]["task_types"]
 
+                # test if family found in context
                 test_families = any([
+                    # first if exact family set is mathing
+                    # make sure only interesetion of list is correct
                     bool(set(families).intersection(f_families)),
+                    # and if famiies are set at all
+                    # if not then return True because we want this preset
+                    # to be active if nothig is set
                     bool(not f_families)
                 ])
 
+                # test task types from filter
                 test_task_types = any([
+                    # check if actual task type is defined in task types
+                    # set in preset's filter
                     bool(task_type in f_task_types),
+                    # and if taskTypes are defined in preset filter
+                    # if not then return True, because we want this filter
+                    # to be active if no taskType is set
                     bool(not f_task_types)
                 ])
 
+                # we need all filters to be positive for this
+                # preset to be activated
                 test_all = all([
                     test_families,
                     test_task_types
                 ])
 
+                # if it is not positive then skip this preset
                 if not test_all:
                     continue
 
