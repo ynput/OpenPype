@@ -288,3 +288,125 @@ class CreateProjectDialog(QtWidgets.QDialog):
 
             project_codes.add(project_code)
         return project_names, project_codes
+
+
+class _SameSizeBtns(QtWidgets.QPushButton):
+    """Button that keep width of all button added as related.
+
+    This happens without changing min/max/fix size of button. Which is
+    welcomed for multidisplay desktops with different resolution.
+    """
+    def __init__(self, *args, **kwargs):
+        super(_SameSizeBtns, self).__init__(*args, **kwargs)
+        self._related_btns = []
+
+    def add_related_btn(self, btn):
+        """Add related button which should be checked for width.
+
+        Args:
+            btn (_SameSizeBtns): Other object of _SameSizeBtns.
+        """
+        self._related_btns.append(btn)
+
+    def hint_width(self):
+        """Get size hint of button not related to others."""
+        return super(_SameSizeBtns, self).sizeHint().width()
+
+    def sizeHint(self):
+        """Calculate size hint based on size hint of this button and related.
+
+        If width is lower than any other button it is changed to higher.
+        """
+        result = super(_SameSizeBtns, self).sizeHint()
+        width = result.width()
+        for btn in self._related_btns:
+            btn_width = btn.hint_width()
+            if btn_width > width:
+                width = btn_width
+
+        result.setWidth(width)
+        return result
+
+
+class ConfirmProjectDeletion(QtWidgets.QDialog):
+    """Dialog which confirms deletion of a project."""
+    def __init__(self, project_name, parent):
+        super(ConfirmProjectDeletion, self).__init__(parent)
+
+        self.setWindowTitle("Delete project?")
+
+        message = (
+            "Project <b>\"{}\"</b> with all related data will be"
+            " permanently removed from the database (This actions won't remove"
+            " any files on disk)."
+        ).format(project_name)
+        message_label = QtWidgets.QLabel(message, self)
+        message_label.setWordWrap(True)
+
+        question_label = QtWidgets.QLabel("<b>Are you sure?</b>", self)
+
+        confirm_input = QtWidgets.QLineEdit(self)
+        confirm_input.setPlaceholderText("Type \"Delete\" to confirm...")
+
+        cancel_btn = _SameSizeBtns("Cancel", self)
+        cancel_btn.setToolTip("Cancel deletion of the project")
+        confirm_btn = _SameSizeBtns("Delete", self)
+        confirm_btn.setEnabled(False)
+        confirm_btn.setToolTip("Confirm deletion")
+
+        cancel_btn.add_related_btn(confirm_btn)
+        confirm_btn.add_related_btn(cancel_btn)
+
+        btns_layout = QtWidgets.QHBoxLayout()
+        btns_layout.addStretch(1)
+        btns_layout.addWidget(cancel_btn, 0)
+        btns_layout.addWidget(confirm_btn, 0)
+
+        layout = QtWidgets.QVBoxLayout(self)
+        layout.addWidget(message_label, 0)
+        layout.addStretch(1)
+        layout.addWidget(question_label, 0)
+        layout.addWidget(confirm_input, 0)
+        layout.addLayout(btns_layout)
+
+        cancel_btn.clicked.connect(self._on_cancel_click)
+        confirm_btn.clicked.connect(self._on_confirm_click)
+        confirm_input.textChanged.connect(self._on_confirm_text_change)
+        confirm_input.returnPressed.connect(self._on_enter_clicked)
+
+        self._cancel_btn = cancel_btn
+        self._confirm_btn = confirm_btn
+        self._confirm_input = confirm_input
+        self._result = 0
+
+        self.setMinimumWidth(450)
+        self.setMaximumWidth(650)
+        self.setMaximumHeight(250)
+
+    def exec_(self, *args, **kwargs):
+        super(ConfirmProjectDeletion, self).exec_(*args, **kwargs)
+        return self._result
+
+    def showEvent(self, event):
+        """Reset result on show."""
+        super(ConfirmProjectDeletion, self).showEvent(event)
+        self._result = 0
+
+    def result(self):
+        """Get result of dialog 1 for confirm 0 for cancel."""
+        return self._result
+
+    def _on_cancel_click(self):
+        self.close()
+
+    def _on_confirm_click(self):
+        self._result = 1
+        self.close()
+
+    def _on_enter_clicked(self):
+        if self._confirm_btn.isEnabled():
+            self._on_confirm_click()
+
+    def _on_confirm_text_change(self):
+        enabled = self._confirm_input.text().lower() == "delete"
+        self._confirm_btn.setEnabled(enabled)
