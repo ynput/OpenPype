@@ -31,7 +31,7 @@ class LibraryLoaderWindow(QtWidgets.QDialog):
     message_timeout = 5000
 
     def __init__(
-        self, parent=None, icon=None, show_projects=False, show_libraries=True
+        self, parent=None, show_projects=False, show_libraries=True
     ):
         super(LibraryLoaderWindow, self).__init__(parent)
 
@@ -517,10 +517,7 @@ class LibraryLoaderWindow(QtWidgets.QDialog):
         return super(LibraryLoaderWindow, self).closeEvent(event)
 
 
-def show(
-    debug=False, parent=None, icon=None,
-    show_projects=False, show_libraries=True
-):
+def show(debug=False, parent=None, show_projects=False, show_libraries=True):
     """Display Loader GUI
 
     Arguments:
@@ -557,7 +554,7 @@ def show(
 
     with tools_lib.qt_app_context():
         window = LibraryLoaderWindow(
-            parent, icon, show_projects, show_libraries
+            parent, show_projects, show_libraries
         )
         window.show()
 
