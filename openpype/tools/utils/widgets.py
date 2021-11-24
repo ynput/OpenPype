@@ -9,9 +9,7 @@ from avalon.vendor import qtawesome, qargparse
 from avalon import style
 from openpype.style import get_objected_colors
 
-from .models import AssetModel, RecursiveSortFilterProxyModel
-from .views import AssetsView
-from .delegates import AssetDelegate
+from .models import RecursiveSortFilterProxyModel
 
 log = logging.getLogger(__name__)
 
