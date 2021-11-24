@@ -16,7 +16,10 @@ from openpype.tools.utils.delegates import (
     VersionDelegate,
     PrettyTimeDelegate
 )
-from openpype.tools.utils.widgets import OptionalMenu
+from openpype.tools.utils.widgets import (
+    OptionalMenu,
+    PlaceholderLineEdit
+)
 from openpype.tools.utils.views import (
     TreeViewSpinner,
     DeselectableTreeView
@@ -175,7 +178,7 @@ class SubsetWidget(QtWidgets.QWidget):
         family_proxy = FamiliesFilterProxyModel()
         family_proxy.setSourceModel(proxy)
 
-        subset_filter = QtWidgets.QLineEdit(self)
+        subset_filter = PlaceholderLineEdit(self)
         subset_filter.setPlaceholderText("Filter subsets..")
 
         group_checkbox = QtWidgets.QCheckBox("Enable Grouping", self)
