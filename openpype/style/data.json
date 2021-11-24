@@ -59,7 +59,12 @@
             "color-selected": "#F0F2F5",
             "color-hover": "#F0F2F5"
         },
-
+        "nice-checkbox": {
+            "bg-checked": "#56a06f",
+            "bg-unchecked": "#434b56",
+            "bg-checker": "#D3D8DE",
+            "bg-checker-hover": "#F0F2F5"
+        },
         "loader": {
             "asset-view": {
                 "selected": "rgba(168, 175, 189, 0.6)",
