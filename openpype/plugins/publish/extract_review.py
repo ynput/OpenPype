@@ -203,11 +203,12 @@ class ExtractReview(pyblish.api.InstancePlugin):
                         new_repre["burnins"].append(str(burnin))
 
                 self.log.debug(
-                    "Linked burnins: `{}`".format(new_repre["burnins"])
+                    "Linked burnins: `{}`".format(new_repre.get("burnins"))
                 )
 
                 self.log.debug(
-                    "New representation tags: `{}`".format(new_repre["tags"])
+                    "New representation tags: `{}`".format(
+                        new_repre.get("tags"))
                 )
 
                 temp_data = self.prepare_temp_data(
