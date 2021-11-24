@@ -116,9 +116,9 @@ class ExtractReviewDataMov(openpype.api.Extractor):
 
                 self.log.info(data["representations"])
 
-                # assign to representations
-                instance.data["representations"] += data["representations"]
+        # assign to representations
+        instance.data["representations"] += data["representations"]
 
-                self.log.debug(
-                    "_ representations: {}".format(
-                        instance.data["representations"]))
+        self.log.debug(
+            "_ representations: {}".format(
+                instance.data["representations"]))
