@@ -1,13 +1,9 @@
 import logging
 
-from . import lib
-
 from Qt import QtWidgets, QtCore, QtGui
+
 from avalon.vendor import qtawesome, qargparse
-
 from openpype.style import get_objected_colors
-
-from .models import RecursiveSortFilterProxyModel
 
 log = logging.getLogger(__name__)
 
