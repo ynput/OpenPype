@@ -92,7 +92,7 @@ class ExtractReview(pyblish.api.InstancePlugin):
             if "delete" in tags and "thumbnail" not in tags:
                 instance.data["representations"].remove(repre)
 
-    def main_process(self, instance):
+    def _get_outputs_for_instance(self, instance):
         host_name = instance.context.data["hostName"]
         task_name = os.environ["AVALON_TASK"]
         family = self.main_family_from_instance(instance)
@@ -114,24 +114,25 @@ class ExtractReview(pyblish.api.InstancePlugin):
         self.log.debug("Matching profile: \"{}\"".format(json.dumps(profile)))
 
         instance_families = self.families_from_instance(instance)
-        _profile_outputs = self.filter_outputs_by_families(
+        filtered_outputs = self.filter_outputs_by_families(
             profile, instance_families
         )
-        if not _profile_outputs:
+        # Store `filename_suffix` to save arguments
+        profile_outputs = []
+        for filename_suffix, definition in filtered_outputs.items():
+            definition["filename_suffix"] = filename_suffix
+            profile_outputs.append(definition)
+
+        if not filtered_outputs:
             self.log.info((
                 "Skipped instance. All output definitions from selected"
                 " profile does not match to instance families. \"{}\""
             ).format(str(instance_families)))
-            return
+        return profile_outputs
 
-        # Store `filename_suffix` to save arguments
-        profile_outputs = []
-        for filename_suffix, definition in _profile_outputs.items():
-            definition["filename_suffix"] = filename_suffix
-            profile_outputs.append(definition)
-
-        # Loop through representations
-        for repre in tuple(instance.data["representations"]):
+    def _get_outputs_per_representaions(self, instance, profile_outputs):
+        outputs_per_representations = []
+        for repre in instance.data["representations"]:
             repre_name = str(repre.get("name"))
             tags = repre.get("tags") or []
             if "review" not in tags:
@@ -173,6 +174,19 @@ class ExtractReview(pyblish.api.InstancePlugin):
                     " tags. \"{}\""
                 ).format(str(tags)))
                 continue
+            outputs_per_representations.append((repre, outputs))
+        return outputs_per_representations
+
+    def main_process(self, instance):
+        profile_outputs = self._get_outputs_for_instance(instance)
+        if not profile_outputs:
+            return
+
+        # Loop through representations
+        outputs_per_repres = self._get_outputs_per_representaions(
+            instance, profile_outputs
+        )
+        for repre, outputs in outputs_per_repres:
 
             for _output_def in outputs:
                 output_def = copy.deepcopy(_output_def)
