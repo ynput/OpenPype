@@ -2,6 +2,7 @@ import os
 import re
 import copy
 import json
+import shutil
 
 from abc import ABCMeta, abstractmethod
 import six
@@ -16,6 +17,10 @@ from openpype.lib import (
 
     path_to_subprocess_arg,
 
+    should_convert_for_ffmpeg,
+    convert_for_ffmpeg,
+    get_transcode_temp_directory,
+    get_temp_directory
 )
 import speedcopy
 
@@ -198,6 +203,54 @@ class ExtractReview(pyblish.api.InstancePlugin):
             # Check if input should be preconverted before processing
             # Store original staging dir (it's value may change)
             src_repre_staging_dir = repre["stagingDir"]
+            # Receive filepath to first file in representation
+            first_input_path = None
+            if not self.input_is_sequence(repre):
+                first_input_path = os.path.join(
+                    src_repre_staging_dir, repre["files"]
+                )
+            else:
+                for filename in repre["files"]:
+                    first_input_path = os.path.join(
+                        src_repre_staging_dir, filename
+                    )
+                    break
+
+            # Skip if file is not set
+            if first_input_path is None:
+                self.log.warning((
+                    "Representation \"{}\" seems to have empty files."
+                    " Skipped."
+                ).format(repre["name"]))
+                continue
+
+            # Determine if representation requires pre conversion for ffmpeg
+            do_convert = should_convert_for_ffmpeg(first_input_path)
+            # If result is None the requirement of conversion can't be
+            #   determined
+            if do_convert is None:
+                self.log.info((
+                    "Can't determine if representation requires conversion."
+                    " Skipped."
+                ))
+                continue
+
+            # Do conversion if needed
+            #   - change staging dir of source representation
+            #   - must be set back after output definitions processing
+            if do_convert:
+                new_staging_dir = get_temp_directory()
+                repre["stagingDir"] = new_staging_dir
+
+                frame_start = instance.data["frameStart"]
+                frame_end = instance.data["frameEnd"]
+                convert_for_ffmpeg(
+                    first_input_path,
+                    new_staging_dir,
+                    frame_start,
+                    frame_end,
+                    self.log
+                )
 
             for _output_def in outputs:
                 output_def = copy.deepcopy(_output_def)
@@ -304,6 +357,14 @@ class ExtractReview(pyblish.api.InstancePlugin):
                     "Adding new representation: {}".format(new_repre)
                 )
                 instance.data["representations"].append(new_repre)
+
+            # Cleanup temp staging dir after procesisng of output definitions
+            if do_convert:
+                temp_dir = repre["stagingDir"]
+                shutil.rmtree(temp_dir)
+                # Set staging dir of source representation back to previous
+                #   value
+                repre["stagingDir"] = src_repre_staging_dir
 
     def input_is_sequence(self, repre):
         """Deduce from representation data if input is sequence."""
