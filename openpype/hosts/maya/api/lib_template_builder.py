@@ -1,9 +1,9 @@
 import maya.cmds as cmds
 
 
-def create_place_holder():
+def create_placeholder():
 
-    place_holder_name = cmds.spaceLocator(name="place_holder")[0]
+    place_holder_name = cmds.spaceLocator(name="_TEMPLATE_PLACEHOLDER_")[0]
 
     cmds.addAttr(
         place_holder_name,
