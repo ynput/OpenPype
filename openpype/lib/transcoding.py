@@ -170,3 +170,68 @@ def parse_oiio_info(oiio_info):
             channels_info[channel_name] = channel_type
     data_map["channels_info"] = channels_info
     return data_map
+
+
+def get_convert_rgb_channels(channels_info):
+    """Get first available RGB(A) group from channels info.
+
+    ## Examples
+    ```
+    # Ideal situation
+    channels_info: {
+        "R": ...,
+        "G": ...,
+        "B": ...,
+        "A": ...
+    }
+    ```
+    Result will be `("R", "G", "B", "A")`
+
+    ```
+    # Not ideal situation
+    channels_info: {
+        "beauty.red": ...,
+        "beuaty.green": ...,
+        "beauty.blue": ...,
+        "depth.Z": ...
+    }
+    ```
+    Result will be `("beauty.red", "beauty.green", "beauty.blue", None)`
+
+    Returns:
+        NoneType: There is not channel combination that matches RGB
+            combination.
+        tuple: Tuple of 4 channel names defying channel names for R, G, B, A
+            where A can be None.
+    """
+    rgb_by_main_name = collections.defaultdict(dict)
+    main_name_order = [""]
+    for channel_name in channels_info.keys():
+        name_parts = channel_name.split(".")
+        rgb_part = name_parts.pop(-1).lower()
+        main_name = ".".join(name_parts)
+        if rgb_part in ("r", "red"):
+            rgb_by_main_name[main_name]["R"] = channel_name
+        elif rgb_part in ("g", "green"):
+            rgb_by_main_name[main_name]["G"] = channel_name
+        elif rgb_part in ("b", "blue"):
+            rgb_by_main_name[main_name]["B"] = channel_name
+        elif rgb_part in ("a", "alpha"):
+            rgb_by_main_name[main_name]["A"] = channel_name
+        else:
+            continue
+        if main_name not in main_name_order:
+            main_name_order.append(main_name)
+
+    output = None
+    for main_name in main_name_order:
+        colors = rgb_by_main_name.get(main_name) or {}
+        red = colors.get("R")
+        green = colors.get("G")
+        blue = colors.get("B")
+        alpha = colors.get("A")
+        if red is not None and green is not None and blue is not None:
+            output = (red, green, blue, alpha)
+            break
+
+    return output
