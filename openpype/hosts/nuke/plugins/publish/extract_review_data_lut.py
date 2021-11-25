@@ -4,13 +4,6 @@ from avalon.nuke import lib as anlib
 from openpype.hosts.nuke.api import plugin
 import openpype
 
-try:
-    from __builtin__ import reload
-except ImportError:
-    from importlib import reload
-
-reload(plugin)
-
 
 class ExtractReviewDataLut(openpype.api.Extractor):
     """Extracts movie and thumbnail with baked in luts

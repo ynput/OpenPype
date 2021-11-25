@@ -4,7 +4,6 @@ import nukescripts
 from openpype.hosts.nuke.api import lib as pnlib
 from avalon.nuke import lib as anlib
 from avalon.nuke import containerise, update_container
-reload(pnlib)
 
 class LoadBackdropNodes(api.Loader):
     """Loading Published Backdrop nodes (workfile, nukenodes)"""
