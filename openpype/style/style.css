@@ -968,8 +968,51 @@ QScrollBar::add-page:vertical, QScrollBar::sub-page:vertical {
 #SettingsMainWidget {
     background: #141a1f;
 }
+/* Change focus borders. */
 #SettingsMainWidget QAbstractSpinBox:focus, #SettingsMainWidget QLineEdit:focus, #SettingsMainWidget QPlainTextEdit:focus, #SettingsMainWidget QTextEdit:focus {
     border-color: {color:settings:focus-border};
+}
+/* Modify tab widget for settings */
+#SettingsMainWidget QTabWidget::pane {
+    border-top-style: none;
+}
+
+#SettingsMainWidget QTabBar {
+   background: transparent;
+}
+
+#SettingsMainWidget QTabBar::tab {
+    border: none;
+    border-top-left-radius: 4px;
+    border-top-right-radius: 4px;
+    padding: 5px;
+}
+
+#SettingsMainWidget QTabBar::tab:selected {
+    background: {color:bg};
+    border-color: #9B9B9B;
+    border-bottom-color: #C2C7CB;
+}
+
+#SettingsMainWidget QTabBar::tab:!selected {
+    margin-top: 2px;
+    background: #21252B;
+}
+
+#SettingsMainWidget QTabBar::tab:!selected:hover {
+    background: #333840;
+}
+
+#SettingsMainWidget QTabBar::tab:first:selected {
+    margin-left: 0;
+}
+
+#SettingsMainWidget QTabBar::tab:last:selected {
+    margin-right: 0;
+}
+
+#SettingsMainWidget QTabBar::tab:only-one {
+    margin: 0;
 }
 
 #SettingsToolIconBtn {
