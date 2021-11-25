@@ -49,7 +49,8 @@ from .vendor_bin_utils import (
     get_vendor_bin_path,
     get_oiio_tools_path,
     get_ffmpeg_tool_path,
-    ffprobe_streams
+    ffprobe_streams,
+    is_oiio_supported
 )
 
 from .python_module_tools import (
@@ -185,6 +186,7 @@ __all__ = [
     "get_oiio_tools_path",
     "get_ffmpeg_tool_path",
     "ffprobe_streams",
+    "is_oiio_supported",
 
     "import_filepath",
     "modules_from_path",

@@ -3,6 +3,7 @@ import logging
 import json
 import platform
 import subprocess
+import distutils
 
 log = logging.getLogger("FFmpeg utils")
 
@@ -105,3 +106,26 @@ def ffprobe_streams(path_to_file, logger=None):
         ))
 
     return json.loads(popen_stdout)["streams"]
+
+
+def is_oiio_supported():
+    """Checks if oiiotool is configured for this platform.
+
+    Triggers simple subprocess, handles exception if fails.
+
+    'should_decompress' will throw exception if configured,
+    but not present or not working.
+
+    Returns:
+        bool: OIIO tool executable is available.
+    """
+    loaded_path = oiio_path = get_oiio_tools_path()
+    if oiio_path:
+        oiio_path = distutils.spawn.find_executable(oiio_path)
+
+    if not oiio_path:
+        log.debug("OIIOTool is not configured or not present at {}".format(
+            loaded_path
+        ))
+        return False
+    return True
