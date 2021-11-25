@@ -196,10 +196,11 @@ class ExtractBurnin(openpype.api.Extractor):
 
             src_repre_staging_dir = repre["stagingDir"]
             # Should convert representation source files before processing?
-            if self.input_is_sequence(repre):
-                filename = repre["files"][0]
+            repre_files = repre["files"]
+            if isinstance(repre_files, (tuple, list)):
+                filename = repre_files[0]
             else:
-                filename = repre["files"]
+                filename = repre_files
 
             first_input_path = os.path.join(src_repre_staging_dir, filename)
             # Determine if representation requires pre conversion for ffmpeg
