@@ -271,3 +271,86 @@ def should_convert_for_ffmpeg(src_filepath):
         return None
 
     return False
+
+
+def convert_for_ffmpeg(
+    first_input_path,
+    output_dir,
+    input_frame_start,
+    input_frame_end,
+    logger=None
+):
+    """Contert source file to format supported in ffmpeg.
+
+    Currently can convert only exrs.
+
+    Args:
+        first_input_path (str): Path to first file of a sequence or a single
+            file path for non-sequential input.
+        output_dir (str): Path to directory where output will be rendered.
+            Must not be same as input's directory.
+        input_frame_start (int): Frame start of input.
+        input_frame_end (int): Frame end of input.
+        logger (logging.Logger): Logger used for logging.
+
+    Raises:
+        ValueError: If input filepath has extension not supported by function.
+            Currently is supported only ".exr" extension.
+    """
+    if logger is None:
+        logger = logging.getLogger(__name__)
+
+    ext = os.path.splitext(first_input_path)[1].lower()
+    if ext != ".exr":
+        raise ValueError((
+            "Function 'convert_for_ffmpeg' currently support only"
+            " \".exr\" extension. Got \"{}\"."
+        ).format(ext))
+
+    is_sequence = False
+    if input_frame_start is not None and input_frame_end is not None:
+        is_sequence = int(input_frame_end) != int(input_frame_start)
+
+    oiio_info = get_oiio_info_for_input(first_input_path)
+    input_info = parse_oiio_info(oiio_info)
+
+    # Change compression only if source compression is "dwaa" or "dwab"
+    #   - they're not supported in ffmpeg
+    compression = input_info["compression"]
+    if compression in ("dwaa", "dwab"):
+        compression = "none"
+
+    # Prepare subprocess arguments
+    oiio_cmd = [
+        get_oiio_tools_path(),
+        "--compression", compression,
+        first_input_path
+    ]
+
+    channels_info = input_info["channels_info"]
+    review_channels = get_convert_rgb_channels(channels_info)
+    if review_channels is None:
+        raise ValueError(
+            "Couldn't find channels that can be used for conversion."
+        )
+
+    red, green, blue, alpha = review_channels
+    channels_arg = "R={},G={},B={}".format(red, green, blue)
+    if alpha is not None:
+        channels_arg += ",A={}".format(alpha)
+    oiio_cmd.append("--ch")
+    oiio_cmd.append(channels_arg)
+
+    # Add frame definitions to arguments
+    if is_sequence:
+        oiio_cmd.append("--frames")
+        oiio_cmd.append("{}-{}".format(input_frame_start, input_frame_end))
+
+    # Add last argument - path to output
+    base_file_name = os.path.basename(first_input_path)
+    output_path = os.path.join(output_dir, base_file_name)
+    oiio_cmd.append("-o")
+    oiio_cmd.append(output_path)
+
+    logger.debug("Conversion command: {}".format(" ".join(oiio_cmd)))
+    run_subprocess(oiio_cmd, logger=logger)
