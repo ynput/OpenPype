@@ -86,7 +86,7 @@ def inject_openpype_environment(deadlinePlugin):
             print(">>> Exception {}".format(e.output))
         import traceback
         print(traceback.format_exc())
-        print("inject_openpype_environment failed")
+        print("!!! Injection failed.")
         RepositoryUtils.FailJob(job)
         raise
 
