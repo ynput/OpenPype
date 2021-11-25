@@ -23,6 +23,7 @@ class TemplateProfileNotFound(Exception):
     doesn't match any template profile"""
     pass
 
+
 class TemplateAlreadyImported(Exception):
     """ """
     pass

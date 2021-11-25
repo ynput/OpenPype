@@ -13,8 +13,8 @@ from openpype.lib.build_template_exceptions import (
     TemplateAlreadyImported,
     TemplateLoadingFailed,
     TemplateProfileNotFound,
-    TemplateNotFound,
-    )
+    TemplateNotFound
+)
 
 
 @six.add_metaclass(ABCMeta)

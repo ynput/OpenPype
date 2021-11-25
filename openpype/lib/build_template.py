@@ -1,7 +1,15 @@
 import openpype
 from openpype.lib import AbstractPlaceholder, AbstractTemplateLoader
-from .build_template_exceptions import *
+
 import importlib
+
+from .build_template_exceptions import (
+    TemplateLoadingFailed,
+    TemplateAlreadyImported,
+    MissingHostTemplateModule,
+    MissingTemplatePlaceholderClass,
+    MissingTemplateLoaderClass
+)
 
 _module_path_format = 'openpype.hosts.{host}.api.template_loader'
 

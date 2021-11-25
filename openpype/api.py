@@ -82,6 +82,7 @@ __all__ = [
     "get_environments",
     "get_project_basic_paths",
     "build_workfile_template",
+    "update_workfile_template",
 
     "SystemSettings",
 
