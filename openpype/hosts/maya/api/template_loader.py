@@ -24,7 +24,8 @@ class MayaTemplateLoader(openpype.lib.AbstractTemplateLoader):
             bool: Wether the template was succesfully imported or not
         """
         if cmds.objExists(PLACEHOLDER_SET):
-            raise TemplateAlreadyImported("Build template already loaded\n"
+            raise TemplateAlreadyImported(
+                "Build template already loaded\n"
                 "Clean scene if needed (File > New Scene)")
 
         cmds.sets(name=PLACEHOLDER_SET, empty=True)
@@ -39,7 +40,8 @@ class MayaTemplateLoader(openpype.lib.AbstractTemplateLoader):
         abortButton = "Abort"
 
         title = "Scene already builded"
-        message = ("It's seems a template was already build for this scene.\n"
+        message = (
+            "It's seems a template was already build for this scene.\n"
             "Error message reveived :\n\n\"{}\"".format(err_msg))
         buttons = [clearButton, updateButton, abortButton]
         defaultButton = clearButton
@@ -69,8 +71,8 @@ class MayaTemplateLoader(openpype.lib.AbstractTemplateLoader):
 
     def get_loaded_containers_by_id(self):
         containers = cmds.sets('AVALON_CONTAINERS', q=True)
-        return {cmds.getAttr(container+'.representation'): container
-            for container in containers}
+        return {cmds.getAttr(container + '.representation'): container
+                for container in containers}
 
 
 class MayaPlaceholder(openpype.lib.AbstractPlaceholder):
@@ -98,7 +100,7 @@ class MayaPlaceholder(openpype.lib.AbstractPlaceholder):
                 node + '.' + attribute_name,
                 asString=True)
         user_data['parent'] = (
-            cmds.getAttr(node+'.parent', asString=True)
+            cmds.getAttr(node + '.parent', asString=True)
             or node.rpartition('|')[0])
         user_data['node'] = node.rpartition('|')[2]
 
