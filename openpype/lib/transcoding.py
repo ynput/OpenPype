@@ -111,3 +111,11 @@ def should_decompress(file_url):
                 raise
 
     return False
+
+
+def get_oiio_info_for_input(filepath, logger=None):
+    """Call oiiotool to get information about input and return stdout."""
+    args = [
+        get_oiio_tools_path(), "--info", "-v", filepath
+    ]
+    return run_subprocess(args, logger=logger)
