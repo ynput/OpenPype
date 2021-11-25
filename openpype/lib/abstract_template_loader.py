@@ -218,7 +218,6 @@ class AbstractTemplateLoader:
         loaded_containers_by_id = self.get_loaded_containers_by_id()
         # loaded_containers_by_id = self.update_containers(
         #     loaded_containers_by_id)
-        print("LOADED CONTAINER ID", loaded_containers_by_id.keys())
         loaded_assets = set()
         for placeholder in sorted_placeholders:
             if placeholder.data['builder_type'] == 'context_asset':
@@ -230,9 +229,7 @@ class AbstractTemplateLoader:
                 representation_id, representation = items
                 if not placeholder.is_repres_valid(representation):
                     continue
-                print("REP ID", str(representation_id))
                 if str(representation_id) in loaded_containers_by_id:
-                    print("Already in scene", representation_id)
                     continue
                 container = avalon.api.load(
                     loaders_by_name[placeholder.loader],
