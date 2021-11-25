@@ -63,6 +63,7 @@ def inject_openpype_environment(deadlinePlugin):
 
         env = os.environ
         env["OPENPYPE_HEADLESS_MODE"] = "1"
+        env["AVALON_TIMEOUT"] = "5000"
 
         print(">>> Executing: {}".format(args))
         std_output = subprocess.check_output(args,
