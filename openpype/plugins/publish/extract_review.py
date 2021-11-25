@@ -207,8 +207,7 @@ class ExtractReview(pyblish.api.InstancePlugin):
             # Skip if file is not set
             if first_input_path is None:
                 self.log.warning((
-                    "Representation \"{}\" seems to have empty files."
-                    " Skipped."
+                    "Representation \"{}\" have empty files. Skipped."
                 ).format(repre["name"]))
                 continue
 
