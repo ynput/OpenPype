@@ -1,6 +1,7 @@
 import os
 import re
 import logging
+import collections
 import tempfile
 
 from .execute import run_subprocess
