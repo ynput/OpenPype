@@ -1,0 +1,86 @@
+{
+            "type": "dict",
+            "collapsible": true,
+            "key": "CreateRender",
+            "label": "Create Render",
+            "checkbox_key": "enabled",
+            "children": [
+                {
+                    "type": "boolean",
+                    "key": "enabled",
+                    "label": "Enabled"
+                },
+                {
+                    "type": "list",
+                    "key": "defaults",
+                    "label": "Default Subsets",
+                    "object_type": "text"
+                },
+                {
+                    "type": "dict",
+                    "collapsible": true,
+                    "checkbox_key": "enabled",
+                    "key": "arnold_renderer",
+                    "label": "Arnold Renderer",
+                    "is_group": true,
+                    "children": [
+                        {
+                          "type": "boolean",
+                          "key": "enabled",
+                          "label": "Enabled"
+                        },
+                        {
+                          "key": "image_format",
+                          "label": "Output Image Format",
+                          "type": "enum",
+                          "multiselection": false,
+                          "defaults": "exr",
+                          "enum_items": [
+                            {"jpeg": "jpeg"},
+                            {"png": "png"},
+                            {"deepexr":  "deep exr"},
+                            {"tif":  "tif"},
+                            {"exr": "exr"},
+                            {"maya": "maya"},
+                            {"mtoa_shaders":  "mtoa_shaders"}
+                          ]
+                        },
+                        {
+                          "key": "multilayer_exr",
+                          "label": "Multilayer (exr)",
+                          "type": "boolean"
+                        },
+                        {
+                          "key": "tiled",
+                          "label": "Tiled (tif, exr)",
+                          "type": "boolean"
+                        },
+                        {
+                          "type": "label",
+                          "label": "Add additional options in a form <code>node.attribute</code> and <b>value<b>\nFor example: <code>defaultArnoldRenderOptions.AASamples</code>"
+                        },
+                        {
+                          "type": "dict-modifiable",
+                          "key": "additional_options",
+                          "label": "Additional Renderer Options",
+                          "use_label_wrap": true,
+                          "object_type": {
+                                "type": "text"
+                          }
+                        }
+                    ]
+                },
+                {
+                    "key": "aov_separator",
+                    "label": "AOV Separator character",
+                    "type": "enum",
+                    "multiselection": false,
+                    "default": "underscore",
+                    "enum_items": [
+                        {"dash":  "- (dash)"},
+                        {"underscore":  "_ (underscore)"},
+                        {"dot": ". (dot)"}
+                    ]
+                }
+            ]
+}
