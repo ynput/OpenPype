@@ -119,3 +119,54 @@ def get_oiio_info_for_input(filepath, logger=None):
         get_oiio_tools_path(), "--info", "-v", filepath
     ]
     return run_subprocess(args, logger=logger)
+
+
+def parse_oiio_info(oiio_info):
+    """Create an object based on output from oiiotool.
+
+    Removes quotation marks from compression value. Parse channels into
+    dictionary - key is channel name value is determined type of channel
+    (e.g. 'uint', 'float').
+
+    Args:
+        oiio_info (str): Output of calling "oiiotool --info -v <path>"
+
+    Returns:
+        dict: Loaded data from output.
+    """
+    lines = [
+        line.strip()
+        for line in oiio_info.split("\n")
+    ]
+    # Each line should contain information about one key
+    #   key - value are separated with ": "
+    oiio_sep = ": "
+    data_map = {}
+    for line in lines:
+        parts = line.split(oiio_sep)
+        if len(parts) < 2:
+            continue
+        key = parts.pop(0)
+        value = oiio_sep.join(parts)
+        data_map[key] = value
+
+    if "compression" in data_map:
+        value = data_map["compression"]
+        data_map["compression"] = value.replace("\"", "")
+
+    channels_info = {}
+    channels_value = data_map.get("channel list") or ""
+    if channels_value:
+        channels = channels_value.split(", ")
+        type_regex = re.compile(r"(?P<name>[^\(]+) \((?P<type>[^\)]+)\)")
+        for channel in channels:
+            match = type_regex.search(channel)
+            if not match:
+                channel_name = channel
+                channel_type = "uint"
+            else:
+                channel_name = match.group("name")
+                channel_type = match.group("type")
+            channels_info[channel_name] = channel_type
+    data_map["channels_info"] = channels_info
+    return data_map
