@@ -100,6 +100,7 @@ import platform
 import traceback
 import subprocess
 import site
+import distutils
 from pathlib import Path
 
 # OPENPYPE_ROOT is variable pointing to build (or code) directory
@@ -384,23 +385,6 @@ def set_modules_environments():
         os.environ.update(env)
 
 
-def is_tool(name):
-    try:
-        import os.errno as errno
-    except ImportError:
-        import errno
-
-    try:
-        devnull = open(os.devnull, "w")
-        subprocess.Popen(
-            [name], stdout=devnull, stderr=devnull
-        ).communicate()
-    except OSError as exc:
-        if exc.errno == errno.ENOENT:
-            return False
-    return True
-
-
 def _startup_validations():
     """Validations before OpenPype starts."""
     try:
@@ -443,7 +427,8 @@ def _validate_thirdparty_binaries():
     if low_platform == "windows":
         ffmpeg_dir = os.path.join(ffmpeg_dir, "bin")
     ffmpeg_executable = os.path.join(ffmpeg_dir, "ffmpeg")
-    if not is_tool(ffmpeg_executable):
+    ffmpeg_result = distutils.spawn.find_executable(ffmpeg_executable)
+    if ffmpeg_result is None:
         raise RuntimeError(error_msg.format("FFmpeg"))
 
     # Validate existence of OpenImageIO (not on MacOs)
@@ -463,7 +448,11 @@ def _validate_thirdparty_binaries():
             low_platform,
             "oiiotool"
         )
-    if oiio_tool_path is not None and not is_tool(oiio_tool_path):
+    oiio_result = None
+    if oiio_tool_path is not None:
+        oiio_result = distutils.spawn.find_executable(oiio_tool_path)
+
+    if oiio_result is None:
         raise RuntimeError(error_msg.format("OpenImageIO"))
 
 
