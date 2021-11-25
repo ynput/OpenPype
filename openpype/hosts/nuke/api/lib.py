@@ -18,7 +18,7 @@ from openpype.api import (
     BuildWorkfile,
     get_version_from_path,
     get_anatomy_settings,
-    get_hierarchy,
+    get_workdir_data,
     get_asset,
     get_current_project_settings,
     ApplicationManager
@@ -270,15 +270,21 @@ def format_anatomy(data):
     if not version:
         file = script_name()
         data["version"] = get_version_from_path(file)
-    project_document = io.find_one({"type": "project"})
+
+    project_doc = io.find_one({"type": "project"})
+    asset_doc = io.find_one({
+        "type": "asset",
+        "name": data["avalon"]["asset"]
+    })
+    task_name = os.environ["AVALON_TASK"]
+    host_name = os.environ["AVALON_APP"]
+    context_data = get_workdir_data(
+        project_doc, asset_doc, task_name, host_name
+    )
+    data.update(context_data)
     data.update({
         "subset": data["avalon"]["subset"],
-        "asset": data["avalon"]["asset"],
-        "task": os.environ["AVALON_TASK"],
         "family": data["avalon"]["family"],
-        "project": {"name": project_document["name"],
-                    "code": project_document["data"].get("code", '')},
-        "hierarchy": get_hierarchy(),
         "frame": "#" * padding,
     })
     return anatomy.format(data)
@@ -1274,6 +1280,8 @@ def launch_workfiles_app():
     from openpype.lib import (
         env_value_to_bool
     )
+    from avalon.nuke.pipeline import get_main_window
+
     # get all imortant settings
     open_at_start = env_value_to_bool(
         env_key="OPENPYPE_WORKFILE_TOOL_ON_START",
@@ -1285,7 +1293,8 @@ def launch_workfiles_app():
 
     if not opnl.workfiles_launched:
         opnl.workfiles_launched = True
-        host_tools.show_workfiles()
+        main_window = get_main_window()
+        host_tools.show_workfiles(parent=main_window)
 
 
 def process_workfile_builder():

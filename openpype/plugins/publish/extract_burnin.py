@@ -210,7 +210,9 @@ class ExtractBurnin(openpype.api.Extractor):
                 for key in self.positions:
                     value = burnin_def.get(key)
                     if value:
-                        burnin_values[key] = value
+                        burnin_values[key] = value.replace(
+                            "{task}", "{task[name]}"
+                        )
 
                 # Remove "delete" tag from new representation
                 if "delete" in new_repre["tags"]:

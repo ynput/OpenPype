@@ -4,8 +4,8 @@ from Qt import QtWidgets, QtCore
 from avalon import api, io, pipeline
 
 from openpype import style
-from openpype.tools.utils.widgets import AssetWidget
 from openpype.tools.utils import lib
+from openpype.tools.utils.assets_widget import MultiSelectAssetsWidget
 
 from .widgets import (
     SubsetWidget,
@@ -65,8 +65,8 @@ class LoaderWindow(QtWidgets.QDialog):
         left_side_splitter.setOrientation(QtCore.Qt.Vertical)
 
         # Assets widget
-        assets_widget = AssetWidget(
-            io, multiselection=True, parent=left_side_splitter
+        assets_widget = MultiSelectAssetsWidget(
+            io, parent=left_side_splitter
         )
         assets_widget.set_current_asset_btn_visibility(True)
 
@@ -156,8 +156,6 @@ class LoaderWindow(QtWidgets.QDialog):
         )
         assets_widget.selection_changed.connect(self.on_assetschanged)
         assets_widget.refresh_triggered.connect(self.on_assetschanged)
-        # TODO do not touch view in asset widget
-        assets_widget.view.clicked.connect(self.on_assetview_click)
         subsets_widget.active_changed.connect(self.on_subsetschanged)
         subsets_widget.version_changed.connect(self.on_versionschanged)
         subsets_widget.refreshed.connect(self._on_subset_refresh)
@@ -216,12 +214,6 @@ class LoaderWindow(QtWidgets.QDialog):
     # Delay calling blocking methods
     # -------------------------------
 
-    def on_assetview_click(self, *args):
-        # TODO do not touch inner attributes of subset widget
-        selection_model = self._subsets_widget.view.selectionModel()
-        if selection_model.selectedIndexes():
-            selection_model.clearSelection()
-
     def refresh(self):
         self.echo("Fetching results..")
         lib.schedule(self._refresh, 50, channel="mongo")
@@ -271,7 +263,7 @@ class LoaderWindow(QtWidgets.QDialog):
         # Refresh families config
         self._families_filter_view.refresh()
         # Change to context asset on context change
-        self._assets_widget.select_assets(io.Session["AVALON_ASSET"])
+        self._assets_widget.select_asset_by_name(io.Session["AVALON_ASSET"])
 
     def _refresh(self):
         """Load assets from database"""
@@ -292,20 +284,9 @@ class LoaderWindow(QtWidgets.QDialog):
         on selection change so they match current selection.
         """
         # TODO do not touch inner attributes of asset widget
-        last_asset_ids = self.data["state"]["assetIds"] or []
-        if not last_asset_ids:
-            return
-
-        assets_widget = self._assets_widget
-        id_role = assets_widget.model.ObjectIdRole
-
-        for index in lib.iter_model_rows(assets_widget.model, 0):
-            if index.data(id_role) not in last_asset_ids:
-                continue
-
-            assets_widget.model.setData(
-                index, [], assets_widget.model.subsetColorsRole
-            )
+        last_asset_ids = self.data["state"]["assetIds"]
+        if last_asset_ids:
+            self._assets_widget.clear_underlines()
 
     def _assetschanged(self):
         """Selected assets have changed"""
@@ -317,9 +298,7 @@ class LoaderWindow(QtWidgets.QDialog):
         self.clear_assets_underlines()
 
         # filter None docs they are silo
-        asset_docs = self._assets_widget.get_selected_assets()
-
-        asset_ids = [asset_doc["_id"] for asset_doc in asset_docs]
+        asset_ids = self._assets_widget.get_selected_asset_ids()
         # Start loading
         subsets_widget.set_loading_state(
             loading=bool(asset_ids),
@@ -333,7 +312,7 @@ class LoaderWindow(QtWidgets.QDialog):
         )
 
         # Clear the version information on asset change
-        self._thumbnail_widget.set_thumbnail(asset_docs)
+        self._thumbnail_widget.set_thumbnail(asset_ids)
         self._version_info_widget.set_version(None)
 
         self.data["state"]["assetIds"] = asset_ids
@@ -353,7 +332,7 @@ class LoaderWindow(QtWidgets.QDialog):
             _merged=True, _other=False
         )
 
-        asset_models = {}
+        asset_colors = {}
         asset_ids = []
         for subset_node in selected_subsets:
             asset_ids.extend(subset_node.get("assetIds", []))
@@ -361,31 +340,17 @@ class LoaderWindow(QtWidgets.QDialog):
 
         for subset_node in selected_subsets:
             for asset_id in asset_ids:
-                if asset_id not in asset_models:
-                    asset_models[asset_id] = []
+                if asset_id not in asset_colors:
+                    asset_colors[asset_id] = []
 
                 color = None
                 if asset_id in subset_node.get("assetIds", []):
                     color = subset_node["subsetColor"]
 
-                asset_models[asset_id].append(color)
+                asset_colors[asset_id].append(color)
 
-        self.clear_assets_underlines()
+        self._assets_widget.set_underline_colors(asset_colors)
 
-        # TODO do not use inner attributes of asset widget
-        assets_widget = self._assets_widget
-        indexes = assets_widget.view.selectionModel().selectedRows()
-
-        for index in indexes:
-            id = index.data(assets_widget.model.ObjectIdRole)
-            if id not in asset_models:
-                continue
-
-            assets_widget.model.setData(
-                index, asset_models[id], assets_widget.model.subsetColorsRole
-            )
-        # Trigger repaint
-        assets_widget.view.updateGeometries()
         # Set version in Version Widget
         self._versionschanged()
 
@@ -424,13 +389,14 @@ class LoaderWindow(QtWidgets.QDialog):
 
         self._version_info_widget.set_version(version_doc)
 
-        thumbnail_docs = version_docs
-        asset_docs = self._assets_widget.get_selected_assets()
-        if not thumbnail_docs:
-            if len(asset_docs) > 0:
-                thumbnail_docs = asset_docs
+        thumbnail_src_ids = [
+            version_doc["_id"]
+            for version_doc in version_docs
+        ]
+        if not thumbnail_src_ids:
+            thumbnail_src_ids = self._assets_widget.get_selected_asset_ids()
 
-        self._thumbnail_widget.set_thumbnail(thumbnail_docs)
+        self._thumbnail_widget.set_thumbnail(thumbnail_src_ids)
 
         if self._repres_widget is not None:
             version_ids = [doc["_id"] for doc in version_docs or []]
@@ -472,7 +438,7 @@ class LoaderWindow(QtWidgets.QDialog):
             # scheduled refresh and the silo tabs are not shown.
             self._refresh()
 
-        self._assets_widget.select_assets(asset)
+        self._assets_widget.select_asset_by_name(asset)
 
     def _on_message_timeout(self):
         self._message_label.setText("")

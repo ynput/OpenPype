@@ -12,15 +12,12 @@ from avalon import io, api, pipeline
 
 from openpype import style
 from openpype.tools.utils.lib import (
-    schedule, qt_app_context
+    schedule,
+    qt_app_context
 )
-from openpype.tools.utils.widgets import AssetWidget
+from openpype.tools.utils.assets_widget import SingleSelectAssetsWidget
 from openpype.tools.utils.tasks_widget import TasksWidget
 from openpype.tools.utils.delegates import PrettyTimeDelegate
-
-from .model import FilesModel
-from .view import FilesView
-
 from openpype.lib import (
     Anatomy,
     get_workdir,
@@ -29,6 +26,9 @@ from openpype.lib import (
     save_workfile_data_to_doc,
     get_workfile_template_key
 )
+
+from .model import FilesModel
+from .view import FilesView
 
 log = logging.getLogger(__name__)
 
@@ -59,20 +59,39 @@ class NameWindow(QtWidgets.QDialog):
 
         # Set work file data for template formatting
         asset_name = session["AVALON_ASSET"]
+        task_name = session["AVALON_TASK"]
         project_doc = io.find_one(
             {"type": "project"},
             {
                 "name": True,
-                "data.code": True
+                "data.code": True,
+                "config.tasks": True,
             }
         )
+        asset_doc = io.find_one(
+            {
+                "type": "asset",
+                "name": asset_name
+            },
+            {"data.tasks": True}
+        )
+
+        task_type = asset_doc["data"]["tasks"].get(task_name, {}).get("type")
+
+        project_task_types = project_doc["config"]["tasks"]
+        task_short = project_task_types.get(task_type, {}).get("short_name")
+
         self.data = {
             "project": {
                 "name": project_doc["name"],
                 "code": project_doc["data"].get("code")
             },
             "asset": asset_name,
-            "task": session["AVALON_TASK"],
+            "task": {
+                "name": task_name,
+                "type": task_type,
+                "short": task_short,
+            },
             "version": 1,
             "user": getpass.getuser(),
             "comment": "",
@@ -81,7 +100,9 @@ class NameWindow(QtWidgets.QDialog):
 
         # Store project anatomy
         self.anatomy = anatomy
-        self.template = anatomy.templates[template_key]["file"]
+        self.template = anatomy.templates[template_key]["file"].replace(
+            "{task}", "{task[name]}"
+        )
         self.template_key = template_key
 
         # Btns widget
@@ -326,7 +347,8 @@ class FilesWidget(QtWidgets.QWidget):
         super(FilesWidget, self).__init__(parent=parent)
 
         # Setup
-        self._asset = None
+        self._asset_id = None
+        self._asset_doc = None
         self._task_name = None
         self._task_type = None
 
@@ -422,15 +444,17 @@ class FilesWidget(QtWidgets.QWidget):
         self.btn_browse = btn_browse
         self.btn_save = btn_save
 
-    def set_asset_task(self, asset, task_name, task_type):
-        self._asset = asset
+    def set_asset_task(self, asset_id, task_name, task_type):
+        if asset_id != self._asset_id:
+            self._asset_doc = None
+        self._asset_id = asset_id
         self._task_name = task_name
         self._task_type = task_type
 
         # Define a custom session so we can query the work root
         # for a "Work area" that is not our current Session.
         # This way we can browse it even before we enter it.
-        if self._asset and self._task_name and self._task_type:
+        if self._asset_id and self._task_name and self._task_type:
             session = self._get_session()
             self.root = self.host.work_root(session)
             self.files_model.set_root(self.root)
@@ -446,6 +470,14 @@ class FilesWidget(QtWidgets.QWidget):
             # Manually trigger file selection
             self.on_file_select()
 
+    def _get_asset_doc(self):
+        if self._asset_id is None:
+            return None
+
+        if self._asset_doc is None:
+            self._asset_doc = io.find_one({"_id": self._asset_id})
+        return self._asset_doc
+
     def _get_session(self):
         """Return a modified session for the current asset and task"""
 
@@ -457,7 +489,7 @@ class FilesWidget(QtWidgets.QWidget):
         )
         changes = pipeline.compute_session_changes(
             session,
-            asset=self._asset,
+            asset=self._get_asset_doc(),
             task=self._task_name,
             template_key=self.template_key
         )
@@ -471,7 +503,7 @@ class FilesWidget(QtWidgets.QWidget):
         session = api.Session.copy()
         changes = pipeline.compute_session_changes(
             session,
-            asset=self._asset,
+            asset=self._get_asset_doc(),
             task=self._task_name,
             template_key=self.template_key
         )
@@ -481,7 +513,7 @@ class FilesWidget(QtWidgets.QWidget):
             return
 
         api.update_current_task(
-            asset=self._asset,
+            asset=self._get_asset_doc(),
             task=self._task_name,
             template_key=self.template_key
         )
@@ -628,7 +660,9 @@ class FilesWidget(QtWidgets.QWidget):
         self._enter_session()   # Make sure we are in the right session
         self.host.save_file(file_path)
 
-        self.set_asset_task(self._asset, self._task_name, self._task_type)
+        self.set_asset_task(
+            self._asset_id, self._task_name, self._task_type
+        )
 
         pipeline.emit("after.workfile.save", [file_path])
 
@@ -654,7 +688,7 @@ class FilesWidget(QtWidgets.QWidget):
         session = api.Session.copy()
         changes = pipeline.compute_session_changes(
             session,
-            asset=self._asset,
+            asset=self._get_asset_doc(),
             task=self._task_name,
             template_key=self.template_key
         )
@@ -679,7 +713,7 @@ class FilesWidget(QtWidgets.QWidget):
 
         # Force a full to the asset as opposed to just self.refresh() so
         # that it will actually check again whether the Work directory exists
-        self.set_asset_task(self._asset, self._task_name, self._task_type)
+        self.set_asset_task(self._asset_id, self._task_name, self._task_type)
 
     def refresh(self):
         """Refresh listed files for current selection in the interface"""
@@ -775,10 +809,10 @@ class SidePanelWidget(QtWidgets.QWidget):
         self.on_note_change()
         self.save_clicked.emit()
 
-    def set_context(self, asset_doc, task_name, filepath, workfile_doc):
+    def set_context(self, asset_id, task_name, filepath, workfile_doc):
         # Check if asset, task and file are selected
         # NOTE workfile document is not requirement
-        enabled = bool(asset_doc) and bool(task_name) and bool(filepath)
+        enabled = bool(asset_id) and bool(task_name) and bool(filepath)
 
         self.details_input.setEnabled(enabled)
         self.note_input.setEnabled(enabled)
@@ -856,7 +890,7 @@ class Window(QtWidgets.QMainWindow):
         home_page_widget = QtWidgets.QWidget(pages_widget)
         home_body_widget = QtWidgets.QWidget(home_page_widget)
 
-        assets_widget = AssetWidget(io, parent=home_body_widget)
+        assets_widget = SingleSelectAssetsWidget(io, parent=home_body_widget)
         assets_widget.set_current_asset_btn_visibility(True)
 
         tasks_widget = TasksWidget(io, home_body_widget)
@@ -884,14 +918,21 @@ class Window(QtWidgets.QMainWindow):
         # the files widget has a filter field which tasks does not.
         tasks_widget.setContentsMargins(0, 32, 0, 0)
 
+        # Set context after asset widget is refreshed
+        # - to do so it is necessary to wait until refresh is done
+        set_context_timer = QtCore.QTimer()
+        set_context_timer.setInterval(100)
+
         # Connect signals
-        assets_widget.current_changed.connect(self.on_asset_changed)
+        set_context_timer.timeout.connect(self._on_context_set_timeout)
+        assets_widget.selection_changed.connect(self.on_asset_changed)
         tasks_widget.task_changed.connect(self.on_task_changed)
         files_widget.file_selected.connect(self.on_file_select)
         files_widget.workfile_created.connect(self.on_workfile_create)
         files_widget.file_opened.connect(self._on_file_opened)
         side_panel.save_clicked.connect(self.on_side_panel_save)
 
+        self._set_context_timer = set_context_timer
         self.home_page_widget = home_page_widget
         self.pages_widget = pages_widget
         self.home_body_widget = home_body_widget
@@ -908,11 +949,13 @@ class Window(QtWidgets.QMainWindow):
         self.resize(1200, 600)
 
         self._first_show = True
+        self._context_to_set = None
 
     def showEvent(self, event):
         super(Window, self).showEvent(event)
         if self._first_show:
             self._first_show = False
+            self.refresh()
             self.setStyleSheet(style.load_stylesheet())
 
     def keyPressEvent(self, event):
@@ -936,21 +979,17 @@ class Window(QtWidgets.QMainWindow):
         schedule(self._on_asset_changed, 50, channel="mongo")
 
     def on_file_select(self, filepath):
-        asset_docs = self.assets_widget.get_selected_assets()
-        asset_doc = None
-        if asset_docs:
-            asset_doc = asset_docs[0]
-
+        asset_id = self.assets_widget.get_selected_asset_id()
         task_name = self.tasks_widget.get_selected_task_name()
 
         workfile_doc = None
-        if asset_doc and task_name and filepath:
+        if asset_id and task_name and filepath:
             filename = os.path.split(filepath)[1]
             workfile_doc = get_workfile_doc(
-                asset_doc["_id"], task_name, filename, io
+                asset_id, task_name, filename, io
             )
         self.side_panel.set_context(
-            asset_doc, task_name, filepath, workfile_doc
+            asset_id, task_name, filepath, workfile_doc
         )
 
     def on_workfile_create(self, filepath):
@@ -972,14 +1011,13 @@ class Window(QtWidgets.QMainWindow):
         if filepath is None:
             filepath = self.files_widget._get_selected_filepath()
         task_name = self.tasks_widget.get_selected_task_name()
-        asset_docs = self.assets_widget.get_selected_assets()
-        if not task_name or not asset_docs or not filepath:
+        asset_id = self.assets_widget.get_selected_asset_id()
+        if not task_name or not asset_id or not filepath:
             return
 
-        asset_doc = asset_docs[0]
         filename = os.path.split(filepath)[1]
         return get_workfile_doc(
-            asset_doc["_id"], task_name, filename, io
+            asset_id, task_name, filename, io
         )
 
     def _create_workfile_doc(self, filepath, force=False):
@@ -989,29 +1027,10 @@ class Window(QtWidgets.QMainWindow):
 
         if not workfile_doc:
             workdir, filename = os.path.split(filepath)
-            asset_docs = self.assets_widget.get_selected_assets()
-            asset_doc = asset_docs[0]
+            asset_id = self.assets_widget.get_selected_asset_id()
+            asset_doc = io.find_one({"_id": asset_id})
             task_name = self.tasks_widget.get_selected_task_name()
             create_workfile_doc(asset_doc, task_name, filename, workdir, io)
-
-    def set_context(self, context):
-        if "asset" in context:
-            asset = context["asset"]
-            asset_document = io.find_one(
-                {
-                    "name": asset,
-                    "type": "asset"
-                },
-                {"_id": 1}
-            ) or {}
-
-            # Select the asset
-            self.assets_widget.select_assets([asset], expand=True)
-
-            self.tasks_widget.set_asset_id(asset_document.get("_id"))
-
-        if "task" in context:
-            self.tasks_widget.select_task_name(context["task"])
 
     def refresh(self):
         # Refresh asset widget
@@ -1019,32 +1038,57 @@ class Window(QtWidgets.QMainWindow):
 
         self._on_task_changed()
 
+    def set_context(self, context):
+        self._context_to_set = context
+        self._set_context_timer.start()
+
+    def _on_context_set_timeout(self):
+        if self._context_to_set is None:
+            self._set_context_timer.stop()
+            return
+
+        if self.assets_widget.refreshing:
+            return
+
+        self._context_to_set, context = None, self._context_to_set
+        if "asset" in context:
+            asset_doc = io.find_one(
+                {
+                    "name": context["asset"],
+                    "type": "asset"
+                },
+                {"_id": 1}
+            ) or {}
+            asset_id = asset_doc.get("_id")
+            # Select the asset
+            self.assets_widget.select_asset(asset_id)
+            self.tasks_widget.set_asset_id(asset_id)
+
+        if "task" in context:
+            self.tasks_widget.select_task_name(context["task"])
+
     def _on_asset_changed(self):
-        asset = self.assets_widget.get_selected_assets() or None
-        asset_id = None
-        if not asset:
+        asset_id = self.assets_widget.get_selected_asset_id()
+        if asset_id:
+            self.tasks_widget.setEnabled(True)
+        else:
             # Force disable the other widgets if no
             # active selection
             self.tasks_widget.setEnabled(False)
             self.files_widget.setEnabled(False)
-        else:
-            asset = asset[0]
-            asset_id = asset.get("_id")
-            self.tasks_widget.setEnabled(True)
 
         self.tasks_widget.set_asset_id(asset_id)
 
     def _on_task_changed(self):
-        asset = self.assets_widget.get_selected_assets() or None
-        if asset is not None:
-            asset = asset[0]
+        asset_id = self.assets_widget.get_selected_asset_id()
         task_name = self.tasks_widget.get_selected_task_name()
         task_type = self.tasks_widget.get_selected_task_type()
 
-        self.tasks_widget.setEnabled(bool(asset))
+        asset_is_valid = asset_id is not None
+        self.tasks_widget.setEnabled(asset_is_valid)
 
-        self.files_widget.setEnabled(all([bool(task_name), bool(asset)]))
-        self.files_widget.set_asset_task(asset, task_name, task_type)
+        self.files_widget.setEnabled(bool(task_name) and asset_is_valid)
+        self.files_widget.set_asset_task(asset_id, task_name, task_type)
         self.files_widget.refresh()
 
 

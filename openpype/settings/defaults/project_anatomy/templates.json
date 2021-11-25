@@ -6,8 +6,8 @@
         "frame": "{frame:0>{@frame_padding}}"
     },
     "work": {
-        "folder": "{root[work]}/{project[name]}/{hierarchy}/{asset}/work/{task}",
-        "file": "{project[code]}_{asset}_{task}_{@version}<_{comment}>.{ext}",
+        "folder": "{root[work]}/{project[name]}/{hierarchy}/{asset}/work/{task[name]}",
+        "file": "{project[code]}_{asset}_{task[name]}_{@version}<_{comment}>.{ext}",
         "path": "{@folder}/{@file}"
     },
     "render": {

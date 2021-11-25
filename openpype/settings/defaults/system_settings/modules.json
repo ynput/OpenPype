@@ -188,5 +188,13 @@
     },
     "slack": {
         "enabled": false
+    },
+    "job_queue": {
+        "server_url": "",
+        "jobs_root": {
+            "windows": "",
+            "darwin": "",
+            "linux": ""
+        }
     }
 }

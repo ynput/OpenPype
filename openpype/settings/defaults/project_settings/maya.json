@@ -42,7 +42,8 @@
             "enabled": true,
             "defaults": [
                 "Main"
-            ]
+            ],
+            "aov_separator": "underscore"
         },
         "CreateAnimation": {
             "enabled": true,

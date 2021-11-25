@@ -7,11 +7,15 @@ from .lib import WorkfileSettings
 from openpype.api import Logger, BuildWorkfile, get_current_project_settings
 from openpype.tools.utils import host_tools
 
+from avalon.nuke.pipeline import get_main_window
+
 log = Logger().get_logger(__name__)
 
 menu_label = os.environ["AVALON_LABEL"]
 
+
 def install():
+    main_window = get_main_window()
     menubar = nuke.menu("Nuke")
     menu = menubar.findItem(menu_label)
 
@@ -26,7 +30,7 @@ def install():
     menu.removeItem(rm_item[1].name())
     menu.addCommand(
         name,
-        lambda: host_tools.show_workfiles(parent=get_main_window()),
+        lambda: host_tools.show_workfiles(parent=main_window),
         index=2
     )
     menu.addSeparator(index=3)
@@ -89,7 +93,7 @@ def install():
     menu.addSeparator()
     menu.addCommand(
         "Experimental tools...",
-        host_tools.show_experimental_tools_dialog
+        lambda: host_tools.show_experimental_tools_dialog(parent=main_window)
     )
 
     # adding shortcuts
