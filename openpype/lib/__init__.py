@@ -66,6 +66,11 @@ from .profiles_filtering import (
     filter_profiles
 )
 
+from .transcoding import (
+    decompress,
+    get_decompress_dir,
+    should_decompress
+)
 from .avalon_context import (
     CURRENT_DOC_SCHEMAS,
     PROJECT_NAME_ALLOWED_SYMBOLS,
@@ -138,10 +143,6 @@ from .plugin_tools import (
     source_hash,
     get_unique_layer_name,
     get_background_layers,
-    oiio_supported,
-    decompress,
-    get_decompress_dir,
-    should_decompress
 )
 
 from .path_tools import (
@@ -193,6 +194,10 @@ __all__ = [
     "recursive_bases_from_class",
     "classes_from_module",
     "import_module_from_dirpath",
+
+    "decompress",
+    "get_decompress_dir",
+    "should_decompress",
 
     "CURRENT_DOC_SCHEMAS",
     "PROJECT_NAME_ALLOWED_SYMBOLS",
@@ -258,10 +263,6 @@ __all__ = [
     "source_hash",
     "get_unique_layer_name",
     "get_background_layers",
-    "oiio_supported",
-    "decompress",
-    "get_decompress_dir",
-    "should_decompress",
 
     "version_up",
     "get_version_from_path",
