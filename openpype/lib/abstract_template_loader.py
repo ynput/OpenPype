@@ -108,7 +108,11 @@ class AbstractTemplateLoader:
                 "No matching profile found for task '{}' of type '{}' "
                 "with host '{}'".format(task_name, task_type, host_name)
             )
-
+        if path is None:
+            raise TemplateLoadingFailed(
+                "Template path is None.\n"
+                "Path need to be set in {}\\Template Workfile Build "
+                "Settings\\Profiles".format(host_name.title()))
         try:
             solved_path = None
             while True:
