@@ -28,6 +28,9 @@
         "viewer": {
             "viewerProcess": "sRGB"
         },
+        "baking": {
+            "viewerProcess": "rec709"
+        },
         "workfile": {
             "colorManagement": "Nuke",
             "OCIO_config": "nuke-default",
