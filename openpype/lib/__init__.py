@@ -67,9 +67,6 @@ from .profiles_filtering import (
 )
 
 from .transcoding import (
-    decompress,
-    get_decompress_dir,
-    should_decompress,
     get_transcode_temp_directory,
     should_convert_for_ffmpeg,
     convert_for_ffmpeg
@@ -198,9 +195,6 @@ __all__ = [
     "classes_from_module",
     "import_module_from_dirpath",
 
-    "decompress",
-    "get_decompress_dir",
-    "should_decompress",
     "get_transcode_temp_directory",
     "should_convert_for_ffmpeg",
     "convert_for_ffmpeg",
