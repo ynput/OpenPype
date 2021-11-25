@@ -16,8 +16,9 @@ def inject_openpype_environment(deadlinePlugin):
     job = deadlinePlugin.GetJob()
     job = RepositoryUtils.GetJob(job.JobId, True)  # invalidates cache
 
-    print("inject_openpype_environment start")
+    print(">>> Injecting OpenPype environments ...")
     try:
+        print(">>> Getting OpenPype executable ...")
         exe_list = job.GetJobExtraInfoKeyValue("openpype_executables")
         openpype_app = FileUtils.SearchFileList(exe_list)
         if openpype_app == "":
@@ -27,11 +28,13 @@ def inject_openpype_environment(deadlinePlugin):
                 "The path to the render executable can be configured " +
                 "from the Plugin Configuration in the Deadline Monitor.")
 
+        print("--- penPype executable: {}".format(openpype_app))
+
         # tempfile.TemporaryFile cannot be used because of locking
         export_url = os.path.join(tempfile.gettempdir(),
                                   time.strftime('%Y%m%d%H%M%S'),
                                   'env.json')  # add HHMMSS + delete later
-        print("export_url {}".format(export_url))
+        print(">>> Temporary path: {}".format(export_url))
 
         args = [
             openpype_app,
@@ -55,21 +58,31 @@ def inject_openpype_environment(deadlinePlugin):
                   "AVALON_TASK, AVALON_APP_NAME"
             raise RuntimeError(msg)
 
-        print("args:::{}".format(args))
+        if not os.environ.get("OPENPYPE_MONGO"):
+            print(">>> Missing OPENPYPE_MONGO env var, process won't work")
 
-        exit_code = subprocess.call(args, cwd=os.path.dirname(openpype_app))
-        if exit_code != 0:
-            raise RuntimeError("Publishing failed, check worker's log")
+        env = os.environ
+        env["OPENPYPE_HEADLESS_MODE"] = "1"
 
+        print(">>> Executing: {}".format(args))
+        std_output = subprocess.check_output(args,
+                                             cwd=os.path.dirname(openpype_app),
+                                             env=env)
+        print(">>> Process result {}".format(std_output))
+
+        print(">>> Loading file ...")
         with open(export_url) as fp:
             contents = json.load(fp)
             for key, value in contents.items():
                 deadlinePlugin.SetProcessEnvironmentVariable(key, value)
 
+        print(">>> Removing temporary file")
         os.remove(export_url)
 
-        print("inject_openpype_environment end")
-    except Exception:
+        print(">> Injection end.")
+    except Exception as e:
+        if hasattr(e, "output"):
+            print(">>> Exception {}".format(e.output))
         import traceback
         print(traceback.format_exc())
         print("inject_openpype_environment failed")
@@ -79,17 +92,17 @@ def inject_openpype_environment(deadlinePlugin):
 
 def inject_render_job_id(deadlinePlugin):
     """Inject dependency ids to publish process as env var for validation."""
-    print("inject_render_job_id start")
+    print(">>> Injecting render job id ...")
     job = deadlinePlugin.GetJob()
     job = RepositoryUtils.GetJob(job.JobId, True)  # invalidates cache
 
     dependency_ids = job.JobDependencyIDs
-    print("dependency_ids {}".format(dependency_ids))
+    print(">>> Dependency IDs: {}".format(dependency_ids))
     render_job_ids = ",".join(dependency_ids)
 
     deadlinePlugin.SetProcessEnvironmentVariable("RENDER_JOB_IDS",
                                                  render_job_ids)
-    print("inject_render_job_id end")
+    print(">>> Injection end.")
 
 
 def pype_command_line(executable, arguments, workingDirectory):
@@ -133,10 +146,13 @@ def pype(deadlinePlugin):
         deadlinePlugin: Deadline job plugin passed by Deadline
 
     """
+    print(">>> Getting job ...")
     job = deadlinePlugin.GetJob()
     # PYPE should be here, not OPENPYPE - backward compatibility!!
     pype_metadata = job.GetJobEnvironmentKeyValue("PYPE_METADATA_FILE")
     pype_python = job.GetJobEnvironmentKeyValue("PYPE_PYTHON_EXE")
+    print(">>> Having backward compatible env vars {}/{}".format(pype_metadata,
+                                                                 pype_python))
     # test if it is pype publish job.
     if pype_metadata:
         pype_metadata = RepositoryUtils.CheckPathMapping(pype_metadata)
@@ -162,6 +178,8 @@ def pype(deadlinePlugin):
 
 
 def __main__(deadlinePlugin):
+    print("*** GlobalJobPreload start ...")
+    print(">>> Getting job ...")
     job = deadlinePlugin.GetJob()
     job = RepositoryUtils.GetJob(job.JobId, True)  # invalidates cache
 
@@ -170,6 +188,8 @@ def __main__(deadlinePlugin):
     openpype_publish_job = \
         job.GetJobEnvironmentKeyValue('OPENPYPE_PUBLISH_JOB') or '0'
 
+    print("--- Job type - render {}".format(openpype_render_job))
+    print("--- Job type - publish {}".format(openpype_publish_job))
     if openpype_publish_job == '1' and openpype_render_job == '1':
         raise RuntimeError("Misconfiguration. Job couldn't be both " +
                            "render and publish.")
