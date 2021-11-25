@@ -100,7 +100,7 @@ import platform
 import traceback
 import subprocess
 import site
-import distutils
+import distutils.spawn
 from pathlib import Path
 
 # OPENPYPE_ROOT is variable pointing to build (or code) directory
