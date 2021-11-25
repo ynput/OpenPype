@@ -6,8 +6,7 @@ import tempfile
 from .execute import run_subprocess
 from .vendor_bin_utils import (
     get_oiio_tools_path,
-    is_oiio_supported,
-    get_ffmpeg_tool_path
+    is_oiio_supported
 )
 
 
@@ -74,32 +73,35 @@ def get_decompress_dir():
 
 
 def should_decompress(file_url):
-    """
-        Tests that 'file_url' is compressed with DWAA.
+    """Tests that 'file_url' is compressed with DWAA.
 
-        Uses 'is_oiio_supported' to check that OIIO tool is available for this
-        platform.
+    Uses 'is_oiio_supported' to check that OIIO tool is available for this
+    platform.
 
-        Shouldn't throw exception as oiiotool is guarded by check function.
-        Currently implemented this way as there is no support for Mac and Linux
-        In the future, it should be more strict and throws exception on
-        misconfiguration.
+    Shouldn't throw exception as oiiotool is guarded by check function.
+    Currently implemented this way as there is no support for Mac and Linux
+    In the future, it should be more strict and throws exception on
+    misconfiguration.
 
-        Args:
-            file_url (str): path to rendered file (in sequence it would be
-                first file, if that compressed it is expected that whole seq
-                will be too)
-        Returns:
-            (bool): 'file_url' is DWAA compressed and should be decompressed
-                and we can decompress (oiiotool supported)
+    Args:
+        file_url (str): path to rendered file (in sequence it would be
+            first file, if that compressed it is expected that whole seq
+            will be too)
+
+    Returns:
+        bool: 'file_url' is DWAA compressed and should be decompressed
+            and we can decompress (oiiotool supported)
     """
     if is_oiio_supported():
         try:
             output = run_subprocess([
                 get_oiio_tools_path(),
                 "--info", "-v", file_url])
-            return "compression: \"dwaa\"" in output or \
-                "compression: \"dwab\"" in output
+            return (
+                "compression: \"dwaa\"" in output
+                or "compression: \"dwab\"" in output
+            )
+
         except RuntimeError:
             _name, ext = os.path.splitext(file_url)
             # TODO: should't the list of allowed extensions be
@@ -107,5 +109,5 @@ def should_decompress(file_url):
             if ext not in [".mxf"]:
                 # Reraise exception
                 raise
-            return False
+
     return False
