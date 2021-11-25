@@ -112,9 +112,7 @@ class ExporterReview(object):
         instance (pyblish.instance): instance of pyblish context
 
     """
-    data = dict({
-        "representations": list()
-    })
+    data = None
 
     def __init__(self,
                  klass,
@@ -126,6 +124,9 @@ class ExporterReview(object):
         self.path_in = self.instance.data.get("path", None)
         self.staging_dir = self.instance.data["stagingDir"]
         self.collection = self.instance.data.get("collection", None)
+        self.data = dict({
+            "representations": list()
+        })
 
     def get_file_info(self):
         if self.collection:
