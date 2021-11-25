@@ -187,6 +187,9 @@ class ExtractReview(pyblish.api.InstancePlugin):
             instance, profile_outputs
         )
         for repre, outputs in outputs_per_repres:
+            # Check if input should be preconverted before processing
+            # Store original staging dir (it's value may change)
+            src_repre_staging_dir = repre["stagingDir"]
 
             for _output_def in outputs:
                 output_def = copy.deepcopy(_output_def)
@@ -199,6 +202,10 @@ class ExtractReview(pyblish.api.InstancePlugin):
 
                 # Create copy of representation
                 new_repre = copy.deepcopy(repre)
+                # Make sure new representation has origin staging dir
+                #   - this is because source representation may change
+                #       it's staging dir because of ffmpeg conversion
+                new_repre["stagingDir"] = src_repre_staging_dir
 
                 # Remove "delete" tag from new repre if there is
                 if "delete" in new_repre["tags"]:
