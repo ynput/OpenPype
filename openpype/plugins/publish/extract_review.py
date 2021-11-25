@@ -174,7 +174,18 @@ class ExtractReview(pyblish.api.InstancePlugin):
             outputs_per_representations.append((repre, outputs))
         return outputs_per_representations
 
+    @staticmethod
+    def get_instance_label(instance):
+        return (
+            getattr(instance, "label", None)
+            or instance.data.get("label")
+            or instance.data.get("name")
+            or str(instance)
+        )
+
     def main_process(self, instance):
+        instance_label = self.get_instance_label(instance)
+        self.log.debug("Processing instance \"{}\"".format(instance_label))
         profile_outputs = self._get_outputs_for_instance(instance)
         if not profile_outputs:
             return
