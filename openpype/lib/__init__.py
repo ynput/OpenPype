@@ -69,7 +69,10 @@ from .profiles_filtering import (
 from .transcoding import (
     decompress,
     get_decompress_dir,
-    should_decompress
+    should_decompress,
+    get_transcode_temp_directory,
+    should_convert_for_ffmpeg,
+    convert_for_ffmpeg
 )
 from .avalon_context import (
     CURRENT_DOC_SCHEMAS,
@@ -198,6 +201,9 @@ __all__ = [
     "decompress",
     "get_decompress_dir",
     "should_decompress",
+    "get_transcode_temp_directory",
+    "should_convert_for_ffmpeg",
+    "convert_for_ffmpeg",
 
     "CURRENT_DOC_SCHEMAS",
     "PROJECT_NAME_ALLOWED_SYMBOLS",
