@@ -15,13 +15,10 @@ import openpype.api
 from openpype.lib import (
     get_pype_execute_args,
 
-    get_temp_directory,
+    get_transcode_temp_directory,
     convert_for_ffmpeg,
     should_convert_for_ffmpeg,
 
-    should_decompress,
-    get_decompress_dir,
-    decompress,
     CREATE_NO_WINDOW
 )
 
@@ -220,7 +217,7 @@ class ExtractBurnin(openpype.api.Extractor):
             #   - change staging dir of source representation
             #   - must be set back after output definitions processing
             if do_convert:
-                new_staging_dir = get_temp_directory()
+                new_staging_dir = get_transcode_temp_directory()
                 repre["stagingDir"] = new_staging_dir
 
                 convert_for_ffmpeg(

@@ -20,7 +20,7 @@ from openpype.lib import (
     should_convert_for_ffmpeg,
     convert_for_ffmpeg,
     get_transcode_temp_directory,
-    get_temp_directory
+    get_transcode_temp_directory
 )
 import speedcopy
 
@@ -226,7 +226,7 @@ class ExtractReview(pyblish.api.InstancePlugin):
             #   - change staging dir of source representation
             #   - must be set back after output definitions processing
             if do_convert:
-                new_staging_dir = get_temp_directory()
+                new_staging_dir = get_transcode_temp_directory()
                 repre["stagingDir"] = new_staging_dir
 
                 frame_start = instance.data["frameStart"]

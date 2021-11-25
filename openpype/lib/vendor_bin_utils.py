@@ -111,11 +111,6 @@ def ffprobe_streams(path_to_file, logger=None):
 def is_oiio_supported():
     """Checks if oiiotool is configured for this platform.
 
-    Triggers simple subprocess, handles exception if fails.
-
-    'should_decompress' will throw exception if configured,
-    but not present or not working.
-
     Returns:
         bool: OIIO tool executable is available.
     """
