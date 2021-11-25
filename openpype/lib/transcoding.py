@@ -235,3 +235,39 @@ def get_convert_rgb_channels(channels_info):
             break
 
     return output
+
+
+def should_convert_for_ffmpeg(src_filepath):
+    """Find out if input should be converted for ffmpeg.
+
+    Currently cares only about exr inputs and is based on OpenImageIO.
+
+    Returns:
+        bool/NoneType: True if should be converted, False if should not and
+            None if can't determine.
+    """
+    # Care only about exr at this moment
+    ext = os.path.splitext(src_filepath)[-1].lower()
+    if ext != ".exr":
+        return False
+
+    # Can't determine if should convert or not without oiio_tool
+    if not is_oiio_supported():
+        return None
+
+    # Load info about info from oiio tool
+    oiio_info = get_oiio_info_for_input(src_filepath)
+    input_info = parse_oiio_info(oiio_info)
+
+    # Check compression
+    compression = input_info["compression"]
+    if compression in ("dwaa", "dwab"):
+        return True
+
+    # Check channels
+    channels_info = input_info["channels_info"]
+    review_channels = get_convert_rgb_channels(channels_info)
+    if review_channels is None:
+        return None
+
+    return False
