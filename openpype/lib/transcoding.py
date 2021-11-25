@@ -114,6 +114,18 @@ def should_decompress(file_url):
     return False
 
 
+def get_transcode_temp_directory():
+    """Creates temporary folder for transcoding.
+
+    Its local, in case of farm it is 'local' to the farm machine.
+
+    Should be much faster, needs to be cleaned up later.
+    """
+    return os.path.normpath(
+        tempfile.mkdtemp(prefix="op_transcoding_")
+    )
+
+
 def get_oiio_info_for_input(filepath, logger=None):
     """Call oiiotool to get information about input and return stdout."""
     args = [
