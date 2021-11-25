@@ -197,7 +197,15 @@ class ExporterReview(object):
     def get_imageio_baking_profile(self):
         from . import lib as opnlib
         nuke_imageio = opnlib.get_nuke_imageio_settings()
-        return nuke_imageio["baking"]["viewerProcess"]
+
+        # TODO: this is only securing backward compatibility lets remove
+        # this once all projects's anotomy are upated to newer config
+        if "baking" in nuke_imageio.keys():
+            return nuke_imageio["baking"]["viewerProcess"]
+        else:
+            return nuke_imageio["viewer"]["viewerProcess"]
+
+
 
 
 class ExporterReviewLut(ExporterReview):
