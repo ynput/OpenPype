@@ -1,5 +1,8 @@
 import openpype.lib
+
 from maya import cmds
+
+from openpype.lib.build_template_exceptions import TemplateAlreadyImported
 
 PLACEHOLDER_SET = 'PLACEHOLDERS_SET'
 
@@ -17,20 +20,57 @@ class MayaTemplateLoader(openpype.lib.AbstractTemplateLoader):
             path (str): A path to current template (usually given by
             get_template_path implementation)
 
-        Raises:
-            ValueError: "Build already generated"
+        Returns:
+            bool: Wether the template was succesfully imported or not
         """
         if cmds.objExists(PLACEHOLDER_SET):
-            raise ValueError("Build already generated. Please clean scene if "
-                             "you really want to rebuild. (File>New Scene)")
+            raise TemplateAlreadyImported("Build template already loaded\n"
+                "Clean scene if needed (File > New Scene)")
+
         cmds.sets(name=PLACEHOLDER_SET, empty=True)
         self.new_nodes = cmds.file(path, i=True, returnNewNodes=True)
         cmds.setAttr(PLACEHOLDER_SET + '.hiddenInOutliner', True)
+
+        return True
+
+    def template_already_imported(self, err_msg):
+        clearButton = "Clear scene and build"
+        updateButton = "Update template"
+        abortButton = "Abort"
+
+        title = "Scene already builded"
+        message = ("It's seems a template was already build for this scene.\n"
+            "Error message reveived :\n\n\"{}\"".format(err_msg))
+        buttons = [clearButton, updateButton, abortButton]
+        defaultButton = clearButton
+        cancelButton = abortButton
+        dismissString = abortButton
+        answer = cmds.confirmDialog(
+            t=title,
+            m=message,
+            b=buttons,
+            db=defaultButton,
+            cb=cancelButton,
+            ds=dismissString)
+
+        if answer == clearButton:
+            cmds.file(newFile=True, force=True)
+            self.import_template(self.template_path)
+            self.populate_template()
+        elif answer == updateButton:
+            self.update_template()
+        elif answer == abortButton:
+            return
 
     @staticmethod
     def get_template_nodes():
         attributes = cmds.ls('*.builder_type', long=True)
         return [attribute.rpartition('.')[0] for attribute in attributes]
+
+    def get_loaded_containers_by_id(self):
+        containers = cmds.sets('AVALON_CONTAINERS', q=True)
+        return {cmds.getAttr(container+'.representation'): container
+            for container in containers}
 
 
 class MayaPlaceholder(openpype.lib.AbstractPlaceholder):
@@ -57,7 +97,10 @@ class MayaPlaceholder(openpype.lib.AbstractPlaceholder):
             user_data[attr] = cmds.getAttr(
                 node + '.' + attribute_name,
                 asString=True)
-        user_data['parent'], _, user_data['node'] = node.rpartition('|')
+        user_data['parent'] = (
+            cmds.getAttr(node+'.parent', asString=True)
+            or node.rpartition('|')[0])
+        user_data['node'] = node.rpartition('|')[2]
 
         self.data = user_data
 
@@ -83,7 +126,8 @@ class MayaPlaceholder(openpype.lib.AbstractPlaceholder):
         node = self.data['node'].rpartition('|')[2]
         cmds.setAttr(node + '.parent', self.data['parent'], type='string')
 
-        cmds.parent(node, world=True)
+        if cmds.listRelatives(node, p=True):
+            cmds.parent(node, world=True)
         cmds.sets(node, addElement=PLACEHOLDER_SET)
         cmds.hide(node)
         cmds.setAttr(node + '.hiddenInOutliner', True)
