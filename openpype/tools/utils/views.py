@@ -61,26 +61,3 @@ class TreeViewSpinner(QtWidgets.QTreeView):
             self.paint_empty(event)
         else:
             super(TreeViewSpinner, self).paintEvent(event)
-
-
-class AssetsView(TreeViewSpinner, DeselectableTreeView):
-    """Item view.
-    This implements a context menu.
-    """
-
-    def __init__(self, parent=None):
-        super(AssetsView, self).__init__(parent)
-        self.setIndentation(15)
-        self.setContextMenuPolicy(QtCore.Qt.CustomContextMenu)
-        self.setHeaderHidden(True)
-
-    def mousePressEvent(self, event):
-        index = self.indexAt(event.pos())
-        if not index.isValid():
-            modifiers = QtWidgets.QApplication.keyboardModifiers()
-            if modifiers == QtCore.Qt.ShiftModifier:
-                return
-            elif modifiers == QtCore.Qt.ControlModifier:
-                return
-
-        super(AssetsView, self).mousePressEvent(event)

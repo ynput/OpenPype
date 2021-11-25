@@ -67,6 +67,9 @@ class LoadClip(plugin.NukeLoader):
 
     def load(self, context, name, namespace, options):
 
+        # reste container id so it is always unique for each instance
+        self.reset_container_id()
+
         is_sequence = len(context["representation"]["files"]) > 1
 
         file = self.fname.replace("\\", "/")
@@ -251,8 +254,7 @@ class LoadClip(plugin.NukeLoader):
                 "handleStart": str(self.handle_start),
                 "handleEnd": str(self.handle_end),
                 "fps": str(version_data.get("fps")),
-                "author": version_data.get("author"),
-                "outputDir": version_data.get("outputDir"),
+                "author": version_data.get("author")
             }
 
             # change color of read_node

@@ -110,7 +110,20 @@
         },
         "ExtractReviewDataMov": {
             "enabled": true,
-            "viewer_lut_raw": false
+            "viewer_lut_raw": false,
+            "outputs": {
+                "baking": {
+                    "filter": {
+                        "task_types": [],
+                        "families": []
+                    },
+                    "extension": "mov",
+                    "viewer_process_override": "",
+                    "bake_viewer_process": true,
+                    "bake_viewer_input_process": true,
+                    "add_tags": []
+                }
+            }
         },
         "ExtractSlateFrame": {
             "viewer_lut_raw": false

@@ -531,12 +531,20 @@ def should_decompress(file_url):
                 and we can decompress (oiiotool supported)
     """
     if oiio_supported():
-        output = run_subprocess([
-            get_oiio_tools_path(),
-            "--info", "-v", file_url])
-        return "compression: \"dwaa\"" in output or \
-            "compression: \"dwab\"" in output
-
+        try:
+            output = run_subprocess([
+                get_oiio_tools_path(),
+                "--info", "-v", file_url])
+            return "compression: \"dwaa\"" in output or \
+                "compression: \"dwab\"" in output
+        except RuntimeError:
+            _name, ext = os.path.splitext(file_url)
+            # TODO: should't the list of allowed extensions be
+            #     taken from an OIIO variable of supported formats
+            if ext not in [".mxf"]:
+                # Reraise exception
+                raise
+            return False
     return False
 
 

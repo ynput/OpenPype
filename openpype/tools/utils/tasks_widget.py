@@ -4,11 +4,11 @@ from avalon import style
 from avalon.vendor import qtawesome
 
 from .views import DeselectableTreeView
-from .constants import (
-    TASK_ORDER_ROLE,
-    TASK_TYPE_ROLE,
-    TASK_NAME_ROLE
-)
+
+
+TASK_NAME_ROLE = QtCore.Qt.UserRole + 1
+TASK_TYPE_ROLE = QtCore.Qt.UserRole + 2
+TASK_ORDER_ROLE = QtCore.Qt.UserRole + 3
 
 
 class TasksModel(QtGui.QStandardItemModel):
@@ -226,10 +226,6 @@ class TasksWidget(QtWidgets.QWidget):
         self._tasks_model.refresh()
 
     def set_asset_id(self, asset_id):
-        # Asset deselected
-        if asset_id is None:
-            return
-
         # Try and preserve the last selected task and reselect it
         # after switching assets. If there's no currently selected
         # asset keep whatever the "last selected" was prior to it.

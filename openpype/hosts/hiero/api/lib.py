@@ -30,6 +30,7 @@ self = sys.modules[__name__]
 self._has_been_setup = False
 self._has_menu = False
 self._registered_gui = None
+self._parent = None
 self.pype_tag_name = "openpypeData"
 self.default_sequence_name = "openpypeSequence"
 self.default_bin_name = "openpypeBin"
@@ -1029,3 +1030,15 @@ def before_project_save(event):
 
     # also mark old versions of loaded containers
     check_inventory_versions()
+
+
+def get_main_window():
+    """Acquire Nuke's main window"""
+    if self._parent is None:
+        top_widgets = QtWidgets.QApplication.topLevelWidgets()
+        name = "Foundry::UI::DockMainWindow"
+        main_window = next(widget for widget in top_widgets if
+                           widget.inherits("QMainWindow") and
+                           widget.metaObject().className() == name)
+        self._parent = main_window
+    return self._parent

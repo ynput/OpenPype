@@ -1574,6 +1574,7 @@ class SyncServerModule(OpenPypeModule, ITrayModule):
 
             Use 'force' to remove existing or raises ValueError
         """
+        reseted_existing = False
         for repre_file in representation.pop().get("files"):
             if file_id and file_id != repre_file["_id"]:
                 continue
@@ -1584,11 +1585,14 @@ class SyncServerModule(OpenPypeModule, ITrayModule):
                         self._reset_site_for_file(collection, query,
                                                   elem, repre_file["_id"],
                                                   site_name)
-                        return
+                        reseted_existing = True
                     else:
                         msg = "Site {} already present".format(site_name)
                         log.info(msg)
                         raise ValueError(msg)
+
+        if reseted_existing:
+            return
 
         if not file_id:
             update = {

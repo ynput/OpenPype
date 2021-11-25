@@ -22,7 +22,7 @@ from .custom_attributes import get_openpype_attr
 
 from bson.objectid import ObjectId
 from bson.errors import InvalidId
-from pymongo import UpdateOne
+from pymongo import UpdateOne, ReplaceOne
 import ftrack_api
 
 log = Logger.get_logger(__name__)
@@ -328,7 +328,7 @@ class SyncEntitiesFactory:
             server_url=self._server_url,
             api_key=self._api_key,
             api_user=self._api_user,
-            auto_connect_event_hub=True
+            auto_connect_event_hub=False
         )
 
         self.duplicates = {}
@@ -341,6 +341,7 @@ class SyncEntitiesFactory:
         }
 
         self.create_list = []
+        self.unarchive_list = []
         self.updates = collections.defaultdict(dict)
 
         self.avalon_project = None
@@ -1169,16 +1170,43 @@ class SyncEntitiesFactory:
                         entity
                     )
 
+    def _get_input_links(self, ftrack_ids):
+        tupled_ids = tuple(ftrack_ids)
+        mapping_by_to_id = {
+            ftrack_id: set()
+            for ftrack_id in tupled_ids
+        }
+        ids_len = len(tupled_ids)
+        chunk_size = int(5000 / ids_len)
+        all_links = []
+        for idx in range(0, ids_len, chunk_size):
+            entity_ids_joined = join_query_keys(
+                tupled_ids[idx:idx + chunk_size]
+            )
+
+            all_links.extend(self.session.query((
+                "select from_id, to_id from"
+                " TypedContextLink where to_id in ({})"
+            ).format(entity_ids_joined)).all())
+
+        for context_link in all_links:
+            to_id = context_link["to_id"]
+            from_id = context_link["from_id"]
+            if from_id == to_id:
+                continue
+            mapping_by_to_id[to_id].add(from_id)
+        return mapping_by_to_id
+
     def prepare_ftrack_ent_data(self):
         not_set_ids = []
-        for id, entity_dict in self.entities_dict.items():
+        for ftrack_id, entity_dict in self.entities_dict.items():
             entity = entity_dict["entity"]
             if entity is None:
-                not_set_ids.append(id)
+                not_set_ids.append(ftrack_id)
                 continue
 
-            self.entities_dict[id]["final_entity"] = {}
-            self.entities_dict[id]["final_entity"]["name"] = (
+            self.entities_dict[ftrack_id]["final_entity"] = {}
+            self.entities_dict[ftrack_id]["final_entity"]["name"] = (
                 entity_dict["name"]
             )
             data = {}
@@ -1191,58 +1219,59 @@ class SyncEntitiesFactory:
             for key, val in entity_dict.get("hier_attrs", []).items():
                 data[key] = val
 
-            if id == self.ft_project_id:
-                project_name = entity["full_name"]
-                data["code"] = entity["name"]
-                self.entities_dict[id]["final_entity"]["data"] = data
-                self.entities_dict[id]["final_entity"]["type"] = "project"
+            if ftrack_id != self.ft_project_id:
+                ent_path_items = [ent["name"] for ent in entity["link"]]
+                parents = ent_path_items[1:len(ent_path_items) - 1:]
 
-                proj_schema = entity["project_schema"]
-                task_types = proj_schema["_task_type_schema"]["types"]
-                proj_apps, warnings = get_project_apps(
-                    data.pop("applications", [])
-                )
-                for msg, items in warnings.items():
-                    if not msg or not items:
-                        continue
-                    self.report_items["warning"][msg] = items
-
-                current_project_anatomy_data = get_anatomy_settings(
-                    project_name, exclude_locals=True
-                )
-                anatomy_tasks = current_project_anatomy_data["tasks"]
-                tasks = {}
-                default_type_data = {
-                    "short_name": ""
-                }
-                for task_type in task_types:
-                    task_type_name = task_type["name"]
-                    tasks[task_type_name] = copy.deepcopy(
-                        anatomy_tasks.get(task_type_name)
-                        or default_type_data
-                    )
-
-                project_config = {
-                    "tasks": tasks,
-                    "apps": proj_apps
-                }
-                for key, value in current_project_anatomy_data.items():
-                    if key in project_config or key == "attributes":
-                        continue
-                    project_config[key] = value
-
-                self.entities_dict[id]["final_entity"]["config"] = (
-                    project_config
-                )
+                data["parents"] = parents
+                data["tasks"] = self.entities_dict[ftrack_id].pop("tasks", {})
+                self.entities_dict[ftrack_id]["final_entity"]["data"] = data
+                self.entities_dict[ftrack_id]["final_entity"]["type"] = "asset"
                 continue
+            project_name = entity["full_name"]
+            data["code"] = entity["name"]
+            self.entities_dict[ftrack_id]["final_entity"]["data"] = data
+            self.entities_dict[ftrack_id]["final_entity"]["type"] = (
+                "project"
+            )
 
-            ent_path_items = [ent["name"] for ent in entity["link"]]
-            parents = ent_path_items[1:len(ent_path_items) - 1:]
+            proj_schema = entity["project_schema"]
+            task_types = proj_schema["_task_type_schema"]["types"]
+            proj_apps, warnings = get_project_apps(
+                data.pop("applications", [])
+            )
+            for msg, items in warnings.items():
+                if not msg or not items:
+                    continue
+                self.report_items["warning"][msg] = items
 
-            data["parents"] = parents
-            data["tasks"] = self.entities_dict[id].pop("tasks", {})
-            self.entities_dict[id]["final_entity"]["data"] = data
-            self.entities_dict[id]["final_entity"]["type"] = "asset"
+            current_project_anatomy_data = get_anatomy_settings(
+                project_name, exclude_locals=True
+            )
+            anatomy_tasks = current_project_anatomy_data["tasks"]
+            tasks = {}
+            default_type_data = {
+                "short_name": ""
+            }
+            for task_type in task_types:
+                task_type_name = task_type["name"]
+                tasks[task_type_name] = copy.deepcopy(
+                    anatomy_tasks.get(task_type_name)
+                    or default_type_data
+                )
+
+            project_config = {
+                "tasks": tasks,
+                "apps": proj_apps
+            }
+            for key, value in current_project_anatomy_data.items():
+                if key in project_config or key == "attributes":
+                    continue
+                project_config[key] = value
+
+            self.entities_dict[ftrack_id]["final_entity"]["config"] = (
+                project_config
+            )
 
         if not_set_ids:
             self.log.debug((
@@ -1432,6 +1461,28 @@ class SyncEntitiesFactory:
             entity_dict = self.entities_dict.pop(_ftrack_id, {"children": []})
             for child_id in entity_dict["children"]:
                 children_queue.append(child_id)
+
+    def set_input_links(self):
+        ftrack_ids = set(self.create_ftrack_ids) | set(self.update_ftrack_ids)
+
+        input_links_by_ftrack_id = self._get_input_links(ftrack_ids)
+
+        for ftrack_id in ftrack_ids:
+            input_links = []
+            final_entity = self.entities_dict[ftrack_id]["final_entity"]
+            final_entity["data"]["inputLinks"] = input_links
+            link_ids = input_links_by_ftrack_id[ftrack_id]
+            if not link_ids:
+                continue
+
+            for ftrack_link_id in link_ids:
+                mongo_id = self.ftrack_avalon_mapper.get(ftrack_link_id)
+                if mongo_id is not None:
+                    input_links.append({
+                        "_id": ObjectId(mongo_id),
+                        "linkedBy": "ftrack",
+                        "type": "breakdown"
+                    })
 
     def prepare_changes(self):
         self.log.debug("* Preparing changes for avalon/ftrack")
@@ -1806,9 +1857,28 @@ class SyncEntitiesFactory:
         for ftrack_id in self.create_ftrack_ids:
             # CHECK it is possible that entity was already created
             # because is parent of another entity which was processed first
-            if ftrack_id in self.ftrack_avalon_mapper:
-                continue
-            self.create_avalon_entity(ftrack_id)
+            if ftrack_id not in self.ftrack_avalon_mapper:
+                self.create_avalon_entity(ftrack_id)
+
+        self.set_input_links()
+
+        unarchive_writes = []
+        for item in self.unarchive_list:
+            mongo_id = item["_id"]
+            unarchive_writes.append(ReplaceOne(
+                {"_id": mongo_id},
+                item
+            ))
+            av_ent_path_items = item["data"]["parents"]
+            av_ent_path_items.append(item["name"])
+            av_ent_path = "/".join(av_ent_path_items)
+            self.log.debug(
+                "Entity was unarchived <{}>".format(av_ent_path)
+            )
+            self.remove_from_archived(mongo_id)
+
+        if unarchive_writes:
+            self.dbcon.bulk_write(unarchive_writes)
 
         if len(self.create_list) > 0:
             self.dbcon.insert_many(self.create_list)
@@ -1899,14 +1969,8 @@ class SyncEntitiesFactory:
 
         if unarchive is False:
             self.create_list.append(item)
-            return
-        # If unarchive then replace entity data in database
-        self.dbcon.replace_one({"_id": new_id}, item)
-        self.remove_from_archived(mongo_id)
-        av_ent_path_items = item["data"]["parents"]
-        av_ent_path_items.append(item["name"])
-        av_ent_path = "/".join(av_ent_path_items)
-        self.log.debug("Entity was unarchived <{}>".format(av_ent_path))
+        else:
+            self.unarchive_list.append(item)
 
     def check_unarchivation(self, ftrack_id, mongo_id, name):
         archived_by_id = self.avalon_archived_by_id.get(mongo_id)

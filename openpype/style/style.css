@@ -19,8 +19,8 @@ Enabled vs Disabled logic in most of stylesheets
 */
 
 * {
-    font-size: 9pt;
-    font-family: "Spartan";
+    font-size: 10pt;
+    font-family: "Noto Sans";
     font-weight: 450;
     outline: none;
 }
@@ -325,47 +325,38 @@ QTabWidget::pane {
 
 /* move to the right to not mess with borders of widget underneath */
 QTabWidget::tab-bar {
-    left: 2px;
+    alignment: left;
 }
 
 QTabBar::tab {
-    padding: 5px;
-    border-left: 3px solid transparent;
     border-top: 1px solid {color:border};
+    border-left: 1px solid {color:border};
     border-right: 1px solid {color:border};
-    /* must be single like because of Nuke*/
-    background: qlineargradient(x1: 0, y1: 1, x2: 0, y2: 0,stop: 0.5 {color:bg}, stop: 1.0 {color:bg-inputs});
+    padding: 5px;
+    background: {color:tab-widget:bg};
+    color: {color:tab-widget:color};
 }
 
 QTabBar::tab:selected {
-    background: {color:grey-lighter};
-    border-left: 3px solid {color:border-focus};
-    /* must be single like because of Nuke*/
-    background: qlineargradient(x1: 0, y1: 1, x2: 0, y2: 0,stop: 0.5 {color:bg}, stop: 1.0 {color:border});
+    border-left-color: {color:tab-widget:bg-selected};
+    border-right-color: {color:tab-widget:bg-selected};
+    border-top-color: {color:border-focus};
+    background: {color:tab-widget:bg-selected};
+    color: {color:tab-widget:color-selected};
 }
 
-QTabBar::tab:!selected {
-    background: {color:grey-light};
-}
-
+QTabBar::tab:!selected {}
 QTabBar::tab:!selected:hover {
-    background: {color:grey-lighter};
+    background: {color:tab-widget:bg-hover};
+    color: {color:tab-widget:color-hover};
 }
-QTabBar::tab:first {
-    border-left: 1px solid {color:border};
+QTabBar::tab:first {}
+QTabBar::tab:first:selected {}
+QTabBar::tab:last:!selected {
+    border-right: 1px solid {color:border};
 }
-QTabBar::tab:first:selected {
-    margin-left: 0;
-    border-left: 3px solid {color:border-focus};
-}
-
-QTabBar::tab:last:selected {
-    margin-right: 0;
-}
-
-QTabBar::tab:only-one {
-    margin: 0;
-}
+QTabBar::tab:last:selected {}
+QTabBar::tab:only-one {}
 
 QHeaderView {
     border: 0px solid {color:border};
@@ -722,20 +713,19 @@ QScrollBar::add-page:vertical, QScrollBar::sub-page:vertical {
 }
 
 #CompleterView::item {
-    padding: 2px 4px 2px 4px;
-    border-left: 3px solid {color:bg-view};
+    background: {color:bg-view-hover};
+    color: {color:font};
+    padding-left: 0px;
 }
 
 #CompleterView::item:hover {
-    border-left-color: {palette:blue-base};
-    background: {color:bg-view-selection};
-    color: {color:font};
+    background: {color:bg-view-hover};
 }
 
 /* Launcher specific stylesheets */
 #IconView[mode="icon"] {
     /* font size can't be set on items */
-    font-size: 8pt;
+    font-size: 9pt;
     border: 0px;
     padding: 0px;
     margin: 0px;
@@ -765,15 +755,46 @@ QScrollBar::add-page:vertical, QScrollBar::sub-page:vertical {
     border: 1px solid {color:border};
     border-radius: 0.1em;
 }
+
 /* Subset Manager */
 #SubsetManagerDetailsText {}
 #SubsetManagerDetailsText[state="invalid"] {
     border: 1px solid #ff0000;
 }
 
+/* Creator */
+#CreatorsView::item {
+    padding: 1px 5px;
+}
+
+#CreatorFamilyLabel {
+    font-size: 10pt;
+    font-weight: bold;
+}
+
+/* Scene Inventory */
+#ButtonWithMenu {
+    padding-right: 16px;
+    border: 1px solid #4A4949;
+    border-radius: 2px;
+}
+#ButtonWithMenu::menu-button {
+    border: 1px solid #4A4949;
+    width: 12px;
+    border-top-left-radius: 0px;
+    border-top-right-radius: 2px;
+    border-bottom-right-radius: 2px;
+    border-bottom-left-radius: 0px;
+}
+
+#ButtonWithMenu[state="1"], #ButtonWithMenu[state="1"]::menu-button, #ButtonWithMenu[state="1"]::menu-button:hover {
+    border-color: green;
+}
+
 /* Python console interpreter */
 #PythonInterpreterOutput, #PythonCodeEditor {
-    font-family: "Roboto Mono";
+    font-family: "Noto Sans Mono";
+    border-radius: 0px;
 }
 
 #SubsetView::item, #RepresentationView:item {
@@ -791,7 +812,7 @@ QScrollBar::add-page:vertical, QScrollBar::sub-page:vertical {
 
 /* New Create/Publish UI */
 #PublishLogConsole {
-    font-family: "Roboto Mono";
+    font-family: "Noto Sans Mono";
 }
 
 #VariantInput[state="new"], #VariantInput[state="new"]:focus, #VariantInput[state="new"]:hover {

@@ -180,6 +180,9 @@ class ExtractReview(pyblish.api.InstancePlugin):
                 if "tags" not in output_def:
                     output_def["tags"] = []
 
+                if "burnins" not in output_def:
+                    output_def["burnins"] = []
+
                 # Create copy of representation
                 new_repre = copy.deepcopy(repre)
 
@@ -192,8 +195,20 @@ class ExtractReview(pyblish.api.InstancePlugin):
                     if tag not in new_repre["tags"]:
                         new_repre["tags"].append(tag)
 
+                # Add burnin link from output definition to representation
+                for burnin in output_def["burnins"]:
+                    if burnin not in new_repre.get("burnins", []):
+                        if not new_repre.get("burnins"):
+                            new_repre["burnins"] = []
+                        new_repre["burnins"].append(str(burnin))
+
                 self.log.debug(
-                    "New representation tags: `{}`".format(new_repre["tags"])
+                    "Linked burnins: `{}`".format(new_repre.get("burnins"))
+                )
+
+                self.log.debug(
+                    "New representation tags: `{}`".format(
+                        new_repre.get("tags"))
                 )
 
                 temp_data = self.prepare_temp_data(
@@ -232,12 +247,16 @@ class ExtractReview(pyblish.api.InstancePlugin):
                     for f in files_to_clean:
                         os.unlink(f)
 
-                output_name = output_def["filename_suffix"]
+                output_name = new_repre.get("outputName", "")
+                output_ext = new_repre["ext"]
+                if output_name:
+                    output_name += "_"
+                output_name += output_def["filename_suffix"]
                 if temp_data["without_handles"]:
                     output_name += "_noHandles"
 
                 new_repre.update({
-                    "name": output_def["filename_suffix"],
+                    "name": "{}_{}".format(output_name, output_ext),
                     "outputName": output_name,
                     "outputDef": output_def,
                     "frameStartFtrack": temp_data["output_frame_start"],

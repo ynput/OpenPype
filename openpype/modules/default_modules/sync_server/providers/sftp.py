@@ -192,7 +192,7 @@ class SFTPHandler(AbstractProvider):
             Format is importing for usage of python's format ** approach
         """
         # roots cannot be locally overridden
-        return self.presets['roots']
+        return self.presets['root']
 
     def get_tree(self):
         """
@@ -421,7 +421,8 @@ class SFTPHandler(AbstractProvider):
 
         try:
             return pysftp.Connection(**conn_params)
-        except paramiko.ssh_exception.SSHException:
+        except (paramiko.ssh_exception.SSHException,
+                pysftp.exceptions.ConnectionException):
             log.warning("Couldn't connect", exc_info=True)
 
     def _mark_progress(self, collection, file, representation, server, site,

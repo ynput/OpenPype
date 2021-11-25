@@ -1,15 +1,8 @@
 import os
 import pyblish.api
 from avalon.nuke import lib as anlib
-from openpype.hosts.nuke.api import lib as pnlib
+from openpype.hosts.nuke.api import plugin
 import openpype
-
-try:
-    from __builtin__ import reload
-except ImportError:
-    from importlib import reload
-
-reload(pnlib)
 
 
 class ExtractReviewDataMov(openpype.api.Extractor):
@@ -27,15 +20,15 @@ class ExtractReviewDataMov(openpype.api.Extractor):
 
     # presets
     viewer_lut_raw = None
-    bake_colorspace_fallback = None
-    bake_colorspace_main = None
+    outputs = {}
 
     def process(self, instance):
         families = instance.data["families"]
+        task_type = instance.context.data["taskType"]
         self.log.info("Creating staging dir...")
 
         if "representations" not in instance.data:
-            instance.data["representations"] = list()
+            instance.data["representations"] = []
 
         staging_dir = os.path.normpath(
             os.path.dirname(instance.data['path']))
@@ -45,28 +38,80 @@ class ExtractReviewDataMov(openpype.api.Extractor):
         self.log.info(
             "StagingDir `{0}`...".format(instance.data["stagingDir"]))
 
+        self.log.info(self.outputs)
+
         # generate data
         with anlib.maintained_selection():
-            exporter = pnlib.ExporterReviewMov(
-                self, instance)
+            for o_name, o_data in self.outputs.items():
+                f_families = o_data["filter"]["families"]
+                f_task_types = o_data["filter"]["task_types"]
 
-            if "render.farm" in families:
-                instance.data["families"].remove("review")
-                data = exporter.generate_mov(farm=True)
+                # test if family found in context
+                test_families = any([
+                    # first if exact family set is mathing
+                    # make sure only interesetion of list is correct
+                    bool(set(families).intersection(f_families)),
+                    # and if famiies are set at all
+                    # if not then return True because we want this preset
+                    # to be active if nothig is set
+                    bool(not f_families)
+                ])
 
-                self.log.debug(
-                    "_ data: {}".format(data))
+                # test task types from filter
+                test_task_types = any([
+                    # check if actual task type is defined in task types
+                    # set in preset's filter
+                    bool(task_type in f_task_types),
+                    # and if taskTypes are defined in preset filter
+                    # if not then return True, because we want this filter
+                    # to be active if no taskType is set
+                    bool(not f_task_types)
+                ])
 
-                instance.data.update({
-                    "bakeRenderPath": data.get("bakeRenderPath"),
-                    "bakeScriptPath": data.get("bakeScriptPath"),
-                    "bakeWriteNodeName": data.get("bakeWriteNodeName")
-                })
-            else:
-                data = exporter.generate_mov()
+                # we need all filters to be positive for this
+                # preset to be activated
+                test_all = all([
+                    test_families,
+                    test_task_types
+                ])
 
-            # assign to representations
-            instance.data["representations"] += data["representations"]
+                # if it is not positive then skip this preset
+                if not test_all:
+                    continue
+
+                self.log.info(
+                    "Baking output `{}` with settings: {}".format(
+                        o_name, o_data))
+
+                # create exporter instance
+                exporter = plugin.ExporterReviewMov(
+                    self, instance, o_name, o_data["extension"])
+
+                if "render.farm" in families:
+                    if "review" in instance.data["families"]:
+                        instance.data["families"].remove("review")
+
+                    data = exporter.generate_mov(farm=True, **o_data)
+
+                    self.log.debug(
+                        "_ data: {}".format(data))
+
+                    if not instance.data.get("bakingNukeScripts"):
+                        instance.data["bakingNukeScripts"] = []
+
+                    instance.data["bakingNukeScripts"].append({
+                        "bakeRenderPath": data.get("bakeRenderPath"),
+                        "bakeScriptPath": data.get("bakeScriptPath"),
+                        "bakeWriteNodeName": data.get("bakeWriteNodeName")
+                    })
+                else:
+                    data = exporter.generate_mov(**o_data)
+
+                self.log.info(data["representations"])
+
+        # assign to representations
+        instance.data["representations"] += data["representations"]
 
         self.log.debug(
-            "_ representations: {}".format(instance.data["representations"]))
+            "_ representations: {}".format(
+                instance.data["representations"]))

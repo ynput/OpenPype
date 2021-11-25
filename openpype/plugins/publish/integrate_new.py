@@ -172,21 +172,26 @@ class IntegrateAssetNew(pyblish.api.InstancePlugin):
             anatomy_data["hierarchy"] = hierarchy
 
         # Make sure task name in anatomy data is same as on instance.data
-        task_name = instance.data.get("task")
-        if task_name:
-            anatomy_data["task"] = task_name
-        else:
-            # Just set 'task_name' variable to context task
-            task_name = anatomy_data["task"]
-
-        # Find task type for current task name
-        # - this should be already prepared on instance
         asset_tasks = (
             asset_entity.get("data", {}).get("tasks")
         ) or {}
-        task_info = asset_tasks.get(task_name) or {}
-        task_type = task_info.get("type")
-        instance.data["task_type"] = task_type
+        task_name = instance.data.get("task")
+        if task_name:
+            task_info = asset_tasks.get(task_name) or {}
+            task_type = task_info.get("type")
+
+            project_task_types = project_entity["config"]["tasks"]
+            task_code = project_task_types.get(task_type, {}).get("short_name")
+            anatomy_data["task"] = {
+                "name": task_name,
+                "type": task_type,
+                "short": task_code
+            }
+
+        else:
+            # Just set 'task_name' variable to context task
+            task_name = anatomy_data["task"]["name"]
+            task_type = anatomy_data["task"]["type"]
 
         # Fill family in anatomy data
         anatomy_data["family"] = instance.data.get("family")
@@ -804,11 +809,8 @@ class IntegrateAssetNew(pyblish.api.InstancePlugin):
         #   - is there a chance that task name is not filled in anatomy
         #       data?
         #   - should we use context task in that case?
-        task_name = (
-            instance.data["anatomyData"]["task"]
-            or io.Session["AVALON_TASK"]
-        )
-        task_type = instance.data["task_type"]
+        task_name = instance.data["anatomyData"]["task"]["name"]
+        task_type = instance.data["anatomyData"]["task"]["type"]
         filtering_criteria = {
             "families": instance.data["family"],
             "hosts": instance.context.data["hostName"],
@@ -1069,10 +1071,12 @@ class IntegrateAssetNew(pyblish.api.InstancePlugin):
             already_attached_sites[meta["name"]] = meta["created_dt"]
 
             if sync_project_presets and sync_project_presets["enabled"]:
-                # add remote
-                meta = {"name": remote_site.strip()}
-                rec["sites"].append(meta)
-                already_attached_sites[meta["name"]] = None
+                if remote_site and \
+                        remote_site not in already_attached_sites.keys():
+                    # add remote
+                    meta = {"name": remote_site.strip()}
+                    rec["sites"].append(meta)
+                    already_attached_sites[meta["name"]] = None
 
                 # add skeleton for site where it should be always synced to
                 for always_on_site in always_accesible:
@@ -1100,8 +1104,6 @@ class IntegrateAssetNew(pyblish.api.InstancePlugin):
             local_site = local_site_id
 
         remote_site = sync_project_presets["config"].get("remote_site")
-        if remote_site == local_site:
-            remote_site = None
 
         if remote_site == 'local':
             remote_site = local_site_id

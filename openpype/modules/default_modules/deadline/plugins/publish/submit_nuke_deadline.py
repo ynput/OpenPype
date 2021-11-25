@@ -94,24 +94,27 @@ class NukeSubmitDeadline(pyblish.api.InstancePlugin):
             render_path).replace("\\", "/")
         instance.data["publishJobState"] = "Suspended"
 
-        if instance.data.get("bakeScriptPath"):
-            render_path = instance.data.get("bakeRenderPath")
-            script_path = instance.data.get("bakeScriptPath")
-            exe_node_name = instance.data.get("bakeWriteNodeName")
+        if instance.data.get("bakingNukeScripts"):
+            for baking_script in instance.data["bakingNukeScripts"]:
+                render_path = baking_script["bakeRenderPath"]
+                script_path = baking_script["bakeScriptPath"]
+                exe_node_name = baking_script["bakeWriteNodeName"]
 
-            # exception for slate workflow
-            if "slate" in instance.data["families"]:
-                self._frame_start += 1
+                # exception for slate workflow
+                if "slate" in instance.data["families"]:
+                    self._frame_start += 1
 
-            resp = self.payload_submit(instance,
-                                       script_path,
-                                       render_path,
-                                       exe_node_name,
-                                       response.json()
-                                       )
-            # Store output dir for unified publisher (filesequence)
-            instance.data["deadlineSubmissionJob"] = resp.json()
-            instance.data["publishJobState"] = "Suspended"
+                resp = self.payload_submit(
+                    instance,
+                    script_path,
+                    render_path,
+                    exe_node_name,
+                    response.json()
+                )
+
+                # Store output dir for unified publisher (filesequence)
+                instance.data["deadlineSubmissionJob"] = resp.json()
+                instance.data["publishJobState"] = "Suspended"
 
         # redefinition of families
         if "render.farm" in families:
