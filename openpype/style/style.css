@@ -1087,6 +1087,7 @@ QScrollBar::add-page:vertical, QScrollBar::sub-page:vertical {
 
 #ExpandLabel {
     font-weight: bold;
+    color: #969b9e;
 }
 #ExpandLabel:hover {
     color: #b8c1c5;
