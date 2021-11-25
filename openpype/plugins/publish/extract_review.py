@@ -758,13 +758,14 @@ class ExtractReview(pyblish.api.InstancePlugin):
         "sequence_file" (if output is sequence) keys to new representation.
         """
 
-        staging_dir = new_repre["stagingDir"]
         repre = temp_data["origin_repre"]
+        src_staging_dir = repre["stagingDir"]
+        dst_staging_dir = new_repre["stagingDir"]
 
         if temp_data["input_is_sequence"]:
             collections = clique.assemble(repre["files"])[0]
             full_input_path = os.path.join(
-                staging_dir,
+                src_staging_dir,
                 collections[0].format("{head}{padding}{tail}")
             )
 
@@ -774,12 +775,12 @@ class ExtractReview(pyblish.api.InstancePlugin):
 
             # Make sure to have full path to one input file
             full_input_path_single_file = os.path.join(
-                staging_dir, repre["files"][0]
+                src_staging_dir, repre["files"][0]
             )
 
         else:
             full_input_path = os.path.join(
-                staging_dir, repre["files"]
+                src_staging_dir, repre["files"]
             )
             filename = os.path.splitext(repre["files"])[0]
 
@@ -825,27 +826,27 @@ class ExtractReview(pyblish.api.InstancePlugin):
 
             new_repre["sequence_file"] = repr_file
             full_output_path = os.path.join(
-                staging_dir, filename_base, repr_file
+                dst_staging_dir, filename_base, repr_file
             )
 
         else:
             repr_file = "{}_{}.{}".format(
                 filename, filename_suffix, output_ext
             )
-            full_output_path = os.path.join(staging_dir, repr_file)
+            full_output_path = os.path.join(dst_staging_dir, repr_file)
             new_repre_files = repr_file
 
         # Store files to representation
         new_repre["files"] = new_repre_files
 
         # Make sure stagingDire exists
-        staging_dir = os.path.normpath(os.path.dirname(full_output_path))
-        if not os.path.exists(staging_dir):
-            self.log.debug("Creating dir: {}".format(staging_dir))
-            os.makedirs(staging_dir)
+        dst_staging_dir = os.path.normpath(os.path.dirname(full_output_path))
+        if not os.path.exists(dst_staging_dir):
+            self.log.debug("Creating dir: {}".format(dst_staging_dir))
+            os.makedirs(dst_staging_dir)
 
         # Store stagingDir to representaion
-        new_repre["stagingDir"] = staging_dir
+        new_repre["stagingDir"] = dst_staging_dir
 
         # Store paths to temp data
         temp_data["full_input_path"] = full_input_path
