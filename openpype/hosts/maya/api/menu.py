@@ -9,7 +9,7 @@ import maya.cmds as cmds
 from avalon.maya import pipeline
 
 from openpype.api import build_workfile_template, update_workfile_template
-from lib_template_builder import create_place_holder
+from lib_template_builder import create_placeholder
 from openpype.settings import get_project_settings
 from openpype.tools.utils import host_tools
 from openpype.hosts.maya.api import lib
@@ -58,7 +58,7 @@ def deferred():
         cmds.menuItem(
             "Create Place Holder",
             parent=_builder_menu,
-            command=lambda *args: create_place_holder()
+            command=lambda *args: create_placeholder()
         )
 
     def add_build_template_workfiles_item():
