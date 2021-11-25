@@ -120,7 +120,7 @@ class ExtractReview(pyblish.api.InstancePlugin):
             ).format(str(instance_families)))
         return profile_outputs
 
-    def _get_outputs_per_representaions(self, instance, profile_outputs):
+    def _get_outputs_per_representations(self, instance, profile_outputs):
         outputs_per_representations = []
         for repre in instance.data["representations"]:
             repre_name = str(repre.get("name"))
@@ -184,7 +184,7 @@ class ExtractReview(pyblish.api.InstancePlugin):
             return
 
         # Loop through representations
-        outputs_per_repres = self._get_outputs_per_representaions(
+        outputs_per_repres = self._get_outputs_per_representations(
             instance, profile_outputs
         )
         for repre, outputs in outputs_per_repres:
