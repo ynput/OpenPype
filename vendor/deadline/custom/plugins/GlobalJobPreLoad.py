@@ -28,7 +28,7 @@ def inject_openpype_environment(deadlinePlugin):
                 "The path to the render executable can be configured " +
                 "from the Plugin Configuration in the Deadline Monitor.")
 
-        print("--- penPype executable: {}".format(openpype_app))
+        print("--- OpenPype executable: {}".format(openpype_app))
 
         # tempfile.TemporaryFile cannot be used because of locking
         export_url = os.path.join(tempfile.gettempdir(),
