@@ -16,9 +16,6 @@ from openpype.lib import (
 
     path_to_subprocess_arg,
 
-    should_decompress,
-    get_decompress_dir,
-    decompress
 )
 import speedcopy
 
@@ -426,34 +423,8 @@ class ExtractReview(pyblish.api.InstancePlugin):
             value for value in _ffmpeg_audio_filters if value.strip()
         ]
 
-        if isinstance(new_repre['files'], list):
-            input_files_urls = [os.path.join(new_repre["stagingDir"], f) for f
-                                in new_repre['files']]
-            test_path = input_files_urls[0]
-        else:
-            test_path = os.path.join(
-                new_repre["stagingDir"], new_repre['files'])
-        do_decompress = should_decompress(test_path)
-
-        if do_decompress:
-            # change stagingDir, decompress first
-            # calculate all paths with modified directory, used on too many
-            # places
-            # will be purged by cleanup.py automatically
-            orig_staging_dir = new_repre["stagingDir"]
-            new_repre["stagingDir"] = get_decompress_dir()
-
         # Prepare input and output filepaths
         self.input_output_paths(new_repre, output_def, temp_data)
-
-        if do_decompress:
-            input_file = temp_data["full_input_path"].\
-                replace(new_repre["stagingDir"], orig_staging_dir)
-
-            decompress(new_repre["stagingDir"], input_file,
-                       temp_data["frame_start"],
-                       temp_data["frame_end"],
-                       self.log)
 
         # Set output frames len to 1 when ouput is single image
         if (
