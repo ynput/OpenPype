@@ -124,7 +124,7 @@ def run_subprocess(*args, **kwargs):
         if full_output:
             full_output += "\n"
         full_output += _stderr
-        logger.warning(_stderr)
+        logger.info(_stderr)
 
     if proc.returncode != 0:
         exc_msg = "Executing arguments was not successful: \"{}\"".format(args)
