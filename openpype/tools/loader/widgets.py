@@ -813,8 +813,9 @@ class ThumbnailWidget(QtWidgets.QLabel):
             {"_id": doc_id},
             {"data.thumbnail_id"}
         )
-
-        thumbnail_id = doc.get("data", {}).get("thumbnail_id")
+        thumbnail_id = None
+        if doc:
+            thumbnail_id = doc.get("data", {}).get("thumbnail_id")
         if thumbnail_id == self.current_thumb_id:
             if self.current_thumbnail is None:
                 self.set_pixmap()
