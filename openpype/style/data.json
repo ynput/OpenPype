@@ -101,6 +101,9 @@
             "project-mid": "#FF8C1A",
             "project-dark": "#E67300",
 
+            "label-fg": "#969b9e",
+            "label-fg-hover": "#b8c1c5",
+
             "breadcrumbs-btn-bg": "rgba(127, 127, 127, 60)",
             "breadcrumbs-btn-bg-hover": "rgba(127, 127, 127, 90)",
 
