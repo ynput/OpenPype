@@ -2818,3 +2818,21 @@ def set_colorspace():
     cmds.colorManagementPrefs(e=True, renderingSpaceName=renderSpace)
     viewTransform = root_dict["viewTransform"]
     cmds.colorManagementPrefs(e=True, viewTransformName=viewTransform)
+
+    # forth set policy path
+    if root_dict.get("policyFilePath"):
+        unresolved_path = root_dict["policyFilePath"]
+        policy_paths = unresolved_path[platform.system().lower()]
+
+        resolved_path = None
+        for policy_p in policy_paths:
+            resolved_path = str(policy_p).format(**os.environ)
+            if not os.path.exists(resolved_path):
+                continue
+
+        if resolved_path:
+            filepath = str(resolved_path).replace("\\", "/")
+            os.environ["MAYA_COLOR_MANAGEMENT_POLICY_FILE"] = filepath
+            log.debug("maya '{}' changed to: {}".format(
+                "policyFilePath", resolved_path))
+            root_dict.pop("policyFilePath")

@@ -181,7 +181,12 @@
                 "linux": []
             },
             "renderSpace": "scene-linear Rec 709/sRGB",
-            "viewTransform": "sRGB gamma"
+            "viewTransform": "sRGB gamma",
+            "policyFilePath": {
+                "windows": [],
+                "darwin": [],
+                "linux": []
+            }
         }
     }
 }

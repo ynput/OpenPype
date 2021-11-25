@@ -363,7 +363,7 @@
             "key": "maya",
             "type": "dict",
             "label": "Maya",
-            "children": [    
+            "children": [
                 {
                     "key": "colorManagementPreference",
                     "type": "dict",
@@ -386,6 +386,13 @@
                             "type": "text",
                             "key": "viewTransform",
                             "label": "Viewer Transform"
+                        },
+                        {
+                            "type": "path",
+                            "key": "policyFilePath",
+                            "label": "Maya color managment policy file path",
+                            "multiplatform": true,
+                            "multipath": true
                         }
                     ]
             }
