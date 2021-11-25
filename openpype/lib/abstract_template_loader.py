@@ -9,6 +9,13 @@ from openpype.settings import get_project_settings
 from openpype.lib import Anatomy, get_linked_assets, get_loaders_by_name,\
     collect_last_version_repres
 
+from openpype.lib.build_template_exceptions import (
+    TemplateAlreadyImported,
+    TemplateLoadingFailed,
+    TemplateProfileNotFound,
+    TemplateNotFound,
+    )
+
 
 @six.add_metaclass(ABCMeta)
 class AbstractTemplateLoader:
@@ -40,9 +47,22 @@ class AbstractTemplateLoader:
             self.log.warning("There are no registered loaders.")
             return
 
-    def process(self):
-        self.import_template(self.template_path)
-        self.populate_template()
+    def template_already_imported(self, err_msg):
+        """In case template was already loaded.
+        Raise the error as a default action.
+
+        Override this method in your template loader implementation
+        to manage this case."""
+        raise TemplateAlreadyImported(err_msg)
+
+    def template_loading_failed(self, err_msg):
+        """In case template loading failed
+        Raise the error as a default action.
+
+        Override this method in your template loader implementation
+        to manage this case.
+        """
+        raise TemplateLoadingFailed(err_msg)
 
     @property
     def template_path(self):
@@ -167,6 +187,63 @@ class AbstractTemplateLoader:
             print("or that the build template is malformed, "
                   "continue at your own risks.")
 
+    def update_template(self):
+        """Check if new assets where linked"""
+        loaders_by_name = self.loaders_by_name
+        current_asset = self.current_asset
+        current_asset_docs = self.current_asset_docs
+
+        linked_asset_docs = get_linked_assets(current_asset_docs)
+        assets_to_load = {asset['name'] for asset in linked_asset_docs}
+        version_repres = collect_last_version_repres(
+            [current_asset_docs] + linked_asset_docs)
+
+        representations_by_id = self.get_representations_by_id(version_repres)
+
+        context_representations_by_id = dict()
+        linked_representations_by_id = dict()
+        for k in representations_by_id.keys():
+            asset = representations_by_id[k]['context']['asset']
+            if asset == current_asset:
+                context_representations_by_id[k] = representations_by_id[k]
+            else:
+                linked_representations_by_id[k] = representations_by_id[k]
+
+        sorted_placeholders = self.get_sorted_placeholders()
+
+        loaded_containers_by_id = self.get_loaded_containers_by_id()
+        # loaded_containers_by_id = self.update_containers(
+        #     loaded_containers_by_id)
+        print("LOADED CONTAINER ID", loaded_containers_by_id.keys())
+        loaded_assets = set()
+        for placeholder in sorted_placeholders:
+            if placeholder.data['builder_type'] == 'context_asset':
+                representations_by_id = context_representations_by_id
+                assets_to_load.add(current_asset)
+            else:
+                representations_by_id = linked_representations_by_id
+            for items in representations_by_id.items():
+                representation_id, representation = items
+                if not placeholder.is_repres_valid(representation):
+                    continue
+                print("REP ID", str(representation_id))
+                if str(representation_id) in loaded_containers_by_id:
+                    print("Already in scene", representation_id)
+                    continue
+                container = avalon.api.load(
+                    loaders_by_name[placeholder.loader],
+                    representation_id)
+                placeholder.parent_in_hierarchy(container)
+                loaded_assets.add(representation['context']['asset'])
+            placeholder.clean()
+
+        if not loaded_assets == assets_to_load:
+            unloaded = assets_to_load - loaded_assets
+            print("Error found while loading {}".format(unloaded))
+            print("It's possible that a needed asset wasn't published")
+            print("or that the build template is malformed, "
+                  "continue at your own risks.")
+
     def get_sorted_placeholders(self):
         placeholder_class = self.placeholder_class
         placeholders = map(placeholder_class, self.get_template_nodes())
@@ -181,6 +258,11 @@ class AbstractTemplateLoader:
             for asset in version_representations.values()
             for subset in asset['subsets'].values()
             for representation in subset['version']['repres']}
+
+    @abstractmethod
+    def get_loaded_containers_by_id(self):
+        """    """
+        pass
 
     @abstractmethod
     def import_template(self, template_path):
@@ -333,14 +415,3 @@ class AbstractPlaceholder:
         is_valid &= data['family'] == rep_family
 
         return is_valid
-
-
-class TemplateNotFound(Exception):
-    """Exception raised when template does not exist."""
-    pass
-
-
-class TemplateProfileNotFound(Exception):
-    """Exception raised when current profile
-    doesn't match any template profile"""
-    pass

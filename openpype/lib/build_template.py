@@ -1,14 +1,31 @@
 import openpype
 from openpype.lib import AbstractPlaceholder, AbstractTemplateLoader
-
+from .build_template_exceptions import *
 import importlib
 
-module_path_format = 'openpype.hosts.{host}.api.template_loader'
+_module_path_format = 'openpype.hosts.{host}.api.template_loader'
 
 
-def build_workfile_template(self):
+def build_workfile_template(args):
+    template_loader = build_template_loader()
+    try:
+        template_loader.import_template(template_loader.template_path)
+    except TemplateAlreadyImported as err:
+        template_loader.template_already_imported(err)
+    except TemplateLoadingFailed as err:
+        template_loader.template_loading_failed(err)
+    else:
+        template_loader.populate_template()
+
+
+def update_workfile_template(args):
+    template_loader = build_template_loader()
+    template_loader.update_template()
+
+
+def build_template_loader():
     host_name = openpype.avalon.registered_host().__name__.partition('.')[2]
-    module_path = module_path_format.format(host=host_name)
+    module_path = _module_path_format.format(host=host_name)
     module = importlib.import_module(module_path)
     if not module:
         raise MissingHostTemplateModule(
@@ -26,18 +43,4 @@ def build_workfile_template(self):
     if not template_placeholder_class:
         raise MissingTemplatePlaceholderClass()
     template_placeholder_class = template_placeholder_class[0]
-
-    template_loader = template_loader_class(template_placeholder_class)
-    template_loader.process()
-
-class MissingHostTemplateModule(Exception):
-    """Error raised when expected module does not exists"""
-    pass
-
-class MissingTemplatePlaceholderClass(Exception):
-    """ """
-    pass
-
-class MissingTemplateLoaderClass(Exception):
-    """ """
-    pass
+    return template_loader_class(template_placeholder_class)

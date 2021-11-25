@@ -43,7 +43,8 @@ from .lib.avalon_context import (
 )
 
 from .lib.build_template import (
-    build_workfile_template
+    build_workfile_template,
+    update_workfile_template
 )
 
 from . import resources

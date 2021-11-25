@@ -8,7 +8,7 @@ import maya.cmds as cmds
 
 from avalon.maya import pipeline
 
-from openpype.api import build_workfile_template
+from openpype.api import build_workfile_template, update_workfile_template
 from lib_template_builder import create_place_holder
 from openpype.settings import get_project_settings
 from openpype.tools.utils import host_tools
@@ -48,6 +48,11 @@ def deferred():
             "Build Workfile from template",
             parent=_builder_menu,
             command=build_workfile_template
+        )
+        cmds.menuItem(
+            "Update Workfile from template",
+            parent=_builder_menu,
+            command=update_workfile_template
         )
         cmds.menuItem(divider=True)
         cmds.menuItem(
