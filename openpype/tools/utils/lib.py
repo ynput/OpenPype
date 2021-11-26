@@ -499,7 +499,7 @@ def get_repre_icons():
 
         provider, _ = os.path.splitext(file_name)
 
-        pix_url = "{}{}{}".format(resource_path, os.path.sep, file_name)
+        pix_url = os.path.join(resource_path, file_name)
         icons[provider] = QtGui.QIcon(pix_url)
 
     return icons
