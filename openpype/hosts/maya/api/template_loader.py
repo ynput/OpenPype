@@ -84,20 +84,13 @@ class MayaPlaceholder(openpype.lib.AbstractPlaceholder):
 
     def get_data(self, node):
         user_data = dict()
-        for attr in self.attributes:
+        for attr in self.attributes.union(self.optional_attributes):
             attribute_name = '{}.{}'.format(node, attr)
             if not cmds.attributeQuery(attr, node=node, exists=True):
                 print("{} not found".format(attribute_name))
                 continue
             user_data[attr] = cmds.getAttr(
                 attribute_name,
-                asString=True)
-        for attr in self.optional_attributes:
-            attribute_name = 'optional_settings.{}'.format(node, attr)
-            if not cmds.attributeQuery(attribute_name, node=node, exists=True):
-                continue
-            user_data[attr] = cmds.getAttr(
-                node + '.' + attribute_name,
                 asString=True)
         user_data['parent'] = (
             cmds.getAttr(node + '.parent', asString=True)

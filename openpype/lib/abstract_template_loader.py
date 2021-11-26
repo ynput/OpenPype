@@ -230,6 +230,7 @@ class AbstractTemplateLoader:
                 if not placeholder.is_repres_valid(representation):
                     continue
                 if str(representation_id) in loaded_containers_by_id:
+                    print("Already in scene : ", representation_id)
                     continue
                 container = avalon.api.load(
                     loaders_by_name[placeholder.loader],
@@ -410,8 +411,8 @@ class AbstractPlaceholder:
         rep_hierarchy = representation['context']['hierarchy']
         rep_family = representation['context']['family']
 
-        is_valid = bool(re.match(data.get('asset', ''), rep_asset))
-        is_valid &= bool(re.match(data.get('hierarchy', ''), rep_hierarchy))
+        is_valid = bool(re.search(data.get('asset', ''), rep_asset))
+        is_valid &= bool(re.search(data.get('hierarchy', ''), rep_hierarchy))
         is_valid &= data['representation'] == rep_name
         is_valid &= data['family'] == rep_family
 
