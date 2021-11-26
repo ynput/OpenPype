@@ -1,16 +1,16 @@
 import getpass
 import os
 
-from avalon.tvpaint import lib, pipeline, get_current_workfile_context
 from avalon import api, io
 from openpype.lib import (
     get_workfile_template_key_from_context,
     get_workdir_data
 )
 from openpype.api import Anatomy
+from openpype.hosts.tvpaint.api import lib, pipeline, plugin
 
 
-class LoadWorkfile(pipeline.Loader):
+class LoadWorkfile(plugin.Loader):
     """Load workfile."""
 
     families = ["workfile"]
@@ -24,7 +24,7 @@ class LoadWorkfile(pipeline.Loader):
         host = api.registered_host()
         current_file = host.current_file()
 
-        context = get_current_workfile_context()
+        context = pipeline.get_current_workfile_context()
 
         filepath = self.fname.replace("\\", "/")
 
