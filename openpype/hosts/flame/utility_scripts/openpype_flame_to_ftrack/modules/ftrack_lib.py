@@ -90,21 +90,13 @@ class FtrackComponentCreator:
         self.session = session
         self._get_ftrack_location()
 
-
-    def generate_temp_data(self, selection, temp_folder, change_preset_data):
-        print(">>>>> self.temp_dir: " + str(self.temp_dir))
-        print(">>>>> self.thumbnails: " + str(self.thumbnails))
-        print(">>>>> self.videos: " + str(self.videos))
-
-        if self.temp_dir:
-            return temp_folder
-
+    def generate_temp_data(self, selection, change_preset_data):
         with app_utils.make_temp_dir() as tempdir_path:
             for seq in selection:
                 app_utils.export_thumbnail(
                     seq, tempdir_path, change_preset_data)
                 app_utils.export_video(seq, tempdir_path, change_preset_data)
-                temp_files = os.listdir(temp_folder)
+                temp_files = os.listdir(tempdir_path)
                 self.thumbnails = [f for f in temp_files if "jpg" in f]
                 self.videos = [f for f in temp_files if "mov" in f]
                 self.temp_dir = tempdir_path

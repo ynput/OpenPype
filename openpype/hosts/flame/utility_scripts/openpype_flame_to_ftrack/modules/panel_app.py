@@ -1,3 +1,9 @@
+from ftrack_lib import (
+    get_ftrack_session,
+    FtrackEntityOperator,
+    FtrackComponentCreator
+)
+import app_utils
 import os
 from PySide2 import QtWidgets, QtCore
 import uiwidgets
@@ -5,17 +11,12 @@ import flame
 
 import ftrack_lib
 reload(ftrack_lib)
-import app_utils
 reload(app_utils)
 
-from ftrack_lib import (
-    get_ftrack_session,
-    FtrackEntityOperator,
-    FtrackComponentCreator
-)
 
 class MainWindow(QtWidgets.QWidget):
     can_close = True
+
     def __init__(self, klass, *args, **kwargs):
         super(MainWindow, self).__init__(*args, **kwargs)
         self.panel_class = klass
@@ -28,6 +29,7 @@ class MainWindow(QtWidgets.QWidget):
 
         # now the panel can be closed
         event.accept()
+
 
 class FlameToFtrackPanel(object):
     session = None
@@ -77,23 +79,16 @@ class FlameToFtrackPanel(object):
         self.window.setWindowTitle('Sequence Shots to Ftrack')
         self.window.setWindowFlags(QtCore.Qt.WindowStaysOnTopHint)
         self.window.setAttribute(QtCore.Qt.WA_DeleteOnClose)
+        self.window.setFocusPolicy(QtCore.Qt.StrongFocus)
         self.window.setStyleSheet('background-color: #313131')
 
-        print(1)
         self._create_project_widget()
-        print(2)
         self._create_tree_widget()
-        print(3)
         self._set_sequence_params()
-        print(4)
         self._generate_widgets()
-        print(5)
         self._generate_layouts()
-        print(6)
         self._timeline_info()
-        print(7)
         self._fix_resolution()
-        print(8)
 
         self.window.show()
 
@@ -323,13 +318,15 @@ class FlameToFtrackPanel(object):
             self.session, self.project_entity)
         component_creator = FtrackComponentCreator(self.session)
 
-        self.temp_data_dir = component_creator.generate_temp_data(
-            self.selection,
-            self.temp_data_dir,
-            {
-                "nbHandles": handles
-            }
-        )
+        if not self.temp_data_dir:
+            self.window.hide()
+            self.temp_data_dir = component_creator.generate_temp_data(
+                self.selection,
+                {
+                    "nbHandles": handles
+                }
+            )
+            self.window.show()
 
         # Get all selected items from treewidget
         for item in self.tree.selectedItems():
@@ -349,6 +346,8 @@ class FlameToFtrackPanel(object):
             video_fp = component_creator.get_video_path(shot_name)
 
             print("processed comps: {}".format(self.processed_components))
+            print("processed thumb_fp: {}".format(thumb_fp))
+
             processed = False
             if thumb_fp not in self.processed_components:
                 self.processed_components.append(thumb_fp)
