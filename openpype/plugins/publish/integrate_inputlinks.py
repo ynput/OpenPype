@@ -103,7 +103,7 @@ class IntegrateInputLinks(pyblish.api.ContextPlugin):
         # future.
         link = OrderedDict()
         link["type"] = link_type
-        link["input"] = io.ObjectId(input_id)
+        link["id"] = io.ObjectId(input_id)
         link["linkedBy"] = "publish"
 
         if "inputLinks" not in version_doc["data"]:
