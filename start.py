@@ -451,9 +451,8 @@ def _validate_thirdparty_binaries():
     oiio_result = None
     if oiio_tool_path is not None:
         oiio_result = distutils.spawn.find_executable(oiio_tool_path)
-
-    if oiio_result is None:
-        raise RuntimeError(error_msg.format("OpenImageIO"))
+        if oiio_result is None:
+            raise RuntimeError(error_msg.format("OpenImageIO"))
 
 
 def _process_arguments() -> tuple:
