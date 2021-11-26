@@ -16,11 +16,15 @@ from openpype.tools.utils.delegates import (
     VersionDelegate,
     PrettyTimeDelegate
 )
-from openpype.tools.utils.widgets import OptionalMenu
+from openpype.tools.utils.widgets import (
+    OptionalMenu,
+    PlaceholderLineEdit
+)
 from openpype.tools.utils.views import (
     TreeViewSpinner,
     DeselectableTreeView
 )
+from openpype.tools.assetlinks.widgets import SimpleLinkView
 
 from .model import (
     SubsetsModel,
@@ -174,7 +178,7 @@ class SubsetWidget(QtWidgets.QWidget):
         family_proxy = FamiliesFilterProxyModel()
         family_proxy.setSourceModel(proxy)
 
-        subset_filter = QtWidgets.QLineEdit(self)
+        subset_filter = PlaceholderLineEdit(self)
         subset_filter.setPlaceholderText("Filter subsets..")
 
         group_checkbox = QtWidgets.QCheckBox("Enable Grouping", self)
@@ -809,8 +813,9 @@ class ThumbnailWidget(QtWidgets.QLabel):
             {"_id": doc_id},
             {"data.thumbnail_id"}
         )
-
-        thumbnail_id = doc.get("data", {}).get("thumbnail_id")
+        thumbnail_id = None
+        if doc:
+            thumbnail_id = doc.get("data", {}).get("thumbnail_id")
         if thumbnail_id == self.current_thumb_id:
             if self.current_thumbnail is None:
                 self.set_pixmap()
@@ -845,19 +850,25 @@ class VersionWidget(QtWidgets.QWidget):
     def __init__(self, dbcon, parent=None):
         super(VersionWidget, self).__init__(parent=parent)
 
-        layout = QtWidgets.QVBoxLayout(self)
-        layout.setContentsMargins(0, 0, 0, 0)
-        label = QtWidgets.QLabel("Version", self)
         data = VersionTextEdit(dbcon, self)
         data.setReadOnly(True)
 
-        layout.addWidget(label)
-        layout.addWidget(data)
+        depend_widget = SimpleLinkView(dbcon, self)
+
+        tab = QtWidgets.QTabWidget()
+        tab.addTab(data, "Version Info")
+        tab.addTab(depend_widget, "Dependency")
+
+        layout = QtWidgets.QVBoxLayout(self)
+        layout.setContentsMargins(0, 0, 0, 0)
+        layout.addWidget(tab)
 
         self.data = data
+        self.depend_widget = depend_widget
 
     def set_version(self, version_doc):
         self.data.set_version(version_doc)
+        self.depend_widget.set_version(version_doc)
 
 
 class FamilyModel(QtGui.QStandardItemModel):
