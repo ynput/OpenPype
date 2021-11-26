@@ -370,6 +370,8 @@ class PypeTrayStarter(QtCore.QObject):
             splash = self._get_splash()
             splash.show()
             self._tray_widget.show()
+            # Make sure tray and splash are painted out
+            QtWidgets.QApplication.processEvents()
 
         elif self._timer_counter == 1:
             self._timer_counter += 1
