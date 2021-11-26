@@ -271,7 +271,7 @@ def get_linked_asset_ids(asset_doc):
     if not asset_doc:
         return output
 
-    input_links = asset_doc["data"].get("inputsLinks") or []
+    input_links = asset_doc["data"].get("inputLinks") or []
     if input_links:
         output = [item["_id"] for item in input_links]
     return output
