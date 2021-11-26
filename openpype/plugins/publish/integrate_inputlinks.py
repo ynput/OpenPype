@@ -55,6 +55,7 @@ class IntegrateInputLinks(pyblish.api.ContextPlugin):
 
         if workfile is None:
             self.log.warn("No workfile in this publish session.")
+            return
         else:
             workfile_version_doc = workfile.data["versionEntity"]
             # link all loaded versions in scene into workfile
