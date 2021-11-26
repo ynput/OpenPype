@@ -55,23 +55,22 @@ class IntegrateInputLinks(pyblish.api.ContextPlugin):
 
         if workfile is None:
             self.log.warn("No workfile in this publish session.")
-            return
-
-        workfile_version_doc = workfile.data["versionEntity"]
-        # link all loaded versions in scene into workfile
-        for version in context.data.get("loadedVersions", []):
-            self.add_link(
-                link_type="reference",
-                input_id=version["version"],
-                version_doc=workfile_version_doc,
-            )
-        # link workfile to all publishing versions
-        for instance in publishing:
-            self.add_link(
-                link_type="generative",
-                input_id=workfile_version_doc["_id"],
-                version_doc=instance.data["versionEntity"],
-            )
+        else:
+            workfile_version_doc = workfile.data["versionEntity"]
+            # link all loaded versions in scene into workfile
+            for version in context.data.get("loadedVersions", []):
+                self.add_link(
+                    link_type="reference",
+                    input_id=version["version"],
+                    version_doc=workfile_version_doc,
+                )
+            # link workfile to all publishing versions
+            for instance in publishing:
+                self.add_link(
+                    link_type="generative",
+                    input_id=workfile_version_doc["_id"],
+                    version_doc=instance.data["versionEntity"],
+                )
 
         # link versions as dependencies to the instance
         for instance in publishing:
@@ -82,7 +81,8 @@ class IntegrateInputLinks(pyblish.api.ContextPlugin):
                     version_doc=instance.data["versionEntity"],
                 )
 
-        publishing.append(workfile)
+        if workfile is not None:
+            publishing.append(workfile)
         self.write_links_to_database(publishing)
 
     def add_link(self, link_type, input_id, version_doc):
