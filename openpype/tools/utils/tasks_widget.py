@@ -4,11 +4,11 @@ from avalon import style
 from avalon.vendor import qtawesome
 
 from .views import DeselectableTreeView
-from .constants import (
-    TASK_ORDER_ROLE,
-    TASK_TYPE_ROLE,
-    TASK_NAME_ROLE
-)
+
+
+TASK_NAME_ROLE = QtCore.Qt.UserRole + 1
+TASK_TYPE_ROLE = QtCore.Qt.UserRole + 2
+TASK_ORDER_ROLE = QtCore.Qt.UserRole + 3
 
 
 class TasksModel(QtGui.QStandardItemModel):

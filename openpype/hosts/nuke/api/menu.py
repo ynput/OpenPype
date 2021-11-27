@@ -1,6 +1,7 @@
 import os
 import nuke
 from avalon.api import Session
+from avalon.nuke.pipeline import get_main_window
 
 from .lib import WorkfileSettings
 from openpype.api import Logger, BuildWorkfile, get_current_project_settings

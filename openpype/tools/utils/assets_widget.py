@@ -564,6 +564,8 @@ class AssetsWidget(QtWidgets.QWidget):
     refreshed = QtCore.Signal()
     # on view selection change
     selection_changed = QtCore.Signal()
+    # It was double clicked on view
+    double_clicked = QtCore.Signal()
 
     def __init__(self, dbcon, parent=None):
         super(AssetsWidget, self).__init__(parent=parent)
@@ -618,6 +620,7 @@ class AssetsWidget(QtWidgets.QWidget):
         refresh_btn.clicked.connect(self.refresh)
         current_asset_btn.clicked.connect(self.set_current_session_asset)
         model.refreshed.connect(self._on_model_refresh)
+        view.doubleClicked.connect(self.double_clicked)
 
         self._current_asset_btn = current_asset_btn
         self._model = model

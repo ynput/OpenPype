@@ -213,6 +213,12 @@
                                             "name": "schema_representation_tags"
                                         },
                                         {
+                                            "key": "burnins",
+                                            "label": "Link to a burnin by name",
+                                            "type": "list",
+                                            "object_type": "text"
+                                        },
+                                        {
                                             "key": "ffmpeg_args",
                                             "label": "FFmpeg arguments",
                                             "type": "dict",
