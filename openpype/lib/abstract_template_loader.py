@@ -149,47 +149,31 @@ class AbstractTemplateLoader:
         current_asset_docs = self.current_asset_docs
 
         linked_asset_docs = get_linked_assets(current_asset_docs)
-        assets_to_load = {asset['name'] for asset in linked_asset_docs}
-        version_repres = collect_last_version_repres(
-            [current_asset_docs] + linked_asset_docs)
-
-        representations_by_id = self.get_representations_by_id(version_repres)
-
-        context_representations_by_id = dict()
-        linked_representations_by_id = dict()
-        for k in representations_by_id.keys():
-            asset = representations_by_id[k]['context']['asset']
-            if asset == current_asset:
-                context_representations_by_id[k] = representations_by_id[k]
-            else:
-                linked_representations_by_id[k] = representations_by_id[k]
+        linked_assets = [asset['name'] for asset in linked_asset_docs]
 
         sorted_placeholders = self.get_sorted_placeholders()
 
-        loaded_assets = set()
         for placeholder in sorted_placeholders:
-            if placeholder.data['builder_type'] == 'context_asset':
-                representations_by_id = context_representations_by_id
-                assets_to_load.add(current_asset)
-            else:
-                representations_by_id = linked_representations_by_id
-            for items in representations_by_id.items():
-                representation_id, representation = items
-                if not placeholder.is_repres_valid(representation):
+            db_filters = placeholder.to_db_filter(current_asset, linked_assets)
+            #get representation by assets
+
+            placeholder_representations = map(
+                lambda x: list(avalon.io.find(x)), db_filters)
+            for representations in placeholder_representations:
+                if not representations:
+                    print(placeholder.err_message())
                     continue
+
+                # get last representation by version
+                last_representation = max(
+                    representations,
+                    key= lambda x: x['context'].get('version'))
                 container = avalon.api.load(
                     loaders_by_name[placeholder.loader],
-                    representation_id)
+                    last_representation['_id'])
                 placeholder.parent_in_hierarchy(container)
-                loaded_assets.add(representation['context']['asset'])
-            placeholder.clean()
 
-        if not loaded_assets == assets_to_load:
-            unloaded = assets_to_load - loaded_assets
-            print("Error found while loading {}".format(unloaded))
-            print("It's possible that a needed asset wasn't published")
-            print("or that the build template is malformed, "
-                  "continue at your own risks.")
+            placeholder.clean()
 
     def update_template(self):
         """Check if new assets where linked"""
@@ -198,53 +182,36 @@ class AbstractTemplateLoader:
         current_asset_docs = self.current_asset_docs
 
         linked_asset_docs = get_linked_assets(current_asset_docs)
-        assets_to_load = {asset['name'] for asset in linked_asset_docs}
-        version_repres = collect_last_version_repres(
-            [current_asset_docs] + linked_asset_docs)
-
-        representations_by_id = self.get_representations_by_id(version_repres)
-
-        context_representations_by_id = dict()
-        linked_representations_by_id = dict()
-        for k in representations_by_id.keys():
-            asset = representations_by_id[k]['context']['asset']
-            if asset == current_asset:
-                context_representations_by_id[k] = representations_by_id[k]
-            else:
-                linked_representations_by_id[k] = representations_by_id[k]
+        linked_assets = [asset['name'] for asset in linked_asset_docs]
 
         sorted_placeholders = self.get_sorted_placeholders()
 
         loaded_containers_by_id = self.get_loaded_containers_by_id()
-        # loaded_containers_by_id = self.update_containers(
-        #     loaded_containers_by_id)
-        loaded_assets = set()
+
         for placeholder in sorted_placeholders:
-            if placeholder.data['builder_type'] == 'context_asset':
-                representations_by_id = context_representations_by_id
-                assets_to_load.add(current_asset)
-            else:
-                representations_by_id = linked_representations_by_id
-            for items in representations_by_id.items():
-                representation_id, representation = items
-                if not placeholder.is_repres_valid(representation):
+            db_filters = placeholder.to_db_filter(current_asset, linked_assets)
+            #get representation by assets
+
+            placeholder_representations = map(
+                lambda x: list(avalon.io.find(x)), db_filters)
+            for representations in placeholder_representations:
+                if not representations:
+                    print(placeholder.err_message())
                     continue
-                if str(representation_id) in loaded_containers_by_id:
-                    print("Already in scene : ", representation_id)
+
+                # get last representation by version
+                last_representation = max(
+                    representations,
+                    key= lambda x: x['context'].get('version'))
+                if str(last_representation['_id']) in loaded_containers_by_id:
+                    print("Already in scene : ", last_representation['_id'])
                     continue
                 container = avalon.api.load(
                     loaders_by_name[placeholder.loader],
-                    representation_id)
+                    last_representation['_id'])
                 placeholder.parent_in_hierarchy(container)
-                loaded_assets.add(representation['context']['asset'])
-            placeholder.clean()
 
-        if not loaded_assets == assets_to_load:
-            unloaded = assets_to_load - loaded_assets
-            print("Error found while loading {}".format(unloaded))
-            print("It's possible that a needed asset wasn't published")
-            print("or that the build template is malformed, "
-                  "continue at your own risks.")
+            placeholder.clean()
 
     def get_sorted_placeholders(self):
         placeholder_class = self.placeholder_class
@@ -253,13 +220,6 @@ class AbstractTemplateLoader:
         sorted_placeholders = sorted(valid_placeholders,
                                      key=placeholder_class.order)
         return sorted_placeholders
-
-    def get_representations_by_id(self, version_representations):
-        return {
-            representation['_id']: representation
-            for asset in version_representations.values()
-            for subset in asset['subsets'].values()
-            for representation in subset['version']['repres']}
 
     @abstractmethod
     def get_loaded_containers_by_id(self):
@@ -394,26 +354,16 @@ class AbstractPlaceholder:
         """
         pass
 
-    def is_repres_valid(self, representation):
-        """Check that given representation correspond to current
-        placeholders values in data
-
-        Args:
-            representation (dict): Representations in avalon BDD
+    @abstractmethod
+    def to_db_filter(self, current_asset, linked_asset):
+        """map current placeholder data as a db filter
+        args:
+            current_asset (String): Name of current asset in context
+            linked asset (list[String]) : Names of assets linked to
+                current asset in context
 
         Returns:
-            Bool: True if representation correspond to placeholder data
+            dict: a dictionnary describing a filter to look for asset in
+                a database
         """
-        data = self.data
-
-        rep_asset = representation['context']['asset']
-        rep_name = representation['context']['representation']
-        rep_hierarchy = representation['context']['hierarchy']
-        rep_family = representation['context']['family']
-
-        is_valid = bool(re.search(data.get('asset', ''), rep_asset))
-        is_valid &= bool(re.search(data.get('hierarchy', ''), rep_hierarchy))
-        is_valid &= data['representation'] == rep_name
-        is_valid &= data['family'] == rep_family
-
-        return is_valid
+        pass
