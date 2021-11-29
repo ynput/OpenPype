@@ -1010,6 +1010,14 @@ class Templates:
             TemplateResult: Filled or partially filled template containing all
                 data needed or missing for filling template.
         """
+        task_data = data.get("task")
+        if (
+            isinstance(task_data, StringType)
+            and "{task[name]}" in orig_template
+        ):
+            # Change task to dictionary if template expect dictionary
+            data["task"] = {"name": task_data}
+
         template, missing_optional, invalid_optional = (
             self._filter_optional(orig_template, data)
         )
@@ -1018,13 +1026,6 @@ class Templates:
         invalid_required = []
         missing_required = []
         replace_keys = []
-
-        task_data = data.get("task")
-        if (
-            isinstance(task_data, StringType)
-            and "{task[name]}" in orig_template
-        ):
-            data["task"] = {"name": task_data}
 
         for group in self.key_pattern.findall(template):
             orig_key = group[1:-1]
