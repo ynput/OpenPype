@@ -91,6 +91,7 @@ class Anatomy:
 
         self._data = get_anatomy_settings(project_name, site_name)
 
+        self._site_name = site_name
         self._templates_obj = Templates(self)
         self._roots_obj = Roots(self)
 
@@ -123,7 +124,7 @@ class Anatomy:
 
     def reset(self):
         """Reset values of cached data in templates and roots objects."""
-        self._data = get_anatomy_settings(self.project_name)
+        self._data = get_anatomy_settings(self.project_name, self._site_name)
         self.templates_obj.reset()
         self.roots_obj.reset()
 
