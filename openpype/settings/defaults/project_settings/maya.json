@@ -43,7 +43,18 @@
             "defaults": [
                 "Main"
             ],
-            "aov_separator": "underscore"
+            "aov_separator": "underscore",
+            "arnold_renderer": {
+                "image_format": "exr",
+                "multilayer_exr": false,
+                "tiled": true,
+                "additional_options": {}
+            },
+            "vray_renderer": {
+                "engine": "1",
+                "image_format": "exr",
+                "additional_options": {}
+            }
         },
         "CreateAnimation": {
             "enabled": true,
