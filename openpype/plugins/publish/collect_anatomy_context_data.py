@@ -69,7 +69,7 @@ class CollectAnatomyContextData(pyblish.api.ContextPlugin):
             },
             "asset": asset_entity["name"],
             "parent": parent_name,
-            "hierarchy": hierarchy.replace("\\", "/"),
+            "hierarchy": hierarchy,
             "task": {
                 "name": task_name,
                 "type": task_type,
