@@ -19,7 +19,7 @@ class CopyFilePath(api.Loader):
 
     @staticmethod
     def copy_path_to_clipboard(path):
-        from avalon.vendor.Qt import QtWidgets
+        from Qt import QtWidgets
 
         clipboard = QtWidgets.QApplication.clipboard()
         assert clipboard, "Must have running QApplication instance"

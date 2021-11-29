@@ -275,7 +275,7 @@ class CollectYetiRig(pyblish.api.InstancePlugin):
             list: file sequence.
 
         """
-        from avalon.vendor import clique
+        import clique
 
         escaped = re.escape(filepath)
         re_pattern = escaped.replace(pattern, "-?[0-9]+")
