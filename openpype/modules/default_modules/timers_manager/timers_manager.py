@@ -95,8 +95,10 @@ class TimersManager(OpenPypeModule, ITrayService):
         message_time = int(timers_settings["message_time"] * 60)
 
         auto_stop = timers_settings["auto_stop"]
+        platform_name = platform.system().lower()
         # Turn of auto stop on MacOs because pynput requires root permissions
-        if platform.system().lower() == "darwin" or full_time <= 0:
+        #    and on linux can cause thread locks on application close
+        if full_time <= 0 or platform_name in ("darwin", "linux"):
             auto_stop = False
 
         self.auto_stop = auto_stop
