@@ -57,14 +57,11 @@ We have a few required anatomy templates for OpenPype to work properly, however 
 | `project[code]` | Project's code |
 | `hierarchy` | All hierarchical parents as subfolders |
 | `asset` | Name of asset or shot |
-<<<<<<< HEAD
 | `task[name]` | Name of task |
 | `task[type]` | Type of task |
 | `task[short]` | Shortname of task |
-=======
 | `parent` | Name of parent folder |
 | `task` | Name of task |
->>>>>>> add7db0c0... add parent asset to doc
 | `version` | Version number |
 | `subset` | Subset name |
 | `family` | Main family name |
