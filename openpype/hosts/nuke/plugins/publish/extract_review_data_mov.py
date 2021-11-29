@@ -31,7 +31,7 @@ class ExtractReviewDataMov(openpype.api.Extractor):
             instance.data["representations"] = []
 
         staging_dir = os.path.normpath(
-            os.path.dirname(instance.data['path']))
+            os.path.dirname(instance.data["path"]))
 
         instance.data["stagingDir"] = staging_dir
 
@@ -83,9 +83,15 @@ class ExtractReviewDataMov(openpype.api.Extractor):
                     "Baking output `{}` with settings: {}".format(
                         o_name, o_data))
 
+                # check if settings have more then one preset
+                # so we dont need to add outputName to representation
+                # in case there is only one preset
+                multiple_presets = bool(len(self.outputs.keys()) > 1)
+
                 # create exporter instance
                 exporter = plugin.ExporterReviewMov(
-                    self, instance, o_name, o_data["extension"])
+                    self, instance, o_name, o_data["extension"],
+                    multiple_presets)
 
                 if "render.farm" in families:
                     if "review" in instance.data["families"]:
