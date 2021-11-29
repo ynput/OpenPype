@@ -94,8 +94,8 @@ class MayaPlaceholder(openpype.lib.AbstractPlaceholder):
                 asString=True)
         user_data['parent'] = (
             cmds.getAttr(node + '.parent', asString=True)
-            or node.rpartition('|')[0])
-        user_data['node'] = node.rpartition('|')[2]
+            or node.rpartition('|')[0] or "")
+        user_data['node'] = node
 
         self.data = user_data
 
@@ -108,7 +108,9 @@ class MayaPlaceholder(openpype.lib.AbstractPlaceholder):
         """
         roots = [container.partition('__')[0] + "_:_GRP"
                  for container in containers]
-        cmds.parent(roots, self.data['parent'])
+
+        if self.data['parent']:
+            cmds.parent(roots, self.data['parent'])
 
     def clean(self):
         """Hide placeholder
@@ -118,11 +120,51 @@ class MayaPlaceholder(openpype.lib.AbstractPlaceholder):
         to keep placeholder info available
         for future use
         """
-        node = self.data['node'].rpartition('|')[2]
-        cmds.setAttr(node + '.parent', self.data['parent'], type='string')
+        node = self.data['node']
+        if self.data['parent']:
+            cmds.setAttr(node + '.parent', self.data['parent'], type='string')
 
         if cmds.listRelatives(node, p=True):
-            cmds.parent(node, world=True)
+            node = cmds.parent(node, world=True)[0]
         cmds.sets(node, addElement=PLACEHOLDER_SET)
         cmds.hide(node)
-        cmds.setAttr(node + '.hiddenInOutliner', True)
+
+        cmds.setAttr(node+'.hiddenInOutliner', True)
+
+    def to_db_filter(self, c_asset, l_asset):
+        if self.data['builder_type'] == "context_asset":
+            return [{
+            "type": "representation",
+            "context.asset": {"$eq": c_asset, "$regex": self.data['asset']},
+            "context.subset": {"$regex": self.data['subset']},
+            "context.hierarchy": {"$regex": self.data['hierarchy']},
+            "context.representation": self.data['representation'],
+            "context.family": self.data['family'],
+            }]
+
+        elif self.data['builder_type'] == "linked_asset":
+            return [{
+            "type": "representation",
+            "context.asset": {"$eq": asset_name, "$regex": self.data['asset']},
+            "context.subset": {"$regex": self.data['subset']},
+            "context.hierarchy": {"$regex": self.data['hierarchy']},
+            "context.representation": self.data['representation'],
+            "context.family": self.data['family'],
+            } for asset_name in l_asset]
+
+        else:
+            return [{
+            "type": "representation",
+            "context.asset": {"$regex": self.data['asset']},
+            "context.subset": {"$regex": self.data['subset']},
+            "context.hierarchy": {"$regex": self.data['hierarchy']},
+            "context.representation": self.data['representation'],
+            "context.family": self.data['family'],
+            }]
+
+    def err_message(self):
+        return ("Error while trying to load a representation.\n"
+        "Either the subset wasn't published or the template is malformed.\n\n"
+        "Builder was looking for :\n{attributes}".format(
+            attributes="\n".join(["{}: {}".format(key.title(), value)
+            for key, value in self.data.items()])))
