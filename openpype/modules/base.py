@@ -271,9 +271,29 @@ def _load_modules():
 
     log = PypeLogger.get_logger("ModulesLoader")
 
-    # Look for OpenPype modules in paths defined with `get_module_dirs`
-    dirpaths = get_module_dirs()
+    # Import default modules imported from 'openpype.modules'
+    for default_module_name in (
+        "settings_action",
+        "launcher_action",
+        "project_manager_action",
+        "standalonepublish_action",
+    ):
+        try:
+            default_module = __import__(
+                "openpype.modules.{}".format(default_module_name),
+                fromlist=("", )
+            )
+            setattr(openpype_modules, default_module_name, default_module)
 
+        except Exception:
+            msg = (
+                "Failed to import default module '{}'."
+            ).format(default_module_name)
+            log.error(msg, exc_info=True)
+
+    # Look for OpenPype modules in paths defined with `get_module_dirs`
+    #   - dynamically imported OpenPype modules and addons
+    dirpaths = get_module_dirs()
     for dirpath in dirpaths:
         if not os.path.exists(dirpath):
             log.warning((
