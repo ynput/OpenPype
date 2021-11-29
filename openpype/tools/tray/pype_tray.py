@@ -374,6 +374,8 @@ class PypeTrayStarter(QtCore.QObject):
             QtWidgets.QApplication.processEvents()
 
         elif self._timer_counter == 1:
+            # Second processing of events to make sure splash is painted
+            QtWidgets.QApplication.processEvents()
             self._timer_counter += 1
             self._tray_widget.initialize_modules()
 
