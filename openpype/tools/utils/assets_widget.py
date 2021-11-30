@@ -430,8 +430,6 @@ class AssetModel(QtGui.QStandardItemModel):
             parent_id, parent_item = asset_items_queue.popleft()
             # Skip if there are no children
             children_ids = asset_ids_by_parents[parent_id]
-            if not children_ids:
-                continue
 
             # Go through current children of parent item
             # - find out items that were deleted and skip creation of already
