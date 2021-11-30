@@ -9,7 +9,7 @@ def create_placeholder():
     dialog = OptionDialog(parent=get_main_window())
     dialog.setWindowTitle("Create Placeholder")
 
-    build_types = ["context_asset", "linked_asset"]
+    build_types = ["context_asset", "linked_asset", "all_assets"]
     args = [
         qargparse.Separator("Main attributes"),
         qargparse.Enum(

@@ -1,7 +1,7 @@
 import openpype.lib
 
 from maya import cmds
-
+import avalon
 from openpype.lib.build_template_exceptions import TemplateAlreadyImported
 
 PLACEHOLDER_SET = 'PLACEHOLDERS_SET'
@@ -31,6 +31,15 @@ class MayaTemplateLoader(openpype.lib.AbstractTemplateLoader):
         cmds.sets(name=PLACEHOLDER_SET, empty=True)
         self.new_nodes = cmds.file(path, i=True, returnNewNodes=True)
         cmds.setAttr(PLACEHOLDER_SET + '.hiddenInOutliner', True)
+
+        for set in cmds.listSets(allSets=True):
+            if (cmds.objExists(set)
+                and cmds.attributeQuery('id', node=set, exists=True)
+                and cmds.getAttr(set+'.id') == 'pyblish.avalon.instance'):
+                if  cmds.attributeQuery('asset', node=set, exists=True):
+                    cmds.setAttr(
+                        set+'.asset',
+                        avalon.io.Session['AVALON_ASSET'], type='string')
 
         return True
 
@@ -71,8 +80,7 @@ class MayaTemplateLoader(openpype.lib.AbstractTemplateLoader):
 
     def get_loaded_containers_by_id(self):
         containers = cmds.sets('AVALON_CONTAINERS', q=True)
-        return {cmds.getAttr(container + '.representation'): container
-                for container in containers}
+        return [cmds.getAttr(container + '.representation') for container in containers]
 
 
 class MayaPlaceholder(openpype.lib.AbstractPlaceholder):
@@ -131,11 +139,12 @@ class MayaPlaceholder(openpype.lib.AbstractPlaceholder):
 
         cmds.setAttr(node+'.hiddenInOutliner', True)
 
-    def to_db_filter(self, c_asset, l_asset):
+    def convert_to_db_filters(self, current_asset, linked_asset):
         if self.data['builder_type'] == "context_asset":
             return [{
             "type": "representation",
-            "context.asset": {"$eq": c_asset, "$regex": self.data['asset']},
+            "context.asset": {
+                "$eq": current_asset, "$regex": self.data['asset']},
             "context.subset": {"$regex": self.data['subset']},
             "context.hierarchy": {"$regex": self.data['hierarchy']},
             "context.representation": self.data['representation'],
@@ -150,7 +159,7 @@ class MayaPlaceholder(openpype.lib.AbstractPlaceholder):
             "context.hierarchy": {"$regex": self.data['hierarchy']},
             "context.representation": self.data['representation'],
             "context.family": self.data['family'],
-            } for asset_name in l_asset]
+            } for asset_name in linked_asset]
 
         else:
             return [{

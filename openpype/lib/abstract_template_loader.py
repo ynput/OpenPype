@@ -1,13 +1,13 @@
 import os
-import re
 import avalon
 from abc import ABCMeta, abstractmethod
 
 import six
 
 from openpype.settings import get_project_settings
-from openpype.lib import Anatomy, get_linked_assets, get_loaders_by_name,\
-    collect_last_version_repres
+from openpype.lib import Anatomy, get_linked_assets, get_loaders_by_name
+
+from functools import reduce
 
 from openpype.lib.build_template_exceptions import (
     TemplateAlreadyImported,
@@ -15,7 +15,19 @@ from openpype.lib.build_template_exceptions import (
     TemplateProfileNotFound,
     TemplateNotFound
 )
+# Helper function
+# update last version in entity dict #Find better name ?
+def update_representations(entities, entity):
+    if entity['context']['asset'] not in entities:
+        entities[entity['context']['asset']] = entity
+    else:
+        current = entities[entity['context']['asset']]
+        incomming = entity
+        entities[entity['context']['asset']] = max(
+            [current, incomming],
+            key= lambda entity: entity["context"].get("version"))
 
+    return entities
 
 @six.add_metaclass(ABCMeta)
 class AbstractTemplateLoader:
@@ -132,7 +144,7 @@ class AbstractTemplateLoader:
                     task_name, host_name, solved_path))
         return solved_path
 
-    def populate_template(self):
+    def populate_template(self, override=None):
         """
         Use template placeholders to load assets and parent them in hierarchy
 
@@ -152,28 +164,27 @@ class AbstractTemplateLoader:
         linked_assets = [asset['name'] for asset in linked_asset_docs]
 
         sorted_placeholders = self.get_sorted_placeholders()
-
         for placeholder in sorted_placeholders:
-            db_filters = placeholder.to_db_filter(current_asset, linked_assets)
-            #get representation by assets
-
-            placeholder_representations = map(
-                lambda x: list(avalon.io.find(x)), db_filters)
-            for representations in placeholder_representations:
-                if not representations:
-                    print(placeholder.err_message())
-                    continue
-
-                # get last representation by version
-                last_representation = max(
-                    representations,
-                    key= lambda x: x['context'].get('version'))
-                container = avalon.api.load(
-                    loaders_by_name[placeholder.loader],
-                    last_representation['_id'])
-                placeholder.parent_in_hierarchy(container)
-
+            placeholder_db_filters = placeholder.convert_to_db_filters(
+                current_asset,
+                linked_assets)
+            # get representation by assets
+            for db_filter in placeholder_db_filters:
+                placeholder_representations = list(avalon.io.find(db_filter))
+                placeholder_representations = reduce(
+                        update_representations,
+                        placeholder_representations,
+                        dict()).values()
+                for last_representation in placeholder_representations:
+                    if not last_representation:
+                        print(placeholder.err_message())
+                        continue
+                    container = avalon.api.load(
+                        loaders_by_name[placeholder.loader],
+                        last_representation['_id'])
+                    placeholder.parent_in_hierarchy(container)
             placeholder.clean()
+    # Merge to populate_template
 
     def update_template(self):
         """Check if new assets where linked"""
@@ -184,33 +195,35 @@ class AbstractTemplateLoader:
         linked_asset_docs = get_linked_assets(current_asset_docs)
         linked_assets = [asset['name'] for asset in linked_asset_docs]
 
+        loaded_containers_by_id = self.get_loaded_containers_id()
         sorted_placeholders = self.get_sorted_placeholders()
-
-        loaded_containers_by_id = self.get_loaded_containers_by_id()
-
         for placeholder in sorted_placeholders:
-            db_filters = placeholder.to_db_filter(current_asset, linked_assets)
-            #get representation by assets
+            placeholder_db_filters = placeholder.convert_to_db_filters(
+                current_asset,
+                linked_assets)
 
-            placeholder_representations = map(
-                lambda x: list(avalon.io.find(x)), db_filters)
-            for representations in placeholder_representations:
-                if not representations:
-                    print(placeholder.err_message())
-                    continue
-
-                # get last representation by version
-                last_representation = max(
-                    representations,
-                    key= lambda x: x['context'].get('version'))
-                if str(last_representation['_id']) in loaded_containers_by_id:
-                    print("Already in scene : ", last_representation['_id'])
-                    continue
-                container = avalon.api.load(
-                    loaders_by_name[placeholder.loader],
-                    last_representation['_id'])
-                placeholder.parent_in_hierarchy(container)
-
+            for db_filter in placeholder_db_filters:
+                placeholder_representations = list(avalon.io.find(db_filter))
+                placeholder_representations = reduce(
+                        update_representations,
+                        placeholder_representations,
+                        dict()).values()
+                    # get last representation by version
+                placeholder_representations = reduce(
+                    update_representations,
+                    placeholder_representations,
+                    dict()).values()
+                for last_representation in placeholder_representations:
+                    if not last_representation:
+                        print(placeholder.err_message())
+                        continue
+                    if str(last_representation['_id']) in loaded_containers_by_id:
+                        print("Already in scene : ", last_representation['_id'])
+                        continue
+                    container = avalon.api.load(
+                        loaders_by_name[placeholder.loader],
+                        last_representation['_id'])
+                    placeholder.parent_in_hierarchy(container)
             placeholder.clean()
 
     def get_sorted_placeholders(self):
@@ -223,7 +236,7 @@ class AbstractTemplateLoader:
 
     @abstractmethod
     def get_loaded_containers_by_id(self):
-        """    """
+        """    """#TODO: Add doc
         pass
 
     @abstractmethod
@@ -355,7 +368,7 @@ class AbstractPlaceholder:
         pass
 
     @abstractmethod
-    def to_db_filter(self, current_asset, linked_asset):
+    def convert_to_db_filters(self, current_asset, linked_asset):
         """map current placeholder data as a db filter
         args:
             current_asset (String): Name of current asset in context
