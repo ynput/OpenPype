@@ -637,6 +637,7 @@ class AssetsWidget(QtWidgets.QWidget):
         self._model = model
         self._proxy = proxy
         self._view = view
+        self._last_project_name = None
 
         self.model_selection = {}
 
@@ -645,7 +646,12 @@ class AssetsWidget(QtWidgets.QWidget):
         return self._model.refreshing
 
     def refresh(self):
-        self._refresh_model()
+        project_name = self.dbcon.Session.get("AVALON_PROJECT")
+        clear_model = False
+        if project_name != self._last_project_name:
+            clear_model = True
+            self._last_project_name = project_name
+        self._refresh_model(clear_model)
 
     def stop_refresh(self):
         self._model.stop_refresh()
@@ -691,14 +697,14 @@ class AssetsWidget(QtWidgets.QWidget):
         self._set_loading_state(loading=False, empty=not has_item)
         self.refreshed.emit()
 
-    def _refresh_model(self):
+    def _refresh_model(self, clear=False):
         # Store selection
         self._set_loading_state(loading=True, empty=True)
 
         # Trigger signal before refresh is called
         self.refresh_triggered.emit()
         # Refresh model
-        self._model.refresh()
+        self._model.refresh(clear=clear)
 
     def _set_loading_state(self, loading, empty):
         self._view.set_loading_state(loading, empty)
