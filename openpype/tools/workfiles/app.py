@@ -100,9 +100,7 @@ class NameWindow(QtWidgets.QDialog):
 
         # Store project anatomy
         self.anatomy = anatomy
-        self.template = anatomy.templates[template_key]["file"].replace(
-            "{task}", "{task[name]}"
-        )
+        self.template = anatomy.templates[template_key]["file"]
         self.template_key = template_key
 
         # Btns widget

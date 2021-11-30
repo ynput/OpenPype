@@ -6,6 +6,7 @@ from avalon.vendor import qargparse
 import avalon.api as avalon
 import openpype.api as openpype
 from . import lib
+from copy import deepcopy
 
 log = openpype.Logger().get_logger(__name__)
 
@@ -799,7 +800,8 @@ class PublishClip:
         # increasing steps by index of rename iteration
         self.count_steps *= self.rename_index
 
-        hierarchy_formating_data = dict()
+        hierarchy_formating_data = {}
+        hierarchy_data = deepcopy(self.hierarchy_data)
         _data = self.track_item_default_data.copy()
         if self.ui_inputs:
             # adding tag metadata from ui
@@ -824,19 +826,19 @@ class PublishClip:
             _data.update({"shot": self.shot_num})
 
             # solve # in test to pythonic expression
-            for _k, _v in self.hierarchy_data.items():
+            for _k, _v in hierarchy_data.items():
                 if "#" not in _v["value"]:
                     continue
-                self.hierarchy_data[
+                hierarchy_data[
                     _k]["value"] = self._replace_hash_to_expression(
                         _k, _v["value"])
 
             # fill up pythonic expresisons in hierarchy data
-            for k, _v in self.hierarchy_data.items():
+            for k, _v in hierarchy_data.items():
                 hierarchy_formating_data[k] = _v["value"].format(**_data)
         else:
             # if no gui mode then just pass default data
-            hierarchy_formating_data = self.hierarchy_data
+            hierarchy_formating_data = hierarchy_data
 
         tag_hierarchy_data = self._solve_tag_hierarchy_data(
             hierarchy_formating_data
@@ -886,30 +888,38 @@ class PublishClip:
             "families": [self.data["family"]]
         }
 
-    def _convert_to_entity(self, key):
+    def _convert_to_entity(self, type, template):
         """ Converting input key to key with type. """
         # convert to entity type
-        entity_type = self.types.get(key, None)
+        entity_type = self.types.get(type, None)
 
         assert entity_type, "Missing entity type for `{}`".format(
-            key
+            type
         )
+
+        # first collect formating data to use for formating template
+        formating_data = {}
+        for _k, _v in self.hierarchy_data.items():
+            value = _v["value"].format(
+                **self.track_item_default_data)
+            formating_data[_k] = value
 
         return {
             "entity_type": entity_type,
-            "entity_name": self.hierarchy_data[key]["value"].format(
-                **self.track_item_default_data
+            "entity_name": template.format(
+                **formating_data
             )
         }
 
     def _create_parents(self):
         """ Create parents and return it in list. """
-        self.parents = list()
+        self.parents = []
 
         patern = re.compile(self.parents_search_patern)
-        par_split = [patern.findall(t).pop()
+
+        par_split = [(patern.findall(t).pop(), t)
                      for t in self.hierarchy.split("/")]
 
-        for key in par_split:
-            parent = self._convert_to_entity(key)
+        for type, template in par_split:
+            parent = self._convert_to_entity(type, template)
             self.parents.append(parent)

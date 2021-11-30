@@ -172,7 +172,9 @@ class LocalApplicationsWidgets(QtWidgets.QWidget):
     def _reset_app_widgets(self):
         while self.content_layout.count() > 0:
             item = self.content_layout.itemAt(0)
-            item.widget().hide()
+            widget = item.widget()
+            if widget is not None:
+                widget.setVisible(False)
             self.content_layout.removeItem(item)
         self.widgets_by_group_name.clear()
 

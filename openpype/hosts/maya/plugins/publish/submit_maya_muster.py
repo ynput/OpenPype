@@ -1,13 +1,14 @@
 import os
 import json
 import getpass
-import appdirs
 import platform
+
+import appdirs
+import requests
 
 from maya import cmds
 
 from avalon import api
-from avalon.vendor import requests
 
 import pyblish.api
 from openpype.hosts.maya.api import lib

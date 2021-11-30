@@ -1,4 +1,4 @@
-from avalon.vendor.Qt import QtWidgets
+from Qt import QtWidgets
 from avalon.vendor import qtawesome
 import avalon.fusion as avalon
 
