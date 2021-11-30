@@ -75,7 +75,8 @@ class BlendLayoutLoader(plugin.AssetLoader):
         container = None
 
         for empty in empties:
-            if empty.get(AVALON_PROPERTY):
+            if (empty.get(AVALON_PROPERTY) and
+                    empty.get(AVALON_PROPERTY).get('family') == 'layout'):
                 container = empty
                 break
 
@@ -174,7 +175,7 @@ class BlendLayoutLoader(plugin.AssetLoader):
         objects.reverse()
 
         armatures = [
-            obj for obj in bpy.data.objects 
+            obj for obj in bpy.data.objects
             if obj.type == 'ARMATURE' and obj.library is None]
         arm_act = {}
 
@@ -192,8 +193,8 @@ class BlendLayoutLoader(plugin.AssetLoader):
         curves = [obj for obj in data_to.objects if obj.type == 'CURVE']
 
         for curve in curves:
-            rig_name = curve.name.split(':')[0]
-            rig_obj = bpy.data.objects.get(rig_name)
+            curve_name = curve.name.split(':')[0]
+            curve_obj = bpy.data.objects.get(curve_name)
 
             local_obj = plugin.prepare_data(curve)
             plugin.prepare_data(local_obj.data)
@@ -204,9 +205,10 @@ class BlendLayoutLoader(plugin.AssetLoader):
             plugin.deselect_all()
             local_obj.select_set(True)
             bpy.context.view_layer.objects.active = local_obj
-            bpy.ops.object.mode_set(mode='EDIT')
-            bpy.ops.object.hook_reset()
-            bpy.ops.object.mode_set(mode='OBJECT')
+            if local_obj.library == None:
+                bpy.ops.object.mode_set(mode='EDIT')
+                bpy.ops.object.hook_reset()
+                bpy.ops.object.mode_set(mode='OBJECT')
             parent.objects.unlink(local_obj)
 
             local_obj.use_fake_user = True
@@ -220,7 +222,7 @@ class BlendLayoutLoader(plugin.AssetLoader):
             avalon_info = local_obj[AVALON_PROPERTY]
             avalon_info.update({"container_name": group_name})
 
-            local_obj.parent = rig_obj
+            local_obj.parent = curve_obj
             objects.append(local_obj)
 
         for armature in armatures:
