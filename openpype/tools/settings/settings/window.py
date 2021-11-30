@@ -5,7 +5,7 @@ from .categories import (
     ProjectWidget
 )
 from .widgets import ShadowWidget, RestartDialog
-from . import style
+from openpype import style
 
 from openpype.lib import is_admin_password_required
 from openpype.widgets import PasswordDialog
@@ -25,7 +25,7 @@ class MainWidget(QtWidgets.QWidget):
 
         self._password_dialog = None
 
-        self.setObjectName("MainWidget")
+        self.setObjectName("SettingsMainWidget")
         self.setWindowTitle("OpenPype Settings")
 
         self.resize(self.widget_width, self.widget_height)

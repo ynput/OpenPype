@@ -81,7 +81,8 @@ class IntegrateInputLinks(pyblish.api.ContextPlugin):
                     version_doc=instance.data["versionEntity"],
                 )
 
-        publishing.append(workfile)
+        if workfile is not None:
+            publishing.append(workfile)
         self.write_links_to_database(publishing)
 
     def add_link(self, link_type, input_id, version_doc):
@@ -103,7 +104,7 @@ class IntegrateInputLinks(pyblish.api.ContextPlugin):
         # future.
         link = OrderedDict()
         link["type"] = link_type
-        link["input"] = io.ObjectId(input_id)
+        link["id"] = io.ObjectId(input_id)
         link["linkedBy"] = "publish"
 
         if "inputLinks" not in version_doc["data"]:

@@ -1062,10 +1062,11 @@ class ExtractReview(pyblish.api.InstancePlugin):
             streams = ffprobe_streams(
                 full_input_path_single_file, self.log
             )
-        except Exception:
+        except Exception as exc:
             raise AssertionError((
-                "FFprobe couldn't read information about input file: \"{}\""
-            ).format(full_input_path_single_file))
+                "FFprobe couldn't read information about input file: \"{}\"."
+                " Error message: {}"
+            ).format(full_input_path_single_file, str(exc)))
 
         # Try to find first stream with defined 'width' and 'height'
         # - this is to avoid order of streams where audio can be as first

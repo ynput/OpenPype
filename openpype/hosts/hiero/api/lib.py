@@ -5,13 +5,13 @@ import os
 import re
 import sys
 import ast
+import shutil
 import hiero
+from Qt import QtWidgets
 import avalon.api as avalon
 import avalon.io
-from avalon.vendor.Qt import QtWidgets
 from openpype.api import (Logger, Anatomy, get_anatomy_settings)
 from . import tags
-import shutil
 from compiler.ast import flatten
 
 try:

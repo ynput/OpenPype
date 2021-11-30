@@ -6,19 +6,19 @@ import platform
 import uuid
 import math
 
-import bson
 import json
 import logging
 import itertools
 import contextlib
 from collections import OrderedDict, defaultdict
 from math import ceil
+from six import string_types
+import bson
 
 from maya import cmds, mel
 import maya.api.OpenMaya as om
 
 from avalon import api, maya, io, pipeline
-from avalon.vendor.six import string_types
 import avalon.maya.lib
 import avalon.maya.interactive
 
@@ -1936,7 +1936,7 @@ def validate_fps():
 
     if current_fps != fps:
 
-        from avalon.vendor.Qt import QtWidgets
+        from Qt import QtWidgets
         from ...widgets import popup
 
         # Find maya main window
@@ -2694,7 +2694,7 @@ def update_content_on_context_change():
 
 
 def show_message(title, msg):
-    from avalon.vendor.Qt import QtWidgets
+    from Qt import QtWidgets
     from openpype.widgets import message_window
 
     # Find maya main window
