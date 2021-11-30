@@ -10,6 +10,7 @@ import tempfile
 from pathlib import Path
 from typing import Union, Callable, List, Tuple
 import hashlib
+import platform
 
 from zipfile import ZipFile, BadZipFile
 
@@ -196,21 +197,23 @@ class OpenPypeVersion(semver.VersionInfo):
         return str(self.finalize_version())
 
     @staticmethod
-    def version_in_str(string: str) -> Tuple:
+    def version_in_str(string: str) -> Union[None, OpenPypeVersion]:
         """Find OpenPype version in given string.
 
         Args:
             string (str):  string to search.
 
         Returns:
-            tuple: True/False and OpenPypeVersion if found.
+            OpenPypeVersion: of detected or None.
 
         """
         m = re.search(OpenPypeVersion._VERSION_REGEX, string)
         if not m:
-            return False, None
+            return None
         version = OpenPypeVersion.parse(string[m.start():m.end()])
-        return True, version
+        if "staging" in string[m.start():m.end()]:
+            version.staging = True
+        return version
 
     @classmethod
     def parse(cls, version):
@@ -531,6 +534,7 @@ class BootstrapRepos:
                 processed_path = file
                 self._print(f"- processing {processed_path}")
 
+
                 checksums.append(
                     (
                         sha256sum(file.as_posix()),
@@ -542,7 +546,10 @@ class BootstrapRepos:
 
             checksums_str = ""
             for c in checksums:
-                checksums_str += "{}:{}\n".format(c[0], c[1])
+                file_str = c[1]
+                if platform.system().lower() == "windows":
+                    file_str = c[1].as_posix().replace("\\", "/")
+                checksums_str += "{}:{}\n".format(c[0], file_str)
             zip_file.writestr("checksums", checksums_str)
             # test if zip is ok
             zip_file.testzip()
@@ -563,6 +570,8 @@ class BootstrapRepos:
                 and string with reason as second.
 
         """
+        if os.getenv("OPENPYPE_DONT_VALIDATE_VERSION"):
+            return True, "Disabled validation"
         if not path.exists():
             return False, "Path doesn't exist"
 
@@ -589,13 +598,16 @@ class BootstrapRepos:
 
             # calculate and compare checksums in the zip file
             for file in checksums:
+                file_name = file[1]
+                if platform.system().lower() == "windows":
+                    file_name = file_name.replace("/", "\\")
                 h = hashlib.sha256()
                 try:
-                    h.update(zip_file.read(file[1]))
+                    h.update(zip_file.read(file_name))
                 except FileNotFoundError:
-                    return False, f"Missing file [ {file[1]} ]"
+                    return False, f"Missing file [ {file_name} ]"
                 if h.hexdigest() != file[0]:
-                    return False, f"Invalid checksum on {file[1]}"
+                    return False, f"Invalid checksum on {file_name}"
 
             # get list of files in zip minus `checksums` file itself
             # and turn in to set to compare against list of files
@@ -604,7 +616,7 @@ class BootstrapRepos:
             files_in_zip = zip_file.namelist()
             files_in_zip.remove("checksums")
             files_in_zip = set(files_in_zip)
-        files_in_checksum = set([file[1] for file in checksums])
+        files_in_checksum = {file[1] for file in checksums}
         diff = files_in_zip.difference(files_in_checksum)
         if diff:
             return False, f"Missing files {diff}"
@@ -628,16 +640,19 @@ class BootstrapRepos:
         ]
         files_in_dir.remove("checksums")
         files_in_dir = set(files_in_dir)
-        files_in_checksum = set([file[1] for file in checksums])
+        files_in_checksum = {file[1] for file in checksums}
 
         for file in checksums:
+            file_name = file[1]
+            if platform.system().lower() == "windows":
+                file_name = file_name.replace("/", "\\")
             try:
-                current = sha256sum((path / file[1]).as_posix())
+                current = sha256sum((path / file_name).as_posix())
             except FileNotFoundError:
-                return False, f"Missing file [ {file[1]} ]"
+                return False, f"Missing file [ {file_name} ]"
 
             if file[0] != current:
-                return False, f"Invalid checksum on {file[1]}"
+                return False, f"Invalid checksum on {file_name}"
         diff = files_in_dir.difference(files_in_checksum)
         if diff:
             return False, f"Missing files {diff}"
@@ -1161,9 +1176,9 @@ class BootstrapRepos:
             name = item.name if item.is_dir() else item.stem
             result = OpenPypeVersion.version_in_str(name)
 
-            if result[0]:
+            if result:
                 detected_version: OpenPypeVersion
-                detected_version = result[1]
+                detected_version = result
 
                 if item.is_dir() and not self._is_openpype_in_dir(
                     item, detected_version

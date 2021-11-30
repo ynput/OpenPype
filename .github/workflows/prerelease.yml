@@ -33,7 +33,7 @@ jobs:
       id: version
       if: steps.version_type.outputs.type != 'skip'
       run: |
-        RESULT=$(python ./tools/ci_tools.py --nightly)
+        RESULT=$(python ./tools/ci_tools.py --nightly --github_token ${{ secrets.GITHUB_TOKEN }})
 
         echo ::set-output name=next_tag::$RESULT
 

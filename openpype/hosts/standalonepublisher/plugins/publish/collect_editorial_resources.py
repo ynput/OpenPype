@@ -238,7 +238,7 @@ class CollectInstanceResources(pyblish.api.InstancePlugin):
                 })
 
             # exception for mp4 preview
-            if ".mp4" in _reminding_file:
+            if ext in ["mp4", "mov"]:
                 frame_start = 0
                 frame_end = (
                     (instance_data["frameEnd"] - instance_data["frameStart"])
@@ -255,6 +255,7 @@ class CollectInstanceResources(pyblish.api.InstancePlugin):
                     "step": 1,
                     "fps": self.context.data.get("fps"),
                     "name": "review",
+                    "thumbnail": True,
                     "tags": ["review", "ftrackreview", "delete"],
                 })
 

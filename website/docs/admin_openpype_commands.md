@@ -32,7 +32,10 @@ For more information [see here](admin_use#run-openpype).
 
 | Command | Description | Arguments |
 | --- | --- |: --- :|
-| tray | Launch OpenPype Tray. |  [📑](#tray-arguments)
+| contextselection | Open Context selection dialog. |  |
+| module | Run command line arguments for modules. |  |
+| repack-version | Tool to re-create version zip. | [📑](#repack-version-arguments) |
+| tray | Launch OpenPype Tray. | [📑](#tray-arguments)
 | eventserver | This should be ideally used by system service (such as systemd or upstart on linux and window service). | [📑](#eventserver-arguments) |
 | launch | Launch application in Pype environment. | [📑](#launch-arguments) |
 | publish | Pype takes JSON from provided path and use it to publish data in it. | [📑](#publish-arguments) |
@@ -157,3 +160,9 @@ openpypeconsole settings
 ```shell
 openpype_console standalonepublisher
 ```
+
+### `repack-version` arguments {#repack-version-arguments}
+Takes path to unzipped and possibly modified OpenPype version. Files will be
+zipped, checksums recalculated and version will be determined by folder name
+(and written to `version.py`).
+

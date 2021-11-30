@@ -51,7 +51,8 @@ def start_webpublish_log(dbcon, batch_id, user):
         "batch_id": batch_id,
         "start_date": datetime.now(),
         "user": user,
-        "status": "in_progress"
+        "status": "in_progress",
+        "progress": 0.0
     }).inserted_id
 
 

@@ -158,7 +158,9 @@ def extractenvironments(output_json_path, project, asset, task, app):
 @click.option("-d", "--debug", is_flag=True, help="Print debug messages")
 @click.option("-t", "--targets", help="Targets module", default=None,
               multiple=True)
-def publish(debug, paths, targets):
+@click.option("-g", "--gui", is_flag=True,
+              help="Show Publish UI", default=False)
+def publish(debug, paths, targets, gui):
     """Start CLI publishing.
 
     Publish collects json from paths provided as an argument.
@@ -166,7 +168,7 @@ def publish(debug, paths, targets):
     """
     if debug:
         os.environ['OPENPYPE_DEBUG'] = '3'
-    PypeCommands.publish(list(paths), targets)
+    PypeCommands.publish(list(paths), targets, gui)
 
 
 @main.command()
@@ -357,3 +359,40 @@ def run(script):
 def runtests(folder, mark, pyargs):
     """Run all automatic tests after proper initialization via start.py"""
     PypeCommands().run_tests(folder, mark, pyargs)
+
+
+@main.command()
+@click.option("-d", "--debug",
+              is_flag=True, help=("Run process in debug mode"))
+@click.option("-a", "--active_site", required=True,
+              help="Name of active stie")
+def syncserver(debug, active_site):
+    """Run sync site server in background.
+
+        Some Site Sync use cases need to expose site to another one.
+        For example if majority of artists work in studio, they are not using
+        SS at all, but if you want to expose published assets to 'studio' site
+        to SFTP for only a couple of artists, some background process must
+        mark published assets to live on multiple sites (they might be
+        physically in same location - mounted shared disk).
+
+        Process mimics OP Tray with specific 'active_site' name, all
+        configuration for this "dummy" user comes from Setting or Local
+        Settings (configured by starting OP Tray with env
+        var OPENPYPE_LOCAL_ID set to 'active_site'.
+    """
+    if debug:
+        os.environ['OPENPYPE_DEBUG'] = '3'
+    PypeCommands().syncserver(active_site)
+
+
+@main.command()
+@click.argument("directory")
+def repack_version(directory):
+    """Repack OpenPype version from directory.
+
+    This command will re-create zip file from specified directory,
+    recalculating file checksums. It will try to use version detected in
+    directory name.
+    """
+    PypeCommands().repack_version(directory)

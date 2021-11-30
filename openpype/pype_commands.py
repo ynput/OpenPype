@@ -80,7 +80,7 @@ class PypeCommands:
         standalonepublish.main()
 
     @staticmethod
-    def publish(paths, targets=None):
+    def publish(paths, targets=None, gui=False):
         """Start headless publishing.
 
         Publish use json from passed paths argument.
@@ -89,19 +89,34 @@ class PypeCommands:
             paths (list): Paths to jsons.
             targets (string): What module should be targeted
                 (to choose validator for example)
+            gui (bool): Show publish UI.
 
         Raises:
             RuntimeError: When there is no path to process.
         """
-        if not any(paths):
-            raise RuntimeError("No publish paths specified")
-
+        from openpype.modules import ModulesManager
         from openpype import install, uninstall
         from openpype.api import Logger
+        from openpype.tools.utils.host_tools import show_publish
+        from openpype.tools.utils.lib import qt_app_context
 
         # Register target and host
         import pyblish.api
         import pyblish.util
+
+        log = Logger.get_logger()
+
+        install()
+
+        manager = ModulesManager()
+
+        publish_paths = manager.collect_plugin_paths()["publish"]
+
+        for path in publish_paths:
+            pyblish.api.register_plugin_path(path)
+
+        if not any(paths):
+            raise RuntimeError("No publish paths specified")
 
         env = get_app_environments_for_context(
             os.environ["AVALON_PROJECT"],
@@ -111,32 +126,39 @@ class PypeCommands:
         )
         os.environ.update(env)
 
-        log = Logger.get_logger()
-
-        install()
-
-        pyblish.api.register_target("filesequence")
         pyblish.api.register_host("shell")
 
         if targets:
             for target in targets:
+                print(f"setting target: {target}")
                 pyblish.api.register_target(target)
+        else:
+            pyblish.api.register_target("filesequence")
 
         os.environ["OPENPYPE_PUBLISH_DATA"] = os.pathsep.join(paths)
 
         log.info("Running publish ...")
 
-        # Error exit as soon as any error occurs.
-        error_format = "Failed {plugin.__name__}: {error} -- {error.traceback}"
+        plugins = pyblish.api.discover()
+        print("Using plugins:")
+        for plugin in plugins:
+            print(plugin)
 
-        for result in pyblish.util.publish_iter():
-            if result["error"]:
-                log.error(error_format.format(**result))
-                uninstall()
-                sys.exit(1)
+        if gui:
+            with qt_app_context():
+                show_publish()
+        else:
+            # Error exit as soon as any error occurs.
+            error_format = ("Failed {plugin.__name__}: "
+                            "{error} -- {error.traceback}")
+
+            for result in pyblish.util.publish_iter():
+                if result["error"]:
+                    log.error(error_format.format(**result))
+                    # uninstall()
+                    sys.exit(1)
 
         log.info("Publish finished.")
-        uninstall()
 
     @staticmethod
     def remotepublishfromapp(project, batch_dir, host_name,
@@ -345,3 +367,35 @@ class PypeCommands:
         cmd = "pytest {} {} {}".format(folder, mark_str, pyargs_str)
         print("Running {}".format(cmd))
         subprocess.run(cmd)
+
+    def syncserver(self, active_site):
+        """Start running sync_server in background."""
+        import signal
+        os.environ["OPENPYPE_LOCAL_ID"] = active_site
+
+        def signal_handler(sig, frame):
+            print("You pressed Ctrl+C. Process ended.")
+            sync_server_module.server_exit()
+            sys.exit(0)
+
+        signal.signal(signal.SIGINT, signal_handler)
+        signal.signal(signal.SIGTERM, signal_handler)
+
+        from openpype.modules import ModulesManager
+
+        manager = ModulesManager()
+        sync_server_module = manager.modules_by_name["sync_server"]
+
+        sync_server_module.server_init()
+        sync_server_module.server_start()
+
+        import time
+        while True:
+            time.sleep(1.0)
+
+    def repack_version(self, directory):
+        """Repacking OpenPype version."""
+        from openpype.tools.repack_version import VersionRepacker
+
+        version_packer = VersionRepacker(directory)
+        version_packer.process()

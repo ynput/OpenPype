@@ -8,14 +8,15 @@ from avalon.api import AvalonMongoDB
 from openpype import style
 from openpype.api import resources
 
-from openpype.tools.utils.widgets import AssetWidget
+from openpype.tools.utils.assets_widget import SingleSelectAssetsWidget
+from openpype.tools.utils.tasks_widget import TasksWidget
+
 from avalon.vendor import qtawesome
 from .models import ProjectModel
 from .lib import get_action_label, ProjectHandler
 from .widgets import (
     ProjectBar,
     ActionBar,
-    TasksWidget,
     ActionHistory,
     SlidePageWidget
 )
@@ -91,8 +92,6 @@ class ProjectsPanel(QtWidgets.QWidget):
     def __init__(self, project_handler, parent=None):
         super(ProjectsPanel, self).__init__(parent=parent)
 
-        layout = QtWidgets.QVBoxLayout(self)
-
         view = ProjectIconView(parent=self)
         view.setSelectionMode(QtWidgets.QListView.NoSelection)
         flick = FlickCharm(parent=self)
@@ -100,6 +99,8 @@ class ProjectsPanel(QtWidgets.QWidget):
 
         view.setModel(project_handler.model)
 
+        layout = QtWidgets.QVBoxLayout(self)
+        layout.setContentsMargins(0, 0, 0, 0)
         layout.addWidget(view)
 
         view.clicked.connect(self.on_clicked)
@@ -123,47 +124,36 @@ class AssetsPanel(QtWidgets.QWidget):
 
         self.dbcon = dbcon
 
-        # project bar
-        project_bar_widget = QtWidgets.QWidget(self)
-
-        layout = QtWidgets.QHBoxLayout(project_bar_widget)
-        layout.setSpacing(4)
-
+        # Project bar
         btn_back_icon = qtawesome.icon("fa.angle-left", color="white")
-        btn_back = QtWidgets.QPushButton(project_bar_widget)
+        btn_back = QtWidgets.QPushButton(self)
         btn_back.setIcon(btn_back_icon)
 
-        project_bar = ProjectBar(project_handler, project_bar_widget)
+        project_bar = ProjectBar(project_handler, self)
 
-        layout.addWidget(btn_back)
-        layout.addWidget(project_bar)
+        project_bar_layout = QtWidgets.QHBoxLayout()
+        project_bar_layout.setContentsMargins(0, 0, 0, 0)
+        project_bar_layout.setSpacing(4)
+        project_bar_layout.addWidget(btn_back)
+        project_bar_layout.addWidget(project_bar)
 
-        # assets
-        assets_proxy_widgets = QtWidgets.QWidget(self)
-        assets_proxy_widgets.setContentsMargins(0, 0, 0, 0)
-        assets_layout = QtWidgets.QVBoxLayout(assets_proxy_widgets)
-        assets_widget = AssetWidget(
-            dbcon=self.dbcon, parent=assets_proxy_widgets
-        )
-
+        # Assets widget
+        assets_widget = SingleSelectAssetsWidget(dbcon=self.dbcon, parent=self)
         # Make assets view flickable
-        flick = FlickCharm(parent=self)
-        flick.activateOn(assets_widget.view)
-        assets_widget.view.setVerticalScrollMode(
-            assets_widget.view.ScrollPerPixel
-        )
-        assets_layout.addWidget(assets_widget)
+        assets_widget.activate_flick_charm()
 
-        # tasks
+        # Tasks widget
         tasks_widget = TasksWidget(self.dbcon, self)
-        body = QtWidgets.QSplitter()
+
+        # Body
+        body = QtWidgets.QSplitter(self)
         body.setContentsMargins(0, 0, 0, 0)
         body.setSizePolicy(
             QtWidgets.QSizePolicy.Expanding,
             QtWidgets.QSizePolicy.Expanding
         )
         body.setOrientation(QtCore.Qt.Horizontal)
-        body.addWidget(assets_proxy_widgets)
+        body.addWidget(assets_widget)
         body.addWidget(tasks_widget)
         body.setStretchFactor(0, 100)
         body.setStretchFactor(1, 65)
@@ -171,23 +161,25 @@ class AssetsPanel(QtWidgets.QWidget):
         # main layout
         layout = QtWidgets.QVBoxLayout(self)
         layout.setContentsMargins(0, 0, 0, 0)
-        layout.setSpacing(0)
-        layout.addWidget(project_bar_widget)
+        layout.addLayout(project_bar_layout)
         layout.addWidget(body)
 
         # signals
-        project_handler.project_changed.connect(self.on_project_changed)
-        assets_widget.selection_changed.connect(self.on_asset_changed)
-        assets_widget.refreshed.connect(self.on_asset_changed)
-        tasks_widget.task_changed.connect(self.on_task_change)
+        project_handler.project_changed.connect(self._on_project_changed)
+        assets_widget.selection_changed.connect(self._on_asset_changed)
+        assets_widget.refreshed.connect(self._on_asset_changed)
+        tasks_widget.task_changed.connect(self._on_task_change)
 
         btn_back.clicked.connect(self.back_clicked)
 
         self.project_handler = project_handler
         self.project_bar = project_bar
         self.assets_widget = assets_widget
-        self.tasks_widget = tasks_widget
+        self._tasks_widget = tasks_widget
         self._btn_back = btn_back
+
+    def select_asset(self, asset_name):
+        self.assets_widget.select_asset_by_name(asset_name)
 
     def showEvent(self, event):
         super(AssetsPanel, self).showEvent(event)
@@ -197,56 +189,41 @@ class AssetsPanel(QtWidgets.QWidget):
         btn_size = self.project_bar.height()
         self._btn_back.setFixedSize(QtCore.QSize(btn_size, btn_size))
 
-    def on_project_changed(self):
+    def select_task_name(self, task_name):
+        self._on_asset_changed()
+        self._tasks_widget.select_task_name(task_name)
+
+    def _on_project_changed(self):
         self.session_changed.emit()
 
         self.assets_widget.refresh()
 
-    def on_asset_changed(self):
+    def _on_asset_changed(self):
         """Callback on asset selection changed
 
         This updates the task view.
         """
 
-        asset_name = None
-        asset_silo = None
-
         # Check asset on current index and selected assets
-        asset_doc = self.assets_widget.get_active_asset_document()
-        selected_asset_docs = self.assets_widget.get_selected_assets()
-        # If there are not asset selected docs then active asset is not
-        # selected
-        if not selected_asset_docs:
-            asset_doc = None
-        elif asset_doc:
-            # If selected asset doc and current asset are not same than
-            # something bad happened
-            if selected_asset_docs[0]["_id"] != asset_doc["_id"]:
-                asset_doc = None
-
-        if asset_doc:
-            asset_name = asset_doc["name"]
-            asset_silo = asset_doc.get("silo")
+        asset_id = self.assets_widget.get_selected_asset_id()
+        asset_name = self.assets_widget.get_selected_asset_name()
 
         self.dbcon.Session["AVALON_TASK"] = None
         self.dbcon.Session["AVALON_ASSET"] = asset_name
-        self.dbcon.Session["AVALON_SILO"] = asset_silo
 
         self.session_changed.emit()
 
-        asset_id = None
-        if asset_doc:
-            asset_id = asset_doc["_id"]
-        self.tasks_widget.set_asset(asset_id)
+        self._tasks_widget.set_asset_id(asset_id)
 
-    def on_task_change(self):
-        task_name = self.tasks_widget.get_current_task()
+    def _on_task_change(self):
+        task_name = self._tasks_widget.get_selected_task_name()
         self.dbcon.Session["AVALON_TASK"] = task_name
         self.session_changed.emit()
 
 
 class LauncherWindow(QtWidgets.QDialog):
     """Launcher interface"""
+    message_timeout = 5000
 
     def __init__(self, parent=None):
         super(LauncherWindow, self).__init__(parent)
@@ -283,20 +260,17 @@ class LauncherWindow(QtWidgets.QDialog):
         actions_bar = ActionBar(project_handler, self.dbcon, self)
 
         # statusbar
-        statusbar = QtWidgets.QWidget()
-        layout = QtWidgets.QHBoxLayout(statusbar)
+        message_label = QtWidgets.QLabel(self)
 
-        message_label = QtWidgets.QLabel()
-        message_label.setFixedHeight(15)
-
-        action_history = ActionHistory()
+        action_history = ActionHistory(self)
         action_history.setStatusTip("Show Action History")
 
-        layout.addWidget(message_label)
-        layout.addWidget(action_history)
+        status_layout = QtWidgets.QHBoxLayout()
+        status_layout.addWidget(message_label, 1)
+        status_layout.addWidget(action_history, 0)
 
         # Vertically split Pages and Actions
-        body = QtWidgets.QSplitter()
+        body = QtWidgets.QSplitter(self)
         body.setContentsMargins(0, 0, 0, 0)
         body.setSizePolicy(
             QtWidgets.QSizePolicy.Expanding,
@@ -314,19 +288,13 @@ class LauncherWindow(QtWidgets.QDialog):
 
         layout = QtWidgets.QVBoxLayout(self)
         layout.addWidget(body)
-        layout.addWidget(statusbar)
-        layout.setSpacing(0)
-        layout.setContentsMargins(0, 0, 0, 0)
+        layout.addLayout(status_layout)
 
-        self.project_handler = project_handler
+        message_timer = QtCore.QTimer()
+        message_timer.setInterval(self.message_timeout)
+        message_timer.setSingleShot(True)
 
-        self.message_label = message_label
-        self.project_panel = project_panel
-        self.asset_panel = asset_panel
-        self.actions_bar = actions_bar
-        self.action_history = action_history
-        self.page_slider = page_slider
-        self._page = 0
+        message_timer.timeout.connect(self._on_message_timeout)
 
         # signals
         actions_bar.action_clicked.connect(self.on_action_clicked)
@@ -337,6 +305,19 @@ class LauncherWindow(QtWidgets.QDialog):
         asset_panel.session_changed.connect(self.on_session_changed)
 
         self.resize(520, 740)
+
+        self._page = 0
+
+        self._message_timer = message_timer
+
+        self.project_handler = project_handler
+
+        self._message_label = message_label
+        self.project_panel = project_panel
+        self.asset_panel = asset_panel
+        self.actions_bar = actions_bar
+        self.action_history = action_history
+        self.page_slider = page_slider
 
     def showEvent(self, event):
         self.project_handler.set_active(True)
@@ -363,9 +344,12 @@ class LauncherWindow(QtWidgets.QDialog):
         self._page = page
         self.page_slider.slide_view(page, direction=direction)
 
+    def _on_message_timeout(self):
+        self._message_label.setText("")
+
     def echo(self, message):
-        self.message_label.setText(str(message))
-        QtCore.QTimer.singleShot(5000, lambda: self.message_label.setText(""))
+        self._message_label.setText(str(message))
+        self._message_timer.start()
         self.log.debug(message)
 
     def on_session_changed(self):
@@ -425,7 +409,6 @@ class LauncherWindow(QtWidgets.QDialog):
 
     def set_session(self, session):
         project_name = session.get("AVALON_PROJECT")
-        silo = session.get("AVALON_SILO")
         asset_name = session.get("AVALON_ASSET")
         task_name = session.get("AVALON_TASK")
 
@@ -440,13 +423,9 @@ class LauncherWindow(QtWidgets.QDialog):
                     index
                 )
 
-        if silo:
-            self.asset_panel.assets_widget.set_silo(silo)
-
         if asset_name:
-            self.asset_panel.assets_widget.select_assets([asset_name])
+            self.asset_panel.select_asset(asset_name)
 
         if task_name:
             # requires a forced refresh first
-            self.asset_panel.on_asset_changed()
-            self.asset_panel.tasks_widget.select_task(task_name)
+            self.asset_panel.select_task_name(task_name)

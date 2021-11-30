@@ -25,6 +25,34 @@ def center_window(window):
     window.move(geo.topLeft())
 
 
+def paint_image_with_color(image, color):
+    """Redraw image with single color using it's alpha.
+
+    It is expected that input image is singlecolor image with alpha.
+
+    Args:
+        image (QImage): Loaded image with alpha.
+        color (QColor): Color that will be used to paint image.
+    """
+    width = image.width()
+    height = image.height()
+
+    alpha_mask = image.createAlphaMask()
+    alpha_region = QtGui.QRegion(QtGui.QBitmap.fromImage(alpha_mask))
+
+    pixmap = QtGui.QPixmap(width, height)
+    pixmap.fill(QtCore.Qt.transparent)
+
+    painter = QtGui.QPainter(pixmap)
+    painter.setClipRegion(alpha_region)
+    painter.setPen(QtCore.Qt.NoPen)
+    painter.setBrush(color)
+    painter.drawRect(QtCore.QRect(0, 0, width, height))
+    painter.end()
+
+    return pixmap
+
+
 def format_version(value, hero_version=False):
     """Formats integer to displayable version name"""
     label = "v{0:03d}".format(value)
@@ -445,6 +473,30 @@ class GroupsConfig:
         return ordered_groups, subset_docs_without_group, subset_docs_by_group
 
 
+class DynamicQThread(QtCore.QThread):
+    """QThread which can run any function with argument and kwargs.
+
+    Args:
+        func (function): Function which will be called.
+        args (tuple): Arguments which will be passed to function.
+        kwargs (tuple): Keyword arguments which will be passed to function.
+        parent (QObject): Parent of thread.
+    """
+    def __init__(self, func, args=None, kwargs=None, parent=None):
+        super(DynamicQThread, self).__init__(parent)
+        if args is None:
+            args = tuple()
+        if kwargs is None:
+            kwargs = {}
+        self._func = func
+        self._args = args
+        self._kwargs = kwargs
+
+    def run(self):
+        """Execute the function with arguments."""
+        self._func(*self._args, **self._kwargs)
+
+
 def create_qthread(func, *args, **kwargs):
     class Thread(QtCore.QThread):
         def run(self):
@@ -453,6 +505,7 @@ def create_qthread(func, *args, **kwargs):
 
 
 def get_repre_icons():
+    """Returns a dict {'provider_name': QIcon}"""
     try:
         from openpype_modules import sync_server
     except Exception:
@@ -464,9 +517,17 @@ def get_repre_icons():
         "providers", "resources"
     )
     icons = {}
-    # TODO get from sync module
-    for provider in ['studio', 'local_drive', 'gdrive']:
-        pix_url = "{}/{}.png".format(resource_path, provider)
+    if not os.path.exists(resource_path):
+        print("No icons for Site Sync found")
+        return {}
+
+    for file_name in os.listdir(resource_path):
+        if file_name and not file_name.endswith("png"):
+            continue
+
+        provider, _ = os.path.splitext(file_name)
+
+        pix_url = os.path.join(resource_path, file_name)
         icons[provider] = QtGui.QIcon(pix_url)
 
     return icons

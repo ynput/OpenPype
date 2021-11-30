@@ -7,8 +7,8 @@ from .widgets import (
     NumberSpinBox,
     GridLabelWidget,
     SettingsComboBox,
-    NiceCheckbox,
     SettingsPlainTextEdit,
+    SettingsNiceCheckbox,
     SettingsLineEdit
 )
 from .multiselection_combobox import MultiSelectionComboBox
@@ -21,6 +21,7 @@ from .base import (
     BaseWidget,
     InputWidget
 )
+
 from openpype.widgets.sliders import NiceSlider
 from openpype.tools.settings import CHILD_OFFSET
 
@@ -129,6 +130,7 @@ class DictImmutableKeysWidget(BaseWidget):
         content_widget.setProperty("show_borders", show_borders)
 
         label_widget = QtWidgets.QLabel(self.entity.label)
+        label_widget.setObjectName("SettingsLabel")
 
         content_layout = QtWidgets.QGridLayout(content_widget)
         content_layout.setContentsMargins(5, 5, 5, 5)
@@ -324,12 +326,7 @@ class DictImmutableKeysWidget(BaseWidget):
 
 class BoolWidget(InputWidget):
     def _add_inputs_to_layout(self):
-        checkbox_height = self.style().pixelMetric(
-            QtWidgets.QStyle.PM_IndicatorHeight
-        )
-        self.input_field = NiceCheckbox(
-            height=checkbox_height, parent=self.content_widget
-        )
+        self.input_field = SettingsNiceCheckbox(parent=self.content_widget)
 
         self.content_layout.addWidget(self.input_field, 0)
         self.content_layout.addStretch(1)
@@ -352,6 +349,9 @@ class BoolWidget(InputWidget):
     def _on_value_change(self):
         if self.ignore_input_changes:
             return
+        self.start_value_timer()
+
+    def _on_value_change_timer(self):
         self.entity.set(self.input_field.isChecked())
 
 

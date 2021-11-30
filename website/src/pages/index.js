@@ -64,6 +64,10 @@ const collab = [
     title: 'Clothcat Animation',
     image: '/img/clothcat.png',
     infoLink: 'https://www.clothcatanimation.com/'
+  }, {
+    title: 'Ellipse Studio',
+    image: '/img/ellipse-studio.png',
+    infoLink: 'http://www.dargaudmedia.com'
   }
 ];
 
@@ -125,7 +129,7 @@ const studios = [
       title: "Moonrock Animation Studio",
       image: "/img/moonrock_logo.png",
       infoLink: "https://www.moonrock.eu/",
-  }  
+  }
 ];
 
 function Service({imageUrl, title, description}) {

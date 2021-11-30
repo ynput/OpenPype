@@ -5,10 +5,11 @@ import os
 import json
 import re
 from copy import copy, deepcopy
+import requests
+import clique
 import openpype.api
 
 from avalon import api, io
-from avalon.vendor import requests, clique
 
 import pyblish.api
 
@@ -104,7 +105,7 @@ class ProcessSubmittedJobOnFarm(pyblish.api.InstancePlugin):
     families = ["render.farm", "prerender.farm",
                 "renderlayer", "imagesequence", "vrayscene"]
 
-    aov_filter = {"maya": [r".*(?:\.|_)*([Bb]eauty)(?:\.|_)*.*"],
+    aov_filter = {"maya": [r".*(?:[\._-])*([Bb]eauty)(?:[\.|_])*.*"],
                   "aftereffects": [r".*"],  # for everything from AE
                   "harmony": [r".*"],  # for everything from AE
                   "celaction": [r".*"]}
@@ -142,8 +143,7 @@ class ProcessSubmittedJobOnFarm(pyblish.api.InstancePlugin):
     instance_transfer = {
         "slate": ["slateFrame"],
         "review": ["lutPath"],
-        "render2d": ["bakeScriptPath", "bakeRenderPath",
-                     "bakeWriteNodeName", "version"],
+        "render2d": ["bakingNukeScripts", "version"],
         "renderlayer": ["convertToScanline"]
     }
 
@@ -231,7 +231,8 @@ class ProcessSubmittedJobOnFarm(pyblish.api.InstancePlugin):
         args = [
             'publish',
             roothless_metadata_path,
-            "--targets {}".format("deadline")
+            "--targets", "deadline",
+            "--targets", "filesequence"
         ]
 
         # Generate the payload for Deadline submission
@@ -505,9 +506,9 @@ class ProcessSubmittedJobOnFarm(pyblish.api.InstancePlugin):
         """
         representations = []
         collections, remainders = clique.assemble(exp_files)
-        bake_render_path = instance.get("bakeRenderPath", [])
+        bake_renders = instance.get("bakingNukeScripts", [])
 
-        # create representation for every collected sequence
+        # create representation for every collected sequento ce
         for collection in collections:
             ext = collection.tail.lstrip(".")
             preview = False
@@ -523,7 +524,7 @@ class ProcessSubmittedJobOnFarm(pyblish.api.InstancePlugin):
                             preview = True
                             break
 
-            if bake_render_path:
+            if bake_renders:
                 preview = False
 
             staging = os.path.dirname(list(collection)[0])
@@ -595,7 +596,8 @@ class ProcessSubmittedJobOnFarm(pyblish.api.InstancePlugin):
                 })
                 self._solve_families(instance, True)
 
-            if remainder in bake_render_path:
+            if (bake_renders
+                    and remainder in bake_renders[0]["bakeRenderPath"]):
                 rep.update({
                     "fps": instance.get("fps"),
                     "tags": ["review", "delete"]

@@ -182,6 +182,31 @@
         },
         {
             "type": "dict",
+            "key": "royalrender",
+            "label": "Royal Render",
+            "require_restart": true,
+            "collapsible": true,
+            "checkbox_key": "enabled",
+            "children": [
+                {
+                    "type": "boolean",
+                    "key": "enabled",
+                    "label": "Enabled"
+                },
+                {
+                    "type": "dict-modifiable",
+                    "object_type": {
+                        "type": "path",
+                        "multiplatform": true
+                    },
+                    "key": "rr_paths",
+                    "required_keys": ["default"],
+                    "label": "Royal Render Root Paths"
+                }
+            ]
+        },
+        {
+            "type": "dict",
             "key": "log_viewer",
             "label": "Logging",
             "collapsible": true,
@@ -234,6 +259,38 @@
                     "type": "boolean",
                     "key": "enabled",
                     "label": "Enabled"
+                }
+            ]
+        },
+        {
+            "type": "dict",
+            "key": "job_queue",
+            "label": "Job Queue",
+            "require_restart": true,
+            "collapsible": true,
+            "children": [
+                {
+                    "type": "label",
+                    "label": "Address of machine where job queue server is running."
+                },
+                {
+                    "type": "text",
+                    "key": "server_url",
+                    "label": "Server Rest URL"
+                },
+                {
+                    "type": "separator"
+                },
+                {
+                    "type": "label",
+                    "label": "Jobs root is used as temporary directory for workers where source is copied and render output can be stored."
+                },
+                {
+                    "key": "jobs_root",
+                    "label": "Jobs root",
+                    "type": "path",
+                    "multipath": false,
+                    "multiplatform": true
                 }
             ]
         },

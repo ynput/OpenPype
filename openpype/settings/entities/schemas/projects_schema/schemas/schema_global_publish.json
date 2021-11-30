@@ -7,6 +7,20 @@
         {
             "type": "dict",
             "collapsible": true,
+            "key": "CollectAnatomyInstanceData",
+            "label": "Collect Anatomy Instance Data",
+            "is_group": true,
+            "children": [
+                {
+                    "type": "boolean",
+                    "key": "follow_workfile_version",
+                    "label": "Follow workfile version"
+                }
+            ]
+        },
+        {
+            "type": "dict",
+            "collapsible": true,
             "checkbox_key": "enabled",
             "key": "ValidateEditorialAssetName",
             "label": "Validate Editorial Asset Name",
@@ -197,6 +211,12 @@
                                         {
                                             "type": "schema",
                                             "name": "schema_representation_tags"
+                                        },
+                                        {
+                                            "key": "burnins",
+                                            "label": "Link to a burnin by name",
+                                            "type": "list",
+                                            "object_type": "text"
                                         },
                                         {
                                             "key": "ffmpeg_args",

@@ -470,10 +470,9 @@ class GUIWidget(BaseWidget):
         self.entity_widget.add_widget_to_layout(self)
 
     def _create_label_ui(self):
-        self.setObjectName("LabelWidget")
-
         label = self.entity["label"]
         label_widget = QtWidgets.QLabel(label, self)
+        label_widget.setObjectName("SettingsLabel")
 
         layout = QtWidgets.QHBoxLayout(self)
         layout.setContentsMargins(0, 5, 0, 5)
@@ -481,7 +480,7 @@ class GUIWidget(BaseWidget):
 
     def _create_separator_ui(self):
         splitter_item = QtWidgets.QWidget(self)
-        splitter_item.setObjectName("SplitterItem")
+        splitter_item.setObjectName("Separator")
         splitter_item.setMinimumHeight(self.separator_height)
         splitter_item.setMaximumHeight(self.separator_height)
 
@@ -513,10 +512,9 @@ class MockUpWidget(BaseWidget):
     child_invalid = False
 
     def create_ui(self):
-        self.setObjectName("LabelWidget")
-
         label = "Mockup widget for entity {}".format(self.entity.path)
         label_widget = QtWidgets.QLabel(label, self)
+        label_widget.setObjectName("SettingsLabel")
 
         layout = QtWidgets.QHBoxLayout(self)
         layout.setContentsMargins(0, 5, 0, 5)
