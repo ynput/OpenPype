@@ -347,13 +347,21 @@ class AssetModel(QtGui.QStandardItemModel):
 
         return self.get_indexes_by_asset_ids(asset_ids)
 
-    def refresh(self, force=False):
-        """Refresh the data for the model."""
+    def refresh(self, force=False, clear=False):
+        """Refresh the data for the model.
+
+        Args:
+            force (bool): Stop currently running refresh start new refresh.
+            clear (bool): Clear model before refresh thread starts.
+        """
         # Skip fetch if there is already other thread fetching documents
         if self._refreshing:
             if not force:
                 return
             self.stop_refresh()
+
+        if clear:
+            self._clear_items()
 
         # Fetch documents from mongo
         # Restart payload
