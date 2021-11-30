@@ -379,15 +379,18 @@ class AssetModel(QtGui.QStandardItemModel):
                 continue
             item.setData(colors, ASSET_UNDERLINE_COLORS_ROLE)
 
+    def _clear_items(self):
+        root_item = self.invisibleRootItem()
+        root_item.removeRows(0, root_item.rowCount())
+        self._items_by_asset_id = {}
+        self._items_with_color_by_id = {}
+
     def _on_docs_fetched(self):
         # Make sure refreshing did not change
         # - since this line is refreshing sequential and
         #   triggering of new refresh will happen when this method is done
         if not self._refreshing:
-            root_item = self.invisibleRootItem()
-            root_item.removeRows(0, root_item.rowCount())
-            self._items_by_asset_id = {}
-            self._items_with_color_by_id = {}
+            self._clear_items()
             return
 
         # Collect asset documents as needed
