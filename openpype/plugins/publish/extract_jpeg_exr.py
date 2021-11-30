@@ -32,11 +32,15 @@ class ExtractJpegEXR(pyblish.api.InstancePlugin):
 
     def process(self, instance):
         self.log.info("subset {}".format(instance.data['subset']))
+
+        # skip crypto passes.
         if 'crypto' in instance.data['subset']:
+            self.log.info("Skipping crypto passes.")
             return
 
-        # Skip review when requested.
+        # Skip if review not set.
         if not instance.data.get("review", True):
+            self.log.info("Skipping - no review set on instance.")
             return
 
         filtered_repres = self._get_filtered_repres(instance)
