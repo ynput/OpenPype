@@ -14,8 +14,6 @@ FTRACK_API_KEY = None
 FTRACK_API_USER = None
 FTRACK_SERVER = None
 
-_ftrack_api = None
-
 def import_ftrack_api():
     try:
         import ftrack_api
@@ -32,7 +30,6 @@ def get_ftrack_session():
     import os
     ftrack_api = import_ftrack_api()
 
-    _ftrack_api = ftrack_api
     # fill your own credentials
     url = FTRACK_SERVER or os.getenv("FTRACK_SERVER") or ""
     user = FTRACK_API_USER or os.getenv("FTRACK_API_USER") or ""
@@ -181,34 +178,37 @@ class FtrackComponentCreator:
         origin_location = self._get_ftrack_location("ftrack.origin")
         location = data.pop("location")
 
-
+        self._remove_component_from_location(entity, location)
 
         entity["file_type"] = data["file_type"]
 
-        origin_location.add_component(
-            entity, data["file_path"]
-        )
-
-        self._remove_component_from_location(entity, location)
-
         try:
+            origin_location.add_component(
+                entity, data["file_path"]
+            )
             # Add components to location.
             location.add_component(
                 entity, origin_location, recursive=True)
-        except _ftrack_api.exception.ComponentInLocationError:
+        except Exception as __e:
+            print("Error: {}".format(__e))
             self._remove_component_from_location(entity, origin_location)
+            origin_location.add_component(
+                entity, data["file_path"]
+            )
             # Add components to location.
             location.add_component(
                 entity, origin_location, recursive=True)
 
 
-    def _remove_component_from_location(self, location, entity):
+    def _remove_component_from_location(self, entity, location):
+        print(location)
         # Removing existing members from location
         components = list(entity.get("members", []))
         components += [entity]
         for component in components:
-            for loc in component["component_locations"]:
+            for loc in component.get("component_locations", []):
                 if location["id"] == loc["location_id"]:
+                    print("<< Removing component: {}".format(component))
                     location.remove_component(
                         component, recursive=False
                     )
@@ -216,6 +216,7 @@ class FtrackComponentCreator:
         # Deleting existing members on component entity
         for member in entity.get("members", []):
             self.session.delete(member)
+            print("<< Deleting member: {}".format(member))
             del(member)
 
         self._commit()
@@ -302,8 +303,8 @@ class FtrackComponentCreator:
             self.session.commit()
         except Exception:
             tp, value, tb = sys.exc_info()
-            self.session.rollback()
-            self.session._configure_locations()
+            # self.session.rollback()
+            # self.session._configure_locations()
             six.reraise(tp, value, tb)
 
     def _get_ftrack_location(self, name=None):
