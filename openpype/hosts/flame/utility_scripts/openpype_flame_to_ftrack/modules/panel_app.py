@@ -328,6 +328,9 @@ class FlameToFtrackPanel(object):
             )
             self.window.show()
 
+        # collect generated files to list data for farther use
+        component_creator.collect_generated_data(self.temp_data_dir)
+
         # Get all selected items from treewidget
         for item in self.tree.selectedItems():
             # frame ranges
