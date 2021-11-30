@@ -58,6 +58,7 @@ class IntegrateFtrackInstance(pyblish.api.InstancePlugin):
         componentList = []
         ft_session = instance.context.data["ftrackSession"]
 
+        review_representations = []
         for comp in instance.data['representations']:
             self.log.debug('component {}'.format(comp))
 
@@ -119,6 +120,8 @@ class IntegrateFtrackInstance(pyblish.api.InstancePlugin):
                                  'frameRate': float(comp['fps'])})}
                 }
                 comp['thumbnail'] = False
+
+                review_representations.append(comp)
             else:
                 component_data = {
                     "name": comp['name']
@@ -162,6 +165,7 @@ class IntegrateFtrackInstance(pyblish.api.InstancePlugin):
             )
 
             componentList.append(component_item)
+
             # Create copy with ftrack.unmanaged location if thumb or prev
             if comp.get('thumbnail') or comp.get('preview') \
                     or ("preview" in comp.get('tags', [])) \
@@ -194,7 +198,41 @@ class IntegrateFtrackInstance(pyblish.api.InstancePlugin):
 
                 componentList.append(component_item_src)
 
-        self.log.debug('componentsList: {}'.format(str(componentList)))
+        if len(review_representations) > 1:
+            review_components = []
+            for representation in review_representations:
+                for component in componentList:
+                    # Filter out unwanted ftrack review components, else each
+                    # asset version will have all the review components.
+                    component_name = component["component_data"]["name"]
+                    component_path = component["component_path"]
+                    if component_name.startswith("ftrackreview"):
+                        if component_path != representation["published_path"]:
+                            continue
+
+                    data = component.copy()
+                    data["asset_data"] = {
+                        "name": (
+                            instance.data["subset"] +
+                            representation["name"].title()
+                        )
+                    }
+
+                    review_components.append(data)
+
+            componentList = review_components
+
+        serializable_data = []
+        for component in componentList:
+            data = dict(component)
+            data.pop("component_location")
+            serializable_data.append(data)
+        self.log.debug(
+            "componentsList: {}".format(
+                json.dumps(serializable_data, sort_keys=True, indent=4)
+            )
+        )
+
         instance.data["ftrackComponentsList"] = componentList
 
     def get_ftrack_location(self, name, session):
