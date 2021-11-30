@@ -14,6 +14,7 @@ FTRACK_API_KEY = None
 FTRACK_API_USER = None
 FTRACK_SERVER = None
 
+_ftrack_api = None
 
 def import_ftrack_api():
     try:
@@ -31,6 +32,7 @@ def get_ftrack_session():
     import os
     ftrack_api = import_ftrack_api()
 
+    _ftrack_api = ftrack_api
     # fill your own credentials
     url = FTRACK_SERVER or os.getenv("FTRACK_SERVER") or ""
     user = FTRACK_API_USER or os.getenv("FTRACK_API_USER") or ""
@@ -179,6 +181,28 @@ class FtrackComponentCreator:
         origin_location = self._get_ftrack_location("ftrack.origin")
         location = data.pop("location")
 
+
+
+        entity["file_type"] = data["file_type"]
+
+        origin_location.add_component(
+            entity, data["file_path"]
+        )
+
+        self._remove_component_from_location(entity, location)
+
+        try:
+            # Add components to location.
+            location.add_component(
+                entity, origin_location, recursive=True)
+        except _ftrack_api.exception.ComponentInLocationError:
+            self._remove_component_from_location(entity, origin_location)
+            # Add components to location.
+            location.add_component(
+                entity, origin_location, recursive=True)
+
+
+    def _remove_component_from_location(self, location, entity):
         # Removing existing members from location
         components = list(entity.get("members", []))
         components += [entity]
@@ -199,16 +223,6 @@ class FtrackComponentCreator:
         # Reset members in memory
         if "members" in entity.keys():
             entity["members"] = []
-
-        entity["file_type"] = data["file_type"]
-
-        origin_location.add_component(
-            entity, data["file_path"]
-        )
-
-        # Add components to location.
-        location.add_component(
-            entity, origin_location, recursive=True)
 
     def _get_assettype(self, data):
         return self.session.query(
