@@ -61,25 +61,6 @@ def deferred():
             command=lambda *args: create_placeholder()
         )
 
-    def add_build_template_workfiles_item():
-        _builder_menu = cmds.menuItem(
-            "Template Builder",
-            subMenu=True,
-            tearOff=True,
-            parent=pipeline._menu
-        )
-        cmds.menuItem(
-            "Build Workfile from template",
-            parent=_builder_menu,
-            command=lambda *args: BuildWorkfileTemplate().process()
-        )
-        cmds.menuItem(divider=True)
-        cmds.menuItem(
-            "Create Place Holder",
-            parent=_builder_menu,
-            command=lambda *args: create_place_holder()
-        )
-
     def add_look_assigner_item():
         cmds.menuItem(
             "Look assigner",
