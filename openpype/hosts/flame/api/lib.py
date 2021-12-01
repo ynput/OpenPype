@@ -8,9 +8,6 @@ from openpype.api import Logger
 
 log = Logger().get_logger(__name__)
 
-# Dumb object to know if argument was passed where None is valid value
-_dumb_obj = object()
-
 
 @contextlib.contextmanager
 def io_preferences_file(klass, filepath, write=False):
@@ -50,10 +47,8 @@ class FlameAppFramework(object):
         def setdefault(self, k, default=None):
             return self.master[self.name].setdefault(k, default)
 
-        def pop(self, k, v=_dumb_obj):
-            if v is _dumb_obj:
-                return self.master[self.name].pop(k)
-            return self.master[self.name].pop(k, v)
+        def pop(self, *args, **kwargs):
+            return self.master[self.name].pop(*args, **kwargs)
 
         def update(self, mapping=(), **kwargs):
             self.master[self.name].update(mapping, **kwargs)
