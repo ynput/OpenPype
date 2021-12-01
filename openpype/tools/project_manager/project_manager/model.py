@@ -3,6 +3,10 @@ import copy
 import json
 from uuid import uuid4
 
+from pymongo import UpdateOne, DeleteOne
+
+from Qt import QtCore, QtGui
+
 from .constants import (
     IDENTIFIER_ROLE,
     ITEM_TYPE_ROLE,
@@ -15,9 +19,6 @@ from .constants import (
 from .style import ResourceCache
 
 from openpype.lib import CURRENT_DOC_SCHEMAS
-from pymongo import UpdateOne, DeleteOne
-from avalon.vendor import qtawesome
-from Qt import QtCore, QtGui
 
 
 class ProjectModel(QtGui.QStandardItemModel):

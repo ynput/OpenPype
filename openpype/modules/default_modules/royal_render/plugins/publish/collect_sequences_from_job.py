@@ -17,7 +17,7 @@ def collect(root,
             frame_end=None):
     """Collect sequence collections in root"""
 
-    from avalon.vendor import clique
+    import clique
 
     files = []
     for filename in os.listdir(root):

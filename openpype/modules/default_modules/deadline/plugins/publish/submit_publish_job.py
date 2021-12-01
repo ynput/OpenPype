@@ -5,10 +5,11 @@ import os
 import json
 import re
 from copy import copy, deepcopy
+import requests
+import clique
 import openpype.api
 
 from avalon import api, io
-from avalon.vendor import requests, clique
 
 import pyblish.api
 
@@ -142,8 +143,7 @@ class ProcessSubmittedJobOnFarm(pyblish.api.InstancePlugin):
     instance_transfer = {
         "slate": ["slateFrame"],
         "review": ["lutPath"],
-        "render2d": ["bakeScriptPath", "bakeRenderPath",
-                     "bakeWriteNodeName", "version"],
+        "render2d": ["bakingNukeScripts", "version"],
         "renderlayer": ["convertToScanline"]
     }
 
@@ -445,9 +445,14 @@ class ProcessSubmittedJobOnFarm(pyblish.api.InstancePlugin):
                         preview = True
                         break
 
+            if instance_data.get("multipartExr"):
+                preview = True
+
             new_instance = copy(instance_data)
             new_instance["subset"] = subset_name
             new_instance["subsetGroup"] = group_name
+            if preview:
+                new_instance["review"] = True
 
             # create represenation
             if isinstance(col, (list, tuple)):
@@ -506,9 +511,9 @@ class ProcessSubmittedJobOnFarm(pyblish.api.InstancePlugin):
         """
         representations = []
         collections, remainders = clique.assemble(exp_files)
-        bake_render_path = instance.get("bakeRenderPath", [])
+        bake_renders = instance.get("bakingNukeScripts", [])
 
-        # create representation for every collected sequence
+        # create representation for every collected sequento ce
         for collection in collections:
             ext = collection.tail.lstrip(".")
             preview = False
@@ -524,8 +529,12 @@ class ProcessSubmittedJobOnFarm(pyblish.api.InstancePlugin):
                             preview = True
                             break
 
-            if bake_render_path:
+            if bake_renders:
                 preview = False
+
+            # toggle preview on if multipart is on
+            if instance.get("multipartExr", False):
+                preview = True
 
             staging = os.path.dirname(list(collection)[0])
             success, rootless_staging_dir = (
@@ -596,7 +605,8 @@ class ProcessSubmittedJobOnFarm(pyblish.api.InstancePlugin):
                 })
                 self._solve_families(instance, True)
 
-            if remainder in bake_render_path:
+            if (bake_renders
+                    and remainder in bake_renders[0]["bakeRenderPath"]):
                 rep.update({
                     "fps": instance.get("fps"),
                     "tags": ["review", "delete"]

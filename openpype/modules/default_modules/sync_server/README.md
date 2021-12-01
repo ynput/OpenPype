@@ -56,6 +56,13 @@ representation.files.sites:
 `db.getCollection('MY_PROJECT').update({type:"representation"}, 
 {$set:{"files.$[].sites.MY_CONFIGURED_REMOTE_SITE" : {}}}, true, true)`
 
+I want to create new custom provider:
+-----------------------------------
+- take `providers\abstract_provider.py` as a base class
+- create provider class in `providers` with a name according to a provider (eg. 'gdrive.py' for gdrive provider etc.)
+- upload provider icon in png format, 24x24, into `providers\resources`, its name must follow name of provider (eg. 'gdrive.png' for gdrive provider)
+- register new provider into `providers.lib.py`, test how many files could be manipulated at same time, check provider's API for limits
+
 Needed configuration:
 --------------------
 `pype/settings/defaults/project_settings/global.json`.`sync_server`:

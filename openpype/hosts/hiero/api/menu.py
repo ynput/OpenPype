@@ -105,9 +105,9 @@ def menu_install():
     sceneinventory_action.triggered.connect(
         lambda: host_tools.show_scene_inventory(parent=main_window)
     )
-    menu.addSeparator()
 
     if os.getenv("OPENPYPE_DEVELOP"):
+        menu.addSeparator()
         reload_action = menu.addAction("Reload pipeline")
         reload_action.setIcon(QtGui.QIcon("icons:ColorAdd.png"))
         reload_action.triggered.connect(reload_config)
@@ -120,3 +120,10 @@ def menu_install():
     apply_colorspace_c_action = menu.addAction("Apply Colorspace Clips")
     apply_colorspace_c_action.setIcon(QtGui.QIcon("icons:ColorAdd.png"))
     apply_colorspace_c_action.triggered.connect(apply_colorspace_clips)
+
+    menu.addSeparator()
+
+    exeprimental_action = menu.addAction("Experimental tools...")
+    exeprimental_action.triggered.connect(
+        lambda: host_tools.show_experimental_tools_dialog(parent=main_window)
+    )

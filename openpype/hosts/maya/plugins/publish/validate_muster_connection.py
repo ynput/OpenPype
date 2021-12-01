@@ -1,9 +1,10 @@
 import os
 import json
+
 import appdirs
+import requests
 
 import pyblish.api
-from avalon.vendor import requests
 from openpype.plugin import contextplugin_should_run
 import openpype.hosts.maya.api.action
 

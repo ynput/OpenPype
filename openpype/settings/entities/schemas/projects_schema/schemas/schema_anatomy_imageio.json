@@ -132,6 +132,19 @@
                     ]
                 },
                 {
+                    "key": "baking",
+                    "type": "dict",
+                    "label": "Extract-review baking profile",
+                    "collapsible": false,
+                    "children": [
+                        {
+                            "type": "text",
+                            "key": "viewerProcess",
+                            "label": "Viewer Process"
+                        }
+                    ]
+                },
+                {
                     "key": "workfile",
                     "type": "dict",
                     "label": "Workfile",
@@ -363,7 +376,7 @@
             "key": "maya",
             "type": "dict",
             "label": "Maya",
-            "children": [    
+            "children": [
                 {
                     "key": "colorManagementPreference",
                     "type": "dict",

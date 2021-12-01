@@ -347,13 +347,21 @@ class AssetModel(QtGui.QStandardItemModel):
 
         return self.get_indexes_by_asset_ids(asset_ids)
 
-    def refresh(self, force=False):
-        """Refresh the data for the model."""
+    def refresh(self, force=False, clear=False):
+        """Refresh the data for the model.
+
+        Args:
+            force (bool): Stop currently running refresh start new refresh.
+            clear (bool): Clear model before refresh thread starts.
+        """
         # Skip fetch if there is already other thread fetching documents
         if self._refreshing:
             if not force:
                 return
             self.stop_refresh()
+
+        if clear:
+            self._clear_items()
 
         # Fetch documents from mongo
         # Restart payload
@@ -379,15 +387,18 @@ class AssetModel(QtGui.QStandardItemModel):
                 continue
             item.setData(colors, ASSET_UNDERLINE_COLORS_ROLE)
 
+    def _clear_items(self):
+        root_item = self.invisibleRootItem()
+        root_item.removeRows(0, root_item.rowCount())
+        self._items_by_asset_id = {}
+        self._items_with_color_by_id = {}
+
     def _on_docs_fetched(self):
         # Make sure refreshing did not change
         # - since this line is refreshing sequential and
         #   triggering of new refresh will happen when this method is done
         if not self._refreshing:
-            root_item = self.invisibleRootItem()
-            root_item.removeRows(0, root_item.rowCount())
-            self._items_by_asset_id = {}
-            self._items_with_color_by_id = {}
+            self._clear_items()
             return
 
         # Collect asset documents as needed
@@ -419,8 +430,6 @@ class AssetModel(QtGui.QStandardItemModel):
             parent_id, parent_item = asset_items_queue.popleft()
             # Skip if there are no children
             children_ids = asset_ids_by_parents[parent_id]
-            if not children_ids:
-                continue
 
             # Go through current children of parent item
             # - find out items that were deleted and skip creation of already
@@ -564,6 +573,8 @@ class AssetsWidget(QtWidgets.QWidget):
     refreshed = QtCore.Signal()
     # on view selection change
     selection_changed = QtCore.Signal()
+    # It was double clicked on view
+    double_clicked = QtCore.Signal()
 
     def __init__(self, dbcon, parent=None):
         super(AssetsWidget, self).__init__(parent=parent)
@@ -618,11 +629,13 @@ class AssetsWidget(QtWidgets.QWidget):
         refresh_btn.clicked.connect(self.refresh)
         current_asset_btn.clicked.connect(self.set_current_session_asset)
         model.refreshed.connect(self._on_model_refresh)
+        view.doubleClicked.connect(self.double_clicked)
 
         self._current_asset_btn = current_asset_btn
         self._model = model
         self._proxy = proxy
         self._view = view
+        self._last_project_name = None
 
         self.model_selection = {}
 
@@ -631,7 +644,12 @@ class AssetsWidget(QtWidgets.QWidget):
         return self._model.refreshing
 
     def refresh(self):
-        self._refresh_model()
+        project_name = self.dbcon.Session.get("AVALON_PROJECT")
+        clear_model = False
+        if project_name != self._last_project_name:
+            clear_model = True
+            self._last_project_name = project_name
+        self._refresh_model(clear_model)
 
     def stop_refresh(self):
         self._model.stop_refresh()
@@ -677,14 +695,14 @@ class AssetsWidget(QtWidgets.QWidget):
         self._set_loading_state(loading=False, empty=not has_item)
         self.refreshed.emit()
 
-    def _refresh_model(self):
+    def _refresh_model(self, clear=False):
         # Store selection
         self._set_loading_state(loading=True, empty=True)
 
         # Trigger signal before refresh is called
         self.refresh_triggered.emit()
         # Refresh model
-        self._model.refresh()
+        self._model.refresh(clear=clear)
 
     def _set_loading_state(self, loading, empty):
         self._view.set_loading_state(loading, empty)

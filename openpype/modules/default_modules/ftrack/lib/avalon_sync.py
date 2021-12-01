@@ -1479,7 +1479,7 @@ class SyncEntitiesFactory:
                 mongo_id = self.ftrack_avalon_mapper.get(ftrack_link_id)
                 if mongo_id is not None:
                     input_links.append({
-                        "_id": ObjectId(mongo_id),
+                        "id": ObjectId(mongo_id),
                         "linkedBy": "ftrack",
                         "type": "breakdown"
                     })
