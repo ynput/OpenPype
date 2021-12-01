@@ -64,8 +64,6 @@ class CreateHDA(plugin.Creator):
                 name=subset_name,
                 hda_file_name="$HIP/{}.hda".format(subset_name)
             )
-            # print("move to hda: {}".format(to_hda))
-            # hou.moveNodesTo([to_hda], hda_node)
             hda_node.layoutChildren()
         elif self._check_existing(subset_name):
             raise plugin.OpenPypeCreatorError(
