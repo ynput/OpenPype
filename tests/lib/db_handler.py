@@ -165,7 +165,7 @@ class DBHandler:
         if collection:
             if not db_name:
                 raise ValueError("db_name must be present")
-            coll_part = "--nsInclude={}.{}".format(db_name, collection)
+            coll_part = "--collection={}".format(collection)
         query = "\"{}\" --uri=\"{}\" --out={} {} {}".format(
             "mongodump", uri, output_path, db_part, coll_part
         )
@@ -220,11 +220,11 @@ class DBHandler:
 
         return query
 
-#handler = DBHandler(uri="mongodb://localhost:27017")
+handler = DBHandler(uri="mongodb://localhost:27017")
 #
-#backup_dir = "c:\\projects\\test_nuke_publish\\input\\dumps"
+backup_dir = "c:\\projects\\test_nuke_publish\\input\\dumps"
 # #
-#handler.backup_to_dump("avalon", backup_dir, True, collection="test_project")
+handler.backup_to_dump("avalon", backup_dir, True, collection="test_project")
 #handler.setup_from_dump("test_db", backup_dir, True, db_name_out="avalon", collection="test_project")
 # # handler.setup_from_sql_file("test_db", "c:\\projects\\sql\\item.sql",
 # #                             collection="test_project",
