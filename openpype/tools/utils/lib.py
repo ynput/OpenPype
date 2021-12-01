@@ -25,6 +25,34 @@ def center_window(window):
     window.move(geo.topLeft())
 
 
+def paint_image_with_color(image, color):
+    """Redraw image with single color using it's alpha.
+
+    It is expected that input image is singlecolor image with alpha.
+
+    Args:
+        image (QImage): Loaded image with alpha.
+        color (QColor): Color that will be used to paint image.
+    """
+    width = image.width()
+    height = image.height()
+
+    alpha_mask = image.createAlphaMask()
+    alpha_region = QtGui.QRegion(QtGui.QBitmap.fromImage(alpha_mask))
+
+    pixmap = QtGui.QPixmap(width, height)
+    pixmap.fill(QtCore.Qt.transparent)
+
+    painter = QtGui.QPainter(pixmap)
+    painter.setClipRegion(alpha_region)
+    painter.setPen(QtCore.Qt.NoPen)
+    painter.setBrush(color)
+    painter.drawRect(QtCore.QRect(0, 0, width, height))
+    painter.end()
+
+    return pixmap
+
+
 def format_version(value, hero_version=False):
     """Formats integer to displayable version name"""
     label = "v{0:03d}".format(value)

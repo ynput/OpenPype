@@ -1,12 +1,13 @@
 import sys
 from Qt import QtWidgets, QtGui
+
+from openpype import style
 from .lib import (
     BTN_FIXED_SIZE,
     CHILD_OFFSET
 )
 from .local_settings import LocalSettingsWindow
 from .settings import (
-    style,
     MainWidget,
     ProjectListWidget
 )
@@ -35,8 +36,6 @@ def main(user_role=None):
 __all__ = (
     "BTN_FIXED_SIZE",
     "CHILD_OFFSET",
-
-    "style",
 
     "MainWidget",
     "ProjectListWidget",

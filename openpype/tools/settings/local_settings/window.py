@@ -1,7 +1,7 @@
 import logging
 from Qt import QtWidgets, QtGui
 
-from ..settings import style
+from openpype import style
 
 from openpype.settings.lib import (
     get_local_settings,
@@ -15,7 +15,6 @@ from openpype.api import (
 from openpype.modules import ModulesManager
 
 from .widgets import (
-    SpacerWidget,
     ExpandingWidget
 )
 from .mongo_widget import OpenPypeMongoWidget
@@ -58,8 +57,7 @@ class LocalSettingsWidget(QtWidgets.QWidget):
         self._create_app_ui()
         self._create_project_ui()
 
-        # Add spacer to main layout
-        self.main_layout.addWidget(SpacerWidget(self), 1)
+        self.main_layout.addStretch(1)
 
     def _create_pype_mongo_ui(self):
         pype_mongo_expand_widget = ExpandingWidget("OpenPype Mongo URL", self)
@@ -210,7 +208,7 @@ class LocalSettingsWindow(QtWidgets.QWidget):
 
         footer_layout = QtWidgets.QHBoxLayout(footer)
         footer_layout.addWidget(reset_btn, 0)
-        footer_layout.addWidget(SpacerWidget(footer), 1)
+        footer_layout.addStretch(1)
         footer_layout.addWidget(save_btn, 0)
 
         main_layout = QtWidgets.QVBoxLayout(self)
