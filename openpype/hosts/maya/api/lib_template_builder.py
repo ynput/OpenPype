@@ -49,6 +49,17 @@ Defines what openpype loader will be used to load assets.
 Useable loader depends on current host's loader list.
 Field is case sensitive.
 """),
+        qargparse.String(
+            "loader_args",
+            default="",
+            label="Loader Arguments",
+            placeholder='ex: {"camera":"persp", "lights":True}',
+            help="""Loader
+
+Defines a dictionnary of arguments used to load assets.
+Useable arguments depend on current placeholder Loader.
+Field should be a valid python dict. Anything else will be ignored.
+"""),
         qargparse.Integer(
             "order",
             default=0,

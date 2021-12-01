@@ -29,6 +29,24 @@ def update_representations(entities, entity):
 
     return entities
 
+def parse_loader_args(loader_args):
+        if not loader_args:
+            return dict()
+        try:
+            parsed_args= eval(loader_args)
+            if not isinstance(parsed_args, dict):
+                return dict()
+            else:
+                return parsed_args
+        except Exception as err:
+            print(
+                "Error while parsing loader arguments '{}'.\n{}: {}\n\n"
+                "Continuing with default arguments. . .".format(
+                    loader_args,
+                    err.__class__.__name__,
+                    err))
+            return dict()
+
 @six.add_metaclass(ABCMeta)
 class AbstractTemplateLoader:
     """
@@ -181,7 +199,8 @@ class AbstractTemplateLoader:
                         continue
                     container = avalon.api.load(
                         loaders_by_name[placeholder.loader],
-                        last_representation['_id'])
+                        last_representation['_id'],
+                        options=parse_loader_args(placeholder.data['loader_args']))
                     placeholder.parent_in_hierarchy(container)
             placeholder.clean()
     # Merge to populate_template
@@ -222,7 +241,8 @@ class AbstractTemplateLoader:
                         continue
                     container = avalon.api.load(
                         loaders_by_name[placeholder.loader],
-                        last_representation['_id'])
+                        last_representation['_id'],
+                        options=parse_loader_args(placeholder.data['loader_args']))
                     placeholder.parent_in_hierarchy(container)
             placeholder.clean()
 
@@ -292,8 +312,8 @@ class AbstractPlaceholder:
 
     """
 
-    attributes = {'builder_type', 'family',
-                  'representation', 'order', 'loader'}
+    attributes = {'builder_type', 'family', 'representation',
+                  'order', 'loader', 'loader_args'}
     optional_attributes = {}
 
     def __init__(self, node):
