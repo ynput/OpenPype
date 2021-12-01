@@ -65,7 +65,7 @@ class AppVariantWidget(QtWidgets.QWidget):
         for item in studio_executables:
             path_widget = QtWidgets.QLineEdit(content_widget)
             path_widget.setText(item.value)
-            path_widget.setEnabled(False)
+            path_widget.setReadOnly(True)
             content_layout.addWidget(path_widget)
 
     def update_local_settings(self, value):
