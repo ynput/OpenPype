@@ -64,8 +64,9 @@ class AppVariantWidget(QtWidgets.QWidget):
 
         for item in studio_executables:
             path_widget = QtWidgets.QLineEdit(content_widget)
+            path_widget.setObjectName("LikeDisabledInput")
             path_widget.setText(item.value)
-            path_widget.setEnabled(False)
+            path_widget.setReadOnly(True)
             content_layout.addWidget(path_widget)
 
     def update_local_settings(self, value):
@@ -172,7 +173,9 @@ class LocalApplicationsWidgets(QtWidgets.QWidget):
     def _reset_app_widgets(self):
         while self.content_layout.count() > 0:
             item = self.content_layout.itemAt(0)
-            item.widget().hide()
+            widget = item.widget()
+            if widget is not None:
+                widget.setVisible(False)
             self.content_layout.removeItem(item)
         self.widgets_by_group_name.clear()
 

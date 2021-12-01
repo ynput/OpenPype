@@ -660,15 +660,6 @@ QScrollBar::add-page:vertical, QScrollBar::sub-page:vertical {
     background: none;
 }
 
-/* Globally used names */
-#Separator {
-    background: {color:bg-menu-separator};
-}
-
-#IconButton {
-    padding: 4px 4px 4px 4px;
-}
-
 /* Password dialog*/
 #PasswordBtn {
     border: none;
@@ -971,7 +962,249 @@ QScrollBar::add-page:vertical, QScrollBar::sub-page:vertical {
     background: transparent;
 }
 
+/* Settings - NOT USED YET
+- we need to define font family for settings UI */
+
+#SettingsMainWidget {
+    background: #141a1f;
+}
+/* Change focus borders. */
+#SettingsMainWidget QAbstractSpinBox:focus, #SettingsMainWidget QLineEdit:focus, #SettingsMainWidget QPlainTextEdit:focus, #SettingsMainWidget QTextEdit:focus {
+    border-color: {color:settings:focus-border};
+}
+/* Modify tab widget for settings */
+#SettingsMainWidget QTabWidget::pane {
+    border-top-style: none;
+}
+
+#SettingsMainWidget QTabBar {
+   background: transparent;
+}
+
+#SettingsMainWidget QTabBar::tab {
+    border: none;
+    border-top-left-radius: 4px;
+    border-top-right-radius: 4px;
+    padding: 5px;
+}
+
+#SettingsMainWidget QTabBar::tab:selected {
+    background: {color:bg};
+    border-color: #9B9B9B;
+    border-bottom-color: #C2C7CB;
+}
+
+#SettingsMainWidget QTabBar::tab:!selected {
+    margin-top: 2px;
+    background: #21252B;
+}
+
+#SettingsMainWidget QTabBar::tab:!selected:hover {
+    background: #333840;
+}
+
+#SettingsMainWidget QTabBar::tab:first:selected {
+    margin-left: 0;
+}
+
+#SettingsMainWidget QTabBar::tab:last:selected {
+    margin-right: 0;
+}
+
+#SettingsMainWidget QTabBar::tab:only-one {
+    margin: 0;
+}
+
+#SettingsToolIconBtn {
+    border: 0px solid #bfccd6;
+    background-color: transparent;
+}
+
+#SettingsToolBtn {
+    border: 1px solid #bfccd6;
+    border-radius: 10px;
+    background-color: transparent;
+}
+
+#SettingsToolBtn:hover {
+    border-color: #189aea;
+    color: {color:settings:modified-light};
+    background-color: transparent;
+}
+#SettingsToolBtn:disabled {
+    background-color: #464b54;
+}
+
+#ExpandToggleBtn {
+    background: transparent;
+}
+
+#SettingsLabel {
+    background: transparent;
+    color: {color:settings:label-fg};
+}
+#SettingsLabel:hover {color: {color:settings:label-fg-hover};}
+#SettingsLabel[state="studio"] {color: {color:settings:studio-light};}
+#SettingsLabel[state="studio"]:hover {color: {color:settings:studio-label-hover};}
+#SettingsLabel[state="modified"] {color: {color:settings:modified-mid};}
+#SettingsLabel[state="modified"]:hover {color: {color:settings:modified-light};}
+#SettingsLabel[state="overriden-modified"] {color: {color:settings:modified-mid};}
+#SettingsLabel[state="overriden-modified"]:hover {color: {color:settings:modified-light};}
+#SettingsLabel[state="overriden"] {color: {color:settings:project-mid};}
+#SettingsLabel[state="overriden"]:hover {color: {color:settings:project-light};}
+#SettingsLabel[state="invalid"] {color:{color:settings:invalid-dark};}
+#SettingsLabel[state="invalid"]:hover {color: {color:settings:invalid-dark};}
+
+/* TODO Replace these with explicit widget types if possible */
+#SettingsMainWidget QWidget[input-state="modified"] {
+    border-color: {color:settings:modified-mid};
+}
+#SettingsMainWidget QWidget[input-state="overriden-modified"] {
+    border-color: {color:settings:modified-mid};
+}
+#SettingsMainWidget QWidget[input-state="overriden"] {
+    border-color: {color:settings:project-mid};
+}
+#SettingsMainWidget QWidget[input-state="invalid"] {
+    border-color: {color:settings:invalid-dark};
+}
+
+#GroupWidget {
+    border-bottom: 1px solid #21252B;
+}
+
+#ProjectListWidget QLabel {
+    background: transparent;
+    font-weight: bold;
+}
+
+#MultiSelectionComboBox {
+    font-size: 12px;
+}
+
+#DictKey[state="modified"] {border-color: {color:settings:modified-mid};}
+#DictKey[state="invalid"] {border-color: {color:settings:invalid-dark};}
+
+#ExpandLabel {
+    font-weight: bold;
+    color: {color:settings:label-fg};
+}
+#ExpandLabel:hover {
+    color: {color:settings:label-fg-hover};
+}
+
+#ContentWidget {
+    background-color: transparent;
+}
+#ContentWidget[content_state="hightlighted"] {
+    background-color: {color:settings:content-hightlighted};
+}
+
+#SideLineWidget {
+    background-color: #333942;
+    border-style: solid;
+    border-color: #4e5254;
+    border-left-width: 3px;
+    border-bottom-width: 0px;
+    border-right-width: 0px;
+    border-top-width: 0px;
+}
+
+#SideLineWidget:hover {
+    border-color: #7d8386;
+}
+
+#SideLineWidget[state="child-studio"] {border-color: {color:settings:studio-dark};}
+#SideLineWidget[state="child-studio"]:hover {border-color: {color:settings:studio-light};}
+
+#SideLineWidget[state="child-modified"] {border-color: {color:settings:modified-dark};}
+#SideLineWidget[state="child-modified"]:hover {border-color: {color:settings:modified-mid};}
+
+#SideLineWidget[state="child-invalid"] {border-color: {color:settings:invalid-dark};}
+#SideLineWidget[state="child-invalid"]:hover {border-color: {color:settings:invalid-light};}
+
+#SideLineWidget[state="child-overriden"] {border-color: {color:settings:project-dark};}
+#SideLineWidget[state="child-overriden"]:hover {border-color: {color:settings:project-mid};}
+
+#SideLineWidget[state="child-overriden-modified"] {border-color: {color:settings:modified-dark};}
+#SideLineWidget[state="child-overriden-modified"]:hover {border-color: {color:settings:modified-mid};}
+
+#DictAsWidgetBody {
+    background: transparent;
+}
+#DictAsWidgetBody[show_borders="1"] {
+    border: 1px solid #4e5254;
+    border-radius: 5px;
+}
+
+#ShadowWidget {
+    font-size: 36pt;
+}
+
+#BreadcrumbsPathInput {
+    padding: 2px;
+    font-size: 9pt;
+}
+
+#BreadcrumbsButton {
+    padding-right: 12px;
+    font-size: 9pt;
+    background: transparent;
+}
+
+#BreadcrumbsButton[empty="1"] {
+    padding-right: 0px;
+}
+
+#BreadcrumbsButton::menu-button {
+    border: none;
+    width: 12px;
+    background: {color:settings:breadcrumbs-btn-bg};
+}
+#BreadcrumbsButton::menu-button:hover {
+    background: {color:settings:breadcrumbs-btn-bg-hover};
+}
+
+#BreadcrumbsPanel {
+    border: 1px solid #4e5254;
+    border-radius: 5px;
+    background: #21252B;
+}
+
+/* Globally used names */
+#Separator {
+    background: {color:bg-menu-separator};
+}
+
+#IconButton {
+    padding: 4px 4px 4px 4px;
+}
+
 #NiceCheckbox {
     /* Default size hint of NiceCheckbox is defined by font size. */
     font-size: 7pt;
+}
+
+#ImageButton {
+    padding: 0;
+    background: transparent;
+    font-size: 11pt;
+}
+
+#ImageButton:disabled {
+    background: {color:bg-buttons-disabled};
+}
+
+/* Input field that looks like disabled
+- QAbstractSpinBox, QLineEdit, QPlainTextEdit, QTextEdit
+- usage: QLineEdit that is not editable but has selectable color
+ */
+#LikeDisabledInput {
+    background: {color:bg-inputs-disabled};
+}
+#LikeDisabledInput:hover {
+    border-color: {color:border};
+}
+#LikeDisabledInput:focus {
+    border-color: {color:border};
 }

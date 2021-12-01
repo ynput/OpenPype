@@ -1,5 +1,5 @@
 import openpype.api
-from avalon.vendor import Qt
+from Qt import QtWidgets
 from avalon import aftereffects
 
 import logging
@@ -56,7 +56,7 @@ class CreateRender(openpype.api.Creator):
         stub.rename_item(item.id, stub.PUBLISH_ICON + self.data["subset"])
 
     def _show_msg(self, txt):
-        msg = Qt.QtWidgets.QMessageBox()
-        msg.setIcon(Qt.QtWidgets.QMessageBox.Warning)
+        msg = QtWidgets.QMessageBox()
+        msg.setIcon(QtWidgets.QMessageBox.Warning)
         msg.setText(txt)
         msg.exec_()
