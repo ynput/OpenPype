@@ -52,7 +52,7 @@ class CreateHDA(plugin.Creator):
             to_hda = subnet
         else:
             to_hda = out.createNode(
-                        "subnet", node_name="{}_subnet".format(self.name))
+                "subnet", node_name="{}_subnet".format(self.name))
         if not to_hda.type().definition():
             # if node type has not its definition, it is not user
             # created hda. We test if hda can be created from the node.
