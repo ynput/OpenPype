@@ -16,29 +16,29 @@ except:
     from PySide2.QtCore import *
 
 
-def whereAmI(self, searchType='TrackItem'):
+def whereAmI(self, searchType="TrackItem"):
     """returns a list of TrackItem or Sequnece objects in the Project which contain this Clip.
   By default this will return a list of TrackItems where the Clip is used in its project.
-  You can also return a list of Sequences by specifying the searchType to be 'Sequence'.
+  You can also return a list of Sequences by specifying the searchType to be "Sequence".
   Should consider putting this into hiero.core.Clip by default?
 
   Example usage:
 
-  shotsForClip = clip.whereAmI('TrackItem')
-  sequencesForClip = clip.whereAmI('Sequence')
+  shotsForClip = clip.whereAmI("TrackItem")
+  sequencesForClip = clip.whereAmI("Sequence")
   """
     proj = self.project()
 
-    if ('TrackItem' not in searchType) and ('Sequence' not in searchType):
-        print "searchType argument must be 'TrackItem' or 'Sequence'"
+    if ("TrackItem" not in searchType) and ("Sequence" not in searchType):
+        print("searchType argument must be \"TrackItem\" or \"Sequence\"")
         return None
 
     # If user specifies a TrackItem, then it will return
     searches = hiero.core.findItemsInProject(proj, searchType)
 
     if len(searches) == 0:
-        print 'Unable to find %s in any items of type: %s' % (str(self),
-                                                              str(searchType))
+        print("Unable to find {} in any items of type: {}".format(
+            str(self), searchType))
         return None
 
     # Case 1: Looking for Shots (trackItems)
@@ -110,7 +110,7 @@ class VersionAllMenu(object):
             for shot in sequenceShotManifest[seq]:
                 updateReportString += '  %s\n    (New Version: %s)\n' % (
                     shot.name(), shot.currentVersion().name())
-            updateReportString += '\n'
+            updateReportString += "\n"
 
         infoBox = QMessageBox(hiero.ui.mainWindow())
         infoBox.setIcon(QMessageBox.Information)
@@ -202,7 +202,7 @@ class VersionAllMenu(object):
             if len(bins) > 0:
                 # Grab the Clips inside of a Bin and append them to a list
                 for bin in bins:
-                    clips = hiero.core.findItemsInBin(bin, 'Clip')
+                    clips = hiero.core.findItemsInBin(bin, "Clip")
                     for clip in clips:
                         if clip not in clipItems:
                             clipItems.append(clip)
@@ -291,7 +291,7 @@ class VersionAllMenu(object):
             for clip in clipSelection:
 
                 # Look to see if it exists in a TrackItem somewhere...
-                shotUsage = clip.whereAmI('TrackItem')
+                shotUsage = clip.whereAmI("TrackItem")
 
                 # Next, depending on the versionOption, make the appropriate update
                 # There's probably a more neat/compact way of doing this...
@@ -326,7 +326,7 @@ class VersionAllMenu(object):
     # This handles events from the Project Bin View
     def binViewEventHandler(self, event):
 
-        if not hasattr(event.sender, 'selection'):
+        if not hasattr(event.sender, "selection"):
             # Something has gone wrong, we should only be here if raised
             # by the Bin view which gives a selection.
             return

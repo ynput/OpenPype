@@ -12,7 +12,6 @@ import avalon.api as avalon
 import avalon.io
 from openpype.api import (Logger, Anatomy, get_anatomy_settings)
 from . import tags
-from compiler.ast import flatten
 
 try:
     from PySide.QtCore import QFile, QTextStream
@@ -39,6 +38,13 @@ AVALON_CONFIG = os.getenv("AVALON_CONFIG", "pype")
 
 
 def get_current_project(remove_untitled=False):
+    def flatten(l):
+        for i in l:
+            if isinstance(i, (list, tuple)):
+                yield from flatten(i)
+            else:
+                yield i
+
     projects = flatten(hiero.core.projects())
     if not remove_untitled:
         return next(iter(projects))

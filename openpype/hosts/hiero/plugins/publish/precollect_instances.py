@@ -1,7 +1,7 @@
 import pyblish
 import openpype
 from openpype.hosts.hiero import api as phiero
-from openpype.hosts.hiero.otio import hiero_export
+from openpype.hosts.hiero.api.otio import hiero_export
 import hiero
 
 from compiler.ast import flatten

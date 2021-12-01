@@ -5,7 +5,6 @@ import os
 import re
 import sys
 import ast
-from compiler.ast import flatten
 import opentimelineio as otio
 from . import utils
 import hiero.core
@@ -27,6 +26,14 @@ self.marker_color_map = {
 }
 self.timeline = None
 self.include_tags = True
+
+
+def flatten(l):
+        for i in l:
+            if isinstance(i, (list, tuple)):
+                yield from flatten(i)
+            else:
+                yield i
 
 
 def get_current_hiero_project(remove_untitled=False):
