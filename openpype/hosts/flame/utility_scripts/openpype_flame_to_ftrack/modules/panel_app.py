@@ -1,9 +1,9 @@
-import os
 from PySide2 import QtWidgets, QtCore
 
 import uiwidgets
 import app_utils
 import ftrack_lib
+
 
 def clear_inner_modules():
     import sys
@@ -19,6 +19,7 @@ def clear_inner_modules():
     if "uiwidgets" in sys.modules.keys():
         del sys.modules["uiwidgets"]
         print("uiwidgets module removed from sys.modules")
+
 
 class MainWindow(QtWidgets.QWidget):
 
@@ -74,6 +75,7 @@ class FlameToFtrackPanel(object):
         self.session = ftrack_lib.get_ftrack_session()
         self.selection = selection
         self.window = MainWindow(self)
+
         # creating ui
         self.window.setMinimumSize(1500, 600)
         self.window.setWindowTitle('Sequence Shots to Ftrack')
@@ -516,7 +518,6 @@ class FlameToFtrackPanel(object):
             shutil.rmtree(self.temp_data_dir)
         self.temp_data_dir = None
         print("All Temp data were destroied ...")
-
 
     def close(self):
         self._save_ui_state_to_cfg()
