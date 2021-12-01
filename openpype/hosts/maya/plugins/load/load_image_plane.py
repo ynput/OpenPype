@@ -82,7 +82,7 @@ class ImagePlaneLoader(api.Loader):
     icon = "image"
     color = "orange"
 
-    def load(self, context, name, namespace, data, option=None):
+    def load(self, context, name, namespace, data, options=None):
         import pymel.core as pm
 
         new_nodes = []
