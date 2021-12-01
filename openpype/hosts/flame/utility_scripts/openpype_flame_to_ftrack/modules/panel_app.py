@@ -1,21 +1,26 @@
-from ftrack_lib import (
-    get_ftrack_session,
-    FtrackEntityOperator,
-    FtrackComponentCreator
-)
-import app_utils
 import os
 from PySide2 import QtWidgets, QtCore
+
 import uiwidgets
-import flame
-
+import app_utils
 import ftrack_lib
-reload(ftrack_lib)
-reload(app_utils)
 
+def clear_inner_modules():
+    import sys
+
+    if "ftrack_lib" in sys.modules.keys():
+        del sys.modules["ftrack_lib"]
+        print("Ftrack Lib module removed from sys.modules")
+
+    if "app_utils" in sys.modules.keys():
+        del sys.modules["app_utils"]
+        print("app_utils module removed from sys.modules")
+
+    if "uiwidgets" in sys.modules.keys():
+        del sys.modules["uiwidgets"]
+        print("uiwidgets module removed from sys.modules")
 
 class MainWindow(QtWidgets.QWidget):
-    can_close = True
 
     def __init__(self, klass, *args, **kwargs):
         super(MainWindow, self).__init__(*args, **kwargs)
@@ -26,7 +31,7 @@ class MainWindow(QtWidgets.QWidget):
         print("Removing temp data")
         self.panel_class.clear_temp_data()
         self.panel_class.close()
-
+        clear_inner_modules()
         # now the panel can be closed
         event.accept()
 
@@ -65,13 +70,8 @@ class FlameToFtrackPanel(object):
 
     def __init__(self, selection):
         print(selection)
-        print(self.processed_components)
 
-        self.session = get_ftrack_session()
-
-        self.processed_components = []
-        print(self.processed_components)
-
+        self.session = ftrack_lib.get_ftrack_session()
         self.selection = selection
         self.window = MainWindow(self)
         # creating ui
@@ -225,7 +225,7 @@ class FlameToFtrackPanel(object):
             cfg_d["create_task_type"], self.task_types.keys(), self.window)
 
     def _create_project_widget(self):
-
+        import flame
         # get project name from flame current project
         self.project_name = flame.project.current_project.name
 
@@ -314,9 +314,9 @@ class FlameToFtrackPanel(object):
         # get resolution from gui inputs
         fps = self.fps_input.text()
 
-        entity_operator = FtrackEntityOperator(
+        entity_operator = ftrack_lib.FtrackEntityOperator(
             self.session, self.project_entity)
-        component_creator = FtrackComponentCreator(self.session)
+        component_creator = ftrack_lib.FtrackComponentCreator(self.session)
 
         if not self.temp_data_dir:
             self.window.hide()
@@ -516,6 +516,7 @@ class FlameToFtrackPanel(object):
             shutil.rmtree(self.temp_data_dir)
         self.temp_data_dir = None
         print("All Temp data were destroied ...")
+
 
     def close(self):
         self._save_ui_state_to_cfg()

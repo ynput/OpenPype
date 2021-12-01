@@ -6,13 +6,13 @@ import json
 from contextlib import contextmanager
 
 import app_utils
-reload(app_utils)
 
 # Fill following constants or set them via environment variable
 FTRACK_MODULE_PATH = None
 FTRACK_API_KEY = None
 FTRACK_API_USER = None
 FTRACK_SERVER = None
+
 
 def import_ftrack_api():
     try:
@@ -104,7 +104,6 @@ class FtrackComponentCreator:
         self.videos = [f for f in temp_files if "mov" in f]
         self.temp_dir = tempdir_path
 
-
     def get_thumb_path(self, shot_name):
         # get component files
         thumb_f = next((f for f in self.thumbnails if shot_name in f), None)
@@ -162,7 +161,7 @@ class FtrackComponentCreator:
 
             # get or create assetversion entity from session
             assetversion_entity = self._get_assetversion({
-                "version": 1,
+                "version": 0,
                 "asset": asset_entity
             })
 
