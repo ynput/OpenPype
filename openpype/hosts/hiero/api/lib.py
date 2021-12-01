@@ -735,9 +735,14 @@ def get_selected_track_items(sequence=None):
 def set_selected_track_items(track_items_list, sequence=None):
     _sequence = sequence or get_current_sequence()
 
+    # make sure only trackItems are in list selection
+    only_track_items = [
+        i for i in track_items_list
+        if isinstance(i, hiero.core.TrackItem)]
+
     # Getting selection
     timeline_editor = hiero.ui.getTimelineEditor(_sequence)
-    return timeline_editor.setSelection(track_items_list)
+    return timeline_editor.setSelection(only_track_items)
 
 
 def _read_doc_from_path(path):
