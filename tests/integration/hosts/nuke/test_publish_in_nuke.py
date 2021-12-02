@@ -14,17 +14,20 @@ class TestPublishInNuke(PublishTest):
         Uses generic TestCase to prepare fixtures for test data, testing DBs,
         env vars.
 
-        Opens Maya, run publish on prepared workile.
+        Opens Nuke, run publish on prepared workile.
 
         Then checks content of DB (if subset, version, representations were
         created.
         Checks tmp folder if all expected files were published.
 
+        How to run:
+        {OPENPYPE_ROOT}/.venv/Scripts/python.exe {OPENPYPE_ROOT}/start.py runtests ../tests/integration/hosts/nuke  # noqa: E501
+
     """
-    PERSIST = True
+    PERSIST = True  # True - keep test_db, test_openpype, outputted test files
 
     TEST_FILES = [
-        ("1635L4gww9nEkP-1EclfWXNdeDuRjDhey", "test_Nuke_publish.zip", "")
+        ("1SUurHj2aiQ21ZIMJfGVBI2KjR8kIjBGI", "test_Nuke_publish.zip", "")
     ]
 
     APP = "nuke"
@@ -40,7 +43,6 @@ class TestPublishInNuke(PublishTest):
 
             Maya expects workfile in proper folder, so copy is done first.
         """
-        print("last_workfile_path")
         log.info("log last_workfile_path")
         src_path = os.path.join(
             download_test_data,
@@ -62,20 +64,14 @@ class TestPublishInNuke(PublishTest):
     @pytest.fixture(scope="module")
     def startup_scripts(self, monkeypatch_session, download_test_data):
         """Points Nuke to userSetup file from input data"""
-        print("startup_scripts")
-        log.info("log startup_scripts")
         startup_path = os.path.join(download_test_data,
                                     "input",
                                     "startup")
-        startup_path = "C:\\projects\\test_nuke_publish\\input\\startup"
-        original_pythonpath = os.environ.get("NUKE_PATH")
+        original_nuke_path = os.environ.get("NUKE_PATH", "")
         monkeypatch_session.setenv("NUKE_PATH",
-                                   "{}{}{}".format(original_pythonpath,
+                                   "{}{}{}".format(startup_path,
                                                    os.pathsep,
-                                                   startup_path))
-        print("NUKE_PATH:: {}{}{}".format(startup_path,
-                                                   os.pathsep,
-                                                   original_pythonpath))
+                                                   original_nuke_path))
 
     def test_db_asserts(self, dbcon, publish_finished):
         """Host and input data dependent expected results in DB."""
@@ -88,25 +84,21 @@ class TestPublishInNuke(PublishTest):
             "Only versions with 1 expected"
 
         assert 1 == dbcon.count_documents({"type": "subset",
-                                           "name": "modelMain"}), \
-            "modelMain subset must be present"
+                                           "name": "renderCompositingInNukeMain"}  # noqa: E501
+                                          ), \
+            "renderCompositingInNukeMain subset must be present"
 
         assert 1 == dbcon.count_documents({"type": "subset",
                                            "name": "workfileTest_task"}), \
             "workfileTest_task subset must be present"
 
-        assert 11 == dbcon.count_documents({"type": "representation"}), \
+        assert 10 == dbcon.count_documents({"type": "representation"}), \
             "Not expected no of representations"
 
-        assert 2 == dbcon.count_documents({"type": "representation",
-                                           "context.subset": "modelMain",
-                                           "context.ext": "abc"}), \
-            "Not expected no of representations with ext 'abc'"
-
-        assert 2 == dbcon.count_documents({"type": "representation",
-                                           "context.subset": "modelMain",
-                                           "context.ext": "ma"}), \
-            "Not expected no of representations with ext 'abc'"
+        assert 1 == dbcon.count_documents({"type": "representation",
+                                           "context.subset": "renderCompositingInNukeMain",  # noqa: E501
+                                           "context.ext": "exr"}), \
+            "Not expected no of representations with ext 'exr'"
 
 
 if __name__ == "__main__":
