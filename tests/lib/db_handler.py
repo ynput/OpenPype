@@ -220,15 +220,16 @@ class DBHandler:
 
         return query
 
-handler = DBHandler(uri="mongodb://localhost:27017")
-#
-backup_dir = "c:\\projects\\test_nuke_publish\\input\\dumps"
+# Examples
+# handler = DBHandler(uri="mongodb://localhost:27017")
 # #
-handler.backup_to_dump("avalon", backup_dir, True, collection="test_project")
-#handler.setup_from_dump("test_db", backup_dir, True, db_name_out="avalon", collection="test_project")
-# # handler.setup_from_sql_file("test_db", "c:\\projects\\sql\\item.sql",
-# #                             collection="test_project",
-# #                             drop=False, mode="upsert")
-# handler.setup_from_sql("test_db", "c:\\projects\\sql",
+# backup_dir = "c:\\projects\\test_nuke_publish\\input\\dumps"
+# # #
+# handler.backup_to_dump("avalon", backup_dir, True, collection="test_project")
+# handler.setup_from_dump("test_db", backup_dir, True, db_name_out="avalon", collection="test_project")
+# handler.setup_from_sql_file("test_db", "c:\\projects\\sql\\item.sql",
 #                             collection="test_project",
 #                             drop=False, mode="upsert")
+# handler.setup_from_sql("test_db", "c:\\projects\\sql",
+#                        collection="test_project",
+#                        drop=False, mode="upsert")
