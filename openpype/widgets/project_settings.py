@@ -1,9 +1,8 @@
-
-
-from avalon.vendor.Qt import QtCore, QtGui, QtWidgets
 import os
 import getpass
 import platform
+
+from Qt import QtCore, QtGui, QtWidgets
 
 from avalon import style
 import ftrack_api

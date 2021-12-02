@@ -101,7 +101,8 @@ class LookModel(models.TreeModel):
             for look in asset_item["looks"]:
                 look_subsets[look["name"]].append(asset)
 
-        for subset, assets in sorted(look_subsets.iteritems()):
+        for subset in sorted(look_subsets.keys()):
+            assets = look_subsets[subset]
 
             # Define nice label without "look" prefix for readability
             label = subset if not subset.startswith("look") else subset[4:]

@@ -164,6 +164,7 @@ class DictConditionalWidget(BaseWidget):
         content_widget.setProperty("show_borders", show_borders)
 
         label_widget = QtWidgets.QLabel(self.entity.label)
+        label_widget.setObjectName("SettingsLabel")
 
         content_layout = QtWidgets.QGridLayout(content_widget)
         content_layout.setContentsMargins(5, 5, 5, 5)
