@@ -274,6 +274,7 @@ def _load_modules():
     # Import default modules imported from 'openpype.modules'
     for default_module_name in (
         "python_console_interpreter",
+        "slack",
         "log_viewer",
         "muster",
         "clockify",
