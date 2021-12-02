@@ -216,6 +216,7 @@ class PypeCommands:
             task_name,
             app_name
         )
+        print("env:: {}".format(env))
         os.environ.update(env)
 
         os.environ["OPENPYPE_PUBLISH_DATA"] = batch_dir
@@ -364,7 +365,10 @@ class PypeCommands:
         if pyargs:
             pyargs_str = "--pyargs {}".format(pyargs)
 
-        cmd = "pytest {} {} {}".format(folder, mark_str, pyargs_str)
+        depr_str = "--disable-pytest-warnings"
+
+        cmd = "pytest {} {} {} {}".format(depr_str, folder,
+                                          mark_str, pyargs_str)
         print("Running {}".format(cmd))
         subprocess.run(cmd)
 
