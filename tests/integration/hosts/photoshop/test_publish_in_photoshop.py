@@ -20,6 +20,7 @@ class TestPublishInPhotoshop(PublishTest):
         Checks tmp folder if all expected files were published.
 
         How to run:
+        (in cmd with activated {OPENPYPE_ROOT}/.venv)
         {OPENPYPE_ROOT}/.venv/Scripts/python.exe {OPENPYPE_ROOT}/start.py runtests ../tests/integration/hosts/photoshop  # noqa: E501
 
     """
