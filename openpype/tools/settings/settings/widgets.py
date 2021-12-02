@@ -11,6 +11,7 @@ from openpype.tools.utils.widgets import ImageButton
 from openpype.tools.utils.lib import paint_image_with_color
 
 from openpype.widgets.nice_checkbox import NiceCheckbox
+from openpype.tools.utils import PlaceholderLineEdit
 from openpype.settings.lib import get_system_settings
 from .images import (
     get_pixmap,
@@ -24,7 +25,7 @@ from .constants import (
 )
 
 
-class SettingsLineEdit(QtWidgets.QLineEdit):
+class SettingsLineEdit(PlaceholderLineEdit):
     focused_in = QtCore.Signal()
 
     def focusInEvent(self, event):

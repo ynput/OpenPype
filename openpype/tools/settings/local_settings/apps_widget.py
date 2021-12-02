@@ -5,6 +5,7 @@ from .widgets import (
     ExpandingWidget
 )
 from openpype.tools.settings import CHILD_OFFSET
+from openpype.tools.utils import PlaceholderLineEdit
 
 
 class AppVariantWidget(QtWidgets.QWidget):
@@ -45,7 +46,7 @@ class AppVariantWidget(QtWidgets.QWidget):
             content_layout.addWidget(warn_label)
             return
 
-        executable_input_widget = QtWidgets.QLineEdit(content_widget)
+        executable_input_widget = PlaceholderLineEdit(content_widget)
         executable_input_widget.setPlaceholderText(self.exec_placeholder)
         content_layout.addWidget(executable_input_widget)
 

@@ -6,6 +6,7 @@ from Qt import QtWidgets
 from pymongo.errors import ServerSelectionTimeoutError
 
 from openpype.api import change_openpype_mongo_url
+from openpype.tools.utils import PlaceholderLineEdit
 
 
 class OpenPypeMongoWidget(QtWidgets.QWidget):
@@ -25,7 +26,7 @@ class OpenPypeMongoWidget(QtWidgets.QWidget):
         mongo_url_label = QtWidgets.QLabel("OpenPype Mongo URL", self)
 
         # Input
-        mongo_url_input = QtWidgets.QLineEdit(self)
+        mongo_url_input = PlaceholderLineEdit(self)
         mongo_url_input.setPlaceholderText("< OpenPype Mongo URL >")
         mongo_url_input.setText(os.environ["OPENPYPE_MONGO"])
 

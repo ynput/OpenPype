@@ -10,7 +10,7 @@ from openpype.api import (
     Creator
 )
 from openpype.lib import TaskNotSetError
-from avalon.tools.creator.app import SubsetAllowedSymbols
+from openpype.pipeline.create import SUBSET_NAME_ALLOWED_SYMBOLS
 
 
 class FamilyWidget(QtWidgets.QWidget):
@@ -223,7 +223,7 @@ class FamilyWidget(QtWidgets.QWidget):
                 # QUESTION should Creator care about this and here should be
                 #   only validated with schema regex?
                 subset_name = re.sub(
-                    "[^{}]+".format(SubsetAllowedSymbols),
+                    "[^{}]+".format(SUBSET_NAME_ALLOWED_SYMBOLS),
                     "",
                     subset_name
                 )
