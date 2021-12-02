@@ -50,11 +50,12 @@ class JobQueueModule(OpenPypeModule):
     name = "job_queue"
 
     def initialize(self, modules_settings):
-        server_url = modules_settings.get("server_url") or ""
+        module_settings = modules_settings.get(self.name) or {}
+        server_url = module_settings.get("server_url") or ""
 
         self._server_url = self.url_conversion(server_url)
         jobs_root_mapping = self._roots_mapping_conversion(
-            modules_settings.get("jobs_root")
+            module_settings.get("jobs_root")
         )
 
         self._jobs_root_mapping = jobs_root_mapping
