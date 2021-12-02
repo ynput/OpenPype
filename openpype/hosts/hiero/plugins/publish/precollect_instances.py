@@ -4,8 +4,6 @@ from openpype.hosts.hiero import api as phiero
 from openpype.hosts.hiero.api.otio import hiero_export
 import hiero
 
-from compiler.ast import flatten
-
 # # developer reload modules
 from pprint import pformat
 
@@ -339,10 +337,10 @@ class PrecollectInstances(pyblish.api.ContextPlugin):
                 continue
 
             track_index = track.trackIndex()
-            _sub_track_items = flatten(track.subTrackItems())
+            _sub_track_items = phiero.flatten(track.subTrackItems())
 
             # continue only if any subtrack items are collected
-            if len(_sub_track_items) < 1:
+            if not list(_sub_track_items):
                 continue
 
             enabled_sti = []
@@ -357,7 +355,7 @@ class PrecollectInstances(pyblish.api.ContextPlugin):
                 enabled_sti.append(_sti)
 
             # continue only if any subtrack items are collected
-            if len(enabled_sti) < 1:
+            if not enabled_sti:
                 continue
 
             # add collection of subtrackitems to dict
@@ -371,7 +369,7 @@ class PrecollectInstances(pyblish.api.ContextPlugin):
         Returns list of Clip's hiero.core.Annotation
         """
         annotations = []
-        subTrackItems = flatten(clip.subTrackItems())
+        subTrackItems = phiero.flatten(clip.subTrackItems())
         annotations += [item for item in subTrackItems if isinstance(
             item, hiero.core.Annotation)]
         return annotations
@@ -382,7 +380,7 @@ class PrecollectInstances(pyblish.api.ContextPlugin):
         Returns list of Clip's hiero.core.SubTrackItem
         """
         subtracks = []
-        subTrackItems = flatten(clip.parent().subTrackItems())
+        subTrackItems = phiero.flatten(clip.parent().subTrackItems())
         for item in subTrackItems:
             if "TimeWarp" in item.name():
                 continue

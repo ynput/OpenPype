@@ -171,8 +171,7 @@ class CollectOcioSubsetResources(pyblish.api.InstancePlugin):
             instance.data["representations"].append(repre)
             self.log.debug(">>>>>>>> {}".format(repre))
 
-        import pprint
-        self.log.debug(pprint.pformat(instance.data))
+        self.log.debug(instance.data)
 
     def _create_representation(self, start, end, **kwargs):
         """

@@ -37,14 +37,14 @@ self.default_bin_name = "openpypeBin"
 AVALON_CONFIG = os.getenv("AVALON_CONFIG", "pype")
 
 
-def get_current_project(remove_untitled=False):
-    def flatten(l):
-        for i in l:
-            if isinstance(i, (list, tuple)):
-                yield from flatten(i)
-            else:
-                yield i
+def flatten(input_list):
+    for item in input_list:
+        if isinstance(item, (list, tuple)):
+            yield from flatten(item)
+        else:
+            yield item
 
+def get_current_project(remove_untitled=False):
     projects = flatten(hiero.core.projects())
     if not remove_untitled:
         return next(iter(projects))
@@ -256,7 +256,7 @@ def set_track_item_pype_tag(track_item, data=None):
     Returns:
         hiero.core.Tag
     """
-    data = data or dict()
+    data = data or {}
 
     # basic Tag's attribute
     tag_data = {
@@ -290,7 +290,7 @@ def get_track_item_pype_data(track_item):
     Returns:
         dict: data found on pype tag
     """
-    data = dict()
+    data = {}
     # get pype data tag from track item
     tag = get_track_item_pype_tag(track_item)
 
@@ -305,8 +305,20 @@ def get_track_item_pype_data(track_item):
 
         try:
             # capture exceptions which are related to strings only
-            value = ast.literal_eval(v)
-        except (ValueError, SyntaxError):
+            if re.match(r"^[\d]+$", v):
+                value = int(v)
+            elif re.match(r"^True$", v):
+                value = True
+            elif re.match(r"^False$", v):
+                value = False
+            elif re.match(r"^None$", v):
+                value = None
+            elif re.match(r"^[\w\d_]+$", v):
+                value = v
+            else:
+                value = ast.literal_eval(v)
+        except (ValueError, SyntaxError) as msg:
+            log.warning(msg)
             value = v
 
         data.update({key: value})
