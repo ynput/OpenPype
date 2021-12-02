@@ -273,6 +273,7 @@ def _load_modules():
 
     # Import default modules imported from 'openpype.modules'
     for default_module_name in (
+        "clockify",
         "settings_action",
         "launcher_action",
         "project_manager_action",
