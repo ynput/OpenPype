@@ -27,7 +27,7 @@ def headless_publish(log, close_plugin_name=None, is_test=False):
 
         publish_and_log(dbcon, _id, log, close_plugin_name)
     else:
-        publish(log, 'CloseAE')
+        publish(log, close_plugin_name)
 
 
 def get_webpublish_conn():
