@@ -4,7 +4,7 @@ from openpype import (
     resources,
     style
 )
-
+from openpype.tools.utils import PlaceholderLineEdit
 from .control import PublisherController
 from .widgets import (
     BorderedLabelWidget,
@@ -131,7 +131,7 @@ class PublisherWindow(QtWidgets.QDialog):
         subset_content_layout.addWidget(subset_attributes_wrap, 7)
 
         # Footer
-        comment_input = QtWidgets.QLineEdit(subset_frame)
+        comment_input = PlaceholderLineEdit(subset_frame)
         comment_input.setObjectName("PublishCommentInput")
         comment_input.setPlaceholderText(
             "Attach a comment to your publish"

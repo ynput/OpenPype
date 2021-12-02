@@ -15,6 +15,7 @@ from openpype.tools.utils.lib import (
     schedule,
     qt_app_context
 )
+from openpype.tools.utils import PlaceholderLineEdit
 from openpype.tools.utils.assets_widget import SingleSelectAssetsWidget
 from openpype.tools.utils.tasks_widget import TasksWidget
 from openpype.tools.utils.delegates import PrettyTimeDelegate
@@ -139,7 +140,7 @@ class NameWindow(QtWidgets.QDialog):
         preview_label = QtWidgets.QLabel("Preview filename", inputs_widget)
 
         # Subversion input
-        subversion_input = QtWidgets.QLineEdit(inputs_widget)
+        subversion_input = PlaceholderLineEdit(inputs_widget)
         subversion_input.setPlaceholderText("Will be part of filename.")
 
         # Extensions combobox
@@ -394,9 +395,9 @@ class FilesWidget(QtWidgets.QWidget):
         files_view.setColumnWidth(0, 330)
 
         # Filtering input
-        filter_input = QtWidgets.QLineEdit(self)
-        filter_input.textChanged.connect(proxy_model.setFilterFixedString)
+        filter_input = PlaceholderLineEdit(self)
         filter_input.setPlaceholderText("Filter files..")
+        filter_input.textChanged.connect(proxy_model.setFilterFixedString)
 
         # Home Page
         # Build buttons widget for files widget
