@@ -13,17 +13,22 @@ class TestPublishInMaya(PublishTest):
         Uses generic TestCase to prepare fixtures for test data, testing DBs,
         env vars.
 
-        Opens Maya, run publish on prepared workile.
+        Always pulls and uses test data from GDrive!
+
+        Opens Maya, runs publish on prepared workile.
 
         Then checks content of DB (if subset, version, representations were
         created.
         Checks tmp folder if all expected files were published.
 
+        How to run:
+        {OPENPYPE_ROOT}/.venv/Scripts/python.exe {OPENPYPE_ROOT}/start.py runtests ../tests/integration/hosts/maya  # noqa: E501
+
     """
     PERSIST = True
 
     TEST_FILES = [
-        ("1pOwjA_VVBc6ooTZyFxtAwLS2KZHaBlkY", "test_maya_publish.zip", "")
+        ("1BTSIIULJTuDc8VvXseuiJV_fL6-Bu7FP", "test_maya_publish.zip", "")
     ]
 
     APP = "maya"

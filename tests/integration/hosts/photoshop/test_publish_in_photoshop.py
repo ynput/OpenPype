@@ -11,17 +11,22 @@ class TestPublishInPhotoshop(PublishTest):
         Uses generic TestCase to prepare fixtures for test data, testing DBs,
         env vars.
 
-        Opens Maya, run publish on prepared workile.
+        Always pulls and uses test data from GDrive!
+
+        Opens Photoshop, runs publish on prepared workile.
 
         Then checks content of DB (if subset, version, representations were
         created.
         Checks tmp folder if all expected files were published.
 
+        How to run:
+        {OPENPYPE_ROOT}/.venv/Scripts/python.exe {OPENPYPE_ROOT}/start.py runtests ../tests/integration/hosts/photoshop  # noqa: E501
+
     """
     PERSIST = True
 
     TEST_FILES = [
-        ("1Bciy2pCwMKl1UIpxuPnlX_LHMo_Xkq0K", "test_photoshop_publish.zip", "")
+        ("1zD2v5cBgkyOm_xIgKz3WKn8aFB_j8qC-", "test_photoshop_publish.zip", "")
     ]
 
     APP = "photoshop"
