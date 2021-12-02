@@ -197,11 +197,22 @@ class AbstractTemplateLoader:
                     if not last_representation:
                         print(placeholder.err_message())
                         continue
-                    container = avalon.api.load(
-                        loaders_by_name[placeholder.loader],
-                        last_representation['_id'],
-                        options=parse_loader_args(placeholder.data['loader_args']))
-                    placeholder.parent_in_hierarchy(container)
+                    try:
+                        container = avalon.api.load(
+                            loaders_by_name[placeholder.loader],
+                            last_representation['_id'],
+                            options=parse_loader_args(placeholder.data['loader_args']))
+                        if container:
+                            placeholder.parent_in_hierarchy(container)
+                    except Exception as err:
+                        bad_rep = last_representation
+                        print(
+                            "Got error trying to load {}:{} with {}\n"
+                            "{}: {}".format(
+                                bad_rep['context']['asset'],
+                                bad_rep['context']['subset'],
+                                placeholder.loader,
+                                err.__class__.__name__, err))
             placeholder.clean()
     # Merge to populate_template
 
