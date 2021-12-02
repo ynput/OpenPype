@@ -218,7 +218,7 @@ class CollectInstances(pyblish.api.ContextPlugin):
             # - not 100% working as it was found out that layer ids can't be
             #   used as unified identifier across multiple workstations
             layers_by_id = {
-                layer["id"]: layer
+                layer["layer_id"]: layer
                 for layer in layers_data
             }
             layer_ids = instance_data["layer_ids"]

@@ -5,10 +5,6 @@ import tempfile
 import avalon.io
 
 from . import CommunicationWrapper
-from .pipeline import (
-    list_instances,
-    write_instances
-)
 
 log = logging.getLogger(__name__)
 

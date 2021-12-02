@@ -15,7 +15,10 @@ from avalon.pipeline import AVALON_CONTAINER_ID
 from openpype.hosts import tvpaint
 from openpype.api import get_current_project_settings
 
-from .communication_server import CommunicationWrapper
+from .lib import (
+    execute_george,
+    execute_george_through_file
+)
 
 log = logging.getLogger(__name__)
 
@@ -214,7 +217,7 @@ def get_workfile_metadata_string_for_keys(metadata_keys):
 
     # Execute the script
     george_script = "\n".join(george_script_parts)
-    CommunicationWrapper.execute_george_through_file(george_script)
+    execute_george_through_file(george_script)
 
     # Load data from temp file
     with open(output_filepath, "r") as stream:
@@ -329,7 +332,7 @@ def write_workfile_metadata(metadata_key, value):
 
     george_script = "\n".join(george_script_parts)
 
-    return CommunicationWrapper.execute_george_through_file(george_script)
+    return execute_george_through_file(george_script)
 
 
 def get_current_workfile_context():
@@ -443,7 +446,7 @@ def set_context_settings(asset_doc=None):
         framerate = project_doc["data"].get("fps")
 
     if framerate is not None:
-        CommunicationWrapper.execute_george(
+        execute_george(
             "tv_framerate {} \"timestretch\"".format(framerate)
         )
     else:
@@ -461,7 +464,7 @@ def set_context_settings(asset_doc=None):
     if width is None or height is None:
         print("Resolution was not found!")
     else:
-        CommunicationWrapper.execute_george(
+        execute_george(
             "tv_resizepage {} {} 0".format(width, height)
         )
 
@@ -484,5 +487,5 @@ def set_context_settings(asset_doc=None):
     mark_in = 0
     mark_out = mark_in + (frame_end - frame_start) + handle_start + handle_end
 
-    CommunicationWrapper.execute_george("tv_markin {} set".format(mark_in))
-    CommunicationWrapper.execute_george("tv_markout {} set".format(mark_out))
+    execute_george("tv_markin {} set".format(mark_in))
+    execute_george("tv_markout {} set".format(mark_out))
