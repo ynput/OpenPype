@@ -3,6 +3,7 @@ import getpass
 from Qt import QtWidgets, QtCore
 from openpype.lib import is_admin_password_required
 from openpype.widgets import PasswordDialog
+from openpype.tools.utils import PlaceholderLineEdit
 
 
 class LocalGeneralWidgets(QtWidgets.QWidget):
@@ -11,7 +12,7 @@ class LocalGeneralWidgets(QtWidgets.QWidget):
 
         self._loading_local_settings = False
 
-        username_input = QtWidgets.QLineEdit(self)
+        username_input = PlaceholderLineEdit(self)
         username_input.setPlaceholderText(getpass.getuser())
 
         is_admin_input = QtWidgets.QCheckBox(self)
