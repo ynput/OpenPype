@@ -378,6 +378,90 @@ class OpenPypeVersion(semver.VersionInfo):
         return False
 
     @classmethod
+    def get_local_versions(
+        cls, production: bool = None, staging: bool = None
+    ) -> List:
+        """Get all versions available on this machine.
+
+        Arguments give ability to specify if filtering is needed. If both
+        arguments are set to None all found versions are returned.
+
+        Args:
+            production (bool): Return production versions.
+            staging (bool): Return staging versions.
+        """
+        # Return all local versions if arguments are set to None
+        if production is None and staging is None:
+            production = True
+            staging = True
+
+        # Just return empty output if both are disabled
+        elif not production and not staging:
+            return []
+
+        dir_to_search = Path(user_data_dir("openpype", "pypeclub"))
+        versions = OpenPypeVersion.get_versions_from_directory(
+            dir_to_search
+        )
+        filtered_versions = []
+        for version in versions:
+            if version.is_staging():
+                if staging:
+                    filtered_versions.append(version)
+            elif production:
+                filtered_versions.append(version)
+        return list(sorted(set(filtered_versions)))
+
+    @classmethod
+    def get_remote_versions(
+        cls, production: bool = None, staging: bool = None
+    ) -> List:
+        """Get all versions available in OpenPype Path.
+
+        Arguments give ability to specify if filtering is needed. If both
+        arguments are set to None all found versions are returned.
+
+        Args:
+            production (bool): Return production versions.
+            staging (bool): Return staging versions.
+        """
+        # Return all local versions if arguments are set to None
+        if production is None and staging is None:
+            production = True
+            staging = True
+
+        # Just return empty output if both are disabled
+        elif not production and not staging:
+            return []
+
+        dir_to_search = None
+        if cls.openpype_path_is_accessible():
+            dir_to_search = Path(cls.get_openpype_path())
+        else:
+            registry = OpenPypeSettingsRegistry()
+            try:
+                registry_dir = Path(str(registry.get_item("openPypePath")))
+                if registry_dir.exists():
+                    dir_to_search = registry_dir
+
+            except ValueError:
+                # nothing found in registry, we'll use data dir
+                pass
+
+        if not dir_to_search:
+            return []
+
+        versions = cls.get_versions_from_directory(dir_to_search)
+        filtered_versions = []
+        for version in versions:
+            if version.is_staging():
+                if staging:
+                    filtered_versions.append(version)
+            elif production:
+                filtered_versions.append(version)
+        return list(sorted(set(filtered_versions)))
+
+    @classmethod
     def get_available_versions(
             cls, staging: bool = False, local: bool = False) -> List:
         """Get ordered dict of detected OpenPype version.
