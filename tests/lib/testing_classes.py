@@ -193,8 +193,34 @@ class PublishTest(ModuleUnitTest):
         raise NotImplementedError
 
     @pytest.fixture(scope="module")
+    def app_args(self, download_test_data):
+        """Returns additional application arguments from a test file.
+
+            Test zip file should contain file at:
+                FOLDER_DIR/input/app_args/app_args.json
+            containing a list of command line arguments (like '-x' etc.)
+        """
+        app_args = []
+        args_url = os.path.join(download_test_data, "input",
+                                "app_args", "app_args.json")
+        if not os.path.exists(args_url):
+            print("App argument file {} doesn't exist".format(args_url))
+        else:
+            try:
+                with open(args_url) as json_file:
+                    app_args = json.load(json_file)
+
+                if not isinstance(app_args, list):
+                    raise ValueError
+            except ValueError:
+                print("{} doesn't contain valid JSON".format(args_url))
+                six.reraise(*sys.exc_info())
+
+        yield app_args
+
+    @pytest.fixture(scope="module")
     def launched_app(self, dbcon, download_test_data, last_workfile_path,
-                     startup_scripts):
+                     startup_scripts, app_args):
         """Launch host app"""
         # set publishing folders
         root_key = "config.roots.work.{}".format("windows")  # TEMP
@@ -228,6 +254,8 @@ class PublishTest(ModuleUnitTest):
             "asset_name": self.ASSET,
             "task_name": self.TASK
         }
+        if app_args:
+            data["app_args"] = app_args
 
         variant = self.APP_VARIANT
         if not variant:
