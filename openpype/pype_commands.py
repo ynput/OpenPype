@@ -365,9 +365,10 @@ class PypeCommands:
         if pyargs:
             pyargs_str = "--pyargs {}".format(pyargs)
 
-        depr_str = "--disable-pytest-warnings"
+        # disable warnings and show captured stdout even if success
+        args_str = "--disable-pytest-warnings -rP"
 
-        cmd = "pytest {} {} {} {}".format(depr_str, folder,
+        cmd = "pytest {} {} {} {}".format(args_str, folder,
                                           mark_str, pyargs_str)
         print("Running {}".format(cmd))
         subprocess.run(cmd)
