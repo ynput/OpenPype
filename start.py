@@ -966,7 +966,6 @@ def boot():
         )
         sys.exit(1)
 
-
     if not openpype_path:
         _print("*** Cannot get OpenPype path from database.")
 
