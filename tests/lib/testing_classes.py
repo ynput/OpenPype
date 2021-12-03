@@ -45,6 +45,8 @@ class ModuleUnitTest(BaseTest):
     ASSET = "test_asset"
     TASK = "test_task"
 
+    TEST_DATA_FOLDER = None
+
     @pytest.fixture(scope='session')
     def monkeypatch_session(self):
         """Monkeypatch couldn't be used with module or session fixtures."""
@@ -55,24 +57,28 @@ class ModuleUnitTest(BaseTest):
 
     @pytest.fixture(scope="module")
     def download_test_data(self):
-        tmpdir = tempfile.mkdtemp()
-        for test_file in self.TEST_FILES:
-            file_id, file_name, md5 = test_file
+        if self.TEST_DATA_FOLDER:
+            print("Using existing folder {}".format(self.TEST_DATA_FOLDER))
+            yield self.TEST_DATA_FOLDER
+        else:
+            tmpdir = tempfile.mkdtemp()
+            for test_file in self.TEST_FILES:
+                file_id, file_name, md5 = test_file
 
-            f_name, ext = os.path.splitext(file_name)
+                f_name, ext = os.path.splitext(file_name)
 
-            RemoteFileHandler.download_file_from_google_drive(file_id,
-                                                              str(tmpdir),
-                                                              file_name)
+                RemoteFileHandler.download_file_from_google_drive(file_id,
+                                                                  str(tmpdir),
+                                                                  file_name)
 
-            if ext.lstrip('.') in RemoteFileHandler.IMPLEMENTED_ZIP_FORMATS:
-                RemoteFileHandler.unzip(os.path.join(tmpdir, file_name))
-            print("Temporary folder created:: {}".format(tmpdir))
-            yield tmpdir
+                if ext.lstrip('.') in RemoteFileHandler.IMPLEMENTED_ZIP_FORMATS:  #noqa E501
+                    RemoteFileHandler.unzip(os.path.join(tmpdir, file_name))
+                print("Temporary folder created:: {}".format(tmpdir))
+                yield tmpdir
 
-            if not self.PERSIST:
-                print("Removing {}".format(tmpdir))
-                shutil.rmtree(tmpdir)
+                if not self.PERSIST:
+                    print("Removing {}".format(tmpdir))
+                    shutil.rmtree(tmpdir)
 
     @pytest.fixture(scope="module")
     def env_var(self, monkeypatch_session, download_test_data):

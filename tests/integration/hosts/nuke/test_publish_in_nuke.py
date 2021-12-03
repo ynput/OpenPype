@@ -25,7 +25,7 @@ class TestPublishInNuke(PublishTest):
         {OPENPYPE_ROOT}/.venv/Scripts/python.exe {OPENPYPE_ROOT}/start.py runtests ../tests/integration/hosts/nuke  # noqa: E501
 
     """
-    PERSIST = True  # True - keep test_db, test_openpype, outputted test files
+    PERSIST = False  # True - keep test_db, test_openpype, outputted test files
 
     TEST_FILES = [
         ("1SUurHj2aiQ21ZIMJfGVBI2KjR8kIjBGI", "test_Nuke_publish.zip", "")
@@ -38,11 +38,12 @@ class TestPublishInNuke(PublishTest):
 
     TIMEOUT = 120  # publish timeout
 
+    TEST_DATA_FOLDER = None  # provide existing folder with test data
+
     @pytest.fixture(scope="module")
     def last_workfile_path(self, download_test_data):
         """Get last_workfile_path from source data.
 
-            Maya expects workfile in proper folder, so copy is done first.
         """
         log.info("log last_workfile_path")
         src_path = os.path.join(
@@ -50,17 +51,8 @@ class TestPublishInNuke(PublishTest):
             "input",
             "workfile",
             "test_project_test_asset_CompositingInNuke_v001.nk")
-        dest_folder = os.path.join(download_test_data,
-                                   self.PROJECT,
-                                   self.ASSET,
-                                   "work",
-                                   self.TASK)
-        os.makedirs(dest_folder)
-        dest_path = os.path.join(
-            dest_folder, "test_project_test_asset_CompositingInNuke_v001.nk")
-        shutil.copy(src_path, dest_path)
 
-        yield dest_path
+        yield src_path
 
     @pytest.fixture(scope="module")
     def startup_scripts(self, monkeypatch_session, download_test_data):
