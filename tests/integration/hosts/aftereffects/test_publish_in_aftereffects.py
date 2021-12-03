@@ -13,6 +13,11 @@ class TestPublishInAfterEffects(PublishTest):
 
         Opens AfterEffects, run publish on prepared workile.
 
+        Test zip file sets 3 required env vars:
+        - HEADLESS_PUBLISH - this triggers publish immediately app is open
+        - IS_TEST - this differentiate between regular webpublish
+        - PYBLISH_TARGETS
+
         Then checks content of DB (if subset, version, representations were
         created.
         Checks tmp folder if all expected files were published.
@@ -21,13 +26,13 @@ class TestPublishInAfterEffects(PublishTest):
     PERSIST = True
 
     TEST_FILES = [
-        ("1qsrq6OJWVpOeXE2LTWrdbsLqEVu155Uf",
+        ("1c8261CmHwyMgS-g7S4xL5epAp0jCBmhf",
          "test_aftereffects_publish.zip",
          "")
     ]
 
     APP = "aftereffects"
-    APP_VARIANT = "2021"
+    APP_VARIANT = "2022"
 
     APP_NAME = "{}/{}".format(APP, APP_VARIANT)
 
@@ -63,7 +68,7 @@ class TestPublishInAfterEffects(PublishTest):
     def test_db_asserts(self, dbcon, publish_finished):
         """Host and input data dependent expected results in DB."""
         print("test_db_asserts")
-        assert 5 == dbcon.count_documents({"type": "version"}), \
+        assert 3 == dbcon.count_documents({"type": "version"}), \
             "Not expected no of versions"
 
         assert 0 == dbcon.count_documents({"type": "version",
@@ -71,25 +76,25 @@ class TestPublishInAfterEffects(PublishTest):
             "Only versions with 1 expected"
 
         assert 1 == dbcon.count_documents({"type": "subset",
-                                           "name": "modelMain"}), \
+                                           "name": "imageMainBackgroundcopy"
+                                           }), \
             "modelMain subset must be present"
 
         assert 1 == dbcon.count_documents({"type": "subset",
-                                           "name": "workfileTest_task"}), \
-            "workfileTest_task subset must be present"
+                                           "name": "workfileTesttask"}), \
+            "workfileTesttask subset must be present"
 
-        assert 11 == dbcon.count_documents({"type": "representation"}), \
+        assert 1 == dbcon.count_documents({"type": "subset",
+                                           "name": "reviewTesttask"}), \
+            "reviewTesttask subset must be present"
+
+        assert 6 == dbcon.count_documents({"type": "representation"}), \
             "Not expected no of representations"
 
-        assert 2 == dbcon.count_documents({"type": "representation",
-                                           "context.subset": "modelMain",
-                                           "context.ext": "abc"}), \
-            "Not expected no of representations with ext 'abc'"
-
-        assert 2 == dbcon.count_documents({"type": "representation",
-                                           "context.subset": "modelMain",
-                                           "context.ext": "ma"}), \
-            "Not expected no of representations with ext 'abc'"
+        assert 1 == dbcon.count_documents({"type": "representation",
+                                           "context.subset": "imageMainBackgroundcopy",  #noqa E501
+                                           "context.ext": "png"}), \
+            "Not expected no of representations with ext 'png'"
 
 
 if __name__ == "__main__":
