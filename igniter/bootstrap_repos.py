@@ -377,9 +377,9 @@ class OpenPypeVersion(semver.VersionInfo):
             return True
         return False
 
-    @staticmethod
+    @classmethod
     def get_available_versions(
-            staging: bool = False, local: bool = False) -> List:
+            cls, staging: bool = False, local: bool = False) -> List:
         """Get ordered dict of detected OpenPype version.
 
         Resolution order for OpenPype is following:
