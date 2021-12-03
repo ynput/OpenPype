@@ -479,29 +479,11 @@ class OpenPypeVersion(semver.VersionInfo):
             local (bool, optional): List only local versions.
 
         """
-        registry = OpenPypeSettingsRegistry()
-        dir_to_search = Path(user_data_dir("openpype", "pypeclub"))
-        user_versions = OpenPypeVersion.get_versions_from_directory(
-            dir_to_search)
+        user_versions = cls.get_local_versions()
         # if we have openpype_path specified, search only there.
-
+        openpype_versions = []
         if not local:
-            if os.getenv("OPENPYPE_PATH"):
-                if Path(os.getenv("OPENPYPE_PATH")).exists():
-                    dir_to_search = Path(os.getenv("OPENPYPE_PATH"))
-            else:
-                try:
-                    registry_dir = Path(
-                        str(registry.get_item("openPypePath")))
-                    if registry_dir.exists():
-                        dir_to_search = registry_dir
-
-                except ValueError:
-                    # nothing found in registry, we'll use data dir
-                    pass
-
-        openpype_versions = OpenPypeVersion.get_versions_from_directory(
-            dir_to_search)
+            openpype_versions = cls.get_remote_versions()
         openpype_versions += user_versions
 
         # remove duplicates and staging/production
