@@ -41,19 +41,31 @@ def openpype_path_is_accessible():
     return None
 
 
-def get_latest_version():
+def get_local_versions(*args, **kwargs):
     if op_version_control_available():
-        return get_OpenPypeVersion().get_latest_version()
+        return get_OpenPypeVersion().get_local_versions(*args, **kwargs)
     return None
 
 
-def get_production_version():
+def get_remote_versions(*args, **kwargs):
+    if op_version_control_available():
+        return get_OpenPypeVersion().get_remote_versions(*args, **kwargs)
+    return None
+
+
+def get_latest_version(*args, **kwargs):
+    if op_version_control_available():
+        return get_OpenPypeVersion().get_latest_version(*args, **kwargs)
+    return None
+
+
+def get_current_production_version():
     if op_version_control_available():
         return get_OpenPypeVersion().get_production_version()
     return None
 
 
-def get_staging_version():
+def get_current_staging_version():
     if op_version_control_available():
         return get_OpenPypeVersion().get_staging_version()
     return None
