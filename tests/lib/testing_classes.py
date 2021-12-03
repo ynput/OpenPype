@@ -11,6 +11,8 @@ import glob
 from tests.lib.db_handler import DBHandler
 from tests.lib.file_handler import RemoteFileHandler
 
+from openpype.lib.remote_publish import find_variant_key
+
 
 class BaseTest:
     """Empty base test class"""
@@ -173,11 +175,14 @@ class PublishTest(ModuleUnitTest):
     """
 
     APP = ""
-    APP_VARIANT = ""
-
-    APP_NAME = "{}/{}".format(APP, APP_VARIANT)
+    APP_VARIANT = ""  # keep empty to locate latest installed variant
 
     TIMEOUT = 120  # publish timeout
+
+    @property
+    def app_name(self):
+        if self.APP_VARIANT:
+            return "{}/{}".format(self.APP, self.APP_VARIANT)
 
     @pytest.fixture(scope="module")
     def last_workfile_path(self, download_test_data):
@@ -224,7 +229,13 @@ class PublishTest(ModuleUnitTest):
             "task_name": self.TASK
         }
 
-        yield application_manager.launch(self.APP_NAME, **data)
+        variant = self.APP_VARIANT
+        if not variant:
+            variant = find_variant_key(application_manager, self.APP)
+
+        app_name = "{}/{}".format(self.APP, variant)
+
+        yield application_manager.launch(app_name, **data)
 
     @pytest.fixture(scope="module")
     def publish_finished(self, dbcon, launched_app, download_test_data):

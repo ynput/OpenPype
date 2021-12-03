@@ -26,16 +26,15 @@ class TestPublishInMaya(PublishTest):
         {OPENPYPE_ROOT}/.venv/Scripts/python.exe {OPENPYPE_ROOT}/start.py runtests ../tests/integration/hosts/maya  # noqa: E501
 
     """
-    PERSIST = True
+    PERSIST = False
 
     TEST_FILES = [
         ("1BTSIIULJTuDc8VvXseuiJV_fL6-Bu7FP", "test_maya_publish.zip", "")
     ]
 
     APP = "maya"
-    APP_VARIANT = "2019"
-
-    APP_NAME = "{}/{}".format(APP, APP_VARIANT)
+    # keep empty to locate latest installed variant or explicit
+    APP_VARIANT = ""
 
     TIMEOUT = 120  # publish timeout
 

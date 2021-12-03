@@ -24,16 +24,15 @@ class TestPublishInPhotoshop(PublishTest):
         {OPENPYPE_ROOT}/.venv/Scripts/python.exe {OPENPYPE_ROOT}/start.py runtests ../tests/integration/hosts/photoshop  # noqa: E501
 
     """
-    PERSIST = True
+    PERSIST = False
 
     TEST_FILES = [
         ("1zD2v5cBgkyOm_xIgKz3WKn8aFB_j8qC-", "test_photoshop_publish.zip", "")
     ]
 
     APP = "photoshop"
-    APP_VARIANT = "2021"
-
-    APP_NAME = "{}/{}".format(APP, APP_VARIANT)
+    # keep empty to locate latest installed variant or explicit
+    APP_VARIANT = ""
 
     TIMEOUT = 120  # publish timeout
 

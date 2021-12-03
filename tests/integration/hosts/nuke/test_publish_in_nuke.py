@@ -32,9 +32,8 @@ class TestPublishInNuke(PublishTest):
     ]
 
     APP = "nuke"
-    APP_VARIANT = "12-2"
-
-    APP_NAME = "{}/{}".format(APP, APP_VARIANT)
+    # keep empty to locate latest installed variant or explicit
+    APP_VARIANT = ""
 
     TIMEOUT = 120  # publish timeout
 
