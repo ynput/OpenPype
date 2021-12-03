@@ -25,7 +25,7 @@ class TestPublishInPhotoshop(PublishTest):
     ]
 
     APP = "photoshop"
-    APP_VARIANT = "2021"
+    APP_VARIANT = "2020"
 
     APP_NAME = "{}/{}".format(APP, APP_VARIANT)
 
@@ -56,7 +56,7 @@ class TestPublishInPhotoshop(PublishTest):
     @pytest.fixture(scope="module")
     def startup_scripts(self, monkeypatch_session, download_test_data):
         """Points Maya to userSetup file from input data"""
-        pass
+        os.environ["IS_HEADLESS"] = "true"
 
     def test_db_asserts(self, dbcon, publish_finished):
         """Host and input data dependent expected results in DB."""
