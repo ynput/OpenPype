@@ -1,6 +1,5 @@
 import pytest
 import os
-import shutil
 import logging
 
 from tests.lib.testing_classes import PublishTest

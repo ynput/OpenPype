@@ -73,7 +73,7 @@ class ModuleUnitTest(BaseTest):
                                                                   str(tmpdir),
                                                                   file_name)
 
-                if ext.lstrip('.') in RemoteFileHandler.IMPLEMENTED_ZIP_FORMATS:  #noqa E501
+                if ext.lstrip('.') in RemoteFileHandler.IMPLEMENTED_ZIP_FORMATS:  # noqa: E501
                     RemoteFileHandler.unzip(os.path.join(tmpdir, file_name))
                 print("Temporary folder created:: {}".format(tmpdir))
                 yield tmpdir
