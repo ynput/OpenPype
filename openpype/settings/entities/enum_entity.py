@@ -1,4 +1,5 @@
 import copy
+import sys
 from .input_entities import InputEntity
 from .exceptions import EntitySchemaError
 from .lib import (
@@ -564,3 +565,54 @@ class AnatomyTemplatesEnumEntity(BaseEnumEntity):
         self.enum_items, self.valid_keys = self._get_enum_values()
         if self._current_value not in self.valid_keys:
             self._current_value = self.value_on_not_set
+
+
+class _OpenPypeVersionEnum(BaseEnumEntity):
+    def _item_initialization(self):
+        self.multiselection = False
+        self.valid_value_types = (STRING_TYPE, )
+
+        self.value_on_not_set = ""
+        items = [
+            {"": "Latest"}
+        ]
+        items.extend(self._get_openpype_versions())
+
+        self.enum_items = items
+        self.valid_keys = {
+            tuple(item.keys())[0]
+            for item in items
+        }
+
+    def _get_openpype_versions(self):
+        return []
+
+
+class ProductionVersionsEnumEntity(_OpenPypeVersionEnum):
+    schema_types = ["production-versions-enum"]
+
+    def _get_openpype_versions(self):
+        items = []
+        if "OpenPypeVersion" in sys.modules:
+            OpenPypeVersion = sys.modules["OpenPypeVersion"]
+            versions = OpenPypeVersion.get_available_versions(
+                staging=False, local=False
+            )
+            for item in versions:
+                items.append({item: item})
+        return items
+
+
+class StagingVersionsEnumEntity(_OpenPypeVersionEnum):
+    schema_types = ["staging-versions-enum"]
+
+    def _get_openpype_versions(self):
+        items = []
+        if "OpenPypeVersion" in sys.modules:
+            OpenPypeVersion = sys.modules["OpenPypeVersion"]
+            versions = OpenPypeVersion.get_available_versions(
+                staging=False, local=False
+            )
+            for item in versions:
+                items.append({item: item})
+        return items
