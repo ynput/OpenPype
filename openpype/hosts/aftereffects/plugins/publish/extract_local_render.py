@@ -19,9 +19,10 @@ class ExtractLocalRender(openpype.api.Extractor):
         staging_dir = instance.data["stagingDir"]
         self.log.info("staging_dir::{}".format(staging_dir))
 
+        stub.render(staging_dir)
+
         # pull file name from Render Queue Output module
         render_q = stub.get_render_info()
-        stub.render(staging_dir)
         if not render_q:
             raise ValueError("No file extension set in Render Queue")
         _, ext = os.path.splitext(os.path.basename(render_q.file_name))
