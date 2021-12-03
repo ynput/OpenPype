@@ -1,8 +1,15 @@
 import copy
 import sys
+from openpype.lib.openpype_version import (
+    op_version_control_available,
+    get_available_versions,
+    openpype_path_is_set,
+    openpype_path_is_accessible
+)
 from .input_entities import InputEntity
 from .exceptions import EntitySchemaError
 from .lib import (
+    OverrideState,
     NOT_SET,
     STRING_TYPE
 )
@@ -573,46 +580,84 @@ class _OpenPypeVersionEnum(BaseEnumEntity):
         self.valid_value_types = (STRING_TYPE, )
 
         self.value_on_not_set = ""
-        items = [
-            {"": "Latest"}
-        ]
-        items.extend(self._get_openpype_versions())
+        items = self._get_default_items()
 
         self.enum_items = items
-        self.valid_keys = {
+        self.valid_keys = self._extract_valid_keys(items)
+
+    def _extract_valid_keys(self, items):
+        return {
             tuple(item.keys())[0]
             for item in items
         }
 
+    def _get_default_items(self):
+        return [
+            {"": "Latest"}
+        ]
+
     def _get_openpype_versions(self):
         return []
+
+    def set_override_state(self, state, *args, **kwargs):
+        items = self._get_default_items()
+        versions = self._get_openpype_versions()
+        if versions is not None:
+            for version in versions:
+                items.append({version: version})
+
+        self.enum_items = items
+        self.valid_keys = self._extract_valid_keys(items)
+
+        # Studio value is not available in collected versions
+        if (
+            state is OverrideState.STUDIO
+            and self.had_studio_override
+            and self._studio_override_value not in self.valid_keys
+        ):
+            # Define if entity should keep the value in settings.
+            #   Value is marked as not existing anymore if
+            # - openpype version control is available
+            # - path to openpype zips is set
+            # - path to openpype zips is accessible (existing for this machine)
+            keep_value = True
+            if (
+                op_version_control_available()
+                and openpype_path_is_set()
+                and openpype_path_is_accessible()
+            ):
+                keep_value = False
+
+            if keep_value:
+                self.enum_items.append(
+                    {self._studio_override_value: self._studio_override_value}
+                )
+                self.valid_keys.add(self._studio_override_value)
+
+        super(_OpenPypeVersionEnum, self).set_override_state(
+            state, *args, **kwargs
+        )
 
 
 class ProductionVersionsEnumEntity(_OpenPypeVersionEnum):
     schema_types = ["production-versions-enum"]
 
     def _get_openpype_versions(self):
-        items = []
         if "OpenPypeVersion" in sys.modules:
             OpenPypeVersion = sys.modules["OpenPypeVersion"]
-            versions = OpenPypeVersion.get_available_versions(
+            return get_available_versions(
                 staging=False, local=False
             )
-            for item in versions:
-                items.append({item: item})
-        return items
+        return None
 
 
 class StagingVersionsEnumEntity(_OpenPypeVersionEnum):
     schema_types = ["staging-versions-enum"]
 
     def _get_openpype_versions(self):
-        items = []
         if "OpenPypeVersion" in sys.modules:
             OpenPypeVersion = sys.modules["OpenPypeVersion"]
-            versions = OpenPypeVersion.get_available_versions(
+            return get_available_versions(
                 staging=False, local=False
             )
-            for item in versions:
-                items.append({item: item})
-        return items
+        return None
