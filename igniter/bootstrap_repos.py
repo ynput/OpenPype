@@ -346,6 +346,37 @@ class OpenPypeVersion(semver.VersionInfo):
 
         return version['__version__']
 
+    @classmethod
+    def get_openpype_path(cls):
+        """Path to openpype zip directory.
+
+        Path can be set through environment variable 'OPENPYPE_PATH' which
+        is set during start of OpenPype if is not available.
+        """
+        return os.getenv("OPENPYPE_PATH")
+
+    @classmethod
+    def openpype_path_is_set(cls):
+        """Path to OpenPype zip directory is set."""
+        if cls.get_openpype_path():
+            return True
+        return False
+
+    @classmethod
+    def openpype_path_is_accessible(cls):
+        """Path to OpenPype zip directory is accessible.
+
+        Exists for this machine.
+        """
+        # First check if is set
+        if not cls.openpype_path_is_set():
+            return False
+
+        # Validate existence
+        if Path(cls.get_openpype_path()).exists():
+            return True
+        return False
+
     @staticmethod
     def get_available_versions(
             staging: bool = False, local: bool = False) -> List:
