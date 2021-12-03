@@ -31,6 +31,19 @@
             "type": "splitter"
         },
         {
+            "type": "production-versions-enum",
+            "key": "production_version",
+            "label": "Production version"
+        },
+        {
+            "type": "staging-versions-enum",
+            "key": "staging_version",
+            "label": "Staging version"
+        },
+        {
+            "type": "splitter"
+        },
+        {
             "key": "environment",
             "label": "Environment",
             "type": "raw-json",
