@@ -10,10 +10,43 @@ from openpype.tools.utils import host_tools
 log = Logger().get_logger(__name__)
 
 menu_label = os.environ["AVALON_LABEL"]
+context_label = None
+
+
+def change_context_label(*args):
+    global context_label
+    menubar = nuke.menu("Nuke")
+    menu = menubar.findItem(menu_label)
+
+    label = "{0}, {1}".format(
+        os.environ["AVALON_ASSET"], os.environ["AVALON_TASK"]
+    )
+
+    rm_item = [
+        (i, item) for i, item in enumerate(menu.items())
+        if context_label in item.name()
+    ][0]
+
+    menu.removeItem(rm_item[1].name())
+
+    context_action = menu.addCommand(
+        label,
+        index=(rm_item[0])
+    )
+    context_action.setEnabled(False)
+
+    log.info("Task label changed from `{}` to `{}`".format(
+        context_label, label))
+
+    context_label = label
+
 
 
 def install():
     from openpype.hosts.nuke.api import reload_config
+
+    global context_label
+
     # uninstall original avalon menu
     uninstall()
 
@@ -24,6 +57,7 @@ def install():
     label = "{0}, {1}".format(
         os.environ["AVALON_ASSET"], os.environ["AVALON_TASK"]
     )
+    context_label = label
     context_action = menu.addCommand(label)
     context_action.setEnabled(False)
 
