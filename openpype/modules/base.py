@@ -29,6 +29,21 @@ from openpype.settings.lib import (
 from openpype.lib import PypeLogger
 
 
+DEFAULT_OPENPYPE_MODULES = (
+    "avalon_apps",
+    "clockify",
+    "log_viewer",
+    "muster",
+    "python_console_interpreter",
+    "slack",
+    "webserver",
+    "launcher_action",
+    "project_manager_action",
+    "settings_action",
+    "standalonepublish_action",
+)
+
+
 # Inherit from `object` for Python 2 hosts
 class _ModuleClass(object):
     """Fake module class for storing OpenPype modules.
@@ -272,18 +287,7 @@ def _load_modules():
     log = PypeLogger.get_logger("ModulesLoader")
 
     # Import default modules imported from 'openpype.modules'
-    for default_module_name in (
-        "webserver",
-        "python_console_interpreter",
-        "slack",
-        "log_viewer",
-        "muster",
-        "clockify",
-        "settings_action",
-        "launcher_action",
-        "project_manager_action",
-        "standalonepublish_action",
-    ):
+    for default_module_name in DEFAULT_OPENPYPE_MODULES:
         try:
             default_module = __import__(
                 "openpype.modules.{}".format(default_module_name),
