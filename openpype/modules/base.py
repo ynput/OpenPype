@@ -289,10 +289,10 @@ def _load_modules():
     # Import default modules imported from 'openpype.modules'
     for default_module_name in DEFAULT_OPENPYPE_MODULES:
         try:
-            default_module = __import__(
-                "openpype.modules.{}".format(default_module_name),
-                fromlist=("", )
-            )
+            import_str = "openpype.modules.{}".format(default_module_name)
+            new_import_str = "{}.{}".format(modules_key, default_module_name)
+            default_module = __import__(import_str, fromlist=("", ))
+            sys.modules[new_import_str] = default_module
             setattr(openpype_modules, default_module_name, default_module)
 
         except Exception:
