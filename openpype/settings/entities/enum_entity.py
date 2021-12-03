@@ -2,7 +2,7 @@ import copy
 import sys
 from openpype.lib.openpype_version import (
     op_version_control_available,
-    get_available_versions,
+    get_remote_versions,
     openpype_path_is_set,
     openpype_path_is_accessible
 )
@@ -645,9 +645,7 @@ class ProductionVersionsEnumEntity(_OpenPypeVersionEnum):
     def _get_openpype_versions(self):
         if "OpenPypeVersion" in sys.modules:
             OpenPypeVersion = sys.modules["OpenPypeVersion"]
-            return get_available_versions(
-                staging=False, local=False
-            )
+            return get_remote_versions(production=True)
         return None
 
 
@@ -657,7 +655,5 @@ class StagingVersionsEnumEntity(_OpenPypeVersionEnum):
     def _get_openpype_versions(self):
         if "OpenPypeVersion" in sys.modules:
             OpenPypeVersion = sys.modules["OpenPypeVersion"]
-            return get_available_versions(
-                staging=False, local=False
-            )
+            return get_remote_versions(staging=True)
         return None
