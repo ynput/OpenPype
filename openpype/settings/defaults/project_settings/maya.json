@@ -48,11 +48,28 @@
                 "image_format": "exr",
                 "multilayer_exr": false,
                 "tiled": true,
+                "aov_list": [
+                    "empty"
+                ],
                 "additional_options": {}
             },
             "vray_renderer": {
                 "engine": "1",
                 "image_format": "exr",
+                "aov_list": [
+                    "empty"
+                ],
+                "additional_options": {}
+            },
+            "redshift_renderer": {
+                "primary_gi_engine": "0",
+                "secondary_gi_engine": "0",
+                "image_format": "exr",
+                "multilayer_exr": false,
+                "force_combine": false,
+                "aov_list": [
+                    "empty"
+                ],
                 "additional_options": {}
             }
         },
