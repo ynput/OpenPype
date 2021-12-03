@@ -200,6 +200,11 @@
                             "label": "Use Asset dependencies"
                         },
                         {
+                            "type": "boolean",
+                            "key": "rendersetup_includelights",
+                            "label": "Render Setup - Include Lights"
+                        },
+                        {
                             "type": "text",
                             "key": "group",
                             "label": "Group Name"
