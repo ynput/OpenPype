@@ -395,8 +395,14 @@ class OpenPypeVersion(semver.VersionInfo):
             production = True
             staging = True
 
+        elif production is None and not staging:
+            production = True
+
+        elif staging is None and not production:
+            staging = True
+
         # Just return empty output if both are disabled
-        elif not production and not staging:
+        if not production and not staging:
             return []
 
         dir_to_search = Path(user_data_dir("openpype", "pypeclub"))
@@ -430,8 +436,14 @@ class OpenPypeVersion(semver.VersionInfo):
             production = True
             staging = True
 
+        elif production is None and not staging:
+            production = True
+
+        elif staging is None and not production:
+            staging = True
+
         # Just return empty output if both are disabled
-        elif not production and not staging:
+        if not production and not staging:
             return []
 
         dir_to_search = None
