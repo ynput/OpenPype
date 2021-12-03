@@ -6,8 +6,14 @@ import sys
 
 os.chdir(os.path.dirname(__file__))  # for override sys.path in Deadline
 
-from .bootstrap_repos import BootstrapRepos
+from .bootstrap_repos import (
+    BootstrapRepos,
+    OpenPypeVersion
+)
 from .version import __version__ as version
+
+if "OpenPypeVersion" not in sys.modules:
+    sys.modules["OpenPypeVersion"] = OpenPypeVersion
 
 
 def open_dialog():
