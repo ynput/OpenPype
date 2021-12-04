@@ -7,6 +7,7 @@ from avalon import api
 from avalon.vendor import qtawesome
 
 from openpype import style
+from openpype.tools.utils import PlaceholderLineEdit
 from openpype.tools.utils.lib import (
     iter_model_rows,
     qt_app_context
@@ -44,7 +45,7 @@ class SubsetManagerWindow(QtWidgets.QDialog):
         header_widget = QtWidgets.QWidget(left_side_widget)
 
         # Filter input
-        filter_input = QtWidgets.QLineEdit(header_widget)
+        filter_input = PlaceholderLineEdit(header_widget)
         filter_input.setPlaceholderText("Filter subsets..")
 
         # Refresh button

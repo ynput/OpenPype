@@ -1194,3 +1194,17 @@ QScrollBar::add-page:vertical, QScrollBar::sub-page:vertical {
 #ImageButton:disabled {
     background: {color:bg-buttons-disabled};
 }
+
+/* Input field that looks like disabled
+- QAbstractSpinBox, QLineEdit, QPlainTextEdit, QTextEdit
+- usage: QLineEdit that is not editable but has selectable color
+ */
+#LikeDisabledInput {
+    background: {color:bg-inputs-disabled};
+}
+#LikeDisabledInput:hover {
+    border-color: {color:border};
+}
+#LikeDisabledInput:focus {
+    border-color: {color:border};
+}
