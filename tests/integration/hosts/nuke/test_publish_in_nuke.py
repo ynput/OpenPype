@@ -24,7 +24,7 @@ class TestPublishInNuke(PublishTest):
         {OPENPYPE_ROOT}/.venv/Scripts/python.exe {OPENPYPE_ROOT}/start.py runtests ../tests/integration/hosts/nuke  # noqa: E501
 
     """
-    PERSIST = False  # True - keep test_db, test_openpype, outputted test files
+    PERSIST = True  # True - keep test_db, test_openpype, outputted test files
 
     TEST_FILES = [
         ("1SUurHj2aiQ21ZIMJfGVBI2KjR8kIjBGI", "test_Nuke_publish.zip", "")
@@ -67,8 +67,10 @@ class TestPublishInNuke(PublishTest):
     def test_db_asserts(self, dbcon, publish_finished):
         """Host and input data dependent expected results in DB."""
         print("test_db_asserts")
-        assert 5 == dbcon.count_documents({"type": "version"}), \
-            "Not expected no of versions"
+        versions = dbcon.count_documents({"type": "version"})
+        assert 5 == versions, \
+            "Not expected no of versions. "\
+            "Expected 5, found {}".format(versions)
 
         assert 0 == dbcon.count_documents({"type": "version",
                                            "name": {"$ne": 1}}), \
@@ -86,10 +88,12 @@ class TestPublishInNuke(PublishTest):
         assert 10 == dbcon.count_documents({"type": "representation"}), \
             "Not expected no of representations"
 
-        assert 1 == dbcon.count_documents({"type": "representation",
+        reprs = dbcon.count_documents({"type": "representation",
                                            "context.subset": "renderCompositingInNukeMain",  # noqa: E501
-                                           "context.ext": "exr"}), \
-            "Not expected no of representations with ext 'exr'"
+                                           "context.ext": "exr"})
+        assert 1 == reprs, \
+            "Not expected no of representations with ext 'exr'."\
+            "Expected 1, found {}".format(reprs)
 
 
 if __name__ == "__main__":
