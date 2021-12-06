@@ -37,7 +37,6 @@ class ProductionVersionsInputEntity(_OpenPypeVersionInput):
     schema_types = ["production-versions-text"]
 
     def _get_openpype_versions(self):
-        return ["", "asd", "dsa", "3.6"]
         return get_remote_versions(production=True)
 
 
@@ -45,5 +44,4 @@ class StagingVersionsInputEntity(_OpenPypeVersionInput):
     schema_types = ["staging-versions-text"]
 
     def _get_openpype_versions(self):
-        return ["", "asd+staging", "dsa+staging", "3.6+staging"]
         return get_remote_versions(staging=True)
