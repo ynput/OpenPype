@@ -389,6 +389,7 @@ class TextWidget(InputWidget):
     def _on_entity_change(self):
         if self.entity.value != self.input_value():
             self.set_entity_value()
+        self._refresh_completer()
 
     def set_entity_value(self):
         if self.entity.multiline:
@@ -409,6 +410,12 @@ class TextWidget(InputWidget):
 
     def _on_value_change_timer(self):
         self.entity.set(self.input_value())
+
+
+class OpenPypeVersionText(TextWidget):
+    def _on_entity_change(self):
+        super(OpenPypeVersionText, self)._on_entity_change()
+        self._refresh_completer()
 
 
 class NumberWidget(InputWidget):
