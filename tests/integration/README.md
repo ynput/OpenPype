@@ -11,6 +11,9 @@ How to run
 - run in cmd
 `{OPENPYPE_ROOT}/.venv/Scripts/python.exe {OPENPYPE_ROOT}/start.py runtests {OPENPYPE_ROOT}/tests/integration`
   - add `hosts/APP_NAME` after integration part to limit only on specific app (eg. `{OPENPYPE_ROOT}/tests/integration/hosts/maya`)
+  
+OR can use built executables 
+`openpype_console runtests {ABS_PATH}/tests/integration`
 
 How to create test for publishing from host
 ------------------------------------------
