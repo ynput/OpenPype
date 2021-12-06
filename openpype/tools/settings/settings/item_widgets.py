@@ -389,7 +389,6 @@ class TextWidget(InputWidget):
     def _on_entity_change(self):
         if self.entity.value != self.input_value():
             self.set_entity_value()
-        self._refresh_completer()
 
     def set_entity_value(self):
         if self.entity.multiline:
