@@ -22,7 +22,10 @@ from .user_settings import (
     OpenPypeSecureRegistry,
     OpenPypeSettingsRegistry
 )
-from .tools import get_openpype_path_from_db
+from .tools import (
+    get_openpype_path_from_db,
+    get_expected_studio_version_str
+)
 
 
 LOG_INFO = 0
@@ -570,6 +573,24 @@ class OpenPypeVersion(semver.VersionInfo):
             staging, local)
 
         return openpype_versions[-1]
+
+    @classmethod
+    def get_expected_studio_version(cls, staging=False):
+        """Expected OpenPype version that should be used at the moment.
+
+        If version is not defined in settings the latest found version is
+        used.
+
+        Args:
+            staging (bool): Staging version or production version.
+
+        Returns:
+            OpenPypeVersion: Version that should be used.
+        """
+        result = get_expected_studio_version_str(staging)
+        if not result:
+            return cls.get_latest_version(staging, False)
+        return OpenPypeVersion(version=result)
 
 
 class BootstrapRepos:
