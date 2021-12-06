@@ -107,8 +107,6 @@ from .enum_entity import (
     TaskTypeEnumEntity,
     DeadlineUrlEnumEntity,
     AnatomyTemplatesEnumEntity,
-    ProductionVersionsEnumEntity,
-    StagingVersionsEnumEntity
 )
 
 from .list_entity import ListEntity
@@ -124,7 +122,10 @@ from .dict_conditional import (
 )
 
 from .anatomy_entities import AnatomyEntity
-
+from .op_version_entity import (
+    ProductionVersionsInputEntity,
+    StagingVersionsInputEntity
+)
 
 __all__ = (
     "DefaultsNotDefined",
@@ -171,8 +172,6 @@ __all__ = (
     "TaskTypeEnumEntity",
     "DeadlineUrlEnumEntity",
     "AnatomyTemplatesEnumEntity",
-    "ProductionVersionsEnumEntity",
-    "StagingVersionsEnumEntity",
 
     "ListEntity",
 
@@ -185,5 +184,8 @@ __all__ = (
     "DictConditionalEntity",
     "SyncServerProviders",
 
-    "AnatomyEntity"
+    "AnatomyEntity",
+
+    "ProductionVersionsInputEntity",
+    "StagingVersionsInputEntity"
 )

@@ -31,12 +31,12 @@
             "type": "splitter"
         },
         {
-            "type": "production-versions-enum",
+            "type": "production-versions-text",
             "key": "production_version",
             "label": "Production version"
         },
         {
-            "type": "staging-versions-enum",
+            "type": "staging-versions-text",
             "key": "staging_version",
             "label": "Staging version"
         },
