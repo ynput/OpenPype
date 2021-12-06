@@ -438,6 +438,7 @@ class TextEntity(InputEntity):
         # GUI attributes
         self.multiline = self.schema_data.get("multiline", False)
         self.placeholder_text = self.schema_data.get("placeholder")
+        self.value_hints = self.schema_data.get("value_hints") or []
 
     def _convert_to_valid_type(self, value):
         # Allow numbers converted to string
