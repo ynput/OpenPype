@@ -2,6 +2,9 @@ import json
 
 from Qt import QtWidgets, QtCore, QtGui
 
+from openpype.widgets.sliders import NiceSlider
+from openpype.tools.settings import CHILD_OFFSET
+
 from .widgets import (
     ExpandingWidget,
     NumberSpinBox,
@@ -21,9 +24,6 @@ from .base import (
     BaseWidget,
     InputWidget
 )
-
-from openpype.widgets.sliders import NiceSlider
-from openpype.tools.settings import CHILD_OFFSET
 
 
 class DictImmutableKeysWidget(BaseWidget):
@@ -377,6 +377,11 @@ class TextWidget(InputWidget):
 
         self.input_field.focused_in.connect(self._on_input_focus)
         self.input_field.textChanged.connect(self._on_value_change)
+
+        self._refresh_completer()
+
+    def _refresh_completer(self):
+        self.input_field.update_completer_values(self.entity.value_hints)
 
     def _on_input_focus(self):
         self.focused_in()
