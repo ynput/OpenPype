@@ -9,19 +9,19 @@ import hiero.core
 
 import PySide2.QtWidgets as qw
 
-from openpype.hosts.hiero.otio.hiero_import import load_otio
+from openpype.hosts.hiero.api.otio.hiero_import import load_otio
 
 
 class OTIOProjectSelect(qw.QDialog):
 
     def __init__(self, projects, *args, **kwargs):
         super(OTIOProjectSelect, self).__init__(*args, **kwargs)
-        self.setWindowTitle('Please select active project')
+        self.setWindowTitle("Please select active project")
         self.layout = qw.QVBoxLayout()
 
         self.label = qw.QLabel(
-            'Unable to determine which project to import sequence to.\n'
-            'Please select one.'
+            "Unable to determine which project to import sequence to.\n"
+            "Please select one."
         )
         self.layout.addWidget(self.label)
 
@@ -45,7 +45,7 @@ def get_sequence(view):
 
     elif isinstance(view, hiero.ui.BinView):
         for item in view.selection():
-            if not hasattr(item, 'acitveItem'):
+            if not hasattr(item, "acitveItem"):
                 continue
 
             if isinstance(item.activeItem(), hiero.core.Sequence):
@@ -57,13 +57,13 @@ def get_sequence(view):
 def OTIO_menu_action(event):
     # Menu actions
     otio_import_action = hiero.ui.createMenuAction(
-        'Import OTIO...',
+        "Import OTIO...",
         open_otio_file,
         icon=None
     )
 
     otio_add_track_action = hiero.ui.createMenuAction(
-        'New Track(s) from OTIO...',
+        "New Track(s) from OTIO...",
         open_otio_file,
         icon=None
     )
@@ -80,19 +80,19 @@ def OTIO_menu_action(event):
             otio_add_track_action.setEnabled(True)
 
     for action in event.menu.actions():
-        if action.text() == 'Import':
+        if action.text() == "Import":
             action.menu().addAction(otio_import_action)
             action.menu().addAction(otio_add_track_action)
 
-        elif action.text() == 'New Track':
+        elif action.text() == "New Track":
             action.menu().addAction(otio_add_track_action)
 
 
 def open_otio_file():
     files = hiero.ui.openFileBrowser(
-        caption='Please select an OTIO file of choice',
-        pattern='*.otio',
-        requiredExtension='.otio'
+        caption="Please select an OTIO file of choice",
+        pattern="*.otio",
+        requiredExtension=".otio"
     )
 
     selection = None
@@ -117,7 +117,7 @@ def open_otio_file():
         else:
             bar = hiero.ui.mainWindow().statusBar()
             bar.showMessage(
-                'OTIO Import aborted by user',
+                "OTIO Import aborted by user",
                 timeout=3000
             )
             return

@@ -15,55 +15,55 @@ except:
     from PySide2.QtWidgets import *
     from PySide2.QtCore import *
 
-# Set to True, if you wat 'Set Status' right-click menu, False if not
+# Set to True, if you wat "Set Status" right-click menu, False if not
 kAddStatusMenu = True
 
-# Set to True, if you wat 'Assign Artist' right-click menu, False if not
+# Set to True, if you wat "Assign Artist" right-click menu, False if not
 kAssignArtistMenu = True
 
 # Global list of Artist Name Dictionaries
 # Note: Override this to add different names, icons, department, IDs.
 gArtistList = [{
-    'artistName': 'John Smith',
-    'artistIcon': 'icons:TagActor.png',
-    'artistDepartment': '3D',
-    'artistID': 0
+    "artistName": "John Smith",
+    "artistIcon": "icons:TagActor.png",
+    "artistDepartment": "3D",
+    "artistID": 0
 }, {
-    'artistName': 'Savlvador Dali',
-    'artistIcon': 'icons:TagActor.png',
-    'artistDepartment': 'Roto',
-    'artistID': 1
+    "artistName": "Savlvador Dali",
+    "artistIcon": "icons:TagActor.png",
+    "artistDepartment": "Roto",
+    "artistID": 1
 }, {
-    'artistName': 'Leonardo Da Vinci',
-    'artistIcon': 'icons:TagActor.png',
-    'artistDepartment': 'Paint',
-    'artistID': 2
+    "artistName": "Leonardo Da Vinci",
+    "artistIcon": "icons:TagActor.png",
+    "artistDepartment": "Paint",
+    "artistID": 2
 }, {
-    'artistName': 'Claude Monet',
-    'artistIcon': 'icons:TagActor.png',
-    'artistDepartment': 'Comp',
-    'artistID': 3
+    "artistName": "Claude Monet",
+    "artistIcon": "icons:TagActor.png",
+    "artistDepartment": "Comp",
+    "artistID": 3
 }, {
-    'artistName': 'Pablo Picasso',
-    'artistIcon': 'icons:TagActor.png',
-    'artistDepartment': 'Animation',
-    'artistID': 4
+    "artistName": "Pablo Picasso",
+    "artistIcon": "icons:TagActor.png",
+    "artistDepartment": "Animation",
+    "artistID": 4
 }]
 
 # Global Dictionary of Status Tags.
 # Note: This can be overwritten if you want to add a new status cellType or custom icon
-# Override the gStatusTags dictionary by adding your own 'Status':'Icon.png' key-value pairs.
-# Add new custom keys like so: gStatusTags['For Client'] = 'forClient.png'
+# Override the gStatusTags dictionary by adding your own "Status":"Icon.png" key-value pairs.
+# Add new custom keys like so: gStatusTags["For Client"] = "forClient.png"
 gStatusTags = {
-    'Approved': 'icons:status/TagApproved.png',
-    'Unapproved': 'icons:status/TagUnapproved.png',
-    'Ready To Start': 'icons:status/TagReadyToStart.png',
-    'Blocked': 'icons:status/TagBlocked.png',
-    'On Hold': 'icons:status/TagOnHold.png',
-    'In Progress': 'icons:status/TagInProgress.png',
-    'Awaiting Approval': 'icons:status/TagAwaitingApproval.png',
-    'Omitted': 'icons:status/TagOmitted.png',
-    'Final': 'icons:status/TagFinal.png'
+    "Approved": "icons:status/TagApproved.png",
+    "Unapproved": "icons:status/TagUnapproved.png",
+    "Ready To Start": "icons:status/TagReadyToStart.png",
+    "Blocked": "icons:status/TagBlocked.png",
+    "On Hold": "icons:status/TagOnHold.png",
+    "In Progress": "icons:status/TagInProgress.png",
+    "Awaiting Approval": "icons:status/TagAwaitingApproval.png",
+    "Omitted": "icons:status/TagOmitted.png",
+    "Final": "icons:status/TagFinal.png"
 }
 
 
@@ -78,17 +78,17 @@ class CustomSpreadsheetColumns(QObject):
 
     # Ideally, we'd set this list on a Per Item basis, but this is expensive for a large mixed selection
     standardColourSpaces = [
-        'linear', 'sRGB', 'rec709', 'Cineon', 'Gamma1.8', 'Gamma2.2',
-        'Panalog', 'REDLog', 'ViperLog'
+        "linear", "sRGB", "rec709", "Cineon", "Gamma1.8", "Gamma2.2",
+        "Panalog", "REDLog", "ViperLog"
     ]
     arriColourSpaces = [
-        'Video - Rec709', 'LogC - Camera Native', 'Video - P3', 'ACES',
-        'LogC - Film', 'LogC - Wide Gamut'
+        "Video - Rec709", "LogC - Camera Native", "Video - P3", "ACES",
+        "LogC - Film", "LogC - Wide Gamut"
     ]
     r3dColourSpaces = [
-        'Linear', 'Rec709', 'REDspace', 'REDlog', 'PDlog685', 'PDlog985',
-        'CustomPDlog', 'REDgamma', 'SRGB', 'REDlogFilm', 'REDgamma2',
-        'REDgamma3'
+        "Linear", "Rec709", "REDspace", "REDlog", "PDlog685", "PDlog985",
+        "CustomPDlog", "REDgamma", "SRGB", "REDlogFilm", "REDgamma2",
+        "REDgamma3"
     ]
     gColourSpaces = standardColourSpaces + arriColourSpaces + r3dColourSpaces
 
@@ -97,52 +97,52 @@ class CustomSpreadsheetColumns(QObject):
     # This is the list of Columns available
     gCustomColumnList = [
         {
-            'name': 'Tags',
-            'cellType': 'readonly'
+            "name": "Tags",
+            "cellType": "readonly"
         },
         {
-            'name': 'Colourspace',
-            'cellType': 'dropdown'
+            "name": "Colourspace",
+            "cellType": "dropdown"
         },
         {
-            'name': 'Notes',
-            'cellType': 'readonly'
+            "name": "Notes",
+            "cellType": "readonly"
         },
         {
-            'name': 'FileType',
-            'cellType': 'readonly'
+            "name": "FileType",
+            "cellType": "readonly"
         },
         {
-            'name': 'Shot Status',
-            'cellType': 'dropdown'
+            "name": "Shot Status",
+            "cellType": "dropdown"
         },
         {
-            'name': 'Thumbnail',
-            'cellType': 'readonly'
+            "name": "Thumbnail",
+            "cellType": "readonly"
         },
         {
-            'name': 'MediaType',
-            'cellType': 'readonly'
+            "name": "MediaType",
+            "cellType": "readonly"
         },
         {
-            'name': 'Width',
-            'cellType': 'readonly'
+            "name": "Width",
+            "cellType": "readonly"
         },
         {
-            'name': 'Height',
-            'cellType': 'readonly'
+            "name": "Height",
+            "cellType": "readonly"
         },
         {
-            'name': 'Pixel Aspect',
-            'cellType': 'readonly'
+            "name": "Pixel Aspect",
+            "cellType": "readonly"
         },
         {
-            'name': 'Artist',
-            'cellType': 'dropdown'
+            "name": "Artist",
+            "cellType": "dropdown"
         },
         {
-            'name': 'Department',
-            'cellType': 'readonly'
+            "name": "Department",
+            "cellType": "readonly"
         },
     ]
 
@@ -156,7 +156,7 @@ class CustomSpreadsheetColumns(QObject):
         """
       Return the name of a custom column
     """
-        return self.gCustomColumnList[column]['name']
+        return self.gCustomColumnList[column]["name"]
 
     def getTagsString(self, item):
         """
@@ -173,7 +173,7 @@ class CustomSpreadsheetColumns(QObject):
         """
       Convenience method for returning all the Notes in a Tag as a string
     """
-        notes = ''
+        notes = ""
         tags = item.tags()
         for tag in tags:
             note = tag.note()
@@ -186,67 +186,67 @@ class CustomSpreadsheetColumns(QObject):
       Return the data in a cell
     """
         currentColumn = self.gCustomColumnList[column]
-        if currentColumn['name'] == 'Tags':
+        if currentColumn["name"] == "Tags":
             return self.getTagsString(item)
 
-        if currentColumn['name'] == 'Colourspace':
+        if currentColumn["name"] == "Colourspace":
             try:
                 colTransform = item.sourceMediaColourTransform()
             except:
-                colTransform = '--'
+                colTransform = "--"
             return colTransform
 
-        if currentColumn['name'] == 'Notes':
+        if currentColumn["name"] == "Notes":
             try:
                 note = self.getNotes(item)
             except:
-                note = ''
+                note = ""
             return note
 
-        if currentColumn['name'] == 'FileType':
-            fileType = '--'
+        if currentColumn["name"] == "FileType":
+            fileType = "--"
             M = item.source().mediaSource().metadata()
-            if M.hasKey('foundry.source.type'):
-                fileType = M.value('foundry.source.type')
-            elif M.hasKey('media.input.filereader'):
-                fileType = M.value('media.input.filereader')
+            if M.hasKey("foundry.source.type"):
+                fileType = M.value("foundry.source.type")
+            elif M.hasKey("media.input.filereader"):
+                fileType = M.value("media.input.filereader")
             return fileType
 
-        if currentColumn['name'] == 'Shot Status':
+        if currentColumn["name"] == "Shot Status":
             status = item.status()
             if not status:
                 status = "--"
             return str(status)
 
-        if currentColumn['name'] == 'MediaType':
+        if currentColumn["name"] == "MediaType":
             M = item.mediaType()
-            return str(M).split('MediaType')[-1].replace('.k', '')
+            return str(M).split("MediaType")[-1].replace(".k", "")
 
-        if currentColumn['name'] == 'Thumbnail':
+        if currentColumn["name"] == "Thumbnail":
             return str(item.eventNumber())
 
-        if currentColumn['name'] == 'Width':
+        if currentColumn["name"] == "Width":
             return str(item.source().format().width())
 
-        if currentColumn['name'] == 'Height':
+        if currentColumn["name"] == "Height":
             return str(item.source().format().height())
 
-        if currentColumn['name'] == 'Pixel Aspect':
+        if currentColumn["name"] == "Pixel Aspect":
             return str(item.source().format().pixelAspect())
 
-        if currentColumn['name'] == 'Artist':
+        if currentColumn["name"] == "Artist":
             if item.artist():
-                name = item.artist()['artistName']
+                name = item.artist()["artistName"]
                 return name
             else:
-                return '--'
+                return "--"
 
-        if currentColumn['name'] == 'Department':
+        if currentColumn["name"] == "Department":
             if item.artist():
-                dep = item.artist()['artistDepartment']
+                dep = item.artist()["artistDepartment"]
                 return dep
             else:
-                return '--'
+                return "--"
 
         return ""
 
@@ -262,10 +262,10 @@ class CustomSpreadsheetColumns(QObject):
       Return the tooltip for a cell
     """
         currentColumn = self.gCustomColumnList[column]
-        if currentColumn['name'] == 'Tags':
+        if currentColumn["name"] == "Tags":
             return str([item.name() for item in item.tags()])
 
-        if currentColumn['name'] == 'Notes':
+        if currentColumn["name"] == "Notes":
             return str(self.getNotes(item))
         return ""
 
@@ -296,24 +296,24 @@ class CustomSpreadsheetColumns(QObject):
       Return the icon for a cell
     """
         currentColumn = self.gCustomColumnList[column]
-        if currentColumn['name'] == 'Colourspace':
+        if currentColumn["name"] == "Colourspace":
             return QIcon("icons:LUT.png")
 
-        if currentColumn['name'] == 'Shot Status':
+        if currentColumn["name"] == "Shot Status":
             status = item.status()
             if status:
                 return QIcon(gStatusTags[status])
 
-        if currentColumn['name'] == 'MediaType':
+        if currentColumn["name"] == "MediaType":
             mediaType = item.mediaType()
             if mediaType == hiero.core.TrackItem.kVideo:
                 return QIcon("icons:VideoOnly.png")
             elif mediaType == hiero.core.TrackItem.kAudio:
                 return QIcon("icons:AudioOnly.png")
 
-        if currentColumn['name'] == 'Artist':
+        if currentColumn["name"] == "Artist":
             try:
-                return QIcon(item.artist()['artistIcon'])
+                return QIcon(item.artist()["artistIcon"])
             except:
                 return None
         return None
@@ -322,9 +322,9 @@ class CustomSpreadsheetColumns(QObject):
         """
       Return the size hint for a cell
     """
-        currentColumnName = self.gCustomColumnList[column]['name']
+        currentColumnName = self.gCustomColumnList[column]["name"]
 
-        if currentColumnName == 'Thumbnail':
+        if currentColumnName == "Thumbnail":
             return QSize(90, 50)
 
         return QSize(50, 50)
@@ -335,7 +335,7 @@ class CustomSpreadsheetColumns(QObject):
       with the default cell painting.
     """
         currentColumn = self.gCustomColumnList[column]
-        if currentColumn['name'] == 'Tags':
+        if currentColumn["name"] == "Tags":
             if option.state & QStyle.State_Selected:
                 painter.fillRect(option.rect, option.palette.highlight())
             iconSize = 20
@@ -348,14 +348,14 @@ class CustomSpreadsheetColumns(QObject):
                 painter.setClipRect(option.rect)
                 for tag in item.tags():
                     M = tag.metadata()
-                    if not (M.hasKey('tag.status')
-                            or M.hasKey('tag.artistID')):
+                    if not (M.hasKey("tag.status")
+                            or M.hasKey("tag.artistID")):
                         QIcon(tag.icon()).paint(painter, r, Qt.AlignLeft)
                         r.translate(r.width() + 2, 0)
                 painter.restore()
                 return True
 
-        if currentColumn['name'] == 'Thumbnail':
+        if currentColumn["name"] == "Thumbnail":
             imageView = None
             pen = QPen()
             r = QRect(option.rect.x() + 2, (option.rect.y() +
@@ -409,35 +409,35 @@ class CustomSpreadsheetColumns(QObject):
         self.currentView = view
 
         currentColumn = self.gCustomColumnList[column]
-        if currentColumn['cellType'] == 'readonly':
+        if currentColumn["cellType"] == "readonly":
             cle = QLabel()
             cle.setEnabled(False)
             cle.setVisible(False)
             return cle
 
-        if currentColumn['name'] == 'Colourspace':
+        if currentColumn["name"] == "Colourspace":
             cb = QComboBox()
             for colourspace in self.gColourSpaces:
                 cb.addItem(colourspace)
             cb.currentIndexChanged.connect(self.colourspaceChanged)
             return cb
 
-        if currentColumn['name'] == 'Shot Status':
+        if currentColumn["name"] == "Shot Status":
             cb = QComboBox()
-            cb.addItem('')
+            cb.addItem("")
             for key in gStatusTags.keys():
                 cb.addItem(QIcon(gStatusTags[key]), key)
-            cb.addItem('--')
+            cb.addItem("--")
             cb.currentIndexChanged.connect(self.statusChanged)
 
             return cb
 
-        if currentColumn['name'] == 'Artist':
+        if currentColumn["name"] == "Artist":
             cb = QComboBox()
-            cb.addItem('')
+            cb.addItem("")
             for artist in gArtistList:
-                cb.addItem(artist['artistName'])
-            cb.addItem('--')
+                cb.addItem(artist["artistName"])
+            cb.addItem("--")
             cb.currentIndexChanged.connect(self.artistNameChanged)
             return cb
         return None
@@ -479,15 +479,15 @@ class CustomSpreadsheetColumns(QObject):
         status = self.sender().currentText()
         project = selection[0].project()
         with project.beginUndo("Set Status"):
-            # A string of '--' characters denotes clear the status
-            if status != '--':
+            # A string of "--" characters denotes clear the status
+            if status != "--":
                 for trackItem in selection:
                     trackItem.setStatus(status)
             else:
                 for trackItem in selection:
                     tTags = trackItem.tags()
                     for tag in tTags:
-                        if tag.metadata().hasKey('tag.status'):
+                        if tag.metadata().hasKey("tag.status"):
                             trackItem.removeTag(tag)
                             break
 
@@ -500,15 +500,15 @@ class CustomSpreadsheetColumns(QObject):
         name = self.sender().currentText()
         project = selection[0].project()
         with project.beginUndo("Assign Artist"):
-            # A string of '--' denotes clear the assignee...
-            if name != '--':
+            # A string of "--" denotes clear the assignee...
+            if name != "--":
                 for trackItem in selection:
                     trackItem.setArtistByName(name)
             else:
                 for trackItem in selection:
                     tTags = trackItem.tags()
                     for tag in tTags:
-                        if tag.metadata().hasKey('tag.artistID'):
+                        if tag.metadata().hasKey("tag.artistID"):
                             trackItem.removeTag(tag)
                             break
 
@@ -518,7 +518,7 @@ def _getArtistFromID(self, artistID):
     global gArtistList
     artist = [
         element for element in gArtistList
-        if element['artistID'] == int(artistID)
+        if element["artistID"] == int(artistID)
     ]
     if not artist:
         return None
@@ -530,7 +530,7 @@ def _getArtistFromName(self, artistName):
     global gArtistList
     artist = [
         element for element in gArtistList
-        if element['artistName'] == artistName
+        if element["artistName"] == artistName
     ]
     if not artist:
         return None
@@ -542,8 +542,8 @@ def _artist(self):
     artist = None
     tags = self.tags()
     for tag in tags:
-        if tag.metadata().hasKey('tag.artistID'):
-            artistID = tag.metadata().value('tag.artistID')
+        if tag.metadata().hasKey("tag.artistID"):
+            artistID = tag.metadata().value("tag.artistID")
             artist = self.getArtistFromID(artistID)
     return artist
 
@@ -554,30 +554,30 @@ def _updateArtistTag(self, artistDict):
     artistTag = None
     tags = self.tags()
     for tag in tags:
-        if tag.metadata().hasKey('tag.artistID'):
+        if tag.metadata().hasKey("tag.artistID"):
             artistTag = tag
             break
 
     if not artistTag:
-        artistTag = hiero.core.Tag('Artist')
-        artistTag.setIcon(artistDict['artistIcon'])
-        artistTag.metadata().setValue('tag.artistID',
-                                      str(artistDict['artistID']))
-        artistTag.metadata().setValue('tag.artistName',
-                                      str(artistDict['artistName']))
-        artistTag.metadata().setValue('tag.artistDepartment',
-                                      str(artistDict['artistDepartment']))
+        artistTag = hiero.core.Tag("Artist")
+        artistTag.setIcon(artistDict["artistIcon"])
+        artistTag.metadata().setValue("tag.artistID",
+                                      str(artistDict["artistID"]))
+        artistTag.metadata().setValue("tag.artistName",
+                                      str(artistDict["artistName"]))
+        artistTag.metadata().setValue("tag.artistDepartment",
+                                      str(artistDict["artistDepartment"]))
         self.sequence().editFinished()
         self.addTag(artistTag)
         self.sequence().editFinished()
         return
 
-    artistTag.setIcon(artistDict['artistIcon'])
-    artistTag.metadata().setValue('tag.artistID', str(artistDict['artistID']))
-    artistTag.metadata().setValue('tag.artistName',
-                                  str(artistDict['artistName']))
-    artistTag.metadata().setValue('tag.artistDepartment',
-                                  str(artistDict['artistDepartment']))
+    artistTag.setIcon(artistDict["artistIcon"])
+    artistTag.metadata().setValue("tag.artistID", str(artistDict["artistID"]))
+    artistTag.metadata().setValue("tag.artistName",
+                                  str(artistDict["artistName"]))
+    artistTag.metadata().setValue("tag.artistDepartment",
+                                  str(artistDict["artistDepartment"]))
     self.sequence().editFinished()
     return
 
@@ -588,8 +588,9 @@ def _setArtistByName(self, artistName):
 
     artist = self.getArtistFromName(artistName)
     if not artist:
-        print 'Artist name: %s was not found in the gArtistList.' % str(
-            artistName)
+        print((
+            "Artist name: {} was not found in "
+            "the gArtistList.").format(artistName))
         return
 
     # Do the update.
@@ -602,8 +603,8 @@ def _setArtistByID(self, artistID):
 
     artist = self.getArtistFromID(artistID)
     if not artist:
-        print 'Artist name: %s was not found in the gArtistList.' % str(
-            artistID)
+        print("Artist name: {} was not found in the gArtistList.".format(
+            artistID))
         return
 
     # Do the update.
@@ -625,15 +626,15 @@ def _status(self):
     status = None
     tags = self.tags()
     for tag in tags:
-        if tag.metadata().hasKey('tag.status'):
-            status = tag.metadata().value('tag.status')
+        if tag.metadata().hasKey("tag.status"):
+            status = tag.metadata().value("tag.status")
     return status
 
 
 def _setStatus(self, status):
     """setShotStatus(status) -> Method to set the Status of a Shot.
   Adds a special kind of status Tag to a TrackItem
-  Example: myTrackItem.setStatus('Final')
+  Example: myTrackItem.setStatus("Final")
 
   @param status - a string, corresponding to the Status name
   """
@@ -641,25 +642,25 @@ def _setStatus(self, status):
 
     # Get a valid Tag object from the Global list of statuses
     if not status in gStatusTags.keys():
-        print 'Status requested was not a valid Status string.'
+        print("Status requested was not a valid Status string.")
         return
 
     # A shot should only have one status. Check if one exists and set accordingly
     statusTag = None
     tags = self.tags()
     for tag in tags:
-        if tag.metadata().hasKey('tag.status'):
+        if tag.metadata().hasKey("tag.status"):
             statusTag = tag
             break
 
     if not statusTag:
-        statusTag = hiero.core.Tag('Status')
+        statusTag = hiero.core.Tag("Status")
         statusTag.setIcon(gStatusTags[status])
-        statusTag.metadata().setValue('tag.status', status)
+        statusTag.metadata().setValue("tag.status", status)
         self.addTag(statusTag)
 
     statusTag.setIcon(gStatusTags[status])
-    statusTag.metadata().setValue('tag.status', status)
+    statusTag.metadata().setValue("tag.status", status)
 
     self.sequence().editFinished()
     return
@@ -743,7 +744,7 @@ class SetStatusMenu(QMenu):
 
     # This handles events from the Project Bin View
     def eventHandler(self, event):
-        if not hasattr(event.sender, 'selection'):
+        if not hasattr(event.sender, "selection"):
             # Something has gone wrong, we should only be here if raised
             # by the Timeline/Spreadsheet view which gives a selection.
             return
@@ -781,9 +782,9 @@ class AssignArtistMenu(QMenu):
         for artist in self.artists:
             self.menuActions += [
                 titleStringTriggeredAction(
-                    artist['artistName'],
+                    artist["artistName"],
                     self.setArtistFromMenuSelection,
-                    icon=artist['artistIcon'])
+                    icon=artist["artistIcon"])
             ]
 
     def setArtistFromMenuSelection(self, menuSelectionArtist):
@@ -818,7 +819,7 @@ class AssignArtistMenu(QMenu):
 
     # This handles events from the Project Bin View
     def eventHandler(self, event):
-        if not hasattr(event.sender, 'selection'):
+        if not hasattr(event.sender, "selection"):
             # Something has gone wrong, we should only be here if raised
             # by the Timeline/Spreadsheet view which gives a selection.
             return
@@ -833,7 +834,7 @@ class AssignArtistMenu(QMenu):
         event.menu.addMenu(self)
 
 
-# Add the 'Set Status' context menu to Timeline and Spreadsheet
+# Add the "Set Status" context menu to Timeline and Spreadsheet
 if kAddStatusMenu:
     setStatusMenu = SetStatusMenu()
 

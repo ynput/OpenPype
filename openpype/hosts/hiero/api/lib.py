@@ -12,7 +12,6 @@ import avalon.api as avalon
 import avalon.io
 from openpype.api import (Logger, Anatomy, get_anatomy_settings)
 from . import tags
-from compiler.ast import flatten
 
 try:
     from PySide.QtCore import QFile, QTextStream
@@ -37,6 +36,13 @@ self.default_bin_name = "openpypeBin"
 
 AVALON_CONFIG = os.getenv("AVALON_CONFIG", "pype")
 
+
+def flatten(input_list):
+    for item in input_list:
+        if isinstance(item, (list, tuple)):
+            yield from flatten(item)
+        else:
+            yield item
 
 def get_current_project(remove_untitled=False):
     projects = flatten(hiero.core.projects())
@@ -250,7 +256,7 @@ def set_track_item_pype_tag(track_item, data=None):
     Returns:
         hiero.core.Tag
     """
-    data = data or dict()
+    data = data or {}
 
     # basic Tag's attribute
     tag_data = {
@@ -284,7 +290,7 @@ def get_track_item_pype_data(track_item):
     Returns:
         dict: data found on pype tag
     """
-    data = dict()
+    data = {}
     # get pype data tag from track item
     tag = get_track_item_pype_tag(track_item)
 
@@ -299,8 +305,20 @@ def get_track_item_pype_data(track_item):
 
         try:
             # capture exceptions which are related to strings only
-            value = ast.literal_eval(v)
-        except (ValueError, SyntaxError):
+            if re.match(r"^[\d]+$", v):
+                value = int(v)
+            elif re.match(r"^True$", v):
+                value = True
+            elif re.match(r"^False$", v):
+                value = False
+            elif re.match(r"^None$", v):
+                value = None
+            elif re.match(r"^[\w\d_]+$", v):
+                value = v
+            else:
+                value = ast.literal_eval(v)
+        except (ValueError, SyntaxError) as msg:
+            log.warning(msg)
             value = v
 
         data.update({key: value})
@@ -729,9 +747,14 @@ def get_selected_track_items(sequence=None):
 def set_selected_track_items(track_items_list, sequence=None):
     _sequence = sequence or get_current_sequence()
 
+    # make sure only trackItems are in list selection
+    only_track_items = [
+        i for i in track_items_list
+        if isinstance(i, hiero.core.TrackItem)]
+
     # Getting selection
     timeline_editor = hiero.ui.getTimelineEditor(_sequence)
-    return timeline_editor.setSelection(track_items_list)
+    return timeline_editor.setSelection(only_track_items)
 
 
 def _read_doc_from_path(path):
