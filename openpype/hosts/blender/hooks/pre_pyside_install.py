@@ -32,7 +32,7 @@ class InstallPySideToBlender(PreLaunchHook):
 
     def inner_execute(self):
         # Get blender's python directory
-        version_regex = re.compile(r"^2\.[0-9]{2}$")
+        version_regex = re.compile(r"^[2-3]\.[0-9]+$")
 
         executable = self.launch_context.executable.executable_path
         if os.path.basename(executable).lower() != "blender.exe":
