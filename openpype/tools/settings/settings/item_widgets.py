@@ -378,6 +378,8 @@ class TextWidget(InputWidget):
         self.input_field.focused_in.connect(self._on_input_focus)
         self.input_field.textChanged.connect(self._on_value_change)
 
+        self._refresh_completer()
+
     def _refresh_completer(self):
         # Multiline entity can't have completer
         #   - there is not space for this UI component
