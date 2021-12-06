@@ -181,11 +181,6 @@ from .openpype_version import (
     is_current_version_higher_than_expected
 )
 
-from .abstract_template_loader import (
-    AbstractPlaceholder,
-    AbstractTemplateLoader
-)
-
 terminal = Terminal
 
 __all__ = [

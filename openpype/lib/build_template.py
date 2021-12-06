@@ -1,5 +1,7 @@
 import openpype
-from openpype.lib import AbstractPlaceholder, AbstractTemplateLoader
+from .abstract_template_loader import (
+    AbstractPlaceholder,
+    AbstractTemplateLoader)
 
 import importlib
 

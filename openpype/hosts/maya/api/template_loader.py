@@ -2,12 +2,15 @@ import openpype.lib
 
 from maya import cmds
 import avalon
+from openpype.lib.abstract_template_loader import (
+    AbstractPlaceholder,
+    AbstractTemplateLoader)
 from openpype.lib.build_template_exceptions import TemplateAlreadyImported
 
 PLACEHOLDER_SET = 'PLACEHOLDERS_SET'
 
 
-class MayaTemplateLoader(openpype.lib.AbstractTemplateLoader):
+class MayaTemplateLoader(AbstractTemplateLoader):
     """Concrete implementation of AbstractTemplateLoader for maya
 
     """
@@ -83,7 +86,7 @@ class MayaTemplateLoader(openpype.lib.AbstractTemplateLoader):
         return [cmds.getAttr(container + '.representation') for container in containers]
 
 
-class MayaPlaceholder(openpype.lib.AbstractPlaceholder):
+class MayaPlaceholder(AbstractPlaceholder):
     """Concrete implementation of AbstractPlaceholder for maya
 
     """
@@ -114,11 +117,29 @@ class MayaPlaceholder(openpype.lib.AbstractPlaceholder):
         Args:
             containers (String): Placeholder loaded containers
         """
-        roots = [container.partition('__')[0] + "_:_GRP"
-                 for container in containers]
+        if not containers:
+            return
+
+        roots = cmds.sets(containers, q=True)
+        nodes_to_parent = []
+        for root in roots:
+            if root.endswith("_RN"):
+                refRoot = cmds.referenceQuery(root, n=True)[0]
+                nodes_to_parent.append(refRoot)
+            else:
+                nodes_to_parent.append(root)
 
         if self.data['parent']:
-            cmds.parent(roots, self.data['parent'])
+            siblings = cmds.listRelatives(self.data['parent'], children=True)
+            cmds.parent(nodes_to_parent, self.data['parent'])
+        else:
+            siblings = cmds.ls(assemblies=True)
+
+        # Move loaded nodes to correct index in outliner hierarchy to keep
+        index = siblings.index(self.data['node'].rpartition('|')[2])
+        for node in nodes_to_parent:
+                cmds.reorder(node, front=True)
+                cmds.reorder(node, relative=index)
 
     def clean(self):
         """Hide placeholder
