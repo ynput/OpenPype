@@ -141,6 +141,14 @@ class MayaPlaceholder(AbstractPlaceholder):
                 cmds.reorder(node, front=True)
                 cmds.reorder(node, relative=index)
 
+        node = self.data['node']
+        holding_sets = cmds.listSets(object=node)
+        if not holding_sets:
+            return
+        for set in holding_sets:
+            cmds.sets(roots, forceElement=set)
+            cmds.sets(node, remove=set)
+
     def clean(self):
         """Hide placeholder
         parent them to root
