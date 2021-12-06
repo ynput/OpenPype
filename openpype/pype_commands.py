@@ -366,12 +366,12 @@ class PypeCommands:
             pyargs_str = "--pyargs {}".format(pyargs)
 
         # disable warnings and show captured stdout even if success
-        args_str = "--disable-pytest-warnings -rP"
+        args = ["--disable-pytest-warnings", "-rP"]
 
-        cmd = "pytest {} {} {} {}".format(args_str, folder,
-                                          mark_str, pyargs_str)
-        print("Running {}".format(cmd))
-        subprocess.run(cmd)
+        args += [folder, mark_str, pyargs_str]
+        print("run_tests args: {}".format(args))
+        import pytest
+        pytest.main(args)
 
     def syncserver(self, active_site):
         """Start running sync_server in background."""
