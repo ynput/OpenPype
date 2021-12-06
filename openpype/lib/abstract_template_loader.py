@@ -6,6 +6,7 @@ import six
 
 from openpype.settings import get_project_settings
 from openpype.lib import Anatomy, get_linked_assets, get_loaders_by_name
+from openpype.api import PypeLogger as Logger
 
 from functools import reduce
 
@@ -62,19 +63,48 @@ class AbstractTemplateLoader:
             as placeholders. Depending on current host
     """
 
+
+
     def __init__(self, placeholder_class):
 
         self.loaders_by_name = get_loaders_by_name()
         self.current_asset = avalon.io.Session["AVALON_ASSET"]
+        self.project_name = avalon.io.Session["AVALON_PROJECT"]
+        self.host_name = avalon.io.Session["AVALON_APP"]
+        self.task_name = avalon.io.Session["AVALON_TASK"]
         self.placeholder_class = placeholder_class
         self.current_asset_docs = avalon.io.find_one({
             "type": "asset",
             "name": self.current_asset
         })
+        self.task_type = (
+            self.current_asset_docs
+            .get("data", {})
+            .get("tasks", {})
+            .get(self.task_name, {})
+            .get("type")
+        )
+
+        self.log = Logger().get_logger("BUILD TEMPLATE")
+
+        self.log.info(
+            "BUILDING ASSET FROM TEMPLATE :\n"
+            "Starting templated build for {asset} in {project}\n\n"
+            "Asset : {asset}\n"
+            "Task : {task_name} ({task_type})\n"
+            "Host : {host}\n"
+            "Project : {project}\n".format(
+                asset=self.current_asset,
+                host=self.host_name,
+                project=self.project_name,
+                task_name=self.task_name,
+                task_type=self.task_type
+            ))
 
         # Skip if there is no loader
         if not self.loaders_by_name:
-            self.log.warning("There are no registered loaders.")
+            self.log.warning("There is no registered loaders."
+            " No assets will be loaded")
             return
 
     def template_already_imported(self, err_msg):
@@ -83,6 +113,9 @@ class AbstractTemplateLoader:
 
         Override this method in your template loader implementation
         to manage this case."""
+        self.log.error("{}: {}".format(
+            err_msg.__class__.__name__,
+            err_msg))
         raise TemplateAlreadyImported(err_msg)
 
     def template_loading_failed(self, err_msg):
@@ -92,6 +125,9 @@ class AbstractTemplateLoader:
         Override this method in your template loader implementation
         to manage this case.
         """
+        self.log.error("{}: {}".format(
+            err_msg.__class__.__name__,
+            err_msg))
         raise TemplateLoadingFailed(err_msg)
 
     @property
@@ -111,18 +147,14 @@ class AbstractTemplateLoader:
                 in avalon context
             TemplateNotFound: Solved path does not exists on current filesystem
         """
-        project_name = avalon.io.Session["AVALON_PROJECT"]
+        project_name = self.project_name
+        host_name = self.host_name
+        task_name = self.task_name
+        task_type = self.task_type
+
         anatomy = Anatomy(project_name)
         project_settings = get_project_settings(project_name)
-        host_name = avalon.io.Session["AVALON_APP"]
-        task_name = avalon.io.Session["AVALON_TASK"]
-        task_type = (
-            self.current_asset_docs
-            .get("data", {})
-            .get("tasks", {})
-            .get(task_name, {})
-            .get("type")
-        )
+
         build_info = project_settings[host_name]['templated_workfile_build']
         profiles = build_info['profiles']
 
@@ -160,6 +192,9 @@ class AbstractTemplateLoader:
                 "Template found in openPype settings for task '{}' with host "
                 "'{}' does not exists. (Not found : {})".format(
                     task_name, host_name, solved_path))
+
+        self.log.info("Found template at : '{}'".format(solved_path))
+
         return solved_path
 
     def populate_template(self, override=None):
@@ -195,8 +230,15 @@ class AbstractTemplateLoader:
                         dict()).values()
                 for last_representation in placeholder_representations:
                     if not last_representation:
-                        print(placeholder.err_message())
+                        self.log.warning(placeholder.err_message())
                         continue
+                    self.log.info(
+                        "Loading {}_{} with loader {}\n"
+                        "Loader arguments used : {}".format(
+                        last_representation['context']['asset'],
+                        last_representation['context']['subset'],
+                        placeholder.loader,
+                        placeholder.data['loader_args']))
                     try:
                         container = avalon.api.load(
                             loaders_by_name[placeholder.loader],
@@ -206,7 +248,7 @@ class AbstractTemplateLoader:
                             placeholder.parent_in_hierarchy(container)
                     except Exception as err:
                         bad_rep = last_representation
-                        print(
+                        self.log.warning(
                             "Got error trying to load {}:{} with {}\n"
                             "{}: {}".format(
                                 bad_rep['context']['asset'],
@@ -214,7 +256,6 @@ class AbstractTemplateLoader:
                                 placeholder.loader,
                                 err.__class__.__name__, err))
             placeholder.clean()
-    # Merge to populate_template
 
     def update_template(self):
         """Check if new assets where linked"""
@@ -238,14 +279,9 @@ class AbstractTemplateLoader:
                         update_representations,
                         placeholder_representations,
                         dict()).values()
-                    # get last representation by version
-                placeholder_representations = reduce(
-                    update_representations,
-                    placeholder_representations,
-                    dict()).values()
                 for last_representation in placeholder_representations:
                     if not last_representation:
-                        print(placeholder.err_message())
+                        self.log.warning(placeholder.err_message())
                         continue
                     if str(last_representation['_id']) in loaded_containers_by_id:
                         print("Already in scene : ", last_representation['_id'])
@@ -267,7 +303,12 @@ class AbstractTemplateLoader:
 
     @abstractmethod
     def get_loaded_containers_by_id(self):
-        """    """#TODO: Add doc
+        """
+        Collect already loaded containers for updating scene
+
+        Return:
+            dict (string, node): A dictionnary id as key and containers as value
+        """
         pass
 
     @abstractmethod
