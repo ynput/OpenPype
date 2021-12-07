@@ -972,6 +972,15 @@ def boot():
         # find versions of OpenPype to be used with frozen code
         try:
             version_path = _find_frozen_openpype(use_version, use_staging)
+        except OpenPypeVersionNotFound as exc:
+            message = str(exc)
+            _print(message)
+            if os.environ.get("OPENPYPE_HEADLESS_MODE") == "1":
+                list_versions(openpype_versions, local_version)
+            else:
+                igniter.show_message_dialog("Version not found", message)
+            sys.exit(1)
+
         except RuntimeError as e:
             # no version to run
             _print(f"!!! {e}")
@@ -984,7 +993,17 @@ def boot():
             sys.exit(1)
         _print(f"--- version is valid")
     else:
-        version_path = _bootstrap_from_code(use_version, use_staging)
+        try:
+            version_path = _bootstrap_from_code(use_version, use_staging)
+
+        except OpenPypeVersionNotFound as exc:
+            message = str(exc)
+            _print(message)
+            if os.environ.get("OPENPYPE_HEADLESS_MODE") == "1":
+                list_versions(openpype_versions, local_version)
+            else:
+                igniter.show_message_dialog("Version not found", message)
+            sys.exit(1)
 
     # set this to point either to `python` from venv in case of live code
     # or to `openpype` or `openpype_console` in case of frozen code
