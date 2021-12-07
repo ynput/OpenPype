@@ -3,7 +3,6 @@ import sys
 import six
 import re
 import json
-from contextlib import contextmanager
 
 import app_utils
 
@@ -198,7 +197,6 @@ class FtrackComponentCreator:
             location.add_component(
                 entity, origin_location, recursive=True)
 
-
     def _remove_component_from_location(self, entity, location):
         print(location)
         # Removing existing members from location
@@ -334,8 +332,8 @@ class FtrackComponentCreator:
         """
         queries = []
         if sys.version_info[0] < 3:
-            for key, value in data.iteritems():
-                if not isinstance(value, (basestring, int)):
+            for key, value in data.items():
+                if not isinstance(value, (str, int)):
                     print("value: {}".format(value))
                     if "id" in value.keys():
                         queries.append(
