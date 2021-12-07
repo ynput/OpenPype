@@ -38,28 +38,20 @@ class OpenPypeContextSelector:
                     os.environ.get("PROGRAMFILES"),
                     "OpenPype", "openpype_console.exe"
                 )
-                if os.path.exists(op_path):
-                    print("  - found OpenPype installation {}".format(op_path))
-                else:
+                if not os.path.exists(op_path):
                     # try to find in user local context
                     op_path = os.path.join(
                         os.environ.get("LOCALAPPDATA"),
                         "Programs",
                         "OpenPype", "openpype_console.exe"
                     )
-                    if os.path.exists(op_path):
-                        print(
-                            "  - found OpenPype installation {}".format(
-                                op_path))
-                    else:
+                    if not os.path.exists(op_path):
                         raise Exception("Error: OpenPype was not found.")
 
-        self.openpype_root = op_path
+                op_path = os.path.dirname(op_path)
+                print("  - found OpenPype installation {}".format(op_path))
 
-        # TODO: this should try to find metadata file. Either using
-        #       jobs custom attributes or using environment variable
-        #       or just using plain existence of file.
-        # self.context = self._process_metadata_file()
+        self.openpype_root = op_path
 
     def _process_metadata_file(self):
         """Find and process metadata file.
@@ -86,8 +78,8 @@ class OpenPypeContextSelector:
         automatically, no UI will be show and publishing will directly
         proceed.
         """
-        if not self.context:
-            self.show()
+        if not self.context and not self.show():
+            return
 
         self.context["user"] = self.job.userName
         self.run_publish()
@@ -120,10 +112,15 @@ class OpenPypeContextSelector:
                 not self.context.get("asset") or \
                 not self.context.get("task"):
             self._show_rr_warning("Context selection failed.")
-            return
+            return False
 
         # self.context["app_name"] = self.job.renderer.name
+        # there should be mapping between OpenPype and Royal Render
+        # app names and versions, but since app_name is not used
+        # currently down the line (but it is required by OP publish command
+        # right now).
         self.context["app_name"] = "maya/2020"
+        return True
 
     @staticmethod
     def _show_rr_warning(text):

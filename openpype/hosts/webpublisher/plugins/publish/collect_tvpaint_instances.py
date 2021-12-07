@@ -138,7 +138,7 @@ class CollectTVPaintInstances(pyblish.api.ContextPlugin):
                 "family": "render"
             }
             subset_name = get_subset_name_with_asset_doc(
-                self.render_pass_family,
+                self.render_layer_family,
                 variant,
                 task_name,
                 asset_doc,
@@ -223,7 +223,7 @@ class CollectTVPaintInstances(pyblish.api.ContextPlugin):
             "name": subset_name,
             "subset": subset_name,
             "label": subset_name,
-            "family": self.render_pass_family,
+            "family": "render",
             # Add `review` family for thumbnail integration
             "families": [self.render_pass_family, "review"],
             "representations": [],
@@ -239,9 +239,9 @@ class CollectTVPaintInstances(pyblish.api.ContextPlugin):
             "name": subset_name,
             "subset": subset_name,
             "label": subset_name,
-            "family": self.render_pass_family,
+            "family": "render",
             # Add `review` family for thumbnail integration
-            "families": [self.render_pass_family, "review"],
+            "families": [self.render_layer_family, "review"],
             "representations": [],
             "layers": layers,
             "stagingDir": staging_dir

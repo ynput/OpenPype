@@ -18,7 +18,7 @@ except:
 ### Magic Widget Finding Methods - This stuff crawls all the PySide widgets, looking for an answer
 def findWidget(w):
     global foundryWidgets
-    if 'Foundry' in w.metaObject().className():
+    if "Foundry" in w.metaObject().className():
         foundryWidgets += [w]
 
     for c in w.children():
@@ -49,7 +49,7 @@ def activeSpreadsheetTreeView():
   Does some PySide widget Magic to detect the Active Spreadsheet TreeView.
   """
     spreadsheetViews = getFoundryWidgetsWithClassName(
-        filter='SpreadsheetTreeView')
+        filter="SpreadsheetTreeView")
     for spreadSheet in spreadsheetViews:
         if spreadSheet.hasFocus():
             activeSpreadSheet = spreadSheet
@@ -77,23 +77,23 @@ class SpreadsheetExportCSVAction(QAction):
         spreadsheetTreeView = activeSpreadsheetTreeView()
 
         if not spreadsheetTreeView:
-            return 'Unable to detect the active TreeView.'
+            return "Unable to detect the active TreeView."
         seq = hiero.ui.activeView().sequence()
         if not seq:
-            print 'Unable to detect the active Sequence from the activeView.'
+            print("Unable to detect the active Sequence from the activeView.")
             return
 
         # The data model of the QTreeView
         model = spreadsheetTreeView.model()
 
-        csvSavePath = os.path.join(QDir.homePath(), 'Desktop',
-                                   seq.name() + '.csv')
+        csvSavePath = os.path.join(QDir.homePath(), "Desktop",
+                                   seq.name() + ".csv")
         savePath, filter = QFileDialog.getSaveFileName(
             None,
             caption="Export Spreadsheet to .CSV as...",
             dir=csvSavePath,
             filter="*.csv")
-        print 'Saving To: ' + str(savePath)
+        print("Saving To: {}".format(savePath))
 
         # Saving was cancelled...
         if len(savePath) == 0:
@@ -101,12 +101,12 @@ class SpreadsheetExportCSVAction(QAction):
 
         # Get the Visible Header Columns from the QTreeView
 
-        #csvHeader = ['Event', 'Status', 'Shot Name', 'Reel',  'Track', 'Speed', 'Src In', 'Src Out','Src Duration', 'Dst In', 'Dst Out', 'Dst Duration', 'Clip', 'Clip Media']
+        #csvHeader = ["Event", "Status", "Shot Name", "Reel",  "Track", "Speed", "Src In", "Src Out","Src Duration", "Dst In", "Dst Out", "Dst Duration", "Clip", "Clip Media"]
 
         # Get a CSV writer object
-        f = open(savePath, 'w')
+        f = open(savePath, "w")
         csvWriter = csv.writer(
-            f, delimiter=',', quotechar='|', quoting=csv.QUOTE_MINIMAL)
+            f, delimiter=',', quotechar="|", quoting=csv.QUOTE_MINIMAL)
 
         # This is a list of the Column titles
         csvHeader = []

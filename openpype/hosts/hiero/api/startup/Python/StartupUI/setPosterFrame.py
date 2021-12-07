@@ -10,15 +10,15 @@ except:
 
 
 def setPosterFrame(posterFrame=.5):
-    '''
+    """
     Update the poster frame of the given clipItmes
     posterFrame = .5 uses the centre frame, a value of 0 uses the first frame, a value of 1 uses the last frame
-    '''
+    """
     view = hiero.ui.activeView()
 
     selectedBinItems = view.selection()
     selectedClipItems = [(item.activeItem()
-                          if hasattr(item, 'activeItem') else item)
+                          if hasattr(item, "activeItem") else item)
                          for item in selectedBinItems]
 
     for clip in selectedClipItems:
