@@ -867,16 +867,6 @@ def boot():
     _startup_validations()
 
     # ------------------------------------------------------------------------
-    # Play animation
-    # ------------------------------------------------------------------------
-
-    # from igniter.terminal_splash import play_animation
-
-    # don't play for silenced commands
-    # if all(item not in sys.argv for item in silent_commands):
-    #     play_animation()
-
-    # ------------------------------------------------------------------------
     # Process arguments
     # ------------------------------------------------------------------------
 
