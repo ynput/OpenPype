@@ -63,9 +63,31 @@ def open_update_window(openpype_version):
     return version_path
 
 
+def show_message_dialog(title, message):
+    if os.getenv("OPENPYPE_HEADLESS_MODE"):
+        print("!!! Can't open dialog in headless mode. Exiting.")
+        sys.exit(1)
+    from Qt import QtWidgets, QtCore
+    from .message_dialog import MessageDialog
+
+    scale_attr = getattr(QtCore.Qt, "AA_EnableHighDpiScaling", None)
+    if scale_attr is not None:
+        QtWidgets.QApplication.setAttribute(scale_attr)
+
+    app = QtWidgets.QApplication.instance()
+    if not app:
+        app = QtWidgets.QApplication(sys.argv)
+
+    dialog = MessageDialog(title, message)
+    dialog.open()
+
+    app.exec_()
+
+
 __all__ = [
     "BootstrapRepos",
     "open_dialog",
     "open_update_window",
+    "show_message_dialog",
     "version"
 ]
