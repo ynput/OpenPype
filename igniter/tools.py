@@ -210,3 +210,11 @@ def load_stylesheet() -> str:
     stylesheet_path = Path(__file__).parent.resolve() / "stylesheet.css"
 
     return stylesheet_path.read_text()
+
+
+def get_openpype_icon_path() -> str:
+    """Path to OpenPype icon png file."""
+    return os.path.join(
+        os.path.dirname(os.path.abspath(__file__)),
+        "openpype_icon.png"
+    )
