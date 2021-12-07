@@ -4,6 +4,7 @@ Host specific functions where host api is connected
 import os
 import re
 import sys
+import platform
 import ast
 import shutil
 import hiero
@@ -783,6 +784,13 @@ def _set_hrox_project_knobs(doc, **knobs):
     # set attributes to Project Tag
     proj_elem = doc.documentElement().firstChildElement("Project")
     for k, v in knobs.items():
+        if "ocioconfigpath" in k:
+            paths_to_format = v[platform.system().lower()]
+            for _path in paths_to_format:
+                v = _path.format(**os.environ)
+                if not os.path.exists(v):
+                    continue
+        log.debug("Project colorspace knob `{}` was set to `{}`".format(k, v))
         if isinstance(v, dict):
             continue
         proj_elem.setAttribute(str(k), v)
