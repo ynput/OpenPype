@@ -196,7 +196,8 @@ from igniter import BootstrapRepos  # noqa: E402
 from igniter.tools import (
     get_openpype_global_settings,
     get_openpype_path_from_db,
-    validate_mongo_connection
+    validate_mongo_connection,
+    OpenPypeVersionNotFound
 )  # noqa
 from igniter.bootstrap_repos import OpenPypeVersion  # noqa: E402
 
@@ -645,89 +646,66 @@ def _find_frozen_openpype(use_version: str = None,
             (if requested).
 
     """
-    version_path = None
-    openpype_version = None
-    openpype_versions = bootstrap.find_openpype(include_zips=True,
-                                                staging=use_staging)
-    # get local frozen version and add it to detected version so if it is
-    # newer it will be used instead.
-    local_version_str = bootstrap.get_version(
-        Path(os.environ["OPENPYPE_ROOT"]))
+    # Collect OpenPype versions
+    openpype_versions = bootstrap.find_openpype(
+        include_zips=True,
+        staging=use_staging
+    )
+    openpype_root = Path(os.environ["OPENPYPE_ROOT"])
+    local_version_str = bootstrap.get_version(openpype_root)
+    studio_version = OpenPypeVersion.get_expected_studio_version(use_staging)
     if local_version_str:
         local_version = OpenPypeVersion(
             version=local_version_str,
-            path=Path(os.environ["OPENPYPE_ROOT"]))
+            path=openpype_root
+        )
         if local_version not in openpype_versions:
             openpype_versions.append(local_version)
-        openpype_versions.sort()
-        # if latest is currently running, ditch whole list
-        # and run from current without installing it.
-        if local_version == openpype_versions[-1]:
-            os.environ["OPENPYPE_TRYOUT"] = "1"
-            openpype_versions = []
+
+    # Find OpenPype version that should be used
+    openpype_version = None
+    if use_version is not None:
+        # Version was specified with arguments or env OPENPYPE_VERSION
+        # - should crash if version is not available
+        _print("Finding specified version \"{}\"".format(use_version))
+        for version in openpype_versions:
+            if version == use_version:
+                openpype_version = version
+                break
+
+        if openpype_version is None:
+            raise OpenPypeVersionNotFound(
+                "Requested version \"{}\" was not found.".format(use_version)
+            )
+
+    elif studio_version:
+        _print("Finding studio version \"{}\"".format(studio_version))
+        # Look for version specified by settings
+        for version in openpype_versions:
+            if version == studio_version:
+                openpype_version = version
+                break
+        if openpype_version is None:
+            raise OpenPypeVersionNotFound((
+                "Requested OpenPype version \"{}\" defined by settings"
+                " was not found."
+            ).format(use_version))
+
     else:
-        _print("!!! Warning: cannot determine current running version.")
+        # Use latest available version
+        _print("Finding latest version")
+        openpype_versions.sort()
+        openpype_version = openpype_versions[-1]
 
-    if not os.getenv("OPENPYPE_TRYOUT"):
-        try:
-            # use latest one found (last in the list is latest)
-            openpype_version = openpype_versions[-1]
-        except IndexError:
-            # no OpenPype version found, run Igniter and ask for them.
-            _print('*** No OpenPype versions found.')
-            if os.getenv("OPENPYPE_HEADLESS_MODE") == "1":
-                _print("!!! Cannot open Igniter dialog in headless mode.")
-                sys.exit(1)
-            _print("--- launching setup UI ...")
-            import igniter
-            return_code = igniter.open_dialog()
-            if return_code == 2:
-                os.environ["OPENPYPE_TRYOUT"] = "1"
-            if return_code == 3:
-                # run OpenPype after installation
-
-                _print('>>> Finding OpenPype again ...')
-                openpype_versions = bootstrap.find_openpype(
-                    staging=use_staging)
-                try:
-                    openpype_version = openpype_versions[-1]
-                except IndexError:
-                    _print(("!!! Something is wrong and we didn't "
-                            "found it again."))
-                    sys.exit(1)
-            elif return_code != 2:
-                _print(f"  . finished ({return_code})")
-                sys.exit(return_code)
-
-    if not openpype_versions:
-        # no openpype versions found anyway, lets use then the one
-        # shipped with frozen OpenPype
-        if not os.getenv("OPENPYPE_TRYOUT"):
-            _print("*** Still no luck finding OpenPype.")
-            _print(("*** We'll try to use the one coming "
-                   "with OpenPype installation."))
+    # get local frozen version and add it to detected version so if it is
+    # newer it will be used instead.
+    if local_version == openpype_version:
         version_path = _bootstrap_from_code(use_version, use_staging)
         openpype_version = OpenPypeVersion(
             version=BootstrapRepos.get_version(version_path),
             path=version_path)
         _initialize_environment(openpype_version)
         return version_path
-
-    # get path of version specified in `--use-version`
-    local_version = bootstrap.get_version(OPENPYPE_ROOT)
-    if use_version and use_version != local_version:
-        # force the one user has selected
-        openpype_version = None
-        openpype_versions = bootstrap.find_openpype(include_zips=True,
-                                                    staging=use_staging)
-        v: OpenPypeVersion
-        found = [v for v in openpype_versions if str(v) == use_version]
-        if found:
-            openpype_version = sorted(found)[-1]
-        if not openpype_version:
-            _print(f"!!! Requested version {use_version} was not found.")
-            list_versions(openpype_versions, local_version)
-            sys.exit(1)
 
     # test if latest detected is installed (in user data dir)
     is_inside = False
