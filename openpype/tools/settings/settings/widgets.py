@@ -90,10 +90,9 @@ class CompleterView(QtWidgets.QListView):
 
     def sizeHint(self):
         result = super(CompleterView, self).sizeHint()
-        height = 0
-        for row in range(self._filter_model.rowCount()):
-            height += self.sizeHintForRow(row)
-        result.setHeight(height)
+        if self._filter_model.rowCount() == 0:
+            result.setHeight(0)
+
         return result
 
     def _update_geo(self):
