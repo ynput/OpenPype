@@ -108,6 +108,14 @@ class ModuleUnitTest(BaseTest):
         import openpype
 
         openpype_root = os.path.dirname(os.path.dirname(openpype.__file__))
+
+        #reset connection to openpype DB with new env var
+        import openpype.settings.lib as sett_lib
+        sett_lib._SETTINGS_HANDLER = None
+        sett_lib._LOCAL_SETTINGS_HANDLER = None
+        sett_lib.create_settings_handler()
+        sett_lib.create_local_settings_handler()
+
         # ?? why 2 of those
         monkeypatch_session.setenv("OPENPYPE_ROOT", openpype_root)
         monkeypatch_session.setenv("OPENPYPE_REPOS_ROOT", openpype_root)
