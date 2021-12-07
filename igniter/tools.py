@@ -16,6 +16,11 @@ from pymongo.errors import (
 )
 
 
+class OpenPypeVersionNotFound(Exception):
+    """OpenPype version was not found in remote and local repository."""
+    pass
+
+
 def should_add_certificate_path_to_mongo_url(mongo_url):
     """Check if should add ca certificate to mongo url.
 
