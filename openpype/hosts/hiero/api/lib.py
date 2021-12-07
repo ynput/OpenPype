@@ -37,10 +37,11 @@ self.default_bin_name = "openpypeBin"
 AVALON_CONFIG = os.getenv("AVALON_CONFIG", "pype")
 
 
-def flatten(input_list):
-    for item in input_list:
+def flatten(_list):
+    for item in _list:
         if isinstance(item, (list, tuple)):
-            yield from flatten(item)
+            for sub_item in flatten(item):
+                yield sub_item
         else:
             yield item
 

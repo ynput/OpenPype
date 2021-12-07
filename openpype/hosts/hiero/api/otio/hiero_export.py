@@ -28,12 +28,13 @@ self.timeline = None
 self.include_tags = True
 
 
-def flatten(l):
-        for i in l:
-            if isinstance(i, (list, tuple)):
-                yield from flatten(i)
-            else:
-                yield i
+def flatten(_list):
+    for item in _list:
+        if isinstance(item, (list, tuple)):
+            for sub_item in flatten(item):
+                yield sub_item
+        else:
+            yield item
 
 
 def get_current_hiero_project(remove_untitled=False):
