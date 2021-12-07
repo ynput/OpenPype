@@ -521,7 +521,7 @@ def _process_arguments() -> tuple:
         if os.getenv("OPENPYPE_HEADLESS_MODE") == "1":
             _print("!!! Cannot open Igniter dialog in headless mode.")
             sys.exit(1)
-        import igniter
+
         return_code = igniter.open_dialog()
 
         # this is when we want to run OpenPype without installing anything.
@@ -719,12 +719,12 @@ def _find_frozen_openpype(use_version: str = None,
 
     if not is_inside:
         # install latest version to user data dir
-        if os.getenv("OPENPYPE_HEADLESS_MODE", "0") != "1":
-            import igniter
-            version_path = igniter.open_update_window(openpype_version)
-        else:
+        if os.getenv("OPENPYPE_HEADLESS_MODE") == "1":
             version_path = bootstrap.install_version(
-                openpype_version, force=True)
+                openpype_version, force=True
+            )
+        else:
+            version_path = igniter.open_update_window(openpype_version)
 
         openpype_version.path = version_path
         _initialize_environment(openpype_version)
