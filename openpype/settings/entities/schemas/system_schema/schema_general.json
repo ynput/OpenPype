@@ -20,7 +20,7 @@
         },
         {
             "type": "label",
-            "label": "This is <b>NOT a securely stored password!</b>. It only acts as a simple barrier to stop users from accessing studio wide settings."
+            "label": "This is <b>NOT a securely stored password!</b> It only acts as a simple barrier to stop users from accessing studio wide settings."
         },
         {
             "type": "text",
