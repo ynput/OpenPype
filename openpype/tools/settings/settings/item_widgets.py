@@ -417,9 +417,30 @@ class TextWidget(InputWidget):
 
 
 class OpenPypeVersionText(TextWidget):
+    def __init__(self, *args, **kwargs):
+        self._info_widget = None
+        super(OpenPypeVersionText, self).__init__(*args, **kwargs)
+
+    def create_ui(self):
+        super(OpenPypeVersionText, self).create_ui()
+        info_widget = QtWidgets.QLabel("Latest", self)
+        self.content_layout.addWidget(info_widget, 1)
+
+        self._info_widget = info_widget
+
+    def _update_info_widget(self):
+        value = self.input_value()
+        if value == "":
+            self._info_widget.setText("Latest")
+        elif value in self.entity.value_hints:
+            self._info_widget.setText("Ok")
+        else:
+            self._info_widget.setText("Version not found from this workstation")
+
     def _on_entity_change(self):
         super(OpenPypeVersionText, self)._on_entity_change()
         self._refresh_completer()
+        self._update_info_widget()
 
 
 class NumberWidget(InputWidget):
