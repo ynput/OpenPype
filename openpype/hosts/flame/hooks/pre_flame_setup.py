@@ -2,6 +2,7 @@ import os
 import json
 import tempfile
 import contextlib
+import socket
 from openpype.lib import (
     PreLaunchHook, get_openpype_username)
 from openpype.hosts import flame as opflame
@@ -32,6 +33,7 @@ class FlamePrelaunch(PreLaunchHook):
         """Hook entry method."""
         project_doc = self.data["project_doc"]
         user_name = get_openpype_username()
+        hostname = socket.gethostname()  # not returning wiretap host name
 
         self.log.debug("Collected user \"{}\"".format(user_name))
         self.log.info(pformat(project_doc))
@@ -53,11 +55,12 @@ class FlamePrelaunch(PreLaunchHook):
             "FieldDominance": "PROGRESSIVE"
         }
 
+
         data_to_script = {
             # from settings
-            "host_name": "localhost",
-            "volume_name": "stonefs",
-            "group_name": "staff",
+            "host_name": os.getenv("FLAME_WIRETAP_HOSTNAME") or hostname,
+            "volume_name": os.getenv("FLAME_WIRETAP_VOLUME"),
+            "group_name": os.getenv("FLAME_WIRETAP_GROUP"),
             "color_policy": "ACES 1.1",
 
             # from project
