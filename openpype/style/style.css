@@ -536,6 +536,27 @@ QAbstractItemView::branch:!has-children:!has-siblings:adjoins-item {
     background: transparent;
 }
 
+CompleterView {
+    border: 1px solid #555555;
+    background: {color:bg-inputs};
+}
+
+CompleterView::item:selected {
+    background: {color:bg-view-hover};
+}
+
+CompleterView::item:selected:hover {
+    background: {color:bg-view-hover};
+}
+
+CompleterView::right-arrow {
+    min-width: 10px;
+}
+CompleterView::separator {
+    background: {color:bg-menu-separator};
+    height: 2px;
+    margin-right: 5px;
+}
 
 /* Progress bar */
 QProgressBar {
