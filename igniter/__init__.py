@@ -28,7 +28,9 @@ def open_dialog():
     if scale_attr is not None:
         QtWidgets.QApplication.setAttribute(scale_attr)
 
-    app = QtWidgets.QApplication(sys.argv)
+    app = QtWidgets.QApplication.instance()
+    if not app:
+        app = QtWidgets.QApplication(sys.argv)
 
     d = InstallDialog()
     d.open()
@@ -49,7 +51,9 @@ def open_update_window(openpype_version):
     if scale_attr is not None:
         QtWidgets.QApplication.setAttribute(scale_attr)
 
-    app = QtWidgets.QApplication(sys.argv)
+    app = QtWidgets.QApplication.instance()
+    if not app:
+        app = QtWidgets.QApplication(sys.argv)
 
     d = UpdateWindow(version=openpype_version)
     d.open()
