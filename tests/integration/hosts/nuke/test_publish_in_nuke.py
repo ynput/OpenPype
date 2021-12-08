@@ -1,6 +1,7 @@
 import pytest
 import os
 import logging
+import shutil
 
 from tests.lib.testing_classes import PublishTest
 
@@ -23,6 +24,8 @@ class TestPublishInNuke(PublishTest):
         (in cmd with activated {OPENPYPE_ROOT}/.venv)
         {OPENPYPE_ROOT}/.venv/Scripts/python.exe {OPENPYPE_ROOT}/start.py runtests ../tests/integration/hosts/nuke  # noqa: E501
 
+        To check log/errors from launched app's publish process keep PERSIST
+        to True and check `test_openpype.logs` collection.
     """
     PERSIST = True  # True - keep test_db, test_openpype, outputted test files
 
@@ -36,21 +39,32 @@ class TestPublishInNuke(PublishTest):
 
     TIMEOUT = 120  # publish timeout
 
-    TEST_DATA_FOLDER = None  # provide existing folder with test data
+    TEST_DATA_FOLDER = "C:\\Users\\petrk\\AppData\\Local\\Temp\\tmpbfh976y6"  # provide existing folder with test data
 
     @pytest.fixture(scope="module")
     def last_workfile_path(self, download_test_data):
         """Get last_workfile_path from source data.
 
         """
-        log.info("log last_workfile_path")
-        src_path = os.path.join(
-            download_test_data,
-            "input",
-            "workfile",
-            "test_project_test_asset_CompositingInNuke_v001.nk")
+        source_file_name = "test_project_test_asset_CompositingInNuke_v001.nk"
+        src_path = os.path.join(download_test_data,
+                                "input",
+                                "workfile",
+                                source_file_name)
+        dest_folder = os.path.join(download_test_data,
+                                   self.PROJECT,
+                                   self.ASSET,
+                                   "work",
+                                   self.TASK)
+        if not os.path.exists(dest_folder):
+            os.makedirs(dest_folder)
 
-        yield src_path
+        dest_path = os.path.join(dest_folder,
+                                 source_file_name)
+
+        shutil.copy(src_path, dest_path)
+
+        yield dest_path
 
     @pytest.fixture(scope="module")
     def startup_scripts(self, monkeypatch_session, download_test_data):
@@ -68,9 +82,9 @@ class TestPublishInNuke(PublishTest):
         """Host and input data dependent expected results in DB."""
         print("test_db_asserts")
         versions = dbcon.count_documents({"type": "version"})
-        assert 5 == versions, \
+        assert 2 == versions, \
             "Not expected no of versions. "\
-            "Expected 5, found {}".format(versions)
+            "Expected 2, found {}".format(versions)
 
         assert 0 == dbcon.count_documents({"type": "version",
                                            "name": {"$ne": 1}}), \
