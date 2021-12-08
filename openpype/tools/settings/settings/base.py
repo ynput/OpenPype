@@ -1,7 +1,10 @@
 import json
 
 from Qt import QtWidgets, QtGui, QtCore
+
+from openpype.settings.entities import ProjectSettings
 from openpype.tools.settings import CHILD_OFFSET
+
 from .widgets import ExpandingWidget
 from .lib import create_deffered_value_change_timer
 
@@ -285,6 +288,45 @@ class BaseWidget(QtWidgets.QWidget):
 
         return output
 
+    def _apply_values_from_project_action(self, menu, actions_mapping):
+        for attr_name in ("project_name", "get_project_names"):
+            if not hasattr(self.category_widget, attr_name):
+                return
+
+        if self.entity.is_dynamic_item or self.entity.is_in_dynamic_item:
+            return
+
+        submenu = QtWidgets.QMenu("Apply values from", menu)
+
+        current_project_name = self.category_widget.project_name
+        for project_name in self.category_widget.get_project_names():
+            if current_project_name == project_name:
+                continue
+
+            if project_name is None:
+                project_name = "< Default >"
+
+            action = QtWidgets.QAction(project_name)
+            submenu.addAction(action)
+            actions_mapping[action] = lambda: self._apply_values_from_project(
+                project_name
+            )
+        menu.addMenu(submenu)
+
+    def _apply_values_from_project(self, project_name):
+        with self.category_widget.working_state_context():
+            path_keys = [
+                item
+                for item in self.entity.path.split("/")
+                if item
+            ]
+
+            settings = ProjectSettings(project_name)
+            entity = settings
+            for key in path_keys:
+                entity = entity[key]
+            self.entity.set(entity.value)
+
     def show_actions_menu(self, event=None):
         if event and event.button() != QtCore.Qt.RightButton:
             return
@@ -303,6 +345,7 @@ class BaseWidget(QtWidgets.QWidget):
         self._remove_from_studio_default_action(menu, actions_mapping)
         self._add_to_project_override_action(menu, actions_mapping)
         self._remove_from_project_override_action(menu, actions_mapping)
+        self._apply_values_from_project_action(menu, actions_mapping)
 
         ui_actions = []
         ui_actions.extend(self._copy_value_actions(menu))
