@@ -559,7 +559,8 @@ class OpenPypeVersion(semver.VersionInfo):
             staging: bool = False, local: bool = False) -> OpenPypeVersion:
         """Get latest available version.
 
-        This is utility version to get latest version from all found.
+        This is utility version to get latest version from all found except
+        build.
 
         Args:
             staging (bool, optional): List staging versions if True.
@@ -572,6 +573,8 @@ class OpenPypeVersion(semver.VersionInfo):
         openpype_versions = OpenPypeVersion.get_available_versions(
             staging, local)
 
+        if not openpype_versions:
+            return None
         return openpype_versions[-1]
 
     @classmethod
