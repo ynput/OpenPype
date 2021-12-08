@@ -125,7 +125,8 @@ class MayaPlaceholder(AbstractPlaceholder):
         for root in roots:
             if root.endswith("_RN"):
                 refRoot = cmds.referenceQuery(root, n=True)[0]
-                nodes_to_parent.append(refRoot)
+                refRoot = cmds.listRelatives(refRoot, parent=True) or [refRoot]
+                nodes_to_parent.extend(refRoot)
             else:
                 nodes_to_parent.append(root)
 
@@ -137,7 +138,7 @@ class MayaPlaceholder(AbstractPlaceholder):
 
         # Move loaded nodes to correct index in outliner hierarchy to keep
         index = siblings.index(self.data['node'].rpartition('|')[2])
-        for node in nodes_to_parent:
+        for node in set(nodes_to_parent):
                 cmds.reorder(node, front=True)
                 cmds.reorder(node, relative=index)
 
@@ -145,9 +146,8 @@ class MayaPlaceholder(AbstractPlaceholder):
         holding_sets = cmds.listSets(object=node)
         if not holding_sets:
             return
-        for set in holding_sets:
-            cmds.sets(roots, forceElement=set)
-            cmds.sets(node, remove=set)
+        for holding_set in holding_sets:
+            cmds.sets(roots, forceElement=holding_set)
 
     def clean(self):
         """Hide placeholder
@@ -167,6 +167,12 @@ class MayaPlaceholder(AbstractPlaceholder):
         cmds.hide(node)
 
         cmds.setAttr(node+'.hiddenInOutliner', True)
+        node = self.data['node'].rpartition('|')[2]
+        holding_sets = cmds.listSets(object=node)
+        if not holding_sets:
+            return
+        for set in holding_sets:
+            cmds.sets(node, remove=set)
 
     def convert_to_db_filters(self, current_asset, linked_asset):
         if self.data['builder_type'] == "context_asset":
