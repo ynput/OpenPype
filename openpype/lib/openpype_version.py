@@ -2,7 +2,11 @@
 
 Access to logic from igniter is available only for OpenPype processes.
 Is meant to be able check OpenPype versions for studio. The logic is dependent
-on igniter's logic of processing.
+on igniter's inner logic of versions.
+
+Keep in mind that all functions except 'get_build_version' does not return
+OpenPype version located in build but versions available in remote versions
+repository or locally available.
 """
 
 import sys
@@ -40,42 +44,42 @@ def get_available_versions(*args, **kwargs):
 
 
 def openpype_path_is_set():
+    """OpenPype repository path is set in settings."""
     if op_version_control_available():
         return get_OpenPypeVersion().openpype_path_is_set()
     return None
 
 
 def openpype_path_is_accessible():
+    """OpenPype version repository path can be accessed."""
     if op_version_control_available():
         return get_OpenPypeVersion().openpype_path_is_accessible()
     return None
 
 
 def get_local_versions(*args, **kwargs):
+    """OpenPype versions available on this workstation."""
     if op_version_control_available():
         return get_OpenPypeVersion().get_local_versions(*args, **kwargs)
     return None
 
 
 def get_remote_versions(*args, **kwargs):
+    """OpenPype versions in repository path."""
     if op_version_control_available():
         return get_OpenPypeVersion().get_remote_versions(*args, **kwargs)
     return None
 
 
 def get_latest_version(*args, **kwargs):
+    """Get latest version from repository path."""
     if op_version_control_available():
         return get_OpenPypeVersion().get_latest_version(*args, **kwargs)
     return None
 
 
-def get_current_production_version():
+def get_expected_studio_version(staging=False):
+    """Expected production or staging version in studio."""
     if op_version_control_available():
-        return get_OpenPypeVersion().get_production_version()
-    return None
-
-
-def get_current_staging_version():
-    if op_version_control_available():
-        return get_OpenPypeVersion().get_staging_version()
+        return get_OpenPypeVersion().get_expected_studio_version(staging)
     return None
