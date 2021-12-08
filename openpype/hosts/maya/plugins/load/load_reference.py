@@ -75,8 +75,8 @@ class ReferenceLoader(openpype.hosts.maya.api.plugin.ReferenceLoader):
                     except:  # noqa: E722
                         pass
 
-                if family not in [
-                    "layout", "setdress", "mayaAscii", "mayaScene"]:
+                if family not in ["layout", "setdress",
+                                  "mayaAscii", "mayaScene"]:
                     for root in roots:
                         root.setParent(world=True)
 
@@ -92,9 +92,9 @@ class ReferenceLoader(openpype.hosts.maya.api.plugin.ReferenceLoader):
                 if c is not None:
                     group_node.useOutlinerColor.set(1)
                     group_node.outlinerColor.set(
-                        (float(c[0])/255),
-                        (float(c[1])/255),
-                        (float(c[2])/255))
+                        (float(c[0]) / 255),
+                        (float(c[1]) / 255),
+                        (float(c[2]) / 255))
 
                 cmds.setAttr(group_name + ".displayHandle", 1)
                 # get bounding box
