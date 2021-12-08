@@ -589,7 +589,7 @@ class OpenPypeVersion(semver.VersionInfo):
         """
         result = get_expected_studio_version_str(staging)
         if not result:
-            return cls.get_latest_version(staging, False)
+            return None
         return OpenPypeVersion(version=result)
 
 
