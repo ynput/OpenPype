@@ -424,6 +424,7 @@ class OpenPypeVersionText(TextWidget):
     def create_ui(self):
         super(OpenPypeVersionText, self).create_ui()
         info_widget = QtWidgets.QLabel("Latest", self)
+        info_widget.setObjectName("OpenPypeVersionLabel")
         self.content_layout.addWidget(info_widget, 1)
 
         self._info_widget = info_widget
