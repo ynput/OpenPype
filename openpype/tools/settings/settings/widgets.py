@@ -185,7 +185,7 @@ class CompleterView(QtWidgets.QListView):
         self._on_activated(index)
 
 
-class SettingsLineEdit(QtWidgets.QLineEdit):
+class SettingsLineEdit(PlaceholderLineEdit):
     focused_in = QtCore.Signal()
 
     def __init__(self, *args, **kwargs):
