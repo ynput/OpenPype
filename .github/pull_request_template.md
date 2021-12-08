@@ -8,7 +8,7 @@ Next paragraf is more elaborate text with more info. This will be displayed for 
 The rest will be ignored in changelog and should contain any additional
 technical information.
 
-## Documentation (add Documentation label)
+## Documentation (add _"type: documentation"_ label)
 [feature_documentation](future_url_after_it_will_be_merged)
 
 ## Testing notes:
