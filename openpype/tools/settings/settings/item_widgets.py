@@ -437,27 +437,29 @@ class OpenPypeVersionText(TextWidget):
         tooltip = ""
         state = None
         if self._is_invalid:
-            message = "Invalid version format"
+            message = "Invalid OpenPype version format"
 
         elif value == "":
             message = "Use latest available version"
-            tooltip = "Latest version from OpenPype zip repository will used"
+            tooltip = (
+                "Latest version from OpenPype zip repository will be used"
+            )
 
         elif value in self.entity.value_hints:
-            message = "Version {} will be used".format(value)
             state = "success"
+            message = "Version {} will be used".format(value)
 
         else:
+            state = "warning"
             message = (
                 "Version {} not found in listed versions".format(value)
             )
-            state = "warning"
             if self.entity.value_hints:
-                tooltip = "Found versions are {}".format(", ".join(
+                tooltip = "Listed versions: {}".format(", ".join(
                     ['"{}"'.format(hint) for hint in self.entity.value_hints]
                 ))
             else:
-                tooltip = "No versions were found"
+                tooltip = "No versions were listed"
 
         self._info_widget.setText(message)
         self._info_widget.setToolTip(tooltip)
