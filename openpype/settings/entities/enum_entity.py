@@ -1,10 +1,4 @@
 import copy
-from openpype.lib.openpype_version import (
-    op_version_control_available,
-    get_remote_versions,
-    openpype_path_is_set,
-    openpype_path_is_accessible
-)
 from .input_entities import InputEntity
 from .exceptions import EntitySchemaError
 from .lib import (
