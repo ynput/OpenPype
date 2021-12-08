@@ -95,6 +95,10 @@ class CompleterView(QtWidgets.QListView):
 
         return result
 
+    def showEvent(self, event):
+        super(CompleterView, self).showEvent(event)
+        self._update_geo()
+
     def _update_geo(self):
         size_hint = self.sizeHint()
         self.resize(size_hint.width(), size_hint.height())
