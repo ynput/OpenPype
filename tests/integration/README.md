@@ -15,6 +15,10 @@ How to run
 OR can use built executables 
 `openpype_console runtests {ABS_PATH}/tests/integration`
 
+How to check logs/errors from app
+--------------------------------
+Keep PERSIST to True in the class and check `test_openpype.logs` collection. 
+
 How to create test for publishing from host
 ------------------------------------------
 - Extend PublishTest in `tests/lib/testing_classes.py`
@@ -28,9 +32,21 @@ How to create test for publishing from host
 ```
 import openpype
 from avalon import api, HOST
+
+from openpype.api import Logger
+
+log = Logger().get_logger(__name__)
   
 api.install(HOST)
-pyblish.util.publish()
+log_lines = []
+for result in pyblish.util.publish_iter():
+    for record in result["records"]:  # for logging to test_openpype DB
+        log_lines.append("{}: {}".format(
+            result["plugin"].label, record.msg))
+
+    if result["error"]:
+        err_fmt = "Failed {plugin.__name__}: {error} -- {error.traceback}"
+        log.error(err_fmt.format(**result))
 
 EXIT_APP (command to exit host)
 ```
