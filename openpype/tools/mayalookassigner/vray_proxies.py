@@ -41,7 +41,12 @@ def get_alembic_paths_by_property(filename, attr, verbose=False):
     filename = filename.replace("\\", "/")
     filename = str(filename)  # path must be string
 
-    archive = alembic.Abc.IArchive(filename)
+    try:
+        archive = alembic.Abc.IArchive(filename)
+    except RuntimeError:
+        # invalid alembic file - probably vrmesh
+        log.warning("{} is not an alembic file".format(filename))
+        return {}
     root = archive.getTop()
 
     iterator = list(root.children)
