@@ -105,9 +105,6 @@ class ModuleUnitTest(BaseTest):
             value = value.format(**all_vars)
             print("Setting {}:{}".format(key, value))
             monkeypatch_session.setenv(key, str(value))
-        import openpype
-
-        openpype_root = os.path.dirname(os.path.dirname(openpype.__file__))
 
         #reset connection to openpype DB with new env var
         import openpype.settings.lib as sett_lib
@@ -116,9 +113,15 @@ class ModuleUnitTest(BaseTest):
         sett_lib.create_settings_handler()
         sett_lib.create_local_settings_handler()
 
+        import openpype
+        openpype_root = os.path.dirname(os.path.dirname(openpype.__file__))
+
         # ?? why 2 of those
         monkeypatch_session.setenv("OPENPYPE_ROOT", openpype_root)
         monkeypatch_session.setenv("OPENPYPE_REPOS_ROOT", openpype_root)
+
+        # for remapping purposes (currently in Nuke)
+        monkeypatch_session.setenv("TEST_SOURCE_FOLDER", download_test_data)
 
     @pytest.fixture(scope="module")
     def db_setup(self, download_test_data, env_var, monkeypatch_session):
@@ -271,7 +274,8 @@ class PublishTest(ModuleUnitTest):
 
         app_name = "{}/{}".format(self.APP, variant)
 
-        yield application_manager.launch(app_name, **data)
+        app_process = application_manager.launch(app_name, **data)
+        yield app_process
 
     @pytest.fixture(scope="module")
     def publish_finished(self, dbcon, launched_app, download_test_data):
