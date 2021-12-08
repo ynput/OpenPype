@@ -651,16 +651,11 @@ def _find_frozen_openpype(use_version: str = None,
         include_zips=True,
         staging=use_staging
     )
-    openpype_root = Path(os.environ["OPENPYPE_ROOT"])
-    local_version_str = bootstrap.get_version(openpype_root)
+    local_version = OpenPypeVersion.get_build_version()
+    if local_version not in openpype_versions:
+        openpype_versions.append(local_version)
+
     studio_version = OpenPypeVersion.get_expected_studio_version(use_staging)
-    if local_version_str:
-        local_version = OpenPypeVersion(
-            version=local_version_str,
-            path=openpype_root
-        )
-        if local_version not in openpype_versions:
-            openpype_versions.append(local_version)
 
     openpype_versions.sort()
 
@@ -668,6 +663,7 @@ def _find_frozen_openpype(use_version: str = None,
     openpype_version = None
     if use_version is not None:
         if use_version.lower() == "latest":
+            _print("Finding latest version")
             openpype_version = openpype_versions[-1]
         else:
             use_version_obj = OpenPypeVersion(use_version)
