@@ -54,6 +54,10 @@ def install():
     ''' Installing all requarements for Nuke host
     '''
 
+    # remove all registred callbacks form avalon.nuke
+    from avalon import pipeline
+    pipeline._registered_event_handlers.clear()
+
     log.info("Registering Nuke plug-ins..")
     pyblish.api.register_plugin_path(PUBLISH_PATH)
     avalon.api.register_plugin_path(avalon.api.Loader, LOAD_PATH)
@@ -62,6 +66,7 @@ def install():
 
     # Register Avalon event for workfiles loading.
     avalon.api.on("workio.open_file", lib.check_inventory_versions)
+    avalon.api.on("taskChanged", menu.change_context_label)
 
     pyblish.api.register_callback(
         "instanceToggled", on_pyblish_instance_toggled)

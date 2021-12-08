@@ -44,16 +44,16 @@ def get_transition_type(otio_item, otio_track):
         _out = None
 
     if _in and _out:
-        return 'dissolve'
+        return "dissolve"
 
     elif _in and not _out:
-        return 'fade_out'
+        return "fade_out"
 
     elif not _in and _out:
-        return 'fade_in'
+        return "fade_in"
 
     else:
-        return 'unknown'
+        return "unknown"
 
 
 def find_trackitem(name, hiero_track):
@@ -84,10 +84,10 @@ def apply_transition(otio_track, otio_item, track):
 
     # Figure out track kind for getattr below
     if isinstance(track, hiero.core.VideoTrack):
-        kind = ''
+        kind = ""
 
     else:
-        kind = 'Audio'
+        kind = "Audio"
 
     try:
         # Gather TrackItems involved in trasition
@@ -98,7 +98,7 @@ def apply_transition(otio_track, otio_item, track):
         )
 
         # Create transition object
-        if transition_type == 'dissolve':
+        if transition_type == "dissolve":
             transition_func = getattr(
                 hiero.core.Transition,
                 'create{kind}DissolveTransition'.format(kind=kind)
@@ -111,7 +111,7 @@ def apply_transition(otio_track, otio_item, track):
                 otio_item.out_offset.value
             )
 
-        elif transition_type == 'fade_in':
+        elif transition_type == "fade_in":
             transition_func = getattr(
                 hiero.core.Transition,
                 'create{kind}FadeInTransition'.format(kind=kind)
@@ -121,7 +121,7 @@ def apply_transition(otio_track, otio_item, track):
                 otio_item.out_offset.value
             )
 
-        elif transition_type == 'fade_out':
+        elif transition_type == "fade_out":
             transition_func = getattr(
                 hiero.core.Transition,
                 'create{kind}FadeOutTransition'.format(kind=kind)
@@ -150,11 +150,11 @@ def apply_transition(otio_track, otio_item, track):
 def prep_url(url_in):
     url = unquote(url_in)
 
-    if url.startswith('file://localhost/'):
-        return url.replace('file://localhost/', '')
+    if url.startswith("file://localhost/"):
+        return url.replace("file://localhost/", "")
 
     url = '{url}'.format(
-        sep=url.startswith(os.sep) and '' or os.sep,
+        sep=url.startswith(os.sep) and "" or os.sep,
         url=url.startswith(os.sep) and url[1:] or url
     )
 
@@ -228,8 +228,8 @@ def add_metadata(metadata, hiero_item):
             continue
 
         if value is not None:
-            if not key.startswith('tag.'):
-                key = 'tag.' + key
+            if not key.startswith("tag."):
+                key = "tag." + key
 
             hiero_item.metadata().setValue(key, str(value))
 
@@ -371,10 +371,10 @@ def build_sequence(
 
     if not sequence:
         # Create a Sequence
-        sequence = hiero.core.Sequence(otio_timeline.name or 'OTIOSequence')
+        sequence = hiero.core.Sequence(otio_timeline.name or "OTIOSequence")
 
         # Set sequence settings from otio timeline if available
-        if hasattr(otio_timeline, 'global_start_time'):
+        if hasattr(otio_timeline, "global_start_time"):
             if otio_timeline.global_start_time:
                 start_time = otio_timeline.global_start_time
                 sequence.setFramerate(start_time.rate)
@@ -414,7 +414,7 @@ def build_sequence(
             if isinstance(otio_clip, otio.schema.Stack):
                 bar = hiero.ui.mainWindow().statusBar()
                 bar.showMessage(
-                    'Nested sequences are created separately.',
+                    "Nested sequences are created separately.",
                     timeout=3000
                 )
                 build_sequence(otio_clip, project, otio_track.kind)

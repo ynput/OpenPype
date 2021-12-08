@@ -1,6 +1,6 @@
 [tool.poetry]
 name = "OpenPype"
-version = "3.7.0-nightly.4" # OpenPype
+version = "3.7.0-nightly.6" # OpenPype
 description = "Open VFX and Animation pipeline with support."
 authors = ["OpenPype Team <info@openpype.io>"]
 license = "MIT License"
@@ -36,7 +36,7 @@ opentimelineio = { version = "0.14.0.dev1", source = "openpype" }
 appdirs = "^1.4.3"
 blessed = "^1.17" # openpype terminal formatting
 coolname = "*"
-clique = "1.5.*"
+clique = "1.6.*"
 Click = "^7"
 dnspython = "^2.1.0"
 ftrack-python-api = "2.0.*"

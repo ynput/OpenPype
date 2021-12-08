@@ -191,7 +191,7 @@ class CreatorWidget(QtWidgets.QDialog):
 
         content_layout = content_layout or self.content_layout[-1]
         # fix order of process by defined order value
-        ordered_keys = data.keys()
+        ordered_keys = list(data.keys())
         for k, v in data.items():
             try:
                 # try removing a key from index which should
