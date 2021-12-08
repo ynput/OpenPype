@@ -667,13 +667,17 @@ def _find_frozen_openpype(use_version: str = None,
     # Find OpenPype version that should be used
     openpype_version = None
     if use_version is not None:
-        # Version was specified with arguments or env OPENPYPE_VERSION
-        # - should crash if version is not available
-        _print("Finding specified version \"{}\"".format(use_version))
-        for version in openpype_versions:
-            if version == use_version:
-                openpype_version = version
-                break
+        if use_version.lower() == "latest":
+            openpype_version = openpype_versions[-1]
+        else:
+            use_version_obj = OpenPypeVersion(use_version)
+            # Version was specified with arguments or env OPENPYPE_VERSION
+            # - should crash if version is not available
+            _print("Finding specified version \"{}\"".format(use_version))
+            for version in openpype_versions:
+                if version == use_version_obj:
+                    openpype_version = version
+                    break
 
         if openpype_version is None:
             raise OpenPypeVersionNotFound(
