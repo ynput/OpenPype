@@ -1,4 +1,6 @@
+import sys
 import json
+import traceback
 
 from Qt import QtWidgets, QtGui, QtCore
 
@@ -316,17 +318,35 @@ class BaseWidget(QtWidgets.QWidget):
 
     def _apply_values_from_project(self, project_name):
         with self.category_widget.working_state_context():
-            path_keys = [
-                item
-                for item in self.entity.path.split("/")
-                if item
-            ]
+            try:
+                path_keys = [
+                    item
+                    for item in self.entity.path.split("/")
+                    if item
+                ]
+                entity = ProjectSettings(project_name)
+                for key in path_keys:
+                    entity = entity[key]
+                self.entity.set(entity.value)
 
-            settings = ProjectSettings(project_name)
-            entity = settings
-            for key in path_keys:
-                entity = entity[key]
-            self.entity.set(entity.value)
+            except Exception:
+                if project_name is None:
+                    project_name = DEFAULT_PROJECT_LABEL
+
+                # TODO better message
+                title = "Applying values failed"
+                msg = "Using values from project \"{}\" failed.".format(
+                    project_name
+                )
+                detail_msg = "".join(
+                    traceback.format_exception(*sys.exc_info())
+                )
+                dialog = QtWidgets.QMessageBox(self)
+                dialog.setWindowTitle(title)
+                dialog.setIcon(QtWidgets.QMessageBox.Warning)
+                dialog.setText(msg)
+                dialog.setDetailedText(detail_msg)
+                dialog.exec_()
 
     def show_actions_menu(self, event=None):
         if event and event.button() != QtCore.Qt.RightButton:
