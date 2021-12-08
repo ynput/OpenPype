@@ -1,19 +1,16 @@
----
-name: Feature request
-about: Suggest an idea for this project
-title: ''
-labels: enhancement
-assignees: ''
----
+## Brief description
+First sentence is brief description.
 
-**Is your feature request related to a problem? Please describe.**
-A clear and concise description of what the problem is. Ex. I'm always frustrated when [...]
+## Description
+Next paragraf is more elaborate text with more info. This will be displayed for example in collapsed form under the first sentence in a changelog.
 
-**Describe the solution you'd like**
-A clear and concise description of what you want to happen.
+## Additional info
+The rest will be ignored in changelog and should contain any additional
+technical information.
 
-**Describe alternatives you've considered**
-A clear and concise description of any alternative solutions or features you've considered.
+## Documentation (add Documentation label)
+[feature_documentation](future_url_after_it_will_be_merged)
 
-**Additional context**
-Add any other context or screenshots about the feature request here.
+## Testing notes:
+1. start with this step
+2. follow this step
