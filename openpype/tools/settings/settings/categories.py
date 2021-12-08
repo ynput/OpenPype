@@ -1,6 +1,7 @@
 import os
 import sys
 import traceback
+import contextlib
 from enum import Enum
 from Qt import QtWidgets, QtCore, QtGui
 
@@ -308,6 +309,12 @@ class SettingsCategoryWidget(QtWidgets.QWidget):
                 "`add_widget_to_layout` on Category item can't accept labels"
             )
         self.content_layout.addWidget(widget, 0)
+
+    @contextlib.contextmanager
+    def working_state_context(self):
+        self.set_state(CategoryState.Working)
+        yield
+        self.set_state(CategoryState.Idle)
 
     def save(self):
         if not self.items_are_valid():
