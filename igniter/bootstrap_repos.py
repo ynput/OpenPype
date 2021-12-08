@@ -63,6 +63,7 @@ class OpenPypeVersion(semver.VersionInfo):
     staging = False
     path = None
     _VERSION_REGEX = re.compile(r"(?P<major>0|[1-9]\d*)\.(?P<minor>0|[1-9]\d*)\.(?P<patch>0|[1-9]\d*)(?:-(?P<prerelease>(?:0|[1-9]\d*|\d*[a-zA-Z-][0-9a-zA-Z-]*)(?:\.(?:0|[1-9]\d*|\d*[a-zA-Z-][0-9a-zA-Z-]*))*))?(?:\+(?P<buildmetadata>[0-9a-zA-Z-]+(?:\.[0-9a-zA-Z-]+)*))?$")  # noqa: E501
+    _build_version = None
 
     def __init__(self, *args, **kwargs):
         """Create OpenPype version.
@@ -554,18 +555,20 @@ class OpenPypeVersion(semver.VersionInfo):
 
         return sorted(_openpype_versions)
 
-    @staticmethod
-    def get_build_version():
+    @classmethod
+    def get_build_version(cls):
         """Get version of OpenPype inside build."""
-        openpype_root = Path(os.environ["OPENPYPE_ROOT"])
-        build_version_str = BootstrapRepos.get_version(openpype_root)
-        build_version = None
-        if build_version_str:
-            build_version = OpenPypeVersion(
-                version=build_version_str,
-                path=openpype_root
-            )
-        return build_version
+        if cls._build_version is None:
+            openpype_root = Path(os.environ["OPENPYPE_ROOT"])
+            build_version_str = BootstrapRepos.get_version(openpype_root)
+            build_version = None
+            if build_version_str:
+                build_version = OpenPypeVersion(
+                    version=build_version_str,
+                    path=openpype_root
+                )
+                cls._build_version = build_version
+        return cls._build_version
 
     @staticmethod
     def get_latest_version(
