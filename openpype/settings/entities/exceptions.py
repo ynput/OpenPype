@@ -15,14 +15,14 @@ class StudioDefaultsNotDefined(Exception):
         super(StudioDefaultsNotDefined, self).__init__(msg)
 
 
-class BaseInvalidValueType(Exception):
+class BaseInvalidValue(Exception):
     def __init__(self, reason, path):
         msg = "Path \"{}\". {}".format(path, reason)
         self.msg = msg
-        super(BaseInvalidValueType, self).__init__(msg)
+        super(BaseInvalidValue, self).__init__(msg)
 
 
-class InvalidValueType(BaseInvalidValueType):
+class InvalidValueType(BaseInvalidValue):
     def __init__(self, valid_types, invalid_type, path):
         joined_types = ", ".join(
             [str(valid_type) for valid_type in valid_types]

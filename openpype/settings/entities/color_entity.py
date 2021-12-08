@@ -1,7 +1,7 @@
 from .lib import STRING_TYPE
 from .input_entities import InputEntity
 from .exceptions import (
-    BaseInvalidValueType,
+    BaseInvalidValue,
     InvalidValueType
 )
 
@@ -47,7 +47,7 @@ class ColorEntity(InputEntity):
             reason = "Color entity expect 4 items in list got {}".format(
                 len(value)
             )
-            raise BaseInvalidValueType(reason, self.path)
+            raise BaseInvalidValue(reason, self.path)
 
         new_value = []
         for item in value:
@@ -60,7 +60,7 @@ class ColorEntity(InputEntity):
                 reason = (
                     "Color entity expect 4 integers in range 0-255 got {}"
                 ).format(value)
-                raise BaseInvalidValueType(reason, self.path)
+                raise BaseInvalidValue(reason, self.path)
             new_value.append(item)
 
         # Make sure

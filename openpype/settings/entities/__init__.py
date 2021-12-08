@@ -57,7 +57,7 @@ from .exceptions import (
     SchemaError,
     DefaultsNotDefined,
     StudioDefaultsNotDefined,
-    BaseInvalidValueType,
+    BaseInvalidValue,
     InvalidValueType,
     InvalidKeySymbols,
     SchemaMissingFileInfo,
@@ -130,7 +130,7 @@ from .op_version_entity import (
 __all__ = (
     "DefaultsNotDefined",
     "StudioDefaultsNotDefined",
-    "BaseInvalidValueType",
+    "BaseInvalidValue",
     "InvalidValueType",
     "InvalidKeySymbols",
     "SchemaMissingFileInfo",
