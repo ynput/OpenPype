@@ -4,6 +4,7 @@ from Qt import QtWidgets, QtCore, QtGui
 
 from openpype.widgets.sliders import NiceSlider
 from openpype.tools.settings import CHILD_OFFSET
+from openpype.settings.entities.exceptions import BaseInvalidValue
 
 from .widgets import (
     ExpandingWidget,
@@ -423,7 +424,7 @@ class OpenPypeVersionText(TextWidget):
 
     def create_ui(self):
         super(OpenPypeVersionText, self).create_ui()
-        info_widget = QtWidgets.QLabel("Latest", self)
+        info_widget = QtWidgets.QLabel(self)
         info_widget.setObjectName("OpenPypeVersionLabel")
         self.content_layout.addWidget(info_widget, 1)
 
@@ -431,17 +432,67 @@ class OpenPypeVersionText(TextWidget):
 
     def _update_info_widget(self):
         value = self.input_value()
-        if value == "":
-            self._info_widget.setText("Latest")
+
+        message = ""
+        tooltip = ""
+        state = None
+        if self._is_invalid:
+            message = "Invalid version format"
+
+        elif value == "":
+            message = "Use latest available version"
+            tooltip = "Latest version from OpenPype zip repository will used"
+
         elif value in self.entity.value_hints:
-            self._info_widget.setText("Ok")
+            message = "Version {} will be used".format(value)
+            state = "success"
+
         else:
-            self._info_widget.setText("Version not found from this workstation")
+            message = (
+                "Version {} not found in listed versions".format(value)
+            )
+            state = "warning"
+            if self.entity.value_hints:
+                tooltip = "Found versions are {}".format(", ".join(
+                    ['"{}"'.format(hint) for hint in self.entity.value_hints]
+                ))
+            else:
+                tooltip = "No versions were found"
+
+        self._info_widget.setText(message)
+        self._info_widget.setToolTip(tooltip)
+        self.set_style_property(self._info_widget, "state", state)
+
+    def set_entity_value(self):
+        super(OpenPypeVersionText, self).set_entity_value()
+        self._invalidate()
+        self._update_info_widget()
+
+    def _on_value_change_timer(self):
+        value = self.input_value()
+        self._invalidate()
+        if not self.is_invalid:
+            self.entity.set(value)
+            self.update_style()
+        else:
+            # Manually trigger hierachical style update
+            self.ignore_input_changes.set_ignore(True)
+            self.ignore_input_changes.set_ignore(False)
+
+        self._update_info_widget()
+
+    def _invalidate(self):
+        value = self.input_value()
+        try:
+            self.entity.convert_to_valid_type(value)
+            is_invalid = False
+        except BaseInvalidValue:
+            is_invalid = True
+        self._is_invalid = is_invalid
 
     def _on_entity_change(self):
         super(OpenPypeVersionText, self)._on_entity_change()
         self._refresh_completer()
-        self._update_info_widget()
 
 
 class NumberWidget(InputWidget):
