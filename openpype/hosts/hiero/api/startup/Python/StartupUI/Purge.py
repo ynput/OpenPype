@@ -23,7 +23,7 @@ class PurgeUnusedAction(QAction):
         self.triggered.connect(self.PurgeUnused)
         hiero.core.events.registerInterest("kShowContextMenu/kBin",
                                            self.eventHandler)
-        self.setIcon(QIcon('icons:TagDelete.png'))
+        self.setIcon(QIcon("icons:TagDelete.png"))
 
     # Method to return whether a Bin is empty...
     def binIsEmpty(self, b):
@@ -67,19 +67,19 @@ class PurgeUnusedAction(QAction):
             msgBox.setDefaultButton(QMessageBox.Ok)
             ret = msgBox.exec_()
             if ret == QMessageBox.Cancel:
-                print 'Not purging anything.'
+                print("Not purging anything.")
             elif ret == QMessageBox.Ok:
-                with proj.beginUndo('Purge Unused Clips'):
+                with proj.beginUndo("Purge Unused Clips"):
                     BINS = []
                     for clip in CLIPSTOREMOVE:
                         BI = clip.binItem()
                         B = BI.parentBin()
                         BINS += [B]
-                        print 'Removing:', BI
+                        print("Removing: {}".format(BI))
                         try:
                             B.removeItem(BI)
                         except:
-                            print 'Unable to remove: ' + BI
+                            print("Unable to remove: {}".format(BI))
             return
 
         # For each sequence, iterate through each track Item, see if the Clip is in the CLIPS list.
@@ -104,24 +104,24 @@ class PurgeUnusedAction(QAction):
         ret = msgBox.exec_()
 
         if ret == QMessageBox.Cancel:
-            print 'Cancel'
+            print("Cancel")
             return
         elif ret == QMessageBox.Ok:
             BINS = []
-            with proj.beginUndo('Purge Unused Clips'):
+            with proj.beginUndo("Purge Unused Clips"):
                 # Delete the rest of the Clips
                 for clip in CLIPSTOREMOVE:
                     BI = clip.binItem()
                     B = BI.parentBin()
                     BINS += [B]
-                    print 'Removing:', BI
+                    print("Removing: {}".format(BI))
                     try:
                         B.removeItem(BI)
                     except:
-                        print 'Unable to remove: ' + BI
+                        print("Unable to remove: {}".format(BI))
 
     def eventHandler(self, event):
-        if not hasattr(event.sender, 'selection'):
+        if not hasattr(event.sender, "selection"):
             # Something has gone wrong, we shouldn't only be here if raised
             # by the Bin view which will give a selection.
             return

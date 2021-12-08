@@ -6,7 +6,7 @@ import pyblish.api
 class CollectDefaultRRPath(pyblish.api.ContextPlugin):
     """Collect default Royal Render path."""
 
-    order = pyblish.api.CollectorOrder + 0.01
+    order = pyblish.api.CollectorOrder
     label = "Default Royal Render Path"
 
     def process(self, context):

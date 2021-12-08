@@ -21,7 +21,7 @@ def __trackActiveProjectHandler(event):
     global gTrackedActiveProject
     selection = event.sender.selection()
     binSelection = selection
-    if len(binSelection) > 0 and hasattr(binSelection[0], 'project'):
+    if len(binSelection) > 0 and hasattr(binSelection[0], "project"):
         proj = binSelection[0].project()
 
         # We only store this if its a valid, active User Project
@@ -30,18 +30,18 @@ def __trackActiveProjectHandler(event):
 
 
 hiero.core.events.registerInterest(
-    'kSelectionChanged/kBin', __trackActiveProjectHandler)
+    "kSelectionChanged/kBin", __trackActiveProjectHandler)
 hiero.core.events.registerInterest(
-    'kSelectionChanged/kTimeline', __trackActiveProjectHandler)
+    "kSelectionChanged/kTimeline", __trackActiveProjectHandler)
 hiero.core.events.registerInterest(
-    'kSelectionChanged/Spreadsheet', __trackActiveProjectHandler)
+    "kSelectionChanged/Spreadsheet", __trackActiveProjectHandler)
 
 
 def activeProject():
     """hiero.ui.activeProject() -> returns the current Project
 
-    Note: There is not technically a notion of a 'active' Project in Hiero/NukeStudio, as it is a multi-project App.
-    This method determines what is 'active' by going down the following rules...
+    Note: There is not technically a notion of a "active" Project in Hiero/NukeStudio, as it is a multi-project App.
+    This method determines what is "active" by going down the following rules...
 
     # 1 - If the current Viewer (hiero.ui.currentViewer) contains a Clip or Sequence, this item is assumed to give the active Project
     # 2 - If nothing is currently in the Viewer, look to the active View, determine project from active selection
@@ -54,7 +54,7 @@ def activeProject():
 
     # Case 1 : Look for what the current Viewr tells us - this might not be what we want, and relies on hiero.ui.currentViewer() being robust.
     cv = hiero.ui.currentViewer().player().sequence()
-    if hasattr(cv, 'project'):
+    if hasattr(cv, "project"):
         activeProject = cv.project()
     else:
         # Case 2: We can't determine a project from the current Viewer, so try seeing what's selected in the activeView
@@ -66,16 +66,16 @@ def activeProject():
 
             # Handle the case where nothing is selected in the active view
             if len(selection) == 0:
-                # It's possible that there is no selection in a Timeline/Spreadsheet, but these views have 'sequence' method, so try that...
+                # It's possible that there is no selection in a Timeline/Spreadsheet, but these views have "sequence" method, so try that...
                 if isinstance(hiero.ui.activeView(), (hiero.ui.TimelineEditor, hiero.ui.SpreadsheetView)):
                     activeSequence = activeView.sequence()
-                    if hasattr(currentItem, 'project'):
+                    if hasattr(currentItem, "project"):
                         activeProject = activeSequence.project()
 
             # The active view has a selection... assume that the first item in the selection has the active Project
             else:
                 currentItem = selection[0]
-                if hasattr(currentItem, 'project'):
+                if hasattr(currentItem, "project"):
                     activeProject = currentItem.project()
 
     # Finally, Cases 3 and 4...
@@ -156,9 +156,14 @@ class SaveAllProjects(QAction):
         for proj in allProjects:
             try:
                 proj.save()
-                print 'Saved Project: %s to: %s ' % (proj.name(), proj.path())
+                print("Saved Project: {} to: {} ".format(
+                    proj.name(), proj.path()
+                ))
             except:
-                print 'Unable to save Project: %s to: %s. Check file permissions.' % (proj.name(), proj.path())
+                print((
+                    "Unable to save Project: {} to: {}. "
+                    "Check file permissions.").format(
+                        proj.name(), proj.path()))
 
     def eventHandler(self, event):
         event.menu.addAction(self)
@@ -190,32 +195,38 @@ class SaveNewProjectVersion(QAction):
             v = None
             prefix = None
             try:
-                (prefix, v) = version_get(path, 'v')
-            except ValueError, msg:
-                print msg
+                (prefix, v) = version_get(path, "v")
+            except ValueError as msg:
+                print(msg)
 
             if (prefix is not None) and (v is not None):
                 v = int(v)
                 newPath = version_set(path, prefix, v, v + 1)
                 try:
                     proj.saveAs(newPath)
-                    print 'Saved new project version: %s to: %s ' % (oldName, newPath)
+                    print("Saved new project version: {} to: {} ".format(
+                        oldName, newPath))
                 except:
-                    print 'Unable to save Project: %s. Check file permissions.' % (oldName)
+                    print((
+                        "Unable to save Project: {}. Check file permissions."
+                    ).format(oldName))
             else:
                 newPath = path.replace(".hrox", "_v01.hrox")
                 answer = nuke.ask(
-                    '%s does not contain a version number.\nDo you want to save as %s?' % (proj, newPath))
+                    "%s does not contain a version number.\nDo you want to save as %s?" % (proj, newPath))
                 if answer:
                     try:
                         proj.saveAs(newPath)
-                        print 'Saved new project version: %s to: %s ' % (oldName, newPath)
+                        print("Saved new project version: {} to: {} ".format(
+                            oldName, newPath))
                     except:
-                        print 'Unable to save Project: %s. Check file permissions.' % (oldName)
+                        print((
+                            "Unable to save Project: {}. Check file "
+                            "permissions.").format(oldName))
 
     def eventHandler(self, event):
         self.selectedProjects = []
-        if hasattr(event.sender, 'selection') and event.sender.selection() is not None and len(event.sender.selection()) != 0:
+        if hasattr(event.sender, "selection") and event.sender.selection() is not None and len(event.sender.selection()) != 0:
             selection = event.sender.selection()
             self.selectedProjects = uniquify(
                 [item.project() for item in selection])

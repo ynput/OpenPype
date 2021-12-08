@@ -5,7 +5,7 @@ import pyblish.api
 class CollectRRPathFromInstance(pyblish.api.InstancePlugin):
     """Collect RR Path from instance."""
 
-    order = pyblish.api.CollectorOrder
+    order = pyblish.api.CollectorOrder + 0.01
     label = "Royal Render Path from the Instance"
     families = ["rendering"]
 
@@ -38,8 +38,8 @@ class CollectRRPathFromInstance(pyblish.api.InstancePlugin):
                 if k in default_servers
             }
 
-        except AttributeError:
-            # Handle situation were we had only one url for deadline.
+        except (AttributeError, KeyError):
+            # Handle situation were we had only one url for royal render.
             return render_instance.context.data["defaultRRPath"]
 
         return rr_servers[

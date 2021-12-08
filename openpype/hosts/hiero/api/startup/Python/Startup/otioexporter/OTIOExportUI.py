@@ -1,11 +1,13 @@
-#!/usr/bin/env python
 # -*- coding: utf-8 -*-
 
 __author__ = "Daniel Flehner Heen"
 __credits__ = ["Jakub Jezek", "Daniel Flehner Heen"]
 
 import hiero.ui
-import OTIOExportTask
+from .OTIOExportTask import (
+    OTIOExportTask,
+    OTIOExportPreset
+)
 
 try:
     # Hiero >= 11.x
@@ -20,14 +22,14 @@ except ImportError:
 
     FormLayout = QFormLayout  # lint:ok
 
-from openpype.hosts.hiero.otio import hiero_export
+from openpype.hosts.hiero.api.otio import hiero_export
 
 class OTIOExportUI(hiero.ui.TaskUIBase):
     def __init__(self, preset):
         """Initialize"""
         hiero.ui.TaskUIBase.__init__(
             self,
-            OTIOExportTask.OTIOExportTask,
+            OTIOExportTask,
             preset,
             "OTIO Exporter"
         )
@@ -67,6 +69,6 @@ class OTIOExportUI(hiero.ui.TaskUIBase):
 
 
 hiero.ui.taskUIRegistry.registerTaskUI(
-    OTIOExportTask.OTIOExportPreset,
+    OTIOExportPreset,
     OTIOExportUI
 )

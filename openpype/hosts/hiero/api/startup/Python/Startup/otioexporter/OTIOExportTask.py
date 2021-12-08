@@ -1,4 +1,3 @@
-#!/usr/bin/env python
 # -*- coding: utf-8 -*-
 
 __author__ = "Daniel Flehner Heen"
@@ -9,7 +8,7 @@ import hiero.core
 from hiero.core import util
 
 import opentimelineio as otio
-from openpype.hosts.hiero.otio import hiero_export
+from openpype.hosts.hiero.api.otio import hiero_export
 
 class OTIOExportTask(hiero.core.TaskBase):
 

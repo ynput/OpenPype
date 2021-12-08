@@ -5,7 +5,6 @@ import os
 import re
 import sys
 import ast
-from compiler.ast import flatten
 import opentimelineio as otio
 from . import utils
 import hiero.core
@@ -27,6 +26,15 @@ self.marker_color_map = {
 }
 self.timeline = None
 self.include_tags = True
+
+
+def flatten(_list):
+    for item in _list:
+        if isinstance(item, (list, tuple)):
+            for sub_item in flatten(item):
+                yield sub_item
+        else:
+            yield item
 
 
 def get_current_hiero_project(remove_untitled=False):
@@ -74,13 +82,11 @@ def create_time_effects(otio_clip, track_item):
         otio_effect = otio.schema.LinearTimeWarp()
         otio_effect.name = "Speed"
         otio_effect.time_scalar = speed
-        otio_effect.metadata = {}
 
     # freeze frame effect
     if speed == 0.:
         otio_effect = otio.schema.FreezeFrame()
         otio_effect.name = "FreezeFrame"
-        otio_effect.metadata = {}
 
     if otio_effect:
         # add otio effect to clip effects
