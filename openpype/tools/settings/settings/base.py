@@ -299,13 +299,18 @@ class BaseWidget(QtWidgets.QWidget):
         if self.entity.is_dynamic_item or self.entity.is_in_dynamic_item:
             return
 
+        current_project_name = self.category_widget.project_name
+        project_names = []
+        for project_name in self.category_widget.get_project_names():
+            if project_name != current_project_name:
+                project_names.append(project_name)
+
+        if not project_names:
+            return
+
         submenu = QtWidgets.QMenu("Apply values from", menu)
 
-        current_project_name = self.category_widget.project_name
-        for project_name in self.category_widget.get_project_names():
-            if current_project_name == project_name:
-                continue
-
+        for project_name in project_names:
             if project_name is None:
                 project_name = DEFAULT_PROJECT_LABEL
 
