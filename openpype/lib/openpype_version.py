@@ -20,6 +20,16 @@ def op_version_control_available():
     return True
 
 
+def get_build_version():
+    """Get OpenPype version inside build.
+
+    This version is not returned by any other functions here.
+    """
+    if op_version_control_available():
+        return get_OpenPypeVersion().get_build_version()
+    return None
+
+
 def get_available_versions(*args, **kwargs):
     """Get list of available versions."""
     if op_version_control_available():

@@ -3,7 +3,8 @@ from openpype.lib.openpype_version import (
     get_remote_versions,
     openpype_path_is_set,
     openpype_path_is_accessible,
-    get_OpenPypeVersion
+    get_OpenPypeVersion,
+    get_build_version
 )
 from .input_entities import TextEntity
 from .lib import (
@@ -57,11 +58,15 @@ class ProductionVersionsInputEntity(OpenPypeVersionInput):
     schema_types = ["production-versions-text"]
 
     def _get_openpype_versions(self):
-        return get_remote_versions(production=True)
+        versions = get_remote_versions(staging=False, production=True)
+        versions.append(get_build_version())
+        return sorted(versions)
 
 
 class StagingVersionsInputEntity(OpenPypeVersionInput):
     schema_types = ["staging-versions-text"]
 
     def _get_openpype_versions(self):
-        return get_remote_versions(staging=True)
+        versions = get_remote_versions(staging=True, production=False)
+        versions.append(get_build_version())
+        return sorted(versions)
