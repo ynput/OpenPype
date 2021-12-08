@@ -681,7 +681,9 @@ def _find_frozen_openpype(use_version: str = None,
 
         if openpype_version is None:
             raise OpenPypeVersionNotFound(
-                "Requested version \"{}\" was not found.".format(use_version)
+                "Requested version \"{}\" was not found.".format(
+                    use_version
+                )
             )
 
     elif studio_version:
@@ -695,7 +697,7 @@ def _find_frozen_openpype(use_version: str = None,
             raise OpenPypeVersionNotFound((
                 "Requested OpenPype version \"{}\" defined by settings"
                 " was not found."
-            ).format(use_version))
+            ).format(studio_version))
 
     else:
         # Use latest available version
