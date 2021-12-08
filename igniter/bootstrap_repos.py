@@ -555,6 +555,19 @@ class OpenPypeVersion(semver.VersionInfo):
         return sorted(_openpype_versions)
 
     @staticmethod
+    def get_build_version():
+        """Get version of OpenPype inside build."""
+        openpype_root = Path(os.environ["OPENPYPE_ROOT"])
+        build_version_str = BootstrapRepos.get_version(openpype_root)
+        build_version = None
+        if build_version_str:
+            build_version = OpenPypeVersion(
+                version=build_version_str,
+                path=openpype_root
+            )
+        return build_version
+
+    @staticmethod
     def get_latest_version(
             staging: bool = False, local: bool = False) -> OpenPypeVersion:
         """Get latest available version.
