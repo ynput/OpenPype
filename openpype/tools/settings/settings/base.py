@@ -7,6 +7,7 @@ from openpype.tools.settings import CHILD_OFFSET
 
 from .widgets import ExpandingWidget
 from .lib import create_deffered_value_change_timer
+from .constants import DEFAULT_PROJECT_LABEL
 
 
 class BaseWidget(QtWidgets.QWidget):
@@ -304,7 +305,7 @@ class BaseWidget(QtWidgets.QWidget):
                 continue
 
             if project_name is None:
-                project_name = "< Default >"
+                project_name = DEFAULT_PROJECT_LABEL
 
             action = QtWidgets.QAction(project_name)
             submenu.addAction(action)
