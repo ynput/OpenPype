@@ -606,6 +606,14 @@ class ProjectWidget(SettingsCategoryWidget):
 
         self.project_list_widget = project_list_widget
 
+    def get_project_names(self):
+        if (
+            self.modify_defaults_checkbox
+            and self.modify_defaults_checkbox.isChecked()
+        ):
+            return []
+        return self.project_list_widget.get_project_names()
+
     def on_saved(self, saved_tab_widget):
         """Callback on any tab widget save.
 
