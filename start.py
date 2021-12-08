@@ -662,6 +662,8 @@ def _find_frozen_openpype(use_version: str = None,
         if local_version not in openpype_versions:
             openpype_versions.append(local_version)
 
+    openpype_versions.sort()
+
     # Find OpenPype version that should be used
     openpype_version = None
     if use_version is not None:
@@ -694,7 +696,6 @@ def _find_frozen_openpype(use_version: str = None,
     else:
         # Use latest available version
         _print("Finding latest version")
-        openpype_versions.sort()
         openpype_version = openpype_versions[-1]
 
     # get local frozen version and add it to detected version so if it is
