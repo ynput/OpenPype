@@ -110,9 +110,10 @@ class BaseWidget(QtWidgets.QWidget):
             return
 
         def discard_changes():
-            self.ignore_input_changes.set_ignore(True)
-            self.entity.discard_changes()
-            self.ignore_input_changes.set_ignore(False)
+            with self.category_widget.working_state_context():
+                self.ignore_input_changes.set_ignore(True)
+                self.entity.discard_changes()
+                self.ignore_input_changes.set_ignore(False)
 
         action = QtWidgets.QAction("Discard changes")
         actions_mapping[action] = discard_changes
@@ -124,8 +125,11 @@ class BaseWidget(QtWidgets.QWidget):
         if not self.entity.can_trigger_add_to_studio_default:
             return
 
+        def add_to_studio_default():
+            with self.category_widget.working_state_context():
+                self.entity.add_to_studio_default()
         action = QtWidgets.QAction("Add to studio default")
-        actions_mapping[action] = self.entity.add_to_studio_default
+        actions_mapping[action] = add_to_studio_default
         menu.addAction(action)
 
     def _remove_from_studio_default_action(self, menu, actions_mapping):
@@ -133,9 +137,10 @@ class BaseWidget(QtWidgets.QWidget):
             return
 
         def remove_from_studio_default():
-            self.ignore_input_changes.set_ignore(True)
-            self.entity.remove_from_studio_default()
-            self.ignore_input_changes.set_ignore(False)
+            with self.category_widget.working_state_context():
+                self.ignore_input_changes.set_ignore(True)
+                self.entity.remove_from_studio_default()
+                self.ignore_input_changes.set_ignore(False)
         action = QtWidgets.QAction("Remove from studio default")
         actions_mapping[action] = remove_from_studio_default
         menu.addAction(action)
@@ -144,8 +149,12 @@ class BaseWidget(QtWidgets.QWidget):
         if not self.entity.can_trigger_add_to_project_override:
             return
 
+        def add_to_project_override():
+            with self.category_widget.working_state_context():
+                self.entity.add_to_project_override
+
         action = QtWidgets.QAction("Add to project project override")
-        actions_mapping[action] = self.entity.add_to_project_override
+        actions_mapping[action] = add_to_project_override
         menu.addAction(action)
 
     def _remove_from_project_override_action(self, menu, actions_mapping):
@@ -153,9 +162,11 @@ class BaseWidget(QtWidgets.QWidget):
             return
 
         def remove_from_project_override():
-            self.ignore_input_changes.set_ignore(True)
-            self.entity.remove_from_project_override()
-            self.ignore_input_changes.set_ignore(False)
+            with self.category_widget.working_state_context():
+                self.ignore_input_changes.set_ignore(True)
+                self.entity.remove_from_project_override()
+                self.ignore_input_changes.set_ignore(False)
+
         action = QtWidgets.QAction("Remove from project override")
         actions_mapping[action] = remove_from_project_override
         menu.addAction(action)
@@ -257,14 +268,16 @@ class BaseWidget(QtWidgets.QWidget):
 
         # Simple paste value method
         def paste_value():
-            _set_entity_value(self.entity, value)
+            with self.category_widget.working_state_context():
+                _set_entity_value(self.entity, value)
 
         action = QtWidgets.QAction("Paste", menu)
         output.append((action, paste_value))
 
         # Paste value to matchin entity
         def paste_value_to_path():
-            _set_entity_value(matching_entity, value)
+            with self.category_widget.working_state_context():
+                _set_entity_value(matching_entity, value)
 
         if matching_entity is not None:
             action = QtWidgets.QAction("Paste to same place", menu)
