@@ -1114,6 +1114,64 @@ class BootstrapRepos:
         os.environ["PYTHONPATH"] = os.pathsep.join(paths)
 
     @staticmethod
+    def find_openpype_version(version, staging):
+        if isinstance(version, str):
+            version = OpenPypeVersion(version=version)
+
+        build_version = OpenPypeVersion.get_build_version()
+        if build_version == version:
+            return build_version
+
+        local_versions = OpenPypeVersion.get_local_versions(
+            staging=staging, production=not staging
+        )
+        zip_version = None
+        for local_version in local_versions:
+            if local_version == version:
+                if local_version.suffix.lower() == ".zip":
+                    zip_version = local_version
+                else:
+                    return local_version
+
+        if zip_version is not None:
+            return zip_version
+
+        remote_versions = OpenPypeVersion.get_remote_versions(
+            staging=staging, production=not staging
+        )
+        for remote_version in remote_versions:
+            if remote_version == version:
+                return remote_version
+        return None
+
+    @staticmethod
+    def find_latest_openpype_version(staging):
+        build_version = OpenPypeVersion.get_build_version()
+        local_versions = OpenPypeVersion.get_local_versions(
+            staging=staging
+        )
+        remote_versions = OpenPypeVersion.get_remote_versions(
+            staging=staging
+        )
+        all_versions = local_versions + remote_versions
+        if not staging:
+            all_versions.append(build_version)
+
+        if not all_versions:
+            return None
+
+        all_versions.sort()
+        latest_version = all_versions[-1]
+        if latest_version == build_version:
+            return latest_version
+
+        if not latest_version.path.is_dir():
+            for version in local_versions:
+                if version == latest_version and version.path.is_dir():
+                    latest_version = version
+                    break
+        return latest_version
+
     def find_openpype(
             self,
             openpype_path: Union[Path, str] = None,
