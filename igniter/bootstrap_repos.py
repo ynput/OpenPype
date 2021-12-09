@@ -477,39 +477,6 @@ class OpenPypeVersion(semver.VersionInfo):
                 filtered_versions.append(version)
         return list(sorted(set(filtered_versions)))
 
-    @classmethod
-    def get_available_versions(
-            cls, staging: bool = False, local: bool = False) -> List:
-        """Get ordered dict of detected OpenPype version.
-
-        Resolution order for OpenPype is following:
-
-            1) First we test for ``OPENPYPE_PATH`` environment variable
-            2) We try to find ``openPypePath`` in registry setting
-            3) We use user data directory
-
-        Only versions from 3) will be listed when ``local`` is set to True.
-
-        Args:
-            staging (bool, optional): List staging versions if True.
-            local (bool, optional): List only local versions.
-
-        """
-        user_versions = cls.get_local_versions()
-        # if we have openpype_path specified, search only there.
-        openpype_versions = []
-        if not local:
-            openpype_versions = cls.get_remote_versions()
-        openpype_versions += user_versions
-
-        # remove duplicates and staging/production
-        openpype_versions = [
-            v for v in openpype_versions if v.is_staging() == staging
-        ]
-        openpype_versions = sorted(list(set(openpype_versions)))
-
-        return openpype_versions
-
     @staticmethod
     def get_versions_from_directory(openpype_dir: Path) -> List:
         """Get all detected OpenPype versions in directory.
