@@ -781,6 +781,13 @@ def _bootstrap_from_code(use_version, use_staging):
     # run through repos and add them to `sys.path` and `PYTHONPATH`
     # set root
     _openpype_root = OPENPYPE_ROOT
+    # Unset use version if latest should be used
+    #   - when executed from code then code is expected as latest
+    #   - when executed from build then build is already marked as latest
+    #       in '_find_frozen_openpype'
+    if use_version and use_version.lower() == "latest":
+        use_version = None
+
     if getattr(sys, 'frozen', False):
         local_version = bootstrap.get_version(Path(_openpype_root))
         switch_str = f" - will switch to {use_version}" if use_version else ""
@@ -790,43 +797,35 @@ def _bootstrap_from_code(use_version, use_staging):
         # get current version of OpenPype
         local_version = bootstrap.get_local_live_version()
 
-    openpype_versions = bootstrap.find_openpype(
-        include_zips=True, staging=use_staging)
-    if use_staging and not use_version:
-        if not openpype_versions:
-            raise OpenPypeVersionNotFound(
-                "Didn't find any staging versions."
+    # All cases when should be used different version than build
+    if (use_version and use_version != local_version) or use_staging:
+        if use_version:
+            # Explicit version should be used
+            version_to_use = bootstrap.find_openpype_version(
+                use_version, use_staging
             )
-
-        # Use last found staging version
-        version_to_use = openpype_versions[-1]
-        if version_to_use.path.is_file():
-            version_to_use.path = bootstrap.extract_openpype(
-                version_to_use)
-        bootstrap.add_paths_from_directory(version_to_use.path)
-        os.environ["OPENPYPE_VERSION"] = str(version_to_use)
-        version_path = version_to_use.path
-        os.environ["OPENPYPE_REPOS_ROOT"] = (
-            version_path / "openpype"
-        ).as_posix()
-        _openpype_root = version_to_use.path.as_posix()
-
-    elif use_version and use_version != local_version:
-        version_to_use = None
-        for version in openpype_versions:
-            if str(version) == use_version:
-                version_to_use = version
-                break
-
-        if version_to_use is None:
-            raise OpenPypeVersionNotFound(
-                "Requested version \"{}\" was not found.".format(use_version)
+            if version_to_use is None:
+                raise OpenPypeVersionNotFound(
+                    "Requested version \"{}\" was not found.".format(
+                        use_version
+                    )
+                )
+        else:
+            # Staging version should be used
+            version_to_use = bootstrap.find_latest_openpype_version(
+                use_staging
             )
+            if version_to_use is None:
+                if use_staging:
+                    reason = "Didn't find any staging versions."
+                else:
+                    # This reason is backup for possible bug in code
+                    reason = "Didn't find any versions."
+                raise OpenPypeVersionNotFound(reason)
 
-        # use specified
+        # Start extraction of version if needed
         if version_to_use.path.is_file():
-            version_to_use.path = bootstrap.extract_openpype(
-                version_to_use)
+            version_to_use.path = bootstrap.extract_openpype(version_to_use)
         bootstrap.add_paths_from_directory(version_to_use.path)
         os.environ["OPENPYPE_VERSION"] = use_version
         version_path = version_to_use.path
@@ -834,6 +833,7 @@ def _bootstrap_from_code(use_version, use_staging):
             version_path / "openpype"
         ).as_posix()
         _openpype_root = version_to_use.path.as_posix()
+
     else:
         os.environ["OPENPYPE_VERSION"] = local_version
         version_path = Path(_openpype_root)
