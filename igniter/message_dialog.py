@@ -7,6 +7,7 @@ from .tools import (
 
 
 class MessageDialog(QtWidgets.QDialog):
+    """Simple message dialog with title, message and OK button."""
     def __init__(self, title, message):
         super(MessageDialog, self).__init__()
 
@@ -27,7 +28,6 @@ class MessageDialog(QtWidgets.QDialog):
         btns_layout.addWidget(ok_btn, 0)
 
         layout = QtWidgets.QVBoxLayout(self)
-        # layout.setContentsMargins(0, 0, 0, 0)
         layout.addWidget(label_widget, 1)
         layout.addLayout(btns_layout, 0)
 

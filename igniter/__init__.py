@@ -12,6 +12,9 @@ from .bootstrap_repos import (
 )
 from .version import __version__ as version
 
+# Store OpenPypeVersion to 'sys.modules'
+#   - this makes it available in OpenPype processes without modifying
+#       'sys.path' or 'PYTHONPATH'
 if "OpenPypeVersion" not in sys.modules:
     sys.modules["OpenPypeVersion"] = OpenPypeVersion
 
@@ -64,6 +67,7 @@ def open_update_window(openpype_version):
 
 
 def show_message_dialog(title, message):
+    """Show dialog with a message and title to user."""
     if os.getenv("OPENPYPE_HEADLESS_MODE"):
         print("!!! Can't open dialog in headless mode. Exiting.")
         sys.exit(1)

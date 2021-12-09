@@ -12,6 +12,16 @@ from .exceptions import BaseInvalidValue
 
 
 class OpenPypeVersionInput(TextEntity):
+    """Entity to store OpenPype version to use.
+
+    It is text input as creating of settings on different machines may
+    affect which versions are available so it must have option to set OpenPype
+    version which is not available for machine where settings entities are
+    loaded.
+
+    It is possible to enter empty string. In that case is used any latest
+    version. Any other string must match regex of OpenPype version semantic.
+    """
     def _item_initialization(self):
         super(OpenPypeVersionInput, self)._item_initialization()
         self.multiline = False
@@ -19,9 +29,13 @@ class OpenPypeVersionInput(TextEntity):
         self.value_hints = []
 
     def _get_openpype_versions(self):
-        return []
+        """This is abstract method returning version hints for UI purposes."""
+        raise NotImplementedError((
+            "{} does not have implemented '_get_openpype_versions'"
+        ).format(self.__class__.__name__))
 
     def set_override_state(self, state, *args, **kwargs):
+        """Update value hints for UI purposes."""
         value_hints = []
         if state is OverrideState.STUDIO:
             versions = self._get_openpype_versions()
@@ -36,6 +50,7 @@ class OpenPypeVersionInput(TextEntity):
         )
 
     def convert_to_valid_type(self, value):
+        """Add validation of version regex."""
         if value and value is not NOT_SET:
             OpenPypeVersion = get_OpenPypeVersion()
             if OpenPypeVersion is not None:
@@ -52,6 +67,7 @@ class OpenPypeVersionInput(TextEntity):
 
 
 class ProductionVersionsInputEntity(OpenPypeVersionInput):
+    """Entity meant only for global settings to define production version."""
     schema_types = ["production-versions-text"]
 
     def _get_openpype_versions(self):
@@ -61,6 +77,7 @@ class ProductionVersionsInputEntity(OpenPypeVersionInput):
 
 
 class StagingVersionsInputEntity(OpenPypeVersionInput):
+    """Entity meant only for global settings to define staging version."""
     schema_types = ["staging-versions-text"]
 
     def _get_openpype_versions(self):

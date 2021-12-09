@@ -28,6 +28,7 @@ class BaseWidget(QtWidgets.QWidget):
 
     @staticmethod
     def set_style_property(obj, property_name, property_value):
+        """Change QWidget property and polish it's style."""
         if obj.property(property_name) == property_value:
             return
 
