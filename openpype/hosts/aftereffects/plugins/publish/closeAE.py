@@ -1,7 +1,5 @@
 # -*- coding: utf-8 -*-
 """Close AE after publish. For Webpublishing only."""
-import os
-
 import pyblish.api
 
 from avalon import aftereffects

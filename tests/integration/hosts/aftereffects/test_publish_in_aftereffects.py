@@ -92,7 +92,7 @@ class TestPublishInAfterEffects(PublishTest):
             "Not expected no of representations"
 
         assert 1 == dbcon.count_documents({"type": "representation",
-                                           "context.subset": "imageMainBackgroundcopy",  #noqa E501
+                                           "context.subset": "imageMainBackgroundcopy",  # noqa E501
                                            "context.ext": "png"}), \
             "Not expected no of representations with ext 'png'"
 
