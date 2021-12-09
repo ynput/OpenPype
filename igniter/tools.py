@@ -187,17 +187,21 @@ def get_openpype_path_from_db(url: str) -> Union[str, None]:
     return None
 
 
-def get_expected_studio_version_str(staging=False) -> str:
+def get_expected_studio_version_str(
+    staging=False, global_settings=None
+) -> str:
     """Version that should be currently used in studio.
 
     Args:
         staging (bool): Get current version for staging.
+        global_settings (dict): Optional precached global settings.
 
     Returns:
         str: OpenPype version which should be used. Empty string means latest.
     """
     mongo_url = os.environ.get("OPENPYPE_MONGO")
-    global_settings = get_openpype_global_settings(mongo_url)
+    if global_settings is None:
+        global_settings = get_openpype_global_settings(mongo_url)
     if staging:
         key = "staging_version"
     else:

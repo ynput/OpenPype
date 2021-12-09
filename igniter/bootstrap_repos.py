@@ -591,19 +591,22 @@ class OpenPypeVersion(semver.VersionInfo):
         return all_versions[-1]
 
     @classmethod
-    def get_expected_studio_version(cls, staging=False):
+    def get_expected_studio_version(cls, staging=False, global_settings=None):
         """Expected OpenPype version that should be used at the moment.
 
         If version is not defined in settings the latest found version is
         used.
 
+        Using precached global settings is needed for usage inside OpenPype.
+
         Args:
             staging (bool): Staging version or production version.
+            global_settings (dict): Optional precached global settings.
 
         Returns:
             OpenPypeVersion: Version that should be used.
         """
-        result = get_expected_studio_version_str(staging)
+        result = get_expected_studio_version_str(staging, global_settings)
         if not result:
             return None
         return OpenPypeVersion(version=result)
