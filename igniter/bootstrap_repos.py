@@ -1158,7 +1158,7 @@ class BootstrapRepos:
         zip_version = None
         for local_version in local_versions:
             if local_version == version:
-                if local_version.suffix.lower() == ".zip":
+                if local_version.path.suffix.lower() == ".zip":
                     zip_version = local_version
                 else:
                     return local_version
