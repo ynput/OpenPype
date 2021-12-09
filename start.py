@@ -467,23 +467,41 @@ def _process_arguments() -> tuple:
     use_version = None
     use_staging = False
     commands = []
-    for arg in sys.argv:
-        if arg == "--use-version":
-            _print("!!! Please use option --use-version like:")
-            _print("    --use-version=3.0.0")
-            sys.exit(1)
 
-        if arg.startswith("--use-version="):
-            m = re.search(
-                r"--use-version=(?P<version>\d+\.\d+\.\d+(?:\S*)?)", arg)
-            if m and m.group('version'):
-                use_version = m.group('version')
-                _print(">>> Requested version [ {} ]".format(use_version))
-                sys.argv.remove(arg)
-                if "+staging" in use_version:
-                    use_staging = True
-                break
+    # OpenPype version specification through arguments
+    use_version_arg = "--use-version"
+
+    for arg in sys.argv:
+        if arg.startswith(use_version_arg):
+            # Remove arg from sys argv
+            sys.argv.remove(arg)
+            # Extract string after use version arg
+            use_version_value = arg[len(use_version_arg):]
+
+            if (
+                not use_version_value
+                or not use_version_value.startswith("=")
+            ):
+                _print("!!! Please use option --use-version like:")
+                _print("    --use-version=3.0.0")
+                sys.exit(1)
+
+            version_str = use_version_value[1:]
+            use_version = None
+            if version_str.lower() == "latest":
+                use_version = "latest"
             else:
+                m = re.search(
+                    r"(?P<version>\d+\.\d+\.\d+(?:\S*)?)", version_str
+                )
+                if m and m.group('version'):
+                    use_version = m.group('version')
+                    _print(">>> Requested version [ {} ]".format(use_version))
+                    if "+staging" in use_version:
+                        use_staging = True
+                    break
+
+            if use_version is None:
                 _print("!!! Requested version isn't in correct format.")
                 _print(("    Use --list-versions to find out"
                        " proper version string."))
