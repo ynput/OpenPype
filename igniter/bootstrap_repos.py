@@ -570,26 +570,58 @@ class OpenPypeVersion(semver.VersionInfo):
 
     @staticmethod
     def get_latest_version(
-            staging: bool = False, local: bool = False) -> OpenPypeVersion:
+        staging: bool = False,
+        local: bool = None,
+        remote: bool = None
+    ) -> OpenPypeVersion:
         """Get latest available version.
 
-        This is utility version to get latest version from all found except
-        build.
+        The version does not contain information about path and source.
+
+        This is utility version to get latest version from all found. Build
+        version is not listed if staging is enabled.
+
+        Arguments 'local' and 'remote' define if local and remote repository
+        versions are used. All versions are used if both are not set (or set
+        to 'None'). If only one of them is set to 'True' the other is disabled.
+        It is possible to set both to 'True' (same as both set to None) and to
+        'False' in that case only build version can be used.
 
         Args:
             staging (bool, optional): List staging versions if True.
-            local (bool, optional): List only local versions.
-
-        See also:
-            OpenPypeVersion.get_available_versions()
-
+            local (bool, optional): List local versions if True.
+            remote (bool, optional): List remote versions if True.
         """
-        openpype_versions = OpenPypeVersion.get_available_versions(
-            staging, local)
+        if local is None and remote is None:
+            local = True
+            remote = True
 
-        if not openpype_versions:
+        elif local is None and not remote:
+            local = True
+
+        elif remote is None and not local:
+            remote = True
+
+        build_version = OpenPypeVersion.get_build_version()
+        local_versions = []
+        remote_versions = []
+        if local:
+            local_versions = OpenPypeVersion.get_local_versions(
+                staging=staging
+            )
+        if remote:
+            remote_versions = OpenPypeVersion.get_remote_versions(
+                staging=staging
+            )
+        all_versions = local_versions + remote_versions
+        if not staging:
+            all_versions.append(build_version)
+
+        if not all_versions:
             return None
-        return openpype_versions[-1]
+
+        all_versions.sort()
+        return all_versions[-1]
 
     @classmethod
     def get_expected_studio_version(cls, staging=False):
