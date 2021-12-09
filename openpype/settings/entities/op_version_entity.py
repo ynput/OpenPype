@@ -1,8 +1,5 @@
 from openpype.lib.openpype_version import (
-    op_version_control_available,
     get_remote_versions,
-    openpype_path_is_set,
-    openpype_path_is_accessible,
     get_OpenPypeVersion,
     get_build_version
 )
