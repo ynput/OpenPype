@@ -1115,21 +1115,65 @@ class BootstrapRepos:
 
     @staticmethod
     def find_openpype(
+            self,
             openpype_path: Union[Path, str] = None,
             staging: bool = False,
             include_zips: bool = False) -> Union[List[OpenPypeVersion], None]:
+        """Get ordered dict of detected OpenPype version.
 
+        Resolution order for OpenPype is following:
+
+            1) First we test for ``OPENPYPE_PATH`` environment variable
+            2) We try to find ``openPypePath`` in registry setting
+            3) We use user data directory
+
+        Args:
+            openpype_path (Path or str, optional): Try to find OpenPype on
+                the given path or url.
+            staging (bool, optional): Filter only staging version, skip them
+                otherwise.
+            include_zips (bool, optional): If set True it will try to find
+                OpenPype in zip files in given directory.
+
+        Returns:
+            dict of Path: Dictionary of detected OpenPype version.
+                 Key is version, value is path to zip file.
+
+            None: if OpenPype is not found.
+
+        Todo:
+            implement git/url support as OpenPype location, so it would be
+            possible to enter git url, OpenPype would check it out and if it is
+            ok install it as normal version.
+
+        """
+        if openpype_path and not isinstance(openpype_path, Path):
+            raise NotImplementedError(
+                ("Finding OpenPype in non-filesystem locations is"
+                 " not implemented yet."))
+
+        dir_to_search = self.data_dir
+        user_versions = self.get_openpype_versions(self.data_dir, staging)
+        # if we have openpype_path specified, search only there.
         if openpype_path:
-            openpype_versions = OpenPypeVersion.get_versions_from_directory(
-                openpype_path)
-            # filter out staging
-
-            openpype_versions = [
-                v for v in openpype_versions if v.is_staging() == staging
-            ]
-
+            dir_to_search = openpype_path
         else:
-            openpype_versions = OpenPypeVersion.get_available_versions(staging)
+            if os.getenv("OPENPYPE_PATH"):
+                if Path(os.getenv("OPENPYPE_PATH")).exists():
+                    dir_to_search = Path(os.getenv("OPENPYPE_PATH"))
+            else:
+                try:
+                    registry_dir = Path(
+                        str(self.registry.get_item("openPypePath")))
+                    if registry_dir.exists():
+                        dir_to_search = registry_dir
+
+                except ValueError:
+                    # nothing found in registry, we'll use data dir
+                    pass
+
+        openpype_versions = self.get_openpype_versions(dir_to_search, staging)
+        openpype_versions += user_versions
 
         # remove zip file version if needed.
         if not include_zips:
