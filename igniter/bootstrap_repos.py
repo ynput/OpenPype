@@ -561,13 +561,11 @@ class OpenPypeVersion(semver.VersionInfo):
         if cls._build_version is None:
             openpype_root = Path(os.environ["OPENPYPE_ROOT"])
             build_version_str = BootstrapRepos.get_version(openpype_root)
-            build_version = None
             if build_version_str:
-                build_version = OpenPypeVersion(
+                cls._build_version = OpenPypeVersion(
                     version=build_version_str,
                     path=openpype_root
                 )
-                cls._build_version = build_version
         return cls._build_version
 
     @staticmethod
