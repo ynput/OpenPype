@@ -65,5 +65,4 @@ class StagingVersionsInputEntity(OpenPypeVersionInput):
 
     def _get_openpype_versions(self):
         versions = get_remote_versions(staging=True, production=False)
-        versions.append(get_build_version())
         return sorted(versions)
