@@ -356,9 +356,13 @@ def run(script):
               "--pyargs",
               help="Run tests from package",
               default=None)
-def runtests(folder, mark, pyargs):
+@click.option("-t",
+              "--test_data_folder",
+              help="Unzipped directory path of test file",
+              default=None)
+def runtests(folder, mark, pyargs, test_data_folder):
     """Run all automatic tests after proper initialization via start.py"""
-    PypeCommands().run_tests(folder, mark, pyargs)
+    PypeCommands().run_tests(folder, mark, pyargs, test_data_folder)
 
 
 @main.command()

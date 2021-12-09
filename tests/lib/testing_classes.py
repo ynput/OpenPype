@@ -58,10 +58,10 @@ class ModuleUnitTest(BaseTest):
         m.undo()
 
     @pytest.fixture(scope="module")
-    def download_test_data(self):
-        if self.TEST_DATA_FOLDER:
-            print("Using existing folder {}".format(self.TEST_DATA_FOLDER))
-            yield self.TEST_DATA_FOLDER
+    def download_test_data(self, test_data_folder):
+        if test_data_folder:
+            print("Using existing folder {}".format(test_data_folder))
+            yield test_data_folder
         else:
             tmpdir = tempfile.mkdtemp()
             for test_file in self.TEST_FILES:

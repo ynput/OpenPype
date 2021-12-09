@@ -341,7 +341,7 @@ class PypeCommands:
     def validate_jsons(self):
         pass
 
-    def run_tests(self, folder, mark, pyargs):
+    def run_tests(self, folder, mark, pyargs, test_data_folder):
         """
             Runs tests from 'folder'
 
@@ -349,26 +349,26 @@ class PypeCommands:
                  folder (str): relative path to folder with tests
                  mark (str): label to run tests marked by it (slow etc)
                  pyargs (str): package path to test
+                 test_data_folder (str): url to unzipped folder of test data
         """
         print("run_tests")
-        import subprocess
-
         if folder:
             folder = " ".join(list(folder))
         else:
             folder = "../tests"
 
-        mark_str = pyargs_str = ''
+        # disable warnings and show captured stdout even if success
+        args = ["--disable-pytest-warnings", "-rP", folder]
+
         if mark:
-            mark_str = "-m {}".format(mark)
+            args.extend(["-m", mark])
 
         if pyargs:
-            pyargs_str = "--pyargs {}".format(pyargs)
+            args.extend(["--pyargs", pyargs])
 
-        # disable warnings and show captured stdout even if success
-        args = ["--disable-pytest-warnings", "-rP"]
+        if test_data_folder:
+            args.extend(["--test_data_folder", test_data_folder])
 
-        args += [folder, mark_str, pyargs_str]
         print("run_tests args: {}".format(args))
         import pytest
         pytest.main(args)
