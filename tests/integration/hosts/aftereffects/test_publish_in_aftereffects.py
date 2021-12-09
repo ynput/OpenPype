@@ -5,13 +5,13 @@ import shutil
 from tests.lib.testing_classes import PublishTest
 
 
-class TestPublishInPhotoshop(PublishTest):
-    """Basic test case for publishing in Photoshop
+class TestPublishInAfterEffects(PublishTest):
+    """Basic test case for publishing in AfterEffects
 
         Uses generic TestCase to prepare fixtures for test data, testing DBs,
         env vars.
 
-        Opens Photoshop, run publish on prepared workile.
+        Opens AfterEffects, run publish on prepared workile.
 
         Test zip file sets 3 required env vars:
         - HEADLESS_PUBLISH - this triggers publish immediately app is open
@@ -26,11 +26,13 @@ class TestPublishInPhotoshop(PublishTest):
     PERSIST = True
 
     TEST_FILES = [
-        ("1zD2v5cBgkyOm_xIgKz3WKn8aFB_j8qC-", "test_photoshop_publish.zip", "")
+        ("1c8261CmHwyMgS-g7S4xL5epAp0jCBmhf",
+         "test_aftereffects_publish.zip",
+         "")
     ]
 
-    APP = "photoshop"
-    APP_VARIANT = "2021"
+    APP = "aftereffects"
+    APP_VARIANT = "2022"
 
     APP_NAME = "{}/{}".format(APP, APP_VARIANT)
 
@@ -45,7 +47,7 @@ class TestPublishInPhotoshop(PublishTest):
         src_path = os.path.join(download_test_data,
                                 "input",
                                 "workfile",
-                                "test_project_test_asset_TestTask_v001.psd")
+                                "test_project_test_asset_TestTask_v001.aep")
         dest_folder = os.path.join(download_test_data,
                                    self.PROJECT,
                                    self.ASSET,
@@ -53,14 +55,14 @@ class TestPublishInPhotoshop(PublishTest):
                                    self.TASK)
         os.makedirs(dest_folder)
         dest_path = os.path.join(dest_folder,
-                                 "test_project_test_asset_TestTask_v001.psd")
+                                 "test_project_test_asset_TestTask_v001.aep")
         shutil.copy(src_path, dest_path)
 
         yield dest_path
 
     @pytest.fixture(scope="module")
     def startup_scripts(self, monkeypatch_session, download_test_data):
-        """Points Maya to userSetup file from input data"""
+        """Points AfterEffects to userSetup file from input data"""
         pass
 
     def test_db_asserts(self, dbcon, publish_finished):
@@ -74,22 +76,26 @@ class TestPublishInPhotoshop(PublishTest):
             "Only versions with 1 expected"
 
         assert 1 == dbcon.count_documents({"type": "subset",
-                                           "name": "imageMainBackgroundcopy"}
-                                          ), \
+                                           "name": "imageMainBackgroundcopy"
+                                           }), \
             "modelMain subset must be present"
 
         assert 1 == dbcon.count_documents({"type": "subset",
                                            "name": "workfileTesttask"}), \
-            "workfileTest_task subset must be present"
+            "workfileTesttask subset must be present"
+
+        assert 1 == dbcon.count_documents({"type": "subset",
+                                           "name": "reviewTesttask"}), \
+            "reviewTesttask subset must be present"
 
         assert 6 == dbcon.count_documents({"type": "representation"}), \
             "Not expected no of representations"
 
         assert 1 == dbcon.count_documents({"type": "representation",
-                                           "context.subset": "imageMainBackgroundcopy",  # noqa: E501
+                                           "context.subset": "imageMainBackgroundcopy",  #noqa E501
                                            "context.ext": "png"}), \
             "Not expected no of representations with ext 'png'"
 
 
 if __name__ == "__main__":
-    test_case = TestPublishInPhotoshop()
+    test_case = TestPublishInAfterEffects()

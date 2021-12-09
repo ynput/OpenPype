@@ -11,6 +11,25 @@ from openpype.lib.mongo import OpenPypeMongoConnection
 from openpype.lib.plugin_tools import parse_json
 
 
+def headless_publish(log, close_plugin_name=None, is_test=False):
+    """Runs publish in a opened host with a context and closes Python process.
+
+        Host is being closed via ClosePS pyblish plugin which triggers 'exit'
+        method in ConsoleTrayApp.
+    """
+    if not is_test:
+        dbcon = get_webpublish_conn()
+        _id = os.environ.get("BATCH_LOG_ID")
+        if not _id:
+            log.warning("Unable to store log records, "
+                        "batch will be unfinished!")
+            return
+
+        publish_and_log(dbcon, _id, log, close_plugin_name)
+    else:
+        publish(log, close_plugin_name)
+
+
 def get_webpublish_conn():
     """Get connection to OP 'webpublishes' collection."""
     mongo_client = OpenPypeMongoConnection.get_mongo_client()
@@ -35,6 +54,33 @@ def start_webpublish_log(dbcon, batch_id, user):
         "status": "in_progress",
         "progress": 0.0
     }).inserted_id
+
+
+def publish(log, close_plugin_name=None):
+    """Loops through all plugins, logs to console. Used for tests.
+
+        Args:
+            log (OpenPypeLogger)
+            close_plugin_name (str): name of plugin with responsibility to
+                close host app
+    """
+    # Error exit as soon as any error occurs.
+    error_format = "Failed {plugin.__name__}: {error} -- {error.traceback}"
+
+    close_plugin = _get_close_plugin(close_plugin_name, log)
+
+    for result in pyblish.util.publish_iter():
+        for record in result["records"]:
+            log.info("{}: {}".format(
+                result["plugin"].label, record.msg))
+
+        if result["error"]:
+            log.error(error_format.format(**result))
+            uninstall()
+            if close_plugin:  # close host app explicitly after error
+                context = pyblish.api.Context()
+                close_plugin().process(context)
+            sys.exit(1)
 
 
 def publish_and_log(dbcon, _id, log, close_plugin_name=None):
