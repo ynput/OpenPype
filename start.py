@@ -665,33 +665,25 @@ def _find_frozen_openpype(use_version: str = None,
 
     """
     # Collect OpenPype versions
-    openpype_versions = bootstrap.find_openpype(
-        include_zips=True,
-        staging=use_staging
-    )
-    local_version = OpenPypeVersion.get_build_version()
-    if local_version not in openpype_versions:
-        openpype_versions.append(local_version)
-
+    build_version = OpenPypeVersion.get_build_version()
+    # Expected version that should be used by studio settings
+    #   - this option is used only if version is not explictly set and if
+    #       studio has set explicit version in settings
     studio_version = OpenPypeVersion.get_expected_studio_version(use_staging)
 
-    openpype_versions.sort()
-
-    # Find OpenPype version that should be used
-    openpype_version = None
     if use_version is not None:
+        # Specific version is defined
         if use_version.lower() == "latest":
-            _print("Finding latest version")
-            openpype_version = openpype_versions[-1]
+            # Version says to use latest version
+            _print("Finding latest version defined by use version")
+            openpype_version = bootstrap.find_latest_openpype_version(
+                use_staging
+            )
         else:
-            use_version_obj = OpenPypeVersion(use_version)
-            # Version was specified with arguments or env OPENPYPE_VERSION
-            # - should crash if version is not available
             _print("Finding specified version \"{}\"".format(use_version))
-            for version in openpype_versions:
-                if version == use_version_obj:
-                    openpype_version = version
-                    break
+            openpype_version = bootstrap.find_openpype_version(
+                use_version, use_staging
+            )
 
         if openpype_version is None:
             raise OpenPypeVersionNotFound(
@@ -700,13 +692,12 @@ def _find_frozen_openpype(use_version: str = None,
                 )
             )
 
-    elif studio_version:
+    elif studio_version is not None:
+        # Studio has defined a version to use
         _print("Finding studio version \"{}\"".format(studio_version))
-        # Look for version specified by settings
-        for version in openpype_versions:
-            if version == studio_version:
-                openpype_version = version
-                break
+        openpype_version = bootstrap.find_openpype_version(
+            studio_version, use_staging
+        )
         if openpype_version is None:
             raise OpenPypeVersionNotFound((
                 "Requested OpenPype version \"{}\" defined by settings"
@@ -714,13 +705,21 @@ def _find_frozen_openpype(use_version: str = None,
             ).format(studio_version))
 
     else:
-        # Use latest available version
+        # Default behavior to use latest version
         _print("Finding latest version")
-        openpype_version = openpype_versions[-1]
+        openpype_version = bootstrap.find_latest_openpype_version(
+            use_staging
+        )
+        if openpype_version is None:
+            if use_staging:
+                reason = "Didn't find any staging versions."
+            else:
+                reason = "Didn't find any versions."
+            raise OpenPypeVersionNotFound(reason)
 
     # get local frozen version and add it to detected version so if it is
     # newer it will be used instead.
-    if local_version == openpype_version:
+    if build_version == openpype_version:
         version_path = _bootstrap_from_code(use_version, use_staging)
         openpype_version = OpenPypeVersion(
             version=BootstrapRepos.get_version(version_path),
