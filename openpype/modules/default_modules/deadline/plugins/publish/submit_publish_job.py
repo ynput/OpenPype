@@ -232,7 +232,7 @@ class ProcessSubmittedJobOnFarm(pyblish.api.InstancePlugin):
             'publish',
             roothless_metadata_path,
             "--targets", "deadline",
-            "--targets", "filesequence"
+            "--targets", "farm"
         ]
 
         # Generate the payload for Deadline submission
