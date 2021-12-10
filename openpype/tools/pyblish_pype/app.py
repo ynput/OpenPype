@@ -98,7 +98,11 @@ def show(parent=None):
 
         self._window.show()
         self._window.activateWindow()
-        self._window.setWindowTitle(settings.WindowTitle)
+        env_title = os.getenv("PYBLISH_TITLE")
+        if env_title:
+            self._window.setWindowTitle(env_title)
+        else:
+            self._window.setWindowTitle(settings.WindowTitle)
 
         font = QtGui.QFont("Open Sans", 8, QtGui.QFont.Normal)
         self._window.setFont(font)
