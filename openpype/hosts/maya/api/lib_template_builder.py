@@ -1,7 +1,7 @@
 import maya.cmds as cmds
 from avalon.maya.lib import imprint
 from avalon.vendor import qargparse
-from avalon.tools.widgets import OptionDialog
+from openpype.tools.utils.widgets import OptionDialog
 from avalon.maya.pipeline import get_main_window
 
 
@@ -100,9 +100,14 @@ Priority rule is : "lowest is first to load"."""),
     # custom arg parse to force empty data query
     # and still imprint them on placeholder
     # and getting items when arg is of type Enumerator
+    # get maya selection
+    selection = cmds.ls(selection=True)
     options = {str(arg): arg._data.get("items") or arg.read()
                for arg in args if not type(arg) == qargparse.Separator}
     placeholder = cmds.spaceLocator(name="_TEMPLATE_PLACEHOLDER_")[0]
+    # if something is selected parent the placeholder to the first selection
+    if selection:
+        cmds.parent(placeholder, selection[0])
     imprint(placeholder, options)
 
     # Some tweaks because imprint force enums to to default value so we get
