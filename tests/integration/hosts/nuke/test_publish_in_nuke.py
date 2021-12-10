@@ -4,6 +4,7 @@ import logging
 import shutil
 
 from tests.lib.testing_classes import PublishTest
+from tests.lib.assert_classes import DBAssert
 
 log = logging.getLogger("test_publish_in_nuke")
 
@@ -82,33 +83,31 @@ class TestPublishInNuke(PublishTest):
     def test_db_asserts(self, dbcon, publish_finished):
         """Host and input data dependent expected results in DB."""
         print("test_db_asserts")
-        versions = dbcon.count_documents({"type": "version"})
-        assert 2 == versions, \
-            "Not expected no of versions. "\
-            "Expected 2, found {}".format(versions)
+        failures = []
 
-        assert 0 == dbcon.count_documents({"type": "version",
-                                           "name": {"$ne": 1}}), \
-            "Only versions with 1 expected"
+        failures.append(DBAssert.count_of_types(dbcon, "version", 2))
 
-        assert 1 == dbcon.count_documents({"type": "subset",
-                                           "name": "renderCompositingInNukeMain"}  # noqa: E501
-                                          ), \
-            "renderCompositingInNukeMain subset must be present"
+        failures.append(
+            DBAssert.count_of_types(dbcon, "version", 0, name={"$ne": 1}))
 
-        assert 1 == dbcon.count_documents({"type": "subset",
-                                           "name": "workfileTest_task"}), \
-            "workfileTest_task subset must be present"
+        failures.append(
+            DBAssert.count_of_types(dbcon, "subset", 1,
+                                    name="renderCompositingInNukeMain"))
 
-        assert 4 == dbcon.count_documents({"type": "representation"}), \
-            "Not expected no of representations"
+        failures.append(
+            DBAssert.count_of_types(dbcon, "subset", 1,
+                                    name="workfileTest_task"))
 
-        reprs = dbcon.count_documents({"type": "representation",
-                                           "context.subset": "renderCompositingInNukeMain",  # noqa: E501
-                                           "context.ext": "exr"})
-        assert 1 == reprs, \
-            "Not expected no of representations with ext 'exr'."\
-            "Expected 1, found {}".format(reprs)
+        failures.append(
+            DBAssert.count_of_types(dbcon, "representation", 4))
+
+        additional_args = {"context.subset": "renderCompositingInNukeMain",
+                           "context.ext": "exr"}
+        failures.append(
+            DBAssert.count_of_types(dbcon, "representation", 1,
+                                    additional_args=additional_args))
+
+        assert not any(failures)
 
 
 if __name__ == "__main__":
