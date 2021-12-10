@@ -224,16 +224,6 @@ class PublishTest(ModuleUnitTest):
         yield path
 
     @pytest.fixture(scope="module")
-    def last_workfile_path(self, download_test_data, output_folder_url):
-        """Returns url of workfile"""
-        raise NotImplementedError
-
-    @pytest.fixture(scope="module")
-    def startup_scripts(self, monkeypatch_session, download_test_data):
-        """"Adds init scripts (like userSetup) to expected location"""
-        raise NotImplementedError
-
-    @pytest.fixture(scope="module")
     def app_args(self, download_test_data):
         """Returns additional application arguments from a test file.
 
@@ -345,3 +335,16 @@ class PublishTest(ModuleUnitTest):
 
         not_matched = expected.difference(published)
         assert not not_matched, "Missing {} files".format(not_matched)
+
+
+class HostFixtures(PublishTest):
+    """Host specific fixtures. Should be implemented once per host."""
+    @pytest.fixture(scope="module")
+    def last_workfile_path(self, download_test_data, output_folder_url):
+        """Returns url of workfile"""
+        raise NotImplementedError
+
+    @pytest.fixture(scope="module")
+    def startup_scripts(self, monkeypatch_session, download_test_data):
+        """"Adds init scripts (like userSetup) to expected location"""
+        raise NotImplementedError
