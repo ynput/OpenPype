@@ -25,6 +25,8 @@ Roles:
 """
 from __future__ import unicode_literals
 
+import os
+
 import pyblish
 
 from . import settings, util
@@ -110,10 +112,15 @@ class IntentModel(QtGui.QStandardItemModel):
             .get("intent", {})
         )
 
-        default = intents_preset.get("default")
         items = intents_preset.get("items", {})
         if not items:
             return
+
+        env_default_intent = os.getenv("PYBLISH_DEFAULT_INTENT")
+        if env_default_intent and env_default_intent in items.keys():
+            default = env_default_intent
+        else:
+            default = intents_preset.get("default")
 
         for idx, item_value in enumerate(items.keys()):
             if item_value == default:
