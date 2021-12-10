@@ -2,6 +2,8 @@ import os
 import avalon
 from abc import ABCMeta, abstractmethod
 
+import traceback
+
 import six
 
 from openpype.settings import get_project_settings
@@ -25,7 +27,7 @@ def update_representations(entities, entity):
         current = entities[entity['context']['asset']]
         incomming = entity
         entities[entity['context']['asset']] = max(
-            [current, incomming],
+            current, incomming,
             key= lambda entity: entity["context"].get("version"))
 
     return entities
@@ -179,6 +181,8 @@ class AbstractTemplateLoader:
             solved_path = None
             while True:
                 solved_path = anatomy.path_remapper(path)
+                if solved_path == None:
+                    solved_path = path
                 if solved_path == path:
                     break
                 path = solved_path
@@ -244,17 +248,17 @@ class AbstractTemplateLoader:
                             loaders_by_name[placeholder.loader],
                             last_representation['_id'],
                             options=parse_loader_args(placeholder.data['loader_args']))
-                        if container:
-                            placeholder.parent_in_hierarchy(container)
-                    except Exception as err:
+                    except Exception:
                         bad_rep = last_representation
                         self.log.warning(
-                            "Got error trying to load {}:{} with {}\n"
-                            "{}: {}".format(
+                            "Got error trying to load {}:{} with {}\n\n"
+                            "{}".format(
                                 bad_rep['context']['asset'],
                                 bad_rep['context']['subset'],
                                 placeholder.loader,
-                                err.__class__.__name__, err))
+                                traceback.format_exc()))
+                    if container:
+                        placeholder.parent_in_hierarchy(container)
             placeholder.clean()
 
     def update_template(self):

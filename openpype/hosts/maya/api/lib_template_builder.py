@@ -4,18 +4,88 @@ from avalon.vendor import qargparse
 from openpype.tools.utils.widgets import OptionDialog
 from avalon.maya.pipeline import get_main_window
 
+# To change as enum
+build_types = ["context_asset", "linked_asset", "all_assets"]
+
+
+def get_placeholder_attributes(node):
+    return {
+        attr: cmds.getAttr("{}.{}".format(node, attr))
+        for attr in cmds.listAttr(node, userDefined=True)}
+
 
 def create_placeholder():
+    args = placeholder_window()
+
+    if not args:
+        return # operation canceled, no locator created
+
+    placeholder = cmds.spaceLocator(name="_TEMPLATE_PLACEHOLDER_")[0]
+
+    selection = cmds.ls(selection=True)
+    if selection:
+        cmds.parent(placeholder, selection[0])
+    # custom arg parse to force empty data query
+    # and still imprint them on placeholder
+    # and getting items when arg is of type Enumerator
+    options = {str(arg): arg._data.get("items") or arg.read()
+               for arg in args if not type(arg) == qargparse.Separator}
+    imprint(placeholder, options)
+    # Some tweaks because imprint force enums to to default value so we get
+    # back arg read and force them to attributes
+    imprint_enum(placeholder, args)
+
+    # Add helper attributes to keep placeholder info
+    cmds.addAttr(
+        placeholder, longName="parent",
+        hidden=True, dataType="string")
+
+
+def update_placeholder():
+    placeholder = cmds.ls(selection=True)
+    if len(placeholder) == 0:
+        raise ValueError("No node selected")
+    if len(placeholder) > 1:
+        raise ValueError("Too many selected nodes")
+    placeholder = placeholder[0]
+
+    args = placeholder_window(get_placeholder_attributes(placeholder))
+    if not args:
+        return # operation canceled
+
+    options = {str(arg): arg._data.get("items") or arg.read()
+               for arg in args if not type(arg) == qargparse.Separator}
+    imprint(placeholder, options)
+    imprint_enum(placeholder, args)
+
+
+def imprint_enum(placeholder, args):
+    """
+    Imprint method doesn't act properly with enums.
+    Replacing the functionnality with this for now
+    """
+    enum_values = {str(arg): arg.read()
+                   for arg in args if arg._data.get("items")}
+    string_to_value_enum_table = {
+        build: i for i, build
+        in enumerate(build_types)}
+    for key, value in enum_values.items():
+        cmds.setAttr(
+            placeholder + "." + key,
+            string_to_value_enum_table[value])
+
+
+def placeholder_window(options=None):
+    options = options or dict()
     dialog = OptionDialog(parent=get_main_window())
     dialog.setWindowTitle("Create Placeholder")
 
-    build_types = ["context_asset", "linked_asset", "all_assets"]
     args = [
         qargparse.Separator("Main attributes"),
         qargparse.Enum(
             "builder_type",
             label="Asset Builder Type",
-            default=0,
+            default=options.get("builder_type", 0),
             items=build_types,
             help="""Asset Builder Type
 Builder type describe what template loader will look for.
@@ -30,17 +100,17 @@ Linked asset are looked in avalon database under field "inputLinks"
         ),
         qargparse.String(
             "family",
-            default="",
+            default=options.get("family", ""),
             label="OpenPype Family",
             placeholder="ex: model, look ..."),
         qargparse.String(
             "representation",
-            default="",
+            default=options.get("representation", ""),
             label="OpenPype Representation",
             placeholder="ex: ma, abc ..."),
         qargparse.String(
             "loader",
-            default="",
+            default=options.get("loader", ""),
             label="Loader",
             placeholder="ex: ReferenceLoader, LightLoader ...",
             help="""Loader
@@ -51,7 +121,7 @@ Field is case sensitive.
 """),
         qargparse.String(
             "loader_args",
-            default="",
+            default=options.get("loader_args", ""),
             label="Loader Arguments",
             placeholder='ex: {"camera":"persp", "lights":True}',
             help="""Loader
@@ -62,7 +132,7 @@ Field should be a valid python dict. Anything else will be ignored.
 """),
         qargparse.Integer(
             "order",
-            default=0,
+            default=options.get("order", 0),
             min=0,
             max=999,
             label="Order",
@@ -75,19 +145,19 @@ Priority rule is : "lowest is first to load"."""),
             "Optional attributes"),
         qargparse.String(
             "asset",
-            default="",
+            default=options.get("asset", ""),
             label="Asset filter",
             placeholder="regex filtering by asset name",
             help="Filtering assets by matching field regex to asset's name"),
         qargparse.String(
             "subset",
-            default="",
+            default=options.get("subset", ""),
             label="Subset filter",
             placeholder="regex filtering by subset name",
             help="Filtering assets by matching field regex to subset's name"),
         qargparse.String(
             "hierarchy",
-            default="",
+            default=options.get("hierarchy", ""),
             label="Hierarchy filter",
             placeholder="regex filtering by asset's hierarchy",
             help="Filtering assets by matching field asset's hierarchy")
@@ -95,34 +165,6 @@ Priority rule is : "lowest is first to load"."""),
     dialog.create(args)
 
     if not dialog.exec_():
-        return  # operation canceled, no locator created
+        return None
 
-    # custom arg parse to force empty data query
-    # and still imprint them on placeholder
-    # and getting items when arg is of type Enumerator
-    # get maya selection
-    selection = cmds.ls(selection=True)
-    options = {str(arg): arg._data.get("items") or arg.read()
-               for arg in args if not type(arg) == qargparse.Separator}
-    placeholder = cmds.spaceLocator(name="_TEMPLATE_PLACEHOLDER_")[0]
-    # if something is selected parent the placeholder to the first selection
-    if selection:
-        cmds.parent(placeholder, selection[0])
-    imprint(placeholder, options)
-
-    # Some tweaks because imprint force enums to to default value so we get
-    # back arg read and force them to attributes
-    enum_values = {str(arg): arg.read()
-                   for arg in args if arg._data.get("items")}
-    string_to_value_enum_table = {
-        build: i for i, build
-        in enumerate(build_types)}
-    for key, value in enum_values.items():
-        cmds.setAttr(
-            placeholder + "." + key,
-            string_to_value_enum_table[value])
-
-    # Add helper attributes to keep placeholder info
-    cmds.addAttr(
-        placeholder, longName="parent",
-        hidden=True, dataType="string")
+    return args
