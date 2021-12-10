@@ -215,7 +215,17 @@ class PublishTest(ModuleUnitTest):
         yield "{}/{}".format(self.APP, app_variant)
 
     @pytest.fixture(scope="module")
-    def last_workfile_path(self, download_test_data):
+    def output_folder_url(self, download_test_data):
+        """Returns location of published data, cleans it first if exists."""
+        path = os.path.join(download_test_data, "output")
+        if os.path.exists(path):
+            print("Purging {}".format(path))
+            shutil.rmtree(path)
+        yield path
+
+    @pytest.fixture(scope="module")
+    def last_workfile_path(self, download_test_data, output_folder_url):
+        """Returns url of workfile"""
         raise NotImplementedError
 
     @pytest.fixture(scope="module")
@@ -251,15 +261,16 @@ class PublishTest(ModuleUnitTest):
 
     @pytest.fixture(scope="module")
     def launched_app(self, dbcon, download_test_data, last_workfile_path,
-                     startup_scripts, app_args):
+                     startup_scripts, app_args, app_name, output_folder_url):
         """Launch host app"""
         # set publishing folders
-        root_key = "config.roots.work.{}".format("windows")  # TEMP
+        platform_str = platform.system().lower()
+        root_key = "config.roots.work.{}".format(platform_str)
         dbcon.update_one(
             {"type": "project"},
             {"$set":
                 {
-                    root_key: download_test_data
+                    root_key: output_folder_url
                 }}
         )
 

@@ -39,7 +39,7 @@ class TestPublishInMaya(PublishTest):
     TIMEOUT = 120  # publish timeout
 
     @pytest.fixture(scope="module")
-    def last_workfile_path(self, download_test_data):
+    def last_workfile_path(self, download_test_data, output_folder_url):
         """Get last_workfile_path from source data.
 
             Maya expects workfile in proper folder, so copy is done first.
@@ -48,7 +48,7 @@ class TestPublishInMaya(PublishTest):
                                 "input",
                                 "workfile",
                                 "test_project_test_asset_TestTask_v001.mb")
-        dest_folder = os.path.join(download_test_data,
+        dest_folder = os.path.join(output_folder_url,
                                    self.PROJECT,
                                    self.ASSET,
                                    "work",

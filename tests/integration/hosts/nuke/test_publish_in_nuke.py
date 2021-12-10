@@ -52,7 +52,7 @@ class TestPublishInNuke(PublishTest):
                                 "input",
                                 "workfile",
                                 source_file_name)
-        dest_folder = os.path.join(download_test_data,
+        dest_folder = os.path.join(output_folder_url,
                                    self.PROJECT,
                                    self.ASSET,
                                    "work",
