@@ -127,6 +127,11 @@ class MayaPlaceholder(AbstractPlaceholder):
                 refRoot = cmds.referenceQuery(root, n=True)[0]
                 refRoot = cmds.listRelatives(refRoot, parent=True) or [refRoot]
                 nodes_to_parent.extend(refRoot)
+            elif root in cmds.listSets(allSets=True):
+                if not cmds.sets(root, q=True):
+                    return
+                else:
+                    pass
             else:
                 nodes_to_parent.append(root)
 
@@ -161,6 +166,12 @@ class MayaPlaceholder(AbstractPlaceholder):
         if self.data['parent']:
             cmds.setAttr(node + '.parent', self.data['parent'], type='string')
 
+        holding_sets = cmds.listSets(object=node)
+        if not holding_sets:
+            return
+        for set in holding_sets:
+            cmds.sets(node, remove=set)
+
         if cmds.listRelatives(node, p=True):
             node = cmds.parent(node, world=True)[0]
         cmds.sets(node, addElement=PLACEHOLDER_SET)
@@ -168,11 +179,6 @@ class MayaPlaceholder(AbstractPlaceholder):
 
         cmds.setAttr(node+'.hiddenInOutliner', True)
         node = self.data['node'].rpartition('|')[2]
-        holding_sets = cmds.listSets(object=node)
-        if not holding_sets:
-            return
-        for set in holding_sets:
-            cmds.sets(node, remove=set)
 
     def convert_to_db_filters(self, current_asset, linked_asset):
         if self.data['builder_type'] == "context_asset":
