@@ -341,7 +341,8 @@ class PypeCommands:
     def validate_jsons(self):
         pass
 
-    def run_tests(self, folder, mark, pyargs, test_data_folder):
+    def run_tests(self, folder, mark, pyargs,
+                  test_data_folder, persist, app_variant):
         """
             Runs tests from 'folder'
 
@@ -350,6 +351,10 @@ class PypeCommands:
                  mark (str): label to run tests marked by it (slow etc)
                  pyargs (str): package path to test
                  test_data_folder (str): url to unzipped folder of test data
+                 persist (bool): True if keep test db and published after test
+                    end
+                app_variant (str): variant (eg 2020 for AE), empty if use
+                    latest installed version
         """
         print("run_tests")
         if folder:
@@ -366,8 +371,14 @@ class PypeCommands:
         if pyargs:
             args.extend(["--pyargs", pyargs])
 
-        if test_data_folder:
+        if persist:
             args.extend(["--test_data_folder", test_data_folder])
+
+        if persist:
+            args.extend(["--persist", persist])
+
+        if app_variant:
+            args.extend(["--app_variant", app_variant])
 
         print("run_tests args: {}".format(args))
         import pytest

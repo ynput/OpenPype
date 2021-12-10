@@ -7,6 +7,7 @@ import pytest
 import tempfile
 import shutil
 import glob
+import platform
 
 from tests.lib.db_handler import DBHandler
 from tests.lib.file_handler import RemoteFileHandler
@@ -58,7 +59,8 @@ class ModuleUnitTest(BaseTest):
         m.undo()
 
     @pytest.fixture(scope="module")
-    def download_test_data(self, test_data_folder):
+    def download_test_data(self, test_data_folder, persist=False):
+        test_data_folder = test_data_folder or self.TEST_DATA_FOLDER
         if test_data_folder:
             print("Using existing folder {}".format(test_data_folder))
             yield test_data_folder
@@ -78,7 +80,8 @@ class ModuleUnitTest(BaseTest):
                 print("Temporary folder created:: {}".format(tmpdir))
                 yield tmpdir
 
-                if not self.PERSIST:
+                persist = persist or self.PERSIST
+                if not persist:
                     print("Removing {}".format(tmpdir))
                     shutil.rmtree(tmpdir)
 
@@ -188,14 +191,28 @@ class PublishTest(ModuleUnitTest):
     """
 
     APP = ""
-    APP_VARIANT = ""  # keep empty to locate latest installed variant
 
     TIMEOUT = 120  # publish timeout
 
-    @property
-    def app_name(self):
-        if self.APP_VARIANT:
-            return "{}/{}".format(self.APP, self.APP_VARIANT)
+    # could be overwritten by command line arguments
+    # command line value takes precedence
+
+    # keep empty to locate latest installed variant or explicit
+    APP_VARIANT = ""
+    PERSIST = True  # True - keep test_db, test_openpype, outputted test files
+    TEST_DATA_FOLDER = None  # use specific folder of unzipped test file
+
+    @pytest.fixture(scope="module")
+    def app_name(self, app_variant):
+        """Returns calculated value for ApplicationManager. Eg.(nuke/12-2)"""
+        from openpype.lib import ApplicationManager
+        app_variant = app_variant or self.APP_VARIANT
+
+        application_manager = ApplicationManager()
+        if not app_variant:
+            app_variant = find_variant_key(application_manager, self.APP)
+
+        yield "{}/{}".format(self.APP, app_variant)
 
     @pytest.fixture(scope="module")
     def last_workfile_path(self, download_test_data):
@@ -203,6 +220,7 @@ class PublishTest(ModuleUnitTest):
 
     @pytest.fixture(scope="module")
     def startup_scripts(self, monkeypatch_session, download_test_data):
+        """"Adds init scripts (like userSetup) to expected location"""
         raise NotImplementedError
 
     @pytest.fixture(scope="module")
@@ -270,12 +288,6 @@ class PublishTest(ModuleUnitTest):
         if app_args:
             data["app_args"] = app_args
 
-        variant = self.APP_VARIANT
-        if not variant:
-            variant = find_variant_key(application_manager, self.APP)
-
-        app_name = "{}/{}".format(self.APP, variant)
-
         app_process = application_manager.launch(app_name, **data)
         yield app_process
 
@@ -295,13 +307,13 @@ class PublishTest(ModuleUnitTest):
         yield True
 
     def test_folder_structure_same(self, dbcon, publish_finished,
-                                   download_test_data):
+                                   download_test_data, output_folder_url):
         """Check if expected and published subfolders contain same files.
 
             Compares only presence, not size nor content!
         """
         published_dir_base = download_test_data
-        published_dir = os.path.join(published_dir_base,
+        published_dir = os.path.join(output_folder_url,
                                      self.PROJECT,
                                      self.TASK,
                                      "**")
@@ -311,7 +323,8 @@ class PublishTest(ModuleUnitTest):
                                     self.PROJECT,
                                     self.TASK,
                                     "**")
-
+        print("Comparing published:'{}' : expected:'{}'".format(published_dir,
+                                                                expected_dir))
         published = set(f.replace(published_dir_base, '') for f in
                         glob.glob(published_dir, recursive=True) if
                         f != published_dir_base and os.path.exists(f))

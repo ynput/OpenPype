@@ -27,22 +27,23 @@ class TestPublishInNuke(PublishTest):
         To check log/errors from launched app's publish process keep PERSIST
         to True and check `test_openpype.logs` collection.
     """
-    PERSIST = True  # True - keep test_db, test_openpype, outputted test files
-
+    # https://drive.google.com/file/d/1SUurHj2aiQ21ZIMJfGVBI2KjR8kIjBGI/view?usp=sharing  # noqa: E501
     TEST_FILES = [
         ("1SUurHj2aiQ21ZIMJfGVBI2KjR8kIjBGI", "test_Nuke_publish.zip", "")
     ]
 
     APP = "nuke"
-    # keep empty to locate latest installed variant or explicit
-    APP_VARIANT = ""
 
     TIMEOUT = 120  # publish timeout
 
-    TEST_DATA_FOLDER = "C:\\Users\\petrk\\AppData\\Local\\Temp\\tmpbfh976y6"  # provide existing folder with test data
+    # could be overwritten by command line arguments
+    # keep empty to locate latest installed variant or explicit
+    APP_VARIANT = ""
+    PERSIST = True  # True - keep test_db, test_openpype, outputted test files
+    TEST_DATA_FOLDER = None
 
     @pytest.fixture(scope="module")
-    def last_workfile_path(self, download_test_data):
+    def last_workfile_path(self, download_test_data, output_folder_url):
         """Get last_workfile_path from source data.
 
         """
@@ -99,7 +100,7 @@ class TestPublishInNuke(PublishTest):
                                            "name": "workfileTest_task"}), \
             "workfileTest_task subset must be present"
 
-        assert 10 == dbcon.count_documents({"type": "representation"}), \
+        assert 4 == dbcon.count_documents({"type": "representation"}), \
             "Not expected no of representations"
 
         reprs = dbcon.count_documents({"type": "representation",

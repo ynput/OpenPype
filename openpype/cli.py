@@ -360,9 +360,18 @@ def run(script):
               "--test_data_folder",
               help="Unzipped directory path of test file",
               default=None)
-def runtests(folder, mark, pyargs, test_data_folder):
+@click.option("-s",
+              "--persist",
+              help="Persist test DB and published files after test end",
+              default=None)
+@click.option("-a",
+              "--app_variant",
+              help="Provide specific app variant for test, empty for latest",
+              default=None)
+def runtests(folder, mark, pyargs, test_data_folder, persist, app_variant):
     """Run all automatic tests after proper initialization via start.py"""
-    PypeCommands().run_tests(folder, mark, pyargs, test_data_folder)
+    PypeCommands().run_tests(folder, mark, pyargs, test_data_folder,
+                             persist, app_variant)
 
 
 @main.command()
