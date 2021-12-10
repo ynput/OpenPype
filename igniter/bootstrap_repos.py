@@ -63,7 +63,7 @@ class OpenPypeVersion(semver.VersionInfo):
     staging = False
     path = None
     _VERSION_REGEX = re.compile(r"(?P<major>0|[1-9]\d*)\.(?P<minor>0|[1-9]\d*)\.(?P<patch>0|[1-9]\d*)(?:-(?P<prerelease>(?:0|[1-9]\d*|\d*[a-zA-Z-][0-9a-zA-Z-]*)(?:\.(?:0|[1-9]\d*|\d*[a-zA-Z-][0-9a-zA-Z-]*))*))?(?:\+(?P<buildmetadata>[0-9a-zA-Z-]+(?:\.[0-9a-zA-Z-]+)*))?$")  # noqa: E501
-    _build_version = None
+    _installed_version = None
 
     def __init__(self, *args, **kwargs):
         """Create OpenPype version.
@@ -533,17 +533,16 @@ class OpenPypeVersion(semver.VersionInfo):
         return version["__version__"]
 
     @classmethod
-    def get_build_version(cls):
+    def get_installed_version(cls):
         """Get version of OpenPype inside build."""
-        if cls._build_version is None:
-            openpype_root = Path(os.environ["OPENPYPE_ROOT"])
-            build_version_str = BootstrapRepos.get_version(openpype_root)
-            if build_version_str:
-                cls._build_version = OpenPypeVersion(
-                    version=build_version_str,
-                    path=openpype_root
+        if cls._installed_version is None:
+            installed_version_str = cls.get_installed_version_str()
+            if installed_version_str:
+                cls._installed_version = OpenPypeVersion(
+                    version=installed_version_str,
+                    path=Path(os.environ["OPENPYPE_ROOT"])
                 )
-        return cls._build_version
+        return cls._installed_version
 
     @staticmethod
     def get_latest_version(
@@ -579,7 +578,7 @@ class OpenPypeVersion(semver.VersionInfo):
         elif remote is None and not local:
             remote = True
 
-        build_version = OpenPypeVersion.get_build_version()
+        installed_version = OpenPypeVersion.get_installed_version()
         local_versions = []
         remote_versions = []
         if local:
@@ -592,7 +591,7 @@ class OpenPypeVersion(semver.VersionInfo):
             )
         all_versions = local_versions + remote_versions
         if not staging:
-            all_versions.append(build_version)
+            all_versions.append(installed_version)
 
         if not all_versions:
             return None
@@ -1118,9 +1117,9 @@ class BootstrapRepos:
         if isinstance(version, str):
             version = OpenPypeVersion(version=version)
 
-        build_version = OpenPypeVersion.get_build_version()
-        if build_version == version:
-            return build_version
+        installed_version = OpenPypeVersion.get_installed_version()
+        if installed_version == version:
+            return installed_version
 
         local_versions = OpenPypeVersion.get_local_versions(
             staging=staging, production=not staging
@@ -1146,7 +1145,7 @@ class BootstrapRepos:
 
     @staticmethod
     def find_latest_openpype_version(staging):
-        build_version = OpenPypeVersion.get_build_version()
+        installed_version = OpenPypeVersion.get_installed_version()
         local_versions = OpenPypeVersion.get_local_versions(
             staging=staging
         )
@@ -1155,14 +1154,14 @@ class BootstrapRepos:
         )
         all_versions = local_versions + remote_versions
         if not staging:
-            all_versions.append(build_version)
+            all_versions.append(installed_version)
 
         if not all_versions:
             return None
 
         all_versions.sort()
         latest_version = all_versions[-1]
-        if latest_version == build_version:
+        if latest_version == installed_version:
             return latest_version
 
         if not latest_version.path.is_dir():

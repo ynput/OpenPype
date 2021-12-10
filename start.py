@@ -665,7 +665,7 @@ def _find_frozen_openpype(use_version: str = None,
 
     """
     # Collect OpenPype versions
-    build_version = OpenPypeVersion.get_build_version()
+    installed_version = OpenPypeVersion.get_installed_version()
     # Expected version that should be used by studio settings
     #   - this option is used only if version is not explictly set and if
     #       studio has set explicit version in settings
@@ -719,7 +719,7 @@ def _find_frozen_openpype(use_version: str = None,
 
     # get local frozen version and add it to detected version so if it is
     # newer it will be used instead.
-    if build_version == openpype_version:
+    if installed_version == openpype_version:
         version_path = _bootstrap_from_code(use_version, use_staging)
         openpype_version = OpenPypeVersion(
             version=BootstrapRepos.get_version(version_path),
