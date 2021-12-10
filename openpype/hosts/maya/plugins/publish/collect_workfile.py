@@ -28,7 +28,8 @@ class CollectWorkfile(pyblish.api.ContextPlugin):
             families_whitelist = families_whitelist.split(',')
         if families_whitelist:
             if 'workfile' not in families_whitelist:
-                self.log.info("Skipped instance with not whitelisted family: {}".format('workfile'))
+                self.log.info("Skipped instance with not whitelisted "
+                              "family: {}".format('workfile'))
                 return
 
         # create instance

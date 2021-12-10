@@ -46,7 +46,8 @@ class CollectInstances(pyblish.api.ContextPlugin):
         families_whitelist = os.getenv("PYBLISH_FAMILY_WHITELIST")
         if families_whitelist:
             families_whitelist = families_whitelist.split(',')
-            self.log.info("Whitelisted families : {}".format(families_whitelist))
+            self.log.info("Whitelisted families : {}".format(
+                families_whitelist))
 
         for objset in objectset:
 
@@ -87,7 +88,8 @@ class CollectInstances(pyblish.api.ContextPlugin):
 
             if families_whitelist:
                 if data['family'] not in families_whitelist:
-                    self.log.info("Skipped instance with not whitelisted family: {}".format(data['family']))
+                    self.log.info("Skipped instance with not whitelisted "
+                                  "family: {}".format(data['family']))
                     continue
 
             # temporarily translation of `active` to `publish` till issue has
