@@ -691,16 +691,6 @@ class BootstrapRepos:
         return None
 
     @staticmethod
-    def get_local_live_version() -> str:
-        """Get version of local OpenPype."""
-
-        version = {}
-        path = Path(os.environ["OPENPYPE_ROOT"]) / "openpype" / "version.py"
-        with open(path, "r") as fp:
-            exec(fp.read(), version)
-        return version["__version__"]
-
-    @staticmethod
     def get_version(repo_dir: Path) -> Union[str, None]:
         """Get version of OpenPype in given directory.
 
@@ -747,7 +737,7 @@ class BootstrapRepos:
         # version and use it as a source. Otherwise repo_dir is user
         # entered location.
         if not repo_dir:
-            version = self.get_local_live_version()
+            version = OpenPypeVersion.get_installed_version_str()
             repo_dir = self.live_repo_dir
         else:
             version = self.get_version(repo_dir)

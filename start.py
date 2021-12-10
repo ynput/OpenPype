@@ -794,7 +794,7 @@ def _bootstrap_from_code(use_version, use_staging):
         assert local_version
     else:
         # get current version of OpenPype
-        local_version = bootstrap.get_local_live_version()
+        local_version = OpenPypeVersion.get_installed_version_str()
 
     # All cases when should be used different version than build
     if (use_version and use_version != local_version) or use_staging:
@@ -930,7 +930,7 @@ def boot():
     if getattr(sys, 'frozen', False):
         local_version = bootstrap.get_version(Path(OPENPYPE_ROOT))
     else:
-        local_version = bootstrap.get_local_live_version()
+        local_version = OpenPypeVersion.get_installed_version_str()
 
     if "validate" in commands:
         _print(f">>> Validating version [ {use_version} ]")
@@ -978,7 +978,7 @@ def boot():
         if getattr(sys, 'frozen', False):
             local_version = bootstrap.get_version(Path(_openpype_root))
         else:
-            local_version = bootstrap.get_local_live_version()
+            local_version = OpenPypeVersion.get_installed_version_str()
 
         list_versions(openpype_versions, local_version)
         sys.exit(1)
