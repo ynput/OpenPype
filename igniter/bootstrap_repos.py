@@ -522,6 +522,16 @@ class OpenPypeVersion(semver.VersionInfo):
 
         return sorted(_openpype_versions)
 
+    @staticmethod
+    def get_installed_version_str() -> str:
+        """Get version of local OpenPype."""
+
+        version = {}
+        path = Path(os.environ["OPENPYPE_ROOT"]) / "openpype" / "version.py"
+        with open(path, "r") as fp:
+            exec(fp.read(), version)
+        return version["__version__"]
+
     @classmethod
     def get_build_version(cls):
         """Get version of OpenPype inside build."""
