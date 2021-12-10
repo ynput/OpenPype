@@ -18,13 +18,21 @@ class CleanUpFarm(pyblish.api.ContextPlugin):
 
     # Keep "filesequence" for backwards compatibility of older jobs
     targets = ["filesequence", "farm"]
+    allowed_hosts = ("maya", )
 
     def process(self, context):
-        """Plugin entry point."""
-        if avalon.api.Session["AVALON_APP"] != "maya":
-            self.log.info("Not in farm publish of maya renders. Skipping")
+        # Get source host from which farm publishing was started
+        src_host_name = avalon.api.Session.get("AVALON_APP")
+        # Skip process if is not in list of source hosts in which this
+        #    plugin should run
+        if src_host_name not in self.allowed_hosts:
+            self.log.info((
+                "Source host \"{}\" is not in list of enabled hosts {}."
+                " Skipping"
+            ).format(str(src_host_name), str(self.allowed_hosts)))
             return
 
+        # Collect directories to remove
         dirpaths_to_remove = set()
         for instance in context:
             staging_dir = instance.data.get("stagingDir")
@@ -34,8 +42,12 @@ class CleanUpFarm(pyblish.api.ContextPlugin):
         # clean dirs which are empty
         for dirpath in dirpaths_to_remove:
             if not os.path.exists(dirpath):
+                self.log.debug("Skipping not existing directory \"{}\"".format(
+                    dirpath
+                ))
                 continue
 
+            self.log.debug("Removing directory \"{}\"".format(dirpath))
             try:
                 shutil.rmtree(dirpath)
             except OSError:
