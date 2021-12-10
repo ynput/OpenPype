@@ -112,9 +112,17 @@ class DBHandler:
                     source 'db_name'
         """
         db_name_out = db_name_out or db_name
-        if self._db_exists(db_name) and not overwrite:
-            raise RuntimeError("DB {} already exists".format(db_name_out) +
-                               "Run with overwrite=True")
+        if self._db_exists(db_name_out):
+            if not overwrite:
+                raise RuntimeError("DB {} already exists".format(db_name_out) +
+                                   "Run with overwrite=True")
+            else:
+                if collection:
+                    coll = self.client[db_name_out].get(collection)
+                    if coll:
+                        coll.drop()
+                else:
+                    self.teardown(db_name_out)
 
         dir_path = os.path.join(dump_dir, db_name)
         if not os.path.exists(dir_path):

@@ -130,10 +130,12 @@ class ModuleUnitTest(BaseTest):
 
         uri = os.environ.get("OPENPYPE_MONGO")
         db_handler = DBHandler(uri)
-        db_handler.setup_from_dump(self.TEST_DB_NAME, backup_dir, True,
+        db_handler.setup_from_dump(self.TEST_DB_NAME, backup_dir,
+                                   overwrite=True,
                                    db_name_out=self.TEST_DB_NAME)
 
-        db_handler.setup_from_dump("openpype", backup_dir, True,
+        db_handler.setup_from_dump("openpype", backup_dir,
+                                   overwrite=True,
                                    db_name_out=self.TEST_OPENPYPE_NAME)
 
         yield db_handler
