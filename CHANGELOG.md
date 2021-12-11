@@ -1,6 +1,6 @@
 # Changelog
 
-## [3.7.0-nightly.6](https://github.com/pypeclub/OpenPype/tree/HEAD)
+## [3.7.0-nightly.7](https://github.com/pypeclub/OpenPype/tree/HEAD)
 
 [Full Changelog](https://github.com/pypeclub/OpenPype/compare/3.6.4...HEAD)
 
@@ -30,6 +30,7 @@
 - General: Reduce vendor imports [\#2305](https://github.com/pypeclub/OpenPype/pull/2305)
 - Tools: Cleanup of unused classes [\#2304](https://github.com/pypeclub/OpenPype/pull/2304)
 - Project Manager: Added ability to delete project [\#2298](https://github.com/pypeclub/OpenPype/pull/2298)
+- Ftrack: Synchronize input links [\#2287](https://github.com/pypeclub/OpenPype/pull/2287)
 - Nuke: extract baked review videos presets [\#2248](https://github.com/pypeclub/OpenPype/pull/2248)
 
 **🐛 Bug fixes**
@@ -93,7 +94,6 @@
 - Tools: Assets widget [\#2265](https://github.com/pypeclub/OpenPype/pull/2265)
 - SceneInventory: Choose loader in asset switcher [\#2262](https://github.com/pypeclub/OpenPype/pull/2262)
 - Style: New fonts in OpenPype style [\#2256](https://github.com/pypeclub/OpenPype/pull/2256)
-- Tools: SceneInventory in OpenPype  [\#2255](https://github.com/pypeclub/OpenPype/pull/2255)
 - Tools: Tasks widget [\#2251](https://github.com/pypeclub/OpenPype/pull/2251)
 - Tools: Creator in OpenPype [\#2244](https://github.com/pypeclub/OpenPype/pull/2244)
 
@@ -121,8 +121,8 @@
 
 **🚀 Enhancements**
 
+- Tools: SceneInventory in OpenPype  [\#2255](https://github.com/pypeclub/OpenPype/pull/2255)
 - Tools: Subset manager in OpenPype [\#2243](https://github.com/pypeclub/OpenPype/pull/2243)
-- General: Skip module directories without init file [\#2239](https://github.com/pypeclub/OpenPype/pull/2239)
 
 **🐛 Bug fixes**
 
