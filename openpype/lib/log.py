@@ -27,7 +27,7 @@ import copy
 from . import Terminal
 from .mongo import (
     MongoEnvNotSet,
-    decompose_url,
+    get_default_components,
     OpenPypeMongoConnection
 )
 try:
@@ -202,10 +202,6 @@ class PypeLogger:
     use_mongo_logging = None
     mongo_process_id = None
 
-    # Information about mongo url
-    log_mongo_url = None
-    log_mongo_url_components = None
-
     # Database name in Mongo
     log_database_name = os.environ["OPENPYPE_DATABASE_NAME"]
     # Collection name under database in Mongo
@@ -282,9 +278,9 @@ class PypeLogger:
         if not cls.use_mongo_logging:
             return
 
-        components = cls.log_mongo_url_components
+        components = get_default_components()
         kwargs = {
-            "host": cls.log_mongo_url,
+            "host": components["host"],
             "database_name": cls.log_database_name,
             "collection": cls.log_collection_name,
             "username": components["username"],
@@ -354,14 +350,8 @@ class PypeLogger:
         # Define if is in OPENPYPE_DEBUG mode
         cls.pype_debug = int(os.getenv("OPENPYPE_DEBUG") or "0")
 
-        # Mongo URL where logs will be stored
-        cls.log_mongo_url = os.environ.get("OPENPYPE_MONGO")
-
-        if not cls.log_mongo_url:
+        if not os.environ.get("OPENPYPE_MONGO"):
             cls.use_mongo_logging = False
-        else:
-            # Decompose url
-            cls.log_mongo_url_components = decompose_url(cls.log_mongo_url)
 
         # Mark as initialized
         cls.initialized = True
@@ -474,7 +464,7 @@ class PypeLogger:
         if not cls.initialized:
             cls.initialize()
 
-        return OpenPypeMongoConnection.get_mongo_client(cls.log_mongo_url)
+        return OpenPypeMongoConnection.get_mongo_client()
 
 
 def timeit(method):
