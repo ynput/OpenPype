@@ -106,7 +106,7 @@ def create_asset_id_hash(nodes):
         # iterate over content of reference node
         if cmds.nodeType(node) == "reference":
             ref_hashes = create_asset_id_hash(
-                cmds.referenceQuery(node, nodes=True))
+                cmds.referenceQuery(node, nodes=True, dp=True))
             for asset_id, ref_nodes in ref_hashes.items():
                 node_id_hash[asset_id] += ref_nodes
         else:
@@ -151,8 +151,7 @@ def create_items_from_nodes(nodes):
             for k, _ in ids.items():
                 pid = k.split(":")[0]
                 if not parent_id.get(pid):
-                    parent_id.update({pid: [vp]})
-
+                    parent_id[pid] = [vp]
             print("Adding ids from alembic {}".format(path))
             id_hashes.update(parent_id)
 

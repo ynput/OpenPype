@@ -90,8 +90,8 @@ class AssetOutliner(QtWidgets.QWidget):
         return items
 
     def get_all_assets(self):
-        """Add all items from the current scene"""
-
+        """Add all items from the current scene."""
+        items = []
         with lib.preserve_expanded_rows(self.view):
             with lib.preserve_selection(self.view):
                 self.clear()
@@ -237,7 +237,7 @@ class LookOutliner(QtWidgets.QWidget):
         """
 
         datas = [i.data(TreeModel.ItemRole) for i in self.view.get_indices()]
-        items = [d for d in datas if d is not None]  # filter Nones
+        items = [d for d in datas if d is not None]   # filter Nones
 
         return items
 
