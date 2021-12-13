@@ -23,6 +23,11 @@ def _decompose_url(url):
     connection directly this is just a dumb components for MongoHandler
     validation pass.
     """
+    # Use first url from passed url
+    #   - this is beacuse it is possible to pass multiple urls for multiple
+    #       replica sets which would crash on urlparse otherwise
+    #   - please don't use comma in username of password
+    url = url.split(",")[0]
     components = {
         "scheme": None,
         "host": None,
