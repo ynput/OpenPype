@@ -118,6 +118,9 @@ class IntegrateInputLinks(pyblish.api.ContextPlugin):
 
         """
         for instance in instances:
+            if not instance:
+                continue
+
             version_doc = instance.data.get("versionEntity")
             if version_doc is None:
                 continue
