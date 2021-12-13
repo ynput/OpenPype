@@ -48,35 +48,6 @@ def decompose_url(url):
     return components
 
 
-def compose_url(scheme=None,
-                host=None,
-                username=None,
-                password=None,
-                port=None,
-                auth_db=None):
-
-    url = "{scheme}://"
-
-    if username and password:
-        url += "{username}:{password}@"
-
-    url += "{host}"
-    if port:
-        url += ":{port}"
-
-    if auth_db:
-        url += "?authSource={auth_db}"
-
-    return url.format(**{
-        "scheme": scheme,
-        "host": host,
-        "username": username,
-        "password": password,
-        "port": port,
-        "auth_db": auth_db
-    })
-
-
 def get_default_components():
     mongo_url = os.environ.get("OPENPYPE_MONGO")
     if mongo_url is None:
