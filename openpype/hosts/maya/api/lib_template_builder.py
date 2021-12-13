@@ -18,8 +18,7 @@ def create_placeholder():
     args = placeholder_window()
 
     if not args:
-        return # operation canceled, no locator created
-
+        return  # operation canceled, no locator created
 
     selection = cmds.ls(selection=True)
     placeholder = cmds.spaceLocator(name="_TEMPLATE_PLACEHOLDER_")[0]
