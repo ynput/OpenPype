@@ -6,11 +6,6 @@ import copy
 
 import six
 
-if six.PY3:
-    from queue import Queue
-else:
-    from Queue import Queue
-
 from avalon.api import AvalonMongoDB
 
 import avalon
@@ -27,7 +22,7 @@ from .custom_attributes import get_openpype_attr
 
 from bson.objectid import ObjectId
 from bson.errors import InvalidId
-from pymongo import UpdateOne
+from pymongo import UpdateOne, ReplaceOne
 import ftrack_api
 
 log = Logger.get_logger(__name__)
@@ -146,11 +141,11 @@ def from_dict_to_set(data, is_project):
             data.pop("data")
 
     result = {"$set": {}}
-    dict_queue = Queue()
-    dict_queue.put((None, data))
+    dict_queue = collections.deque()
+    dict_queue.append((None, data))
 
-    while not dict_queue.empty():
-        _key, _data = dict_queue.get()
+    while dict_queue:
+        _key, _data = dict_queue.popleft()
         for key, value in _data.items():
             new_key = key
             if _key is not None:
@@ -160,7 +155,7 @@ def from_dict_to_set(data, is_project):
                     (isinstance(value, dict) and not bool(value)):  # empty dic
                 result["$set"][new_key] = value
                 continue
-            dict_queue.put((new_key, value))
+            dict_queue.append((new_key, value))
 
     if task_changes is not not_set and task_changes_key:
         result["$set"][task_changes_key] = task_changes
@@ -333,7 +328,7 @@ class SyncEntitiesFactory:
             server_url=self._server_url,
             api_key=self._api_key,
             api_user=self._api_user,
-            auto_connect_event_hub=True
+            auto_connect_event_hub=False
         )
 
         self.duplicates = {}
@@ -346,6 +341,7 @@ class SyncEntitiesFactory:
         }
 
         self.create_list = []
+        self.unarchive_list = []
         self.updates = collections.defaultdict(dict)
 
         self.avalon_project = None
@@ -714,7 +710,7 @@ class SyncEntitiesFactory:
         self.filter_by_duplicate_regex()
 
     def filter_by_duplicate_regex(self):
-        filter_queue = Queue()
+        filter_queue = collections.deque()
         failed_regex_msg = "{} - Entity has invalid symbols in the name"
         duplicate_msg = "There are multiple entities with the name: \"{}\":"
 
@@ -722,18 +718,18 @@ class SyncEntitiesFactory:
             for id in ids:
                 ent_path = self.get_ent_path(id)
                 self.log.warning(failed_regex_msg.format(ent_path))
-                filter_queue.put(id)
+                filter_queue.append(id)
 
         for name, ids in self.duplicates.items():
             self.log.warning(duplicate_msg.format(name))
             for id in ids:
                 ent_path = self.get_ent_path(id)
                 self.log.warning(ent_path)
-                filter_queue.put(id)
+                filter_queue.append(id)
 
         filtered_ids = []
-        while not filter_queue.empty():
-            ftrack_id = filter_queue.get()
+        while filter_queue:
+            ftrack_id = filter_queue.popleft()
             if ftrack_id in filtered_ids:
                 continue
 
@@ -749,7 +745,7 @@ class SyncEntitiesFactory:
 
             filtered_ids.append(ftrack_id)
             for child_id in entity_dict.get("children", []):
-                filter_queue.put(child_id)
+                filter_queue.append(child_id)
 
         for name, ids in self.tasks_failed_regex.items():
             for id in ids:
@@ -768,10 +764,10 @@ class SyncEntitiesFactory:
         ) == "_notset_":
             return
 
-        self.filter_queue = Queue()
-        self.filter_queue.put((self.ft_project_id, False))
-        while not self.filter_queue.empty():
-            parent_id, remove = self.filter_queue.get()
+        filter_queue = collections.deque()
+        filter_queue.append((self.ft_project_id, False))
+        while filter_queue:
+            parent_id, remove = filter_queue.popleft()
             if remove:
                 parent_dict = self.entities_dict.pop(parent_id, {})
                 self.all_filtered_entities[parent_id] = parent_dict
@@ -790,7 +786,7 @@ class SyncEntitiesFactory:
                             child_id
                         )
                         _remove = True
-                self.filter_queue.put((child_id, _remove))
+                filter_queue.append((child_id, _remove))
 
     def filter_by_selection(self, event):
         # BUGGY!!!! cause that entities are in deleted list
@@ -805,47 +801,51 @@ class SyncEntitiesFactory:
             selected_ids.append(entity["entityId"])
 
         sync_ids = [self.ft_project_id]
-        parents_queue = Queue()
-        children_queue = Queue()
-        for id in selected_ids:
+        parents_queue = collections.deque()
+        children_queue = collections.deque()
+        for selected_id in selected_ids:
             # skip if already filtered with ignore sync custom attribute
-            if id in self.filtered_ids:
+            if selected_id in self.filtered_ids:
                 continue
 
-            parents_queue.put(id)
-            children_queue.put(id)
+            parents_queue.append(selected_id)
+            children_queue.append(selected_id)
 
-        while not parents_queue.empty():
-            id = parents_queue.get()
+        while parents_queue:
+            ftrack_id = parents_queue.popleft()
             while True:
                 # Stops when parent is in sync_ids
-                if id in self.filtered_ids or id in sync_ids or id is None:
+                if (
+                    ftrack_id in self.filtered_ids
+                    or ftrack_id in sync_ids
+                    or ftrack_id is None
+                ):
                     break
-                sync_ids.append(id)
-                id = self.entities_dict[id]["parent_id"]
+                sync_ids.append(ftrack_id)
+                ftrack_id = self.entities_dict[ftrack_id]["parent_id"]
 
-        while not children_queue.empty():
-            parent_id = children_queue.get()
+        while children_queue:
+            parent_id = children_queue.popleft()
             for child_id in self.entities_dict[parent_id]["children"]:
                 if child_id in sync_ids or child_id in self.filtered_ids:
                     continue
                 sync_ids.append(child_id)
-                children_queue.put(child_id)
+                children_queue.append(child_id)
 
         # separate not selected and to process entities
         for key, value in self.entities_dict.items():
             if key not in sync_ids:
                 self.not_selected_ids.append(key)
 
-        for id in self.not_selected_ids:
+        for ftrack_id in self.not_selected_ids:
             # pop from entities
-            value = self.entities_dict.pop(id)
+            value = self.entities_dict.pop(ftrack_id)
             # remove entity from parent's children
             parent_id = value["parent_id"]
             if parent_id not in sync_ids:
                 continue
 
-            self.entities_dict[parent_id]["children"].remove(id)
+            self.entities_dict[parent_id]["children"].remove(ftrack_id)
 
     def _query_custom_attributes(self, session, conf_ids, entity_ids):
         output = []
@@ -1117,11 +1117,11 @@ class SyncEntitiesFactory:
             if value is not None:
                 project_values[key] = value
 
-        hier_down_queue = Queue()
-        hier_down_queue.put((project_values, top_id))
+        hier_down_queue = collections.deque()
+        hier_down_queue.append((project_values, top_id))
 
-        while not hier_down_queue.empty():
-            hier_values, parent_id = hier_down_queue.get()
+        while hier_down_queue:
+            hier_values, parent_id = hier_down_queue.popleft()
             for child_id in self.entities_dict[parent_id]["children"]:
                 _hier_values = copy.deepcopy(hier_values)
                 for key in attributes_by_key.keys():
@@ -1134,7 +1134,7 @@ class SyncEntitiesFactory:
                         _hier_values[key] = value
 
                 self.entities_dict[child_id]["hier_attrs"].update(_hier_values)
-                hier_down_queue.put((_hier_values, child_id))
+                hier_down_queue.append((_hier_values, child_id))
 
     def remove_from_archived(self, mongo_id):
         entity = self.avalon_archived_by_id.pop(mongo_id, None)
@@ -1170,16 +1170,43 @@ class SyncEntitiesFactory:
                         entity
                     )
 
+    def _get_input_links(self, ftrack_ids):
+        tupled_ids = tuple(ftrack_ids)
+        mapping_by_to_id = {
+            ftrack_id: set()
+            for ftrack_id in tupled_ids
+        }
+        ids_len = len(tupled_ids)
+        chunk_size = int(5000 / ids_len)
+        all_links = []
+        for idx in range(0, ids_len, chunk_size):
+            entity_ids_joined = join_query_keys(
+                tupled_ids[idx:idx + chunk_size]
+            )
+
+            all_links.extend(self.session.query((
+                "select from_id, to_id from"
+                " TypedContextLink where to_id in ({})"
+            ).format(entity_ids_joined)).all())
+
+        for context_link in all_links:
+            to_id = context_link["to_id"]
+            from_id = context_link["from_id"]
+            if from_id == to_id:
+                continue
+            mapping_by_to_id[to_id].add(from_id)
+        return mapping_by_to_id
+
     def prepare_ftrack_ent_data(self):
         not_set_ids = []
-        for id, entity_dict in self.entities_dict.items():
+        for ftrack_id, entity_dict in self.entities_dict.items():
             entity = entity_dict["entity"]
             if entity is None:
-                not_set_ids.append(id)
+                not_set_ids.append(ftrack_id)
                 continue
 
-            self.entities_dict[id]["final_entity"] = {}
-            self.entities_dict[id]["final_entity"]["name"] = (
+            self.entities_dict[ftrack_id]["final_entity"] = {}
+            self.entities_dict[ftrack_id]["final_entity"]["name"] = (
                 entity_dict["name"]
             )
             data = {}
@@ -1192,58 +1219,59 @@ class SyncEntitiesFactory:
             for key, val in entity_dict.get("hier_attrs", []).items():
                 data[key] = val
 
-            if id == self.ft_project_id:
-                project_name = entity["full_name"]
-                data["code"] = entity["name"]
-                self.entities_dict[id]["final_entity"]["data"] = data
-                self.entities_dict[id]["final_entity"]["type"] = "project"
+            if ftrack_id != self.ft_project_id:
+                ent_path_items = [ent["name"] for ent in entity["link"]]
+                parents = ent_path_items[1:len(ent_path_items) - 1:]
 
-                proj_schema = entity["project_schema"]
-                task_types = proj_schema["_task_type_schema"]["types"]
-                proj_apps, warnings = get_project_apps(
-                    data.pop("applications", [])
-                )
-                for msg, items in warnings.items():
-                    if not msg or not items:
-                        continue
-                    self.report_items["warning"][msg] = items
-
-                current_project_anatomy_data = get_anatomy_settings(
-                    project_name, exclude_locals=True
-                )
-                anatomy_tasks = current_project_anatomy_data["tasks"]
-                tasks = {}
-                default_type_data = {
-                    "short_name": ""
-                }
-                for task_type in task_types:
-                    task_type_name = task_type["name"]
-                    tasks[task_type_name] = copy.deepcopy(
-                        anatomy_tasks.get(task_type_name)
-                        or default_type_data
-                    )
-
-                project_config = {
-                    "tasks": tasks,
-                    "apps": proj_apps
-                }
-                for key, value in current_project_anatomy_data.items():
-                    if key in project_config or key == "attributes":
-                        continue
-                    project_config[key] = value
-
-                self.entities_dict[id]["final_entity"]["config"] = (
-                    project_config
-                )
+                data["parents"] = parents
+                data["tasks"] = self.entities_dict[ftrack_id].pop("tasks", {})
+                self.entities_dict[ftrack_id]["final_entity"]["data"] = data
+                self.entities_dict[ftrack_id]["final_entity"]["type"] = "asset"
                 continue
+            project_name = entity["full_name"]
+            data["code"] = entity["name"]
+            self.entities_dict[ftrack_id]["final_entity"]["data"] = data
+            self.entities_dict[ftrack_id]["final_entity"]["type"] = (
+                "project"
+            )
 
-            ent_path_items = [ent["name"] for ent in entity["link"]]
-            parents = ent_path_items[1:len(ent_path_items) - 1:]
+            proj_schema = entity["project_schema"]
+            task_types = proj_schema["_task_type_schema"]["types"]
+            proj_apps, warnings = get_project_apps(
+                data.pop("applications", [])
+            )
+            for msg, items in warnings.items():
+                if not msg or not items:
+                    continue
+                self.report_items["warning"][msg] = items
 
-            data["parents"] = parents
-            data["tasks"] = self.entities_dict[id].pop("tasks", {})
-            self.entities_dict[id]["final_entity"]["data"] = data
-            self.entities_dict[id]["final_entity"]["type"] = "asset"
+            current_project_anatomy_data = get_anatomy_settings(
+                project_name, exclude_locals=True
+            )
+            anatomy_tasks = current_project_anatomy_data["tasks"]
+            tasks = {}
+            default_type_data = {
+                "short_name": ""
+            }
+            for task_type in task_types:
+                task_type_name = task_type["name"]
+                tasks[task_type_name] = copy.deepcopy(
+                    anatomy_tasks.get(task_type_name)
+                    or default_type_data
+                )
+
+            project_config = {
+                "tasks": tasks,
+                "apps": proj_apps
+            }
+            for key, value in current_project_anatomy_data.items():
+                if key in project_config or key == "attributes":
+                    continue
+                project_config[key] = value
+
+            self.entities_dict[ftrack_id]["final_entity"]["config"] = (
+                project_config
+            )
 
         if not_set_ids:
             self.log.debug((
@@ -1303,15 +1331,15 @@ class SyncEntitiesFactory:
             create_ftrack_ids.append(self.ft_project_id)
 
         # make it go hierarchically
-        prepare_queue = Queue()
+        prepare_queue = collections.deque()
 
         for child_id in self.entities_dict[self.ft_project_id]["children"]:
-            prepare_queue.put(child_id)
+            prepare_queue.append(child_id)
 
-        while not prepare_queue.empty():
-            ftrack_id = prepare_queue.get()
+        while prepare_queue:
+            ftrack_id = prepare_queue.popleft()
             for child_id in self.entities_dict[ftrack_id]["children"]:
-                prepare_queue.put(child_id)
+                prepare_queue.append(child_id)
 
             entity_dict = self.entities_dict[ftrack_id]
             ent_path = self.get_ent_path(ftrack_id)
@@ -1426,25 +1454,47 @@ class SyncEntitiesFactory:
         parent_id = ent_dict["parent_id"]
         self.entities_dict[parent_id]["children"].remove(ftrack_id)
 
-        children_queue = Queue()
-        children_queue.put(ftrack_id)
-        while not children_queue.empty():
-            _ftrack_id = children_queue.get()
+        children_queue = collections.deque()
+        children_queue.append(ftrack_id)
+        while children_queue:
+            _ftrack_id = children_queue.popleft()
             entity_dict = self.entities_dict.pop(_ftrack_id, {"children": []})
             for child_id in entity_dict["children"]:
-                children_queue.put(child_id)
+                children_queue.append(child_id)
+
+    def set_input_links(self):
+        ftrack_ids = set(self.create_ftrack_ids) | set(self.update_ftrack_ids)
+
+        input_links_by_ftrack_id = self._get_input_links(ftrack_ids)
+
+        for ftrack_id in ftrack_ids:
+            input_links = []
+            final_entity = self.entities_dict[ftrack_id]["final_entity"]
+            final_entity["data"]["inputLinks"] = input_links
+            link_ids = input_links_by_ftrack_id[ftrack_id]
+            if not link_ids:
+                continue
+
+            for ftrack_link_id in link_ids:
+                mongo_id = self.ftrack_avalon_mapper.get(ftrack_link_id)
+                if mongo_id is not None:
+                    input_links.append({
+                        "id": ObjectId(mongo_id),
+                        "linkedBy": "ftrack",
+                        "type": "breakdown"
+                    })
 
     def prepare_changes(self):
         self.log.debug("* Preparing changes for avalon/ftrack")
         hierarchy_changing_ids = []
         ignore_keys = collections.defaultdict(list)
 
-        update_queue = Queue()
+        update_queue = collections.deque()
         for ftrack_id in self.update_ftrack_ids:
-            update_queue.put(ftrack_id)
+            update_queue.append(ftrack_id)
 
-        while not update_queue.empty():
-            ftrack_id = update_queue.get()
+        while update_queue:
+            ftrack_id = update_queue.popleft()
             if ftrack_id == self.ft_project_id:
                 changes = self.prepare_project_changes()
                 if changes:
@@ -1720,7 +1770,7 @@ class SyncEntitiesFactory:
                 new_entity_id = self.create_ftrack_ent_from_avalon_ent(
                     av_entity, parent_id
                 )
-                update_queue.put(new_entity_id)
+                update_queue.append(new_entity_id)
 
             if new_entity_id:
                 ftrack_ent_dict["entity"]["parent_id"] = new_entity_id
@@ -1807,9 +1857,28 @@ class SyncEntitiesFactory:
         for ftrack_id in self.create_ftrack_ids:
             # CHECK it is possible that entity was already created
             # because is parent of another entity which was processed first
-            if ftrack_id in self.ftrack_avalon_mapper:
-                continue
-            self.create_avalon_entity(ftrack_id)
+            if ftrack_id not in self.ftrack_avalon_mapper:
+                self.create_avalon_entity(ftrack_id)
+
+        self.set_input_links()
+
+        unarchive_writes = []
+        for item in self.unarchive_list:
+            mongo_id = item["_id"]
+            unarchive_writes.append(ReplaceOne(
+                {"_id": mongo_id},
+                item
+            ))
+            av_ent_path_items = item["data"]["parents"]
+            av_ent_path_items.append(item["name"])
+            av_ent_path = "/".join(av_ent_path_items)
+            self.log.debug(
+                "Entity was unarchived <{}>".format(av_ent_path)
+            )
+            self.remove_from_archived(mongo_id)
+
+        if unarchive_writes:
+            self.dbcon.bulk_write(unarchive_writes)
 
         if len(self.create_list) > 0:
             self.dbcon.insert_many(self.create_list)
@@ -1900,14 +1969,8 @@ class SyncEntitiesFactory:
 
         if unarchive is False:
             self.create_list.append(item)
-            return
-        # If unarchive then replace entity data in database
-        self.dbcon.replace_one({"_id": new_id}, item)
-        self.remove_from_archived(mongo_id)
-        av_ent_path_items = item["data"]["parents"]
-        av_ent_path_items.append(item["name"])
-        av_ent_path = "/".join(av_ent_path_items)
-        self.log.debug("Entity was unarchived <{}>".format(av_ent_path))
+        else:
+            self.unarchive_list.append(item)
 
     def check_unarchivation(self, ftrack_id, mongo_id, name):
         archived_by_id = self.avalon_archived_by_id.get(mongo_id)
@@ -2024,14 +2087,14 @@ class SyncEntitiesFactory:
         entity["custom_attributes"][CUST_ATTR_ID_KEY] = str(new_id)
 
     def _bubble_changeability(self, unchangeable_ids):
-        unchangeable_queue = Queue()
+        unchangeable_queue = collections.deque()
         for entity_id in unchangeable_ids:
-            unchangeable_queue.put((entity_id, False))
+            unchangeable_queue.append((entity_id, False))
 
         processed_parents_ids = []
         subsets_to_remove = []
-        while not unchangeable_queue.empty():
-            entity_id, child_is_archived = unchangeable_queue.get()
+        while unchangeable_queue:
+            entity_id, child_is_archived = unchangeable_queue.popleft()
             # skip if already processed
             if entity_id in processed_parents_ids:
                 continue
@@ -2067,7 +2130,9 @@ class SyncEntitiesFactory:
             parent_id = entity["data"]["visualParent"]
             if parent_id is None:
                 continue
-            unchangeable_queue.put((str(parent_id), child_is_archived))
+            unchangeable_queue.append(
+                (str(parent_id), child_is_archived)
+            )
 
         self._delete_subsets_without_asset(subsets_to_remove)
 
@@ -2150,16 +2215,18 @@ class SyncEntitiesFactory:
         self.dbcon.bulk_write(mongo_changes_bulk)
 
     def reload_parents(self, hierarchy_changing_ids):
-        parents_queue = Queue()
-        parents_queue.put((self.ft_project_id, [], False))
-        while not parents_queue.empty():
-            ftrack_id, parent_parents, changed = parents_queue.get()
+        parents_queue = collections.deque()
+        parents_queue.append((self.ft_project_id, [], False))
+        while parents_queue:
+            ftrack_id, parent_parents, changed = parents_queue.popleft()
             _parents = copy.deepcopy(parent_parents)
             if ftrack_id not in hierarchy_changing_ids and not changed:
                 if ftrack_id != self.ft_project_id:
                     _parents.append(self.entities_dict[ftrack_id]["name"])
                 for child_id in self.entities_dict[ftrack_id]["children"]:
-                    parents_queue.put((child_id, _parents, changed))
+                    parents_queue.append(
+                        (child_id, _parents, changed)
+                    )
                 continue
 
             changed = True
@@ -2170,7 +2237,9 @@ class SyncEntitiesFactory:
 
             _parents.append(self.entities_dict[ftrack_id]["name"])
             for child_id in self.entities_dict[ftrack_id]["children"]:
-                parents_queue.put((child_id, _parents, changed))
+                parents_queue.append(
+                    (child_id, _parents, changed)
+                )
 
             if ftrack_id in self.create_ftrack_ids:
                 mongo_id = self.ftrack_avalon_mapper[ftrack_id]

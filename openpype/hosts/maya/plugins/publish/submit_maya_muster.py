@@ -1,13 +1,14 @@
 import os
 import json
 import getpass
-import appdirs
 import platform
+
+import appdirs
+import requests
 
 from maya import cmds
 
 from avalon import api
-from avalon.vendor import requests
 
 import pyblish.api
 from openpype.hosts.maya.api import lib
@@ -383,7 +384,7 @@ class MayaSubmitMuster(pyblish.api.InstancePlugin):
                     "attributes": {
                         "environmental_variables": {
                             "value": ", ".join("{!s}={!r}".format(k, v)
-                                               for (k, v) in env.iteritems()),
+                                               for (k, v) in env.items()),
 
                             "state": True,
                             "subst": False

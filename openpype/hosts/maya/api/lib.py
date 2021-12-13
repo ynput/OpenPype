@@ -2,26 +2,28 @@
 
 import re
 import os
+import platform
 import uuid
 import math
 
-import bson
 import json
 import logging
 import itertools
 import contextlib
 from collections import OrderedDict, defaultdict
 from math import ceil
+from six import string_types
+import bson
 
 from maya import cmds, mel
 import maya.api.OpenMaya as om
 
 from avalon import api, maya, io, pipeline
-from avalon.vendor.six import string_types
 import avalon.maya.lib
 import avalon.maya.interactive
 
 from openpype import lib
+from openpype.api import get_anatomy_settings
 
 
 log = logging.getLogger(__name__)
@@ -437,7 +439,8 @@ def empty_sets(sets, force=False):
             cmds.connectAttr(src, dest)
 
         # Restore original members
-        for origin_set, members in original.iteritems():
+        _iteritems = getattr(original, "iteritems", original.items)
+        for origin_set, members in _iteritems():
             cmds.sets(members, forceElement=origin_set)
 
 
@@ -581,7 +584,7 @@ def get_shader_assignments_from_shapes(shapes, components=True):
 
         # Build a mapping from parent to shapes to include in lookup.
         transforms = {shape.rsplit("|", 1)[0]: shape for shape in shapes}
-        lookup = set(shapes + transforms.keys())
+        lookup = set(shapes) | set(transforms.keys())
 
         component_assignments = defaultdict(list)
         for shading_group in assignments.keys():
@@ -669,7 +672,8 @@ def displaySmoothness(nodes,
         yield
     finally:
         # Revert state
-        for node, state in originals.iteritems():
+        _iteritems = getattr(originals, "iteritems", originals.items)
+        for node, state in _iteritems():
             if state:
                 cmds.displaySmoothness(node, **state)
 
@@ -712,7 +716,8 @@ def no_display_layers(nodes):
         yield
     finally:
         # Restore original members
-        for layer, members in original.iteritems():
+        _iteritems = getattr(original, "iteritems", original.items)
+        for layer, members in _iteritems():
             cmds.editDisplayLayerMembers(layer, members, noRecurse=True)
 
 
@@ -1819,7 +1824,7 @@ def set_scene_fps(fps, update=True):
     cmds.file(modified=True)
 
 
-def set_scene_resolution(width, height):
+def set_scene_resolution(width, height, pixelAspect):
     """Set the render resolution
 
     Args:
@@ -1847,6 +1852,36 @@ def set_scene_resolution(width, height):
     cmds.setAttr("%s.width" % control_node, width)
     cmds.setAttr("%s.height" % control_node, height)
 
+    deviceAspectRatio = ((float(width) / float(height)) * float(pixelAspect))
+    cmds.setAttr("%s.deviceAspectRatio" % control_node, deviceAspectRatio)
+    cmds.setAttr("%s.pixelAspect" % control_node, pixelAspect)
+
+
+def reset_scene_resolution():
+    """Apply the scene resolution  from the project definition
+
+    scene resolution can be overwritten by an asset if the asset.data contains
+    any information regarding scene resolution .
+
+    Returns:
+        None
+    """
+
+    project_doc = io.find_one({"type": "project"})
+    project_data = project_doc["data"]
+    asset_data = lib.get_asset()["data"]
+
+    # Set project resolution
+    width_key = "resolutionWidth"
+    height_key = "resolutionHeight"
+    pixelAspect_key = "pixelAspect"
+
+    width = asset_data.get(width_key, project_data.get(width_key, 1920))
+    height = asset_data.get(height_key, project_data.get(height_key, 1080))
+    pixelAspect = asset_data.get(pixelAspect_key,
+                                 project_data.get(pixelAspect_key, 1))
+
+    set_scene_resolution(width, height, pixelAspect)
 
 def set_context_settings():
     """Apply the project settings from the project definition
@@ -1873,17 +1908,13 @@ def set_context_settings():
     api.Session["AVALON_FPS"] = str(fps)
     set_scene_fps(fps)
 
-    # Set project resolution
-    width_key = "resolutionWidth"
-    height_key = "resolutionHeight"
-
-    width = asset_data.get(width_key, project_data.get(width_key, 1920))
-    height = asset_data.get(height_key, project_data.get(height_key, 1080))
-
-    set_scene_resolution(width, height)
+    reset_scene_resolution()
 
     # Set frame range.
     avalon.maya.interactive.reset_frame_range()
+
+    # Set colorspace
+    set_colorspace()
 
 
 # Valid FPS
@@ -1905,7 +1936,7 @@ def validate_fps():
 
     if current_fps != fps:
 
-        from avalon.vendor.Qt import QtWidgets
+        from Qt import QtWidgets
         from ...widgets import popup
 
         # Find maya main window
@@ -2152,10 +2183,11 @@ def load_capture_preset(data=None):
     for key in preset['Display Options']:
         if key.startswith('background'):
             disp_options[key] = preset['Display Options'][key]
-            disp_options[key][0] = (float(disp_options[key][0])/255)
-            disp_options[key][1] = (float(disp_options[key][1])/255)
-            disp_options[key][2] = (float(disp_options[key][2])/255)
-            disp_options[key].pop()
+            if len(disp_options[key]) == 4:
+                disp_options[key][0] = (float(disp_options[key][0])/255)
+                disp_options[key][1] = (float(disp_options[key][1])/255)
+                disp_options[key][2] = (float(disp_options[key][2])/255)
+                disp_options[key].pop()
         else:
             disp_options['displayGradient'] = True
 
@@ -2662,7 +2694,7 @@ def update_content_on_context_change():
 
 
 def show_message(title, msg):
-    from avalon.vendor.Qt import QtWidgets
+    from Qt import QtWidgets
     from openpype.widgets import message_window
 
     # Find maya main window
@@ -2740,3 +2772,49 @@ def iter_shader_edits(relationships, shader_nodes, nodes_by_id, label=None):
                "uuid": data["uuid"],
                "nodes": nodes,
                "attributes": attr_value}
+
+
+def set_colorspace():
+    """Set Colorspace from project configuration
+    """
+    project_name = os.getenv("AVALON_PROJECT")
+    imageio = get_anatomy_settings(project_name)["imageio"]["maya"]
+    root_dict = imageio["colorManagementPreference"]
+
+    if not isinstance(root_dict, dict):
+        msg = "set_colorspace(): argument should be dictionary"
+        log.error(msg)
+
+    log.debug(">> root_dict: {}".format(root_dict))
+
+    # first enable color management
+    cmds.colorManagementPrefs(e=True, cmEnabled=True)
+    cmds.colorManagementPrefs(e=True, ocioRulesEnabled=True)
+
+    # second set config path
+    if root_dict.get("configFilePath"):
+        unresolved_path = root_dict["configFilePath"]
+        ocio_paths = unresolved_path[platform.system().lower()]
+
+        resolved_path = None
+        for ocio_p in ocio_paths:
+            resolved_path = str(ocio_p).format(**os.environ)
+            if not os.path.exists(resolved_path):
+                continue
+
+        if resolved_path:
+            filepath = str(resolved_path).replace("\\", "/")
+            cmds.colorManagementPrefs(e=True, configFilePath=filepath)
+            cmds.colorManagementPrefs(e=True, cmConfigFileEnabled=True)
+            log.debug("maya '{}' changed to: {}".format(
+                "configFilePath", resolved_path))
+            root_dict.pop("configFilePath")
+        else:
+            cmds.colorManagementPrefs(e=True, cmConfigFileEnabled=False)
+            cmds.colorManagementPrefs(e=True, configFilePath="" )
+
+    # third set rendering space and view transform
+    renderSpace = root_dict["renderSpace"]
+    cmds.colorManagementPrefs(e=True, renderingSpaceName=renderSpace)
+    viewTransform = root_dict["viewTransform"]
+    cmds.colorManagementPrefs(e=True, viewTransformName=viewTransform)

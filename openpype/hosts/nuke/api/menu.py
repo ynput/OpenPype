@@ -1,89 +1,127 @@
 import os
 import nuke
-from avalon.api import Session
+from avalon.nuke.pipeline import get_main_window
 
 from .lib import WorkfileSettings
 from openpype.api import Logger, BuildWorkfile, get_current_project_settings
 from openpype.tools.utils import host_tools
 
+
 log = Logger().get_logger(__name__)
 
 menu_label = os.environ["AVALON_LABEL"]
+context_label = None
 
-def install():
+
+def change_context_label(*args):
+    global context_label
     menubar = nuke.menu("Nuke")
     menu = menubar.findItem(menu_label)
 
-    # replace reset resolution from avalon core to pype's
-    name = "Work Files..."
-    rm_item = [
-        (i, item) for i, item in enumerate(menu.items()) if name in item.name()
-    ][0]
-
-    log.debug("Changing Item: {}".format(rm_item))
-
-    menu.removeItem(rm_item[1].name())
-    menu.addCommand(
-        name,
-        host_tools.show_workfiles,
-        index=2
+    label = "{0}, {1}".format(
+        os.environ["AVALON_ASSET"], os.environ["AVALON_TASK"]
     )
-    menu.addSeparator(index=3)
-    # replace reset resolution from avalon core to pype's
-    name = "Reset Resolution"
-    new_name = "Set Resolution"
+
     rm_item = [
-        (i, item) for i, item in enumerate(menu.items()) if name in item.name()
+        (i, item) for i, item in enumerate(menu.items())
+        if context_label in item.name()
     ][0]
 
-    log.debug("Changing Item: {}".format(rm_item))
-    # rm_item[1].setEnabled(False)
     menu.removeItem(rm_item[1].name())
-    menu.addCommand(
-        new_name,
-        lambda: WorkfileSettings().reset_resolution(),
+
+    context_action = menu.addCommand(
+        label,
         index=(rm_item[0])
     )
+    context_action.setEnabled(False)
 
-    # replace reset frame range from avalon core to pype's
-    name = "Reset Frame Range"
-    new_name = "Set Frame Range"
-    rm_item = [
-        (i, item) for i, item in enumerate(menu.items()) if name in item.name()
-    ][0]
-    log.debug("Changing Item: {}".format(rm_item))
-    # rm_item[1].setEnabled(False)
-    menu.removeItem(rm_item[1].name())
-    menu.addCommand(
-        new_name,
-        lambda: WorkfileSettings().reset_frame_range_handles(),
-        index=(rm_item[0])
-    )
+    log.info("Task label changed from `{}` to `{}`".format(
+        context_label, label))
 
-    # add colorspace menu item
-    name = "Set Colorspace"
-    menu.addCommand(
-        name, lambda: WorkfileSettings().set_colorspace()
-    )
-    log.debug("Adding menu item: {}".format(name))
+    context_label = label
 
-    # add item that applies all setting above
-    name = "Apply All Settings"
-    menu.addCommand(
-        name,
-        lambda: WorkfileSettings().set_context_settings()
+
+
+def install():
+    from openpype.hosts.nuke.api import reload_config
+
+    global context_label
+
+    # uninstall original avalon menu
+    uninstall()
+
+    main_window = get_main_window()
+    menubar = nuke.menu("Nuke")
+    menu = menubar.addMenu(menu_label)
+
+    label = "{0}, {1}".format(
+        os.environ["AVALON_ASSET"], os.environ["AVALON_TASK"]
     )
-    log.debug("Adding menu item: {}".format(name))
+    context_label = label
+    context_action = menu.addCommand(label)
+    context_action.setEnabled(False)
 
     menu.addSeparator()
-
-    # add workfile builder menu item
-    name = "Build Workfile"
     menu.addCommand(
-        name, lambda: BuildWorkfile().process()
+        "Work Files...",
+        lambda: host_tools.show_workfiles(parent=main_window)
     )
-    log.debug("Adding menu item: {}".format(name))
 
+    menu.addSeparator()
+    menu.addCommand(
+        "Create...",
+        lambda: host_tools.show_creator(parent=main_window)
+    )
+    menu.addCommand(
+        "Load...",
+        lambda: host_tools.show_loader(
+            parent=main_window,
+            use_context=True
+        )
+    )
+    menu.addCommand(
+        "Publish...",
+        lambda: host_tools.show_publish(parent=main_window)
+    )
+    menu.addCommand(
+        "Manage...",
+        lambda: host_tools.show_scene_inventory(parent=main_window)
+    )
+
+    menu.addSeparator()
+    menu.addCommand(
+        "Set Resolution",
+        lambda: WorkfileSettings().reset_resolution()
+    )
+    menu.addCommand(
+        "Set Frame Range",
+        lambda: WorkfileSettings().reset_frame_range_handles()
+    )
+    menu.addCommand(
+        "Set Colorspace",
+        lambda: WorkfileSettings().set_colorspace()
+    )
+    menu.addCommand(
+        "Apply All Settings",
+        lambda: WorkfileSettings().set_context_settings()
+    )
+
+    menu.addSeparator()
+    menu.addCommand(
+        "Build Workfile",
+        lambda: BuildWorkfile().process()
+    )
+
+    menu.addSeparator()
+    menu.addCommand(
+        "Experimental tools...",
+        lambda: host_tools.show_experimental_tools_dialog(parent=main_window)
+    )
+
+    # add reload pipeline only in debug mode
+    if bool(os.getenv("NUKE_DEBUG")):
+        menu.addSeparator()
+        menu.addCommand("Reload Pipeline", reload_config)
 
     # adding shortcuts
     add_shortcuts_from_presets()

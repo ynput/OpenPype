@@ -26,14 +26,17 @@ class CollectUsername(pyblish.api.ContextPlugin):
     """
     order = pyblish.api.CollectorOrder - 0.488
     label = "Collect ftrack username"
-    hosts = ["webpublisher"]
+    hosts = ["webpublisher", "photoshop"]
+    targets = ["remotepublish", "filespublish", "tvpaint_worker"]
 
     _context = None
 
     def process(self, context):
+        self.log.info("CollectUsername")
+
         os.environ["FTRACK_API_USER"] = os.environ["FTRACK_BOT_API_USER"]
         os.environ["FTRACK_API_KEY"] = os.environ["FTRACK_BOT_API_KEY"]
-        self.log.info("CollectUsername")
+
         for instance in context:
             email = instance.data["user_email"]
             self.log.info("email:: {}".format(email))

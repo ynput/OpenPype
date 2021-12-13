@@ -461,13 +461,8 @@ class ApplicationExecutable:
         # On MacOS check if exists path to executable when ends with `.app`
         # - it is common that path will lead to "/Applications/Blender" but
         #   real path is "/Applications/Blender.app"
-        if (
-            platform.system().lower() == "darwin"
-            and not os.path.exists(executable)
-        ):
-            _executable = executable + ".app"
-            if os.path.exists(_executable):
-                executable = _executable
+        if platform.system().lower() == "darwin":
+            executable = self.macos_executable_prep(executable)
 
         self.executable_path = executable
 
@@ -476,6 +471,45 @@ class ApplicationExecutable:
 
     def __repr__(self):
         return "<{}> {}".format(self.__class__.__name__, self.executable_path)
+
+    @staticmethod
+    def macos_executable_prep(executable):
+        """Try to find full path to executable file.
+
+        Real executable is stored in '*.app/Contents/MacOS/<executable>'.
+
+        Having path to '*.app' gives ability to read it's plist info and
+        use "CFBundleExecutable" key from plist to know what is "executable."
+
+        Plist is stored in '*.app/Contents/Info.plist'.
+
+        This is because some '*.app' directories don't have same permissions
+        as real executable.
+        """
+        # Try to find if there is `.app` file
+        if not os.path.exists(executable):
+            _executable = executable + ".app"
+            if os.path.exists(_executable):
+                executable = _executable
+
+        # Try to find real executable if executable has `Contents` subfolder
+        contents_dir = os.path.join(executable, "Contents")
+        if os.path.exists(contents_dir):
+            executable_filename = None
+            # Load plist file and check for bundle executable
+            plist_filepath = os.path.join(contents_dir, "Info.plist")
+            if os.path.exists(plist_filepath):
+                import plistlib
+
+                parsed_plist = plistlib.readPlist(plist_filepath)
+                executable_filename = parsed_plist.get("CFBundleExecutable")
+
+            if executable_filename:
+                executable = os.path.join(
+                    contents_dir, "MacOS", executable_filename
+                )
+
+        return executable
 
     def as_args(self):
         return [self.executable_path]
@@ -1246,23 +1280,12 @@ def prepare_context_environments(data):
 
     anatomy = data["anatomy"]
 
-    asset_tasks = asset_doc.get("data", {}).get("tasks") or {}
-    task_info = asset_tasks.get(task_name) or {}
-    task_type = task_info.get("type")
+    task_type = workdir_data["task"]["type"]
     # Temp solution how to pass task type to `_prepare_last_workfile`
     data["task_type"] = task_type
 
-    workfile_template_key = get_workfile_template_key(
-        task_type,
-        app.host_name,
-        project_name=project_name,
-        project_settings=project_settings
-    )
-
     try:
-        workdir = get_workdir_with_workdir_data(
-            workdir_data, anatomy, template_key=workfile_template_key
-        )
+        workdir = get_workdir_with_workdir_data(workdir_data, anatomy)
 
     except Exception as exc:
         raise ApplicationLaunchFailed(
@@ -1295,10 +1318,10 @@ def prepare_context_environments(data):
     )
     data["env"].update(context_env)
 
-    _prepare_last_workfile(data, workdir, workfile_template_key)
+    _prepare_last_workfile(data, workdir)
 
 
-def _prepare_last_workfile(data, workdir, workfile_template_key):
+def _prepare_last_workfile(data, workdir):
     """last workfile workflow preparation.
 
     Function check if should care about last workfile workflow and tries
@@ -1361,6 +1384,10 @@ def _prepare_last_workfile(data, workdir, workfile_template_key):
             anatomy = data["anatomy"]
             # Find last workfile
             file_template = anatomy.templates["work"]["file"]
+            # Replace {task} by '{task[name]}' for backward compatibility
+            if '{task}' in file_template:
+                file_template = file_template.replace('{task}', '{task[name]}')
+
             workdir_data.update({
                 "version": 1,
                 "user": get_openpype_username(),

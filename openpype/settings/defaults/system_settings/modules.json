@@ -167,6 +167,16 @@
             "ffmpeg": 48
         }
     },
+    "royalrender": {
+        "enabled": false,
+        "rr_paths": {
+            "default": {
+                "windows": "",
+                "darwin": "",
+                "linux": ""
+            }
+        }
+    },
     "log_viewer": {
         "enabled": true
     },
@@ -178,5 +188,13 @@
     },
     "slack": {
         "enabled": false
+    },
+    "job_queue": {
+        "server_url": "",
+        "jobs_root": {
+            "windows": "",
+            "darwin": "",
+            "linux": ""
+        }
     }
 }

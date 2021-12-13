@@ -132,6 +132,19 @@
                     ]
                 },
                 {
+                    "key": "baking",
+                    "type": "dict",
+                    "label": "Extract-review baking profile",
+                    "collapsible": false,
+                    "children": [
+                        {
+                            "type": "text",
+                            "key": "viewerProcess",
+                            "label": "Viewer Process"
+                        }
+                    ]
+                },
+                {
                     "key": "workfile",
                     "type": "dict",
                     "label": "Workfile",
@@ -357,6 +370,38 @@
                         }
                     ]
                 }
+            ]
+        },
+        {
+            "key": "maya",
+            "type": "dict",
+            "label": "Maya",
+            "children": [
+                {
+                    "key": "colorManagementPreference",
+                    "type": "dict",
+                    "label": "Color Managment Preference",
+                    "collapsible": false,
+                    "children": [
+                        {
+                            "type": "path",
+                            "key": "configFilePath",
+                            "label": "OCIO Config File Path",
+                            "multiplatform": true,
+                            "multipath": true
+                        },
+                        {
+                            "type": "text",
+                            "key": "renderSpace",
+                            "label": "Rendering Space"
+                        },
+                        {
+                            "type": "text",
+                            "key": "viewTransform",
+                            "label": "Viewer Transform"
+                        }
+                    ]
+            }
             ]
         }
     ]

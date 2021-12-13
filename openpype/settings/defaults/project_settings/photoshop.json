@@ -12,6 +12,16 @@
             "optional": true,
             "active": true
         },
+        "CollectRemoteInstances": {
+            "color_code_mapping": [
+                {
+                    "color_code": [],
+                    "layer_name_regex": [],
+                    "family": "",
+                    "subset_template_name": ""
+                }
+            ]
+        },
         "ExtractImage": {
             "formats": [
                 "png",
@@ -20,8 +30,7 @@
         },
         "ExtractReview": {
             "jpg_options": {
-                "tags": [
-                ]
+                "tags": []
             },
             "mov_options": {
                 "tags": [

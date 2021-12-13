@@ -2,8 +2,8 @@ import sys
 
 from Qt import QtWidgets, QtCore, QtGui
 
-from avalon import style
 from avalon.api import AvalonMongoDB
+from openpype import style
 from openpype.tools.utils import lib as tools_lib
 from openpype.tools.loader.widgets import (
     ThumbnailWidget,
@@ -11,7 +11,7 @@ from openpype.tools.loader.widgets import (
     FamilyListView,
     RepresentationWidget
 )
-from openpype.tools.utils.widgets import AssetWidget
+from openpype.tools.utils.assets_widget import MultiSelectAssetsWidget
 
 from openpype.modules import ModulesManager
 
@@ -28,157 +28,180 @@ class LibraryLoaderWindow(QtWidgets.QDialog):
     tool_title = "Library Loader 0.5"
     tool_name = "library_loader"
 
+    message_timeout = 5000
+
     def __init__(
-        self, parent=None, icon=None, show_projects=False, show_libraries=True
+        self, parent=None, show_projects=False, show_libraries=True
     ):
         super(LibraryLoaderWindow, self).__init__(parent)
 
-        self._initial_refresh = False
-        self._ignore_project_change = False
-
-        # Enable minimize and maximize for app
+        # Window modifications
         self.setWindowTitle(self.tool_title)
         window_flags = QtCore.Qt.Window
         if not parent:
             window_flags |= QtCore.Qt.WindowStaysOnTopHint
         self.setWindowFlags(window_flags)
         self.setFocusPolicy(QtCore.Qt.StrongFocus)
-        if icon is not None:
-            self.setWindowIcon(icon)
-        # self.setAttribute(QtCore.Qt.WA_DeleteOnClose)
 
-        body = QtWidgets.QWidget()
-        footer = QtWidgets.QWidget()
-        footer.setFixedHeight(20)
+        icon = QtGui.QIcon(style.app_icon_path())
+        self.setWindowIcon(icon)
 
-        container = QtWidgets.QWidget()
+        self._first_show = True
+        self._initial_refresh = False
+        self._ignore_project_change = False
 
-        self.dbcon = AvalonMongoDB()
-        self.dbcon.install()
-        self.dbcon.Session["AVALON_PROJECT"] = None
+        dbcon = AvalonMongoDB()
+        dbcon.install()
+        dbcon.Session["AVALON_PROJECT"] = None
+
+        self.dbcon = dbcon
 
         self.show_projects = show_projects
         self.show_libraries = show_libraries
 
         # Groups config
-        self.groups_config = tools_lib.GroupsConfig(self.dbcon)
-        self.family_config_cache = tools_lib.FamilyConfigCache(self.dbcon)
+        self.groups_config = tools_lib.GroupsConfig(dbcon)
+        self.family_config_cache = tools_lib.FamilyConfigCache(dbcon)
 
-        assets = AssetWidget(
-            self.dbcon, multiselection=True, parent=self
+        # UI initialization
+        main_splitter = QtWidgets.QSplitter(self)
+
+        # --- Left part ---
+        left_side_splitter = QtWidgets.QSplitter(main_splitter)
+        left_side_splitter.setOrientation(QtCore.Qt.Vertical)
+
+        # Project combobox
+        projects_combobox = QtWidgets.QComboBox(left_side_splitter)
+        combobox_delegate = QtWidgets.QStyledItemDelegate(self)
+        projects_combobox.setItemDelegate(combobox_delegate)
+
+        # Assets widget
+        assets_widget = MultiSelectAssetsWidget(
+            dbcon, parent=left_side_splitter
         )
-        families = FamilyListView(
-            self.dbcon, self.family_config_cache, parent=self
+
+        # Families widget
+        families_filter_view = FamilyListView(
+            dbcon, self.family_config_cache, left_side_splitter
         )
-        subsets = LibrarySubsetWidget(
-            self.dbcon,
+        left_side_splitter.addWidget(projects_combobox)
+        left_side_splitter.addWidget(assets_widget)
+        left_side_splitter.addWidget(families_filter_view)
+        left_side_splitter.setStretchFactor(1, 65)
+        left_side_splitter.setStretchFactor(2, 35)
+
+        # --- Middle part ---
+        # Subsets widget
+        subsets_widget = LibrarySubsetWidget(
+            dbcon,
             self.groups_config,
             self.family_config_cache,
             tool_name=self.tool_name,
             parent=self
         )
 
-        version = VersionWidget(self.dbcon)
-        thumbnail = ThumbnailWidget(self.dbcon)
-
-        # Project
-        self.combo_projects = QtWidgets.QComboBox()
-
-        # Create splitter to show / hide family filters
-        asset_filter_splitter = QtWidgets.QSplitter()
-        asset_filter_splitter.setOrientation(QtCore.Qt.Vertical)
-        asset_filter_splitter.addWidget(self.combo_projects)
-        asset_filter_splitter.addWidget(assets)
-        asset_filter_splitter.addWidget(families)
-        asset_filter_splitter.setStretchFactor(1, 65)
-        asset_filter_splitter.setStretchFactor(2, 35)
-
-        manager = ModulesManager()
-        sync_server = manager.modules_by_name["sync_server"]
-
-        representations = RepresentationWidget(self.dbcon)
-        thumb_ver_splitter = QtWidgets.QSplitter()
+        # --- Right part ---
+        thumb_ver_splitter = QtWidgets.QSplitter(main_splitter)
         thumb_ver_splitter.setOrientation(QtCore.Qt.Vertical)
-        thumb_ver_splitter.addWidget(thumbnail)
-        thumb_ver_splitter.addWidget(version)
-        if sync_server.enabled:
-            thumb_ver_splitter.addWidget(representations)
+
+        thumbnail_widget = ThumbnailWidget(dbcon, parent=thumb_ver_splitter)
+        version_info_widget = VersionWidget(dbcon, parent=thumb_ver_splitter)
+
+        thumb_ver_splitter.addWidget(thumbnail_widget)
+        thumb_ver_splitter.addWidget(version_info_widget)
+
         thumb_ver_splitter.setStretchFactor(0, 30)
         thumb_ver_splitter.setStretchFactor(1, 35)
 
-        container_layout = QtWidgets.QHBoxLayout(container)
-        container_layout.setContentsMargins(0, 0, 0, 0)
-        split = QtWidgets.QSplitter()
-        split.addWidget(asset_filter_splitter)
-        split.addWidget(subsets)
-        split.addWidget(thumb_ver_splitter)
-        split.setSizes([180, 950, 200])
-        container_layout.addWidget(split)
+        manager = ModulesManager()
+        sync_server = manager.modules_by_name.get("sync_server")
+        sync_server_enabled = False
+        if sync_server is not None:
+            sync_server_enabled = sync_server.enabled
 
-        body_layout = QtWidgets.QHBoxLayout(body)
-        body_layout.addWidget(container)
-        body_layout.setContentsMargins(0, 0, 0, 0)
+        repres_widget = None
+        if sync_server_enabled:
+            repres_widget = RepresentationWidget(
+                dbcon, self.tool_name, parent=thumb_ver_splitter
+            )
+            thumb_ver_splitter.addWidget(repres_widget)
 
-        message = QtWidgets.QLabel()
-        message.hide()
+        main_splitter.addWidget(left_side_splitter)
+        main_splitter.addWidget(subsets_widget)
+        main_splitter.addWidget(thumb_ver_splitter)
+        if sync_server_enabled:
+            main_splitter.setSizes([250, 1000, 550])
+        else:
+            main_splitter.setSizes([250, 850, 200])
 
-        footer_layout = QtWidgets.QVBoxLayout(footer)
-        footer_layout.addWidget(message)
+        # --- Footer ---
+        footer_widget = QtWidgets.QWidget(self)
+        footer_widget.setFixedHeight(20)
+
+        message_label = QtWidgets.QLabel(footer_widget)
+
+        footer_layout = QtWidgets.QVBoxLayout(footer_widget)
         footer_layout.setContentsMargins(0, 0, 0, 0)
+        footer_layout.addWidget(message_label)
 
         layout = QtWidgets.QVBoxLayout(self)
-        layout.addWidget(body)
-        layout.addWidget(footer)
+        layout.addWidget(main_splitter)
+        layout.addWidget(footer_widget)
 
         self.data = {
-            "widgets": {
-                "families": families,
-                "assets": assets,
-                "subsets": subsets,
-                "version": version,
-                "thumbnail": thumbnail,
-                "representations": representations
-            },
-            "label": {
-                "message": message,
-            },
             "state": {
                 "assetIds": None
             }
         }
 
-        families.active_changed.connect(subsets.set_family_filters)
-        assets.selection_changed.connect(self.on_assetschanged)
-        assets.refresh_triggered.connect(self.on_assetschanged)
-        assets.view.clicked.connect(self.on_assetview_click)
-        subsets.active_changed.connect(self.on_subsetschanged)
-        subsets.version_changed.connect(self.on_versionschanged)
-        subsets.refreshed.connect(self._on_subset_refresh)
-        self.combo_projects.currentTextChanged.connect(self.on_project_change)
+        message_timer = QtCore.QTimer()
+        message_timer.setInterval(self.message_timeout)
+        message_timer.setSingleShot(True)
+
+        message_timer.timeout.connect(self._on_message_timeout)
+
+        families_filter_view.active_changed.connect(
+            self._on_family_filter_change
+        )
+        assets_widget.selection_changed.connect(self.on_assetschanged)
+        assets_widget.refresh_triggered.connect(self.on_assetschanged)
+        subsets_widget.active_changed.connect(self.on_subsetschanged)
+        subsets_widget.version_changed.connect(self.on_versionschanged)
+        subsets_widget.refreshed.connect(self._on_subset_refresh)
+        projects_combobox.currentTextChanged.connect(self.on_project_change)
 
         self.sync_server = sync_server
+        self._sync_server_enabled = sync_server_enabled
 
-        # Set default thumbnail on start
-        thumbnail.set_thumbnail(None)
+        self._combobox_delegate = combobox_delegate
+        self._projects_combobox = projects_combobox
+        self._assets_widget = assets_widget
+        self._families_filter_view = families_filter_view
 
-        # Defaults
-        if sync_server.enabled:
-            split.setSizes([250, 1000, 550])
-            self.resize(1800, 900)
-        else:
-            split.setSizes([250, 850, 200])
-            self.resize(1300, 700)
+        self._subsets_widget = subsets_widget
+
+        self._version_info_widget = version_info_widget
+        self._thumbnail_widget = thumbnail_widget
+        self._repres_widget = repres_widget
+
+        self._message_label = message_label
+        self._message_timer = message_timer
 
     def showEvent(self, event):
         super(LibraryLoaderWindow, self).showEvent(event)
-        if not self._initial_refresh:
-            self.refresh()
+        if self._first_show:
+            self._first_show = False
+            self.setStyleSheet(style.load_stylesheet())
+            if self._sync_server_enabled:
+                self.resize(1800, 900)
+            else:
+                self.resize(1300, 700)
 
-    def on_assetview_click(self, *args):
-        subsets_widget = self.data["widgets"]["subsets"]
-        selection_model = subsets_widget.view.selectionModel()
-        if selection_model.selectedIndexes():
-            selection_model.clearSelection()
+            tools_lib.center_window(self)
+
+        if not self._initial_refresh:
+            self._initial_refresh = True
+            self.refresh()
 
     def _set_projects(self):
         # Store current project
@@ -187,7 +210,7 @@ class LibraryLoaderWindow(QtWidgets.QDialog):
         self._ignore_project_change = True
 
         # Cleanup
-        self.combo_projects.clear()
+        self._projects_combobox.clear()
 
         # Fill combobox with projects
         select_project_item = QtGui.QStandardItem("< Select project >")
@@ -202,18 +225,18 @@ class LibraryLoaderWindow(QtWidgets.QDialog):
             item.setData(project_name, QtCore.Qt.UserRole + 1)
             combobox_items.append(item)
 
-        root_item = self.combo_projects.model().invisibleRootItem()
+        root_item = self._projects_combobox.model().invisibleRootItem()
         root_item.appendRows(combobox_items)
 
         index = 0
         self._ignore_project_change = False
 
         if old_project_name:
-            index = self.combo_projects.findText(
+            index = self._projects_combobox.findText(
                 old_project_name, QtCore.Qt.MatchFixedString
             )
 
-        self.combo_projects.setCurrentIndex(index)
+        self._projects_combobox.setCurrentIndex(index)
 
     def get_filtered_projects(self):
         projects = list()
@@ -231,8 +254,8 @@ class LibraryLoaderWindow(QtWidgets.QDialog):
         if self._ignore_project_change:
             return
 
-        row = self.combo_projects.currentIndex()
-        index = self.combo_projects.model().index(row, 0)
+        row = self._projects_combobox.currentIndex()
+        index = self._projects_combobox.model().index(row, 0)
         project_name = index.data(QtCore.Qt.UserRole + 1)
 
         self.dbcon.Session["AVALON_PROJECT"] = project_name
@@ -245,11 +268,9 @@ class LibraryLoaderWindow(QtWidgets.QDialog):
                 "Config `%s` has no function `install`" % _config.__name__
             )
 
-        subsets = self.data["widgets"]["subsets"]
-        representations = self.data["widgets"]["representations"]
-
-        subsets.on_project_change(self.dbcon.Session["AVALON_PROJECT"])
-        representations.on_project_change(self.dbcon.Session["AVALON_PROJECT"])
+        self._subsets_widget.on_project_change(project_name)
+        if self._repres_widget:
+            self._repres_widget.on_project_change(project_name)
 
         self.family_config_cache.refresh()
         self.groups_config.refresh()
@@ -263,13 +284,7 @@ class LibraryLoaderWindow(QtWidgets.QDialog):
 
     @property
     def current_project(self):
-        if (
-            not self.dbcon.active_project() or
-            self.dbcon.active_project() == ""
-        ):
-            return None
-
-        return self.dbcon.active_project()
+        return self.dbcon.active_project() or None
 
     # -------------------------------
     # Delay calling blocking methods
@@ -292,12 +307,11 @@ class LibraryLoaderWindow(QtWidgets.QDialog):
         tools_lib.schedule(self._versionschanged, 150, channel="mongo")
 
     def _on_subset_refresh(self, has_item):
-        subsets_widget = self.data["widgets"]["subsets"]
-        families_view = self.data["widgets"]["families"]
-
-        subsets_widget.set_loading_state(loading=False, empty=not has_item)
-        families = subsets_widget.get_subsets_families()
-        families_view.set_enabled_families(families)
+        self._subsets_widget.set_loading_state(
+            loading=False, empty=not has_item
+        )
+        families = self._subsets_widget.get_subsets_families()
+        self._families_filter_view.set_enabled_families(families)
 
     def set_context(self, context, refresh=True):
         self.echo("Setting context: {}".format(context))
@@ -307,6 +321,9 @@ class LibraryLoaderWindow(QtWidgets.QDialog):
         )
 
     # ------------------------------
+    def _on_family_filter_change(self, families):
+        self._subsets_widget.set_family_filters(families)
+
     def _refresh(self):
         if not self._initial_refresh:
             self._initial_refresh = True
@@ -322,74 +339,55 @@ class LibraryLoaderWindow(QtWidgets.QDialog):
             )
             assert project_doc, "This is a bug"
 
-        assets_widget = self.data["widgets"]["assets"]
-        families_view = self.data["widgets"]["families"]
-        families_view.set_enabled_families(set())
-        families_view.refresh()
+        self._families_filter_view.set_enabled_families(set())
+        self._families_filter_view.refresh()
 
-        assets_widget.model.stop_fetch_thread()
-        assets_widget.refresh()
-        assets_widget.setFocus()
+        self._assets_widget.stop_refresh()
+        self._assets_widget.refresh()
+        self._assets_widget.setFocus()
 
     def clear_assets_underlines(self):
         last_asset_ids = self.data["state"]["assetIds"]
-        if not last_asset_ids:
-            return
-
-        assets_widget = self.data["widgets"]["assets"]
-        id_role = assets_widget.model.ObjectIdRole
-
-        for index in tools_lib.iter_model_rows(assets_widget.model, 0):
-            if index.data(id_role) not in last_asset_ids:
-                continue
-
-            assets_widget.model.setData(
-                index, [], assets_widget.model.subsetColorsRole
-            )
+        if last_asset_ids:
+            self._assets_widget.clear_underlines()
 
     def _assetschanged(self):
         """Selected assets have changed"""
-        assets_widget = self.data["widgets"]["assets"]
-        subsets_widget = self.data["widgets"]["subsets"]
-        subsets_model = subsets_widget.model
+        subsets_model = self._subsets_widget.model
 
         subsets_model.clear()
         self.clear_assets_underlines()
 
         if not self.dbcon.Session.get("AVALON_PROJECT"):
-            subsets_widget.set_loading_state(
+            self._subsets_widget.set_loading_state(
                 loading=False,
                 empty=True
             )
             return
 
-        # filter None docs they are silo
-        asset_docs = assets_widget.get_selected_assets()
-        if len(asset_docs) == 0:
-            return
+        asset_ids = self._assets_widget.get_selected_asset_ids()
 
-        asset_ids = [asset_doc["_id"] for asset_doc in asset_docs]
         # Start loading
-        subsets_widget.set_loading_state(
+        self._subsets_widget.set_loading_state(
             loading=bool(asset_ids),
             empty=True
         )
 
         subsets_model.set_assets(asset_ids)
-        subsets_widget.view.setColumnHidden(
+        self._subsets_widget.view.setColumnHidden(
             subsets_model.Columns.index("asset"),
             len(asset_ids) < 2
         )
 
         # Clear the version information on asset change
-        self.data["widgets"]["version"].set_version(None)
-        self.data["widgets"]["thumbnail"].set_thumbnail(asset_docs)
+        self._version_info_widget.set_version(None)
+        self._thumbnail_widget.set_thumbnail(asset_ids)
 
         self.data["state"]["assetIds"] = asset_ids
 
-        representations = self.data["widgets"]["representations"]
         # reset repre list
-        representations.set_version_ids([])
+        if self._repres_widget:
+            self._repres_widget.set_version_ids([])
 
     def _subsetschanged(self):
         asset_ids = self.data["state"]["assetIds"]
@@ -398,10 +396,11 @@ class LibraryLoaderWindow(QtWidgets.QDialog):
             self._versionschanged()
             return
 
-        subsets = self.data["widgets"]["subsets"]
-        selected_subsets = subsets.selected_subsets(_merged=True, _other=False)
+        selected_subsets = self._subsets_widget.selected_subsets(
+            _merged=True, _other=False
+        )
 
-        asset_models = {}
+        asset_colors = {}
         asset_ids = []
         for subset_node in selected_subsets:
             asset_ids.extend(subset_node.get("assetIds", []))
@@ -409,37 +408,22 @@ class LibraryLoaderWindow(QtWidgets.QDialog):
 
         for subset_node in selected_subsets:
             for asset_id in asset_ids:
-                if asset_id not in asset_models:
-                    asset_models[asset_id] = []
+                if asset_id not in asset_colors:
+                    asset_colors[asset_id] = []
 
                 color = None
                 if asset_id in subset_node.get("assetIds", []):
                     color = subset_node["subsetColor"]
 
-                asset_models[asset_id].append(color)
+                asset_colors[asset_id].append(color)
 
-        self.clear_assets_underlines()
+        self._assets_widget.set_underline_colors(asset_colors)
 
-        assets_widget = self.data["widgets"]["assets"]
-        indexes = assets_widget.view.selectionModel().selectedRows()
-
-        for index in indexes:
-            id = index.data(assets_widget.model.ObjectIdRole)
-            if id not in asset_models:
-                continue
-
-            assets_widget.model.setData(
-                index, asset_models[id], assets_widget.model.subsetColorsRole
-            )
-        # Trigger repaint
-        assets_widget.view.updateGeometries()
         # Set version in Version Widget
         self._versionschanged()
 
     def _versionschanged(self):
-
-        subsets = self.data["widgets"]["subsets"]
-        selection = subsets.view.selectionModel()
+        selection = self._subsets_widget.view.selectionModel()
 
         # Active must be in the selected rows otherwise we
         # assume it's not actually an "active" current index.
@@ -448,7 +432,7 @@ class LibraryLoaderWindow(QtWidgets.QDialog):
         active = selection.currentIndex()
         rows = selection.selectedRows(column=active.column())
         if active and active in rows:
-            item = active.data(subsets.model.ItemRole)
+            item = active.data(self._subsets_widget.model.ItemRole)
             if (
                 item is not None
                 and not (item.get("isGroup") or item.get("isMerged"))
@@ -460,7 +444,7 @@ class LibraryLoaderWindow(QtWidgets.QDialog):
             for index in rows:
                 if not index or not index.isValid():
                     continue
-                item = index.data(subsets.model.ItemRole)
+                item = index.data(self._subsets_widget.model.ItemRole)
                 if (
                     item is None
                     or item.get("isGroup")
@@ -469,20 +453,20 @@ class LibraryLoaderWindow(QtWidgets.QDialog):
                     continue
                 version_docs.append(item["version_document"])
 
-        self.data["widgets"]["version"].set_version(version_doc)
+        self._version_info_widget.set_version(version_doc)
 
-        thumbnail_docs = version_docs
-        if not thumbnail_docs:
-            assets_widget = self.data["widgets"]["assets"]
-            asset_docs = assets_widget.get_selected_assets()
-            if len(asset_docs) > 0:
-                thumbnail_docs = asset_docs
+        thumbnail_src_ids = [
+            version_doc["_id"]
+            for version_doc in version_docs
+        ]
+        if not thumbnail_src_ids:
+            thumbnail_src_ids = self._assets_widget.get_selected_asset_ids()
 
-        self.data["widgets"]["thumbnail"].set_thumbnail(thumbnail_docs)
+        self._thumbnail_widget.set_thumbnail(thumbnail_src_ids)
 
-        representations = self.data["widgets"]["representations"]
         version_ids = [doc["_id"] for doc in version_docs or []]
-        representations.set_version_ids(version_ids)
+        if self._repres_widget:
+            self._repres_widget.set_version_ids(version_ids)
 
     def _set_context(self, context, refresh=True):
         """Set the selection in the interface using a context.
@@ -497,8 +481,8 @@ class LibraryLoaderWindow(QtWidgets.QDialog):
             None
         """
 
-        asset = context.get("asset", None)
-        if asset is None:
+        asset_name = context.get("asset", None)
+        if asset_name is None:
             return
 
         if refresh:
@@ -510,16 +494,15 @@ class LibraryLoaderWindow(QtWidgets.QDialog):
             # scheduled refresh and the silo tabs are not shown.
             self._refresh_assets()
 
-        asset_widget = self.data["widgets"]["assets"]
-        asset_widget.select_assets(asset)
+        self._assets_widget.select_asset_by_name(asset_name)
+
+    def _on_message_timeout(self):
+        self._message_label.setText("")
 
     def echo(self, message):
-        widget = self.data["label"]["message"]
-        widget.setText(str(message))
-        widget.show()
+        self._message_label.setText(str(message))
         print(message)
-
-        tools_lib.schedule(widget.hide, 5000, channel="message")
+        self._message_timer.start()
 
     def closeEvent(self, event):
         # Kill on holding SHIFT
@@ -534,10 +517,7 @@ class LibraryLoaderWindow(QtWidgets.QDialog):
         return super(LibraryLoaderWindow, self).closeEvent(event)
 
 
-def show(
-    debug=False, parent=None, icon=None,
-    show_projects=False, show_libraries=True
-):
+def show(debug=False, parent=None, show_projects=False, show_libraries=True):
     """Display Loader GUI
 
     Arguments:
@@ -572,11 +552,10 @@ def show(
         import traceback
         sys.excepthook = lambda typ, val, tb: traceback.print_last()
 
-    with tools_lib.application():
+    with tools_lib.qt_app_context():
         window = LibraryLoaderWindow(
-            parent, icon, show_projects, show_libraries
+            parent, show_projects, show_libraries
         )
-        window.setStyleSheet(style.load_stylesheet())
         window.show()
 
         module.window = window

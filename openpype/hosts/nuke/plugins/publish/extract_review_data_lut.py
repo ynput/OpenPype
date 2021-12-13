@@ -1,15 +1,8 @@
 import os
 import pyblish.api
 from avalon.nuke import lib as anlib
-from openpype.hosts.nuke.api import lib as pnlib
+from openpype.hosts.nuke.api import plugin
 import openpype
-
-try:
-    from __builtin__ import reload
-except ImportError:
-    from importlib import reload
-
-reload(pnlib)
 
 
 class ExtractReviewDataLut(openpype.api.Extractor):
@@ -45,7 +38,7 @@ class ExtractReviewDataLut(openpype.api.Extractor):
 
         # generate data
         with anlib.maintained_selection():
-            exporter = pnlib.ExporterReviewLut(
+            exporter = plugin.ExporterReviewLut(
                 self, instance
                 )
             data = exporter.generate_lut()

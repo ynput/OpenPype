@@ -1,8 +1,6 @@
-import os
 import collections
 import copy
 import json
-import queue
 import time
 import datetime
 import atexit
@@ -193,7 +191,10 @@ class SyncToAvalonEvent(BaseEvent):
             self._avalon_ents_by_ftrack_id = {}
             proj, ents = self.avalon_entities
             if proj:
-                ftrack_id = proj["data"]["ftrackId"]
+                ftrack_id = proj["data"].get("ftrackId")
+                if ftrack_id is None:
+                    ftrack_id = self._update_project_ftrack_id()
+                    proj["data"]["ftrackId"] = ftrack_id
                 self._avalon_ents_by_ftrack_id[ftrack_id] = proj
                 for ent in ents:
                     ftrack_id = ent["data"].get("ftrackId")
@@ -201,6 +202,16 @@ class SyncToAvalonEvent(BaseEvent):
                         continue
                     self._avalon_ents_by_ftrack_id[ftrack_id] = ent
         return self._avalon_ents_by_ftrack_id
+
+    def _update_project_ftrack_id(self):
+        ftrack_id = self.cur_project["id"]
+
+        self.dbcon.update_one(
+            {"type": "project"},
+            {"$set": {"data.ftrackId": ftrack_id}}
+        )
+
+        return ftrack_id
 
     @property
     def avalon_subsets_by_parents(self):
@@ -340,13 +351,13 @@ class SyncToAvalonEvent(BaseEvent):
                 self._avalon_archived_by_id[mongo_id] = entity
 
     def _bubble_changeability(self, unchangeable_ids):
-        unchangeable_queue = queue.Queue()
+        unchangeable_queue = collections.deque()
         for entity_id in unchangeable_ids:
-            unchangeable_queue.put((entity_id, False))
+            unchangeable_queue.append((entity_id, False))
 
         processed_parents_ids = []
-        while not unchangeable_queue.empty():
-            entity_id, child_is_archived = unchangeable_queue.get()
+        while unchangeable_queue:
+            entity_id, child_is_archived = unchangeable_queue.popleft()
             # skip if already processed
             if entity_id in processed_parents_ids:
                 continue
@@ -388,7 +399,7 @@ class SyncToAvalonEvent(BaseEvent):
             parent_id = entity["data"]["visualParent"]
             if parent_id is None:
                 continue
-            unchangeable_queue.put((parent_id, child_is_archived))
+            unchangeable_queue.append((parent_id, child_is_archived))
 
     def reset_variables(self):
         """Reset variables so each event callback has clear env."""
@@ -573,6 +584,10 @@ class SyncToAvalonEvent(BaseEvent):
                 if len(ftrack_id) == 0:
                     continue
                 ftrack_id = ftrack_id[0]
+
+            # Skip deleted projects
+            if action == "remove" and entityType == "show":
+                return True
 
             # task modified, collect parent id of task, handle separately
             if entity_type.lower() == "task":
@@ -1050,7 +1065,7 @@ class SyncToAvalonEvent(BaseEvent):
             key=(lambda entity: len(entity["link"]))
         )
 
-        children_queue = queue.Queue()
+        children_queue = collections.deque()
         for entity in synchronizable_ents:
             parent_avalon_ent = self.avalon_ents_by_ftrack_id[
                 entity["parent_id"]
@@ -1060,10 +1075,10 @@ class SyncToAvalonEvent(BaseEvent):
             for child in entity["children"]:
                 if child.entity_type.lower() == "task":
                     continue
-                children_queue.put(child)
+                children_queue.append(child)
 
-        while not children_queue.empty():
-            entity = children_queue.get()
+        while children_queue:
+            entity = children_queue.popleft()
             ftrack_id = entity["id"]
             name = entity["name"]
             ent_by_ftrack_id = self.avalon_ents_by_ftrack_id.get(ftrack_id)
@@ -1093,7 +1108,7 @@ class SyncToAvalonEvent(BaseEvent):
             for child in entity["children"]:
                 if child.entity_type.lower() == "task":
                     continue
-                children_queue.put(child)
+                children_queue.append(child)
 
     def create_entity_in_avalon(self, ftrack_ent, parent_avalon):
         proj, ents = self.avalon_entities
@@ -1278,7 +1293,7 @@ class SyncToAvalonEvent(BaseEvent):
             "Processing renamed entities: {}".format(str(ent_infos))
         )
 
-        changeable_queue = queue.Queue()
+        changeable_queue = collections.deque()
         for ftrack_id, ent_info in ent_infos.items():
             entity_type = ent_info["entity_type"]
             if entity_type == "Task":
@@ -1306,7 +1321,7 @@ class SyncToAvalonEvent(BaseEvent):
 
             mongo_id = avalon_ent["_id"]
             if self.changeability_by_mongo_id[mongo_id]:
-                changeable_queue.put((ftrack_id, avalon_ent, new_name))
+                changeable_queue.append((ftrack_id, avalon_ent, new_name))
             else:
                 ftrack_ent = self.ftrack_ents_by_id[ftrack_id]
                 ftrack_ent["name"] = avalon_ent["name"]
@@ -1348,8 +1363,8 @@ class SyncToAvalonEvent(BaseEvent):
 
         old_names = []
         # Process renaming in Avalon DB
-        while not changeable_queue.empty():
-            ftrack_id, avalon_ent, new_name = changeable_queue.get()
+        while changeable_queue:
+            ftrack_id, avalon_ent, new_name = changeable_queue.popleft()
             mongo_id = avalon_ent["_id"]
             old_name = avalon_ent["name"]
 
@@ -1390,13 +1405,13 @@ class SyncToAvalonEvent(BaseEvent):
             # - it's name may be changed in next iteration
             same_name_ftrack_id = same_name_avalon_ent["data"]["ftrackId"]
             same_is_unprocessed = False
-            for item in list(changeable_queue.queue):
+            for item in changeable_queue:
                 if same_name_ftrack_id == item[0]:
                     same_is_unprocessed = True
                     break
 
             if same_is_unprocessed:
-                changeable_queue.put((ftrack_id, avalon_ent, new_name))
+                changeable_queue.append((ftrack_id, avalon_ent, new_name))
                 continue
 
             self.duplicated.append(ftrack_id)
@@ -2008,12 +2023,12 @@ class SyncToAvalonEvent(BaseEvent):
         # ftrack_parenting = collections.defaultdict(list)
         entities_dict = collections.defaultdict(dict)
 
-        children_queue = queue.Queue()
-        parent_queue = queue.Queue()
+        children_queue = collections.deque()
+        parent_queue = collections.deque()
 
         for mongo_id in hier_cust_attrs_ids:
             avalon_ent = self.avalon_ents_by_id[mongo_id]
-            parent_queue.put(avalon_ent)
+            parent_queue.append(avalon_ent)
             ftrack_id = avalon_ent["data"]["ftrackId"]
             if ftrack_id not in entities_dict:
                 entities_dict[ftrack_id] = {
@@ -2040,10 +2055,10 @@ class SyncToAvalonEvent(BaseEvent):
                 entities_dict[_ftrack_id]["parent_id"] = ftrack_id
                 if _ftrack_id not in entities_dict[ftrack_id]["children"]:
                     entities_dict[ftrack_id]["children"].append(_ftrack_id)
-                children_queue.put(children_ent)
+                children_queue.append(children_ent)
 
-        while not children_queue.empty():
-            avalon_ent = children_queue.get()
+        while children_queue:
+            avalon_ent = children_queue.popleft()
             mongo_id = avalon_ent["_id"]
             ftrack_id = avalon_ent["data"]["ftrackId"]
             if ftrack_id in cust_attrs_ftrack_ids:
@@ -2066,10 +2081,10 @@ class SyncToAvalonEvent(BaseEvent):
                 entities_dict[_ftrack_id]["parent_id"] = ftrack_id
                 if _ftrack_id not in entities_dict[ftrack_id]["children"]:
                     entities_dict[ftrack_id]["children"].append(_ftrack_id)
-                children_queue.put(children_ent)
+                children_queue.append(children_ent)
 
-        while not parent_queue.empty():
-            avalon_ent = parent_queue.get()
+        while parent_queue:
+            avalon_ent = parent_queue.popleft()
             if avalon_ent["type"].lower() == "project":
                 continue
 
@@ -2100,7 +2115,7 @@ class SyncToAvalonEvent(BaseEvent):
             # if ftrack_id not in ftrack_parenting[parent_ftrack_id]:
             #     ftrack_parenting[parent_ftrack_id].append(ftrack_id)
 
-            parent_queue.put(parent_ent)
+            parent_queue.append(parent_ent)
 
         # Prepare values to query
         configuration_ids = set()
@@ -2174,11 +2189,13 @@ class SyncToAvalonEvent(BaseEvent):
             if value is not None:
                 project_values[key] = value
 
-        hier_down_queue = queue.Queue()
-        hier_down_queue.put((project_values, ftrack_project_id))
+        hier_down_queue = collections.deque()
+        hier_down_queue.append(
+            (project_values, ftrack_project_id)
+        )
 
-        while not hier_down_queue.empty():
-            hier_values, parent_id = hier_down_queue.get()
+        while hier_down_queue:
+            hier_values, parent_id = hier_down_queue.popleft()
             for child_id in entities_dict[parent_id]["children"]:
                 _hier_values = hier_values.copy()
                 for name in hier_cust_attrs_keys:
@@ -2187,7 +2204,7 @@ class SyncToAvalonEvent(BaseEvent):
                         _hier_values[name] = value
 
                 entities_dict[child_id]["hier_attrs"].update(_hier_values)
-                hier_down_queue.put((_hier_values, child_id))
+                hier_down_queue.append((_hier_values, child_id))
 
         ftrack_mongo_mapping = {}
         for mongo_id, ftrack_id in mongo_ftrack_mapping.items():
@@ -2302,11 +2319,12 @@ class SyncToAvalonEvent(BaseEvent):
         """
         mongo_changes_bulk = []
         for mongo_id, changes in self.updates.items():
-            filter = {"_id": mongo_id}
             avalon_ent = self.avalon_ents_by_id[mongo_id]
             is_project = avalon_ent["type"] == "project"
             change_data = avalon_sync.from_dict_to_set(changes, is_project)
-            mongo_changes_bulk.append(UpdateOne(filter, change_data))
+            mongo_changes_bulk.append(
+                UpdateOne({"_id": mongo_id}, change_data)
+            )
 
         if not mongo_changes_bulk:
             return

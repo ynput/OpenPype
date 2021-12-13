@@ -1,6 +1,6 @@
 [tool.poetry]
 name = "OpenPype"
-version = "3.0.0"
+version = "3.7.0-nightly.7" # OpenPype
 description = "Open VFX and Animation pipeline with support."
 authors = ["OpenPype Team <info@openpype.io>"]
 license = "MIT License"
@@ -36,7 +36,7 @@ opentimelineio = { version = "0.14.0.dev1", source = "openpype" }
 appdirs = "^1.4.3"
 blessed = "^1.17" # openpype terminal formatting
 coolname = "*"
-clique = "1.5.*"
+clique = "1.6.*"
 Click = "^7"
 dnspython = "^2.1.0"
 ftrack-python-api = "2.0.*"
@@ -45,7 +45,7 @@ jsonschema = "^3.2.0"
 keyring = "^22.0.1"
 log4mongo = "^1.7"
 pathlib2= "^2.3.5" # deadline submit publish job only (single place, maybe not needed?)
-Pillow = "^8.1" # only used for slates prototype
+Pillow = "^8.3" # only used for slates prototype
 pyblish-base = "^1.8.8"
 pynput = "^1.7.2" # idle manager in tray
 pymongo = "^3.11.2"

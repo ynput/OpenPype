@@ -28,6 +28,9 @@
         "viewer": {
             "viewerProcess": "sRGB"
         },
+        "baking": {
+            "viewerProcess": "rec709"
+        },
         "workfile": {
             "colorManagement": "Nuke",
             "OCIO_config": "nuke-default",
@@ -162,9 +165,7 @@
                     ]
                 }
             ],
-            "customNodes": [
-
-            ]
+            "customNodes": []
         },
         "regexInputs": {
             "inputs": [
@@ -173,6 +174,17 @@
                     "colorspace": "linear"
                 }
             ]
+        }
+    },
+    "maya": {
+        "colorManagementPreference": {
+            "configFilePath": {
+                "windows": [],
+                "darwin": [],
+                "linux": []
+            },
+            "renderSpace": "scene-linear Rec 709/sRGB",
+            "viewTransform": "sRGB gamma"
         }
     }
 }

@@ -217,6 +217,30 @@
                 {
                     "type": "dict",
                     "collapsible": true,
+                    "key": "ValidateModelContent",
+                    "label": "Validate Model Content",
+                    "checkbox_key": "enabled",
+                    "children": [
+                         {
+                            "type": "boolean",
+                            "key": "enabled",
+                            "label": "Enabled"
+                        },
+                        {
+                            "type": "boolean",
+                            "key": "optional",
+                            "label": "Optional"
+                        },
+                        {
+                            "type": "boolean",
+                            "key": "validate_top_group",
+                            "label": "Validate one top group"
+                        }
+                    ]
+                },
+                {
+                    "type": "dict",
+                    "collapsible": true,
                     "key": "ValidateTransformNamingSuffix",
                     "label": "ValidateTransformNamingSuffix",
                     "checkbox_key": "enabled",
@@ -275,6 +299,10 @@
                             "label": "ValidateMeshLaminaFaces"
                         },
                         {
+                            "key": "ValidateMeshNgons",
+                            "label": "ValidateMeshNgons"
+                        },
+                        {
                             "key": "ValidateMeshNonManifold",
                             "label": "ValidateMeshNonManifold"
                         },
@@ -321,8 +349,16 @@
                             "label": "ValidateShapeRenderStats"
                         },
                         {
+                            "key": "ValidateShapeZero",
+                            "label": "ValidateShapeZero"
+                        },
+                        {
                             "key": "ValidateTransformZero",
                             "label": "ValidateTransformZero"
+                        },
+                        {
+                            "key": "ValidateUniqueNames",
+                            "label": "ValidateUniqueNames"
                         }
                     ]
                 }

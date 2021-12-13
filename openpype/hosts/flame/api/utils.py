@@ -1,7 +1,5 @@
-#! python3
-
 """
-Resolve's tools for setting environment
+Flame utils for syncing scripts
 """
 
 import os
@@ -11,7 +9,7 @@ log = Logger().get_logger(__name__)
 
 
 def _sync_utility_scripts(env=None):
-    """ Synchronizing basic utlility scripts for resolve.
+    """ Synchronizing basic utlility scripts for flame.
 
     To be able to run start OpenPype within Flame we have to copy
     all utility_scripts and additional FLAME_SCRIPT_DIR into
@@ -20,12 +18,11 @@ def _sync_utility_scripts(env=None):
     """
     from .. import HOST_DIR
 
-    if not env:
-        env = os.environ
+    env = env or os.environ
 
     # initiate inputs
     scripts = {}
-    fsd_env = env.get("FLAME_SCRIPT_DIR", "")
+    fsd_env = env.get("FLAME_SCRIPT_DIRS", "")
     flame_shared_dir = "/opt/Autodesk/shared/python"
 
     fsd_paths = [os.path.join(
@@ -34,14 +31,15 @@ def _sync_utility_scripts(env=None):
     )]
 
     # collect script dirs
-    log.info("FLAME_SCRIPT_DIR: `{fsd_env}`".format(**locals()))
+    log.info("FLAME_SCRIPT_DIRS: `{fsd_env}`".format(**locals()))
     log.info("fsd_paths: `{fsd_paths}`".format(**locals()))
 
     # add application environment setting for FLAME_SCRIPT_DIR
     # to script path search
     for _dirpath in fsd_env.split(os.pathsep):
         if not os.path.isdir(_dirpath):
-            log.warning("Path is not a valid dir: `{_dirpath}`".format(**locals()))
+            log.warning("Path is not a valid dir: `{_dirpath}`".format(
+                **locals()))
             continue
         fsd_paths.append(_dirpath)
 
@@ -49,13 +47,32 @@ def _sync_utility_scripts(env=None):
     for path in fsd_paths:
         scripts.update({path: os.listdir(path)})
 
+    remove_black_list = []
+    for _k, s_list in scripts.items():
+        remove_black_list += s_list
+
+    log.info("remove_black_list: `{remove_black_list}`".format(**locals()))
     log.info("Additional Flame script paths: `{fsd_paths}`".format(**locals()))
     log.info("Flame Scripts: `{scripts}`".format(**locals()))
 
     # make sure no script file is in folder
     if next(iter(os.listdir(flame_shared_dir)), None):
-        for s in os.listdir(flame_shared_dir):
-            path = os.path.join(flame_shared_dir, s)
+        for _itm in os.listdir(flame_shared_dir):
+            skip = False
+
+            # skip all scripts and folders which are not maintained
+            if _itm not in remove_black_list:
+                skip = True
+
+            # do not skyp if pyc in extension
+            if not os.path.isdir(_itm) and "pyc" in os.path.splitext(_itm)[-1]:
+                skip = False
+
+            # continue if skip in true
+            if skip:
+                continue
+
+            path = os.path.join(flame_shared_dir, _itm)
             log.info("Removing `{path}`...".format(**locals()))
             if os.path.isdir(path):
                 shutil.rmtree(path, onerror=None)
@@ -80,10 +97,10 @@ def _sync_utility_scripts(env=None):
 
 
 def setup(env=None):
-    """ Wrapper installer started from pype.hooks.resolve.FlamePrelaunch()
+    """ Wrapper installer started from
+    `flame/hooks/pre_flame_setup.py`
     """
-    if not env:
-        env = os.environ
+    env = env or os.environ
 
     # synchronize resolve utility scripts
     _sync_utility_scripts(env)

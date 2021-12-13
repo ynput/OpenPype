@@ -5,6 +5,7 @@ use singleton approach with global functions (using helper anyway).
 """
 
 import avalon.api
+from .lib import qt_app_context
 
 
 class HostToolsHelper:
@@ -28,6 +29,7 @@ class HostToolsHelper:
         self._scene_inventory_tool = None
         self._library_loader_tool = None
         self._look_assigner_tool = None
+        self._experimental_tools_dialog = None
 
     @property
     def log(self):
@@ -40,7 +42,6 @@ class HostToolsHelper:
     def get_workfiles_tool(self, parent):
         """Create, cache and return workfiles tool window."""
         if self._workfiles_tool is None:
-            from avalon import style
             from openpype.tools.workfiles.app import (
                 Window, validate_host_requirements
             )
@@ -49,7 +50,6 @@ class HostToolsHelper:
             validate_host_requirements(host)
 
             workfiles_window = Window(parent=parent)
-            workfiles_window.setStyleSheet(style.load_stylesheet())
             self._workfiles_tool = workfiles_window
 
         return self._workfiles_tool
@@ -62,139 +62,138 @@ class HostToolsHelper:
         if save is None:
             save = True
 
-        workfiles_tool = self.get_workfiles_tool(parent)
-        if use_context:
-            context = {
-                "asset": avalon.api.Session["AVALON_ASSET"],
-                "silo": avalon.api.Session["AVALON_SILO"],
-                "task": avalon.api.Session["AVALON_TASK"]
-            }
-            workfiles_tool.set_context(context)
-
-        if save:
+        with qt_app_context():
+            workfiles_tool = self.get_workfiles_tool(parent)
             workfiles_tool.set_save_enabled(save)
 
-        workfiles_tool.refresh()
-        workfiles_tool.show()
-        # Pull window to the front.
-        workfiles_tool.raise_()
-        workfiles_tool.activateWindow()
+            if not workfiles_tool.isVisible():
+                workfiles_tool.show()
+
+                if use_context:
+                    context = {
+                        "asset": avalon.api.Session["AVALON_ASSET"],
+                        "task": avalon.api.Session["AVALON_TASK"]
+                    }
+                    workfiles_tool.set_context(context)
+
+            # Pull window to the front.
+            workfiles_tool.raise_()
+            workfiles_tool.activateWindow()
 
     def get_loader_tool(self, parent):
         """Create, cache and return loader tool window."""
         if self._loader_tool is None:
-            from avalon import style
             from openpype.tools.loader import LoaderWindow
 
             loader_window = LoaderWindow(parent=parent or self._parent)
-            loader_window.setStyleSheet(style.load_stylesheet())
             self._loader_tool = loader_window
 
         return self._loader_tool
 
     def show_loader(self, parent=None, use_context=None):
         """Loader tool for loading representations."""
-        if use_context is None:
-            use_context = False
-        loader_tool = self.get_loader_tool(parent)
+        with qt_app_context():
+            loader_tool = self.get_loader_tool(parent)
 
-        if use_context:
-            context = {"asset": avalon.api.Session["AVALON_ASSET"]}
-            loader_tool.set_context(context, refresh=True)
-        else:
-            loader_tool.refresh()
+            loader_tool.show()
+            loader_tool.raise_()
+            loader_tool.activateWindow()
 
-        loader_tool.show()
-        loader_tool.raise_()
-        loader_tool.activateWindow()
-        loader_tool.refresh()
+            if use_context is None:
+                use_context = False
+
+            if use_context:
+                context = {"asset": avalon.api.Session["AVALON_ASSET"]}
+                loader_tool.set_context(context, refresh=True)
+            else:
+                loader_tool.refresh()
 
     def get_creator_tool(self, parent):
         """Create, cache and return creator tool window."""
         if self._creator_tool is None:
-            from avalon import style
-            from avalon.tools.creator.app import Window
+            from openpype.tools.creator import CreatorWindow
 
-            creator_window = Window(parent=parent or self._parent)
-            creator_window.setStyleSheet(style.load_stylesheet())
+            creator_window = CreatorWindow(parent=parent or self._parent)
             self._creator_tool = creator_window
 
         return self._creator_tool
 
     def show_creator(self, parent=None):
         """Show tool to create new instantes for publishing."""
-        creator_tool = self.get_creator_tool(parent)
-        creator_tool.refresh()
-        creator_tool.show()
+        with qt_app_context():
+            creator_tool = self.get_creator_tool(parent)
+            creator_tool.refresh()
+            creator_tool.show()
 
-        # Pull window to the front.
-        creator_tool.raise_()
-        creator_tool.activateWindow()
+            # Pull window to the front.
+            creator_tool.raise_()
+            creator_tool.activateWindow()
 
     def get_subset_manager_tool(self, parent):
         """Create, cache and return subset manager tool window."""
         if self._subset_manager_tool is None:
-            from avalon import style
-            from avalon.tools.subsetmanager import Window
+            from openpype.tools.subsetmanager import SubsetManagerWindow
 
-            subset_manager_window = Window(parent=parent or self._parent)
-            subset_manager_window.setStyleSheet(style.load_stylesheet())
+            subset_manager_window = SubsetManagerWindow(
+                parent=parent or self._parent
+            )
             self._subset_manager_tool = subset_manager_window
 
         return self._subset_manager_tool
 
     def show_subset_manager(self, parent=None):
         """Show tool display/remove existing created instances."""
-        subset_manager_tool = self.get_subset_manager_tool(parent)
-        subset_manager_tool.show()
+        with qt_app_context():
+            subset_manager_tool = self.get_subset_manager_tool(parent)
+            subset_manager_tool.show()
 
-        # Pull window to the front.
-        subset_manager_tool.raise_()
-        subset_manager_tool.activateWindow()
+            # Pull window to the front.
+            subset_manager_tool.raise_()
+            subset_manager_tool.activateWindow()
 
     def get_scene_inventory_tool(self, parent):
         """Create, cache and return scene inventory tool window."""
         if self._scene_inventory_tool is None:
-            from avalon import style
-            from avalon.tools.sceneinventory.app import Window
+            from openpype.tools.sceneinventory import SceneInventoryWindow
 
-            scene_inventory_window = Window(parent=parent or self._parent)
-            scene_inventory_window.setStyleSheet(style.load_stylesheet())
+            scene_inventory_window = SceneInventoryWindow(
+                parent=parent or self._parent
+            )
             self._scene_inventory_tool = scene_inventory_window
 
         return self._scene_inventory_tool
 
     def show_scene_inventory(self, parent=None):
         """Show tool maintain loaded containers."""
-        scene_inventory_tool = self.get_scene_inventory_tool(parent)
-        scene_inventory_tool.show()
-        scene_inventory_tool.refresh()
+        with qt_app_context():
+            scene_inventory_tool = self.get_scene_inventory_tool(parent)
+            scene_inventory_tool.show()
+            scene_inventory_tool.refresh()
 
-        # Pull window to the front.
-        scene_inventory_tool.raise_()
-        scene_inventory_tool.activateWindow()
+            # Pull window to the front.
+            scene_inventory_tool.raise_()
+            scene_inventory_tool.activateWindow()
 
     def get_library_loader_tool(self, parent):
         """Create, cache and return library loader tool window."""
         if self._library_loader_tool is None:
-            from avalon import style
             from openpype.tools.libraryloader import LibraryLoaderWindow
 
             library_window = LibraryLoaderWindow(
                 parent=parent or self._parent
             )
-            library_window.setStyleSheet(style.load_stylesheet())
             self._library_loader_tool = library_window
 
         return self._library_loader_tool
 
     def show_library_loader(self, parent=None):
         """Loader tool for loading representations from library project."""
-        library_loader_tool = self.get_library_loader_tool(parent)
-        library_loader_tool.show()
-        library_loader_tool.raise_()
-        library_loader_tool.activateWindow()
-        library_loader_tool.refresh()
+        with qt_app_context():
+            library_loader_tool = self.get_library_loader_tool(parent)
+            library_loader_tool.show()
+            library_loader_tool.raise_()
+            library_loader_tool.activateWindow()
+            library_loader_tool.refresh()
 
     def show_publish(self, parent=None):
         """Publish UI."""
@@ -205,18 +204,48 @@ class HostToolsHelper:
     def get_look_assigner_tool(self, parent):
         """Create, cache and return look assigner tool window."""
         if self._look_assigner_tool is None:
-            from avalon import style
             import mayalookassigner
 
             mayalookassigner_window = mayalookassigner.App(parent)
-            mayalookassigner_window.setStyleSheet(style.load_stylesheet())
             self._look_assigner_tool = mayalookassigner_window
         return self._look_assigner_tool
 
     def show_look_assigner(self, parent=None):
         """Look manager is Maya specific tool for look management."""
-        look_assigner_tool = self.get_look_assigner_tool(parent)
-        look_assigner_tool.show()
+        from avalon import style
+
+        with qt_app_context():
+            look_assigner_tool = self.get_look_assigner_tool(parent)
+            look_assigner_tool.show()
+            look_assigner_tool.setStyleSheet(style.load_stylesheet())
+
+    def get_experimental_tools_dialog(self, parent=None):
+        """Dialog of experimental tools.
+
+        For some hosts it is not easy to modify menu of tools. For
+        those cases was addded experimental tools dialog which is Qt based
+        and can dynamically filled by experimental tools so
+        host need only single "Experimental tools" button to see them.
+
+        Dialog can be also empty with a message that there are not available
+        experimental tools.
+        """
+        if self._experimental_tools_dialog is None:
+            from openpype.tools.experimental_tools import (
+                ExperimentalToolsDialog
+            )
+
+            self._experimental_tools_dialog = ExperimentalToolsDialog(parent)
+        return self._experimental_tools_dialog
+
+    def show_experimental_tools_dialog(self, parent=None):
+        """Show dialog with experimental tools."""
+        with qt_app_context():
+            dialog = self.get_experimental_tools_dialog(parent)
+
+            dialog.show()
+            dialog.raise_()
+            dialog.activateWindow()
 
     def get_tool_by_name(self, tool_name, parent=None, *args, **kwargs):
         """Show tool by it's name.
@@ -246,6 +275,9 @@ class HostToolsHelper:
 
         elif tool_name == "publish":
             self.log.info("Can't return publish tool window.")
+
+        elif tool_name == "experimental_tools":
+            return self.get_experimental_tools_dialog(parent, *args, **kwargs)
 
         else:
             self.log.warning(
@@ -280,6 +312,9 @@ class HostToolsHelper:
 
         elif tool_name == "publish":
             self.show_publish(parent, *args, **kwargs)
+
+        elif tool_name == "experimental_tools":
+            self.show_experimental_tools_dialog(parent, *args, **kwargs)
 
         else:
             self.log.warning(
@@ -355,3 +390,7 @@ def show_look_assigner(parent=None):
 
 def show_publish(parent=None):
     _SingletonPoint.show_tool_by_name("publish", parent)
+
+
+def show_experimental_tools_dialog(parent=None):
+    _SingletonPoint.show_tool_by_name("experimental_tools", parent)

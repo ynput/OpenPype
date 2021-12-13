@@ -16,11 +16,15 @@ from openpype.tools.utils.delegates import (
     VersionDelegate,
     PrettyTimeDelegate
 )
-from openpype.tools.utils.widgets import OptionalMenu
+from openpype.tools.utils.widgets import (
+    OptionalMenu,
+    PlaceholderLineEdit
+)
 from openpype.tools.utils.views import (
     TreeViewSpinner,
     DeselectableTreeView
 )
+from openpype.tools.assetlinks.widgets import SimpleLinkView
 
 from .model import (
     SubsetsModel,
@@ -31,18 +35,26 @@ from .model import (
 )
 from . import lib
 
+from openpype.tools.utils.constants import (
+    LOCAL_PROVIDER_ROLE,
+    REMOTE_PROVIDER_ROLE,
+    LOCAL_AVAILABILITY_ROLE,
+    REMOTE_AVAILABILITY_ROLE
+)
+
 
 class OverlayFrame(QtWidgets.QFrame):
     def __init__(self, label, parent):
         super(OverlayFrame, self).__init__(parent)
 
         label_widget = QtWidgets.QLabel(label, self)
+        label_widget.setAttribute(QtCore.Qt.WA_TranslucentBackground)
+
         main_layout = QtWidgets.QVBoxLayout(self)
         main_layout.addWidget(label_widget, 1, QtCore.Qt.AlignCenter)
 
         self.label_widget = label_widget
 
-        label_widget.setStyleSheet("background: transparent;")
         self.setStyleSheet((
             "background: rgba(0, 0, 0, 127);"
             "font-size: 60pt;"
@@ -159,91 +171,84 @@ class SubsetWidget(QtWidgets.QWidget):
             grouping=enable_grouping
         )
         proxy = SubsetFilterProxyModel()
+        proxy.setSourceModel(model)
+        proxy.setDynamicSortFilter(True)
+        proxy.setFilterCaseSensitivity(QtCore.Qt.CaseInsensitive)
+
         family_proxy = FamiliesFilterProxyModel()
         family_proxy.setSourceModel(proxy)
 
-        subset_filter = QtWidgets.QLineEdit()
+        subset_filter = PlaceholderLineEdit(self)
         subset_filter.setPlaceholderText("Filter subsets..")
 
-        groupable = QtWidgets.QCheckBox("Enable Grouping")
-        groupable.setChecked(enable_grouping)
+        group_checkbox = QtWidgets.QCheckBox("Enable Grouping", self)
+        group_checkbox.setChecked(enable_grouping)
 
         top_bar_layout = QtWidgets.QHBoxLayout()
         top_bar_layout.addWidget(subset_filter)
-        top_bar_layout.addWidget(groupable)
+        top_bar_layout.addWidget(group_checkbox)
 
-        view = TreeViewSpinner()
+        view = TreeViewSpinner(self)
+        view.setModel(family_proxy)
         view.setObjectName("SubsetView")
         view.setIndentation(20)
-        view.setStyleSheet("""
-            QTreeView::item{
-                padding: 5px 1px;
-                border: 0px;
-            }
-        """)
         view.setAllColumnsShowFocus(True)
-
-        # Set view delegates
-        version_delegate = VersionDelegate(self.dbcon)
-        column = model.Columns.index("version")
-        view.setItemDelegateForColumn(column, version_delegate)
-
-        time_delegate = PrettyTimeDelegate()
-        column = model.Columns.index("time")
-        view.setItemDelegateForColumn(column, time_delegate)
-
-        layout = QtWidgets.QVBoxLayout(self)
-        layout.setContentsMargins(0, 0, 0, 0)
-        layout.addLayout(top_bar_layout)
-        layout.addWidget(view)
-
         view.setContextMenuPolicy(QtCore.Qt.CustomContextMenu)
         view.setSelectionMode(QtWidgets.QAbstractItemView.ExtendedSelection)
         view.setSortingEnabled(True)
         view.sortByColumn(1, QtCore.Qt.AscendingOrder)
         view.setAlternatingRowColors(True)
 
-        self.data = {
-            "delegates": {
-                "version": version_delegate,
-                "time": time_delegate
-            },
-            "state": {
-                "groupable": groupable
-            }
-        }
+        # Set view delegates
+        version_delegate = VersionDelegate(self.dbcon, view)
+        column = model.Columns.index("version")
+        view.setItemDelegateForColumn(column, version_delegate)
 
-        self.proxy = proxy
-        self.model = model
-        self.view = view
-        self.filter = subset_filter
-        self.family_proxy = family_proxy
+        time_delegate = PrettyTimeDelegate(view)
+        column = model.Columns.index("time")
+        view.setItemDelegateForColumn(column, time_delegate)
+
+        avail_delegate = AvailabilityDelegate(self.dbcon, view)
+        column = model.Columns.index("repre_info")
+        view.setItemDelegateForColumn(column, avail_delegate)
+
+        layout = QtWidgets.QVBoxLayout(self)
+        layout.setContentsMargins(0, 0, 0, 0)
+        layout.addLayout(top_bar_layout)
+        layout.addWidget(view)
 
         # settings and connections
-        self.proxy.setSourceModel(self.model)
-        self.proxy.setDynamicSortFilter(True)
-        self.proxy.setFilterCaseSensitivity(QtCore.Qt.CaseInsensitive)
-
-        self.view.setModel(self.family_proxy)
-        self.view.customContextMenuRequested.connect(self.on_context_menu)
-
         for column_name, width in self.default_widths:
             idx = model.Columns.index(column_name)
             view.setColumnWidth(idx, width)
 
+        self.model = model
+        self.view = view
+
         actual_project = dbcon.Session["AVALON_PROJECT"]
         self.on_project_change(actual_project)
+
+        view.customContextMenuRequested.connect(self.on_context_menu)
 
         selection = view.selectionModel()
         selection.selectionChanged.connect(self.active_changed)
 
         version_delegate.version_changed.connect(self.version_changed)
 
-        groupable.stateChanged.connect(self.set_grouping)
+        group_checkbox.stateChanged.connect(self.set_grouping)
 
-        self.filter.textChanged.connect(self.proxy.setFilterRegExp)
-        self.filter.textChanged.connect(self.view.expandAll)
+        subset_filter.textChanged.connect(proxy.setFilterRegExp)
+        subset_filter.textChanged.connect(view.expandAll)
         model.refreshed.connect(self.refreshed)
+
+        self.proxy = proxy
+        self.family_proxy = family_proxy
+
+        self._subset_filter = subset_filter
+        self._group_checkbox = group_checkbox
+
+        self._version_delegate = version_delegate
+        self._time_delegate = time_delegate
 
         self.model.refresh()
 
@@ -254,7 +259,7 @@ class SubsetWidget(QtWidgets.QWidget):
         self.family_proxy.setFamiliesFilter(families)
 
     def is_groupable(self):
-        return self.data["state"]["groupable"].checkState()
+        return self._group_checkbox.isChecked()
 
     def set_grouping(self, state):
         with tools_lib.preserve_selection(tree_view=self.view,
@@ -755,6 +760,7 @@ class ThumbnailWidget(QtWidgets.QLabel):
             "default_thumbnail.png"
         )
         self.default_pix = QtGui.QPixmap(default_pix_path)
+        self.set_pixmap()
 
     def height(self):
         width = self.width()
@@ -792,19 +798,24 @@ class ThumbnailWidget(QtWidgets.QLabel):
             QtCore.Qt.SmoothTransformation
         )
 
-    def set_thumbnail(self, entity=None):
-        if not entity:
+    def set_thumbnail(self, doc_id=None):
+        if not doc_id:
             self.set_pixmap()
             return
 
-        if isinstance(entity, (list, tuple)):
-            if len(entity) == 1:
-                entity = entity[0]
-            else:
+        if isinstance(doc_id, (list, tuple)):
+            if len(doc_id) < 1:
                 self.set_pixmap()
                 return
+            doc_id = doc_id[0]
 
-        thumbnail_id = entity.get("data", {}).get("thumbnail_id")
+        doc = self.dbcon.find_one(
+            {"_id": doc_id},
+            {"data.thumbnail_id"}
+        )
+        thumbnail_id = None
+        if doc:
+            thumbnail_id = doc.get("data", {}).get("thumbnail_id")
         if thumbnail_id == self.current_thumb_id:
             if self.current_thumbnail is None:
                 self.set_pixmap()
@@ -839,19 +850,25 @@ class VersionWidget(QtWidgets.QWidget):
     def __init__(self, dbcon, parent=None):
         super(VersionWidget, self).__init__(parent=parent)
 
-        layout = QtWidgets.QVBoxLayout(self)
-        layout.setContentsMargins(0, 0, 0, 0)
-        label = QtWidgets.QLabel("Version", self)
         data = VersionTextEdit(dbcon, self)
         data.setReadOnly(True)
 
-        layout.addWidget(label)
-        layout.addWidget(data)
+        depend_widget = SimpleLinkView(dbcon, self)
+
+        tab = QtWidgets.QTabWidget()
+        tab.addTab(data, "Version Info")
+        tab.addTab(depend_widget, "Dependency")
+
+        layout = QtWidgets.QVBoxLayout(self)
+        layout.setContentsMargins(0, 0, 0, 0)
+        layout.addWidget(tab)
 
         self.data = data
+        self.depend_widget = depend_widget
 
     def set_version(self, version_doc):
         self.data.set_version(version_doc)
+        self.depend_widget.set_version(version_doc)
 
 
 class FamilyModel(QtGui.QStandardItemModel):
@@ -1131,7 +1148,8 @@ class RepresentationWidget(QtWidgets.QWidget):
 
         label = QtWidgets.QLabel("Representations", self)
 
-        tree_view = DeselectableTreeView()
+        tree_view = DeselectableTreeView(parent=self)
+        tree_view.setObjectName("RepresentationView")
         tree_view.setModel(proxy_model)
         tree_view.setAllColumnsShowFocus(True)
         tree_view.setContextMenuPolicy(QtCore.Qt.CustomContextMenu)
@@ -1141,12 +1159,6 @@ class RepresentationWidget(QtWidgets.QWidget):
         tree_view.sortByColumn(1, QtCore.Qt.AscendingOrder)
         tree_view.setAlternatingRowColors(True)
         tree_view.setIndentation(20)
-        tree_view.setStyleSheet("""
-            QTreeView::item{
-                padding: 5px 1px;
-                border: 0px;
-            }
-        """)
         tree_view.collapseAll()
 
         for column_name, width in self.default_widths:
@@ -1592,3 +1604,54 @@ def _load_subsets_by_loader(loader, subset_contexts, options,
                 ))
 
     return error_info
+
+
+class AvailabilityDelegate(QtWidgets.QStyledItemDelegate):
+    """
+        Prints icons and downloaded representation ration for both sides.
+    """
+
+    def __init__(self, dbcon, parent=None):
+        super(AvailabilityDelegate, self).__init__(parent)
+        self.icons = tools_lib.get_repre_icons()
+
+    def paint(self, painter, option, index):
+        super(AvailabilityDelegate, self).paint(painter, option, index)
+        option = QtWidgets.QStyleOptionViewItem(option)
+        option.showDecorationSelected = True
+
+        provider_active = index.data(LOCAL_PROVIDER_ROLE)
+        provider_remote = index.data(REMOTE_PROVIDER_ROLE)
+
+        availability_active = index.data(LOCAL_AVAILABILITY_ROLE)
+        availability_remote = index.data(REMOTE_AVAILABILITY_ROLE)
+
+        if not availability_active or not availability_remote:  # group lines
+            return
+
+        idx = 0
+        height = width = 24
+        for value, provider in [(availability_active, provider_active),
+                                (availability_remote, provider_remote)]:
+            icon = self.icons.get(provider)
+            if not icon:
+                continue
+
+            pixmap = icon.pixmap(icon.actualSize(QtCore.QSize(height, width)))
+            padding = 10 + (70 * idx)
+            point = QtCore.QPoint(option.rect.x() + padding,
+                                  option.rect.y() +
+                                  (option.rect.height() - pixmap.height()) / 2)
+            painter.drawPixmap(point, pixmap)
+
+            text_rect = option.rect.translated(padding + width + 10, 0)
+            painter.drawText(
+                text_rect,
+                option.displayAlignment,
+                value
+            )
+
+            idx += 1
+
+    def displayText(self, value, locale):
+        pass

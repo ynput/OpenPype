@@ -18,7 +18,7 @@ class CopyFile(api.Loader):
 
     @staticmethod
     def copy_file_to_clipboard(path):
-        from avalon.vendor.Qt import QtCore, QtWidgets
+        from Qt import QtCore, QtWidgets
 
         clipboard = QtWidgets.QApplication.clipboard()
         assert clipboard, "Must have running QApplication instance"

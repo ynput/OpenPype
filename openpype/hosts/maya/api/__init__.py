@@ -13,6 +13,7 @@ from pyblish import api as pyblish
 from openpype.lib import any_outdated
 import openpype.hosts.maya
 from openpype.hosts.maya.lib import copy_workspace_mel
+from openpype.lib.path_tools import HostDirmap
 from . import menu, lib
 
 log = logging.getLogger("openpype.hosts.maya")
@@ -30,7 +31,8 @@ def install():
 
     project_settings = get_project_settings(os.getenv("AVALON_PROJECT"))
     # process path mapping
-    process_dirmap(project_settings)
+    dirmap_processor = MayaDirmap("maya", project_settings)
+    dirmap_processor.process_dirmap()
 
     pyblish.register_plugin_path(PUBLISH_PATH)
     avalon.register_plugin_path(avalon.Loader, LOAD_PATH)
@@ -58,110 +60,6 @@ def install():
 
     log.info("Setting default family states for loader..")
     avalon.data["familiesStateToggled"] = ["imagesequence"]
-
-
-def process_dirmap(project_settings):
-    # type: (dict) -> None
-    """Go through all paths in Settings and set them using `dirmap`.
-
-        If artists has Site Sync enabled, take dirmap mapping directly from
-        Local Settings when artist is syncing workfile locally.
-
-    Args:
-        project_settings (dict): Settings for current project.
-
-    """
-    local_mapping = _get_local_sync_dirmap(project_settings)
-    if not project_settings["maya"].get("maya-dirmap") and not local_mapping:
-        return
-
-    mapping = local_mapping or \
-        project_settings["maya"]["maya-dirmap"]["paths"] \
-        or {}
-    mapping_enabled = project_settings["maya"]["maya-dirmap"]["enabled"] \
-        or bool(local_mapping)
-
-    if not mapping or not mapping_enabled:
-        return
-    if mapping.get("source-path") and mapping_enabled is True:
-        log.info("Processing directory mapping ...")
-        cmds.dirmap(en=True)
-    for k, sp in enumerate(mapping["source-path"]):
-        try:
-            print("{} -> {}".format(sp, mapping["destination-path"][k]))
-            cmds.dirmap(m=(sp, mapping["destination-path"][k]))
-            cmds.dirmap(m=(mapping["destination-path"][k], sp))
-        except IndexError:
-            # missing corresponding destination path
-            log.error(("invalid dirmap mapping, missing corresponding"
-                       " destination directory."))
-            break
-        except RuntimeError:
-            log.error("invalid path {} -> {}, mapping not registered".format(
-                sp, mapping["destination-path"][k]
-            ))
-            continue
-
-
-def _get_local_sync_dirmap(project_settings):
-    """
-        Returns dirmap if synch to local project is enabled.
-
-        Only valid mapping is from roots of remote site to local site set in
-        Local Settings.
-
-        Args:
-            project_settings (dict)
-        Returns:
-            dict : { "source-path": [XXX], "destination-path": [YYYY]}
-    """
-    import json
-    mapping = {}
-
-    if not project_settings["global"]["sync_server"]["enabled"]:
-        log.debug("Site Sync not enabled")
-        return mapping
-
-    from openpype.settings.lib import get_site_local_overrides
-    from openpype.modules import ModulesManager
-
-    manager = ModulesManager()
-    sync_module = manager.modules_by_name["sync_server"]
-
-    project_name = os.getenv("AVALON_PROJECT")
-    sync_settings = sync_module.get_sync_project_setting(
-        os.getenv("AVALON_PROJECT"), exclude_locals=False, cached=False)
-    log.debug(json.dumps(sync_settings, indent=4))
-
-    active_site = sync_module.get_local_normalized_site(
-        sync_module.get_active_site(project_name))
-    remote_site = sync_module.get_local_normalized_site(
-        sync_module.get_remote_site(project_name))
-    log.debug("active {} - remote {}".format(active_site, remote_site))
-
-    if active_site == "local" \
-            and project_name in sync_module.get_enabled_projects()\
-            and active_site != remote_site:
-        overrides = get_site_local_overrides(os.getenv("AVALON_PROJECT"),
-                                             active_site)
-        for root_name, value in overrides.items():
-            if os.path.isdir(value):
-                try:
-                    mapping["destination-path"] = [value]
-                    mapping["source-path"] = [sync_settings["sites"]\
-                                                           [remote_site]\
-                                                           ["root"]\
-                                                           [root_name]]
-                except IndexError:
-                    # missing corresponding destination path
-                    log.debug("overrides".format(overrides))
-                    log.error(
-                        ("invalid dirmap mapping, missing corresponding"
-                         " destination directory."))
-                    break
-
-        log.debug("local sync mapping:: {}".format(mapping))
-    return mapping
 
 
 def uninstall():
@@ -240,7 +138,7 @@ def on_save(_):
 def on_open(_):
     """On scene open let's assume the containers have changed."""
 
-    from avalon.vendor.Qt import QtWidgets
+    from Qt import QtWidgets
     from openpype.widgets import popup
 
     cmds.evalDeferred(
@@ -275,8 +173,7 @@ def on_open(_):
 
             # Show outdated pop-up
             def _on_show_inventory():
-                import avalon.tools.sceneinventory as tool
-                tool.show(parent=parent)
+                host_tools.show_scene_inventory(parent=parent)
 
             dialog = popup.Popup(parent=parent)
             dialog.setWindowTitle("Maya scene has outdated content")
@@ -327,3 +224,12 @@ def before_workfile_save(workfile_path):
 
     workdir = os.path.dirname(workfile_path)
     copy_workspace_mel(workdir)
+
+
+class MayaDirmap(HostDirmap):
+    def on_enable_dirmap(self):
+        cmds.dirmap(en=True)
+
+    def dirmap_routine(self, source_path, destination_path):
+        cmds.dirmap(m=(source_path, destination_path))
+        cmds.dirmap(m=(destination_path, source_path))

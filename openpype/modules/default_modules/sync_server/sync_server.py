@@ -80,6 +80,10 @@ async def upload(module, collection, file, representation, provider_name,
                                          remote_site_name,
                                          True
                                          )
+
+    module.handle_alternate_site(collection, representation, remote_site_name,
+                                 file["_id"], file_id)
+
     return file_id
 
 
@@ -131,6 +135,10 @@ async def download(module, collection, file, representation, provider_name,
                                          local_site,
                                          True
                                          )
+
+    module.handle_alternate_site(collection, representation, local_site,
+                                 file["_id"], file_id)
+
     return file_id
 
 
@@ -246,6 +254,7 @@ class SyncServerThread(threading.Thread):
 
             asyncio.ensure_future(self.check_shutdown(), loop=self.loop)
             asyncio.ensure_future(self.sync_loop(), loop=self.loop)
+            log.info("Sync Server Started")
             self.loop.run_forever()
         except Exception:
             log.warning(
@@ -421,6 +430,12 @@ class SyncServerThread(threading.Thread):
             periodically.
         """
         while self.is_running:
+            if self.module.long_running_tasks:
+                task = self.module.long_running_tasks.pop()
+                log.info("starting long running")
+                await self.loop.run_in_executor(None, task["func"])
+                log.info("finished long running")
+                self.module.projects_processed.remove(task["project_name"])
             await asyncio.sleep(0.5)
         tasks = [task for task in asyncio.all_tasks() if
                  task is not asyncio.current_task()]

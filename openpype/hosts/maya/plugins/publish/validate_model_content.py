@@ -9,7 +9,7 @@ from openpype.hosts.maya.api import lib
 class ValidateModelContent(pyblish.api.InstancePlugin):
     """Adheres to the content of 'model' family
 
-    - Must have one top group.
+    - Must have one top group. (configurable)
     - Must only contain: transforms, meshes and groups
 
     """
@@ -19,6 +19,8 @@ class ValidateModelContent(pyblish.api.InstancePlugin):
     families = ["model"]
     label = "Model Content"
     actions = [openpype.hosts.maya.api.action.SelectInvalidAction]
+
+    validate_top_group = True
 
     @classmethod
     def get_invalid(cls, instance):
@@ -59,12 +61,13 @@ class ValidateModelContent(pyblish.api.InstancePlugin):
 
         # Top group
         assemblies = cmds.ls(content_instance, assemblies=True, long=True)
-        if len(assemblies) != 1:
+        if len(assemblies) != 1 and cls.validate_top_group:
             cls.log.error("Must have exactly one top group")
-            if len(assemblies) == 0:
-                cls.log.warning("No top group found. "
-                                "(Are there objects in the instance?"
-                                " Or is it parented in another group?)")
+            return assemblies
+        if len(assemblies) == 0:
+            cls.log.warning("No top group found. "
+                            "(Are there objects in the instance?"
+                            " Or is it parented in another group?)")
             return assemblies or True
 
         def _is_visible(node):

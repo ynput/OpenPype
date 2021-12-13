@@ -386,10 +386,13 @@ class CollectLook(pyblish.api.InstancePlugin):
 
         self.log.info("Collected resources: {}".format(instance.data["resources"]))
 
-        # Log a warning when no relevant sets were retrieved for the look.
-        if not instance.data["lookData"]["relationships"]:
-            self.log.warning("No sets found for the nodes in the instance: "
-                             "%s" % instance[:])
+        # Log warning when no relevant sets were retrieved for the look.
+        if (
+            not instance.data["lookData"]["relationships"]
+            and "model" not in self.families
+        ):
+            self.log.warning("No sets found for the nodes in the "
+                             "instance: %s" % instance[:])
 
         # Ensure unique shader sets
         # Add shader sets to the instance for unify ID validation
@@ -532,7 +535,7 @@ class CollectLook(pyblish.api.InstancePlugin):
             color_space = cmds.getAttr(color_space_attr)
         except ValueError:
             # node doesn't have colorspace attribute
-            color_space = "raw"
+            color_space = "Raw"
         # Compare with the computed file path, e.g. the one with the <UDIM>
         # pattern in it, to generate some logging information about this
         # difference

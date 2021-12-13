@@ -12,6 +12,7 @@ from avalon.blender.pipeline import AVALON_CONTAINERS
 from avalon.blender.pipeline import AVALON_CONTAINER_ID
 from avalon.blender.pipeline import AVALON_PROPERTY
 from avalon.blender.pipeline import AVALON_INSTANCES
+from openpype import lib
 from openpype.hosts.blender.api import plugin
 
 
@@ -59,7 +60,7 @@ class JsonLayoutLoader(plugin.AssetLoader):
         return None
 
     def _process(self, libpath, asset, asset_group, actions):
-        bpy.ops.object.select_all(action='DESELECT')
+        plugin.deselect_all()
 
         with open(libpath, "r") as fp:
             data = json.load(fp)
@@ -102,6 +103,21 @@ class JsonLayoutLoader(plugin.AssetLoader):
                 namespace=instance_name,
                 options=options
             )
+
+        # Create the camera asset and the camera instance
+        creator_plugin = lib.get_creator_by_name("CreateCamera")
+        if not creator_plugin:
+            raise ValueError("Creator plugin \"CreateCamera\" was "
+                             "not found.")
+
+        api.create(
+            creator_plugin,
+            name="camera",
+            # name=f"{unique_number}_{subset}_animation",
+            asset=asset,
+            options={"useSelection": False}
+            # data={"dependencies": str(context["representation"]["_id"])}
+        )
 
     def process_asset(self,
                       context: dict,

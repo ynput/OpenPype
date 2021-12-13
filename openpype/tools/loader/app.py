@@ -1,11 +1,14 @@
 import sys
 
 from Qt import QtWidgets, QtCore
-from avalon import api, io, style, pipeline
+from avalon import api, io, pipeline
 
-from openpype.tools.utils.widgets import AssetWidget
-
-from openpype.tools.utils import lib
+from openpype import style
+from openpype.tools.utils import (
+    lib,
+    PlaceholderLineEdit
+)
+from openpype.tools.utils.assets_widget import MultiSelectAssetsWidget
 
 from .widgets import (
     SubsetWidget,
@@ -37,6 +40,7 @@ class LoaderWindow(QtWidgets.QDialog):
     """Asset loader interface"""
 
     tool_name = "loader"
+    message_timeout = 5000
 
     def __init__(self, parent=None):
         super(LoaderWindow, self).__init__(parent)
@@ -57,83 +61,85 @@ class LoaderWindow(QtWidgets.QDialog):
         self.setWindowFlags(window_flags)
         self.setFocusPolicy(QtCore.Qt.StrongFocus)
 
-        body = QtWidgets.QWidget()
-        footer = QtWidgets.QWidget()
-        footer.setFixedHeight(20)
+        main_splitter = QtWidgets.QSplitter(self)
 
-        container = QtWidgets.QWidget()
+        # --- Left part ---
+        left_side_splitter = QtWidgets.QSplitter(main_splitter)
+        left_side_splitter.setOrientation(QtCore.Qt.Vertical)
 
-        assets = AssetWidget(io, multiselection=True, parent=self)
-        assets.set_current_asset_btn_visibility(True)
+        # Assets widget
+        assets_widget = MultiSelectAssetsWidget(
+            io, parent=left_side_splitter
+        )
+        assets_widget.set_current_asset_btn_visibility(True)
 
-        families = FamilyListView(io, self.family_config_cache, self)
-        subsets = SubsetWidget(
+        # Families widget
+        families_filter_view = FamilyListView(
+            io, self.family_config_cache, left_side_splitter
+        )
+        left_side_splitter.addWidget(assets_widget)
+        left_side_splitter.addWidget(families_filter_view)
+        left_side_splitter.setStretchFactor(0, 65)
+        left_side_splitter.setStretchFactor(1, 35)
+
+        # --- Middle part ---
+        # Subsets widget
+        subsets_widget = SubsetWidget(
             io,
             self.groups_config,
             self.family_config_cache,
             tool_name=self.tool_name,
-            parent=self
+            parent=main_splitter
         )
-        version = VersionWidget(io)
-        thumbnail = ThumbnailWidget(io)
-        representations = RepresentationWidget(io, self.tool_name)
 
-        manager = ModulesManager()
-        sync_server = manager.modules_by_name["sync_server"]
-
-        thumb_ver_splitter = QtWidgets.QSplitter()
+        # --- Right part ---
+        thumb_ver_splitter = QtWidgets.QSplitter(main_splitter)
         thumb_ver_splitter.setOrientation(QtCore.Qt.Vertical)
-        thumb_ver_splitter.addWidget(thumbnail)
-        thumb_ver_splitter.addWidget(version)
-        if sync_server.enabled:
-            thumb_ver_splitter.addWidget(representations)
+
+        thumbnail_widget = ThumbnailWidget(io, parent=thumb_ver_splitter)
+        version_info_widget = VersionWidget(io, parent=thumb_ver_splitter)
+
+        thumb_ver_splitter.addWidget(thumbnail_widget)
+        thumb_ver_splitter.addWidget(version_info_widget)
+
         thumb_ver_splitter.setStretchFactor(0, 30)
         thumb_ver_splitter.setStretchFactor(1, 35)
 
-        # Create splitter to show / hide family filters
-        asset_filter_splitter = QtWidgets.QSplitter()
-        asset_filter_splitter.setOrientation(QtCore.Qt.Vertical)
-        asset_filter_splitter.addWidget(assets)
-        asset_filter_splitter.addWidget(families)
-        asset_filter_splitter.setStretchFactor(0, 65)
-        asset_filter_splitter.setStretchFactor(1, 35)
+        manager = ModulesManager()
+        sync_server = manager.modules_by_name.get("sync_server")
+        sync_server_enabled = False
+        if sync_server is not None:
+            sync_server_enabled = sync_server.enabled
 
-        container_layout = QtWidgets.QHBoxLayout(container)
-        container_layout.setContentsMargins(0, 0, 0, 0)
-        split = QtWidgets.QSplitter()
-        split.addWidget(asset_filter_splitter)
-        split.addWidget(subsets)
-        split.addWidget(thumb_ver_splitter)
+        repres_widget = None
+        if sync_server_enabled:
+            repres_widget = RepresentationWidget(
+                io, self.tool_name, parent=thumb_ver_splitter
+            )
+            thumb_ver_splitter.addWidget(repres_widget)
 
-        container_layout.addWidget(split)
+        main_splitter.addWidget(left_side_splitter)
+        main_splitter.addWidget(subsets_widget)
+        main_splitter.addWidget(thumb_ver_splitter)
 
-        body_layout = QtWidgets.QHBoxLayout(body)
-        body_layout.addWidget(container)
-        body_layout.setContentsMargins(0, 0, 0, 0)
+        if sync_server_enabled:
+            main_splitter.setSizes([250, 1000, 550])
+        else:
+            main_splitter.setSizes([250, 850, 200])
 
-        message = QtWidgets.QLabel()
-        message.hide()
+        footer_widget = QtWidgets.QWidget(self)
 
-        footer_layout = QtWidgets.QVBoxLayout(footer)
-        footer_layout.addWidget(message)
+        message_label = QtWidgets.QLabel(footer_widget)
+
+        footer_layout = QtWidgets.QHBoxLayout(footer_widget)
         footer_layout.setContentsMargins(0, 0, 0, 0)
+        footer_layout.addWidget(message_label, 1)
 
         layout = QtWidgets.QVBoxLayout(self)
-        layout.addWidget(body)
-        layout.addWidget(footer)
+        layout.addWidget(main_splitter, 1)
+        layout.addWidget(footer_widget, 0)
 
         self.data = {
-            "widgets": {
-                "families": families,
-                "assets": assets,
-                "subsets": subsets,
-                "version": version,
-                "thumbnail": thumbnail,
-                "representations": representations
-            },
-            "label": {
-                "message": message,
-            },
             "state": {
                 "assetIds": None
             }
@@ -142,19 +148,42 @@ class LoaderWindow(QtWidgets.QDialog):
         overlay_frame = OverlayFrame("Loading...", self)
         overlay_frame.setVisible(False)
 
-        families.active_changed.connect(subsets.set_family_filters)
-        assets.selection_changed.connect(self.on_assetschanged)
-        assets.refresh_triggered.connect(self.on_assetschanged)
-        assets.view.clicked.connect(self.on_assetview_click)
-        subsets.active_changed.connect(self.on_subsetschanged)
-        subsets.version_changed.connect(self.on_versionschanged)
-        subsets.refreshed.connect(self._on_subset_refresh)
+        message_timer = QtCore.QTimer()
+        message_timer.setInterval(self.message_timeout)
+        message_timer.setSingleShot(True)
 
-        subsets.load_started.connect(self._on_load_start)
-        subsets.load_ended.connect(self._on_load_end)
-        representations.load_started.connect(self._on_load_start)
-        representations.load_ended.connect(self._on_load_end)
+        message_timer.timeout.connect(self._on_message_timeout)
 
+        families_filter_view.active_changed.connect(
+            self._on_family_filter_change
+        )
+        assets_widget.selection_changed.connect(self.on_assetschanged)
+        assets_widget.refresh_triggered.connect(self.on_assetschanged)
+        subsets_widget.active_changed.connect(self.on_subsetschanged)
+        subsets_widget.version_changed.connect(self.on_versionschanged)
+        subsets_widget.refreshed.connect(self._on_subset_refresh)
+
+        subsets_widget.load_started.connect(self._on_load_start)
+        subsets_widget.load_ended.connect(self._on_load_end)
+        if repres_widget:
+            repres_widget.load_started.connect(self._on_load_start)
+            repres_widget.load_ended.connect(self._on_load_end)
+
+        self._sync_server_enabled = sync_server_enabled
+
+        self._assets_widget = assets_widget
+        self._families_filter_view = families_filter_view
+
+        self._subsets_widget = subsets_widget
+
+        self._version_info_widget = version_info_widget
+        self._thumbnail_widget = thumbnail_widget
+        self._repres_widget = repres_widget
+
+        self._message_label = message_label
+        self._message_timer = message_timer
+
+        # TODO add overlay using stack widget
         self._overlay_frame = overlay_frame
 
         self.family_config_cache.refresh()
@@ -163,13 +192,7 @@ class LoaderWindow(QtWidgets.QDialog):
         self._refresh()
         self._assetschanged()
 
-        # Defaults
-        if sync_server.enabled:
-            split.setSizes([250, 1000, 550])
-            self.resize(1800, 900)
-        else:
-            split.setSizes([250, 850, 200])
-            self.resize(1300, 700)
+        self._first_show = True
 
     def resizeEvent(self, event):
         super(LoaderWindow, self).resizeEvent(event)
@@ -179,15 +202,20 @@ class LoaderWindow(QtWidgets.QDialog):
         super(LoaderWindow, self).moveEvent(event)
         self._overlay_frame.move(0, 0)
 
+    def showEvent(self, event):
+        super(LoaderWindow, self).showEvent(event)
+        if self._first_show:
+            self._first_show = False
+            self.setStyleSheet(style.load_stylesheet())
+            if self._sync_server_enabled:
+                self.resize(1800, 900)
+            else:
+                self.resize(1300, 700)
+            lib.center_window(self)
+
     # -------------------------------
     # Delay calling blocking methods
     # -------------------------------
-
-    def on_assetview_click(self, *args):
-        subsets_widget = self.data["widgets"]["subsets"]
-        selection_model = subsets_widget.view.selectionModel()
-        if selection_model.selectedIndexes():
-            selection_model.clearSelection()
 
     def refresh(self):
         self.echo("Fetching results..")
@@ -219,12 +247,11 @@ class LoaderWindow(QtWidgets.QDialog):
         self._overlay_frame.setVisible(False)
 
     def _on_subset_refresh(self, has_item):
-        subsets_widget = self.data["widgets"]["subsets"]
-        families_view = self.data["widgets"]["families"]
-
-        subsets_widget.set_loading_state(loading=False, empty=not has_item)
-        families = subsets_widget.get_subsets_families()
-        families_view.set_enabled_families(families)
+        self._subsets_widget.set_loading_state(
+            loading=False, empty=not has_item
+        )
+        families = self._subsets_widget.get_subsets_families()
+        self._families_filter_view.set_enabled_families(families)
 
     def _on_load_end(self):
         # Delay hiding as click events happened during loading should be
@@ -232,14 +259,14 @@ class LoaderWindow(QtWidgets.QDialog):
         QtCore.QTimer.singleShot(100, self._hide_overlay)
 
     # ------------------------------
+    def _on_family_filter_change(self, families):
+        self._subsets_widget.set_family_filters(families)
 
     def on_context_task_change(self, *args, **kwargs):
-        assets_widget = self.data["widgets"]["assets"]
-        families_view = self.data["widgets"]["families"]
         # Refresh families config
-        families_view.refresh()
+        self._families_filter_view.refresh()
         # Change to context asset on context change
-        assets_widget.select_assets(io.Session["AVALON_ASSET"])
+        self._assets_widget.select_asset_by_name(io.Session["AVALON_ASSET"])
 
     def _refresh(self):
         """Load assets from database"""
@@ -248,12 +275,10 @@ class LoaderWindow(QtWidgets.QDialog):
         project = io.find_one({"type": "project"}, {"type": 1})
         assert project, "Project was not found! This is a bug"
 
-        assets_widget = self.data["widgets"]["assets"]
-        assets_widget.refresh()
-        assets_widget.setFocus()
+        self._assets_widget.refresh()
+        self._assets_widget.setFocus()
 
-        families_view = self.data["widgets"]["families"]
-        families_view.refresh()
+        self._families_filter_view.refresh()
 
     def clear_assets_underlines(self):
         """Clear colors from asset data to remove colored underlines
@@ -261,34 +286,22 @@ class LoaderWindow(QtWidgets.QDialog):
         own selected subsets. These colors must be cleared from asset data
         on selection change so they match current selection.
         """
+        # TODO do not touch inner attributes of asset widget
         last_asset_ids = self.data["state"]["assetIds"]
-        if not last_asset_ids:
-            return
-
-        assets_widget = self.data["widgets"]["assets"]
-        id_role = assets_widget.model.ObjectIdRole
-
-        for index in lib.iter_model_rows(assets_widget.model, 0):
-            if index.data(id_role) not in last_asset_ids:
-                continue
-
-            assets_widget.model.setData(
-                index, [], assets_widget.model.subsetColorsRole
-            )
+        if last_asset_ids:
+            self._assets_widget.clear_underlines()
 
     def _assetschanged(self):
         """Selected assets have changed"""
-        assets_widget = self.data["widgets"]["assets"]
-        subsets_widget = self.data["widgets"]["subsets"]
+        subsets_widget = self._subsets_widget
+        # TODO do not touch subset widget inner attributes
         subsets_model = subsets_widget.model
 
         subsets_model.clear()
         self.clear_assets_underlines()
 
         # filter None docs they are silo
-        asset_docs = assets_widget.get_selected_assets()
-
-        asset_ids = [asset_doc["_id"] for asset_doc in asset_docs]
+        asset_ids = self._assets_widget.get_selected_asset_ids()
         # Start loading
         subsets_widget.set_loading_state(
             loading=bool(asset_ids),
@@ -302,14 +315,14 @@ class LoaderWindow(QtWidgets.QDialog):
         )
 
         # Clear the version information on asset change
-        self.data["widgets"]["version"].set_version(None)
-        self.data["widgets"]["thumbnail"].set_thumbnail(asset_docs)
+        self._thumbnail_widget.set_thumbnail(asset_ids)
+        self._version_info_widget.set_version(None)
 
         self.data["state"]["assetIds"] = asset_ids
 
-        representations = self.data["widgets"]["representations"]
         # reset repre list
-        representations.set_version_ids([])
+        if self._repres_widget is not None:
+            self._repres_widget.set_version_ids([])
 
     def _subsetschanged(self):
         asset_ids = self.data["state"]["assetIds"]
@@ -318,10 +331,11 @@ class LoaderWindow(QtWidgets.QDialog):
             self._versionschanged()
             return
 
-        subsets = self.data["widgets"]["subsets"]
-        selected_subsets = subsets.selected_subsets(_merged=True, _other=False)
+        selected_subsets = self._subsets_widget.selected_subsets(
+            _merged=True, _other=False
+        )
 
-        asset_models = {}
+        asset_colors = {}
         asset_ids = []
         for subset_node in selected_subsets:
             asset_ids.extend(subset_node.get("assetIds", []))
@@ -329,35 +343,22 @@ class LoaderWindow(QtWidgets.QDialog):
 
         for subset_node in selected_subsets:
             for asset_id in asset_ids:
-                if asset_id not in asset_models:
-                    asset_models[asset_id] = []
+                if asset_id not in asset_colors:
+                    asset_colors[asset_id] = []
 
                 color = None
                 if asset_id in subset_node.get("assetIds", []):
                     color = subset_node["subsetColor"]
 
-                asset_models[asset_id].append(color)
+                asset_colors[asset_id].append(color)
 
-        self.clear_assets_underlines()
+        self._assets_widget.set_underline_colors(asset_colors)
 
-        assets_widget = self.data["widgets"]["assets"]
-        indexes = assets_widget.view.selectionModel().selectedRows()
-
-        for index in indexes:
-            id = index.data(assets_widget.model.ObjectIdRole)
-            if id not in asset_models:
-                continue
-
-            assets_widget.model.setData(
-                index, asset_models[id], assets_widget.model.subsetColorsRole
-            )
-        # Trigger repaint
-        assets_widget.view.updateGeometries()
         # Set version in Version Widget
         self._versionschanged()
 
     def _versionschanged(self):
-        subsets = self.data["widgets"]["subsets"]
+        subsets = self._subsets_widget
         selection = subsets.view.selectionModel()
 
         # Active must be in the selected rows otherwise we
@@ -389,23 +390,25 @@ class LoaderWindow(QtWidgets.QDialog):
                 else:
                     version_docs.append(item["version_document"])
 
-        self.data["widgets"]["version"].set_version(version_doc)
+        self._version_info_widget.set_version(version_doc)
 
-        thumbnail_docs = version_docs
-        assets_widget = self.data["widgets"]["assets"]
-        asset_docs = assets_widget.get_selected_assets()
-        if not thumbnail_docs:
-            if len(asset_docs) > 0:
-                thumbnail_docs = asset_docs
+        thumbnail_src_ids = [
+            version_doc["_id"]
+            for version_doc in version_docs
+        ]
+        if not thumbnail_src_ids:
+            thumbnail_src_ids = self._assets_widget.get_selected_asset_ids()
 
-        self.data["widgets"]["thumbnail"].set_thumbnail(thumbnail_docs)
+        self._thumbnail_widget.set_thumbnail(thumbnail_src_ids)
 
-        representations = self.data["widgets"]["representations"]
-        version_ids = [doc["_id"] for doc in version_docs or []]
-        representations.set_version_ids(version_ids)
+        if self._repres_widget is not None:
+            version_ids = [doc["_id"] for doc in version_docs or []]
+            self._repres_widget.set_version_ids(version_ids)
 
-        # representations.change_visibility("subset", len(rows) > 1)
-        # representations.change_visibility("asset", len(asset_docs) > 1)
+            # self._repres_widget.change_visibility("subset", len(rows) > 1)
+            # self._repres_widget.change_visibility(
+            #     "asset", len(asset_docs) > 1
+            # )
 
     def _set_context(self, context, refresh=True):
         """Set the selection in the interface using a context.
@@ -438,16 +441,15 @@ class LoaderWindow(QtWidgets.QDialog):
             # scheduled refresh and the silo tabs are not shown.
             self._refresh()
 
-        asset_widget = self.data["widgets"]["assets"]
-        asset_widget.select_assets(asset)
+        self._assets_widget.select_asset_by_name(asset)
+
+    def _on_message_timeout(self):
+        self._message_label.setText("")
 
     def echo(self, message):
-        widget = self.data["label"]["message"]
-        widget.setText(str(message))
-        widget.show()
+        self._message_label.setText(str(message))
         print(message)
-
-        lib.schedule(widget.hide, 5000, channel="message")
+        self._message_timer.start()
 
     def closeEvent(self, event):
         # Kill on holding SHIFT
@@ -475,7 +477,7 @@ class LoaderWindow(QtWidgets.QDialog):
         event.setAccepted(True)  # Avoid interfering other widgets
 
     def show_grouping_dialog(self):
-        subsets = self.data["widgets"]["subsets"]
+        subsets = self._subsets_widget
         if not subsets.is_groupable():
             self.echo("Grouping not enabled.")
             return
@@ -514,10 +516,11 @@ class SubsetGroupingDialog(QtWidgets.QDialog):
 
         self.items = items
         self.groups_config = groups_config
-        self.subsets = parent.data["widgets"]["subsets"]
+        # TODO do not touch inner attributes
+        self.subsets = parent._subsets_widget
         self.asset_ids = parent.data["state"]["assetIds"]
 
-        name = QtWidgets.QLineEdit()
+        name = PlaceholderLineEdit(self)
         name.setPlaceholderText("Remain blank to ungroup..")
 
         # Menu for pre-defined subset groups
@@ -631,9 +634,8 @@ def show(debug=False, parent=None, use_context=False):
         api.Session["AVALON_PROJECT"] = any_project["name"]
         module.project = any_project["name"]
 
-    with lib.application():
+    with lib.qt_app_context():
         window = LoaderWindow(parent)
-        window.setStyleSheet(style.load_stylesheet())
         window.show()
 
         if use_context:

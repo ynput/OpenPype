@@ -2,6 +2,7 @@ import os
 import re
 import copy
 import json
+import shutil
 
 from abc import ABCMeta, abstractmethod
 import six
@@ -16,9 +17,10 @@ from openpype.lib import (
 
     path_to_subprocess_arg,
 
-    should_decompress,
-    get_decompress_dir,
-    decompress
+    should_convert_for_ffmpeg,
+    convert_for_ffmpeg,
+    get_transcode_temp_directory,
+    get_transcode_temp_directory
 )
 import speedcopy
 
@@ -71,18 +73,6 @@ class ExtractReview(pyblish.api.InstancePlugin):
         if not instance.data.get("review", True):
             return
 
-        # ffmpeg doesn't support multipart exrs
-        if instance.data.get("multipartExr") is True:
-            instance_label = (
-                getattr(instance, "label", None)
-                or instance.data.get("label")
-                or instance.data.get("name")
-            )
-            self.log.info((
-                "Instance \"{}\" contain \"multipartExr\". Skipped."
-            ).format(instance_label))
-            return
-
         # Run processing
         self.main_process(instance)
 
@@ -92,7 +82,7 @@ class ExtractReview(pyblish.api.InstancePlugin):
             if "delete" in tags and "thumbnail" not in tags:
                 instance.data["representations"].remove(repre)
 
-    def main_process(self, instance):
+    def _get_outputs_for_instance(self, instance):
         host_name = instance.context.data["hostName"]
         task_name = os.environ["AVALON_TASK"]
         family = self.main_family_from_instance(instance)
@@ -114,24 +104,25 @@ class ExtractReview(pyblish.api.InstancePlugin):
         self.log.debug("Matching profile: \"{}\"".format(json.dumps(profile)))
 
         instance_families = self.families_from_instance(instance)
-        _profile_outputs = self.filter_outputs_by_families(
+        filtered_outputs = self.filter_outputs_by_families(
             profile, instance_families
         )
-        if not _profile_outputs:
+        # Store `filename_suffix` to save arguments
+        profile_outputs = []
+        for filename_suffix, definition in filtered_outputs.items():
+            definition["filename_suffix"] = filename_suffix
+            profile_outputs.append(definition)
+
+        if not filtered_outputs:
             self.log.info((
                 "Skipped instance. All output definitions from selected"
                 " profile does not match to instance families. \"{}\""
             ).format(str(instance_families)))
-            return
+        return profile_outputs
 
-        # Store `filename_suffix` to save arguments
-        profile_outputs = []
-        for filename_suffix, definition in _profile_outputs.items():
-            definition["filename_suffix"] = filename_suffix
-            profile_outputs.append(definition)
-
-        # Loop through representations
-        for repre in tuple(instance.data["representations"]):
+    def _get_outputs_per_representations(self, instance, profile_outputs):
+        outputs_per_representations = []
+        for repre in instance.data["representations"]:
             repre_name = str(repre.get("name"))
             tags = repre.get("tags") or []
             if "review" not in tags:
@@ -173,6 +164,80 @@ class ExtractReview(pyblish.api.InstancePlugin):
                     " tags. \"{}\""
                 ).format(str(tags)))
                 continue
+            outputs_per_representations.append((repre, outputs))
+        return outputs_per_representations
+
+    @staticmethod
+    def get_instance_label(instance):
+        return (
+            getattr(instance, "label", None)
+            or instance.data.get("label")
+            or instance.data.get("name")
+            or str(instance)
+        )
+
+    def main_process(self, instance):
+        instance_label = self.get_instance_label(instance)
+        self.log.debug("Processing instance \"{}\"".format(instance_label))
+        profile_outputs = self._get_outputs_for_instance(instance)
+        if not profile_outputs:
+            return
+
+        # Loop through representations
+        outputs_per_repres = self._get_outputs_per_representations(
+            instance, profile_outputs
+        )
+        for repre, outputs in outputs_per_repres:
+            # Check if input should be preconverted before processing
+            # Store original staging dir (it's value may change)
+            src_repre_staging_dir = repre["stagingDir"]
+            # Receive filepath to first file in representation
+            first_input_path = None
+            if not self.input_is_sequence(repre):
+                first_input_path = os.path.join(
+                    src_repre_staging_dir, repre["files"]
+                )
+            else:
+                for filename in repre["files"]:
+                    first_input_path = os.path.join(
+                        src_repre_staging_dir, filename
+                    )
+                    break
+
+            # Skip if file is not set
+            if first_input_path is None:
+                self.log.warning((
+                    "Representation \"{}\" have empty files. Skipped."
+                ).format(repre["name"]))
+                continue
+
+            # Determine if representation requires pre conversion for ffmpeg
+            do_convert = should_convert_for_ffmpeg(first_input_path)
+            # If result is None the requirement of conversion can't be
+            #   determined
+            if do_convert is None:
+                self.log.info((
+                    "Can't determine if representation requires conversion."
+                    " Skipped."
+                ))
+                continue
+
+            # Do conversion if needed
+            #   - change staging dir of source representation
+            #   - must be set back after output definitions processing
+            if do_convert:
+                new_staging_dir = get_transcode_temp_directory()
+                repre["stagingDir"] = new_staging_dir
+
+                frame_start = instance.data["frameStart"]
+                frame_end = instance.data["frameEnd"]
+                convert_for_ffmpeg(
+                    first_input_path,
+                    new_staging_dir,
+                    frame_start,
+                    frame_end,
+                    self.log
+                )
 
             for _output_def in outputs:
                 output_def = copy.deepcopy(_output_def)
@@ -180,8 +245,15 @@ class ExtractReview(pyblish.api.InstancePlugin):
                 if "tags" not in output_def:
                     output_def["tags"] = []
 
+                if "burnins" not in output_def:
+                    output_def["burnins"] = []
+
                 # Create copy of representation
                 new_repre = copy.deepcopy(repre)
+                # Make sure new representation has origin staging dir
+                #   - this is because source representation may change
+                #       it's staging dir because of ffmpeg conversion
+                new_repre["stagingDir"] = src_repre_staging_dir
 
                 # Remove "delete" tag from new repre if there is
                 if "delete" in new_repre["tags"]:
@@ -192,8 +264,20 @@ class ExtractReview(pyblish.api.InstancePlugin):
                     if tag not in new_repre["tags"]:
                         new_repre["tags"].append(tag)
 
+                # Add burnin link from output definition to representation
+                for burnin in output_def["burnins"]:
+                    if burnin not in new_repre.get("burnins", []):
+                        if not new_repre.get("burnins"):
+                            new_repre["burnins"] = []
+                        new_repre["burnins"].append(str(burnin))
+
                 self.log.debug(
-                    "New representation tags: `{}`".format(new_repre["tags"])
+                    "Linked burnins: `{}`".format(new_repre.get("burnins"))
+                )
+
+                self.log.debug(
+                    "New representation tags: `{}`".format(
+                        new_repre.get("tags"))
                 )
 
                 temp_data = self.prepare_temp_data(
@@ -232,12 +316,16 @@ class ExtractReview(pyblish.api.InstancePlugin):
                     for f in files_to_clean:
                         os.unlink(f)
 
-                output_name = output_def["filename_suffix"]
+                output_name = new_repre.get("outputName", "")
+                output_ext = new_repre["ext"]
+                if output_name:
+                    output_name += "_"
+                output_name += output_def["filename_suffix"]
                 if temp_data["without_handles"]:
                     output_name += "_noHandles"
 
                 new_repre.update({
-                    "name": output_def["filename_suffix"],
+                    "name": "{}_{}".format(output_name, output_ext),
                     "outputName": output_name,
                     "outputDef": output_def,
                     "frameStartFtrack": temp_data["output_frame_start"],
@@ -256,6 +344,14 @@ class ExtractReview(pyblish.api.InstancePlugin):
                     "Adding new representation: {}".format(new_repre)
                 )
                 instance.data["representations"].append(new_repre)
+
+            # Cleanup temp staging dir after procesisng of output definitions
+            if do_convert:
+                temp_dir = repre["stagingDir"]
+                shutil.rmtree(temp_dir)
+                # Set staging dir of source representation back to previous
+                #   value
+                repre["stagingDir"] = src_repre_staging_dir
 
     def input_is_sequence(self, repre):
         """Deduce from representation data if input is sequence."""
@@ -386,34 +482,8 @@ class ExtractReview(pyblish.api.InstancePlugin):
             value for value in _ffmpeg_audio_filters if value.strip()
         ]
 
-        if isinstance(new_repre['files'], list):
-            input_files_urls = [os.path.join(new_repre["stagingDir"], f) for f
-                                in new_repre['files']]
-            test_path = input_files_urls[0]
-        else:
-            test_path = os.path.join(
-                new_repre["stagingDir"], new_repre['files'])
-        do_decompress = should_decompress(test_path)
-
-        if do_decompress:
-            # change stagingDir, decompress first
-            # calculate all paths with modified directory, used on too many
-            # places
-            # will be purged by cleanup.py automatically
-            orig_staging_dir = new_repre["stagingDir"]
-            new_repre["stagingDir"] = get_decompress_dir()
-
         # Prepare input and output filepaths
         self.input_output_paths(new_repre, output_def, temp_data)
-
-        if do_decompress:
-            input_file = temp_data["full_input_path"].\
-                replace(new_repre["stagingDir"], orig_staging_dir)
-
-            decompress(new_repre["stagingDir"], input_file,
-                       temp_data["frame_start"],
-                       temp_data["frame_end"],
-                       self.log)
 
         # Set output frames len to 1 when ouput is single image
         if (
@@ -649,6 +719,8 @@ class ExtractReview(pyblish.api.InstancePlugin):
             AssertionError: if more then one collection is obtained.
 
         """
+        start_frame = int(start_frame)
+        end_frame = int(end_frame)
         collections = clique.assemble(files)[0]
         assert len(collections) == 1, "Multiple collections found."
         col = collections[0]
@@ -723,13 +795,14 @@ class ExtractReview(pyblish.api.InstancePlugin):
         "sequence_file" (if output is sequence) keys to new representation.
         """
 
-        staging_dir = new_repre["stagingDir"]
         repre = temp_data["origin_repre"]
+        src_staging_dir = repre["stagingDir"]
+        dst_staging_dir = new_repre["stagingDir"]
 
         if temp_data["input_is_sequence"]:
             collections = clique.assemble(repre["files"])[0]
             full_input_path = os.path.join(
-                staging_dir,
+                src_staging_dir,
                 collections[0].format("{head}{padding}{tail}")
             )
 
@@ -739,12 +812,12 @@ class ExtractReview(pyblish.api.InstancePlugin):
 
             # Make sure to have full path to one input file
             full_input_path_single_file = os.path.join(
-                staging_dir, repre["files"][0]
+                src_staging_dir, repre["files"][0]
             )
 
         else:
             full_input_path = os.path.join(
-                staging_dir, repre["files"]
+                src_staging_dir, repre["files"]
             )
             filename = os.path.splitext(repre["files"])[0]
 
@@ -790,27 +863,27 @@ class ExtractReview(pyblish.api.InstancePlugin):
 
             new_repre["sequence_file"] = repr_file
             full_output_path = os.path.join(
-                staging_dir, filename_base, repr_file
+                dst_staging_dir, filename_base, repr_file
             )
 
         else:
             repr_file = "{}_{}.{}".format(
                 filename, filename_suffix, output_ext
             )
-            full_output_path = os.path.join(staging_dir, repr_file)
+            full_output_path = os.path.join(dst_staging_dir, repr_file)
             new_repre_files = repr_file
 
         # Store files to representation
         new_repre["files"] = new_repre_files
 
         # Make sure stagingDire exists
-        staging_dir = os.path.normpath(os.path.dirname(full_output_path))
-        if not os.path.exists(staging_dir):
-            self.log.debug("Creating dir: {}".format(staging_dir))
-            os.makedirs(staging_dir)
+        dst_staging_dir = os.path.normpath(os.path.dirname(full_output_path))
+        if not os.path.exists(dst_staging_dir):
+            self.log.debug("Creating dir: {}".format(dst_staging_dir))
+            os.makedirs(dst_staging_dir)
 
         # Store stagingDir to representaion
-        new_repre["stagingDir"] = staging_dir
+        new_repre["stagingDir"] = dst_staging_dir
 
         # Store paths to temp data
         temp_data["full_input_path"] = full_input_path
@@ -989,10 +1062,11 @@ class ExtractReview(pyblish.api.InstancePlugin):
             streams = ffprobe_streams(
                 full_input_path_single_file, self.log
             )
-        except Exception:
+        except Exception as exc:
             raise AssertionError((
-                "FFprobe couldn't read information about input file: \"{}\""
-            ).format(full_input_path_single_file))
+                "FFprobe couldn't read information about input file: \"{}\"."
+                " Error message: {}"
+            ).format(full_input_path_single_file, str(exc)))
 
         # Try to find first stream with defined 'width' and 'height'
         # - this is to avoid order of streams where audio can be as first

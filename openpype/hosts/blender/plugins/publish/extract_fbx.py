@@ -24,7 +24,7 @@ class ExtractFBX(api.Extractor):
         # Perform extraction
         self.log.info("Performing extraction..")
 
-        bpy.ops.object.select_all(action='DESELECT')
+        plugin.deselect_all()
 
         selected = []
         asset_group = None
@@ -60,7 +60,7 @@ class ExtractFBX(api.Extractor):
             add_leaf_bones=False
         )
 
-        bpy.ops.object.select_all(action='DESELECT')
+        plugin.deselect_all()
 
         for mat in new_materials:
             bpy.data.materials.remove(mat)

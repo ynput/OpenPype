@@ -13,6 +13,46 @@ from openpype.api import get_project_settings
 from openpype.lib import filter_profiles
 
 
+def center_window(window):
+    """Move window to center of it's screen."""
+    desktop = QtWidgets.QApplication.desktop()
+    screen_idx = desktop.screenNumber(window)
+    screen_geo = desktop.screenGeometry(screen_idx)
+    geo = window.frameGeometry()
+    geo.moveCenter(screen_geo.center())
+    if geo.y() < screen_geo.y():
+        geo.setY(screen_geo.y())
+    window.move(geo.topLeft())
+
+
+def paint_image_with_color(image, color):
+    """Redraw image with single color using it's alpha.
+
+    It is expected that input image is singlecolor image with alpha.
+
+    Args:
+        image (QImage): Loaded image with alpha.
+        color (QColor): Color that will be used to paint image.
+    """
+    width = image.width()
+    height = image.height()
+
+    alpha_mask = image.createAlphaMask()
+    alpha_region = QtGui.QRegion(QtGui.QBitmap.fromImage(alpha_mask))
+
+    pixmap = QtGui.QPixmap(width, height)
+    pixmap.fill(QtCore.Qt.transparent)
+
+    painter = QtGui.QPainter(pixmap)
+    painter.setClipRegion(alpha_region)
+    painter.setPen(QtCore.Qt.NoPen)
+    painter.setBrush(color)
+    painter.drawRect(QtCore.QRect(0, 0, width, height))
+    painter.end()
+
+    return pixmap
+
+
 def format_version(value, hero_version=False):
     """Formats integer to displayable version name"""
     label = "v{0:03d}".format(value)
@@ -22,7 +62,7 @@ def format_version(value, hero_version=False):
 
 
 @contextlib.contextmanager
-def application():
+def qt_app_context():
     app = QtWidgets.QApplication.instance()
 
     if not app:
@@ -35,24 +75,8 @@ def application():
         yield app
 
 
-def defer(delay, func):
-    """Append artificial delay to `func`
-
-    This aids in keeping the GUI responsive, but complicates logic
-    when producing tests. To combat this, the environment variable ensures
-    that every operation is synchonous.
-
-    Arguments:
-        delay (float): Delay multiplier; default 1, 0 means no delay
-        func (callable): Any callable
-
-    """
-
-    delay *= float(os.getenv("PYBLISH_DELAY", 1))
-    if delay > 0:
-        return QtCore.QTimer.singleShot(delay, func)
-    else:
-        return func()
+# Backwards compatibility
+application = qt_app_context
 
 
 class SharedObjects:
@@ -82,18 +106,6 @@ def schedule(func, time, channel="default"):
     SharedObjects.jobs[channel] = timer
 
 
-@contextlib.contextmanager
-def dummy():
-    """Dummy context manager
-
-    Usage:
-        >> with some_context() if False else dummy():
-        ..   pass
-
-    """
-    yield
-
-
 def iter_model_rows(model, column, include_root=False):
     """Iterate over all row indices in a model"""
     indices = [QtCore.QModelIndex()]  # start iteration at root
@@ -109,76 +121,6 @@ def iter_model_rows(model, column, include_root=False):
             continue
 
         yield index
-
-
-@contextlib.contextmanager
-def preserve_states(tree_view,
-                    column=0,
-                    role=None,
-                    preserve_expanded=True,
-                    preserve_selection=True,
-                    expanded_role=QtCore.Qt.DisplayRole,
-                    selection_role=QtCore.Qt.DisplayRole):
-    """Preserves row selection in QTreeView by column's data role.
-    This function is created to maintain the selection status of
-    the model items. When refresh is triggered the items which are expanded
-    will stay expanded and vise versa.
-        tree_view (QWidgets.QTreeView): the tree view nested in the application
-        column (int): the column to retrieve the data from
-        role (int): the role which dictates what will be returned
-    Returns:
-        None
-    """
-    # When `role` is set then override both expanded and selection roles
-    if role:
-        expanded_role = role
-        selection_role = role
-
-    model = tree_view.model()
-    selection_model = tree_view.selectionModel()
-    flags = selection_model.Select | selection_model.Rows
-
-    expanded = set()
-
-    if preserve_expanded:
-        for index in iter_model_rows(
-            model, column=column, include_root=False
-        ):
-            if tree_view.isExpanded(index):
-                value = index.data(expanded_role)
-                expanded.add(value)
-
-    selected = None
-
-    if preserve_selection:
-        selected_rows = selection_model.selectedRows()
-        if selected_rows:
-            selected = set(row.data(selection_role) for row in selected_rows)
-
-    try:
-        yield
-    finally:
-        if expanded:
-            for index in iter_model_rows(
-                model, column=0, include_root=False
-            ):
-                value = index.data(expanded_role)
-                is_expanded = value in expanded
-                # skip if new index was created meanwhile
-                if is_expanded is None:
-                    continue
-                tree_view.setExpanded(index, is_expanded)
-
-        if selected:
-            # Go through all indices, select the ones with similar data
-            for index in iter_model_rows(
-                model, column=column, include_root=False
-            ):
-                value = index.data(selection_role)
-                state = value in selected
-                if state:
-                    tree_view.scrollTo(index)  # Ensure item is visible
-                    selection_model.select(index, flags)
 
 
 @contextlib.contextmanager
@@ -531,6 +473,30 @@ class GroupsConfig:
         return ordered_groups, subset_docs_without_group, subset_docs_by_group
 
 
+class DynamicQThread(QtCore.QThread):
+    """QThread which can run any function with argument and kwargs.
+
+    Args:
+        func (function): Function which will be called.
+        args (tuple): Arguments which will be passed to function.
+        kwargs (tuple): Keyword arguments which will be passed to function.
+        parent (QObject): Parent of thread.
+    """
+    def __init__(self, func, args=None, kwargs=None, parent=None):
+        super(DynamicQThread, self).__init__(parent)
+        if args is None:
+            args = tuple()
+        if kwargs is None:
+            kwargs = {}
+        self._func = func
+        self._args = args
+        self._kwargs = kwargs
+
+    def run(self):
+        """Execute the function with arguments."""
+        self._func(*self._args, **self._kwargs)
+
+
 def create_qthread(func, *args, **kwargs):
     class Thread(QtCore.QThread):
         def run(self):
@@ -539,6 +505,7 @@ def create_qthread(func, *args, **kwargs):
 
 
 def get_repre_icons():
+    """Returns a dict {'provider_name': QIcon}"""
     try:
         from openpype_modules import sync_server
     except Exception:
@@ -550,9 +517,17 @@ def get_repre_icons():
         "providers", "resources"
     )
     icons = {}
-    # TODO get from sync module
-    for provider in ['studio', 'local_drive', 'gdrive']:
-        pix_url = "{}/{}.png".format(resource_path, provider)
+    if not os.path.exists(resource_path):
+        print("No icons for Site Sync found")
+        return {}
+
+    for file_name in os.listdir(resource_path):
+        if file_name and not file_name.endswith("png"):
+            continue
+
+        provider, _ = os.path.splitext(file_name)
+
+        pix_url = os.path.join(resource_path, file_name)
         icons[provider] = QtGui.QIcon(pix_url)
 
     return icons

@@ -100,6 +100,7 @@ import platform
 import traceback
 import subprocess
 import site
+import distutils.spawn
 from pathlib import Path
 
 # OPENPYPE_ROOT is variable pointing to build (or code) directory
@@ -293,19 +294,31 @@ def run_disk_mapping_commands(mongo_url):
 
     mappings = disk_mapping.get(low_platform) or []
     for source, destination in mappings:
-        args = ["subst", destination.rstrip('/'), source.rstrip('/')]
+        destination = destination.rstrip('/')
+        source = source.rstrip('/')
+
+        if low_platform == "windows":
+            args = ["subst", destination, source]
+        elif low_platform == "darwin":
+            scr = "do shell script \"ln -s {} {}\" with administrator privileges".format(source, destination)  # noqa: E501
+            args = ["osascript", "-e", scr]
+        else:
+            args = ["sudo", "ln", "-s", source, destination]
+
         _print("disk mapping args:: {}".format(args))
         try:
-            output = subprocess.Popen(args)
-            if output.returncode and output.returncode != 0:
-                exc_msg = "Executing args was not successful: \"{}\"".format(
-                    args)
+            if not os.path.exists(destination):
+                output = subprocess.Popen(args)
+                if output.returncode and output.returncode != 0:
+                    exc_msg = "Executing was not successful: \"{}\"".format(
+                        args)
 
-                raise RuntimeError(exc_msg)
-        except TypeError:
-            _print("Error in mapping drive")
+                    raise RuntimeError(exc_msg)
+        except TypeError as exc:
+            _print("Error {} in mapping drive {}, {}".format(str(exc),
+                                                             source,
+                                                             destination))
             raise
-
 
 def set_avalon_environments():
     """Set avalon specific environments.
@@ -372,23 +385,6 @@ def set_modules_environments():
         os.environ.update(env)
 
 
-def is_tool(name):
-    try:
-        import os.errno as errno
-    except ImportError:
-        import errno
-
-    try:
-        devnull = open(os.devnull, "w")
-        subprocess.Popen(
-            [name], stdout=devnull, stderr=devnull
-        ).communicate()
-    except OSError as exc:
-        if exc.errno == errno.ENOENT:
-            return False
-    return True
-
-
 def _startup_validations():
     """Validations before OpenPype starts."""
     try:
@@ -431,7 +427,8 @@ def _validate_thirdparty_binaries():
     if low_platform == "windows":
         ffmpeg_dir = os.path.join(ffmpeg_dir, "bin")
     ffmpeg_executable = os.path.join(ffmpeg_dir, "ffmpeg")
-    if not is_tool(ffmpeg_executable):
+    ffmpeg_result = distutils.spawn.find_executable(ffmpeg_executable)
+    if ffmpeg_result is None:
         raise RuntimeError(error_msg.format("FFmpeg"))
 
     # Validate existence of OpenImageIO (not on MacOs)
@@ -451,8 +448,11 @@ def _validate_thirdparty_binaries():
             low_platform,
             "oiiotool"
         )
-    if oiio_tool_path is not None and not is_tool(oiio_tool_path):
-        raise RuntimeError(error_msg.format("OpenImageIO"))
+    oiio_result = None
+    if oiio_tool_path is not None:
+        oiio_result = distutils.spawn.find_executable(oiio_tool_path)
+        if oiio_result is None:
+            raise RuntimeError(error_msg.format("OpenImageIO"))
 
 
 def _process_arguments() -> tuple:

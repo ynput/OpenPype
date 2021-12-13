@@ -103,11 +103,14 @@
         "icon": "{}/app_icons/flame.png",
         "host_name": "flame",
         "environment": {
-            "FLAME_SCRIPT_DIR": {
+            "FLAME_SCRIPT_DIRS": {
                 "windows": "",
-                "darvin": "",
+                "darwin": "",
                 "linux": ""
-            }
+            },
+            "FLAME_WIRETAP_HOSTNAME": "",
+            "FLAME_WIRETAP_VOLUME": "stonefs",
+            "FLAME_WIRETAP_GROUP": "staff"
         },
         "variants": {
             "2021": {
@@ -502,7 +505,7 @@
                 "environment": {}
             },
             "__dynamic_keys_labels__": {
-                "13-0": "13.0 (Testing only)",
+                "13-0": "13.0",
                 "12-2": "12.2",
                 "12-0": "12.0",
                 "11-3": "11.3",
@@ -639,7 +642,7 @@
                 "environment": {}
             },
             "__dynamic_keys_labels__": {
-                "13-0": "13.0 (Testing only)",
+                "13-0": "13.0",
                 "12-2": "12.2",
                 "12-0": "12.0",
                 "11-3": "11.3",
@@ -656,12 +659,12 @@
             "FUSION_UTILITY_SCRIPTS_SOURCE_DIR": [],
             "FUSION_UTILITY_SCRIPTS_DIR": {
                 "windows": "{PROGRAMDATA}/Blackmagic Design/Fusion/Scripts/Comp",
-                "darvin": "/Library/Application Support/Blackmagic Design/Fusion/Scripts/Comp",
+                "darwin": "/Library/Application Support/Blackmagic Design/Fusion/Scripts/Comp",
                 "linux": "/opt/Fusion/Scripts/Comp"
             },
             "PYTHON36": {
                 "windows": "{LOCALAPPDATA}/Programs/Python/Python36",
-                "darvin": "~/Library/Python/3.6/bin",
+                "darwin": "~/Library/Python/3.6/bin",
                 "linux": "/opt/Python/3.6/bin"
             },
             "PYTHONPATH": [
@@ -722,22 +725,22 @@
             "RESOLVE_UTILITY_SCRIPTS_SOURCE_DIR": [],
             "RESOLVE_SCRIPT_API": {
                 "windows": "{PROGRAMDATA}/Blackmagic Design/DaVinci Resolve/Support/Developer/Scripting",
-                "darvin": "/Library/Application Support/Blackmagic Design/DaVinci Resolve/Developer/Scripting",
+                "darwin": "/Library/Application Support/Blackmagic Design/DaVinci Resolve/Developer/Scripting",
                 "linux": "/opt/resolve/Developer/Scripting"
             },
             "RESOLVE_SCRIPT_LIB": {
                 "windows": "C:/Program Files/Blackmagic Design/DaVinci Resolve/fusionscript.dll",
-                "darvin": "/Applications/DaVinci Resolve/DaVinci Resolve.app/Contents/Libraries/Fusion/fusionscript.so",
+                "darwin": "/Applications/DaVinci Resolve/DaVinci Resolve.app/Contents/Libraries/Fusion/fusionscript.so",
                 "linux": "/opt/resolve/libs/Fusion/fusionscript.so"
             },
             "RESOLVE_UTILITY_SCRIPTS_DIR": {
                 "windows": "{PROGRAMDATA}/Blackmagic Design/DaVinci Resolve/Fusion/Scripts/Comp",
-                "darvin": "/Library/Application Support/Blackmagic Design/DaVinci Resolve/Fusion/Scripts/Comp",
+                "darwin": "/Library/Application Support/Blackmagic Design/DaVinci Resolve/Fusion/Scripts/Comp",
                 "linux": "/opt/resolve/Fusion/Scripts/Comp"
             },
             "PYTHON36_RESOLVE": {
                 "windows": "{LOCALAPPDATA}/Programs/Python/Python36",
-                "darvin": "~/Library/Python/3.6/bin",
+                "darwin": "~/Library/Python/3.6/bin",
                 "linux": "/opt/Python/3.6/bin"
             },
             "PYTHONPATH": [
@@ -1009,8 +1012,6 @@
         },
         "variants": {
             "2020": {
-                "enabled": true,
-                "variant_label": "2020",
                 "executables": {
                     "windows": [
                         "C:\\Program Files\\Adobe\\Adobe Photoshop 2020\\Photoshop.exe"
@@ -1026,11 +1027,24 @@
                 "environment": {}
             },
             "2021": {
-                "enabled": true,
-                "variant_label": "2021",
                 "executables": {
                     "windows": [
                         "C:\\Program Files\\Adobe\\Adobe Photoshop 2021\\Photoshop.exe"
+                    ],
+                    "darwin": [],
+                    "linux": []
+                },
+                "arguments": {
+                    "windows": [],
+                    "darwin": [],
+                    "linux": []
+                },
+                "environment": {}
+            },
+            "2022": {
+                "executables": {
+                    "windows": [
+                        "C:\\Program Files\\Adobe\\Adobe Photoshop 2022\\Photoshop.exe"
                     ],
                     "darwin": [],
                     "linux": []

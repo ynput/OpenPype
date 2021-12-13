@@ -1,21 +1,14 @@
 """
 Basic avalon integration
 """
-import os
 import contextlib
-from collections import OrderedDict
-from avalon.tools import workfiles
 from avalon import api as avalon
-from avalon import schema
-from avalon.pipeline import AVALON_CONTAINER_ID
 from pyblish import api as pyblish
 from openpype.api import Logger
-from . import lib
 
 AVALON_CONTAINERS = "AVALON_CONTAINERS"
 
 log = Logger().get_logger(__name__)
-
 
 
 def install():
@@ -43,7 +36,7 @@ def install():
 
     pyblish.register_host("flame")
     pyblish.register_plugin_path(PUBLISH_PATH)
-    log.info("Registering DaVinci Resovle plug-ins..")
+    log.info("Registering Flame plug-ins..")
 
     avalon.register_plugin_path(avalon.Loader, LOAD_PATH)
     avalon.register_plugin_path(avalon.Creator, CREATE_PATH)
@@ -136,13 +129,13 @@ def on_pyblish_instance_toggled(instance, old_value, new_value):
     log.info("instance toggle: {}, old_value: {}, new_value:{} ".format(
         instance, old_value, new_value))
 
-    from openpype.hosts.resolve import (
-        set_publish_attribute
-    )
+    # from openpype.hosts.resolve import (
+    #     set_publish_attribute
+    # )
 
-    # Whether instances should be passthrough based on new value
-    timeline_item = instance.data["item"]
-    set_publish_attribute(timeline_item, new_value)
+    # # Whether instances should be passthrough based on new value
+    # timeline_item = instance.data["item"]
+    # set_publish_attribute(timeline_item, new_value)
 
 
 def remove_instance(instance):
