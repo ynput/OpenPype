@@ -15,7 +15,14 @@ class MongoEnvNotSet(Exception):
     pass
 
 
-def decompose_url(url):
+def _decompose_url(url):
+    """Decompose mongo url to basic components.
+
+    Used for creation of MongoHandler which expect mongo url components as
+    separated kwargs. Components are at the end not used as we're setting
+    connection directly this is just a dumb components for MongoHandler
+    validation pass.
+    """
     components = {
         "scheme": None,
         "host": None,
@@ -54,7 +61,7 @@ def get_default_components():
         raise MongoEnvNotSet(
             "URL for Mongo logging connection is not set."
         )
-    return decompose_url(mongo_url)
+    return _decompose_url(mongo_url)
 
 
 def should_add_certificate_path_to_mongo_url(mongo_url):
