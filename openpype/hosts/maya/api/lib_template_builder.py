@@ -50,7 +50,7 @@ def update_placeholder():
 
     args = placeholder_window(get_placeholder_attributes(placeholder))
     if not args:
-        return # operation canceled
+        return  # operation canceled
 
     options = {str(arg): arg._data.get("items") or arg.read()
                for arg in args if not type(arg) == qargparse.Separator}
