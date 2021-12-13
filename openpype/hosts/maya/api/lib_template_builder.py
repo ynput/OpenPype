@@ -20,9 +20,9 @@ def create_placeholder():
     if not args:
         return # operation canceled, no locator created
 
-    placeholder = cmds.spaceLocator(name="_TEMPLATE_PLACEHOLDER_")[0]
 
     selection = cmds.ls(selection=True)
+    placeholder = cmds.spaceLocator(name="_TEMPLATE_PLACEHOLDER_")[0]
     if selection:
         cmds.parent(placeholder, selection[0])
     # custom arg parse to force empty data query
