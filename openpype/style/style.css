@@ -1071,8 +1071,8 @@ QScrollBar::add-page:vertical, QScrollBar::sub-page:vertical {
 #ExpandLabel[state="overriden-modified"]:hover, #SettingsLabel[state="overriden-modified"]:hover {
     color: {color:settings:modified-light};
 }
-#ExpandLabel[state="overriden"], #SettingsLabel[state="overriden"] {color: {
-    color:settings:project-mid};
+#ExpandLabel[state="overriden"], #SettingsLabel[state="overriden"] {
+    color: {color:settings:project-mid};
 }
 #ExpandLabel[state="overriden"]:hover, #SettingsLabel[state="overriden"]:hover {
     color: {color:settings:project-light};
