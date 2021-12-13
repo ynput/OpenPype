@@ -2,6 +2,7 @@ import os
 from datetime import datetime
 import sys
 from bson.objectid import ObjectId
+import collections
 
 import pyblish.util
 import pyblish.api
@@ -140,7 +141,9 @@ def find_variant_key(application_manager, host):
 
     found_variant_key = None
     # finds most up-to-date variant if any installed
-    for variant_key, variant in app_group.variants.items():
+    sorted_variants = collections.OrderedDict(
+        sorted(app_group.variants.items()))
+    for variant_key, variant in sorted_variants.items():
         for executable in variant.executables:
             if executable.exists():
                 found_variant_key = variant_key
