@@ -316,12 +316,14 @@ class PublishTest(ModuleUnitTest):
         published_dir_base = download_test_data
         published_dir = os.path.join(output_folder_url,
                                      self.PROJECT,
+                                     self.ASSET,
                                      self.TASK,
                                      "**")
         expected_dir_base = os.path.join(published_dir_base,
                                          "expected")
         expected_dir = os.path.join(expected_dir_base,
                                     self.PROJECT,
+                                    self.ASSET,
                                     self.TASK,
                                     "**")
         print("Comparing published:'{}' : expected:'{}'".format(published_dir,
