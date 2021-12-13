@@ -1,5 +1,3 @@
-import openpype.lib
-
 from maya import cmds
 import avalon
 from openpype.lib.abstract_template_loader import (
@@ -36,12 +34,12 @@ class MayaTemplateLoader(AbstractTemplateLoader):
         cmds.setAttr(PLACEHOLDER_SET + '.hiddenInOutliner', True)
 
         for set in cmds.listSets(allSets=True):
-            if (cmds.objExists(set)
-                and cmds.attributeQuery('id', node=set, exists=True)
-                and cmds.getAttr(set+'.id') == 'pyblish.avalon.instance'):
+            if (cmds.objExists(set) and
+                  cmds.attributeQuery('id', node=set, exists=True) and
+                  cmds.getAttr(set + '.id') == 'pyblish.avalon.instance'):
                 if  cmds.attributeQuery('asset', node=set, exists=True):
                     cmds.setAttr(
-                        set+'.asset',
+                        set + '.asset',
                         avalon.io.Session['AVALON_ASSET'], type='string')
 
         return True
@@ -83,7 +81,9 @@ class MayaTemplateLoader(AbstractTemplateLoader):
 
     def get_loaded_containers_by_id(self):
         containers = cmds.sets('AVALON_CONTAINERS', q=True)
-        return [cmds.getAttr(container + '.representation') for container in containers]
+        return [
+            cmds.getAttr(container + '.representation')
+            for container in containers]
 
 
 class MayaPlaceholder(AbstractPlaceholder):
@@ -144,8 +144,8 @@ class MayaPlaceholder(AbstractPlaceholder):
         # Move loaded nodes to correct index in outliner hierarchy to keep
         index = siblings.index(self.data['node'].rpartition('|')[2])
         for node in set(nodes_to_parent):
-                cmds.reorder(node, front=True)
-                cmds.reorder(node, relative=index)
+            cmds.reorder(node, front=True)
+            cmds.reorder(node, relative=index)
 
         node = self.data['node']
         holding_sets = cmds.listSets(object=node)
@@ -177,44 +177,51 @@ class MayaPlaceholder(AbstractPlaceholder):
         cmds.sets(node, addElement=PLACEHOLDER_SET)
         cmds.hide(node)
 
-        cmds.setAttr(node+'.hiddenInOutliner', True)
+        cmds.setAttr(node + '.hiddenInOutliner', True)
         node = self.data['node'].rpartition('|')[2]
 
     def convert_to_db_filters(self, current_asset, linked_asset):
         if self.data['builder_type'] == "context_asset":
             return [{
-            "type": "representation",
-            "context.asset": {
-                "$eq": current_asset, "$regex": self.data['asset']},
-            "context.subset": {"$regex": self.data['subset']},
-            "context.hierarchy": {"$regex": self.data['hierarchy']},
-            "context.representation": self.data['representation'],
-            "context.family": self.data['family'],
+                "type": "representation",
+                "context.asset": {
+                    "$eq": current_asset, "$regex": self.data['asset']},
+                "context.subset": {"$regex": self.data['subset']},
+                "context.hierarchy": {"$regex": self.data['hierarchy']},
+                "context.representation": self.data['representation'],
+                "context.family": self.data['family'],
             }]
 
         elif self.data['builder_type'] == "linked_asset":
             return [{
-            "type": "representation",
-            "context.asset": {"$eq": asset_name, "$regex": self.data['asset']},
-            "context.subset": {"$regex": self.data['subset']},
-            "context.hierarchy": {"$regex": self.data['hierarchy']},
-            "context.representation": self.data['representation'],
-            "context.family": self.data['family'],
+                "type": "representation",
+                "context.asset": {
+                    "$eq": asset_name, "$regex": self.data['asset']},
+                "context.subset": {"$regex": self.data['subset']},
+                "context.hierarchy": {"$regex": self.data['hierarchy']},
+                "context.representation": self.data['representation'],
+                "context.family": self.data['family'],
             } for asset_name in linked_asset]
 
         else:
             return [{
-            "type": "representation",
-            "context.asset": {"$regex": self.data['asset']},
-            "context.subset": {"$regex": self.data['subset']},
-            "context.hierarchy": {"$regex": self.data['hierarchy']},
-            "context.representation": self.data['representation'],
-            "context.family": self.data['family'],
+                "type": "representation",
+                "context.asset": {"$regex": self.data['asset']},
+                "context.subset": {"$regex": self.data['subset']},
+                "context.hierarchy": {"$regex": self.data['hierarchy']},
+                "context.representation": self.data['representation'],
+                "context.family": self.data['family'],
             }]
 
     def err_message(self):
-        return ("Error while trying to load a representation.\n"
-        "Either the subset wasn't published or the template is malformed.\n\n"
-        "Builder was looking for :\n{attributes}".format(
-            attributes="\n".join(["{}: {}".format(key.title(), value)
-            for key, value in self.data.items()])))
+        return (
+            "Error while trying to load a representation.\n"
+            "Either the subset wasn't published or the template is malformed."
+            "\n\n"
+            "Builder was looking for :\n{attributes}".format(
+                attributes="\n".join([
+                    "{}: {}".format(key.title(), value)
+                    for key, value in self.data.items()]
+                )
+            )
+        )

@@ -18,8 +18,8 @@ from openpype.lib.build_template_exceptions import (
     TemplateProfileNotFound,
     TemplateNotFound
 )
-# Helper function
-# update last version in entity dict #Find better name ?
+
+
 def update_representations(entities, entity):
     if entity['context']['asset'] not in entities:
         entities[entity['context']['asset']] = entity
@@ -28,27 +28,29 @@ def update_representations(entities, entity):
         incomming = entity
         entities[entity['context']['asset']] = max(
             current, incomming,
-            key= lambda entity: entity["context"].get("version"))
+            key=lambda entity: entity["context"].get("version"))
 
     return entities
 
+
 def parse_loader_args(loader_args):
-        if not loader_args:
+    if not loader_args:
+        return dict()
+    try:
+        parsed_args = eval(loader_args)
+        if not isinstance(parsed_args, dict):
             return dict()
-        try:
-            parsed_args= eval(loader_args)
-            if not isinstance(parsed_args, dict):
-                return dict()
-            else:
-                return parsed_args
-        except Exception as err:
-            print(
-                "Error while parsing loader arguments '{}'.\n{}: {}\n\n"
-                "Continuing with default arguments. . .".format(
-                    loader_args,
-                    err.__class__.__name__,
-                    err))
-            return dict()
+        else:
+            return parsed_args
+    except Exception as err:
+        print(
+            "Error while parsing loader arguments '{}'.\n{}: {}\n\n"
+            "Continuing with default arguments. . .".format(
+                loader_args,
+                err.__class__.__name__,
+                err))
+        return dict()
+
 
 @six.add_metaclass(ABCMeta)
 class AbstractTemplateLoader:
@@ -64,8 +66,6 @@ class AbstractTemplateLoader:
         get_template_nodes : Abstract Method. Used to query nodes acting
             as placeholders. Depending on current host
     """
-
-
 
     def __init__(self, placeholder_class):
 
@@ -102,11 +102,10 @@ class AbstractTemplateLoader:
                 task_name=self.task_name,
                 task_type=self.task_type
             ))
-
         # Skip if there is no loader
         if not self.loaders_by_name:
-            self.log.warning("There is no registered loaders."
-            " No assets will be loaded")
+            self.log.warning(
+                "There is no registered loaders. No assets will be loaded")
             return
 
     def template_already_imported(self, err_msg):
@@ -181,7 +180,7 @@ class AbstractTemplateLoader:
             solved_path = None
             while True:
                 solved_path = anatomy.path_remapper(path)
-                if solved_path == None:
+                if solved_path is None:
                     solved_path = path
                 if solved_path == path:
                     break
@@ -239,15 +238,16 @@ class AbstractTemplateLoader:
                     self.log.info(
                         "Loading {}_{} with loader {}\n"
                         "Loader arguments used : {}".format(
-                        last_representation['context']['asset'],
-                        last_representation['context']['subset'],
-                        placeholder.loader,
-                        placeholder.data['loader_args']))
+                            last_representation['context']['asset'],
+                            last_representation['context']['subset'],
+                            placeholder.loader,
+                            placeholder.data['loader_args']))
                     try:
                         container = avalon.api.load(
                             loaders_by_name[placeholder.loader],
                             last_representation['_id'],
-                            options=parse_loader_args(placeholder.data['loader_args']))
+                            options=parse_loader_args(
+                                placeholder.data['loader_args']))
                     except Exception:
                         bad_rep = last_representation
                         self.log.warning(
@@ -311,7 +311,8 @@ class AbstractTemplateLoader:
         Collect already loaded containers for updating scene
 
         Return:
-            dict (string, node): A dictionnary id as key and containers as value
+            dict (string, node): A dictionnary id as key
+            and containers as value
         """
         pass
 
