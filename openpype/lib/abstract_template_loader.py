@@ -228,9 +228,9 @@ class AbstractTemplateLoader:
             for db_filter in placeholder_db_filters:
                 placeholder_representations = list(avalon.io.find(db_filter))
                 placeholder_representations = reduce(
-                        update_representations,
-                        placeholder_representations,
-                        dict()).values()
+                    update_representations,
+                    placeholder_representations,
+                    dict()).values()
                 for last_representation in placeholder_representations:
                     if not last_representation:
                         self.log.warning(placeholder.err_message())
@@ -280,20 +280,23 @@ class AbstractTemplateLoader:
             for db_filter in placeholder_db_filters:
                 placeholder_representations = list(avalon.io.find(db_filter))
                 placeholder_representations = reduce(
-                        update_representations,
-                        placeholder_representations,
-                        dict()).values()
+                    update_representations,
+                    placeholder_representations,
+                    dict()).values()
                 for last_representation in placeholder_representations:
                     if not last_representation:
                         self.log.warning(placeholder.err_message())
                         continue
-                    if str(last_representation['_id']) in loaded_containers_by_id:
-                        print("Already in scene : ", last_representation['_id'])
+                    if (str(last_representation['_id'])
+                       in loaded_containers_by_id):
+                        print("Already in scene : ",
+                              last_representation['_id'])
                         continue
                     container = avalon.api.load(
                         loaders_by_name[placeholder.loader],
                         last_representation['_id'],
-                        options=parse_loader_args(placeholder.data['loader_args']))
+                        options=parse_loader_args(
+                            placeholder.data['loader_args']))
                     placeholder.parent_in_hierarchy(container)
             placeholder.clean()
 

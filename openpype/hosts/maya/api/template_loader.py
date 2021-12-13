@@ -35,9 +35,9 @@ class MayaTemplateLoader(AbstractTemplateLoader):
 
         for set in cmds.listSets(allSets=True):
             if (cmds.objExists(set) and
-                  cmds.attributeQuery('id', node=set, exists=True) and
-                  cmds.getAttr(set + '.id') == 'pyblish.avalon.instance'):
-                if  cmds.attributeQuery('asset', node=set, exists=True):
+               cmds.attributeQuery('id', node=set, exists=True) and
+               cmds.getAttr(set + '.id') == 'pyblish.avalon.instance'):
+                if cmds.attributeQuery('asset', node=set, exists=True):
                     cmds.setAttr(
                         set + '.asset',
                         avalon.io.Session['AVALON_ASSET'], type='string')
