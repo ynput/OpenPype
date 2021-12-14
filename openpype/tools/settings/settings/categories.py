@@ -1,6 +1,7 @@
 import os
 import sys
 import traceback
+import contextlib
 from enum import Enum
 from Qt import QtWidgets, QtCore, QtGui
 
@@ -309,6 +310,12 @@ class SettingsCategoryWidget(QtWidgets.QWidget):
             )
         self.content_layout.addWidget(widget, 0)
 
+    @contextlib.contextmanager
+    def working_state_context(self):
+        self.set_state(CategoryState.Working)
+        yield
+        self.set_state(CategoryState.Idle)
+
     def save(self):
         if not self.items_are_valid():
             return
@@ -598,6 +605,14 @@ class ProjectWidget(SettingsCategoryWidget):
         project_list_widget.project_changed.connect(self._on_project_change)
 
         self.project_list_widget = project_list_widget
+
+    def get_project_names(self):
+        if (
+            self.modify_defaults_checkbox
+            and self.modify_defaults_checkbox.isChecked()
+        ):
+            return []
+        return self.project_list_widget.get_project_names()
 
     def on_saved(self, saved_tab_widget):
         """Callback on any tab widget save.
