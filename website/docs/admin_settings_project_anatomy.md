@@ -60,6 +60,7 @@ We have a few required anatomy templates for OpenPype to work properly, however 
 | `task[name]` | Name of task |
 | `task[type]` | Type of task |
 | `task[short]` | Shortname of task |
+| `parent` | Name of hierarchical parent |
 | `version` | Version number |
 | `subset` | Subset name |
 | `family` | Main family name |
