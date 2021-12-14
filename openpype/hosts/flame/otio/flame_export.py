@@ -5,10 +5,15 @@ import os
 import re
 import sys
 import ast
-
+import logging
 import opentimelineio as otio
 from . import utils
 import flame
+from pprint import pformat
+
+reload(utils)
+
+log = logging.getLogger(__name__)
 
 self = sys.modules[__name__]
 # self.track_types = {
@@ -375,69 +380,66 @@ def add_otio_metadata(otio_item, media_source, **kwargs):
         otio_item.metadata.update({key: value})
 
 def get_segment_attributes(segment, frame_rate):
-    print(segment.attributes)
+    log.info(segment)
+    # log.info(dir(segment))
+    # log.info(segment.attributes)
+    # track = segment.parent
+    # log.info("track: {}".format(track))
+    # log.info(dir(track))
+    # log.info(track.attributes)
+    # log.info(track.name)
+
     if str(segment.name)[1:-1] == "":
         return None
-
-    # get clip frame duration
-    record_duration = str(segment.record_duration)[1:-1]
-    clip_duration = utils.timecode_to_frames(
-        record_duration, frame_rate)
-
-    # populate shot source metadata
-    shot_description = ""
-    for attr in ["tape_name", "source_name", "head",
-                    "tail", "file_path"]:
-        if not hasattr(segment, attr):
-            continue
-        _value = getattr(segment, attr)
-        _label = attr.replace("_", " ").capitalize()
-        row = "{}: {}\n".format(_label, _value)
-        shot_description += row
 
     # Add timeline segment to tree
     clip_data = {
         "clip_name": str(segment.name)[1:-1],
-        "clip_duration": str(clip_duration),
         "clip_comment": str(segment.comment)[1:-1],
-        "shot_description": shot_description
+        "tape_name": str(segment.tape_name),
+        "source_name": str(segment.source_name),
+        "file_path": str(segment.file_path)
     }
-    print(clip_data)
+
+    # populate shot source metadata
+    segment_attrs = [
+        "record_duration", "record_in", "record_out",
+        "source_duration", "source_in", "source_out"
+    ]
+    segment_attrs_data = {}
+    for attr in segment_attrs:
+        if not hasattr(segment, attr):
+            continue
+        _value = getattr(segment, attr)
+        segment_attrs_data[attr] = _value
+        _value = str(_value)[1:-1]
+        clip_data[attr] = utils.timecode_to_frames(
+            _value, frame_rate)
+
+    clip_data["segment_attrs"] = segment_attrs_data
+
+    log.info(pformat(clip_data))
 
 def create_otio_timeline(selection):
     process_timeline = None
-    process_segments = []
 
     if len(selection) == 1:
         if isinstance(selection[0], flame.PySequence):
             process_timeline = selection[0]
     else:
-        for item in selection:
-            if not isinstance(item, flame.PySegment):
-                continue
-            process_segments.append(item)
+        track = selection[0].parent
+        version = track.parent
+        process_timeline = version.parent
 
     if process_timeline:
-        print("___________________timeline__________________")
+        log.info("___________________timeline__________________")
         frame_rate = float(str(process_timeline.frame_rate)[:-4])
-        print(frame_rate)
+        log.info(frame_rate)
         for ver in process_timeline.versions:
             for tracks in ver.tracks:
                 for segment in tracks.segments:
                     # process all segments
                     get_segment_attributes(segment, frame_rate)
-
-    if process_segments:
-        print("___________________segments__________________")
-        # get segments sequence parent
-        track = process_segments[0].parent
-        version = track.parent
-        flame_timeline = version.parent
-        frame_rate = float(str(flame_timeline.frame_rate)[:-4])
-
-        for segment in process_segments:
-            get_segment_attributes(segment, frame_rate)
-
 
     # get current timeline
     # self.timeline = hiero.ui.activeSequence()
