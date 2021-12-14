@@ -360,6 +360,8 @@ class SyncEntitiesFactory:
         self._subsets_by_parent_id = None
         self._changeability_by_mongo_id = None
 
+        self._object_types_by_name = None
+
         self.all_filtered_entities = {}
         self.filtered_ids = []
         self.not_selected_ids = []
@@ -652,6 +654,18 @@ class SyncEntitiesFactory:
         return self._changeability_by_mongo_id
 
     @property
+    def object_types_by_name(self):
+        if self._object_types_by_name is None:
+            object_types_by_name = self.session.query(
+                "select id, name from ObjectType"
+            ).all()
+            self._object_types_by_name = {
+                object_type["name"]: object_type
+                for object_type in object_types_by_name
+            }
+        return self._object_types_by_name
+
+    @property
     def all_ftrack_names(self):
         """
             Returns lists of names of all entities in Ftrack
@@ -880,10 +894,7 @@ class SyncEntitiesFactory:
         custom_attrs, hier_attrs = get_openpype_attr(
             self.session, query_keys=self.cust_attr_query_keys
         )
-        ent_types = self.session.query("select id, name from ObjectType").all()
-        ent_types_by_name = {
-            ent_type["name"]: ent_type["id"] for ent_type in ent_types
-        }
+        ent_types_by_name = self.object_types_by_name
         # Custom attribute types
         cust_attr_types = self.session.query(
             "select id, name from CustomAttributeType"
