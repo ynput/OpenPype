@@ -340,7 +340,7 @@ class BaseWidget(QtWidgets.QWidget):
 
                 # TODO better message
                 title = "Applying values failed"
-                msg = "Using values from project \"{}\" failed.".format(
+                msg = "Applying values from project \"{}\" failed.".format(
                     project_name
                 )
                 detail_msg = "".join(
