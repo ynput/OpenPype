@@ -5,17 +5,16 @@ import os
 import re
 import sys
 import ast
-from compiler.ast import flatten
+
 import opentimelineio as otio
 from . import utils
-import hiero.core
-import hiero.ui
+import flame
 
 self = sys.modules[__name__]
-self.track_types = {
-    hiero.core.VideoTrack: otio.schema.TrackKind.Video,
-    hiero.core.AudioTrack: otio.schema.TrackKind.Audio
-}
+# self.track_types = {
+#     hiero.core.VideoTrack: otio.schema.TrackKind.Video,
+#     hiero.core.AudioTrack: otio.schema.TrackKind.Audio
+# }
 self.project_fps = None
 self.marker_color_map = {
     "magenta": otio.schema.MarkerColor.MAGENTA,
@@ -29,17 +28,17 @@ self.timeline = None
 self.include_tags = True
 
 
-def get_current_hiero_project(remove_untitled=False):
-    projects = flatten(hiero.core.projects())
-    if not remove_untitled:
-        return next(iter(projects))
-
-    # if remove_untitled
-    for proj in projects:
-        if "Untitled" in proj.name():
-            proj.close()
+def flatten(_list):
+    for item in _list:
+        if isinstance(item, (list, tuple)):
+            for sub_item in flatten(item):
+                yield sub_item
         else:
-            return proj
+            yield item
+
+
+def get_current_flame_project():
+    return flame.project.current_project
 
 
 def create_otio_rational_time(frame, fps):
@@ -313,7 +312,7 @@ def create_otio_gap(gap_start, clip_start, tl_start_frame, fps):
 
 
 def _create_otio_timeline():
-    project = get_current_hiero_project(remove_untitled=False)
+    project = get_current_flame_project()
     metadata = _get_metadata(self.timeline)
 
     metadata.update({
@@ -375,73 +374,124 @@ def add_otio_metadata(otio_item, media_source, **kwargs):
     for key, value in metadata.items():
         otio_item.metadata.update({key: value})
 
+def get_segment_attributes(segment, frame_rate):
+    print(segment.attributes)
+    if str(segment.name)[1:-1] == "":
+        return None
 
-def create_otio_timeline():
+    # get clip frame duration
+    record_duration = str(segment.record_duration)[1:-1]
+    clip_duration = utils.timecode_to_frames(
+        record_duration, frame_rate)
 
-    def set_prev_item(itemindex, track_item):
-        # Add Gap if needed
-        if itemindex == 0:
-            # if it is first track item at track then add
-            # it to previouse item
-            return track_item
+    # populate shot source metadata
+    shot_description = ""
+    for attr in ["tape_name", "source_name", "head",
+                    "tail", "file_path"]:
+        if not hasattr(segment, attr):
+            continue
+        _value = getattr(segment, attr)
+        _label = attr.replace("_", " ").capitalize()
+        row = "{}: {}\n".format(_label, _value)
+        shot_description += row
 
-        else:
-            # get previouse item
-            return track_item.parent().items()[itemindex - 1]
+    # Add timeline segment to tree
+    clip_data = {
+        "clip_name": str(segment.name)[1:-1],
+        "clip_duration": str(clip_duration),
+        "clip_comment": str(segment.comment)[1:-1],
+        "shot_description": shot_description
+    }
+    print(clip_data)
+
+def create_otio_timeline(selection):
+    process_timeline = None
+    process_segments = []
+
+    if len(selection) == 1:
+        if isinstance(selection[0], flame.PySequence):
+            process_timeline = selection[0]
+    else:
+        for item in selection:
+            if not isinstance(item, flame.PySegment):
+                continue
+            process_segments.append(item)
+
+    if process_timeline:
+        print("___________________timeline__________________")
+        frame_rate = float(str(process_timeline.frame_rate)[:-4])
+        print(frame_rate)
+        for ver in process_timeline.versions:
+            for tracks in ver.tracks:
+                for segment in tracks.segments:
+                    # process all segments
+                    get_segment_attributes(segment, frame_rate)
+
+    if process_segments:
+        print("___________________segments__________________")
+        # get segments sequence parent
+        track = process_segments[0].parent
+        version = track.parent
+        flame_timeline = version.parent
+        frame_rate = float(str(flame_timeline.frame_rate)[:-4])
+
+        for segment in process_segments:
+            get_segment_attributes(segment, frame_rate)
+
 
     # get current timeline
-    self.timeline = hiero.ui.activeSequence()
-    self.project_fps = self.timeline.framerate().toFloat()
+    # self.timeline = hiero.ui.activeSequence()
+    # self.project_fps = self.timeline.framerate().toFloat()
 
-    # convert timeline to otio
-    otio_timeline = _create_otio_timeline()
+    # # convert timeline to otio
+    # otio_timeline = _create_otio_timeline()
 
-    # loop all defined track types
-    for track in self.timeline.items():
-        # skip if track is disabled
-        if not track.isEnabled():
-            continue
+    # # loop all defined track types
+    # for track in self.timeline.items():
+    #     # skip if track is disabled
+    #     if not track.isEnabled():
+    #         continue
 
-        # convert track to otio
-        otio_track = create_otio_track(
-            type(track), track.name())
+    #     # convert track to otio
+    #     otio_track = create_otio_track(
+    #         type(track), track.name())
 
-        for itemindex, track_item in enumerate(track):
-            # Add Gap if needed
-            if itemindex == 0:
-                # if it is first track item at track then add
-                # it to previouse item
-                prev_item = track_item
+    #     for itemindex, track_item in enumerate(track):
+    #         # Add Gap if needed
+    #         if itemindex == 0:
+    #             # if it is first track item at track then add
+    #             # it to previouse item
+    #             prev_item = track_item
 
-            else:
-                # get previouse item
-                prev_item = track_item.parent().items()[itemindex - 1]
+    #         else:
+    #             # get previouse item
+    #             prev_item = track_item.parent().items()[itemindex - 1]
 
-            # calculate clip frame range difference from each other
-            clip_diff = track_item.timelineIn() - prev_item.timelineOut()
+    #         # calculate clip frame range difference from each other
+    #         clip_diff = track_item.timelineIn() - prev_item.timelineOut()
 
-            # add gap if first track item is not starting
-            # at first timeline frame
-            if itemindex == 0 and track_item.timelineIn() > 0:
-                add_otio_gap(track_item, otio_track, 0)
+    #         # add gap if first track item is not starting
+    #         # at first timeline frame
+    #         if itemindex == 0 and track_item.timelineIn() > 0:
+    #             add_otio_gap(track_item, otio_track, 0)
 
-            # or add gap if following track items are having
-            # frame range differences from each other
-            elif itemindex and clip_diff != 1:
-                add_otio_gap(track_item, otio_track, prev_item.timelineOut())
+    #         # or add gap if following track items are having
+    #         # frame range differences from each other
+    #         elif itemindex and clip_diff != 1:
+    #             add_otio_gap(track_item, otio_track, prev_item.timelineOut())
 
-            # create otio clip and add it to track
-            otio_clip = create_otio_clip(track_item)
-            otio_track.append(otio_clip)
+    #         # create otio clip and add it to track
+    #         otio_clip = create_otio_clip(track_item)
+    #         otio_track.append(otio_clip)
 
-        # Add tags as markers
-        if self.include_tags:
-            create_otio_markers(otio_track, track)
+    #     # Add tags as markers
+    #     if self.include_tags:
+    #         create_otio_markers(otio_track, track)
 
-        # add track to otio timeline
-        otio_timeline.tracks.append(otio_track)
+    #     # add track to otio timeline
+    #     otio_timeline.tracks.append(otio_track)
 
-    return otio_timeline
+    # return otio_timeline
 
 
 def write_to_file(otio_timeline, path):
