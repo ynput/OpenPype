@@ -42,6 +42,7 @@ class ExtractReviewDataMov(openpype.api.Extractor):
 
         # generate data
         with anlib.maintained_selection():
+            generated_repres = []
             for o_name, o_data in self.outputs.items():
                 f_families = o_data["filter"]["families"]
                 f_task_types = o_data["filter"]["task_types"]
@@ -112,11 +113,13 @@ class ExtractReviewDataMov(openpype.api.Extractor):
                     })
                 else:
                     data = exporter.generate_mov(**o_data)
+                    generated_repres.extend(data["representations"])
 
-                self.log.info(data["representations"])
+                self.log.info(generated_repres)
 
-        # assign to representations
-        instance.data["representations"] += data["representations"]
+        if generated_repres:
+            # assign to representations
+            instance.data["representations"] += generated_repres
 
         self.log.debug(
             "_ representations: {}".format(
