@@ -1,7 +1,6 @@
 import os
-import shlex
 import subprocess
-import platform
+import distutils.spawn
 
 from .log import PypeLogger as Logger
 
@@ -175,3 +174,46 @@ def get_pype_execute_args(*args):
         pype_args.extend(args)
 
     return pype_args
+
+
+def get_linux_launcher_args(*args):
+    """Path to application mid process executable.
+
+    This function should be able as arguments are different when used
+    from code and build.
+
+    It is possible that this function is used in OpenPype build which does
+    not have yet the new executable. In that case 'None' is returned.
+
+    Args:
+        args (iterable): List of additional arguments added after executable
+            argument.
+
+    Returns:
+        list: Executables with possible positional argument to script when
+            called from code.
+    """
+    filename = "linux_app_launcher"
+    openpype_executable = os.environ["OPENPYPE_EXECUTABLE"]
+
+    executable_filename = os.path.basename(openpype_executable)
+    if "python" in executable_filename.lower():
+        script_path = os.path.join(
+            os.environ["OPENPYPE_ROOT"],
+            "{}.py".format(filename)
+        )
+        launch_args = [openpype_executable, script_path]
+    else:
+        new_executable = os.path.join(
+            os.path.dirname(openpype_executable),
+            filename
+        )
+        executable_path = distutils.spawn.find_executable(new_executable)
+        if executable_path is None:
+            return None
+        launch_args = [executable_path]
+
+    if args:
+        launch_args.extend(args)
+
+    return launch_args
