@@ -2502,7 +2502,13 @@ class SyncEntitiesFactory:
         parent_entity = self.entities_dict[parent_id]["entity"]
 
         _name = av_entity["name"]
-        _type = av_entity["data"].get("entityType", "folder")
+        _type = av_entity["data"].get("entityType")
+        # Check existence of object type
+        if _type and _type not in self.object_types_by_name:
+            _type = None
+
+        if not _type:
+            _type = "Folder"
 
         self.log.debug((
             "Re-ceating deleted entity {} <{}>"
