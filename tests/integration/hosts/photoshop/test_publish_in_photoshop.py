@@ -37,7 +37,7 @@ class TestPublishInPhotoshop(PhotoshopTestClass):
     ]
 
     APP = "photoshop"
-     # keep empty to locate latest installed variant or explicit
+    # keep empty to locate latest installed variant or explicit
     APP_VARIANT = ""
 
     APP_NAME = "{}/{}".format(APP, APP_VARIANT)
