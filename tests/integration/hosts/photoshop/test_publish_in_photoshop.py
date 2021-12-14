@@ -1,11 +1,7 @@
-import pytest
-import os
-import shutil
-
-from tests.lib.testing_classes import PublishTest
+from tests.integration.hosts.photoshop.lib import PhotoshopTestClass
 
 
-class TestPublishInPhotoshop(PublishTest):
+class TestPublishInPhotoshop(PhotoshopTestClass):
     """Basic test case for publishing in Photoshop
 
         Uses generic TestCase to prepare fixtures for test data, testing DBs,
@@ -18,19 +14,28 @@ class TestPublishInPhotoshop(PublishTest):
         - IS_TEST - this differentiate between regular webpublish
         - PYBLISH_TARGETS
 
+        Always pulls and uses test data from GDrive!
+
+        Opens Photoshop, runs publish on prepared workile.
+
         Then checks content of DB (if subset, version, representations were
         created.
         Checks tmp folder if all expected files were published.
 
+        How to run:
+        (in cmd with activated {OPENPYPE_ROOT}/.venv)
+        {OPENPYPE_ROOT}/.venv/Scripts/python.exe {OPENPYPE_ROOT}/start.py runtests ../tests/integration/hosts/photoshop  # noqa: E501
+
     """
-    PERSIST = True
+    PERSIST = False
 
     TEST_FILES = [
         ("1zD2v5cBgkyOm_xIgKz3WKn8aFB_j8qC-", "test_photoshop_publish.zip", "")
     ]
 
     APP = "photoshop"
-    APP_VARIANT = "2021"
+     # keep empty to locate latest installed variant or explicit
+    APP_VARIANT = ""
 
     APP_NAME = "{}/{}".format(APP, APP_VARIANT)
 

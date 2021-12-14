@@ -307,7 +307,6 @@ class HostDirmap:
         mapping = {}
 
         if not project_settings["global"]["sync_server"]["enabled"]:
-            log.debug("Site Sync not enabled")
             return mapping
 
         from openpype.settings.lib import get_site_local_overrides
