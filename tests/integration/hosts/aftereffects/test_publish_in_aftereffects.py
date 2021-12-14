@@ -68,7 +68,7 @@ class TestPublishInAfterEffects(PublishTest):
     def test_db_asserts(self, dbcon, publish_finished):
         """Host and input data dependent expected results in DB."""
         print("test_db_asserts")
-        assert 3 == dbcon.count_documents({"type": "version"}), \
+        assert 2 == dbcon.count_documents({"type": "version"}), \
             "Not expected no of versions"
 
         assert 0 == dbcon.count_documents({"type": "version",
@@ -88,7 +88,7 @@ class TestPublishInAfterEffects(PublishTest):
                                            "name": "reviewTesttask"}), \
             "reviewTesttask subset must be present"
 
-        assert 6 == dbcon.count_documents({"type": "representation"}), \
+        assert 4 == dbcon.count_documents({"type": "representation"}), \
             "Not expected no of representations"
 
         assert 1 == dbcon.count_documents({"type": "representation",
