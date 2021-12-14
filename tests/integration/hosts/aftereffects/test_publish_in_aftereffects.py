@@ -68,7 +68,8 @@ class TestPublishInAfterEffects(PublishTest):
     def test_db_asserts(self, dbcon, publish_finished):
         """Host and input data dependent expected results in DB."""
         print("test_db_asserts")
-        assert 3 == dbcon.count_documents({"type": "version"}), \
+
+        assert 2 == dbcon.count_documents({"type": "version"}), \
             "Not expected no of versions"
 
         assert 0 == dbcon.count_documents({"type": "version",
@@ -81,18 +82,18 @@ class TestPublishInAfterEffects(PublishTest):
             "modelMain subset must be present"
 
         assert 1 == dbcon.count_documents({"type": "subset",
-                                           "name": "workfileTesttask"}), \
+                                           "name": "workfileTest_task"}), \
             "workfileTesttask subset must be present"
 
         assert 1 == dbcon.count_documents({"type": "subset",
                                            "name": "reviewTesttask"}), \
             "reviewTesttask subset must be present"
 
-        assert 6 == dbcon.count_documents({"type": "representation"}), \
+        assert 4 == dbcon.count_documents({"type": "representation"}), \
             "Not expected no of representations"
 
         assert 1 == dbcon.count_documents({"type": "representation",
-                                           "context.subset": "imageMainBackgroundcopy",  #noqa E501
+                                           "context.subset": "renderTestTaskDefault",  # noqa E501
                                            "context.ext": "png"}), \
             "Not expected no of representations with ext 'png'"
 

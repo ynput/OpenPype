@@ -14,6 +14,13 @@ class TestPublishInPhotoshop(PhotoshopTestClass):
         - IS_TEST - this differentiate between regular webpublish
         - PYBLISH_TARGETS
 
+        Always pulls and uses test data from GDrive!
+
+        Test zip file sets 3 required env vars:
+        - HEADLESS_PUBLISH - this triggers publish immediately app is open
+        - IS_TEST - this differentiate between regular webpublish
+        - PYBLISH_TARGETS
+
         Then checks content of DB (if subset, version, representations were
         created.
         Checks tmp folder if all expected files were published.
@@ -33,7 +40,10 @@ class TestPublishInPhotoshop(PhotoshopTestClass):
     # keep empty to locate latest installed variant or explicit
     APP_VARIANT = ""
 
+    APP_NAME = "{}/{}".format(APP, APP_VARIANT)
+
     TIMEOUT = 120  # publish timeout
+
 
     def test_db_asserts(self, dbcon, publish_finished):
         """Host and input data dependent expected results in DB."""
