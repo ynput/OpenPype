@@ -1,8 +1,8 @@
 import os
 import json
-import pyblish.api
+import requests
 
-from avalon.vendor import requests
+import pyblish.api
 
 from openpype.lib.abstract_submit_deadline import requests_get
 from openpype.lib.delivery import collect_frames

@@ -9,7 +9,8 @@ from avalon.vendor import qtawesome
 
 from openpype.widgets.attribute_defs import create_widget_for_attr_def
 from openpype.tools.flickcharm import FlickCharm
-
+from openpype.tools.utils import PlaceholderLineEdit
+from openpype.pipeline.create import SUBSET_NAME_ALLOWED_SYMBOLS
 from .models import (
     AssetsHierarchyModel,
     TasksModel,
@@ -21,7 +22,6 @@ from .icons import (
 )
 
 from ..constants import (
-    SUBSET_NAME_ALLOWED_SYMBOLS,
     VARIANT_TOOLTIP
 )
 
@@ -397,7 +397,7 @@ class AssetsDialog(QtWidgets.QDialog):
         proxy_model.setSourceModel(model)
         proxy_model.setFilterCaseSensitivity(QtCore.Qt.CaseInsensitive)
 
-        filter_input = QtWidgets.QLineEdit(self)
+        filter_input = PlaceholderLineEdit(self)
         filter_input.setPlaceholderText("Filter assets..")
 
         asset_view = QtWidgets.QTreeView(self)
@@ -935,7 +935,7 @@ class TasksCombobox(QtWidgets.QComboBox):
         self.set_selected_items(self._origin_value)
 
 
-class VariantInputWidget(QtWidgets.QLineEdit):
+class VariantInputWidget(PlaceholderLineEdit):
     """Input widget for variant."""
     value_changed = QtCore.Signal()
 

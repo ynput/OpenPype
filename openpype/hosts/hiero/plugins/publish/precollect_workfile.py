@@ -4,7 +4,7 @@ import hiero.ui
 from openpype.hosts.hiero import api as phiero
 from avalon import api as avalon
 from pprint import pformat
-from openpype.hosts.hiero.otio import hiero_export
+from openpype.hosts.hiero.api.otio import hiero_export
 from Qt.QtGui import QPixmap
 import tempfile
 

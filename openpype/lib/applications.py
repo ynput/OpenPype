@@ -716,6 +716,8 @@ class ApplicationLaunchContext:
         # subprocess.Popen launch arguments (first argument in constructor)
         self.launch_args = executable.as_args()
         self.launch_args.extend(application.arguments)
+        if self.data.get("app_args"):
+            self.launch_args.extend(self.data.pop("app_args"))
 
         # Handle launch environemtns
         env = self.data.pop("env", None)
@@ -1280,23 +1282,12 @@ def prepare_context_environments(data):
 
     anatomy = data["anatomy"]
 
-    asset_tasks = asset_doc.get("data", {}).get("tasks") or {}
-    task_info = asset_tasks.get(task_name) or {}
-    task_type = task_info.get("type")
+    task_type = workdir_data["task"]["type"]
     # Temp solution how to pass task type to `_prepare_last_workfile`
     data["task_type"] = task_type
 
-    workfile_template_key = get_workfile_template_key(
-        task_type,
-        app.host_name,
-        project_name=project_name,
-        project_settings=project_settings
-    )
-
     try:
-        workdir = get_workdir_with_workdir_data(
-            workdir_data, anatomy, template_key=workfile_template_key
-        )
+        workdir = get_workdir_with_workdir_data(workdir_data, anatomy)
 
     except Exception as exc:
         raise ApplicationLaunchFailed(
@@ -1329,10 +1320,10 @@ def prepare_context_environments(data):
     )
     data["env"].update(context_env)
 
-    _prepare_last_workfile(data, workdir, workfile_template_key)
+    _prepare_last_workfile(data, workdir)
 
 
-def _prepare_last_workfile(data, workdir, workfile_template_key):
+def _prepare_last_workfile(data, workdir):
     """last workfile workflow preparation.
 
     Function check if should care about last workfile workflow and tries
@@ -1395,6 +1386,10 @@ def _prepare_last_workfile(data, workdir, workfile_template_key):
             anatomy = data["anatomy"]
             # Find last workfile
             file_template = anatomy.templates["work"]["file"]
+            # Replace {task} by '{task[name]}' for backward compatibility
+            if '{task}' in file_template:
+                file_template = file_template.replace('{task}', '{task[name]}')
+
             workdir_data.update({
                 "version": 1,
                 "user": get_openpype_username(),

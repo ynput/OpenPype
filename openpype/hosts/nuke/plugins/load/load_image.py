@@ -217,8 +217,7 @@ class LoadImage(api.Loader):
             "colorspace": version_data.get("colorspace"),
             "source": version_data.get("source"),
             "fps": str(version_data.get("fps")),
-            "author": version_data.get("author"),
-            "outputDir": version_data.get("outputDir"),
+            "author": version_data.get("author")
         })
 
         # change color of node

@@ -42,7 +42,9 @@
             "enabled": true,
             "defaults": [
                 "Main"
-            ]
+            ],
+            "aov_separator": "underscore",
+            "default_render_image_folder": "renders"
         },
         "CreateAnimation": {
             "enabled": true,
@@ -273,6 +275,11 @@
             "enabled": true,
             "optional": true,
             "active": true
+        },
+        "ValidateModelContent": {
+            "enabled": true,
+            "optional": false,
+            "validate_top_group": true
         },
         "ValidateNoAnimation": {
             "enabled": false,

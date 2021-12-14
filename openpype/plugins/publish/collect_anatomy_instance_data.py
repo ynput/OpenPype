@@ -38,6 +38,8 @@ class CollectAnatomyInstanceData(pyblish.api.ContextPlugin):
     order = pyblish.api.CollectorOrder + 0.49
     label = "Collect Anatomy Instance data"
 
+    follow_workfile_version = False
+
     def process(self, context):
         self.log.info("Collecting anatomy data for all instances.")
 
@@ -212,8 +214,13 @@ class CollectAnatomyInstanceData(pyblish.api.ContextPlugin):
         project_doc = context.data["projectEntity"]
         context_asset_doc = context.data["assetEntity"]
 
+        project_task_types = project_doc["config"]["tasks"]
+
         for instance in context:
-            version_number = instance.data.get("version")
+            if self.follow_workfile_version:
+                version_number = context.data('version')
+            else:
+                version_number = instance.data.get("version")
             # If version is not specified for instance or context
             if version_number is None:
                 # TODO we should be able to change default version by studio
@@ -235,12 +242,27 @@ class CollectAnatomyInstanceData(pyblish.api.ContextPlugin):
             asset_doc = instance.data.get("assetEntity")
             if asset_doc and asset_doc["_id"] != context_asset_doc["_id"]:
                 parents = asset_doc["data"].get("parents") or list()
+                parent_name = project_doc["name"]
+                if parents:
+                    parent_name = parents[-1]
                 anatomy_updates["hierarchy"] = "/".join(parents)
+                anatomy_updates["parent"] = parent_name
 
             # Task
             task_name = instance.data.get("task")
             if task_name:
-                anatomy_updates["task"] = task_name
+                asset_tasks = asset_doc["data"]["tasks"]
+                task_type = asset_tasks.get(task_name, {}).get("type")
+                task_code = (
+                    project_task_types
+                    .get(task_type, {})
+                    .get("short_name")
+                )
+                anatomy_updates["task"] = {
+                    "name": task_name,
+                    "type": task_type,
+                    "short": task_code
+                }
 
             # Additional data
             resolution_width = instance.data.get("resolutionWidth")

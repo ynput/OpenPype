@@ -7,6 +7,7 @@ import platform
 import logging
 import collections
 import functools
+import getpass
 
 from openpype.settings import get_project_settings
 from .anatomy import Anatomy
@@ -257,19 +258,48 @@ def get_hierarchy(asset_name=None):
     return "/".join(hierarchy_items)
 
 
-@with_avalon
-def get_linked_assets(asset_entity):
-    """Return linked assets for `asset_entity` from DB
+def get_linked_asset_ids(asset_doc):
+    """Return linked asset ids for `asset_doc` from DB
 
-        Args:
-            asset_entity (dict): asset document from DB
+    Args:
+        asset_doc (dict): Asset document from DB.
 
-        Returns:
-            (list) of MongoDB documents
+    Returns:
+        (list): MongoDB ids of input links.
     """
-    inputs = asset_entity["data"].get("inputs", [])
-    inputs = [avalon.io.find_one({"_id": x}) for x in inputs]
-    return inputs
+    output = []
+    if not asset_doc:
+        return output
+
+    input_links = asset_doc["data"].get("inputLinks") or []
+    if input_links:
+        for item in input_links:
+            # Backwards compatibility for "_id" key which was replaced with
+            #   "id"
+            if "_id" in item:
+                link_id = item["_id"]
+            else:
+                link_id = item["id"]
+            output.append(link_id)
+
+    return output
+
+
+@with_avalon
+def get_linked_assets(asset_doc):
+    """Return linked assets for `asset_doc` from DB
+
+    Args:
+        asset_doc (dict): Asset document from DB
+
+    Returns:
+        (list) Asset documents of input links for passed asset doc.
+    """
+    link_ids = get_linked_asset_ids(asset_doc)
+    if not link_ids:
+        return []
+
+    return list(avalon.io.find({"_id": {"$in": link_ids}}))
 
 
 @with_avalon
@@ -464,6 +494,7 @@ def get_workfile_template_key(
     return default
 
 
+# TODO rename function as is not just "work" specific
 def get_workdir_data(project_doc, asset_doc, task_name, host_name):
     """Prepare data for workdir template filling from entered information.
 
@@ -477,24 +508,39 @@ def get_workdir_data(project_doc, asset_doc, task_name, host_name):
     Returns:
         dict: Data prepared for filling workdir template.
     """
-    hierarchy = "/".join(asset_doc["data"]["parents"])
+    task_type = asset_doc['data']['tasks'].get(task_name, {}).get('type')
+
+    project_task_types = project_doc["config"]["tasks"]
+    task_code = project_task_types.get(task_type, {}).get("short_name")
+
+    asset_parents = asset_doc["data"]["parents"]
+    hierarchy = "/".join(asset_parents)
+
+    parent_name = project_doc["name"]
+    if asset_parents:
+        parent_name = asset_parents[-1]
 
     data = {
         "project": {
             "name": project_doc["name"],
             "code": project_doc["data"].get("code")
         },
-        "task": task_name,
+        "task": {
+            "name": task_name,
+            "type": task_type,
+            "short": task_code,
+        },
         "asset": asset_doc["name"],
+        "parent": parent_name,
         "app": host_name,
-        "hierarchy": hierarchy
+        "user": getpass.getuser(),
+        "hierarchy": hierarchy,
     }
     return data
 
 
 def get_workdir_with_workdir_data(
-    workdir_data, anatomy=None, project_name=None,
-    template_key=None, dbcon=None
+    workdir_data, anatomy=None, project_name=None, template_key=None
 ):
     """Fill workdir path from entered data and project's anatomy.
 
@@ -529,12 +575,10 @@ def get_workdir_with_workdir_data(
         anatomy = Anatomy(project_name)
 
     if not template_key:
-        template_key = get_workfile_template_key_from_context(
-            workdir_data["asset"],
-            workdir_data["task"],
+        template_key = get_workfile_template_key(
+            workdir_data["task"]["type"],
             workdir_data["app"],
-            project_name=workdir_data["project"]["name"],
-            dbcon=dbcon
+            project_name=workdir_data["project"]["name"]
         )
 
     anatomy_filled = anatomy.format(workdir_data)
@@ -648,7 +692,7 @@ def create_workfile_doc(asset_doc, task_name, filename, workdir, dbcon=None):
     anatomy = Anatomy(project_doc["name"])
     # Get workdir path (result is anatomy.TemplateResult)
     template_workdir = get_workdir_with_workdir_data(
-        workdir_data, anatomy, dbcon=dbcon
+        workdir_data, anatomy
     )
     template_workdir_path = str(template_workdir).replace("\\", "/")
 

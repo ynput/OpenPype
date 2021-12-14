@@ -173,9 +173,9 @@
             "workfile_families": [],
             "texture_families": [],
             "color_space": [
-                "linsRGB",
-                "raw",
-                "acesg"
+                "sRGB",
+                "Raw",
+                "ACEScg"
             ],
             "input_naming_patterns": {
                 "workfile": [

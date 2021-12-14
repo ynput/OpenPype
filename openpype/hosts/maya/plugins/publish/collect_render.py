@@ -41,6 +41,7 @@ Provides:
 
 import re
 import os
+import platform
 import json
 
 from maya import cmds
@@ -60,6 +61,12 @@ class CollectMayaRender(pyblish.api.ContextPlugin):
     hosts = ["maya"]
     label = "Collect Render Layers"
     sync_workfile_version = False
+
+    _aov_chars = {
+        "dot": ".",
+        "dash": "-",
+        "underscore": "_"
+    }
 
     def process(self, context):
         """Entry point to collector."""
@@ -166,6 +173,18 @@ class CollectMayaRender(pyblish.api.ContextPlugin):
             if renderer.startswith("renderman"):
                 renderer = "renderman"
 
+            try:
+                aov_separator = self._aov_chars[(
+                    context.data["project_settings"]
+                    ["create"]
+                    ["CreateRender"]
+                    ["aov_separator"]
+                )]
+            except KeyError:
+                aov_separator = "_"
+
+            render_instance.data["aovSeparator"] = aov_separator
+
             # return all expected files for all cameras and aovs in given
             # frame range
             layer_render_products = get_layer_render_products(
@@ -173,7 +192,10 @@ class CollectMayaRender(pyblish.api.ContextPlugin):
             render_products = layer_render_products.layer_data.products
             assert render_products, "no render products generated"
             exp_files = []
+            multipart = False
             for product in render_products:
+                if product.multipart:
+                    multipart = True
                 product_name = product.productName
                 if product.camera and layer_render_products.has_camera_token():
                     product_name = "{}{}".format(
@@ -186,7 +208,7 @@ class CollectMayaRender(pyblish.api.ContextPlugin):
                     })
 
             self.log.info("multipart: {}".format(
-                layer_render_products.multipart))
+                multipart))
             assert exp_files, "no file names were generated, this is bug"
             self.log.info(exp_files)
 
@@ -202,14 +224,19 @@ class CollectMayaRender(pyblish.api.ContextPlugin):
             # append full path
             full_exp_files = []
             aov_dict = {}
-
+            default_render_file = context.data.get('project_settings')\
+                .get('maya')\
+                .get('create')\
+                .get('CreateRender')\
+                .get('default_render_image_folder')
             # replace relative paths with absolute. Render products are
             # returned as list of dictionaries.
             publish_meta_path = None
             for aov in exp_files:
                 full_paths = []
                 for file in aov[aov.keys()[0]]:
-                    full_path = os.path.join(workspace, "renders", file)
+                    full_path = os.path.join(workspace, default_render_file,
+                                             file)
                     full_path = full_path.replace("\\", "/")
                     full_paths.append(full_path)
                     publish_meta_path = os.path.dirname(full_path)
@@ -255,17 +282,33 @@ class CollectMayaRender(pyblish.api.ContextPlugin):
                     common_publish_meta_path, part)
                 if part == expected_layer_name:
                     break
+
+            # TODO: replace this terrible linux hotfix with real solution :)
+            if platform.system().lower() in ["linux", "darwin"]:
+                common_publish_meta_path = "/" + common_publish_meta_path
+
             self.log.info(
                 "Publish meta path: {}".format(common_publish_meta_path))
 
             self.log.info(full_exp_files)
             self.log.info("collecting layer: {}".format(layer_name))
             # Get layer specific settings, might be overrides
+
+            try:
+                aov_separator = self._aov_chars[(
+                    context.data["project_settings"]
+                    ["create"]
+                    ["CreateRender"]
+                    ["aov_separator"]
+                )]
+            except KeyError:
+                aov_separator = "_"
+
             data = {
                 "subset": expected_layer_name,
                 "attachTo": attach_to,
                 "setMembers": layer_name,
-                "multipartExr": layer_render_products.multipart,
+                "multipartExr": multipart,
                 "review": render_instance.data.get("review") or False,
                 "publish": True,
 
@@ -302,7 +345,8 @@ class CollectMayaRender(pyblish.api.ContextPlugin):
                     "convertToScanline") or False,
                 "useReferencedAovs": render_instance.data.get(
                     "useReferencedAovs") or render_instance.data.get(
-                        "vrayUseReferencedAovs") or False
+                        "vrayUseReferencedAovs") or False,
+                "aovSeparator": aov_separator
             }
 
             if deadline_url:

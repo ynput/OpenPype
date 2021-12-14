@@ -4,7 +4,6 @@ from openpype.hosts.nuke.api import lib as pnlib
 import nuke
 import os
 import openpype
-reload(pnlib)
 
 class ExtractBackdropNode(openpype.api.Extractor):
     """Extracting content of backdrop nodes

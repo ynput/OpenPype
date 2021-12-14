@@ -785,7 +785,7 @@ class InstanceListView(AbstractInstanceView):
         group_index = self._instance_model.index(
             group_item.row(), group_item.column()
         )
-        proxy_index = self.mapFromSource(group_index)
+        proxy_index = self._proxy_model.mapFromSource(group_index)
         self._instance_view.setExpanded(proxy_index, expanded)
 
     def _on_group_toggle_request(self, group_name, state):
@@ -810,6 +810,6 @@ class InstanceListView(AbstractInstanceView):
 
         self._change_active_instances(instance_ids, active)
 
-        proxy_index = self.mapFromSource(group_item.index())
+        proxy_index = self._proxy_model.mapFromSource(group_item.index())
         if not self._instance_view.isExpanded(proxy_index):
             self._instance_view.expand(proxy_index)

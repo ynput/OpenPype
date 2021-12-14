@@ -288,6 +288,22 @@ class MayaSubmitDeadline(pyblish.api.InstancePlugin):
                 "pluginInfo", {})
         )
 
+        self.limit_groups = (
+            context.data["project_settings"].get(
+                "deadline", {}).get(
+                "publish", {}).get(
+                "MayaSubmitDeadline", {}).get(
+                "limit", [])
+        )
+
+        self.group = (
+            context.data["project_settings"].get(
+                "deadline", {}).get(
+                "publish", {}).get(
+                "MayaSubmitDeadline", {}).get(
+                "group", "none")
+        )
+
         context = instance.context
         workspace = context.data["workspaceDir"]
         anatomy = context.data['anatomy']
@@ -378,9 +394,14 @@ class MayaSubmitDeadline(pyblish.api.InstancePlugin):
         self.log.debug(filepath)
 
         # Gather needed data ------------------------------------------------
+        default_render_file = instance.context.data.get('project_settings')\
+            .get('maya')\
+            .get('create')\
+            .get('CreateRender')\
+            .get('default_render_image_folder')
         filename = os.path.basename(filepath)
         comment = context.data.get("comment", "")
-        dirname = os.path.join(workspace, "renders")
+        dirname = os.path.join(workspace, default_render_file)
         renderlayer = instance.data['setMembers']       # rs_beauty
         deadline_user = context.data.get("user", getpass.getuser())
         jobname = "%s - %s" % (filename, instance.name)

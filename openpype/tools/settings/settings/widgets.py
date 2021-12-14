@@ -6,7 +6,17 @@ from avalon.mongodb import (
     AvalonMongoDB
 )
 
+from openpype.style import get_objected_colors
+from openpype.tools.utils.widgets import ImageButton
+from openpype.tools.utils.lib import paint_image_with_color
+
+from openpype.widgets.nice_checkbox import NiceCheckbox
+from openpype.tools.utils import PlaceholderLineEdit
 from openpype.settings.lib import get_system_settings
+from .images import (
+    get_pixmap,
+    get_image
+)
 from .constants import (
     DEFAULT_PROJECT_LABEL,
     PROJECT_NAME_ROLE,
@@ -15,7 +25,7 @@ from .constants import (
 )
 
 
-class SettingsLineEdit(QtWidgets.QLineEdit):
+class SettingsLineEdit(PlaceholderLineEdit):
     focused_in = QtCore.Signal()
 
     def focusInEvent(self, event):
@@ -29,6 +39,78 @@ class SettingsPlainTextEdit(QtWidgets.QPlainTextEdit):
     def focusInEvent(self, event):
         super(SettingsPlainTextEdit, self).focusInEvent(event)
         self.focused_in.emit()
+
+
+class SettingsToolBtn(ImageButton):
+    _mask_pixmap = None
+    _cached_icons = {}
+
+    def __init__(self, btn_type, parent):
+        super(SettingsToolBtn, self).__init__(parent)
+
+        icon, hover_icon = self._get_icon_type(btn_type)
+
+        self.setIcon(icon)
+
+        self._icon = icon
+        self._hover_icon = hover_icon
+
+    @classmethod
+    def _get_icon_type(cls, btn_type):
+        if btn_type not in cls._cached_icons:
+            settings_colors = get_objected_colors()["settings"]
+            normal_color = settings_colors["image-btn"].get_qcolor()
+            hover_color = settings_colors["image-btn-hover"].get_qcolor()
+            disabled_color = settings_colors["image-btn-disabled"].get_qcolor()
+
+            image = get_image("{}.png".format(btn_type))
+
+            pixmap = paint_image_with_color(image, normal_color)
+            hover_pixmap = paint_image_with_color(image, hover_color)
+            disabled_pixmap = paint_image_with_color(image, disabled_color)
+
+            icon = QtGui.QIcon(pixmap)
+            hover_icon = QtGui.QIcon(hover_pixmap)
+            icon.addPixmap(
+                disabled_pixmap, QtGui.QIcon.Disabled, QtGui.QIcon.On
+            )
+            icon.addPixmap(
+                disabled_pixmap, QtGui.QIcon.Disabled, QtGui.QIcon.Off
+            )
+            hover_icon.addPixmap(
+                disabled_pixmap, QtGui.QIcon.Disabled, QtGui.QIcon.On
+            )
+            hover_icon.addPixmap(
+                disabled_pixmap, QtGui.QIcon.Disabled, QtGui.QIcon.Off
+            )
+            cls._cached_icons[btn_type] = icon, hover_icon
+        return cls._cached_icons[btn_type]
+
+    def enterEvent(self, event):
+        self.setIcon(self._hover_icon)
+        super(SettingsToolBtn, self).enterEvent(event)
+
+    def leaveEvent(self, event):
+        self.setIcon(self._icon)
+        super(SettingsToolBtn, self).leaveEvent(event)
+
+    @classmethod
+    def _get_mask_pixmap(cls):
+        if cls._mask_pixmap is None:
+            mask_pixmap = get_pixmap("mask.png")
+            cls._mask_pixmap = mask_pixmap
+        return cls._mask_pixmap
+
+    def _change_size(self):
+        super(SettingsToolBtn, self)._change_size()
+        size = self.iconSize()
+        scaled = self._get_mask_pixmap().scaled(
+            size.width(),
+            size.height(),
+            QtCore.Qt.IgnoreAspectRatio,
+            QtCore.Qt.SmoothTransformation
+        )
+        self.setMask(scaled.mask())
 
 
 class ShadowWidget(QtWidgets.QWidget):
@@ -132,8 +214,13 @@ class SettingsComboBox(QtWidgets.QComboBox):
     def __init__(self, *args, **kwargs):
         super(SettingsComboBox, self).__init__(*args, **kwargs)
 
+        delegate = QtWidgets.QStyledItemDelegate()
+        self.setItemDelegate(delegate)
+
         self.currentIndexChanged.connect(self._on_change)
         self.setFocusPolicy(QtCore.Qt.StrongFocus)
+
+        self._delegate = delegate
 
     def wheelEvent(self, event):
         if self.hasFocus():
@@ -180,14 +267,14 @@ class ExpandingWidget(QtWidgets.QWidget):
 
         button_size = QtCore.QSize(5, 5)
         button_toggle = QtWidgets.QToolButton(parent=side_line_widget)
-        button_toggle.setProperty("btn-type", "expand-toggle")
+        button_toggle.setObjectName("ExpandToggleBtn")
         button_toggle.setIconSize(button_size)
         button_toggle.setArrowType(QtCore.Qt.RightArrow)
         button_toggle.setCheckable(True)
         button_toggle.setChecked(False)
 
         label_widget = QtWidgets.QLabel(label, parent=side_line_widget)
-        label_widget.setObjectName("DictLabel")
+        label_widget.setObjectName("ExpandLabel")
 
         before_label_widget = QtWidgets.QWidget(side_line_widget)
         before_label_layout = QtWidgets.QHBoxLayout(before_label_widget)
@@ -381,6 +468,7 @@ class GridLabelWidget(QtWidgets.QWidget):
         self.properties = {}
 
         label_widget = QtWidgets.QLabel(label, self)
+        label_widget.setObjectName("SettingsLabel")
 
         label_proxy_layout = QtWidgets.QHBoxLayout()
         label_proxy_layout.setContentsMargins(0, 0, 0, 0)
@@ -415,197 +503,12 @@ class GridLabelWidget(QtWidgets.QWidget):
         return super(GridLabelWidget, self).mouseReleaseEvent(event)
 
 
-class NiceCheckboxMoveWidget(QtWidgets.QFrame):
-    def __init__(self, height, border_width, parent):
-        super(NiceCheckboxMoveWidget, self).__init__(parent=parent)
-
-        self.checkstate = False
-
-        self.half_size = int(height / 2)
-        self.full_size = self.half_size * 2
-        self.border_width = border_width
-        self.setFixedHeight(self.full_size)
-        self.setFixedWidth(self.full_size)
-
-        self.setStyleSheet((
-            "background: #444444;border-style: none;"
-            "border-radius: {};border-width:{}px;"
-        ).format(self.half_size, self.border_width))
-
-    def update_position(self):
-        parent_rect = self.parent().rect()
-        if self.checkstate is True:
-            pos_x = (
-                parent_rect.x()
-                + parent_rect.width()
-                - self.full_size
-                - self.border_width
-            )
-        else:
-            pos_x = parent_rect.x() + self.border_width
-
-        pos_y = parent_rect.y() + int(
-            parent_rect.height() / 2 - self.half_size
-        )
-        self.setGeometry(pos_x, pos_y, self.width(), self.height())
-
-    def state_offset(self):
-        diff_x = (
-            self.parent().rect().width()
-            - self.full_size
-            - (2 * self.border_width)
-        )
-        return QtCore.QPoint(diff_x, 0)
-
-    def change_position(self, checkstate):
-        self.checkstate = checkstate
-
-        self.update_position()
-
-    def resizeEvent(self, event):
-        super().resizeEvent(event)
-        self.update_position()
-
-
-class NiceCheckbox(QtWidgets.QFrame):
-    stateChanged = QtCore.Signal(int)
-    checked_bg_color = QtGui.QColor(69, 128, 86)
-    unchecked_bg_color = QtGui.QColor(170, 80, 80)
+class SettingsNiceCheckbox(NiceCheckbox):
     focused_in = QtCore.Signal()
-
-    def set_bg_color(self, color):
-        self._bg_color = color
-        self.setStyleSheet(self._stylesheet_template.format(
-            color.red(), color.green(), color.blue()
-        ))
-
-    def bg_color(self):
-        return self._bg_color
-
-    bgcolor = QtCore.Property(QtGui.QColor, bg_color, set_bg_color)
-
-    def __init__(self, checked=True, height=30, *args, **kwargs):
-        super(NiceCheckbox, self).__init__(*args, **kwargs)
-
-        self._checkstate = checked
-        if checked:
-            bg_color = self.checked_bg_color
-        else:
-            bg_color = self.unchecked_bg_color
-
-        self.half_height = int(height / 2)
-        height = self.half_height * 2
-        tenth_height = int(height / 10)
-
-        self.setFixedHeight(height)
-        self.setFixedWidth((height - tenth_height) * 2)
-
-        move_item_size = height - (2 * tenth_height)
-
-        self.move_item = NiceCheckboxMoveWidget(
-            move_item_size, tenth_height, self
-        )
-        self.move_item.change_position(self._checkstate)
-
-        self._stylesheet_template = (
-            "border-radius: {}px;"
-            "border-width: {}px;"
-            "background: #333333;"
-            "border-style: solid;"
-            "border-color: #555555;"
-        ).format(self.half_height, tenth_height)
-        self._stylesheet_template += "background: rgb({},{},{});"
-
-        self.set_bg_color(bg_color)
-
-    def resizeEvent(self, event):
-        super(NiceCheckbox, self).resizeEvent(event)
-        self.move_item.update_position()
-
-    def show(self, *args, **kwargs):
-        super(NiceCheckbox, self).show(*args, **kwargs)
-        self.move_item.update_position()
-
-    def checkState(self):
-        if self._checkstate:
-            return QtCore.Qt.Checked
-        else:
-            return QtCore.Qt.Unchecked
-
-    def _on_checkstate_change(self):
-        self.stateChanged.emit(self.checkState())
-
-        move_start_value = self.move_item.pos()
-        offset = self.move_item.state_offset()
-        if self._checkstate is True:
-            move_end_value = move_start_value + offset
-        else:
-            move_end_value = move_start_value - offset
-        move_animation = QtCore.QPropertyAnimation(
-            self.move_item, b"pos", self
-        )
-        move_animation.setDuration(150)
-        move_animation.setEasingCurve(QtCore.QEasingCurve.OutQuad)
-        move_animation.setStartValue(move_start_value)
-        move_animation.setEndValue(move_end_value)
-
-        color_animation = QtCore.QPropertyAnimation(
-            self, b"bgcolor"
-        )
-        color_animation.setDuration(150)
-        if self._checkstate is True:
-            color_animation.setStartValue(self.unchecked_bg_color)
-            color_animation.setEndValue(self.checked_bg_color)
-        else:
-            color_animation.setStartValue(self.checked_bg_color)
-            color_animation.setEndValue(self.unchecked_bg_color)
-
-        anim_group = QtCore.QParallelAnimationGroup(self)
-        anim_group.addAnimation(move_animation)
-        anim_group.addAnimation(color_animation)
-
-        def _finished():
-            self.move_item.change_position(self._checkstate)
-
-        anim_group.finished.connect(_finished)
-        anim_group.start()
-
-    def isChecked(self):
-        return self._checkstate
-
-    def setChecked(self, checked):
-        if checked == self._checkstate:
-            return
-        self._checkstate = checked
-        self._on_checkstate_change()
-
-    def setCheckState(self, state=None):
-        if state is None:
-            checkstate = not self._checkstate
-        elif state == QtCore.Qt.Checked:
-            checkstate = True
-        elif state == QtCore.Qt.Unchecked:
-            checkstate = False
-        else:
-            return
-
-        if checkstate == self._checkstate:
-            return
-
-        self._checkstate = checkstate
-
-        self._on_checkstate_change()
 
     def mousePressEvent(self, event):
         self.focused_in.emit()
-        super(NiceCheckbox, self).mousePressEvent(event)
-
-    def mouseReleaseEvent(self, event):
-        if event.button() == QtCore.Qt.LeftButton:
-            self.setCheckState()
-            event.accept()
-            return
-        return super(NiceCheckbox, self).mouseReleaseEvent(event)
+        super(SettingsNiceCheckbox, self).mousePressEvent(event)
 
 
 class ProjectModel(QtGui.QStandardItemModel):

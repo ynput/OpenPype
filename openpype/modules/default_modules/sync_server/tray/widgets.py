@@ -154,7 +154,7 @@ class SyncProjectListWidget(QtWidgets.QWidget):
            selected_index.isValid() and \
            not self._selection_changed:
             mode = QtCore.QItemSelectionModel.Select | \
-                   QtCore.QItemSelectionModel.Rows
+                QtCore.QItemSelectionModel.Rows
             self.project_list.selectionModel().select(selected_index, mode)
 
         if self.current_project:
@@ -489,7 +489,7 @@ class _SyncRepresentationWidget(QtWidgets.QWidget):
                           format(check_progress))
                 continue
 
-            self.sync_server.reset_provider_for_file(
+            self.sync_server.reset_site_on_representation(
                 self.model.project,
                 representation_id,
                 site_name=site_name,
@@ -872,7 +872,7 @@ class SyncRepresentationDetailWidget(_SyncRepresentationWidget):
                           format(check_progress))
                 continue
 
-            self.sync_server.reset_provider_for_file(
+            self.sync_server.reset_site_on_representation(
                 self.model.project,
                 self.representation_id,
                 site_name=site_name,
