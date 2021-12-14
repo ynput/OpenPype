@@ -1,8 +1,8 @@
 import os
 import sys
-import re
 import copy
 import json
+import tempfile
 import platform
 import collections
 import inspect
@@ -37,6 +37,7 @@ from .python_module_tools import (
     modules_from_path,
     classes_from_module
 )
+from .execute import get_linux_launcher_args
 
 
 _logger = None
@@ -921,6 +922,46 @@ class ApplicationLaunchContext:
     def manager(self):
         return self.application.manager
 
+    def _run_process(self):
+        # Windows and MacOS have easier process start
+        low_platform = platform.system().lower()
+        if low_platform in ("windows", "darwin"):
+            return subprocess.Popen(self.launch_args, **self.kwargs)
+
+        # Linux uses mid process
+        # - it is possible that the mid process executable is not
+        #   available for this version of OpenPype in that case use standard
+        #   launch
+        launch_args = get_linux_launcher_args()
+        if launch_args is None:
+            return subprocess.Popen(self.launch_args, **self.kwargs)
+
+        # Prepare data that will be passed to midprocess
+        # - store arguments to a json and pass path to json as last argument
+        json_data = {
+            "args": self.launch_args
+        }
+        # Create temp file
+        json_temp = tempfile.NamedTemporaryFile(
+            mode="w", prefix="op_app_args", suffix=".json", delete=False
+        )
+        json_temp.close()
+        json_temp_filpath = json_temp.name
+        with open(json_temp_filpath, "w") as stream:
+            json.dump(json_data, stream)
+
+        launch_args.append(json_temp_filpath)
+
+        # Create mid-process which will launch application
+        process = subprocess.Popen(launch_args, **self.kwargs)
+        # Wait until the process finishes
+        #   - This is important! The process would stay in "open" state.
+        process.wait()
+        # Remove the temp file
+        os.remove(json_temp_filpath)
+        # Return process which is already terminated
+        return process
+
     def launch(self):
         """Collect data for new process and then create it.
 
@@ -957,8 +998,10 @@ class ApplicationLaunchContext:
                 self.app_name, args_len_str, args
             )
         )
+        self.launch_args = args
+
         # Run process
-        self.process = subprocess.Popen(args, **self.kwargs)
+        self.process = self._run_process()
 
         # Process post launch hooks
         for postlaunch_hook in self.postlaunch_hooks:
