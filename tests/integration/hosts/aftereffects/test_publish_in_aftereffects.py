@@ -68,6 +68,7 @@ class TestPublishInAfterEffects(PublishTest):
     def test_db_asserts(self, dbcon, publish_finished):
         """Host and input data dependent expected results in DB."""
         print("test_db_asserts")
+
         assert 2 == dbcon.count_documents({"type": "version"}), \
             "Not expected no of versions"
 
