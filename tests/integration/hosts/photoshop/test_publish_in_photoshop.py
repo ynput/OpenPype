@@ -16,7 +16,10 @@ class TestPublishInPhotoshop(PhotoshopTestClass):
 
         Always pulls and uses test data from GDrive!
 
-        Opens Photoshop, runs publish on prepared workile.
+        Test zip file sets 3 required env vars:
+        - HEADLESS_PUBLISH - this triggers publish immediately app is open
+        - IS_TEST - this differentiate between regular webpublish
+        - PYBLISH_TARGETS
 
         Then checks content of DB (if subset, version, representations were
         created.
