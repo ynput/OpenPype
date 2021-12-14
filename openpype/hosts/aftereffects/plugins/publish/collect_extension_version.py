@@ -48,9 +48,9 @@ class CollectExtensionVersion(pyblish.api.ContextPlugin):
                 expected_version = found[0][1]
 
         if expected_version != installed_version:
-            msg = "Expected version '{}' found '{}'\n".format(
-                expected_version, installed_version)
-            msg += "Please update your installed extension, it might not work "
-            msg += "properly."
+            msg = (
+                "Expected version '{}' found '{}'\n Please update"
+                " your installed extension, it might not work properly."
+            ).format(expected_version, installed_version)
 
             raise ValueError(msg)
