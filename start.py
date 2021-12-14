@@ -926,7 +926,9 @@ def boot():
         sys.exit(1)
 
     os.environ["OPENPYPE_MONGO"] = openpype_mongo
-    os.environ["OPENPYPE_DATABASE_NAME"] = "openpype"  # name of Pype database
+    # name of Pype database
+    os.environ["OPENPYPE_DATABASE_NAME"] = \
+        os.environ.get("OPENPYPE_DATABASE_NAME") or "openpype"
 
     _print(">>> run disk mapping command ...")
     run_disk_mapping_commands(openpype_mongo)

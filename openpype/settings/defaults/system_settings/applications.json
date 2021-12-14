@@ -142,7 +142,7 @@
         "icon": "{}/app_icons/nuke.png",
         "host_name": "nuke",
         "environment": {
-            "NUKE_PATH": "{OPENPYPE_STUDIO_PLUGINS}/nuke"
+            "NUKE_PATH": ["{NUKE_PATH}", "{OPENPYPE_STUDIO_PLUGINS}/nuke"]
         },
         "variants": {
             "13-0": {
@@ -248,7 +248,7 @@
         "icon": "{}/app_icons/nuke.png",
         "host_name": "nuke",
         "environment": {
-            "NUKE_PATH": "{OPENPYPE_STUDIO_PLUGINS}/nuke"
+            "NUKE_PATH": ["{NUKE_PATH}", "{OPENPYPE_STUDIO_PLUGINS}/nuke"]
         },
         "variants": {
             "13-0": {
@@ -1091,23 +1091,6 @@
                 "executables": {
                     "windows": [
                         "C:\\Program Files\\Adobe\\Adobe After Effects 2021\\Support Files\\AfterFX.exe"
-                    ],
-                    "darwin": [],
-                    "linux": []
-                },
-                "arguments": {
-                    "windows": [],
-                    "darwin": [],
-                    "linux": []
-                },
-                "environment": {}
-            },
-            "2022": {
-                "enabled": true,
-                "variant_label": "2022",
-                "executables": {
-                    "windows": [
-                        "C:\\Program Files\\Adobe\\Adobe After Effects 2022\\Support Files\\AfterFX.exe"
                     ],
                     "darwin": [],
                     "linux": []
