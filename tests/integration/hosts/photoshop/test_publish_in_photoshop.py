@@ -7,9 +7,12 @@ class TestPublishInPhotoshop(PhotoshopTestClass):
         Uses generic TestCase to prepare fixtures for test data, testing DBs,
         env vars.
 
-        Always pulls and uses test data from GDrive!
+        Opens Photoshop, run publish on prepared workile.
 
-        Opens Photoshop, runs publish on prepared workile.
+        Test zip file sets 3 required env vars:
+        - HEADLESS_PUBLISH - this triggers publish immediately app is open
+        - IS_TEST - this differentiate between regular webpublish
+        - PYBLISH_TARGETS
 
         Then checks content of DB (if subset, version, representations were
         created.
@@ -35,7 +38,7 @@ class TestPublishInPhotoshop(PhotoshopTestClass):
     def test_db_asserts(self, dbcon, publish_finished):
         """Host and input data dependent expected results in DB."""
         print("test_db_asserts")
-        assert 5 == dbcon.count_documents({"type": "version"}), \
+        assert 3 == dbcon.count_documents({"type": "version"}), \
             "Not expected no of versions"
 
         assert 0 == dbcon.count_documents({"type": "version",
@@ -43,25 +46,21 @@ class TestPublishInPhotoshop(PhotoshopTestClass):
             "Only versions with 1 expected"
 
         assert 1 == dbcon.count_documents({"type": "subset",
-                                           "name": "modelMain"}), \
+                                           "name": "imageMainBackgroundcopy"}
+                                          ), \
             "modelMain subset must be present"
 
         assert 1 == dbcon.count_documents({"type": "subset",
-                                           "name": "workfileTest_task"}), \
+                                           "name": "workfileTesttask"}), \
             "workfileTest_task subset must be present"
 
-        assert 11 == dbcon.count_documents({"type": "representation"}), \
+        assert 6 == dbcon.count_documents({"type": "representation"}), \
             "Not expected no of representations"
 
-        assert 2 == dbcon.count_documents({"type": "representation",
-                                           "context.subset": "modelMain",
-                                           "context.ext": "abc"}), \
-            "Not expected no of representations with ext 'abc'"
-
-        assert 2 == dbcon.count_documents({"type": "representation",
-                                           "context.subset": "modelMain",
-                                           "context.ext": "ma"}), \
-            "Not expected no of representations with ext 'abc'"
+        assert 1 == dbcon.count_documents({"type": "representation",
+                                           "context.subset": "imageMainBackgroundcopy",  # noqa: E501
+                                           "context.ext": "png"}), \
+            "Not expected no of representations with ext 'png'"
 
 
 if __name__ == "__main__":
