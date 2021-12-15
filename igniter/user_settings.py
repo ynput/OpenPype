@@ -57,6 +57,8 @@ class OpenPypeSecureRegistry:
             from keyring.backends import Windows
 
             keyring.set_keyring(Windows.WinVaultKeyring())
+        else:
+            self._set_default_keyring()
 
         # Force "OpenPype" prefix
         self._name = "/".join(("OpenPype", name))
@@ -132,6 +134,28 @@ class OpenPypeSecureRegistry:
         self.get_item.cache_clear()
         keyring.delete_password(self._name, name)
 
+    def _set_default_keyring(self):
+        """Sets encrypted file keyring for headless variants of Linux OS.
+
+            If classic keyring background for OS with x11 is provided, it uses
+            that one. This one is only applicable for render workers ets.
+
+            These nodes require set environment variable OPENPYPE_SECRET!
+        """
+        import keyring
+        from keyrings.cryptfile.file import EncryptedKeyring
+        from keyrings.cryptfile.cryptfile import CryptFileKeyring
+
+        backends = keyring.get_keyring().backends
+        if backends and \
+                (isinstance(backends[0], EncryptedKeyring) or
+                 isinstance(backends[0], CryptFileKeyring)):
+
+            if not os.environ.get("OPENPYPE_SECRET"):
+                raise ValueError("Please set env var OPENPYPE_SECRET")
+            kr = backends[0]
+            kr.keyring_key = os.environ["OPENPYPE_SECRET"]
+            keyring.set_keyring(kr)
 
 @six.add_metaclass(ABCMeta)
 class ASettingRegistry():
