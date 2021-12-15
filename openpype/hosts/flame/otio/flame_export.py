@@ -17,11 +17,13 @@ reload(utils)
 log = logging.getLogger(__name__)
 
 self = sys.modules[__name__]
-# self.track_types = {
-#     hiero.core.VideoTrack: otio.schema.TrackKind.Video,
-#     hiero.core.AudioTrack: otio.schema.TrackKind.Audio
-# }
+self.track_types = {
+    "video": otio.schema.TrackKind.Video,
+    "audio": otio.schema.TrackKind.Audio
+}
 self.fps = None
+self.seq_frame_start = None
+
 self.marker_color_map = {
     "magenta": otio.schema.MarkerColor.MAGENTA,
     "red": otio.schema.MarkerColor.RED,
@@ -59,10 +61,12 @@ def create_otio_time_range(start_frame, frame_duration, fps):
         duration=create_otio_rational_time(frame_duration, fps)
     )
 
-
 def _get_metadata(item):
     if hasattr(item, 'metadata'):
-        return {key: value for key, value in dict(item.metadata()).items()}
+        log.debug(item.metadata)
+        if not item.metadata:
+            return {}
+        return {key: value for key, value in dict(item.metadata)}
     return {}
 
 
@@ -136,22 +140,23 @@ def create_time_effects(otio_clip, track_item):
         otio_clip.effects.append(otio_effect)
 
 
-def create_otio_reference(clip):
-    metadata = _get_metadata(clip)
-    media_source = clip.mediaSource()
+def create_otio_reference(clip_data):
+    metadata = _get_metadata(clip_data)
 
     # get file info for path and start frame
-    file_info = media_source.fileinfos().pop()
-    frame_start = file_info.startFrame()
-    path = file_info.filename()
+    frame_start = 0
+    path = clip_data["fpath"]
+    file_name = os.path.basename(path)
+    file_head, extension = os.path.splitext(file_name)
 
     # get padding and other file infos
-    padding = media_source.filenamePadding()
-    file_head = media_source.filenameHead()
-    is_sequence = not media_source.singleFile()
-    frame_duration = media_source.duration()
-    fps = utils.get_rate(clip) or self.fps
-    extension = os.path.splitext(path)[-1]
+    is_sequence = padding = utils.get_padding_from_path(path)
+    if is_sequence:
+        padding_pattern = re.compile(r"[._](\d+)[.]")
+        number = re.findall(padding_pattern, path).pop()
+        file_head = file_name.split(number)[:-1]
+
+    frame_duration = clip_data["source_duration"]
 
     if is_sequence:
         metadata.update({
@@ -159,13 +164,6 @@ def create_otio_reference(clip):
             "padding": padding
         })
 
-    # add resolution metadata
-    metadata.update({
-        "openpype.source.colourtransform": clip.sourceMediaColourTransform(),
-        "openpype.source.width": int(media_source.width()),
-        "openpype.source.height": int(media_source.height()),
-        "openpype.source.pixelAspect": float(media_source.pixelAspect())
-    })
 
     otio_ex_ref_item = None
 
@@ -180,11 +178,11 @@ def create_otio_reference(clip):
                 name_suffix=extension,
                 start_frame=frame_start,
                 frame_zero_padding=padding,
-                rate=fps,
+                rate=self.fps,
                 available_range=create_otio_time_range(
                     frame_start,
                     frame_duration,
-                    fps
+                    self.fps
                 )
             )
         except AttributeError:
@@ -198,12 +196,12 @@ def create_otio_reference(clip):
             available_range=create_otio_time_range(
                 frame_start,
                 frame_duration,
-                fps
+                self.fps
             )
         )
 
     # add metadata to otio item
-    add_otio_metadata(otio_ex_ref_item, media_source, **metadata)
+    # add_otio_metadata(otio_ex_ref_item, media_source, **metadata)
 
     return otio_ex_ref_item
 
@@ -269,26 +267,17 @@ def create_otio_markers(otio_item, item):
         otio_item.markers.append(marker)
 
 
-def create_otio_clip(track_item):
-    clip = track_item.source()
-    speed = track_item.playbackSpeed()
-    # flip if speed is in minus
-    source_in = track_item.sourceIn() if speed > 0 else track_item.sourceOut()
+def create_otio_clip(clip_data):
 
-    duration = int(track_item.duration())
-
-    fps = utils.get_rate(track_item) or self.fps
-    name = track_item.name()
-
-    media_reference = create_otio_reference(clip)
+    media_reference = create_otio_reference(clip_data)
     source_range = create_otio_time_range(
-        int(source_in),
-        int(duration),
-        fps
+        clip_data["source_in"],
+        clip_data["record_duration"],
+        self.fps
     )
 
     otio_clip = otio.schema.Clip(
-        name=name,
+        name=clip_data["name"],
         source_range=source_range,
         media_reference=media_reference
     )
@@ -336,12 +325,12 @@ def _create_otio_timeline(sequence):
         # "openpype.project.ocioConfigPath": project.ocioConfigPath()
     })
 
-    start_time = create_otio_rational_time(
-        self.timeline.timecodeStart(), self.fps)
+    rt_start_time = create_otio_rational_time(
+        self.seq_frame_start, self.fps)
 
     return otio.schema.Timeline(
-        name=self.timeline.name(),
-        global_start_time=start_time,
+        name=sequence.name,
+        global_start_time=rt_start_time,
         metadata=metadata
     )
 
@@ -353,8 +342,8 @@ def create_otio_track(track_type, track_name):
     )
 
 
-def add_otio_gap(track_item, otio_track, prev_out):
-    gap_length = track_item.timelineIn() - prev_out
+def add_otio_gap(clip_data, otio_track, prev_out):
+    gap_length = clip_data["record_in"] - prev_out
     if prev_out != 0:
         gap_length -= 1
 
@@ -379,7 +368,7 @@ def add_otio_metadata(otio_item, media_source, **kwargs):
     for key, value in metadata.items():
         otio_item.metadata.update({key: value})
 
-def get_segment_attributes(segment, frame_rate):
+def get_segment_attributes(segment):
     log.info(segment)
 
     if str(segment.name)[1:-1] == "":
@@ -391,7 +380,8 @@ def get_segment_attributes(segment, frame_rate):
         "comment": str(segment.comment)[1:-1],
         "tape_name": str(segment.tape_name),
         "source_name": str(segment.source_name),
-        "fpath": str(segment.file_path)
+        "fpath": str(segment.file_path),
+        "segment": segment
     }
 
     # populate shot source metadata
@@ -406,46 +396,20 @@ def get_segment_attributes(segment, frame_rate):
         _value = getattr(segment, attr)
         segment_attrs_data[attr] = _value
         _value = str(_value)[1:-1]
-        clip_data[attr] = utils.timecode_to_frames(
-            _value, frame_rate)
+
+        if attr in ["record_in", "record_out"]:
+            # exclude timeline start
+            frame = utils.timecode_to_frames(
+                _value, self.fps)
+            clip_data[attr] = frame - self.seq_frame_start
+        else:
+            clip_data[attr] = utils.timecode_to_frames(
+                _value, self.fps)
 
     clip_data["segment_timecodes"] = segment_attrs_data
 
     log.info(pformat(clip_data))
     return clip_data
-
-def get_track_attributes(track, frame_rate):
-    log.info(track)
-    log.info(dir(track))
-    log.info(track.attributes)
-
-    if len(track.segments) == 0:
-        return None
-
-    # Add timeline segment to tree
-    track_data = {
-        "name": str(track.name)[1:-1]
-    }
-
-    # # populate shot source metadata
-    # segment_attrs = [
-    #     "record_duration", "record_in", "record_out",
-    #     "source_duration", "source_in", "source_out"
-    # ]
-    # segment_attrs_data = {}
-    # for attr in segment_attrs:
-    #     if not hasattr(segment, attr):
-    #         continue
-    #     _value = getattr(segment, attr)
-    #     segment_attrs_data[attr] = _value
-    #     _value = str(_value)[1:-1]
-    #     clip_data[attr] = utils.timecode_to_frames(
-    #         _value, frame_rate)
-
-    # clip_data["segment_timecodes"] = segment_attrs_data
-
-    log.info(pformat(track_data))
-    return track_data
 
 def create_otio_timeline(sequence):
     log.info(dir(sequence))
@@ -453,72 +417,63 @@ def create_otio_timeline(sequence):
 
     # get current timeline
     self.fps = float(str(sequence.frame_rate)[:-4])
-
+    self.seq_frame_start = utils.timecode_to_frames(
+            str(sequence.start_time), self.fps)
     # # convert timeline to otio
     otio_timeline = _create_otio_timeline(sequence)
 
     # create otio tracks and clips
     for ver in sequence.versions:
         for track in ver.tracks:
-            track_data = get_track_attributes(track, self.fps)
-            if not track_data:
-                continue
-            for segment in track.segments:
-                # process all segments
-                clip_data = get_segment_attributes(
-                    segment, self.fps)
-                # create otio clip
-                # create otio reference
+            if len(track.segments) == 0 and track.hidden:
+                return None
+
+            # convert track to otio
+            otio_track = create_otio_track(
+                "video", str(track.name)[1:-1])
+
+            segments_ordered = {
+                itemindex: get_segment_attributes(segment)
+                for itemindex, segment in enumerate(
+                    track.segments)
+            }
+
+            for itemindex, segment_data in segments_ordered.items():
+                # Add Gap if needed
+                if itemindex == 0:
+                    # if it is first track item at track then add
+                    # it to previouse item
+                    prev_item = segment_data
+
+                else:
+                    # get previouse item
+                    prev_item = segments_ordered[itemindex - 1]
+
+                # calculate clip frame range difference from each other
+                clip_diff = segment_data["record_in"] - prev_item["record_out"]
+
+                # add gap if first track item is not starting
+                # at first timeline frame
+                if itemindex == 0 and segment_data["record_in"] > 0:
+                    add_otio_gap(segment_data, otio_track, 0)
+
+                # or add gap if following track items are having
+                # frame range differences from each other
+                elif itemindex and clip_diff != 1:
+                    add_otio_gap(
+                        segment_data, otio_track, prev_item["record_out"])
+
+                # create otio clip and add it to track
+                otio_clip = create_otio_clip(segment_data)
+                otio_track.append(otio_clip)
+
                 # create otio marker
                 # create otio metadata
 
+            # add track to otio timeline
+            otio_timeline.tracks.append(otio_track)
 
-    # # loop all defined track types
-    # for track in self.timeline.items():
-    #     # skip if track is disabled
-    #     if not track.isEnabled():
-    #         continue
-
-    #     # convert track to otio
-    #     otio_track = create_otio_track(
-    #         type(track), track.name())
-
-    #     for itemindex, track_item in enumerate(track):
-    #         # Add Gap if needed
-    #         if itemindex == 0:
-    #             # if it is first track item at track then add
-    #             # it to previouse item
-    #             prev_item = track_item
-
-    #         else:
-    #             # get previouse item
-    #             prev_item = track_item.parent().items()[itemindex - 1]
-
-    #         # calculate clip frame range difference from each other
-    #         clip_diff = track_item.timelineIn() - prev_item.timelineOut()
-
-    #         # add gap if first track item is not starting
-    #         # at first timeline frame
-    #         if itemindex == 0 and track_item.timelineIn() > 0:
-    #             add_otio_gap(track_item, otio_track, 0)
-
-    #         # or add gap if following track items are having
-    #         # frame range differences from each other
-    #         elif itemindex and clip_diff != 1:
-    #             add_otio_gap(track_item, otio_track, prev_item.timelineOut())
-
-    #         # create otio clip and add it to track
-    #         otio_clip = create_otio_clip(track_item)
-    #         otio_track.append(otio_clip)
-
-    #     # Add tags as markers
-    #     if self.include_tags:
-    #         create_otio_markers(otio_track, track)
-
-    #     # add track to otio timeline
-    #     otio_timeline.tracks.append(otio_track)
-
-    # return otio_timeline
+    return otio_timeline
 
 
 def write_to_file(otio_timeline, path):

@@ -28,17 +28,17 @@ def get_reformated_path(path, padded=True):
         type: string with reformated path
 
     Example:
-        get_reformated_path("plate.[0001-1008].exr") > plate.%04d.exr
+        get_reformated_path("plate.1001.exr") > plate.%04d.exr
 
     """
-    if "%" in path:
-        padding_pattern = r"(\d+)"
-        padding = int(re.findall(padding_pattern, path).pop())
-        num_pattern = r"(%\d+d)"
-        if padded:
-            path = re.sub(num_pattern, "%0{}d".format(padding), path)
-        else:
-            path = re.sub(num_pattern, "%d", path)
+    num_pattern = re.compile(r"[._](\d+)[.]")
+    padding = get_padding_from_path(path)
+
+    if padded:
+        path = re.sub(num_pattern, "%0{}d".format(padding), path)
+    else:
+        path = re.sub(num_pattern, "%d", path)
+
     return path
 
 
@@ -53,28 +53,14 @@ def get_padding_from_path(path):
         int: padding number
 
     Example:
-        get_padding_from_path("plate.[0001-1008].exr") > 4
+        get_padding_from_path("plate.0001.exr") > 4
 
     """
-    padding_pattern = "(\\d+)(?=-)"
-    if "[" in path:
-        return len(re.findall(padding_pattern, path).pop())
+    padding_pattern = re.compile(r"[._](\d+)[.]")
 
-    return None
+    found = re.findall(padding_pattern, path).pop()
 
-
-def get_rate(item):
-    if not hasattr(item, 'framerate'):
+    if found:
+        return len(found)
+    else:
         return None
-
-    num, den = item.framerate().toRational()
-
-    try:
-        rate = float(num) / float(den)
-    except ZeroDivisionError:
-        return None
-
-    if rate.is_integer():
-        return rate
-
-    return round(rate, 4)

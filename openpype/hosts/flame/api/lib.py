@@ -258,21 +258,23 @@ def get_current_project():
 
 def get_current_sequence(selection):
     import flame
+    def segment_to_sequence(_segment):
+        track = _segment.parent
+        version = track.parent
+        return version.parent
 
     process_timeline = None
 
     if len(selection) == 1:
         if isinstance(selection[0], flame.PySequence):
             process_timeline = selection[0]
+        if isinstance(selection[0], flame.PySegment):
+            process_timeline = segment_to_sequence(selection[0])
     else:
-        process_segment = None
         for segment in selection:
             if isinstance(segment, flame.PySegment):
-                process_segment = segment
+                process_timeline = segment_to_sequence(segment)
                 break
-        track = process_segment.parent
-        version = track.parent
-        process_timeline = version.parent
 
     return process_timeline
 
