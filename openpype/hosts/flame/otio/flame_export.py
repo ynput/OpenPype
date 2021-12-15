@@ -8,6 +8,7 @@ import ast
 import logging
 import opentimelineio as otio
 from . import utils
+
 import flame
 from pprint import pformat
 
@@ -420,26 +421,14 @@ def get_segment_attributes(segment, frame_rate):
 
     log.info(pformat(clip_data))
 
-def create_otio_timeline(selection):
-    process_timeline = None
-
-    if len(selection) == 1:
-        if isinstance(selection[0], flame.PySequence):
-            process_timeline = selection[0]
-    else:
-        track = selection[0].parent
-        version = track.parent
-        process_timeline = version.parent
-
-    if process_timeline:
-        log.info("___________________timeline__________________")
-        frame_rate = float(str(process_timeline.frame_rate)[:-4])
-        log.info(frame_rate)
-        for ver in process_timeline.versions:
-            for tracks in ver.tracks:
-                for segment in tracks.segments:
-                    # process all segments
-                    get_segment_attributes(segment, frame_rate)
+def create_otio_timeline(sequence):
+    frame_rate = float(str(sequence.frame_rate)[:-4])
+    log.info(frame_rate)
+    for ver in sequence.versions:
+        for tracks in ver.tracks:
+            for segment in tracks.segments:
+                # process all segments
+                get_segment_attributes(segment, frame_rate)
 
     # get current timeline
     # self.timeline = hiero.ui.activeSequence()

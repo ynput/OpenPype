@@ -220,10 +220,10 @@ def maintain_current_timeline(to_timeline, from_timeline=None):
         timeline2
 
         >>> with maintain_current_timeline(to_timeline):
-        ...     print(get_current_timeline().GetName())
+        ...     print(get_current_sequence().GetName())
         timeline2
 
-        >>> print(get_current_timeline().GetName())
+        >>> print(get_current_sequence().GetName())
         timeline1
     """
     # todo: this is still Resolve's implementation
@@ -256,9 +256,25 @@ def get_current_project():
     return
 
 
-def get_current_timeline(new=False):
-    # TODO: get_current_timeline
-    return
+def get_current_sequence(selection):
+    import flame
+
+    process_timeline = None
+
+    if len(selection) == 1:
+        if isinstance(selection[0], flame.PySequence):
+            process_timeline = selection[0]
+    else:
+        process_segment = None
+        for segment in selection:
+            if isinstance(segment, flame.PySegment):
+                process_segment = segment
+                break
+        track = process_segment.parent
+        version = track.parent
+        process_timeline = version.parent
+
+    return process_timeline
 
 
 def create_bin(name, root=None):

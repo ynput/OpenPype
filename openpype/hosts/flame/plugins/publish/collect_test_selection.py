@@ -1,7 +1,7 @@
 import pyblish.api
 import openpype.hosts.flame as opflame
 from openpype.hosts.flame.otio import flame_export as otio_export
-import flame
+from pprint import pformat
 reload(otio_export)
 
 @pyblish.api.log
@@ -15,4 +15,8 @@ class CollectTestSelection(pyblish.api.ContextPlugin):
 
     def process(self, context):
         self.log.info(opflame.selection)
-        otio_export.create_otio_timeline(opflame.selection)
+
+        sequence = opflame.get_current_sequence(opflame.selection)
+        otio_timeline = otio_export.create_otio_timeline(sequence)
+
+        self.log.info(pformat(otio_timeline))

@@ -19,7 +19,7 @@ from .api.lib import (
     maintain_current_timeline,
     get_project_manager,
     get_current_project,
-    get_current_timeline,
+    get_current_sequence,
     create_bin,
 )
 
@@ -88,7 +88,7 @@ __all__ = [
     "maintain_current_timeline",
     "get_project_manager",
     "get_current_project",
-    "get_current_timeline",
+    "get_current_sequence",
     "create_bin",
 
     # menu
