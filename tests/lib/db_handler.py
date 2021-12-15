@@ -112,9 +112,17 @@ class DBHandler:
                     source 'db_name'
         """
         db_name_out = db_name_out or db_name
-        if self._db_exists(db_name) and not overwrite:
-            raise RuntimeError("DB {} already exists".format(db_name_out) +
-                               "Run with overwrite=True")
+        if self._db_exists(db_name_out):
+            if not overwrite:
+                raise RuntimeError("DB {} already exists".format(db_name_out) +
+                                   "Run with overwrite=True")
+            else:
+                if collection:
+                    coll = self.client[db_name_out].get(collection)
+                    if coll:
+                        coll.drop()
+                else:
+                    self.teardown(db_name_out)
 
         dir_path = os.path.join(dump_dir, db_name)
         if not os.path.exists(dir_path):
@@ -136,7 +144,8 @@ class DBHandler:
         print("Dropping {} database".format(db_name))
         self.client.drop_database(db_name)
 
-    def backup_to_dump(self, db_name, dump_dir, overwrite=False):
+    def backup_to_dump(self, db_name, dump_dir, overwrite=False,
+                       collection=None):
         """
             Helper method for running mongodump for specific 'db_name'
         """
@@ -148,7 +157,8 @@ class DBHandler:
             raise RuntimeError("Backup already exists, "
                                "run with overwrite=True")
 
-        query = self._dump_query(self.uri, dump_dir, db_name=db_name)
+        query = self._dump_query(self.uri, dump_dir,
+                                 db_name=db_name, collection=collection)
         print("Mongodump query:: {}".format(query))
         subprocess.run(query)
 
@@ -163,7 +173,7 @@ class DBHandler:
         if collection:
             if not db_name:
                 raise ValueError("db_name must be present")
-            coll_part = "--nsInclude={}.{}".format(db_name, collection)
+            coll_part = "--collection={}".format(collection)
         query = "\"{}\" --uri=\"{}\" --out={} {} {}".format(
             "mongodump", uri, output_path, db_part, coll_part
         )
@@ -187,7 +197,8 @@ class DBHandler:
             drop_part = "--drop"
 
         if db_name_out:
-            db_part += " --nsTo={}.*".format(db_name_out)
+            collection_str = collection or '*'
+            db_part += " --nsTo={}.{}".format(db_name_out, collection_str)
 
         query = "\"{}\" --uri=\"{}\" --dir=\"{}\" {} {} {}".format(
             "mongorestore", uri, dump_dir, db_part, coll_part, drop_part
@@ -217,15 +228,16 @@ class DBHandler:
 
         return query
 
+# Examples
 # handler = DBHandler(uri="mongodb://localhost:27017")
-#
-# backup_dir = "c:\\projects\\dumps"
 # #
-# handler.backup_to_dump("openpype", backup_dir, True)
-# # handler.setup_from_dump("test_db", backup_dir, True)
-# # handler.setup_from_sql_file("test_db", "c:\\projects\\sql\\item.sql",
-# #                             collection="test_project",
-# #                             drop=False, mode="upsert")
-# handler.setup_from_sql("test_db", "c:\\projects\\sql",
+# backup_dir = "c:\\projects\\test_nuke_publish\\input\\dumps"
+# # #
+# handler.backup_to_dump("avalon", backup_dir, True, collection="test_project")
+# handler.setup_from_dump("test_db", backup_dir, True, db_name_out="avalon", collection="test_project")
+# handler.setup_from_sql_file("test_db", "c:\\projects\\sql\\item.sql",
 #                             collection="test_project",
 #                             drop=False, mode="upsert")
+# handler.setup_from_sql("test_db", "c:\\projects\\sql",
+#                        collection="test_project",
+#                        drop=False, mode="upsert")
