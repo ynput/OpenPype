@@ -21,7 +21,7 @@ self = sys.modules[__name__]
 #     hiero.core.VideoTrack: otio.schema.TrackKind.Video,
 #     hiero.core.AudioTrack: otio.schema.TrackKind.Audio
 # }
-self.project_fps = None
+self.fps = None
 self.marker_color_map = {
     "magenta": otio.schema.MarkerColor.MAGENTA,
     "red": otio.schema.MarkerColor.RED,
@@ -30,7 +30,6 @@ self.marker_color_map = {
     "cyan": otio.schema.MarkerColor.CYAN,
     "blue": otio.schema.MarkerColor.BLUE,
 }
-self.timeline = None
 self.include_tags = True
 
 
@@ -151,7 +150,7 @@ def create_otio_reference(clip):
     file_head = media_source.filenameHead()
     is_sequence = not media_source.singleFile()
     frame_duration = media_source.duration()
-    fps = utils.get_rate(clip) or self.project_fps
+    fps = utils.get_rate(clip) or self.fps
     extension = os.path.splitext(path)[-1]
 
     if is_sequence:
@@ -231,7 +230,7 @@ def create_otio_markers(otio_item, item):
             # Hiero adds this tag to a lot of clips
             continue
 
-        frame_rate = utils.get_rate(item) or self.project_fps
+        frame_rate = utils.get_rate(item) or self.fps
 
         marked_range = otio.opentime.TimeRange(
             start_time=otio.opentime.RationalTime(
@@ -278,7 +277,7 @@ def create_otio_clip(track_item):
 
     duration = int(track_item.duration())
 
-    fps = utils.get_rate(track_item) or self.project_fps
+    fps = utils.get_rate(track_item) or self.fps
     name = track_item.name()
 
     media_reference = create_otio_reference(clip)
@@ -317,28 +316,28 @@ def create_otio_gap(gap_start, clip_start, tl_start_frame, fps):
     )
 
 
-def _create_otio_timeline():
+def _create_otio_timeline(sequence):
     project = get_current_flame_project()
-    metadata = _get_metadata(self.timeline)
+    metadata = _get_metadata(sequence)
 
     metadata.update({
-        "openpype.timeline.width": int(self.timeline.format().width()),
-        "openpype.timeline.height": int(self.timeline.format().height()),
-        "openpype.timeline.pixelAspect": int(self.timeline.format().pixelAspect()),  # noqa
-        "openpype.project.useOCIOEnvironmentOverride": project.useOCIOEnvironmentOverride(),  # noqa
-        "openpype.project.lutSetting16Bit": project.lutSetting16Bit(),
-        "openpype.project.lutSetting8Bit": project.lutSetting8Bit(),
-        "openpype.project.lutSettingFloat": project.lutSettingFloat(),
-        "openpype.project.lutSettingLog": project.lutSettingLog(),
-        "openpype.project.lutSettingViewer": project.lutSettingViewer(),
-        "openpype.project.lutSettingWorkingSpace": project.lutSettingWorkingSpace(),  # noqa
-        "openpype.project.lutUseOCIOForExport": project.lutUseOCIOForExport(),
-        "openpype.project.ocioConfigName": project.ocioConfigName(),
-        "openpype.project.ocioConfigPath": project.ocioConfigPath()
+        "openpype.timeline.width": int(sequence.width),
+        "openpype.timeline.height": int(sequence.height),
+        "openpype.timeline.pixelAspect": 1,  # noqa
+        # "openpype.project.useOCIOEnvironmentOverride": project.useOCIOEnvironmentOverride(),  # noqa
+        # "openpype.project.lutSetting16Bit": project.lutSetting16Bit(),
+        # "openpype.project.lutSetting8Bit": project.lutSetting8Bit(),
+        # "openpype.project.lutSettingFloat": project.lutSettingFloat(),
+        # "openpype.project.lutSettingLog": project.lutSettingLog(),
+        # "openpype.project.lutSettingViewer": project.lutSettingViewer(),
+        # "openpype.project.lutSettingWorkingSpace": project.lutSettingWorkingSpace(),  # noqa
+        # "openpype.project.lutUseOCIOForExport": project.lutUseOCIOForExport(),
+        # "openpype.project.ocioConfigName": project.ocioConfigName(),
+        # "openpype.project.ocioConfigPath": project.ocioConfigPath()
     })
 
     start_time = create_otio_rational_time(
-        self.timeline.timecodeStart(), self.project_fps)
+        self.timeline.timecodeStart(), self.fps)
 
     return otio.schema.Timeline(
         name=self.timeline.name(),
@@ -362,7 +361,7 @@ def add_otio_gap(track_item, otio_track, prev_out):
     gap = otio.opentime.TimeRange(
         duration=otio.opentime.RationalTime(
             gap_length,
-            self.project_fps
+            self.fps
         )
     )
     otio_gap = otio.schema.Gap(source_range=gap)
@@ -382,24 +381,17 @@ def add_otio_metadata(otio_item, media_source, **kwargs):
 
 def get_segment_attributes(segment, frame_rate):
     log.info(segment)
-    # log.info(dir(segment))
-    # log.info(segment.attributes)
-    # track = segment.parent
-    # log.info("track: {}".format(track))
-    # log.info(dir(track))
-    # log.info(track.attributes)
-    # log.info(track.name)
 
     if str(segment.name)[1:-1] == "":
         return None
 
     # Add timeline segment to tree
     clip_data = {
-        "clip_name": str(segment.name)[1:-1],
-        "clip_comment": str(segment.comment)[1:-1],
+        "name": str(segment.name)[1:-1],
+        "comment": str(segment.comment)[1:-1],
         "tape_name": str(segment.tape_name),
         "source_name": str(segment.source_name),
-        "file_path": str(segment.file_path)
+        "fpath": str(segment.file_path)
     }
 
     # populate shot source metadata
@@ -417,25 +409,69 @@ def get_segment_attributes(segment, frame_rate):
         clip_data[attr] = utils.timecode_to_frames(
             _value, frame_rate)
 
-    clip_data["segment_attrs"] = segment_attrs_data
+    clip_data["segment_timecodes"] = segment_attrs_data
 
     log.info(pformat(clip_data))
+    return clip_data
+
+def get_track_attributes(track, frame_rate):
+    log.info(track)
+    log.info(dir(track))
+    log.info(track.attributes)
+
+    if len(track.segments) == 0:
+        return None
+
+    # Add timeline segment to tree
+    track_data = {
+        "name": str(track.name)[1:-1]
+    }
+
+    # # populate shot source metadata
+    # segment_attrs = [
+    #     "record_duration", "record_in", "record_out",
+    #     "source_duration", "source_in", "source_out"
+    # ]
+    # segment_attrs_data = {}
+    # for attr in segment_attrs:
+    #     if not hasattr(segment, attr):
+    #         continue
+    #     _value = getattr(segment, attr)
+    #     segment_attrs_data[attr] = _value
+    #     _value = str(_value)[1:-1]
+    #     clip_data[attr] = utils.timecode_to_frames(
+    #         _value, frame_rate)
+
+    # clip_data["segment_timecodes"] = segment_attrs_data
+
+    log.info(pformat(track_data))
+    return track_data
 
 def create_otio_timeline(sequence):
-    frame_rate = float(str(sequence.frame_rate)[:-4])
-    log.info(frame_rate)
-    for ver in sequence.versions:
-        for tracks in ver.tracks:
-            for segment in tracks.segments:
-                # process all segments
-                get_segment_attributes(segment, frame_rate)
+    log.info(dir(sequence))
+    log.info(sequence.attributes)
 
     # get current timeline
-    # self.timeline = hiero.ui.activeSequence()
-    # self.project_fps = self.timeline.framerate().toFloat()
+    self.fps = float(str(sequence.frame_rate)[:-4])
 
     # # convert timeline to otio
-    # otio_timeline = _create_otio_timeline()
+    otio_timeline = _create_otio_timeline(sequence)
+
+    # create otio tracks and clips
+    for ver in sequence.versions:
+        for track in ver.tracks:
+            track_data = get_track_attributes(track, self.fps)
+            if not track_data:
+                continue
+            for segment in track.segments:
+                # process all segments
+                clip_data = get_segment_attributes(
+                    segment, self.fps)
+                # create otio clip
+                # create otio reference
+                # create otio marker
+                # create otio metadata
+
 
     # # loop all defined track types
     # for track in self.timeline.items():
