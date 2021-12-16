@@ -4,8 +4,13 @@ import logging
 import collections
 
 from Qt import QtCore, QtGui
+from avalon.vendor import qtawesome
+from avalon import style, api
 from openpype.lib import ApplicationManager
 from openpype.tools.utils.lib import DynamicQThread
+from openpype.tools.utils.tasks_widget import (
+    TasksModel,
+)
 
 from . import lib
 from .constants import (
@@ -15,8 +20,6 @@ from .constants import (
     ACTION_ID_ROLE
 )
 from .actions import ApplicationAction
-from avalon.vendor import qtawesome
-from avalon import style, api
 
 log = logging.getLogger(__name__)
 
@@ -522,6 +525,18 @@ class LauncherModel(QtCore.QObject):
             return
         self._refreshing_assets = False
         self._set_asset_docs(asset_docs)
+
+
+class LauncherTaskModel(TasksModel):
+    def __init__(self, launcher_model, *args, **kwargs):
+        self._launcher_model = launcher_model
+        super(LauncherTaskModel, self).__init__(*args, **kwargs)
+
+    def set_asset_id(self, asset_id):
+        asset_doc = None
+        if self._context_is_valid():
+            asset_doc = self._launcher_model.get_asset_doc(asset_id)
+        self._set_asset(asset_doc)
 
 
 class ProjectModel(QtGui.QStandardItemModel):
