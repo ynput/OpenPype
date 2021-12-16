@@ -228,7 +228,7 @@ class AssetsPanel(QtWidgets.QWidget):
         self.session_changed.emit()
 
     def _on_filter_change(self):
-        filter = self._filter_widget.get_selected_filters()
+        return self._filter_widget.get_selected_filters()
 
 
 class LauncherWindow(QtWidgets.QDialog):

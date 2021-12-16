@@ -27,6 +27,7 @@ ASSET_ID_ROLE = QtCore.Qt.UserRole + 1
 ASSET_NAME_ROLE = QtCore.Qt.UserRole + 2
 ASSET_LABEL_ROLE = QtCore.Qt.UserRole + 3
 ASSET_UNDERLINE_COLORS_ROLE = QtCore.Qt.UserRole + 4
+ASSET_USER_ROLE = QtCore.Qt.UserRole + 5
 
 
 class AssetsView(TreeViewSpinner, DeselectableTreeView):
@@ -289,7 +290,8 @@ class AssetModel(QtGui.QStandardItemModel):
         "data.visualParent": 1,
         "data.label": 1,
         "data.icon": 1,
-        "data.color": 1
+        "data.color": 1,
+        "data.tasks":1
     }
 
     def __init__(self, dbcon, parent=None):
@@ -490,6 +492,15 @@ class AssetModel(QtGui.QStandardItemModel):
             if item.data(ASSET_LABEL_ROLE) != asset_label:
                 item.setData(asset_label, QtCore.Qt.DisplayRole)
                 item.setData(asset_label, ASSET_LABEL_ROLE)
+
+            asset_tasks = asset_doc.get("data", {}).get("tasks")
+            assign_user = []
+            if asset_tasks:
+                for task_data in asset_tasks.values():
+                    task_user = task_data.get("assigned")
+                    if task_user:
+                        assign_user.extend(task_user)
+            item.setData(assign_user, ASSET_USER_ROLE)
 
             icon_color = asset_data.get("color") or style.colors.default
             icon_name = asset_data.get("icon")
