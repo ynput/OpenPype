@@ -30,7 +30,7 @@ def build_workfile_template(args):
 
 def update_workfile_template(args):
     template_loader = build_template_loader()
-    template_loader.update_template()
+    template_loader.update_missing_containers()
 
 
 def build_template_loader():
