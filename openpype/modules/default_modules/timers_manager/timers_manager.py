@@ -152,7 +152,11 @@ class TimersManager(OpenPypeModule, ITrayService):
             self._idle_manager.wait()
 
     def get_timer_data_for_context(self, project_name, asset_name, task_name):
-        """Prepare data for timer related callbacks."""
+        """Prepare data for timer related callbacks.
+
+        TODO:
+        - return predefined object that has access to asset document etc.
+        """
         dbconn = AvalonMongoDB()
         dbconn.install()
         dbconn.Session["AVALON_PROJECT"] = project_name
@@ -203,6 +207,11 @@ class TimersManager(OpenPypeModule, ITrayService):
         self.timer_started(None, data)
 
     def get_task_time(self, project_name, asset_name, task_name):
+        """Get total time for passed context.
+
+        TODO:
+        - convert context to timer data
+        """
         times = {}
         for module_id, connector in self._connectors_by_module_id.items():
             if hasattr(connector, "get_task_time"):
@@ -213,6 +222,10 @@ class TimersManager(OpenPypeModule, ITrayService):
         return times
 
     def timer_started(self, source_id, data):
+        """Connector triggered that timer has started.
+
+        New timer has started for context in data.
+        """
         for module_id, connector in self._connectors_by_module_id.items():
             if module_id == source_id:
                 continue
@@ -230,6 +243,14 @@ class TimersManager(OpenPypeModule, ITrayService):
         self.is_running = True
 
     def timer_stopped(self, source_id):
+        """Connector triggered that hist timer has stopped.
+
+        Should stop all other timers.
+
+        TODO:
+        - pass context for which timer has stopped to validate if timers are
+            same and valid
+        """
         for module_id, connector in self._connectors_by_module_id.items():
             if module_id == source_id:
                 continue
@@ -248,6 +269,7 @@ class TimersManager(OpenPypeModule, ITrayService):
             self.timer_started(None, self.last_task)
 
     def stop_timers(self):
+        """Stop all timers."""
         if self.is_running is False:
             return
 
