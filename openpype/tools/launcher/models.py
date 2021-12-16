@@ -8,6 +8,10 @@ from avalon.vendor import qtawesome
 from avalon import style, api
 from openpype.lib import ApplicationManager
 from openpype.tools.utils.lib import DynamicQThread
+from openpype.tools.utils.assets_widget import (
+    AssetModel,
+    ASSET_NAME_ROLE
+)
 from openpype.tools.utils.tasks_widget import (
     TasksModel,
     TasksProxyModel,
@@ -25,6 +29,10 @@ from .constants import (
 from .actions import ApplicationAction
 
 log = logging.getLogger(__name__)
+
+# Must be different than roles in default asset model
+ASSET_TASK_TYPES_ROLE = QtCore.Qt.UserRole + 10
+ASSET_ASSIGNEE_ROLE = QtCore.Qt.UserRole + 11
 
 
 class ActionModel(QtGui.QStandardItemModel):
@@ -582,6 +590,54 @@ class LauncherTaskModel(TasksModel):
         if self._context_is_valid():
             asset_doc = self._launcher_model.get_asset_doc(asset_id)
         self._set_asset(asset_doc)
+
+
+class LauncherAssetsModel(AssetModel):
+    def __init__(self, launcher_model, dbcon, parent=None):
+        self._launcher_model = launcher_model
+        # Make sure that variable is available (even if is in AssetModel)
+        self._last_project_name = None
+
+        super(LauncherAssetsModel, self).__init__(dbcon, parent)
+
+        launcher_model.project_changed.connect(self._on_project_change)
+        launcher_model.assets_refresh_started.connect(
+            self._on_launcher_refresh_start
+        )
+        launcher_model.assets_refreshed.connect(self._on_launcher_refresh)
+
+    def _on_launcher_refresh_start(self):
+        self._refreshing = True
+        project_name = self._launcher_model.project_name
+        if self._last_project_name != project_name:
+            self._clear_items()
+            self._last_project_name = project_name
+
+    def _on_launcher_refresh(self):
+        self._fill_assets(self._launcher_model.asset_docs)
+        self._refreshing = False
+        self.refreshed.emit(bool(self._items_by_asset_id))
+
+    def _fill_assets(self, *args, **kwargs):
+        super(LauncherAssetsModel, self)._fill_assets(*args, **kwargs)
+        asset_filter_data_by_id = self._launcher_model.asset_filter_data_by_id
+        for asset_id, item in self._items_by_asset_id.items():
+            filter_data = asset_filter_data_by_id.get(asset_id)
+
+            assignees = filter_data["assignees"]
+            task_types = filter_data["task_types"]
+
+            item.setData(assignees, ASSET_ASSIGNEE_ROLE)
+            item.setData(task_types, ASSET_TASK_TYPES_ROLE)
+
+    def _on_project_change(self):
+        self._clear_items()
+
+    def refresh(self, *args, **kwargs):
+        raise ValueError("This is a bug!")
+
+    def stop_refresh(self, *args, **kwargs):
+        raise ValueError("This is a bug!")
 
 
 class ProjectModel(QtGui.QStandardItemModel):
