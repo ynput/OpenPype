@@ -1,6 +1,3 @@
-import os
-
-from openpype.api import get_project_settings
 from openpype.lib import PostLaunchHook
 
 

@@ -1,7 +1,10 @@
 import os
 import platform
 from openpype.modules import OpenPypeModule
-from openpype_interfaces import ITrayService
+from openpype_interfaces import (
+    ITrayService,
+    ILaunchHookPaths
+)
 from avalon.api import AvalonMongoDB
 
 
@@ -64,7 +67,7 @@ class ExampleTimersManagerConnector:
             self._timers_manager_module.timer_stopped(self._module.id)
 
 
-class TimersManager(OpenPypeModule, ITrayService):
+class TimersManager(OpenPypeModule, ITrayService, ILaunchHookPaths):
     """ Handles about Timers.
 
     Should be able to start/stop all timers at once.
@@ -165,6 +168,13 @@ class TimersManager(OpenPypeModule, ITrayService):
         project_name = path_items.pop(0)
         return self.get_timer_data_for_context(
             project_name, asset_name, task_name
+        )
+
+    def get_launch_hook_paths(self):
+        """Implementation of `ILaunchHookPaths`."""
+        return os.path.join(
+            os.path.dirname(os.path.abspath(__file__)),
+            "launch_hooks"
         )
 
     def get_timer_data_for_context(self, project_name, asset_name, task_name):
