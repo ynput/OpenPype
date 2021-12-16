@@ -1,11 +1,5 @@
 from Qt import QtWidgets, QtCore, QtGui
 
-from avalon.vendor import qtawesome
-from avalon import style
-from .views import DeselectableTreeView
-from functools import reduce
-
-
 
 class AssetsTasksFilterWidget(QtWidgets.QWidget):
     """Widget filters for asset and task"""
@@ -46,7 +40,7 @@ class AssetsTasksFilterWidget(QtWidgets.QWidget):
 
 
 class FiltersTreeView(QtWidgets.QTreeView):
-     def __init__(self):
+    def __init__(self):
         super(FiltersTreeView, self).__init__()
 
         self.setEditTriggers(QtWidgets.QAbstractItemView.NoEditTriggers)
@@ -104,7 +98,7 @@ class FiltersModel(QtGui.QStandardItemModel):
         root_item.appendRows(items)
 
     def refresh(self):
-        print("TRY TO REFRESH !!!!"*5)
+        print("TRY TO REFRESH !!!!" * 5)
 
         self._fetch_assets()
 
@@ -154,10 +148,13 @@ class FiltersModel(QtGui.QStandardItemModel):
             for i in dict_asset.values():
                 return self.get_recursive(i, new_string, result=result)
 
-        return self.get_recursive(dict_asset.get(key, {}), new_string, result=result)
+        return self.get_recursive(
+            dict_asset.get(key, {}),
+            new_string,
+            result=result
+        )
 
 
 class FiltersProxy(QtCore.QSortFilterProxyModel):
     def filterAcceptsRow(self, row, parent):
         return True
-
