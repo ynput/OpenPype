@@ -10,6 +10,9 @@ from openpype.lib import ApplicationManager
 from openpype.tools.utils.lib import DynamicQThread
 from openpype.tools.utils.tasks_widget import (
     TasksModel,
+    TasksProxyModel,
+    TASK_TYPE_ROLE,
+    TASK_ASSIGNEE_ROLE
 )
 
 from . import lib
@@ -525,6 +528,48 @@ class LauncherModel(QtCore.QObject):
             return
         self._refreshing_assets = False
         self._set_asset_docs(asset_docs)
+
+
+class LauncherTasksProxyModel(TasksProxyModel):
+    """Tasks proxy model with more filtering.
+
+    TODO:
+    This can be (with few modifications) used in default tasks widget too.
+    """
+    def __init__(self, launcher_model, *args, **kwargs):
+        self._launcher_model = launcher_model
+        super(LauncherTasksProxyModel, self).__init__(*args, **kwargs)
+
+        launcher_model.filters_changed.connect(self._on_filter_change)
+
+        self._task_types_filter = set()
+        self._assignee_filter = set()
+
+    def _on_filter_change(self):
+        self._task_types_filter = self._launcher_model.task_type_filters
+        self._assignee_filter = self._launcher_model.assignee_filters
+        self.invalidateFilter()
+
+    def filterAcceptsRow(self, row, parent):
+        if not self._task_types_filter and not self._assignee_filter:
+            return True
+
+        model = self.sourceModel()
+        source_index = model.index(row, self.filterKeyColumn(), parent)
+        if not source_index.isValid():
+            return False
+
+        # Check current index itself
+        if self._task_types_filter:
+            task_type = model.data(source_index, TASK_TYPE_ROLE)
+            if task_type not in self._task_types_filter:
+                return False
+
+        if self._assignee_filter:
+            assignee = model.data(source_index, TASK_ASSIGNEE_ROLE)
+            if not self._assignee_filter.intersection(assignee):
+                return False
+        return True
 
 
 class LauncherTaskModel(TasksModel):
