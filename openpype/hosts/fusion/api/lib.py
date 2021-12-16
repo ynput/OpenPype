@@ -1,6 +1,6 @@
 import sys
 
-from avalon.vendor.Qt import QtGui
+from Qt import QtGui
 import avalon.fusion
 from avalon import io
 

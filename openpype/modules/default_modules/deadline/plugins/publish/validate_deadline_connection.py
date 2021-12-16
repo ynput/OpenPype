@@ -1,7 +1,7 @@
-import pyblish.api
-
-from avalon.vendor import requests
 import os
+import requests
+
+import pyblish.api
 
 
 class ValidateDeadlineConnection(pyblish.api.InstancePlugin):

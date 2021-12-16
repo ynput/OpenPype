@@ -89,8 +89,10 @@ class Anatomy:
 
         self.project_name = project_name
 
-        self._data = get_anatomy_settings(project_name, site_name)
-
+        self._data = self._prepare_anatomy_data(
+            get_anatomy_settings(project_name, site_name)
+        )
+        self._site_name = site_name
         self._templates_obj = Templates(self)
         self._roots_obj = Roots(self)
 
@@ -121,9 +123,36 @@ class Anatomy:
         """
         return get_default_anatomy_settings(clear_metadata=False)
 
+    @staticmethod
+    def _prepare_anatomy_data(anatomy_data):
+        """Prepare anatomy data for futher processing.
+
+        Method added to replace `{task}` with `{task[name]}` in templates.
+        """
+        templates_data = anatomy_data.get("templates")
+        if templates_data:
+            # Replace `{task}` with `{task[name]}` in templates
+            value_queue = collections.deque()
+            value_queue.append(templates_data)
+            while value_queue:
+                item = value_queue.popleft()
+                if not isinstance(item, dict):
+                    continue
+
+                for key in tuple(item.keys()):
+                    value = item[key]
+                    if isinstance(value, dict):
+                        value_queue.append(value)
+
+                    elif isinstance(value, StringType):
+                        item[key] = value.replace("{task}", "{task[name]}")
+        return anatomy_data
+
     def reset(self):
         """Reset values of cached data in templates and roots objects."""
-        self._data = get_anatomy_settings(self.project_name)
+        self._data = self._prepare_anatomy_data(
+            get_anatomy_settings(self.project_name, self._site_name)
+        )
         self.templates_obj.reset()
         self.roots_obj.reset()
 
@@ -981,6 +1010,14 @@ class Templates:
             TemplateResult: Filled or partially filled template containing all
                 data needed or missing for filling template.
         """
+        task_data = data.get("task")
+        if (
+            isinstance(task_data, StringType)
+            and "{task[name]}" in orig_template
+        ):
+            # Change task to dictionary if template expect dictionary
+            data["task"] = {"name": task_data}
+
         template, missing_optional, invalid_optional = (
             self._filter_optional(orig_template, data)
         )
@@ -989,13 +1026,6 @@ class Templates:
         invalid_required = []
         missing_required = []
         replace_keys = []
-
-        task_data = data.get("task")
-        if (
-            isinstance(task_data, StringType)
-            and "{task[name]}" in orig_template
-        ):
-            data["task"] = {"name": task_data}
 
         for group in self.key_pattern.findall(template):
             orig_key = group[1:-1]

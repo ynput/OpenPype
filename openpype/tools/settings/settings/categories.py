@@ -391,7 +391,9 @@ class SettingsCategoryWidget(QtWidgets.QWidget):
 
         while self.content_layout.count() != 0:
             widget = self.content_layout.itemAt(0).widget()
-            widget.hide()
+            if widget is not None:
+                widget.setVisible(False)
+
             self.content_layout.removeWidget(widget)
             widget.deleteLater()
 

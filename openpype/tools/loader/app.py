@@ -4,7 +4,10 @@ from Qt import QtWidgets, QtCore
 from avalon import api, io, pipeline
 
 from openpype import style
-from openpype.tools.utils import lib
+from openpype.tools.utils import (
+    lib,
+    PlaceholderLineEdit
+)
 from openpype.tools.utils.assets_widget import MultiSelectAssetsWidget
 
 from .widgets import (
@@ -517,7 +520,7 @@ class SubsetGroupingDialog(QtWidgets.QDialog):
         self.subsets = parent._subsets_widget
         self.asset_ids = parent.data["state"]["assetIds"]
 
-        name = QtWidgets.QLineEdit()
+        name = PlaceholderLineEdit(self)
         name.setPlaceholderText("Remain blank to ungroup..")
 
         # Menu for pre-defined subset groups

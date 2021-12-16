@@ -14,9 +14,11 @@ import openpype
 import openpype.api
 from openpype.lib import (
     get_pype_execute_args,
-    should_decompress,
-    get_decompress_dir,
-    decompress,
+
+    get_transcode_temp_directory,
+    convert_for_ffmpeg,
+    should_convert_for_ffmpeg,
+
     CREATE_NO_WINDOW
 )
 
@@ -70,18 +72,6 @@ class ExtractBurnin(openpype.api.Extractor):
     options = None
 
     def process(self, instance):
-        # ffmpeg doesn't support multipart exrs
-        if instance.data.get("multipartExr") is True:
-            instance_label = (
-                getattr(instance, "label", None)
-                or instance.data.get("label")
-                or instance.data.get("name")
-            )
-            self.log.info((
-                "Instance \"{}\" contain \"multipartExr\". Skipped."
-            ).format(instance_label))
-            return
-
         # QUESTION what is this for and should we raise an exception?
         if "representations" not in instance.data:
             raise RuntimeError("Burnin needs already created mov to work on.")
@@ -94,6 +84,55 @@ class ExtractBurnin(openpype.api.Extractor):
             if all(x in repre.get("tags", []) for x in ['delete', 'burnin']):
                 self.log.debug("Removing representation: {}".format(repre))
                 instance.data["representations"].remove(repre)
+
+    def _get_burnins_per_representations(self, instance, src_burnin_defs):
+        self.log.debug("Filtering of representations and their burnins starts")
+
+        filtered_repres = []
+        repres = instance.data.get("representations") or []
+        for idx, repre in enumerate(repres):
+            self.log.debug("repre ({}): `{}`".format(idx + 1, repre["name"]))
+            if not self.repres_is_valid(repre):
+                continue
+
+            repre_burnin_links = repre.get("burnins", [])
+            self.log.debug(
+                "repre_burnin_links: {}".format(repre_burnin_links)
+            )
+
+            burnin_defs = copy.deepcopy(src_burnin_defs)
+            self.log.debug(
+                "burnin_defs.keys(): {}".format(burnin_defs.keys())
+            )
+
+            # Filter output definition by `burnin` represetation key
+            repre_linked_burnins = {
+                name: output
+                for name, output in burnin_defs.items()
+                if name in repre_burnin_links
+            }
+            self.log.debug(
+                "repre_linked_burnins: {}".format(repre_linked_burnins)
+            )
+
+            # if any match then replace burnin defs and follow tag filtering
+            if repre_linked_burnins:
+                burnin_defs = repre_linked_burnins
+
+            # Filter output definition by representation tags (optional)
+            repre_burnin_defs = self.filter_burnins_by_tags(
+                burnin_defs, repre["tags"]
+            )
+            if not repre_burnin_defs:
+                self.log.info((
+                    "Skipped representation. All burnin definitions from"
+                    " selected profile does not match to representation's"
+                    " tags. \"{}\""
+                ).format(str(repre["tags"])))
+                continue
+            filtered_repres.append((repre, repre_burnin_defs))
+
+        return filtered_repres
 
     def main_process(self, instance):
         # TODO get these data from context
@@ -110,8 +149,7 @@ class ExtractBurnin(openpype.api.Extractor):
             ).format(host_name, family, task_name))
             return
 
-        self.log.debug("profile: {}".format(
-            profile))
+        self.log.debug("profile: {}".format(profile))
 
         # Pre-filter burnin definitions by instance families
         burnin_defs = self.filter_burnins_defs(profile, instance)
@@ -133,52 +171,51 @@ class ExtractBurnin(openpype.api.Extractor):
         # Executable args that will execute the script
         # [pype executable, *pype script, "run"]
         executable_args = get_pype_execute_args("run", scriptpath)
-
-        for idx, repre in enumerate(tuple(instance.data["representations"])):
-            self.log.debug("repre ({}): `{}`".format(idx + 1, repre["name"]))
-
-            repre_burnin_links = repre.get("burnins", [])
-
-            if not self.repres_is_valid(repre):
-                continue
-
-            self.log.debug("repre_burnin_links: {}".format(
-                repre_burnin_links))
-
-            self.log.debug("burnin_defs.keys(): {}".format(
-                burnin_defs.keys()))
-
-            # Filter output definition by `burnin` represetation key
-            repre_linked_burnins = {
-                name: output for name, output in burnin_defs.items()
-                if name in repre_burnin_links
-            }
-            self.log.debug("repre_linked_burnins: {}".format(
-                repre_linked_burnins))
-
-            # if any match then replace burnin defs and follow tag filtering
-            _burnin_defs = copy.deepcopy(burnin_defs)
-            if repre_linked_burnins:
-                _burnin_defs = repre_linked_burnins
-
-            # Filter output definition by representation tags (optional)
-            repre_burnin_defs = self.filter_burnins_by_tags(
-                _burnin_defs, repre["tags"]
-            )
-            if not repre_burnin_defs:
-                self.log.info((
-                    "Skipped representation. All burnin definitions from"
-                    " selected profile does not match to representation's"
-                    " tags. \"{}\""
-                ).format(str(repre["tags"])))
-                continue
-
+        burnins_per_repres = self._get_burnins_per_representations(
+            instance, burnin_defs
+        )
+        for repre, repre_burnin_defs in burnins_per_repres:
             # Create copy of `_burnin_data` and `_temp_data` for repre.
             burnin_data = copy.deepcopy(_burnin_data)
             temp_data = copy.deepcopy(_temp_data)
 
             # Prepare representation based data.
             self.prepare_repre_data(instance, repre, burnin_data, temp_data)
+
+            src_repre_staging_dir = repre["stagingDir"]
+            # Should convert representation source files before processing?
+            repre_files = repre["files"]
+            if isinstance(repre_files, (tuple, list)):
+                filename = repre_files[0]
+            else:
+                filename = repre_files
+
+            first_input_path = os.path.join(src_repre_staging_dir, filename)
+            # Determine if representation requires pre conversion for ffmpeg
+            do_convert = should_convert_for_ffmpeg(first_input_path)
+            # If result is None the requirement of conversion can't be
+            #   determined
+            if do_convert is None:
+                self.log.info((
+                    "Can't determine if representation requires conversion."
+                    " Skipped."
+                ))
+                continue
+
+            # Do conversion if needed
+            #   - change staging dir of source representation
+            #   - must be set back after output definitions processing
+            if do_convert:
+                new_staging_dir = get_transcode_temp_directory()
+                repre["stagingDir"] = new_staging_dir
+
+                convert_for_ffmpeg(
+                    first_input_path,
+                    new_staging_dir,
+                    _temp_data["frameStart"],
+                    _temp_data["frameEnd"],
+                    self.log
+                )
 
             # Add anatomy keys to burnin_data.
             filled_anatomy = anatomy.format_all(burnin_data)
@@ -199,6 +236,7 @@ class ExtractBurnin(openpype.api.Extractor):
             files_to_delete = []
             for filename_suffix, burnin_def in repre_burnin_defs.items():
                 new_repre = copy.deepcopy(repre)
+                new_repre["stagingDir"] = src_repre_staging_dir
 
                 # Keep "ftrackreview" tag only on first output
                 if first_output:
@@ -229,27 +267,9 @@ class ExtractBurnin(openpype.api.Extractor):
                     new_repre["outputName"] = new_name
 
                 # Prepare paths and files for process.
-                self.input_output_paths(new_repre, temp_data, filename_suffix)
-
-                decompressed_dir = ''
-                full_input_path = temp_data["full_input_path"]
-                do_decompress = should_decompress(full_input_path)
-                if do_decompress:
-                    decompressed_dir = get_decompress_dir()
-
-                    decompress(
-                        decompressed_dir,
-                        full_input_path,
-                        temp_data["frame_start"],
-                        temp_data["frame_end"],
-                        self.log
-                    )
-
-                    # input path changed, 'decompressed' added
-                    input_file = os.path.basename(full_input_path)
-                    temp_data["full_input_path"] = os.path.join(
-                        decompressed_dir,
-                        input_file)
+                self.input_output_paths(
+                    repre, new_repre, temp_data, filename_suffix
+                )
 
                 # Data for burnin script
                 script_data = {
@@ -305,6 +325,14 @@ class ExtractBurnin(openpype.api.Extractor):
                 # Add new representation to instance
                 instance.data["representations"].append(new_repre)
 
+            # Cleanup temp staging dir after procesisng of output definitions
+            if do_convert:
+                temp_dir = repre["stagingDir"]
+                shutil.rmtree(temp_dir)
+                # Set staging dir of source representation back to previous
+                #   value
+                repre["stagingDir"] = src_repre_staging_dir
+
             # Remove source representation
             # NOTE we maybe can keep source representation if necessary
             instance.data["representations"].remove(repre)
@@ -316,9 +344,6 @@ class ExtractBurnin(openpype.api.Extractor):
                 if os.path.exists(filepath):
                     os.remove(filepath)
                     self.log.debug("Removed: \"{}\"".format(filepath))
-
-            if do_decompress and os.path.exists(decompressed_dir):
-                shutil.rmtree(decompressed_dir)
 
     def _get_burnin_options(self):
         # Prepare burnin options
@@ -474,6 +499,12 @@ class ExtractBurnin(openpype.api.Extractor):
                 "Representation \"{}\" don't have \"burnin\" tag. Skipped."
             ).format(repre["name"]))
             return False
+
+        if not repre.get("files"):
+            self.log.warning((
+                "Representation \"{}\" have empty files. Skipped."
+            ).format(repre["name"]))
+            return False
         return True
 
     def filter_burnins_by_tags(self, burnin_defs, tags):
@@ -504,7 +535,9 @@ class ExtractBurnin(openpype.api.Extractor):
 
         return filtered_burnins
 
-    def input_output_paths(self, new_repre, temp_data, filename_suffix):
+    def input_output_paths(
+        self, src_repre, new_repre, temp_data, filename_suffix
+    ):
         """Prepare input and output paths for representation.
 
         Store data to `temp_data` for keys "full_input_path" which is full path
@@ -565,12 +598,13 @@ class ExtractBurnin(openpype.api.Extractor):
 
             repre_files = output_filename
 
-        stagingdir = new_repre["stagingDir"]
+        src_stagingdir = src_repre["stagingDir"]
+        dst_stagingdir = new_repre["stagingDir"]
         full_input_path = os.path.join(
-            os.path.normpath(stagingdir), input_filename
+            os.path.normpath(src_stagingdir), input_filename
         ).replace("\\", "/")
         full_output_path = os.path.join(
-            os.path.normpath(stagingdir), output_filename
+            os.path.normpath(dst_stagingdir), output_filename
         ).replace("\\", "/")
 
         temp_data["full_input_path"] = full_input_path
@@ -587,7 +621,7 @@ class ExtractBurnin(openpype.api.Extractor):
         if is_sequence:
             for filename in input_filenames:
                 filepath = os.path.join(
-                    os.path.normpath(stagingdir), filename
+                    os.path.normpath(src_stagingdir), filename
                 ).replace("\\", "/")
                 full_input_paths.append(filepath)
 

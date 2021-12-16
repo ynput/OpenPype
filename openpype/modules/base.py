@@ -29,6 +29,21 @@ from openpype.settings.lib import (
 from openpype.lib import PypeLogger
 
 
+DEFAULT_OPENPYPE_MODULES = (
+    "avalon_apps",
+    "clockify",
+    "log_viewer",
+    "muster",
+    "python_console_interpreter",
+    "slack",
+    "webserver",
+    "launcher_action",
+    "project_manager_action",
+    "settings_action",
+    "standalonepublish_action",
+)
+
+
 # Inherit from `object` for Python 2 hosts
 class _ModuleClass(object):
     """Fake module class for storing OpenPype modules.
@@ -271,9 +286,24 @@ def _load_modules():
 
     log = PypeLogger.get_logger("ModulesLoader")
 
-    # Look for OpenPype modules in paths defined with `get_module_dirs`
-    dirpaths = get_module_dirs()
+    # Import default modules imported from 'openpype.modules'
+    for default_module_name in DEFAULT_OPENPYPE_MODULES:
+        try:
+            import_str = "openpype.modules.{}".format(default_module_name)
+            new_import_str = "{}.{}".format(modules_key, default_module_name)
+            default_module = __import__(import_str, fromlist=("", ))
+            sys.modules[new_import_str] = default_module
+            setattr(openpype_modules, default_module_name, default_module)
 
+        except Exception:
+            msg = (
+                "Failed to import default module '{}'."
+            ).format(default_module_name)
+            log.error(msg, exc_info=True)
+
+    # Look for OpenPype modules in paths defined with `get_module_dirs`
+    #   - dynamically imported OpenPype modules and addons
+    dirpaths = get_module_dirs()
     for dirpath in dirpaths:
         if not os.path.exists(dirpath):
             log.warning((

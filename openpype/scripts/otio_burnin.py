@@ -161,6 +161,23 @@ def _dnxhd_codec_args(stream_data, source_ffmpeg_cmd):
     return output
 
 
+def _mxf_format_args(ffprobe_data, source_ffmpeg_cmd):
+    input_format = ffprobe_data["format"]
+    format_tags = input_format.get("tags") or {}
+    product_name = format_tags.get("product_name") or ""
+    output = []
+    if "opatom" in product_name.lower():
+        output.extend(["-f", "mxf_opatom"])
+    return output
+
+
+def get_format_args(ffprobe_data, source_ffmpeg_cmd):
+    input_format = ffprobe_data.get("format") or {}
+    if input_format.get("format_name") == "mxf":
+        return _mxf_format_args(ffprobe_data, source_ffmpeg_cmd)
+    return []
+
+
 def get_codec_args(ffprobe_data, source_ffmpeg_cmd):
     stream_data = ffprobe_data["streams"][0]
     codec_name = stream_data.get("codec_name")
@@ -595,9 +612,9 @@ def burnins_from_data(
     if source_timecode is None:
         source_timecode = stream.get("tags", {}).get("timecode")
 
+    # Use "format" key from ffprobe data
+    #   - this is used e.g. in mxf extension
     if source_timecode is None:
-        # Use "format" key from ffprobe data
-        #   - this is used e.g. in mxf extension
         input_format = burnin.ffprobe_data.get("format") or {}
         source_timecode = input_format.get("timecode")
         if source_timecode is None:
@@ -692,6 +709,9 @@ def burnins_from_data(
         ffmpeg_args.append("-g 1")
 
     else:
+        ffmpeg_args.extend(
+            get_format_args(burnin.ffprobe_data, source_ffmpeg_cmd)
+        )
         ffmpeg_args.extend(
             get_codec_args(burnin.ffprobe_data, source_ffmpeg_cmd)
         )

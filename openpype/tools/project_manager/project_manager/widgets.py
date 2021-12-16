@@ -10,6 +10,7 @@ from openpype.lib import (
     PROJECT_NAME_REGEX
 )
 from openpype.style import load_stylesheet
+from openpype.tools.utils import PlaceholderLineEdit
 from avalon.api import AvalonMongoDB
 
 from Qt import QtWidgets, QtCore
@@ -345,7 +346,7 @@ class ConfirmProjectDeletion(QtWidgets.QDialog):
 
         question_label = QtWidgets.QLabel("<b>Are you sure?</b>", self)
 
-        confirm_input = QtWidgets.QLineEdit(self)
+        confirm_input = PlaceholderLineEdit(self)
         confirm_input.setPlaceholderText("Type \"Delete\" to confirm...")
 
         cancel_btn = _SameSizeBtns("Cancel", self)

@@ -1,7 +1,6 @@
 from Qt import QtWidgets, QtCore
 from openpype.tools.settings.settings.widgets import (
-    ExpandingWidget,
-    SpacerWidget
+    ExpandingWidget
 )
 
 
@@ -56,7 +55,5 @@ class ProxyLabelWidget(QtWidgets.QWidget):
 
 __all__ = (
     "ExpandingWidget",
-    "SpacerWidget",
     "Separator",
-    "SpacerWidget"
 )

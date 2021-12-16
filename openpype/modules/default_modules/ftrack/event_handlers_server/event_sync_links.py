@@ -113,7 +113,7 @@ class SyncLinksToAvalon(BaseEvent):
                     continue
 
                 links.append({
-                    "_id": ObjectId(link_mongo_id),
+                    "id": ObjectId(link_mongo_id),
                     "linkedBy": "ftrack",
                     "type": "breakdown"
                 })

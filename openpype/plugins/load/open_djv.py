@@ -32,7 +32,7 @@ class OpenInDJV(api.Loader):
 
     def load(self, context, name, namespace, data):
         directory = os.path.dirname(self.fname)
-        from avalon.vendor import clique
+        import clique
 
         pattern = clique.PATTERNS["frames"]
         files = os.listdir(directory)

@@ -27,7 +27,7 @@ class Openfile(api.Loader):
     color = "orange"
 
     def load(self, context, name, namespace, data):
-        from avalon.vendor import clique
+        import clique
 
         directory = os.path.dirname(self.fname)
         pattern = clique.PATTERNS["frames"]

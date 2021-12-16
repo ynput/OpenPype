@@ -25,6 +25,9 @@
                             "nukenodes": "nukenodes"
                         },
                         {
+                            "model": "model"
+                        },
+                        {
                             "camera": "camera"
                         },
                         {

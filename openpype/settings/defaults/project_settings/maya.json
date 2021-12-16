@@ -275,6 +275,11 @@
             "optional": true,
             "active": true
         },
+        "ValidateModelContent": {
+            "enabled": true,
+            "optional": false,
+            "validate_top_group": true
+        },
         "ValidateNoAnimation": {
             "enabled": false,
             "optional": true,

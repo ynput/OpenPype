@@ -1,10 +1,17 @@
 from math import floor, sqrt, ceil
 from Qt import QtWidgets, QtCore, QtGui
 
+from openpype.style import get_objected_colors
+
 
 class NiceCheckbox(QtWidgets.QFrame):
     stateChanged = QtCore.Signal(int)
     clicked = QtCore.Signal()
+
+    _checked_bg_color = None
+    _unchecked_bg_color = None
+    _checker_color = None
+    _checker_hover_color = None
 
     def __init__(self, checked=False, draw_icons=False, parent=None):
         super(NiceCheckbox, self).__init__(parent)
@@ -41,12 +48,6 @@ class NiceCheckbox(QtWidgets.QFrame):
         self._pressed = False
         self._under_mouse = False
 
-        self.checked_bg_color = QtGui.QColor(67, 181, 129)
-        self.unchecked_bg_color = QtGui.QColor(79, 79, 79)
-
-        self.checker_checked_color = QtGui.QColor(255, 255, 255)
-        self.checker_unchecked_color = self.checker_checked_color
-
         self.icon_scale_factor = sqrt(2) / 2
 
         icon_path_stroker = QtGui.QPainterPathStroker()
@@ -58,6 +59,37 @@ class NiceCheckbox(QtWidgets.QFrame):
         self._animation_timer.timeout.connect(self._on_animation_timeout)
 
         self._base_size = QtCore.QSize(90, 50)
+        self._load_colors()
+
+    @classmethod
+    def _load_colors(cls):
+        if cls._checked_bg_color is not None:
+            return
+
+        colors_data = get_objected_colors()
+        colors_info = colors_data["nice-checkbox"]
+
+        cls._checked_bg_color = colors_info["bg-checked"].get_qcolor()
+        cls._unchecked_bg_color = colors_info["bg-unchecked"].get_qcolor()
+
+        cls._checker_color = colors_info["bg-checker"].get_qcolor()
+        cls._checker_hover_color = colors_info["bg-checker-hover"].get_qcolor()
+
+    @property
+    def checked_bg_color(self):
+        return self._checked_bg_color
+
+    @property
+    def unchecked_bg_color(self):
+        return self._unchecked_bg_color
+
+    @property
+    def checker_color(self):
+        return self._checker_color
+
+    @property
+    def checker_hover_color(self):
+        return self._checker_hover_color
 
     def setTristate(self, tristate=True):
         if self._is_tristate != tristate:
@@ -72,15 +104,6 @@ class NiceCheckbox(QtWidgets.QFrame):
 
         self._draw_icons = draw_icons
         self.repaint()
-
-    def _checkbox_size_hint(self):
-        checkbox_height = self.style().pixelMetric(
-            QtWidgets.QStyle.PM_IndicatorHeight
-        )
-        checkbox_height += checkbox_height % 2
-        width = (2 * checkbox_height) - (checkbox_height / 5)
-        new_size = QtCore.QSize(width, checkbox_height)
-        return new_size
 
     def sizeHint(self):
         height = self.fontMetrics().height()
@@ -159,7 +182,7 @@ class NiceCheckbox(QtWidgets.QFrame):
         if self._animation_timer.isActive():
             self._animation_timer.stop()
 
-        if self.isEnabled():
+        if self.isVisible() and self.isEnabled():
             # Start animation
             self._animation_timer.start(self._animation_timeout)
         else:
@@ -235,14 +258,16 @@ class NiceCheckbox(QtWidgets.QFrame):
 
     def _on_animation_timeout(self):
         if self._checkstate == QtCore.Qt.Checked:
-            self._current_step += 1
             if self._current_step == self._steps:
                 self._animation_timer.stop()
+                return
+            self._current_step += 1
 
         elif self._checkstate == QtCore.Qt.Unchecked:
-            self._current_step -= 1
             if self._current_step == 0:
                 self._animation_timer.stop()
+                return
+            self._current_step -= 1
 
         else:
             if self._current_step < self._middle_step:
@@ -291,11 +316,9 @@ class NiceCheckbox(QtWidgets.QFrame):
         # Draw inner background
         if self._current_step == self._steps:
             bg_color = self.checked_bg_color
-            checker_color = self.checker_checked_color
 
         elif self._current_step == 0:
             bg_color = self.unchecked_bg_color
-            checker_color = self.checker_unchecked_color
 
         else:
             offset_ratio = self._current_step / self._steps
@@ -303,11 +326,6 @@ class NiceCheckbox(QtWidgets.QFrame):
             bg_color = self.steped_color(
                 self.checked_bg_color,
                 self.unchecked_bg_color,
-                offset_ratio
-            )
-            checker_color = self.steped_color(
-                self.checker_checked_color,
-                self.checker_unchecked_color,
                 offset_ratio
             )
 
@@ -359,51 +377,13 @@ class NiceCheckbox(QtWidgets.QFrame):
         checker_rect = QtCore.QRect(pos_x, pos_y, checker_size, checker_size)
 
         under_mouse = self.isEnabled() and self._under_mouse
-
-        shadow_x = checker_rect.x()
-        shadow_y = checker_rect.y() + margin_size_c
-        shadow_size = min(
-            frame_rect.right() - shadow_x,
-            frame_rect.bottom() - shadow_y,
-            checker_size + (2 * margin_size_c)
-        )
-        shadow_rect = QtCore.QRect(
-            checker_rect.x(),
-            shadow_y,
-            shadow_size,
-            shadow_size
-        )
-
-        shadow_brush = QtGui.QRadialGradient(
-            shadow_rect.center(),
-            shadow_rect.height() / 2
-        )
-        shadow_brush.setColorAt(0.6, QtCore.Qt.black)
-        shadow_brush.setColorAt(1, QtCore.Qt.transparent)
-
-        painter.setPen(QtCore.Qt.transparent)
-        painter.setBrush(shadow_brush)
-        painter.drawEllipse(shadow_rect)
+        if under_mouse:
+            checker_color = self.checker_hover_color
+        else:
+            checker_color = self.checker_color
 
         painter.setBrush(checker_color)
         painter.drawEllipse(checker_rect)
-
-        if under_mouse:
-            adjust = margin_size_c
-            if adjust < 1 and checker_rect.height() > 4:
-                adjust = 1
-
-            smaller_checker_rect = checker_rect.adjusted(
-                adjust, adjust, -adjust, -adjust
-            )
-            gradient = QtGui.QLinearGradient(
-                smaller_checker_rect.bottomRight(),
-                smaller_checker_rect.topLeft()
-            )
-            gradient.setColorAt(0, checker_color)
-            gradient.setColorAt(1, checker_color.darker(155))
-            painter.setBrush(gradient)
-            painter.drawEllipse(smaller_checker_rect)
 
         if self._draw_icons:
             painter.setBrush(bg_color)
