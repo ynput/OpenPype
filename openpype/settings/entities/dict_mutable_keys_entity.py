@@ -191,6 +191,9 @@ class DictMutableKeysEntity(EndpointEntity):
         child_entity = self.children_by_key[key]
         self.set_child_label(child_entity, label)
 
+    def has_child_with_key(self, key):
+        return key in self.children_by_key
+
     def _item_initialization(self):
         self._default_metadata = {}
         self._studio_override_metadata = {}
