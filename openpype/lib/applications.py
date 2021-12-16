@@ -640,6 +640,10 @@ class LaunchHook:
     def app_name(self):
         return getattr(self.application, "full_name", None)
 
+    @property
+    def modules_manager(self):
+        return getattr(self.launch_context, "modules_manager", None)
+
     def validate(self):
         """Optional validation of launch hook on initialization.
 
@@ -702,8 +706,12 @@ class ApplicationLaunchContext:
     """
 
     def __init__(self, application, executable, **data):
+        from openpype.modules import ModulesManager
+
         # Application object
         self.application = application
+
+        self.modules_manager = ModulesManager()
 
         # Logger
         logger_name = "{}-{}".format(self.__class__.__name__, self.app_name)
@@ -812,10 +820,7 @@ class ApplicationLaunchContext:
                 paths.append(path)
 
         # Load modules paths
-        from openpype.modules import ModulesManager
-
-        manager = ModulesManager()
-        paths.extend(manager.collect_launch_hook_paths())
+        paths.extend(self.modules_manager.collect_launch_hook_paths())
 
         return paths
 
