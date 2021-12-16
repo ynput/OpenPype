@@ -3,6 +3,7 @@ import uuid
 import copy
 import logging
 import collections
+import time
 
 from Qt import QtCore, QtGui
 from avalon.vendor import qtawesome
@@ -524,6 +525,7 @@ class LauncherModel(QtCore.QObject):
         self._refreshing_assets = False
         if self._asset_refresh_thread is not None:
             while self._asset_refresh_thread.isRunning():
+                # TODO this is blocking UI should be done in a different way
                 time.sleep(0.01)
             self._asset_refresh_thread = None
 
@@ -532,7 +534,6 @@ class LauncherModel(QtCore.QObject):
             {"type": "asset"},
             self._asset_projection
         ))
-        time.sleep(5)
         if not self._refreshing_assets:
             return
         self._refreshing_assets = False
@@ -703,18 +704,17 @@ class LauncherAssetsModel(AssetModel):
 class ProjectModel(QtGui.QStandardItemModel):
     """List of projects"""
 
-    def __init__(self, dbcon, parent=None):
+    def __init__(self, launcher_model, parent=None):
         super(ProjectModel, self).__init__(parent=parent)
 
-        self.dbcon = dbcon
+        self._launcher_model = launcher_model
         self.project_icon = qtawesome.icon("fa.map", color="white")
         self._project_names = set()
 
-    def refresh(self):
-        project_names = set()
-        for project_doc in self.get_projects():
-            project_names.add(project_doc["name"])
+        launcher_model.projects_refreshed.connect(self._on_refresh)
 
+    def _on_refresh(self):
+        project_names = set(self._launcher_model.project_names)
         origin_project_names = set(self._project_names)
         self._project_names = project_names
 
@@ -757,7 +757,3 @@ class ProjectModel(QtGui.QStandardItemModel):
                 items.append(item)
 
             self.invisibleRootItem().insertRows(row, items)
-
-    def get_projects(self):
-        return sorted(self.dbcon.projects(only_active=True),
-                      key=lambda x: x["name"])
