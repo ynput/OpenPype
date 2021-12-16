@@ -1,4 +1,3 @@
-from openpype.hosts.maya.api.lib_template_builder import update_placeholder
 import sys
 import os
 import logging
