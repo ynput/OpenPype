@@ -4,10 +4,14 @@ import collections
 from Qt import QtWidgets, QtCore, QtGui
 from avalon.vendor import qtawesome
 
+from openpype.tools.flickcharm import FlickCharm
+
 from .delegates import ActionDelegate
 from . import lib
-from .models import ActionModel
-from openpype.tools.flickcharm import FlickCharm
+from .models import (
+    ActionModel,
+    ProjectModel,
+)
 from .constants import (
     ACTION_ROLE,
     GROUP_ROLE,
@@ -20,15 +24,15 @@ from .constants import (
 
 
 class ProjectBar(QtWidgets.QWidget):
-    def __init__(self, project_handler, parent=None):
+    def __init__(self, launcher_model, parent=None):
         super(ProjectBar, self).__init__(parent)
 
         project_combobox = QtWidgets.QComboBox(self)
         # Change delegate so stylysheets are applied
         project_delegate = QtWidgets.QStyledItemDelegate(project_combobox)
         project_combobox.setItemDelegate(project_delegate)
-
-        project_combobox.setModel(project_handler.model)
+        model = ProjectModel(launcher_model)
+        project_combobox.setModel(model)
         project_combobox.setRootModelIndex(QtCore.QModelIndex())
 
         layout = QtWidgets.QHBoxLayout(self)
@@ -40,16 +44,17 @@ class ProjectBar(QtWidgets.QWidget):
             QtWidgets.QSizePolicy.Maximum
         )
 
-        self.project_handler = project_handler
+        self._launcher_model = launcher_model
         self.project_delegate = project_delegate
         self.project_combobox = project_combobox
+        self._model = model
 
         # Signals
         self.project_combobox.currentIndexChanged.connect(self.on_index_change)
-        project_handler.project_changed.connect(self._on_project_change)
+        launcher_model.project_changed.connect(self._on_project_change)
 
         # Set current project by default if it's set.
-        project_name = project_handler.current_project
+        project_name = launcher_model.project_name
         if project_name:
             self.set_project(project_name)
 
@@ -65,7 +70,7 @@ class ProjectBar(QtWidgets.QWidget):
         index = self.project_combobox.findText(project_name)
         if index < 0:
             # Try refresh combobox model
-            self.project_handler.refresh_model()
+            self._launcher_model.refresh_projects()
             index = self.project_combobox.findText(project_name)
 
         if index >= 0:
@@ -76,7 +81,7 @@ class ProjectBar(QtWidgets.QWidget):
             return
 
         project_name = self.get_current_project()
-        self.project_handler.set_project(project_name)
+        self._launcher_model.set_project_name(project_name)
 
 
 class ActionBar(QtWidgets.QWidget):
@@ -84,10 +89,10 @@ class ActionBar(QtWidgets.QWidget):
 
     action_clicked = QtCore.Signal(object)
 
-    def __init__(self, project_handler, dbcon, parent=None):
+    def __init__(self, launcher_model, dbcon, parent=None):
         super(ActionBar, self).__init__(parent)
 
-        self.project_handler = project_handler
+        self._launcher_model = launcher_model
         self.dbcon = dbcon
 
         view = QtWidgets.QListView(self)
@@ -133,7 +138,7 @@ class ActionBar(QtWidgets.QWidget):
 
         self.set_row_height(1)
 
-        project_handler.projects_refreshed.connect(self._on_projects_refresh)
+        launcher_model.projects_refreshed.connect(self._on_projects_refresh)
         view.clicked.connect(self.on_clicked)
 
     def discover_actions(self):
@@ -172,7 +177,7 @@ class ActionBar(QtWidgets.QWidget):
 
     def _start_animation(self, index):
         # Offset refresh timout
-        self.project_handler.start_timer()
+        self.launcher_model.start_refresh_timer()
         action_id = index.data(ACTION_ID_ROLE)
         item = self.model.items_by_id.get(action_id)
         if item:
@@ -194,7 +199,7 @@ class ActionBar(QtWidgets.QWidget):
             return
 
         # Offset refresh timout
-        self.project_handler.start_timer()
+        self.launcher_model.start_refresh_timer()
 
         actions = index.data(ACTION_ROLE)
 
