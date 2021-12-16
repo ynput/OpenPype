@@ -10,6 +10,7 @@ from openpype.api import resources
 
 from openpype.tools.utils.assets_widget import SingleSelectAssetsWidget
 from openpype.tools.utils.tasks_widget import TasksWidget
+from openpype.tools.utils.filter_widget import AssetsTasksFilterWidget
 
 from avalon.vendor import qtawesome
 from .models import ProjectModel
@@ -145,6 +146,9 @@ class AssetsPanel(QtWidgets.QWidget):
         # Tasks widget
         tasks_widget = TasksWidget(self.dbcon, self)
 
+        # Filter widget
+        filter_widget = AssetsTasksFilterWidget(self.dbcon, self)
+
         # Body
         body = QtWidgets.QSplitter(self)
         body.setContentsMargins(0, 0, 0, 0)
@@ -155,6 +159,7 @@ class AssetsPanel(QtWidgets.QWidget):
         body.setOrientation(QtCore.Qt.Horizontal)
         body.addWidget(assets_widget)
         body.addWidget(tasks_widget)
+        body.addWidget(filter_widget)
         body.setStretchFactor(0, 100)
         body.setStretchFactor(1, 65)
 
@@ -169,6 +174,7 @@ class AssetsPanel(QtWidgets.QWidget):
         assets_widget.selection_changed.connect(self._on_asset_changed)
         assets_widget.refreshed.connect(self._on_asset_changed)
         tasks_widget.task_changed.connect(self._on_task_change)
+        filter_widget.filter_changed.connect(self._on_filter_change)
 
         btn_back.clicked.connect(self.back_clicked)
 
@@ -176,6 +182,7 @@ class AssetsPanel(QtWidgets.QWidget):
         self.project_bar = project_bar
         self.assets_widget = assets_widget
         self._tasks_widget = tasks_widget
+        self._filter_widget = filter_widget
         self._btn_back = btn_back
 
     def select_asset(self, asset_name):
@@ -219,6 +226,9 @@ class AssetsPanel(QtWidgets.QWidget):
         task_name = self._tasks_widget.get_selected_task_name()
         self.dbcon.Session["AVALON_TASK"] = task_name
         self.session_changed.emit()
+
+    def _on_filter_change(self):
+        filter = self._filter_widget.get_selected_filters()
 
 
 class LauncherWindow(QtWidgets.QDialog):
@@ -369,6 +379,7 @@ class LauncherWindow(QtWidgets.QDialog):
         # Update the Action plug-ins available for the current project
         self.set_page(1)
         self.discover_actions()
+        self.asset_panel._filter_widget.refresh()
 
     def on_back_clicked(self):
         self.project_handler.set_project(None)
