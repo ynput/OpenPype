@@ -401,11 +401,18 @@ class AssetModel(QtGui.QStandardItemModel):
             self._clear_items()
             return
 
+        self._fill_assets(self._doc_payload)
+
+        self.refreshed.emit(bool(self._items_by_asset_id))
+
+        self._stop_fetch_thread()
+
+    def _fill_assets(self, asset_docs):
         # Collect asset documents as needed
         asset_ids = set()
         asset_docs_by_id = {}
         asset_ids_by_parents = collections.defaultdict(set)
-        for asset_doc in self._doc_payload:
+        for asset_doc in asset_docs:
             asset_id = asset_doc["_id"]
             asset_data = asset_doc.get("data") or {}
             parent_id = asset_data.get("visualParent")
@@ -510,10 +517,6 @@ class AssetModel(QtGui.QStandardItemModel):
 
             except Exception:
                 pass
-
-        self.refreshed.emit(bool(self._items_by_asset_id))
-
-        self._stop_fetch_thread()
 
     def _threaded_fetch(self):
         asset_docs = self._fetch_asset_docs()
