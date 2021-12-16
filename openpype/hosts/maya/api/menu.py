@@ -1,3 +1,4 @@
+from openpype.hosts.maya.api.lib_template_builder import update_placeholder
 import sys
 import os
 import logging
@@ -9,7 +10,7 @@ import maya.cmds as cmds
 from avalon.maya import pipeline
 
 from openpype.api import build_workfile_template, update_workfile_template
-from lib_template_builder import create_placeholder
+from lib_template_builder import create_placeholder, update_placeholder
 from openpype.settings import get_project_settings
 from openpype.tools.utils import host_tools
 from openpype.hosts.maya.api import lib
@@ -56,9 +57,14 @@ def deferred():
         )
         cmds.menuItem(divider=True)
         cmds.menuItem(
-            "Create Place Holder",
+            "Create Placeholder",
             parent=_builder_menu,
             command=lambda *args: create_placeholder()
+        )
+        cmds.menuItem(
+            "Update Placeholder",
+            parent=_builder_menu,
+            command=lambda *args: update_placeholder()
         )
 
     def add_look_assigner_item():
