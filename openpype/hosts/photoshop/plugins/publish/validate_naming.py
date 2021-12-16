@@ -78,7 +78,6 @@ class ValidateNaming(pyblish.api.InstancePlugin):
                                                        help_msg)
         assert not re.search(self.invalid_chars, instance.data["subset"]), msg
 
-
     @classmethod
     def get_replace_chars(cls):
         """Pass values configured in Settings for Repair."""
