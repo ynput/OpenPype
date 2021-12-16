@@ -306,6 +306,8 @@ class AssetModel(QtGui.QStandardItemModel):
         self._items_with_color_by_id = {}
         self._items_by_asset_id = {}
 
+        self._last_project_name = None
+
     @property
     def refreshing(self):
         return self._refreshing
@@ -347,12 +349,11 @@ class AssetModel(QtGui.QStandardItemModel):
 
         return self.get_indexes_by_asset_ids(asset_ids)
 
-    def refresh(self, force=False, clear=False):
+    def refresh(self, force=False):
         """Refresh the data for the model.
 
         Args:
             force (bool): Stop currently running refresh start new refresh.
-            clear (bool): Clear model before refresh thread starts.
         """
         # Skip fetch if there is already other thread fetching documents
         if self._refreshing:
@@ -360,7 +361,13 @@ class AssetModel(QtGui.QStandardItemModel):
                 return
             self.stop_refresh()
 
-        if clear:
+        project_name = self.dbcon.Session.get("AVALON_PROJECT")
+        clear_model = False
+        if project_name != self._last_project_name:
+            clear_model = True
+            self._last_project_name = project_name
+
+        if clear_model:
             self._clear_items()
 
         # Fetch documents from mongo
@@ -655,12 +662,7 @@ class AssetsWidget(QtWidgets.QWidget):
         return self._model.refreshing
 
     def refresh(self):
-        project_name = self.dbcon.Session.get("AVALON_PROJECT")
-        clear_model = False
-        if project_name != self._last_project_name:
-            clear_model = True
-            self._last_project_name = project_name
-        self._refresh_model(clear_model)
+        self._refresh_model()
 
     def stop_refresh(self):
         self._model.stop_refresh()
@@ -706,14 +708,14 @@ class AssetsWidget(QtWidgets.QWidget):
         self._set_loading_state(loading=False, empty=not has_item)
         self.refreshed.emit()
 
-    def _refresh_model(self, clear=False):
+    def _refresh_model(self):
         # Store selection
         self._set_loading_state(loading=True, empty=True)
 
         # Trigger signal before refresh is called
         self.refresh_triggered.emit()
         # Refresh model
-        self._model.refresh(clear=clear)
+        self._model.refresh()
 
     def _set_loading_state(self, loading, empty):
         self._view.set_loading_state(loading, empty)
