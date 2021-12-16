@@ -200,14 +200,12 @@ class AbstractTemplateLoader:
 
         return solved_path
 
-    def populate_template(self, override=None):
+    def populate_template(self, ignored_ids=None):
         """
         Use template placeholders to load assets and parent them in hierarchy
 
         Arguments :
-            current_asset (str):
-            loader_by_name (dict(name:loader)):
-            placeholder_class (AbstractPlaceHolder):
+            ignored_ids :
 
         Returns:
             None
@@ -219,6 +217,7 @@ class AbstractTemplateLoader:
         linked_asset_docs = get_linked_assets(current_asset_docs)
         linked_assets = [asset['name'] for asset in linked_asset_docs]
 
+        ignored_ids = [] or ignored_ids
         sorted_placeholders = self.get_sorted_placeholders()
         for placeholder in sorted_placeholders:
             placeholder_db_filters = placeholder.convert_to_db_filters(
@@ -234,6 +233,11 @@ class AbstractTemplateLoader:
                 for last_representation in placeholder_representations:
                     if not last_representation:
                         self.log.warning(placeholder.err_message())
+                        continue
+                    if (str(last_representation['_id'])
+                       in ignored_ids):
+                        print("Ignoring : ",
+                              last_representation['_id'])
                         continue
                     self.log.info(
                         "Loading {}_{} with loader {}\n"
@@ -259,45 +263,6 @@ class AbstractTemplateLoader:
                                 traceback.format_exc()))
                     if container:
                         placeholder.parent_in_hierarchy(container)
-            placeholder.clean()
-
-    def update_template(self):
-        """Check if new assets where linked"""
-        loaders_by_name = self.loaders_by_name
-        current_asset = self.current_asset
-        current_asset_docs = self.current_asset_docs
-
-        linked_asset_docs = get_linked_assets(current_asset_docs)
-        linked_assets = [asset['name'] for asset in linked_asset_docs]
-
-        loaded_containers_by_id = self.get_loaded_containers_id()
-        sorted_placeholders = self.get_sorted_placeholders()
-        for placeholder in sorted_placeholders:
-            placeholder_db_filters = placeholder.convert_to_db_filters(
-                current_asset,
-                linked_assets)
-
-            for db_filter in placeholder_db_filters:
-                placeholder_representations = list(avalon.io.find(db_filter))
-                placeholder_representations = reduce(
-                    update_representations,
-                    placeholder_representations,
-                    dict()).values()
-                for last_representation in placeholder_representations:
-                    if not last_representation:
-                        self.log.warning(placeholder.err_message())
-                        continue
-                    if (str(last_representation['_id'])
-                       in loaded_containers_by_id):
-                        print("Already in scene : ",
-                              last_representation['_id'])
-                        continue
-                    container = avalon.api.load(
-                        loaders_by_name[placeholder.loader],
-                        last_representation['_id'],
-                        options=parse_loader_args(
-                            placeholder.data['loader_args']))
-                    placeholder.parent_in_hierarchy(container)
             placeholder.clean()
 
     def get_sorted_placeholders(self):
