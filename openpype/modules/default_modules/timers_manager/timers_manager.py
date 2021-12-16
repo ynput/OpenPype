@@ -189,44 +189,17 @@ class TimersManager(OpenPypeModule, ITrayService):
             "hierarchy": hierarchy_items
         }
 
-    def start_timer(self, project_name, asset_name, task_name, hierarchy):
+    def start_timer(self, project_name, asset_name, task_name):
+        """Start timer for passed context.
+
+        Args:
+            project_name (str): Project name
+            asset_name (str): Asset name
+            task_name (str): Task name
         """
-            Start timer for 'project_name', 'asset_name' and 'task_name'
-
-            Called from REST api by hosts.
-
-            Args:
-                project_name (string)
-                asset_name (string)
-                task_name (string)
-                hierarchy (string)
-        """
-        dbconn = AvalonMongoDB()
-        dbconn.install()
-        dbconn.Session["AVALON_PROJECT"] = project_name
-
-        asset_doc = dbconn.find_one({
-            "type": "asset", "name": asset_name
-        })
-        if not asset_doc:
-            raise ValueError("Uknown asset {}".format(asset_name))
-
-        task_type = ''
-        try:
-            task_type = asset_doc["data"]["tasks"][task_name]["type"]
-        except KeyError:
-            self.log.warning("Couldn't find task_type for {}".
-                             format(task_name))
-
-        hierarchy = hierarchy.split("\\")
-        hierarchy.append(asset_name)
-
-        data = {
-            "project_name": project_name,
-            "task_name": task_name,
-            "task_type": task_type,
-            "hierarchy": hierarchy
-        }
+        data = self.get_timer_data_for_context(
+            project_name, asset_name, task_name
+        )
         self.timer_started(None, data)
 
     def get_task_time(self, project_name, asset_name, task_name):
