@@ -63,7 +63,6 @@ def create_otio_time_range(start_frame, frame_duration, fps):
 
 def _get_metadata(item):
     if hasattr(item, 'metadata'):
-        log.debug(item.metadata)
         if not item.metadata:
             return {}
         return {key: value for key, value in dict(item.metadata)}
@@ -140,72 +139,6 @@ def create_time_effects(otio_clip, track_item):
         otio_clip.effects.append(otio_effect)
 
 
-def create_otio_reference(clip_data):
-    metadata = _get_metadata(clip_data)
-
-    # get file info for path and start frame
-    frame_start = 0
-    path = clip_data["fpath"]
-    file_name = os.path.basename(path)
-    file_head, extension = os.path.splitext(file_name)
-
-    # get padding and other file infos
-    is_sequence = padding = utils.get_padding_from_path(path)
-    if is_sequence:
-        padding_pattern = re.compile(r"[._](\d+)[.]")
-        number = re.findall(padding_pattern, path).pop()
-        file_head = file_name.split(number)[:-1]
-
-    frame_duration = clip_data["source_duration"]
-
-    if is_sequence:
-        metadata.update({
-            "isSequence": True,
-            "padding": padding
-        })
-
-
-    otio_ex_ref_item = None
-
-    if is_sequence:
-        # if it is file sequence try to create `ImageSequenceReference`
-        # the OTIO might not be compatible so return nothing and do it old way
-        try:
-            dirname = os.path.dirname(path)
-            otio_ex_ref_item = otio.schema.ImageSequenceReference(
-                target_url_base=dirname + os.sep,
-                name_prefix=file_head,
-                name_suffix=extension,
-                start_frame=frame_start,
-                frame_zero_padding=padding,
-                rate=self.fps,
-                available_range=create_otio_time_range(
-                    frame_start,
-                    frame_duration,
-                    self.fps
-                )
-            )
-        except AttributeError:
-            pass
-
-    if not otio_ex_ref_item:
-        reformat_path = utils.get_reformated_path(path, padded=False)
-        # in case old OTIO or video file create `ExternalReference`
-        otio_ex_ref_item = otio.schema.ExternalReference(
-            target_url=reformat_path,
-            available_range=create_otio_time_range(
-                frame_start,
-                frame_duration,
-                self.fps
-            )
-        )
-
-    # add metadata to otio item
-    # add_otio_metadata(otio_ex_ref_item, media_source, **metadata)
-
-    return otio_ex_ref_item
-
-
 def get_marker_color(tag):
     icon = tag.icon()
     pat = r'icons:Tag(?P<color>\w+)\.\w+'
@@ -267,11 +200,82 @@ def create_otio_markers(otio_item, item):
         otio_item.markers.append(marker)
 
 
+def create_otio_reference(clip_data):
+    metadata = _get_metadata(clip_data)
+
+    # get file info for path and start frame
+    frame_start = 0
+    path = clip_data["fpath"]
+    file_name = os.path.basename(path)
+    file_head, extension = os.path.splitext(file_name)
+
+    # get padding and other file infos
+    log.debug("_ path: {}".format(path))
+
+    is_sequence = padding = utils.get_frame_from_path(path)
+    if is_sequence:
+        number = utils.get_frame_from_path(path)
+        file_head = file_name.split(number)[:-1]
+        frame_start = int(number)
+
+    frame_duration = clip_data["source_duration"]
+
+    if is_sequence:
+        metadata.update({
+            "isSequence": True,
+            "padding": padding
+        })
+
+
+    otio_ex_ref_item = None
+
+    if is_sequence:
+        # if it is file sequence try to create `ImageSequenceReference`
+        # the OTIO might not be compatible so return nothing and do it old way
+        try:
+            dirname = os.path.dirname(path)
+            otio_ex_ref_item = otio.schema.ImageSequenceReference(
+                target_url_base=dirname + os.sep,
+                name_prefix=file_head,
+                name_suffix=extension,
+                start_frame=frame_start,
+                frame_zero_padding=padding,
+                rate=self.fps,
+                available_range=create_otio_time_range(
+                    frame_start,
+                    frame_duration,
+                    self.fps
+                )
+            )
+        except AttributeError:
+            pass
+
+    if not otio_ex_ref_item:
+        reformat_path = utils.get_reformated_path(path, padded=False)
+        # in case old OTIO or video file create `ExternalReference`
+        otio_ex_ref_item = otio.schema.ExternalReference(
+            target_url=reformat_path,
+            available_range=create_otio_time_range(
+                frame_start,
+                frame_duration,
+                self.fps
+            )
+        )
+
+    # add metadata to otio item
+    # add_otio_metadata(otio_ex_ref_item, media_source, **metadata)
+
+    return otio_ex_ref_item
+
+
 def create_otio_clip(clip_data):
 
     media_reference = create_otio_reference(clip_data)
+    # calculate source in
+    first_frame = utils.get_frame_from_path(clip_data["fpath"]) or 0
+    source_in = int(clip_data["source_in"]) - int(first_frame)
     source_range = create_otio_time_range(
-        clip_data["source_in"],
+        source_in,
         clip_data["record_duration"],
         self.fps
     )
@@ -282,15 +286,15 @@ def create_otio_clip(clip_data):
         media_reference=media_reference
     )
 
-    # Add tags as markers
-    if self.include_tags:
-        create_otio_markers(otio_clip, track_item)
-        create_otio_markers(otio_clip, track_item.source())
+    # # Add tags as markers
+    # if self.include_tags:
+    #     create_otio_markers(otio_clip, track_item)
+    #     create_otio_markers(otio_clip, track_item.source())
 
-    # only if video
-    if not clip.mediaSource().hasAudio():
-        # Add effects to clips
-        create_time_effects(otio_clip, track_item)
+    # # only if video
+    # if not clip.mediaSource().hasAudio():
+    #     # Add effects to clips
+    #     create_time_effects(otio_clip, track_item)
 
     return otio_clip
 
@@ -329,7 +333,7 @@ def _create_otio_timeline(sequence):
         self.seq_frame_start, self.fps)
 
     return otio.schema.Timeline(
-        name=sequence.name,
+        name=str(sequence.name)[1:-1],
         global_start_time=rt_start_time,
         metadata=metadata
     )
@@ -369,8 +373,6 @@ def add_otio_metadata(otio_item, media_source, **kwargs):
         otio_item.metadata.update({key: value})
 
 def get_segment_attributes(segment):
-    log.info(segment)
-
     if str(segment.name)[1:-1] == "":
         return None
 
@@ -401,14 +403,13 @@ def get_segment_attributes(segment):
             # exclude timeline start
             frame = utils.timecode_to_frames(
                 _value, self.fps)
-            clip_data[attr] = frame - self.seq_frame_start
+            clip_data[attr] = (frame - self.seq_frame_start) + 1
         else:
             clip_data[attr] = utils.timecode_to_frames(
                 _value, self.fps)
 
     clip_data["segment_timecodes"] = segment_attrs_data
 
-    log.info(pformat(clip_data))
     return clip_data
 
 def create_otio_timeline(sequence):
@@ -419,8 +420,10 @@ def create_otio_timeline(sequence):
     self.fps = float(str(sequence.frame_rate)[:-4])
     self.seq_frame_start = utils.timecode_to_frames(
             str(sequence.start_time), self.fps)
-    # # convert timeline to otio
+
+    # convert timeline to otio
     otio_timeline = _create_otio_timeline(sequence)
+    log.debug("_ otio_timeline: {}".format(otio_timeline))
 
     # create otio tracks and clips
     for ver in sequence.versions:
@@ -432,13 +435,27 @@ def create_otio_timeline(sequence):
             otio_track = create_otio_track(
                 "video", str(track.name)[1:-1])
 
+            all_segments = []
+            for segment in track.segments:
+                clip_data = get_segment_attributes(segment)
+                if not clip_data:
+                    continue
+                all_segments.append(clip_data)
+
             segments_ordered = {
-                itemindex: get_segment_attributes(segment)
-                for itemindex, segment in enumerate(
-                    track.segments)
+                itemindex: clip_data
+                for itemindex, clip_data in enumerate(
+                    all_segments)
             }
+            log.debug("_ segments_ordered: {}".format(
+                pformat(segments_ordered)
+            ))
+            if not segments_ordered:
+                continue
 
             for itemindex, segment_data in segments_ordered.items():
+                log.debug("_ itemindex: {}".format(itemindex))
+
                 # Add Gap if needed
                 if itemindex == 0:
                     # if it is first track item at track then add
@@ -448,6 +465,9 @@ def create_otio_timeline(sequence):
                 else:
                     # get previouse item
                     prev_item = segments_ordered[itemindex - 1]
+
+                log.debug("_ segment_data: {}".format(segment_data))
+                log.debug("_ prev_item: {}".format(prev_item))
 
                 # calculate clip frame range difference from each other
                 clip_diff = segment_data["record_in"] - prev_item["record_out"]
@@ -466,6 +486,8 @@ def create_otio_timeline(sequence):
                 # create otio clip and add it to track
                 otio_clip = create_otio_clip(segment_data)
                 otio_track.append(otio_clip)
+
+                log.debug("_ otio_clip: {}".format(otio_clip))
 
                 # create otio marker
                 # create otio metadata
