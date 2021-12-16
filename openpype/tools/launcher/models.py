@@ -1,3 +1,4 @@
+import re
 import uuid
 import copy
 import logging
@@ -590,6 +591,65 @@ class LauncherTaskModel(TasksModel):
         if self._context_is_valid():
             asset_doc = self._launcher_model.get_asset_doc(asset_id)
         self._set_asset(asset_doc)
+
+
+class AssetRecursiveSortFilterModel(QtCore.QSortFilterProxyModel):
+    def __init__(self, launcher_model, *args, **kwargs):
+        self._launcher_model = launcher_model
+
+        super(AssetRecursiveSortFilterModel, self).__init__(*args, **kwargs)
+
+        launcher_model.filters_changed.connect(self._on_filter_change)
+        self._name_filter = ""
+        self._task_types_filter = set()
+        self._assignee_filter = set()
+
+    def _on_filter_change(self):
+        self._name_filter = self._launcher_model.asset_name_filter
+        self._task_types_filter = self._launcher_model.task_type_filters
+        self._assignee_filter = self._launcher_model.assignee_filters
+        self.invalidateFilter()
+
+    """Filters to the regex if any of the children matches allow parent"""
+    def filterAcceptsRow(self, row, parent):
+        if (
+            not self._name_filter
+            and not self._task_types_filter
+            and not self._assignee_filter
+        ):
+            return True
+
+        model = self.sourceModel()
+        source_index = model.index(row, self.filterKeyColumn(), parent)
+        if not source_index.isValid():
+            return False
+
+        # Check current index itself
+        valid = True
+        if self._name_filter:
+            name = model.data(source_index, ASSET_NAME_ROLE)
+            if not re.search(self._name_filter, name, re.IGNORECASE):
+                valid = False
+
+        if valid and self._task_types_filter:
+            task_types = model.data(source_index, ASSET_TASK_TYPES_ROLE)
+            if not self._task_types_filter.intersection(task_types):
+                valid = False
+
+        if valid and self._assignee_filter:
+            assignee = model.data(source_index, ASSET_ASSIGNEE_ROLE)
+            if not self._assignee_filter.intersection(assignee):
+                valid = False
+
+        if valid:
+            return True
+
+        # Check children
+        rows = model.rowCount(source_index)
+        for child_row in range(rows):
+            if self.filterAcceptsRow(child_row, source_index):
+                return True
+        return False
 
 
 class LauncherAssetsModel(AssetModel):
