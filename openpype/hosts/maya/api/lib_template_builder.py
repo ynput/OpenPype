@@ -1,3 +1,4 @@
+from collections import OrderedDict
 import maya.cmds as cmds
 from avalon.maya.lib import imprint
 from avalon.vendor import qargparse
@@ -27,8 +28,10 @@ def create_placeholder():
     # custom arg parse to force empty data query
     # and still imprint them on placeholder
     # and getting items when arg is of type Enumerator
-    options = {str(arg): arg._data.get("items") or arg.read()
-               for arg in args if not type(arg) == qargparse.Separator}
+    options = OrderedDict()
+    for arg in args:
+        if not type(arg) == qargparse.Separator:
+            options[str(arg)] = arg._data.get("items") or arg.read()
     imprint(placeholder, options)
     # Some tweaks because imprint force enums to to default value so we get
     # back arg read and force them to attributes
