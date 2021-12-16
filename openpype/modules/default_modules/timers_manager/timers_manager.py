@@ -306,18 +306,29 @@ class TimersManager(OpenPypeModule, ITrayService):
                 self, server_manager
             )
 
-    def change_timer_from_host(self, project_name, asset_name, task_name):
+    @staticmethod
+    def start_timer_with_webserver(
+        project_name, asset_name, task_name, logger=None
+    ):
         """Prepared method for calling change timers on REST api"""
         webserver_url = os.environ.get("OPENPYPE_WEBSERVER_URL")
         if not webserver_url:
-            self.log.warning("Couldn't find webserver url")
+            msg = "Couldn't find webserver url"
+            if logger is not None:
+                logger.warning(msg)
+            else:
+                print(msg)
             return
 
         rest_api_url = "{}/timers_manager/start_timer".format(webserver_url)
         try:
             import requests
         except Exception:
-            self.log.warning("Couldn't start timer")
+            msg = "Couldn't start timer ('requests' is not available)"
+            if logger is not None:
+                logger.warning(msg)
+            else:
+                print(msg)
             return
         data = {
             "project_name": project_name,
