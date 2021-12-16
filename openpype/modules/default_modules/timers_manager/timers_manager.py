@@ -151,6 +151,44 @@ class TimersManager(OpenPypeModule, ITrayService):
             self._idle_manager.stop()
             self._idle_manager.wait()
 
+    def get_timer_data_for_context(self, project_name, asset_name, task_name):
+        """Prepare data for timer related callbacks."""
+        dbconn = AvalonMongoDB()
+        dbconn.install()
+        dbconn.Session["AVALON_PROJECT"] = project_name
+
+        asset_doc = dbconn.find_one(
+            {
+                "type": "asset",
+                "name": asset_name
+            },
+            {
+                "data.tasks": True,
+                "data.parents": True
+            }
+        )
+        if not asset_doc:
+            raise ValueError("Uknown asset {}".format(asset_name))
+
+        asset_data = asset_doc.get("data") or {}
+        task_type = ""
+        try:
+            task_type = asset_data["tasks"][task_name]["type"]
+        except KeyError:
+            self.log.warning(
+                "Couldn't find task_type for {}".format(task_name)
+            )
+
+        hierarchy_items = asset_data.get("parents") or []
+        hierarchy_items.append(asset_name)
+
+        return {
+            "project_name": project_name,
+            "task_name": task_name,
+            "task_type": task_type,
+            "hierarchy": hierarchy_items
+        }
+
     def start_timer(self, project_name, asset_name, task_name, hierarchy):
         """
             Start timer for 'project_name', 'asset_name' and 'task_name'
