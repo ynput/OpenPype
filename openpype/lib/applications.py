@@ -938,8 +938,10 @@ class ApplicationLaunchContext:
 
         # Prepare data that will be passed to midprocess
         # - store arguments to a json and pass path to json as last argument
+        # - pass environments to set
         json_data = {
-            "args": self.launch_args
+            "args": self.launch_args,
+            "env": self.kwargs.pop("env", {})
         }
         # Create temp file
         json_temp = tempfile.NamedTemporaryFile(
