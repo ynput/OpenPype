@@ -89,15 +89,15 @@ class ProjectIconView(QtWidgets.QListView):
 
 class ProjectsPanel(QtWidgets.QWidget):
     """Projects Page"""
-    def __init__(self, project_handler, parent=None):
+    def __init__(self, launcher_model, parent=None):
         super(ProjectsPanel, self).__init__(parent=parent)
 
         view = ProjectIconView(parent=self)
         view.setSelectionMode(QtWidgets.QListView.NoSelection)
         flick = FlickCharm(parent=self)
         flick.activateOn(view)
-
-        view.setModel(project_handler.model)
+        model = ProjectModel(launcher_model)
+        view.setModel(model)
 
         layout = QtWidgets.QVBoxLayout(self)
         layout.setContentsMargins(0, 0, 0, 0)
@@ -105,13 +105,14 @@ class ProjectsPanel(QtWidgets.QWidget):
 
         view.clicked.connect(self.on_clicked)
 
+        self._model = model
         self.view = view
-        self.project_handler = project_handler
+        self._launcher_model = launcher_model
 
     def on_clicked(self, index):
         if index.isValid():
             project_name = index.data(QtCore.Qt.DisplayRole)
-            self.project_handler.set_project(project_name)
+            self._launcher_model.set_project_name(project_name)
 
 
 class AssetsPanel(QtWidgets.QWidget):
@@ -119,7 +120,7 @@ class AssetsPanel(QtWidgets.QWidget):
     back_clicked = QtCore.Signal()
     session_changed = QtCore.Signal()
 
-    def __init__(self, project_handler, dbcon, parent=None):
+    def __init__(self, launcher_model, dbcon, parent=None):
         super(AssetsPanel, self).__init__(parent=parent)
 
         self.dbcon = dbcon
@@ -129,7 +130,7 @@ class AssetsPanel(QtWidgets.QWidget):
         btn_back = QtWidgets.QPushButton(self)
         btn_back.setIcon(btn_back_icon)
 
-        project_bar = ProjectBar(project_handler, self)
+        project_bar = ProjectBar(launcher_model, self)
 
         project_bar_layout = QtWidgets.QHBoxLayout()
         project_bar_layout.setContentsMargins(0, 0, 0, 0)
