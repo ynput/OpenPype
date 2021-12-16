@@ -217,7 +217,7 @@ class AbstractTemplateLoader:
         linked_asset_docs = get_linked_assets(current_asset_docs)
         linked_assets = [asset['name'] for asset in linked_asset_docs]
 
-        ignored_ids = [] or ignored_ids
+        ignored_ids = ignored_ids or []
         sorted_placeholders = self.get_sorted_placeholders()
         for placeholder in sorted_placeholders:
             placeholder_db_filters = placeholder.convert_to_db_filters(
@@ -264,6 +264,10 @@ class AbstractTemplateLoader:
                     if container:
                         placeholder.parent_in_hierarchy(container)
             placeholder.clean()
+
+    def update_missing_containers(self):
+        loaded_containers_ids = self.get_loaded_containers_by_id()
+        self.populate_template(ignored_ids=loaded_containers_ids)
 
     def get_sorted_placeholders(self):
         placeholder_class = self.placeholder_class

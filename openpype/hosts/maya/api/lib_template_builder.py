@@ -41,6 +41,10 @@ def create_placeholder():
     cmds.addAttr(
         placeholder, longName="parent",
         hidden=True, dataType="string")
+    cmds.addAttr(
+        placeholder, longName="index",
+        hidden=True, attributeType="short",
+        defaultValue=-1)
 
 
 def update_placeholder():

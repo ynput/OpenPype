@@ -70,8 +70,7 @@ class MayaTemplateLoader(AbstractTemplateLoader):
             self.import_template(self.template_path)
             self.populate_template()
         elif answer == updateButton:
-            loaded_containers_ids = self.get_loaded_containers_id()
-            self.populate_template(ignored_ids=loaded_containers_ids)
+            self.update_missing_containers()
         elif answer == abortButton:
             return
 
@@ -108,6 +107,15 @@ class MayaPlaceholder(AbstractPlaceholder):
             cmds.getAttr(node + '.parent', asString=True)
             or node.rpartition('|')[0] or "")
         user_data['node'] = node
+        if user_data['parent']:
+            siblings = cmds.listRelatives(user_data['parent'], children=True)
+        else:
+            siblings = cmds.ls(assemblies=True)
+        node_shortname = user_data['node'].rpartition('|')[2]
+        current_index = cmds.getAttr(node + '.index', asString=True)
+        user_data['index'] = (
+            current_index if current_index >= 0
+            else siblings.index(node_shortname))
 
         self.data = user_data
 
@@ -137,16 +145,11 @@ class MayaPlaceholder(AbstractPlaceholder):
                 nodes_to_parent.append(root)
 
         if self.data['parent']:
-            siblings = cmds.listRelatives(self.data['parent'], children=True)
             cmds.parent(nodes_to_parent, self.data['parent'])
-        else:
-            siblings = cmds.ls(assemblies=True)
-
-        # Move loaded nodes to correct index in outliner hierarchy to keep
-        index = siblings.index(self.data['node'].rpartition('|')[2])
+        # Move loaded nodes to correct index in outliner hierarchy
         for node in set(nodes_to_parent):
             cmds.reorder(node, front=True)
-            cmds.reorder(node, relative=index)
+            cmds.reorder(node, relative=self.data['index'])
 
         node = self.data['node']
         holding_sets = cmds.listSets(object=node)
@@ -156,30 +159,26 @@ class MayaPlaceholder(AbstractPlaceholder):
             cmds.sets(roots, forceElement=holding_set)
 
     def clean(self):
-        """Hide placeholder
-        parent them to root
-        add them to placeholder set
-        and register placeholder's parent
-        to keep placeholder info available
-        for future use
+        """Hide placeholder, parent them to root
+        add them to placeholder set and register placeholder's parent
+        to keep placeholder info available for future use
         """
         node = self.data['node']
         if self.data['parent']:
             cmds.setAttr(node + '.parent', self.data['parent'], type='string')
+        if cmds.getAttr(node + '.index') < 0:
+            cmds.setAttr(node + '.index', self.data['index'])
 
         holding_sets = cmds.listSets(object=node)
-        if not holding_sets:
-            return
-        for set in holding_sets:
-            cmds.sets(node, remove=set)
+        if holding_sets:
+            for set in holding_sets:
+                cmds.sets(node, remove=set)
 
         if cmds.listRelatives(node, p=True):
             node = cmds.parent(node, world=True)[0]
         cmds.sets(node, addElement=PLACEHOLDER_SET)
         cmds.hide(node)
-
         cmds.setAttr(node + '.hiddenInOutliner', True)
-        node = self.data['node'].rpartition('|')[2]
 
     def convert_to_db_filters(self, current_asset, linked_asset):
         if self.data['builder_type'] == "context_asset":
