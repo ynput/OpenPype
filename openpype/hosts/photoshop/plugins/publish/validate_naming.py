@@ -22,6 +22,7 @@ class ValidateNamingRepair(pyblish.api.Action):
                 failed.append(result["instance"])
 
         invalid_chars, replace_char = plugin.get_replace_chars()
+        self.log.info("{} --- {}".format(invalid_chars, replace_char))
 
         # Apply pyblish.logic to get the instances for the plug-in
         instances = pyblish.api.instances_by_plugin(failed, plugin)
@@ -37,7 +38,7 @@ class ValidateNamingRepair(pyblish.api.Action):
                 if layer_data:
                     layer_name = re.sub(invalid_chars,
                                         replace_char,
-                                        layer_name)
+                                        layer_data.name)
 
                     stub.rename_layer(instance.data["uuid"], layer_name)
 
