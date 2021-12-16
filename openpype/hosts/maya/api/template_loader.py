@@ -70,7 +70,8 @@ class MayaTemplateLoader(AbstractTemplateLoader):
             self.import_template(self.template_path)
             self.populate_template()
         elif answer == updateButton:
-            self.update_template()
+            loaded_containers_ids = self.get_loaded_containers_id()
+            self.populate_template(ignored_ids=loaded_containers_ids)
         elif answer == abortButton:
             return
 
