@@ -151,6 +151,22 @@ class TimersManager(OpenPypeModule, ITrayService):
             self._idle_manager.stop()
             self._idle_manager.wait()
 
+    def get_timer_data_for_path(self, task_path):
+        """Convert string path to a timer data.
+
+        It is expected that first item is project name, last item is task name
+        and parent asset name is before task name.
+        """
+        path_items = task_path.split("/")
+        if len(path_items) < 3:
+            raise ValueError("Invalid path")
+        task_name = path_items.pop(-1)
+        asset_name = path_items.pop(-1)
+        project_name = path_items.pop(0)
+        return self.get_timer_data_for_context(
+            project_name, asset_name, task_name
+        )
+
     def get_timer_data_for_context(self, project_name, asset_name, task_name):
         """Prepare data for timer related callbacks.
 
