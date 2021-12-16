@@ -348,7 +348,18 @@ class TimersManager(OpenPypeModule, ITrayService):
     def start_timer_with_webserver(
         project_name, asset_name, task_name, logger=None
     ):
-        """Prepared method for calling change timers on REST api"""
+        """Prepared method for calling change timers on REST api.
+
+        Webserver must be active. At the moment is Webserver running only when
+        OpenPype Tray is used.
+
+        Args:
+            project_name (str): Project name.
+            asset_name (str): Asset name.
+            task_name (str): Task name.
+            logger (logging.Logger): Logger object. Using 'print' if not
+                passed.
+        """
         webserver_url = os.environ.get("OPENPYPE_WEBSERVER_URL")
         if not webserver_url:
             msg = "Couldn't find webserver url"
