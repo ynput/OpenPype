@@ -147,10 +147,12 @@ class OpenPypeSecureRegistry:
         from keyrings.cryptfile.cryptfile import CryptFileKeyring
 
         backends = keyring.get_keyring().backends
-        if backends and \
-                (isinstance(backends[0], EncryptedKeyring) or
-                 isinstance(backends[0], CryptFileKeyring)):
-
+        if (
+            backends
+            and isinstance(
+                backends[0], (EncryptedKeyring, CryptFileKeyring)
+            )
+        ):
             if not os.environ.get("OPENPYPE_SECRET"):
                 raise ValueError("Please set env var OPENPYPE_SECRET")
             kr = backends[0]
