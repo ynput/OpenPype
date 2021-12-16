@@ -5,12 +5,15 @@ from Qt import QtWidgets, QtCore, QtGui
 from avalon.vendor import qtawesome
 
 from openpype.tools.flickcharm import FlickCharm
+from openpype.tools.utils.tasks_widget import TasksWidget
 
 from .delegates import ActionDelegate
 from . import lib
 from .models import (
     ActionModel,
     ProjectModel,
+    LauncherTaskModel,
+    LauncherTasksProxyModel
 )
 from .constants import (
     ACTION_ROLE,
@@ -82,6 +85,21 @@ class ProjectBar(QtWidgets.QWidget):
 
         project_name = self.get_current_project()
         self._launcher_model.set_project_name(project_name)
+
+
+class LauncherTaskWidget(TasksWidget):
+    def __init__(self, launcher_model, *args, **kwargs):
+        self._launcher_model = launcher_model
+
+        super(LauncherTaskWidget, self).__init__(*args, **kwargs)
+
+    def _create_source_model(self):
+        return LauncherTaskModel(self._launcher_model, self._dbcon)
+
+    def _create_proxy_model(self, source_model):
+        proxy = LauncherTasksProxyModel(self._launcher_model)
+        proxy.setSourceModel(source_model)
+        return proxy
 
 
 class ActionBar(QtWidgets.QWidget):
