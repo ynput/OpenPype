@@ -28,6 +28,12 @@ def main(input_json_path):
     with open(input_json_path, "r") as stream:
         data = json.load(stream)
 
+    # Change environment variables
+    env = data.get("env") or {}
+    for key, value in env.items():
+        os.environ[key] = value
+
+    # Prepare launch arguments
     args = data["args"]
     if isinstance(args, list):
         args = subprocess.list2cmdline(args)
