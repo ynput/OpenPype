@@ -23,7 +23,8 @@ self.track_types = {
 }
 self.fps = None
 self.seq_frame_start = None
-
+self.project = None
+self.clips = None
 self.marker_color_map = {
     "magenta": otio.schema.MarkerColor.MAGENTA,
     "red": otio.schema.MarkerColor.RED,
@@ -45,7 +46,8 @@ def flatten(_list):
 
 
 def get_current_flame_project():
-    return flame.project.current_project
+    project = flame.project.current_project
+    return project
 
 
 def create_otio_rational_time(frame, fps):
@@ -205,7 +207,19 @@ def create_otio_reference(clip_data):
 
     # get file info for path and start frame
     frame_start = 0
+    fps = self.fps
+
     path = clip_data["fpath"]
+
+    reel_clip = None
+    match_reel_clip = [
+        clip for clip in self.clips
+        if clip["fpath"] == path
+    ]
+    if match_reel_clip:
+        reel_clip = match_reel_clip.pop()
+        fps = reel_clip["fps"]
+
     file_name = os.path.basename(path)
     file_head, extension = os.path.splitext(file_name)
 
@@ -240,11 +254,11 @@ def create_otio_reference(clip_data):
                 name_suffix=extension,
                 start_frame=frame_start,
                 frame_zero_padding=padding,
-                rate=self.fps,
+                rate=fps,
                 available_range=create_otio_time_range(
                     frame_start,
                     frame_duration,
-                    self.fps
+                    fps
                 )
             )
         except AttributeError:
@@ -258,12 +272,12 @@ def create_otio_reference(clip_data):
             available_range=create_otio_time_range(
                 frame_start,
                 frame_duration,
-                self.fps
+                fps
             )
         )
 
     # add metadata to otio item
-    # add_otio_metadata(otio_ex_ref_item, media_source, **metadata)
+    add_otio_metadata(otio_ex_ref_item, clip_data, **metadata)
 
     return otio_ex_ref_item
 
@@ -281,7 +295,7 @@ def create_otio_clip(clip_data):
     )
 
     otio_clip = otio.schema.Clip(
-        name=clip_data["name"],
+        name=clip_data["segment_name"],
         source_range=source_range,
         media_reference=media_reference
     )
@@ -308,9 +322,39 @@ def create_otio_gap(gap_start, clip_start, tl_start_frame, fps):
         )
     )
 
+def get_clips_in_reels(project):
+    output_clips = []
+    project_desktop = project.current_workspace.desktop
+
+    for reel_group in project_desktop.reel_groups:
+        for reel in reel_group.reels:
+            for clip in reel.clips:
+                clip_data = {
+                    "PyClip": clip,
+                    "fps": float(str(clip.frame_rate)[:-4])
+                }
+
+                attrs = [
+                    "name", "width", "height",
+                    "ratio", "sample_rate", "bit_depth"
+                ]
+
+                for attr in attrs:
+                    val = getattr(clip, attr)
+                    clip_data[attr] = val
+
+                version = clip.versions[-1]
+                track = version.tracks[-1]
+                for segment in track.segments:
+                    segment_data = get_segment_attributes(segment)
+                    clip_data.update(segment_data)
+
+                output_clips.append(clip_data)
+
+    return output_clips
 
 def _create_otio_timeline(sequence):
-    project = get_current_flame_project()
+
     metadata = _get_metadata(sequence)
 
     metadata.update({
@@ -361,8 +405,8 @@ def add_otio_gap(clip_data, otio_track, prev_out):
     otio_track.append(otio_gap)
 
 
-def add_otio_metadata(otio_item, media_source, **kwargs):
-    metadata = _get_metadata(media_source)
+def add_otio_metadata(otio_item, item, **kwargs):
+    metadata = _get_metadata(item)
 
     # add additional metadata from kwargs
     if kwargs:
@@ -372,19 +416,77 @@ def add_otio_metadata(otio_item, media_source, **kwargs):
     for key, value in metadata.items():
         otio_item.metadata.update({key: value})
 
+def get_markers(item, segment=True):
+    output_markers = []
+
+    if segment:
+        segment_tl_in = item.record_in.relative_frame
+
+    for marker in item.markers:
+        log.debug(marker)
+        start_frame = marker.location.get_value().relative_frame
+
+        if segment:
+            start_frame = (start_frame - segment_tl_in) + 1
+
+        marker_data = {
+            "name": marker.name.get_value(),
+            "duration": marker.duration.get_value().relative_frame,
+            "comment": marker.comment.get_value(),
+            "start_frame": start_frame,
+            "colour": marker.colour.get_value()
+        }
+
+        output_markers.append(marker_data)
+
+    return output_markers
+
+def get_shot_tokens_values(clip, tokens):
+    old_value = None
+    output = {}
+
+    shot_name = getattr(clip, "shot_name")
+
+    if not shot_name:
+        return output
+
+    old_value = shot_name.get_value()
+
+    for token in tokens:
+        shot_name.set_value(token)
+        _key = re.sub("[ <>]", "", token)
+        try:
+            output[_key] = int(shot_name.get_value())
+        except:
+            output[_key] = shot_name.get_value()
+
+    shot_name.set_value(old_value)
+
+    return output
+
 def get_segment_attributes(segment):
+    # log.debug(dir(segment))
+
+    markers = get_markers(segment)
+
     if str(segment.name)[1:-1] == "":
         return None
 
     # Add timeline segment to tree
     clip_data = {
-        "name": str(segment.name)[1:-1],
-        "comment": str(segment.comment)[1:-1],
-        "tape_name": str(segment.tape_name),
-        "source_name": str(segment.source_name),
-        "fpath": str(segment.file_path),
-        "segment": segment
+        "segment_name": segment.name.get_value(),
+        "segment_comment": segment.comment.get_value(),
+        "tape_name": segment.tape_name,
+        "source_name": segment.source_name,
+        "fpath": segment.file_path,
+        "PySegment": segment
     }
+
+    # add all available shot tokens
+    shot_tokens = get_shot_tokens_values(segment, [
+        "<colour space>", "<width>", "<height>", "<depth>",
+    ])
+    clip_data.update(shot_tokens)
 
     # populate shot source metadata
     segment_attrs = [
@@ -396,17 +498,12 @@ def get_segment_attributes(segment):
         if not hasattr(segment, attr):
             continue
         _value = getattr(segment, attr)
-        segment_attrs_data[attr] = _value
-        _value = str(_value)[1:-1]
+        segment_attrs_data[attr] = str(_value).replace("+", ":")
 
         if attr in ["record_in", "record_out"]:
-            # exclude timeline start
-            frame = utils.timecode_to_frames(
-                _value, self.fps)
-            clip_data[attr] = (frame - self.seq_frame_start) + 1
+            clip_data[attr] = _value.relative_frame
         else:
-            clip_data[attr] = utils.timecode_to_frames(
-                _value, self.fps)
+            clip_data[attr] = _value.frame
 
     clip_data["segment_timecodes"] = segment_attrs_data
 
@@ -416,14 +513,21 @@ def create_otio_timeline(sequence):
     log.info(dir(sequence))
     log.info(sequence.attributes)
 
+    self.project = get_current_flame_project()
+    self.clips = get_clips_in_reels(self.project)
+
+    log.debug(pformat(
+        self.clips
+    ))
+
     # get current timeline
     self.fps = float(str(sequence.frame_rate)[:-4])
     self.seq_frame_start = utils.timecode_to_frames(
-            str(sequence.start_time), self.fps)
+            str(sequence.start_time).replace("+", ":"),
+            self.fps)
 
     # convert timeline to otio
     otio_timeline = _create_otio_timeline(sequence)
-    log.debug("_ otio_timeline: {}".format(otio_timeline))
 
     # create otio tracks and clips
     for ver in sequence.versions:
@@ -467,7 +571,6 @@ def create_otio_timeline(sequence):
                     prev_item = segments_ordered[itemindex - 1]
 
                 log.debug("_ segment_data: {}".format(segment_data))
-                log.debug("_ prev_item: {}".format(prev_item))
 
                 # calculate clip frame range difference from each other
                 clip_diff = segment_data["record_in"] - prev_item["record_out"]
