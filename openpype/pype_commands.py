@@ -305,13 +305,16 @@ class PypeCommands:
         log.info("Publish finished.")
 
     @staticmethod
-    def extractenvironments(output_json_path, project, asset, task, app):
-        env = os.environ.copy()
+    def extractenvironments(
+        output_json_path, project, asset, task, app, env_group
+    ):
         if all((project, asset, task, app)):
             from openpype.api import get_app_environments_for_context
             env = get_app_environments_for_context(
-                project, asset, task, app, env
+                project, asset, task, app, env_group
             )
+        else:
+            env = os.environ.copy()
 
         output_dir = os.path.dirname(output_json_path)
         if not os.path.exists(output_dir):

@@ -95,9 +95,6 @@ def parse_environments(env_data, env_group=None, platform_name=None):
         }
     }
     ```
-
-    Args:
-
     """
     output = {}
     if not env_data:
