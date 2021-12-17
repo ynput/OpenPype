@@ -269,6 +269,37 @@ class SettingsCategoryWidget(QtWidgets.QWidget):
             # Scroll to widget
             self.scroll_widget.ensureWidgetVisible(widget)
 
+    def go_to_fullpath(self, full_path):
+        """Full path of settings entity which can lead to different category.
+
+        Args:
+            full_path (str): Full path to settings entity. It is expected that
+                path starts with category name ("system_setting" etc.).
+        """
+        if not full_path:
+            return
+        items = full_path.split("/")
+        category = items[0]
+        path = ""
+        if len(items) > 1:
+            path = "/".join(items[1:])
+        self.full_path_requested.emit(category, path)
+
+    def contain_category_key(self, category):
+        """Parent widget ask if category of full path lead to this widget.
+
+        Args:
+            category (str): The category name.
+
+        Returns:
+            bool: Passed category lead to this widget.
+        """
+        return False
+
+    def set_category_path(self, category, path):
+        """Change path of widget based on category full path."""
+        pass
+
     def set_path(self, path):
         self.breadcrumbs_widget.set_path(path)
 
