@@ -6,6 +6,7 @@ from pprint import pformat
 reload(lib)
 reload(otio_export)
 
+
 @pyblish.api.log
 class CollectTestSelection(pyblish.api.ContextPlugin):
     """testing selection sharing

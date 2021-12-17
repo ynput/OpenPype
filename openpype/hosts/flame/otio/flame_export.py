@@ -353,24 +353,38 @@ def get_clips_in_reels(project):
 
     return output_clips
 
+def _get_colourspace_policy():
+
+    output = {}
+    # get policies project path
+    policy_dir = "/opt/Autodesk/project/{}/synColor/policy".format(
+        self.project.name
+    )
+    log.debug(policy_dir)
+    policy_fp = os.path.join(policy_dir, "policy.cfg")
+
+    if not os.path.exists(policy_fp):
+        return output
+
+    with open(policy_fp) as file:
+        dict_conf = dict(line.strip().split(' = ', 1) for line in file)
+        output.update(
+            {"openpype.flame.{}".format(k): v for k, v in dict_conf.items()}
+        )
+    return output
+
 def _create_otio_timeline(sequence):
 
     metadata = _get_metadata(sequence)
 
+    # find colour policy files and add them to metadata
+    colorspace_policy = _get_colourspace_policy()
+    metadata.update(colorspace_policy)
+
     metadata.update({
         "openpype.timeline.width": int(sequence.width),
         "openpype.timeline.height": int(sequence.height),
-        "openpype.timeline.pixelAspect": 1,  # noqa
-        # "openpype.project.useOCIOEnvironmentOverride": project.useOCIOEnvironmentOverride(),  # noqa
-        # "openpype.project.lutSetting16Bit": project.lutSetting16Bit(),
-        # "openpype.project.lutSetting8Bit": project.lutSetting8Bit(),
-        # "openpype.project.lutSettingFloat": project.lutSettingFloat(),
-        # "openpype.project.lutSettingLog": project.lutSettingLog(),
-        # "openpype.project.lutSettingViewer": project.lutSettingViewer(),
-        # "openpype.project.lutSettingWorkingSpace": project.lutSettingWorkingSpace(),  # noqa
-        # "openpype.project.lutUseOCIOForExport": project.lutUseOCIOForExport(),
-        # "openpype.project.ocioConfigName": project.ocioConfigName(),
-        # "openpype.project.ocioConfigPath": project.ocioConfigPath()
+        "openpype.timeline.pixelAspect": 1
     })
 
     rt_start_time = create_otio_rational_time(
