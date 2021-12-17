@@ -1,7 +1,7 @@
 from openpype.lib.openpype_version import (
     get_remote_versions,
     get_OpenPypeVersion,
-    get_build_version
+    get_installed_version
 )
 from .input_entities import TextEntity
 from .lib import (
@@ -72,7 +72,7 @@ class ProductionVersionsInputEntity(OpenPypeVersionInput):
 
     def _get_openpype_versions(self):
         versions = get_remote_versions(staging=False, production=True)
-        versions.append(get_build_version())
+        versions.append(get_installed_version())
         return sorted(versions)
 
 

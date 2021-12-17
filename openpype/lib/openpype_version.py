@@ -4,7 +4,7 @@ Access to logic from igniter is available only for OpenPype processes.
 Is meant to be able check OpenPype versions for studio. The logic is dependent
 on igniter's inner logic of versions.
 
-Keep in mind that all functions except 'get_build_version' does not return
+Keep in mind that all functions except 'get_installed_version' does not return
 OpenPype version located in build but versions available in remote versions
 repository or locally available.
 """
@@ -24,13 +24,13 @@ def op_version_control_available():
     return True
 
 
-def get_build_version():
+def get_installed_version():
     """Get OpenPype version inside build.
 
     This version is not returned by any other functions here.
     """
     if op_version_control_available():
-        return get_OpenPypeVersion().get_build_version()
+        return get_OpenPypeVersion().get_installed_version()
     return None
 
 
