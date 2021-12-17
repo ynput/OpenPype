@@ -795,7 +795,7 @@ class ApplicationLaunchContext:
             preparation to store objects usable in multiple places.
     """
 
-    def __init__(self, application, executable, **data):
+    def __init__(self, application, executable, env_group=None, **data):
         # Application object
         self.application = application
 
@@ -804,6 +804,11 @@ class ApplicationLaunchContext:
         self.log = PypeLogger.get_logger(logger_name)
 
         self.executable = executable
+
+        if env_group is None:
+            env_group = DEFAULT_ENV_SUBGROUP
+
+        self.env_group = env_group
 
         self.data = dict(data)
 
@@ -1141,7 +1146,7 @@ class EnvironmentPrepData(dict):
 
 
 def get_app_environments_for_context(
-    project_name, asset_name, task_name, app_name, env=None
+    project_name, asset_name, task_name, app_name, env_group=None, env=None
 ):
     """Prepare environment variables by context.
     Args:
@@ -1193,8 +1198,8 @@ def get_app_environments_for_context(
         "env": env
     })
 
-    prepare_host_environments(data)
-    prepare_context_environments(data)
+    prepare_host_environments(data, env_group)
+    prepare_context_environments(data, env_group)
 
     # Discard avalon connection
     dbcon.uninstall()
@@ -1214,7 +1219,7 @@ def _merge_env(env, current_env):
     return result
 
 
-def prepare_host_environments(data, implementation_envs=True):
+def prepare_host_environments(data, env_group=None, implementation_envs=True):
     """Modify launch environments based on launched app and context.
 
     Args:
@@ -1268,7 +1273,7 @@ def prepare_host_environments(data, implementation_envs=True):
             continue
 
         # Choose right platform
-        tool_env = acre.parse(_env_values)
+        tool_env = parse_environments(_env_values, env_group)
         # Merge dictionaries
         env_values = _merge_env(tool_env, env_values)
 
@@ -1300,7 +1305,9 @@ def prepare_host_environments(data, implementation_envs=True):
         data["env"].pop(key, None)
 
 
-def apply_project_environments_value(project_name, env, project_settings=None):
+def apply_project_environments_value(
+    project_name, env, project_settings=None, env_group=None
+):
     """Apply project specific environments on passed environments.
 
     The enviornments are applied on passed `env` argument value so it is not
@@ -1328,14 +1335,15 @@ def apply_project_environments_value(project_name, env, project_settings=None):
 
     env_value = project_settings["global"]["project_environments"]
     if env_value:
+        parsed_value = parse_environments(env_value, env_group)
         env.update(acre.compute(
-            _merge_env(acre.parse(env_value), env),
+            _merge_env(parsed_value, env),
             cleanup=False
         ))
     return env
 
 
-def prepare_context_environments(data):
+def prepare_context_environments(data, env_group=None):
     """Modify launch environemnts with context data for launched host.
 
     Args:
@@ -1365,7 +1373,7 @@ def prepare_context_environments(data):
     data["project_settings"] = project_settings
     # Apply project specific environments on current env value
     apply_project_environments_value(
-        project_name, data["env"], project_settings
+        project_name, data["env"], project_settings, env_group
     )
 
     app = data["app"]
