@@ -41,6 +41,100 @@ from .python_module_tools import (
 
 _logger = None
 
+PLATFORM_NAMES = {"windows", "linux", "darwin"}
+DEFAULT_ENV_SUBGROUP = "standard"
+
+
+def parse_environments(env_data, env_group=None, platform_name=None):
+    """Parse environment values from settings byt group and platfrom.
+
+    Data may contain up to 2 hierarchical levels of dictionaries. At the end
+    of the last level must be string or list. List is joined using platform
+    specific joiner (';' for windows and ':' for linux and mac).
+
+    Hierarchical levels can contain keys for subgroups and platform name.
+    Platform specific values must be always last level of dictionary. Platform
+    names are "windows" (MS Windows), "linux" (any linux distribution) and
+    "darwin" (any MacOS distribution).
+
+    Subgroups are helpers added mainly for standard and on farm usage. Farm
+    may require different environments for e.g. licence related values or
+    plugins. Default subgroup is "standard".
+
+    Examples:
+    ```
+    {
+        # Unchanged value
+        "ENV_KEY1": "value",
+        # Empty values are kept (unset environment variable)
+        "ENV_KEY2": "",
+
+        # Join list values with ':' or ';'
+        "ENV_KEY3": ["value1", "value2"],
+
+        # Environment groups
+        "ENV_KEY4": {
+            "standard": "DEMO_SERVER_URL",
+            "farm": "LICENCE_SERVER_URL"
+        },
+
+        # Platform specific (and only for windows and mac)
+        "ENV_KEY5": {
+            "windows": "windows value",
+            "darwin": ["value 1", "value 2"]
+        },
+
+        # Environment groups and platform combination
+        "ENV_KEY6": {
+            "farm": "FARM_VALUE",
+            "standard": {
+                "windows": ["value1", "value2"],
+                "linux": "value1",
+                "darwin": ""
+            }
+        }
+    }
+    ```
+
+    Args:
+
+    """
+    output = {}
+    if not env_data:
+        return output
+
+    if not env_group:
+        env_group = DEFAULT_ENV_SUBGROUP
+
+    if not platform_name:
+        platform_name = platform.system().lower()
+
+    for key, value in env_data.items():
+        if isinstance(value, dict):
+            # Look if any key is platform key
+            #   - expect that represents environment group if does not contain
+            #   platform keys
+            if not PLATFORM_NAMES.intersection(set(value.keys())):
+                # Skip the key if group is not available
+                if env_group not in value:
+                    continue
+                value = value[env_group]
+
+        # Check again if value is dictionary
+        #   - this time there should be only platform keys
+        if isinstance(value, dict):
+            value = value.get(platform_name)
+
+        # Check if value is list and join it's values
+        # QUESTION Should empty values be skipped?
+        if isinstance(value, (list, tuple)):
+            value = os.pathsep.join(value)
+
+        # Set key to output if value is string
+        if isinstance(value, six.string_types):
+            output[key] = value
+    return output
+
 
 def get_logger():
     """Global lib.applications logger getter."""
