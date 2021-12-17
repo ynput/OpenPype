@@ -375,6 +375,44 @@ def get_latest_version(asset_name, subset_name, dbcon=None, project_name=None):
     return version_doc
 
 
+# @with_avalon
+def get_master_task(asset_doc, task_name, dbcon=None):
+    """Retrieve master_task from avalon asset requested task
+
+    Return the master task if there is one, return the task otherwise.
+
+    Args:
+        asset_id (int): Id of asset under which the task belongs.
+        task_name (str): Name of task to retrieve master_task from.
+        dbcon (avalon.mongodb.AvalonMongoDB, optional): Avalon Mongo connection
+            with Session.
+    Returns:
+        str: master task name if there is one, task name otherwise.
+    """
+
+    # if not dbcon:
+    #     log.debug("Using `avalon.io` for query.")
+    #     dbcon = avalon.io
+    #     # Make sure is installed
+    #     dbcon.install()
+    #
+    # asset_doc = avalon.io.find_one(
+    #     {"type": "asset", "_id": asset_id},
+    #     {"data": True}
+    # )
+
+    if asset_doc:
+        master_task = (
+            asset_doc.get("data", {})
+            .get("tasks", {})
+            .get(task_name, {})
+            .get("master_task", None)
+        )
+        if master_task:
+            return master_task
+    return task_name
+
+
 def get_workfile_template_key_from_context(
     asset_name, task_name, host_name, project_name=None,
     dbcon=None, project_settings=None
@@ -519,6 +557,10 @@ def get_workdir_data(project_doc, asset_doc, task_name, host_name):
     parent_name = project_doc["name"]
     if asset_parents:
         parent_name = asset_parents[-1]
+
+    master_task = get_master_task(asset_doc, task_name)
+    if master_task:
+        task_name = master_task
 
     data = {
         "project": {

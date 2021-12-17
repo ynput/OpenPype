@@ -90,6 +90,7 @@ from .avalon_context import (
     get_workdir_data,
     get_workdir,
     get_workdir_with_workdir_data,
+    get_master_task,
 
     create_workfile_doc,
     save_workfile_data_to_doc,
@@ -228,6 +229,7 @@ __all__ = [
     "get_workdir_data",
     "get_workdir",
     "get_workdir_with_workdir_data",
+    "get_master_task",
 
     "create_workfile_doc",
     "save_workfile_data_to_doc",
