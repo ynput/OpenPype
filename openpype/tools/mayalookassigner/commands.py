@@ -8,7 +8,6 @@ from openpype.hosts.maya.api import lib
 
 from avalon import io, api
 
-
 from .vray_proxies import get_alembic_ids_cache
 
 log = logging.getLogger(__name__)
@@ -68,7 +67,9 @@ def get_selected_nodes():
 
     selection = cmds.ls(selection=True, long=True)
     hierarchy = list_descendents(selection)
-    return list(set(selection + hierarchy))
+    selected_nodes = list(set(selection + hierarchy))
+    log.warning("selected nodes: {}".format(selected_nodes))
+    return selected_nodes
 
 
 def get_all_asset_nodes():
@@ -79,17 +80,23 @@ def get_all_asset_nodes():
     """
 
     host = api.registered_host()
+    containers = host.ls()
 
     nodes = []
+    log.debug("got {}".format(containers))
     for container in host.ls():
         # We are not interested in looks but assets!
         if container["loader"] == "LookLoader":
+            log.warning("skipping {}".format(container))
             continue
 
         # Gather all information
         container_name = container["objectName"]
+        log.warning("--- listing: {}".format(container_name))
         nodes += cmds.sets(container_name, query=True, nodesOnly=True) or []
 
+    nodes = list(set(nodes))
+    log.warning("returning {}".format(nodes))
     return nodes
 
 
@@ -102,13 +109,24 @@ def create_asset_id_hash(nodes):
         dict
     """
     node_id_hash = defaultdict(list)
+
+    # log.warning(pformat(nodes))
     for node in nodes:
         # iterate over content of reference node
         if cmds.nodeType(node) == "reference":
             ref_hashes = create_asset_id_hash(
-                cmds.referenceQuery(node, nodes=True))
+                list(set(cmds.referenceQuery(node, nodes=True, dp=True))))
             for asset_id, ref_nodes in ref_hashes.items():
                 node_id_hash[asset_id] += ref_nodes
+        elif cmds.pluginInfo('vrayformaya', query=True,
+                             loaded=True) and cmds.nodeType(
+                node) == "VRayProxy":
+            path = cmds.getAttr("{}.fileName".format(node))
+            ids = get_alembic_ids_cache(path)
+            for k, _ in ids.items():
+                pid = k.split(":")[0]
+                if not node_id_hash.get(pid):
+                    node_id_hash[pid] = [node]
         else:
             value = lib.get_id(node)
             if value is None:
@@ -151,12 +169,12 @@ def create_items_from_nodes(nodes):
             for k, _ in ids.items():
                 pid = k.split(":")[0]
                 if not parent_id.get(pid):
-                    parent_id.update({pid: [vp]})
-
-            print("Adding ids from alembic {}".format(path))
+                    parent_id[pid] = [vp]
+            log.warning("Adding ids from alembic {}".format(path))
             id_hashes.update(parent_id)
 
     if not id_hashes:
+        log.warning("No id hashes")
         return asset_view_items
 
     for _id, id_nodes in id_hashes.items():
