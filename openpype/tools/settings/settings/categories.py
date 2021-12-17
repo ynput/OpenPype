@@ -587,6 +587,14 @@ class SettingsCategoryWidget(QtWidgets.QWidget):
 
 
 class SystemWidget(SettingsCategoryWidget):
+    def contain_category_key(self, category):
+        if category == "system_settings":
+            return True
+        return False
+
+    def set_category_path(self, category, path):
+        self.breadcrumbs_widget.change_path(path)
+
     def _create_root_entity(self):
         self.entity = SystemSettings(set_studio_state=False)
         self.entity.on_change_callbacks.append(self._on_entity_change)
@@ -623,6 +631,21 @@ class SystemWidget(SettingsCategoryWidget):
 
 
 class ProjectWidget(SettingsCategoryWidget):
+    def contain_category_key(self, category):
+        if category in ("project_settings", "project_anatomy"):
+            return True
+        return False
+
+    def set_category_path(self, category, path):
+        if path:
+            path_items = path.split("/")
+            if path_items[0] not in ("project_settings", "project_anatomy"):
+                path = "/".join([category, path])
+        else:
+            path = category
+
+        self.breadcrumbs_widget.change_path(path)
+
     def initialize_attributes(self):
         self.project_name = None
 
