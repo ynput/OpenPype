@@ -82,6 +82,7 @@ class SettingsCategoryWidget(QtWidgets.QWidget):
     state_changed = QtCore.Signal()
     saved = QtCore.Signal(QtWidgets.QWidget)
     restart_required_trigger = QtCore.Signal()
+    full_path_requested = QtCore.Signal(str, str)
 
     def __init__(self, user_role, parent=None):
         super(SettingsCategoryWidget, self).__init__(parent)
