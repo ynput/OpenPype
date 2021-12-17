@@ -6,11 +6,19 @@ class AssetsTasksFilterWidget(QtWidgets.QWidget):
 
     filter_changed = QtCore.Signal()
 
+    filter_name_relation = {
+        "tasks": "data.tasks",
+        # "tasks type": "data.tasks.*.type",
+        "assigned to": "data.tasks.*.assigned",
+        "status": "data.tasks.*.status",
+        "parent": "data.parents"
+    }
+
     def __init__(self, dbcon, parent=None):
         super(AssetsTasksFilterWidget, self).__init__(parent)
 
-        view = FiltersTreeView() #DeselectableTreeView()
-        model = FiltersModel(dbcon, self)
+        view = FiltersTreeView()
+        model = FiltersModel(dbcon, self.filter_name_relation, self)
         proxy = FiltersProxy()
         proxy.setSourceModel(model)
         view.setModel(proxy)
@@ -23,8 +31,8 @@ class AssetsTasksFilterWidget(QtWidgets.QWidget):
         selection.selectionChanged.connect(self._on_filter_change)
 
         self._model = model
-        # self._proxy = proxy
-        # self._view = view
+        self._proxy = proxy
+        self._view = view
 
         self._last_selected_filters = None
 
@@ -32,7 +40,24 @@ class AssetsTasksFilterWidget(QtWidgets.QWidget):
         self._model.refresh()
 
     def get_selected_filters(self):
-        print("get_selected_filter NOT IMPLEMENTED!!!!"*5)
+        root = self._model.invisibleRootItem()
+
+        selected_filter = {}
+        for i in range(root.rowCount()):
+            group = root.child(i, 0)
+            checked_items = []
+
+            for y in range(group.rowCount()):
+                item = group.child(y, 0)
+                if item.checkState():
+                    checked_items.append(item.text())
+
+            if checked_items:
+                group_name = group.text()
+                db_relation = self.filter_name_relation[group_name]
+                selected_filter[db_relation] = checked_items
+
+        return selected_filter
 
     def _on_filter_change(self):
         print("ON FILTER CHANGE!!!")
@@ -50,20 +75,13 @@ class FiltersTreeView(QtWidgets.QTreeView):
 class FiltersModel(QtGui.QStandardItemModel):
     """"""
 
-    filter_hierarchy = {
-        "tasks": "data.tasks",
-        # "tasks type": "data.tasks.*.type",
-        "assigned to": "data.tasks.*.assigned",
-        "parent": "data.parents"
-    }
-
-    def __init__(self, dbcon, parent=None):
+    def __init__(self, dbcon, filter_name_relation, parent=None):
         super(FiltersModel, self).__init__(parent=parent)
 
         self.setHorizontalHeaderLabels(['Filters'])
 
         self.dbcon = dbcon
-
+        self.filter_name_relation = filter_name_relation
         self._asset = []
         self._filters = {}
 
@@ -113,7 +131,7 @@ class FiltersModel(QtGui.QStandardItemModel):
         assets = list(self.dbcon.find({"type": "asset"}))
         filters = {}
 
-        for visual_name, attr in self.filter_hierarchy.items():
+        for visual_name, attr in self.filter_name_relation.items():
             possible_value = set()
             for asset in assets:
 
