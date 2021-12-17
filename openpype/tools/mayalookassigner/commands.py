@@ -67,9 +67,7 @@ def get_selected_nodes():
 
     selection = cmds.ls(selection=True, long=True)
     hierarchy = list_descendents(selection)
-    selected_nodes = list(set(selection + hierarchy))
-    log.warning("selected nodes: {}".format(selected_nodes))
-    return selected_nodes
+    return list(set(selection + hierarchy))
 
 
 def get_all_asset_nodes():
@@ -83,20 +81,16 @@ def get_all_asset_nodes():
     containers = host.ls()
 
     nodes = []
-    log.debug("got {}".format(containers))
     for container in host.ls():
         # We are not interested in looks but assets!
         if container["loader"] == "LookLoader":
-            log.warning("skipping {}".format(container))
             continue
 
         # Gather all information
         container_name = container["objectName"]
-        log.warning("--- listing: {}".format(container_name))
         nodes += cmds.sets(container_name, query=True, nodesOnly=True) or []
 
     nodes = list(set(nodes))
-    log.warning("returning {}".format(nodes))
     return nodes
 
 
@@ -109,8 +103,6 @@ def create_asset_id_hash(nodes):
         dict
     """
     node_id_hash = defaultdict(list)
-
-    # log.warning(pformat(nodes))
     for node in nodes:
         # iterate over content of reference node
         if cmds.nodeType(node) == "reference":
