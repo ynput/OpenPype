@@ -339,13 +339,14 @@ def set_avalon_environments():
         os.environ.get("AVALON_MONGO")
         or os.environ["OPENPYPE_MONGO"]
     )
+    avalon_db = os.environ.get("AVALON_DB") or "avalon"  # for tests
     os.environ.update({
         # Mongo url (use same as OpenPype has)
         "AVALON_MONGO": avalon_mongo_url,
 
         "AVALON_SCHEMA": schema_path,
         # Mongo DB name where avalon docs are stored
-        "AVALON_DB": "avalon",
+        "AVALON_DB": avalon_db,
         # Name of config
         "AVALON_CONFIG": "openpype",
         "AVALON_LABEL": "OpenPype"
@@ -925,7 +926,9 @@ def boot():
         sys.exit(1)
 
     os.environ["OPENPYPE_MONGO"] = openpype_mongo
-    os.environ["OPENPYPE_DATABASE_NAME"] = "openpype"  # name of Pype database
+    # name of Pype database
+    os.environ["OPENPYPE_DATABASE_NAME"] = \
+        os.environ.get("OPENPYPE_DATABASE_NAME") or "openpype"
 
     _print(">>> run disk mapping command ...")
     run_disk_mapping_commands(openpype_mongo)

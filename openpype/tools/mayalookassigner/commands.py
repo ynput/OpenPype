@@ -8,7 +8,6 @@ from openpype.hosts.maya.api import lib
 
 from avalon import io, api
 
-
 from .vray_proxies import get_alembic_ids_cache
 
 log = logging.getLogger(__name__)
@@ -90,6 +89,7 @@ def get_all_asset_nodes():
         container_name = container["objectName"]
         nodes += cmds.sets(container_name, query=True, nodesOnly=True) or []
 
+    nodes = list(set(nodes))
     return nodes
 
 
@@ -106,9 +106,18 @@ def create_asset_id_hash(nodes):
         # iterate over content of reference node
         if cmds.nodeType(node) == "reference":
             ref_hashes = create_asset_id_hash(
-                cmds.referenceQuery(node, nodes=True, dp=True))
+                list(set(cmds.referenceQuery(node, nodes=True, dp=True))))
             for asset_id, ref_nodes in ref_hashes.items():
                 node_id_hash[asset_id] += ref_nodes
+        elif cmds.pluginInfo('vrayformaya', query=True,
+                             loaded=True) and cmds.nodeType(
+                node) == "VRayProxy":
+            path = cmds.getAttr("{}.fileName".format(node))
+            ids = get_alembic_ids_cache(path)
+            for k, _ in ids.items():
+                pid = k.split(":")[0]
+                if not node_id_hash.get(pid):
+                    node_id_hash[pid] = [node]
         else:
             value = lib.get_id(node)
             if value is None:
@@ -156,6 +165,7 @@ def create_items_from_nodes(nodes):
             id_hashes.update(parent_id)
 
     if not id_hashes:
+        log.warning("No id hashes")
         return asset_view_items
 
     for _id, id_nodes in id_hashes.items():

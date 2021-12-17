@@ -69,18 +69,27 @@ class NameWindow(QtWidgets.QDialog):
                 "config.tasks": True,
             }
         )
+
         asset_doc = io.find_one(
             {
                 "type": "asset",
                 "name": asset_name
             },
-            {"data.tasks": True}
+            {
+                "data.tasks": True,
+                "data.parents": True
+            }
         )
 
         task_type = asset_doc["data"]["tasks"].get(task_name, {}).get("type")
 
         project_task_types = project_doc["config"]["tasks"]
         task_short = project_task_types.get(task_type, {}).get("short_name")
+
+        asset_parents = asset_doc["data"]["parents"]
+        parent_name = project_doc["name"]
+        if asset_parents:
+            parent_name = asset_parents[-1]
 
         self.data = {
             "project": {
@@ -93,6 +102,7 @@ class NameWindow(QtWidgets.QDialog):
                 "type": task_type,
                 "short": task_short,
             },
+            "parent": parent_name,
             "version": 1,
             "user": getpass.getuser(),
             "comment": "",

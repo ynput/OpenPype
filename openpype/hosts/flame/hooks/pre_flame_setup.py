@@ -22,7 +22,7 @@ class FlamePrelaunch(PreLaunchHook):
     flame_python_exe = "/opt/Autodesk/python/2021/bin/python2.7"
 
     wtc_script_path = os.path.join(
-        opflame.HOST_DIR, "scripts", "wiretap_com.py")
+        opflame.HOST_DIR, "api", "scripts", "wiretap_com.py")
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
