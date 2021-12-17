@@ -48,6 +48,7 @@ def inject_openpype_environment(deadlinePlugin):
         add_args['asset'] = job.GetJobEnvironmentKeyValue('AVALON_ASSET')
         add_args['task'] = job.GetJobEnvironmentKeyValue('AVALON_TASK')
         add_args['app'] = job.GetJobEnvironmentKeyValue('AVALON_APP_NAME')
+        add_args["envgroup"] = "farm"
 
         if all(add_args.values()):
             for key, value in add_args.items():
