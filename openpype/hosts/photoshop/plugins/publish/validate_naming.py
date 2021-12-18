@@ -1,3 +1,5 @@
+import re
+
 import pyblish.api
 import openpype.api
 from avalon import photoshop
@@ -19,20 +21,33 @@ class ValidateNamingRepair(pyblish.api.Action):
                     and result["instance"] not in failed):
                 failed.append(result["instance"])
 
+        invalid_chars, replace_char = plugin.get_replace_chars()
+        self.log.info("{} --- {}".format(invalid_chars, replace_char))
+
         # Apply pyblish.logic to get the instances for the plug-in
         instances = pyblish.api.instances_by_plugin(failed, plugin)
         stub = photoshop.stub()
         for instance in instances:
             self.log.info("validate_naming instance {}".format(instance))
-            name = instance.data["name"].replace(" ", "_")
-            name = name.replace(instance.data["family"], '')
-            instance[0].Name = name
-            data = stub.read(instance[0])
-            data["subset"] = "image" + name
-            stub.imprint(instance[0], data)
+            metadata = stub.read(instance[0])
+            self.log.info("metadata instance {}".format(metadata))
+            layer_name = None
+            if metadata.get("uuid"):
+                layer_data = stub.get_layer(metadata["uuid"])
+                self.log.info("layer_data {}".format(layer_data))
+                if layer_data:
+                    layer_name = re.sub(invalid_chars,
+                                        replace_char,
+                                        layer_data.name)
 
-            name = stub.PUBLISH_ICON + name
-            stub.rename_layer(instance.data["uuid"], name)
+                    stub.rename_layer(instance.data["uuid"], layer_name)
+
+            subset_name = re.sub(invalid_chars, replace_char,
+                                 instance.data["name"])
+
+            instance[0].Name = layer_name or subset_name
+            metadata["subset"] = subset_name
+            stub.imprint(instance[0], metadata)
 
         return True
 
@@ -49,12 +64,21 @@ class ValidateNaming(pyblish.api.InstancePlugin):
     families = ["image"]
     actions = [ValidateNamingRepair]
 
+    # configured by Settings
+    invalid_chars = ''
+    replace_char = ''
+
     def process(self, instance):
         help_msg = ' Use Repair action (A) in Pyblish to fix it.'
         msg = "Name \"{}\" is not allowed.{}".format(instance.data["name"],
                                                      help_msg)
-        assert " " not in instance.data["name"], msg
+        assert not re.search(self.invalid_chars, instance.data["name"]), msg
 
         msg = "Subset \"{}\" is not allowed.{}".format(instance.data["subset"],
                                                        help_msg)
-        assert " " not in instance.data["subset"], msg
+        assert not re.search(self.invalid_chars, instance.data["subset"]), msg
+
+    @classmethod
+    def get_replace_chars(cls):
+        """Pass values configured in Settings for Repair."""
+        return cls.invalid_chars, cls.replace_char

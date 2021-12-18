@@ -554,7 +554,9 @@ class GUIWidget(BaseWidget):
     def _create_label_ui(self):
         label = self.entity["label"]
         label_widget = QtWidgets.QLabel(label, self)
+        label_widget.setTextInteractionFlags(QtCore.Qt.TextBrowserInteraction)
         label_widget.setObjectName("SettingsLabel")
+        label_widget.linkActivated.connect(self._on_link_activate)
 
         layout = QtWidgets.QHBoxLayout(self)
         layout.setContentsMargins(0, 5, 0, 5)
@@ -569,6 +571,14 @@ class GUIWidget(BaseWidget):
         layout = QtWidgets.QHBoxLayout(self)
         layout.setContentsMargins(5, 5, 5, 5)
         layout.addWidget(splitter_item)
+
+    def _on_link_activate(self, url):
+        if not url.startswith("settings://"):
+            QtGui.QDesktopServices.openUrl(url)
+            return
+
+        path = url.replace("settings://", "")
+        self.category_widget.go_to_fullpath(path)
 
     def set_entity_value(self):
         pass
