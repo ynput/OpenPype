@@ -16,16 +16,12 @@ reload(utils)  # noqa
 
 log = logging.getLogger(__name__)
 
-self = sys.modules[__name__]
-self.track_types = {
+
+TRACK_TYPES = {
     "video": otio.schema.TrackKind.Video,
     "audio": otio.schema.TrackKind.Audio
 }
-self.fps = None
-self.seq_frame_start = None
-self.project = None
-self.clips = None
-self.marker_color_map = {
+MARKERS_COLOR_MAP = {
     "magenta": otio.schema.MarkerColor.MAGENTA,
     "red": otio.schema.MarkerColor.RED,
     "yellow": otio.schema.MarkerColor.YELLOW,
@@ -38,7 +34,37 @@ self.marker_color_map = {
     "pink": otio.schema.MarkerColor.PINK,
     "black": otio.schema.MarkerColor.BLACK,
 }
-self.include_markers = True
+MARKERS_INCLUDE = True
+
+
+class CTX:
+    _fps = None
+    _tl_start_frame = None
+    project = None
+    clips = None
+
+    @classmethod
+    def set_fps(cls, new_fps):
+        if not isinstance(new_fps, float):
+            raise TypeError("Invalid fps type {}".format(type(new_fps)))
+        if cls._fps != new_fps:
+            cls._fps = new_fps
+
+    @classmethod
+    def get_fps(cls):
+       return cls._fps
+
+    @classmethod
+    def set_tl_start_frame(cls, number):
+        if not isinstance(number, int):
+            raise TypeError("Invalid timeline start frame type {}".format(
+                type(number)))
+        if cls._tl_start_frame != number:
+            cls._tl_start_frame = number
+
+    @classmethod
+    def get_tl_start_frame(cls):
+       return cls._tl_start_frame
 
 
 def flatten(_list):
@@ -151,8 +177,8 @@ def create_time_effects(otio_clip, item):
 
 
 def _get_marker_color(flame_colour):
-    if flame_colour in self.marker_color_map:
-        return self.marker_color_map[flame_colour]
+    if flame_colour in MARKERS_COLOR_MAP:
+        return MARKERS_COLOR_MAP[flame_colour]
 
     return otio.schema.MarkerColor.RED
 
@@ -184,7 +210,7 @@ def _get_flame_markers(item):
 def create_otio_markers(otio_item, item):
     markers = _get_flame_markers(item)
     for marker in markers:
-        frame_rate = self.fps
+        frame_rate = CTX.get_fps()
 
         marked_range = otio.opentime.TimeRange(
             start_time=otio.opentime.RationalTime(
@@ -234,13 +260,13 @@ def create_otio_reference(clip_data):
 
     # get file info for path and start frame
     frame_start = 0
-    fps = self.fps
+    fps = CTX.get_fps()
 
     path = clip_data["fpath"]
 
     reel_clip = None
     match_reel_clip = [
-        clip for clip in self.clips
+        clip for clip in CTX.clips
         if clip["fpath"] == path
     ]
     if match_reel_clip:
@@ -322,7 +348,7 @@ def create_otio_clip(clip_data):
     source_range = create_otio_time_range(
         source_in,
         clip_data["record_duration"],
-        self.fps
+        CTX.get_fps()
     )
 
     otio_clip = otio.schema.Clip(
@@ -332,7 +358,7 @@ def create_otio_clip(clip_data):
     )
 
     # Add markers
-    if self.include_markers:
+    if MARKERS_INCLUDE:
         create_otio_markers(otio_clip, segment)
 
     return otio_clip
@@ -385,7 +411,7 @@ def _get_colourspace_policy():
     output = {}
     # get policies project path
     policy_dir = "/opt/Autodesk/project/{}/synColor/policy".format(
-        self.project.name
+        CTX.project.name
     )
     log.debug(policy_dir)
     policy_fp = os.path.join(policy_dir, "policy.cfg")
@@ -416,7 +442,7 @@ def _create_otio_timeline(sequence):
     })
 
     rt_start_time = create_otio_rational_time(
-        self.seq_frame_start, self.fps)
+        CTX.get_tl_start_frame(), CTX.get_fps())
 
     return otio.schema.Timeline(
         name=str(sequence.name)[1:-1],
@@ -428,7 +454,7 @@ def _create_otio_timeline(sequence):
 def create_otio_track(track_type, track_name):
     return otio.schema.Track(
         name=track_name,
-        kind=self.track_types[track_type]
+        kind=TRACK_TYPES[track_type]
     )
 
 
@@ -440,7 +466,7 @@ def add_otio_gap(clip_data, otio_track, prev_out):
     gap = otio.opentime.TimeRange(
         duration=otio.opentime.RationalTime(
             gap_length,
-            self.fps
+            CTX.get_fps()
         )
     )
     otio_gap = otio.schema.Gap(source_range=gap)
@@ -530,18 +556,22 @@ def create_otio_timeline(sequence):
     log.info(dir(sequence))
     log.info(sequence.attributes)
 
-    self.project = get_current_flame_project()
-    self.clips = get_clips_in_reels(self.project)
+    CTX.project = get_current_flame_project()
+    CTX.clips = get_clips_in_reels(CTX.project)
 
     log.debug(pformat(
-        self.clips
+        CTX.clips
     ))
 
     # get current timeline
-    self.fps = float(str(sequence.frame_rate)[:-4])
-    self.seq_frame_start = utils.timecode_to_frames(
+    CTX.set_fps(
+        float(str(sequence.frame_rate)[:-4]))
+
+    tl_start_frame = utils.timecode_to_frames(
         str(sequence.start_time).replace("+", ":"),
-        self.fps)
+        CTX.get_fps()
+    )
+    CTX.set_tl_start_frame(tl_start_frame)
 
     # convert timeline to otio
     otio_timeline = _create_otio_timeline(sequence)
