@@ -167,7 +167,7 @@ class TimersManager(OpenPypeModule, ITrayService, ILaunchHookPaths):
         asset_name = path_items.pop(-1)
         project_name = path_items.pop(0)
         return self.get_timer_data_for_context(
-            project_name, asset_name, task_name
+            project_name, asset_name, task_name, self.log
         )
 
     def get_launch_hook_paths(self):
@@ -177,7 +177,10 @@ class TimersManager(OpenPypeModule, ITrayService, ILaunchHookPaths):
             "launch_hooks"
         )
 
-    def get_timer_data_for_context(self, project_name, asset_name, task_name):
+    @staticmethod
+    def get_timer_data_for_context(
+        project_name, asset_name, task_name, logger=None
+    ):
         """Prepare data for timer related callbacks.
 
         TODO:
@@ -205,9 +208,11 @@ class TimersManager(OpenPypeModule, ITrayService, ILaunchHookPaths):
         try:
             task_type = asset_data["tasks"][task_name]["type"]
         except KeyError:
-            self.log.warning(
-                "Couldn't find task_type for {}".format(task_name)
-            )
+            msg = "Couldn't find task_type for {}".format(task_name)
+            if logger is not None:
+                logger.warning(msg)
+            else:
+                print(msg)
 
         hierarchy_items = asset_data.get("parents") or []
         hierarchy_items.append(asset_name)
@@ -228,7 +233,7 @@ class TimersManager(OpenPypeModule, ITrayService, ILaunchHookPaths):
             task_name (str): Task name
         """
         data = self.get_timer_data_for_context(
-            project_name, asset_name, task_name
+            project_name, asset_name, task_name, self.log
         )
         self.timer_started(None, data)
 
