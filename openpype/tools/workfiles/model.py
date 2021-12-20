@@ -1,4 +1,5 @@
 import os
+import glob
 import logging
 
 from Qt import QtCore, QtGui
@@ -18,6 +19,7 @@ class FilesModel(TreeModel):
     DateModifiedRole = QtCore.Qt.UserRole + 3
     FilePathRole = QtCore.Qt.UserRole + 4
     IsEnabled = QtCore.Qt.UserRole + 5
+    published = False
 
     def __init__(self, file_extensions, parent=None):
         super(FilesModel, self).__init__(parent=parent)
@@ -55,7 +57,7 @@ class FilesModel(TreeModel):
             self.endResetModel()
             return
 
-        if not os.path.exists(root):
+        if not self.published and not os.path.exists(root):
             # Add Work Area does not exist placeholder
             log.debug("Work Area does not exist: %s", root)
             message = "Work Area does not exist. Use Save As to create it."
@@ -72,8 +74,10 @@ class FilesModel(TreeModel):
 
         extensions = self._file_extensions
 
-        for filename in os.listdir(root):
-            path = os.path.join(root, filename)
+        root = os.path.join(root, "*")
+        for path in glob.glob(root):
+            print(path)
+            filename = os.path.basename(path)
             if os.path.isdir(path):
                 continue
 

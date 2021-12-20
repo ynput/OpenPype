@@ -15,6 +15,8 @@ from openpype.pipeline.lib import BeforeWorkfileSave
 from openpype.tools.utils.lib import (
     qt_app_context
 )
+from openpype.api import get_project_settings
+from openpype.lib.profiles_filtering import filter_profiles
 from openpype.tools.utils import PlaceholderLineEdit
 from openpype.tools.utils.assets_widget import SingleSelectAssetsWidget
 from openpype.tools.utils.tasks_widget import TasksWidget
@@ -59,56 +61,8 @@ class NameWindow(QtWidgets.QDialog):
             # Fallback to active session
             session = api.Session
 
-        # Set work file data for template formatting
-        asset_name = session["AVALON_ASSET"]
-        task_name = session["AVALON_TASK"]
-        project_doc = io.find_one(
-            {"type": "project"},
-            {
-                "name": True,
-                "data.code": True,
-                "config.tasks": True,
-            }
-        )
-
-        asset_doc = io.find_one(
-            {
-                "type": "asset",
-                "name": asset_name
-            },
-            {
-                "data.tasks": True,
-                "data.parents": True
-            }
-        )
-
-        task_type = asset_doc["data"]["tasks"].get(task_name, {}).get("type")
-
-        project_task_types = project_doc["config"]["tasks"]
-        task_short = project_task_types.get(task_type, {}).get("short_name")
-
-        asset_parents = asset_doc["data"]["parents"]
-        parent_name = project_doc["name"]
-        if asset_parents:
-            parent_name = asset_parents[-1]
-
-        self.data = {
-            "project": {
-                "name": project_doc["name"],
-                "code": project_doc["data"].get("code")
-            },
-            "asset": asset_name,
-            "task": {
-                "name": task_name,
-                "type": task_type,
-                "short": task_short,
-            },
-            "parent": parent_name,
-            "version": 1,
-            "user": getpass.getuser(),
-            "comment": "",
-            "ext": None
-        }
+        self.data = _get_anatomy_data(session)
+        self.data['version'] = 1
 
         # Store project anatomy
         self.anatomy = anatomy
@@ -361,6 +315,7 @@ class FilesWidget(QtWidgets.QWidget):
         self._asset_doc = None
         self._task_name = None
         self._task_type = None
+        self._published = False
 
         # Pype's anatomy object for current project
         self.anatomy = Anatomy(io.Session["AVALON_PROJECT"])
@@ -383,8 +338,8 @@ class FilesWidget(QtWidgets.QWidget):
         files_view = FilesView(self)
 
         # Create the Files model
-        extensions = set(self.host.file_extensions())
-        files_model = FilesModel(file_extensions=extensions)
+        self.extensions = set(self.host.file_extensions())
+        files_model = FilesModel(file_extensions=self.extensions)
 
         # Create proxy model for files to be able sort and filter
         proxy_model = QtCore.QSortFilterProxyModel()
@@ -407,9 +362,13 @@ class FilesWidget(QtWidgets.QWidget):
         files_view.setColumnWidth(0, 330)
 
         # Filtering input
-        filter_input = PlaceholderLineEdit(self)
+        filter_widget = QtWidgets.QWidget(self)
+        filter_input = PlaceholderLineEdit(self, filter_widget)
         filter_input.setPlaceholderText("Filter files..")
         filter_input.textChanged.connect(proxy_model.setFilterFixedString)
+
+        published_checkbox = QtWidgets.QCheckBox("Published", filter_widget)
+        published_checkbox.stateChanged.connect(self.on_published_pressed)
 
         # Home Page
         # Build buttons widget for files widget
@@ -424,10 +383,15 @@ class FilesWidget(QtWidgets.QWidget):
         btns_layout.addWidget(btn_browse)
         btns_layout.addWidget(btn_save)
 
+        filter_layout = QtWidgets.QHBoxLayout(filter_widget)
+        filter_layout.setContentsMargins(0, 0, 0, 0)
+        filter_layout.addWidget(published_checkbox)
+        filter_layout.addWidget(filter_input)
+
         # Build files widgets for home page
         main_layout = QtWidgets.QVBoxLayout(self)
         main_layout.setContentsMargins(0, 0, 0, 0)
-        main_layout.addWidget(filter_input)
+        main_layout.addWidget(filter_widget)
         main_layout.addWidget(files_view)
         main_layout.addWidget(btns_widget)
 
@@ -467,8 +431,13 @@ class FilesWidget(QtWidgets.QWidget):
         # This way we can browse it even before we enter it.
         if self._asset_id and self._task_name and self._task_type:
             session = self._get_session()
-            self._workdir_path = session["AVALON_WORKDIR"]
-            self._workfiles_root = self.host.work_root(session)
+
+            if not self._published:
+                self._workdir_path = session["AVALON_WORKDIR"]
+                self._workfiles_root = self.host.work_root(session)
+            else:
+                self._workfiles_root = self._get_published_root(session)
+
             self.files_model.set_root(self._workfiles_root)
 
         else:
@@ -489,6 +458,34 @@ class FilesWidget(QtWidgets.QWidget):
         if self._asset_doc is None:
             self._asset_doc = io.find_one({"_id": self._asset_id})
         return self._asset_doc
+
+    def _get_published_root(self, session):
+
+        settings = get_project_settings(session["AVALON_PROJECT"])
+        template_name_profiles = settings.get('global') \
+            .get('publish') \
+            .get('IntegrateAssetNew') \
+            .get('template_name_profiles')
+        key_values = {
+            "families": "workfile",
+            "tasks": self._task_name,
+            "hosts": self.host,
+            "task_types": self._task_type
+        }
+        profile = filter_profiles(
+            template_name_profiles,
+            key_values
+        )
+        data = _get_anatomy_data(session)
+        data["ext"] = self.extensions
+        anatomy_filled = self.anatomy.format(data)
+        anatomy_filled.strict = False
+        folder = anatomy_filled[profile["template_name"]]['folder']
+
+        if "{version}" in folder:
+            folder = folder.replace("{version}", "*")
+
+        return folder
 
     def _get_session(self):
         """Return a modified session for the current asset and task"""
@@ -623,6 +620,19 @@ class FilesWidget(QtWidgets.QWidget):
             return
 
         return index.data(self.files_model.FilePathRole)
+
+    def on_published_pressed(self, state):
+        if state == 0:
+            self._published = False
+            self.files_model.published = False
+            self.btn_save.show()
+            self.btn_browse.show()
+        elif state == 2:
+            self._published = True
+            self.files_model.published = True
+            self.btn_save.hide()
+            self.btn_browse.hide()
+        self.set_asset_task(self._asset_id, self._task_name, self._task_type)
 
     def on_open_pressed(self):
         path = self._get_selected_filepath()
@@ -1088,6 +1098,60 @@ def validate_host_requirements(host):
             "%s (host: %s)" % (", ".join(missing), host)
         )
     return True
+
+
+def _get_anatomy_data(session):
+    # Set work file data for template formatting
+    asset_name = session["AVALON_ASSET"]
+    task_name = session["AVALON_TASK"]
+    project_doc = io.find_one(
+        {"type": "project"},
+        {
+            "name": True,
+            "data.code": True,
+            "config.tasks": True,
+        }
+    )
+
+    asset_doc = io.find_one(
+        {
+            "type": "asset",
+            "name": asset_name
+        },
+        {
+            "data.tasks": True,
+            "data.parents": True
+        }
+    )
+
+    task_type = asset_doc["data"]["tasks"].get(task_name, {}).get("type")
+
+    project_task_types = project_doc["config"]["tasks"]
+    task_short = project_task_types.get(task_type, {}).get("short_name")
+
+    asset_parents = asset_doc["data"]["parents"]
+    parent_name = project_doc["name"]
+    if asset_parents:
+        parent_name = asset_parents[-1]
+    hierarchy = "/".join(asset_parents)
+
+    return {
+        "project": {
+            "name": project_doc["name"],
+            "code": project_doc["data"].get("code")
+        },
+        "asset": asset_name,
+        "task": {
+            "name": task_name,
+            "type": task_type,
+            "short": task_short,
+        },
+        "parent": parent_name,
+        "user": getpass.getuser(),
+        "comment": "",
+        "ext": None,
+        "hierarchy": hierarchy
+    }
 
 
 def show(root=None, debug=False, parent=None, use_context=True, save=True):
