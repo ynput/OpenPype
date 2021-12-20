@@ -292,13 +292,13 @@ def rescan_hooks():
     except Exception:
         pass
 
+
 def get_metadata(project_name, _log=None):
     from adsk.libwiretapPythonClientAPI import (
         WireTapClient,
         WireTapServerHandle,
         WireTapNodeHandle,
-        WireTapStr,
-        WireTapInt
+        WireTapStr
     )
 
     class GetProjectColorPolicy(object):
