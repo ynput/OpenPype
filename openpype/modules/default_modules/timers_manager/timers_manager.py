@@ -1,11 +1,14 @@
 import os
 import platform
+
+from avalon.api import AvalonMongoDB
+
 from openpype.modules import OpenPypeModule
 from openpype_interfaces import (
     ITrayService,
     ILaunchHookPaths
 )
-from avalon.api import AvalonMongoDB
+from .exceptions import InvalidContextError
 
 
 class ExampleTimersManagerConnector:
@@ -162,7 +165,7 @@ class TimersManager(OpenPypeModule, ITrayService, ILaunchHookPaths):
         """
         path_items = task_path.split("/")
         if len(path_items) < 3:
-            raise ValueError("Invalid path")
+            raise InvalidContextError("Invalid path \"{}\"".format(task_path))
         task_name = path_items.pop(-1)
         asset_name = path_items.pop(-1)
         project_name = path_items.pop(0)
@@ -186,6 +189,12 @@ class TimersManager(OpenPypeModule, ITrayService, ILaunchHookPaths):
         TODO:
         - return predefined object that has access to asset document etc.
         """
+        if not project_name or not asset_name or not task_name:
+            raise InvalidContextError((
+                "Missing context information got"
+                " Project: \"{}\" Asset: \"{}\" Task: \"{}\""
+            ).format(str(project_name), str(asset_name), str(task_name)))
+
         dbconn = AvalonMongoDB()
         dbconn.install()
         dbconn.Session["AVALON_PROJECT"] = project_name
@@ -201,12 +210,22 @@ class TimersManager(OpenPypeModule, ITrayService, ILaunchHookPaths):
             }
         )
         if not asset_doc:
-            raise ValueError("Uknown asset {}".format(asset_name))
+            dbconn.uninstall()
+            raise InvalidContextError((
+                "Asset \"{}\" not found in project \"{}\""
+            ).format(asset_name, project_name))
 
         asset_data = asset_doc.get("data") or {}
+        asset_tasks = asset_data.get("tasks") or {}
+        if task_name not in asset_tasks:
+            dbconn.uninstall()
+            raise InvalidContextError((
+                "Task \"{}\" not found on asset \"{}\" in project \"{}\""
+            ).format(task_name, asset_name, project_name))
+
         task_type = ""
         try:
-            task_type = asset_data["tasks"][task_name]["type"]
+            task_type = asset_tasks[task_name]["type"]
         except KeyError:
             msg = "Couldn't find task_type for {}".format(task_name)
             if logger is not None:
@@ -217,6 +236,7 @@ class TimersManager(OpenPypeModule, ITrayService, ILaunchHookPaths):
         hierarchy_items = asset_data.get("parents") or []
         hierarchy_items.append(asset_name)
 
+        dbconn.uninstall()
         return {
             "project_name": project_name,
             "task_name": task_name,
