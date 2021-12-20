@@ -420,4 +420,4 @@ class TimersManager(OpenPypeModule, ITrayService, ILaunchHookPaths):
             "task_name": task_name
         }
 
-        requests.post(rest_api_url, json=data)
+        return requests.post(rest_api_url, json=data)
