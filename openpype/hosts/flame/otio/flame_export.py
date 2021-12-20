@@ -244,7 +244,7 @@ def create_otio_markers(otio_item, item):
         else:
             metadata["comment"] = marker["comment"]
 
-        marker = otio.schema.Marker(
+        otio_marker = otio.schema.Marker(
             name=marker["name"],
             color=_get_marker_color(
                 marker["colour"]),
@@ -252,7 +252,7 @@ def create_otio_markers(otio_item, item):
             metadata=metadata
         )
 
-        otio_item.markers.append(marker)
+        otio_item.markers.append(otio_marker)
 
 
 def create_otio_reference(clip_data):
@@ -500,7 +500,7 @@ def _get_shot_tokens_values(clip, tokens):
 
         try:
             output[_key] = int(clip.shot_name.get_value())
-        except TypeError:
+        except ValueError:
             output[_key] = clip.shot_name.get_value()
 
     clip.shot_name.set_value(old_value)
