@@ -14,7 +14,7 @@ def frames_to_timecode(frames, framerate):
     return otio.opentime.to_timecode(rt)
 
 
-def frames_to_secons(frames, framerate):
+def frames_to_seconds(frames, framerate):
     rt = otio.opentime.from_frames(frames, framerate)
     return otio.opentime.to_seconds(rt)
 
