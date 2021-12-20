@@ -306,8 +306,6 @@ class PublishAttributes:
         self._plugin_names_order = []
         self._missing_plugins = []
         self.attr_plugins = attr_plugins or []
-        if not attr_plugins:
-            return
 
         origin_data = self._origin_data
         data = self._data
