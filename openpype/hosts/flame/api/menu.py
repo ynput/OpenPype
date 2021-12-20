@@ -24,11 +24,13 @@ default_flame_export_presets = {
     }
 }
 
+
 def send_selection(selection):
     import openpype.hosts.flame as opflame
     opflame.selection = selection
     print(opflame.selection)
     return True
+
 
 class _FlameMenuApp(object):
     def __init__(self, framework):

@@ -3,8 +3,8 @@ import openpype.hosts.flame as opflame
 from openpype.hosts.flame.otio import flame_export as otio_export
 from openpype.hosts.flame.api import lib
 from pprint import pformat
-reload(lib)
-reload(otio_export)
+reload(lib)  # noqa
+reload(otio_export)  # noqa
 
 
 @pyblish.api.log

@@ -258,6 +258,7 @@ def get_current_project():
 
 def get_current_sequence(selection):
     import flame
+
     def segment_to_sequence(_segment):
         track = _segment.parent
         version = track.parent
@@ -291,11 +292,7 @@ def rescan_hooks():
     except Exception:
         pass
 
-
-
 def get_metadata(project_name, _log=None):
-    import flame
-
     from adsk.libwiretapPythonClientAPI import (
         WireTapClient,
         WireTapServerHandle,
@@ -319,7 +316,9 @@ def get_metadata(project_name, _log=None):
 
         def process(self, project_name):
             policy_node_handle = WireTapNodeHandle(
-                self._server, "/projects/{}/syncolor/policy".format(project_name))
+                self._server,
+                "/projects/{}/syncolor/policy".format(project_name)
+            )
             self.log.info(policy_node_handle)
 
             policy = WireTapStr()

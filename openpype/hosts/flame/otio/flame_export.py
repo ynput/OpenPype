@@ -134,7 +134,8 @@ def create_time_effects(otio_clip, item):
     #             value = [
     #                 ((node[knob].getValueAt(i)) - i)
     #                 for i in range(
-    #                     track_item.timelineIn(), track_item.timelineOut() + 1)
+    #                     track_item.timelineIn(),
+    #                     track_item.timelineOut() + 1)
     #             ]
 
     #         metadata[knob] = value

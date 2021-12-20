@@ -3,6 +3,7 @@ import opentimelineio as otio
 import logging
 log = logging.getLogger(__name__)
 
+
 def timecode_to_frames(timecode, framerate):
     rt = otio.opentime.from_timecode(timecode, framerate)
     return int(otio.opentime.to_frames(rt))
@@ -44,7 +45,6 @@ def get_reformated_path(path, padded=True):
     else:
         path = path.replace(found, "%d")
 
-
     return path
 
 
@@ -68,6 +68,7 @@ def get_padding_from_path(path):
         return len(found)
     else:
         return None
+
 
 def get_frame_from_path(path):
     """
