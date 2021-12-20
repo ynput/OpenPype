@@ -4,7 +4,7 @@
 import os
 import re
 import sys
-import ast
+import json
 import logging
 import opentimelineio as otio
 from . import utils
@@ -12,7 +12,7 @@ from . import utils
 import flame
 from pprint import pformat
 
-reload(utils)
+reload(utils)  # noqa
 
 log = logging.getLogger(__name__)
 
@@ -31,9 +31,14 @@ self.marker_color_map = {
     "yellow": otio.schema.MarkerColor.YELLOW,
     "green": otio.schema.MarkerColor.GREEN,
     "cyan": otio.schema.MarkerColor.CYAN,
+    "white": otio.schema.MarkerColor.WHITE,
+    "orange": otio.schema.MarkerColor.ORANGE,
     "blue": otio.schema.MarkerColor.BLUE,
+    "purple": otio.schema.MarkerColor.PURPLE,
+    "pink": otio.schema.MarkerColor.PINK,
+    "black": otio.schema.MarkerColor.BLACK,
 }
-self.include_tags = True
+self.include_markers = True
 
 
 def flatten(_list):
@@ -63,6 +68,7 @@ def create_otio_time_range(start_frame, frame_duration, fps):
         duration=create_otio_rational_time(frame_duration, fps)
     )
 
+
 def _get_metadata(item):
     if hasattr(item, 'metadata'):
         if not item.metadata:
@@ -71,130 +77,150 @@ def _get_metadata(item):
     return {}
 
 
-def create_time_effects(otio_clip, track_item):
+def create_time_effects(otio_clip, item):
+    # todo #2426: add retiming effects to export
+    pass
     # get all subtrack items
-    subTrackItems = flatten(track_item.parent().subTrackItems())
-    speed = track_item.playbackSpeed()
+    # subTrackItems = flatten(track_item.parent().subTrackItems())
+    # speed = track_item.playbackSpeed()
 
-    otio_effect = None
-    # retime on track item
-    if speed != 1.:
-        # make effect
-        otio_effect = otio.schema.LinearTimeWarp()
-        otio_effect.name = "Speed"
-        otio_effect.time_scalar = speed
-        otio_effect.metadata = {}
+    # otio_effect = None
+    # # retime on track item
+    # if speed != 1.:
+    #     # make effect
+    #     otio_effect = otio.schema.LinearTimeWarp()
+    #     otio_effect.name = "Speed"
+    #     otio_effect.time_scalar = speed
+    #     otio_effect.metadata = {}
 
-    # freeze frame effect
-    if speed == 0.:
-        otio_effect = otio.schema.FreezeFrame()
-        otio_effect.name = "FreezeFrame"
-        otio_effect.metadata = {}
+    # # freeze frame effect
+    # if speed == 0.:
+    #     otio_effect = otio.schema.FreezeFrame()
+    #     otio_effect.name = "FreezeFrame"
+    #     otio_effect.metadata = {}
 
-    if otio_effect:
-        # add otio effect to clip effects
-        otio_clip.effects.append(otio_effect)
+    # if otio_effect:
+    #     # add otio effect to clip effects
+    #     otio_clip.effects.append(otio_effect)
 
-    # loop trought and get all Timewarps
-    for effect in subTrackItems:
-        if ((track_item not in effect.linkedItems())
-                and (len(effect.linkedItems()) > 0)):
-            continue
-        # avoid all effect which are not TimeWarp and disabled
-        if "TimeWarp" not in effect.name():
-            continue
+    # # loop trought and get all Timewarps
+    # for effect in subTrackItems:
+    #     if ((track_item not in effect.linkedItems())
+    #             and (len(effect.linkedItems()) > 0)):
+    #         continue
+    #     # avoid all effect which are not TimeWarp and disabled
+    #     if "TimeWarp" not in effect.name():
+    #         continue
 
-        if not effect.isEnabled():
-            continue
+    #     if not effect.isEnabled():
+    #         continue
 
-        node = effect.node()
-        name = node["name"].value()
+    #     node = effect.node()
+    #     name = node["name"].value()
 
-        # solve effect class as effect name
-        _name = effect.name()
-        if "_" in _name:
-            effect_name = re.sub(r"(?:_)[_0-9]+", "", _name)  # more numbers
-        else:
-            effect_name = re.sub(r"\d+", "", _name)  # one number
+    #     # solve effect class as effect name
+    #     _name = effect.name()
+    #     if "_" in _name:
+    #         effect_name = re.sub(r"(?:_)[_0-9]+", "", _name)  # more numbers
+    #     else:
+    #         effect_name = re.sub(r"\d+", "", _name)  # one number
 
-        metadata = {}
-        # add knob to metadata
-        for knob in ["lookup", "length"]:
-            value = node[knob].value()
-            animated = node[knob].isAnimated()
-            if animated:
-                value = [
-                    ((node[knob].getValueAt(i)) - i)
-                    for i in range(
-                        track_item.timelineIn(), track_item.timelineOut() + 1)
-                ]
+    #     metadata = {}
+    #     # add knob to metadata
+    #     for knob in ["lookup", "length"]:
+    #         value = node[knob].value()
+    #         animated = node[knob].isAnimated()
+    #         if animated:
+    #             value = [
+    #                 ((node[knob].getValueAt(i)) - i)
+    #                 for i in range(
+    #                     track_item.timelineIn(), track_item.timelineOut() + 1)
+    #             ]
 
-            metadata[knob] = value
+    #         metadata[knob] = value
 
-        # make effect
-        otio_effect = otio.schema.TimeEffect()
-        otio_effect.name = name
-        otio_effect.effect_name = effect_name
-        otio_effect.metadata = metadata
+    #     # make effect
+    #     otio_effect = otio.schema.TimeEffect()
+    #     otio_effect.name = name
+    #     otio_effect.effect_name = effect_name
+    #     otio_effect.metadata = metadata
 
-        # add otio effect to clip effects
-        otio_clip.effects.append(otio_effect)
+    #     # add otio effect to clip effects
+    #     otio_clip.effects.append(otio_effect)
 
 
-def get_marker_color(tag):
-    icon = tag.icon()
-    pat = r'icons:Tag(?P<color>\w+)\.\w+'
-
-    res = re.search(pat, icon)
-    if res:
-        color = res.groupdict().get('color')
-        if color.lower() in self.marker_color_map:
-            return self.marker_color_map[color.lower()]
+def _get_marker_color(flame_colour):
+    if flame_colour in self.marker_color_map:
+        return self.marker_color_map[flame_colour]
 
     return otio.schema.MarkerColor.RED
 
 
+def _get_flame_markers(item):
+    output_markers = []
+
+    time_in = item.record_in.relative_frame
+
+    for marker in item.markers:
+        log.debug(marker)
+        start_frame = marker.location.get_value().relative_frame
+
+        start_frame = (start_frame - time_in) + 1
+
+        marker_data = {
+            "name": marker.name.get_value(),
+            "duration": marker.duration.get_value().relative_frame,
+            "comment": marker.comment.get_value(),
+            "start_frame": start_frame,
+            "colour": marker.colour.get_value()
+        }
+
+        output_markers.append(marker_data)
+
+    return output_markers
+
+
 def create_otio_markers(otio_item, item):
-    for tag in item.tags():
-        if not tag.visible():
-            continue
-
-        if tag.name() == 'Copy':
-            # Hiero adds this tag to a lot of clips
-            continue
-
-        frame_rate = utils.get_rate(item) or self.fps
+    markers = _get_flame_markers(item)
+    for marker in markers:
+        frame_rate = self.fps
 
         marked_range = otio.opentime.TimeRange(
             start_time=otio.opentime.RationalTime(
-                tag.inTime(),
+                marker["start_frame"],
                 frame_rate
             ),
             duration=otio.opentime.RationalTime(
-                int(tag.metadata().dict().get('tag.length', '0')),
+                marker["duration"],
                 frame_rate
             )
         )
-        # add tag metadata but remove "tag." string
+
+        # testing the comment if it is not containing json string
+        check_if_json = re.findall(
+            re.compile(r"[{:}]"),
+            marker["comment"]
+        )
+
+        # to identify this as json, at least 3 items in the list should
+        # be present ["{", ":", "}"]
         metadata = {}
-
-        for key, value in tag.metadata().dict().items():
-            _key = key.replace("tag.", "")
-
+        if len(check_if_json) >= 3:
+            # this is json string
             try:
                 # capture exceptions which are related to strings only
-                _value = ast.literal_eval(value)
-            except (ValueError, SyntaxError):
-                _value = value
-
-            metadata.update({_key: _value})
-
-        # Store the source item for future import assignment
-        metadata['hiero_source_type'] = item.__class__.__name__
+                metadata.update(
+                    json.loads(marker["comment"])
+                )
+            except ValueError as msg:
+                log.error("Marker json conversion: {}".format(msg))
+        else:
+            metadata["comment"] = marker["comment"]
 
         marker = otio.schema.Marker(
-            name=tag.name(),
-            color=get_marker_color(tag),
+            name=marker["name"],
+            color=_get_marker_color(
+                marker["colour"]),
             marked_range=marked_range,
             metadata=metadata
         )
@@ -240,7 +266,6 @@ def create_otio_reference(clip_data):
             "padding": padding
         })
 
-
     otio_ex_ref_item = None
 
     if is_sequence:
@@ -283,11 +308,16 @@ def create_otio_reference(clip_data):
 
 
 def create_otio_clip(clip_data):
+    segment = clip_data["PySegment"]
 
+    # create media reference
     media_reference = create_otio_reference(clip_data)
+
     # calculate source in
     first_frame = utils.get_frame_from_path(clip_data["fpath"]) or 0
     source_in = int(clip_data["source_in"]) - int(first_frame)
+
+    # creatae source range
     source_range = create_otio_time_range(
         source_in,
         clip_data["record_duration"],
@@ -300,15 +330,9 @@ def create_otio_clip(clip_data):
         media_reference=media_reference
     )
 
-    # # Add tags as markers
-    # if self.include_tags:
-    #     create_otio_markers(otio_clip, track_item)
-    #     create_otio_markers(otio_clip, track_item.source())
-
-    # # only if video
-    # if not clip.mediaSource().hasAudio():
-    #     # Add effects to clips
-    #     create_time_effects(otio_clip, track_item)
+    # Add markers
+    if self.include_markers:
+        create_otio_markers(otio_clip, segment)
 
     return otio_clip
 
@@ -321,6 +345,7 @@ def create_otio_gap(gap_start, clip_start, tl_start_frame, fps):
             fps
         )
     )
+
 
 def get_clips_in_reels(project):
     output_clips = []
@@ -346,12 +371,13 @@ def get_clips_in_reels(project):
                 version = clip.versions[-1]
                 track = version.tracks[-1]
                 for segment in track.segments:
-                    segment_data = get_segment_attributes(segment)
+                    segment_data = _get_segment_attributes(segment)
                     clip_data.update(segment_data)
 
                 output_clips.append(clip_data)
 
     return output_clips
+
 
 def _get_colourspace_policy():
 
@@ -372,6 +398,7 @@ def _get_colourspace_policy():
             {"openpype.flame.{}".format(k): v for k, v in dict_conf.items()}
         )
     return output
+
 
 def _create_otio_timeline(sequence):
 
@@ -430,58 +457,32 @@ def add_otio_metadata(otio_item, item, **kwargs):
     for key, value in metadata.items():
         otio_item.metadata.update({key: value})
 
-def get_markers(item, segment=True):
-    output_markers = []
 
-    if segment:
-        segment_tl_in = item.record_in.relative_frame
-
-    for marker in item.markers:
-        log.debug(marker)
-        start_frame = marker.location.get_value().relative_frame
-
-        if segment:
-            start_frame = (start_frame - segment_tl_in) + 1
-
-        marker_data = {
-            "name": marker.name.get_value(),
-            "duration": marker.duration.get_value().relative_frame,
-            "comment": marker.comment.get_value(),
-            "start_frame": start_frame,
-            "colour": marker.colour.get_value()
-        }
-
-        output_markers.append(marker_data)
-
-    return output_markers
-
-def get_shot_tokens_values(clip, tokens):
+def _get_shot_tokens_values(clip, tokens):
     old_value = None
     output = {}
 
-    shot_name = getattr(clip, "shot_name")
-
-    if not shot_name:
+    if not clip.shot_name:
         return output
 
-    old_value = shot_name.get_value()
+    old_value = clip.shot_name.get_value()
 
     for token in tokens:
-        shot_name.set_value(token)
+        clip.shot_name.set_value(token)
         _key = re.sub("[ <>]", "", token)
-        try:
-            output[_key] = int(shot_name.get_value())
-        except:
-            output[_key] = shot_name.get_value()
 
-    shot_name.set_value(old_value)
+        try:
+            output[_key] = int(clip.shot_name.get_value())
+        except TypeError:
+            output[_key] = clip.shot_name.get_value()
+
+    clip.shot_name.set_value(old_value)
 
     return output
 
-def get_segment_attributes(segment):
-    # log.debug(dir(segment))
 
-    markers = get_markers(segment)
+def _get_segment_attributes(segment):
+    # log.debug(dir(segment))
 
     if str(segment.name)[1:-1] == "":
         return None
@@ -497,7 +498,7 @@ def get_segment_attributes(segment):
     }
 
     # add all available shot tokens
-    shot_tokens = get_shot_tokens_values(segment, [
+    shot_tokens = _get_shot_tokens_values(segment, [
         "<colour space>", "<width>", "<height>", "<depth>",
     ])
     clip_data.update(shot_tokens)
@@ -523,6 +524,7 @@ def get_segment_attributes(segment):
 
     return clip_data
 
+
 def create_otio_timeline(sequence):
     log.info(dir(sequence))
     log.info(sequence.attributes)
@@ -537,8 +539,8 @@ def create_otio_timeline(sequence):
     # get current timeline
     self.fps = float(str(sequence.frame_rate)[:-4])
     self.seq_frame_start = utils.timecode_to_frames(
-            str(sequence.start_time).replace("+", ":"),
-            self.fps)
+        str(sequence.start_time).replace("+", ":"),
+        self.fps)
 
     # convert timeline to otio
     otio_timeline = _create_otio_timeline(sequence)
@@ -555,7 +557,7 @@ def create_otio_timeline(sequence):
 
             all_segments = []
             for segment in track.segments:
-                clip_data = get_segment_attributes(segment)
+                clip_data = _get_segment_attributes(segment)
                 if not clip_data:
                     continue
                 all_segments.append(clip_data)
