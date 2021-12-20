@@ -39,17 +39,23 @@ class TimersManagerModuleRestApi:
     async def start_timer(self, request):
         data = await request.json()
         try:
-            project_name = data['project_name']
-            asset_name = data['asset_name']
-            task_name = data['task_name']
-            hierarchy = data['hierarchy']
+            project_name = data["project_name"]
+            asset_name = data["asset_name"]
+            task_name = data["task_name"]
         except KeyError:
-            log.error("Payload must contain fields 'project_name, " +
-                      "'asset_name', 'task_name', 'hierarchy'")
-            return Response(status=400)
+            msg = (
+                "Payload must contain fields 'project_name,"
+                " 'asset_name' and 'task_name'"
+            )
+            log.error(msg)
+            return Response(status=400, message=msg)
 
         self.module.stop_timers()
-        self.module.start_timer(project_name, asset_name, task_name, hierarchy)
+        try:
+            self.module.start_timer(project_name, asset_name, task_name)
+        except Exception as exc:
+            return Response(status=404, message=str(exc))
+
         return Response(status=200)
 
     async def stop_timer(self, request):
