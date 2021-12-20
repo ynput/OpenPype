@@ -10,3 +10,6 @@
 [submodule "openpype/modules/default_modules/ftrack/python2_vendor/ftrack-python-api"]
 	path = openpype/modules/default_modules/ftrack/python2_vendor/ftrack-python-api
 	url = https://bitbucket.org/ftrack/ftrack-python-api.git
+[submodule "openpype/hosts/maya/vendor/studiolibrary"]
+	path = openpype/hosts/maya/vendor/studiolibrary
+	url = https://github.com/krathjen/studiolibrary.git

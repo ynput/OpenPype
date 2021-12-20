@@ -2,14 +2,6 @@ from avalon import api
 from maya import cmds
 import os
 
-import os
-import sys
-
-if not os.path.exists(r'/Users/karimbehiry/Documents/git/studiolibrary-2.9.6.b3/src'):
-    raise IOError(r'The source path "/Users/karimbehiry/Documents/git/studiolibrary-2.9.6.b3/src" does not exist!')
-
-if r'/Users/karimbehiry/Documents/git/studiolibrary-2.9.6.b3/src' not in sys.path:
-    sys.path.insert(0, r'/Users/karimbehiry/Documents/git/studiolibrary-2.9.6.b3/src')
 
 from studiolibrarymaya import animitem
 

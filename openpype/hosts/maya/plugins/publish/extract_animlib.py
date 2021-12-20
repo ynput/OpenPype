@@ -8,19 +8,7 @@ from maya import cmds
 import avalon.maya
 import openpype.api
 
-
-import os
-import sys
-
-if not os.path.exists(r'/Users/karimbehiry/Documents/git/studiolibrary-2.9.6.b3/src'):
-    raise IOError(r'The source path "/Users/karimbehiry/Documents/git/studiolibrary-2.9.6.b3/src" does not exist!')
-
-if r'/Users/karimbehiry/Documents/git/studiolibrary-2.9.6.b3/src' not in sys.path:
-    sys.path.insert(0, r'/Users/karimbehiry/Documents/git/studiolibrary-2.9.6.b3/src')
-
 from studiolibrarymaya import animitem
-# import mutils
-# import mutils.gui
 
 class ExtractAnimLib(openpype.api.Extractor):
     """Extract Animation as Animaion Library (.anim)."""
