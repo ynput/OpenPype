@@ -29,13 +29,13 @@ class ValidateAnimationContent(pyblish.api.InstancePlugin):
 
         if not out_set:
             raise PublishXmlValidationError(
-                "Invalid animation instance structure", cls,
+                cls, "Invalid animation instance structure",
                 key="missing_out_set",
                 formatting_data={"instance": instance.name})
 
         if 'out_hierarchy' not in instance.data:
             raise PublishXmlValidationError(
-                "Missing collected data", cls,
+                cls, "Missing collected data",
                 key="out_hierarchy_not_collected",
                 formatting_data={"instance": instance.name})
 
@@ -54,5 +54,5 @@ class ValidateAnimationContent(pyblish.api.InstancePlugin):
         invalid = self.get_invalid(instance)
         if invalid:
             raise PublishXmlValidationError(
-                "Invalid animation content", self,
+                self, "Invalid animation content",
                 formatting_data={"nodes": ", ".join(invalid)})
