@@ -20,7 +20,7 @@ This error is shown when for example resolution in the scene doesn't match to re
 Either value in the database or in the scene is wrong.
 </detail>
 </error>
-<error id="secondary">
+<error id="file_not_found">
 <title>Scene file doesn't exist</title>
 <description>
 ## Scene file doesn't exist

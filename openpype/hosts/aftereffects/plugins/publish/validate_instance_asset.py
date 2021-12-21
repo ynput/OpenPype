@@ -2,7 +2,7 @@ from avalon import api
 import pyblish.api
 import openpype.api
 from avalon import aftereffects
-from openpype.pipeline import PublishValidationError
+from openpype.pipeline import PublishXmlValidationError
 
 
 class ValidateInstanceAssetRepair(pyblish.api.Action):
@@ -56,6 +56,5 @@ class ValidateInstanceAsset(pyblish.api.InstancePlugin):
             f"as current context {current_asset}."
         )
 
-        # assert instance_asset == current_asset, msg
         if instance_asset != current_asset:
-            raise PublishValidationError(msg, "Subset context", DESCRIPTION)
+            raise PublishXmlValidationError(self, msg)

@@ -126,8 +126,12 @@ class ValidateSceneSettings(pyblish.api.InstancePlugin):
 
         if invalid_settings:
             invalid_keys_str = ",".join(invalid_keys)
+            break_str = "<br/>"
+            invalid_setting_str = "<b>Found invalid settings:</b><br/>{}".\
+                format(break_str.join(invalid_settings))
+
             formatting_data = {
-                "invalid_setting_str": msg,
+                "invalid_setting_str": invalid_setting_str,
                 "invalid_keys_str": invalid_keys_str
             }
             raise PublishXmlValidationError(self, msg,
@@ -141,5 +145,5 @@ class ValidateSceneSettings(pyblish.api.InstancePlugin):
             formatting_data = {
                 "scene_url": scene_url
             }
-            raise PublishXmlValidationError(self, msg,
+            raise PublishXmlValidationError(self, msg, key="file_not_found",
                                             formatting_data=formatting_data)
