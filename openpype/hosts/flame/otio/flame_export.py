@@ -22,17 +22,17 @@ TRACK_TYPES = {
     "audio": otio.schema.TrackKind.Audio
 }
 MARKERS_COLOR_MAP = {
-    "magenta": otio.schema.MarkerColor.MAGENTA,
-    "red": otio.schema.MarkerColor.RED,
-    "yellow": otio.schema.MarkerColor.YELLOW,
-    "green": otio.schema.MarkerColor.GREEN,
-    "cyan": otio.schema.MarkerColor.CYAN,
-    "white": otio.schema.MarkerColor.WHITE,
-    "orange": otio.schema.MarkerColor.ORANGE,
-    "blue": otio.schema.MarkerColor.BLUE,
-    "purple": otio.schema.MarkerColor.PURPLE,
-    "pink": otio.schema.MarkerColor.PINK,
-    "black": otio.schema.MarkerColor.BLACK,
+    (1.0, 0.0, 0.0): otio.schema.MarkerColor.RED,
+    (1.0, 0.5, 0.0): otio.schema.MarkerColor.ORANGE,
+    (1.0, 1.0, 0.0): otio.schema.MarkerColor.YELLOW,
+    (1.0, 0.5, 1.0): otio.schema.MarkerColor.PINK,
+    (1.0, 1.0, 1.0): otio.schema.MarkerColor.WHITE,
+    (0.0, 1.0, 0.0): otio.schema.MarkerColor.GREEN,
+    (0.0, 1.0, 1.0): otio.schema.MarkerColor.CYAN,
+    (0.0, 0.0, 1.0): otio.schema.MarkerColor.BLUE,
+    (0.5, 0.0, 0.5): otio.schema.MarkerColor.PURPLE,
+    (0.5, 0.0, 1.0): otio.schema.MarkerColor.MAGENTA,
+    (0.0, 0.0, 0.0): otio.schema.MarkerColor.BLACK
 }
 MARKERS_INCLUDE = True
 
