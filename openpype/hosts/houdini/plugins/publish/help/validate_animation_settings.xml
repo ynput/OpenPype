@@ -1,0 +1,31 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<root>
+<error id="main">
+<title>Frame token in output</title>
+<description>## Frame range is missing frame token
+
+This validator will check the output parameter of the node if
+the Valid Frame Range is not set to 'Render Current Frame'
+
+No frame token found in {nodepath}
+
+### How to repair?
+Your you need to add `$F4` or similar frame based token to your path. 
+**Example:** 
+    Good: 'my_vbd_cache.$F4.vdb'
+    Bad: 'my_vbd_cache.vdb'
+
+
+
+</description>
+<detail>
+
+If you render out a frame range it is mandatory to have the
+frame token - '$F4' or similar - to ensure that each frame gets
+written. If this is not the case you will override the same file
+every time a frame is written out.
+
+
+</detail>
+</error>
+</root>
