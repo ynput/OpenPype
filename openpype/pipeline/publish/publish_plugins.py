@@ -35,7 +35,9 @@ class PublishXmlValidationError(PublishValidationError):
         result = load_help_content_from_plugin(plugin)
         content_obj = result["errors"][key]
         description = content_obj.description.format(**formatting_data)
-        detail = content_obj.detail.format(**formatting_data)
+        detail = content_obj.detail
+        if detail:
+            detail = detail.format(**formatting_data)
         super(PublishXmlValidationError, self).__init__(
             message, content_obj.title, description, detail
         )
