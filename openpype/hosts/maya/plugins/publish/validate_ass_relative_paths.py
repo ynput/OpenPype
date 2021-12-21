@@ -1,11 +1,15 @@
+# -*- coding: utf-8 -*-
+"""Ensure exporting ass file has set relative texture paths."""
 import os
 import types
 
 import maya.cmds as cmds
 
 import pyblish.api
+from pyblish.api import Instance
 import openpype.api
 import openpype.hosts.maya.api.action
+from openpype.pipeline import PublishXmlValidationError
 
 
 class ValidateAssRelativePaths(pyblish.api.InstancePlugin):
@@ -18,6 +22,7 @@ class ValidateAssRelativePaths(pyblish.api.InstancePlugin):
     actions = [openpype.api.RepairAction]
 
     def process(self, instance):
+        # type: (Instance) -> None
         # we cannot ask this until user open render settings as
         # `defaultArnoldRenderOptions` doesn't exists
         try:
@@ -32,15 +37,19 @@ class ValidateAssRelativePaths(pyblish.api.InstancePlugin):
                 "defaultArnoldRenderOptions.pspath"
             )
         except ValueError:
-            assert False, ("Can not validate, render setting were not opened "
-                           "yet so Arnold setting cannot be validate")
+            raise PublishXmlValidationError(
+                self, "Render Settings were not opened.")
 
         scene_dir, scene_basename = os.path.split(cmds.file(q=True, loc=True))
         scene_name, _ = os.path.splitext(scene_basename)
-        assert self.maya_is_true(relative_texture) is not True, \
-            ("Texture path is set to be absolute")
-        assert self.maya_is_true(relative_procedural) is not True, \
-            ("Procedural path is set to be absolute")
+        if self.maya_is_true(relative_texture) is True:
+            raise PublishXmlValidationError(
+                self, "Texture path is set to be absolute.",
+                key="texture_paths_not_relative")
+        if self.maya_is_true(relative_procedural) is True:
+            raise PublishXmlValidationError(
+                self, "Procedural path is set to be absolute.",
+                key="procedural_paths_not_relative")
 
         anatomy = instance.context.data["anatomy"]
 
@@ -54,13 +63,15 @@ class ValidateAssRelativePaths(pyblish.api.InstancePlugin):
 
         self.log.info("discovered roots: {}".format(":".join(paths)))
 
-        assert ":".join(paths) in texture_search_path, (
-            "Project roots are not in texture_search_path"
-        )
+        if ":".join(paths) not in texture_search_path:
+            raise PublishXmlValidationError(
+                self, "Project roots are not in textures search path.",
+                key="project_not_in_texture")
 
-        assert ":".join(paths) in procedural_search_path, (
-            "Project roots are not in procedural_search_path"
-        )
+        if ":".join(paths) not in procedural_search_path:
+            raise PublishXmlValidationError(
+                self, "Project roots are not in procedural search path.",
+                key="project_not_in_procedural")
 
     @classmethod
     def repair(cls, instance):

@@ -1,0 +1,74 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<root>
+    <error id="main">
+<title>Render Settings were not opened.</title>
+<description>We can't validate if Arnold stand-ins have relative path set because Maya Render Setting were not opened yet.
+
+    ### How to repair
+    This can be easily fixed just by opening them and hitting refresh button.
+
+</description>
+<detail>Until you won't open Render Settings in Maya at least one time, we cannot access proper data to validate them.
+</detail>
+</error>
+
+    <error id="texture_paths_not_relative">
+<title>Arnold stand-ins texture search path are not relative.</title>
+<description>Texture search path should be set to relative to avoid problems on multiplatform rendering machines.
+
+    ### How to repair
+    Just turn off checkbox in **Render Settings -> System -> Search Paths -> Absolute Texture Paths**.
+</description>
+<detail/>
+</error>
+
+     <error id="procedural_paths_not_relative">
+<title>Arnold stand-ins procedural search path are not relative.</title>
+<description>Procedural search path should be set to relative to avoid problems on multiplatform rendering machines.
+
+    ### How to repair
+    Just turn off checkbox in **Render Settings -> System -> Search Paths -> Absolute Procedural Paths**.
+</description>
+<detail/>
+</error>
+
+    <error id="project_not_in_texture">
+<title>Project roots are not in texture search paths.</title>
+<description>Project roots must be included in texture search paths to allow searching for textures published in
+    that given project.
+
+    ### How to repair
+    Add project root to the paths. You can use environment variable that is automatically set by OpenPype on Maya
+    launch. This variable has different names based on you project settings but it follows this convention:
+
+    `OPENPYPE_PROJECT_ROOT_{NAME}` where `{NAME}` is the name of project root. If your project root is called
+    `WORK` you can use it like this:
+
+    ```
+    [OPENPYPE_PROJECT_ROOT_WORK]:/my/custom/path
+    ```
+    You can set it in **Render Settings -> System -> Search Paths -> Texture Search Path**.
+</description>
+<detail/>
+</error>
+
+    <error id="project_not_in_procedural">
+<title>Project roots are not in procedural search paths.</title>
+<description>Project roots must be included in procedural search paths to allow searching for procedurals published in
+    that given project.
+
+    ### How to repair
+    Add project root to the paths. You can use environment variable that is automatically set by OpenPype on Maya
+    launch. This variable has different names based on you project settings but it follows this convention:
+
+    `OPENPYPE_PROJECT_ROOT_{NAME}` where `{NAME}` is the name of project root. If your project root is called
+    `WORK` you can use it like this:
+
+    ```
+    [OPENPYPE_PROJECT_ROOT_WORK]:/my/custom/path
+    ```
+    You can set it in **Render Settings -> System -> Search Paths -> Procedural Search Path**.
+</description>
+<detail/>
+</error>
+</root>

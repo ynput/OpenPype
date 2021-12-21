@@ -12,10 +12,12 @@
 <error id="missing_out_set">
 <title>Animation instance has invalid structure</title>
 <description>Animation instance {instance} has invalid structure. It must have `out_SET` inside.
+
+    ### How to repair:
+    To fix it, create `out_SET` under your animation instance set, or re-create this instance with Creator.
+    If this instance is an unloaded reference, please deactivate it.
 </description>
-<detail>Animation instance will know what to process based on Maya sets under it. To fix it, create `out_SET`
-    under your animation instance set. If this instance is an unloaded reference, please deactivate it.
-</detail>
+<detail/>
 </error>
 
 <error id="out_hierarchy_not_collected">
