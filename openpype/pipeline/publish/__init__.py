@@ -1,5 +1,6 @@
 from .publish_plugins import (
     PublishValidationError,
+    PublishXmlValidationError,
     KnownPublishError,
     OpenPypePyblishPluginMixin
 )
@@ -14,6 +15,7 @@ from .lib import (
 
 __all__ = (
     "PublishValidationError",
+    "PublishXmlValidationError",
     "KnownPublishError",
     "OpenPypePyblishPluginMixin",
 
