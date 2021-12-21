@@ -25,7 +25,7 @@ class PublishValidationError(Exception):
 
 class PublishXmlValidationError(PublishValidationError):
     def __init__(
-        self, message, plugin, key=None, formatting_data=None
+        self, plugin, message, key=None, formatting_data=None
     ):
         if key is None:
             key = "main"
