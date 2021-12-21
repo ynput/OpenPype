@@ -1,13 +1,17 @@
+# -*- coding: utf-8 -*-
+"""Validate if deformed shapes have related IDs to the original shapes."""
 import maya.cmds as cmds
 
 import pyblish.api
 import openpype.api
+from pyblish.api import Instance
 import openpype.hosts.maya.api.action
 from openpype.hosts.maya.api import lib
+from openpype.pipeline import PublishXmlValidationError
 
 
 class ValidateOutRelatedNodeIds(pyblish.api.InstancePlugin):
-    """Validate if deformed shapes have related IDs to the original shapes
+    """Validate if deformed shapes have related IDs to the original shapes.
 
     When a deformer is applied in the scene on a referenced mesh that already
     had deformers then Maya will create a new shape node for the mesh that
@@ -26,17 +30,23 @@ class ValidateOutRelatedNodeIds(pyblish.api.InstancePlugin):
     ]
 
     def process(self, instance):
-        """Process all meshes"""
+        # type: (Instance) -> None
+        """Process all meshes."""
 
         # Ensure all nodes have a cbId and a related ID to the original shapes
         # if a deformer has been created on the shape
         invalid = self.get_invalid(instance)
         if invalid:
-            raise RuntimeError("Nodes found with non-related "
-                               "asset IDs: {0}".format(invalid))
+            raise PublishXmlValidationError(
+                self, "Non-related nodes found.",
+                formatting_data={
+                    "instance": instance.name,
+                    "nodes": invalid,
+                })
 
     @classmethod
     def get_invalid(cls, instance):
+        # type: (Instance) -> list
         """Get all nodes which do not match the criteria"""
 
         invalid = []
@@ -73,7 +83,7 @@ class ValidateOutRelatedNodeIds(pyblish.api.InstancePlugin):
 
     @classmethod
     def repair(cls, instance):
-
+        # type: (Instance) -> None
         for node in cls.get_invalid(instance):
             # Get the original id from history
             history_id = lib.get_id_from_history(node)

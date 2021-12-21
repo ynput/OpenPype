@@ -1,0 +1,15 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<root>
+    <error id="main">
+<title>Non-related IDs</title>
+<description>All object in Animation `out_SET` must be related to each other. This validation makes sure there is no
+    node under it (deformer for example) that is not related to other nodes. For instance {instance}, these nodes are
+    invalid - not related: {nodes}.
+</description>
+<detail>
+    When a deformer is applied in the scene on a referenced mesh that already had deformers then Maya will create a new shape node for the mesh that
+    does not have the original id. This validator checks whether the ids are valid on all the shape nodes in the instance. We are ensuring that all
+    nodes have a cbId and a related ID to the original shapes.
+</detail>
+</error>
+</root>
