@@ -1,0 +1,17 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<root>
+    <error id="main">
+        <title>Knobs values</title>
+        <description>
+## Invalid node's knobs values
+
+Following write node knobs needs to be repaired:
+{xml_msg}
+
+### How to repair?
+
+1. Use Repair button.
+3. Hit Reload button on the publisher.
+        </description>
+    </error>
+</root>

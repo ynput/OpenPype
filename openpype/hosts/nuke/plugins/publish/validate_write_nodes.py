@@ -1,6 +1,7 @@
 import os
 import pyblish.api
 import openpype.utils
+from openpype.pipeline import PublishXmlValidationError
 import openpype.hosts.nuke.lib as nukelib
 import avalon.nuke
 
@@ -57,13 +58,17 @@ class ValidateNukeWriteNode(pyblish.api.InstancePlugin):
 
         self.log.info(check)
 
-        msg = "Node's attribute `{0}` is not correct!\n" \
-              "\nCorrect: `{1}` \n\nWrong: `{2}` \n\n"
+        msg = "Write node's knobs values are not correct!\n"
+        msg_add = "Knob `{0}` Correct: `{1}` Wrong: `{2}` \n"
+        xml_msg = ""
 
         if check:
-            print_msg = ""
+            dbg_msg = msg
             for item in check:
-                print_msg += msg.format(item[0], item[1], item[2])
-            print_msg += "`RMB` click to the validator and `A` to fix!"
+                _msg_add = msg_add.format(item[0], item[1], item[2])
+                dbg_msg += _msg_add
+                xml_msg += _msg_add
 
-        assert not check, print_msg
+            raise PublishXmlValidationError(
+                self, dbg_msg, {"xml_msg": xml_msg}
+            )
