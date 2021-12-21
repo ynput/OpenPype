@@ -45,7 +45,7 @@
                 "render"
             ]
         },
-        "ValidateInstanceInContext": {
+        "ValidateCorrectAssetName": {
             "enabled": true,
             "optional": true,
             "active": true
