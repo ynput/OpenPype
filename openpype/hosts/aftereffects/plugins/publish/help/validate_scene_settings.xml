@@ -6,12 +6,12 @@
 ## Invalid scene setting found
 
 One of the settings in a scene doesn't match to asset settings in database.
-Invalid setting:
+
 {invalid_setting_str}
 
 ### How to repair?
 
-Change {invalid_keys_str} setting in the scene OR change them in asset database if they are wrong there.
+Change values for {invalid_keys_str} in the scene OR change them in the asset database if they are wrong there.
 </description>
 <detail>
 ### __Detailed Info__ (optional)
