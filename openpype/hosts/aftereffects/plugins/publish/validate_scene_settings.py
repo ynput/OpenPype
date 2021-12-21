@@ -7,6 +7,7 @@ import pyblish.api
 
 from avalon import aftereffects
 
+from openpype.pipeline import PublishXmlValidationError
 import openpype.hosts.aftereffects.api as api
 
 stub = aftereffects.stub()
@@ -103,12 +104,14 @@ class ValidateSceneSettings(pyblish.api.InstancePlugin):
         self.log.info("current_settings:: {}".format(current_settings))
 
         invalid_settings = []
+        invalid_keys = set()
         for key, value in expected_settings.items():
             if value != current_settings[key]:
                 invalid_settings.append(
                     "{} expected: {}  found: {}".format(key, value,
                                                         current_settings[key])
                 )
+                invalid_keys.add(key)
 
         if ((expected_settings.get("handleStart")
             or expected_settings.get("handleEnd"))
@@ -120,7 +123,23 @@ class ValidateSceneSettings(pyblish.api.InstancePlugin):
         msg = "Found invalid settings:\n{}".format(
             "\n".join(invalid_settings)
         )
-        assert not invalid_settings, msg
-        assert os.path.exists(instance.data.get("source")), (
-            "Scene file not found (saved under wrong name)"
-        )
+
+        if invalid_settings:
+            invalid_keys_str = ",".join(invalid_keys)
+            formatting_data = {
+                "invalid_setting_str": msg,
+                "invalid_keys_str": invalid_keys_str
+            }
+            raise PublishXmlValidationError(self, msg,
+                                            formatting_data=formatting_data)
+
+        if not os.path.exists(instance.data.get("source")):
+            scene_url = instance.data.get("source")
+            msg = "Scene file {} not found (saved under wrong name)".format(
+                scene_url
+            )
+            formatting_data = {
+                "scene_url": scene_url
+            }
+            raise PublishXmlValidationError(self, msg,
+                                            formatting_data=formatting_data)
