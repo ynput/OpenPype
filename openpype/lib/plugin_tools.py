@@ -241,8 +241,8 @@ def filter_pyblish_plugins(plugins):
                 )
                 continue
 
-            host_from_file = split_path[-4:-3][0]
-            plugin_kind = split_path[-2:-1][0]
+            host_from_file = split_path[-4]
+            plugin_kind = split_path[-2]
 
             # TODO: change after all plugins are moved one level up
             if host_from_file == "openpype":
