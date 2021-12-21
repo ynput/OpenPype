@@ -68,8 +68,7 @@ class ValidationErrorTitleWidget(QtWidgets.QWidget):
         toggle_instance_btn.setArrowType(QtCore.Qt.RightArrow)
         toggle_instance_btn.setMaximumWidth(14)
 
-        exception = error_info["exception"]
-        label_widget = QtWidgets.QLabel(exception.title, title_frame)
+        label_widget = QtWidgets.QLabel(error_info["title"], title_frame)
 
         title_frame_layout = QtWidgets.QHBoxLayout(title_frame)
         title_frame_layout.addWidget(toggle_instance_btn)
@@ -86,7 +85,8 @@ class ValidationErrorTitleWidget(QtWidgets.QWidget):
         ):
             context_validation = True
             toggle_instance_btn.setArrowType(QtCore.Qt.NoArrow)
-            help_text_by_instance_id[None] = error_info[0][1]
+            description = self._prepare_description(error_info[0][1])
+            help_text_by_instance_id[None] = description
         else:
             items = []
             for instance, exception in error_info:
@@ -97,16 +97,8 @@ class ValidationErrorTitleWidget(QtWidgets.QWidget):
                 )
                 item.setData(instance.id, INSTANCE_ID_ROLE)
                 items.append(item)
-                dsc = exception.description
-                detail = exception.detail
-                if detail:
-                    dsc += "<br/><br/>{}".format(detail)
-
-                help_text = dsc
-                if commonmark:
-                    help_text = commonmark.commonmark(dsc)
-
-                help_text_by_instance_id[instance.id] = help_text
+                description = self._prepare_description(exception)
+                help_text_by_instance_id[instance.id] = description
 
             instances_model.invisibleRootItem().appendRows(items)
 
@@ -144,6 +136,17 @@ class ValidationErrorTitleWidget(QtWidgets.QWidget):
 
         self._context_validation = context_validation
         self._help_text_by_instance_id = help_text_by_instance_id
+
+    def _prepare_description(self, exception):
+        dsc = exception.description
+        detail = exception.detail
+        if detail:
+            dsc += "<br/><br/>{}".format(detail)
+
+        description = dsc
+        if commonmark:
+            description = commonmark.commonmark(dsc)
+        return description
 
     def _mouse_release_callback(self):
         """Mark this widget as selected on click."""
@@ -493,7 +496,8 @@ class ValidationsWidget(QtWidgets.QWidget):
             for title in titles:
                 errors_by_title.append({
                     "plugin": plugin_info["plugin"],
-                    "error_info": error_info_by_title[title]
+                    "error_info": error_info_by_title[title],
+                    "title": title
                 })
 
         for idx, item in enumerate(errors_by_title):
