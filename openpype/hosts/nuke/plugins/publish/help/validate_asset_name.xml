@@ -1,0 +1,18 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<root>
+    <error id="main">
+        <title>Shot/Asset mame</title>
+        <description>
+## Invalid Shot/Asset name in subset
+
+Following Node with name `{node_name}`:
+Is in context of `{context_asset}` but Node _asset_ knob is set as `{asset}`.
+
+### How to repair?
+
+1. Either use Repair or Select button.
+2. If you chose Select then rename asset knob to correct name.
+3. Hit Reload button on the publisher.
+        </description>
+    </error>
+</root>

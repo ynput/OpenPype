@@ -3,17 +3,17 @@
 from __future__ import absolute_import
 
 import nuke
-
 import pyblish.api
 import openpype.api
 import avalon.nuke.lib
 import openpype.hosts.nuke.api as nuke_api
+from openpype.pipeline import PublishXmlValidationError
 
 
 class SelectInvalidInstances(pyblish.api.Action):
     """Select invalid instances in Outliner."""
 
-    label = "Select Instances"
+    label = "Select"
     icon = "briefcase"
     on = "failed"
 
@@ -87,7 +87,7 @@ class RepairSelectInvalidInstances(pyblish.api.Action):
             )
 
 
-class ValidateInstanceInContext(pyblish.api.InstancePlugin):
+class ValidateCorrectAssetName(pyblish.api.InstancePlugin):
     """Validator to check if instance asset match context asset.
 
     When working in per-shot style you always publish data in context of
@@ -96,15 +96,29 @@ class ValidateInstanceInContext(pyblish.api.InstancePlugin):
 
     Action on this validator will select invalid instances in Outliner.
     """
-
     order = openpype.api.ValidateContentsOrder
-    label = "Instance in same Context"
+    label = "Validate correct asset name"
     hosts = ["nuke"]
-    actions = [SelectInvalidInstances, RepairSelectInvalidInstances]
+    actions = [
+        SelectInvalidInstances,
+        RepairSelectInvalidInstances
+    ]
     optional = True
 
     def process(self, instance):
         asset = instance.data.get("asset")
         context_asset = instance.context.data["assetEntity"]["name"]
-        msg = "{} has asset {}".format(instance.name, asset)
-        assert asset == context_asset, msg
+
+        msg = (
+            "Instance `{}` has wrong shot/asset name:\n"
+            "Correct: `{}` | Wrong: `{}`").format(
+                instance.name, asset, context_asset)
+
+        if asset != context_asset:
+            PublishXmlValidationError(
+                self, msg, formatting_data={
+                    "node_name": instance[0]["name"].value(),
+                    "wrong_name": asset,
+                    "correct_name": context_asset
+                }
+            )
