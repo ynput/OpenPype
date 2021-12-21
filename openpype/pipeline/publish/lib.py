@@ -64,7 +64,7 @@ def load_help_content_from_filepath(filepath):
         description = child.find("description").text
         detail_node = child.find("detail")
         detail = None
-        if detail_node:
+        if detail_node is not None:
             detail = detail_node.text
         if child.tag == "error":
             errors[child_id] = HelpContent(title, description, detail)
