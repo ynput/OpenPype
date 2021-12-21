@@ -1,3 +1,6 @@
+from .lib import load_help_content_from_plugin
+
+
 class PublishValidationError(Exception):
     """Validation error happened during publishing.
 
@@ -12,11 +15,31 @@ class PublishValidationError(Exception):
         description(str): Detailed description of an error. It is possible
             to use Markdown syntax.
     """
-    def __init__(self, message, title=None, description=None):
+    def __init__(self, message, title=None, description=None, detail=None):
         self.message = message
         self.title = title or "< Missing title >"
         self.description = description or message
+        self.detail = detail
         super(PublishValidationError, self).__init__(message)
+
+
+class PublishXmlValidationError(PublishValidationError):
+    def __init__(
+        self, message, plugin, key=None, *formattings_arg, **formatting_kwargs
+    ):
+        if key is None:
+            key = "main"
+        result = load_help_content_from_plugin(plugin)
+        content_obj = result["errors"][key]
+        description = content_obj.description.format(
+            *formattings_arg, **formatting_kwargs
+        )
+        detail = content_obj.detail.format(
+            *formattings_arg, **formatting_kwargs
+        )
+        super(PublishXmlValidationError, self).__init__(
+            message, content_obj.title, description, detail
+        )
 
 
 class KnownPublishError(Exception):

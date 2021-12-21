@@ -6,7 +6,9 @@ from .publish_plugins import (
 
 from .lib import (
     DiscoverResult,
-    publish_plugins_discover
+    publish_plugins_discover,
+    load_help_content_from_plugin,
+    load_help_content_from_filepath
 )
 
 
@@ -16,5 +18,7 @@ __all__ = (
     "OpenPypePyblishPluginMixin",
 
     "DiscoverResult",
-    "publish_plugins_discover"
+    "publish_plugins_discover",
+    "load_help_content_from_plugin",
+    "load_help_content_from_filepath"
 )
