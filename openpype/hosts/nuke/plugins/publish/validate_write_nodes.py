@@ -25,7 +25,11 @@ class RepairNukeWriteNodeAction(pyblish.api.Action):
 
 
 class ValidateNukeWriteNode(pyblish.api.InstancePlugin):
-    """ Validates file output. """
+    """ Validate Write node's knobs.
+
+    Compare knobs on write node inside the render group
+    with settings. At the moment supporting only `file` knob.
+    """
 
     order = pyblish.api.ValidatorOrder
     optional = True
