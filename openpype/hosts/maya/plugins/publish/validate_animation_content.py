@@ -1,6 +1,10 @@
+# -*- coding: utf-8 -*-
+"""Validate content of animation family."""
 import pyblish.api
+from pyblish.api import Instance
 import openpype.api
 import openpype.hosts.maya.api.action
+from openpype.pipeline import PublishXmlValidationError
 
 
 class ValidateAnimationContent(pyblish.api.InstancePlugin):
@@ -19,16 +23,21 @@ class ValidateAnimationContent(pyblish.api.InstancePlugin):
 
     @classmethod
     def get_invalid(cls, instance):
-
+        # type: (Instance) -> list
         out_set = next((i for i in instance.data["setMembers"] if
                         i.endswith("out_SET")), None)
 
-        assert out_set, ("Instance '%s' has no objectSet named: `OUT_set`. "
-                         "If this instance is an unloaded reference, "
-                         "please deactivate by toggling the 'Active' attribute"
-                         % instance.name)
+        if not out_set:
+            raise PublishXmlValidationError(
+                "Invalid animation instance structure", cls,
+                key="missing_out_set",
+                formatting_data={"instance": instance.name})
 
-        assert 'out_hierarchy' in instance.data, "Missing `out_hierarchy` data"
+        if 'out_hierarchy' not in instance.data:
+            raise PublishXmlValidationError(
+                "Missing collected data", cls,
+                key="out_hierarchy_not_collected",
+                formatting_data={"instance": instance.name})
 
         # All nodes in the `out_hierarchy` must be among the nodes that are
         # in the instance. The nodes in the instance are found from the top
@@ -41,6 +50,9 @@ class ValidateAnimationContent(pyblish.api.InstancePlugin):
         return invalid
 
     def process(self, instance):
+        # type: (Instance) -> None
         invalid = self.get_invalid(instance)
         if invalid:
-            raise RuntimeError("Animation content is invalid. See log.")
+            raise PublishXmlValidationError(
+                "Invalid animation content", self,
+                formatting_data={"nodes": ", ".join(invalid)})

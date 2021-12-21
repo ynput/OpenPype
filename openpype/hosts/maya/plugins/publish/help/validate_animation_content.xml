@@ -1,0 +1,29 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<root>
+    <error id="main">
+<title>Animation instance was not correctly collected</title>
+<description>Animation instance {instance} was not collected correctly and is missing data.
+</description>
+<detail>Collection of animation data failed. This is either because animation instance is incorrectly created or
+    due to the bug. Checkout the output of animation collector.
+</detail>
+</error>
+
+<error id="missing_out_set">
+<title>Animation instance has invalid structure</title>
+<description>Animation instance {instance} has invalid structure. It must have `out_SET` inside.
+</description>
+<detail>Animation instance will know what to process based on Maya sets under it. To fix it, create `out_SET`
+    under your animation instance set. If this instance is an unloaded reference, please deactivate it.
+</detail>
+</error>
+
+<error id="out_hierarchy_not_collected">
+<title>Animation instance was not correctly collected</title>
+<description>Animation instance {instance} was not collected correctly and is missing data.
+</description>
+<detail>Collection of animation data failed. This is either because animation instance is incorrectly created or
+    due to the bug. Checkout the output of animation collector.
+</detail>
+</error>
+</root>
