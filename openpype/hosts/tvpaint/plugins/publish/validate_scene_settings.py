@@ -3,11 +3,10 @@ import json
 import pyblish.api
 
 
-class ValidateProjectSettings(pyblish.api.ContextPlugin):
-    """Validate project settings against database.
-    """
+class ValidateSceneSettings(pyblish.api.ContextPlugin):
+    """Validate scene settings against database."""
 
-    label = "Validate Project Settings"
+    label = "Validate Scene Settings"
     order = pyblish.api.ValidatorOrder
     optional = True
 
@@ -28,7 +27,7 @@ class ValidateProjectSettings(pyblish.api.ContextPlugin):
 
         if invalid:
             raise AssertionError(
-                "Project settings does not match database:\n{}".format(
+                "Scene settings does not match database:\n{}".format(
                     json.dumps(invalid, sort_keys=True, indent=4)
                 )
             )
