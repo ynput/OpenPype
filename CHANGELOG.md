@@ -1,6 +1,6 @@
 # Changelog
 
-## [3.7.0-nightly.9](https://github.com/pypeclub/OpenPype/tree/HEAD)
+## [3.7.0-nightly.10](https://github.com/pypeclub/OpenPype/tree/HEAD)
 
 [Full Changelog](https://github.com/pypeclub/OpenPype/compare/3.6.4...HEAD)
 
@@ -8,14 +8,12 @@
 
 - General: Default modules hierarchy n2 [\#2368](https://github.com/pypeclub/OpenPype/pull/2368)
 
-**🆕 New features**
-
-- Settings UI use OpenPype styles [\#2296](https://github.com/pypeclub/OpenPype/pull/2296)
-
 **🚀 Enhancements**
 
+- General: Environment variables groups [\#2424](https://github.com/pypeclub/OpenPype/pull/2424)
 - Settings UI: Hyperlinks to settings [\#2420](https://github.com/pypeclub/OpenPype/pull/2420)
 - Modules: JobQueue module moved one hierarchy level higher [\#2419](https://github.com/pypeclub/OpenPype/pull/2419)
+- TimersManager: Start timer post launch hook [\#2418](https://github.com/pypeclub/OpenPype/pull/2418)
 - Ftrack: Check existence of object type on recreation [\#2404](https://github.com/pypeclub/OpenPype/pull/2404)
 - Flame: moving `utility\_scripts` to api folder also with `scripts` [\#2385](https://github.com/pypeclub/OpenPype/pull/2385)
 - Centos 7 dependency compatibility [\#2384](https://github.com/pypeclub/OpenPype/pull/2384)
@@ -27,18 +25,14 @@
 - Burnins: Be able recognize mxf OPAtom format [\#2361](https://github.com/pypeclub/OpenPype/pull/2361)
 - Maya: Add is\_static\_image\_plane and is\_in\_all\_views option in imagePlaneLoader [\#2356](https://github.com/pypeclub/OpenPype/pull/2356)
 - Local settings: Copyable studio paths [\#2349](https://github.com/pypeclub/OpenPype/pull/2349)
-- Assets Widget: Clear model on project change [\#2345](https://github.com/pypeclub/OpenPype/pull/2345)
-- General: OpenPype default modules hierarchy [\#2338](https://github.com/pypeclub/OpenPype/pull/2338)
-- General: FFprobe error exception contain original error message [\#2328](https://github.com/pypeclub/OpenPype/pull/2328)
-- Resolve: Add experimental button to menu [\#2325](https://github.com/pypeclub/OpenPype/pull/2325)
-- General: Reduce vendor imports [\#2305](https://github.com/pypeclub/OpenPype/pull/2305)
-- Ftrack: Synchronize input links [\#2287](https://github.com/pypeclub/OpenPype/pull/2287)
+- General: Multilayer EXRs support [\#2315](https://github.com/pypeclub/OpenPype/pull/2315)
 
 **🐛 Bug fixes**
 
 - PS: Introduced settings for invalid characters to use in ValidateNaming plugin [\#2417](https://github.com/pypeclub/OpenPype/pull/2417)
 - Settings UI: Breadcrumbs path does not create new entities [\#2416](https://github.com/pypeclub/OpenPype/pull/2416)
 - AfterEffects: Variant 2022 is in defaults but missing in schemas [\#2412](https://github.com/pypeclub/OpenPype/pull/2412)
+- Nuke: baking representations was not additive [\#2406](https://github.com/pypeclub/OpenPype/pull/2406)
 - General: Fix access to environments from default settings [\#2403](https://github.com/pypeclub/OpenPype/pull/2403)
 - Fix: Placeholder Input color set fix [\#2399](https://github.com/pypeclub/OpenPype/pull/2399)
 - Settings: Fix state change of wrapper label [\#2396](https://github.com/pypeclub/OpenPype/pull/2396)
@@ -53,12 +47,9 @@
 - Launcher: Minimize button on MacOs [\#2355](https://github.com/pypeclub/OpenPype/pull/2355)
 - StandalonePublisher: Fix import of constant [\#2354](https://github.com/pypeclub/OpenPype/pull/2354)
 - Adobe products show issue [\#2347](https://github.com/pypeclub/OpenPype/pull/2347)
-- Maya Look Assigner: Fix Python 3 compatibility [\#2343](https://github.com/pypeclub/OpenPype/pull/2343)
 - Remove wrongly used host for hook [\#2342](https://github.com/pypeclub/OpenPype/pull/2342)
 - Tools: Use Qt context on tools show [\#2340](https://github.com/pypeclub/OpenPype/pull/2340)
 - Flame: Fix default argument value in custom dictionary [\#2339](https://github.com/pypeclub/OpenPype/pull/2339)
-- Timers Manager: Disable auto stop timer on linux platform [\#2334](https://github.com/pypeclub/OpenPype/pull/2334)
-- Fix - provider icons are pulled from a folder [\#2326](https://github.com/pypeclub/OpenPype/pull/2326)
 - Royal Render: Fix plugin order and OpenPype auto-detection [\#2291](https://github.com/pypeclub/OpenPype/pull/2291)
 
 **Merged pull requests:**
@@ -67,7 +58,6 @@
 - Add validator to check correct version of extension for PS and AE [\#2387](https://github.com/pypeclub/OpenPype/pull/2387)
 - Linux : flip updating submodules logic [\#2357](https://github.com/pypeclub/OpenPype/pull/2357)
 - Update of avalon-core [\#2346](https://github.com/pypeclub/OpenPype/pull/2346)
-- Maya: configurable model top level validation [\#2321](https://github.com/pypeclub/OpenPype/pull/2321)
 
 ## [3.6.4](https://github.com/pypeclub/OpenPype/tree/3.6.4) (2021-11-23)
 
