@@ -30,9 +30,6 @@
             "optional": false,
             "active": true
         },
-        "ValidateSceneSetWorkspace": {
-            "publish_from_published_workfiles": false
-        },
         "ValidateIntent": {
             "enabled": false,
             "profiles": []

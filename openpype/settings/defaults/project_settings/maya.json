@@ -206,6 +206,9 @@
             "redshift_render_attributes": [],
             "renderman_render_attributes": []
         },
+        "ValidateSceneSetWorkspace": {
+            "publish_from_published_workfiles": false
+        },
         "ValidateModelName": {
             "enabled": false,
             "database": true,

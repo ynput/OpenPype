@@ -230,6 +230,20 @@
             ]
         },
         {
+            "type": "dict",
+            "collapsible": true,
+            "key": "ValidateSceneSetWorkspace",
+            "label": "Validate Workspace",
+            "is_group": true,
+            "children": [
+                {
+                    "type": "boolean",
+                    "key": "publish_from_published_workfiles",
+                    "label": "Allow publishing form published workfiles"
+                }
+            ]
+        },
+        {
             "type": "collapsible-wrap",
             "label": "Model",
             "children": [

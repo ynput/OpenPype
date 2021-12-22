@@ -35,7 +35,7 @@ class ValidateSceneSetWorkspace(pyblish.api.InstancePlugin):
     version = (0, 1, 0)
     label = 'Maya Workspace Set'
 
-    publish_from_published_workfiles = True
+    publish_from_published_workfiles = False
 
     def process(self, instance):
 
