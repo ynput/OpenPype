@@ -29,16 +29,16 @@ class ValidationErrorInstanceList(QtWidgets.QListView):
         self.setSelectionMode(QtWidgets.QListView.ExtendedSelection)
 
     def minimumSizeHint(self):
-        result = super(ValidationErrorInstanceList, self).minimumSizeHint()
-        result.setHeight(self.sizeHint().height())
-        return result
+        return self.sizeHint()
 
     def sizeHint(self):
+        result = super(ValidationErrorInstanceList, self).sizeHint()
         row_count = self.model().rowCount()
         height = 0
         if row_count > 0:
             height = self.sizeHintForRow(0) * row_count
-        return QtCore.QSize(self.width(), height)
+        result.setHeight(height)
+        return result
 
 
 class ValidationErrorTitleWidget(QtWidgets.QWidget):
@@ -133,11 +133,29 @@ class ValidationErrorTitleWidget(QtWidgets.QWidget):
 
         self._toggle_instance_btn = toggle_instance_btn
 
+        self._view_layout = view_layout
+
         self._instances_model = instances_model
         self._instances_view = instances_view
 
         self._context_validation = context_validation
         self._help_text_by_instance_id = help_text_by_instance_id
+
+    def sizeHint(self):
+        result = super().sizeHint()
+        expected_width = 0
+        for idx in range(self._view_layout.count()):
+            expected_width += self._view_layout.itemAt(idx).sizeHint().width()
+
+        if expected_width < 200:
+            expected_width = 200
+
+        if result.width() < expected_width:
+            result.setWidth(expected_width)
+        return result
+
+    def minimumSizeHint(self):
+        return self.sizeHint()
 
     def _prepare_description(self, exception):
         dsc = exception.description
@@ -409,7 +427,6 @@ class ValidationsWidget(QtWidgets.QWidget):
         errors_scroll.setWidgetResizable(True)
 
         errors_widget = QtWidgets.QWidget(errors_scroll)
-        errors_widget.setMinimumWidth(200)
         errors_widget.setAttribute(QtCore.Qt.WA_TranslucentBackground)
         errors_layout = QtWidgets.QVBoxLayout(errors_widget)
         errors_layout.setContentsMargins(0, 0, 0, 0)
@@ -517,6 +534,8 @@ class ValidationsWidget(QtWidgets.QWidget):
 
         if self._title_widgets:
             self._title_widgets[0].set_selected(True)
+
+        self.updateGeometry()
 
     def _on_select(self, index):
         if self._previous_select:
