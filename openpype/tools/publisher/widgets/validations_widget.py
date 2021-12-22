@@ -407,24 +407,24 @@ class ValidationsWidget(QtWidgets.QWidget):
         errors_scroll.setWidgetResizable(True)
 
         errors_widget = QtWidgets.QWidget(errors_scroll)
-        errors_widget.setFixedWidth(200)
+        errors_widget.setMinimumWidth(200)
         errors_widget.setAttribute(QtCore.Qt.WA_TranslucentBackground)
         errors_layout = QtWidgets.QVBoxLayout(errors_widget)
         errors_layout.setContentsMargins(0, 0, 0, 0)
 
         errors_scroll.setWidget(errors_widget)
 
-        error_details_widget = QtWidgets.QWidget(self)
-        error_details_input = QtWidgets.QTextEdit(error_details_widget)
+        error_details_frame = QtWidgets.QFrame(self)
+        error_details_input = QtWidgets.QTextEdit(error_details_frame)
         error_details_input.setObjectName("InfoText")
         error_details_input.setTextInteractionFlags(
             QtCore.Qt.TextBrowserInteraction
         )
 
         actions_widget = ValidateActionsWidget(controller, self)
-        actions_widget.setFixedWidth(140)
+        actions_widget.setMinimumWidth(140)
 
-        error_details_layout = QtWidgets.QHBoxLayout(error_details_widget)
+        error_details_layout = QtWidgets.QHBoxLayout(error_details_frame)
         error_details_layout.addWidget(error_details_input, 1)
         error_details_layout.addWidget(actions_widget, 0)
 
@@ -433,7 +433,7 @@ class ValidationsWidget(QtWidgets.QWidget):
         content_layout.setContentsMargins(0, 0, 0, 0)
 
         content_layout.addWidget(errors_scroll, 0)
-        content_layout.addWidget(error_details_widget, 1)
+        content_layout.addWidget(error_details_frame, 1)
 
         top_label = QtWidgets.QLabel("Publish validation report", self)
         top_label.setObjectName("PublishInfoMainLabel")
@@ -447,7 +447,7 @@ class ValidationsWidget(QtWidgets.QWidget):
         self._top_label = top_label
         self._errors_widget = errors_widget
         self._errors_layout = errors_layout
-        self._error_details_widget = error_details_widget
+        self._error_details_frame = error_details_frame
         self._error_details_input = error_details_input
         self._actions_widget = actions_widget
 
@@ -467,7 +467,7 @@ class ValidationsWidget(QtWidgets.QWidget):
                 widget.deleteLater()
 
         self._top_label.setVisible(False)
-        self._error_details_widget.setVisible(False)
+        self._error_details_frame.setVisible(False)
         self._errors_widget.setVisible(False)
         self._actions_widget.setVisible(False)
 
@@ -478,7 +478,7 @@ class ValidationsWidget(QtWidgets.QWidget):
             return
 
         self._top_label.setVisible(True)
-        self._error_details_widget.setVisible(True)
+        self._error_details_frame.setVisible(True)
         self._errors_widget.setVisible(True)
 
         errors_by_title = []

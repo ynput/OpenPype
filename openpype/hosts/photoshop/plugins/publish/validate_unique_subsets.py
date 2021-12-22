@@ -1,5 +1,8 @@
+import collections
+
 import pyblish.api
 import openpype.api
+from openpype.pipeline import PublishXmlValidationError
 
 
 class ValidateSubsetUniqueness(pyblish.api.ContextPlugin):
@@ -19,8 +22,18 @@ class ValidateSubsetUniqueness(pyblish.api.ContextPlugin):
             if instance.data.get('publish'):
                 subset_names.append(instance.data.get('subset'))
 
-        msg = (
-            "Instance subset names are not unique. " +
-            "Remove duplicates via SubsetManager."
-        )
-        assert len(subset_names) == len(set(subset_names)), msg
+        duplicates = [item
+                      for item, count in
+                      collections.Counter(subset_names).items()
+                      if count > 1]
+
+        if duplicates:
+            duplicates_str = ",".join(duplicates)
+            formatting_data = {"duplicates_str": duplicates_str}
+            msg = (
+                    "Instance subset names {} are not unique.".format(
+                        duplicates_str) +
+                    " Remove duplicates via SubsetManager."
+            )
+            raise PublishXmlValidationError(self, msg,
+                                            formatting_data=formatting_data)
