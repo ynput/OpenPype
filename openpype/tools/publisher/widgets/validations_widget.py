@@ -407,7 +407,7 @@ class ValidationsWidget(QtWidgets.QWidget):
         errors_scroll.setWidgetResizable(True)
 
         errors_widget = QtWidgets.QWidget(errors_scroll)
-        errors_widget.setFixedWidth(200)
+        errors_widget.setMinimumWidth(200)
         errors_widget.setAttribute(QtCore.Qt.WA_TranslucentBackground)
         errors_layout = QtWidgets.QVBoxLayout(errors_widget)
         errors_layout.setContentsMargins(0, 0, 0, 0)
@@ -422,7 +422,7 @@ class ValidationsWidget(QtWidgets.QWidget):
         )
 
         actions_widget = ValidateActionsWidget(controller, self)
-        actions_widget.setFixedWidth(140)
+        actions_widget.setMinimumWidth(140)
 
         error_details_layout = QtWidgets.QHBoxLayout(error_details_frame)
         error_details_layout.addWidget(error_details_input, 1)
