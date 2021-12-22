@@ -25,6 +25,7 @@ class ValidationErrorInstanceList(QtWidgets.QListView):
 
         self.setObjectName("ValidationErrorInstanceList")
 
+        self.setHorizontalScrollBarPolicy(QtCore.Qt.ScrollBarAlwaysOff)
         self.setSelectionMode(QtWidgets.QListView.ExtendedSelection)
 
     def minimumSizeHint(self):
