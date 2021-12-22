@@ -74,5 +74,5 @@ class ValidateNukeWriteNode(pyblish.api.InstancePlugin):
                 xml_msg += _msg_add
 
             raise PublishXmlValidationError(
-                self, dbg_msg, {"xml_msg": xml_msg}
+                self, dbg_msg, formatting_data={"xml_msg": xml_msg}
             )

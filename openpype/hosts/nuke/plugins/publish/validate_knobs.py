@@ -2,6 +2,7 @@ import nuke
 
 import pyblish.api
 import openpype.api
+from openpype.pipeline import PublishXmlValidationError
 
 
 class ValidateKnobs(pyblish.api.ContextPlugin):
@@ -27,11 +28,12 @@ class ValidateKnobs(pyblish.api.ContextPlugin):
     optional = True
 
     def process(self, context):
-
         invalid = self.get_invalid(context, compute=True)
         if invalid:
-            raise RuntimeError(
-                "Found knobs with invalid values:\n{}".format(invalid)
+            raise PublishXmlValidationError(
+                self,
+                "Found knobs with invalid values:\n{}".format(invalid),
+                formatting_data={}
             )
 
     @classmethod
