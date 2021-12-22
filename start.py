@@ -1110,15 +1110,15 @@ def get_info(use_staging=None) -> list:
     # Reinitialize
     PypeLogger.initialize()
 
-    log_components = PypeLogger.log_mongo_url_components
-    if log_components["host"]:
-        inf.append(("Logging to MongoDB", log_components["host"]))
-        inf.append(("  - port", log_components["port"] or "<N/A>"))
+    mongo_components = get_default_components()
+    if mongo_components["host"]:
+        inf.append(("Logging to MongoDB", mongo_components["host"]))
+        inf.append(("  - port", mongo_components["port"] or "<N/A>"))
         inf.append(("  - database", PypeLogger.log_database_name))
         inf.append(("  - collection", PypeLogger.log_collection_name))
-        inf.append(("  - user", log_components["username"] or "<N/A>"))
-        if log_components["auth_db"]:
-            inf.append(("  - auth source", log_components["auth_db"]))
+        inf.append(("  - user", mongo_components["username"] or "<N/A>"))
+        if mongo_components["auth_db"]:
+            inf.append(("  - auth source", mongo_components["auth_db"]))
 
     maximum = max(len(i[0]) for i in inf)
     formatted = []

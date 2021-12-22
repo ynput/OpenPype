@@ -32,8 +32,6 @@ from .execute import (
 )
 from .log import PypeLogger, timeit
 from .mongo import (
-    decompose_url,
-    compose_url,
     get_default_components,
     validate_mongo_connection,
     OpenPypeMongoConnection
@@ -276,8 +274,6 @@ __all__ = [
     "get_datetime_data",
 
     "PypeLogger",
-    "decompose_url",
-    "compose_url",
     "get_default_components",
     "validate_mongo_connection",
     "OpenPypeMongoConnection",
