@@ -30,10 +30,16 @@ class ValidateKnobs(pyblish.api.ContextPlugin):
     def process(self, context):
         invalid = self.get_invalid(context, compute=True)
         if invalid:
+            invalid_items = [
+                ("Node __{node_name}__ with knob _{label}_ "
+                "expecting _{expected}_, "
+                "but is set to _{current}_").format(**i)
+                for i in invalid]
             raise PublishXmlValidationError(
                 self,
                 "Found knobs with invalid values:\n{}".format(invalid),
-                formatting_data={}
+                formatting_data={
+                    "invalid_items": "\n".join(invalid_items)}
             )
 
     @classmethod
@@ -85,6 +91,7 @@ class ValidateKnobs(pyblish.api.ContextPlugin):
                     if node[knob].value() != expected:
                         invalid_knobs.append(
                             {
+                                "node_name": node.name(),
                                 "knob": node[knob],
                                 "name": node[knob].name(),
                                 "label": node[knob].label(),
