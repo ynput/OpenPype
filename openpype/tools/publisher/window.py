@@ -79,7 +79,7 @@ class PublisherWindow(QtWidgets.QDialog):
 
         # Content
         # Subset widget
-        subset_frame = QtWidgets.QWidget(self)
+        subset_frame = QtWidgets.QFrame(self)
 
         subset_views_widget = BorderedLabelWidget(
             "Subsets to publish", subset_frame
