@@ -32,7 +32,7 @@ class ValidateWorkfileProjectName(pyblish.api.ContextPlugin):
             return
 
         # Raise an error
-        raise AssertionError(
+        raise PublishXmlValidationError(
             self,
             (
                 # Short message
