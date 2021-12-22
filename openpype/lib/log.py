@@ -202,6 +202,11 @@ class PypeLogger:
     use_mongo_logging = None
     mongo_process_id = None
 
+    # Backwards compatibility - was used in start.py
+    # TODO remove when all old builds are replaced with new one
+    #   not using 'log_mongo_url_components'
+    log_mongo_url_components = None
+
     # Database name in Mongo
     log_database_name = os.environ["OPENPYPE_DATABASE_NAME"]
     # Collection name under database in Mongo
@@ -320,6 +325,7 @@ class PypeLogger:
         # Change initialization state to prevent runtime changes
         # if is executed during runtime
         cls.initialized = False
+        cls.log_mongo_url_components = get_default_components()
 
         # Define if should logging to mongo be used
         use_mongo_logging = bool(log4mongo is not None)
