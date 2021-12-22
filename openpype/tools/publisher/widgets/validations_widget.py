@@ -95,6 +95,7 @@ class ValidationErrorTitleWidget(QtWidgets.QWidget):
                 item.setFlags(
                     QtCore.Qt.ItemIsEnabled | QtCore.Qt.ItemIsSelectable
                 )
+                item.setData(label, QtCore.Qt.ToolTipRole)
                 item.setData(instance.id, INSTANCE_ID_ROLE)
                 items.append(item)
                 description = self._prepare_description(exception)
