@@ -41,6 +41,97 @@ from .python_module_tools import (
 
 _logger = None
 
+PLATFORM_NAMES = {"windows", "linux", "darwin"}
+DEFAULT_ENV_SUBGROUP = "standard"
+
+
+def parse_environments(env_data, env_group=None, platform_name=None):
+    """Parse environment values from settings byt group and platfrom.
+
+    Data may contain up to 2 hierarchical levels of dictionaries. At the end
+    of the last level must be string or list. List is joined using platform
+    specific joiner (';' for windows and ':' for linux and mac).
+
+    Hierarchical levels can contain keys for subgroups and platform name.
+    Platform specific values must be always last level of dictionary. Platform
+    names are "windows" (MS Windows), "linux" (any linux distribution) and
+    "darwin" (any MacOS distribution).
+
+    Subgroups are helpers added mainly for standard and on farm usage. Farm
+    may require different environments for e.g. licence related values or
+    plugins. Default subgroup is "standard".
+
+    Examples:
+    ```
+    {
+        # Unchanged value
+        "ENV_KEY1": "value",
+        # Empty values are kept (unset environment variable)
+        "ENV_KEY2": "",
+
+        # Join list values with ':' or ';'
+        "ENV_KEY3": ["value1", "value2"],
+
+        # Environment groups
+        "ENV_KEY4": {
+            "standard": "DEMO_SERVER_URL",
+            "farm": "LICENCE_SERVER_URL"
+        },
+
+        # Platform specific (and only for windows and mac)
+        "ENV_KEY5": {
+            "windows": "windows value",
+            "darwin": ["value 1", "value 2"]
+        },
+
+        # Environment groups and platform combination
+        "ENV_KEY6": {
+            "farm": "FARM_VALUE",
+            "standard": {
+                "windows": ["value1", "value2"],
+                "linux": "value1",
+                "darwin": ""
+            }
+        }
+    }
+    ```
+    """
+    output = {}
+    if not env_data:
+        return output
+
+    if not env_group:
+        env_group = DEFAULT_ENV_SUBGROUP
+
+    if not platform_name:
+        platform_name = platform.system().lower()
+
+    for key, value in env_data.items():
+        if isinstance(value, dict):
+            # Look if any key is platform key
+            #   - expect that represents environment group if does not contain
+            #   platform keys
+            if not PLATFORM_NAMES.intersection(set(value.keys())):
+                # Skip the key if group is not available
+                if env_group not in value:
+                    continue
+                value = value[env_group]
+
+        # Check again if value is dictionary
+        #   - this time there should be only platform keys
+        if isinstance(value, dict):
+            value = value.get(platform_name)
+
+        # Check if value is list and join it's values
+        # QUESTION Should empty values be skipped?
+        if isinstance(value, (list, tuple)):
+            value = os.pathsep.join(value)
+
+        # Set key to output if value is string
+        if isinstance(value, six.string_types):
+            output[key] = value
+    return output
+
 
 def get_logger():
     """Global lib.applications logger getter."""
@@ -640,6 +731,10 @@ class LaunchHook:
     def app_name(self):
         return getattr(self.application, "full_name", None)
 
+    @property
+    def modules_manager(self):
+        return getattr(self.launch_context, "modules_manager", None)
+
     def validate(self):
         """Optional validation of launch hook on initialization.
 
@@ -701,15 +796,24 @@ class ApplicationLaunchContext:
             preparation to store objects usable in multiple places.
     """
 
-    def __init__(self, application, executable, **data):
+    def __init__(self, application, executable, env_group=None, **data):
+        from openpype.modules import ModulesManager
+
         # Application object
         self.application = application
+
+        self.modules_manager = ModulesManager()
 
         # Logger
         logger_name = "{}-{}".format(self.__class__.__name__, self.app_name)
         self.log = PypeLogger.get_logger(logger_name)
 
         self.executable = executable
+
+        if env_group is None:
+            env_group = DEFAULT_ENV_SUBGROUP
+
+        self.env_group = env_group
 
         self.data = dict(data)
 
@@ -812,10 +916,7 @@ class ApplicationLaunchContext:
                 paths.append(path)
 
         # Load modules paths
-        from openpype.modules import ModulesManager
-
-        manager = ModulesManager()
-        paths.extend(manager.collect_launch_hook_paths())
+        paths.extend(self.modules_manager.collect_launch_hook_paths())
 
         return paths
 
@@ -1047,7 +1148,7 @@ class EnvironmentPrepData(dict):
 
 
 def get_app_environments_for_context(
-    project_name, asset_name, task_name, app_name, env=None
+    project_name, asset_name, task_name, app_name, env_group=None, env=None
 ):
     """Prepare environment variables by context.
     Args:
@@ -1099,8 +1200,8 @@ def get_app_environments_for_context(
         "env": env
     })
 
-    prepare_host_environments(data)
-    prepare_context_environments(data)
+    prepare_host_environments(data, env_group)
+    prepare_context_environments(data, env_group)
 
     # Discard avalon connection
     dbcon.uninstall()
@@ -1120,7 +1221,7 @@ def _merge_env(env, current_env):
     return result
 
 
-def prepare_host_environments(data, implementation_envs=True):
+def prepare_host_environments(data, env_group=None, implementation_envs=True):
     """Modify launch environments based on launched app and context.
 
     Args:
@@ -1174,7 +1275,7 @@ def prepare_host_environments(data, implementation_envs=True):
             continue
 
         # Choose right platform
-        tool_env = acre.parse(_env_values)
+        tool_env = parse_environments(_env_values, env_group)
         # Merge dictionaries
         env_values = _merge_env(tool_env, env_values)
 
@@ -1206,7 +1307,9 @@ def prepare_host_environments(data, implementation_envs=True):
         data["env"].pop(key, None)
 
 
-def apply_project_environments_value(project_name, env, project_settings=None):
+def apply_project_environments_value(
+    project_name, env, project_settings=None, env_group=None
+):
     """Apply project specific environments on passed environments.
 
     The enviornments are applied on passed `env` argument value so it is not
@@ -1234,14 +1337,15 @@ def apply_project_environments_value(project_name, env, project_settings=None):
 
     env_value = project_settings["global"]["project_environments"]
     if env_value:
+        parsed_value = parse_environments(env_value, env_group)
         env.update(acre.compute(
-            _merge_env(acre.parse(env_value), env),
+            _merge_env(parsed_value, env),
             cleanup=False
         ))
     return env
 
 
-def prepare_context_environments(data):
+def prepare_context_environments(data, env_group=None):
     """Modify launch environemnts with context data for launched host.
 
     Args:
@@ -1271,7 +1375,7 @@ def prepare_context_environments(data):
     data["project_settings"] = project_settings
     # Apply project specific environments on current env value
     apply_project_environments_value(
-        project_name, data["env"], project_settings
+        project_name, data["env"], project_settings, env_group
     )
 
     app = data["app"]
