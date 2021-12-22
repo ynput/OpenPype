@@ -272,6 +272,7 @@ class ValidateActionsWidget(QtWidgets.QFrame):
             item = self._content_layout.takeAt(0)
             widget = item.widget()
             if widget:
+                widget.setVisible(False)
                 widget.deleteLater()
         self._actions_mapping = {}
 
