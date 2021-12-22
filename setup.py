@@ -48,7 +48,8 @@ install_requires = [
     "filecmp",
     "dns",
     # Python defaults (cx_Freeze skip them by default)
-    "dbm"
+    "dbm",
+    "sqlite3"
 ]
 
 includes = []
