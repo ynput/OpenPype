@@ -226,13 +226,15 @@ class ActionButton(ClickableFrame):
         action_label = action.label or action.__name__
         action_icon = getattr(action, "icon", None)
         label_widget = QtWidgets.QLabel(action_label, self)
+        icon_label = None
         if action_icon:
             icon_label = IconValuePixmapLabel(action_icon, self)
 
         layout = QtWidgets.QHBoxLayout(self)
         layout.setContentsMargins(5, 0, 5, 0)
         layout.addWidget(label_widget, 1)
-        layout.addWidget(icon_label, 0)
+        if icon_label is not None:
+            layout.addWidget(icon_label, 0)
 
         self.setSizePolicy(
             QtWidgets.QSizePolicy.Minimum,
@@ -272,6 +274,7 @@ class ValidateActionsWidget(QtWidgets.QFrame):
             item = self._content_layout.takeAt(0)
             widget = item.widget()
             if widget:
+                widget.setVisible(False)
                 widget.deleteLater()
         self._actions_mapping = {}
 
