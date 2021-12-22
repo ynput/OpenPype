@@ -112,9 +112,9 @@ executables = [
 if IS_LINUX:
     executables.append(
         Executable(
-            "linux_app_launcher.py",
+            "app_launcher.py",
             base=None,
-            target_name="linux_app_launcher",
+            target_name="app_launcher",
             icon=icon_path.as_posix()
         )
     )

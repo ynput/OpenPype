@@ -193,7 +193,7 @@ def get_linux_launcher_args(*args):
         list: Executables with possible positional argument to script when
             called from code.
     """
-    filename = "linux_app_launcher"
+    filename = "app_launcher"
     openpype_executable = os.environ["OPENPYPE_EXECUTABLE"]
 
     executable_filename = os.path.basename(openpype_executable)
