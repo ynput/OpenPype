@@ -8,7 +8,7 @@ Context of the given subset doesn't match your current scene.
 
 ### How to repair?
 
-Yout can fix with "Repair" button on the right. This will use '{expected_asset}' asset name and overwrite '{found_asset}' asset name in scene metadata.
+Yout can fix this with "Repair" button on the right. This will use '{expected_asset}' asset name and overwrite '{found_asset}' asset name in scene metadata.
 
 After that restart publishing with Reload button.
 </description>
