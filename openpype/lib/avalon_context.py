@@ -375,8 +375,7 @@ def get_latest_version(asset_name, subset_name, dbcon=None, project_name=None):
     return version_doc
 
 
-# @with_avalon
-def get_master_task(asset_doc, task_name, dbcon=None):
+def get_master_task(asset_doc, task_name):
     """Retrieve master_task from avalon asset requested task
 
     Return the master task if there is one, return the task otherwise.
@@ -384,22 +383,9 @@ def get_master_task(asset_doc, task_name, dbcon=None):
     Args:
         asset_id (int): Id of asset under which the task belongs.
         task_name (str): Name of task to retrieve master_task from.
-        dbcon (avalon.mongodb.AvalonMongoDB, optional): Avalon Mongo connection
-            with Session.
     Returns:
         str: master task name if there is one, task name otherwise.
     """
-
-    # if not dbcon:
-    #     log.debug("Using `avalon.io` for query.")
-    #     dbcon = avalon.io
-    #     # Make sure is installed
-    #     dbcon.install()
-    #
-    # asset_doc = avalon.io.find_one(
-    #     {"type": "asset", "_id": asset_id},
-    #     {"data": True}
-    # )
 
     if asset_doc:
         master_task = (
