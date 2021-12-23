@@ -7,7 +7,9 @@ import re
 import pyblish.api
 
 from avalon import harmony
+
 import openpype.hosts.harmony
+from openpype.pipeline import PublishXmlValidationError
 
 
 class ValidateSceneSettingsRepair(pyblish.api.Action):
@@ -102,6 +104,7 @@ class ValidateSceneSettings(pyblish.api.InstancePlugin):
         self.log.debug("current scene settings {}".format(current_settings))
 
         invalid_settings = []
+        invalid_keys = set()
         for key, value in expected_settings.items():
             if value != current_settings[key]:
                 invalid_settings.append({
@@ -109,6 +112,7 @@ class ValidateSceneSettings(pyblish.api.InstancePlugin):
                     "expected": value,
                     "current": current_settings[key]
                 })
+                invalid_keys.add(key)
 
         if ((expected_settings["handleStart"]
             or expected_settings["handleEnd"])
@@ -120,10 +124,30 @@ class ValidateSceneSettings(pyblish.api.InstancePlugin):
         msg = "Found invalid settings:\n{}".format(
             json.dumps(invalid_settings, sort_keys=True, indent=4)
         )
-        assert not invalid_settings, msg
-        assert os.path.exists(instance.context.data.get("scenePath")), (
-            "Scene file not found (saved under wrong name)"
-        )
+
+        if invalid_settings:
+            invalid_keys_str = ",".join(invalid_keys)
+            break_str = "<br/>"
+            invalid_setting_str = "<b>Found invalid settings:</b><br/>{}".\
+                format(break_str.join(invalid_settings))
+
+            formatting_data = {
+                "invalid_setting_str": invalid_setting_str,
+                "invalid_keys_str": invalid_keys_str
+            }
+            raise PublishXmlValidationError(self, msg,
+                                            formatting_data=formatting_data)
+
+        scene_url = instance.context.data.get("scenePath")
+        if not os.path.exists(scene_url):
+            msg = "Scene file {} not found (saved under wrong name)".format(
+                scene_url
+            )
+            formatting_data = {
+                "scene_url": scene_url
+            }
+            raise PublishXmlValidationError(self, msg, key="file_not_found",
+                                            formatting_data=formatting_data)
 
 
 def _update_frames(expected_settings):
