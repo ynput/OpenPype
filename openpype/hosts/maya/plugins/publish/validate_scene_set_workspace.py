@@ -71,8 +71,12 @@ class ValidateSceneSetWorkspace(pyblish.api.InstancePlugin):
                     logger=self.log
                 )
                 anatomy = context.data.get('anatomy')
-                anatomy_filled = anatomy.format(instance.data.get('anatomyData'))
-                pub_workfile_path = anatomy_filled[profile["template_name"]]["folder"]
+                anatomy_filled = anatomy.format(
+                    instance.data.get('anatomyData')
+                )
+                pub_workfile_path = anatomy_filled.get(
+                    profile["template_name"]
+                ).get("folder")
 
                 if not is_subdir(scene_name, pub_workfile_path):
                     raise RuntimeError("Maya workspace is not set correctly.")
