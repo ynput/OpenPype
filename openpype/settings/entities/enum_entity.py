@@ -154,7 +154,8 @@ class HostsEnumEntity(BaseEnumEntity):
         "resolve",
         "tvpaint",
         "unreal",
-        "standalonepublisher"
+        "standalonepublisher",
+        "webpublisher"
     ]
 
     def _item_initialization(self):

@@ -11,6 +11,7 @@ from openpype.tools.utils.widgets import ImageButton
 from openpype.tools.utils.lib import paint_image_with_color
 
 from openpype.widgets.nice_checkbox import NiceCheckbox
+from openpype.tools.utils import PlaceholderLineEdit
 from openpype.settings.lib import get_system_settings
 from .images import (
     get_pixmap,
@@ -24,7 +25,7 @@ from .constants import (
 )
 
 
-class SettingsLineEdit(QtWidgets.QLineEdit):
+class SettingsLineEdit(PlaceholderLineEdit):
     focused_in = QtCore.Signal()
 
     def focusInEvent(self, event):
@@ -745,6 +746,13 @@ class ProjectListWidget(QtWidgets.QWidget):
         self.project_list.selectionModel().setCurrentIndex(
             index, QtCore.QItemSelectionModel.SelectionFlag.SelectCurrent
         )
+
+    def get_project_names(self):
+        output = []
+        for row in range(self.project_proxy.rowCount()):
+            index = self.project_proxy.index(row, 0)
+            output.append(index.data(PROJECT_NAME_ROLE))
+        return output
 
     def refresh(self):
         selected_project = None

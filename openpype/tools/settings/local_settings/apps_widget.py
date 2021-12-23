@@ -5,6 +5,7 @@ from .widgets import (
     ExpandingWidget
 )
 from openpype.tools.settings import CHILD_OFFSET
+from openpype.tools.utils import PlaceholderLineEdit
 
 
 class AppVariantWidget(QtWidgets.QWidget):
@@ -45,7 +46,7 @@ class AppVariantWidget(QtWidgets.QWidget):
             content_layout.addWidget(warn_label)
             return
 
-        executable_input_widget = QtWidgets.QLineEdit(content_widget)
+        executable_input_widget = PlaceholderLineEdit(content_widget)
         executable_input_widget.setPlaceholderText(self.exec_placeholder)
         content_layout.addWidget(executable_input_widget)
 
@@ -64,8 +65,9 @@ class AppVariantWidget(QtWidgets.QWidget):
 
         for item in studio_executables:
             path_widget = QtWidgets.QLineEdit(content_widget)
+            path_widget.setObjectName("LikeDisabledInput")
             path_widget.setText(item.value)
-            path_widget.setEnabled(False)
+            path_widget.setReadOnly(True)
             content_layout.addWidget(path_widget)
 
     def update_local_settings(self, value):

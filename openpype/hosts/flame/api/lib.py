@@ -47,10 +47,8 @@ class FlameAppFramework(object):
         def setdefault(self, k, default=None):
             return self.master[self.name].setdefault(k, default)
 
-        def pop(self, k, v=object()):
-            if v is object():
-                return self.master[self.name].pop(k)
-            return self.master[self.name].pop(k, v)
+        def pop(self, *args, **kwargs):
+            return self.master[self.name].pop(*args, **kwargs)
 
         def update(self, mapping=(), **kwargs):
             self.master[self.name].update(mapping, **kwargs)

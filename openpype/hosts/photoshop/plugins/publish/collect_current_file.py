@@ -8,7 +8,7 @@ from avalon import photoshop
 class CollectCurrentFile(pyblish.api.ContextPlugin):
     """Inject the current working file into context"""
 
-    order = pyblish.api.CollectorOrder - 0.5
+    order = pyblish.api.CollectorOrder - 0.49
     label = "Current File"
     hosts = ["photoshop"]
 

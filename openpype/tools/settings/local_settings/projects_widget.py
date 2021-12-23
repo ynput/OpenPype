@@ -2,6 +2,7 @@ import platform
 import copy
 from Qt import QtWidgets, QtCore, QtGui
 from openpype.tools.settings.settings import ProjectListWidget
+from openpype.tools.utils import PlaceholderLineEdit
 from openpype.settings.constants import (
     PROJECT_ANATOMY_KEY,
     DEFAULT_PROJECT_KEY
@@ -45,7 +46,7 @@ class DynamicInputItem(QtCore.QObject):
         parent
     ):
         super(DynamicInputItem, self).__init__()
-        input_widget = QtWidgets.QLineEdit(parent)
+        input_widget = PlaceholderLineEdit(parent)
 
         settings_value = input_def.get("value")
         placeholder = input_def.get("placeholder")

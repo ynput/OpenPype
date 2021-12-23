@@ -10,6 +10,7 @@ class ValidateWorkfileData(pyblish.api.ContextPlugin):
 
     label = "Validate Workfile Data"
     order = pyblish.api.ValidatorOrder
+    targets = ["tvpaint_worker"]
 
     def process(self, context):
         # Data collected in `CollectAvalonEntities`
