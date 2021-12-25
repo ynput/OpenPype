@@ -1,6 +1,6 @@
 # Changelog
 
-## [3.7.0-nightly.10](https://github.com/pypeclub/OpenPype/tree/HEAD)
+## [3.7.0-nightly.11](https://github.com/pypeclub/OpenPype/tree/HEAD)
 
 [Full Changelog](https://github.com/pypeclub/OpenPype/compare/3.6.4...HEAD)
 
@@ -10,11 +10,15 @@
 
 **🚀 Enhancements**
 
+- Photoshop: New style validations for New publisher [\#2429](https://github.com/pypeclub/OpenPype/pull/2429)
 - General: Environment variables groups [\#2424](https://github.com/pypeclub/OpenPype/pull/2424)
+- Unreal: Dynamic menu created in Python [\#2422](https://github.com/pypeclub/OpenPype/pull/2422)
 - Settings UI: Hyperlinks to settings [\#2420](https://github.com/pypeclub/OpenPype/pull/2420)
 - Modules: JobQueue module moved one hierarchy level higher [\#2419](https://github.com/pypeclub/OpenPype/pull/2419)
 - TimersManager: Start timer post launch hook [\#2418](https://github.com/pypeclub/OpenPype/pull/2418)
 - Ftrack: Check existence of object type on recreation [\#2404](https://github.com/pypeclub/OpenPype/pull/2404)
+- Enhancement: Global cleanup plugin that explicitly remove paths from context [\#2402](https://github.com/pypeclub/OpenPype/pull/2402)
+- General: MongoDB ability to specify replica set groups [\#2401](https://github.com/pypeclub/OpenPype/pull/2401)
 - Flame: moving `utility\_scripts` to api folder also with `scripts` [\#2385](https://github.com/pypeclub/OpenPype/pull/2385)
 - Centos 7 dependency compatibility [\#2384](https://github.com/pypeclub/OpenPype/pull/2384)
 - Enhancement: Settings: Use project settings values from another project [\#2382](https://github.com/pypeclub/OpenPype/pull/2382)
@@ -24,11 +28,10 @@
 - Hiero: python3 compatibility [\#2365](https://github.com/pypeclub/OpenPype/pull/2365)
 - Burnins: Be able recognize mxf OPAtom format [\#2361](https://github.com/pypeclub/OpenPype/pull/2361)
 - Maya: Add is\_static\_image\_plane and is\_in\_all\_views option in imagePlaneLoader [\#2356](https://github.com/pypeclub/OpenPype/pull/2356)
-- Local settings: Copyable studio paths [\#2349](https://github.com/pypeclub/OpenPype/pull/2349)
-- General: Multilayer EXRs support [\#2315](https://github.com/pypeclub/OpenPype/pull/2315)
 
 **🐛 Bug fixes**
 
+- Short Pyblish plugin path [\#2428](https://github.com/pypeclub/OpenPype/pull/2428)
 - PS: Introduced settings for invalid characters to use in ValidateNaming plugin [\#2417](https://github.com/pypeclub/OpenPype/pull/2417)
 - Settings UI: Breadcrumbs path does not create new entities [\#2416](https://github.com/pypeclub/OpenPype/pull/2416)
 - AfterEffects: Variant 2022 is in defaults but missing in schemas [\#2412](https://github.com/pypeclub/OpenPype/pull/2412)
@@ -44,36 +47,24 @@
 - Nuke: fixing node name based on switched asset name [\#2369](https://github.com/pypeclub/OpenPype/pull/2369)
 - JobQueue: Fix loading of settings [\#2362](https://github.com/pypeclub/OpenPype/pull/2362)
 - Tools: Placeholder color [\#2359](https://github.com/pypeclub/OpenPype/pull/2359)
-- Launcher: Minimize button on MacOs [\#2355](https://github.com/pypeclub/OpenPype/pull/2355)
-- StandalonePublisher: Fix import of constant [\#2354](https://github.com/pypeclub/OpenPype/pull/2354)
-- Adobe products show issue [\#2347](https://github.com/pypeclub/OpenPype/pull/2347)
-- Remove wrongly used host for hook [\#2342](https://github.com/pypeclub/OpenPype/pull/2342)
-- Tools: Use Qt context on tools show [\#2340](https://github.com/pypeclub/OpenPype/pull/2340)
+- Houdini: Fix HDA creation [\#2350](https://github.com/pypeclub/OpenPype/pull/2350)
 - Flame: Fix default argument value in custom dictionary [\#2339](https://github.com/pypeclub/OpenPype/pull/2339)
-- Royal Render: Fix plugin order and OpenPype auto-detection [\#2291](https://github.com/pypeclub/OpenPype/pull/2291)
 
 **Merged pull requests:**
 
+- Forced cx\_freeze to include sqlite3 into build  [\#2432](https://github.com/pypeclub/OpenPype/pull/2432)
+- Maya: Replaced PATH usage with vendored oiio path for maketx utility [\#2405](https://github.com/pypeclub/OpenPype/pull/2405)
 - \[Fix\]\[MAYA\] Handle message type attribute within CollectLook [\#2394](https://github.com/pypeclub/OpenPype/pull/2394)
 - Add validator to check correct version of extension for PS and AE [\#2387](https://github.com/pypeclub/OpenPype/pull/2387)
 - Linux : flip updating submodules logic [\#2357](https://github.com/pypeclub/OpenPype/pull/2357)
-- Update of avalon-core [\#2346](https://github.com/pypeclub/OpenPype/pull/2346)
 
 ## [3.6.4](https://github.com/pypeclub/OpenPype/tree/3.6.4) (2021-11-23)
 
 [Full Changelog](https://github.com/pypeclub/OpenPype/compare/CI/3.7.0-nightly.1...3.6.4)
 
-**🐛 Bug fixes**
-
-- Nuke: inventory update removes all loaded read nodes [\#2294](https://github.com/pypeclub/OpenPype/pull/2294)
-
 ## [3.6.3](https://github.com/pypeclub/OpenPype/tree/3.6.3) (2021-11-19)
 
 [Full Changelog](https://github.com/pypeclub/OpenPype/compare/CI/3.6.3-nightly.1...3.6.3)
-
-**🐛 Bug fixes**
-
-- Deadline: Fix publish targets [\#2280](https://github.com/pypeclub/OpenPype/pull/2280)
 
 ## [3.6.2](https://github.com/pypeclub/OpenPype/tree/3.6.2) (2021-11-18)
 
