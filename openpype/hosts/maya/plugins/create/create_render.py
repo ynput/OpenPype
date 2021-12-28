@@ -254,7 +254,7 @@ class CreateRender(plugin.Creator):
         # get pools
         pool_names = []
 
-        self.server_aliases = self.deadline_servers.keys()
+        self.server_aliases = list(self.deadline_servers.keys())
         self.data["deadlineServers"] = self.server_aliases
         self.data["suspendPublishJob"] = False
         self.data["review"] = True
