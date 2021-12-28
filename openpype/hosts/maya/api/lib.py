@@ -805,10 +805,10 @@ def polyConstraint(components, *args, **kwargs):
                 # a `maya.cmds.select()` call will not trigger the constraint.
                 with reset_polySelectConstraint():
                     cmds.select(components, r=1, noExpand=True)
-                    return cmds.polySelectConstraint(*args,
-                                                     mode=2,
-                                                     returnSelection=True,
-                                                     **kwargs)
+                    cmds.polySelectConstraint(*args, mode=2, **kwargs)
+                    result = cmds.ls(selection=True)
+                    cmds.select(clear=True)
+                    return result
 
 
 @contextlib.contextmanager
