@@ -5,6 +5,7 @@ import os
 import platform
 import uuid
 import math
+import sys
 
 import json
 import logging
@@ -130,7 +131,13 @@ def float_round(num, places=0, direction=ceil):
 def pairwise(iterable):
     """s -> (s0,s1), (s2,s3), (s4, s5), ..."""
     a = iter(iterable)
-    return itertools.izip(a, a)
+
+    if sys.version_info[0] == 2:
+        izip = itertools.izip
+    else:
+        izip = zip
+
+    return izip(a, a)
 
 
 def unique(name):
