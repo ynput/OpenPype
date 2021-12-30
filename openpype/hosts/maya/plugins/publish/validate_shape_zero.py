@@ -9,11 +9,9 @@ from avalon.maya import maintained_selection
 
 
 class ValidateShapeZero(pyblish.api.Validator):
-    """shape can't have any values
+    """Shape components may not have any "tweak" values
 
-    To solve this issue, try freezing the shapes. So long
-    as the translation, rotation and scaling values are zero,
-    you're all good.
+    To solve this issue, try freezing the shapes.
 
     """
 
@@ -67,5 +65,5 @@ class ValidateShapeZero(pyblish.api.Validator):
 
         invalid = self.get_invalid(instance)
         if invalid:
-            raise ValueError("Nodes found with shape or vertices not freezed"
-                             "values: {0}".format(invalid))
+            raise ValueError("Shapes found with non-zero component tweaks: "
+                             "{0}".format(invalid))
