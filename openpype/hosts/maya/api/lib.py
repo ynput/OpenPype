@@ -2855,6 +2855,11 @@ def set_colorspace():
             cmds.colorManagementPrefs(e=True, cmConfigFileEnabled=False)
             cmds.colorManagementPrefs(e=True, configFilePath="" )
 
+    if int(cmds.about(version=True)) >= 2022:
+        log.warning("Skipping setting of color management preferences due to"
+                    " the settings not being compatible with Maya 2022+")
+        return
+
     # third set rendering space and view transform
     renderSpace = root_dict["renderSpace"]
     cmds.colorManagementPrefs(e=True, renderingSpaceName=renderSpace)
