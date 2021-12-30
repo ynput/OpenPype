@@ -164,7 +164,8 @@ class ValidateRigControllers(pyblish.api.InstancePlugin):
                 continue
 
             # Ignore proxy connections.
-            if cmds.addAttr(plug, query=True, usedAsProxy=True):
+            if (cmds.addAttr(plug, query=True, exists=True) and
+                    cmds.addAttr(plug, query=True, usedAsProxy=True)):
                 continue
 
             # Check for incoming connections
