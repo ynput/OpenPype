@@ -2,7 +2,6 @@ import pyblish.api
 import openpype.api
 import openpype.hosts.maya.api.action
 import math
-import sys
 import maya.api.OpenMaya as om
 import pymel.core as pm
 
