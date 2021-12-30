@@ -192,6 +192,11 @@
             "regex": "(.*)_(\\d)*_(?P<shader>.*)_(GEO)",
             "top_level_regex": ".*_GRP"
         },
+        "ValidateModelContent": {
+            "enabled": true,
+            "optional": false,
+            "validate_top_group": true
+        },
         "ValidateTransformNamingSuffix": {
             "enabled": true,
             "SUFFIX_NAMING_TABLE": {
@@ -275,11 +280,6 @@
             "enabled": true,
             "optional": true,
             "active": true
-        },
-        "ValidateModelContent": {
-            "enabled": true,
-            "optional": false,
-            "validate_top_group": true
         },
         "ValidateNoAnimation": {
             "enabled": false,
@@ -468,6 +468,11 @@
             "optional": true,
             "active": true,
             "bake_attributes": []
+        },
+        "ExtractModel": {
+            "enabled": true,
+            "optional": true,
+            "active": true
         }
     },
     "load": {
