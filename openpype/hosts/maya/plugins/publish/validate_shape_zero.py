@@ -3,6 +3,7 @@ from maya import cmds
 import pyblish.api
 import openpype.api
 import openpype.hosts.maya.api.action
+from openpype.hosts.maya.api import lib
 
 from avalon.maya import maintained_selection
 
@@ -53,8 +54,13 @@ class ValidateShapeZero(pyblish.api.Validator):
             return
 
         with maintained_selection():
-            for shape in invalid_shapes:
-                cmds.polyCollapseTweaks(shape)
+            with lib.tool("selectSuperContext"):
+                for shape in invalid_shapes:
+                    cmds.polyCollapseTweaks(shape)
+                    # cmds.polyCollapseTweaks keeps selecting the geometry
+                    # after each command. When running on many meshes
+                    # after one another this tends to get really heavy
+                    cmds.select(clear=True)
 
     def process(self, instance):
         """Process all the nodes in the instance "objectSet"""
