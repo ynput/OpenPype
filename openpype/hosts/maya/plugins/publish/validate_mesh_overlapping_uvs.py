@@ -6,10 +6,7 @@ import sys
 import maya.api.OpenMaya as om
 import pymel.core as pm
 
-
-if sys.version_info[0] != 2:
-    # Py3+ does not have `xrange` so we mimic it to allow to use it in Py2
-    xrange = range
+from six.moves import xrange
 
 
 class GetOverlappingUVs(object):
