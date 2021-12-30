@@ -4,6 +4,8 @@ import pyblish.api
 import openpype.api
 import openpype.hosts.maya.api.action
 
+from avalon.maya import maintained_selection
+
 
 class ValidateShapeZero(pyblish.api.Validator):
     """shape can't have any values
@@ -47,8 +49,12 @@ class ValidateShapeZero(pyblish.api.Validator):
     @classmethod
     def repair(cls, instance):
         invalid_shapes = cls.get_invalid(instance)
-        for shape in invalid_shapes:
-            cmds.polyCollapseTweaks(shape)
+        if not invalid_shapes:
+            return
+
+        with maintained_selection():
+            for shape in invalid_shapes:
+                cmds.polyCollapseTweaks(shape)
 
     def process(self, instance):
         """Process all the nodes in the instance "objectSet"""
