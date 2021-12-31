@@ -12,7 +12,6 @@ from avalon import io, api, pipeline
 
 from openpype import style
 from openpype.tools.utils.lib import (
-    schedule,
     qt_app_context
 )
 from openpype.tools.utils import PlaceholderLineEdit
@@ -736,7 +735,7 @@ class FilesWidget(QtWidgets.QWidget):
         self.files_model.refresh()
 
         if self.auto_select_latest_modified:
-            schedule(self._select_last_modified_file, 100)
+            self._select_last_modified_file()
 
     def on_context_menu(self, point):
         index = self.files_view.indexAt(point)
@@ -941,8 +940,8 @@ class Window(QtWidgets.QMainWindow):
 
         # Connect signals
         set_context_timer.timeout.connect(self._on_context_set_timeout)
-        assets_widget.selection_changed.connect(self.on_asset_changed)
-        tasks_widget.task_changed.connect(self.on_task_changed)
+        assets_widget.selection_changed.connect(self._on_asset_changed)
+        tasks_widget.task_changed.connect(self._on_task_changed)
         files_widget.file_selected.connect(self.on_file_select)
         files_widget.workfile_created.connect(self.on_workfile_create)
         files_widget.file_opened.connect(self._on_file_opened)
@@ -986,13 +985,6 @@ class Window(QtWidgets.QMainWindow):
 
     def set_save_enabled(self, enabled):
         self.files_widget.btn_save.setEnabled(enabled)
-
-    def on_task_changed(self):
-        # Since we query the disk give it slightly more delay
-        schedule(self._on_task_changed, 100, channel="mongo")
-
-    def on_asset_changed(self):
-        schedule(self._on_asset_changed, 50, channel="mongo")
 
     def on_file_select(self, filepath):
         asset_id = self.assets_widget.get_selected_asset_id()
