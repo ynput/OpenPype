@@ -25,7 +25,8 @@ from openpype.lib import (
     get_workfile_doc,
     create_workfile_doc,
     save_workfile_data_to_doc,
-    get_workfile_template_key
+    get_workfile_template_key,
+    create_workdir_extra_folders
 )
 
 from .model import FilesModel
@@ -672,7 +673,13 @@ class FilesWidget(QtWidgets.QWidget):
         self.set_asset_task(
             self._asset_id, self._task_name, self._task_type
         )
-
+        create_workdir_extra_folders(
+            self.root,
+            api.Session["AVALON_APP"],
+            self._task_type,
+            self._task_name,
+            api.Session["AVALON_PROJECT"]
+        )
         pipeline.emit("after.workfile.save", [file_path])
 
         self.workfile_created.emit(file_path)
