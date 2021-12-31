@@ -12,6 +12,9 @@ def add_implementation_envs(env, _app):
     old_python_path = env.get("PYTHONPATH") or ""
     for path in old_python_path.split(os.pathsep):
         if not path or not os.path.exists(path):
+            if path.strip():
+                # Debug logging
+                print("Removing non-existing path from PYTHONPATH: %s" % path)
             continue
 
         norm_path = os.path.normpath(path)
