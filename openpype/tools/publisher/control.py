@@ -42,7 +42,7 @@ class MainThreadProcess(QtCore.QObject):
     This approach gives ability to update UI meanwhile plugin is in progress.
     """
 
-    timer_interval = 10
+    timer_interval = 3
 
     def __init__(self):
         super(MainThreadProcess, self).__init__()
