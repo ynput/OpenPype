@@ -291,21 +291,7 @@
                     "enabled": false
                 }
             ],
-            "sw_folders": {
-                "compositing": [
-                    "nuke",
-                    "ae"
-                ],
-                "modeling": [
-                    "maya",
-                    "blender",
-                    "zbrush"
-                ],
-                "lookdev": [
-                    "substance",
-                    "textures"
-                ]
-            }
+            "extra_folders": []
         },
         "loader": {
             "family_filter_profiles": [
