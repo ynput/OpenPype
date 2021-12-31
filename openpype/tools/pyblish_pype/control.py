@@ -28,6 +28,72 @@ class IterationBreak(Exception):
     pass
 
 
+class MainThreadItem:
+    """Callback with args and kwargs."""
+    def __init__(self, callback, *args, **kwargs):
+        self.callback = callback
+        self.args = args
+        self.kwargs = kwargs
+
+    def process(self):
+        self.callback(*self.args, **self.kwargs)
+
+
+class MainThreadProcess(QtCore.QObject):
+    """Qt based main thread process executor.
+
+    Has timer which controls each 50ms if there is new item to process.
+
+    This approach gives ability to update UI meanwhile plugin is in progress.
+    """
+    def __init__(self):
+        super(MainThreadProcess, self).__init__()
+        self._items_to_process = collections.deque()
+
+        timer = QtCore.QTimer()
+        timer.setInterval(10)
+
+        timer.timeout.connect(self._execute)
+
+        self._timer = timer
+
+    def process(self, func, *args, **kwargs):
+        item = MainThreadItem(func, *args, **kwargs)
+        self.add_item(item)
+
+    def add_item(self, item):
+        self._items_to_process.append(item)
+
+    def _execute(self):
+        if not self._items_to_process:
+            return
+
+        item = self._items_to_process.popleft()
+        item.process()
+
+    def start(self):
+        if not self._timer.isActive():
+            self._timer.start()
+
+    def stop(self):
+        if self._timer.isActive():
+            self._timer.stop()
+
+    def clear(self):
+        if self._timer.isActive():
+            self._timer.stop()
+        self._items_to_process = collections.deque()
+
+    def stop_if_empty(self):
+        if self._timer.isActive():
+            item = MainThreadItem(self._stop_if_empty)
+            self.add_item(item)
+
+    def _stop_if_empty(self):
+        if not self._items_to_process:
+            self.stop()
+
+
 class Controller(QtCore.QObject):
     log = logging.getLogger("PyblishController")
     # Emitted when the GUI is about to start processing;
