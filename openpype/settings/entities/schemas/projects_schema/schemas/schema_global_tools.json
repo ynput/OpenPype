@@ -225,6 +225,10 @@
                                 "type": "splitter"
                             },
                             {
+                                "type": "label",
+                                "label": "Folders will be created in directory next to workfile. Items may contain nested directories (e.g. <b>resources/images</b>)."
+                            },
+                            {
                                 "key": "folders",
                                 "label": "Folders",
                                 "type": "list",
