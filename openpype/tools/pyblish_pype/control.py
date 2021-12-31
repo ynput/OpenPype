@@ -9,6 +9,7 @@ import os
 import sys
 import inspect
 import logging
+import collections
 
 from Qt import QtCore
 
@@ -137,6 +138,7 @@ class Controller(QtCore.QObject):
         self.plugins = {}
         self.optional_default = {}
         self.instance_toggled.connect(self._on_instance_toggled)
+        self._main_thread_processor = MainThreadProcess()
 
     def reset_variables(self):
         self.log.debug("Resetting pyblish context variables")
@@ -235,7 +237,11 @@ class Controller(QtCore.QObject):
 
     def reset(self):
         """Discover plug-ins and run collection."""
+        self._main_thread_processor.clear()
+        self._main_thread_processor.process(self._reset)
+        self._main_thread_processor.start()
 
+    def _reset(self):
         self.reset_context()
         self.reset_variables()
 
@@ -276,21 +282,25 @@ class Controller(QtCore.QObject):
         if self.is_running:
             self.is_running = False
         self.was_finished.emit()
+        self._main_thread_processor.stop()
 
     def stop(self):
         self.log.debug("Stopping")
         self.stopped = True
 
     def act(self, plugin, action):
-        def on_next():
-            result = pyblish.plugin.process(
-                plugin, self.context, None, action.id
-            )
-            self.is_running = False
-            self.was_acted.emit(result)
-
         self.is_running = True
-        util.defer(100, on_next)
+        item = MainThreadItem(self._process_action, plugin, action)
+        self._main_thread_processor.add_item(item)
+        self._main_thread_processor.start()
+        self._main_thread_processor.stop_if_empty()
+
+    def _process_action(self, plugin, action):
+        result = pyblish.plugin.process(
+            plugin, self.context, None, action.id
+        )
+        self.is_running = False
+        self.was_acted.emit(result)
 
     def emit_(self, signal, kwargs):
         pyblish.api.emit(signal, **kwargs)
@@ -421,11 +431,13 @@ class Controller(QtCore.QObject):
 
         self.passed_group.emit(self.processing["next_group_order"])
 
-    def iterate_and_process(self, on_finished=lambda: None):
+    def iterate_and_process(self, on_finished=None):
         """ Iterating inserted plugins with current context.
         Collectors do not contain instances, they are None when collecting!
         This process don't stop on one
         """
+        self._main_thread_processor.start()
+
         def on_next():
             self.log.debug("Looking for next pair to process")
             try:
@@ -437,13 +449,19 @@ class Controller(QtCore.QObject):
                 self.log.debug("Iteration break was raised")
                 self.is_running = False
                 self.was_stopped.emit()
+                self._main_thread_processor.stop()
                 return
 
             except StopIteration:
                 self.log.debug("Iteration stop was raised")
                 self.is_running = False
                 # All pairs were processed successfully!
-                return util.defer(500, on_finished)
+                if on_finished is not None:
+                    self._main_thread_processor.add_item(
+                        MainThreadItem(on_finished)
+                    )
+                self._main_thread_processor.stop_if_empty()
+                return
 
             except Exception as exc:
                 self.log.warning(
@@ -451,12 +469,15 @@ class Controller(QtCore.QObject):
                     exc_info=True
                 )
                 exc_msg = str(exc)
-                return util.defer(
-                    500, lambda: on_unexpected_error(error=exc_msg)
+                self._main_thread_processor.add_item(
+                    MainThreadItem(on_unexpected_error, error=exc_msg)
                 )
+                return
 
             self.about_to_process.emit(*self.current_pair)
-            util.defer(100, on_process)
+            self._main_thread_processor.add_item(
+                MainThreadItem(on_process)
+            )
 
         def on_process():
             try:
@@ -477,11 +498,14 @@ class Controller(QtCore.QObject):
                     exc_info=True
                 )
                 exc_msg = str(exc)
-                return util.defer(
-                    500, lambda: on_unexpected_error(error=exc_msg)
+                self._main_thread_processor.add_item(
+                    MainThreadItem(on_unexpected_error, error=exc_msg)
                 )
+                return
 
-            util.defer(10, on_next)
+            self._main_thread_processor.add_item(
+                MainThreadItem(on_next)
+            )
 
         def on_unexpected_error(error):
             # TODO this should be handled much differently
@@ -489,24 +513,42 @@ class Controller(QtCore.QObject):
             self.is_running = False
             self.was_stopped.emit()
             util.u_print(u"An unexpected error occurred:\n %s" % error)
-            return util.defer(500, on_finished)
+            if on_finished is not None:
+                self._main_thread_processor.add_item(
+                    MainThreadItem(on_finished)
+                )
+            self._main_thread_processor.stop_if_empty()
 
         self.is_running = True
-        util.defer(10, on_next)
+        self._main_thread_processor.add_item(
+            MainThreadItem(on_next)
+        )
 
     def collect(self):
         """ Iterate and process Collect plugins
         - load_plugins method is launched again when finished
         """
-        self.iterate_and_process()
+        self._main_thread_processor.process(self._start_collect)
+        self._main_thread_processor.start()
 
     def validate(self):
         """ Process plugins to validations_order value."""
-        self.processing["stop_on_validation"] = True
-        self.iterate_and_process()
+        self._main_thread_processor.process(self._start_validate)
+        self._main_thread_processor.start()
 
     def publish(self):
         """ Iterate and process all remaining plugins."""
+        self._main_thread_processor.process(self._start_publish)
+        self._main_thread_processor.start()
+
+    def _start_collect(self):
+        self.iterate_and_process()
+
+    def _start_validate(self):
+        self.processing["stop_on_validation"] = True
+        self.iterate_and_process()
+
+    def _start_publish(self):
         self.processing["stop_on_validation"] = False
         self.iterate_and_process(self.on_published)
 
