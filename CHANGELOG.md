@@ -1,6 +1,6 @@
 # Changelog
 
-## [3.7.0-nightly.12](https://github.com/pypeclub/OpenPype/tree/HEAD)
+## [3.7.0-nightly.13](https://github.com/pypeclub/OpenPype/tree/HEAD)
 
 [Full Changelog](https://github.com/pypeclub/OpenPype/compare/3.6.4...HEAD)
 
