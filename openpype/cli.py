@@ -324,6 +324,18 @@ def contextselection(
     )
 
 
+@main.command()
+@click.argument("directory")
+def repack_version(directory):
+    """Repack OpenPype version from directory.
+
+    This command will re-create zip file from specified directory,
+    recalculating file checksums. It will try to use version detected in
+    directory name.
+    """
+    PypeCommands().repack_version(directory)
+
+
 @main.command(
     context_settings=dict(
         ignore_unknown_options=True,
@@ -375,6 +387,44 @@ def runtests(folder, mark, pyargs, test_data_folder, persist, app_variant):
 
 
 @main.command()
+@click.argument("set_url")
+@click.option("--project", help="Define project context", default=None)
+def setvalue(
+    set_url,
+    project
+):
+    """Stores value into keyring or potentially settings
+
+        Define general location (keyring or setting) with specific path,
+        variable and its value.
+        Format keyring://file/environment/OPENPYPE_MONGO=foo
+    """
+    PypeCommands.set_value(
+        set_url,
+        project
+    )
+
+
+@main.command()
+@click.argument("set_url")
+@click.option("--project", help="Define project context", default=None)
+def getvalue(
+    set_url,
+    project
+):
+    """Pulls value from keyring or potentially settings
+
+        Define general location (keyring or setting) with specific path,
+        variable and its value.
+        Format keyring://file/environment/OPENPYPE_MONGO
+    """
+    PypeCommands.get_value(
+        set_url,
+        project
+    )
+
+
+@main.command()
 @click.option("-d", "--debug",
               is_flag=True, help=("Run process in debug mode"))
 @click.option("-a", "--active_site", required=True,
@@ -397,15 +447,3 @@ def syncserver(debug, active_site):
     if debug:
         os.environ['OPENPYPE_DEBUG'] = '3'
     PypeCommands().syncserver(active_site)
-
-
-@main.command()
-@click.argument("directory")
-def repack_version(directory):
-    """Repack OpenPype version from directory.
-
-    This command will re-create zip file from specified directory,
-    recalculating file checksums. It will try to use version detected in
-    directory name.
-    """
-    PypeCommands().repack_version(directory)

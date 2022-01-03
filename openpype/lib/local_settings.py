@@ -583,3 +583,38 @@ def is_admin_password_required():
     if is_admin:
         return False
     return True
+
+
+def parse_set_url(set_url):
+    """Parses url with value to set into segments.
+
+        Returns:
+            (tuple) - (general_location, path_part, key, value)
+
+        Eg. expected url keyring://file/environment/OPENPYPE_MONGO=foo
+        Returned ("keyring", "file/environment", "OPENPYPE_MONGO", "foo")
+    """
+    try:
+        general_location, rest = set_url.split("://")
+    except ValueError:
+        raise ValueError("Set url {} must contain general location part".
+                         format(set_url))
+
+    implemented_locations = ["keyring"]
+    if general_location not in implemented_locations:
+        raise ValueError("Set url {} must contain one of {} values".
+                         format(set_url, implemented_locations))
+
+    path_part = rest[:rest.rfind("/")]
+    if not path_part:
+        raise ValueError("Set url {} must contain path part".
+                         format(set_url))
+
+    value_part = rest[rest.rfind("/") + 1:]
+    if "=" in value_part:
+        key, value = value_part.split("=")
+    else:
+        key = value_part
+        value = None
+
+    return general_location, path_part, key, value

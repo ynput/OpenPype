@@ -384,6 +384,26 @@ class PypeCommands:
         import pytest
         pytest.main(args)
 
+    @staticmethod
+    def set_value(set_url, project=None):
+        from openpype.lib.local_settings import (OpenPypeSecureRegistry,
+                                                 parse_set_url)
+
+        general_location, path_part, key, value = parse_set_url(set_url)
+        if general_location == "keyring":
+            registry = OpenPypeSecureRegistry(path_part)
+            registry.set_item(key, value)
+
+    @staticmethod
+    def get_value(set_url, project=None):
+        from openpype.lib.local_settings import (OpenPypeSecureRegistry,
+                                                 parse_set_url)
+
+        general_location, path_part, key, _ = parse_set_url(set_url)
+        if general_location == "keyring":
+            registry = OpenPypeSecureRegistry(path_part)
+            return registry.get_item(key)
+
     def syncserver(self, active_site):
         """Start running sync_server in background."""
         import signal
