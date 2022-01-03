@@ -1,43 +1,9 @@
-import nuke
 
 import pyblish.api
-
-
-class RepairWriteResolutionDifference(pyblish.api.Action):
-
-    label = "Repair"
-    icon = "wrench"
-    on = "failed"
-
-    def process(self, context, plugin):
-
-        # Get the errored instances
-        failed = []
-        for result in context.data["results"]:
-            if (result["error"] is not None and result["instance"] is not None
-               and result["instance"] not in failed):
-                failed.append(result["instance"])
-
-        # Apply pyblish.logic to get the instances for the plug-in
-        instances = pyblish.api.instances_by_plugin(failed, plugin)
-
-        for instance in instances:
-            reformat = instance[0].dependencies()[0]
-            if reformat.Class() != "Reformat":
-                reformat = nuke.nodes.Reformat(inputs=[instance[0].input(0)])
-
-                xpos = instance[0].xpos()
-                ypos = instance[0].ypos() - 26
-
-                dependent_ypos = instance[0].dependencies()[0].ypos()
-                if (instance[0].ypos() - dependent_ypos) <= 51:
-                    xpos += 110
-
-                reformat.setXYpos(xpos, ypos)
-
-                instance[0].setInput(0, reformat)
-
-            reformat["resize"].setValue("none")
+import openpype.api
+import avalon.nuke.lib as anlib
+from openpype.pipeline import PublishXmlValidationError
+import nuke
 
 
 class ValidateOutputResolution(pyblish.api.InstancePlugin):
@@ -52,27 +18,76 @@ class ValidateOutputResolution(pyblish.api.InstancePlugin):
     families = ["render", "render.local", "render.farm"]
     label = "Write Resolution"
     hosts = ["nuke"]
-    actions = [RepairWriteResolutionDifference]
+    actions = [openpype.api.RepairAction]
+
+    missing_msg = "Missing Reformat node in render group node"
+    resolution_msg = "Reformat is set to wrong format"
 
     def process(self, instance):
+        invalid = self.get_invalid(instance)
+        if invalid:
+            raise PublishXmlValidationError(self, invalid)
 
-        # Skip bounding box check if a reformat node exists.
-        if instance[0].dependencies()[0].Class() == "Reformat":
-            return
+    @classmethod
+    def get_reformat(cls, instance):
+        reformat = None
+        for inode in instance:
+            if inode.Class() != "Reformat":
+                continue
+            reformat = inode
 
-        msg = "Bounding box is outside the format."
-        assert self.check_resolution(instance), msg
+        return reformat
 
-    def check_resolution(self, instance):
-        node = instance[0]
+    @classmethod
+    def get_invalid(cls, instance):
+        def _check_resolution(instance, reformat):
+            root_width = instance.data["resolutionWidth"]
+            root_height = instance.data["resolutionHeight"]
 
-        root_width = instance.data["resolutionWidth"]
-        root_height = instance.data["resolutionHeight"]
+            write_width = reformat.format().width()
+            write_height = reformat.format().height()
 
-        write_width = node.format().width()
-        write_height = node.format().height()
+            if (root_width != write_width) or (root_height != write_height):
+                return None
+            else:
+                return True
 
-        if (root_width != write_width) or (root_height != write_height):
-            return None
-        else:
-            return True
+        # check if reformat is in render node
+        reformat = cls.get_reformat(instance)
+        if not reformat:
+            return cls.missing_msg
+
+        # check if reformat is set to correct root format
+        correct_format = _check_resolution(instance, reformat)
+        if not correct_format:
+            return cls.resolution_msg
+
+
+    @classmethod
+    def repair(cls, instance):
+        invalid = cls.get_invalid(instance)
+        grp_node = instance[0]
+
+        if cls.missing_msg == invalid:
+            # make sure we are inside of the group node
+            with grp_node:
+                # find input node and select it
+                input = None
+                for inode in instance:
+                    if inode.Class() != "Input":
+                        continue
+                    input = inode
+
+                # add reformat node under it
+                with anlib.maintained_selection():
+                    input['selected'].setValue(True)
+                    _rfn = nuke.createNode("Reformat", "name Reformat01")
+                    _rfn["resize"].setValue(0)
+                    _rfn["black_outside"].setValue(1)
+
+                cls.log.info("I am adding reformat node")
+
+        if cls.resolution_msg == invalid:
+            reformat = cls.get_reformat(instance)
+            reformat["format"].setValue(nuke.root()["format"].value())
+            cls.log.info("I am fixing reformat to root.format")
