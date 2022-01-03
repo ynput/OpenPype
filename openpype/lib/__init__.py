@@ -148,7 +148,8 @@ from .path_tools import (
     get_version_from_path,
     get_last_version_from_path,
     create_project_folders,
-    get_project_basic_paths
+    create_workdir_extra_folders,
+    get_project_basic_paths,
 )
 
 from .editorial import (
@@ -290,6 +291,7 @@ __all__ = [
     "frames_to_timecode",
     "make_sequence_collection",
     "create_project_folders",
+    "create_workdir_extra_folders",
     "get_project_basic_paths",
 
     "get_openpype_version",
