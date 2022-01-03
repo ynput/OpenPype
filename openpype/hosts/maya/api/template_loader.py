@@ -149,7 +149,7 @@ class MayaPlaceholder(AbstractPlaceholder):
         # Move loaded nodes to correct index in outliner hierarchy
         placeholder_node = self.data['node']
         placeholder_form = cmds.xform(
-                placeholder_node, q=True, matrix=True, worldSpace=True)
+            placeholder_node, q=True, matrix=True, worldSpace=True)
         for node in set(nodes_to_parent):
             cmds.reorder(node, front=True)
             cmds.reorder(node, relative=self.data['index'])
