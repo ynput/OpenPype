@@ -16,7 +16,7 @@ from .build_template_exceptions import (
 _module_path_format = 'openpype.hosts.{host}.api.template_loader'
 
 
-def build_workfile_template(args):
+def build_workfile_template(*args):
     template_loader = build_template_loader()
     try:
         template_loader.import_template(template_loader.template_path)
