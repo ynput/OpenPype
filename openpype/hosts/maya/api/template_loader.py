@@ -140,19 +140,22 @@ class MayaPlaceholder(AbstractPlaceholder):
                 if not cmds.sets(root, q=True):
                     return
                 else:
-                    pass
+                    continue
             else:
                 nodes_to_parent.append(root)
 
         if self.data['parent']:
             cmds.parent(nodes_to_parent, self.data['parent'])
         # Move loaded nodes to correct index in outliner hierarchy
+        placeholder_node = self.data['node']
+        placeholder_form = cmds.xform(
+                placeholder_node, q=True, matrix=True, worldSpace=True)
         for node in set(nodes_to_parent):
             cmds.reorder(node, front=True)
             cmds.reorder(node, relative=self.data['index'])
+            cmds.xform(node, matrix=placeholder_form, ws=True)
 
-        node = self.data['node']
-        holding_sets = cmds.listSets(object=node)
+        holding_sets = cmds.listSets(object=placeholder_node)
         if not holding_sets:
             return
         for holding_set in holding_sets:
