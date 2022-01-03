@@ -2,7 +2,7 @@ import signal
 import time
 import asyncio
 
-from avalon.tvpaint.communication_server import (
+from openpype.hosts.tvpaint.api.communication_server import (
     BaseCommunicator,
     CommunicationWrapper
 )

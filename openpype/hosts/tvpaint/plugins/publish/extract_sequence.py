@@ -5,7 +5,7 @@ import tempfile
 from PIL import Image
 
 import pyblish.api
-from avalon.tvpaint import lib
+from openpype.hosts.tvpaint.api import lib
 from openpype.hosts.tvpaint.lib import (
     calculate_layers_extraction_data,
     get_frame_filename_template,
