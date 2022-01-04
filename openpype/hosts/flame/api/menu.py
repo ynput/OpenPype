@@ -25,11 +25,11 @@ default_flame_export_presets = {
 }
 
 
-def send_selection(selection):
+def callback_selection(selection, function):
     import openpype.hosts.flame as opflame
     opflame.selection = selection
     print(opflame.selection)
-    return True
+    function()
 
 
 class _FlameMenuApp(object):
@@ -103,9 +103,6 @@ class FlameMenuProjectConnect(_FlameMenuApp):
         if not self.flame:
             return []
 
-        flame_project_name = self.flame_project_name
-        self.log.info("______ {} ______".format(flame_project_name))
-
         menu = deepcopy(self.menu)
 
         menu['actions'].append({
@@ -114,13 +111,13 @@ class FlameMenuProjectConnect(_FlameMenuApp):
         })
         menu['actions'].append({
             "name": "Create ...",
-            "isVisible": send_selection,
-            "execute": lambda x: self.tools_helper.show_creator()
+            "execute": lambda x: callback_selection(
+                x, self.tools_helper.show_creator)
         })
         menu['actions'].append({
             "name": "Publish ...",
-            "isVisible": send_selection,
-            "execute": lambda x: self.tools_helper.show_publish()
+            "execute": lambda x: callback_selection(
+                x, self.tools_helper.show_publish)
         })
         menu['actions'].append({
             "name": "Load ...",
@@ -170,20 +167,17 @@ class FlameMenuTimeline(_FlameMenuApp):
         if not self.flame:
             return []
 
-        flame_project_name = self.flame_project_name
-        self.log.info("______ {} ______".format(flame_project_name))
-
         menu = deepcopy(self.menu)
 
         menu['actions'].append({
             "name": "Create ...",
-            "isVisible": send_selection,
-            "execute": lambda x: self.tools_helper.show_creator()
+            "execute": lambda x: callback_selection(
+                x, self.tools_helper.show_creator)
         })
         menu['actions'].append({
             "name": "Publish ...",
-            "isVisible": send_selection,
-            "execute": lambda x: self.tools_helper.show_publish()
+            "execute": lambda x: callback_selection(
+                x, self.tools_helper.show_publish)
         })
         menu['actions'].append({
             "name": "Load ...",
