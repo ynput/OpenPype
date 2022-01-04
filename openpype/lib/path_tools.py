@@ -347,20 +347,17 @@ class HostDirmap:
         It checks if Site Sync is enabled and user chose to use local
         site, in that case configuration in Local Settings takes precedence
         """
-        local_mapping = self._get_local_sync_dirmap(project_settings)
-        dirmap_label = "{}-dirmap".format(self.host_name)
-        if not self.project_settings[self.host_name].get(dirmap_label) and \
-                not local_mapping:
-            return []
-        mapping = local_mapping or \
-            self.project_settings[self.host_name][dirmap_label]["paths"] or {}
-        enbled = self.project_settings[self.host_name][dirmap_label]["enabled"]
-        mapping_enabled = enbled or bool(local_mapping)
+        # Local settings
+        mapping = self._get_local_sync_dirmap(project_settings)
 
-        if not mapping or not mapping_enabled or \
-                not mapping.get("destination-path") or \
-                not mapping.get("source-path"):
-            return []
+        # Host specific mapping
+        value = self._get_host_specific_mapping(project_settings)
+
+        if value:
+            for key in tuple(mapping.keys()):
+                if key in value:
+                    mapping[key].extend(value[key])
+
         return mapping
 
     def _get_host_specific_mapping(self, project_settings):
