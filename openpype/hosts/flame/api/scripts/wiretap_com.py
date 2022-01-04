@@ -10,14 +10,19 @@ import xml.dom.minidom as minidom
 from copy import deepcopy
 import datetime
 
+FLAME_V = os.getenv("OPENPYPE_FLAME_VERSION")
+
+if not FLAME_V:
+    raise KeyError("Missing key in environment `OPENPYPE_FLAME_VERSION`")
+
 try:
     from libwiretapPythonClientAPI import (
         WireTapClientInit)
 except ImportError:
-    flame_python_path = "/opt/Autodesk/flame_2021/python"
+    flame_python_path = "/opt/Autodesk/flame_{}/python".format(FLAME_V)
     flame_exe_path = (
-        "/opt/Autodesk/flame_2021/bin/flame.app"
-        "/Contents/MacOS/startApp")
+        "/opt/Autodesk/flame_{}/bin/flame.app"
+        "/Contents/MacOS/startApp").format(FLAME_V)
 
     sys.path.append(flame_python_path)
 
@@ -169,7 +174,7 @@ class WireTapCom(object):
             # check if volumes exists
             if self.volume_name not in volumes:
                 raise AttributeError(
-                    ("Volume '{}' does not exist '{}'").format(
+                    ("Volume '{}' does not exist in '{}'").format(
                         self.volume_name, volumes)
                 )
 
@@ -179,7 +184,7 @@ class WireTapCom(object):
                     "/opt/Autodesk/",
                     "wiretap",
                     "tools",
-                    "2021",
+                    FLAME_V,
                     "wiretap_create_node",
                 ),
                 '-n',
@@ -434,7 +439,7 @@ class WireTapCom(object):
                 "/opt/Autodesk/",
                 "wiretap",
                 "tools",
-                "2021",
+                FLAME_V,
                 "wiretap_duplicate_node",
             ),
             "-s",

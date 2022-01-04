@@ -19,7 +19,10 @@ class FlamePrelaunch(PreLaunchHook):
     app_groups = ["flame"]
 
     # todo: replace version number with avalon launch app version
-    flame_python_exe = "/opt/Autodesk/python/2021/bin/python2.7"
+    flame_python_exe = (
+        "/opt/Autodesk/python/{OPENPYPE_FLAME_VERSION}"
+        "/bin/python2.7"
+    )
 
     wtc_script_path = os.path.join(
         opflame.HOST_DIR, "api", "scripts", "wiretap_com.py")
@@ -30,6 +33,7 @@ class FlamePrelaunch(PreLaunchHook):
         self.signature = "( {} )".format(self.__class__.__name__)
 
     def execute(self):
+        _env = self.launch_context.env
         """Hook entry method."""
         project_doc = self.data["project_doc"]
         user_name = get_openpype_username()
@@ -58,9 +62,9 @@ class FlamePrelaunch(PreLaunchHook):
 
         data_to_script = {
             # from settings
-            "host_name": os.getenv("FLAME_WIRETAP_HOSTNAME") or hostname,
-            "volume_name": os.getenv("FLAME_WIRETAP_VOLUME"),
-            "group_name": os.getenv("FLAME_WIRETAP_GROUP"),
+            "host_name": _env.get("FLAME_WIRETAP_HOSTNAME") or hostname,
+            "volume_name": _env.get("FLAME_WIRETAP_VOLUME"),
+            "group_name": _env.get("FLAME_WIRETAP_GROUP"),
             "color_policy": "ACES 1.1",
 
             # from project
@@ -68,9 +72,12 @@ class FlamePrelaunch(PreLaunchHook):
             "user_name": user_name,
             "project_data": project_data
         }
+
+        self.log.info(pformat(dict(_env)))
+        self.log.info(pformat(data_to_script))
+
         app_arguments = self._get_launch_arguments(data_to_script)
 
-        self.log.info(pformat(dict(self.launch_context.env)))
 
         opflame.setup(self.launch_context.env)
 
@@ -83,7 +90,9 @@ class FlamePrelaunch(PreLaunchHook):
         with make_temp_file(dumped_script_data) as tmp_json_path:
             # Prepare subprocess arguments
             args = [
-                self.flame_python_exe,
+                self.flame_python_exe.format(
+                    **self.launch_context.env
+                ),
                 self.wtc_script_path,
                 tmp_json_path
             ]
@@ -91,7 +100,7 @@ class FlamePrelaunch(PreLaunchHook):
 
             process_kwargs = {
                 "logger": self.log,
-                "env": {}
+                "env": self.launch_context.env
             }
 
             openpype.api.run_subprocess(args, **process_kwargs)

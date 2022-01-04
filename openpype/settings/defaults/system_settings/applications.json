@@ -118,10 +118,10 @@
                 "executables": {
                     "windows": [],
                     "darwin": [
-                        "/opt/Autodesk/flame_2021/bin/flame.app/Contents/MacOS/startApp"
+                        "/opt/Autodesk/flame_{OPENPYPE_FLAME_VERSION}/bin/flame.app/Contents/MacOS/startApp"
                     ],
                     "linux": [
-                        "/opt/Autodesk/flame_2021/bin/flame"
+                        "/opt/Autodesk/flame_{OPENPYPE_FLAME_VERSION}/bin/flame"
                     ]
                 },
                 "arguments": {
@@ -129,7 +129,9 @@
                     "darwin": [],
                     "linux": []
                 },
-                "environment": {}
+                "environment": {
+                    "OPENPYPE_FLAME_VERSION": "2021"
+                }
             },
             "__dynamic_keys_labels__": {
                 "2021": "2021 (Testing Only)"
