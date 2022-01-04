@@ -38,9 +38,10 @@ class OpenPypeVersionInput(TextEntity):
         value_hints = []
         if state is OverrideState.STUDIO:
             versions = self._get_openpype_versions()
-            if versions is not None:
-                for version in versions:
-                    value_hints.append(str(version))
+            for version in versions:
+                version_str = str(version)
+                if version_str not in value_hints:
+                    value_hints.append(version_str)
 
         self.value_hints = value_hints
 
