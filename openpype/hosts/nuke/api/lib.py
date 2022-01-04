@@ -1431,7 +1431,7 @@ def recreate_instance(origin_node, avalon_data=None):
 
 
 class NukeDirmap(HostDirmap):
-    def __init__(self, host_name, project_settings, sync_module, file_name):
+    def __init__(self, project_settings, sync_module=None):
         """
         Args:
             host_name (str): Nuke
@@ -1439,12 +1439,10 @@ class NukeDirmap(HostDirmap):
             sync_module (SyncServerModule): to limit reinitialization
             file_name (str): full path of referenced file from workfiles
         """
-        self.host_name = host_name
-        self.project_settings = project_settings
-        self.file_name = file_name
-        self.sync_module = sync_module
+        super(NukeDirmap, self).__init__("nuke", project_settings, sync_module)
 
-        self._mapping = None  # cache mapping
+        self.file_name = file_name
+
 
     def on_enable_dirmap(self):
         pass
