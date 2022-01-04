@@ -1101,6 +1101,23 @@
                     "linux": []
                 },
                 "environment": {}
+            },
+            "2022": {
+                "enabled": true,
+                "variant_label": "2022",
+                "executables": {
+                    "windows": [
+                        "C:\\Program Files\\Adobe\\Adobe After Effects 2022\\Support Files\\AfterFX.exe"
+                    ],
+                    "darwin": [],
+                    "linux": []
+                },
+                "arguments": {
+                    "windows": [],
+                    "darwin": [],
+                    "linux": []
+                },
+                "environment": {}
             }
         }
     },

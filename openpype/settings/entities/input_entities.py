@@ -118,6 +118,9 @@ class InputEntity(EndpointEntity):
             return self.value == other.value
         return self.value == other
 
+    def has_child_with_key(self, key):
+        return False
+
     def get_child_path(self, child_obj):
         raise TypeError("{} can't have children".format(
             self.__class__.__name__

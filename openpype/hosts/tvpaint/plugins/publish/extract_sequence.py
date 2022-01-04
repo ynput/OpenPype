@@ -2,17 +2,18 @@ import os
 import copy
 import tempfile
 
+from PIL import Image
+
 import pyblish.api
-from avalon.tvpaint import lib
-from openpype.hosts.tvpaint.api.lib import composite_images
+from openpype.hosts.tvpaint.api import lib
 from openpype.hosts.tvpaint.lib import (
     calculate_layers_extraction_data,
     get_frame_filename_template,
     fill_reference_frames,
     composite_rendered_layers,
-    rename_filepaths_by_frame_start
+    rename_filepaths_by_frame_start,
+    composite_images
 )
-from PIL import Image
 
 
 class ExtractSequence(pyblish.api.Extractor):

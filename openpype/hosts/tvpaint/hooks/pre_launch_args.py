@@ -44,10 +44,6 @@ class TvpaintPrelaunchHook(PreLaunchHook):
             self.launch_context.launch_args.extend(remainders)
 
     def launch_script_path(self):
-        avalon_dir = os.path.dirname(os.path.abspath(avalon.__file__))
-        script_path = os.path.join(
-            avalon_dir,
-            "tvpaint",
-            "launch_script.py"
-        )
-        return script_path
+        from openpype.hosts.tvpaint import get_launch_script_path
+
+        return get_launch_script_path()

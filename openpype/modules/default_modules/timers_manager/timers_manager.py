@@ -1,8 +1,14 @@
 import os
 import platform
-from openpype.modules import OpenPypeModule
-from openpype_interfaces import ITrayService
+
 from avalon.api import AvalonMongoDB
+
+from openpype.modules import OpenPypeModule
+from openpype_interfaces import (
+    ITrayService,
+    ILaunchHookPaths
+)
+from .exceptions import InvalidContextError
 
 
 class ExampleTimersManagerConnector:
@@ -64,7 +70,7 @@ class ExampleTimersManagerConnector:
             self._timers_manager_module.timer_stopped(self._module.id)
 
 
-class TimersManager(OpenPypeModule, ITrayService):
+class TimersManager(OpenPypeModule, ITrayService, ILaunchHookPaths):
     """ Handles about Timers.
 
     Should be able to start/stop all timers at once.
@@ -151,47 +157,112 @@ class TimersManager(OpenPypeModule, ITrayService):
             self._idle_manager.stop()
             self._idle_manager.wait()
 
-    def start_timer(self, project_name, asset_name, task_name, hierarchy):
-        """
-            Start timer for 'project_name', 'asset_name' and 'task_name'
+    def get_timer_data_for_path(self, task_path):
+        """Convert string path to a timer data.
 
-            Called from REST api by hosts.
-
-            Args:
-                project_name (string)
-                asset_name (string)
-                task_name (string)
-                hierarchy (string)
+        It is expected that first item is project name, last item is task name
+        and parent asset name is before task name.
         """
+        path_items = task_path.split("/")
+        if len(path_items) < 3:
+            raise InvalidContextError("Invalid path \"{}\"".format(task_path))
+        task_name = path_items.pop(-1)
+        asset_name = path_items.pop(-1)
+        project_name = path_items.pop(0)
+        return self.get_timer_data_for_context(
+            project_name, asset_name, task_name, self.log
+        )
+
+    def get_launch_hook_paths(self):
+        """Implementation of `ILaunchHookPaths`."""
+        return os.path.join(
+            os.path.dirname(os.path.abspath(__file__)),
+            "launch_hooks"
+        )
+
+    @staticmethod
+    def get_timer_data_for_context(
+        project_name, asset_name, task_name, logger=None
+    ):
+        """Prepare data for timer related callbacks.
+
+        TODO:
+        - return predefined object that has access to asset document etc.
+        """
+        if not project_name or not asset_name or not task_name:
+            raise InvalidContextError((
+                "Missing context information got"
+                " Project: \"{}\" Asset: \"{}\" Task: \"{}\""
+            ).format(str(project_name), str(asset_name), str(task_name)))
+
         dbconn = AvalonMongoDB()
         dbconn.install()
         dbconn.Session["AVALON_PROJECT"] = project_name
 
-        asset_doc = dbconn.find_one({
-            "type": "asset", "name": asset_name
-        })
+        asset_doc = dbconn.find_one(
+            {
+                "type": "asset",
+                "name": asset_name
+            },
+            {
+                "data.tasks": True,
+                "data.parents": True
+            }
+        )
         if not asset_doc:
-            raise ValueError("Uknown asset {}".format(asset_name))
+            dbconn.uninstall()
+            raise InvalidContextError((
+                "Asset \"{}\" not found in project \"{}\""
+            ).format(asset_name, project_name))
 
-        task_type = ''
+        asset_data = asset_doc.get("data") or {}
+        asset_tasks = asset_data.get("tasks") or {}
+        if task_name not in asset_tasks:
+            dbconn.uninstall()
+            raise InvalidContextError((
+                "Task \"{}\" not found on asset \"{}\" in project \"{}\""
+            ).format(task_name, asset_name, project_name))
+
+        task_type = ""
         try:
-            task_type = asset_doc["data"]["tasks"][task_name]["type"]
+            task_type = asset_tasks[task_name]["type"]
         except KeyError:
-            self.log.warning("Couldn't find task_type for {}".
-                             format(task_name))
+            msg = "Couldn't find task_type for {}".format(task_name)
+            if logger is not None:
+                logger.warning(msg)
+            else:
+                print(msg)
 
-        hierarchy = hierarchy.split("\\")
-        hierarchy.append(asset_name)
+        hierarchy_items = asset_data.get("parents") or []
+        hierarchy_items.append(asset_name)
 
-        data = {
+        dbconn.uninstall()
+        return {
             "project_name": project_name,
             "task_name": task_name,
             "task_type": task_type,
-            "hierarchy": hierarchy
+            "hierarchy": hierarchy_items
         }
+
+    def start_timer(self, project_name, asset_name, task_name):
+        """Start timer for passed context.
+
+        Args:
+            project_name (str): Project name
+            asset_name (str): Asset name
+            task_name (str): Task name
+        """
+        data = self.get_timer_data_for_context(
+            project_name, asset_name, task_name, self.log
+        )
         self.timer_started(None, data)
 
     def get_task_time(self, project_name, asset_name, task_name):
+        """Get total time for passed context.
+
+        TODO:
+        - convert context to timer data
+        """
         times = {}
         for module_id, connector in self._connectors_by_module_id.items():
             if hasattr(connector, "get_task_time"):
@@ -202,6 +273,10 @@ class TimersManager(OpenPypeModule, ITrayService):
         return times
 
     def timer_started(self, source_id, data):
+        """Connector triggered that timer has started.
+
+        New timer has started for context in data.
+        """
         for module_id, connector in self._connectors_by_module_id.items():
             if module_id == source_id:
                 continue
@@ -219,6 +294,14 @@ class TimersManager(OpenPypeModule, ITrayService):
         self.is_running = True
 
     def timer_stopped(self, source_id):
+        """Connector triggered that hist timer has stopped.
+
+        Should stop all other timers.
+
+        TODO:
+        - pass context for which timer has stopped to validate if timers are
+            same and valid
+        """
         for module_id, connector in self._connectors_by_module_id.items():
             if module_id == source_id:
                 continue
@@ -237,6 +320,7 @@ class TimersManager(OpenPypeModule, ITrayService):
             self.timer_started(None, self.last_task)
 
     def stop_timers(self):
+        """Stop all timers."""
         if self.is_running is False:
             return
 
@@ -295,18 +379,40 @@ class TimersManager(OpenPypeModule, ITrayService):
                 self, server_manager
             )
 
-    def change_timer_from_host(self, project_name, asset_name, task_name):
-        """Prepared method for calling change timers on REST api"""
+    @staticmethod
+    def start_timer_with_webserver(
+        project_name, asset_name, task_name, logger=None
+    ):
+        """Prepared method for calling change timers on REST api.
+
+        Webserver must be active. At the moment is Webserver running only when
+        OpenPype Tray is used.
+
+        Args:
+            project_name (str): Project name.
+            asset_name (str): Asset name.
+            task_name (str): Task name.
+            logger (logging.Logger): Logger object. Using 'print' if not
+                passed.
+        """
         webserver_url = os.environ.get("OPENPYPE_WEBSERVER_URL")
         if not webserver_url:
-            self.log.warning("Couldn't find webserver url")
+            msg = "Couldn't find webserver url"
+            if logger is not None:
+                logger.warning(msg)
+            else:
+                print(msg)
             return
 
         rest_api_url = "{}/timers_manager/start_timer".format(webserver_url)
         try:
             import requests
         except Exception:
-            self.log.warning("Couldn't start timer")
+            msg = "Couldn't start timer ('requests' is not available)"
+            if logger is not None:
+                logger.warning(msg)
+            else:
+                print(msg)
             return
         data = {
             "project_name": project_name,
@@ -314,4 +420,4 @@ class TimersManager(OpenPypeModule, ITrayService):
             "task_name": task_name
         }
 
-        requests.post(rest_api_url, json=data)
+        return requests.post(rest_api_url, json=data)

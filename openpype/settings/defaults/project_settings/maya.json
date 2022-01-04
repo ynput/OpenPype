@@ -43,7 +43,8 @@
             "defaults": [
                 "Main"
             ],
-            "aov_separator": "underscore"
+            "aov_separator": "underscore",
+            "default_render_image_folder": "renders"
         },
         "CreateAnimation": {
             "enabled": true,
