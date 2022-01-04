@@ -227,8 +227,22 @@ def before_workfile_save(workfile_path):
 
 
 class MayaDirmap(HostDirmap):
-    def on_enable_dirmap(self):
+    def process_dirmap(self):
+        mapping = self.mapping
+        if not mapping:
+            return
+
+        log.info("Processing directory mapping ...")
         cmds.dirmap(en=True)
+        log.info("mapping:: {}".format(mapping))
+
+        for src_path in mapping["source-path"]:
+            if not src_path:
+                continue
+            for dst_path in mapping["destination-path"]:
+                if not dst_path or not os.path.exists(dst_path):
+                    continue
+                self.dirmap_routine(src_path, dst_path)
 
     def dirmap_routine(self, source_path, destination_path):
         cmds.dirmap(m=(source_path, destination_path))
