@@ -12,22 +12,17 @@ class PlaceholderLineEdit(QtWidgets.QLineEdit):
     """Set placeholder color of QLineEdit in Qt 5.12 and higher."""
     def __init__(self, *args, **kwargs):
         super(PlaceholderLineEdit, self).__init__(*args, **kwargs)
-        self._first_show = True
-
-    def showEvent(self, event):
-        super(PlaceholderLineEdit, self).showEvent(event)
-        if self._first_show:
-            self._first_show = False
+        # Change placeholder palette color
+        if hasattr(QtGui.QPalette, "PlaceholderText"):
             filter_palette = self.palette()
-            if hasattr(filter_palette, "PlaceholderText"):
-                color_obj = get_objected_colors()["font"]
-                color = color_obj.get_qcolor()
-                color.setAlpha(67)
-                filter_palette.setColor(
-                    filter_palette.PlaceholderText,
-                    color
-                )
-                self.setPalette(filter_palette)
+            color_obj = get_objected_colors()["font"]
+            color = color_obj.get_qcolor()
+            color.setAlpha(67)
+            filter_palette.setColor(
+                QtGui.QPalette.PlaceholderText,
+                color
+            )
+            self.setPalette(filter_palette)
 
 
 class ImageButton(QtWidgets.QPushButton):

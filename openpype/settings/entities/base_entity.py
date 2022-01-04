@@ -235,6 +235,11 @@ class BaseItemEntity(BaseEntity):
         """Return system settings entity."""
         pass
 
+    @abstractmethod
+    def has_child_with_key(self, key):
+        """Entity contains key as children."""
+        pass
+
     def schema_validations(self):
         """Validate schema of entity and it's hierachy.
 

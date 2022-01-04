@@ -1,7 +1,7 @@
 import pyblish.api
 
-from avalon.tvpaint import workio
 from openpype.api import version_up
+from openpype.hosts.tvpaint.api import workio
 
 
 class IncrementWorkfileVersion(pyblish.api.ContextPlugin):

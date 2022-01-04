@@ -970,6 +970,13 @@ class ProjectListWidget(QtWidgets.QWidget):
             index, QtCore.QItemSelectionModel.SelectionFlag.SelectCurrent
         )
 
+    def get_project_names(self):
+        output = []
+        for row in range(self.project_proxy.rowCount()):
+            index = self.project_proxy.index(row, 0)
+            output.append(index.data(PROJECT_NAME_ROLE))
+        return output
+
     def refresh(self):
         selected_project = None
         for index in self.project_list.selectedIndexes():
