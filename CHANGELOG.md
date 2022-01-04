@@ -1,17 +1,12 @@
 # Changelog
 
-## [3.7.0-nightly.14](https://github.com/pypeclub/OpenPype/tree/HEAD)
+## [3.7.0](https://github.com/pypeclub/OpenPype/tree/3.7.0) (2022-01-04)
 
-[Full Changelog](https://github.com/pypeclub/OpenPype/compare/3.6.4...HEAD)
-
-**Deprecated:**
-
-- General: Default modules hierarchy n2 [\#2368](https://github.com/pypeclub/OpenPype/pull/2368)
+[Full Changelog](https://github.com/pypeclub/OpenPype/compare/3.6.4...3.7.0)
 
 **🚀 Enhancements**
 
 - General: Workdir extra folders [\#2462](https://github.com/pypeclub/OpenPype/pull/2462)
-- Harmony: Added new style validations for New Publisher [\#2434](https://github.com/pypeclub/OpenPype/pull/2434)
 - Photoshop: New style validations for New publisher [\#2429](https://github.com/pypeclub/OpenPype/pull/2429)
 - General: Environment variables groups [\#2424](https://github.com/pypeclub/OpenPype/pull/2424)
 - Unreal: Dynamic menu created in Python [\#2422](https://github.com/pypeclub/OpenPype/pull/2422)
