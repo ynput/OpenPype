@@ -278,11 +278,6 @@ class HostDirmap:
         self._last_cache = 0
         self._cache_timeout = 180
 
-    @abc.abstractmethod
-    def on_enable_dirmap(self):
-        """
-            Run host dependent operation for enabling dirmap if necessary.
-        """
     @property
     def sync_module(self):
         if not self._sync_module:
@@ -291,11 +286,6 @@ class HostDirmap:
             self._sync_module = manager.modules_by_name["sync_server"]
         return self._sync_module
 
-    @abc.abstractmethod
-    def dirmap_routine(self, source_path, destination_path):
-        """
-            Run host dependent remapping from source_path to destination_path
-        """
     @property
     def mapping(self):
         if (time.time() - self._last_cache) > self._cache_timeout:
@@ -304,6 +294,8 @@ class HostDirmap:
         if not self._mapping:
             self._mapping = self.get_mappings(self.project_settings)
         return self._mapping
+
+    @abc.abstractmethod
     def process_dirmap(self):
         # type: (dict) -> None
         """Go through all paths in Settings and set them using `dirmap`.
@@ -313,33 +305,8 @@ class HostDirmap:
 
         Args:
             project_settings (dict): Settings for current project.
-
         """
-        if not self._mapping:
-            self._mapping = self.get_mappings(self.project_settings)
-        if not self._mapping:
-            return
-
-        log.info("Processing directory mapping ...")
-        self.on_enable_dirmap()
-        log.info("mapping:: {}".format(self._mapping))
-
-        for k, sp in enumerate(self._mapping["source-path"]):
-            try:
-                print("{} -> {}".format(sp,
-                                        self._mapping["destination-path"][k]))
-                self.dirmap_routine(sp,
-                                    self._mapping["destination-path"][k])
-            except IndexError:
-                # missing corresponding destination path
-                log.error(("invalid dirmap mapping, missing corresponding"
-                           " destination directory."))
-                break
-            except RuntimeError:
-                log.error("invalid path {} -> {}, mapping not registered".format(  # noqa: E501
-                    sp, self._mapping["destination-path"][k]
-                ))
-                continue
+        pass
 
     def get_mappings(self, project_settings):
         """Get translation from source-path to destination-path.
