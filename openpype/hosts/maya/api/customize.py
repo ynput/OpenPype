@@ -78,22 +78,22 @@ def override_toolbox_ui():
     icons = resources.get_resource("icons")
 
     # Ensure the maya web icon on toolbox exists
-    maya_version = int(cmds.about(version=True))
-    if maya_version >= 2022:
-        # Maya 2022+ has an updated toolbox with a different web
-        # button name and type
-        web_button = "ToolBox|MainToolboxLayout|mayaHomeToolboxButton"
-        button_fn = cmds.iconTextStaticLabel
+    button_names = [
+        # Maya 2022.1+ with maya.cmds.iconTextStaticLabel
+        "ToolBox|MainToolboxLayout|mayaHomeToolboxButton",
+        # Older with maya.cmds.iconTextButton
+        "ToolBox|MainToolboxLayout|mayaWebButton"
+    ]
+    for name in button_names:
+        if cmds.control(name, query=True, exists=True):
+            web_button = name
+            break
     else:
-        web_button = "ToolBox|MainToolboxLayout|mayaWebButton"
-        button_fn = cmds.iconTextButton
-
-    if not button_fn(web_button, query=True, exists=True):
         # Button does not exist
         log.warning("Can't find Maya Home/Web button to override toolbox ui..")
         return
 
-    button_fn(web_button, edit=True, visible=False)
+    cmds.control(web_button, edit=True, visible=False)
 
     # real = 32, but 36 with padding - according to toolbox mel script
     icon_size = 36
