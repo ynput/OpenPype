@@ -4,6 +4,7 @@ import abc
 import json
 import logging
 import six
+import time
 
 from openpype.settings import get_project_settings
 from openpype.settings.lib import get_site_local_overrides
@@ -271,7 +272,10 @@ class HostDirmap:
         self.project_settings = project_settings
         self._sync_module = sync_module  # to limit reinit of Modules
 
-        self._mapping = None  # cache mapping
+        # Cache mapping
+        self._mapping = None
+        self._last_cache = 0
+        self._cache_timeout = 180
 
     @abc.abstractmethod
     def on_enable_dirmap(self):
@@ -291,7 +295,14 @@ class HostDirmap:
         """
             Run host dependent remapping from source_path to destination_path
         """
+    @property
+    def mapping(self):
+        if (time.time() - self._last_cache) > self._cache_timeout:
+            self._mapping = None
 
+        if not self._mapping:
+            self._mapping = self.get_mappings(self.project_settings)
+        return self._mapping
     def process_dirmap(self):
         # type: (dict) -> None
         """Go through all paths in Settings and set them using `dirmap`.
