@@ -363,6 +363,13 @@ class HostDirmap:
             return []
         return mapping
 
+    def _get_host_specific_mapping(self, project_settings):
+        dirmap_label = "{}-dirmap".format(self.host_name)
+        value = self.project_settings[self.host_name].get(dirmap_label)
+        if not value or not value["enabled"]:
+            return {}
+        return value["paths"]
+
     def _get_local_sync_dirmap(self, project_settings):
         """
             Returns dirmap if synch to local project is enabled.
