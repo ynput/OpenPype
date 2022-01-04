@@ -1,5 +1,5 @@
-from collections import defaultdict
 import copy
+from collections import defaultdict
 
 from Qt import QtWidgets, QtCore, QtGui
 
@@ -58,6 +58,18 @@ class DeliveryOptionsDialog(QtWidgets.QDialog):
     def __init__(self, contexts, log=None, parent=None):
         super(DeliveryOptionsDialog, self).__init__(parent=parent)
 
+        self.setWindowTitle("OpenPype - Deliver versions")
+        icon = QtGui.QIcon(resources.get_openpype_icon_filepath())
+        self.setWindowIcon(icon)
+
+        self.setWindowFlags(
+            QtCore.Qt.WindowStaysOnTopHint
+            | QtCore.Qt.WindowCloseButtonHint
+            | QtCore.Qt.WindowMinimizeButtonHint
+        )
+
+        self.setStyleSheet(style.load_stylesheet())
+
         project = contexts[0]["project"]["name"]
         self.anatomy = Anatomy(project)
         self._representations = None
@@ -69,16 +81,6 @@ class DeliveryOptionsDialog(QtWidgets.QDialog):
         self.dbcon.install()
 
         self._set_representations(contexts)
-
-        self.setWindowTitle("OpenPype - Deliver versions")
-        icon = QtGui.QIcon(resources.get_openpype_icon_filepath())
-        self.setWindowIcon(icon)
-
-        self.setWindowFlags(
-            QtCore.Qt.WindowCloseButtonHint |
-            QtCore.Qt.WindowMinimizeButtonHint
-        )
-        self.setStyleSheet(style.load_stylesheet())
 
         dropdown = QtWidgets.QComboBox()
         self.templates = self._get_templates(self.anatomy)
