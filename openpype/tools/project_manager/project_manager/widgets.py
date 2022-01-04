@@ -336,18 +336,21 @@ class ConfirmProjectDeletion(QtWidgets.QDialog):
 
         self.setWindowTitle("Delete project?")
 
-        message = (
+        message_label = QtWidgets.QLabel(self)
+        message_label.setWordWrap(True)
+        message_label.setTextInteractionFlags(QtCore.Qt.TextBrowserInteraction)
+        message_label.setText((
             "Project <b>\"{}\"</b> with all related data will be"
             " permanently removed from the database (This actions won't remove"
             " any files on disk)."
-        ).format(project_name)
-        message_label = QtWidgets.QLabel(message, self)
-        message_label.setWordWrap(True)
+        ).format(project_name))
 
         question_label = QtWidgets.QLabel("<b>Are you sure?</b>", self)
 
         confirm_input = PlaceholderLineEdit(self)
-        confirm_input.setPlaceholderText("Type \"Delete\" to confirm...")
+        confirm_input.setPlaceholderText(
+            "Type \"{}\" to confirm...".format(project_name)
+        )
 
         cancel_btn = _SameSizeBtns("Cancel", self)
         cancel_btn.setToolTip("Cancel deletion of the project")
@@ -379,6 +382,7 @@ class ConfirmProjectDeletion(QtWidgets.QDialog):
         self._confirm_btn = confirm_btn
         self._confirm_input = confirm_input
         self._result = 0
+        self._project_name = project_name
 
         self.setMinimumWidth(480)
         self.setMaximumWidth(650)
@@ -411,5 +415,5 @@ class ConfirmProjectDeletion(QtWidgets.QDialog):
             self._on_confirm_click()
 
     def _on_confirm_text_change(self):
-        enabled = self._confirm_input.text().lower() == "delete"
+        enabled = self._confirm_input.text() == self._project_name
         self._confirm_btn.setEnabled(enabled)

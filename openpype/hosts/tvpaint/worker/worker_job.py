@@ -256,7 +256,7 @@ class CollectSceneData(BaseCommand):
     name = "collect_scene_data"
 
     def execute(self):
-        from avalon.tvpaint.lib import (
+        from openpype.hosts.tvpaint.api.lib import (
             get_layers_data,
             get_groups_data,
             get_layers_pre_post_behavior,
