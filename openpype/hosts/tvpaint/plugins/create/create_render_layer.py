@@ -197,6 +197,7 @@ class CreateRenderlayer(plugin.Creator):
         )
 
     def _ask_user_subset_override(self, instance):
+        from Qt import QtCore
         from Qt.QtWidgets import QMessageBox
 
         title = "Subset \"{}\" already exist".format(instance["subset"])
@@ -206,6 +207,10 @@ class CreateRenderlayer(plugin.Creator):
         ).format(instance["subset"])
 
         dialog = QMessageBox()
+        dialog.setWindowFlags(
+            dialog.windowFlags()
+            | QtCore.Qt.WindowStaysOnTopHint
+        )
         dialog.setWindowTitle(title)
         dialog.setText(text)
         dialog.setStandardButtons(QMessageBox.Yes | QMessageBox.No)
