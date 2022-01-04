@@ -1560,7 +1560,7 @@ def get_custom_workfile_template_by_context(
     # get path from matching profile
     matching_item = filter_profiles(
         template_profiles,
-        {"task_type": current_task_type}
+        {"task_types": current_task_type}
     )
     # when path is available try to format it in case
     # there are some anatomy template strings
