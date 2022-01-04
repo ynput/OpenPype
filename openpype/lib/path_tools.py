@@ -371,25 +371,23 @@ class HostDirmap:
         return value["paths"]
 
     def _get_local_sync_dirmap(self, project_settings):
+        """Returns dirmap if synch to local project is enabled.
+
+        Only valid mapping is from roots of remote site to local site set
+        in Local Settings.
+
+        Args:
+            project_settings (dict)
+
+        Returns:
+            dict : { "source-path": [XXX], "destination-path": [YYYY]}
         """
-            Returns dirmap if synch to local project is enabled.
-
-            Only valid mapping is from roots of remote site to local site set
-            in Local Settings.
-
-            Args:
-                project_settings (dict)
-            Returns:
-                dict : { "source-path": [XXX], "destination-path": [YYYY]}
-        """
-        import json
-        mapping = {}
-
-        if not project_settings["global"]["sync_server"]["enabled"]:
+        mapping = {
+            "destination-path": [],
+            "source-path": []
+        }
+        if not self.sync_module:
             return mapping
-
-        from openpype.settings.lib import get_site_local_overrides
-
 
         project_name = os.getenv("AVALON_PROJECT")
 
