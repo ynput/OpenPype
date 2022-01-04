@@ -13,14 +13,6 @@ class AvalonModule(OpenPypeModule, ITrayModule):
 
         avalon_settings = modules_settings[self.name]
 
-        # Check if environment is already set
-        avalon_mongo_url = os.environ.get("AVALON_MONGO")
-        if not avalon_mongo_url:
-            avalon_mongo_url = avalon_settings["AVALON_MONGO"]
-        # Use pype mongo if Avalon's mongo not defined
-        if not avalon_mongo_url:
-            avalon_mongo_url = os.environ["OPENPYPE_MONGO"]
-
         thumbnail_root = os.environ.get("AVALON_THUMBNAIL_ROOT")
         if not thumbnail_root:
             thumbnail_root = avalon_settings["AVALON_THUMBNAIL_ROOT"]
@@ -31,7 +23,6 @@ class AvalonModule(OpenPypeModule, ITrayModule):
             avalon_mongo_timeout = avalon_settings["AVALON_TIMEOUT"]
 
         self.thumbnail_root = thumbnail_root
-        self.avalon_mongo_url = avalon_mongo_url
         self.avalon_mongo_timeout = avalon_mongo_timeout
 
         # Tray attributes
