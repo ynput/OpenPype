@@ -3,7 +3,6 @@
 
 import os
 import re
-import sys
 import json
 import logging
 import opentimelineio as otio
@@ -52,7 +51,7 @@ class CTX:
 
     @classmethod
     def get_fps(cls):
-       return cls._fps
+        return cls._fps
 
     @classmethod
     def set_tl_start_frame(cls, number):
@@ -64,7 +63,7 @@ class CTX:
 
     @classmethod
     def get_tl_start_frame(cls):
-       return cls._tl_start_frame
+        return cls._tl_start_frame
 
 
 def flatten(_list):
@@ -105,7 +104,6 @@ def _get_metadata(item):
 
 def create_time_effects(otio_clip, item):
     # todo #2426: add retiming effects to export
-    pass
     # get all subtrack items
     # subTrackItems = flatten(track_item.parent().subTrackItems())
     # speed = track_item.playbackSpeed()
@@ -174,11 +172,18 @@ def create_time_effects(otio_clip, item):
 
     #     # add otio effect to clip effects
     #     otio_clip.effects.append(otio_effect)
+    pass
 
 
 def _get_marker_color(flame_colour):
-    if flame_colour in MARKERS_COLOR_MAP:
-        return MARKERS_COLOR_MAP[flame_colour]
+    # clamp colors to closes half numbers
+    _flame_colour = [
+        (lambda x: round(x * 2) / 2)(c)
+        for c in flame_colour]
+
+    for color, otio_color_type in MARKERS_COLOR_MAP.items():
+        if _flame_colour == list(color):
+            return otio_color_type
 
     return otio.schema.MarkerColor.RED
 
