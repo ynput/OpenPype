@@ -3,11 +3,11 @@ import copy
 
 from Qt import QtWidgets, QtCore, QtGui
 
-from avalon import api, style
+from avalon import api
 from avalon.api import AvalonMongoDB
 
 from openpype.api import Anatomy, config
-from openpype import resources
+from openpype import resources, style
 
 from openpype.lib.delivery import (
     sizeof_fmt,
