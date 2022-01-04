@@ -271,6 +271,7 @@ class HostDirmap:
         self.host_name = host_name
         self.project_settings = project_settings
         self._sync_module = sync_module  # to limit reinit of Modules
+        self.log = logging.getLogger(self.__class__.__name__)
 
         # Cache mapping
         self._mapping = None
