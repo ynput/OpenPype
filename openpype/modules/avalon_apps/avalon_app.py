@@ -42,12 +42,20 @@ class AvalonModule(OpenPypeModule, ITrayModule):
     def tray_init(self):
         # Add library tool
         try:
+            from Qt import QtCore
             from openpype.tools.libraryloader import LibraryLoaderWindow
 
-            self.libraryloader = LibraryLoaderWindow(
+            libraryloader = LibraryLoaderWindow(
                 show_projects=True,
                 show_libraries=True
             )
+            # Remove always on top flag for tray
+            window_flags = libraryloader.windowFlags()
+            if window_flags | QtCore.Qt.WindowStaysOnTopHint:
+                window_flags ^= QtCore.Qt.WindowStaysOnTopHint
+                libraryloader.setWindowFlags(window_flags)
+            self.libraryloader = libraryloader
+
         except Exception:
             self.log.warning(
                 "Couldn't load Library loader tool for tray.",
