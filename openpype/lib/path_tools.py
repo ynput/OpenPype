@@ -269,7 +269,7 @@ class HostDirmap:
     def __init__(self, host_name, project_settings, sync_module=None):
         self.host_name = host_name
         self.project_settings = project_settings
-        self.sync_module = sync_module  # to limit reinit of Modules
+        self._sync_module = sync_module  # to limit reinit of Modules
 
         self._mapping = None  # cache mapping
 
@@ -278,6 +278,13 @@ class HostDirmap:
         """
             Run host dependent operation for enabling dirmap if necessary.
         """
+    @property
+    def sync_module(self):
+        if not self._sync_module:
+            from openpype.modules import ModulesManager
+            manager = ModulesManager()
+            self._sync_module = manager.modules_by_name["sync_server"]
+        return self._sync_module
 
     @abc.abstractmethod
     def dirmap_routine(self, source_path, destination_path):
@@ -364,10 +371,6 @@ class HostDirmap:
 
         from openpype.settings.lib import get_site_local_overrides
 
-        if not self.sync_module:
-            from openpype.modules import ModulesManager
-            manager = ModulesManager()
-            self.sync_module = manager.modules_by_name["sync_server"]
 
         project_name = os.getenv("AVALON_PROJECT")
 
