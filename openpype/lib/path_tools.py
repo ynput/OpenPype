@@ -256,16 +256,15 @@ def create_workdir_extra_folders(
 
 @six.add_metaclass(abc.ABCMeta)
 class HostDirmap:
-    """
-        Abstract class for running dirmap on a workfile in a host.
+    """Abstract class for running dirmap on a workfile in a host.
 
-        Dirmap is used to translate paths inside of host workfile from one
-        OS to another. (Eg. arstist created workfile on Win, different artists
-        opens same file on Linux.)
+    Dirmap is used to translate paths inside of host workfile from one
+    OS to another. (Eg. arstist created workfile on Win, different artists
+    opens same file on Linux.)
 
-        Expects methods to be implemented inside of host:
-            on_dirmap_enabled: run host code for enabling dirmap
-            do_dirmap: run host code to do actual remapping
+    Expects methods to be implemented inside of host:
+        on_dirmap_enabled: run host code for enabling dirmap
+        do_dirmap: run host code to do actual remapping
     """
     def __init__(self, host_name, project_settings, sync_module=None):
         self.host_name = host_name
@@ -290,8 +289,8 @@ class HostDirmap:
         # type: (dict) -> None
         """Go through all paths in Settings and set them using `dirmap`.
 
-            If artists has Site Sync enabled, take dirmap mapping directly from
-            Local Settings when artist is syncing workfile locally.
+        If artists has Site Sync enabled, take dirmap mapping directly from
+        Local Settings when artist is syncing workfile locally.
 
         Args:
             project_settings (dict): Settings for current project.
@@ -326,8 +325,8 @@ class HostDirmap:
     def get_mappings(self, project_settings):
         """Get translation from source-path to destination-path.
 
-            It checks if Site Sync is enabled and user chose to use local
-            site, in that case configuration in Local Settings takes precedence
+        It checks if Site Sync is enabled and user chose to use local
+        site, in that case configuration in Local Settings takes precedence
         """
         local_mapping = self._get_local_sync_dirmap(project_settings)
         dirmap_label = "{}-dirmap".format(self.host_name)
