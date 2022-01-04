@@ -582,11 +582,8 @@ class AssetsWidget(QtWidgets.QWidget):
         self.dbcon = dbcon
 
         # Tree View
-        model = AssetModel(dbcon=self.dbcon, parent=self)
-        proxy = RecursiveSortFilterProxyModel()
-        proxy.setSourceModel(model)
-        proxy.setFilterCaseSensitivity(QtCore.Qt.CaseInsensitive)
-        proxy.setSortCaseSensitivity(QtCore.Qt.CaseInsensitive)
+        model = self._create_source_model()
+        proxy = self._create_proxy_model(model)
 
         view = AssetsView(self)
         view.setModel(proxy)
@@ -628,7 +625,6 @@ class AssetsWidget(QtWidgets.QWidget):
         selection_model.selectionChanged.connect(self._on_selection_change)
         refresh_btn.clicked.connect(self.refresh)
         current_asset_btn.clicked.connect(self.set_current_session_asset)
-        model.refreshed.connect(self._on_model_refresh)
         view.doubleClicked.connect(self.double_clicked)
 
         self._current_asset_btn = current_asset_btn
@@ -638,6 +634,18 @@ class AssetsWidget(QtWidgets.QWidget):
         self._last_project_name = None
 
         self.model_selection = {}
+
+    def _create_source_model(self):
+        model = AssetModel(dbcon=self.dbcon, parent=self)
+        model.refreshed.connect(self._on_model_refresh)
+        return model
+
+    def _create_proxy_model(self, source_model):
+        proxy = RecursiveSortFilterProxyModel()
+        proxy.setSourceModel(source_model)
+        proxy.setFilterCaseSensitivity(QtCore.Qt.CaseInsensitive)
+        proxy.setSortCaseSensitivity(QtCore.Qt.CaseInsensitive)
+        return proxy
 
     @property
     def refreshing(self):
@@ -691,6 +699,12 @@ class AssetsWidget(QtWidgets.QWidget):
         self._proxy.setFilterFixedString(new_text)
 
     def _on_model_refresh(self, has_item):
+        """This method should be triggered on model refresh.
+
+        Default implementation register this callback in '_create_source_model'
+        so if you're modifying model keep in mind that this method should be
+        called when refresh is done.
+        """
         self._proxy.sort(0)
         self._set_loading_state(loading=False, empty=not has_item)
         self.refreshed.emit()
