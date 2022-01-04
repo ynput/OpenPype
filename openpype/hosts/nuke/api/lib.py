@@ -1473,21 +1473,17 @@ class NukeDirmap(HostDirmap):
 
 class DirmapCache:
     """Caching class to get settings and sync_module easily and only once."""
-    _project_settings = None
-    _sync_module = None
+    _dirmap_cache = None
 
     @classmethod
-    def project_settings(cls):
-        if cls._project_settings is None:
-            cls._project_settings = get_project_settings(
-                os.getenv("AVALON_PROJECT"))
-        return cls._project_settings
-
-    @classmethod
-    def sync_module(cls):
-        if cls._sync_module is None:
-            cls._sync_module = ModulesManager().modules_by_name["sync_server"]
-        return cls._sync_module
+    def dirmapper(cls):
+        if cls._dirmap_cache is None:
+            project_settings = get_project_settings(
+                os.getenv("AVALON_PROJECT")
+            )
+            sync_module = ModulesManager().modules_by_name["sync_server"]
+            cls._dirmap_cache = NukeDirmap(project_settings, sync_module)
+        return cls._dirmap_cache
 
 
 def dirmap_file_name_filter(file_name):
@@ -1495,11 +1491,5 @@ def dirmap_file_name_filter(file_name):
 
         Checks project settings for potential mapping from source to dest.
     """
-    dirmap_processor = NukeDirmap("nuke",
-                                  DirmapCache.project_settings(),
-                                  DirmapCache.sync_module(),
-                                  file_name)
-    dirmap_processor.process_dirmap()
-    if os.path.exists(dirmap_processor.file_name):
-        return dirmap_processor.file_name
-    return file_name
+    dirmapper = DirmapCache.dirmapper()
+    return dirmapper.process_dirmap(file_name)
