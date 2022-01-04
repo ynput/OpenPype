@@ -390,39 +390,39 @@ class HostDirmap:
             return mapping
 
         project_name = os.getenv("AVALON_PROJECT")
+        if project_name not in self.sync_module.get_enabled_projects():
+            return mapping
 
         active_site = self.sync_module.get_local_normalized_site(
             self.sync_module.get_active_site(project_name))
         remote_site = self.sync_module.get_local_normalized_site(
             self.sync_module.get_remote_site(project_name))
-        log.debug("active {} - remote {}".format(active_site, remote_site))
+        self.log.debug(
+            "active {} - remote {}".format(active_site, remote_site)
+        )
 
-        if active_site == "local" \
-                and project_name in self.sync_module.get_enabled_projects()\
-                and active_site != remote_site:
+        if active_site != "local" or active_site == remote_site:
+            return mapping
 
-            sync_settings = self.sync_module.get_sync_project_setting(
-                os.getenv("AVALON_PROJECT"), exclude_locals=False,
-                cached=False)
+        sync_settings = self.sync_module.get_sync_project_setting(
+            project_name,
+            exclude_locals=False,
+            cached=False
+        )
 
-            active_overrides = get_site_local_overrides(
-                os.getenv("AVALON_PROJECT"), active_site)
-            remote_overrides = get_site_local_overrides(
-                os.getenv("AVALON_PROJECT"), remote_site)
+        active_overrides = get_site_local_overrides(project_name, active_site)
+        remote_overrides = get_site_local_overrides(project_name, remote_site)
 
-            log.debug("local overrides".format(active_overrides))
-            log.debug("remote overrides".format(remote_overrides))
-            for root_name, active_site_dir in active_overrides.items():
-                remote_site_dir = remote_overrides.get(root_name) or\
-                    sync_settings["sites"][remote_site]["root"][root_name]
-                if os.path.isdir(active_site_dir):
-                    if not mapping.get("destination-path"):
-                        mapping["destination-path"] = []
-                    mapping["destination-path"].append(active_site_dir)
+        self.log.debug("local overrides {}".format(active_overrides))
+        self.log.debug("remote overrides {}".format(remote_overrides))
+        root_settings = sync_settings["sites"][remote_site]["root"]
+        for root_name, active_site_dir in active_overrides.items():
+            remote_site_dir = (
+                remote_overrides.get(root_name) or root_settings[root_name]
+            )
+            if os.path.isdir(active_site_dir):
+                mapping["destination-path"].append(active_site_dir)
+                mapping["source-path"].append(remote_site_dir)
 
-                    if not mapping.get("source-path"):
-                        mapping["source-path"] = []
-                    mapping["source-path"].append(remote_site_dir)
-
-            log.debug("local sync mapping:: {}".format(mapping))
+        self.log.debug("local sync mapping:: {}".format(mapping))
         return mapping
