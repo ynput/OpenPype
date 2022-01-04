@@ -14,10 +14,8 @@ from .exceptions import BaseInvalidValue
 class OpenPypeVersionInput(TextEntity):
     """Entity to store OpenPype version to use.
 
-    It is text input as creating of settings on different machines may
-    affect which versions are available so it must have option to set OpenPype
-    version which is not available for machine where settings entities are
-    loaded.
+    Settings created on another machine may affect available versions on current user's machine.
+    Text input element is provided to explicitly set version not yet showing up the user's machine.
 
     It is possible to enter empty string. In that case is used any latest
     version. Any other string must match regex of OpenPype version semantic.
