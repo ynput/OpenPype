@@ -1441,23 +1441,34 @@ class NukeDirmap(HostDirmap):
         """
         super(NukeDirmap, self).__init__("nuke", project_settings, sync_module)
 
-        self.file_name = file_name
+    def process_dirmap(self, filepath):
+        if os.path.exists(filepath):
+            return filepath
 
+        mapping = self.mapping
+        if not mapping:
+            return filepath
 
-    def on_enable_dirmap(self):
-        pass
+        self.log.info("mapping:: {}".format(mapping))
 
-    def dirmap_routine(self, source_path, destination_path):
-        log.debug("{}: {}->{}".format(self.file_name,
-                                      source_path, destination_path))
-        source_path = source_path.lower().replace(os.sep, '/')
-        destination_path = destination_path.lower().replace(os.sep, '/')
-        if platform.system().lower() == "windows":
-            self.file_name = self.file_name.lower().replace(
-                source_path, destination_path)
-        else:
-            self.file_name = self.file_name.replace(
-                source_path, destination_path)
+        filepath = filepath.replace("\\", "/")
+        filtered_dst_paths = []
+        for dst_path in mapping["destination-path"]:
+            if os.path.exists(dst_path):
+                filtered_dst_paths.append(dst_path)
+
+        for src_mapping in mapping["source-path"]:
+            if not os.path.exists(src_mapping):
+                continue
+
+            if not filepath.startswith(src_mapping):
+                continue
+
+            for dst_mapping in filtered_dst_paths:
+                new_filepath = filepath.replace(src_mapping, dst_mapping)
+                if os.path.exists(new_filepath):
+                    return new_filepath
+        return filepath
 
 
 class DirmapCache:
