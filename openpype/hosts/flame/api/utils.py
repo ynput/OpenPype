@@ -106,7 +106,7 @@ def _sync_utility_scripts(env=None):
                     )
                 else:
                     shutil.copy2(src, dst)
-            except PermissionError as msg:
+            except (PermissionError, FileExistsError) as msg:
                 log.warning(
                     "Not able to coppy to: `{}`, Problem with: `{}`".format(
                         dst,

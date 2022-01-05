@@ -114,11 +114,14 @@ class FlameAppFramework(object):
             self.hostname,
         )
 
-        self.log.info("[{}] waking up".format(self.__class__.__name__))
-        self.load_prefs()
+         self.log.info("[{}] waking up".format(self.__class__.__name__))
+
+        try:
+            self.load_prefs()
+        except RuntimeError:
+            self.save_prefs()
 
         # menu auto-refresh defaults
-
         if not self.prefs_global.get("menu_auto_refresh"):
             self.prefs_global["menu_auto_refresh"] = {
                 "media_panel": True,
