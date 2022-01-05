@@ -375,27 +375,27 @@ def get_latest_version(asset_name, subset_name, dbcon=None, project_name=None):
     return version_doc
 
 
-def get_master_task(asset_doc, task_name):
-    """Retrieve master_task from avalon asset requested task
+def get_main_task(asset_doc, task_name):
+    """Retrieve main_task from avalon asset requested task
 
-    Return the master task if there is one, return the task otherwise.
+    Return the main task if there is one, return the task otherwise.
 
     Args:
         asset_id (int): Id of asset under which the task belongs.
-        task_name (str): Name of task to retrieve master_task from.
+        task_name (str): Name of task to retrieve main_task from.
     Returns:
-        str: master task name if there is one, task name otherwise.
+        str: main task name if there is one, task name otherwise.
     """
 
     if asset_doc:
-        master_task = (
+        main_task = (
             asset_doc.get("data", {})
             .get("tasks", {})
             .get(task_name, {})
-            .get("master_task", None)
+            .get("main_task", None)
         )
-        if master_task:
-            return master_task
+        if main_task:
+            return main_task
     return task_name
 
 
@@ -544,9 +544,9 @@ def get_workdir_data(project_doc, asset_doc, task_name, host_name):
     if asset_parents:
         parent_name = asset_parents[-1]
 
-    master_task = get_master_task(asset_doc, task_name)
-    if master_task:
-        task_name = master_task
+    main_task = get_main_task(asset_doc, task_name)
+    if main_task:
+        task_name = main_task
 
     data = {
         "project": {

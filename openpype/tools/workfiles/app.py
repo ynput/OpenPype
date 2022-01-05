@@ -21,7 +21,7 @@ from openpype.tools.utils.tasks_widget import TasksWidget
 from openpype.tools.utils.delegates import PrettyTimeDelegate
 from openpype.lib import (
     Anatomy,
-    get_master_task,
+    get_main_task,
     get_workdir,
     get_workfile_doc,
     create_workfile_doc,
@@ -464,7 +464,7 @@ class FilesWidget(QtWidgets.QWidget):
             {"type": "asset", "_id": asset_id},
             {"data": True}
         )
-        self._task_name = get_master_task(asset_doc, task_name)
+        self._task_name = get_main_task(asset_doc, task_name)
         self._task_type = task_type
 
         # Define a custom session so we can query the work root
