@@ -5,10 +5,14 @@ from .widgets import (
     ExpandBtn,
 )
 
+from .error_dialog import ErrorMessageBox
+
 
 __all__ = (
     "PlaceholderLineEdit",
     "BaseClickableFrame",
     "ClickableFrame",
-    "ExpandBtn"
+    "ExpandBtn",
+
+    "ErrorMessageBox"
 )
