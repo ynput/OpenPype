@@ -25,6 +25,41 @@ class PlaceholderLineEdit(QtWidgets.QLineEdit):
             self.setPalette(filter_palette)
 
 
+class BaseClickableFrame(QtWidgets.QFrame):
+    """Widget that catch left mouse click and can trigger a callback.
+
+    Callback is defined by overriding `_mouse_release_callback`.
+    """
+    def __init__(self, parent):
+        super(BaseClickableFrame, self).__init__(parent)
+
+        self._mouse_pressed = False
+
+    def _mouse_release_callback(self):
+        pass
+
+    def mousePressEvent(self, event):
+        if event.button() == QtCore.Qt.LeftButton:
+            self._mouse_pressed = True
+        super(BaseClickableFrame, self).mousePressEvent(event)
+
+    def mouseReleaseEvent(self, event):
+        if self._mouse_pressed:
+            self._mouse_pressed = False
+            if self.rect().contains(event.pos()):
+                self._mouse_release_callback()
+
+        super(BaseClickableFrame, self).mouseReleaseEvent(event)
+
+
+class ClickableFrame(BaseClickableFrame):
+    """Extended clickable frame which triggers 'clicked' signal."""
+    clicked = QtCore.Signal()
+
+    def _mouse_release_callback(self):
+        self.clicked.emit()
+
+
 class ImageButton(QtWidgets.QPushButton):
     """PushButton with icon and size of font.
 
