@@ -38,13 +38,9 @@ class ExtractAssStandin(openpype.api.Extractor):
                 self.log.info("Extracting ass sequence")
 
                 # Collect the start and end including handles
-                start = instance.data.get("frameStart", 1)
-                end = instance.data.get("frameEnd", 1)
-                handles = instance.data.get("handles", 0)
+                start = instance.data.get("frameStartHandle", 1)
+                end = instance.data.get("frameEndHandle", 1)
                 step = instance.data.get("step", 0)
-                if handles:
-                    start -= handles
-                    end += handles
 
                 exported_files = cmds.arnoldExportAss(filename=file_path,
                                                       selected=True,

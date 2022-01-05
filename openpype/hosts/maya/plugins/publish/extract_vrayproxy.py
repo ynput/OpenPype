@@ -28,14 +28,19 @@ class ExtractVRayProxy(openpype.api.Extractor):
         if not anim_on:
             # Remove animation information because it is not required for
             # non-animated subsets
-            instance.data.pop("frameStart", None)
-            instance.data.pop("frameEnd", None)
+            keys = ["frameStart", "frameEnd",
+                    "handleStart", "handleEnd",
+                    "frameStartHandle", "frameEndHandle",
+                    # Backwards compatibility
+                    "handles"]
+            for key in keys:
+                instance.data.pop(key, None)
 
             start_frame = 1
             end_frame = 1
         else:
-            start_frame = instance.data["frameStart"]
-            end_frame = instance.data["frameEnd"]
+            start_frame = instance.data["frameStartHandle"]
+            end_frame = instance.data["frameEndHandle"]
 
         vertex_colors = instance.data.get("vertexColors", False)
 
