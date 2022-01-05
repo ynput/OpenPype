@@ -176,7 +176,7 @@ def update_frame_range(comp, representations):
     versions = list(versions)
 
     versions = [v for v in versions
-                if v["data"].get("startFrame", None) is not None]
+                if v["data"].get("frameStart", None) is not None]
 
     if not versions:
         log.warning("No versions loaded to match frame range to.\n")
