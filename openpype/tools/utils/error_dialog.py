@@ -75,6 +75,9 @@ class ErrorMessageBox(QtWidgets.QDialog):
         content_layout = QtWidgets.QVBoxLayout(content_widget)
         content_layout.setContentsMargins(0, 0, 0, 0)
 
+        # Store content widget before creation of content
+        self._content_widget = content_widget
+
         self._create_content(content_layout)
 
         content_layout.addStretch(1)
@@ -104,7 +107,6 @@ class ErrorMessageBox(QtWidgets.QDialog):
             copy_report_btn.setVisible(False)
 
         self._report_data = report_data
-        self._content_widget = content_widget
 
     @staticmethod
     def convert_text_for_html(text):

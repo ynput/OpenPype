@@ -42,7 +42,7 @@ class CreateErrorMessageBox(ErrorMessageBox):
         ).format(
             subset=self._subset_name,
             family=self._family,
-            asset=self._asset,
+            asset=self._asset_name,
             message=self._exc_msg
         )
         if self._formatted_traceback:
@@ -62,10 +62,8 @@ class CreateErrorMessageBox(ErrorMessageBox):
 
         item_name_widget = QtWidgets.QLabel(self)
         item_name_widget.setText(
-            self.convert_text_for_html(
-                item_name_template.format(
-                    self._family, self._subset_name, self._asset_name
-                )
+            item_name_template.format(
+                self._family, self._subset_name, self._asset_name
             )
         )
         content_layout.addWidget(item_name_widget)
@@ -77,9 +75,11 @@ class CreateErrorMessageBox(ErrorMessageBox):
         content_layout.addWidget(message_label_widget)
 
         if self._formatted_traceback:
+            line_widget = self._create_line()
             tb_widget = self._create_traceback_widget(
                 self._formatted_traceback
             )
+            content_layout.addWidget(line_widget)
             content_layout.addWidget(tb_widget)
 
 
