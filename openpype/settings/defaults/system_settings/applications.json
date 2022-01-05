@@ -118,10 +118,10 @@
                 "executables": {
                     "windows": [],
                     "darwin": [
-                        "/opt/Autodesk/flame_{OPENPYPE_FLAME_VERSION}/bin/flame.app/Contents/MacOS/startApp"
+                        "/opt/Autodesk/flame_2021/bin/flame.app/Contents/MacOS/startApp"
                     ],
                     "linux": [
-                        "/opt/Autodesk/flame_{OPENPYPE_FLAME_VERSION}/bin/flame"
+                        "/opt/Autodesk/flame_2021/bin/flame"
                     ]
                 },
                 "arguments": {
@@ -144,7 +144,10 @@
         "icon": "{}/app_icons/nuke.png",
         "host_name": "nuke",
         "environment": {
-            "NUKE_PATH": ["{NUKE_PATH}", "{OPENPYPE_STUDIO_PLUGINS}/nuke"]
+            "NUKE_PATH": [
+                "{NUKE_PATH}",
+                "{OPENPYPE_STUDIO_PLUGINS}/nuke"
+            ]
         },
         "variants": {
             "13-0": {
@@ -250,7 +253,10 @@
         "icon": "{}/app_icons/nuke.png",
         "host_name": "nuke",
         "environment": {
-            "NUKE_PATH": ["{NUKE_PATH}", "{OPENPYPE_STUDIO_PLUGINS}/nuke"]
+            "NUKE_PATH": [
+                "{NUKE_PATH}",
+                "{OPENPYPE_STUDIO_PLUGINS}/nuke"
+            ]
         },
         "variants": {
             "13-0": {
