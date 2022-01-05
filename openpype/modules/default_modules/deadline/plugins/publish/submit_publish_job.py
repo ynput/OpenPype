@@ -311,8 +311,8 @@ class ProcessSubmittedJobOnFarm(pyblish.api.InstancePlugin):
         import speedcopy
 
         self.log.info("Preparing to copy ...")
-        start = instance.data.get("startFrame")
-        end = instance.data.get("endFrame")
+        start = instance.data.get("frameStart")
+        end = instance.data.get("frameEnd")
 
         # get latest version of subset
         # this will stop if subset wasn't published yet
