@@ -6,7 +6,6 @@ from avalon import maya
 
 import openpype.api
 import openpype.hosts.maya.api.action
-from openpype.hosts.maya.api.lib import undo_chunk
 
 
 class ValidateRigCycleError(pyblish.api.InstancePlugin):
@@ -33,4 +32,3 @@ class ValidateRigCycleError(pyblish.api.InstancePlugin):
                                     list=True)
             invalid = cmds.ls(plugs, objectsOnly=True, long=True)
             return invalid
-
