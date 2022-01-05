@@ -3,7 +3,10 @@ import logging
 from Qt import QtWidgets, QtCore, QtGui
 
 from avalon.vendor import qtawesome, qargparse
-from openpype.style import get_objected_colors
+from openpype.style import (
+    get_objected_colors,
+    get_style_image_path
+)
 
 log = logging.getLogger(__name__)
 
@@ -58,6 +61,65 @@ class ClickableFrame(BaseClickableFrame):
 
     def _mouse_release_callback(self):
         self.clicked.emit()
+
+
+class ExpandBtnLabel(QtWidgets.QLabel):
+    """Label showing expand icon meant for ExpandBtn."""
+    def __init__(self, parent):
+        super(ExpandBtnLabel, self).__init__(parent)
+        self._source_collapsed_pix = QtGui.QPixmap(
+            get_style_image_path("branch_closed")
+        )
+        self._source_expanded_pix = QtGui.QPixmap(
+            get_style_image_path("branch_open")
+        )
+
+        self._current_image = self._source_collapsed_pix
+        self._collapsed = True
+
+    def set_collapsed(self, collapsed):
+        if self._collapsed == collapsed:
+            return
+        self._collapsed = collapsed
+        if collapsed:
+            self._current_image = self._source_collapsed_pix
+        else:
+            self._current_image = self._source_expanded_pix
+        self._set_resized_pix()
+
+    def resizeEvent(self, event):
+        self._set_resized_pix()
+        super(ExpandBtnLabel, self).resizeEvent(event)
+
+    def _set_resized_pix(self):
+        size = int(self.fontMetrics().height() / 2)
+        if size < 1:
+            size = 1
+        size += size % 2
+        self.setPixmap(
+            self._current_image.scaled(
+                size,
+                size,
+                QtCore.Qt.KeepAspectRatio,
+                QtCore.Qt.SmoothTransformation
+            )
+        )
+
+
+class ExpandBtn(ClickableFrame):
+    def __init__(self, parent=None):
+        super(ExpandBtn, self).__init__(parent)
+
+        pixmap_label = ExpandBtnLabel(self)
+
+        layout = QtWidgets.QHBoxLayout(self)
+        layout.setContentsMargins(0, 0, 0, 0)
+        layout.addWidget(pixmap_label)
+
+        self._pixmap_label = pixmap_label
+
+    def set_collapsed(self, collapsed):
+        self._pixmap_label.set_collapsed(collapsed)
 
 
 class ImageButton(QtWidgets.QPushButton):
