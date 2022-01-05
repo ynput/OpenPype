@@ -3,20 +3,23 @@ from Qt import QtWidgets, QtCore
 from .widgets import ClickableFrame, ExpandBtn
 
 
+def convert_text_for_html(text):
+    return (
+        text
+        .replace("<", "&#60;")
+        .replace(">", "&#62;")
+        .replace("\n", "<br>")
+        .replace(" ", "&nbsp;")
+    )
+
+
 class TracebackWidget(QtWidgets.QWidget):
     def __init__(self, tb_text, parent):
         super(TracebackWidget, self).__init__(parent)
 
         # Modify text to match html
         # - add more replacements when needed
-        tb_text = (
-            tb_text
-            .replace("<", "&#60;")
-            .replace(">", "&#62;")
-            .replace("\n", "<br>")
-            .replace(" ", "&nbsp;")
-        )
-
+        tb_text = convert_text_for_html(tb_text)
         expand_btn = ExpandBtn(self)
 
         clickable_frame = ClickableFrame(self)
@@ -102,6 +105,10 @@ class ErrorMessageBox(QtWidgets.QDialog):
 
         self._report_data = report_data
         self._content_widget = content_widget
+
+    @staticmethod
+    def convert_text_for_html(text):
+        return convert_text_for_html(text)
 
     def _create_top_widget(self, parent_widget):
         label_widget = QtWidgets.QLabel(parent_widget)

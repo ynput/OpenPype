@@ -72,6 +72,31 @@ class LoadErrorMessageBox(ErrorMessageBox):
         self._messages = messages
         super(LoadErrorMessageBox, self).__init__("Loading failed", parent)
 
+    def _create_top_widget(self, parent_widget):
+        label_widget = QtWidgets.QLabel(parent_widget)
+        label_widget.setText(
+            "<span style='font-size:18pt;'>Failed to load items</span>"
+        )
+        return label_widget
+
+    def _get_report_data(self):
+        report_data = []
+        for exc_msg, tb_text, repre, subset, version in self._messages:
+            report_message = (
+                "During load error happened on Subset: \"{subset}\""
+                " Representation: \"{repre}\" Version: {version}"
+                "\n\nError message: {message}"
+            ).format(
+                subset=subset,
+                repre=repre,
+                version=version,
+                message=exc_msg
+            )
+            if tb_text:
+                report_message += "\n\n{}".format(tb_text)
+            report_data.append(report_message)
+        return report_data
+
     def _create_content(self, content_layout):
         item_name_template = (
             "<span style='font-weight:bold;'>Subset:</span> {}<br>"
@@ -101,31 +126,6 @@ class LoadErrorMessageBox(ErrorMessageBox):
                 tb_widget = self._create_traceback_widget(tb_text, self)
                 content_layout.addWidget(line)
                 content_layout.addWidget(tb_widget)
-
-    def _get_report_data(self):
-        report_data = []
-        for exc_msg, tb_text, repre, subset, version in self._messages:
-            report_message = (
-                "During load error happened on Subset: \"{subset}\""
-                " Representation: \"{repre}\" Version: {version}"
-                "\n\nError message: {message}"
-            ).format(
-                subset=subset,
-                repre=repre,
-                version=version,
-                message=exc_msg
-            )
-            if tb_text:
-                report_message += "\n\n{}".format(tb_text)
-            report_data.append(report_message)
-        return report_data
-
-    def _create_top_widget(self, parent_widget):
-        label_widget = QtWidgets.QLabel(parent_widget)
-        label_widget.setText(
-            "<span style='font-size:18pt;'>Failed to load items</span>"
-        )
-        return label_widget
 
 
 class SubsetWidget(QtWidgets.QWidget):
