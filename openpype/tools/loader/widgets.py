@@ -535,7 +535,7 @@ class SubsetWidget(QtWidgets.QWidget):
         self.load_ended.emit()
 
         if error_info:
-            box = LoadErrorMessageBox(error_info)
+            box = LoadErrorMessageBox(error_info, self)
             box.show()
 
     def selected_subsets(self, _groups=False, _merged=False, _other=True):
@@ -1431,7 +1431,7 @@ class RepresentationWidget(QtWidgets.QWidget):
         self.load_ended.emit()
 
         if errors:
-            box = LoadErrorMessageBox(errors)
+            box = LoadErrorMessageBox(errors, self)
             box.show()
 
     def _get_optional_labels(self, loaders, selected_side):
