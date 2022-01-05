@@ -1074,6 +1074,7 @@ class Window(QtWidgets.QMainWindow):
 
         if "task" in context:
             self.tasks_widget.select_task_name(context["task"])
+        self._on_task_changed()
 
     def _on_asset_changed(self):
         asset_id = self.assets_widget.get_selected_asset_id()
