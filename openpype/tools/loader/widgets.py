@@ -188,9 +188,9 @@ class LoadErrorMessageBox(QtWidgets.QDialog):
 
     def _create_line(self):
         line = QtWidgets.QFrame(self)
-        line.setFixedHeight(2)
-        line.setFrameShape(QtWidgets.QFrame.HLine)
-        line.setFrameShadow(QtWidgets.QFrame.Sunken)
+        line.setObjectName("Separator")
+        line.setMinimumHeight(2)
+        line.setMaximumHeight(2)
         return line
 
 
