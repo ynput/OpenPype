@@ -280,7 +280,7 @@ def shape_from_element(element):
         return node
 
 
-def collect_animation_data():
+def collect_animation_data(fps=False):
     """Get the basic animation data
 
     Returns:
@@ -291,7 +291,6 @@ def collect_animation_data():
     # get scene values as defaults
     start = cmds.playbackOptions(query=True, animationStartTime=True)
     end = cmds.playbackOptions(query=True, animationEndTime=True)
-    fps = mel.eval('currentTimeUnitToFPS()')
 
     # build attributes
     data = OrderedDict()
@@ -299,7 +298,9 @@ def collect_animation_data():
     data["frameEnd"] = end
     data["handles"] = 0
     data["step"] = 1.0
-    data["fps"] = fps
+
+    if fps:
+        data["fps"] = mel.eval('currentTimeUnitToFPS()')
 
     return data
 
