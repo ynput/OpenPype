@@ -18,6 +18,8 @@ from openpype.tools.utils.delegates import (
 )
 from openpype.tools.utils.widgets import (
     OptionalMenu,
+    ClickableFrame,
+    ExpandBtn,
     PlaceholderLineEdit
 )
 from openpype.tools.utils.views import (
@@ -62,6 +64,55 @@ class OverlayFrame(QtWidgets.QFrame):
 
     def set_label(self, label):
         self.label_widget.setText(label)
+
+
+class TracebackWidget(QtWidgets.QWidget):
+    def __init__(self, tb_text, parent):
+        super(TracebackWidget, self).__init__(parent)
+
+        # Modify text to match html
+        # - add more replacements when needed
+        tb_text = (
+            tb_text
+            .replace("<", "&#60;")
+            .replace(">", "&#62;")
+            .replace("\n", "<br>")
+            .replace(" ", "&nbsp;")
+        )
+
+        expand_btn = ExpandBtn(self)
+
+        clickable_frame = ClickableFrame(self)
+        clickable_layout = QtWidgets.QHBoxLayout(clickable_frame)
+        clickable_layout.setContentsMargins(0, 0, 0, 0)
+
+        expand_label = QtWidgets.QLabel("Details", clickable_frame)
+        clickable_layout.addWidget(expand_label, 0)
+        clickable_layout.addStretch(1)
+
+        show_details_layout = QtWidgets.QHBoxLayout()
+        show_details_layout.addWidget(expand_btn, 0)
+        show_details_layout.addWidget(clickable_frame, 1)
+
+        text_widget = QtWidgets.QLabel(self)
+        text_widget.setText(tb_text)
+        text_widget.setTextInteractionFlags(QtCore.Qt.TextBrowserInteraction)
+        text_widget.setVisible(False)
+
+        layout = QtWidgets.QVBoxLayout(self)
+        layout.setContentsMargins(0, 0, 0, 0)
+        layout.addLayout(show_details_layout, 0)
+        layout.addWidget(text_widget, 1)
+
+        clickable_frame.clicked.connect(self._on_show_details_click)
+        expand_btn.clicked.connect(self._on_show_details_click)
+
+        self._expand_btn = expand_btn
+        self._text_widget = text_widget
+
+    def _on_show_details_click(self):
+        self._text_widget.setVisible(not self._text_widget.isVisible())
+        self._expand_btn.set_collapsed(not self._text_widget.isVisible())
 
 
 class LoadErrorMessageBox(QtWidgets.QDialog):
