@@ -491,26 +491,41 @@ def create_pype_marker(segment):
 def maintained_segment_selection(sequence):
     """Maintain selection during context
 
+    Attributes:
+        sequence (flame.PySequence): python api object
+
+    Yield:
+        list of flame.PySegment
+
     Example:
-        >>> with maintained_selection():
-        ...     node['selected'].setValue(True)
-        >>> print(node['selected'].value())
-        False
+        >>> with maintained_segment_selection(sequence) as selected_segments:
+        ...     for segment in selected_segments:
+        ...         segment.selected = False
+        >>> print(segment.selected)
+        True
     """
     selected_segments = []
+    # loop versions in sequence
     for ver in sequence.versions:
+        # loop track in versions
         for track in ver.tracks:
+            # ignore all empty tracks and hidden too
             if len(track.segments) == 0 and track.hidden:
                 continue
+            # loop all segment in remaining tracks
             for segment in track.segments:
+                # ignore all segments not selected
                 if segment.selected != True:
                     continue
+                # add it to original selection
                 selected_segments.append(segment)
     try:
-        # do the operation
-        yield
+        # do the operation on selected segments
+        yield selected_segments
     finally:
+        # reset all selected clips
         reset_segment_selection(sequence)
+        # select only original selection of segments
         for segment in selected_segments:
             segment.selected = True
 
