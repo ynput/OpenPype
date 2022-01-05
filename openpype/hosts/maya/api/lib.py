@@ -5,7 +5,6 @@ import os
 import platform
 import uuid
 import math
-import sys
 
 import json
 import logging
