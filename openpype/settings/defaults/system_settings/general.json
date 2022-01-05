@@ -2,6 +2,8 @@
     "studio_name": "Studio name",
     "studio_code": "stu",
     "admin_password": "",
+    "production_version": "",
+    "staging_version": "",
     "environment": {
         "__environment_keys__": {
             "global": []
