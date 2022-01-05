@@ -142,7 +142,22 @@ class LoadErrorMessageBox(QtWidgets.QDialog):
         content_layout = QtWidgets.QVBoxLayout(content_widget)
         content_layout.setContentsMargins(0, 0, 0, 0)
 
+        report_data = []
         for exc_msg, tb_text, repre, subset, version in messages:
+            report_message = (
+                "During load error happened on Subset: \"{subset}\""
+                " Representation: \"{repre}\" Version: {version}"
+                "\n\nError message: {message}"
+            ).format(
+                subset=subset,
+                repre=repre,
+                version=version,
+                message=exc_msg
+            )
+            if tb_text:
+                report_message += "\n\n{}".format(tb_text)
+            report_data.append(report_message)
+
             line = self._create_line()
             content_layout.addWidget(line)
 
@@ -166,9 +181,11 @@ class LoadErrorMessageBox(QtWidgets.QDialog):
 
         content_layout.addStretch(1)
 
+        copy_report_btn = QtWidgets.QPushButton("Copy report", self)
         ok_btn = QtWidgets.QPushButton("OK", self)
 
         footer_layout = QtWidgets.QHBoxLayout()
+        footer_layout.addWidget(copy_report_btn, 0)
         footer_layout.addStretch(1)
         footer_layout.addWidget(ok_btn, 0)
 
@@ -179,12 +196,24 @@ class LoadErrorMessageBox(QtWidgets.QDialog):
         body_layout.addWidget(bottom_line, 0)
         body_layout.addLayout(footer_layout, 0)
 
+        copy_report_btn.clicked.connect(self._on_copy_report)
         ok_btn.clicked.connect(self._on_ok_clicked)
 
         self.resize(660, 350)
 
+        self._report_data = report_data
+
     def _on_ok_clicked(self):
         self.close()
+
+    def _on_copy_report(self):
+        report_text = (10 * "*").join(self._report_data)
+
+        mime_data = QtCore.QMimeData()
+        mime_data.setText(report_text)
+        QtWidgets.QApplication.instance().clipboard().setMimeData(
+            mime_data
+        )
 
     def _create_line(self):
         line = QtWidgets.QFrame(self)
