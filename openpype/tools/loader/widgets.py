@@ -121,13 +121,10 @@ class LoadErrorMessageBox(QtWidgets.QDialog):
         self.setWindowTitle("Loading failed")
         self.setFocusPolicy(QtCore.Qt.StrongFocus)
 
-        body_layout = QtWidgets.QVBoxLayout(self)
-
         main_label = (
             "<span style='font-size:18pt;'>Failed to load items</span>"
         )
         main_label_widget = QtWidgets.QLabel(main_label, self)
-        body_layout.addWidget(main_label_widget)
 
         item_name_template = (
             "<span style='font-weight:bold;'>Subset:</span> {}<br>"
@@ -136,38 +133,57 @@ class LoadErrorMessageBox(QtWidgets.QDialog):
         )
         exc_msg_template = "<span style='font-weight:bold'>{}</span>"
 
-        for exc_msg, tb, repre, subset, version in messages:
+        content_scroll = QtWidgets.QScrollArea(self)
+        content_scroll.setWidgetResizable(True)
+
+        content_widget = QtWidgets.QWidget(content_scroll)
+        content_scroll.setWidget(content_widget)
+
+        content_layout = QtWidgets.QVBoxLayout(content_widget)
+        content_layout.setContentsMargins(0, 0, 0, 0)
+
+        for exc_msg, tb_text, repre, subset, version in messages:
             line = self._create_line()
-            body_layout.addWidget(line)
+            content_layout.addWidget(line)
 
             item_name = item_name_template.format(subset, version, repre)
             item_name_widget = QtWidgets.QLabel(
                 item_name.replace("\n", "<br>"), self
             )
-            body_layout.addWidget(item_name_widget)
+            item_name_widget.setWordWrap(True)
+            content_layout.addWidget(item_name_widget)
 
             exc_msg = exc_msg_template.format(exc_msg.replace("\n", "<br>"))
             message_label_widget = QtWidgets.QLabel(exc_msg, self)
-            body_layout.addWidget(message_label_widget)
+            message_label_widget.setWordWrap(True)
+            content_layout.addWidget(message_label_widget)
 
-            if tb:
-                tb_widget = QtWidgets.QLabel(tb.replace("\n", "<br>"), self)
-                tb_widget.setTextInteractionFlags(
-                    QtCore.Qt.TextBrowserInteraction
-                )
-                body_layout.addWidget(tb_widget)
+            if tb_text:
+                line = self._create_line()
+                tb_widget = TracebackWidget(tb_text, self)
+                content_layout.addWidget(line)
+                content_layout.addWidget(tb_widget)
 
-        footer_widget = QtWidgets.QWidget(self)
-        footer_layout = QtWidgets.QHBoxLayout(footer_widget)
-        buttonBox = QtWidgets.QDialogButtonBox(QtCore.Qt.Vertical)
-        buttonBox.setStandardButtons(
-            QtWidgets.QDialogButtonBox.StandardButton.Ok
-        )
-        buttonBox.accepted.connect(self._on_accept)
-        footer_layout.addWidget(buttonBox, alignment=QtCore.Qt.AlignRight)
-        body_layout.addWidget(footer_widget)
+        content_layout.addStretch(1)
 
-    def _on_accept(self):
+        ok_btn = QtWidgets.QPushButton("OK", self)
+
+        footer_layout = QtWidgets.QHBoxLayout()
+        footer_layout.addStretch(1)
+        footer_layout.addWidget(ok_btn, 0)
+
+        bottom_line = self._create_line()
+        body_layout = QtWidgets.QVBoxLayout(self)
+        body_layout.addWidget(main_label_widget, 0)
+        body_layout.addWidget(content_scroll, 1)
+        body_layout.addWidget(bottom_line, 0)
+        body_layout.addLayout(footer_layout, 0)
+
+        ok_btn.clicked.connect(self._on_ok_clicked)
+
+        self.resize(660, 350)
+
+    def _on_ok_clicked(self):
         self.close()
 
     def _create_line(self):
