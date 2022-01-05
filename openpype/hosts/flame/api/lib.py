@@ -1,5 +1,6 @@
 import sys
 import os
+import json
 import pickle
 import contextlib
 from pprint import pformat
@@ -8,6 +9,12 @@ from openpype.api import Logger
 
 log = Logger().get_logger(__name__)
 
+class ctx:
+    # OpenPype marker workflow variables
+    marker_name = "OpenPypeData"
+    marker_duration = 0
+    marker_color = (0.0, 1.0, 1.0)
+    publish_default = False
 
 @contextlib.contextmanager
 def io_preferences_file(klass, filepath, write=False):
@@ -114,7 +121,7 @@ class FlameAppFramework(object):
             self.hostname,
         )
 
-         self.log.info("[{}] waking up".format(self.__class__.__name__))
+        self.log.info("[{}] waking up".format(self.__class__.__name__))
 
         try:
             self.load_prefs()
@@ -337,3 +344,146 @@ def get_metadata(project_name, _log=None):
 
     policy_wiretap = GetProjectColorPolicy(_log=_log)
     return policy_wiretap.process(project_name)
+
+
+def get_segment_pype_tag(segment, with_marker=None):
+    """
+    Get openpype track item tag created by creator or loader plugin.
+
+    Attributes:
+        segment (flame.PySegment): flame api object
+        with_marker (bool)[optional]: if true it will return also marker object
+
+    Returns:
+        dict: openpype tag data
+
+    Returns(with_marker=True):
+        flame.PyMarker, dict
+    """
+    for marker in segment.markers:
+        comment = marker.comment.get_value()
+        color = marker.colour.get_value()
+        name = marker.name.get_value()
+
+        if name == ctx.marker_name and color == ctx.marker_color:
+            if not with_marker:
+                return json.loads(comment)
+            else:
+                return marker, json.loads(comment)
+
+
+def set_segment_pype_tag(segment, data=None):
+    """
+    Set openpype track item tag to input segment.
+
+    Attributes:
+        segment (flame.PySegment): flame api object
+
+    Returns:
+        dict: json loaded data
+    """
+    data = data or dict()
+
+    marker_data = get_segment_pype_tag(segment, True)
+
+    if marker_data:
+        # get available openpype tag if any
+        marker, tag_data = marker_data
+        # update tag data with new data
+        tag_data.update(data)
+        # update marker with tag data
+        marker.comment = json.dumps(tag_data)
+
+        return True
+    else:
+        # update tag data with new data
+        marker = create_pype_marker(segment)
+        # add tag data to marker's comment
+        marker.comment = json.dumps(data)
+
+        return True
+
+
+
+def imprint(segment, data=None):
+    """
+    Adding openpype data to Flame timeline segment.
+
+    Also including publish attribute into tag.
+
+    Arguments:
+        segment (flame.PySegment)): flame api object
+        data (dict): Any data which needst to be imprinted
+
+    Examples:
+        data = {
+            'asset': 'sq020sh0280',
+            'family': 'render',
+            'subset': 'subsetMain'
+        }
+    """
+    data = data or {}
+
+    if not set_segment_pype_tag(segment, data):
+        raise AttributeError("Not imprint data to segment")
+
+    # add publish attribute
+    set_publish_attribute(segment, True)
+
+
+def set_publish_attribute(segment, value):
+    """ Set Publish attribute in input Tag object
+
+    Attribute:
+        segment (flame.PySegment)): flame api object
+        value (bool): True or False
+    """
+    tag_data = get_segment_pype_tag(segment)
+    tag_data["publish"] = value
+
+    # set data to the publish attribute
+    if not set_segment_pype_tag(segment, tag_data):
+        raise AttributeError("Not imprint data to segment")
+
+
+def get_publish_attribute(segment):
+    """ Get Publish attribute from input Tag object
+
+    Attribute:
+        segment (flame.PySegment)): flame api object
+
+    Returns:
+        bool: True or False
+    """
+    tag_data = get_segment_pype_tag(segment)
+
+    if not tag_data:
+        set_publish_attribute(segment, ctx.publish_default)
+        return ctx.publish_default
+
+    return tag_data["publish"]
+
+
+def create_pype_marker(segment):
+    """ Create openpype marker on a segment.
+
+    Attributes:
+        segment (flame.PySegment): flame api object
+
+    Returns:
+        flame.PyMarker: flame api object
+    """
+    # get duration of segment
+    duration = segment.record_duration.relative_frame
+    # calculate start frame of the new marker
+    start_frame = int(segment.record_in.relative_frame) + int(duration / 2)
+    # create marker
+    marker = segment.create_marker(start_frame)
+    # set marker name
+    marker.name = ctx.marker_name
+    # set duration
+    marker.duration = ctx.marker_duration
+    # set colour
+    marker.colour = ctx.marker_color
+
+    return marker
