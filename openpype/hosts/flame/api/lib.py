@@ -393,15 +393,13 @@ def set_segment_pype_tag(segment, data=None):
         tag_data.update(data)
         # update marker with tag data
         marker.comment = json.dumps(tag_data)
-
-        return True
     else:
         # update tag data with new data
         marker = create_pype_marker(segment)
         # add tag data to marker's comment
         marker.comment = json.dumps(data)
 
-        return True
+    return True
 
 
 
@@ -487,3 +485,42 @@ def create_pype_marker(segment):
     marker.colour = ctx.marker_color
 
     return marker
+
+
+@contextlib.contextmanager
+def maintained_segment_selection(sequence):
+    """Maintain selection during context
+
+    Example:
+        >>> with maintained_selection():
+        ...     node['selected'].setValue(True)
+        >>> print(node['selected'].value())
+        False
+    """
+    selected_segments = []
+    for ver in sequence.versions:
+        for track in ver.tracks:
+            if len(track.segments) == 0 and track.hidden:
+                continue
+            for segment in track.segments:
+                if segment.selected != True:
+                    continue
+                selected_segments.append(segment)
+    try:
+        # do the operation
+        yield
+    finally:
+        reset_segment_selection(sequence)
+        for segment in selected_segments:
+            segment.selected = True
+
+
+def reset_segment_selection(sequence):
+    """Deselect all selected nodes
+    """
+    for ver in sequence.versions:
+        for track in ver.tracks:
+            if len(track.segments) == 0 and track.hidden:
+                continue
+            for segment in track.segments:
+                segment.selected = False

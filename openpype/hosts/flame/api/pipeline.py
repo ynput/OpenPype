@@ -97,32 +97,6 @@ def update_container(tl_segment, data=None):
     # TODO: update_container
     pass
 
-
-@contextlib.contextmanager
-def maintained_selection():
-    """Maintain selection during context
-
-    Example:
-        >>> with maintained_selection():
-        ...     node['selected'].setValue(True)
-        >>> print(node['selected'].value())
-        False
-    """
-    # TODO: maintained_selection + remove undo steps
-
-    try:
-        # do the operation
-        yield
-    finally:
-        pass
-
-
-def reset_selection():
-    """Deselect all selected nodes
-    """
-    pass
-
-
 def on_pyblish_instance_toggled(instance, old_value, new_value):
     """Toggle node passthrough states on instance toggles."""
 
