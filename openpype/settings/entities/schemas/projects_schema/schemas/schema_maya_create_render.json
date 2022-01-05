@@ -41,6 +41,11 @@
                     "is_group": true,
                     "children": [
                         {
+                          "key": "image_prefix",
+                          "label": "Image prefix template",
+                          "type": "text"
+                        },
+                        {
                           "key": "image_format",
                           "label": "Output Image Format",
                           "type": "enum",
@@ -152,6 +157,11 @@
                     "label": "V-Ray Renderer",
                     "is_group": true,
                     "children": [
+                        {
+                          "key": "image_prefix",
+                          "label": "Image prefix template",
+                          "type": "text"
+                        },
                         {
                           "key": "engine",
                           "label": "Production Engine",
@@ -282,6 +292,11 @@
                     "label": "Redshift Renderer",
                     "is_group": true,
                     "children": [
+                      {
+                          "key": "image_prefix",
+                          "label": "Image prefix template",
+                          "type": "text"
+                      },
                       {
                           "key": "primary_gi_engine",
                           "label": "Primary GI Engine",

@@ -7,6 +7,8 @@ import requests
 import six
 import sys
 from collections import Counter
+import attr
+import logging
 
 from maya import cmds  # noqa
 import maya.app.renderSetup.model.renderSetup as renderSetup  # noqa
@@ -23,6 +25,9 @@ from openpype.modules import ModulesManager
 
 from avalon.api import Session
 from avalon.api import CreatorError
+
+
+log = logging.getLogger(__name__)
 
 
 class CreateRender(plugin.Creator):
@@ -89,7 +94,30 @@ class CreateRender(plugin.Creator):
         ...
 
 
-class DeadlineRenderInstance:
+@attr.s
+class RenderInstance:
+    review = attr.ib(default=True)
+    extendFrames = attr.ib(default=False)
+    overrideExistingFrame = attr.ib(default=True)
+    tileRendering = attr.ib(default=False)
+    tilesX = attr.ib(default=2)
+    tilesY = attr.ib(default=2)
+    convertToScanline = attr.ib(default=False)
+    useReferencedAovs = attr.ib(default=False)
+
+
+@attr.s
+class DeadlineRenderInstance(RenderInstance):
+    deadlineServers = attr.ib(default=[])
+    priority = attr.ib(default=50)
+    framesPerTask = attr.ib(default=1)
+    whitelist = attr.ib(default=False)
+    machineList = attr.ib(default="")
+    useMayaBatch = attr.ib(default=False)
+    suspendPublishJob = attr.ib(default=False)
+
+
+class Deadline:
 
     def __init__(self, settings, project_settings):
         self.settings = settings
@@ -127,7 +155,8 @@ class DeadlineRenderInstance:
                     self._deadline_webservice_changed
                 ])
 
-    def _get_deadline_pools(self, webservice):
+    @staticmethod
+    def get_deadline_pools(webservice):
         # type: (str) -> list
         """Get pools from Deadline.
         Args:
@@ -135,7 +164,7 @@ class DeadlineRenderInstance:
         Returns:
             list: Pools.
         Throws:
-            RuntimeError: If deadline webservice is unreachable.
+            CreatorError: If deadline webservice is unreachable.
 
         """
         argument = "{}/api/pools?NamesOnly=true".format(webservice)
@@ -143,16 +172,17 @@ class DeadlineRenderInstance:
             response = requests_get(argument)
         except requests.exceptions.ConnectionError as exc:
             msg = 'Cannot connect to deadline web service'
-            self.log.error(msg)
+            log.error(msg)
             six.reraise(
-                RuntimeError,
-                RuntimeError('{} - {}'.format(msg, exc)),
+                CreatorError,
+                CreatorError('{} - {}'.format(msg, exc)),
                 sys.exc_info()[2])
-        if not response.ok:
-            self.log.warning("No pools retrieved")
-            return []
+        else:
+            if not response.ok:
+                log.warning("No pools retrieved")
+                return []
 
-        return response.json()
+            return response.json()
 
     def _deadline_webservice_changed(self):
         """Refresh Deadline server dependent options."""
@@ -163,7 +193,7 @@ class DeadlineRenderInstance:
                 cmds.getAttr("{}.deadlineServers".format(self.instance))
             ]
         ]
-        pools = self._get_deadline_pools(webservice)
+        pools = self.get_deadline_pools(webservice)
         cmds.deleteAttr("{}.primaryPool".format(self.instance))
         cmds.deleteAttr("{}.secondaryPool".format(self.instance))
         cmds.addAttr(self.instance, longName="primaryPool",
