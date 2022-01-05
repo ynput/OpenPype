@@ -29,6 +29,9 @@ from openpype.settings.entities import (
     StudioDefaultsNotDefined,
     SchemaError
 )
+from openpype.settings.entities.op_version_entity import (
+    OpenPypeVersionInput
+)
 
 from openpype.settings import SaveWarningExc
 from .widgets import ProjectListWidget
@@ -47,6 +50,7 @@ from .item_widgets import (
     BoolWidget,
     DictImmutableKeysWidget,
     TextWidget,
+    OpenPypeVersionText,
     NumberWidget,
     RawJsonWidget,
     EnumeratorWidget,
@@ -117,6 +121,9 @@ class SettingsCategoryWidget(QtWidgets.QWidget):
 
         elif isinstance(entity, BoolEntity):
             return BoolWidget(*args)
+
+        elif isinstance(entity, OpenPypeVersionInput):
+            return OpenPypeVersionText(*args)
 
         elif isinstance(entity, TextEntity):
             return TextWidget(*args)

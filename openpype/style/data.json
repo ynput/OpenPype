@@ -111,7 +111,9 @@
             "focus-border": "#839caf",
             "image-btn": "#bfccd6",
             "image-btn-hover": "#189aea",
-            "image-btn-disabled": "#bfccd6"
+            "image-btn-disabled": "#bfccd6",
+            "version-exists": "#458056",
+            "version-not-found": "#ffc671"
         }
     }
 }
