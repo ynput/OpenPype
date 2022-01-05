@@ -24,3 +24,24 @@ class CollectTestSelection(pyblish.api.ContextPlugin):
         otio_timeline = otio_export.create_otio_timeline(sequence)
 
         self.log.info(pformat(otio_timeline))
+
+        # test segment markers
+        for ver in sequence.versions:
+            for track in ver.tracks:
+                if len(track.segments) == 0 and track.hidden:
+                    continue
+
+                for segment in track.segments:
+                    if str(segment.name)[1:-1] == "":
+                        continue
+                    if not segment.selected:
+                        continue
+
+                    self.log.debug("Segment with OpenPypeData: {}".format(
+                        segment.name))
+
+                    lib.imprint(segment, {
+                        'asset': 'sq020sh0280',
+                        'family': 'render',
+                        'subset': 'subsetMain'
+                    })
