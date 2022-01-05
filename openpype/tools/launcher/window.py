@@ -243,7 +243,11 @@ class LauncherWindow(QtWidgets.QDialog):
 
         # Allow minimize
         self.setWindowFlags(
-            self.windowFlags() | QtCore.Qt.WindowMinimizeButtonHint
+            QtCore.Qt.Window
+            | QtCore.Qt.CustomizeWindowHint
+            | QtCore.Qt.WindowTitleHint
+            | QtCore.Qt.WindowMinimizeButtonHint
+            | QtCore.Qt.WindowCloseButtonHint
         )
 
         project_model = ProjectModel(self.dbcon)

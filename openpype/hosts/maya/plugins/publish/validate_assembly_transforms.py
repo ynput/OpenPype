@@ -89,8 +89,8 @@ class ValidateAssemblyModelTransforms(pyblish.api.InstancePlugin):
 
         """
 
+        from Qt import QtWidgets
         from openpype.hosts.maya.api import lib
-        from avalon.vendor.Qt import QtWidgets
 
         # Store namespace in variable, cosmetics thingy
         messagebox = QtWidgets.QMessageBox

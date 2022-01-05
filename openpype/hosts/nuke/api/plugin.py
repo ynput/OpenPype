@@ -27,7 +27,7 @@ class PypeCreator(PypeCreatorMixin, avalon.nuke.pipeline.Creator):
                 self.data["subset"]):
             msg = ("The subset name `{0}` is already used on a node in"
                    "this workfile.".format(self.data["subset"]))
-            self.log.error(msg + '\n\nPlease use other subset name!')
+            self.log.error(msg + "\n\nPlease use other subset name!")
             raise NameError("`{0}: {1}".format(__name__, msg))
         return
 
@@ -53,7 +53,7 @@ class NukeLoader(api.Loader):
     container_id = None
 
     def reset_container_id(self):
-        self.container_id = ''.join(random.choice(
+        self.container_id = "".join(random.choice(
             string.ascii_uppercase + string.digits) for _ in range(10))
 
     def get_container_id(self, node):
@@ -61,7 +61,7 @@ class NukeLoader(api.Loader):
         return id_knob.value() if id_knob else None
 
     def get_members(self, source):
-        """Return nodes that has same 'containerId' as `source`"""
+        """Return nodes that has same "containerId" as `source`"""
         source_id = self.get_container_id(source)
         return [node for node in nuke.allNodes(recurseGroups=True)
                 if self.get_container_id(node) == source_id
@@ -116,11 +116,13 @@ class ExporterReview(object):
 
     def __init__(self,
                  klass,
-                 instance
+                 instance,
+                 multiple_presets=True
                  ):
 
         self.log = klass.log
         self.instance = instance
+        self.multiple_presets = multiple_presets
         self.path_in = self.instance.data.get("path", None)
         self.staging_dir = self.instance.data["stagingDir"]
         self.collection = self.instance.data.get("collection", None)
@@ -152,12 +154,10 @@ class ExporterReview(object):
 
     def get_representation_data(self, tags=None, range=False):
         add_tags = tags or []
-
         repre = {
-            'outputName': self.name,
-            'name': self.name,
-            'ext': self.ext,
-            'files': self.file,
+            "name": self.name,
+            "ext": self.ext,
+            "files": self.file,
             "stagingDir": self.staging_dir,
             "tags": [self.name.replace("_", "-")] + add_tags
         }
@@ -167,6 +167,9 @@ class ExporterReview(object):
                 "frameStart": self.first_frame,
                 "frameEnd": self.last_frame,
             })
+
+        if self.multiple_presets:
+            repre["outputName"] = self.name
 
         self.data["representations"].append(repre)
 
@@ -183,19 +186,19 @@ class ExporterReview(object):
         anlib.reset_selection()
         ipn_orig = None
         for v in nuke.allNodes(filter="Viewer"):
-            ip = v['input_process'].getValue()
-            ipn = v['input_process_node'].getValue()
+            ip = v["input_process"].getValue()
+            ipn = v["input_process_node"].getValue()
             if "VIEWER_INPUT" not in ipn and ip:
                 ipn_orig = nuke.toNode(ipn)
                 ipn_orig.setSelected(True)
 
         if ipn_orig:
             # copy selected to clipboard
-            nuke.nodeCopy('%clipboard%')
+            nuke.nodeCopy("%clipboard%")
             # reset selection
             anlib.reset_selection()
             # paste node and selection is on it only
-            nuke.nodePaste('%clipboard%')
+            nuke.nodePaste("%clipboard%")
             # assign to variable
             ipn = nuke.selectedNode()
 
@@ -234,9 +237,11 @@ class ExporterReviewLut(ExporterReview):
                  ext=None,
                  cube_size=None,
                  lut_size=None,
-                 lut_style=None):
+                 lut_style=None,
+                 multiple_presets=True):
         # initialize parent class
-        super(ExporterReviewLut, self).__init__(klass, instance)
+        super(ExporterReviewLut, self).__init__(
+            klass, instance, multiple_presets)
 
         # deal with now lut defined in viewer lut
         if hasattr(klass, "viewer_lut_raw"):
@@ -349,9 +354,11 @@ class ExporterReviewMov(ExporterReview):
                  instance,
                  name=None,
                  ext=None,
+                 multiple_presets=True
                  ):
         # initialize parent class
-        super(ExporterReviewMov, self).__init__(klass, instance)
+        super(ExporterReviewMov, self).__init__(
+            klass, instance, multiple_presets)
         # passing presets for nodes to self
         self.nodes = klass.nodes if hasattr(klass, "nodes") else {}
 

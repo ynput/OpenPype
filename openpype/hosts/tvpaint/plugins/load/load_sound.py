@@ -1,9 +1,9 @@
 import os
 import tempfile
-from avalon.tvpaint import lib, pipeline
+from openpype.hosts.tvpaint.api import lib, plugin
 
 
-class ImportSound(pipeline.Loader):
+class ImportSound(plugin.Loader):
     """Load sound to TVPaint.
 
     Sound layers does not have ids but only position index so we can't

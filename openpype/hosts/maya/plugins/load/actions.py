@@ -133,7 +133,7 @@ class ImportMayaLoader(api.Loader):
 
         """
 
-        from avalon.vendor.Qt import QtWidgets
+        from Qt import QtWidgets
 
         accept = QtWidgets.QMessageBox.Ok
         buttons = accept | QtWidgets.QMessageBox.Cancel

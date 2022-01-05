@@ -12,9 +12,9 @@ from avalon import io, api, pipeline
 
 from openpype import style
 from openpype.tools.utils.lib import (
-    schedule,
     qt_app_context
 )
+from openpype.tools.utils import PlaceholderLineEdit
 from openpype.tools.utils.assets_widget import SingleSelectAssetsWidget
 from openpype.tools.utils.tasks_widget import TasksWidget
 from openpype.tools.utils.delegates import PrettyTimeDelegate
@@ -24,7 +24,8 @@ from openpype.lib import (
     get_workfile_doc,
     create_workfile_doc,
     save_workfile_data_to_doc,
-    get_workfile_template_key
+    get_workfile_template_key,
+    create_workdir_extra_folders
 )
 
 from .model import FilesModel
@@ -68,18 +69,27 @@ class NameWindow(QtWidgets.QDialog):
                 "config.tasks": True,
             }
         )
+
         asset_doc = io.find_one(
             {
                 "type": "asset",
                 "name": asset_name
             },
-            {"data.tasks": True}
+            {
+                "data.tasks": True,
+                "data.parents": True
+            }
         )
 
         task_type = asset_doc["data"]["tasks"].get(task_name, {}).get("type")
 
         project_task_types = project_doc["config"]["tasks"]
         task_short = project_task_types.get(task_type, {}).get("short_name")
+
+        asset_parents = asset_doc["data"]["parents"]
+        parent_name = project_doc["name"]
+        if asset_parents:
+            parent_name = asset_parents[-1]
 
         self.data = {
             "project": {
@@ -92,6 +102,7 @@ class NameWindow(QtWidgets.QDialog):
                 "type": task_type,
                 "short": task_short,
             },
+            "parent": parent_name,
             "version": 1,
             "user": getpass.getuser(),
             "comment": "",
@@ -100,9 +111,7 @@ class NameWindow(QtWidgets.QDialog):
 
         # Store project anatomy
         self.anatomy = anatomy
-        self.template = anatomy.templates[template_key]["file"].replace(
-            "{task}", "{task[name]}"
-        )
+        self.template = anatomy.templates[template_key]["file"]
         self.template_key = template_key
 
         # Btns widget
@@ -141,7 +150,7 @@ class NameWindow(QtWidgets.QDialog):
         preview_label = QtWidgets.QLabel("Preview filename", inputs_widget)
 
         # Subversion input
-        subversion_input = QtWidgets.QLineEdit(inputs_widget)
+        subversion_input = PlaceholderLineEdit(inputs_widget)
         subversion_input.setPlaceholderText("Will be part of filename.")
 
         # Extensions combobox
@@ -396,9 +405,9 @@ class FilesWidget(QtWidgets.QWidget):
         files_view.setColumnWidth(0, 330)
 
         # Filtering input
-        filter_input = QtWidgets.QLineEdit(self)
-        filter_input.textChanged.connect(proxy_model.setFilterFixedString)
+        filter_input = PlaceholderLineEdit(self)
         filter_input.setPlaceholderText("Filter files..")
+        filter_input.textChanged.connect(proxy_model.setFilterFixedString)
 
         # Home Page
         # Build buttons widget for files widget
@@ -663,7 +672,13 @@ class FilesWidget(QtWidgets.QWidget):
         self.set_asset_task(
             self._asset_id, self._task_name, self._task_type
         )
-
+        create_workdir_extra_folders(
+            self.root,
+            api.Session["AVALON_APP"],
+            self._task_type,
+            self._task_name,
+            api.Session["AVALON_PROJECT"]
+        )
         pipeline.emit("after.workfile.save", [file_path])
 
         self.workfile_created.emit(file_path)
@@ -720,7 +735,7 @@ class FilesWidget(QtWidgets.QWidget):
         self.files_model.refresh()
 
         if self.auto_select_latest_modified:
-            schedule(self._select_last_modified_file, 100)
+            self._select_last_modified_file()
 
     def on_context_menu(self, point):
         index = self.files_view.indexAt(point)
@@ -925,8 +940,8 @@ class Window(QtWidgets.QMainWindow):
 
         # Connect signals
         set_context_timer.timeout.connect(self._on_context_set_timeout)
-        assets_widget.selection_changed.connect(self.on_asset_changed)
-        tasks_widget.task_changed.connect(self.on_task_changed)
+        assets_widget.selection_changed.connect(self._on_asset_changed)
+        tasks_widget.task_changed.connect(self._on_task_changed)
         files_widget.file_selected.connect(self.on_file_select)
         files_widget.workfile_created.connect(self.on_workfile_create)
         files_widget.file_opened.connect(self._on_file_opened)
@@ -970,13 +985,6 @@ class Window(QtWidgets.QMainWindow):
 
     def set_save_enabled(self, enabled):
         self.files_widget.btn_save.setEnabled(enabled)
-
-    def on_task_changed(self):
-        # Since we query the disk give it slightly more delay
-        schedule(self._on_task_changed, 100, channel="mongo")
-
-    def on_asset_changed(self):
-        schedule(self._on_asset_changed, 50, channel="mongo")
 
     def on_file_select(self, filepath):
         asset_id = self.assets_widget.get_selected_asset_id()

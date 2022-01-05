@@ -306,6 +306,8 @@ class AssetModel(QtGui.QStandardItemModel):
         self._items_with_color_by_id = {}
         self._items_by_asset_id = {}
 
+        self._last_project_name = None
+
     @property
     def refreshing(self):
         return self._refreshing
@@ -348,12 +350,26 @@ class AssetModel(QtGui.QStandardItemModel):
         return self.get_indexes_by_asset_ids(asset_ids)
 
     def refresh(self, force=False):
-        """Refresh the data for the model."""
+        """Refresh the data for the model.
+
+        Args:
+            force (bool): Stop currently running refresh start new refresh.
+            clear (bool): Clear model before refresh thread starts.
+        """
         # Skip fetch if there is already other thread fetching documents
         if self._refreshing:
             if not force:
                 return
             self.stop_refresh()
+
+        project_name = self.dbcon.Session.get("AVALON_PROJECT")
+        clear_model = False
+        if project_name != self._last_project_name:
+            clear_model = True
+            self._last_project_name = project_name
+
+        if clear_model:
+            self._clear_items()
 
         # Fetch documents from mongo
         # Restart payload
@@ -379,22 +395,32 @@ class AssetModel(QtGui.QStandardItemModel):
                 continue
             item.setData(colors, ASSET_UNDERLINE_COLORS_ROLE)
 
+    def _clear_items(self):
+        root_item = self.invisibleRootItem()
+        root_item.removeRows(0, root_item.rowCount())
+        self._items_by_asset_id = {}
+        self._items_with_color_by_id = {}
+
     def _on_docs_fetched(self):
         # Make sure refreshing did not change
         # - since this line is refreshing sequential and
         #   triggering of new refresh will happen when this method is done
         if not self._refreshing:
-            root_item = self.invisibleRootItem()
-            root_item.removeRows(0, root_item.rowCount())
-            self._items_by_asset_id = {}
-            self._items_with_color_by_id = {}
+            self._clear_items()
             return
 
+        self._fill_assets(self._doc_payload)
+
+        self.refreshed.emit(bool(self._items_by_asset_id))
+
+        self._stop_fetch_thread()
+
+    def _fill_assets(self, asset_docs):
         # Collect asset documents as needed
         asset_ids = set()
         asset_docs_by_id = {}
         asset_ids_by_parents = collections.defaultdict(set)
-        for asset_doc in self._doc_payload:
+        for asset_doc in asset_docs:
             asset_id = asset_doc["_id"]
             asset_data = asset_doc.get("data") or {}
             parent_id = asset_data.get("visualParent")
@@ -419,8 +445,6 @@ class AssetModel(QtGui.QStandardItemModel):
             parent_id, parent_item = asset_items_queue.popleft()
             # Skip if there are no children
             children_ids = asset_ids_by_parents[parent_id]
-            if not children_ids:
-                continue
 
             # Go through current children of parent item
             # - find out items that were deleted and skip creation of already
@@ -502,10 +526,6 @@ class AssetModel(QtGui.QStandardItemModel):
             except Exception:
                 pass
 
-        self.refreshed.emit(bool(self._items_by_asset_id))
-
-        self._stop_fetch_thread()
-
     def _threaded_fetch(self):
         asset_docs = self._fetch_asset_docs()
         if not self._refreshing:
@@ -573,11 +593,8 @@ class AssetsWidget(QtWidgets.QWidget):
         self.dbcon = dbcon
 
         # Tree View
-        model = AssetModel(dbcon=self.dbcon, parent=self)
-        proxy = RecursiveSortFilterProxyModel()
-        proxy.setSourceModel(model)
-        proxy.setFilterCaseSensitivity(QtCore.Qt.CaseInsensitive)
-        proxy.setSortCaseSensitivity(QtCore.Qt.CaseInsensitive)
+        model = self._create_source_model()
+        proxy = self._create_proxy_model(model)
 
         view = AssetsView(self)
         view.setModel(proxy)
@@ -619,15 +636,27 @@ class AssetsWidget(QtWidgets.QWidget):
         selection_model.selectionChanged.connect(self._on_selection_change)
         refresh_btn.clicked.connect(self.refresh)
         current_asset_btn.clicked.connect(self.set_current_session_asset)
-        model.refreshed.connect(self._on_model_refresh)
         view.doubleClicked.connect(self.double_clicked)
 
         self._current_asset_btn = current_asset_btn
         self._model = model
         self._proxy = proxy
         self._view = view
+        self._last_project_name = None
 
         self.model_selection = {}
+
+    def _create_source_model(self):
+        model = AssetModel(dbcon=self.dbcon, parent=self)
+        model.refreshed.connect(self._on_model_refresh)
+        return model
+
+    def _create_proxy_model(self, source_model):
+        proxy = RecursiveSortFilterProxyModel()
+        proxy.setSourceModel(source_model)
+        proxy.setFilterCaseSensitivity(QtCore.Qt.CaseInsensitive)
+        proxy.setSortCaseSensitivity(QtCore.Qt.CaseInsensitive)
+        return proxy
 
     @property
     def refreshing(self):
@@ -676,6 +705,12 @@ class AssetsWidget(QtWidgets.QWidget):
         self._proxy.setFilterFixedString(new_text)
 
     def _on_model_refresh(self, has_item):
+        """This method should be triggered on model refresh.
+
+        Default implementation register this callback in '_create_source_model'
+        so if you're modifying model keep in mind that this method should be
+        called when refresh is done.
+        """
         self._proxy.sort(0)
         self._set_loading_state(loading=False, empty=not has_item)
         self.refreshed.emit()

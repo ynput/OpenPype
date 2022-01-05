@@ -5,12 +5,8 @@ import inspect
 import logging
 import re
 import json
-import tempfile
-import distutils
 
-from .execute import run_subprocess
 from .profiles_filtering import filter_profiles
-from .vendor_bin_utils import get_oiio_tools_path
 
 from openpype.settings import get_project_settings
 
@@ -231,20 +227,27 @@ def filter_pyblish_plugins(plugins):
     # iterate over plugins
     for plugin in plugins[:]:
 
-        file = os.path.normpath(inspect.getsourcefile(plugin))
-        file = os.path.normpath(file)
-
-        # host determined from path
-        host_from_file = file.split(os.path.sep)[-4:-3][0]
-        plugin_kind = file.split(os.path.sep)[-2:-1][0]
-
-        # TODO: change after all plugins are moved one level up
-        if host_from_file == "openpype":
-            host_from_file = "global"
-
         try:
             config_data = presets[host]["publish"][plugin.__name__]
         except KeyError:
+            # host determined from path
+            file = os.path.normpath(inspect.getsourcefile(plugin))
+            file = os.path.normpath(file)
+
+            split_path = file.split(os.path.sep)
+            if len(split_path) < 4:
+                log.warning(
+                    'plugin path too short to extract host {}'.format(file)
+                )
+                continue
+
+            host_from_file = split_path[-4]
+            plugin_kind = split_path[-2]
+
+            # TODO: change after all plugins are moved one level up
+            if host_from_file == "openpype":
+                host_from_file = "global"
+
             try:
                 config_data = presets[host_from_file][plugin_kind][plugin.__name__]  # noqa: E501
             except KeyError:
@@ -423,129 +426,6 @@ def get_background_layers(file_url):
                                                layer.get("filename")).
                                   replace("\\", "/"))
     return layers
-
-
-def oiio_supported():
-    """
-        Checks if oiiotool is configured for this platform.
-
-        Triggers simple subprocess, handles exception if fails.
-
-        'should_decompress' will throw exception if configured,
-        but not present or not working.
-        Returns:
-            (bool)
-    """
-    oiio_path = get_oiio_tools_path()
-    if oiio_path:
-        oiio_path = distutils.spawn.find_executable(oiio_path)
-
-    if not oiio_path:
-        log.debug("OIIOTool is not configured or not present at {}".
-                  format(oiio_path))
-        return False
-
-    return True
-
-
-def decompress(target_dir, file_url,
-               input_frame_start=None, input_frame_end=None, log=None):
-    """
-        Decompresses DWAA 'file_url' .exr to 'target_dir'.
-
-        Creates uncompressed files in 'target_dir', they need to be cleaned.
-
-        File url could be for single file or for a sequence, in that case
-        %0Xd will be as a placeholder for frame number AND input_frame* will
-        be filled.
-        In that case single oiio command with '--frames' will be triggered for
-        all frames, this should be faster then looping and running sequentially
-
-        Args:
-            target_dir (str): extended from stagingDir
-            file_url (str): full urls to source file (with or without %0Xd)
-            input_frame_start (int) (optional): first frame
-            input_frame_end (int) (optional): last frame
-            log (Logger) (optional): pype logger
-    """
-    is_sequence = input_frame_start is not None and \
-        input_frame_end is not None and \
-        (int(input_frame_end) > int(input_frame_start))
-
-    oiio_cmd = []
-    oiio_cmd.append(get_oiio_tools_path())
-
-    oiio_cmd.append("--compression none")
-
-    base_file_name = os.path.basename(file_url)
-    oiio_cmd.append(file_url)
-
-    if is_sequence:
-        oiio_cmd.append("--frames {}-{}".format(input_frame_start,
-                                                input_frame_end))
-
-    oiio_cmd.append("-o")
-    oiio_cmd.append(os.path.join(target_dir, base_file_name))
-
-    subprocess_exr = " ".join(oiio_cmd)
-
-    if not log:
-        log = logging.getLogger(__name__)
-
-    log.debug("Decompressing {}".format(subprocess_exr))
-    run_subprocess(
-        subprocess_exr, shell=True, logger=log
-    )
-
-
-def get_decompress_dir():
-    """
-        Creates temporary folder for decompressing.
-        Its local, in case of farm it is 'local' to the farm machine.
-
-        Should be much faster, needs to be cleaned up later.
-    """
-    return os.path.normpath(
-        tempfile.mkdtemp(prefix="pyblish_tmp_")
-    )
-
-
-def should_decompress(file_url):
-    """
-        Tests that 'file_url' is compressed with DWAA.
-
-        Uses 'oiio_supported' to check that OIIO tool is available for this
-        platform.
-
-        Shouldn't throw exception as oiiotool is guarded by check function.
-        Currently implemented this way as there is no support for Mac and Linux
-        In the future, it should be more strict and throws exception on
-        misconfiguration.
-
-        Args:
-            file_url (str): path to rendered file (in sequence it would be
-                first file, if that compressed it is expected that whole seq
-                will be too)
-        Returns:
-            (bool): 'file_url' is DWAA compressed and should be decompressed
-                and we can decompress (oiiotool supported)
-    """
-    if oiio_supported():
-        try:
-            output = run_subprocess([
-                get_oiio_tools_path(),
-                "--info", "-v", file_url])
-            return "compression: \"dwaa\"" in output or \
-                "compression: \"dwab\"" in output
-        except RuntimeError:
-            _name, ext = os.path.splitext(file_url)
-            # TODO: should't the list of allowed extensions be
-            #     taken from an OIIO variable of supported formats
-            if ext not in [".mxf"]:
-                # Reraise exception
-                raise
-            return False
-    return False
 
 
 def parse_json(path):

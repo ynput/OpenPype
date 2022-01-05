@@ -12,22 +12,43 @@ class PlaceholderLineEdit(QtWidgets.QLineEdit):
     """Set placeholder color of QLineEdit in Qt 5.12 and higher."""
     def __init__(self, *args, **kwargs):
         super(PlaceholderLineEdit, self).__init__(*args, **kwargs)
-        self._first_show = True
+        # Change placeholder palette color
+        if hasattr(QtGui.QPalette, "PlaceholderText"):
+            filter_palette = self.palette()
+            color_obj = get_objected_colors()["font"]
+            color = color_obj.get_qcolor()
+            color.setAlpha(67)
+            filter_palette.setColor(
+                QtGui.QPalette.PlaceholderText,
+                color
+            )
+            self.setPalette(filter_palette)
+
+
+class ImageButton(QtWidgets.QPushButton):
+    """PushButton with icon and size of font.
+
+    Using font metrics height as icon size reference.
+
+    TODO:
+    - handle changes of screen (different resolution)
+    """
+
+    def __init__(self, *args, **kwargs):
+        super(ImageButton, self).__init__(*args, **kwargs)
+        self.setObjectName("ImageButton")
+
+    def _change_size(self):
+        font_height = self.fontMetrics().height()
+        self.setIconSize(QtCore.QSize(font_height, font_height))
 
     def showEvent(self, event):
-        super(PlaceholderLineEdit, self).showEvent(event)
-        if self._first_show:
-            self._first_show = False
-            filter_palette = self.palette()
-            if hasattr(filter_palette, "PlaceholderText"):
-                color_obj = get_objected_colors()["font"]
-                color = color_obj.get_qcolor()
-                color.setAlpha(67)
-                filter_palette.setColor(
-                    filter_palette.PlaceholderText,
-                    color
-                )
-                self.setPalette(filter_palette)
+        super(ImageButton, self).showEvent(event)
+
+        self._change_size()
+
+    def sizeHint(self):
+        return self.iconSize()
 
 
 class OptionalMenu(QtWidgets.QMenu):

@@ -5,10 +5,11 @@ import os
 import json
 import re
 from copy import copy, deepcopy
+import requests
+import clique
 import openpype.api
 
 from avalon import api, io
-from avalon.vendor import requests, clique
 
 import pyblish.api
 
@@ -444,9 +445,14 @@ class ProcessSubmittedJobOnFarm(pyblish.api.InstancePlugin):
                         preview = True
                         break
 
+            if instance_data.get("multipartExr"):
+                preview = True
+
             new_instance = copy(instance_data)
             new_instance["subset"] = subset_name
             new_instance["subsetGroup"] = group_name
+            if preview:
+                new_instance["review"] = True
 
             # create represenation
             if isinstance(col, (list, tuple)):
@@ -525,6 +531,10 @@ class ProcessSubmittedJobOnFarm(pyblish.api.InstancePlugin):
 
             if bake_renders:
                 preview = False
+
+            # toggle preview on if multipart is on
+            if instance.get("multipartExr", False):
+                preview = True
 
             staging = os.path.dirname(list(collection)[0])
             success, rootless_staging_dir = (

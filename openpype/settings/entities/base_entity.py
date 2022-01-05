@@ -9,7 +9,7 @@ from .lib import (
 )
 
 from .exceptions import (
-    BaseInvalidValueType,
+    BaseInvalidValue,
     InvalidValueType,
     SchemeGroupHierarchyBug,
     EntitySchemaError
@@ -235,6 +235,11 @@ class BaseItemEntity(BaseEntity):
         """Return system settings entity."""
         pass
 
+    @abstractmethod
+    def has_child_with_key(self, key):
+        """Entity contains key as children."""
+        pass
+
     def schema_validations(self):
         """Validate schema of entity and it's hierachy.
 
@@ -432,7 +437,7 @@ class BaseItemEntity(BaseEntity):
 
         try:
             new_value = self.convert_to_valid_type(value)
-        except BaseInvalidValueType:
+        except BaseInvalidValue:
             new_value = NOT_SET
 
         if new_value is not NOT_SET:

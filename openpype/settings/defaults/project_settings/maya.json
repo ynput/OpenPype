@@ -43,6 +43,7 @@
             "defaults": [
                 "Main"
             ],
+            "default_render_image_folder": "renders",
             "aov_separator": "underscore",
             "arnold_renderer": {
                 "image_format": "exr",
@@ -302,6 +303,11 @@
             "enabled": true,
             "optional": true,
             "active": true
+        },
+        "ValidateModelContent": {
+            "enabled": true,
+            "optional": false,
+            "validate_top_group": true
         },
         "ValidateNoAnimation": {
             "enabled": false,

@@ -178,10 +178,10 @@ main () {
   fi
 
 if [ "$disable_submodule_update" == 1 ]; then
-  echo -e "${BIGreen}>>>${RST} Making sure submodules are up-to-date ..."
-  git submodule update --init --recursive
+    echo -e "${BIYellow}***${RST} Not updating submodules ..."
   else
-     echo -e "${BIYellow}***${RST} Not updating submodules ..."
+    echo -e "${BIGreen}>>>${RST} Making sure submodules are up-to-date ..."
+    git submodule update --init --recursive
   fi
   echo -e "${BIGreen}>>>${RST} Building ..."
   if [[ "$OSTYPE" == "linux-gnu"* ]]; then

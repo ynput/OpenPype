@@ -386,10 +386,13 @@ class CollectLook(pyblish.api.InstancePlugin):
 
         self.log.info("Collected resources: {}".format(instance.data["resources"]))
 
-        # Log a warning when no relevant sets were retrieved for the look.
-        if not instance.data["lookData"]["relationships"]:
-            self.log.warning("No sets found for the nodes in the instance: "
-                             "%s" % instance[:])
+        # Log warning when no relevant sets were retrieved for the look.
+        if (
+            not instance.data["lookData"]["relationships"]
+            and "model" not in self.families
+        ):
+            self.log.warning("No sets found for the nodes in the "
+                             "instance: %s" % instance[:])
 
         # Ensure unique shader sets
         # Add shader sets to the instance for unify ID validation
@@ -489,6 +492,8 @@ class CollectLook(pyblish.api.InstancePlugin):
                 if not cmds.attributeQuery(attr, node=node, exists=True):
                     continue
                 attribute = "{}.{}".format(node, attr)
+                if cmds.getAttr(attribute, type=True) == "message":
+                    continue
                 node_attributes[attr] = cmds.getAttr(attribute)
 
             attributes.append({"name": node,

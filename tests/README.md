@@ -14,12 +14,12 @@ How to run:
 ----------
 - single test class could be run by PyCharm and its pytest runner directly
 - OR
-- use Openpype command 'runtests' from command line
--- `${OPENPYPE_ROOT}/start.py runtests`
+- use Openpype command 'runtests' from command line (`.venv` in ${OPENPYPE_ROOT} must be activated to use configured Python!)
+-- `${OPENPYPE_ROOT}/python start.py runtests`
   
 By default, this command will run all tests in ${OPENPYPE_ROOT}/tests.
 
 Specific location could be provided to this command as an argument, either as absolute path, or relative path to ${OPENPYPE_ROOT}.
-(eg. `${OPENPYPE_ROOT}/start.py runtests ../tests/integration`) will trigger only tests in `integration` folder.
+(eg. `${OPENPYPE_ROOT}/python start.py runtests ../tests/integration`) will trigger only tests in `integration` folder.
 
 See `${OPENPYPE_ROOT}/cli.py:runtests` for other arguments.

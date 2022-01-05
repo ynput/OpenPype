@@ -31,7 +31,7 @@ class ExtractReviewDataMov(openpype.api.Extractor):
             instance.data["representations"] = []
 
         staging_dir = os.path.normpath(
-            os.path.dirname(instance.data['path']))
+            os.path.dirname(instance.data["path"]))
 
         instance.data["stagingDir"] = staging_dir
 
@@ -42,6 +42,7 @@ class ExtractReviewDataMov(openpype.api.Extractor):
 
         # generate data
         with anlib.maintained_selection():
+            generated_repres = []
             for o_name, o_data in self.outputs.items():
                 f_families = o_data["filter"]["families"]
                 f_task_types = o_data["filter"]["task_types"]
@@ -83,9 +84,15 @@ class ExtractReviewDataMov(openpype.api.Extractor):
                     "Baking output `{}` with settings: {}".format(
                         o_name, o_data))
 
+                # check if settings have more then one preset
+                # so we dont need to add outputName to representation
+                # in case there is only one preset
+                multiple_presets = bool(len(self.outputs.keys()) > 1)
+
                 # create exporter instance
                 exporter = plugin.ExporterReviewMov(
-                    self, instance, o_name, o_data["extension"])
+                    self, instance, o_name, o_data["extension"],
+                    multiple_presets)
 
                 if "render.farm" in families:
                     if "review" in instance.data["families"]:
@@ -106,11 +113,13 @@ class ExtractReviewDataMov(openpype.api.Extractor):
                     })
                 else:
                     data = exporter.generate_mov(**o_data)
+                    generated_repres.extend(data["representations"])
 
-                self.log.info(data["representations"])
+                self.log.info(generated_repres)
 
-        # assign to representations
-        instance.data["representations"] += data["representations"]
+        if generated_repres:
+            # assign to representations
+            instance.data["representations"] += generated_repres
 
         self.log.debug(
             "_ representations: {}".format(

@@ -1,9 +1,15 @@
+import sys
 import json
+import traceback
 
 from Qt import QtWidgets, QtGui, QtCore
+
+from openpype.settings.entities import ProjectSettings
 from openpype.tools.settings import CHILD_OFFSET
+
 from .widgets import ExpandingWidget
 from .lib import create_deffered_value_change_timer
+from .constants import DEFAULT_PROJECT_LABEL
 
 
 class BaseWidget(QtWidgets.QWidget):
@@ -25,6 +31,15 @@ class BaseWidget(QtWidgets.QWidget):
 
         self.label_widget = None
         self.create_ui()
+
+    @staticmethod
+    def set_style_property(obj, property_name, property_value):
+        """Change QWidget property and polish it's style."""
+        if obj.property(property_name) == property_value:
+            return
+
+        obj.setProperty(property_name, property_value)
+        obj.style().polish(obj)
 
     def scroll_to(self, widget):
         self.category_widget.scroll_to(widget)
@@ -110,9 +125,10 @@ class BaseWidget(QtWidgets.QWidget):
             return
 
         def discard_changes():
-            self.ignore_input_changes.set_ignore(True)
-            self.entity.discard_changes()
-            self.ignore_input_changes.set_ignore(False)
+            with self.category_widget.working_state_context():
+                self.ignore_input_changes.set_ignore(True)
+                self.entity.discard_changes()
+                self.ignore_input_changes.set_ignore(False)
 
         action = QtWidgets.QAction("Discard changes")
         actions_mapping[action] = discard_changes
@@ -124,8 +140,11 @@ class BaseWidget(QtWidgets.QWidget):
         if not self.entity.can_trigger_add_to_studio_default:
             return
 
+        def add_to_studio_default():
+            with self.category_widget.working_state_context():
+                self.entity.add_to_studio_default()
         action = QtWidgets.QAction("Add to studio default")
-        actions_mapping[action] = self.entity.add_to_studio_default
+        actions_mapping[action] = add_to_studio_default
         menu.addAction(action)
 
     def _remove_from_studio_default_action(self, menu, actions_mapping):
@@ -133,9 +152,10 @@ class BaseWidget(QtWidgets.QWidget):
             return
 
         def remove_from_studio_default():
-            self.ignore_input_changes.set_ignore(True)
-            self.entity.remove_from_studio_default()
-            self.ignore_input_changes.set_ignore(False)
+            with self.category_widget.working_state_context():
+                self.ignore_input_changes.set_ignore(True)
+                self.entity.remove_from_studio_default()
+                self.ignore_input_changes.set_ignore(False)
         action = QtWidgets.QAction("Remove from studio default")
         actions_mapping[action] = remove_from_studio_default
         menu.addAction(action)
@@ -144,8 +164,12 @@ class BaseWidget(QtWidgets.QWidget):
         if not self.entity.can_trigger_add_to_project_override:
             return
 
+        def add_to_project_override():
+            with self.category_widget.working_state_context():
+                self.entity.add_to_project_override
+
         action = QtWidgets.QAction("Add to project project override")
-        actions_mapping[action] = self.entity.add_to_project_override
+        actions_mapping[action] = add_to_project_override
         menu.addAction(action)
 
     def _remove_from_project_override_action(self, menu, actions_mapping):
@@ -153,9 +177,11 @@ class BaseWidget(QtWidgets.QWidget):
             return
 
         def remove_from_project_override():
-            self.ignore_input_changes.set_ignore(True)
-            self.entity.remove_from_project_override()
-            self.ignore_input_changes.set_ignore(False)
+            with self.category_widget.working_state_context():
+                self.ignore_input_changes.set_ignore(True)
+                self.entity.remove_from_project_override()
+                self.ignore_input_changes.set_ignore(False)
+
         action = QtWidgets.QAction("Remove from project override")
         actions_mapping[action] = remove_from_project_override
         menu.addAction(action)
@@ -257,20 +283,84 @@ class BaseWidget(QtWidgets.QWidget):
 
         # Simple paste value method
         def paste_value():
-            _set_entity_value(self.entity, value)
+            with self.category_widget.working_state_context():
+                _set_entity_value(self.entity, value)
 
         action = QtWidgets.QAction("Paste", menu)
         output.append((action, paste_value))
 
         # Paste value to matchin entity
         def paste_value_to_path():
-            _set_entity_value(matching_entity, value)
+            with self.category_widget.working_state_context():
+                _set_entity_value(matching_entity, value)
 
         if matching_entity is not None:
             action = QtWidgets.QAction("Paste to same place", menu)
             output.append((action, paste_value_to_path))
 
         return output
+
+    def _apply_values_from_project_action(self, menu, actions_mapping):
+        for attr_name in ("project_name", "get_project_names"):
+            if not hasattr(self.category_widget, attr_name):
+                return
+
+        if self.entity.is_dynamic_item or self.entity.is_in_dynamic_item:
+            return
+
+        current_project_name = self.category_widget.project_name
+        project_names = []
+        for project_name in self.category_widget.get_project_names():
+            if project_name != current_project_name:
+                project_names.append(project_name)
+
+        if not project_names:
+            return
+
+        submenu = QtWidgets.QMenu("Apply values from", menu)
+
+        for project_name in project_names:
+            if project_name is None:
+                project_name = DEFAULT_PROJECT_LABEL
+
+            action = QtWidgets.QAction(project_name)
+            submenu.addAction(action)
+            actions_mapping[action] = lambda: self._apply_values_from_project(
+                project_name
+            )
+        menu.addMenu(submenu)
+
+    def _apply_values_from_project(self, project_name):
+        with self.category_widget.working_state_context():
+            try:
+                path_keys = [
+                    item
+                    for item in self.entity.path.split("/")
+                    if item
+                ]
+                entity = ProjectSettings(project_name)
+                for key in path_keys:
+                    entity = entity[key]
+                self.entity.set(entity.value)
+
+            except Exception:
+                if project_name is None:
+                    project_name = DEFAULT_PROJECT_LABEL
+
+                # TODO better message
+                title = "Applying values failed"
+                msg = "Applying values from project \"{}\" failed.".format(
+                    project_name
+                )
+                detail_msg = "".join(
+                    traceback.format_exception(*sys.exc_info())
+                )
+                dialog = QtWidgets.QMessageBox(self)
+                dialog.setWindowTitle(title)
+                dialog.setIcon(QtWidgets.QMessageBox.Warning)
+                dialog.setText(msg)
+                dialog.setDetailedText(detail_msg)
+                dialog.exec_()
 
     def show_actions_menu(self, event=None):
         if event and event.button() != QtCore.Qt.RightButton:
@@ -290,6 +380,7 @@ class BaseWidget(QtWidgets.QWidget):
         self._remove_from_studio_default_action(menu, actions_mapping)
         self._add_to_project_override_action(menu, actions_mapping)
         self._remove_from_project_override_action(menu, actions_mapping)
+        self._apply_values_from_project_action(menu, actions_mapping)
 
         ui_actions = []
         ui_actions.extend(self._copy_value_actions(menu))
@@ -470,10 +561,11 @@ class GUIWidget(BaseWidget):
         self.entity_widget.add_widget_to_layout(self)
 
     def _create_label_ui(self):
-        self.setObjectName("LabelWidget")
-
         label = self.entity["label"]
         label_widget = QtWidgets.QLabel(label, self)
+        label_widget.setTextInteractionFlags(QtCore.Qt.TextBrowserInteraction)
+        label_widget.setObjectName("SettingsLabel")
+        label_widget.linkActivated.connect(self._on_link_activate)
 
         layout = QtWidgets.QHBoxLayout(self)
         layout.setContentsMargins(0, 5, 0, 5)
@@ -481,13 +573,21 @@ class GUIWidget(BaseWidget):
 
     def _create_separator_ui(self):
         splitter_item = QtWidgets.QWidget(self)
-        splitter_item.setObjectName("SplitterItem")
+        splitter_item.setObjectName("Separator")
         splitter_item.setMinimumHeight(self.separator_height)
         splitter_item.setMaximumHeight(self.separator_height)
 
         layout = QtWidgets.QHBoxLayout(self)
         layout.setContentsMargins(5, 5, 5, 5)
         layout.addWidget(splitter_item)
+
+    def _on_link_activate(self, url):
+        if not url.startswith("settings://"):
+            QtGui.QDesktopServices.openUrl(url)
+            return
+
+        path = url.replace("settings://", "")
+        self.category_widget.go_to_fullpath(path)
 
     def set_entity_value(self):
         pass
@@ -513,10 +613,9 @@ class MockUpWidget(BaseWidget):
     child_invalid = False
 
     def create_ui(self):
-        self.setObjectName("LabelWidget")
-
         label = "Mockup widget for entity {}".format(self.entity.path)
         label_widget = QtWidgets.QLabel(label, self)
+        label_widget.setObjectName("SettingsLabel")
 
         layout = QtWidgets.QHBoxLayout(self)
         layout.setContentsMargins(0, 5, 0, 5)

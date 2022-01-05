@@ -2,9 +2,10 @@ import os
 import sys
 import logging
 
+from Qt import QtWidgets
+
 from avalon import io
 from avalon import api as avalon
-from avalon.vendor import Qt
 from openpype import lib
 from pyblish import api as pyblish
 import openpype.hosts.photoshop
@@ -38,10 +39,10 @@ def check_inventory():
 
     # Warn about outdated containers.
     print("Starting new QApplication..")
-    app = Qt.QtWidgets.QApplication(sys.argv)
+    app = QtWidgets.QApplication(sys.argv)
 
-    message_box = Qt.QtWidgets.QMessageBox()
-    message_box.setIcon(Qt.QtWidgets.QMessageBox.Warning)
+    message_box = QtWidgets.QMessageBox()
+    message_box.setIcon(QtWidgets.QMessageBox.Warning)
     msg = "There are outdated containers in the scene."
     message_box.setText(msg)
     message_box.exec_()

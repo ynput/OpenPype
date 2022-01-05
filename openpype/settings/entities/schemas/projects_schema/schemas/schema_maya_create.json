@@ -30,7 +30,6 @@
             ]
         },
         {
-
             "type": "schema",
             "name": "schema_maya_create_render"
         },

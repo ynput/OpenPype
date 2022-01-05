@@ -111,13 +111,6 @@ class CreateFolders(BaseAction):
             publish_template = publish_template[key]
         publish_has_apps = "{app" in publish_template
 
-        tools_settings = project_settings["global"]["tools"]
-        app_presets = tools_settings["Workfiles"]["sw_folders"]
-        app_manager_apps = None
-        if app_presets and (work_has_apps or publish_has_apps):
-            app_manager_apps = ApplicationManager().applications
-
-        cached_apps = {}
         collected_paths = []
         for entity in all_entities:
             if entity.entity_type.lower() == "project":
@@ -143,26 +136,10 @@ class CreateFolders(BaseAction):
                 if child["object_type"]["name"].lower() != "task":
                     continue
                 tasks_created = True
-                task_type_name = child["type"]["name"].lower()
                 task_data = ent_data.copy()
                 task_data["task"] = child["name"]
 
                 apps = []
-                if app_manager_apps:
-                    possible_apps = app_presets.get(task_type_name) or []
-                    for app_name in possible_apps:
-
-                        if app_name in cached_apps:
-                            apps.append(cached_apps[app_name])
-                            continue
-
-                        app_def = app_manager_apps.get(app_name)
-                        if app_def and app_def.is_host:
-                            app_dir = app_def.host_name
-                        else:
-                            app_dir = app_name
-                        cached_apps[app_name] = app_dir
-                        apps.append(app_dir)
 
                 # Template wok
                 if work_has_apps:

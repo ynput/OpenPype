@@ -37,8 +37,13 @@ class SimpleLinkView(QtWidgets.QWidget):
         # inputs
         #
         for link in version_doc["data"].get("inputLinks", []):
+            # Backwards compatibility for "input" key used as "id"
+            if "id" not in link:
+                link_id = link["input"]
+            else:
+                link_id = link["id"]
             version = self.dbcon.find_one(
-                {"_id": link["input"], "type": "version"},
+                {"_id": link_id, "type": "version"},
                 projection={"name": 1, "parent": 1}
             )
             if not version:
