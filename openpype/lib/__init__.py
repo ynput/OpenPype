@@ -25,6 +25,7 @@ from .env_tools import (
 from .terminal import Terminal
 from .execute import (
     get_pype_execute_args,
+    get_linux_launcher_args,
     execute,
     run_subprocess,
     path_to_subprocess_arg,
@@ -32,8 +33,6 @@ from .execute import (
 )
 from .log import PypeLogger, timeit
 from .mongo import (
-    decompose_url,
-    compose_url,
     get_default_components,
     validate_mongo_connection,
     OpenPypeMongoConnection
@@ -150,7 +149,8 @@ from .path_tools import (
     get_version_from_path,
     get_last_version_from_path,
     create_project_folders,
-    get_project_basic_paths
+    create_workdir_extra_folders,
+    get_project_basic_paths,
 )
 
 from .editorial import (
@@ -174,6 +174,7 @@ terminal = Terminal
 
 __all__ = [
     "get_pype_execute_args",
+    "get_linux_launcher_args",
     "execute",
     "run_subprocess",
     "path_to_subprocess_arg",
@@ -276,8 +277,6 @@ __all__ = [
     "get_datetime_data",
 
     "PypeLogger",
-    "decompose_url",
-    "compose_url",
     "get_default_components",
     "validate_mongo_connection",
     "OpenPypeMongoConnection",
@@ -294,6 +293,7 @@ __all__ = [
     "frames_to_timecode",
     "make_sequence_collection",
     "create_project_folders",
+    "create_workdir_extra_folders",
     "get_project_basic_paths",
 
     "get_openpype_version",

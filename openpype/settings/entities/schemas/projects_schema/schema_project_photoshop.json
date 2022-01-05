@@ -34,16 +34,6 @@
             "label": "Publish plugins",
             "children": [
                 {
-                    "type": "schema_template",
-                    "name": "template_publish_plugin",
-                    "template_data": [
-                        {
-                            "key": "ValidateContainers",
-                            "label": "ValidateContainers"
-                        }
-                    ]
-                },
-                {
                     "type": "dict",
                     "collapsible": true,
                     "is_group": true,
@@ -105,6 +95,38 @@
                                     }
                                 ]
                             }
+                        }
+                    ]
+                },
+                {
+                    "type": "schema_template",
+                    "name": "template_publish_plugin",
+                    "template_data": [
+                        {
+                            "key": "ValidateContainers",
+                            "label": "ValidateContainers"
+                        }
+                    ]
+                },
+                {
+                    "type": "dict",
+                    "collapsible": true,
+                    "key": "ValidateNaming",
+                    "label": "Validate naming of subsets and layers",
+                    "children": [
+                        {
+                            "type": "label",
+                            "label": "Subset cannot contain invalid characters or extract to file would fail"
+                        },
+                        {
+                            "type": "text",
+                            "key": "invalid_chars",
+                            "label": "Regex pattern of invalid characters"
+                        },
+                        {
+                            "type": "text",
+                            "key": "replace_char",
+                            "label": "Replacement character"
                         }
                     ]
                 },

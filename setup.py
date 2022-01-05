@@ -3,6 +3,7 @@
 import os
 import sys
 import re
+import platform
 from pathlib import Path
 
 from cx_Freeze import setup, Executable
@@ -18,8 +19,13 @@ with open(openpype_root / "openpype" / "version.py") as fp:
 version_match = re.search(r"(\d+\.\d+.\d+).*", version["__version__"])
 __version__ = version_match.group(1)
 
+low_platform_name = platform.system().lower()
+IS_WINDOWS = low_platform_name == "windows"
+IS_LINUX = low_platform_name == "linux"
+IS_MACOS = low_platform_name == "darwin"
+
 base = None
-if sys.platform == "win32":
+if IS_WINDOWS:
     base = "Win32GUI"
 
 # -----------------------------------------------------------------------
@@ -48,7 +54,8 @@ install_requires = [
     "filecmp",
     "dns",
     # Python defaults (cx_Freeze skip them by default)
-    "dbm"
+    "dbm",
+    "sqlite3"
 ]
 
 includes = []
@@ -71,7 +78,7 @@ include_files = [
     "README.md"
 ]
 
-if sys.platform == "win32":
+if IS_WINDOWS:
     install_requires.extend([
         # `pywin32` packages
         "win32ctypes",
@@ -103,6 +110,15 @@ executables = [
     Executable("start.py", base=None,
                target_name="openpype_console", icon=icon_path.as_posix())
 ]
+if IS_LINUX:
+    executables.append(
+        Executable(
+            "app_launcher.py",
+            base=None,
+            target_name="app_launcher",
+            icon=icon_path.as_posix()
+        )
+    )
 
 setup(
     name="OpenPype",

@@ -216,6 +216,7 @@ class PypeCommands:
             task_name,
             app_name
         )
+        print("env:: {}".format(env))
         os.environ.update(env)
 
         os.environ["OPENPYPE_PUBLISH_DATA"] = batch_dir
@@ -304,13 +305,16 @@ class PypeCommands:
         log.info("Publish finished.")
 
     @staticmethod
-    def extractenvironments(output_json_path, project, asset, task, app):
-        env = os.environ.copy()
+    def extractenvironments(
+        output_json_path, project, asset, task, app, env_group
+    ):
         if all((project, asset, task, app)):
             from openpype.api import get_app_environments_for_context
             env = get_app_environments_for_context(
-                project, asset, task, app, env
+                project, asset, task, app, env_group
             )
+        else:
+            env = os.environ.copy()
 
         output_dir = os.path.dirname(output_json_path)
         if not os.path.exists(output_dir):
@@ -340,7 +344,8 @@ class PypeCommands:
     def validate_jsons(self):
         pass
 
-    def run_tests(self, folder, mark, pyargs):
+    def run_tests(self, folder, mark, pyargs,
+                  test_data_folder, persist, app_variant):
         """
             Runs tests from 'folder'
 
@@ -348,25 +353,39 @@ class PypeCommands:
                  folder (str): relative path to folder with tests
                  mark (str): label to run tests marked by it (slow etc)
                  pyargs (str): package path to test
+                 test_data_folder (str): url to unzipped folder of test data
+                 persist (bool): True if keep test db and published after test
+                    end
+                app_variant (str): variant (eg 2020 for AE), empty if use
+                    latest installed version
         """
         print("run_tests")
-        import subprocess
-
         if folder:
             folder = " ".join(list(folder))
         else:
             folder = "../tests"
 
-        mark_str = pyargs_str = ''
+        # disable warnings and show captured stdout even if success
+        args = ["--disable-pytest-warnings", "-rP", folder]
+
         if mark:
-            mark_str = "-m {}".format(mark)
+            args.extend(["-m", mark])
 
         if pyargs:
-            pyargs_str = "--pyargs {}".format(pyargs)
+            args.extend(["--pyargs", pyargs])
 
-        cmd = "pytest {} {} {}".format(folder, mark_str, pyargs_str)
-        print("Running {}".format(cmd))
-        subprocess.run(cmd)
+        if persist:
+            args.extend(["--test_data_folder", test_data_folder])
+
+        if persist:
+            args.extend(["--persist", persist])
+
+        if app_variant:
+            args.extend(["--app_variant", app_variant])
+
+        print("run_tests args: {}".format(args))
+        import pytest
+        pytest.main(args)
 
     def syncserver(self, active_site):
         """Start running sync_server in background."""

@@ -19,7 +19,7 @@ from .api.lib import (
     maintain_current_timeline,
     get_project_manager,
     get_current_project,
-    get_current_timeline,
+    get_current_sequence,
     create_bin,
 )
 
@@ -51,6 +51,7 @@ INVENTORY_PATH = os.path.join(PLUGINS_DIR, "inventory")
 
 app_framework = None
 apps = []
+selection = None
 
 
 __all__ = [
@@ -65,6 +66,7 @@ __all__ = [
 
     "app_framework",
     "apps",
+    "selection",
 
     # pipeline
     "install",
@@ -86,7 +88,7 @@ __all__ = [
     "maintain_current_timeline",
     "get_project_manager",
     "get_current_project",
-    "get_current_timeline",
+    "get_current_sequence",
     "create_bin",
 
     # menu

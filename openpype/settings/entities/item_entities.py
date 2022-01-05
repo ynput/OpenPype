@@ -1,3 +1,7 @@
+import re
+
+import six
+
 from .lib import (
     NOT_SET,
     STRING_TYPE,
@@ -47,6 +51,9 @@ class PathEntity(ItemEntity):
         if not self.multiplatform:
             raise AttributeError(self.attribute_error_msg.format("items"))
         return self.child_obj.items()
+
+    def has_child_with_key(self, key):
+        return self.child_obj.has_child_with_key(key)
 
     def _item_initialization(self):
         if self.group_item is None and not self.is_group:
@@ -197,6 +204,7 @@ class PathEntity(ItemEntity):
 
 class ListStrictEntity(ItemEntity):
     schema_types = ["list-strict"]
+    _key_regex = re.compile(r"[0-9]+")
 
     def __getitem__(self, idx):
         if not isinstance(idx, int):
@@ -215,6 +223,19 @@ class ListStrictEntity(ItemEntity):
         if idx < len(self.children):
             return self.children[idx]
         return default
+
+    def has_child_with_key(self, key):
+        if (
+            key
+            and isinstance(key, six.string_types)
+            and self._key_regex.match(key)
+        ):
+            key = int(key)
+
+        if not isinstance(key, int):
+            return False
+
+        return 0 <= key < len(self.children)
 
     def _item_initialization(self):
         self.valid_value_types = (list, )

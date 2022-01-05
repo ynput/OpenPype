@@ -27,6 +27,7 @@ def _sync_utility_scripts(env=None):
 
     fsd_paths = [os.path.join(
         HOST_DIR,
+        "api",
         "utility_scripts"
     )]
 

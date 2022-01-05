@@ -7,11 +7,6 @@
         }
     },
     "publish": {
-        "ValidateContainers": {
-            "enabled": true,
-            "optional": true,
-            "active": true
-        },
         "CollectRemoteInstances": {
             "color_code_mapping": [
                 {
@@ -21,6 +16,15 @@
                     "subset_template_name": ""
                 }
             ]
+        },
+        "ValidateContainers": {
+            "enabled": true,
+            "optional": true,
+            "active": true
+        },
+        "ValidateNaming": {
+            "invalid_chars": "[ \\\\/+\\*\\?\\(\\)\\[\\]\\{\\}:,]",
+            "replace_char": "_"
         },
         "ExtractImage": {
             "formats": [
