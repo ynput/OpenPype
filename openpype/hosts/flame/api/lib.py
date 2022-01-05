@@ -220,10 +220,10 @@ def maintain_current_timeline(to_timeline, from_timeline=None):
         timeline2
 
         >>> with maintain_current_timeline(to_timeline):
-        ...     print(get_current_timeline().GetName())
+        ...     print(get_current_sequence().GetName())
         timeline2
 
-        >>> print(get_current_timeline().GetName())
+        >>> print(get_current_sequence().GetName())
         timeline1
     """
     # todo: this is still Resolve's implementation
@@ -256,9 +256,28 @@ def get_current_project():
     return
 
 
-def get_current_timeline(new=False):
-    # TODO: get_current_timeline
-    return
+def get_current_sequence(selection):
+    import flame
+
+    def segment_to_sequence(_segment):
+        track = _segment.parent
+        version = track.parent
+        return version.parent
+
+    process_timeline = None
+
+    if len(selection) == 1:
+        if isinstance(selection[0], flame.PySequence):
+            process_timeline = selection[0]
+        if isinstance(selection[0], flame.PySegment):
+            process_timeline = segment_to_sequence(selection[0])
+    else:
+        for segment in selection:
+            if isinstance(segment, flame.PySegment):
+                process_timeline = segment_to_sequence(segment)
+                break
+
+    return process_timeline
 
 
 def create_bin(name, root=None):
@@ -272,3 +291,46 @@ def rescan_hooks():
         flame.execute_shortcut('Rescan Python Hooks')
     except Exception:
         pass
+
+
+def get_metadata(project_name, _log=None):
+    from adsk.libwiretapPythonClientAPI import (
+        WireTapClient,
+        WireTapServerHandle,
+        WireTapNodeHandle,
+        WireTapStr
+    )
+
+    class GetProjectColorPolicy(object):
+        def __init__(self, host_name=None, _log=None):
+            # Create a connection to the Backburner manager using the Wiretap
+            # python API.
+            #
+            self.log = _log or log
+            self.host_name = host_name or "localhost"
+            self._wiretap_client = WireTapClient()
+            if not self._wiretap_client.init():
+                raise Exception("Could not initialize Wiretap Client")
+            self._server = WireTapServerHandle(
+                "{}:IFFFS".format(self.host_name))
+
+        def process(self, project_name):
+            policy_node_handle = WireTapNodeHandle(
+                self._server,
+                "/projects/{}/syncolor/policy".format(project_name)
+            )
+            self.log.info(policy_node_handle)
+
+            policy = WireTapStr()
+            if not policy_node_handle.getNodeTypeStr(policy):
+                self.log.warning(
+                    "Could not retrieve policy of '%s': %s" % (
+                        policy_node_handle.getNodeId().id(),
+                        policy_node_handle.lastError()
+                    )
+                )
+
+            return policy.c_str()
+
+    policy_wiretap = GetProjectColorPolicy(_log=_log)
+    return policy_wiretap.process(project_name)
