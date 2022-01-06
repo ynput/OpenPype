@@ -12,26 +12,42 @@
 # add these directories to sys.path here. If the directory is relative to the
 # documentation root, use os.path.abspath to make it absolute, like shown here.
 #
-# import os
-# import sys
 
 import os
 import sys
-pype_root = os.path.abspath('../..')
-sys.path.insert(0, pype_root)
-repos = os.listdir(os.path.abspath("../../repos"))
-repos = [os.path.join(pype_root, "repos", repo) for repo in repos]
+from pathlib import Path
+import re
+
+version = {}
+openpype_root = Path(os.path.abspath('../..'))
+sys.path.insert(0, openpype_root.as_posix())
+sys.path.insert(0, (openpype_root / "openpype").as_posix())
+sys.path.insert(0, (openpype_root / "igniter").as_posix())
+repos = openpype_root / "repos"
+repos = [os.path.join(openpype_root, "repos", repo) for repo in repos.as_posix()]
 for repo in repos:
     sys.path.append(repo)
 
+with open(openpype_root / "openpype" / "version.py") as fp:
+    exec(fp.read(), version)
+
+version_match = re.search(r"(\d+\.\d+.\d+).*", version["__version__"])
+__version__ = version_match.group(1)
+
+
+todo_include_todos = True
+autodoc_mock_imports = ["maya", "pymel", "nuke", "nukestudio", "nukescripts",
+                        "hiero", "bpy", "fusion", "houdini", "hou", "unreal",
+                        "__builtin__", "resolve", "pysync", "DaVinciResolveScript"]
+
 # -- Project information -----------------------------------------------------
 
-project = 'pype'
+project = 'OpenPype'
 copyright = '2019, Orbi Tools'
 author = 'Orbi Tools'
 
 # The short X.Y version
-version = ''
+version = version
 # The full version, including alpha/beta/rc tags
 release = ''
 
@@ -54,17 +70,39 @@ extensions = [
     'sphinx.ext.mathjax',
     'sphinx.ext.viewcode',
     'sphinx.ext.autosummary',
-    'recommonmark'
+    'm2r2',
+    'sphinx.ext.inheritance_diagram',
+    'autoapi.sphinx'
 ]
 
+##############################
+# Autoapi settings
+##############################
+
+autoapi_dirs = [openpype_root / 'openpype', openpype_root / 'igniter']
+
+# bypass modules with a lot of python2 content for now
+autoapi_ignore = [
+    "*vendor*"
+]
+autoapi_keep_files = True
+autoapi_options = [
+    'members',
+    'undoc-members',
+    'show-inheritance',
+    'show-module-summary'
+]
+autoapi_add_toctree_entry = True
+autoapi_template_dir = '_autoapi_templates'
+
 # Add any paths that contain templates here, relative to this directory.
-templates_path = ['_templates']
+templates_path = ['templates']
 
 # The suffix(es) of source filenames.
 # You can specify multiple suffix as a list of string:
 #
 # source_suffix = ['.rst', '.md']
-source_suffix = '.rst'
+source_suffix = ['.rst', '.md']
 
 # The master toctree document.
 master_doc = 'index'
@@ -86,6 +124,7 @@ pygments_style = 'friendly'
 
 # -- Options for autodoc -----------------------------------------------------
 autodoc_default_flags = ['members']
+autodoc_typehints = 'description'
 autosummary_generate = True
 
 
@@ -104,7 +143,9 @@ html_theme = 'sphinx_rtd_theme'
 # documentation.
 #
 html_theme_options = {
-    'collapse_navigation': False
+    'collapse_navigation': False,
+    'navigation_depth': 5,
+    'titles_only': False
 }
 
 # Add any paths that contain custom static files (such as style sheets) here,

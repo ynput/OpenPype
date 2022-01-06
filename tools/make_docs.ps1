@@ -60,8 +60,9 @@ if (-not (Test-Path -PathType Container -Path "$($env:POETRY_HOME)\bin")) {
 Write-Host "This will not overwrite existing source rst files, only scan and add new."
 Set-Location -Path $openpype_root
 Write-Host ">>> " -NoNewline -ForegroundColor green
-Write-Host "Running apidoc ..."
-& "$env:POETRY_HOME\bin\poetry" run sphinx-apidoc -M -e -d 10  --ext-intersphinx --ext-todo --ext-coverage --ext-viewcode -o "$($openpype_root)\docs\source" igniter
+Write-Host "Running apidoc for igniter ..."
+& "$env:POETRY_HOME\bin\poetry" run sphinx-apidoc.exe -M -e -d 10  --ext-intersphinx --ext-todo --ext-coverage --ext-viewcode -o "$($openpype_root)\docs\source" igniter
+Write-Host "Running apidoc for openpype ..."
 & "$env:POETRY_HOME\bin\poetry" run sphinx-apidoc.exe -M -e -d 10 --ext-intersphinx --ext-todo --ext-coverage --ext-viewcode -o "$($openpype_root)\docs\source" openpype vendor, openpype\vendor
 
 Write-Host ">>> " -NoNewline -ForegroundColor green
