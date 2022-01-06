@@ -29,7 +29,7 @@ class CollectTestSelection(pyblish.api.ContextPlugin):
 
     def test_otio_export(self, sequence):
         home_dir = os.path.expanduser("~")
-        export_path = os.path.normalize(
+        export_path = os.path.normpath(
             os.path.join(
                 home_dir, "otio_timeline_export.otio"
             )
