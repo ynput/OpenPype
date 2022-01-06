@@ -59,22 +59,23 @@ def modules_from_path(folder_path):
     """
     crashed = []
     modules = []
+    output = (modules, crashed)
     # Just skip and return empty list if path is not set
     if not folder_path:
-        return modules
+        return output
 
     # Do not allow relative imports
     if folder_path.startswith("."):
         log.warning((
             "BUG: Relative paths are not allowed for security reasons. {}"
         ).format(folder_path))
-        return modules
+        return output
 
     folder_path = os.path.normpath(folder_path)
 
     if not os.path.isdir(folder_path):
         log.warning("Not a directory path: {}".format(folder_path))
-        return modules
+        return output
 
     for filename in os.listdir(folder_path):
         # Ignore files which start with underscore
@@ -101,7 +102,7 @@ def modules_from_path(folder_path):
             )
             continue
 
-    return modules, crashed
+    return output
 
 
 def recursive_bases_from_class(klass):
