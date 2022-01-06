@@ -5,6 +5,10 @@ import contextlib
 from avalon import api as avalon
 from pyblish import api as pyblish
 from openpype.api import Logger
+from .lib import (
+    set_segment_data_marker,
+    set_publish_attribute
+)
 
 AVALON_CONTAINERS = "AVALON_CONTAINERS"
 
@@ -124,6 +128,27 @@ def list_instances():
     pass
 
 
-def imprint(item, data=None):
-    # TODO: imprint
-    pass
+def imprint(segment, data=None):
+    """
+    Adding openpype data to Flame timeline segment.
+
+    Also including publish attribute into tag.
+
+    Arguments:
+        segment (flame.PySegment)): flame api object
+        data (dict): Any data which needst to be imprinted
+
+    Examples:
+        data = {
+            'asset': 'sq020sh0280',
+            'family': 'render',
+            'subset': 'subsetMain'
+        }
+    """
+    data = data or {}
+
+    if not set_segment_data_marker(segment, data):
+        raise AttributeError("Not imprint data to segment")
+
+    # add publish attribute
+    set_publish_attribute(segment, True)

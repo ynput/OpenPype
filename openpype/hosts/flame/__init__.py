@@ -8,7 +8,6 @@ from .api.pipeline import (
     ls,
     containerise,
     update_container,
-    maintained_selection,
     remove_instance,
     list_instances,
     imprint
@@ -21,6 +20,13 @@ from .api.lib import (
     get_current_project,
     get_current_sequence,
     create_bin,
+    create_segment_data_marker,
+    get_segment_data_marker,
+    set_segment_data_marker,
+    set_publish_attribute,
+    get_publish_attribute,
+    maintained_segment_selection,
+    reset_segment_selection
 )
 
 from .api.menu import (
@@ -90,6 +96,13 @@ __all__ = [
     "get_current_project",
     "get_current_sequence",
     "create_bin",
+    "create_segment_data_marker",
+    "get_segment_data_marker",
+    "set_segment_data_marker",
+    "set_publish_attribute",
+    "get_publish_attribute",
+    "maintained_segment_selection",
+    "reset_segment_selection",
 
     # menu
     "FlameMenuProjectConnect",

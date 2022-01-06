@@ -346,7 +346,7 @@ def get_metadata(project_name, _log=None):
     return policy_wiretap.process(project_name)
 
 
-def get_segment_pype_tag(segment, with_marker=None):
+def get_segment_data_marker(segment, with_marker=None):
     """
     Get openpype track item tag created by creator or loader plugin.
 
@@ -372,7 +372,7 @@ def get_segment_pype_tag(segment, with_marker=None):
                 return marker, json.loads(comment)
 
 
-def set_segment_pype_tag(segment, data=None):
+def set_segment_data_marker(segment, data=None):
     """
     Set openpype track item tag to input segment.
 
@@ -384,7 +384,7 @@ def set_segment_pype_tag(segment, data=None):
     """
     data = data or dict()
 
-    marker_data = get_segment_pype_tag(segment, True)
+    marker_data = get_segment_data_marker(segment, True)
 
     if marker_data:
         # get available openpype tag if any
@@ -395,38 +395,11 @@ def set_segment_pype_tag(segment, data=None):
         marker.comment = json.dumps(tag_data)
     else:
         # update tag data with new data
-        marker = create_pype_marker(segment)
+        marker = create_segment_data_marker(segment)
         # add tag data to marker's comment
         marker.comment = json.dumps(data)
 
     return True
-
-
-
-def imprint(segment, data=None):
-    """
-    Adding openpype data to Flame timeline segment.
-
-    Also including publish attribute into tag.
-
-    Arguments:
-        segment (flame.PySegment)): flame api object
-        data (dict): Any data which needst to be imprinted
-
-    Examples:
-        data = {
-            'asset': 'sq020sh0280',
-            'family': 'render',
-            'subset': 'subsetMain'
-        }
-    """
-    data = data or {}
-
-    if not set_segment_pype_tag(segment, data):
-        raise AttributeError("Not imprint data to segment")
-
-    # add publish attribute
-    set_publish_attribute(segment, True)
 
 
 def set_publish_attribute(segment, value):
@@ -436,11 +409,11 @@ def set_publish_attribute(segment, value):
         segment (flame.PySegment)): flame api object
         value (bool): True or False
     """
-    tag_data = get_segment_pype_tag(segment)
+    tag_data = get_segment_data_marker(segment)
     tag_data["publish"] = value
 
     # set data to the publish attribute
-    if not set_segment_pype_tag(segment, tag_data):
+    if not set_segment_data_marker(segment, tag_data):
         raise AttributeError("Not imprint data to segment")
 
 
@@ -453,7 +426,7 @@ def get_publish_attribute(segment):
     Returns:
         bool: True or False
     """
-    tag_data = get_segment_pype_tag(segment)
+    tag_data = get_segment_data_marker(segment)
 
     if not tag_data:
         set_publish_attribute(segment, ctx.publish_default)
@@ -462,7 +435,7 @@ def get_publish_attribute(segment):
     return tag_data["publish"]
 
 
-def create_pype_marker(segment):
+def create_segment_data_marker(segment):
     """ Create openpype marker on a segment.
 
     Attributes:
