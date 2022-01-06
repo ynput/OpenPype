@@ -89,9 +89,11 @@ class WireTapCom(object):
         workspace_name = kwargs.get("workspace_name")
         color_policy = kwargs.get("color_policy")
 
-        self._project_prep(project_name)
-        self._set_project_settings(project_name, project_data)
-        self._set_project_colorspace(project_name, color_policy)
+        project_exists = self._project_prep(project_name)
+        if not project_exists:
+            self._set_project_settings(project_name, project_data)
+            self._set_project_colorspace(project_name, color_policy)
+
         user_name = self._user_prep(user_name)
 
         if workspace_name is None:
@@ -207,6 +209,7 @@ class WireTapCom(object):
 
             print(
                 "A new project '{}' is created.".format(project_name))
+        return project_exists
 
     def _get_all_volumes(self):
         """Request all available volumens from WireTap
