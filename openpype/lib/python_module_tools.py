@@ -49,13 +49,10 @@ def modules_from_path(folder_path):
 
     Arguments:
         path (str): Path to folder containing python scripts.
-        return_crasher (bool): Crashed module paths with exception info
-            will be returned too.
 
     Returns:
-        list, tuple: List of modules when `return_crashed` is False else tuple
-            with list of modules at first place and tuple of path and exception
-            info at second place.
+        tuple<list, list>: First list contains successfully imported modules
+            and second list contains tuples of path and exception.
     """
     crashed = []
     modules = []
