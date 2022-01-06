@@ -53,6 +53,11 @@ class FtrackModule(
             settings_server_paths = settings_server_paths[low_platform]
 
         for path in settings_server_paths:
+            # Try to format path with environments
+            try:
+                path = path.format(**os.environ)
+            except BaseException:
+                pass
             server_event_handlers_paths.append(path)
 
         user_event_handlers_paths = [
@@ -63,6 +68,11 @@ class FtrackModule(
             settings_action_paths = settings_action_paths[low_platform]
 
         for path in settings_action_paths:
+            # Try to format path with environments
+            try:
+                path = path.format(**os.environ)
+            except BaseException:
+                pass
             user_event_handlers_paths.append(path)
 
         # Prepare attribute
