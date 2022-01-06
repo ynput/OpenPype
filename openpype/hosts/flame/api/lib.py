@@ -14,7 +14,7 @@ class ctx:
     # OpenPype marker workflow variables
     marker_name = "OpenPypeData"
     marker_duration = 0
-    marker_color = "red"
+    marker_color = "cyan"
     publish_default = False
     color_map = {
         "red": (1.0, 0.0, 0.0),

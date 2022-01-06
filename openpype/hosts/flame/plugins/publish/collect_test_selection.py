@@ -43,23 +43,16 @@ class CollectTestSelection(pyblish.api.ContextPlugin):
         self.log.info("Otio exported to: {}".format(export_path))
 
     def test_imprint_data(self, sequence):
-        # test segment markers
-        for ver in sequence.versions:
-            for track in ver.tracks:
-                if len(track.segments) == 0 and track.hidden:
+        with lib.maintained_segment_selection(sequence) as selected_segments:
+            for segment in selected_segments:
+                if str(segment.name)[1:-1] == "":
                     continue
 
-                for segment in track.segments:
-                    if str(segment.name)[1:-1] == "":
-                        continue
-                    if not segment.selected:
-                        continue
+                self.log.debug("Segment with OpenPypeData: {}".format(
+                    segment.name))
 
-                    self.log.debug("Segment with OpenPypeData: {}".format(
-                        segment.name))
-
-                    pipeline.imprint(segment, {
-                        'asset': segment.name.get_value(),
-                        'family': 'render',
-                        'subset': 'subsetMain'
-                    })
+                pipeline.imprint(segment, {
+                    'asset': segment.name.get_value(),
+                    'family': 'render',
+                    'subset': 'subsetMain'
+                })
