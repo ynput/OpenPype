@@ -401,8 +401,8 @@ class PublishableClip:
 
         if self.rename:
             # rename segment
-            self.current_segment.name = new_name
-            self.marker_data["asset"] = new_name
+            self.current_segment.name = str(new_name)
+            self.marker_data["asset"] = str(new_name)
         else:
             self.marker_data["asset"] = self.cs_name
             self.marker_data["hierarchyData"]["shot"] = self.cs_name
