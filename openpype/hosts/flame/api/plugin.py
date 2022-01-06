@@ -2,22 +2,12 @@ import re
 import os
 from Qt import QtWidgets, QtCore
 import openpype.api as openpype
+from openpype import style
 import openpype.hosts.flame as opflame
 from . import lib, pipeline
 from copy import deepcopy
 
 log = openpype.Logger().get_logger(__name__)
-
-# Creator plugin functions
-def load_stylesheet():
-    path = os.path.join(os.path.dirname(__file__), "style.css")
-    if not os.path.exists(path):
-        log.warning("Unable to load stylesheet, file not found in resources")
-        return ""
-
-    with open(path, "r") as file_stream:
-        stylesheet = file_stream.read()
-    return stylesheet
 
 
 class CreatorWidget(QtWidgets.QDialog):
@@ -93,8 +83,7 @@ class CreatorWidget(QtWidgets.QDialog):
         ok_btn.clicked.connect(self._on_ok_clicked)
         cancel_btn.clicked.connect(self._on_cancel_clicked)
 
-        stylesheet = load_stylesheet()
-        self.setStyleSheet(stylesheet)
+        self.setStyleSheet(style.load_stylesheet())
 
     def _on_ok_clicked(self):
         self.result = self.value(self.items)
