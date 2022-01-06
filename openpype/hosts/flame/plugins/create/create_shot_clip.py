@@ -11,6 +11,8 @@ def _get_video_track_names(sequence):
         for track in ver.tracks:
             track_names.append(track.name.get_value())
 
+    return track_names
+
 class CreateShotClip(fplugin.Creator):
     """Publishable clip"""
 
