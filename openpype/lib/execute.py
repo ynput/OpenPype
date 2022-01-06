@@ -138,6 +138,49 @@ def run_subprocess(*args, **kwargs):
     return full_output
 
 
+def clean_envs_for_openpype_process(env=None):
+    """Modify environemnts that may affect OpenPype process.
+
+    Main reason to implement this function is to pop PYTHONPATH which may be
+    affected by in-host environments.
+    """
+    if env is None:
+        env = os.environ
+    return {
+        key: value
+        for key, value in env.items()
+        if key not in ("PYTHONPATH",)
+    }
+
+
+def run_openpype_process(*args, **kwargs):
+    """Execute OpenPype process with passed arguments and wait.
+
+    Wrapper for 'run_process' which prepends OpenPype executable arguments
+    before passed arguments and define environments if are not passed.
+
+    Values from 'os.environ' are used for environments if are not passed.
+    They are cleaned using 'clean_envs_for_openpype_process' function.
+
+    Example:
+    ```
+    run_openpype_process(["run", "<path to .py script>"])
+    ```
+
+    Args:
+        *args (tuple): OpenPype cli arguments.
+        **kwargs (dict): Keyword arguments for for subprocess.Popen.
+    """
+    args = get_openpype_execute_args(*args)
+    env = kwargs.pop("env", None)
+    # Keep env untouched if are passed and not empty
+    if not env:
+        # Skip envs that can affect OpenPype process
+        # - fill more if you find more
+        env = clean_envs_for_openpype_process(os.environ)
+    return run_subprocess(args, env=env, **kwargs)
+
+
 def path_to_subprocess_arg(path):
     """Prepare path for subprocess arguments.
 

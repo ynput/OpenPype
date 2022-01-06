@@ -29,6 +29,8 @@ from .execute import (
     get_linux_launcher_args,
     execute,
     run_subprocess,
+    run_openpype_process,
+    clean_envs_for_openpype_process,
     path_to_subprocess_arg,
     CREATE_NO_WINDOW
 )
@@ -179,6 +181,8 @@ __all__ = [
     "get_linux_launcher_args",
     "execute",
     "run_subprocess",
+    "run_openpype_process",
+    "clean_envs_for_openpype_process",
     "path_to_subprocess_arg",
     "CREATE_NO_WINDOW",
 
