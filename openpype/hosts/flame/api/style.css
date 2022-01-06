@@ -1,5 +1,5 @@
 QWidget {
-  font-size: 13px;
+  font: 14px "Discreet";
 }
 
 QSpinBox {
@@ -8,13 +8,46 @@ QSpinBox {
 }
 
 QLineEdit {
-  padding: 2;
-  min-width: 15em;
+  color: #9a9a9a;
+  background-color: #373e47;
+  selection-color: #262626;
+  selection-background-color: #b8b1a7;
+  font: 14px "Discreet"
+}
+QLineEdit:focus {
+  background-color: #474e58
+}
+
+QLineEdit:disabled {
+  color: #6a6a6a;
+  background-color: #373737
+}
+
+QPushButton {
+  color: #9a9a9a;
+  background-color: #424142;
+  border-top: 1px inset #555555;
+  border-bottom: 1px inset black;
+  font: 14px "Discreet"
+}
+
+QPushButton:pressed {
+  color: #d9d9d9;
+  background-color: #4f4f4f;
+  border-top: 1px inset #666666;
+  font: italic
+}
+
+QPushButton:disabled {
+  color: #747474;
+  background-color: #353535;
+  border-top: 1px solid #444444;
+  border-bottom: 1px solid #242424
 }
 
 QVBoxLayout {
   min-width: 15em;
-  background-color: #201f1f;
+  background-color: #313131
 }
 
 QComboBox {
@@ -23,4 +56,14 @@ QComboBox {
 
 #sectionContent {
   background-color: #2E2D2D;
+}
+
+QLabel {
+  color: #9a9a9a;
+  border-bottom: 1px inset #282828;
+  font: 14px "Discreet"
+}
+
+QLabel:disabled {
+  color: #6a6a6a
 }
