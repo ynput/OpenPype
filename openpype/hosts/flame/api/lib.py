@@ -1,5 +1,6 @@
 import sys
 import os
+import re
 import json
 import pickle
 import contextlib
@@ -13,8 +14,21 @@ class ctx:
     # OpenPype marker workflow variables
     marker_name = "OpenPypeData"
     marker_duration = 0
-    marker_color = (0.0, 1.0, 1.0)
+    marker_color = "red"
     publish_default = False
+    color_map = {
+        "red": (1.0, 0.0, 0.0),
+        "orange": (1.0, 0.5, 0.0),
+        "yellow": (1.0, 1.0, 0.0),
+        "pink": (1.0, 0.5, 1.0),
+        "white": (1.0, 1.0, 1.0),
+        "green": (0.0, 1.0, 0.0),
+        "cyan": (0.0, 1.0, 1.0),
+        "blue": (0.0, 0.0, 1.0),
+        "purple": (0.5, 0.0, 0.5),
+        "magenta": (0.5, 0.0, 1.0),
+        "black": (0.0, 0.0, 0.0)
+}
 
 @contextlib.contextmanager
 def io_preferences_file(klass, filepath, write=False):
@@ -262,8 +276,8 @@ def get_media_storage():
 
 
 def get_current_project():
-    # TODO: get_current_project
-    return
+    import flame
+    return flame.project.current_project
 
 
 def get_current_sequence(selection):
@@ -365,7 +379,7 @@ def get_segment_data_marker(segment, with_marker=None):
         color = marker.colour.get_value()
         name = marker.name.get_value()
 
-        if name == ctx.marker_name and color == ctx.marker_color:
+        if name == ctx.marker_name and color == ctx.color_map[ctx.marker_color]:
             if not with_marker:
                 return json.loads(comment)
             else:
@@ -455,9 +469,27 @@ def create_segment_data_marker(segment):
     # set duration
     marker.duration = ctx.marker_duration
     # set colour
-    marker.colour = ctx.marker_color
+    marker.colour = ctx.color_map[ctx.marker_color]  # Red
 
     return marker
+
+def get_sequence_segments(sequence, selected=False):
+    segments = []
+    # loop versions in sequence
+    for ver in sequence.versions:
+        # loop track in versions
+        for track in ver.tracks:
+            # ignore all empty tracks and hidden too
+            if len(track.segments) == 0 and track.hidden:
+                continue
+            # loop all segment in remaining tracks
+            for segment in track.segments:
+                # ignore all segments not selected
+                if segment.selected != True and selected == True:
+                    continue
+                # add it to original selection
+                segments.append(segment)
+    return segments
 
 
 @contextlib.contextmanager
@@ -477,21 +509,7 @@ def maintained_segment_selection(sequence):
         >>> print(segment.selected)
         True
     """
-    selected_segments = []
-    # loop versions in sequence
-    for ver in sequence.versions:
-        # loop track in versions
-        for track in ver.tracks:
-            # ignore all empty tracks and hidden too
-            if len(track.segments) == 0 and track.hidden:
-                continue
-            # loop all segment in remaining tracks
-            for segment in track.segments:
-                # ignore all segments not selected
-                if segment.selected != True:
-                    continue
-                # add it to original selection
-                selected_segments.append(segment)
+    selected_segments = get_sequence_segments(sequence, True)
     try:
         # do the operation on selected segments
         yield selected_segments
@@ -512,3 +530,69 @@ def reset_segment_selection(sequence):
                 continue
             for segment in track.segments:
                 segment.selected = False
+
+
+def _get_shot_tokens_values(clip, tokens):
+    old_value = None
+    output = {}
+
+    if not clip.shot_name:
+        return output
+
+    old_value = clip.shot_name.get_value()
+
+    for token in tokens:
+        clip.shot_name.set_value(token)
+        _key = str(re.sub("[<>]", "", token)).replace(" ", "_")
+
+        try:
+            output[_key] = int(clip.shot_name.get_value())
+        except ValueError:
+            output[_key] = clip.shot_name.get_value()
+
+    clip.shot_name.set_value(old_value)
+
+    return output
+
+
+def get_segment_attributes(segment):
+    if str(segment.name)[1:-1] == "":
+        return None
+
+    # Add timeline segment to tree
+    clip_data = {
+        "segment_name": segment.name.get_value(),
+        "segment_comment": segment.comment.get_value(),
+        "tape_name": segment.tape_name,
+        "source_name": segment.source_name,
+        "fpath": segment.file_path,
+        "PySegment": segment
+    }
+
+    # add all available shot tokens
+    shot_tokens = _get_shot_tokens_values(segment, [
+        "<colour space>", "<width>", "<height>", "<depth>", "<segment>",
+        "<track>", "<track name>"
+    ])
+    clip_data.update(shot_tokens)
+
+    # populate shot source metadata
+    segment_attrs = [
+        "record_duration", "record_in", "record_out",
+        "source_duration", "source_in", "source_out"
+    ]
+    segment_attrs_data = {}
+    for attr in segment_attrs:
+        if not hasattr(segment, attr):
+            continue
+        _value = getattr(segment, attr)
+        segment_attrs_data[attr] = str(_value).replace("+", ":")
+
+        if attr in ["record_in", "record_out"]:
+            clip_data[attr] = _value.relative_frame
+        else:
+            clip_data[attr] = _value.frame
+
+    clip_data["segment_timecodes"] = segment_attrs_data
+
+    return clip_data

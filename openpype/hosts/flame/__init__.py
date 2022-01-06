@@ -25,8 +25,10 @@ from .api.lib import (
     set_segment_data_marker,
     set_publish_attribute,
     get_publish_attribute,
+    get_sequence_segments,
     maintained_segment_selection,
-    reset_segment_selection
+    reset_segment_selection,
+    get_segment_attributes
 )
 
 from .api.menu import (
@@ -101,8 +103,10 @@ __all__ = [
     "set_segment_data_marker",
     "set_publish_attribute",
     "get_publish_attribute",
+    "get_sequence_segments",
     "maintained_segment_selection",
     "reset_segment_selection",
+    "get_segment_attributes"
 
     # menu
     "FlameMenuProjectConnect",
