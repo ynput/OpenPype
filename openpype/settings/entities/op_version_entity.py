@@ -72,6 +72,8 @@ class ProductionVersionsInputEntity(OpenPypeVersionInput):
 
     def _get_openpype_versions(self):
         versions = get_remote_versions(staging=False, production=True)
+        if versions is None:
+            return []
         versions.append(get_installed_version())
         return sorted(versions)
 
@@ -82,4 +84,6 @@ class StagingVersionsInputEntity(OpenPypeVersionInput):
 
     def _get_openpype_versions(self):
         versions = get_remote_versions(staging=True, production=False)
+        if versions is None:
+            return []
         return sorted(versions)
