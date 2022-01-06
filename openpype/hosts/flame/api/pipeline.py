@@ -22,7 +22,6 @@ def install():
         CREATE_PATH,
         INVENTORY_PATH
     )
-    # TODO: install
 
     # Disable all families except for the ones we explicitly want to see
     family_states = [
@@ -36,19 +35,18 @@ def install():
     avalon.data["familiesStateDefault"] = False
     avalon.data["familiesStateToggled"] = family_states
 
-    log.info("openpype.hosts.flame installed")
 
     pyblish.register_host("flame")
     pyblish.register_plugin_path(PUBLISH_PATH)
-    log.info("Registering Flame plug-ins..")
-
     avalon.register_plugin_path(avalon.Loader, LOAD_PATH)
     avalon.register_plugin_path(avalon.Creator, CREATE_PATH)
     avalon.register_plugin_path(avalon.InventoryAction, INVENTORY_PATH)
+    log.info("OpenPype Flame plug-ins registred ...")
 
     # register callback for switching publishable
     pyblish.register_callback("instanceToggled", on_pyblish_instance_toggled)
 
+    log.info("OpenPype Flame host installed ...")
 
 def uninstall():
     from .. import (
@@ -58,17 +56,18 @@ def uninstall():
         INVENTORY_PATH
     )
 
-    # TODO: uninstall
     pyblish.deregister_host("flame")
-    pyblish.deregister_plugin_path(PUBLISH_PATH)
-    log.info("Deregistering DaVinci Resovle plug-ins..")
 
+    log.info("Deregistering Flame plug-ins..")
+    pyblish.deregister_plugin_path(PUBLISH_PATH)
     avalon.deregister_plugin_path(avalon.Loader, LOAD_PATH)
     avalon.deregister_plugin_path(avalon.Creator, CREATE_PATH)
     avalon.deregister_plugin_path(avalon.InventoryAction, INVENTORY_PATH)
 
     # register callback for switching publishable
     pyblish.deregister_callback("instanceToggled", on_pyblish_instance_toggled)
+
+    log.info("OpenPype Flame host uninstalled ...")
 
 
 def containerise(tl_segment,
