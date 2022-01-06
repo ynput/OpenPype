@@ -93,6 +93,10 @@ class CreatorWidget(QtWidgets.QDialog):
         self.result = None
         self.close()
 
+    def closeEvent(self, event):
+        self.result = None
+        event.accept()
+
     def value(self, data, new_data=None):
         new_data = new_data or dict()
         for k, v in data.items():
