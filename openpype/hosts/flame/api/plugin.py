@@ -3,7 +3,7 @@ import os
 from Qt import QtWidgets, QtCore
 import openpype.api as openpype
 import openpype.hosts.flame as opflame
-from . import lib
+from . import lib, pipeline
 from copy import deepcopy
 
 log = openpype.Logger().get_logger(__name__)
@@ -321,8 +321,8 @@ class PublishableClip:
     Returns:
         flame.PySegment: flame api object
     """
-    vertical_clip_match = dict()
-    tag_data = dict()
+    vertical_clip_match = {}
+    marker_data = {}
     types = {
         "shot": "shot",
         "folder": "folder",
@@ -368,10 +368,10 @@ class PublishableClip:
 
         # adding tag.family into tag
         if kwargs.get("avalon"):
-            self.tag_data.update(kwargs["avalon"])
+            self.marker_data.update(kwargs["avalon"])
 
         # add publish attribute to marker data
-        self.tag_data.update({"publish": True})
+        self.marker_data.update({"publish": True})
 
         # adding ui inputs if any
         self.ui_inputs = kwargs.get("ui_inputs", {})
@@ -397,23 +397,23 @@ class PublishableClip:
             return
 
         # deal with clip name
-        new_name = self.tag_data.pop("newClipName")
+        new_name = self.marker_data.pop("newClipName")
 
         if self.rename:
             # rename segment
-            self.current_segment.setName(new_name)
-            self.tag_data["asset"] = new_name
+            self.current_segment.name = new_name
+            self.marker_data["asset"] = new_name
         else:
-            self.tag_data["asset"] = self.cs_name
-            self.tag_data["hierarchyData"]["shot"] = self.cs_name
+            self.marker_data["asset"] = self.cs_name
+            self.marker_data["hierarchyData"]["shot"] = self.cs_name
 
-        if self.tag_data["heroTrack"] and self.review_layer:
-            self.tag_data.update({"reviewTrack": self.review_layer})
+        if self.marker_data["heroTrack"] and self.review_layer:
+            self.marker_data.update({"reviewTrack": self.review_layer})
         else:
-            self.tag_data.update({"reviewTrack": None})
+            self.marker_data.update({"reviewTrack": None})
 
         # create pype tag on track_item and add data
-        lib.imprint(self.current_segment, self.tag_data)
+        pipeline.imprint(self.current_segment, self.marker_data)
 
         return self.current_segment
 
@@ -481,11 +481,10 @@ class PublishableClip:
         _repl = "{{{0}:0>{1}}}".format(name, _len)
         return text.replace(("#" * _len), _repl)
 
-
     def _convert_to_marker_data(self):
         """ Convert internal data to marker data.
 
-        Populating the marker data into internal variable self.tag_data
+        Populating the marker data into internal variable self.marker_data
         """
         # define vertical sync attributes
         hero_track = True
@@ -504,7 +503,7 @@ class PublishableClip:
             # adding tag metadata from ui
             for _k, _v in self.ui_inputs.items():
                 if _v["target"] == "tag":
-                    self.tag_data[_k] = _v["value"]
+                    self.marker_data[_k] = _v["value"]
 
             # driving layer is set as positive match
             if hero_track or self.vertical_sync:
@@ -564,7 +563,7 @@ class PublishableClip:
                     tag_hierarchy_data = hero_data
 
         # add data to return data dict
-        self.tag_data.update(tag_hierarchy_data)
+        self.marker_data.update(tag_hierarchy_data)
 
     def _solve_tag_hierarchy_data(self, hierarchy_formating_data):
         """ Solve marker data from hierarchy data and templates. """
