@@ -63,6 +63,12 @@ class FtrackServer:
         # Iterate all paths
         register_functions = []
         for path in paths:
+            # Try to format path with environments
+            try:
+                path = path.format(**os.environ)
+            except BaseException:
+                pass
+
             # Get all modules with functions
             modules, crashed = modules_from_path(path)
             for filepath, exc_info in crashed:

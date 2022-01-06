@@ -45,35 +45,23 @@ class FtrackModule(
         current_dir = os.path.dirname(os.path.abspath(__file__))
         low_platform = platform.system().lower()
 
+        # Server event handler paths
         server_event_handlers_paths = [
             os.path.join(current_dir, "event_handlers_server")
         ]
         settings_server_paths = ftrack_settings["ftrack_events_path"]
         if isinstance(settings_server_paths, dict):
             settings_server_paths = settings_server_paths[low_platform]
+        server_event_handlers_paths.extend(settings_server_paths)
 
-        for path in settings_server_paths:
-            # Try to format path with environments
-            try:
-                path = path.format(**os.environ)
-            except BaseException:
-                pass
-            server_event_handlers_paths.append(path)
-
+        # User event handler paths
         user_event_handlers_paths = [
             os.path.join(current_dir, "event_handlers_user")
         ]
         settings_action_paths = ftrack_settings["ftrack_actions_path"]
         if isinstance(settings_action_paths, dict):
             settings_action_paths = settings_action_paths[low_platform]
-
-        for path in settings_action_paths:
-            # Try to format path with environments
-            try:
-                path = path.format(**os.environ)
-            except BaseException:
-                pass
-            user_event_handlers_paths.append(path)
+        user_event_handlers_paths.extend(settings_action_paths)
 
         # Prepare attribute
         self.server_event_handlers_paths = server_event_handlers_paths
