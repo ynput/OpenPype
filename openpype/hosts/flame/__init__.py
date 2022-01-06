@@ -10,7 +10,8 @@ from .api.pipeline import (
     update_container,
     remove_instance,
     list_instances,
-    imprint
+    imprint,
+    maintained_selection
 )
 
 from .api.lib import (
@@ -87,6 +88,7 @@ __all__ = [
     "remove_instance",
     "list_instances",
     "imprint",
+    "maintained_selection",
 
     # utils
     "setup",

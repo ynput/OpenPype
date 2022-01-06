@@ -7,7 +7,9 @@ from pyblish import api as pyblish
 from openpype.api import Logger
 from .lib import (
     set_segment_data_marker,
-    set_publish_attribute
+    set_publish_attribute,
+    maintained_segment_selection,
+    get_current_sequence
 )
 
 AVALON_CONTAINERS = "AVALON_CONTAINERS"
@@ -151,3 +153,17 @@ def imprint(segment, data=None):
 
     # add publish attribute
     set_publish_attribute(segment, True)
+
+@contextlib.contextmanager
+def maintained_selection():
+    import flame
+    from .. import selection
+
+    # check if segment is selected
+    if isinstance(selection[0], flame.PySegment):
+        sequence = get_current_sequence(selection)
+        try:
+            with maintained_segment_selection(sequence):
+                yield
+        finally:
+            pass
