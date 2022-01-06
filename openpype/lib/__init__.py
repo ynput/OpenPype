@@ -24,6 +24,7 @@ from .env_tools import (
 
 from .terminal import Terminal
 from .execute import (
+    get_openpype_execute_args,
     get_pype_execute_args,
     get_linux_launcher_args,
     execute,
@@ -173,6 +174,7 @@ from .pype_info import (
 terminal = Terminal
 
 __all__ = [
+    "get_openpype_execute_args",
     "get_pype_execute_args",
     "get_linux_launcher_args",
     "execute",

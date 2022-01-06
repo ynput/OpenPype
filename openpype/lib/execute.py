@@ -147,6 +147,11 @@ def path_to_subprocess_arg(path):
 
 
 def get_pype_execute_args(*args):
+    """Backwards compatible function for 'get_openpype_execute_args'."""
+    return get_openpype_execute_args(*args)
+
+
+def get_openpype_execute_args(*args):
     """Arguments to run pype command.
 
     Arguments for subprocess when need to spawn new pype process. Which may be
