@@ -142,12 +142,12 @@ class CreateShotClip(fplugin.Creator):
             "order": 3,
             "value": {
                 "subsetName": {
-                    "value": ["<track_name>", "main", "bg", "fg", "bg",
+                    "value": ["[ track name ]", "main", "bg", "fg", "bg",
                               "animatic"],
                     "type": "QComboBox",
                     "label": "Subset Name",
                     "target": "ui",
-                    "toolTip": "chose subset name patern, if <track_name> is selected, name of track layer will be used",  # noqa
+                    "toolTip": "chose subset name patern, if [ track name ] is selected, name of track layer will be used",  # noqa
                     "order": 0},
                 "subsetFamily": {
                     "value": ["plate", "take"],
