@@ -22,21 +22,23 @@ class BackgroundLoader(api.Loader):
 
     def load(self, context, name=None, namespace=None, data=None):
         items = stub.get_items(comps=True)
-        existing_items = [layer.name for layer in items]
+        existing_items = [layer.name.replace(stub.LOADED_ICON, '')
+                          for layer in items]
 
         comp_name = get_unique_layer_name(
             existing_items,
             "{}_{}".format(context["asset"]["name"], name))
 
         layers = get_background_layers(self.fname)
+        if not layers:
+            raise ValueError("No layers found in {}".format(self.fname))
+
         comp = stub.import_background(None, stub.LOADED_ICON + comp_name,
                                       layers)
 
         if not comp:
-            self.log.warning(
-                "Import background failed.")
-            self.log.warning("Check host app for alert error.")
-            return
+            raise ValueError("Import background failed. "
+                             "Please contact support")
 
         self[:] = [comp]
         namespace = namespace or comp_name

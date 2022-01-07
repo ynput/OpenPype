@@ -1,6 +1,7 @@
-import openpype.api
-from Qt import QtWidgets
 from avalon import aftereffects
+from avalon.api import CreatorError
+
+import openpype.api
 
 import logging
 
@@ -27,14 +28,13 @@ class CreateRender(openpype.api.Creator):
                                             folders=False,
                                             footages=False)
         if len(items) > 1:
-            self._show_msg("Please select only single composition at time.")
-            return False
+            raise CreatorError("Please select only single "
+                               "composition at time.")
 
         if not items:
-            self._show_msg("Nothing to create. Select composition " +
-                           "if 'useSelection' or create at least " +
-                           "one composition.")
-            return False
+            raise CreatorError("Nothing to create. Select composition " +
+                               "if 'useSelection' or create at least " +
+                               "one composition.")
 
         existing_subsets = [instance['subset'].lower()
                             for instance in aftereffects.list_instances()]
@@ -42,8 +42,7 @@ class CreateRender(openpype.api.Creator):
         item = items.pop()
         if self.name.lower() in existing_subsets:
             txt = "Instance with name \"{}\" already exists.".format(self.name)
-            self._show_msg(txt)
-            return False
+            raise CreatorError(txt)
 
         self.data["members"] = [item.id]
         self.data["uuid"] = item.id  # for SubsetManager
@@ -54,9 +53,3 @@ class CreateRender(openpype.api.Creator):
         stub.imprint(item, self.data)
         stub.set_label_color(item.id, 14)  # Cyan options 0 - 16
         stub.rename_item(item.id, stub.PUBLISH_ICON + self.data["subset"])
-
-    def _show_msg(self, txt):
-        msg = QtWidgets.QMessageBox()
-        msg.setIcon(QtWidgets.QMessageBox.Warning)
-        msg.setText(txt)
-        msg.exec_()
