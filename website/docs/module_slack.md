@@ -78,23 +78,14 @@ Message content can use Templating (see [Available template keys](admin_settings
 
 Few keys also have Capitalized and UPPERCASE format. Values will be modified accordingly ({Asset} >> "Asset", {FAMILY} >> "RENDER").
 
-**Available keys:**
-- asset
-- subset
-- task\[name\]
-- task\[type\]
-- task\[short\]
-- username
-- app
-- family
-- version
-- review_link
+**Additional implemented keys:**
+- review_filepath
 
 ##### Message example
 ```
 {Subset} was published for {ASSET} in {task[name]} task.
 
-Here you can find review {review_link}
+Here you can find review {review_filepath}
 ```
 
 #### Message retention

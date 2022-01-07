@@ -15,7 +15,7 @@ class IntegrateSlackAPI(pyblish.api.InstancePlugin):
         If instance contains 'thumbnail' it uploads it. Bot must be present
         in the target channel.
         If instance contains 'review' it could upload (if configured) or place
-        link with {review_link} placeholder.
+        link with {review_filepath} placeholder.
         Message template can contain {} placeholders from anatomyData.
     """
     order = pyblish.api.IntegratorOrder + 0.499
@@ -73,7 +73,7 @@ class IntegrateSlackAPI(pyblish.api.InstancePlugin):
                                               fill_data.get("version"))))
         ]
         if review_path:
-            fill_pairs.append(("review_link", review_path))
+            fill_pairs.append(("review_filepath", review_path))
 
         task_data = instance.data.get("task")
         if not task_data:
