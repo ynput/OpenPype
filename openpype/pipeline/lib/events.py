@@ -31,10 +31,16 @@ class BaseEvent(object):
 
     @classmethod
     def emit(cls, *args, **kwargs):
+        """Create object of event and emit.
+
+        Args:
+            Same args as '__init__' expects which may be class specific.
+        """
         from avalon import pipeline
 
         obj = cls(*args, **kwargs)
         pipeline.emit(obj.topic, [obj])
+        return obj
 
 
 class BeforeWorkfileSave(BaseEvent):
