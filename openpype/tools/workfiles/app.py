@@ -654,6 +654,9 @@ class FilesWidget(QtWidgets.QWidget):
         if not work_file:
             return
 
+        # Trigger before save event
+        BeforeWorkfileSave.emit(work_file, self._workdir_path)
+
         # Initialize work directory if it has not been initialized before
         if not os.path.exists(self._workfiles_root):
             log.debug("Initializing Work Directory: %s", self._workfiles_root)
@@ -670,9 +673,6 @@ class FilesWidget(QtWidgets.QWidget):
         file_path = os.path.join(
             os.path.normpath(self._workfiles_root), work_file
         )
-
-        BeforeWorkfileSave.emit(file_path, self._workdir_path)
-
         self._enter_session()   # Make sure we are in the right session
         self.host.save_file(file_path)
 

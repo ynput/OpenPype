@@ -45,12 +45,7 @@ class BaseEvent(object):
 
 class BeforeWorkfileSave(BaseEvent):
     """Before workfile changes event data."""
-    def __init__(self, new_workfile, workdir):
-        data = {
-            "workfile_path": new_workfile,
-            "workdir_path": workdir
-        }
-        super(BeforeWorkfileSave, self).__init__("before.workfile.save", data)
-
-        self.workfile_path = new_workfile
+    def __init__(self, filename, workdir):
+        super(BeforeWorkfileSave, self).__init__("before.workfile.save")
+        self.filename = filename
         self.workdir_path = workdir
