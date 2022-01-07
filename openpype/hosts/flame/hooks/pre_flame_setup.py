@@ -24,12 +24,13 @@ class FlamePrelaunch(PreLaunchHook):
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
-        self._env = self.launch_context.env
-        self.flame_python_exe = self._env["OPENPYPE_FLAME_PYTHON_EXEC"]
-        self.flame_pythonpath = self._env["OPENPYPE_FLAME_PYTHONPATH"]
         self.signature = "( {} )".format(self.__class__.__name__)
 
     def execute(self):
+        _env = self.launch_context.env
+        self.flame_python_exe = _env["OPENPYPE_FLAME_PYTHON_EXEC"]
+        self.flame_pythonpath = _env["OPENPYPE_FLAME_PYTHONPATH"]
+
         """Hook entry method."""
         project_doc = self.data["project_doc"]
         user_name = get_openpype_username()
@@ -57,9 +58,9 @@ class FlamePrelaunch(PreLaunchHook):
 
         data_to_script = {
             # from settings
-            "host_name": self._env.get("FLAME_WIRETAP_HOSTNAME") or hostname,
-            "volume_name": self._env.get("FLAME_WIRETAP_VOLUME"),
-            "group_name": self._env.get("FLAME_WIRETAP_GROUP"),
+            "host_name": _env.get("FLAME_WIRETAP_HOSTNAME") or hostname,
+            "volume_name": _env.get("FLAME_WIRETAP_VOLUME"),
+            "group_name": _env.get("FLAME_WIRETAP_GROUP"),
             "color_policy": "ACES 1.1",
 
             # from project
@@ -68,7 +69,7 @@ class FlamePrelaunch(PreLaunchHook):
             "project_data": project_data
         }
 
-        self.log.info(pformat(dict(self._env)))
+        self.log.info(pformat(dict(_env)))
         self.log.info(pformat(data_to_script))
 
         # add to python path from settings
