@@ -37,7 +37,7 @@ class CreatorWidget(QtWidgets.QDialog):
         self.content_widget = [QtWidgets.QWidget(self)]
         top_layout = QtWidgets.QFormLayout(self.content_widget[0])
         top_layout.setObjectName("ContentLayout")
-        top_layout.addSpacing(5)
+        top_layout.addWidget(Spacer(5, self))
 
         # first add widget tag line
         top_layout.addWidget(QtWidgets.QLabel(info))
@@ -206,8 +206,7 @@ class CreatorWidget(QtWidgets.QDialog):
                 self.content_layout[-1].setObjectName("sectionHeadline")
 
                 headline = QtWidgets.QVBoxLayout(self.content_layout[-1])
-                headline.addSpacing(20)
-
+                headline.addWidget(Spacer(20, self))
                 headline.addWidget(QtWidgets.QLabel(v["label"]))
 
                 # adding nested layout with label
@@ -229,7 +228,7 @@ class CreatorWidget(QtWidgets.QDialog):
                 self.content_layout[-1].setObjectName("sectionHeadline")
 
                 headline = QtWidgets.QVBoxLayout(self.content_layout[-1])
-                headline.addSpacing(20)
+                headline.addWidget(Spacer(20, self))
                 headline.addWidget(QtWidgets.QLabel(v["label"]))
 
                 # adding nested layout with label
@@ -263,6 +262,23 @@ class CreatorWidget(QtWidgets.QDialog):
                     setValue=v["value"], setMinimum=0,
                     setMaximum=100000, setToolTip=tool_tip)
         return data
+
+
+class Spacer(QtWidgets.QWidget):
+    def __init__(self, height, *args, **kwargs):
+        super(self.__class__, self).__init__(*args, **kwargs)
+
+        self.setFixedHeight(height)
+
+        real_spacer = QtWidgets.QWidget(self)
+        real_spacer.setObjectName("Spacer")
+        real_spacer.setFixedHeight(height)
+
+        layout = QtWidgets.QVBoxLayout(self)
+        layout.setContentsMargins(0, 0, 0, 0)
+        layout.addWidget(real_spacer)
+
+        self.setLayout(layout)
 
 
 class Creator(openpype.Creator):
