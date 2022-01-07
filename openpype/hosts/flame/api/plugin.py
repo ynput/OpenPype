@@ -134,9 +134,9 @@ class CreatorWidget(QtWidgets.QDialog):
             '.+?(?:(?<=[a-z])(?=[A-Z])|(?<=[A-Z])(?=[A-Z][a-z])|$)', text)
         return " ".join([str(m.group(0)).capitalize() for m in matches])
 
-    def create_row(self, layout, type, text, **kwargs):
+    def create_row(self, layout, type_name, text, **kwargs):
         # get type attribute from qwidgets
-        attr = getattr(QtWidgets, type)
+        attr = getattr(QtWidgets, type_name)
 
         # convert label text to normal capitalized text with spaces
         label_text = self.camel_case_split(text)
