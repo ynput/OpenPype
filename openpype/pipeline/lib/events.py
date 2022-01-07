@@ -1,7 +1,8 @@
 """Events holding data about specific event."""
 
 
-class BaseEvent:
+# Inherit from 'object' for Python 2 hosts
+class BaseEvent(object):
     """Base event object.
 
     Can be used to anything because data are not much specific. Only required
@@ -27,6 +28,13 @@ class BaseEvent:
     @property
     def topic(self):
         return self._topic
+
+    @classmethod
+    def emit(cls, *args, **kwargs):
+        from avalon import pipeline
+
+        obj = cls(*args, **kwargs)
+        pipeline.emit(obj.topic, [obj])
 
 
 class BeforeWorkfileSave(BaseEvent):
