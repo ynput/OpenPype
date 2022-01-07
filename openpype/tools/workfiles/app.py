@@ -368,6 +368,7 @@ class FilesWidget(QtWidgets.QWidget):
 
         # This is not root but workfile directory
         self._workfiles_root = None
+        self._workdir_path = None
         self.host = api.registered_host()
 
         # Whether to automatically select the latest modified
@@ -465,6 +466,7 @@ class FilesWidget(QtWidgets.QWidget):
         # This way we can browse it even before we enter it.
         if self._asset_id and self._task_name and self._task_type:
             session = self._get_session()
+            self._workdir_path = session["AVALON_WORKDIR"]
             self._workfiles_root = self.host.work_root(session)
             self.files_model.set_root(self._workfiles_root)
 
@@ -677,6 +679,7 @@ class FilesWidget(QtWidgets.QWidget):
             self._asset_id, self._task_name, self._task_type
         )
         create_workdir_extra_folders(
+            self._workdir_path,
             self._workfiles_root,
             api.Session["AVALON_APP"],
             self._task_type,
