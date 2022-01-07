@@ -112,16 +112,6 @@ class FlameMenuProjectConnect(_FlameMenuApp):
             "execute": lambda x: self.tools_helper.show_workfiles()
         })
         menu['actions'].append({
-            "name": "Create ...",
-            "execute": lambda x: callback_selection(
-                x, self.tools_helper.show_creator)
-        })
-        menu['actions'].append({
-            "name": "Publish ...",
-            "execute": lambda x: callback_selection(
-                x, self.tools_helper.show_publish)
-        })
-        menu['actions'].append({
             "name": "Load ...",
             "execute": lambda x: self.tools_helper.show_loader()
         })
