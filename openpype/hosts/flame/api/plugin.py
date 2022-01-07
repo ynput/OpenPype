@@ -38,7 +38,7 @@ class CreatorWidget(QtWidgets.QDialog):
         self.content_widget = [QtWidgets.QWidget(self)]
         top_layout = QtWidgets.QFormLayout(self.content_widget[0])
         top_layout.setObjectName("ContentLayout")
-        top_layout.addWidget(Spacer(5, self))
+        top_layout.addSpacing(5)
 
         # first add widget tag line
         top_layout.addWidget(QtWidgets.QLabel(info))
@@ -202,13 +202,13 @@ class CreatorWidget(QtWidgets.QDialog):
             v = data[k]
             tool_tip = v.get("toolTip", "")
             if v["type"] == "dict":
-                # adding spacer between sections
                 self.content_layout.append(QtWidgets.QWidget(self))
                 content_layout.addWidget(self.content_layout[-1])
                 self.content_layout[-1].setObjectName("sectionHeadline")
 
                 headline = QtWidgets.QVBoxLayout(self.content_layout[-1])
-                headline.addWidget(Spacer(20, self))
+                headline.addSpacing(20)
+
                 headline.addWidget(QtWidgets.QLabel(v["label"]))
 
                 # adding nested layout with label
@@ -225,13 +225,12 @@ class CreatorWidget(QtWidgets.QDialog):
                     v["value"], nested_content_layout)
 
             if v["type"] == "section":
-                # adding spacer between sections
                 self.content_layout.append(QtWidgets.QWidget(self))
                 content_layout.addWidget(self.content_layout[-1])
                 self.content_layout[-1].setObjectName("sectionHeadline")
 
                 headline = QtWidgets.QVBoxLayout(self.content_layout[-1])
-                headline.addWidget(Spacer(20, self))
+                headline.addSpacing(20)
                 headline.addWidget(QtWidgets.QLabel(v["label"]))
 
                 # adding nested layout with label
@@ -267,23 +266,6 @@ class CreatorWidget(QtWidgets.QDialog):
         return data
 
 
-class Spacer(QtWidgets.QWidget):
-    def __init__(self, height, *args, **kwargs):
-        super(self.__class__, self).__init__(*args, **kwargs)
-
-        self.setFixedHeight(height)
-
-        real_spacer = QtWidgets.QWidget(self)
-        real_spacer.setObjectName("Spacer")
-        real_spacer.setFixedHeight(height)
-
-        layout = QtWidgets.QVBoxLayout(self)
-        layout.setContentsMargins(0, 0, 0, 0)
-        layout.addWidget(real_spacer)
-
-        self.setLayout(layout)
-
-
 class Creator(openpype.Creator):
     """Creator class wrapper
     """
@@ -304,7 +286,8 @@ class Creator(openpype.Creator):
         else:
             self.selected = flib.get_sequence_segments(self.sequence)
 
-        self.widget = CreatorWidget
+    def create_widget(self, *args, **kwargs):
+        return CreatorWidget(*args, **kwargs)
 
 
 class PublishableClip:

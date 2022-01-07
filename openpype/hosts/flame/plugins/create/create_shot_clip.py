@@ -232,7 +232,7 @@ class CreateShotClip(opfapi.Creator):
                 gui_inputs[k]["value"] = presets[k]
 
         # open widget for plugins inputs
-        widget = self.widget(self.gui_name, self.gui_info, gui_inputs)
+        widget = self.create_widget(self.gui_name, self.gui_info, gui_inputs)
         widget.exec_()
 
         if len(self.selected) < 1:
