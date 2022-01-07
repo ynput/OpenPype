@@ -347,8 +347,8 @@ class ConfirmProjectDeletion(QtWidgets.QDialog):
         message_label.setText((
             "<b>WARNING: This cannot be undone.</b><br/><br/>"
             "Project <b>\"{}\"</b> with all related data will be"
-            " permanently removed from the database (This actions won't remove"
-            " any files on disk)."
+            " permanently removed from the database. (This action won't remove"
+            " any files on disk.)"
         ).format(project_name))
 
         top_layout = QtWidgets.QHBoxLayout(top_widget)
