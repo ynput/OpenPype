@@ -61,6 +61,18 @@ Integration can upload 'thumbnail' file (if present in an instance), for that bo
 manually added to target channel by Slack admin!
 (In target channel write: ```/invite @OpenPypeNotifier``)
 
+#### Upload review
+Integration can upload 'review' file (if present in an instance), for that bot must be 
+manually added to target channel by Slack admin!
+(In target channel write: ```/invite @OpenPypeNotifier``)
+
+Burnin version (usually .mp4) is preferred if present.
+
+Please be sure that this configuration is viable for your use case. In case of uploading large reviews to Slack, 
+all publishes will be slowed down and you might hit a file limit on Slack pretty soon (it is 5GB for Free version of Slack, any file cannot be bigger than 1GB).
+You might try to add `{review_link}` to message content. This link might help users to find review easier on their machines.
+(It won't show a playable preview though!)
+
 #### Message
 Message content can use Templating (see [Available template keys](admin_settings_project_anatomy#available-template-keys)).
 
@@ -69,8 +81,22 @@ Few keys also have Capitalized and UPPERCASE format. Values will be modified acc
 **Available keys:**
 - asset
 - subset
-- task
+- task\[name\]
+- task\[type\]
+- task\[short\]
 - username
 - app
 - family
 - version
+- review_link
+
+##### Message example
+```
+{Subset} was published for {ASSET} in {task[name]} task.
+
+Here you can find review {review_link}
+```
+
+#### Message retention
+Currently no purging of old messages is implemented in Openpype. Admins of Slack should set their own retention of messages and files per channel.
+(see https://slack.com/help/articles/203457187-Customize-message-and-file-retention-policies)
