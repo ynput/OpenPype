@@ -131,7 +131,8 @@
                 },
                 "environment": {
                     "OPENPYPE_FLAME_PYTHON_EXEC": "/opt/Autodesk/python/2021/bin/python2.7",
-                    "OPENPYPE_FLAME_PYTHONPATH": "/opt/Autodesk/flame_2021/python"
+                    "OPENPYPE_FLAME_PYTHONPATH": "/opt/Autodesk/flame_2021/python",
+                    "OPENPYPE_WIRETAP_TOOLS": "/opt/Autodesk/wiretap/tools/2021"
                 }
             },
             "__dynamic_keys_labels__": {

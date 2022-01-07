@@ -43,6 +43,9 @@ class WireTapCom(object):
         self.volume_name = volume_name or "stonefs"
         self.group_name = group_name or "staff"
 
+        # wiretap tools dir path
+        self.wiretap_tools_dir = os.getenv("OPENPYPE_WIRETAP_TOOLS")
+
         # initialize WireTap client
         WireTapClientInit()
 
@@ -166,11 +169,8 @@ class WireTapCom(object):
             # form cmd arguments
             project_create_cmd = [
                 os.path.join(
-                    "/opt/Autodesk/",
-                    "wiretap",
-                    "tools",
-                    FLAME_V,
-                    "wiretap_create_node",
+                    self.wiretap_tools_dir,
+                    "wiretap_create_node"
                 ),
                 '-n',
                 os.path.join("/volumes", self.volume_name),
@@ -422,11 +422,8 @@ class WireTapCom(object):
         color_policy = color_policy or "Legacy"
         project_colorspace_cmd = [
             os.path.join(
-                "/opt/Autodesk/",
-                "wiretap",
-                "tools",
-                FLAME_V,
-                "wiretap_duplicate_node",
+                self.wiretap_tools_dir,
+                "wiretap_duplicate_node"
             ),
             "-s",
             "/syncolor/policies/Autodesk/{}".format(color_policy),
