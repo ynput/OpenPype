@@ -20,10 +20,8 @@ class FlamePrelaunch(PreLaunchHook):
     app_groups = ["flame"]
 
     # todo: replace version number with avalon launch app version
-    flame_python_exe = (
-        "/opt/Autodesk/python/{OPENPYPE_FLAME_VERSION}"
-        "/bin/python2.7"
-    )
+    flame_python_exe = os.getenv("OPENPYPE_FLAME_PYTHON_EXEC")
+    flame_pythonpath = os.getenv("OPENPYPE_FLAME_PYTHONPATH")
 
     wtc_script_path = os.path.join(
         opflame.HOST_DIR, "api", "scripts", "wiretap_com.py")
@@ -60,7 +58,6 @@ class FlamePrelaunch(PreLaunchHook):
             "FieldDominance": "PROGRESSIVE"
         }
 
-
         data_to_script = {
             # from settings
             "host_name": _env.get("FLAME_WIRETAP_HOSTNAME") or hostname,
@@ -77,11 +74,24 @@ class FlamePrelaunch(PreLaunchHook):
         self.log.info(pformat(dict(_env)))
         self.log.info(pformat(data_to_script))
 
+        # add to python path from settings
+        self._add_pythonpath()
+
         app_arguments = self._get_launch_arguments(data_to_script)
 
         opfapi.setup(self.launch_context.env)
 
         self.launch_context.launch_args.extend(app_arguments)
+
+    def _add_pythonpath(self):
+        pythonpath = self.launch_context.env.get("PYTHONPATH")
+
+        # separate it explicity by `;` that is what we use in settings
+        new_pythonpath = self.flame_pythonpath.split(";")
+        new_pythonpath += pythonpath.split(os.pathsep)
+
+        self.launch_context.env["PYTHONPATH"] = os.pathsep.join(new_pythonpath)
+
 
     def _get_launch_arguments(self, script_data):
         # Dump data to string

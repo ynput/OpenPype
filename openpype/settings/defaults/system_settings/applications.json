@@ -130,7 +130,8 @@
                     "linux": []
                 },
                 "environment": {
-                    "OPENPYPE_FLAME_VERSION": "2021"
+                    "OPENPYPE_FLAME_PYTHON_EXEC": "/opt/Autodesk/python/2021/bin/python2.7",
+                    "OPENPYPE_FLAME_PYTHONPATH": "/opt/Autodesk/flame_2021/python"
                 }
             },
             "__dynamic_keys_labels__": {

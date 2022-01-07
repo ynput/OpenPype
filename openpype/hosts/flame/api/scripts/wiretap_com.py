@@ -9,31 +9,14 @@ import json
 import xml.dom.minidom as minidom
 from copy import deepcopy
 import datetime
-
-FLAME_V = os.getenv("OPENPYPE_FLAME_VERSION")
-
-if not FLAME_V:
-    raise KeyError("Missing key in environment `OPENPYPE_FLAME_VERSION`")
-
-try:
-    from libwiretapPythonClientAPI import (  # noqa
-        WireTapClientInit)
-except ImportError:
-    flame_python_path = "/opt/Autodesk/flame_{}/python".format(FLAME_V)
-    flame_exe_path = (
-        "/opt/Autodesk/flame_{}/bin/flame.app"
-        "/Contents/MacOS/startApp").format(FLAME_V)
-
-    sys.path.append(flame_python_path)
-
-    from libwiretapPythonClientAPI import (  # noqa
-        WireTapClientInit,
-        WireTapClientUninit,
-        WireTapNodeHandle,
-        WireTapServerHandle,
-        WireTapInt,
-        WireTapStr
-    )
+from libwiretapPythonClientAPI import (  # noqa
+    WireTapClientInit,
+    WireTapClientUninit,
+    WireTapNodeHandle,
+    WireTapServerHandle,
+    WireTapInt,
+    WireTapStr
+)
 
 
 class WireTapCom(object):
