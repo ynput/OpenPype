@@ -10,7 +10,8 @@ from .lib import (
     set_segment_data_marker,
     set_publish_attribute,
     maintained_segment_selection,
-    get_current_sequence
+    get_current_sequence,
+    reset_segment_selection
 )
 from .. import HOST_DIR
 
@@ -158,8 +159,13 @@ def maintained_selection():
     # check if segment is selected
     if isinstance(CTX.selection[0], flame.PySegment):
         sequence = get_current_sequence(CTX.selection)
+
         try:
-            with maintained_segment_selection(sequence):
+            with maintained_segment_selection(sequence) as selected:
                 yield
         finally:
-            pass
+            # reset all selected clips
+            reset_segment_selection(sequence)
+            # select only original selection of segments
+            for segment in selected:
+                segment.selected = True

@@ -61,6 +61,7 @@ class CreateShotClip(opfapi.Creator):
         sorted_selected_segments.extend(unsorted_selected_segments)
 
         kwargs = {
+            "log": self.log,
             "ui_inputs": widget.result,
             "avalon": self.data
         }

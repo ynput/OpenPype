@@ -89,7 +89,8 @@ class CreatorWidget(QtWidgets.QDialog):
         self.setStyleSheet(style.load_stylesheet())
 
     def _on_ok_clicked(self):
-        self.result = self.value(self.items)
+        log.debug("ok is clicked: {}".format(self.items))
+        self.result = self._values(self.items)
         self.close()
 
     def _on_cancel_clicked(self):
@@ -100,7 +101,7 @@ class CreatorWidget(QtWidgets.QDialog):
         self.result = None
         event.accept()
 
-    def value(self, data, new_data=None):
+    def _values(self, data, new_data=None):
         new_data = new_data or dict()
         for k, v in data.items():
             new_data[k] = {
@@ -109,10 +110,10 @@ class CreatorWidget(QtWidgets.QDialog):
             }
             if v["type"] == "dict":
                 new_data[k]["target"] = v["target"]
-                new_data[k]["value"] = self.value(v["value"])
+                new_data[k]["value"] = self._values(v["value"])
             if v["type"] == "section":
                 new_data.pop(k)
-                new_data = self.value(v["value"], new_data)
+                new_data = self._values(v["value"], new_data)
             elif getattr(v["value"], "currentText", None):
                 new_data[k]["target"] = v["target"]
                 new_data[k]["value"] = v["value"].currentText()
@@ -343,6 +344,8 @@ class PublishableClip:
 
     def __init__(self, segment, **kwargs):
         self.rename_index = kwargs["rename_index"]
+        self.log = kwargs["log"]
+
         # get main parent objects
         self.current_segment = segment
         sequence_name = flib.get_current_sequence([segment]).name.get_value()
@@ -369,6 +372,9 @@ class PublishableClip:
         # adding ui inputs if any
         self.ui_inputs = kwargs.get("ui_inputs", {})
 
+        self.log.info("Inside of plugin: {}".format(
+            self.marker_data
+        ))
         # populate default data before we get other attributes
         self._populate_segment_default_data()
 
@@ -430,7 +436,7 @@ class PublishableClip:
 
         # define ui inputs if non gui mode was used
         self.shot_num = self.cs_index
-        log.debug(
+        self.log.debug(
             "____ self.shot_num: {}".format(self.shot_num))
 
         # ui_inputs data or default values if gui was not used
