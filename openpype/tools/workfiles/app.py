@@ -650,35 +650,33 @@ class FilesWidget(QtWidgets.QWidget):
             self.open_file(work_file)
 
     def on_save_as_pressed(self):
-        work_file = self.get_filename()
-        if not work_file:
+        work_filename = self.get_filename()
+        if not work_filename:
             return
 
         # Trigger before save event
-        BeforeWorkfileSave.emit(work_file, self._workdir_path)
+        BeforeWorkfileSave.emit(work_filename, self._workdir_path)
 
-        # Initialize work directory if it has not been initialized before
-        if not os.path.exists(self._workfiles_root):
-            log.debug("Initializing Work Directory: %s", self._workfiles_root)
-            self.initialize_work_directory()
-            if not os.path.exists(self._workfiles_root):
-                # Failed to initialize Work Directory
-                log.error(
-                    "Failed to initialize Work Directory: {}".format(
-                        self._workfiles_root
-                    )
-                )
-                return
-
-        file_path = os.path.join(
-            os.path.normpath(self._workfiles_root), work_file
-        )
-        self._enter_session()   # Make sure we are in the right session
-        self.host.save_file(file_path)
-
+        # Make sure workfiles root is updated
+        # - this triggers 'workio.work_root(...)' which may change value of
+        #   '_workfiles_root'
         self.set_asset_task(
             self._asset_id, self._task_name, self._task_type
         )
+
+        # Create workfiles root folder
+        if not os.path.exists(self._workfiles_root):
+            log.debug("Initializing Work Directory: %s", self._workfiles_root)
+            os.makedirs(self._workfiles_root)
+
+        # Update session if context has changed
+        self._enter_session()
+        # Prepare full path to workfile and save it
+        filepath = os.path.join(
+            os.path.normpath(self._workfiles_root), work_filename
+        )
+        self.host.save_file(filepath)
+        # Create extra folders
         create_workdir_extra_folders(
             self._workdir_path,
             api.Session["AVALON_APP"],
@@ -686,56 +684,15 @@ class FilesWidget(QtWidgets.QWidget):
             self._task_name,
             api.Session["AVALON_PROJECT"]
         )
-        pipeline.emit("after.workfile.save", [file_path])
+        # Trigger after save events
+        pipeline.emit("after.workfile.save", [filepath])
 
-        self.workfile_created.emit(file_path)
-
+        self.workfile_created.emit(filepath)
+        # Refresh files model
         self.refresh()
 
     def on_file_select(self):
         self.file_selected.emit(self._get_selected_filepath())
-
-    def initialize_work_directory(self):
-        """Initialize Work Directory.
-
-        This is used when the Work Directory does not exist yet.
-
-        This finds the current AVALON_APP_NAME and tries to triggers its
-        `.toml` initialization step. Note that this will only be valid
-        whenever `AVALON_APP_NAME` is actually set in the current session.
-
-        """
-
-        # Inputs (from the switched session and running app)
-        session = api.Session.copy()
-        changes = pipeline.compute_session_changes(
-            session,
-            asset=self._get_asset_doc(),
-            task=self._task_name,
-            template_key=self.template_key
-        )
-        session.update(changes)
-
-        # Prepare documents to get workdir data
-        project_doc = io.find_one({"type": "project"})
-        asset_doc = io.find_one(
-            {
-                "type": "asset",
-                "name": session["AVALON_ASSET"]
-            }
-        )
-        task_name = session["AVALON_TASK"]
-        host_name = session["AVALON_APP"]
-
-        # Get workdir from collected documents
-        workdir = get_workdir(project_doc, asset_doc, task_name, host_name)
-        # Create workdir if does not exist yet
-        if not os.path.exists(workdir):
-            os.makedirs(workdir)
-
-        # Force a full to the asset as opposed to just self.refresh() so
-        # that it will actually check again whether the Work directory exists
-        self.set_asset_task(self._asset_id, self._task_name, self._task_type)
 
     def refresh(self):
         """Refresh listed files for current selection in the interface"""
