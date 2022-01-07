@@ -6,4 +6,5 @@ def main():
     api.install(houdini)
 
 
-main()
+if __name__ == "__main__":
+    main()

@@ -2,10 +2,7 @@
 """Package for handling pype command line arguments."""
 import os
 import sys
-
 import click
-
-# import sys
 from .pype_commands import PypeCommands
 
 
@@ -412,3 +409,102 @@ def repack_version(directory):
     directory name.
     """
     PypeCommands().repack_version(directory)
+
+
+@main.command()
+def make_api_docs():
+    """Generate API documentation."""
+
+    import itertools
+    import shutil
+    from pathlib import Path
+    from io import StringIO
+    from sphinx.application import Sphinx
+    from sphinx.cmd.build import handle_exception
+    from sphinx.util.docutils import docutils_namespace, patch_docutils
+    from sphinx.ext import apidoc
+    from pathlib import Path
+    from io import StringIO
+    from openpype.lib import execute
+
+    os.chdir(os.getenv("OPENPYPE_ROOT"))
+
+    conf_dir = str(Path(os.getenv("OPENPYPE_ROOT")) / "docs" / "source")
+    build_dir = str(Path(os.getenv("OPENPYPE_ROOT")) / "docs" / "build")
+
+    if Path(build_dir).exists():
+        shutil.rmtree(build_dir)
+
+    builder = ["html"]
+    modules = ["igniter", "openpype"]
+
+    for mod in modules:
+        args = list(
+            itertools.chain(
+                ["-M"],
+                ["-e"],
+                ["-d", "3"],
+                ["--implicit-namespaces"],
+                ["--ext-intersphinx"],
+                ["--ext-todo"],
+                ["--ext-coverage"],
+                ["--ext-viewcode"],
+                ["-o", str(
+                    Path(os.getenv("OPENPYPE_ROOT")) / "docs" / "source")],
+                [mod],
+                [
+                    "openpype/vendor/*",
+                    "openpype/hosts/hiero/api/startup/*",
+                    "openpype/hosts/houdini/startup/*",
+                    "openpype/hosts/houdini/vendor/*",
+                    "openpype/modules/default_modules/ftrack/*",
+                    "openpype/modules/default_modules/timers_manager/*",
+                    "openpype/modules/default_modules/sync_server/*",
+                    "openpype/modules/job_queue/*",
+                    "openpype/tools/creator/*"
+                ]
+            )
+        )
+        print(f">>> Running apidoc for {mod} ...")
+        apidoc.main(args)
+
+    builder_target_dirs = [
+        (builder, os.path.join(build_dir, builder))
+        for builder in builder]
+
+    print(">>> Generating documentation ...")
+
+    sphinx_args = [
+        os.path.join(os.getenv("OPENPYPE_ROOT"), ".poetry", "bin", "poetry.exe"),
+        "run",
+        "python",
+        "setup.py",
+        "build_sphinx"
+    ]
+
+    class MockArgs:
+        pdb = False
+        verbosity = 1
+        traceback = True
+
+    for builder, builder_target_dir in builder_target_dirs:
+        app = None
+        print(f"    builder: {builder}")
+        try:
+            with patch_docutils(conf_dir), docutils_namespace():
+                app = Sphinx(conf_dir, conf_dir,
+                             builder_target_dir,
+                             os.path.join(build_dir, "doctrees"),
+                             builder, {}, sys.stdout, verbosity=1,
+                             keep_going=False)
+                app.build(force_all=True)
+                if app.statuscode:
+                    print('Error caused by %s builder.' % app.builder.name)
+        except Exception as exc:
+            handle_exception(app, MockArgs(), exception=exc)
+            raise SystemExit(1) from exc
+        except BaseException as exc:
+            handle_exception(app, MockArgs(), exception=exc)
+            raise SystemExit(1) from exc
+
+    print("*** Done.")

@@ -17,9 +17,14 @@ import os
 import sys
 from pathlib import Path
 import re
+from Qt.QtWidgets import QApplication
+
+
+app = QApplication([])
 
 version = {}
 openpype_root = Path(os.path.abspath('../..'))
+
 sys.path.insert(0, openpype_root.as_posix())
 sys.path.insert(0, (openpype_root / "openpype").as_posix())
 sys.path.insert(0, (openpype_root / "igniter").as_posix())
@@ -32,7 +37,7 @@ with open(openpype_root / "openpype" / "version.py") as fp:
     exec(fp.read(), version)
 
 version_match = re.search(r"(\d+\.\d+.\d+).*", version["__version__"])
-__version__ = version_match.group(1)
+openpype_version = version_match.group(1)
 
 
 todo_include_todos = True
@@ -47,7 +52,7 @@ copyright = '2019, Orbi Tools'
 author = 'Orbi Tools'
 
 # The short X.Y version
-version = version
+version = openpype_version
 # The full version, including alpha/beta/rc tags
 release = ''
 
