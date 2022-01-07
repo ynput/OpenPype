@@ -163,6 +163,7 @@ def imprint(segment, data=None):
     # add publish attribute
     set_publish_attribute(segment, True)
 
+
 @contextlib.contextmanager
 def maintained_selection():
     import flame

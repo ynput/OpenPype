@@ -11,7 +11,7 @@ from . import utils
 import flame
 from pprint import pformat
 
-reload(utils)  # type: ignore
+reload(utils)  # noqa
 
 log = logging.getLogger(__name__)
 

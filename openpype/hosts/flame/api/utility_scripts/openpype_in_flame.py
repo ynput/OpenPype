@@ -55,7 +55,9 @@ def cleanup():
         opfapi.CTX.apps = []
 
     if opfapi.CTX.app_framework:
-        print('PYTHON\t: %s cleaning up' % opfapi.CTX.app_framework.bundle_name)
+        print('openpype\t: {} cleaning up'.format(
+            opfapi.CTX.app_framework.bundle_name)
+        )
         opfapi.CTX.app_framework.save_prefs()
         opfapi.CTX.app_framework = None
 
@@ -66,7 +68,8 @@ atexit.register(cleanup)
 def load_apps():
     """Load available apps into Flame framework
     """
-    opfapi.CTX.apps.append(opfapi.FlameMenuProjectConnect(opfapi.CTX.app_framework))
+    opfapi.CTX.apps.append(
+        opfapi.FlameMenuProjectConnect(opfapi.CTX.app_framework))
     opfapi.CTX.apps.append(opfapi.FlameMenuTimeline(opfapi.CTX.app_framework))
     opfapi.CTX.app_framework.log.info("Apps are loaded")
 

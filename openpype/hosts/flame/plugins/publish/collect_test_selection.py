@@ -3,8 +3,8 @@ import pyblish.api
 import openpype.hosts.flame.api as opfapi
 from openpype.hosts.flame.otio import flame_export as otio_export
 from pprint import pformat
-reload(opfapi)  # type: ignore
-reload(otio_export)  # type: ignore
+reload(opfapi)  # noqa
+reload(otio_export)  # noqa
 
 
 @pyblish.api.log
@@ -35,7 +35,7 @@ class CollectTestSelection(pyblish.api.ContextPlugin):
         otio_timeline = otio_export.create_otio_timeline(sequence)
         otio_export.write_to_file(
             otio_timeline, export_path
-            )
+        )
 
         self.log.info(pformat(otio_timeline))
         self.log.info("Otio exported to: {}".format(export_path))
