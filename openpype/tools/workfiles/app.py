@@ -670,7 +670,7 @@ class FilesWidget(QtWidgets.QWidget):
             os.path.normpath(self._workfiles_root), work_file
         )
 
-        pipeline.emit("before.workfile.save", [file_path])
+        pipeline.emit("before.workfile.save", [file_path, self._workdir_path])
 
         self._enter_session()   # Make sure we are in the right session
         self.host.save_file(file_path)
