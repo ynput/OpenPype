@@ -29,7 +29,9 @@ def callback_selection(selection, function):
     import openpype.hosts.flame.api as opfapi
     opfapi.CTX.selection = selection
     print("Hook Selection: \n\t{}".format(
-        pformat({type(item): item.name for item in opfapi.CTX.selection})
+        pformat({
+            index: (type(item), item.name)
+            for index, item in enumerate(opfapi.CTX.selection)})
     ))
     function()
 
