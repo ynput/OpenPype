@@ -681,7 +681,6 @@ class FilesWidget(QtWidgets.QWidget):
         )
         create_workdir_extra_folders(
             self._workdir_path,
-            self._workfiles_root,
             api.Session["AVALON_APP"],
             self._task_type,
             self._task_name,
