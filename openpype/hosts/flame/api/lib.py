@@ -5,30 +5,24 @@ import json
 import pickle
 import contextlib
 from pprint import pformat
-
+from .constants import (
+    MARKER_COLOR,
+    MARKER_DURATION,
+    MARKER_NAME,
+    COLOR_MAP,
+    MARKER_PUBLISH_DEFAULT
+)
 from openpype.api import Logger
 
-log = Logger().get_logger(__name__)
+log = Logger.get_logger(__name__)
 
-class ctx:
-    # OpenPype marker workflow variables
-    marker_name = "OpenPypeData"
-    marker_duration = 0
-    marker_color = "cyan"
-    publish_default = False
-    color_map = {
-        "red": (1.0, 0.0, 0.0),
-        "orange": (1.0, 0.5, 0.0),
-        "yellow": (1.0, 1.0, 0.0),
-        "pink": (1.0, 0.5, 1.0),
-        "white": (1.0, 1.0, 1.0),
-        "green": (0.0, 1.0, 0.0),
-        "cyan": (0.0, 1.0, 1.0),
-        "blue": (0.0, 0.0, 1.0),
-        "purple": (0.5, 0.0, 0.5),
-        "magenta": (0.5, 0.0, 1.0),
-        "black": (0.0, 0.0, 0.0)
-}
+
+class CTX:
+    # singleton used for passing data between api modules
+    app_framework = None
+    apps = []
+    selection = None
+
 
 @contextlib.contextmanager
 def io_preferences_file(klass, filepath, write=False):
@@ -379,7 +373,8 @@ def get_segment_data_marker(segment, with_marker=None):
         color = marker.colour.get_value()
         name = marker.name.get_value()
 
-        if name == ctx.marker_name and color == ctx.color_map[ctx.marker_color]:
+        if (name == MARKER_NAME) and (
+                color == COLOR_MAP[MARKER_COLOR]):
             if not with_marker:
                 return json.loads(comment)
             else:
@@ -443,8 +438,8 @@ def get_publish_attribute(segment):
     tag_data = get_segment_data_marker(segment)
 
     if not tag_data:
-        set_publish_attribute(segment, ctx.publish_default)
-        return ctx.publish_default
+        set_publish_attribute(segment, MARKER_PUBLISH_DEFAULT)
+        return MARKER_PUBLISH_DEFAULT
 
     return tag_data["publish"]
 
@@ -465,13 +460,14 @@ def create_segment_data_marker(segment):
     # create marker
     marker = segment.create_marker(start_frame)
     # set marker name
-    marker.name = ctx.marker_name
+    marker.name = MARKER_NAME
     # set duration
-    marker.duration = ctx.marker_duration
+    marker.duration = MARKER_DURATION
     # set colour
-    marker.colour = ctx.color_map[ctx.marker_color]  # Red
+    marker.colour = COLOR_MAP[MARKER_COLOR]  # Red
 
     return marker
+
 
 def get_sequence_segments(sequence, selected=False):
     segments = []
@@ -485,7 +481,7 @@ def get_sequence_segments(sequence, selected=False):
             # loop all segment in remaining tracks
             for segment in track.segments:
                 # ignore all segments not selected
-                if segment.selected != True and selected == True:
+                if segment.selected is not True and selected is True:
                     continue
                 # add it to original selection
                 segments.append(segment)

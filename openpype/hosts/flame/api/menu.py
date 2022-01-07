@@ -1,7 +1,7 @@
 import os
 from Qt import QtWidgets
 from copy import deepcopy
-
+from pprint import pformat
 from openpype.tools.utils.host_tools import HostToolsHelper
 
 menu_group_name = 'OpenPype'
@@ -26,9 +26,11 @@ default_flame_export_presets = {
 
 
 def callback_selection(selection, function):
-    import openpype.hosts.flame as opflame
-    opflame.selection = selection
-    print(opflame.selection)
+    import openpype.hosts.flame.api as opfapi
+    opfapi.CTX.selection = selection
+    print("Hook Selection: \n\t{}".format(
+        pformat({type(item): item.name for item in CTX.selection})
+    ))
     function()
 
 

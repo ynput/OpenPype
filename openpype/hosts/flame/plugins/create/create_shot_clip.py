@@ -1,9 +1,8 @@
 from copy import deepcopy
-import openpype.hosts.flame as opflame
-import openpype.hosts.flame.api.plugin as fplugin
-import openpype.hosts.flame.api.lib as flib
-reload(fplugin)
-reload(flib)
+import openpype.hosts.flame.api as opfapi
+
+reload(opfapi)  # noqa
+
 
 def _get_video_track_names(sequence):
     track_names = []
@@ -13,7 +12,8 @@ def _get_video_track_names(sequence):
 
     return track_names
 
-class CreateShotClip(fplugin.Creator):
+
+class CreateShotClip(opfapi.Creator):
     """Publishable clip"""
 
     label = "Create Publishable Clip"
@@ -22,7 +22,7 @@ class CreateShotClip(fplugin.Creator):
     defaults = ["Main"]
 
     gui_tracks = _get_video_track_names(
-        flib.get_current_sequence(opflame.selection)
+        opfapi.get_current_sequence(opfapi.CTX.selection)
     )
     gui_name = "Pype publish attributes creator"
     gui_info = "Define sequential rename and fill hierarchy data."
@@ -267,4 +267,4 @@ class CreateShotClip(fplugin.Creator):
             self.rename_index = i
 
             # convert track item to timeline media pool item
-            fplugin.PublishableClip(self, segment, **kwargs).convert()
+            opfapi.PublishableClip(self, segment, **kwargs).convert()

@@ -1,6 +1,7 @@
 """
 Basic avalon integration
 """
+import os
 import contextlib
 from avalon import api as avalon
 from pyblish import api as pyblish
@@ -11,10 +12,18 @@ from .lib import (
     maintained_segment_selection,
     get_current_sequence
 )
+from .. import HOST_DIR
+
+API_DIR = os.path.join(HOST_DIR, "api")
+PLUGINS_DIR = os.path.join(HOST_DIR, "plugins")
+PUBLISH_PATH = os.path.join(PLUGINS_DIR, "publish")
+LOAD_PATH = os.path.join(PLUGINS_DIR, "load")
+CREATE_PATH = os.path.join(PLUGINS_DIR, "create")
+INVENTORY_PATH = os.path.join(PLUGINS_DIR, "inventory")
 
 AVALON_CONTAINERS = "AVALON_CONTAINERS"
 
-log = Logger().get_logger(__name__)
+log = Logger.get_logger(__name__)
 
 
 def install():

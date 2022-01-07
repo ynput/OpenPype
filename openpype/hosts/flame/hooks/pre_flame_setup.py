@@ -6,6 +6,7 @@ import socket
 from openpype.lib import (
     PreLaunchHook, get_openpype_username)
 from openpype.hosts import flame as opflame
+import openpype.hosts.flame.api as opfapi
 import openpype
 from pprint import pformat
 
@@ -79,7 +80,7 @@ class FlamePrelaunch(PreLaunchHook):
         app_arguments = self._get_launch_arguments(data_to_script)
 
 
-        opflame.setup(self.launch_context.env)
+        opfapi.setup(self.launch_context.env)
 
         self.launch_context.launch_args.extend(app_arguments)
 

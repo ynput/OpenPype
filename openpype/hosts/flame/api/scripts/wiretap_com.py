@@ -16,7 +16,7 @@ if not FLAME_V:
     raise KeyError("Missing key in environment `OPENPYPE_FLAME_VERSION`")
 
 try:
-    from libwiretapPythonClientAPI import (
+    from libwiretapPythonClientAPI import (  # noqa
         WireTapClientInit)
 except ImportError:
     flame_python_path = "/opt/Autodesk/flame_{}/python".format(FLAME_V)
@@ -26,7 +26,7 @@ except ImportError:
 
     sys.path.append(flame_python_path)
 
-    from libwiretapPythonClientAPI import (
+    from libwiretapPythonClientAPI import (  # noqa
         WireTapClientInit,
         WireTapClientUninit,
         WireTapNodeHandle,

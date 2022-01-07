@@ -1,13 +1,17 @@
 import re
-import os
 from Qt import QtWidgets, QtCore
 import openpype.api as openpype
 from openpype import style
-import openpype.hosts.flame as opflame
-from . import lib, pipeline
+from . import selection as opfapi_selection
+from . import (
+    lib as flib,
+    pipeline as fpipeline,
+    constants
+)
+
 from copy import deepcopy
 
-log = openpype.Logger().get_logger(__name__)
+log = openpype.Logger.get_logger(__name__)
 
 
 class CreatorWidget(QtWidgets.QDialog):
@@ -283,7 +287,7 @@ class Spacer(QtWidgets.QWidget):
 class Creator(openpype.Creator):
     """Creator class wrapper
     """
-    clip_color = lib.ctx.color_map["purple"]
+    clip_color = constants.COLOR_MAP["purple"]
     rename_index = None
 
     def __init__(self, *args, **kwargs):
@@ -292,13 +296,13 @@ class Creator(openpype.Creator):
             "flame"]["create"].get(self.__class__.__name__, {})
 
         # adding basic current context flame objects
-        self.project = lib.get_current_project()
-        self.sequence = lib.get_current_sequence(opflame.selection)
+        self.project = flib.get_current_project()
+        self.sequence = flib.get_current_sequence(opfapi_selection)
 
         if (self.options or {}).get("useSelection"):
-            self.selected = lib.get_sequence_segments(self.sequence, True)
+            self.selected = flib.get_sequence_segments(self.sequence, True)
         else:
-            self.selected = lib.get_sequence_segments(self.sequence)
+            self.selected = flib.get_sequence_segments(self.sequence)
 
         self.widget = CreatorWidget
 
@@ -345,10 +349,10 @@ class PublishableClip:
 
         # get main parent objects
         self.current_segment = segment
-        sequence_name = lib.get_current_sequence([segment]).name.get_value()
+        sequence_name = flib.get_current_sequence([segment]).name.get_value()
         self.sequence_name = str(sequence_name).replace(" ", "_")
 
-        self.clip_data = lib.get_segment_attributes(segment)
+        self.clip_data = flib.get_segment_attributes(segment)
         # segment (clip) main attributes
         self.cs_name = self.clip_data["segment_name"]
         self.cs_index = int(self.clip_data["segment"])
@@ -406,7 +410,7 @@ class PublishableClip:
             self.marker_data.update({"reviewTrack": None})
 
         # create pype tag on track_item and add data
-        pipeline.imprint(self.current_segment, self.marker_data)
+        fpipeline.imprint(self.current_segment, self.marker_data)
 
         return self.current_segment
 

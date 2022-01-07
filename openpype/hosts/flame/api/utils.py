@@ -5,7 +5,7 @@ Flame utils for syncing scripts
 import os
 import shutil
 from openpype.api import Logger
-log = Logger().get_logger(__name__)
+log = Logger.get_logger(__name__)
 
 
 def _sync_utility_scripts(env=None):
