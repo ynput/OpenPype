@@ -11,6 +11,7 @@ from Qt import QtWidgets, QtCore
 from avalon import io, api, pipeline
 
 from openpype import style
+from openpype.pipeline.lib import BeforeWorkfileSave
 from openpype.tools.utils.lib import (
     qt_app_context
 )
@@ -367,7 +368,8 @@ class FilesWidget(QtWidgets.QWidget):
         self.template_key = "work"
 
         # This is not root but workfile directory
-        self.root = None
+        self._workfiles_root = None
+        self._workdir_path = None
         self.host = api.registered_host()
 
         # Whether to automatically select the latest modified
@@ -465,8 +467,9 @@ class FilesWidget(QtWidgets.QWidget):
         # This way we can browse it even before we enter it.
         if self._asset_id and self._task_name and self._task_type:
             session = self._get_session()
-            self.root = self.host.work_root(session)
-            self.files_model.set_root(self.root)
+            self._workdir_path = session["AVALON_WORKDIR"]
+            self._workfiles_root = self.host.work_root(session)
+            self.files_model.set_root(self._workfiles_root)
 
         else:
             self.files_model.set_root(None)
@@ -590,7 +593,7 @@ class FilesWidget(QtWidgets.QWidget):
 
         window = NameWindow(
             parent=self,
-            root=self.root,
+            root=self._workfiles_root,
             anatomy=self.anatomy,
             template_key=self.template_key,
             session=session
@@ -605,7 +608,7 @@ class FilesWidget(QtWidgets.QWidget):
             return
 
         src = self._get_selected_filepath()
-        dst = os.path.join(self.root, work_file)
+        dst = os.path.join(self._workfiles_root, work_file)
         shutil.copy(src, dst)
 
         self.workfile_created.emit(dst)
@@ -638,9 +641,9 @@ class FilesWidget(QtWidgets.QWidget):
             "filter": ext_filter
         }
         if Qt.__binding__ in ("PySide", "PySide2"):
-            kwargs["dir"] = self.root
+            kwargs["dir"] = self._workfiles_root
         else:
-            kwargs["directory"] = self.root
+            kwargs["directory"] = self._workfiles_root
 
         work_file = QtWidgets.QFileDialog.getOpenFileName(**kwargs)[0]
         if work_file:
@@ -652,19 +655,23 @@ class FilesWidget(QtWidgets.QWidget):
             return
 
         # Initialize work directory if it has not been initialized before
-        if not os.path.exists(self.root):
-            log.debug("Initializing Work Directory: %s", self.root)
+        if not os.path.exists(self._workfiles_root):
+            log.debug("Initializing Work Directory: %s", self._workfiles_root)
             self.initialize_work_directory()
-            if not os.path.exists(self.root):
+            if not os.path.exists(self._workfiles_root):
                 # Failed to initialize Work Directory
                 log.error(
-                    "Failed to initialize Work Directory: {}".format(self.root)
+                    "Failed to initialize Work Directory: {}".format(
+                        self._workfiles_root
+                    )
                 )
                 return
 
-        file_path = os.path.join(os.path.normpath(self.root), work_file)
+        file_path = os.path.join(
+            os.path.normpath(self._workfiles_root), work_file
+        )
 
-        pipeline.emit("before.workfile.save", [file_path])
+        BeforeWorkfileSave.emit(file_path, self._workdir_path)
 
         self._enter_session()   # Make sure we are in the right session
         self.host.save_file(file_path)
@@ -673,7 +680,8 @@ class FilesWidget(QtWidgets.QWidget):
             self._asset_id, self._task_name, self._task_type
         )
         create_workdir_extra_folders(
-            self.root,
+            self._workdir_path,
+            self._workfiles_root,
             api.Session["AVALON_APP"],
             self._task_type,
             self._task_name,

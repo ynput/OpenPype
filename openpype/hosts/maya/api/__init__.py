@@ -218,12 +218,10 @@ def on_task_changed(*args):
     )
 
 
-def before_workfile_save(workfile_path):
-    if not workfile_path:
-        return
-
-    workdir = os.path.dirname(workfile_path)
-    copy_workspace_mel(workdir)
+def before_workfile_save(event):
+    workdir_path = event.workdir_path
+    if workdir_path:
+        copy_workspace_mel(workdir_path)
 
 
 class MayaDirmap(HostDirmap):
