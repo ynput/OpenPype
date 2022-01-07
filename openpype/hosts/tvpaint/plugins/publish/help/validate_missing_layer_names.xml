@@ -1,0 +1,18 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<root>
+<error id="main">
+<title>Missing layers</title>
+<description>## Missing layers for render pass
+
+Render pass subset "{instance_name}" has stored layer names that belong to it's rendering scope but layers were not found in scene.
+
+### Missing layer names
+
+{layer_names}
+
+### How to repair?
+
+Find layers that belong to subset {instance_name} and rename them back to expected layer names or remove the subset and create new with right layers.
+</description>
+</error>
+</root>
