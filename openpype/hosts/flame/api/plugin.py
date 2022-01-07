@@ -326,10 +326,8 @@ class PublishableClip:
     vertical_sync_default = False
     driving_layer_default = ""
 
-    def __init__(self, cls, segment, **kwargs):
-        # populate input cls attribute onto self.[attr]
-        self.__dict__.update(cls.__dict__)
-
+    def __init__(self, segment, **kwargs):
+        self.rename_index = kwargs["rename_index"]
         # get main parent objects
         self.current_segment = segment
         sequence_name = flib.get_current_sequence([segment]).name.get_value()
