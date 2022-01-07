@@ -2,7 +2,6 @@ import re
 from Qt import QtWidgets, QtCore
 import openpype.api as openpype
 from openpype import style
-from . import selection as opfapi_selection
 from . import (
     lib as flib,
     pipeline as fpipeline,
@@ -279,7 +278,7 @@ class Creator(openpype.Creator):
 
         # adding basic current context flame objects
         self.project = flib.get_current_project()
-        self.sequence = flib.get_current_sequence(opfapi_selection)
+        self.sequence = flib.get_current_sequence(flib.CTX.selection)
 
         if (self.options or {}).get("useSelection"):
             self.selected = flib.get_sequence_segments(self.sequence, True)

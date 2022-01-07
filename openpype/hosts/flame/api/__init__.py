@@ -11,7 +11,6 @@ from .constants import (
 from .lib import (
     CTX,
     FlameAppFramework,
-    maintain_current_timeline,
     get_project_manager,
     get_current_project,
     get_current_sequence,
@@ -68,7 +67,6 @@ __all__ = [
     # lib
     "CTX",
     "FlameAppFramework",
-    "maintain_current_timeline",
     "get_project_manager",
     "get_current_project",
     "get_current_sequence",

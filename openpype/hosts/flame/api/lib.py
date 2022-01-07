@@ -225,40 +225,6 @@ class FlameAppFramework(object):
         return True
 
 
-@contextlib.contextmanager
-def maintain_current_timeline(to_timeline, from_timeline=None):
-    """Maintain current timeline selection during context
-
-    Attributes:
-        from_timeline (resolve.Timeline)[optional]:
-    Example:
-        >>> print(from_timeline.GetName())
-        timeline1
-        >>> print(to_timeline.GetName())
-        timeline2
-
-        >>> with maintain_current_timeline(to_timeline):
-        ...     print(get_current_sequence().GetName())
-        timeline2
-
-        >>> print(get_current_sequence().GetName())
-        timeline1
-    """
-    # todo: this is still Resolve's implementation
-    project = get_current_project()
-    working_timeline = from_timeline or project.GetCurrentTimeline()
-
-    # swith to the input timeline
-    project.SetCurrentTimeline(to_timeline)
-
-    try:
-        # do a work
-        yield
-    finally:
-        # put the original working timeline to context
-        project.SetCurrentTimeline(working_timeline)
-
-
 def get_project_manager():
     # TODO: get_project_manager
     return
