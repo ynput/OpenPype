@@ -27,13 +27,6 @@ log = Logger.get_logger(__name__)
 
 
 def install():
-    from .. import (
-        PUBLISH_PATH,
-        LOAD_PATH,
-        CREATE_PATH,
-        INVENTORY_PATH
-    )
-
     # Disable all families except for the ones we explicitly want to see
     family_states = [
         "imagesequence",
@@ -60,13 +53,6 @@ def install():
     log.info("OpenPype Flame host installed ...")
 
 def uninstall():
-    from .. import (
-        PUBLISH_PATH,
-        LOAD_PATH,
-        CREATE_PATH,
-        INVENTORY_PATH
-    )
-
     pyblish.deregister_host("flame")
 
     log.info("Deregistering Flame plug-ins..")
@@ -167,11 +153,11 @@ def imprint(segment, data=None):
 @contextlib.contextmanager
 def maintained_selection():
     import flame
-    from .. import selection
+    from .lib import CTX
 
     # check if segment is selected
-    if isinstance(selection[0], flame.PySegment):
-        sequence = get_current_sequence(selection)
+    if isinstance(CTX.selection[0], flame.PySegment):
+        sequence = get_current_sequence(CTX.selection)
         try:
             with maintained_segment_selection(sequence):
                 yield
