@@ -85,9 +85,8 @@ class OpenPypeVersion(semver.VersionInfo):
             path (Path): path to version location.
 
         """
-
-        # self.path = None
-        # self.staging = False
+        self.path = None
+        self.staging = False
 
         if "version" in kwargs.keys():
             if not kwargs.get("version"):
@@ -195,7 +194,6 @@ class OpenPypeVersion(semver.VersionInfo):
 
         .. deprecated:: 3.0.0-rc.2
             use `finalize_version()` instead.
-
         Returns:
             str: main version component
 

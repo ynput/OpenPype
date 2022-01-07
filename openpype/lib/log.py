@@ -208,7 +208,7 @@ class PypeLogger:
     log_mongo_url_components = None
 
     # Database name in Mongo
-    log_database_name = os.getenv("OPENPYPE_DATABASE_NAME")
+    log_database_name = os.environ["OPENPYPE_DATABASE_NAME"]
     # Collection name under database in Mongo
     log_collection_name = "logs"
 
