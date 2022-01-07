@@ -24,6 +24,10 @@ class IntegrateSlackAPI(pyblish.api.InstancePlugin):
 
     optional = True
 
+    # internal, not configurable
+    bot_user_name = "OpenpypeNotifier"
+    icon_url = "https://openpype.io/img/favicon/favicon.ico"
+
     def process(self, instance):
         thumbnail_path = self._get_thumbnail_path(instance)
         review_path = self._get_review_path(instance)
@@ -148,7 +152,9 @@ class IntegrateSlackAPI(pyblish.api.InstancePlugin):
             response = client.api_call(
                 "chat.postMessage",
                 channel=channel,
-                text=message
+                text=message,
+                username=self.bot_user_name,
+                icon_url=self.icon_url
             )
 
             if response.get("error"):
@@ -180,7 +186,9 @@ class IntegrateSlackAPI(pyblish.api.InstancePlugin):
 
             _ = client.chat_postMessage(
                 channel=channel,
-                text=message
+                text=message,
+                username=self.bot_user_name,
+                icon_url=self.icon_url
             )
         except SlackApiError as e:
             # You will get a SlackApiError if "ok" is False

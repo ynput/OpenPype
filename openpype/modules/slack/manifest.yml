@@ -15,6 +15,7 @@ oauth_config:
   scopes:
     bot:
       - chat:write
+      - chat:write.customize
       - chat:write.public
       - files:write
 settings:
