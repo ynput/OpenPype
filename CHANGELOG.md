@@ -1,6 +1,6 @@
 # Changelog
 
-## [3.8.0-nightly.1](https://github.com/pypeclub/OpenPype/tree/HEAD)
+## [3.8.0-nightly.2](https://github.com/pypeclub/OpenPype/tree/HEAD)
 
 [Full Changelog](https://github.com/pypeclub/OpenPype/compare/3.7.0...HEAD)
 
@@ -10,6 +10,8 @@
 
 **🚀 Enhancements**
 
+- Ftrack: Event handlers settings [\#2496](https://github.com/pypeclub/OpenPype/pull/2496)
+- Tools: Fix style and modality of errors in loader and creator [\#2489](https://github.com/pypeclub/OpenPype/pull/2489)
 - Tools: Be able to change models of tasks and assets widgets [\#2475](https://github.com/pypeclub/OpenPype/pull/2475)
 - Publish pype: Reduce publish process defering [\#2464](https://github.com/pypeclub/OpenPype/pull/2464)
 - Maya: Improve speed of Collect History logic [\#2460](https://github.com/pypeclub/OpenPype/pull/2460)
@@ -19,8 +21,19 @@
 
 **🐛 Bug fixes**
 
+- General: Settings work if OpenPypeVersion is available [\#2494](https://github.com/pypeclub/OpenPype/pull/2494)
+- Workfiles tool: Files widget show files on first show [\#2488](https://github.com/pypeclub/OpenPype/pull/2488)
 - General: Custom template paths filter fix [\#2483](https://github.com/pypeclub/OpenPype/pull/2483)
 - Loader: Remove always on top flag in tray [\#2480](https://github.com/pypeclub/OpenPype/pull/2480)
+- General: Anatomy does not return root envs as unicode [\#2465](https://github.com/pypeclub/OpenPype/pull/2465)
+- Webpublisher: Fix assignment of families of TVpaint instances [\#2373](https://github.com/pypeclub/OpenPype/pull/2373)
+
+**Merged pull requests:**
+
+- General: Modules import function output fix [\#2492](https://github.com/pypeclub/OpenPype/pull/2492)
+- AE: fix hiding of alert window below Publish [\#2491](https://github.com/pypeclub/OpenPype/pull/2491)
+- Maya: Validate NGONs re-use polyConstraint code from openpype.host.maya.api.lib [\#2458](https://github.com/pypeclub/OpenPype/pull/2458)
+- Version handling [\#2363](https://github.com/pypeclub/OpenPype/pull/2363)
 
 ## [3.7.0](https://github.com/pypeclub/OpenPype/tree/3.7.0) (2022-01-04)
 
@@ -67,7 +80,6 @@
 - hiero: solve custom ocio path  [\#2379](https://github.com/pypeclub/OpenPype/pull/2379)
 - hiero: fix workio and flatten [\#2378](https://github.com/pypeclub/OpenPype/pull/2378)
 - Nuke: fixing menu re-drawing during context change  [\#2374](https://github.com/pypeclub/OpenPype/pull/2374)
-- Webpublisher: Fix assignment of families of TVpaint instances [\#2373](https://github.com/pypeclub/OpenPype/pull/2373)
 - Nuke: fixing node name based on switched asset name [\#2369](https://github.com/pypeclub/OpenPype/pull/2369)
 - Houdini: Fix HDA creation [\#2350](https://github.com/pypeclub/OpenPype/pull/2350)
 
