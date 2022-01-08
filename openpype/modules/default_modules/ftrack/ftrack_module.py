@@ -1,6 +1,7 @@
 import os
 import json
 import collections
+import platform
 
 import click
 
@@ -42,18 +43,26 @@ class FtrackModule(
         self.ftrack_url = ftrack_url
 
         current_dir = os.path.dirname(os.path.abspath(__file__))
+        low_platform = platform.system().lower()
+
+        # Server event handler paths
         server_event_handlers_paths = [
             os.path.join(current_dir, "event_handlers_server")
         ]
-        server_event_handlers_paths.extend(
-            ftrack_settings["ftrack_events_path"]
-        )
+        settings_server_paths = ftrack_settings["ftrack_events_path"]
+        if isinstance(settings_server_paths, dict):
+            settings_server_paths = settings_server_paths[low_platform]
+        server_event_handlers_paths.extend(settings_server_paths)
+
+        # User event handler paths
         user_event_handlers_paths = [
             os.path.join(current_dir, "event_handlers_user")
         ]
-        user_event_handlers_paths.extend(
-            ftrack_settings["ftrack_actions_path"]
-        )
+        settings_action_paths = ftrack_settings["ftrack_actions_path"]
+        if isinstance(settings_action_paths, dict):
+            settings_action_paths = settings_action_paths[low_platform]
+        user_event_handlers_paths.extend(settings_action_paths)
+
         # Prepare attribute
         self.server_event_handlers_paths = server_event_handlers_paths
         self.user_event_handlers_paths = user_event_handlers_paths

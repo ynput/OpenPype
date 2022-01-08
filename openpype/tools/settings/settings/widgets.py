@@ -1,4 +1,5 @@
 import os
+import copy
 from Qt import QtWidgets, QtCore, QtGui
 from avalon.vendor import qtawesome
 from avalon.mongodb import (
@@ -25,12 +26,234 @@ from .constants import (
 )
 
 
+class CompleterFilter(QtCore.QSortFilterProxyModel):
+    def __init__(self, *args, **kwargs):
+        super(CompleterFilter, self).__init__(*args, **kwargs)
+
+        self.setFilterCaseSensitivity(QtCore.Qt.CaseInsensitive)
+
+        self._text_filter = ""
+
+    def set_text_filter(self, text):
+        if self._text_filter == text:
+            return
+        self._text_filter = text
+        self.invalidateFilter()
+
+    def filterAcceptsRow(self, row, parent_index):
+        if not self._text_filter:
+            return True
+        model = self.sourceModel()
+        index = model.index(row, self.filterKeyColumn(), parent_index)
+        value = index.data(QtCore.Qt.DisplayRole)
+        if self._text_filter in value:
+            if self._text_filter == value:
+                return False
+            return True
+        return False
+
+
+class CompleterView(QtWidgets.QListView):
+    row_activated = QtCore.Signal(str)
+
+    def __init__(self, parent):
+        super(CompleterView, self).__init__(parent)
+
+        self.setWindowFlags(
+            QtCore.Qt.FramelessWindowHint
+            | QtCore.Qt.Tool
+        )
+        delegate = QtWidgets.QStyledItemDelegate()
+        self.setItemDelegate(delegate)
+
+        model = QtGui.QStandardItemModel()
+        filter_model = CompleterFilter()
+        filter_model.setSourceModel(model)
+        self.setModel(filter_model)
+
+        # self.installEventFilter(parent)
+
+        self.clicked.connect(self._on_activated)
+
+        self._last_loaded_values = None
+        self._model = model
+        self._filter_model = filter_model
+        self._delegate = delegate
+
+    def _on_activated(self, index):
+        if index.isValid():
+            value = index.data(QtCore.Qt.DisplayRole)
+            self.row_activated.emit(value)
+
+    def set_text_filter(self, text):
+        self._filter_model.set_text_filter(text)
+        self._update_geo()
+
+    def sizeHint(self):
+        result = super(CompleterView, self).sizeHint()
+        if self._filter_model.rowCount() == 0:
+            result.setHeight(0)
+
+        return result
+
+    def showEvent(self, event):
+        super(CompleterView, self).showEvent(event)
+        self._update_geo()
+
+    def _update_geo(self):
+        size_hint = self.sizeHint()
+        self.resize(size_hint.width(), size_hint.height())
+
+    def update_values(self, values):
+        if not values:
+            values = []
+
+        if self._last_loaded_values == values:
+            return
+        self._last_loaded_values = copy.deepcopy(values)
+
+        root_item = self._model.invisibleRootItem()
+        existing_values = {}
+        for row in reversed(range(root_item.rowCount())):
+            child = root_item.child(row)
+            value = child.data(QtCore.Qt.DisplayRole)
+            if value not in values:
+                root_item.removeRows(child.row())
+            else:
+                existing_values[value] = child
+
+        for row, value in enumerate(values):
+            if value in existing_values:
+                item = existing_values[value]
+                if item.row() == row:
+                    continue
+            else:
+                item = QtGui.QStandardItem(value)
+                item.setEditable(False)
+
+            root_item.setChild(row, item)
+
+        self._update_geo()
+
+    def _get_selected_row(self):
+        indexes = self.selectionModel().selectedIndexes()
+        if not indexes:
+            return -1
+        return indexes[0].row()
+
+    def _select_row(self, row):
+        index = self._filter_model.index(row, 0)
+        self.setCurrentIndex(index)
+
+    def move_up(self):
+        rows = self._filter_model.rowCount()
+        if rows == 0:
+            return
+
+        selected_row = self._get_selected_row()
+        if selected_row < 0:
+            new_row = rows - 1
+        else:
+            new_row = selected_row - 1
+            if new_row < 0:
+                new_row = rows - 1
+
+        if new_row != selected_row:
+            self._select_row(new_row)
+
+    def move_down(self):
+        rows = self._filter_model.rowCount()
+        if rows == 0:
+            return
+
+        selected_row = self._get_selected_row()
+        if selected_row < 0:
+            new_row = 0
+        else:
+            new_row = selected_row + 1
+            if new_row >= rows:
+                new_row = 0
+
+        if new_row != selected_row:
+            self._select_row(new_row)
+
+    def enter_pressed(self):
+        selected_row = self._get_selected_row()
+        if selected_row < 0:
+            return
+        index = self._filter_model.index(selected_row, 0)
+        self._on_activated(index)
+
+
 class SettingsLineEdit(PlaceholderLineEdit):
     focused_in = QtCore.Signal()
+
+    def __init__(self, *args, **kwargs):
+        super(SettingsLineEdit, self).__init__(*args, **kwargs)
+
+        self._completer = None
+
+        self.textChanged.connect(self._on_text_change)
+
+    def _on_text_change(self, text):
+        if self._completer is not None:
+            self._completer.set_text_filter(text)
+
+    def _update_completer(self):
+        if self._completer is None or not self._completer.isVisible():
+            return
+        point = self.frameGeometry().bottomLeft()
+        new_point = self.mapToGlobal(point)
+        self._completer.move(new_point)
 
     def focusInEvent(self, event):
         super(SettingsLineEdit, self).focusInEvent(event)
         self.focused_in.emit()
+
+        if self._completer is None:
+            return
+        self._completer.show()
+        self._update_completer()
+
+    def focusOutEvent(self, event):
+        super(SettingsLineEdit, self).focusOutEvent(event)
+        if self._completer is not None:
+            self._completer.hide()
+
+    def paintEvent(self, event):
+        super(SettingsLineEdit, self).paintEvent(event)
+        self._update_completer()
+
+    def update_completer_values(self, values):
+        if not values and self._completer is None:
+            return
+
+        self._create_completer()
+
+        self._completer.update_values(values)
+
+    def _create_completer(self):
+        if self._completer is None:
+            self._completer = CompleterView(self)
+            self._completer.row_activated.connect(self._completer_activated)
+
+    def _completer_activated(self, text):
+        self.setText(text)
+
+    def keyPressEvent(self, event):
+        if self._completer is None:
+            super(SettingsLineEdit, self).keyPressEvent(event)
+            return
+
+        key = event.key()
+        if key == QtCore.Qt.Key_Up:
+            self._completer.move_up()
+        elif key == QtCore.Qt.Key_Down:
+            self._completer.move_down()
+        elif key in (QtCore.Qt.Key_Enter, QtCore.Qt.Key_Return):
+            self._completer.enter_pressed()
+        else:
+            super(SettingsLineEdit, self).keyPressEvent(event)
 
 
 class SettingsPlainTextEdit(QtWidgets.QPlainTextEdit):
