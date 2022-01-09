@@ -33,8 +33,7 @@ class FusionPrelaunch(PreLaunchHook):
                 "Fusion utility script dir does not exist. Either make sure "
                 "the 'environments/fusion.json' has "
                 "'FUSION_UTILITY_SCRIPTS_DIR' set correctly or reinstall "
-                "DaVinci Resolve.\n\n"
-                f"FUSION_UTILITY_SCRIPTS_DIR: '{us_dir}'"
+                f"Fusion.\n\nFUSION_UTILITY_SCRIPTS_DIR: '{us_dir}'"
             )
 
         try:
