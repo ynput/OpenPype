@@ -153,24 +153,15 @@ class ReferenceLoader(api.Loader):
             nodes = self[:]
             if not nodes:
                 return
-            # FIXME: there is probably better way to do this for looks.
-            if "look" in self.families:
-                loaded_containers.append(containerise(
-                    name=name,
-                    namespace=namespace,
-                    nodes=nodes,
-                    context=context,
-                    loader=self.__class__.__name__
-                ))
-            else:
-                ref_node = get_reference_node(nodes, self.log)
-                loaded_containers.append(containerise(
-                    name=name,
-                    namespace=namespace,
-                    nodes=[ref_node],
-                    context=context,
-                    loader=self.__class__.__name__
-                ))
+
+            ref_node = get_reference_node(nodes, self.log)
+            loaded_containers.append(containerise(
+                name=name,
+                namespace=namespace,
+                nodes=[ref_node],
+                context=context,
+                loader=self.__class__.__name__
+            ))
 
             c += 1
             namespace = None
@@ -180,18 +171,18 @@ class ReferenceLoader(api.Loader):
         """To be implemented by subclass"""
         raise NotImplementedError("Must be implemented by subclass")
 
-
     def update(self, container, representation):
 
         import os
         from maya import cmds
+        from openpype.hosts.maya.api.lib import get_container_members
 
         node = container["objectName"]
 
         path = api.get_representation_path(representation)
 
         # Get reference node from container members
-        members = cmds.sets(node, query=True, nodesOnly=True)
+        members = lib.get_container_members(node)
         reference_node = get_reference_node(members, self.log)
 
         file_type = {
