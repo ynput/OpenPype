@@ -182,7 +182,7 @@ class ReferenceLoader(api.Loader):
         path = api.get_representation_path(representation)
 
         # Get reference node from container members
-        members = lib.get_container_members(node)
+        members = get_container_members(node)
         reference_node = get_reference_node(members, self.log)
 
         file_type = {
