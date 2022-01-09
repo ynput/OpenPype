@@ -202,7 +202,7 @@ def load_look(version_id):
             container_node = api.load(loader, look_representation)
 
     # Get container members
-    shader_nodes = cmds.sets(container_node, query=True)
+    shader_nodes = lib.get_container_members(container_node)
     return shader_nodes
 
 
