@@ -16,11 +16,11 @@ class FusionPrelaunch(PreLaunchHook):
         py36_dir = os.path.normpath(self.launch_context.env.get("PYTHON36", ""))
         if not os.path.isdir(py36_dir):
             raise ApplicationLaunchFailed(
-            "Python 3.6 is not installed at the provided path.\n"
-            "Either make sure the 'environments/fusion.json' has "
-            "'PYTHON36' set corectly or make sure Python 3.6 is installed "
-            f"in the given path.\n\nPYTHON36: {py36_dir}"
-        )
+                "Python 3.6 is not installed at the provided path.\n"
+                "Either make sure the 'environments/fusion.json' has "
+                "'PYTHON36' set corectly or make sure Python 3.6 is installed "
+                f"in the given path.\n\nPYTHON36: {py36_dir}"
+            )
         self.log.info(f"Path to Fusion Python folder: '{py36_dir}'...")
         self.launch_context.env["PYTHON36"] = py36_dir
 
@@ -30,11 +30,12 @@ class FusionPrelaunch(PreLaunchHook):
         )
         if not os.path.isdir(us_dir):
             raise ApplicationLaunchFailed(
-            "Fusion utility script dir does not exist. Either make sure "
-            "the 'environments/fusion.json' has 'FUSION_UTILITY_SCRIPTS_DIR' "
-            "set correctly or reinstall DaVinci Resolve.\n\n"
-            f"FUSION_UTILITY_SCRIPTS_DIR: '{us_dir}'"
-        )
+                "Fusion utility script dir does not exist. Either make sure "
+                "the 'environments/fusion.json' has "
+                "'FUSION_UTILITY_SCRIPTS_DIR' set correctly or reinstall "
+                "DaVinci Resolve.\n\n"
+                f"FUSION_UTILITY_SCRIPTS_DIR: '{us_dir}'"
+            )
 
         try:
             __import__("avalon.fusion")
