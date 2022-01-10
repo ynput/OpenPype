@@ -446,8 +446,12 @@ def get_sequence_segments(sequence, selected=False):
                 continue
             # loop all segment in remaining tracks
             for segment in track.segments:
-                # ignore all segments not selected
-                if segment.selected is not True and selected is True:
+                if segment.name.get_value() == "":
+                    continue
+                if (
+                    selected is True
+                    and segment.selected.get_value() is not True
+                ):
                     continue
                 # add it to original selection
                 segments.append(segment)
