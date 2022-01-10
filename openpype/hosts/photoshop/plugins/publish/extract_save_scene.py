@@ -1,5 +1,5 @@
 import openpype.api
-from avalon import photoshop
+from openpype.hosts.photoshop import api as photoshop
 
 
 class ExtractSaveScene(openpype.api.Extractor):

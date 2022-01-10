@@ -1,6 +1,7 @@
 import re
 
-from avalon import api, photoshop
+from avalon import api
+from openpype.hosts.photoshop import api as photoshop
 
 from openpype.hosts.photoshop.plugins.lib import get_unique_layer_name
 
