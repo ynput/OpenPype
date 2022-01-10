@@ -2,10 +2,10 @@
     Stub handling connection from server to client.
     Used anywhere solution is calling client methods.
 """
-import json
 import sys
-from wsrpc_aiohttp import WebSocketAsync
+import json
 import attr
+from wsrpc_aiohttp import WebSocketAsync
 
 from avalon.tools.webserver.app import WebServerTool
 
@@ -60,19 +60,19 @@ class PhotoshopServerStub:
         return client
 
     def open(self, path):
-        """
-            Open file located at 'path' (local).
+        """Open file located at 'path' (local).
+
         Args:
             path(string): file path locally
         Returns: None
         """
-        self.websocketserver.call(self.client.call
-                                  ('Photoshop.open', path=path)
-                                  )
+        self.websocketserver.call(
+            self.client.call('Photoshop.open', path=path)
+        )
 
     def read(self, layer, layers_meta=None):
-        """
-            Parses layer metadata from Headline field of active document
+        """Parses layer metadata from Headline field of active document.
+
         Args:
             layer: (PSItem)
             layers_meta: full list from Headline (for performance in loops)
@@ -84,30 +84,29 @@ class PhotoshopServerStub:
         return layers_meta.get(str(layer.id))
 
     def imprint(self, layer, data, all_layers=None, layers_meta=None):
-        """
-            Save layer metadata to Headline field of active document
+        """Save layer metadata to Headline field of active document
 
-            Stores metadata in format:
-            [{
-                "active":true,
-                "subset":"imageBG",
-                "family":"image",
-                "id":"pyblish.avalon.instance",
-                "asset":"Town",
-                "uuid": "8"
-            }] - for created instances
-            OR
-            [{
-                "schema": "openpype:container-2.0",
-                "id": "pyblish.avalon.instance",
-                "name": "imageMG",
-                "namespace": "Jungle_imageMG_001",
-                "loader": "ImageLoader",
-                "representation": "5fbfc0ee30a946093c6ff18a",
-                "members": [
-                    "40"
-                ]
-            }] - for loaded instances
+        Stores metadata in format:
+        [{
+            "active":true,
+            "subset":"imageBG",
+            "family":"image",
+            "id":"pyblish.avalon.instance",
+            "asset":"Town",
+            "uuid": "8"
+        }] - for created instances
+        OR
+        [{
+            "schema": "openpype:container-2.0",
+            "id": "pyblish.avalon.instance",
+            "name": "imageMG",
+            "namespace": "Jungle_imageMG_001",
+            "loader": "ImageLoader",
+            "representation": "5fbfc0ee30a946093c6ff18a",
+            "members": [
+                "40"
+            ]
+        }] - for loaded instances
 
         Args:
             layer (PSItem):
@@ -139,19 +138,18 @@ class PhotoshopServerStub:
         layer_ids = [layer.id for layer in all_layers]
         cleaned_data = []
 
-        for id in layers_meta:
-            if int(id) in layer_ids:
-                cleaned_data.append(layers_meta[id])
+        for layer_id in layers_meta:
+            if int(layer_id) in layer_ids:
+                cleaned_data.append(layers_meta[layer_id])
 
         payload = json.dumps(cleaned_data, indent=4)
 
-        self.websocketserver.call(self.client.call
-                                  ('Photoshop.imprint', payload=payload)
-                                  )
+        self.websocketserver.call(
+            self.client.call('Photoshop.imprint', payload=payload)
+        )
 
     def get_layers(self):
-        """
-            Returns JSON document with all(?) layers in active document.
+        """Returns JSON document with all(?) layers in active document.
 
         Returns: <list of PSItem>
                     Format of tuple: { 'id':'123',
@@ -159,8 +157,9 @@ class PhotoshopServerStub:
                                      'type': 'GUIDE'|'FG'|'BG'|'OBJ'
                                      'visible': 'true'|'false'
         """
-        res = self.websocketserver.call(self.client.call
-                                        ('Photoshop.get_layers'))
+        res = self.websocketserver.call(
+            self.client.call('Photoshop.get_layers')
+        )
 
         return self._to_records(res)
 
@@ -179,11 +178,13 @@ class PhotoshopServerStub:
                 return layer
 
     def get_layers_in_layers(self, layers):
-        """
-            Return all layers that belong to layers (might be groups).
+        """Return all layers that belong to layers (might be groups).
+
         Args:
             layers <list of PSItem>:
-        Returns: <list of PSItem>
+
+        Returns:
+            <list of PSItem>
         """
         all_layers = self.get_layers()
         ret = []
@@ -199,27 +200,30 @@ class PhotoshopServerStub:
         return ret
 
     def create_group(self, name):
-        """
-            Create new group (eg. LayerSet)
-        Returns: <PSItem>
+        """Create new group (eg. LayerSet)
+
+        Returns:
+            <PSItem>
         """
         enhanced_name = self.PUBLISH_ICON + name
-        ret = self.websocketserver.call(self.client.call
-                                        ('Photoshop.create_group',
-                                         name=enhanced_name))
+        ret = self.websocketserver.call(
+            self.client.call('Photoshop.create_group', name=enhanced_name)
+        )
         # create group on PS is asynchronous, returns only id
         return PSItem(id=ret, name=name, group=True)
 
     def group_selected_layers(self, name):
-        """
-            Group selected layers into new LayerSet (eg. group)
-        Returns: (Layer)
+        """Group selected layers into new LayerSet (eg. group)
+
+        Returns:
+            (Layer)
         """
         enhanced_name = self.PUBLISH_ICON + name
-        res = self.websocketserver.call(self.client.call
-                                        ('Photoshop.group_selected_layers',
-                                         name=enhanced_name)
-                                        )
+        res = self.websocketserver.call(
+            self.client.call(
+                'Photoshop.group_selected_layers', name=enhanced_name
+            )
+        )
         res = self._to_records(res)
         if res:
             rec = res.pop()
@@ -228,103 +232,112 @@ class PhotoshopServerStub:
         raise ValueError("No group record returned")
 
     def get_selected_layers(self):
-        """
-            Get a list of actually selected layers
+        """Get a list of actually selected layers.
+
         Returns: <list of Layer('id':XX, 'name':"YYY")>
         """
-        res = self.websocketserver.call(self.client.call
-                                        ('Photoshop.get_selected_layers'))
+        res = self.websocketserver.call(
+            self.client.call('Photoshop.get_selected_layers')
+        )
         return self._to_records(res)
 
     def select_layers(self, layers):
-        """
-            Selects specified layers in Photoshop by its ids
+        """Selects specified layers in Photoshop by its ids.
+
         Args:
             layers: <list of Layer('id':XX, 'name':"YYY")>
-        Returns: None
         """
         layers_id = [str(lay.id) for lay in layers]
-        self.websocketserver.call(self.client.call
-                                  ('Photoshop.select_layers',
-                                   layers=json.dumps(layers_id))
-                                  )
+        self.websocketserver.call(
+            self.client.call(
+                'Photoshop.select_layers',
+                layers=json.dumps(layers_id)
+            )
+        )
 
     def get_active_document_full_name(self):
-        """
-            Returns full name with path of active document via ws call
-        Returns(string): full path with name
+        """Returns full name with path of active document via ws call
+
+        Returns(string):
+            full path with name
         """
         res = self.websocketserver.call(
-            self.client.call('Photoshop.get_active_document_full_name'))
+            self.client.call('Photoshop.get_active_document_full_name')
+        )
 
         return res
 
     def get_active_document_name(self):
-        """
-            Returns just a name of active document via ws call
-        Returns(string): file name
-        """
-        res = self.websocketserver.call(self.client.call
-                                        ('Photoshop.get_active_document_name'))
+        """Returns just a name of active document via ws call
 
-        return res
+        Returns(string):
+            file name
+        """
+        return self.websocketserver.call(
+            self.client.call('Photoshop.get_active_document_name')
+        )
 
     def is_saved(self):
+        """Returns true if no changes in active document
+
+        Returns:
+            <boolean>
         """
-            Returns true if no changes in active document
-        Returns: <boolean>
-        """
-        return self.websocketserver.call(self.client.call
-                                         ('Photoshop.is_saved'))
+        return self.websocketserver.call(
+            self.client.call('Photoshop.is_saved')
+        )
 
     def save(self):
-        """
-            Saves active document
-        Returns: None
-        """
-        self.websocketserver.call(self.client.call
-                                  ('Photoshop.save'))
+        """Saves active document"""
+        self.websocketserver.call(
+            self.client.call('Photoshop.save')
+        )
 
     def saveAs(self, image_path, ext, as_copy):
-        """
-            Saves active document to psd (copy) or png or jpg
+        """Saves active document to psd (copy) or png or jpg
+
         Args:
             image_path(string): full local path
             ext: <string psd|jpg|png>
             as_copy: <boolean>
         Returns: None
         """
-        self.websocketserver.call(self.client.call
-                                  ('Photoshop.saveAs',
-                                   image_path=image_path,
-                                   ext=ext,
-                                   as_copy=as_copy))
+        self.websocketserver.call(
+            self.client.call(
+                'Photoshop.saveAs',
+                image_path=image_path,
+                ext=ext,
+                as_copy=as_copy
+            )
+        )
 
     def set_visible(self, layer_id, visibility):
-        """
-            Set layer with 'layer_id' to 'visibility'
+        """Set layer with 'layer_id' to 'visibility'
+
         Args:
             layer_id: <int>
             visibility: <true - set visible, false - hide>
         Returns: None
         """
-        self.websocketserver.call(self.client.call
-                                  ('Photoshop.set_visible',
-                                   layer_id=layer_id,
-                                   visibility=visibility))
+        self.websocketserver.call(
+            self.client.call(
+                'Photoshop.set_visible',
+                layer_id=layer_id,
+                visibility=visibility
+            )
+        )
 
     def get_layers_metadata(self):
-        """
-            Reads layers metadata from Headline from active document in PS.
-            (Headline accessible by File > File Info)
+        """Reads layers metadata from Headline from active document in PS.
+        (Headline accessible by File > File Info)
 
-            Returns:
-                (string): - json documents
-                example:
-                    {"8":{"active":true,"subset":"imageBG",
-                          "family":"image","id":"pyblish.avalon.instance",
-                          "asset":"Town"}}
-                    8 is layer(group) id - used for deletion, update etc.
+        Returns:
+            (string): - json documents
+            example:
+                {"8":{"active":true,"subset":"imageBG",
+                      "family":"image","id":"pyblish.avalon.instance",
+                      "asset":"Town"}}
+                8 is layer(group) id - used for deletion, update etc.
         """
         layers_data = {}
         res = self.websocketserver.call(self.client.call('Photoshop.read'))
@@ -337,8 +350,10 @@ class PhotoshopServerStub:
         if not isinstance(layers_data, dict):
             temp_layers_meta = {}
             for layer_meta in layers_data:
-                layer_id = layer_meta.get("uuid") or \
-                    (layer_meta.get("members")[0])
+                layer_id = layer_meta.get("uuid")
+                if not layer_id:
+                    layer_id = layer_meta.get("members")[0]
+
                 temp_layers_meta[layer_id] = layer_meta
             layers_data = temp_layers_meta
         else:
@@ -352,8 +367,7 @@ class PhotoshopServerStub:
         return layers_data
 
     def import_smart_object(self, path, layer_name, as_reference=False):
-        """
-            Import the file at `path` as a smart object to active document.
+        """Import the file at `path` as a smart object to active document.
 
         Args:
             path (str): File path to import.
@@ -362,53 +376,62 @@ class PhotoshopServerStub:
             as_reference (bool): pull in content or reference
         """
         enhanced_name = self.LOADED_ICON + layer_name
-        res = self.websocketserver.call(self.client.call
-                                        ('Photoshop.import_smart_object',
-                                         path=path, name=enhanced_name,
-                                         as_reference=as_reference
-                                         ))
+        res = self.websocketserver.call(
+            self.client.call(
+                'Photoshop.import_smart_object',
+                path=path,
+                name=enhanced_name,
+                as_reference=as_reference
+            )
+        )
         rec = self._to_records(res).pop()
         if rec:
             rec.name = rec.name.replace(self.LOADED_ICON, '')
         return rec
 
     def replace_smart_object(self, layer, path, layer_name):
-        """
-            Replace the smart object `layer` with file at `path`
-            layer_name (str): Unique layer name to differentiate how many times
-                same smart object was loaded
+        """Replace the smart object `layer` with file at `path`
 
         Args:
             layer (PSItem):
             path (str): File to import.
+            layer_name (str): Unique layer name to differentiate how many times
+                same smart object was loaded
         """
         enhanced_name = self.LOADED_ICON + layer_name
-        self.websocketserver.call(self.client.call
-                                  ('Photoshop.replace_smart_object',
-                                   layer_id=layer.id,
-                                   path=path, name=enhanced_name))
+        self.websocketserver.call(
+            self.client.call(
+                'Photoshop.replace_smart_object',
+                layer_id=layer.id,
+                path=path,
+                name=enhanced_name
+            )
+        )
 
     def delete_layer(self, layer_id):
-        """
-            Deletes specific layer by it's id.
+        """Deletes specific layer by it's id.
+
         Args:
             layer_id (int): id of layer to delete
         """
-        self.websocketserver.call(self.client.call
-                                  ('Photoshop.delete_layer',
-                                   layer_id=layer_id))
+        self.websocketserver.call(
+            self.client.call('Photoshop.delete_layer', layer_id=layer_id)
+        )
 
     def rename_layer(self, layer_id, name):
-        """
-            Renames specific layer by it's id.
+        """Renames specific layer by it's id.
+
         Args:
             layer_id (int): id of layer to delete
             name (str): new name
         """
-        self.websocketserver.call(self.client.call
-                                  ('Photoshop.rename_layer',
-                                   layer_id=layer_id,
-                                   name=name))
+        self.websocketserver.call(
+            self.client.call(
+                'Photoshop.rename_layer',
+                layer_id=layer_id,
+                name=name
+            )
+        )
 
     def remove_instance(self, instance_id):
         cleaned_data = {}
@@ -419,14 +442,15 @@ class PhotoshopServerStub:
 
         payload = json.dumps(cleaned_data, indent=4)
 
-        self.websocketserver.call(self.client.call
-                                  ('Photoshop.imprint', payload=payload)
-                                  )
+        self.websocketserver.call(
+            self.client.call('Photoshop.imprint', payload=payload)
+        )
 
     def get_extension_version(self):
         """Returns version number of installed extension."""
-        return self.websocketserver.call(self.client.call
-                                         ('Photoshop.get_extension_version'))
+        return self.websocketserver.call(
+            self.client.call('Photoshop.get_extension_version')
+        )
 
     def close(self):
         """Shutting down PS and process too.
@@ -437,11 +461,12 @@ class PhotoshopServerStub:
         self.websocketserver.call(self.client.call('Photoshop.close'))
 
     def _to_records(self, res):
-        """
-            Converts string json representation into list of PSItem for
-            dot notation access to work.
+        """Converts string json representation into list of PSItem for
+        dot notation access to work.
+
         Args:
             res (string): valid json
+
         Returns:
             <list of PSItem>
         """
@@ -456,15 +481,15 @@ class PhotoshopServerStub:
             layers_data = [layers_data]
         for d in layers_data:
             # currently implemented and expected fields
-            item = PSItem(d.get('id'),
-                          d.get('name'),
-                          d.get('group'),
-                          d.get('parents'),
-                          d.get('visible'),
-                          d.get('type'),
-                          d.get('members'),
-                          d.get('long_name'),
-                          d.get("color_code"))
-
-            ret.append(item)
+            ret.append(PSItem(
+                d.get('id'),
+                d.get('name'),
+                d.get('group'),
+                d.get('parents'),
+                d.get('visible'),
+                d.get('type'),
+                d.get('members'),
+                d.get('long_name'),
+                d.get("color_code")
+            ))
         return ret
