@@ -1,5 +1,8 @@
 import re
 
+import avalon.api
+from .launch_logic import stub
+
 
 def get_unique_layer_name(layers, asset_name, subset_name):
     """
@@ -24,3 +27,9 @@ def get_unique_layer_name(layers, asset_name, subset_name):
     occurrences = names.get(name, 0)
 
     return "{}_{:0>3d}".format(name, occurrences + 1)
+
+
+class PhotoshopLoader(avalon.api.Loader):
+    @staticmethod
+    def get_stub():
+        return stub()

@@ -4,6 +4,8 @@ Anything that isn't defined here is INTERNAL and unreliable for external use.
 
 """
 
+from .launch_logic import stub
+
 from .pipeline import (
     ls,
     list_instances,
@@ -13,6 +15,7 @@ from .pipeline import (
     containerise
 )
 from .plugin import (
+    PhotoshopLoader,
     get_unique_layer_name
 )
 from .workio import (
@@ -29,9 +32,10 @@ from .lib import (
     maintained_visibility
 )
 
-from .launch_logic import stub
-
 __all__ = [
+    # launch_logic
+    "stub"
+
     # pipeline
     "ls",
     "list_instances",
@@ -41,6 +45,7 @@ __all__ = [
     "containerise",
 
     # Plugin
+    "PhotoshopLoader",
     "get_unique_layer_name",
 
     # workfiles
@@ -54,7 +59,4 @@ __all__ = [
     # lib
     "maintained_selection",
     "maintained_visibility",
-
-    # launch_logic
-    "stub"
 ]
