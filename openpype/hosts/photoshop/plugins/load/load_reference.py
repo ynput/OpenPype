@@ -3,7 +3,7 @@ import re
 from avalon import api
 
 from openpype.hosts.photoshop import api as photoshop
-from openpype.hosts.photoshop.plugins.lib import get_unique_layer_name
+from openpype.hosts.photoshop.api import get_unique_layer_name
 
 stub = photoshop.stub()
 

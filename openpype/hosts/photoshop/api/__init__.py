@@ -12,7 +12,9 @@ from .pipeline import (
     install,
     containerise
 )
-
+from .plugin import (
+    get_unique_layer_name
+)
 from .workio import (
     file_extensions,
     has_unsaved_changes,
@@ -37,6 +39,9 @@ __all__ = [
     "Creator",
     "install",
     "containerise",
+
+    # Plugin
+    "get_unique_layer_name",
 
     # workfiles
     "file_extensions",

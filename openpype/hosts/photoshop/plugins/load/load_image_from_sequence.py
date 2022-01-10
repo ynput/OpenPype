@@ -5,8 +5,8 @@ from avalon.pipeline import get_representation_path_from_context
 from avalon.vendor import qargparse
 
 from openpype.lib import Anatomy
-from openpype.hosts.photoshop.plugins.lib import get_unique_layer_name
 from openpype.hosts.photoshop import api as photoshop
+from openpype.hosts.photoshop.api import get_unique_layer_name
 
 stub = photoshop.stub()
 
