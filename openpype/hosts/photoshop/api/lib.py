@@ -1,13 +1,15 @@
 import os
 import sys
+import re
 import contextlib
 import traceback
 
 from Qt import QtWidgets
 
-from openpype.tools.utils import host_tools
+import avalon.api
 
 from openpype.api import Logger
+from openpype.tools.utils import host_tools
 from openpype.lib.remote_publish import headless_publish
 
 from .launch_logic import ProcessLauncher, stub
@@ -20,9 +22,9 @@ def safe_excepthook(*args):
 
 
 def main(*subprocess_args):
-    from avalon import api, photoshop
+    from openpype.hosts.photoshop import api
 
-    api.install(photoshop)
+    avalon.api.install(api)
     sys.excepthook = safe_excepthook
 
     # coloring in ConsoleTrayApp
