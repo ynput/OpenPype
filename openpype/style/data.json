@@ -51,6 +51,9 @@
         "border-hover": "rgba(168, 175, 189, .3)",
         "border-focus": "rgb(92, 173, 214)",
 
+        "delete-btn-bg": "rgb(201, 54, 54)",
+        "delete-btn-bg-disabled": "rgba(201, 54, 54, 64)",
+
         "tab-widget": {
             "bg": "#21252B",
             "bg-selected": "#434a56",
