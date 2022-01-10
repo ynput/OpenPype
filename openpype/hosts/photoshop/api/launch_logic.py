@@ -2,7 +2,6 @@ import os
 import subprocess
 import collections
 import asyncio
-import functools
 
 from wsrpc_aiohttp import (
     WebSocketRoute,
@@ -24,6 +23,61 @@ log = Logger.get_logger(__name__)
 
 class ConnectionNotEstablishedYet(Exception):
     pass
+
+
+class MainThreadItem:
+    """Structure to store information about callback in main thread.
+
+    Item should be used to execute callback in main thread which may be needed
+    for execution of Qt objects.
+
+    Item store callback (callable variable), arguments and keyword arguments
+    for the callback. Item hold information about it's process.
+    """
+    not_set = object()
+
+    def __init__(self, callback, *args, **kwargs):
+        self._done = False
+        self._exception = self.not_set
+        self._result = self.not_set
+        self._callback = callback
+        self._args = args
+        self._kwargs = kwargs
+
+    @property
+    def done(self):
+        return self._done
+
+    @property
+    def exception(self):
+        return self._exception
+
+    @property
+    def result(self):
+        return self._result
+
+    def execute(self):
+        """Execute callback and store it's result.
+
+        Method must be called from main thread. Item is marked as `done`
+        when callback execution finished. Store output of callback of exception
+        information when callback raise one.
+        """
+        log.debug("Executing process in main thread")
+        if self.done:
+            log.warning("- item is already processed")
+            return
+
+        log.info("Running callback: {}".format(str(self._callback)))
+        try:
+            result = self._callback(*self._args, **self._kwargs)
+            self._result = result
+
+        except Exception as exc:
+            self._exception = exc
+
+        finally:
+            self._done = True
 
 
 def stub():
@@ -113,8 +167,10 @@ class ProcessLauncher(QtCore.QObject):
         return None
 
     @classmethod
-    def execute_in_main_thread(cls, callback):
-        cls._main_thread_callbacks.append(callback)
+    def execute_in_main_thread(cls, callback, *args, **kwargs):
+        item = MainThreadItem(callback, *args, **kwargs)
+        cls._main_thread_callbacks.append(item)
+        return item
 
     def start(self):
         if self._started:
@@ -145,8 +201,8 @@ class ProcessLauncher(QtCore.QObject):
         cls = self.__class__
         for _ in range(len(cls._main_thread_callbacks)):
             if cls._main_thread_callbacks:
-                callback = cls._main_thread_callbacks.popleft()
-                callback()
+                item = cls._main_thread_callbacks.popleft()
+                item.execute()
 
         if not self.is_process_running:
             self.log.info("Host process is not running. Closing")
@@ -303,10 +359,7 @@ class PhotoshopRoute(WebSocketRoute):
     def _tool_route(self, _tool_name):
         """The address accessed when clicking on the buttons."""
 
-        partial_method = functools.partial(show_tool_by_name, 
-                                           _tool_name)
-
-        ProcessLauncher.execute_in_main_thread(partial_method)
+        ProcessLauncher.execute_in_main_thread(show_tool_by_name, _tool_name)
 
         # Required return statement.
         return "nothing"

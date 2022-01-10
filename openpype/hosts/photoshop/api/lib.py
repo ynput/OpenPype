@@ -34,17 +34,19 @@ def main(*subprocess_args):
     launcher.start()
 
     if os.environ.get("HEADLESS_PUBLISH"):
-        launcher.execute_in_main_thread(lambda: headless_publish(
+        launcher.execute_in_main_thread(
+            headless_publish,
             log,
             "ClosePS",
-            os.environ.get("IS_TEST")))
+            os.environ.get("IS_TEST")
+        )
     elif os.environ.get("AVALON_PHOTOSHOP_WORKFILES_ON_LAUNCH", True):
         save = False
         if os.getenv("WORKFILES_SAVE_AS"):
             save = True
 
         launcher.execute_in_main_thread(
-            lambda: host_tools.show_workfiles(save=save)
+            host_tools.show_workfiles, save=save
         )
 
     sys.exit(app.exec_())
