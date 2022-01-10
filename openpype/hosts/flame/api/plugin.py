@@ -353,6 +353,7 @@ class PublishableClip:
     count_steps_default = 10
     vertical_sync_default = False
     driving_layer_default = ""
+    index_from_segment_default = False
 
     def __init__(self, segment, **kwargs):
         self.rename_index = kwargs["rename_index"]
@@ -462,6 +463,8 @@ class PublishableClip:
         self.hierarchy_data = self.ui_inputs.get(
             "hierarchyData", {}).get("value") or \
             self.current_segment_default_data.copy()
+        self.index_from_segment = self.ui_inputs.get(
+            "segmentIndex", {}).get("value") or self.index_from_segment_default
         self.count_from = self.ui_inputs.get(
             "countFrom", {}).get("value") or self.count_from_default
         self.count_steps = self.ui_inputs.get(
@@ -524,8 +527,12 @@ class PublishableClip:
                         self.review_track not in self.review_track_default):
                     # if review layer is defined and not the same as defalut
                     self.review_layer = self.review_track
+
                 # shot num calculate
-                if self.rename_index == 0:
+                if self.index_from_segment:
+                    # use clip index from timeline
+                    self.shot_num = self.count_steps * self.cs_index
+                elif self.rename_index == 0:
                     self.shot_num = self.count_from
                 else:
                     self.shot_num = self.count_from + self.count_steps

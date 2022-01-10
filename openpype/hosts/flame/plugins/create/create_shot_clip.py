@@ -101,20 +101,27 @@ class CreateShotClip(opfapi.Creator):
                         "target": "ui",
                         "toolTip": "template for creating shot namespaused for renaming (use rename: on)",  # noqa
                         "order": 2},
+                    "segmentIndex": {
+                        "value": True,
+                        "type": "QCheckBox",
+                        "label": "Segment index",
+                        "target": "ui",
+                        "toolTip": "Take number from segment index",  # noqa
+                        "order": 3},
                     "countFrom": {
                         "value": 10,
                         "type": "QSpinBox",
                         "label": "Count sequence from",
                         "target": "ui",
                         "toolTip": "Set when the sequence number stafrom",  # noqa
-                        "order": 3},
+                        "order": 4},
                     "countSteps": {
                         "value": 10,
                         "type": "QSpinBox",
                         "label": "Stepping number",
                         "target": "ui",
                         "toolTip": "What number is adding every new step",  # noqa
-                        "order": 4},
+                        "order": 5},
                 }
             },
             "hierarchyData": {
