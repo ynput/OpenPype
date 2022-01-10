@@ -10,12 +10,13 @@ from .pipeline import (
     ls,
     list_instances,
     remove_instance,
-    Creator,
     install,
+    uninstall,
     containerise
 )
 from .plugin import (
     PhotoshopLoader,
+    Creator,
     get_unique_layer_name
 )
 from .workio import (
@@ -34,18 +35,18 @@ from .lib import (
 
 __all__ = [
     # launch_logic
-    "stub"
+    "stub",
 
     # pipeline
     "ls",
     "list_instances",
     "remove_instance",
-    "Creator",
     "install",
     "containerise",
 
     # Plugin
     "PhotoshopLoader",
+    "Creator",
     "get_unique_layer_name",
 
     # workfiles
