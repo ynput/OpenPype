@@ -1,8 +1,6 @@
 from copy import deepcopy
 import openpype.hosts.flame.api as opfapi
 
-reload(opfapi)  # noqa
-
 
 class CreateShotClip(opfapi.Creator):
     """Publishable clip"""
@@ -32,22 +30,21 @@ class CreateShotClip(opfapi.Creator):
                 gui_inputs[k]["value"] = presets[k]
 
         # open widget for plugins inputs
-        widget = self.create_widget(
+        results_back = self.create_widget(
             "Pype publish attributes creator",
             "Define sequential rename and fill hierarchy data.",
             gui_inputs
         )
-        widget.exec_()
 
         if len(self.selected) < 1:
             return
 
-        if not widget.result:
+        if not results_back:
             print("Operation aborted")
             return
 
         # get ui output for track name for vertical sync
-        v_sync_track = widget.result["vSyncTrack"]["value"]
+        v_sync_track = results_back["vSyncTrack"]["value"]
 
         # sort selected trackItems by
         sorted_selected_segments = []
@@ -62,8 +59,9 @@ class CreateShotClip(opfapi.Creator):
 
         kwargs = {
             "log": self.log,
-            "ui_inputs": widget.result,
-            "avalon": self.data
+            "ui_inputs": results_back,
+            "avalon": self.data,
+            "family": self.data["family"]
         }
 
         for i, segment in enumerate(sorted_selected_segments):

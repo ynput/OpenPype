@@ -17,6 +17,7 @@ class CreatorWidget(QtWidgets.QDialog):
 
     # output items
     items = dict()
+    _results_back = None
 
     def __init__(self, name, info, ui_inputs, parent=None):
         super(CreatorWidget, self).__init__(parent)
@@ -88,18 +89,27 @@ class CreatorWidget(QtWidgets.QDialog):
 
         self.setStyleSheet(style.load_stylesheet())
 
+    @classmethod
+    def set_results_back(cls, value):
+        cls._results_back = value
+
+    @classmethod
+    def get_results_back(cls):
+        return cls._results_back
+
     def _on_ok_clicked(self):
         log.debug("ok is clicked: {}".format(self.items))
-        self.result = self._values(self.items)
+        results_back = self._values(self.items)
+        self.set_results_back(results_back)
         self.close()
 
     def _on_cancel_clicked(self):
-        self.result = None
+        self.set_results_back(None)
         self.close()
 
-    def closeEvent(self, event):
-        self.result = None
-        event.accept()
+    def showEvent(self, event):
+        self.set_results_back(None)
+        super(CreatorWidget, self).showEvent(event)
 
     def _values(self, data, new_data=None):
         new_data = new_data or dict()
@@ -303,7 +313,9 @@ class Creator(openpype.Creator):
             self.selected = flib.get_sequence_segments(self.sequence)
 
     def create_widget(self, *args, **kwargs):
-        return CreatorWidget(*args, **kwargs)
+        widget = CreatorWidget(*args, **kwargs)
+        widget.exec_()
+        return widget.get_results_back()
 
 
 class PublishableClip:
@@ -344,6 +356,7 @@ class PublishableClip:
 
     def __init__(self, segment, **kwargs):
         self.rename_index = kwargs["rename_index"]
+        self.family = kwargs["family"]
         self.log = kwargs["log"]
 
         # get main parent objects
@@ -580,7 +593,7 @@ class PublishableClip:
             "hierarchyData": hierarchy_formating_data,
             "subset": self.subset,
             "family": self.subset_family,
-            "families": [self.data["family"]]
+            "families": [self.family]
         }
 
     def _convert_to_entity(self, type, template):
