@@ -1,7 +1,6 @@
 import os
 import subprocess
 import collections
-import logging
 import asyncio
 import functools
 
@@ -12,6 +11,7 @@ from wsrpc_aiohttp import (
 
 from Qt import QtCore
 
+from openpype.api import Logger
 from openpype.tools.utils import host_tools
 
 from avalon import api
@@ -19,8 +19,7 @@ from avalon.tools.webserver.app import WebServerTool
 
 from .ws_stub import PhotoshopServerStub
 
-log = logging.getLogger(__name__)
-log.setLevel(logging.DEBUG)
+log = Logger.get_logger(__name__)
 
 
 class ConnectionNotEstablishedYet(Exception):
@@ -81,10 +80,9 @@ class ProcessLauncher(QtCore.QObject):
     @property
     def log(self):
         if self._log is None:
-            from openpype.api import Logger
-
-            self._log = Logger.get_logger("{}-launcher".format(
-                self.route_name))
+            self._log = Logger.get_logger(
+                "{}-launcher".format(self.route_name)
+            )
         return self._log
 
     @property
@@ -106,7 +104,6 @@ class ProcessLauncher(QtCore.QObject):
             return False
 
         try:
-
             _stub = stub()
             if _stub:
                 return True

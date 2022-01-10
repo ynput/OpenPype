@@ -1,19 +1,18 @@
 import os
 import sys
 import contextlib
-import logging
 import traceback
 
 from Qt import QtWidgets
 
 from openpype.tools.utils import host_tools
 
+from openpype.api import Logger
 from openpype.lib.remote_publish import headless_publish
 
 from .launch_logic import ProcessLauncher, stub
 
-log = logging.getLogger(__name__)
-log.setLevel(logging.DEBUG)
+log = Logger.get_logger(__name__)
 
 
 def safe_excepthook(*args):
