@@ -312,7 +312,7 @@ class ExtractBurnin(openpype.api.Extractor):
                 if platform.system().lower() == "windows":
                     process_kwargs["creationflags"] = CREATE_NO_WINDOW
 
-                run_openpype_process(args, **process_kwargs)
+                run_openpype_process(*args, **process_kwargs)
                 # Remove the temporary json
                 os.remove(temporary_json_filepath)
 
