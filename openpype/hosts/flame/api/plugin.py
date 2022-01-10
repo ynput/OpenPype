@@ -509,7 +509,8 @@ class PublishableClip:
             hero_track = False
 
         # increasing steps by index of rename iteration
-        self.count_steps *= self.rename_index
+        if not self.index_from_segment:
+            self.count_steps *= self.rename_index
 
         hierarchy_formating_data = {}
         hierarchy_data = deepcopy(self.hierarchy_data)
@@ -532,10 +533,11 @@ class PublishableClip:
                 if self.index_from_segment:
                     # use clip index from timeline
                     self.shot_num = self.count_steps * self.cs_index
-                elif self.rename_index == 0:
-                    self.shot_num = self.count_from
                 else:
-                    self.shot_num = self.count_from + self.count_steps
+                    if self.rename_index == 0:
+                        self.shot_num = self.count_from
+                    else:
+                        self.shot_num = self.count_from + self.count_steps
 
             # clip name sequence number
             _data.update({"shot": self.shot_num})
