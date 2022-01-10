@@ -24,10 +24,13 @@ from .env_tools import (
 
 from .terminal import Terminal
 from .execute import (
+    get_openpype_execute_args,
     get_pype_execute_args,
     get_linux_launcher_args,
     execute,
     run_subprocess,
+    run_openpype_process,
+    clean_envs_for_openpype_process,
     path_to_subprocess_arg,
     CREATE_NO_WINDOW
 )
@@ -173,10 +176,13 @@ from .pype_info import (
 terminal = Terminal
 
 __all__ = [
+    "get_openpype_execute_args",
     "get_pype_execute_args",
     "get_linux_launcher_args",
     "execute",
     "run_subprocess",
+    "run_openpype_process",
+    "clean_envs_for_openpype_process",
     "path_to_subprocess_arg",
     "CREATE_NO_WINDOW",
 

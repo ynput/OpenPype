@@ -10,7 +10,7 @@ from .constants import HOST_NAME
 from avalon import io
 from openpype.api import execute, Logger
 from openpype.lib import (
-    get_pype_execute_args,
+    get_openpype_execute_args,
     apply_project_environments_value
 )
 
@@ -193,7 +193,7 @@ def cli_publish(data, publish_paths, gui=True):
     project_name = os.environ["AVALON_PROJECT"]
     env_copy = apply_project_environments_value(project_name, envcopy)
 
-    args = get_pype_execute_args("run", PUBLISH_SCRIPT_PATH)
+    args = get_openpype_execute_args("run", PUBLISH_SCRIPT_PATH)
     result = execute(args, env=envcopy)
 
     result = {}
