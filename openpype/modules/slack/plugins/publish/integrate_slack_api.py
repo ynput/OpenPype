@@ -25,7 +25,7 @@ class IntegrateSlackAPI(pyblish.api.InstancePlugin):
     optional = True
 
     # internal, not configurable
-    bot_user_name = "OpenpypeNotifier"
+    bot_user_name = "OpenPypeNotifier"
     icon_url = "https://openpype.io/img/favicon/favicon.ico"
 
     def process(self, instance):
@@ -37,11 +37,12 @@ class IntegrateSlackAPI(pyblish.api.InstancePlugin):
             message = self._get_filled_message(message_profile["message"],
                                                instance,
                                                review_path)
+            self.log.info("message:: {}".format(message))
             if not message:
                 return
 
-            if message_profile["upload_thumbnail"] and thumbnail_path:
-                publish_files.add(thumbnail_path)
+            # if message_profile["upload_thumbnail"] and thumbnail_path:
+            #     publish_files.add(thumbnail_path)
 
             if message_profile["upload_review"] and review_path:
                 publish_files.add(review_path)
@@ -130,14 +131,14 @@ class IntegrateSlackAPI(pyblish.api.InstancePlugin):
         from slackclient import SlackClient
         try:
             client = SlackClient(token)
+            self.log.info("publish {}".format(publish_files))
+            attachment_str = "\n\n Attachment links: \n"
             for p_file in publish_files:
-                attachment_str = "\n\n Attachment links: \n"
                 with open(p_file, 'rb') as pf:
                     response = client.api_call(
                         "files.upload",
                         channels=channel,
-                        file=pf,
-                        title=os.path.basename(p_file),
+                        file=pf
                     )
                     attachment_str += "\n<{}|{}>".format(
                         response["file"]["permalink"],
@@ -149,11 +150,9 @@ class IntegrateSlackAPI(pyblish.api.InstancePlugin):
             response = client.api_call(
                 "chat.postMessage",
                 channel=channel,
-                text=message,
-                username=self.bot_user_name,
-                icon_url=self.icon_url
+                text=message
             )
-
+            self.log.info("repsonse {}".format(response))
             if response.get("error"):
                 error_str = self._enrich_error(str(response.get("error")),
                                                channel)
