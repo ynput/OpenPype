@@ -28,7 +28,7 @@ class CollectTestSelection(pyblish.api.ContextPlugin):
 
     def test_otio_export(self, sequence):
         test_dir = os.path.normpath(
-                tempfile.mkdtemp(prefix="test_pyblish_tmp_")
+            tempfile.mkdtemp(prefix="test_pyblish_tmp_")
         )
         export_path = os.path.normpath(
             os.path.join(
@@ -42,7 +42,7 @@ class CollectTestSelection(pyblish.api.ContextPlugin):
         read_timeline_otio = otio.adapters.read_from_file(export_path)
 
         if otio_timeline != read_timeline_otio:
-            raise Exception("Exported otio timeline is different from original")
+            raise Exception("Exported timeline is different from original")
 
         self.log.info(pformat(otio_timeline))
         self.log.info("Otio exported to: {}".format(export_path))
