@@ -17,6 +17,10 @@ import os
 import sys
 from pathlib import Path
 import re
+from Qt.QtWidgets import QApplication
+
+
+app = QApplication([])
 
 version = {}
 openpype_root = Path(os.path.abspath('../..'))
@@ -32,13 +36,14 @@ with open(openpype_root / "openpype" / "version.py") as fp:
     exec(fp.read(), version)
 
 version_match = re.search(r"(\d+\.\d+.\d+).*", version["__version__"])
-__version__ = version_match.group(1)
+openpype_version = version_match.group(1)
 
 
 todo_include_todos = True
 autodoc_mock_imports = ["maya", "pymel", "nuke", "nukestudio", "nukescripts",
                         "hiero", "bpy", "fusion", "houdini", "hou", "unreal",
-                        "__builtin__", "resolve", "pysync", "DaVinciResolveScript"]
+                        "__builtin__", "resolve", "pysync", "DaVinciResolveScript",
+                        "PySide2"]
 
 # -- Project information -----------------------------------------------------
 
@@ -47,7 +52,7 @@ copyright = '2019, Orbi Tools'
 author = 'Orbi Tools'
 
 # The short X.Y version
-version = version
+version = openpype_version
 # The full version, including alpha/beta/rc tags
 release = ''
 
@@ -68,11 +73,11 @@ extensions = [
     'sphinx.ext.todo',
     'sphinx.ext.coverage',
     'sphinx.ext.mathjax',
-    'sphinx.ext.viewcode',
+    # 'sphinx.ext.viewcode',
     'sphinx.ext.autosummary',
     'm2r2',
     'sphinx.ext.inheritance_diagram',
-    'autoapi.sphinx'
+    'autoapi.extension'
 ]
 
 ##############################
@@ -80,10 +85,11 @@ extensions = [
 ##############################
 
 autoapi_dirs = [openpype_root / 'openpype', openpype_root / 'igniter']
-
-# bypass modules with a lot of python2 content for now
 autoapi_ignore = [
-    "*vendor*"
+    "*vendor/*",
+    "openpype/vendor/*",
+    "openpype/hosts/hiero/api/startup/*",
+    "openpype/tools/creator/widgets.py"
 ]
 autoapi_keep_files = True
 autoapi_options = [
@@ -128,8 +134,49 @@ autodoc_typehints = 'description'
 autosummary_generate = True
 
 
-# -- Options for HTML output -------------------------------------------------
+# -- Automatically generate API documentation --------------------------------
 
+def run_apidoc(_):
+
+    import shutil
+    from sphinx.ext import apidoc
+
+    op_root = os.path.abspath(os.getenv("OPENPYPE_ROOT"))
+    os.chdir(op_root)
+
+    conf_dir = str(Path(op_root) / "docs" / "source")
+    build_dir = str(Path(op_root) / "docs" / "build")
+
+    if Path(build_dir).exists():
+        shutil.rmtree(build_dir)
+
+    builder = ["html"]
+    modules = ["igniter", "openpype"]
+
+    ignore_paths = [
+        os.path.join(op_root, "vendor"),
+        os.path.join(op_root, "openpype", "vendor"),
+        os.path.join(op_root, "openpype", "hosts", "hiero", "api", "startup"),
+        os.path.join(op_root, "openpype", "tools", "creator", "widgets.py"),
+        os.path.join(op_root, "openpype", "vendor", "creator", "widgets.py")
+    ]
+
+    for mod in modules:
+        argv = [
+            "-f",
+            "-l",
+            "-e",
+            "-M",
+            "-o", str(Path(os.getenv("OPENPYPE_ROOT")) / "docs" / "source"),
+            mod
+        ] + ignore_paths
+
+        from sphinx.ext import apidoc
+        apidoc.main(argv)
+
+
+def setup(app):
+    app.connect('builder-inited', run_apidoc)
 
 # -- Options for HTML output -------------------------------------------------
 
@@ -194,7 +241,7 @@ latex_elements = {
 # (source start file, target name, title,
 #  author, documentclass [howto, manual, or own class]).
 latex_documents = [
-    (master_doc, 'pype.tex', 'pype Documentation',
+    (master_doc, 'openpype.tex', 'OpenPype Documentation',
      'OrbiTools', 'manual'),
 ]
 
@@ -204,7 +251,7 @@ latex_documents = [
 # One entry per manual page. List of tuples
 # (source start file, name, description, authors, manual section).
 man_pages = [
-    (master_doc, 'pype', 'pype Documentation',
+    (master_doc, 'openpype', 'OpenPype Documentation',
      [author], 1)
 ]
 
@@ -215,7 +262,7 @@ man_pages = [
 # (source start file, target name, title, author,
 #  dir menu entry, description, category)
 texinfo_documents = [
-    (master_doc, 'pype', 'pype Documentation',
+    (master_doc, 'openpype', 'OpenPype Documentation',
      author, 'pype', 'One line description of project.',
      'Miscellaneous'),
 ]

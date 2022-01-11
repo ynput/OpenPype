@@ -906,7 +906,7 @@ class KnobScripter(QtWidgets.QWidget):
                 os.makedirs(folder_path)
                 return True
             except:
-                print "Couldn't create the scripting folders.\nPlease check your OS write permissions."
+                print("Couldn't create the scripting folders.\nPlease check your OS write permissions.")
                 return False
 
     def makeScriptFile(self, name="Untitled.py", folder="scripts", empty=True):
@@ -916,7 +916,7 @@ class KnobScripter(QtWidgets.QWidget):
                 self.current_script_file = open(script_path, 'w')
                 return True
             except:
-                print "Couldn't create the scripting folders.\nPlease check your OS write permissions."
+                print("Couldn't create the scripting folders.\nPlease check your OS write permissions.")
                 return False
 
     def setCurrentFolder(self, folderName):
@@ -1457,7 +1457,7 @@ class KnobScripter(QtWidgets.QWidget):
     def changeClicked(self, newNode=""):
         ''' Change node '''
         try:
-            print "Changing from " + self.node.name()
+            print("Changing from " + self.node.name())
         except:
             self.node = None
             if not len(nuke.selectedNodes()):

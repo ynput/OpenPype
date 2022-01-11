@@ -2,10 +2,7 @@
 """Package for handling pype command line arguments."""
 import os
 import sys
-
 import click
-
-# import sys
 from .pype_commands import PypeCommands
 
 
@@ -21,7 +18,7 @@ from .pype_commands import PypeCommands
 @click.option("--validate-version", expose_value=False,
               help="validate given version integrity")
 def main(ctx):
-    """Pype is main command serving as entry point to pipeline system.
+    """OpenPype is main command serving as entry point to pipeline system.
 
     It wraps different commands together.
     """
@@ -32,13 +29,13 @@ def main(ctx):
 @main.command()
 @click.option("-d", "--dev", is_flag=True, help="Settings in Dev mode")
 def settings(dev):
-    """Show Pype Settings UI."""
+    """Show OpenPype Settings UI."""
     PypeCommands().launch_settings_gui(dev)
 
 
 @main.command()
 def standalonepublisher():
-    """Show Pype Standalone publisher UI."""
+    """Show OpenPype Standalone publisher UI."""
     PypeCommands().launch_standalone_publisher()
 
 
@@ -46,13 +43,14 @@ def standalonepublisher():
 @click.option("-d", "--debug",
               is_flag=True, help=("Run pype tray in debug mode"))
 def tray(debug=False):
-    """Launch pype tray.
+    """Launch OpenPype tray.
 
-    Default action of pype command is to launch tray widget to control basic
-    aspects of pype. See documentation for more information.
+    Default action of OpenPype command is to launch tray widget to contro
+    basic aspects of OpenPype. See documentation for more information.
 
-    Running pype with `--debug` will result in lot of information useful for
-    debugging to be shown in console.
+    Running OpenPype with `--debug` will result in lot of information useful
+    for debugging to be shown in console.
+
     """
     PypeCommands().launch_tray(debug)
 
@@ -146,7 +144,7 @@ def extractenvironments(output_json_path, project, asset, task, app, envgroup):
 
     Entered output filepath will be created if does not exists.
 
-    All context options must be passed otherwise only pype's global
+    All context options must be passed otherwise only openpype's global
     environments will be extracted.
 
     Context options are "project", "asset", "task", "app"
@@ -264,11 +262,11 @@ def texturecopy(debug, project, asset, path):
 @click.argument('arguments', nargs=-1)
 def launch(app, project, asset, task,
            ftrack_server, ftrack_user, ftrack_key, tools, arguments, user):
-    """Launch registered application name in Pype context.
+    """Launch registered application name in OpenPype context.
 
-    You can define applications in pype-config toml files. Project, asset name
-    and task name must be provided (even if they are not used by app itself).
-    Optionally you can specify ftrack credentials if needed.
+    Project, asset name and task name must be provided (even if they are not
+    used by app itself). Optionally you can specify ftrack credentials
+    if needed.
 
     ARGUMENTS are passed to launched application.
 
@@ -412,3 +410,57 @@ def repack_version(directory):
     directory name.
     """
     PypeCommands().repack_version(directory)
+
+@main.command()
+def make_api_docs():
+    """Generate API documentation."""
+
+    import shutil
+    from sphinx.application import Sphinx
+    from sphinx.cmd.build import handle_exception
+    from sphinx.util.docutils import docutils_namespace, patch_docutils
+    from pathlib import Path
+
+    op_root = os.path.abspath(os.getenv("OPENPYPE_ROOT"))
+    os.chdir(op_root)
+
+    conf_dir = str(Path(op_root) / "docs" / "source")
+    build_dir = str(Path(op_root) / "docs" / "build")
+
+    if Path(build_dir).exists():
+        shutil.rmtree(build_dir)
+
+    builder = ["html"]
+
+    builder_target_dirs = [
+        (builder, os.path.join(build_dir, builder))
+        for builder in builder]
+
+    print(">>> Generating documentation ...")
+
+    class MockArgs:
+        pdb = False
+        verbosity = 1
+        traceback = True
+
+    for builder, builder_target_dir in builder_target_dirs:
+        app = None
+        print(f"    builder: {builder}")
+        try:
+            with patch_docutils(conf_dir), docutils_namespace():
+                app = Sphinx(conf_dir, conf_dir,
+                             builder_target_dir,
+                             os.path.join(build_dir, "doctrees"),
+                             builder, {}, sys.stdout, verbosity=1,
+                             warningiserror=True, keep_going=False)
+                app.build(force_all=True)
+                if app.statuscode:
+                    print('Error caused by %s builder.' % app.builder.name)
+        except Exception as exc:
+            handle_exception(app, MockArgs(), exception=exc)
+            raise SystemExit(1) from exc
+        except BaseException as exc:
+            handle_exception(app, MockArgs(), exception=exc)
+            raise SystemExit(1) from exc
+
+    print("*** Done.")
