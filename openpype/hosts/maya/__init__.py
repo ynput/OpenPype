@@ -8,7 +8,9 @@ def add_implementation_envs(env, _app):
         os.path.join(pype_root, "openpype", "hosts", "maya", "startup"),
         os.path.join(pype_root, "repos", "avalon-core", "setup", "maya"),
         os.path.join(pype_root, "tools", "mayalookassigner"),
-        os.path.join(pype_root, "openpype", "hosts", "maya", "vendor", "studiolibrary", "src")
+        os.path.join(
+            pype_root, "openpype", "hosts", "maya", "vendor", "studiolibrary", "src"
+        ),
     ]
     old_python_path = env.get("PYTHONPATH") or ""
     for path in old_python_path.split(os.pathsep):
@@ -22,9 +24,7 @@ def add_implementation_envs(env, _app):
     env["PYTHONPATH"] = os.pathsep.join(new_python_paths)
 
     # Set default values if are not already set via settings
-    defaults = {
-        "OPENPYPE_LOG_NO_COLORS": "Yes"
-    }
+    defaults = {"OPENPYPE_LOG_NO_COLORS": "Yes"}
     for key, value in defaults.items():
         if not env.get(key):
             env[key] = value

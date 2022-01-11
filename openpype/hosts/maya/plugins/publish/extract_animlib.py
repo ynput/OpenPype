@@ -2,10 +2,6 @@
 """Extract Animation as Animaion Library (.anim)."""
 import os
 import platform
-
-from maya import cmds
-
-import avalon.maya
 import openpype.api
 
 from studiolibrarymaya import animitem
