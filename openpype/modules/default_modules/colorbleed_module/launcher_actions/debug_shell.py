@@ -1,11 +1,7 @@
 import os
-
-import tempfile
 import subprocess
-import json
 
-from avalon import api, lib, pipeline
-from avalon.vendor import six
+from avalon import api
 
 
 class DebugShell(api.Action):
