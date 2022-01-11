@@ -17,7 +17,8 @@ class PrecollecTimelineOCIO(pyblish.api.ContextPlugin):
         sequence = opfapi.get_current_sequence(opfapi.CTX.selection)
 
         # adding otio timeline to context
-        otio_timeline = flame_export.create_otio_timeline(sequence)
+        with opfapi.maintained_segment_selection(sequence):
+            otio_timeline = flame_export.create_otio_timeline(sequence)
 
         instance_data = {
             "name": "{}_{}".format(asset, subset),
