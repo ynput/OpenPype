@@ -45,14 +45,14 @@ sys.excepthook = exeption_handler
 def cleanup():
     """Cleaning up Flame framework context
     """
-    if opfapi.CTX.apps:
-        print('`{}` cleaning up apps:\n {}\n'.format(
-            __file__, pformat(opfapi.CTX.apps)))
-        while len(opfapi.CTX.apps):
-            app = opfapi.CTX.apps.pop()
+    if opfapi.CTX.flame_apps:
+        print('`{}` cleaning up flame_apps:\n {}\n'.format(
+            __file__, pformat(opfapi.CTX.flame_apps)))
+        while len(opfapi.CTX.flame_apps):
+            app = opfapi.CTX.flame_apps.pop()
             print('`{}` removing : {}'.format(__file__, app.name))
             del app
-        opfapi.CTX.apps = []
+        opfapi.CTX.flame_apps = []
 
     if opfapi.CTX.app_framework:
         print('openpype\t: {} cleaning up'.format(
@@ -66,11 +66,12 @@ atexit.register(cleanup)
 
 
 def load_apps():
-    """Load available apps into Flame framework
+    """Load available flame_apps into Flame framework
     """
-    opfapi.CTX.apps.append(
+    opfapi.CTX.flame_apps.append(
         opfapi.FlameMenuProjectConnect(opfapi.CTX.app_framework))
-    opfapi.CTX.apps.append(opfapi.FlameMenuTimeline(opfapi.CTX.app_framework))
+    opfapi.CTX.flame_apps.append(
+        opfapi.FlameMenuTimeline(opfapi.CTX.app_framework))
     opfapi.CTX.app_framework.log.info("Apps are loaded")
 
 
@@ -103,7 +104,7 @@ Initialisation of the hook is starting from here
 First it needs to test if it can import the flame modul.
 This will happen only in case a project has been loaded.
 Then `app_initialized` will load main Framework which will load
-all menu objects as apps.
+all menu objects as flame_apps.
 """
 
 try:
@@ -131,7 +132,7 @@ def _build_app_menu(app_name):
 
     # first find the relative appname
     app = None
-    for _app in opfapi.CTX.apps:
+    for _app in opfapi.CTX.flame_apps:
         if _app.__class__.__name__ == app_name:
             app = _app
 

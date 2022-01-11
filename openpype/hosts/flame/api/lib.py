@@ -20,7 +20,7 @@ log = Logger.get_logger(__name__)
 class CTX:
     # singleton used for passing data between api modules
     app_framework = None
-    apps = []
+    flame_apps = []
     selection = None
 
 
