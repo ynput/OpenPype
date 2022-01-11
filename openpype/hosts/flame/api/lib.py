@@ -448,6 +448,8 @@ def get_sequence_segments(sequence, selected=False):
             for segment in track.segments:
                 if segment.name.get_value() == "":
                     continue
+                if segment.hidden:
+                    continue
                 if (
                     selected is True
                     and segment.selected.get_value() is not True
@@ -522,7 +524,7 @@ def _get_shot_tokens_values(clip, tokens):
 
 
 def get_segment_attributes(segment):
-    if str(segment.name)[1:-1] == "":
+    if segment.name.get_value() == "":
         return None
 
     # Add timeline segment to tree
