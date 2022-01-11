@@ -1,7 +1,9 @@
 import os
 import pyblish.api
+import tempfile
 import openpype.hosts.flame.api as opfapi
 from openpype.hosts.flame.otio import flame_export as otio_export
+import opentimelineio as otio
 from pprint import pformat
 reload(otio_export)  # noqa
 
@@ -25,16 +27,22 @@ class CollectTestSelection(pyblish.api.ContextPlugin):
         self.test_otio_export(sequence)
 
     def test_otio_export(self, sequence):
-        home_dir = os.path.expanduser("~")
+        test_dir = os.path.normpath(
+                tempfile.mkdtemp(prefix="test_pyblish_tmp_")
+        )
         export_path = os.path.normpath(
             os.path.join(
-                home_dir, "otio_timeline_export.otio"
+                test_dir, "otio_timeline_export.otio"
             )
         )
         otio_timeline = otio_export.create_otio_timeline(sequence)
         otio_export.write_to_file(
             otio_timeline, export_path
         )
+        read_timeline_otio = otio.adapters.read_from_file(export_path)
+
+        if otio_timeline != read_timeline_otio:
+            raise Exception("Exported otio timeline is different from original")
 
         self.log.info(pformat(otio_timeline))
         self.log.info("Otio exported to: {}".format(export_path))
