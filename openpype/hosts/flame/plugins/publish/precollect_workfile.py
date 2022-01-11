@@ -32,6 +32,7 @@ class PrecollecTimelineOCIO(pyblish.api.ContextPlugin):
 
         # update context with main project attributes
         context.data.update({
+            "flameProject": project,
             "flameSequence": sequence,
             "otioTimeline": otio_timeline,
             "currentFile": "Flame/{}/{}".format(
