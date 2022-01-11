@@ -175,6 +175,13 @@
             "whitelist_native_plugins": false,
             "authorized_plugins": []
         },
+        "ValidateCycleError": {
+            "enabled": true,
+            "optional": false,
+            "families": [
+                "rig"
+            ]
+        },
         "ValidateRenderSettings": {
             "arnold_render_attributes": [],
             "vray_render_attributes": [],
