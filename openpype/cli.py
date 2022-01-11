@@ -411,6 +411,7 @@ def repack_version(directory):
     """
     PypeCommands().repack_version(directory)
 
+
 @main.command()
 def make_api_docs():
     """Generate API documentation."""
