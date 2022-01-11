@@ -534,6 +534,12 @@ def get_segment_attributes(segment):
         "PySegment": segment
     }
 
+    # head and tail with forward compatibility
+    if segment.head:
+        clip_data["segment_head"] = int(segment.head)
+    if segment.tail:
+        clip_data["segment_tail"] = int(segment.tail)
+
     # add all available shot tokens
     shot_tokens = _get_shot_tokens_values(segment, [
         "<colour space>", "<width>", "<height>", "<depth>", "<segment>",
@@ -561,3 +567,111 @@ def get_segment_attributes(segment):
     clip_data["segment_timecodes"] = segment_attrs_data
 
     return clip_data
+
+
+def get_clips_in_reels(project):
+    output_clips = []
+    project_desktop = project.current_workspace.desktop
+
+    for reel_group in project_desktop.reel_groups:
+        for reel in reel_group.reels:
+            for clip in reel.clips:
+                clip_data = {
+                    "PyClip": clip,
+                    "fps": float(str(clip.frame_rate)[:-4])
+                }
+
+                attrs = [
+                    "name", "width", "height",
+                    "ratio", "sample_rate", "bit_depth"
+                ]
+
+                for attr in attrs:
+                    val = getattr(clip, attr)
+                    clip_data[attr] = val
+
+                version = clip.versions[-1]
+                track = version.tracks[-1]
+                for segment in track.segments:
+                    segment_data = get_segment_attributes(segment)
+                    clip_data.update(segment_data)
+
+                output_clips.append(clip_data)
+
+    return output_clips
+
+
+def get_reformated_path(path, padded=True):
+    """
+    Return fixed python expression path
+
+    Args:
+        path (str): path url or simple file name
+
+    Returns:
+        type: string with reformated path
+
+    Example:
+        get_reformated_path("plate.1001.exr") > plate.%04d.exr
+
+    """
+    padding = get_padding_from_path(path)
+    found = get_frame_from_path(path)
+
+    if not found:
+        log.info("Path is not sequence: {}".format(path))
+        return path
+
+    if padded:
+        path = path.replace(found, "%0{}d".format(padding))
+    else:
+        path = path.replace(found, "%d")
+
+    return path
+
+
+def get_padding_from_path(path):
+    """
+    Return padding number from Flame path style
+
+    Args:
+        path (str): path url or simple file name
+
+    Returns:
+        int: padding number
+
+    Example:
+        get_padding_from_path("plate.0001.exr") > 4
+
+    """
+    found = get_frame_from_path(path)
+
+    if found:
+        return len(found)
+    else:
+        return None
+
+
+def get_frame_from_path(path):
+    """
+    Return sequence number from Flame path style
+
+    Args:
+        path (str): path url or simple file name
+
+    Returns:
+        int: sequence frame number
+
+    Example:
+        def get_frame_from_path(path):
+            ("plate.0001.exr") > 0001
+
+    """
+    frame_pattern = re.compile(r"[._](\d+)[.]")
+
+    found = re.findall(frame_pattern, path)
+
+    if found:
+        return found.pop()
+    else:
+        return None
