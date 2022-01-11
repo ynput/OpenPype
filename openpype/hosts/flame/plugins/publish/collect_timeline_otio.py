@@ -45,6 +45,17 @@ class CollecTimelineOTIO(pyblish.api.ContextPlugin):
         instance = context.create_instance(**instance_data)
         self.log.info("Creating instance: {}".format(instance))
 
+        instance_data = {
+            "name": "{}_{}".format(asset, subset),
+            "asset": asset,
+            "subset": "{}{}".format(asset, subset.capitalize()),
+            "family": "workfile"
+        }
+
+        # create instance with workfile
+        instance = context.create_instance(**instance_data)
+        self.log.info("Creating instance: {}".format(instance))
+
         # update context with main project attributes
         context.data.update({
             "flameProject": project,
