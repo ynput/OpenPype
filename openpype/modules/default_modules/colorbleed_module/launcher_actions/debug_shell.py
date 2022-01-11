@@ -17,7 +17,6 @@ class DebugShell(api.Action):
         return required.issubset(session)
 
     def process(self, session, **kwargs):
-        from openpype.lib import ApplicationManager, ApplicationLaunchFailed
         from openpype.api import get_app_environments_for_context
 
         # Get the environment
