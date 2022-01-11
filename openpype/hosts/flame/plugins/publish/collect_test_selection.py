@@ -14,6 +14,7 @@ class CollectTestSelection(pyblish.api.ContextPlugin):
     order = pyblish.api.CollectorOrder
     label = "test selection"
     hosts = ["flame"]
+    active = False
 
     def process(self, context):
         self.log.info(
