@@ -1,19 +1,14 @@
-from maya import cmds
-
-from openpype.hosts.maya.api import (
-    lib,
-    plugin
-)
+from openpype.hosts.maya.api import lib, plugin
 
 
 class CreateAnimLib(plugin.Creator):
-    """Studio Library animlib """
+    """Studio Library animlib"""
 
     name = "animlibDefault"
     label = "AnimLib"
     family = "animlib"
     icon = "wheelchair"
-    defaults = ['Main']
+    defaults = ["Main"]
 
     def __init__(self, *args, **kwargs):
         super(CreateAnimLib, self).__init__(*args, **kwargs)
@@ -33,4 +28,3 @@ class CreateAnimLib(plugin.Creator):
         #     raise AnimationTransferError(msg)
         # self.data["start"] = start
         # self.data["end"] = end
-

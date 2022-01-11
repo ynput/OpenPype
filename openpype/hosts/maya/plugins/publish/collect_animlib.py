@@ -1,5 +1,3 @@
-from maya import cmds
-
 import pyblish.api
 
 
