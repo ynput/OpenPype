@@ -144,8 +144,7 @@ def imprint(segment, data=None):
     """
     data = data or {}
 
-    if not set_segment_data_marker(segment, data):
-        raise AttributeError("Not imprint data to segment")
+    set_segment_data_marker(segment, data)
 
     # add publish attribute
     set_publish_attribute(segment, True)

@@ -374,8 +374,6 @@ def set_segment_data_marker(segment, data=None):
         # add tag data to marker's comment
         marker.comment = json.dumps(data)
 
-    return True
-
 
 def set_publish_attribute(segment, value):
     """ Set Publish attribute in input Tag object
@@ -388,8 +386,7 @@ def set_publish_attribute(segment, value):
     tag_data["publish"] = value
 
     # set data to the publish attribute
-    if not set_segment_data_marker(segment, tag_data):
-        raise AttributeError("Not imprint data to segment")
+    set_segment_data_marker(segment, tag_data)
 
 
 def get_publish_attribute(segment):
