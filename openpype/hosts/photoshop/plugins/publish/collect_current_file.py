@@ -2,7 +2,7 @@ import os
 
 import pyblish.api
 
-from avalon import photoshop
+from openpype.hosts.photoshop import api as photoshop
 
 
 class CollectCurrentFile(pyblish.api.ContextPlugin):
