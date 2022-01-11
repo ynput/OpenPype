@@ -21,126 +21,114 @@ class PrecollectInstances(pyblish.api.ContextPlugin):
         self.otio_timeline = context.data["otioTimeline"]
         self.clips_in_reels = opfapi.get_clips_in_reels(project)
 
-        # return only actually selected and enabled segments
-        selected_segments = opfapi.get_sequence_segments(sequence, True)
+        # process all sellected
+        with opfapi.maintained_segment_selection(sequence) as selected_segments:
+            for segment in selected_segments:
+                clip_data = opfapi.get_segment_attributes(segment)
+                clip_name = clip_data["segment_name"]
+                self.log.debug("clip_name: {}".format(clip_name))
 
-        # only return enabled segments
-        if not selected_segments:
-            selected_segments = opfapi.get_sequence_segments(
-                sequence)
+                # get openpype tag data
+                marker_data = opfapi.get_segment_data_marker(segment)
+                self.log.debug("__ marker_data: {}".format(pformat(marker_data)))
 
-        self.log.info(
-            "Processing following segments: {}".format(
-                [s.name for s in selected_segments]))
+                if not marker_data:
+                    continue
 
-        # process all sellected timeline track items
-        for segment in selected_segments:
+                if marker_data.get("id") != "pyblish.avalon.instance":
+                    continue
 
-            clip_data = opfapi.get_segment_attributes(segment)
-            clip_name = clip_data["segment_name"]
-            self.log.debug("clip_name: {}".format(clip_name))
+                file_path = clip_data["fpath"]
+                first_frame = opfapi.get_frame_from_path(file_path) or 0
 
-            # get openpype tag data
-            marker_data = opfapi.get_segment_data_marker(segment)
-            self.log.debug("__ marker_data: {}".format(pformat(marker_data)))
+                # calculate head and tail with forward compatibility
+                head = clip_data.get("segment_head")
+                tail = clip_data.get("segment_tail")
 
-            if not marker_data:
-                continue
-
-            if marker_data.get("id") != "pyblish.avalon.instance":
-                continue
-
-            file_path = clip_data["fpath"]
-            first_frame = opfapi.get_frame_from_path(file_path) or 0
-
-            # calculate head and tail with forward compatibility
-            head = clip_data.get("segment_head")
-            tail = clip_data.get("segment_tail")
-
-            if not head:
-                head = int(clip_data["source_in"]) - int(first_frame)
-            if not tail:
-                tail = int(
-                    clip_data["source_duration"] - (
-                        head + clip_data["record_duration"]
+                if not head:
+                    head = int(clip_data["source_in"]) - int(first_frame)
+                if not tail:
+                    tail = int(
+                        clip_data["source_duration"] - (
+                            head + clip_data["record_duration"]
+                        )
                     )
-                )
 
-            # solve handles length
-            marker_data["handleStart"] = min(
-                marker_data["handleStart"], head)
-            marker_data["handleEnd"] = min(
-                marker_data["handleEnd"], tail)
+                # solve handles length
+                marker_data["handleStart"] = min(
+                    marker_data["handleStart"], head)
+                marker_data["handleEnd"] = min(
+                    marker_data["handleEnd"], tail)
 
-            # add audio to families
-            with_audio = False
-            if marker_data.pop("audio"):
-                with_audio = True
+                # add audio to families
+                with_audio = False
+                if marker_data.pop("audio"):
+                    with_audio = True
 
-            # add tag data to instance data
-            data = {
-                k: v for k, v in marker_data.items()
-                if k not in ("id", "applieswhole", "label")
-            }
-
-            asset = marker_data["asset"]
-            subset = marker_data["subset"]
-
-            # insert family into families
-            family = marker_data["family"]
-            families = [str(f) for f in marker_data["families"]]
-            families.insert(0, str(family))
-
-            # form label
-            label = asset
-            if asset != clip_name:
-                label += " ({})".format(clip_name)
-            label += " {}".format(subset)
-            label += " {}".format("[" + ", ".join(families) + "]")
-
-            data.update({
-                "name": "{}_{}".format(asset, subset),
-                "label": label,
-                "asset": asset,
-                "item": segment,
-                "families": families,
-                "publish": marker_data["publish"],
-                "fps": context.data["fps"],
-            })
-
-            # # otio clip data
-            # otio_data = self.get_otio_clip_instance_data(segment) or {}
-            # self.log.debug("__ otio_data: {}".format(pformat(otio_data)))
-            # data.update(otio_data)
-            # self.log.debug("__ data: {}".format(pformat(data)))
-
-            # # add resolution
-            # self.get_resolution_to_data(data, context)
-
-            # create instance
-            instance = context.create_instance(**data)
-
-            # add colorspace data
-            instance.data.update({
-                "versionData": {
-                    "colorspace": clip_data["colour_space"],
+                # add tag data to instance data
+                data = {
+                    k: v for k, v in marker_data.items()
+                    if k not in ("id", "applieswhole", "label")
                 }
-            })
 
-            # create shot instance for shot attributes create/update
-            self.create_shot_instance(context, clip_name, **data)
+                asset = marker_data["asset"]
+                subset = marker_data["subset"]
 
-            self.log.info("Creating instance: {}".format(instance))
-            self.log.info(
-                "_ instance.data: {}".format(pformat(instance.data)))
+                # insert family into families
+                family = marker_data["family"]
+                families = [str(f) for f in marker_data["families"]]
+                families.insert(0, str(family))
 
-            if not with_audio:
-                continue
+                # form label
+                label = asset
+                if asset != clip_name:
+                    label += " ({})".format(clip_name)
+                label += " {}".format(subset)
+                label += " {}".format("[" + ", ".join(families) + "]")
 
-            # add audioReview attribute to plate instance data
-            # if reviewTrack is on
-            if marker_data.get("reviewTrack") is not None:
-                instance.data["reviewAudio"] = True
+                data.update({
+                    "name": "{}_{}".format(asset, subset),
+                    "label": label,
+                    "asset": asset,
+                    "item": segment,
+                    "families": families,
+                    "publish": marker_data["publish"],
+                    "fps": context.data["fps"],
+                })
+
+                # # otio clip data
+                # otio_data = self.get_otio_clip_instance_data(segment) or {}
+                # self.log.debug("__ otio_data: {}".format(pformat(otio_data)))
+                # data.update(otio_data)
+                # self.log.debug("__ data: {}".format(pformat(data)))
+
+                # # add resolution
+                # self.get_resolution_to_data(data, context)
+
+                # create instance
+                instance = context.create_instance(**data)
+
+                # add colorspace data
+                instance.data.update({
+                    "versionData": {
+                        "colorspace": clip_data["colour_space"],
+                    }
+                })
+
+                # create shot instance for shot attributes create/update
+                self.create_shot_instance(context, clip_name, **data)
+
+                self.log.info("Creating instance: {}".format(instance))
+                self.log.info(
+                    "_ instance.data: {}".format(pformat(instance.data)))
+
+                if not with_audio:
+                    continue
+
+                # add audioReview attribute to plate instance data
+                # if reviewTrack is on
+                if marker_data.get("reviewTrack") is not None:
+                    instance.data["reviewAudio"] = True
 
     def get_resolution_to_data(self, data, context):
         assert data.get("otioClip"), "Missing `otioClip` data"
