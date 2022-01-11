@@ -28,15 +28,16 @@ class ExtractAnimLib(openpype.api.Extractor):
 
         current_platform = platform.system().lower()
         root_dir = instance.context.data["project_settings"]["maya"]["create"]["CreateAnimlib"]["exportdir"][current_platform]
-        animlib_path = os.path.join(root_dir, filename)
+
+        name = instance.data["assetEntity"]["name"]
+        parents = instance.data["assetEntity"]["data"]["parents"]
+        version = "v{}".format(instance.data["version"])
+        animlib_path = os.path.join(os.path.join(root_dir, *parents), name, version)
 
         # Perform extraction
         self.log.info("Performing extraction ...")
-        # with avalon.maya.maintained_selection():
-        # cmds.select(instance, noExpand=True)
-        # start studio library export
 
-        # path = "/AnimLibrary/Characters/Malcolm/malcolm.anim"
+        # start studio library export
         objects = instance.data["setMembers"]
         startFrame= instance.data["frameStart"] # get start keyframe instead of playback range
         endFrame= instance.data["frameEnd"]
