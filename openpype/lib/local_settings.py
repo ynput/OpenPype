@@ -588,33 +588,76 @@ def is_admin_password_required():
 def parse_set_url(set_url):
     """Parses url with value to set into segments.
 
-        Returns:
-            (tuple) - (general_location, path_part, key, value)
+    Returns:
+        (tuple) - (general_location, path_part, key, value)
 
-        Eg. expected url keyring://file/environment/OPENPYPE_MONGO=foo
-        Returned ("keyring", "file/environment", "OPENPYPE_MONGO", "foo")
+    Eg. expected url keyring://file/environment/OPENPYPE_MONGO=foo
+    Returned ("keyring", "file/environment", "OPENPYPE_MONGO", "foo")
     """
+    general_location = namespace = key = value = None
+    if not set_url:
+        return general_location, namespace, key, value
+
+    general_location, rest = _parse_url(set_url)
+
+    if '=' not in rest:
+        raise ValueError("Set url {} must contain value".format(set_url))
+
+    path_part, value = rest.split("=")
+    subfolders = path_part.split("/")
+    if subfolders:
+        key = subfolders[-1]
+        namespace = "/".join(subfolders[:-1]) or ''
+
+    if not key:
+        raise ValueError("Set url {} must contain key".format(set_url))
+
+    return general_location, namespace, key, value
+
+
+def parse_get_url(get_url):
+    """Parses url with value to set into segments.
+
+    Url methods split to set + get
+
+    Returns:
+        (tuple) - (general_location, path_part, key, value)
+
+    Eg. expected url keyring://file/environment/OPENPYPE_MONGO
+    Returned ("keyring", "file/environment", "OPENPYPE_MONGO", None)
+    """
+    general_location = namespace = key = value = None
+    if not get_url:
+        return general_location, namespace, key, value
+
+    general_location, rest = _parse_url(get_url)
+
+    if '=' in rest:
+        print("Get url {} cannot contain '=', this part ignored".
+              format(get_url))
+
+    last_slash_idx = rest.rfind("/")
+    namespace = ''
+    key = rest[last_slash_idx + 1:]
+    if last_slash_idx > -1:
+        namespace = rest[:last_slash_idx]
+
+    if not key:
+        raise ValueError("Url {} must contain key".format(get_url))
+
+    return general_location, namespace, key, None
+
+
+def _parse_url(url):
     try:
-        general_location, rest = set_url.split("://")
+        general_location, rest = url.split("://")
     except ValueError:
-        raise ValueError("Set url {} must contain general location part".
-                         format(set_url))
+        raise ValueError("Url {} must contain general location part (eg. keyring://)".  # noqa
+                         format(url))
 
     implemented_locations = ["keyring"]
     if general_location not in implemented_locations:
-        raise ValueError("Set url {} must contain one of {} values".
-                         format(set_url, implemented_locations))
+        raise ValueError("Url {} must contain one of {} values".
+                         format(url, implemented_locations))
 
-    path_part = rest[:rest.rfind("/")]
-    if not path_part:
-        raise ValueError("Set url {} must contain path part".
-                         format(set_url))
-
-    value_part = rest[rest.rfind("/") + 1:]
-    if "=" in value_part:
-        key, value = value_part.split("=")
-    else:
-        key = value_part
-        value = None
-
-    return general_location, path_part, key, value
+    return general_location, rest

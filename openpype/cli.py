@@ -412,16 +412,16 @@ def getvalue(
     set_url,
     project
 ):
-    """Pulls value from keyring or potentially settings
+    """Prints value from keyring or potentially settings to stdout
 
         Define general location (keyring or setting) with specific path,
         variable and its value.
         Format keyring://file/environment/OPENPYPE_MONGO
     """
-    PypeCommands.get_value(
+    return click.echo("getvalue:{}".format(PypeCommands.get_value(
         set_url,
         project
-    )
+    )))
 
 
 @main.command()
