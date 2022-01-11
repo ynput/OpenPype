@@ -12,11 +12,13 @@ from openpype.settings.constants import (
     M_OVERRIDEN_KEY,
     KEY_REGEX
 )
-from . import (
+from .base_entity import (
     BaseItemEntity,
     ItemEntity,
-    BoolEntity,
     GUIEntity
+)
+from .input_entities import (
+    BoolEntity
 )
 from .exceptions import (
     DefaultsNotDefined,

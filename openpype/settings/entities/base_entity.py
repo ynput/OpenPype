@@ -15,8 +15,6 @@ from .exceptions import (
     EntitySchemaError
 )
 
-from openpype.lib import PypeLogger
-
 
 @six.add_metaclass(ABCMeta)
 class BaseEntity:
@@ -485,6 +483,8 @@ class BaseItemEntity(BaseEntity):
     def log(self):
         """Auto created logger for debugging or warnings."""
         if self._log is None:
+            from openpype.lib import PypeLogger
+
             self._log = PypeLogger.get_logger(self.__class__.__name__)
         return self._log
 

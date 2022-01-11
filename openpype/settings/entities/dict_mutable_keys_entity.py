@@ -4,7 +4,7 @@ from .lib import (
     NOT_SET,
     OverrideState
 )
-from . import EndpointEntity
+from .input_entities import EndpointEntity
 from .exceptions import (
     DefaultsNotDefined,
     InvalidKeySymbols,

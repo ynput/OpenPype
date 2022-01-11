@@ -1,10 +1,8 @@
 import copy
 import six
 import re
-from . import (
-    BaseEntity,
-    EndpointEntity
-)
+from .base_entity import BaseEntity
+from .input_entities import EndpointEntity
 from .lib import (
     NOT_SET,
     OverrideState

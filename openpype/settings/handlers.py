@@ -1,12 +1,10 @@
 import os
 import json
 import copy
-import logging
 import collections
 import datetime
 from abc import ABCMeta, abstractmethod
 import six
-import openpype
 from .constants import (
     GLOBAL_SETTINGS_KEY,
     SYSTEM_SETTINGS_KEY,

@@ -1,8 +1,3 @@
-from openpype.lib.openpype_version import (
-    get_remote_versions,
-    get_OpenPypeVersion,
-    get_installed_version
-)
 from .input_entities import TextEntity
 from .lib import (
     OverrideState,
@@ -52,6 +47,8 @@ class OpenPypeVersionInput(TextEntity):
     def convert_to_valid_type(self, value):
         """Add validation of version regex."""
         if value and value is not NOT_SET:
+            from openpype.lib.openpype_version import get_OpenPypeVersion
+
             OpenPypeVersion = get_OpenPypeVersion()
             if OpenPypeVersion is not None:
                 try:
@@ -71,7 +68,14 @@ class ProductionVersionsInputEntity(OpenPypeVersionInput):
     schema_types = ["production-versions-text"]
 
     def _get_openpype_versions(self):
+        from openpype.lib.openpype_version import (
+            get_remote_versions,
+            get_installed_version
+        )
+
         versions = get_remote_versions(staging=False, production=True)
+        if versions is None:
+            return []
         versions.append(get_installed_version())
         return sorted(versions)
 
@@ -81,5 +85,9 @@ class StagingVersionsInputEntity(OpenPypeVersionInput):
     schema_types = ["staging-versions-text"]
 
     def _get_openpype_versions(self):
+        from openpype.lib.openpype_version import get_remote_versions
+
         versions = get_remote_versions(staging=True, production=False)
+        if versions is None:
+            return []
         return sorted(versions)
