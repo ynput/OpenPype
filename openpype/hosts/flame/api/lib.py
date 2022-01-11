@@ -445,7 +445,7 @@ def get_sequence_segments(sequence, selected=False):
             for segment in track.segments:
                 if segment.name.get_value() == "":
                     continue
-                if segment.hidden:
+                if segment.hidden.get_value() is True:
                     continue
                 if (
                     selected is True
