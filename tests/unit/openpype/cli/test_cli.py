@@ -33,6 +33,14 @@ def test_set_get(url):
     assert exp_msg in str(popen_stdout)
 
 
+def test_get_unknown():
+    cmd_args = ["getvalue", "keyring://bar"]
+    popen_std, popen_stderr = _run_cli_command(cmd_args)
+    exp_msg = "bar does not exist"
+    assert exp_msg in str(popen_std)
+    exp_msg = "getvalue:None"
+    assert exp_msg in str(popen_std)
+
 def _run_cli_command(cmd_args):
     args = [sys.executable,
             os.path.join(os.environ["OPENPYPE_ROOT"], "start.py")]
@@ -44,5 +52,10 @@ def _run_cli_command(cmd_args):
         stderr=subprocess.PIPE
     )
 
-    popen_stdout, popen_stderr = popen.communicate()
+    try:
+        popen_stdout, popen_stderr = popen.communicate(timeout=15)
+    except subprocess.TimeoutExpired:
+        popen.kill()
+        popen_stdout, popen_stderr = popen.communicate()
+
     return popen_stdout, popen_stderr

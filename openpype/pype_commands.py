@@ -403,7 +403,10 @@ class PypeCommands:
 
         if general_location == "keyring":
             registry = OpenPypeSecureRegistry(path_part)
-            return registry.get_item(key)
+            try:
+                return registry.get_item(key)
+            except ValueError as exp:
+                print(str(exp))
 
     def syncserver(self, active_site):
         """Start running sync_server in background."""
