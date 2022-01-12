@@ -18,6 +18,21 @@ def test_setvalue_missing_value():
     assert exp_msg in str(popen_stderr)
 
 
+urls = ["keyring://file/environment/foo=bar", "keyring://foo=bar"]
+ids = ["fullpath", "no_namespace"]
+@pytest.mark.parametrize("url", urls, ids=ids)
+def test_set_get(url):
+    cmd_args = ["setvalue", url]
+    _, popen_stderr = _run_cli_command(cmd_args)
+
+    assert not popen_stderr
+
+    cmd_args = ["getvalue", url]
+    popen_stdout, popen_stderr = _run_cli_command(cmd_args)
+    exp_msg = "getvalue:bar"
+    assert exp_msg in str(popen_stdout)
+
+
 def _run_cli_command(cmd_args):
     args = [sys.executable,
             os.path.join(os.environ["OPENPYPE_ROOT"], "start.py")]
