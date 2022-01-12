@@ -18,6 +18,7 @@ oauth_config:
       - chat:write.customize
       - chat:write.public
       - files:write
+      - channels:read
 settings:
   org_deploy_enabled: false
   socket_mode_enabled: false
