@@ -116,8 +116,9 @@ def create_asset_id_hash(nodes):
             ids = get_alembic_ids_cache(path)
             for k, _ in ids.items():
                 pid = k.split(":")[0]
-                if not node_id_hash.get(pid):
-                    node_id_hash[pid] = [node]
+                if node not in node_id_hash[pid]:
+                    node_id_hash[pid].append(node)
+
         else:
             value = lib.get_id(node)
             if value is None:
@@ -149,20 +150,6 @@ def create_items_from_nodes(nodes):
     asset_view_items = []
 
     id_hashes = create_asset_id_hash(nodes)
-
-    # get ids from alembic
-    if cmds.pluginInfo('vrayformaya', query=True, loaded=True):
-        vray_proxy_nodes = cmds.ls(nodes, type="VRayProxy")
-        for vp in vray_proxy_nodes:
-            path = cmds.getAttr("{}.fileName".format(vp))
-            ids = get_alembic_ids_cache(path)
-            parent_id = {}
-            for k, _ in ids.items():
-                pid = k.split(":")[0]
-                if not parent_id.get(pid):
-                    parent_id[pid] = [vp]
-            print("Adding ids from alembic {}".format(path))
-            id_hashes.update(parent_id)
 
     if not id_hashes:
         log.warning("No id hashes")
