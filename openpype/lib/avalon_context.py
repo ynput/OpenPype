@@ -1433,7 +1433,11 @@ def get_creator_by_name(creator_name, case_sensitive=False):
 
 @with_avalon
 def change_timer_to_current_context():
-    """Called after context change to change timers"""
+    """Called after context change to change timers.
+
+    TODO:
+    - use TimersManager's static method instead of reimplementing it here
+    """
     webserver_url = os.environ.get("OPENPYPE_WEBSERVER_URL")
     if not webserver_url:
         log.warning("Couldn't find webserver url")
@@ -1448,8 +1452,7 @@ def change_timer_to_current_context():
     data = {
         "project_name": avalon.io.Session["AVALON_PROJECT"],
         "asset_name": avalon.io.Session["AVALON_ASSET"],
-        "task_name": avalon.io.Session["AVALON_TASK"],
-        "hierarchy": get_hierarchy()
+        "task_name": avalon.io.Session["AVALON_TASK"]
     }
 
     requests.post(rest_api_url, json=data)
@@ -1557,7 +1560,7 @@ def get_custom_workfile_template_by_context(
     # get path from matching profile
     matching_item = filter_profiles(
         template_profiles,
-        {"task_type": current_task_type}
+        {"task_types": current_task_type}
     )
     # when path is available try to format it in case
     # there are some anatomy template strings

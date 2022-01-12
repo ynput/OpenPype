@@ -45,19 +45,14 @@ class CreateHDA(plugin.Creator):
         if (self.options or {}).get("useSelection") and self.nodes:
             # if we have `use selection` enabled and we have some
             # selected nodes ...
-            to_hda = self.nodes[0]
-            if len(self.nodes) > 1:
-                # if there is more then one node, create subnet first
-                subnet = out.createNode(
-                    "subnet", node_name="{}_subnet".format(self.name))
-                to_hda = subnet
-        else:
-            # in case of no selection, just create subnet node
-            subnet = out.createNode(
-                "subnet", node_name="{}_subnet".format(self.name))
+            subnet = out.collapseIntoSubnet(
+                self.nodes,
+                subnet_name="{}_subnet".format(self.name))
             subnet.moveToGoodPosition()
             to_hda = subnet
-
+        else:
+            to_hda = out.createNode(
+                "subnet", node_name="{}_subnet".format(self.name))
         if not to_hda.type().definition():
             # if node type has not its definition, it is not user
             # created hda. We test if hda can be created from the node.
@@ -69,13 +64,12 @@ class CreateHDA(plugin.Creator):
                 name=subset_name,
                 hda_file_name="$HIP/{}.hda".format(subset_name)
             )
-            hou.moveNodesTo(self.nodes, hda_node)
             hda_node.layoutChildren()
+        elif self._check_existing(subset_name):
+            raise plugin.OpenPypeCreatorError(
+                ("subset {} is already published with different HDA"
+                 "definition.").format(subset_name))
         else:
-            if self._check_existing(subset_name):
-                raise plugin.OpenPypeCreatorError(
-                    ("subset {} is already published with different HDA"
-                     "definition.").format(subset_name))
             hda_node = to_hda
 
         hda_node.setName(subset_name)

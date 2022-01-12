@@ -1,7 +1,7 @@
 import os
 import platform
 import subprocess
-from openpype.lib import get_pype_execute_args
+from openpype.lib import get_openpype_execute_args
 from openpype.modules import OpenPypeModule
 from openpype_interfaces import ITrayAction
 
@@ -35,7 +35,7 @@ class StandAlonePublishAction(OpenPypeModule, ITrayAction):
         self.publish_paths.extend(publish_paths)
 
     def run_standalone_publisher(self):
-        args = get_pype_execute_args("standalonepublisher")
+        args = get_openpype_execute_args("standalonepublisher")
         kwargs = {}
         if platform.system().lower() == "darwin":
             new_args = ["open", "-na", args.pop(0), "--args"]
