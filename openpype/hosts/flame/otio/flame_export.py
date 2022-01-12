@@ -295,7 +295,7 @@ def create_otio_reference(clip_data):
     if is_sequence:
         metadata.update({
             "isSequence": True,
-            "padding": padding
+            "padding": len(padding)
         })
 
     otio_ex_ref_item = None
