@@ -2,8 +2,10 @@ import os
 import six
 import pyblish.api
 import copy
+from datetime import datetime
 
 from openpype.lib.plugin_tools import prepare_template_data
+from openpype.lib import OpenPypeMongoConnection
 
 
 class IntegrateSlackAPI(pyblish.api.InstancePlugin):
@@ -41,23 +43,38 @@ class IntegrateSlackAPI(pyblish.api.InstancePlugin):
             if not message:
                 return
 
-            # if message_profile["upload_thumbnail"] and thumbnail_path:
-            #     publish_files.add(thumbnail_path)
+            if message_profile["upload_thumbnail"] and thumbnail_path:
+                publish_files.add(thumbnail_path)
 
             if message_profile["upload_review"] and review_path:
                 publish_files.add(review_path)
 
+            project = instance.context.data["anatomyData"]["project"]["code"]
             for channel in message_profile["channels"]:
                 if six.PY2:
-                    self._python2_call(instance.data["slack_token"],
-                                       channel,
-                                       message,
-                                       publish_files)
+                    msg_id, file_ids = \
+                        self._python2_call(instance.data["slack_token"],
+                                           channel,
+                                           message,
+                                           publish_files)
                 else:
-                    self._python3_call(instance.data["slack_token"],
-                                       channel,
-                                       message,
-                                       publish_files)
+                    msg_id, file_ids = \
+                        self._python3_call(instance.data["slack_token"],
+                                           channel,
+                                           message,
+                                           publish_files)
+
+                msg = {
+                    "type": "slack",
+                    "msg_id": msg_id,
+                    "file_ids": file_ids,
+                    "project": project,
+                    "created_dt": datetime.now()
+                }
+                mongo_client = OpenPypeMongoConnection.get_mongo_client()
+                database_name = os.environ["OPENPYPE_DATABASE_NAME"]
+                dbcon = mongo_client[database_name]["notification_messages"]
+                dbcon.insert_one(msg)
 
     def _get_filled_message(self, message_templ, instance, review_path=None):
         """Use message_templ and data from instance to get message content.
@@ -85,7 +102,7 @@ class IntegrateSlackAPI(pyblish.api.InstancePlugin):
             task_data = fill_data.get("task")
         for key, value in task_data.items():
             fill_key = "task[{}]".format(key)
-            fill_pairs.append((fill_key , value))
+            fill_pairs.append((fill_key, value))
         fill_pairs.append(("task", task_data["name"]))
 
         self.log.debug("fill_pairs ::{}".format(fill_pairs))
@@ -126,23 +143,24 @@ class IntegrateSlackAPI(pyblish.api.InstancePlugin):
                     break
         return published_path
 
-    def _python2_call(self, token, channel, message,
-                      publish_files):
+    def _python2_call(self, token, channel, message, publish_files):
         from slackclient import SlackClient
         try:
             client = SlackClient(token)
-            self.log.info("publish {}".format(publish_files))
             attachment_str = "\n\n Attachment links: \n"
+            file_ids = []
             for p_file in publish_files:
                 with open(p_file, 'rb') as pf:
                     response = client.api_call(
                         "files.upload",
-                        channels=channel,
-                        file=pf
+                        file=pf,
+                        channel=channel,
+                        title=os.path.basename(p_file)
                     )
                     attachment_str += "\n<{}|{}>".format(
                         response["file"]["permalink"],
                         os.path.basename(p_file))
+                    file_ids.append(response["file"]["id"])
 
             if publish_files:
                 message += attachment_str
@@ -152,23 +170,24 @@ class IntegrateSlackAPI(pyblish.api.InstancePlugin):
                 channel=channel,
                 text=message
             )
-            self.log.info("repsonse {}".format(response))
             if response.get("error"):
                 error_str = self._enrich_error(str(response.get("error")),
                                                channel)
                 self.log.warning("Error happened: {}".format(error_str))
+            else:
+                return response["ts"], file_ids
         except Exception as e:
             # You will get a SlackApiError if "ok" is False
             error_str = self._enrich_error(str(e), channel)
             self.log.warning("Error happened: {}".format(error_str))
 
-    def _python3_call(self, token, channel, message,
-                      publish_files):
+    def _python3_call(self, token, channel, message, publish_files):
         from slack_sdk import WebClient
         from slack_sdk.errors import SlackApiError
         try:
             client = WebClient(token=token)
             attachment_str = "\n\n Attachment links: \n"
+            file_ids = []
             for published_file in publish_files:
                 response = client.files_upload(
                     file=published_file,
@@ -176,16 +195,16 @@ class IntegrateSlackAPI(pyblish.api.InstancePlugin):
                 attachment_str += "\n<{}|{}>".format(
                     response["file"]["permalink"],
                     os.path.basename(published_file))
+                file_ids.append(response["file"]["id"])
 
             if publish_files:
                 message += attachment_str
 
-            _ = client.chat_postMessage(
+            response = client.chat_postMessage(
                 channel=channel,
-                text=message,
-                username=self.bot_user_name,
-                icon_url=self.icon_url
+                text=message
             )
+            return response.data["ts"], file_ids
         except SlackApiError as e:
             # You will get a SlackApiError if "ok" is False
             error_str = self._enrich_error(str(e.response["error"]), channel)
