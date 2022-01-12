@@ -20,7 +20,7 @@ class CollectOcioSubsetResources(pyblish.api.InstancePlugin):
     label = "Collect OTIO Subset Resources"
     order = pyblish.api.CollectorOrder - 0.47
     families = ["clip"]
-    hosts = ["resolve", "hiero"]
+    hosts = ["resolve", "hiero", "flame"]
 
     def process(self, instance):
 
