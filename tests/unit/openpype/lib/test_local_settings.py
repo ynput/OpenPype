@@ -1,3 +1,4 @@
+import pytest
 from openpype.lib.local_settings import parse_set_url, parse_get_url
 
 
