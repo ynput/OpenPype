@@ -14,7 +14,7 @@ from openpype.api import (
     resources,
     get_system_settings
 )
-from openpype.lib import get_pype_execute_args
+from openpype.lib import get_openpype_execute_args
 from openpype.modules import TrayModulesManager
 from openpype import style
 from openpype.settings import (
@@ -208,10 +208,10 @@ class TrayManager:
 
         First creates new process with same argument and close current tray.
         """
-        args = get_pype_execute_args()
+        args = get_openpype_execute_args()
         # Create a copy of sys.argv
         additional_args = list(sys.argv)
-        # Check last argument from `get_pype_execute_args`
+        # Check last argument from `get_openpype_execute_args`
         # - when running from code it is the same as first from sys.argv
         if args[-1] == additional_args[0]:
             additional_args.pop(0)
