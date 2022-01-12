@@ -75,8 +75,12 @@ def maketx(source, destination, *args):
         "--filter lanczos3",
     ]
 
+    def _escape(path):
+        # Ensure path is enclosed by quotes to allow paths with spaces
+        return '"{}"'.format(path)
+
     cmd.extend(args)
-    cmd.extend(["-o", destination, source])
+    cmd.extend(["-o", _escape(destination), _escape(source)])
 
     cmd = " ".join(cmd)
 
