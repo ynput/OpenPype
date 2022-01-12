@@ -91,7 +91,8 @@ class PrecollectInstances(pyblish.api.ContextPlugin):
                     "publish": marker_data["publish"],
                     "fps": self.fps,
                     "flameSourceClip": source_clip,
-                    "sourceFirstFrame": first_frame
+                    "sourceFirstFrame": first_frame,
+                    "path": file_path
                 })
 
                 # otio clip data
@@ -228,17 +229,11 @@ class PrecollectInstances(pyblish.api.ContextPlugin):
 
         """
         segment = clip_data["PySegment"]
-
-        self.log.debug(
-            ">> flame Track.dir: {}".format(dir(segment.parent)))
         s_track_name = segment.parent.name.get_value()
-
         timeline_range = self._create_otio_time_range_from_timeline_item_data(
             clip_data)
 
         for otio_clip in self.otio_timeline.each_clip():
-            self.log.debug(
-                ">> OTIO Track.dir: {}".format(dir(otio_clip.parent())))
             track_name = otio_clip.parent().name
             parent_range = otio_clip.range_in_parent()
             if s_track_name not in track_name:
