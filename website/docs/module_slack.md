@@ -20,6 +20,12 @@ Slack application must be installed to company's Slack first.
 Please locate `openpype/modules/slack/manifest.yml` file in deployed OpenPype installation and follow instruction at
 https://api.slack.com/reference/manifests#using and follow "Creating apps with manifests".
 
+### App icon
+
+If you would like to enrich bot with an icon, Slack admin must add the icon after app installation. 
+
+Go to your Slack app home (something like https://api.slack.com/apps/XXXXXXXX/general?) > Basic information > Display Information.
+You can upload any image you want, or for your convenience locate prepared OpenPype icon in your installed Openpype installation in `openpype\modules\slac\resources`.
 
 ## System Settings
 
