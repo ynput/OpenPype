@@ -559,7 +559,7 @@ def get_segment_attributes(segment):
         attr = getattr(segment, attr_name)
         segment_attrs_data[attr] = str(attr).replace("+", ":")
 
-        if attr in ["record_in", "record_out"]:
+        if attr_name in ["record_in", "record_out"]:
             clip_data[attr_name] = attr.relative_frame
         else:
             clip_data[attr_name] = attr.frame
