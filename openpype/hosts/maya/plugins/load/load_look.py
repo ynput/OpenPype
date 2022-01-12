@@ -8,6 +8,8 @@ from collections import defaultdict
 from openpype.widgets.message_window import ScrollMessageBox
 from Qt import QtWidgets
 
+from openpype.hosts.maya.api.plugin import get_reference_node
+
 
 class LookLoader(openpype.hosts.maya.api.plugin.ReferenceLoader):
     """Specific loader for lookdev"""
@@ -70,7 +72,7 @@ class LookLoader(openpype.hosts.maya.api.plugin.ReferenceLoader):
 
         # Get reference node from container members
         members = cmds.sets(node, query=True, nodesOnly=True)
-        reference_node = self._get_reference_node(members)
+        reference_node = get_reference_node(members, log=self.log)
 
         shader_nodes = cmds.ls(members, type='shadingEngine')
         orig_nodes = set(self._get_nodes_with_shader(shader_nodes))

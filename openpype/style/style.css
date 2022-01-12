@@ -734,6 +734,13 @@ QScrollBar::add-page:vertical, QScrollBar::sub-page:vertical {
     background: {color:bg-view-hover};
 }
 
+#DeleteButton {
+    background: {color:delete-btn-bg};
+}
+#DeleteButton:disabled {
+    background: {color:delete-btn-bg-disabled};
+}
+
 /* Launcher specific stylesheets */
 #IconView[mode="icon"] {
     /* font size can't be set on items */
