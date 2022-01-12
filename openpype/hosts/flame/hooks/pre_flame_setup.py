@@ -85,7 +85,7 @@ class FlamePrelaunch(PreLaunchHook):
         pythonpath = self.launch_context.env.get("PYTHONPATH")
 
         # separate it explicity by `;` that is what we use in settings
-        new_pythonpath = self.flame_pythonpath.split(";")
+        new_pythonpath = self.flame_pythonpath.split(os.pathsep)
         new_pythonpath += pythonpath.split(os.pathsep)
 
         self.launch_context.env["PYTHONPATH"] = os.pathsep.join(new_pythonpath)
