@@ -56,7 +56,7 @@ class ValidateFrameRange(pyblish.api.InstancePlugin):
 
         formatting_data = {"duration": duration,
                            "found": frames}
-        if frames == duration:
+        if frames != duration:
             raise PublishXmlValidationError(self, msg,
                                             formatting_data=formatting_data)
 
