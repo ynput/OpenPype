@@ -41,6 +41,7 @@ def test_get_unknown():
     exp_msg = "getvalue:None"
     assert exp_msg in str(popen_std)
 
+
 def _run_cli_command(cmd_args):
     args = [sys.executable,
             os.path.join(os.environ["OPENPYPE_ROOT"], "start.py")]
