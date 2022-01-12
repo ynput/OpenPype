@@ -17,7 +17,7 @@
             {"editorial": "editorial"},
             {"layout": "layout"},
             {"look": "look"},
-            {"mayaAscii": "mayaAscii"},
+            {"mayaScene": "mayaScene"},
             {"model": "model"},
             {"pointcache": "pointcache"},
             {"reference": "reference"},
