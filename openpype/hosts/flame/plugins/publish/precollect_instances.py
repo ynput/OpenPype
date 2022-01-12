@@ -32,7 +32,8 @@ class PrecollectInstances(pyblish.api.ContextPlugin):
 
                 # get openpype tag data
                 marker_data = opfapi.get_segment_data_marker(segment)
-                self.log.debug("__ marker_data: {}".format(pformat(marker_data)))
+                self.log.debug("__ marker_data: {}".format(
+                    pformat(marker_data)))
 
                 if not marker_data:
                     continue
