@@ -1,6 +1,7 @@
 import pyblish
-# import openpype
+import openpype
 import openpype.hosts.flame.api as opfapi
+from openpype.hosts.flame.otio import flame_export
 
 # # developer reload modules
 from pprint import pformat
@@ -20,10 +21,11 @@ class PrecollectInstances(pyblish.api.ContextPlugin):
         sequence = context.data["flameSequence"]
         self.otio_timeline = context.data["otioTimeline"]
         self.clips_in_reels = opfapi.get_clips_in_reels(project)
+        self.fps = context.data["fps"]
 
         # process all sellected
-        with opfapi.maintained_segment_selection(sequence) as selected_segments:
-            for segment in selected_segments:
+        with opfapi.maintained_segment_selection(sequence) as segments:
+            for segment in segments:
                 clip_data = opfapi.get_segment_attributes(segment)
                 clip_name = clip_data["segment_name"]
                 self.log.debug("clip_name: {}".format(clip_name))
@@ -38,21 +40,15 @@ class PrecollectInstances(pyblish.api.ContextPlugin):
                 if marker_data.get("id") != "pyblish.avalon.instance":
                     continue
 
+                # get file path
                 file_path = clip_data["fpath"]
+
+                # get source clip
+                source_clip = self._get_reel_clip(file_path)
+
                 first_frame = opfapi.get_frame_from_path(file_path) or 0
 
-                # calculate head and tail with forward compatibility
-                head = clip_data.get("segment_head")
-                tail = clip_data.get("segment_tail")
-
-                if not head:
-                    head = int(clip_data["source_in"]) - int(first_frame)
-                if not tail:
-                    tail = int(
-                        clip_data["source_duration"] - (
-                            head + clip_data["record_duration"]
-                        )
-                    )
+                head, tail = self._get_head_tail(clip_data, first_frame)
 
                 # solve handles length
                 marker_data["handleStart"] = min(
@@ -93,17 +89,19 @@ class PrecollectInstances(pyblish.api.ContextPlugin):
                     "item": segment,
                     "families": families,
                     "publish": marker_data["publish"],
-                    "fps": context.data["fps"],
+                    "fps": self.fps,
+                    "flameSourceClip": source_clip,
+                    "sourceFirstFrame": first_frame
                 })
 
-                # # otio clip data
-                # otio_data = self.get_otio_clip_instance_data(segment) or {}
-                # self.log.debug("__ otio_data: {}".format(pformat(otio_data)))
-                # data.update(otio_data)
-                # self.log.debug("__ data: {}".format(pformat(data)))
+                # otio clip data
+                otio_data = self._get_otio_clip_instance_data(clip_data) or {}
+                self.log.debug("__ otio_data: {}".format(pformat(otio_data)))
+                data.update(otio_data)
+                self.log.debug("__ data: {}".format(pformat(data)))
 
-                # # add resolution
-                # self.get_resolution_to_data(data, context)
+                # add resolution
+                self._get_resolution_to_data(data, context)
 
                 # create instance
                 instance = context.create_instance(**data)
@@ -116,7 +114,7 @@ class PrecollectInstances(pyblish.api.ContextPlugin):
                 })
 
                 # create shot instance for shot attributes create/update
-                self.create_shot_instance(context, clip_name, **data)
+                self._create_shot_instance(context, clip_name, **data)
 
                 self.log.info("Creating instance: {}".format(instance))
                 self.log.info(
@@ -130,7 +128,30 @@ class PrecollectInstances(pyblish.api.ContextPlugin):
                 if marker_data.get("reviewTrack") is not None:
                     instance.data["reviewAudio"] = True
 
-    def get_resolution_to_data(self, data, context):
+    def _get_head_tail(self, clip_data, first_frame):
+        # calculate head and tail with forward compatibility
+        head = clip_data.get("segment_head")
+        tail = clip_data.get("segment_tail")
+
+        if not head:
+            head = int(clip_data["source_in"]) - int(first_frame)
+        if not tail:
+            tail = int(
+                clip_data["source_duration"] - (
+                    head + clip_data["record_duration"]
+                )
+            )
+        return head, tail
+
+    def _get_reel_clip(self, path):
+        match_reel_clip = [
+            clip for clip in self.clips_in_reels
+            if clip["fpath"] == path
+        ]
+        if match_reel_clip:
+            return match_reel_clip.pop()
+
+    def _get_resolution_to_data(self, data, context):
         assert data.get("otioClip"), "Missing `otioClip` data"
 
         # solve source resolution option
@@ -155,7 +176,7 @@ class PrecollectInstances(pyblish.api.ContextPlugin):
                     "openpype.timeline.pixelAspect"]
             })
 
-    def create_shot_instance(self, context, clip_name, **data):
+    def _create_shot_instance(self, context, clip_name, **data):
         master_layer = data.get("heroTrack")
         hierarchy_data = data.get("hierarchyData")
         asset = data.get("asset")
@@ -193,47 +214,51 @@ class PrecollectInstances(pyblish.api.ContextPlugin):
         self.log.debug(
             "_ instance.data: {}".format(pformat(instance.data)))
 
-    # def get_otio_clip_instance_data(self, segment):
-    #     """
-    #     Return otio objects for timeline, track and clip
+    def _get_otio_clip_instance_data(self, clip_data):
+        """
+        Return otio objects for timeline, track and clip
 
-    #     Args:
-    #         timeline_item_data (dict): timeline_item_data from list returned by
-    #                                 resolve.get_current_timeline_items()
-    #         otio_timeline (otio.schema.Timeline): otio object
+        Args:
+            timeline_item_data (dict): timeline_item_data from list returned by
+                                    resolve.get_current_timeline_items()
+            otio_timeline (otio.schema.Timeline): otio object
 
-    #     Returns:
-    #         dict: otio clip object
+        Returns:
+            dict: otio clip object
 
-    #     """
-    #     ti_track_name = segment.parent().name()
-    #     timeline_range = self.create_otio_time_range_from_timeline_item_data(
-    #         segment)
-    #     for otio_clip in self.otio_timeline.each_clip():
-    #         track_name = otio_clip.parent().name
-    #         parent_range = otio_clip.range_in_parent()
-    #         if ti_track_name not in track_name:
-    #             continue
-    #         if otio_clip.name not in segment.name():
-    #             continue
-    #         if openpype.lib.is_overlapping_otio_ranges(
-    #                 parent_range, timeline_range, strict=True):
+        """
+        segment = clip_data["PySegment"]
 
-    #             # add pypedata marker to otio_clip metadata
-    #             for marker in otio_clip.markers:
-    #                 if phiero.pype_tag_name in marker.name:
-    #                     otio_clip.metadata.update(marker.metadata)
-    #             return {"otioClip": otio_clip}
+        self.log.debug(
+            ">> flame Track.dir: {}".format(dir(segment.parent)))
+        s_track_name = segment.parent.name.get_value()
 
-    #     return None
+        timeline_range = self._create_otio_time_range_from_timeline_item_data(
+            clip_data)
 
-    # @staticmethod
-    # def create_otio_time_range_from_timeline_item_data(segment):
-    #     speed = segment.playbackSpeed()
-    #     timeline = phiero.get_current_sequence()
-    #     frame_start = int(segment.timelineIn())
-    #     frame_duration = int(segment.sourceDuration() / speed)
-    #     fps = timeline.framerate().toFloat()
+        for otio_clip in self.otio_timeline.each_clip():
+            self.log.debug(
+                ">> OTIO Track.dir: {}".format(dir(otio_clip.parent())))
+            track_name = otio_clip.parent().name
+            parent_range = otio_clip.range_in_parent()
+            if s_track_name not in track_name:
+                continue
+            if otio_clip.name not in segment.name.get_value():
+                continue
+            if openpype.lib.is_overlapping_otio_ranges(
+                    parent_range, timeline_range, strict=True):
 
-    #     return hiero_export.create_otio_time_range(
-    #         frame_start, frame_duration, fps)
+                # add pypedata marker to otio_clip metadata
+                for marker in otio_clip.markers:
+                    if opfapi.MARKER_NAME in marker.name:
+                        otio_clip.metadata.update(marker.metadata)
+                return {"otioClip": otio_clip}
+
+        return None
+
+    def _create_otio_time_range_from_timeline_item_data(self, clip_data):
+        frame_start = int(clip_data["record_in"])
+        frame_duration = int(clip_data["record_duration"])
+
+        return flame_export.create_otio_time_range(
+            frame_start, frame_duration, self.fps)
