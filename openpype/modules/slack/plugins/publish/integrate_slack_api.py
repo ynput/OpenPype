@@ -26,10 +26,6 @@ class IntegrateSlackAPI(pyblish.api.InstancePlugin):
 
     optional = True
 
-    # internal, not configurable
-    bot_user_name = "OpenPypeNotifier"
-    icon_url = "https://openpype.io/img/favicon/favicon.ico"
-
     def process(self, instance):
         thumbnail_path = self._get_thumbnail_path(instance)
         review_path = self._get_review_path(instance)
