@@ -58,7 +58,9 @@ def validate_thirdparty_binaries():
             raise RuntimeError(error_msg.format("OpenImageIO"))
 
 
-validate_thirdparty_binaries()
+# Give ability to skip vaidation
+if not os.getenv("SKIP_THIRD_PARTY_VALIDATION"):
+    validate_thirdparty_binaries()
 
 version = {}
 
