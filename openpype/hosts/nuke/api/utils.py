@@ -49,12 +49,14 @@ def gizmo_is_nuke_default(gizmo):
     return gizmo.filename().startswith(plug_dir)
 
 
-def bake_gizmos_recursively(in_group=nuke.Root()):
+def bake_gizmos_recursively(in_group=None):
     """Converting a gizmo to group
 
     Argumets:
         is_group (nuke.Node)[optonal]: group node or all nodes
     """
+    if in_group is None:
+        in_group = nuke.Root()
     # preserve selection after all is done
     with maintained_selection():
         # jump to the group
