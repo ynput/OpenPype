@@ -632,15 +632,16 @@ def parse_get_url(get_url):
 
     general_location, rest = _parse_url(get_url)
 
-    if '=' in rest:
-        print("Get url {} cannot contain '=', this part ignored".
-              format(get_url))
-
     last_slash_idx = rest.rfind("/")
     namespace = ''
     key = rest[last_slash_idx + 1:]
     if last_slash_idx > -1:
         namespace = rest[:last_slash_idx]
+
+    if '=' in key:
+        print("Get url {} cannot contain '=', this part ignored".
+              format(get_url))
+        key = key.split('=')[0]
 
     if not key:
         raise ValueError("Url {} must contain key".format(get_url))
