@@ -22,6 +22,7 @@ from openpype.settings import (
     ProjectSettings,
     DefaultsNotDefined
 )
+from openpype.tools.utils import WrappedCallbackItem
 
 from .pype_info_widget import PypeInfoWidget
 
@@ -61,21 +62,24 @@ class TrayManager:
         if callback:
             self.execute_in_main_thread(callback)
 
-    def execute_in_main_thread(self, callback):
-        self._main_thread_callbacks.append(callback)
+    def execute_in_main_thread(self, callback, *args, **kwargs):
+        if isinstance(callback, WrappedCallbackItem):
+            item = callback
+        else:
+            item = WrappedCallbackItem(callback, *args, **kwargs)
+
+        self._main_thread_callbacks.append(item)
+
+        return item
 
     def _main_thread_execution(self):
         if self._execution_in_progress:
             return
         self._execution_in_progress = True
-        while self._main_thread_callbacks:
-            try:
-                callback = self._main_thread_callbacks.popleft()
-                callback()
-            except:
-                self.log.warning(
-                    "Failed to execute {} in main thread".format(callback),
-                    exc_info=True)
+        for _ in range(len(self._main_thread_callbacks)):
+            if self._main_thread_callbacks:
+                item = self._main_thread_callbacks.popleft()
+                item.execute()
 
         self._execution_in_progress = False
 

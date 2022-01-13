@@ -6,6 +6,7 @@ from .widgets import (
 )
 
 from .error_dialog import ErrorMessageBox
+from .lib import WrappedCallbackItem
 
 
 __all__ = (
@@ -14,5 +15,7 @@ __all__ = (
     "ClickableFrame",
     "ExpandBtn",
 
-    "ErrorMessageBox"
+    "ErrorMessageBox",
+
+    "WrappedCallbackItem",
 )
