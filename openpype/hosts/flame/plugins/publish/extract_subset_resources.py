@@ -15,7 +15,7 @@ class ExtractSubsetResources(openpype.api.Extractor):
     hosts = ["flame"]
 
     # hide publisher during exporting
-    hide_ui_on_process = True
+    # hide_ui_on_process = True
 
     export_presets_mapping = {
         "thumbnail": {
@@ -39,51 +39,66 @@ class ExtractSubsetResources(openpype.api.Extractor):
         if "representations" not in instance.data:
             instance.data["representations"] = []
 
-        name = instance.data["name"]
-        clip = instance.data["flameSourceClip"]
+        source_first_frame = instance.data["sourceFirstFrame"]
+        source_start_handles = instance.data["sourceStartH"]
+        source_end_handles = instance.data["sourceEndH"]
+        source_duration_handles = (
+            source_end_handles - source_start_handles) + 1
+
+        clip_data = instance.data["flameSourceClip"]
+        clip = clip_data["PyClip"]
+
+        in_mark = (source_start_handles - source_first_frame) + 1
+        out_mark = in_mark + source_duration_handles
+
         staging_dir = self.staging_dir(instance)
 
-        # prepare full export path
-        export_dir_path = os.path.join(
-            staging_dir, name
-        )
         # loop all preset names and
-        for preset_name, preset_config in self.export_presets_mapping:
+        for preset_name, preset_config in self.export_presets_mapping.items():
             kwargs = {}
             unique_name = preset_config["uniqueName"]
             preset_type = None
 
             # define kwargs based on preset type
             if "thumbnail" in preset_name:
-                kwargs["thumb_frame_number"] = 2
+                kwargs["thumb_frame_number"] = in_mark + (
+                    source_duration_handles / 2)
             else:
                 preset_type = preset_config["preset_type"]
                 kwargs.update({
-                    "in_mark": 2,
-                    "out_mark": 5,
-                    "preset_type": preset_type
+                    "in_mark": in_mark,
+                    "out_mark": out_mark,
+                    "export_type": preset_type
                 })
 
-            _export_dir_path = os.path.join(
-                export_dir_path, unique_name
+            export_dir_path = os.path.join(
+                staging_dir, unique_name
             )
+            os.makedirs(export_dir_path)
+
             # export
             opfapi.export_clip(
-                _export_dir_path, clip, preset_name, **kwargs)
+                export_dir_path, clip, preset_name, **kwargs)
 
             # create representation data
             representation_data = {
                 'name': unique_name,
                 'ext': preset_config["ext"],
-                "stagingDir": _export_dir_path,
+                "stagingDir": export_dir_path,
             }
 
-            files = os.listdir(_export_dir_path)
+            files = os.listdir(export_dir_path)
 
-            if preset_type and preset_type == "movie_file":
-                representation_data["files"] = files
-            else:
+            # add files to represetation but add
+            # imagesequence as list
+            if (
+                preset_type
+                and preset_type == "movie_file"
+                or preset_name == "thumbnail"
+            ):
                 representation_data["files"] = files.pop()
+            else:
+                representation_data["files"] = files
 
             instance.data["representations"].append(representation_data)
 

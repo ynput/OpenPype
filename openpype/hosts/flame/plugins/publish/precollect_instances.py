@@ -92,7 +92,7 @@ class PrecollectInstances(pyblish.api.ContextPlugin):
                     "publish": marker_data["publish"],
                     "fps": self.fps,
                     "flameSourceClip": source_clip,
-                    "sourceFirstFrame": first_frame,
+                    "sourceFirstFrame": int(first_frame),
                     "path": file_path
                 })
 
