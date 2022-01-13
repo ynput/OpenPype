@@ -10,12 +10,12 @@ class ExtractSubsetResources(openpype.api.Extractor):
     """
 
     label = "Extract subset resources"
-    order = pyblish.api.CollectorOrder + 0.49
+    order = pyblish.api.ExtractorOrder
     families = ["clip"]
     hosts = ["flame"]
 
     # hide publisher during exporting
-    # hide_ui_on_process = True
+    hide_ui_on_process = True
 
     export_presets_mapping = {
         "thumbnail": {
