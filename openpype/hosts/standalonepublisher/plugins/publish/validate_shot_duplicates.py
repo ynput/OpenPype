@@ -22,7 +22,7 @@ class ValidateShotDuplicates(pyblish.api.ContextPlugin):
 
         msg = "There are duplicate shot names:\n{}".format(duplicate_names)
 
-        formatting_data = {"duplicate_str": ','.join(duplicate_names)}
+        formatting_data = {"duplicates_str": ','.join(duplicate_names)}
         if duplicate_names:
             raise PublishXmlValidationError(self, msg,
                                             formatting_data=formatting_data)
