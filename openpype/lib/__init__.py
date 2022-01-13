@@ -168,7 +168,7 @@ from .editorial import (
     make_sequence_collection
 )
 
-from .pype_info import (
+from .openpype_version import (
     get_openpype_version,
     get_build_version,
     is_running_from_build,

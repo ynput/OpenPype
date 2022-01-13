@@ -5,65 +5,13 @@ import platform
 import getpass
 import socket
 
-import openpype.version
 from openpype.settings.lib import get_local_settings
 from .execute import get_openpype_execute_args
 from .local_settings import get_local_site_id
-from .python_module_tools import import_filepath
 from .openpype_version import (
-    op_version_control_available,
-    openpype_path_is_accessible,
-    get_expected_studio_version,
-    get_OpenPypeVersion
+    is_running_from_build,
+    get_openpype_version
 )
-
-
-def get_openpype_version():
-    """Version of pype that is currently used."""
-    return openpype.version.__version__
-
-
-def get_build_version():
-    """OpenPype version of build."""
-    # Return OpenPype version if is running from code
-    if not is_running_from_build():
-        return get_openpype_version()
-
-    # Import `version.py` from build directory
-    version_filepath = os.path.join(
-        os.environ["OPENPYPE_ROOT"],
-        "openpype",
-        "version.py"
-    )
-    if not os.path.exists(version_filepath):
-        return None
-
-    module = import_filepath(version_filepath, "openpype_build_version")
-    return getattr(module, "__version__", None)
-
-
-def is_running_from_build():
-    """Determine if current process is running from build or code.
-
-    Returns:
-        bool: True if running from build.
-    """
-    executable_path = os.environ["OPENPYPE_EXECUTABLE"]
-    executable_filename = os.path.basename(executable_path)
-    if "python" in executable_filename.lower():
-        return False
-    return True
-
-
-def is_running_staging():
-    """Currently used OpenPype is staging version.
-
-    Returns:
-        bool: True if openpype version containt 'staging'.
-    """
-    if "staging" in get_openpype_version():
-        return True
-    return False
 
 
 def get_pype_info():
@@ -135,36 +83,3 @@ def extract_pype_info_to_file(dirpath):
     with open(filepath, "w") as file_stream:
         json.dump(data, file_stream, indent=4)
     return filepath
-
-
-def is_current_version_studio_latest():
-    """Is currently running OpenPype version which is defined by studio.
-
-    It is not recommended to ask in each process as there may be situations
-    when older OpenPype should be used. For example on farm. But it does make
-    sense in processes that can run for a long time.
-
-    Returns:
-        None: Can't determine. e.g. when running from code or the build is
-            too old.
-        bool: True when is using studio
-    """
-    output = None
-    # Skip if is not running from build
-    if not is_running_from_build():
-        return output
-
-    # Skip if build does not support version control
-    if not op_version_control_available():
-        return output
-
-    # Skip if path to folder with zip files is not accessible
-    if not openpype_path_is_accessible():
-        return output
-
-    # Check if current version is expected version
-    OpenPypeVersion = get_OpenPypeVersion()
-    current_version = OpenPypeVersion(get_openpype_version())
-    expected_version = get_expected_studio_version(is_running_staging())
-
-    return current_version == expected_version
