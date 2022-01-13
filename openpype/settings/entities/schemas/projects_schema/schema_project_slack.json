@@ -92,6 +92,11 @@
                                                     "label": "Upload thumbnail"
                                                 },
                                                 {
+                                                    "type": "boolean",
+                                                    "key": "upload_review",
+                                                    "label": "Upload review"
+                                                },
+                                                {
                                                     "type": "text",
                                                     "multiline": true,
                                                     "key": "message",
