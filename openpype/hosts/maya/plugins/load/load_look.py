@@ -8,8 +8,6 @@ from collections import defaultdict
 from openpype.widgets.message_window import ScrollMessageBox
 from Qt import QtWidgets
 
-from openpype.hosts.maya.api.plugin import get_reference_node
-
 
 class LookLoader(openpype.hosts.maya.api.plugin.ReferenceLoader):
     """Specific loader for lookdev"""
@@ -71,8 +69,10 @@ class LookLoader(openpype.hosts.maya.api.plugin.ReferenceLoader):
         path = api.get_representation_path(representation)
 
         # Get reference node from container members
-        members = cmds.sets(node, query=True, nodesOnly=True)
-        reference_node = get_reference_node(members, log=self.log)
+        members = openpype.hosts.maya.api.lib.get_container_members(container)
+        reference_node = openpype.hosts.maya.api.lib.get_reference_node(
+            members
+        )
 
         shader_nodes = cmds.ls(members, type='shadingEngine')
         orig_nodes = set(self._get_nodes_with_shader(shader_nodes))
@@ -176,7 +176,6 @@ class LookLoader(openpype.hosts.maya.api.plugin.ReferenceLoader):
             <list> node names
         """
         import maya.cmds as cmds
-        # Get container members
 
         nodes_list = []
         for shader in shader_nodes:
@@ -227,5 +226,3 @@ class LookLoader(openpype.hosts.maya.api.plugin.ReferenceLoader):
         if cmds.getAttr("{}.verticesOnlySet".format(node)):
             self.log.info("Setting %s.verticesOnlySet to False", node)
             cmds.setAttr("{}.verticesOnlySet".format(node), False)
-        # Add new nodes of the reference to the container
-        cmds.sets(content, forceElement=node)
