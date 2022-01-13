@@ -549,6 +549,11 @@ def _determine_mongodb() -> str:
         RuntimeError: if mongodb connection url cannot by determined.
 
     """
+    # special case when OPENPYPE_MONGO is being set into keyring
+    if "setvalue" in sys.argv:
+        key, value = sys.argv[-1].split("=")
+        if "OPENPYPE_MONGO" in key:
+            os.environ["OPENPYPE_MONGO"] = value
 
     openpype_mongo = os.getenv("OPENPYPE_MONGO", None)
     if not openpype_mongo:
