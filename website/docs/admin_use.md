@@ -89,6 +89,18 @@ save it in secure way to your systems keyring - on Windows it is **Credential Ma
 This can be also set beforehand with environment variable `OPENPYPE_MONGO`. If set it takes precedence
 over the one set in keyring.
 
+##### MongoDB in headless mode
+Setting of environment variable `OPENPYPE_MONGO` is recommended for headless machines running OpenPype (render nodes etc.)
+This approach is recommended as setting of the environment variable might be a part of boot script of an image of headless node etc.
+
+If storing MongoDB url in environment variable is against your security rules, OpenPype might switch to use encrypted files as a keyring.
+For this set environment variable `OPENPYPE_SECRET` instead. This value is used to encrypt keyring files stored on a headless machine.
+
+Then as a first set `OPENPYPE_MONGO` into a keyring:
+```shell
+openpype_console setvalue keyring://file/environment/OPENPYPE_MONGO=YOUR_MONGO_URL
+```
+
 #### Check for OpenPype version path
 When connection to MongoDB is made, OpenPype will get various settings from there - one among them is
 directory location where OpenPype versions are stored. If this directory exists OpenPype tries to
