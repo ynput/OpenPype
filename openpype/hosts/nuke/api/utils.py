@@ -1,7 +1,7 @@
 import os
 import nuke
 from avalon.nuke import lib as anlib
-from openpype.api import resources
+from openpype import resources
 
 
 def set_context_favorites(favorites=None):

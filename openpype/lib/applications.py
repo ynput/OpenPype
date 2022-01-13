@@ -21,10 +21,8 @@ from openpype.settings.constants import (
     METADATA_KEYS,
     M_DYNAMIC_KEY_LABEL
 )
-from . import (
-    PypeLogger,
-    Anatomy
-)
+from .log import PypeLogger
+from .anatomy import Anatomy
 from .profiles_filtering import filter_profiles
 from .local_settings import get_openpype_username
 from .avalon_context import (

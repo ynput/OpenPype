@@ -24,7 +24,7 @@ import traceback
 import threading
 import copy
 
-from . import Terminal
+from .terminal import Terminal
 from .mongo import (
     MongoEnvNotSet,
     get_default_components,

@@ -34,7 +34,7 @@ from openpype.settings import (
     get_system_settings
 )
 
-from .import validate_mongo_connection
+from .mongo import validate_mongo_connection
 
 _PLACEHOLDER = object()
 

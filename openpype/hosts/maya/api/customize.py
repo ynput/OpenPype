@@ -9,7 +9,7 @@ import maya.cmds as mc
 import maya.mel as mel
 
 from avalon.maya import pipeline
-from openpype.api import resources
+from openpype import resources
 from openpype.tools.utils import host_tools
 
 
