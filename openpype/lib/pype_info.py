@@ -10,20 +10,17 @@ from openpype.settings.lib import get_local_settings
 from .execute import get_openpype_execute_args
 from .local_settings import get_local_site_id
 from .python_module_tools import import_filepath
+from .openpype_version import (
+    op_version_control_available,
+    openpype_path_is_accessible,
+    get_expected_studio_version,
+    get_OpenPypeVersion
+)
 
 
 def get_openpype_version():
     """Version of pype that is currently used."""
     return openpype.version.__version__
-
-
-def get_pype_version():
-    """Backwards compatibility. Remove when 100% not used."""
-    print((
-        "Using deprecated function 'openpype.lib.pype_info.get_pype_version'"
-        " replace with 'openpype.lib.pype_info.get_openpype_version'."
-    ))
-    return get_openpype_version()
 
 
 def get_build_version():
@@ -138,3 +135,36 @@ def extract_pype_info_to_file(dirpath):
     with open(filepath, "w") as file_stream:
         json.dump(data, file_stream, indent=4)
     return filepath
+
+
+def is_current_version_studio_latest():
+    """Is currently running OpenPype version which is defined by studio.
+
+    It is not recommended to ask in each process as there may be situations
+    when older OpenPype should be used. For example on farm. But it does make
+    sense in processes that can run for a long time.
+
+    Returns:
+        None: Can't determine. e.g. when running from code or the build is
+            too old.
+        bool: True when is using studio
+    """
+    output = None
+    # Skip if is not running from build
+    if not is_running_from_build():
+        return output
+
+    # Skip if build does not support version control
+    if not op_version_control_available():
+        return output
+
+    # Skip if path to folder with zip files is not accessible
+    if not openpype_path_is_accessible():
+        return output
+
+    # Check if current version is expected version
+    OpenPypeVersion = get_OpenPypeVersion()
+    current_version = OpenPypeVersion(get_openpype_version())
+    expected_version = get_expected_studio_version(is_running_staging())
+
+    return current_version == expected_version

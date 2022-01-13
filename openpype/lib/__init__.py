@@ -170,7 +170,9 @@ from .editorial import (
 
 from .pype_info import (
     get_openpype_version,
-    get_build_version
+    get_build_version,
+    is_running_from_build,
+    is_current_version_studio_latest
 )
 
 terminal = Terminal
@@ -304,4 +306,6 @@ __all__ = [
 
     "get_openpype_version",
     "get_build_version",
+    "is_running_from_build",
+    "is_current_version_studio_latest",
 ]

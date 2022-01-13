@@ -14,7 +14,11 @@ from openpype.api import (
     resources,
     get_system_settings
 )
-from openpype.lib import get_openpype_execute_args
+from openpype.lib import (
+    get_openpype_execute_args,
+    is_current_version_studio_latest,
+    is_running_from_build
+)
 from openpype.modules import TrayModulesManager
 from openpype import style
 from openpype.settings import (
@@ -27,11 +31,43 @@ from openpype.tools.utils import WrappedCallbackItem
 from .pype_info_widget import PypeInfoWidget
 
 
+class VersionDialog(QtWidgets.QDialog):
+    def __init__(self, parent=None):
+        super(VersionDialog, self).__init__(parent)
+
+        label_widget = QtWidgets.QLabel(
+            "Your version does not match to studio version", self
+        )
+
+        ignore_btn = QtWidgets.QPushButton("Ignore", self)
+        restart_btn = QtWidgets.QPushButton("Restart and Install", self)
+
+        btns_layout = QtWidgets.QHBoxLayout()
+        btns_layout.addStretch(1)
+        btns_layout.addWidget(ignore_btn, 0)
+        btns_layout.addWidget(restart_btn, 0)
+
+        layout = QtWidgets.QVBoxLayout(self)
+        layout.addWidget(label_widget, 0)
+        layout.addStretch(1)
+        layout.addLayout(btns_layout, 0)
+
+        ignore_btn.clicked.connect(self._on_ignore)
+        restart_btn.clicked.connect(self._on_reset)
+
+    def _on_ignore(self):
+        self.reject()
+
+    def _on_reset(self):
+        self.accept()
+
+
 class TrayManager:
     """Cares about context of application.
 
     Load submenus, actions, separators and modules into tray's context.
     """
+    _version_check_interval = 5 * 60 * 1000
 
     def __init__(self, tray_widget, main_window):
         self.tray_widget = tray_widget
@@ -45,6 +81,9 @@ class TrayManager:
         self.modules_manager = TrayModulesManager()
 
         self.errors = []
+
+        self._version_check_timer = None
+        self._version_dialog = None
 
         self.main_thread_timer = None
         self._main_thread_callbacks = collections.deque()
@@ -61,6 +100,24 @@ class TrayManager:
         callback = self.doubleclick_callback
         if callback:
             self.execute_in_main_thread(callback)
+
+    def _on_version_check_timer(self):
+        # Check if is running from build and stop future validations if yes
+        if not is_running_from_build():
+            self._version_check_timer.stop()
+            return
+
+        self.validate_openpype_version()
+
+    def validate_openpype_version(self):
+        if is_current_version_studio_latest():
+            return
+
+        if self._version_dialog is None:
+            self._version_dialog = VersionDialog()
+        result = self._version_dialog.exec_()
+        if result:
+            self.restart()
 
     def execute_in_main_thread(self, callback, *args, **kwargs):
         if isinstance(callback, WrappedCallbackItem):
@@ -122,6 +179,12 @@ class TrayManager:
         main_thread_timer.start()
 
         self.main_thread_timer = main_thread_timer
+
+        version_check_timer = QtCore.QTimer()
+        version_check_timer.setInterval(self._version_check_interval)
+        version_check_timer.timeout.connect(self._on_version_check_timer)
+        version_check_timer.start()
+        self._version_check_timer = version_check_timer
 
         # For storing missing settings dialog
         self._settings_validation_dialog = None
@@ -207,7 +270,7 @@ class TrayManager:
         self.tray_widget.menu.addAction(version_action)
         self.tray_widget.menu.addSeparator()
 
-    def restart(self):
+    def restart(self, reset_version=True):
         """Restart Tray tool.
 
         First creates new process with same argument and close current tray.
@@ -221,13 +284,18 @@ class TrayManager:
             additional_args.pop(0)
         args.extend(additional_args)
 
-        kwargs = {}
+        kwargs = {
+            "env": dict(os.environ.items())
+        }
         if platform.system().lower() == "windows":
             flags = (
                 subprocess.CREATE_NEW_PROCESS_GROUP
                 | subprocess.DETACHED_PROCESS
             )
             kwargs["creationflags"] = flags
+
+        if reset_version:
+            kwargs["env"].pop("OPENPYPE_VERSION", None)
 
         subprocess.Popen(args, **kwargs)
         self.exit()
