@@ -95,7 +95,7 @@ class ResourceCache:
     def get_warning_pixmap(cls):
         src_image = get_warning_image()
         colors = get_objected_colors()
-        color_value = colors["delete-btn-bg"]
+        color_value = colors["warning-btn-bg"]
 
         return paint_image_with_color(
             src_image,

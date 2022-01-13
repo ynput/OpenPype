@@ -153,6 +153,17 @@ def get_expected_studio_version(staging=None):
     return None
 
 
+def get_expected_version(staging=None):
+    expected_version = get_expected_studio_version(staging)
+    if expected_version is None:
+        # Look for latest if expected version is not set in settings
+        expected_version = get_latest_version(
+            staging=staging,
+            remote=True
+        )
+    return expected_version
+
+
 def is_current_version_studio_latest():
     """Is currently running OpenPype version which is defined by studio.
 
@@ -166,16 +177,13 @@ def is_current_version_studio_latest():
         bool: True when is using studio
     """
     output = None
-    # Skip if is not running from build
-    if not is_running_from_build():
-        return output
-
-    # Skip if build does not support version control
-    if not op_version_control_available():
-        return output
-
-    # Skip if path to folder with zip files is not accessible
-    if not openpype_path_is_accessible():
+    # Skip if is not running from build or build does not support version
+    #   control or path to folder with zip files is not accessible
+    if (
+        not is_running_from_build()
+        or not op_version_control_available()
+        or not openpype_path_is_accessible()
+    ):
         return output
 
     # Get OpenPypeVersion class
@@ -183,14 +191,7 @@ def is_current_version_studio_latest():
     # Convert current version to OpenPypeVersion object
     current_version = OpenPypeVersion(version=get_openpype_version())
 
-    staging = is_running_staging()
     # Get expected version (from settings)
-    expected_version = get_expected_studio_version(staging)
-    if expected_version is None:
-        # Look for latest if expected version is not set in settings
-        expected_version = get_latest_version(
-            staging=staging,
-            remote=True
-        )
+    expected_version = get_expected_version()
     # Check if current version is expected version
     return current_version == expected_version

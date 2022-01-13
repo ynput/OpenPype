@@ -17,7 +17,9 @@ from openpype.api import (
 from openpype.lib import (
     get_openpype_execute_args,
     is_current_version_studio_latest,
-    is_running_from_build
+    is_running_from_build,
+    get_expected_version,
+    get_openpype_version
 )
 from openpype.modules import TrayModulesManager
 from openpype import style
@@ -32,15 +34,30 @@ from .pype_info_widget import PypeInfoWidget
 
 
 class VersionDialog(QtWidgets.QDialog):
+    restart_requested = QtCore.Signal()
+
+    _min_width = 400
+    _min_height = 130
+
     def __init__(self, parent=None):
         super(VersionDialog, self).__init__(parent)
-
-        label_widget = QtWidgets.QLabel(
-            "Your version does not match to studio version", self
+        self.setWindowTitle("Wrong OpenPype version")
+        icon = QtGui.QIcon(resources.get_openpype_icon_filepath())
+        self.setWindowIcon(icon)
+        self.setWindowFlags(
+            self.windowFlags()
+            | QtCore.Qt.WindowStaysOnTopHint
         )
 
+        self.setMinimumWidth(self._min_width)
+        self.setMinimumHeight(self._min_height)
+
+        label_widget = QtWidgets.QLabel(self)
+        label_widget.setWordWrap(True)
+
         ignore_btn = QtWidgets.QPushButton("Ignore", self)
-        restart_btn = QtWidgets.QPushButton("Restart and Install", self)
+        ignore_btn.setObjectName("WarningButton")
+        restart_btn = QtWidgets.QPushButton("Restart and Change", self)
 
         btns_layout = QtWidgets.QHBoxLayout()
         btns_layout.addStretch(1)
@@ -55,10 +72,22 @@ class VersionDialog(QtWidgets.QDialog):
         ignore_btn.clicked.connect(self._on_ignore)
         restart_btn.clicked.connect(self._on_reset)
 
+        self._label_widget = label_widget
+
+        self.setStyleSheet(style.load_stylesheet())
+
+    def update_versions(self, current_version, expected_version):
+        message = (
+            "Your OpenPype version <b>{}</b> does"
+            " not match to studio version <b>{}</b>"
+        ).format(str(current_version), str(expected_version))
+        self._label_widget.setText(message)
+
     def _on_ignore(self):
         self.reject()
 
     def _on_reset(self):
+        self.restart_requested.emit()
         self.accept()
 
 
@@ -115,9 +144,22 @@ class TrayManager:
 
         if self._version_dialog is None:
             self._version_dialog = VersionDialog()
-        result = self._version_dialog.exec_()
-        if result:
-            self.restart()
+            self._version_dialog.restart_requested.connect(
+                self._restart_and_install
+            )
+
+        if self._version_dialog.isVisible():
+            return
+
+        expected_version = get_expected_version()
+        current_version = get_openpype_version()
+        self._version_dialog.update_versions(
+            current_version, expected_version
+        )
+        self._version_dialog.exec_()
+
+    def _restart_and_install(self):
+        self.restart()
 
     def execute_in_main_thread(self, callback, *args, **kwargs):
         if isinstance(callback, WrappedCallbackItem):

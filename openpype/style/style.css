@@ -734,11 +734,11 @@ QScrollBar::add-page:vertical, QScrollBar::sub-page:vertical {
     background: {color:bg-view-hover};
 }
 
-#DeleteButton {
-    background: {color:delete-btn-bg};
+#WarningButton {
+    background: {color:warning-btn-bg};
 }
-#DeleteButton:disabled {
-    background: {color:delete-btn-bg-disabled};
+#WarningButton:disabled {
+    background: {color:warning-btn-bg-disabled};
 }
 
 /* Launcher specific stylesheets */
