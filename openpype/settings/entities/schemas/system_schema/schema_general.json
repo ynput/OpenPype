@@ -20,12 +20,29 @@
         },
         {
             "type": "label",
-            "label": "This is <b>NOT a securely stored password!</b>. It only acts as a simple barrier to stop users from accessing studio wide settings."
+            "label": "This is <b>NOT a securely stored password!</b> It only acts as a simple barrier to stop users from accessing studio wide settings."
         },
         {
             "type": "text",
             "key": "admin_password",
             "label": "Admin password"
+        },
+        {
+            "type": "splitter"
+        },
+        {
+            "type": "label",
+            "label": "Define explicit OpenPype version that should be used. Keep empty to use latest available version."
+        },
+        {
+            "type": "production-versions-text",
+            "key": "production_version",
+            "label": "Production version"
+        },
+        {
+            "type": "staging-versions-text",
+            "key": "staging_version",
+            "label": "Staging version"
         },
         {
             "type": "splitter"

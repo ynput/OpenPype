@@ -32,6 +32,15 @@ class BaseWidget(QtWidgets.QWidget):
         self.label_widget = None
         self.create_ui()
 
+    @staticmethod
+    def set_style_property(obj, property_name, property_value):
+        """Change QWidget property and polish it's style."""
+        if obj.property(property_name) == property_value:
+            return
+
+        obj.setProperty(property_name, property_value)
+        obj.style().polish(obj)
+
     def scroll_to(self, widget):
         self.category_widget.scroll_to(widget)
 

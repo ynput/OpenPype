@@ -7,9 +7,10 @@ from avalon.vendor import qtawesome
 
 from openpype import style
 from openpype.pipeline.create import SUBSET_NAME_ALLOWED_SYMBOLS
+from openpype.tools.utils import ErrorMessageBox
 
 
-class CreateErrorMessageBox(QtWidgets.QDialog):
+class CreateErrorMessageBox(ErrorMessageBox):
     def __init__(
         self,
         family,
@@ -17,23 +18,38 @@ class CreateErrorMessageBox(QtWidgets.QDialog):
         asset_name,
         exc_msg,
         formatted_traceback,
-        parent=None
+        parent
     ):
-        super(CreateErrorMessageBox, self).__init__(parent)
-        self.setWindowTitle("Creation failed")
-        self.setFocusPolicy(QtCore.Qt.StrongFocus)
-        self.setWindowFlags(
-            self.windowFlags() | QtCore.Qt.WindowStaysOnTopHint
-        )
+        self._family = family
+        self._subset_name = subset_name
+        self._asset_name = asset_name
+        self._exc_msg = exc_msg
+        self._formatted_traceback = formatted_traceback
+        super(CreateErrorMessageBox, self).__init__("Creation failed", parent)
 
-        body_layout = QtWidgets.QVBoxLayout(self)
-
-        main_label = (
+    def _create_top_widget(self, parent_widget):
+        label_widget = QtWidgets.QLabel(parent_widget)
+        label_widget.setText(
             "<span style='font-size:18pt;'>Failed to create</span>"
         )
-        main_label_widget = QtWidgets.QLabel(main_label, self)
-        body_layout.addWidget(main_label_widget)
+        return label_widget
 
+    def _get_report_data(self):
+        report_message = (
+            "Failed to create Subset: \"{subset}\" Family: \"{family}\""
+            " in Asset: \"{asset}\""
+            "\n\nError: {message}"
+        ).format(
+            subset=self._subset_name,
+            family=self._family,
+            asset=self._asset_name,
+            message=self._exc_msg
+        )
+        if self._formatted_traceback:
+            report_message += "\n\n{}".format(self._formatted_traceback)
+        return [report_message]
+
+    def _create_content(self, content_layout):
         item_name_template = (
             "<span style='font-weight:bold;'>Family:</span> {}<br>"
             "<span style='font-weight:bold;'>Subset:</span> {}<br>"
@@ -42,50 +58,29 @@ class CreateErrorMessageBox(QtWidgets.QDialog):
         exc_msg_template = "<span style='font-weight:bold'>{}</span>"
 
         line = self._create_line()
-        body_layout.addWidget(line)
+        content_layout.addWidget(line)
 
-        item_name = item_name_template.format(family, subset_name, asset_name)
-        item_name_widget = QtWidgets.QLabel(
-            item_name.replace("\n", "<br>"), self
-        )
-        body_layout.addWidget(item_name_widget)
-
-        exc_msg = exc_msg_template.format(exc_msg.replace("\n", "<br>"))
-        message_label_widget = QtWidgets.QLabel(exc_msg, self)
-        body_layout.addWidget(message_label_widget)
-
-        if formatted_traceback:
-            tb_widget = QtWidgets.QLabel(
-                formatted_traceback.replace("\n", "<br>"), self
+        item_name_widget = QtWidgets.QLabel(self)
+        item_name_widget.setText(
+            item_name_template.format(
+                self._family, self._subset_name, self._asset_name
             )
-            tb_widget.setTextInteractionFlags(
-                QtCore.Qt.TextBrowserInteraction
-            )
-            body_layout.addWidget(tb_widget)
-
-        footer_widget = QtWidgets.QWidget(self)
-        footer_layout = QtWidgets.QHBoxLayout(footer_widget)
-        button_box = QtWidgets.QDialogButtonBox(QtCore.Qt.Vertical)
-        button_box.setStandardButtons(
-            QtWidgets.QDialogButtonBox.StandardButton.Ok
         )
-        button_box.accepted.connect(self._on_accept)
-        footer_layout.addWidget(button_box, alignment=QtCore.Qt.AlignRight)
-        body_layout.addWidget(footer_widget)
+        content_layout.addWidget(item_name_widget)
 
-    def showEvent(self, event):
-        self.setStyleSheet(style.load_stylesheet())
-        super(CreateErrorMessageBox, self).showEvent(event)
+        message_label_widget = QtWidgets.QLabel(self)
+        message_label_widget.setText(
+            exc_msg_template.format(self.convert_text_for_html(self._exc_msg))
+        )
+        content_layout.addWidget(message_label_widget)
 
-    def _on_accept(self):
-        self.close()
-
-    def _create_line(self):
-        line = QtWidgets.QFrame(self)
-        line.setFixedHeight(2)
-        line.setFrameShape(QtWidgets.QFrame.HLine)
-        line.setFrameShadow(QtWidgets.QFrame.Sunken)
-        return line
+        if self._formatted_traceback:
+            line_widget = self._create_line()
+            tb_widget = self._create_traceback_widget(
+                self._formatted_traceback
+            )
+            content_layout.addWidget(line_widget)
+            content_layout.addWidget(tb_widget)
 
 
 class SubsetNameValidator(QtGui.QRegExpValidator):

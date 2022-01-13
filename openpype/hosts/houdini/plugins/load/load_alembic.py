@@ -1,6 +1,6 @@
 from avalon import api
 
-from avalon.houdini import pipeline, lib
+from avalon.houdini import pipeline
 
 
 class AbcLoader(api.Loader):
@@ -25,16 +25,9 @@ class AbcLoader(api.Loader):
         # Get the root node
         obj = hou.node("/obj")
 
-        # Create a unique name
-        counter = 1
+        # Define node name
         namespace = namespace if namespace else context["asset"]["name"]
-        formatted = "{}_{}".format(namespace, name) if namespace else name
-        node_name = "{0}_{1:03d}".format(formatted, counter)
-
-        children = lib.children_as_string(hou.node("/obj"))
-        while node_name in children:
-            counter += 1
-            node_name = "{0}_{1:03d}".format(formatted, counter)
+        node_name = "{}_{}".format(namespace, name) if namespace else name
 
         # Create a new geo node
         container = obj.createNode("geo", node_name=node_name)

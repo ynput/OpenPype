@@ -7,7 +7,7 @@ import socket
 
 import openpype.version
 from openpype.settings.lib import get_local_settings
-from .execute import get_pype_execute_args
+from .execute import get_openpype_execute_args
 from .local_settings import get_local_site_id
 from .python_module_tools import import_filepath
 
@@ -71,7 +71,7 @@ def is_running_staging():
 
 def get_pype_info():
     """Information about currently used Pype process."""
-    executable_args = get_pype_execute_args()
+    executable_args = get_openpype_execute_args()
     if is_running_from_build():
         version_type = "build"
     else:
