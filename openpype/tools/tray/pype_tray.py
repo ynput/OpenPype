@@ -35,6 +35,7 @@ from .pype_info_widget import PypeInfoWidget
 
 class VersionDialog(QtWidgets.QDialog):
     restart_requested = QtCore.Signal()
+    ignore_requested = QtCore.Signal()
 
     _min_width = 400
     _min_height = 130
@@ -73,8 +74,18 @@ class VersionDialog(QtWidgets.QDialog):
         restart_btn.clicked.connect(self._on_reset)
 
         self._label_widget = label_widget
+        self._restart_accepted = False
 
         self.setStyleSheet(style.load_stylesheet())
+
+    def showEvent(self, event):
+        super().showEvent(event)
+        self._restart_accepted = False
+
+    def closeEvent(self, event):
+        super().closeEvent(event)
+        if not self._restart_accepted:
+            self.ignore_requested.emit()
 
     def update_versions(self, current_version, expected_version):
         message = (
@@ -87,6 +98,7 @@ class VersionDialog(QtWidgets.QDialog):
         self.reject()
 
     def _on_reset(self):
+        self._restart_accepted = True
         self.restart_requested.emit()
         self.accept()
 
@@ -147,6 +159,9 @@ class TrayManager:
             self._version_dialog.restart_requested.connect(
                 self._restart_and_install
             )
+            self._version_dialog.ignore_requested.connect(
+                self._outdated_version_ignored
+            )
 
         if self._version_dialog.isVisible():
             return
@@ -160,6 +175,15 @@ class TrayManager:
 
     def _restart_and_install(self):
         self.restart()
+
+    def _outdated_version_ignored(self):
+        self.show_tray_message(
+            "Outdated OpenPype version",
+            (
+                "Please update your OpenPype as soon as possible."
+                " All you have to do is to restart tray."
+            )
+        )
 
     def execute_in_main_thread(self, callback, *args, **kwargs):
         if isinstance(callback, WrappedCallbackItem):
