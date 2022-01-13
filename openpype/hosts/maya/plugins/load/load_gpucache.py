@@ -2,10 +2,11 @@ import os
 from avalon import api
 from openpype.api import get_project_settings
 
+
 class GpuCacheLoader(api.Loader):
     """Load model Alembic as gpuCache"""
 
-    families = ["model"]
+    families = ["model", "animation", "pointcache"]
     representations = ["abc"]
 
     label = "Import Gpu Cache"
