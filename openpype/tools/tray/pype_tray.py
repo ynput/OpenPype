@@ -108,8 +108,6 @@ class TrayManager:
 
     Load submenus, actions, separators and modules into tray's context.
     """
-    _version_check_interval = 5 * 60 * 1000
-
     def __init__(self, tray_widget, main_window):
         self.tray_widget = tray_widget
         self.main_window = main_window
@@ -117,7 +115,15 @@ class TrayManager:
 
         self.log = Logger.get_logger(self.__class__.__name__)
 
-        self.module_settings = get_system_settings()["modules"]
+        system_settings = get_system_settings()
+        self.module_settings = system_settings["modules"]
+
+        version_check_interval = system_settings["general"].get(
+            "version_check_interval"
+        )
+        if version_check_interval is None:
+            version_check_interval = 5
+        self._version_check_interval = version_check_interval * 60 * 1000
 
         self.modules_manager = TrayModulesManager()
 
@@ -247,9 +253,10 @@ class TrayManager:
         self.main_thread_timer = main_thread_timer
 
         version_check_timer = QtCore.QTimer()
-        version_check_timer.setInterval(self._version_check_interval)
         version_check_timer.timeout.connect(self._on_version_check_timer)
-        version_check_timer.start()
+        if self._version_check_interval > 0:
+            version_check_timer.setInterval(self._version_check_interval)
+            version_check_timer.start()
         self._version_check_timer = version_check_timer
 
         # For storing missing settings dialog
