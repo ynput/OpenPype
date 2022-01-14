@@ -173,6 +173,7 @@ from .openpype_version import (
     get_build_version,
     get_expected_version,
     is_running_from_build,
+    is_running_staging,
     is_current_version_studio_latest
 )
 
@@ -309,5 +310,6 @@ __all__ = [
     "get_build_version",
     "get_expected_version",
     "is_running_from_build",
+    "is_running_staging",
     "is_current_version_studio_latest",
 ]
