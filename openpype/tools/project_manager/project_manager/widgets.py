@@ -369,7 +369,7 @@ class ConfirmProjectDeletion(QtWidgets.QDialog):
         cancel_btn = QtWidgets.QPushButton("Cancel", self)
         cancel_btn.setToolTip("Cancel deletion of the project")
         confirm_btn = QtWidgets.QPushButton("Permanently Delete Project", self)
-        confirm_btn.setObjectName("WarningButton")
+        confirm_btn.setObjectName("DeleteButton")
         confirm_btn.setEnabled(False)
         confirm_btn.setToolTip("Confirm deletion")
 

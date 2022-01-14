@@ -734,11 +734,11 @@ QScrollBar::add-page:vertical, QScrollBar::sub-page:vertical {
     background: {color:bg-view-hover};
 }
 
-#WarningButton {
-    background: {color:warning-btn-bg};
+#DeleteButton {
+    background: {color:delete-btn-bg};
 }
-#WarningButton:disabled {
-    background: {color:warning-btn-bg-disabled};
+#DeleteButton:disabled {
+    background: {color:delete-btn-bg-disabled};
 }
 
 /* Launcher specific stylesheets */
@@ -1226,6 +1226,11 @@ QScrollBar::add-page:vertical, QScrollBar::sub-page:vertical {
     border: 1px solid #4e5254;
     border-radius: 5px;
     background: #21252B;
+}
+
+/* Tray */
+#TrayRestartButton {
+    background: {color:restart-btn-bg};
 }
 
 /* Globally used names */
