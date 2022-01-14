@@ -24,6 +24,7 @@
                     "ext": "exr",
                     "xmlPresetDir": "",
                     "xmlPresetFile": "OpenEXR (16-bit fp DWAA).xml",
+                    "representationAddRange": false,
                     "representationTags": []
                 }
             }

@@ -21,12 +21,14 @@ class ExtractSubsetResources(openpype.api.Extractor):
             "ext": "jpg",
             "xmlPresetFile": "Jpeg (8-bit).xml",
             "xmlPresetDir": "",
+            "representationAddRange": False,
             "representationTags": ["thumbnail"]
         },
         "ftrackpreview": {
             "ext": "mov",
             "xmlPresetFile": "Apple iPad (1920x1080).xml",
             "xmlPresetDir": "",
+            "representationAddRange": False,
             "representationTags": [
                 "review",
                 "delete"

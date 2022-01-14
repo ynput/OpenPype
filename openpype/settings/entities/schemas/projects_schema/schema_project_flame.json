@@ -160,6 +160,11 @@
                                         "type": "separator"
                                     },
                                     {
+                                        "type": "boolean",
+                                        "key": "representationAddRange",
+                                        "label": "Add frame range to representation"
+                                    },
+                                    {
                                         "type": "list",
                                         "key": "representationTags",
                                         "label": "Add representation tags",
