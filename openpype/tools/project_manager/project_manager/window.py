@@ -78,7 +78,9 @@ class ProjectManagerWindow(QtWidgets.QWidget):
         )
         create_folders_btn.setEnabled(False)
 
-        remove_projects_btn = QtWidgets.QPushButton(project_widget)
+        remove_projects_btn = QtWidgets.QPushButton(
+            "Delete project", project_widget
+        )
         remove_projects_btn.setIcon(ResourceCache.get_icon("remove"))
         remove_projects_btn.setObjectName("IconBtn")
 

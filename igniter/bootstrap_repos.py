@@ -22,7 +22,10 @@ from .user_settings import (
     OpenPypeSecureRegistry,
     OpenPypeSettingsRegistry
 )
-from .tools import get_openpype_path_from_db
+from .tools import (
+    get_openpype_path_from_db,
+    get_expected_studio_version_str
+)
 
 
 LOG_INFO = 0
@@ -60,6 +63,7 @@ class OpenPypeVersion(semver.VersionInfo):
     staging = False
     path = None
     _VERSION_REGEX = re.compile(r"(?P<major>0|[1-9]\d*)\.(?P<minor>0|[1-9]\d*)\.(?P<patch>0|[1-9]\d*)(?:-(?P<prerelease>(?:0|[1-9]\d*|\d*[a-zA-Z-][0-9a-zA-Z-]*)(?:\.(?:0|[1-9]\d*|\d*[a-zA-Z-][0-9a-zA-Z-]*))*))?(?:\+(?P<buildmetadata>[0-9a-zA-Z-]+(?:\.[0-9a-zA-Z-]+)*))?$")  # noqa: E501
+    _installed_version = None
 
     def __init__(self, *args, **kwargs):
         """Create OpenPype version.
@@ -232,6 +236,390 @@ class OpenPypeVersion(semver.VersionInfo):
         else:
             return hash(str(self))
 
+    @staticmethod
+    def is_version_in_dir(
+            dir_item: Path, version: OpenPypeVersion) -> Tuple[bool, str]:
+        """Test if path item is OpenPype version matching detected version.
+
+        If item is directory that might (based on it's name)
+        contain OpenPype version, check if it really does contain
+        OpenPype and that their versions matches.
+
+        Args:
+            dir_item (Path): Directory to test.
+            version (OpenPypeVersion): OpenPype version detected
+                from name.
+
+        Returns:
+            Tuple: State and reason, True if it is valid OpenPype version,
+                   False otherwise.
+
+        """
+        try:
+            # add one 'openpype' level as inside dir there should
+            # be many other repositories.
+            version_str = OpenPypeVersion.get_version_string_from_directory(
+                dir_item)  # noqa: E501
+            version_check = OpenPypeVersion(version=version_str)
+        except ValueError:
+            return False, f"cannot determine version from {dir_item}"
+
+        version_main = version_check.get_main_version()
+        detected_main = version.get_main_version()
+        if version_main != detected_main:
+            return False, (f"dir version ({version}) and "
+                           f"its content version ({version_check}) "
+                           "doesn't match. Skipping.")
+        return True, "Versions match"
+
+    @staticmethod
+    def is_version_in_zip(
+            zip_item: Path, version: OpenPypeVersion) -> Tuple[bool, str]:
+        """Test if zip path is OpenPype version matching detected version.
+
+        Open zip file, look inside and parse version from OpenPype
+        inside it. If there is none, or it is different from
+        version specified in file name, skip it.
+
+        Args:
+            zip_item (Path): Zip file to test.
+            version (OpenPypeVersion): Pype version detected
+                from name.
+
+        Returns:
+           Tuple: State and reason, True if it is valid OpenPype version,
+                False otherwise.
+
+        """
+        # skip non-zip files
+        if zip_item.suffix.lower() != ".zip":
+            return False, "Not a zip"
+
+        try:
+            with ZipFile(zip_item, "r") as zip_file:
+                with zip_file.open(
+                        "openpype/version.py") as version_file:
+                    zip_version = {}
+                    exec(version_file.read(), zip_version)
+                    try:
+                        version_check = OpenPypeVersion(
+                            version=zip_version["__version__"])
+                    except ValueError as e:
+                        return False, str(e)
+
+                    version_main = version_check.get_main_version()  #
+                    # noqa: E501
+                    detected_main = version.get_main_version()
+                    # noqa: E501
+
+                    if version_main != detected_main:
+                        return False, (f"zip version ({version}) "
+                                       f"and its content version "
+                                       f"({version_check}) "
+                                       "doesn't match. Skipping.")
+        except BadZipFile:
+            return False, f"{zip_item} is not a zip file"
+        except KeyError:
+            return False, "Zip does not contain OpenPype"
+        return True, "Versions match"
+
+    @staticmethod
+    def get_version_string_from_directory(repo_dir: Path) -> Union[str, None]:
+        """Get version of OpenPype in given directory.
+
+        Note: in frozen OpenPype installed in user data dir, this must point
+        one level deeper as it is:
+        `openpype-version-v3.0.0/openpype/version.py`
+
+        Args:
+            repo_dir (Path): Path to OpenPype repo.
+
+        Returns:
+            str: version string.
+            None: if OpenPype is not found.
+
+        """
+        # try to find version
+        version_file = Path(repo_dir) / "openpype" / "version.py"
+        if not version_file.exists():
+            return None
+
+        version = {}
+        with version_file.open("r") as fp:
+            exec(fp.read(), version)
+
+        return version['__version__']
+
+    @classmethod
+    def get_openpype_path(cls):
+        """Path to openpype zip directory.
+
+        Path can be set through environment variable 'OPENPYPE_PATH' which
+        is set during start of OpenPype if is not available.
+        """
+        return os.getenv("OPENPYPE_PATH")
+
+    @classmethod
+    def openpype_path_is_set(cls):
+        """Path to OpenPype zip directory is set."""
+        if cls.get_openpype_path():
+            return True
+        return False
+
+    @classmethod
+    def openpype_path_is_accessible(cls):
+        """Path to OpenPype zip directory is accessible.
+
+        Exists for this machine.
+        """
+        # First check if is set
+        if not cls.openpype_path_is_set():
+            return False
+
+        # Validate existence
+        if Path(cls.get_openpype_path()).exists():
+            return True
+        return False
+
+    @classmethod
+    def get_local_versions(
+        cls, production: bool = None, staging: bool = None
+    ) -> List:
+        """Get all versions available on this machine.
+
+        Arguments give ability to specify if filtering is needed. If both
+        arguments are set to None all found versions are returned.
+
+        Args:
+            production (bool): Return production versions.
+            staging (bool): Return staging versions.
+        """
+        # Return all local versions if arguments are set to None
+        if production is None and staging is None:
+            production = True
+            staging = True
+
+        elif production is None and not staging:
+            production = True
+
+        elif staging is None and not production:
+            staging = True
+
+        # Just return empty output if both are disabled
+        if not production and not staging:
+            return []
+
+        dir_to_search = Path(user_data_dir("openpype", "pypeclub"))
+        versions = OpenPypeVersion.get_versions_from_directory(
+            dir_to_search
+        )
+        filtered_versions = []
+        for version in versions:
+            if version.is_staging():
+                if staging:
+                    filtered_versions.append(version)
+            elif production:
+                filtered_versions.append(version)
+        return list(sorted(set(filtered_versions)))
+
+    @classmethod
+    def get_remote_versions(
+        cls, production: bool = None, staging: bool = None
+    ) -> List:
+        """Get all versions available in OpenPype Path.
+
+        Arguments give ability to specify if filtering is needed. If both
+        arguments are set to None all found versions are returned.
+
+        Args:
+            production (bool): Return production versions.
+            staging (bool): Return staging versions.
+        """
+        # Return all local versions if arguments are set to None
+        if production is None and staging is None:
+            production = True
+            staging = True
+
+        elif production is None and not staging:
+            production = True
+
+        elif staging is None and not production:
+            staging = True
+
+        # Just return empty output if both are disabled
+        if not production and not staging:
+            return []
+
+        dir_to_search = None
+        if cls.openpype_path_is_accessible():
+            dir_to_search = Path(cls.get_openpype_path())
+        else:
+            registry = OpenPypeSettingsRegistry()
+            try:
+                registry_dir = Path(str(registry.get_item("openPypePath")))
+                if registry_dir.exists():
+                    dir_to_search = registry_dir
+
+            except ValueError:
+                # nothing found in registry, we'll use data dir
+                pass
+
+        if not dir_to_search:
+            return []
+
+        versions = cls.get_versions_from_directory(dir_to_search)
+        filtered_versions = []
+        for version in versions:
+            if version.is_staging():
+                if staging:
+                    filtered_versions.append(version)
+            elif production:
+                filtered_versions.append(version)
+        return list(sorted(set(filtered_versions)))
+
+    @staticmethod
+    def get_versions_from_directory(openpype_dir: Path) -> List:
+        """Get all detected OpenPype versions in directory.
+
+        Args:
+            openpype_dir (Path): Directory to scan.
+
+        Returns:
+            list of OpenPypeVersion
+
+        Throws:
+            ValueError: if invalid path is specified.
+
+        """
+        if not openpype_dir.exists() and not openpype_dir.is_dir():
+            raise ValueError("specified directory is invalid")
+
+        _openpype_versions = []
+        # iterate over directory in first level and find all that might
+        # contain OpenPype.
+        for item in openpype_dir.iterdir():
+
+            # if file, strip extension, in case of dir not.
+            name = item.name if item.is_dir() else item.stem
+            result = OpenPypeVersion.version_in_str(name)
+
+            if result:
+                detected_version: OpenPypeVersion
+                detected_version = result
+
+                if item.is_dir() and not OpenPypeVersion.is_version_in_dir(
+                        item, detected_version
+                )[0]:
+                    continue
+
+                if item.is_file() and not OpenPypeVersion.is_version_in_zip(
+                        item, detected_version
+                )[0]:
+                    continue
+
+                detected_version.path = item
+                _openpype_versions.append(detected_version)
+
+        return sorted(_openpype_versions)
+
+    @staticmethod
+    def get_installed_version_str() -> str:
+        """Get version of local OpenPype."""
+
+        version = {}
+        path = Path(os.environ["OPENPYPE_ROOT"]) / "openpype" / "version.py"
+        with open(path, "r") as fp:
+            exec(fp.read(), version)
+        return version["__version__"]
+
+    @classmethod
+    def get_installed_version(cls):
+        """Get version of OpenPype inside build."""
+        if cls._installed_version is None:
+            installed_version_str = cls.get_installed_version_str()
+            if installed_version_str:
+                cls._installed_version = OpenPypeVersion(
+                    version=installed_version_str,
+                    path=Path(os.environ["OPENPYPE_ROOT"])
+                )
+        return cls._installed_version
+
+    @staticmethod
+    def get_latest_version(
+        staging: bool = False,
+        local: bool = None,
+        remote: bool = None
+    ) -> OpenPypeVersion:
+        """Get latest available version.
+
+        The version does not contain information about path and source.
+
+        This is utility version to get latest version from all found. Build
+        version is not listed if staging is enabled.
+
+        Arguments 'local' and 'remote' define if local and remote repository
+        versions are used. All versions are used if both are not set (or set
+        to 'None'). If only one of them is set to 'True' the other is disabled.
+        It is possible to set both to 'True' (same as both set to None) and to
+        'False' in that case only build version can be used.
+
+        Args:
+            staging (bool, optional): List staging versions if True.
+            local (bool, optional): List local versions if True.
+            remote (bool, optional): List remote versions if True.
+        """
+        if local is None and remote is None:
+            local = True
+            remote = True
+
+        elif local is None and not remote:
+            local = True
+
+        elif remote is None and not local:
+            remote = True
+
+        installed_version = OpenPypeVersion.get_installed_version()
+        local_versions = []
+        remote_versions = []
+        if local:
+            local_versions = OpenPypeVersion.get_local_versions(
+                staging=staging
+            )
+        if remote:
+            remote_versions = OpenPypeVersion.get_remote_versions(
+                staging=staging
+            )
+        all_versions = local_versions + remote_versions
+        if not staging:
+            all_versions.append(installed_version)
+
+        if not all_versions:
+            return None
+
+        all_versions.sort()
+        return all_versions[-1]
+
+    @classmethod
+    def get_expected_studio_version(cls, staging=False, global_settings=None):
+        """Expected OpenPype version that should be used at the moment.
+
+        If version is not defined in settings the latest found version is
+        used.
+
+        Using precached global settings is needed for usage inside OpenPype.
+
+        Args:
+            staging (bool): Staging version or production version.
+            global_settings (dict): Optional precached global settings.
+
+        Returns:
+            OpenPypeVersion: Version that should be used.
+        """
+        result = get_expected_studio_version_str(staging, global_settings)
+        if not result:
+            return None
+        return OpenPypeVersion(version=result)
+
 
 class BootstrapRepos:
     """Class for bootstrapping local OpenPype installation.
@@ -302,16 +690,6 @@ class BootstrapRepos:
         return None
 
     @staticmethod
-    def get_local_live_version() -> str:
-        """Get version of local OpenPype."""
-
-        version = {}
-        path = Path(os.environ["OPENPYPE_ROOT"]) / "openpype" / "version.py"
-        with open(path, "r") as fp:
-            exec(fp.read(), version)
-        return version["__version__"]
-
-    @staticmethod
     def get_version(repo_dir: Path) -> Union[str, None]:
         """Get version of OpenPype in given directory.
 
@@ -358,7 +736,7 @@ class BootstrapRepos:
         # version and use it as a source. Otherwise repo_dir is user
         # entered location.
         if not repo_dir:
-            version = self.get_local_live_version()
+            version = OpenPypeVersion.get_installed_version_str()
             repo_dir = self.live_repo_dir
         else:
             version = self.get_version(repo_dir)
@@ -384,7 +762,7 @@ class BootstrapRepos:
 
             destination = self._move_zip_to_data_dir(temp_zip)
 
-        return OpenPypeVersion(version=version, path=destination)
+        return OpenPypeVersion(version=version, path=Path(destination))
 
     def _move_zip_to_data_dir(self, zip_file) -> Union[None, Path]:
         """Move zip with OpenPype version to user data directory.
@@ -733,6 +1111,65 @@ class BootstrapRepos:
         paths += roots
 
         os.environ["PYTHONPATH"] = os.pathsep.join(paths)
+
+    @staticmethod
+    def find_openpype_version(version, staging):
+        if isinstance(version, str):
+            version = OpenPypeVersion(version=version)
+
+        installed_version = OpenPypeVersion.get_installed_version()
+        if installed_version == version:
+            return installed_version
+
+        local_versions = OpenPypeVersion.get_local_versions(
+            staging=staging, production=not staging
+        )
+        zip_version = None
+        for local_version in local_versions:
+            if local_version == version:
+                if local_version.path.suffix.lower() == ".zip":
+                    zip_version = local_version
+                else:
+                    return local_version
+
+        if zip_version is not None:
+            return zip_version
+
+        remote_versions = OpenPypeVersion.get_remote_versions(
+            staging=staging, production=not staging
+        )
+        for remote_version in remote_versions:
+            if remote_version == version:
+                return remote_version
+        return None
+
+    @staticmethod
+    def find_latest_openpype_version(staging):
+        installed_version = OpenPypeVersion.get_installed_version()
+        local_versions = OpenPypeVersion.get_local_versions(
+            staging=staging
+        )
+        remote_versions = OpenPypeVersion.get_remote_versions(
+            staging=staging
+        )
+        all_versions = local_versions + remote_versions
+        if not staging:
+            all_versions.append(installed_version)
+
+        if not all_versions:
+            return None
+
+        all_versions.sort()
+        latest_version = all_versions[-1]
+        if latest_version == installed_version:
+            return latest_version
+
+        if not latest_version.path.is_dir():
+            for version in local_versions:
+                if version == latest_version and version.path.is_dir():
+                    latest_version = version
+                    break
+        return latest_version
 
     def find_openpype(
             self,

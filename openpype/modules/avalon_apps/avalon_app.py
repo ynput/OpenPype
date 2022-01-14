@@ -13,14 +13,6 @@ class AvalonModule(OpenPypeModule, ITrayModule):
 
         avalon_settings = modules_settings[self.name]
 
-        # Check if environment is already set
-        avalon_mongo_url = os.environ.get("AVALON_MONGO")
-        if not avalon_mongo_url:
-            avalon_mongo_url = avalon_settings["AVALON_MONGO"]
-        # Use pype mongo if Avalon's mongo not defined
-        if not avalon_mongo_url:
-            avalon_mongo_url = os.environ["OPENPYPE_MONGO"]
-
         thumbnail_root = os.environ.get("AVALON_THUMBNAIL_ROOT")
         if not thumbnail_root:
             thumbnail_root = avalon_settings["AVALON_THUMBNAIL_ROOT"]
@@ -31,7 +23,6 @@ class AvalonModule(OpenPypeModule, ITrayModule):
             avalon_mongo_timeout = avalon_settings["AVALON_TIMEOUT"]
 
         self.thumbnail_root = thumbnail_root
-        self.avalon_mongo_url = avalon_mongo_url
         self.avalon_mongo_timeout = avalon_mongo_timeout
 
         # Tray attributes
@@ -51,12 +42,20 @@ class AvalonModule(OpenPypeModule, ITrayModule):
     def tray_init(self):
         # Add library tool
         try:
+            from Qt import QtCore
             from openpype.tools.libraryloader import LibraryLoaderWindow
 
-            self.libraryloader = LibraryLoaderWindow(
+            libraryloader = LibraryLoaderWindow(
                 show_projects=True,
                 show_libraries=True
             )
+            # Remove always on top flag for tray
+            window_flags = libraryloader.windowFlags()
+            if window_flags | QtCore.Qt.WindowStaysOnTopHint:
+                window_flags ^= QtCore.Qt.WindowStaysOnTopHint
+                libraryloader.setWindowFlags(window_flags)
+            self.libraryloader = libraryloader
+
         except Exception:
             self.log.warning(
                 "Couldn't load Library loader tool for tray.",

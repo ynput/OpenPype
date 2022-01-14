@@ -96,9 +96,9 @@ if (-not (Test-Path -PathType Container -Path "$($env:POETRY_HOME)\bin")) {
 
 Write-Host ">>> " -NoNewline -ForegroundColor green
 Write-Host "Cleaning cache files ... " -NoNewline
-Get-ChildItem $openpype_root -Filter "*.pyc" -Force -Recurse | Where-Object { $_.FullName -inotmatch 'build' } | Remove-Item -Force
-Get-ChildItem $openpype_root -Filter "*.pyo" -Force -Recurse | Where-Object { $_.FullName -inotmatch 'build' } | Remove-Item -Force
-Get-ChildItem $openpype_root -Filter "__pycache__" -Force -Recurse|  Where-Object { $_.FullName -inotmatch 'build' } | Remove-Item -Force -Recurse
+Get-ChildItem $openpype_root -Filter "__pycache__" -Force -Recurse|  Where-Object {( $_.FullName -inotmatch '\\build\\' ) -and ( $_.FullName -inotmatch '\\.venv' )} | Remove-Item -Force -Recurse
+Get-ChildItem $openpype_root -Filter "*.pyc" -Force -Recurse | Where-Object {( $_.FullName -inotmatch '\\build\\' ) -and ( $_.FullName -inotmatch '\\.venv' )} | Remove-Item -Force
+Get-ChildItem $openpype_root -Filter "*.pyo" -Force -Recurse | Where-Object {( $_.FullName -inotmatch '\\build\\' ) -and ( $_.FullName -inotmatch '\\.venv' )} | Remove-Item -Force
 Write-Host "OK" -ForegroundColor green
 
 Write-Host ">>> " -NoNewline -ForegroundColor green

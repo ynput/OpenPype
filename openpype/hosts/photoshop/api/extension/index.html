@@ -1,0 +1,119 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <style type="text/css">
+      html, body, iframe {
+        width: 100%;
+        height: 100%;
+        border: 0px;
+        margin: 0px;
+        overflow: hidden;
+        background-color: #424242;
+      }
+      button {width: 100%;}
+    </style>
+    
+    <style>
+      button {width: 100%;}
+      body {margin:0; padding:0; height: 100%;}
+      html {height: 100%;}
+    </style>
+    <script src="http://ajax.googleapis.com/ajax/libs/jquery/1.9.1/jquery.min.js">
+    </script>
+    
+    <script type=text/javascript>
+            $(function() {
+              $("a#workfiles-button").bind("click", function() {
+                RPC.call('Photoshop.workfiles_route').then(function (data) {
+                }, function (error) {
+                    alert(error);
+                });
+              });
+            });
+    </script>
+    
+    <script type=text/javascript>
+            $(function() {
+              $("a#creator-button").bind("click", function() {
+                RPC.call('Photoshop.creator_route').then(function (data) {
+                }, function (error) {
+                    alert(error);
+                });
+              });
+            });
+    </script>
+    
+    <script type=text/javascript>
+            $(function() {
+              $("a#loader-button").bind("click", function() {
+                RPC.call('Photoshop.loader_route').then(function (data) {
+                }, function (error) {
+                    alert(error);
+                });
+              });
+            });
+    </script>
+    
+    <script type=text/javascript>
+            $(function() {
+              $("a#publish-button").bind("click", function() {
+                RPC.call('Photoshop.publish_route').then(function (data) {
+                }, function (error) {
+                    alert(error);
+                });
+              });
+            });
+    </script>
+    
+    <script type=text/javascript>
+            $(function() {
+              $("a#sceneinventory-button").bind("click", function() {
+                RPC.call('Photoshop.sceneinventory_route').then(function (data) {
+                }, function (error) {
+                    alert(error);
+                });
+              });
+            });
+    </script>
+
+    <script type=text/javascript>
+            $(function() {
+              $("a#subsetmanager-button").bind("click", function() {
+                RPC.call('Photoshop.subsetmanager_route').then(function (data) {
+                }, function (error) {
+                    alert(error);
+                });
+              });
+            });
+    </script>
+    
+    <script type=text/javascript>
+            $(function() {
+              $("a#experimental-button").bind("click", function() {
+                RPC.call('Photoshop.experimental_tools_route').then(function (data) {
+                }, function (error) {
+                    alert(error);
+                });
+              });
+            });
+    </script>
+</head>
+<body>
+  <script type="text/javascript" src="./client/wsrpc.js"></script>
+  <script type="text/javascript" src="./client/CSInterface.js"></script>
+  <script type="text/javascript" src="./client/loglevel.min.js"></script>
+  
+  <!-- helper library for better debugging of .jsx check its license! -->
+  <script type="text/javascript" src="./host/JSX.js"></script>
+  
+  <script type="text/javascript" src="./client/client.js"></script>
+  
+    <a href=# id=workfiles-button><button>Workfiles...</button></a>
+    <a href=# id=creator-button><button>Create...</button></a>
+    <a href=# id=loader-button><button>Load...</button></a>
+    <a href=# id=publish-button><button>Publish...</button></a>
+    <a href=# id=sceneinventory-button><button>Manage...</button></a>
+    <a href=# id=subsetmanager-button><button>Subset Manager...</button></a>
+    <a href=# id=experimental-button><button>Experimental Tools...</button></a>
+</body>
+</html>

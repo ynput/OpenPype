@@ -580,7 +580,7 @@ class IntegrateAssetNew(pyblish.api.InstancePlugin):
             if repre.get("outputName"):
                 representation["context"]["output"] = repre['outputName']
 
-            if sequence_repre and repre.get("frameStart"):
+            if sequence_repre and repre.get("frameStart") is not None:
                 representation['context']['frame'] = (
                     dst_padding_exp % int(repre.get("frameStart"))
                 )

@@ -1,13 +1,15 @@
-import json
-import logging
 import os
 import re
 import abc
+import json
+import logging
 import six
 
+from openpype.settings import get_project_settings
+from openpype.settings.lib import get_site_local_overrides
 
 from .anatomy import Anatomy
-from openpype.settings import get_project_settings
+from .profiles_filtering import filter_profiles
 
 log = logging.getLogger(__name__)
 
@@ -198,6 +200,58 @@ def get_project_basic_paths(project_name):
     if isinstance(folder_structure, str):
         folder_structure = json.loads(folder_structure)
     return _list_path_items(folder_structure)
+
+
+def create_workdir_extra_folders(
+    workdir, host_name, task_type, task_name, project_name,
+    project_settings=None
+):
+    """Create extra folders in work directory based on context.
+
+    Args:
+        workdir (str): Path to workdir where workfiles is stored.
+        host_name (str): Name of host implementation.
+        task_type (str): Type of task for which extra folders should be
+            created.
+        task_name (str): Name of task for which extra folders should be
+            created.
+        project_name (str): Name of project on which task is.
+        project_settings (dict): Prepared project settings. Are loaded if not
+            passed.
+    """
+    # Load project settings if not set
+    if not project_settings:
+        project_settings = get_project_settings(project_name)
+
+    # Load extra folders profiles
+    extra_folders_profiles = (
+        project_settings["global"]["tools"]["Workfiles"]["extra_folders"]
+    )
+    # Skip if are empty
+    if not extra_folders_profiles:
+        return
+
+    # Prepare profiles filters
+    filter_data = {
+        "task_types": task_type,
+        "task_names": task_name,
+        "hosts": host_name
+    }
+    profile = filter_profiles(extra_folders_profiles, filter_data)
+    if profile is None:
+        return
+
+    for subfolder in profile["folders"]:
+        # Make sure backslashes are converted to forwards slashes
+        #   and does not start with slash
+        subfolder = subfolder.replace("\\", "/").lstrip("/")
+        # Skip empty strings
+        if not subfolder:
+            continue
+
+        fullpath = os.path.join(workdir, subfolder)
+        if not os.path.exists(fullpath):
+            os.makedirs(fullpath)
 
 
 @six.add_metaclass(abc.ABCMeta)
