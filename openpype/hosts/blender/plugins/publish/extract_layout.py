@@ -136,6 +136,7 @@ class ExtractLayout(openpype.api.Extractor):
             family = metadata["family"]
 
             self.log.debug("Parent: {}".format(parent))
+            # Get blend reference
             blend = io.find_one(
                 {
                     "type": "representation",
@@ -143,7 +144,10 @@ class ExtractLayout(openpype.api.Extractor):
                     "name": "blend"
                 },
                 projection={"_id": True})
-            blend_id = blend["_id"]
+            blend_id = None
+            if blend:
+                blend_id = blend["_id"]
+            # Get fbx reference
             fbx = io.find_one(
                 {
                     "type": "representation",
@@ -151,11 +155,28 @@ class ExtractLayout(openpype.api.Extractor):
                     "name": "fbx"
                 },
                 projection={"_id": True})
-            fbx_id = fbx["_id"]
+            fbx_id = None
+            if fbx:
+                fbx_id = fbx["_id"]
+            # Get abc reference
+            abc = io.find_one(
+                {
+                    "type": "representation",
+                    "parent": io.ObjectId(parent),
+                    "name": "abc"
+                },
+                projection={"_id": True})
+            abc_id = None
+            if abc:
+                abc_id = abc["_id"]
 
             json_element = {}
-            json_element["reference"] = str(blend_id)
-            json_element["reference_fbx"] = str(fbx_id)
+            if blend_id:
+                json_element["reference"] = str(blend_id)
+            if fbx_id:
+                json_element["reference_fbx"] = str(fbx_id)
+            if abc_id:
+                json_element["reference_abc"] = str(abc_id)
             json_element["family"] = family
             json_element["instance_name"] = asset.name
             json_element["asset_name"] = metadata["asset_name"]

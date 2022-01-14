@@ -40,7 +40,7 @@ class LayoutLoader(api.Loader):
 
         return asset_containers
 
-    def _get_loader(self, loaders, family):
+    def _get_fbx_loader(self, loaders, family):
         name = ""
         if family == 'rig':
             name = "SkeletalMeshFBXLoader"
@@ -48,6 +48,22 @@ class LayoutLoader(api.Loader):
             name = "StaticMeshFBXLoader"
         elif family == 'camera':
             name = "CameraLoader"
+
+        if name == "":
+            return None
+
+        for loader in loaders:
+            if loader.__name__ == name:
+                return loader
+
+        return None
+
+    def _get_abc_loader(self, loaders, family):
+        name = ""
+        if family == 'rig':
+            name = "SkeletalMeshAlembicLoader"
+        elif family == 'model':
+            name = "StaticMeshAlembicLoader"
 
         if name == "":
             return None
@@ -193,7 +209,17 @@ class LayoutLoader(api.Loader):
         actors_dict = {}
 
         for element in data:
-            reference = element.get('reference_fbx')
+            reference = None
+            if element.get('reference_fbx'):
+                reference = element.get('reference_fbx')
+            elif element.get('reference_abc'):
+                reference = element.get('reference_abc')
+
+            # If reference is None, this element is skipped, as it cannot be
+            # imported in Unreal
+            if not reference:
+                continue
+
             instance_name = element.get('instance_name')
 
             skeleton = None
@@ -204,7 +230,13 @@ class LayoutLoader(api.Loader):
                 family = element.get('family')
                 loaders = api.loaders_from_representation(
                     all_loaders, reference)
-                loader = self._get_loader(loaders, family)
+
+                loader = None
+
+                if reference == element.get('reference_fbx'):
+                    loader = self._get_fbx_loader(loaders, family)
+                elif reference == element.get('reference_abc'):
+                    loader = self._get_abc_loader(loaders, family)
 
                 if not loader:
                     continue
@@ -222,7 +254,8 @@ class LayoutLoader(api.Loader):
 
                 instances = [
                     item for item in data
-                    if item.get('reference_fbx') == reference]
+                    if (item.get('reference_fbx') == reference or
+                        item.get('reference_abc') == reference)]
 
                 for instance in instances:
                     transform = instance.get('transform')
