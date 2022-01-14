@@ -29,9 +29,49 @@ from openpype.settings import (
     ProjectSettings,
     DefaultsNotDefined
 )
-from openpype.tools.utils import WrappedCallbackItem
+from openpype.tools.utils import (
+    WrappedCallbackItem,
+    paint_image_with_color
+)
 
 from .pype_info_widget import PypeInfoWidget
+
+
+# TODO PixmapLabel should be moved to 'utils' in other future PR so should be
+#   imported from there
+class PixmapLabel(QtWidgets.QLabel):
+    """Label resizing image to height of font."""
+    def __init__(self, pixmap, parent):
+        super(PixmapLabel, self).__init__(parent)
+        self._empty_pixmap = QtGui.QPixmap(0, 0)
+        self._source_pixmap = pixmap
+
+    def set_source_pixmap(self, pixmap):
+        """Change source image."""
+        self._source_pixmap = pixmap
+        self._set_resized_pix()
+
+    def _get_pix_size(self):
+        size = self.fontMetrics().height() * 3
+        return size, size
+
+    def _set_resized_pix(self):
+        if self._source_pixmap is None:
+            self.setPixmap(self._empty_pixmap)
+            return
+        width, height = self._get_pix_size()
+        self.setPixmap(
+            self._source_pixmap.scaled(
+                width,
+                height,
+                QtCore.Qt.KeepAspectRatio,
+                QtCore.Qt.SmoothTransformation
+            )
+        )
+
+    def resizeEvent(self, event):
+        self._set_resized_pix()
+        super(PixmapLabel, self).resizeEvent(event)
 
 
 class VersionDialog(QtWidgets.QDialog):
@@ -43,7 +83,7 @@ class VersionDialog(QtWidgets.QDialog):
 
     def __init__(self, parent=None):
         super(VersionDialog, self).__init__(parent)
-        self.setWindowTitle("Wrong OpenPype version")
+        self.setWindowTitle("OpenPype update is needed")
         icon = QtGui.QIcon(resources.get_openpype_icon_filepath())
         self.setWindowIcon(icon)
         self.setWindowFlags(
@@ -54,12 +94,23 @@ class VersionDialog(QtWidgets.QDialog):
         self.setMinimumWidth(self._min_width)
         self.setMinimumHeight(self._min_height)
 
-        label_widget = QtWidgets.QLabel(self)
+        top_widget = QtWidgets.QWidget(self)
+
+        gift_pixmap = self._get_gift_pixmap()
+        gift_icon_label = PixmapLabel(gift_pixmap, top_widget)
+
+        label_widget = QtWidgets.QLabel(top_widget)
         label_widget.setWordWrap(True)
 
-        ignore_btn = QtWidgets.QPushButton("Ignore", self)
-        ignore_btn.setObjectName("WarningButton")
-        restart_btn = QtWidgets.QPushButton("Restart and Change", self)
+        top_layout = QtWidgets.QHBoxLayout(top_widget)
+        # top_layout.setContentsMargins(0, 0, 0, 0)
+        top_layout.setSpacing(10)
+        top_layout.addWidget(gift_icon_label, 0, QtCore.Qt.AlignCenter)
+        top_layout.addWidget(label_widget, 1)
+
+        ignore_btn = QtWidgets.QPushButton("Later", self)
+        restart_btn = QtWidgets.QPushButton("Restart && Update", self)
+        restart_btn.setObjectName("TrayRestartButton")
 
         btns_layout = QtWidgets.QHBoxLayout()
         btns_layout.addStretch(1)
@@ -67,7 +118,7 @@ class VersionDialog(QtWidgets.QDialog):
         btns_layout.addWidget(restart_btn, 0)
 
         layout = QtWidgets.QVBoxLayout(self)
-        layout.addWidget(label_widget, 0)
+        layout.addWidget(top_widget, 0)
         layout.addStretch(1)
         layout.addLayout(btns_layout, 0)
 
@@ -78,6 +129,21 @@ class VersionDialog(QtWidgets.QDialog):
         self._restart_accepted = False
 
         self.setStyleSheet(style.load_stylesheet())
+
+    def _get_gift_pixmap(self):
+        image_path = os.path.join(
+            os.path.dirname(os.path.abspath(__file__)),
+            "images",
+            "gifts.png"
+        )
+        src_image = QtGui.QImage(image_path)
+        colors = style.get_objected_colors()
+        color_value = colors["font"]
+
+        return paint_image_with_color(
+            src_image,
+            color_value.get_qcolor()
+        )
 
     def showEvent(self, event):
         super().showEvent(event)
@@ -90,8 +156,8 @@ class VersionDialog(QtWidgets.QDialog):
 
     def update_versions(self, current_version, expected_version):
         message = (
-            "Your OpenPype version <b>{}</b> does"
-            " not match to studio version <b>{}</b>"
+            "Running OpenPype version is <b>{}</b>."
+            " Your production has been updated to version <b>{}</b>."
         ).format(str(current_version), str(expected_version))
         self._label_widget.setText(message)
 
@@ -113,6 +179,7 @@ class TrayManager:
         self.tray_widget = tray_widget
         self.main_window = main_window
         self.pype_info_widget = None
+        self._restart_action = None
 
         self.log = Logger.get_logger(self.__class__.__name__)
 
@@ -158,7 +225,14 @@ class TrayManager:
         self.validate_openpype_version()
 
     def validate_openpype_version(self):
-        if is_current_version_studio_latest():
+        using_requested = is_current_version_studio_latest()
+        self._restart_action.setVisible(not using_requested)
+        if using_requested:
+            if (
+                self._version_dialog is not None
+                and self._version_dialog.isVisible()
+            ):
+                self._version_dialog.close()
             return
 
         if self._version_dialog is None:
@@ -170,25 +244,24 @@ class TrayManager:
                 self._outdated_version_ignored
             )
 
-        if self._version_dialog.isVisible():
-            return
-
         expected_version = get_expected_version()
         current_version = get_openpype_version()
         self._version_dialog.update_versions(
             current_version, expected_version
         )
-        self._version_dialog.exec_()
+        self._version_dialog.show()
+        self._version_dialog.raise_()
+        self._version_dialog.activateWindow()
 
     def _restart_and_install(self):
         self.restart()
 
     def _outdated_version_ignored(self):
         self.show_tray_message(
-            "Outdated OpenPype version",
+            "OpenPype version is outdated",
             (
                 "Please update your OpenPype as soon as possible."
-                " All you have to do is to restart tray."
+                " To update, restart OpenPype Tray application."
             )
         )
 
@@ -341,8 +414,21 @@ class TrayManager:
 
         version_action = QtWidgets.QAction(version_string, self.tray_widget)
         version_action.triggered.connect(self._on_version_action)
+
+        restart_action = QtWidgets.QAction(
+            "Restart && Update", self.tray_widget
+        )
+        restart_action.triggered.connect(self._on_restart_action)
+        restart_action.setVisible(False)
+
         self.tray_widget.menu.addAction(version_action)
+        self.tray_widget.menu.addAction(restart_action)
         self.tray_widget.menu.addSeparator()
+
+        self._restart_action = restart_action
+
+    def _on_restart_action(self):
+        self.restart()
 
     def restart(self, reset_version=True):
         """Restart Tray tool.
