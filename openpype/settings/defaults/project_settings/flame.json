@@ -16,5 +16,17 @@
             "handleStart": 10,
             "handleEnd": 10
         }
+    },
+    "publish": {
+        "ExtractSubsetResources": {
+            "export_presets_mapping": {
+                "exr16fpdwaa": {
+                    "ext": "exr",
+                    "xmlPresetDir": "",
+                    "xmlPresetFile": "OpenEXR (16-bit fp DWAA).xml",
+                    "representationTags": []
+                }
+            }
+        }
     }
 }
