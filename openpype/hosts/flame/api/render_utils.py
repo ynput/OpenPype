@@ -1,18 +1,15 @@
 import os
 
-SHARED_PRESET_PATH = '/opt/Autodesk/shared/export/presets'
 
-
-def export_clip(export_path, clip, export_preset, **kwargs):
+def export_clip(export_path, clip, preset_path, **kwargs):
     """Flame exported wrapper
 
     Args:
         export_path (str): exporting directory path
         clip (PyClip): flame api object
-        export_preset (str): name of exporting preset xml file
+        preset_path (str): full export path to xml file
 
     Kwargs:
-        export_type (str)[optional]: name of export type folder
         thumb_frame_number (int)[optional]: source frame number
         in_mark (int)[optional]: cut in mark
         out_mark (int)[optional]: cut out mark
@@ -20,8 +17,6 @@ def export_clip(export_path, clip, export_preset, **kwargs):
     Raises:
         KeyError: Missing input kwarg `thumb_frame_number`
                   in case `thumbnail` in `export_preset`
-        KeyError: Missing input kwarg `export_type`
-                  in case of other `export_preset` then `thumbnail`
         FileExistsError: Missing export preset in shared folder
     """
     import flame
@@ -33,11 +28,8 @@ def export_clip(export_path, clip, export_preset, **kwargs):
     exporter.foreground = True
     exporter.export_between_marks = True
 
-    # Duplicate the clip to avoid modifying the original clip
-    duplicate_clip = flame.duplicate(clip)
-
-    if export_preset == 'thumbnail':
-        thumb_frame_number = kwargs.get("thumb_frame_number")
+    if kwargs.get("thumb_frame_number"):
+        thumb_frame_number = kwargs["thumb_frame_number"]
         # make sure it exists in kwargs
         if not thumb_frame_number:
             raise KeyError(
@@ -46,61 +38,88 @@ def export_clip(export_path, clip, export_preset, **kwargs):
         in_mark = int(thumb_frame_number)
         out_mark = int(thumb_frame_number) + 1
 
-        # In case Thumbnail is needed
-        preset_dir = flame.PyExporter.get_presets_dir(
-            flame.PyExporter.PresetVisibility.Autodesk,
-            flame.PyExporter.PresetType.Image_Sequence)
-        export_preset_path = os.path.join(
-            preset_dir, "Jpeg", "Jpeg (8-bit).xml")
-
+    elif kwargs.get("in_mark") and kwargs.get("out_mark"):
+        in_mark = int(kwargs["in_mark"])
+        out_mark = int(kwargs["out_mark"])
     else:
-        # In case other output is needed
-        # get compulsory kwargs
-        export_type = kwargs.get("export_type")
-        # make sure it exists in kwargs
-        if not export_type:
-            raise KeyError(
-                "Missing key `export_type` in input kwargs")
-
-        # create full shared preset path
-        shared_preset_dir = os.path.join(
-            SHARED_PRESET_PATH, export_type
-        )
-
-        # check if export preset is available in shared presets
-        shared_presets = [
-            preset[:-4] for preset in os.listdir(shared_preset_dir)]
-        if export_preset not in shared_presets:
-            raise FileExistsError(
-                "Missing preset file `{}` in `{}`".format(
-                    export_preset,
-                    shared_preset_dir
-                ))
-
-        export_preset_path = os.path.join(
-            shared_preset_dir, export_preset + '.xml')
-
-        # check if mark in/out is set in kwargs
-        if kwargs.get("in_mark") and kwargs.get("out_mark"):
-            in_mark = int(kwargs["in_mark"])
-            out_mark = int(kwargs["out_mark"])
-        else:
-            exporter.export_between_marks = False
+        exporter.export_between_marks = False
 
     try:
         # set in and out marks if they are available
         if in_mark and out_mark:
-            duplicate_clip.in_mark = in_mark
-            duplicate_clip.out_mark = out_mark
+            clip.in_mark = in_mark
+            clip.out_mark = out_mark
 
         # export with exporter
-        exporter.export(duplicate_clip, export_preset_path, export_path)
+        exporter.export(clip, preset_path, export_path)
     finally:
         print('Exported: {} at {}-{}'.format(
             clip.name.get_value(),
-            duplicate_clip.in_mark,
-            duplicate_clip.out_mark
+            clip.in_mark,
+            clip.out_mark
         ))
 
-        # delete duplicated clip it is not needed anymore
-        flame.delete(duplicate_clip)
+
+def get_preset_path_by_xml_name(xml_preset_name):
+    def _search_path(root):
+        output = []
+        for root, dirs, files in os.walk(root):
+            for f in files:
+                if f != xml_preset_name:
+                    continue
+                file_path = os.path.join(root, f)
+                output.append(file_path)
+        return output
+
+    def _validate_results(results):
+        if results and len(results) == 1:
+            return results.pop()
+        elif results and len(results) > 1:
+            print((
+                "More matching presets for `{}`: /n"
+                "{}").format(xml_preset_name, results))
+            return results.pop()
+        else:
+            return None
+
+    from .utils import (
+        get_flame_install_root,
+        get_flame_version
+    )
+
+    # get actual flame version and install path
+    _version = get_flame_version()["full"]
+    _install_root = get_flame_install_root()
+
+    # search path templates
+    shared_search_root = "{install_root}/shared/export/presets"
+    install_search_root = (
+        "{install_root}/presets/{version}/export/presets/flame")
+
+    # fill templates
+    shared_search_root = shared_search_root.format(
+        install_root=_install_root
+    )
+    install_search_root = install_search_root.format(
+        install_root=_install_root,
+        version=_version
+    )
+
+    # get search results
+    shared_results = _search_path(shared_search_root)
+    installed_results = _search_path(install_search_root)
+
+    # first try to return shared results
+    shared_preset_path = _validate_results(shared_results)
+
+    if shared_preset_path:
+        return os.path.dirname(shared_preset_path)
+
+    # then try installed results
+    installed_preset_path = _validate_results(installed_results)
+
+    if installed_preset_path:
+        return os.path.dirname(installed_preset_path)
+
+    # if nothing found then return None
+    return False

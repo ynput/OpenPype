@@ -63,7 +63,8 @@ from .workio import (
     work_root
 )
 from .render_utils import (
-    export_clip
+    export_clip,
+    get_preset_path_by_xml_name
 )
 
 __all__ = [
@@ -131,5 +132,6 @@ __all__ = [
     "work_root",
 
     # render utils
-    "export_clip"
+    "export_clip",
+    "get_preset_path_by_xml_name"
 ]
