@@ -18,6 +18,7 @@ from openpype.lib import (
     get_openpype_execute_args,
     is_current_version_studio_latest,
     is_running_from_build,
+    is_running_staging,
     get_expected_version,
     get_openpype_version
 )
@@ -349,26 +350,31 @@ class TrayManager:
         First creates new process with same argument and close current tray.
         """
         args = get_openpype_execute_args()
+        kwargs = {
+            "env": dict(os.environ.items())
+        }
+
         # Create a copy of sys.argv
         additional_args = list(sys.argv)
         # Check last argument from `get_openpype_execute_args`
         # - when running from code it is the same as first from sys.argv
         if args[-1] == additional_args[0]:
             additional_args.pop(0)
-        args.extend(additional_args)
 
-        kwargs = {
-            "env": dict(os.environ.items())
-        }
+        # Pop OPENPYPE_VERSION
+        if reset_version:
+            # Add staging flag if was running from staging
+            if is_running_staging():
+                args.append("--use-staging")
+            kwargs["env"].pop("OPENPYPE_VERSION", None)
+
+        args.extend(additional_args)
         if platform.system().lower() == "windows":
             flags = (
                 subprocess.CREATE_NEW_PROCESS_GROUP
                 | subprocess.DETACHED_PROCESS
             )
             kwargs["creationflags"] = flags
-
-        if reset_version:
-            kwargs["env"].pop("OPENPYPE_VERSION", None)
 
         subprocess.Popen(args, **kwargs)
         self.exit()
