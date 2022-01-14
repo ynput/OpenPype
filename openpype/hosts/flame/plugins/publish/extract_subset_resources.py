@@ -28,7 +28,7 @@ class ExtractSubsetResources(openpype.api.Extractor):
             "ext": "mov",
             "xmlPresetFile": "Apple iPad (1920x1080).xml",
             "xmlPresetDir": "",
-            "representationAddRange": False,
+            "representationAddRange": True,
             "representationTags": [
                 "review",
                 "delete"
@@ -46,6 +46,9 @@ class ExtractSubsetResources(openpype.api.Extractor):
         if "representations" not in instance.data:
             instance.data["representations"] = []
 
+        frame_start = instance.data["frameStart"]
+        handle_start = instance.data["handleStart"]
+        frame_start_handle = frame_start - handle_start
         source_first_frame = instance.data["sourceFirstFrame"]
         source_start_handles = instance.data["sourceStartH"]
         source_end_handles = instance.data["sourceEndH"]
@@ -138,6 +141,15 @@ class ExtractSubsetResources(openpype.api.Extractor):
                     representation_data["files"] = files.pop()
                 else:
                     representation_data["files"] = files
+
+                # add frame range
+                if preset_config["representationAddRange"]:
+                    representation_data.update({
+                        "frameStart": frame_start_handle,
+                        "frameEnd": (
+                            frame_start_handle + source_duration_handles),
+                        "fps": instance.data["fps"]
+                    })
 
                 instance.data["representations"].append(representation_data)
 
