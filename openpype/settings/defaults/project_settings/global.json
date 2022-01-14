@@ -219,7 +219,7 @@
                     "hosts": [],
                     "task_types": [],
                     "tasks": [],
-                    "template": "{family}{Variant}"
+                    "template": "{family}{variant}"
                 },
                 {
                     "families": [

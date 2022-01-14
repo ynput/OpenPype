@@ -127,6 +127,13 @@
             "enabled": true,
             "defaults": [
                 "Main"
+            ],
+            "static_mesh_prefix": "S_",
+            "collision_prefixes": [
+                "UBX",
+                "UCP",
+                "USP",
+                "UCX"
             ]
         },
         "CreateVrayProxy": {
@@ -180,6 +187,11 @@
             "whitelist_native_plugins": false,
             "authorized_plugins": []
         },
+        "ValidateUnrealStaticMeshName": {
+            "enabled": true,
+            "validate_mesh": false,
+            "validate_collision": true
+        },
         "ValidateRenderSettings": {
             "arnold_render_attributes": [],
             "vray_render_attributes": [],
@@ -196,6 +208,11 @@
             },
             "regex": "(.*)_(\\d)*_(?P<shader>.*)_(GEO)",
             "top_level_regex": ".*_GRP"
+        },
+        "ValidateModelContent": {
+            "enabled": true,
+            "optional": false,
+            "validate_top_group": true
         },
         "ValidateTransformNamingSuffix": {
             "enabled": true,
@@ -280,11 +297,6 @@
             "enabled": true,
             "optional": true,
             "active": true
-        },
-        "ValidateModelContent": {
-            "enabled": true,
-            "optional": false,
-            "validate_top_group": true
         },
         "ValidateNoAnimation": {
             "enabled": false,
