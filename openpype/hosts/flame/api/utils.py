@@ -125,3 +125,18 @@ def setup(env=None):
     _sync_utility_scripts(env)
 
     log.info("Flame OpenPype wrapper has been installed")
+
+
+def get_flame_version():
+    import flame
+
+    return {
+        "full": flame.get_version(),
+        "major": flame.get_version_major(),
+        "minor": flame.get_version_minor(),
+        "patch": flame.get_version_patch()
+    }
+
+
+def get_flame_install_root():
+    return "/opt/Autodesk"

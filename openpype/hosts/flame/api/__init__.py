@@ -30,7 +30,9 @@ from .lib import (
     get_padding_from_path
 )
 from .utils import (
-    setup
+    setup,
+    get_flame_version,
+    get_flame_install_root
 )
 from .pipeline import (
     install,
@@ -107,6 +109,8 @@ __all__ = [
 
     # utils
     "setup",
+    "get_flame_version",
+    "get_flame_install_root",
 
     # menu
     "FlameMenuProjectConnect",
