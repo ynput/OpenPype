@@ -187,6 +187,7 @@ class ExtractReview(pyblish.api.InstancePlugin):
         outputs_per_repres = self._get_outputs_per_representations(
             instance, profile_outputs
         )
+        fill_data = copy.deepcopy(instance.data["anatomyData"])
         for repre, outputs in outputs_per_repres:
             # Check if input should be preconverted before processing
             # Store original staging dir (it's value may change)
@@ -293,7 +294,7 @@ class ExtractReview(pyblish.api.InstancePlugin):
 
                 try:  # temporary until oiiotool is supported cross platform
                     ffmpeg_args = self._ffmpeg_arguments(
-                        output_def, instance, new_repre, temp_data
+                        output_def, instance, new_repre, temp_data, fill_data
                     )
                 except ZeroDivisionError:
                     if 'exr' in temp_data["origin_repre"]["ext"]:
@@ -446,7 +447,9 @@ class ExtractReview(pyblish.api.InstancePlugin):
             "handles_are_set": handles_are_set
         }
 
-    def _ffmpeg_arguments(self, output_def, instance, new_repre, temp_data):
+    def _ffmpeg_arguments(
+        self, output_def, instance, new_repre, temp_data, fill_data
+    ):
         """Prepares ffmpeg arguments for expected extraction.
 
         Prepares input and output arguments based on output definition and
@@ -472,15 +475,27 @@ class ExtractReview(pyblish.api.InstancePlugin):
         ffmpeg_input_args = [
             value for value in _ffmpeg_input_args if value.strip()
         ]
-        ffmpeg_output_args = [
-            value for value in _ffmpeg_output_args if value.strip()
-        ]
         ffmpeg_video_filters = [
             value for value in _ffmpeg_video_filters if value.strip()
         ]
         ffmpeg_audio_filters = [
             value for value in _ffmpeg_audio_filters if value.strip()
         ]
+
+        ffmpeg_output_args = []
+        for value in _ffmpeg_output_args:
+            value = value.strip()
+            if not value:
+                continue
+            try:
+                value = value.format(**fill_data)
+            except Exception:
+                self.log.warning(
+                    "Failed to format ffmpeg argument: {}".format(value),
+                    exc_info=True
+                )
+                pass
+            ffmpeg_output_args.append(value)
 
         # Prepare input and output filepaths
         self.input_output_paths(new_repre, output_def, temp_data)
