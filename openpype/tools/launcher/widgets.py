@@ -15,7 +15,8 @@ from .constants import (
     ACTION_ID_ROLE,
     ANIMATION_START_ROLE,
     ANIMATION_STATE_ROLE,
-    ANIMATION_LEN
+    ANIMATION_LEN,
+    FORCE_NOT_OPEN_WORKFILE_ROLE
 )
 
 
@@ -96,6 +97,7 @@ class ActionBar(QtWidgets.QWidget):
         view.setViewMode(QtWidgets.QListView.IconMode)
         view.setResizeMode(QtWidgets.QListView.Adjust)
         view.setSelectionMode(QtWidgets.QListView.NoSelection)
+        view.setContextMenuPolicy(QtCore.Qt.CustomContextMenu)
         view.setEditTriggers(QtWidgets.QListView.NoEditTriggers)
         view.setWrapping(True)
         view.setGridSize(QtCore.QSize(70, 75))
@@ -135,6 +137,7 @@ class ActionBar(QtWidgets.QWidget):
 
         project_handler.projects_refreshed.connect(self._on_projects_refresh)
         view.clicked.connect(self.on_clicked)
+        view.customContextMenuRequested.connect(self.on_context_menu)
 
     def discover_actions(self):
         if self._animation_timer.isActive():
@@ -181,6 +184,38 @@ class ActionBar(QtWidgets.QWidget):
             self._animated_items.add(action_id)
             self._animation_timer.start()
 
+    def on_context_menu(self, point):
+        """Creates menu to force skip opening last workfile."""
+        index = self.view.indexAt(point)
+        if not index.isValid():
+            return
+
+        action_item = index.data(ACTION_ROLE)
+        menu = QtWidgets.QMenu(self.view)
+        checkbox = QtWidgets.QCheckBox("Force not open last workfile",
+                                       menu)
+        if index.data(FORCE_NOT_OPEN_WORKFILE_ROLE):
+            checkbox.setChecked(True)
+
+        checkbox.stateChanged.connect(
+            lambda: self.on_checkbox_changed(checkbox.isChecked(),
+                                             action_item))
+        action = QtWidgets.QWidgetAction(menu)
+        action.setDefaultWidget(checkbox)
+
+        menu.addAction(action)
+
+        global_point = self.mapToGlobal(point)
+        action = menu.exec_(global_point)
+        if not action or not action.data():
+            return
+
+        return
+
+    def on_checkbox_changed(self, is_checked, action):
+        self.model.update_force_not_open_workfile_settings(is_checked, action)
+        self.discover_actions()  # repaint
+
     def on_clicked(self, index):
         if not index or not index.isValid():
             return
@@ -189,6 +224,8 @@ class ActionBar(QtWidgets.QWidget):
         is_variant_group = index.data(VARIANT_GROUP_ROLE)
         if not is_group and not is_variant_group:
             action = index.data(ACTION_ROLE)
+            if index.data(FORCE_NOT_OPEN_WORKFILE_ROLE):
+                action.data["start_last_workfile"] = False
             self._start_animation(index)
             self.action_clicked.emit(action)
             return

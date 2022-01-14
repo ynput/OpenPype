@@ -40,7 +40,7 @@ class NonPythonHostHook(PreLaunchHook):
         )
         # Add workfile path if exists
         workfile_path = self.data["last_workfile_path"]
-        if os.path.exists(workfile_path):
+        if workfile_path and os.path.exists(workfile_path):
             new_launch_args.append(workfile_path)
 
         # Append as whole list as these areguments should not be separated

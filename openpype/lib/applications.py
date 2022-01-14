@@ -1490,6 +1490,11 @@ def _prepare_last_workfile(data, workdir):
     import avalon.api
 
     log = data["log"]
+
+    if not data.get("start_last_workfile", True):
+        log.info("Explicitly forbidden to open last workfile, skipping")
+        return
+
     _workdir_data = data.get("workdir_data")
     if not _workdir_data:
         log.info(

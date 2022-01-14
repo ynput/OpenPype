@@ -8,13 +8,16 @@ from .constants import (
     ACTION_ROLE,
     GROUP_ROLE,
     VARIANT_GROUP_ROLE,
-    ACTION_ID_ROLE
+    ACTION_ID_ROLE,
+    FORCE_NOT_OPEN_WORKFILE_ROLE
 )
 from .actions import ApplicationAction
 from Qt import QtCore, QtGui
 from avalon.vendor import qtawesome
 from avalon import style, api
 from openpype.lib import ApplicationManager
+
+from openpype.settings.lib import get_local_settings, save_local_settings
 
 log = logging.getLogger(__name__)
 
@@ -75,7 +78,8 @@ class ActionModel(QtGui.QStandardItemModel):
                     "group": None,
                     "icon": app.icon,
                     "color": getattr(app, "color", None),
-                    "order": getattr(app, "order", None) or 0
+                    "order": getattr(app, "order", None) or 0,
+                    "data": {}
                 }
             )
 
@@ -179,11 +183,20 @@ class ActionModel(QtGui.QStandardItemModel):
 
         self.beginResetModel()
 
+        local_settings = get_local_settings()
         items = []
         for order in sorted(items_by_order.keys()):
             for item in items_by_order[order]:
                 item_id = str(uuid.uuid4())
                 item.setData(item_id, ACTION_ID_ROLE)
+
+                if self.is_force_not_open_workfile(item,
+                                                   local_settings):
+                    label = item.text()
+                    label += " (Not opening last workfile)"
+                    item.setData(label, QtCore.Qt.ToolTipRole)
+                    item.setData(True, FORCE_NOT_OPEN_WORKFILE_ROLE)
+
                 self.items_by_id[item_id] = item
                 items.append(item)
 
@@ -221,6 +234,75 @@ class ActionModel(QtGui.QStandardItemModel):
             compatible,
             key=lambda action: (action.order, action.name)
         )
+
+    def update_force_not_open_workfile_settings(self, is_checked, action):
+        """Store/remove config for forcing to skip opening last workfile.
+
+        Args:
+            is_checked (bool): True to add, False to remove
+            action (ApplicationAction)
+        """
+        local_settings = get_local_settings()
+
+        actual_data = self._prepare_compare_data(action)
+
+        force_not_open_workfile = local_settings.get("force_not_open_workfile",
+                                                     [])
+        final_local_sett = local_settings
+        if is_checked:
+            if not force_not_open_workfile:
+                final_local_sett["force_not_open_workfile"] = []
+
+            final_local_sett["force_not_open_workfile"].append(actual_data)
+        else:
+            final_local_sett["force_not_open_workfile"] = []
+            for config in force_not_open_workfile:
+                if config != actual_data:
+                    final_local_sett["force_not_open_workfile"].append(config)
+
+            if not final_local_sett["force_not_open_workfile"]:
+                final_local_sett.pop("force_not_open_workfile")
+
+        save_local_settings(final_local_sett)
+
+    def is_force_not_open_workfile(self, item, local_settings):
+        """Checks if application for task is marked to not open workfile
+
+        There might be specific tasks where is unwanted to open workfile right
+        always (broken file, low performance). This allows artist to mark to
+        skip opening for combination (project, asset, task_name, app)
+
+        Args:
+            item (QStandardItem)
+            local_settings (dict)
+        """
+        action = item.data(ACTION_ROLE)
+        actual_data = self._prepare_compare_data(action)
+        for config in local_settings.get("force_not_open_workfile", []):
+            if config == actual_data:
+                return True
+
+        return False
+
+    def _prepare_compare_data(self, action):
+        if isinstance(action, list) and action:
+            action = action[0]
+
+        _session = copy.deepcopy(self.dbcon.Session)
+        session = {
+            key: value
+            for key, value in _session.items()
+            if value
+        }
+
+        actual_data = {
+            "app_label": action.label.lower(),
+            "project_name": session["AVALON_PROJECT"],
+            "asset": session["AVALON_ASSET"],
+            "task_name": session["AVALON_TASK"]
+        }
+
+        return actual_data
 
 
 class ProjectModel(QtGui.QStandardItemModel):
