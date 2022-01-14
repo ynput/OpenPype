@@ -205,7 +205,7 @@ class BlendLayoutLoader(plugin.AssetLoader):
             plugin.deselect_all()
             local_obj.select_set(True)
             bpy.context.view_layer.objects.active = local_obj
-            if local_obj.library == None:
+            if local_obj.library is None:
                 bpy.ops.object.mode_set(mode='EDIT')
                 bpy.ops.object.hook_reset()
                 bpy.ops.object.mode_set(mode='OBJECT')
