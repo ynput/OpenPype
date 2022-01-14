@@ -733,7 +733,7 @@ def namespaced(namespace, new=True):
         str: The namespace that is used during the context
 
     """
-    original = cmds.namespaceInfo(cur=True)
+    original = cmds.namespaceInfo(cur=True, absoluteName=True)
     if new:
         namespace = avalon.maya.lib.unique_namespace(namespace)
         cmds.namespace(add=namespace)
