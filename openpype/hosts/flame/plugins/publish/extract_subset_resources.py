@@ -76,6 +76,7 @@ class ExtractSubsetResources(openpype.api.Extractor):
                 kwargs = {}
                 preset_file = preset_config["xmlPresetFile"]
                 preset_dir = preset_config["xmlPresetDir"]
+                repre_tags = preset_config["representationTags"]
 
                 # validate xml preset file is filled
                 if preset_file == "":
@@ -98,9 +99,9 @@ class ExtractSubsetResources(openpype.api.Extractor):
                         )
 
                 # create preset path
-                preset_path = os.path.join(
+                preset_path = str(os.path.join(
                     preset_dir, preset_file
-                )
+                ))
 
                 # define kwargs based on preset type
                 if "thumbnail" in unique_name:
@@ -112,9 +113,9 @@ class ExtractSubsetResources(openpype.api.Extractor):
                         "out_mark": out_mark
                     })
 
-                export_dir_path = os.path.join(
+                export_dir_path = str(os.path.join(
                     staging_dir, unique_name
-                )
+                ))
                 os.makedirs(export_dir_path)
 
                 # export
@@ -127,7 +128,7 @@ class ExtractSubsetResources(openpype.api.Extractor):
                     "outputName": unique_name,
                     "ext": preset_config["ext"],
                     "stagingDir": export_dir_path,
-                    "tags": preset_config["representationTags"]
+                    "tags": repre_tags
                 }
 
                 files = os.listdir(export_dir_path)
@@ -152,6 +153,10 @@ class ExtractSubsetResources(openpype.api.Extractor):
                     })
 
                 instance.data["representations"].append(representation_data)
+
+                # add review family if found in tags
+                if "review" in repre_tags:
+                    instance.data["families"].append("review")
 
                 self.log.info("Added representation: {}".format(
                     representation_data))
