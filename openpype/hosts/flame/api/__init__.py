@@ -27,7 +27,8 @@ from .lib import (
     get_clips_in_reels,
     get_reformated_path,
     get_frame_from_path,
-    get_padding_from_path
+    get_padding_from_path,
+    maintained_object_duplication
 )
 from .utils import (
     setup,
@@ -93,6 +94,7 @@ __all__ = [
     "get_reformated_path",
     "get_frame_from_path",
     "get_padding_from_path",
+    "maintained_object_duplication",
 
     # pipeline
     "install",

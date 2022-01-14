@@ -675,3 +675,26 @@ def get_frame_from_path(path):
         return found.pop()
     else:
         return None
+
+
+
+@contextlib.contextmanager
+def maintained_object_duplication(item):
+    """Maintain input item duplication
+
+    Attributes:
+        item (any flame.PyObject): python api object
+
+    Yield:
+        duplicate input PyObject type
+    """
+    import flame
+    # Duplicate the clip to avoid modifying the original clip
+    duplicate = flame.duplicate(item)
+
+    try:
+        # do the operation on selected segments
+        yield duplicate
+    finally:
+        # delete the item at the end
+        flame.delete(duplicate)
