@@ -5,7 +5,7 @@ Flame utils for syncing scripts
 import os
 import shutil
 from openpype.api import Logger
-log = Logger().get_logger(__name__)
+log = Logger.get_logger(__name__)
 
 
 def _sync_utility_scripts(env=None):
@@ -75,10 +75,19 @@ def _sync_utility_scripts(env=None):
 
             path = os.path.join(flame_shared_dir, _itm)
             log.info("Removing `{path}`...".format(**locals()))
-            if os.path.isdir(path):
-                shutil.rmtree(path, onerror=None)
-            else:
-                os.remove(path)
+
+            try:
+                if os.path.isdir(path):
+                    shutil.rmtree(path, onerror=None)
+                else:
+                    os.remove(path)
+            except PermissionError as msg:
+                log.warning(
+                    "Not able to remove: `{}`, Problem with: `{}`".format(
+                        path,
+                        msg
+                    )
+                )
 
     # copy scripts into Resolve's utility scripts dir
     for dirpath, scriptlist in scripts.items():
@@ -88,13 +97,22 @@ def _sync_utility_scripts(env=None):
             src = os.path.join(dirpath, _script)
             dst = os.path.join(flame_shared_dir, _script)
             log.info("Copying `{src}` to `{dst}`...".format(**locals()))
-            if os.path.isdir(src):
-                shutil.copytree(
-                    src, dst, symlinks=False,
-                    ignore=None, ignore_dangling_symlinks=False
+
+            try:
+                if os.path.isdir(src):
+                    shutil.copytree(
+                        src, dst, symlinks=False,
+                        ignore=None, ignore_dangling_symlinks=False
+                    )
+                else:
+                    shutil.copy2(src, dst)
+            except (PermissionError, FileExistsError) as msg:
+                log.warning(
+                    "Not able to coppy to: `{}`, Problem with: `{}`".format(
+                        dst,
+                        msg
+                    )
                 )
-            else:
-                shutil.copy2(src, dst)
 
 
 def setup(env=None):

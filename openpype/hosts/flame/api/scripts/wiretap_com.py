@@ -9,26 +9,14 @@ import json
 import xml.dom.minidom as minidom
 from copy import deepcopy
 import datetime
-
-try:
-    from libwiretapPythonClientAPI import (
-        WireTapClientInit)
-except ImportError:
-    flame_python_path = "/opt/Autodesk/flame_2021/python"
-    flame_exe_path = (
-        "/opt/Autodesk/flame_2021/bin/flame.app"
-        "/Contents/MacOS/startApp")
-
-    sys.path.append(flame_python_path)
-
-    from libwiretapPythonClientAPI import (
-        WireTapClientInit,
-        WireTapClientUninit,
-        WireTapNodeHandle,
-        WireTapServerHandle,
-        WireTapInt,
-        WireTapStr
-    )
+from libwiretapPythonClientAPI import (  # noqa
+    WireTapClientInit,
+    WireTapClientUninit,
+    WireTapNodeHandle,
+    WireTapServerHandle,
+    WireTapInt,
+    WireTapStr
+)
 
 
 class WireTapCom(object):
@@ -54,6 +42,9 @@ class WireTapCom(object):
         self.host_name = host_name or "localhost"
         self.volume_name = volume_name or "stonefs"
         self.group_name = group_name or "staff"
+
+        # wiretap tools dir path
+        self.wiretap_tools_dir = os.getenv("OPENPYPE_WIRETAP_TOOLS")
 
         # initialize WireTap client
         WireTapClientInit()
@@ -84,9 +75,11 @@ class WireTapCom(object):
         workspace_name = kwargs.get("workspace_name")
         color_policy = kwargs.get("color_policy")
 
-        self._project_prep(project_name)
-        self._set_project_settings(project_name, project_data)
-        self._set_project_colorspace(project_name, color_policy)
+        project_exists = self._project_prep(project_name)
+        if not project_exists:
+            self._set_project_settings(project_name, project_data)
+            self._set_project_colorspace(project_name, color_policy)
+
         user_name = self._user_prep(user_name)
 
         if workspace_name is None:
@@ -169,18 +162,15 @@ class WireTapCom(object):
             # check if volumes exists
             if self.volume_name not in volumes:
                 raise AttributeError(
-                    ("Volume '{}' does not exist '{}'").format(
+                    ("Volume '{}' does not exist in '{}'").format(
                         self.volume_name, volumes)
                 )
 
             # form cmd arguments
             project_create_cmd = [
                 os.path.join(
-                    "/opt/Autodesk/",
-                    "wiretap",
-                    "tools",
-                    "2021",
-                    "wiretap_create_node",
+                    self.wiretap_tools_dir,
+                    "wiretap_create_node"
                 ),
                 '-n',
                 os.path.join("/volumes", self.volume_name),
@@ -202,6 +192,7 @@ class WireTapCom(object):
 
             print(
                 "A new project '{}' is created.".format(project_name))
+        return project_exists
 
     def _get_all_volumes(self):
         """Request all available volumens from WireTap
@@ -431,11 +422,8 @@ class WireTapCom(object):
         color_policy = color_policy or "Legacy"
         project_colorspace_cmd = [
             os.path.join(
-                "/opt/Autodesk/",
-                "wiretap",
-                "tools",
-                "2021",
-                "wiretap_duplicate_node",
+                self.wiretap_tools_dir,
+                "wiretap_duplicate_node"
             ),
             "-s",
             "/syncolor/policies/Autodesk/{}".format(color_policy),

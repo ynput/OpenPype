@@ -112,6 +112,10 @@
                 },
                 {
                     "type": "schema",
+                    "name": "schema_project_flame"
+                },
+                {
+                    "type": "schema",
                     "name": "schema_project_resolve"
                 },
                 {
