@@ -93,7 +93,6 @@ def override_toolbox_ui():
         return
 
     # Create our controls
-    background_color = (0.267, 0.267, 0.267)
     controls = []
 
     controls.append(
@@ -103,7 +102,6 @@ def override_toolbox_ui():
             label="Look Manager",
             image=os.path.join(icons, "lookmanager.png"),
             command=host_tools.show_look_assigner,
-            bgc=background_color,
             width=icon_size,
             height=icon_size,
             parent=parent
@@ -119,7 +117,6 @@ def override_toolbox_ui():
             command=lambda: host_tools.show_workfiles(
                 parent=pipeline._parent
             ),
-            bgc=background_color,
             width=icon_size,
             height=icon_size,
             parent=parent
@@ -135,7 +132,6 @@ def override_toolbox_ui():
             command=lambda: host_tools.show_loader(
                 parent=pipeline._parent, use_context=True
             ),
-            bgc=background_color,
             width=icon_size,
             height=icon_size,
             parent=parent
@@ -151,7 +147,6 @@ def override_toolbox_ui():
             command=lambda: host_tools.show_scene_inventory(
                 parent=pipeline._parent
             ),
-            bgc=background_color,
             width=icon_size,
             height=icon_size,
             parent=parent
