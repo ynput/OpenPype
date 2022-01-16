@@ -1,7 +1,7 @@
 import os
 import re
-import attr
 import tempfile
+import attr
 
 from avalon import aftereffects
 import pyblish.api
@@ -9,6 +9,8 @@ import pyblish.api
 from openpype.settings import get_project_settings
 from openpype.lib import abstract_collect_render
 from openpype.lib.abstract_collect_render import RenderInstance
+
+from openpype.hosts.aftereffects.api import get_stub
 
 
 @attr.s
@@ -35,7 +37,7 @@ class CollectAERender(abstract_collect_render.AbstractCollectRender):
     padding_width = 6
     rendered_extension = 'png'
 
-    stub = aftereffects.stub()
+    stub = get_stub()
 
     def get_instances(self, context):
         instances = []
