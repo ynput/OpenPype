@@ -118,7 +118,7 @@ class ImagePlaneLoader(api.Loader):
             camera = pm.createNode("camera")
 
         if camera is None:
-                return
+            return
 
         try:
             camera.displayResolution.set(1)

@@ -3,6 +3,7 @@ from avalon.maya.pipeline import containerise
 from avalon.maya import lib
 from maya import cmds, mel
 
+
 class AudioLoader(api.Loader):
     """Specific loader of audio."""
 
@@ -11,7 +12,6 @@ class AudioLoader(api.Loader):
     representations = ["wav"]
     icon = "volume-up"
     color = "orange"
-
 
     def load(self, context, name, namespace, data):
 
