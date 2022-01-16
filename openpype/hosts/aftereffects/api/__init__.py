@@ -11,8 +11,9 @@ from .launch_logic import (
 
 from .pipeline import (
     ls,
-    Creator,
+    get_asset_settings,
     install,
+    uninstall,
     list_instances,
     remove_instance,
     containerise
@@ -33,7 +34,8 @@ from .lib import (
 )
 
 from .plugin import (
-    AfterEffectsLoader
+    AfterEffectsLoader,
+    Creator
 )
 
 
@@ -44,8 +46,9 @@ __all__ = [
 
     # pipeline
     "ls",
-    "Creator",
+    "get_asset_settings",
     "install",
+    "uninstall",
     "list_instances",
     "remove_instance",
     "containerise",
@@ -63,4 +66,5 @@ __all__ = [
 
     # plugin
     "AfterEffectsLoader",
+    "Creator",
 ]
