@@ -95,29 +95,20 @@ def override_toolbox_ui():
     # Create our controls
     background_color = (0.267, 0.267, 0.267)
     controls = []
-    look_assigner = None
-    try:
-        look_assigner = host_tools.get_tool_by_name(
-            "lookassigner",
-            parent=pipeline._parent
-        )
-    except Exception:
-        log.warning("Couldn't create Look assigner window.", exc_info=True)
 
-    if look_assigner is not None:
-        controls.append(
-            mc.iconTextButton(
-                "pype_toolbox_lookmanager",
-                annotation="Look Manager",
-                label="Look Manager",
-                image=os.path.join(icons, "lookmanager.png"),
-                command=host_tools.show_look_assigner,
-                bgc=background_color,
-                width=icon_size,
-                height=icon_size,
-                parent=parent
-            )
+    controls.append(
+        mc.iconTextButton(
+            "pype_toolbox_lookmanager",
+            annotation="Look Manager",
+            label="Look Manager",
+            image=os.path.join(icons, "lookmanager.png"),
+            command=host_tools.show_look_assigner,
+            bgc=background_color,
+            width=icon_size,
+            height=icon_size,
+            parent=parent
         )
+    )
 
     controls.append(
         mc.iconTextButton(
