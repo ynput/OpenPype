@@ -25,8 +25,11 @@
             {"review": "review"},
             {"rig": "rig"},
             {"setdress": "setdress"},
+            {"vdbcache": "vdbcache"},
             {"workfile": "workfile"},
-            {"xgen": "xgen"}
+            {"xgen": "xgen"},
+            {"yeticache": "yeticache"},
+            {"yetiRig": "yetiRig"}
         ]
     }
 ]
