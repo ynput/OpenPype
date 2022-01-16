@@ -79,7 +79,7 @@ def run_subprocess(*args, **kwargs):
 
     Args:
         *args: Variable length arument list passed to Popen.
-        **kwargs : Arbitary keyword arguments passed to Popen. Is possible to
+        **kwargs : Arbitrary keyword arguments passed to Popen. Is possible to
             pass `logging.Logger` object under "logger" if want to use
             different than lib's logger.
 
@@ -119,7 +119,7 @@ def run_subprocess(*args, **kwargs):
 
     if _stderr:
         _stderr = _stderr.decode("utf-8")
-        # Add additional line break if output already containt stdout
+        # Add additional line break if output already contains stdout
         if full_output:
             full_output += "\n"
         full_output += _stderr
