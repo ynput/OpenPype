@@ -12,7 +12,7 @@ stub = photoshop.stub()
 
 
 class ImageFromSequenceLoader(api.Loader):
-    """ Load specifing image from sequence
+    """ Load specific image from sequence
 
         Used only as quick load of reference file from a sequence.
 

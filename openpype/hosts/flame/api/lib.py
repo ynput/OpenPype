@@ -230,7 +230,7 @@ def maintain_current_timeline(to_timeline, from_timeline=None):
     project = get_current_project()
     working_timeline = from_timeline or project.GetCurrentTimeline()
 
-    # swith to the input timeline
+    # switch to the input timeline
     project.SetCurrentTimeline(to_timeline)
 
     try:

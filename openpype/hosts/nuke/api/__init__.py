@@ -54,7 +54,7 @@ def install():
     ''' Installing all requarements for Nuke host
     '''
 
-    # remove all registred callbacks form avalon.nuke
+    # remove all registered callbacks form avalon.nuke
     from avalon import pipeline
     pipeline._registered_event_handlers.clear()
 

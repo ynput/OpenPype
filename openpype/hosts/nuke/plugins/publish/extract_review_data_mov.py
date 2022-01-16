@@ -49,7 +49,7 @@ class ExtractReviewDataMov(openpype.api.Extractor):
 
                 # test if family found in context
                 test_families = any([
-                    # first if exact family set is mathing
+                    # first if exact family set is matching
                     # make sure only interesetion of list is correct
                     bool(set(families).intersection(f_families)),
                     # and if famiies are set at all

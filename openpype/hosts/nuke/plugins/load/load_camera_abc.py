@@ -156,7 +156,7 @@ class AlembicCameraLoader(api.Loader):
         # color node by correct color by actual version
         self.node_version_color(version, camera_node)
 
-        self.log.info("udated to version: {}".format(version.get("name")))
+        self.log.info("updated to version: {}".format(version.get("name")))
 
         return update_container(camera_node, data_imprint)
 

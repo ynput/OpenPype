@@ -113,7 +113,7 @@ class ExtractCamera(openpype.api.Extractor):
 
 
 def bakeCameraWithAxeses(camera_node, output_range):
-    """ Baking all perent hiearchy of axeses into camera
+    """ Baking all perent hierarchy of axeses into camera
     with transposition onto word XYZ coordinance
     """
     bakeFocal = False

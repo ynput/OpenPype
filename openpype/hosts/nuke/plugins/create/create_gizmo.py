@@ -48,7 +48,7 @@ class CreateGizmo(plugin.PypeCreator):
                 gizmo_node["name"].setValue("{}_GZM".format(self.name))
                 gizmo_node["tile_color"].setValue(int(self.node_color, 16))
 
-                # add sticky node wit guide
+                # add sticky node with guide
                 with gizmo_node:
                     sticky = nuke.createNode("StickyNote")
                     sticky["label"].setValue(
@@ -71,7 +71,7 @@ class CreateGizmo(plugin.PypeCreator):
                 gizmo_node["name"].setValue("{}_GZM".format(self.name))
                 gizmo_node["tile_color"].setValue(int(self.node_color, 16))
 
-                # add sticky node wit guide
+                # add sticky node with guide
                 with gizmo_node:
                     sticky = nuke.createNode("StickyNote")
                     sticky["label"].setValue(

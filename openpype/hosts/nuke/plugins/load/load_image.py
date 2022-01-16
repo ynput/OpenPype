@@ -231,7 +231,7 @@ class LoadImage(api.Loader):
             node,
             updated_dict
         )
-        self.log.info("udated to version: {}".format(version.get("name")))
+        self.log.info("updated to version: {}".format(version.get("name")))
 
     def remove(self, container):
 

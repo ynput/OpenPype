@@ -168,7 +168,7 @@ class ExtractSequence(pyblish.api.Extractor):
         if single_file:
             repre_files = repre_files[0]
 
-        # Extension is harcoded
+        # Extension is hardcoded
         #   - changing extension would require change code
         new_repre = {
             "name": "png",
@@ -235,7 +235,7 @@ class ExtractSequence(pyblish.api.Extractor):
             scene_bg_color (list): Bg color set in scene. Result of george
                 script command `tv_background`.
 
-        Retruns:
+        Returns:
             tuple: With 2 items first is list of filenames second is path to
                 thumbnail.
         """
@@ -311,7 +311,7 @@ class ExtractSequence(pyblish.api.Extractor):
             mark_out (int): On which frame index export will end.
             layers (list): List of layers to be exported.
 
-        Retruns:
+        Returns:
             tuple: With 2 items first is list of filenames second is path to
                 thumbnail.
         """

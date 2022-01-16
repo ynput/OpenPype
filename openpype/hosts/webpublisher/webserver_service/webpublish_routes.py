@@ -335,7 +335,7 @@ class ConfiguredExtensionsEndpoint(_RestApiEndpoint):
         configured = {
             "file_exts": set(),
             "sequence_exts": set(),
-            # workfiles that could have "Studio Procesing" hardcoded for now
+            # workfiles that could have "Studio Processing" hardcoded for now
             "studio_exts": set(["psd", "psb", "tvpp", "tvp"])
         }
         collect_conf = sett["webpublisher"]["publish"]["CollectPublishedFiles"]

@@ -270,7 +270,7 @@ class LoadClip(plugin.NukeLoader):
                 read_node,
                 updated_dict
             )
-            self.log.info("udated to version: {}".format(version.get("name")))
+            self.log.info("updated to version: {}".format(version.get("name")))
 
         if version_data.get("retime", None):
             self._make_retimes(read_node, version_data)
@@ -302,7 +302,7 @@ class LoadClip(plugin.NukeLoader):
         self._loader_shift(read_node, start_at_workfile)
 
     def _make_retimes(self, parent_node, version_data):
-        ''' Create all retime and timewarping nodes with coppied animation '''
+        ''' Create all retime and timewarping nodes with copied animation '''
         speed = version_data.get('speed', 1)
         time_warp_nodes = version_data.get('timewarps', [])
         last_node = None

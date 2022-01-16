@@ -184,7 +184,7 @@ def uv_from_element(element):
             parent = element.split(".", 1)[0]
 
             # Maya is funny in that when the transform of the shape
-            # of the component elemen has children, the name returned
+            # of the component element has children, the name returned
             # by that elementection is the shape. Otherwise, it is
             # the transform. So lets see what type we're dealing with here.
             if cmds.nodeType(parent) in supported:
@@ -1595,7 +1595,7 @@ def get_container_transforms(container, members=None, root=False):
     Args:
         container (dict): the container
         members (list): optional and convenience argument
-        root (bool): return highest node in hierachy if True
+        root (bool): return highest node in hierarchy if True
 
     Returns:
         root (list / str):
@@ -2482,7 +2482,7 @@ class shelf():
 def _get_render_instances():
     """Return all 'render-like' instances.
 
-    This returns list of instance sets that needs to receive informations
+    This returns list of instance sets that needs to receive information
     about render layer changes.
 
     Returns:
