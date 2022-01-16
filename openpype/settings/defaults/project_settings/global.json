@@ -297,6 +297,7 @@
             "family_filter_profiles": [
                 {
                     "hosts": [],
+                    "is_include": true,
                     "task_types": [],
                     "filter_families": []
                 }

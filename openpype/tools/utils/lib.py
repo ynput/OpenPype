@@ -228,6 +228,7 @@ class FamilyConfigCache:
         self.dbcon = dbcon
         self.family_configs = {}
         self._family_filters_set = False
+        self._family_filters_is_include = True
         self._require_refresh = True
 
     @classmethod
@@ -249,7 +250,7 @@ class FamilyConfigCache:
                 "icon": self.default_icon()
             }
             if self._family_filters_set:
-                item["state"] = False
+                item["state"] = not self._family_filters_is_include
         return item
 
     def refresh(self, force=False):
@@ -313,20 +314,23 @@ class FamilyConfigCache:
             matching_item = filter_profiles(profiles, profiles_filter)
 
         families = []
+        is_include = True
         if matching_item:
             families = matching_item["filter_families"]
+            is_include = matching_item["is_include"]
 
         if not families:
             return
 
         self._family_filters_set = True
+        self._family_filters_is_include = is_include
 
         # Replace icons with a Qt icon we can use in the user interfaces
         for family in families:
             family_info = {
                 "name": family,
                 "icon": self.default_icon(),
-                "state": True
+                "state": is_include
             }
 
             self.family_configs[family] = family_info

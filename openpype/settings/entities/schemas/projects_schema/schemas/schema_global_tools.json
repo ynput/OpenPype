@@ -267,7 +267,13 @@
                                 "label": "Task types"
                             },
                             {
-                                "type": "splitter"
+                                "type": "boolean",
+                                "key": "is_include",
+                                "label": "Exclude (OFF) / Include (ON)"
+                            },
+                            {
+                                "type": "label",
+                                "label": "Include: <b>show</b> selected families by default. Hides others by default.<br>Exclude: <b>hide</b> selected families by default. Shows others by default."
                             },
                             {
                                 "type": "template",
