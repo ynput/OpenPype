@@ -7,7 +7,7 @@ class AudioLoader(api.Loader):
     """Specific loader of audio."""
 
     families = ["audio"]
-    label = "Import audio."
+    label = "Import audio"
     representations = ["wav"]
     icon = "volume-up"
     color = "orange"
