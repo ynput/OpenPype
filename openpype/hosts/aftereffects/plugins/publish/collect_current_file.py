@@ -2,7 +2,7 @@ import os
 
 import pyblish.api
 
-from avalon import aftereffects
+from openpype.hosts.aftereffects.api import get_stub
 
 
 class CollectCurrentFile(pyblish.api.ContextPlugin):
@@ -14,5 +14,5 @@ class CollectCurrentFile(pyblish.api.ContextPlugin):
 
     def process(self, context):
         context.data["currentFile"] = os.path.normpath(
-            aftereffects.stub().get_active_document_full_name()
+            get_stub().get_active_document_full_name()
         ).replace("\\", "/")

@@ -83,7 +83,7 @@ def main(argv):
     if host_name == "photoshop":
         from openpype.hosts.photoshop.api.lib import main
     elif host_name == "aftereffects":
-        from avalon.aftereffects.lib import main
+        from openpype.hosts.aftereffects.api.lib import main
     elif host_name == "harmony":
         from avalon.harmony.lib import main
     else:
