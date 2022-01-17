@@ -300,12 +300,15 @@ class ActionModel(QtGui.QStandardItemModel):
         if isinstance(action, list) and action:
             action = action[0]
 
-        return {
-            "app_label": action.label.lower(),
-            "project_name": self.dbcon.Session["AVALON_PROJECT"],
-            "asset": self.dbcon.Session["AVALON_ASSET"],
-            "task_name": self.dbcon.Session["AVALON_TASK"]
-        }
+        compare_data = {}
+        if action:
+            compare_data = {
+                "app_label": action.label.lower(),
+                "project_name": self.dbcon.Session["AVALON_PROJECT"],
+                "asset": self.dbcon.Session["AVALON_ASSET"],
+                "task_name": self.dbcon.Session["AVALON_TASK"]
+            }
+        return compare_data
 
 
 class ProjectModel(QtGui.QStandardItemModel):
