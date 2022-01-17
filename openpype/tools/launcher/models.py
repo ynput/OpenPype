@@ -2,6 +2,7 @@ import uuid
 import copy
 import logging
 import collections
+import appdirs
 
 from . import lib
 from .constants import (
@@ -15,9 +16,7 @@ from .actions import ApplicationAction
 from Qt import QtCore, QtGui
 from avalon.vendor import qtawesome
 from avalon import style, api
-from openpype.lib import ApplicationManager
-
-from openpype.settings.lib import get_local_settings, save_local_settings
+from openpype.lib import ApplicationManager, JSONSettingRegistry
 
 log = logging.getLogger(__name__)
 
@@ -33,6 +32,13 @@ class ActionModel(QtGui.QStandardItemModel):
         # Cache of available actions
         self._registered_actions = list()
         self.items_by_id = {}
+        path = appdirs.user_data_dir("openpype", "pype_club")
+        self.launcher_registry = JSONSettingRegistry("launcher", path)
+
+        try:
+            _ = self.launcher_registry.get_item("force_not_open_workfile")
+        except ValueError:
+            self.launcher_registry.set_item("force_not_open_workfile", [])
 
     def discover(self):
         """Set up Actions cache. Run this for each new project."""
@@ -183,7 +189,7 @@ class ActionModel(QtGui.QStandardItemModel):
 
         self.beginResetModel()
 
-        local_settings = get_local_settings()
+        stored = self.launcher_registry.get_item("force_not_open_workfile")
         items = []
         for order in sorted(items_by_order.keys()):
             for item in items_by_order[order]:
@@ -191,7 +197,7 @@ class ActionModel(QtGui.QStandardItemModel):
                 item.setData(item_id, ACTION_ID_ROLE)
 
                 if self.is_force_not_open_workfile(item,
-                                                   local_settings):
+                                                   stored):
                     label = item.text()
                     label += " (Not opening last workfile)"
                     item.setData(label, QtCore.Qt.ToolTipRole)
@@ -242,30 +248,21 @@ class ActionModel(QtGui.QStandardItemModel):
             is_checked (bool): True to add, False to remove
             action (ApplicationAction)
         """
-        local_settings = get_local_settings()
-
         actual_data = self._prepare_compare_data(action)
 
-        force_not_open_workfile = local_settings.get("force_not_open_workfile",
-                                                     [])
-        final_local_sett = local_settings
+        stored = self.launcher_registry.get_item("force_not_open_workfile")
         if is_checked:
-            if not force_not_open_workfile:
-                final_local_sett["force_not_open_workfile"] = []
-
-            final_local_sett["force_not_open_workfile"].append(actual_data)
+            stored.append(actual_data)
         else:
-            final_local_sett["force_not_open_workfile"] = []
-            for config in force_not_open_workfile:
+            final_values = []
+            for config in stored:
                 if config != actual_data:
-                    final_local_sett["force_not_open_workfile"].append(config)
+                    final_values.append(config)
+            stored = final_values
 
-            if not final_local_sett["force_not_open_workfile"]:
-                final_local_sett.pop("force_not_open_workfile")
+        self.launcher_registry.set_item("force_not_open_workfile", stored)
 
-        save_local_settings(final_local_sett)
-
-    def is_force_not_open_workfile(self, item, local_settings):
+    def is_force_not_open_workfile(self, item, stored):
         """Checks if application for task is marked to not open workfile
 
         There might be specific tasks where is unwanted to open workfile right
@@ -274,11 +271,11 @@ class ActionModel(QtGui.QStandardItemModel):
 
         Args:
             item (QStandardItem)
-            local_settings (dict)
+            stored (list) of dict
         """
         action = item.data(ACTION_ROLE)
         actual_data = self._prepare_compare_data(action)
-        for config in local_settings.get("force_not_open_workfile", []):
+        for config in stored:
             if config == actual_data:
                 return True
 
