@@ -20,7 +20,7 @@ class ValidateEditorialResources(pyblish.api.InstancePlugin):
             f"Instance: {instance}, Families: "
             f"{[instance.data['family']] + instance.data['families']}")
         check_file = instance.data["editorialSourcePath"]
-        msg = f"Missing source video file."
+        msg = "Missing source video file."
 
         if not check_file:
             raise PublishXmlValidationError(self, msg)
