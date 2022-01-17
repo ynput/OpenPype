@@ -291,21 +291,12 @@ class ActionModel(QtGui.QStandardItemModel):
         if isinstance(action, list) and action:
             action = action[0]
 
-        _session = copy.deepcopy(self.dbcon.Session)
-        session = {
-            key: value
-            for key, value in _session.items()
-            if value
-        }
-
-        actual_data = {
+        return {
             "app_label": action.label.lower(),
-            "project_name": session["AVALON_PROJECT"],
-            "asset": session["AVALON_ASSET"],
-            "task_name": session["AVALON_TASK"]
+            "project_name": self.dbcon.Session["AVALON_PROJECT"],
+            "asset": self.dbcon.Session["AVALON_ASSET"],
+            "task_name": self.dbcon.Session["AVALON_TASK"]
         }
-
-        return actual_data
 
 
 class ProjectModel(QtGui.QStandardItemModel):
