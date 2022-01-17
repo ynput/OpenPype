@@ -274,6 +274,12 @@ class ActionModel(QtGui.QStandardItemModel):
             stored (list) of dict
         """
         action = item.data(ACTION_ROLE)
+        if isinstance(action, list) and action:
+            action = action[0]
+
+        if ApplicationAction not in action.__bases__:
+            return False
+
         actual_data = self._prepare_compare_data(action)
         for config in stored:
             if config == actual_data:
