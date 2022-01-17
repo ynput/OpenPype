@@ -17,7 +17,7 @@ from openpype.api import get_project_settings
 class VRayProxyLoader(api.Loader):
     """Load VRay Proxy with Alembic or VrayMesh."""
 
-    families = ["vrayproxy", "model"]
+    families = ["vrayproxy"]
     representations = ["vrmesh", "abc"]
 
     label = "Import VRay Proxy"
