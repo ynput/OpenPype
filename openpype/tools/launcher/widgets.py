@@ -191,6 +191,9 @@ class ActionBar(QtWidgets.QWidget):
             return
 
         action_item = index.data(ACTION_ROLE)
+        if not self.model.is_application_action(action_item):
+            return
+
         menu = QtWidgets.QMenu(self.view)
         checkbox = QtWidgets.QCheckBox("Force not open last workfile",
                                        menu)

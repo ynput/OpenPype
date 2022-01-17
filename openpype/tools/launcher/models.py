@@ -261,6 +261,18 @@ class ActionModel(QtGui.QStandardItemModel):
             stored = final_values
 
         self.launcher_registry.set_item("force_not_open_workfile", stored)
+        self.launcher_registry._get_item.cache_clear()
+
+    def is_application_action(self, action):
+        """Checks if item is of a ApplicationAction type
+
+        Args:
+            action (action)
+        """
+        if isinstance(action, list) and action:
+            action = action[0]
+
+        return ApplicationAction in action.__bases__
 
     def is_force_not_open_workfile(self, item, stored):
         """Checks if application for task is marked to not open workfile
@@ -274,10 +286,7 @@ class ActionModel(QtGui.QStandardItemModel):
             stored (list) of dict
         """
         action = item.data(ACTION_ROLE)
-        if isinstance(action, list) and action:
-            action = action[0]
-
-        if ApplicationAction not in action.__bases__:
+        if not self.is_application_action(action):
             return False
 
         actual_data = self._prepare_compare_data(action)
