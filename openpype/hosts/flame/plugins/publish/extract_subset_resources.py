@@ -1,4 +1,5 @@
 import os
+from pprint import pformat
 from copy import deepcopy
 import pyblish.api
 import openpype.api
@@ -35,6 +36,8 @@ class ExtractSubsetResources(openpype.api.Extractor):
             ]
         }
     }
+    keep_original_representation = False
+
     # hide publisher during exporting
     hide_ui_on_process = True
 
@@ -42,8 +45,12 @@ class ExtractSubsetResources(openpype.api.Extractor):
     export_presets_mapping = {}
 
     def process(self, instance):
-        # create representation data
-        if "representations" not in instance.data:
+
+        if (
+            self.keep_original_representation
+            and "representations" not in instance.data
+            or not self.keep_original_representation
+        ):
             instance.data["representations"] = []
 
         frame_start = instance.data["frameStart"]
@@ -74,9 +81,9 @@ class ExtractSubsetResources(openpype.api.Extractor):
             # loop all preset names and
             for unique_name, preset_config in export_presets.items():
                 kwargs = {}
-                preset_file = preset_config["xmlPresetFile"]
-                preset_dir = preset_config["xmlPresetDir"]
-                repre_tags = preset_config["representationTags"]
+                preset_file = preset_config["xml_preset_file"]
+                preset_dir = preset_config["xml_preset_dir"]
+                repre_tags = preset_config["representation_tags"]
 
                 # validate xml preset file is filled
                 if preset_file == "":
@@ -144,7 +151,7 @@ class ExtractSubsetResources(openpype.api.Extractor):
                     representation_data["files"] = files
 
                 # add frame range
-                if preset_config["representationAddRange"]:
+                if preset_config["representation_add_range"]:
                     representation_data.update({
                         "frameStart": frame_start_handle,
                         "frameEnd": (
@@ -160,3 +167,6 @@ class ExtractSubsetResources(openpype.api.Extractor):
 
                 self.log.info("Added representation: {}".format(
                     representation_data))
+
+        self.log.debug("All representations: {}".format(
+            pformat(instance.data["representations"])))

@@ -134,6 +134,11 @@
                     "is_group": true,
                     "children": [
                         {
+                            "type": "boolean",
+                            "key": "keep_original_representation",
+                            "label": "Publish clip's original media"
+                        },
+                        {
                             "key": "export_presets_mapping",
                             "label": "Export presets mapping",
                             "type": "dict-modifiable",
@@ -147,12 +152,12 @@
                                         "type": "text"
                                     },
                                     {
-                                        "key": "xmlPresetFile",
+                                        "key": "xml_preset_file",
                                         "label": "XML preset file (with ext)",
                                         "type": "text"
                                     },
                                     {
-                                        "key": "xmlPresetDir",
+                                        "key": "xml_preset_dir",
                                         "label": "XML preset folder (optional)",
                                         "type": "text"
                                     },
@@ -161,12 +166,12 @@
                                     },
                                     {
                                         "type": "boolean",
-                                        "key": "representationAddRange",
+                                        "key": "representation_add_range",
                                         "label": "Add frame range to representation"
                                     },
                                     {
                                         "type": "list",
-                                        "key": "representationTags",
+                                        "key": "representation_tags",
                                         "label": "Add representation tags",
                                         "object_type": {
                                             "type": "text",
