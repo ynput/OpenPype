@@ -1,4 +1,4 @@
-# Photoshop Integration
+# AfterEffects Integration
 
 Requirements: This extension requires use of Javascript engine, which is 
 available since CC 16.0.
