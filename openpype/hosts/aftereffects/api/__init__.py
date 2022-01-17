@@ -34,8 +34,7 @@ from .lib import (
 )
 
 from .plugin import (
-    AfterEffectsLoader,
-    Creator
+    AfterEffectsLoader
 )
 
 
@@ -65,6 +64,5 @@ __all__ = [
     "get_extension_manifest_path",
 
     # plugin
-    "AfterEffectsLoader",
-    "Creator",
+    "AfterEffectsLoader"
 ]
