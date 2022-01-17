@@ -63,7 +63,7 @@ def export_clip(export_path, clip, preset_path, **kwargs):
 def get_preset_path_by_xml_name(xml_preset_name):
     def _search_path(root):
         output = []
-        for root, dirs, files in os.walk(root):
+        for root, _dirs, files in os.walk(root):
             for f in files:
                 if f != xml_preset_name:
                     continue

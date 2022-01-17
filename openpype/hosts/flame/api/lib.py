@@ -677,7 +677,6 @@ def get_frame_from_path(path):
         return None
 
 
-
 @contextlib.contextmanager
 def maintained_object_duplication(item):
     """Maintain input item duplication
