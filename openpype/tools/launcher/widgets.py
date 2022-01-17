@@ -209,11 +209,7 @@ class ActionBar(QtWidgets.QWidget):
         menu.addAction(action)
 
         global_point = self.mapToGlobal(point)
-        action = menu.exec_(global_point)
-        if not action or not action.data():
-            return
-
-        return
+        _ = menu.exec_(global_point)
 
     def on_checkbox_changed(self, is_checked, action):
         self.model.update_force_not_open_workfile_settings(is_checked, action)
