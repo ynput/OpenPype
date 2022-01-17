@@ -1491,10 +1491,6 @@ def _prepare_last_workfile(data, workdir):
 
     log = data["log"]
 
-    if not data.get("start_last_workfile", True):
-        log.info("Explicitly forbidden to open last workfile, skipping")
-        return
-
     _workdir_data = data.get("workdir_data")
     if not _workdir_data:
         log.info(
@@ -1511,7 +1507,11 @@ def _prepare_last_workfile(data, workdir):
     start_last_workfile = should_start_last_workfile(
         project_name, app.host_name, task_name, task_type
     )
-    data["start_last_workfile"] = start_last_workfile
+    if not data.get("start_last_workfile", True):
+        log.info("Explicitly forbidden to open last workfile")
+        start_last_workfile = False
+    else:
+        data["start_last_workfile"] = start_last_workfile
 
     workfile_startup = should_workfile_tool_start(
         project_name, app.host_name, task_name, task_type
