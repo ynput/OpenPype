@@ -912,7 +912,6 @@ class BootstrapRepos:
                 processed_path = file
                 self._print(f"- processing {processed_path}")
 
-
                 checksums.append(
                     (
                         sha256sum(file.as_posix()),
@@ -1544,7 +1543,8 @@ class BootstrapRepos:
 
         Args:
             zip_item (Path): Zip file to test.
-            detected_version (OpenPypeVersion): Pype version detected from name.
+            detected_version (OpenPypeVersion): Pype version detected from
+                name.
 
         Returns:
            True if it is valid OpenPype version, False otherwise.
