@@ -13,6 +13,8 @@ class TestCreatorOne(Creator):
     family = "test"
     description = "Testing creator of testhost"
 
+    create_allow_context_change = False
+
     def get_icon(self):
         return resources.get_openpype_splash_filepath()
 
@@ -48,7 +50,17 @@ class TestCreatorOne(Creator):
 
     def get_attribute_defs(self):
         output = [
-            lib.NumberDef("number_key", label="Number")
+            lib.NumberDef("number_key", label="Number"),
+        ]
+        return output
+
+    def get_pre_create_attr_defs(self):
+        output = [
+            lib.BoolDef("use_selection", label="Use selection"),
+            lib.UISeparatorDef(),
+            lib.UILabelDef("Testing label"),
+            lib.FileDef("filepath", folders=True, label="Filepath"),
+            lib.FileDef("filepath_2", multipath=True, folders=True, label="Filepath 2")
         ]
         return output
 
