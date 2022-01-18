@@ -11,14 +11,14 @@ from openpype.lib import PypeLogger
 from .webpublish_routes import (
     RestApiResource,
     OpenPypeRestApiResource,
-    WebpublisherBatchPublishEndpoint,
+    HiearchyEndpoint,
+    ProjectsEndpoint,
+    ConfiguredExtensionsEndpoint,
+    BatchPublishEndpoint,
     BatchReprocessEndpoint,
-    WebpublisherTaskPublishEndpoint,
-    WebpublisherHiearchyEndpoint,
-    WebpublisherProjectsEndpoint,
     BatchStatusEndpoint,
-    PublishesStatusEndpoint,
-    ConfiguredExtensionsEndpoint
+    TaskPublishEndpoint,
+    PublishesStatusEndpoint
 )
 
 
@@ -42,14 +42,14 @@ def run_webserver(*args, **kwargs):
                                upload_dir=kwargs["upload_dir"],
                                executable=kwargs["executable"],
                                studio_task_queue=studio_task_queue)
-    projects_endpoint = WebpublisherProjectsEndpoint(resource)
+    projects_endpoint = ProjectsEndpoint(resource)
     server_manager.add_route(
         "GET",
         "/api/projects",
         projects_endpoint.dispatch
     )
 
-    hiearchy_endpoint = WebpublisherHiearchyEndpoint(resource)
+    hiearchy_endpoint = HiearchyEndpoint(resource)
     server_manager.add_route(
         "GET",
         "/api/hierarchy/{project_name}",
@@ -65,7 +65,7 @@ def run_webserver(*args, **kwargs):
 
     # triggers publish
     webpublisher_task_publish_endpoint = \
-        WebpublisherBatchPublishEndpoint(resource)
+        BatchPublishEndpoint(resource)
     server_manager.add_route(
         "POST",
         "/api/webpublish/batch",
@@ -73,7 +73,7 @@ def run_webserver(*args, **kwargs):
     )
 
     webpublisher_batch_publish_endpoint = \
-        WebpublisherTaskPublishEndpoint(resource)
+        TaskPublishEndpoint(resource)
     server_manager.add_route(
         "POST",
         "/api/webpublish/task",

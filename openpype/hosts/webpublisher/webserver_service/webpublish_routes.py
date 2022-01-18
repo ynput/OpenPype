@@ -61,7 +61,7 @@ class OpenPypeRestApiResource(RestApiResource):
         self.dbcon = mongo_client[database_name]["webpublishes"]
 
 
-class WebpublisherProjectsEndpoint(_RestApiEndpoint):
+class ProjectsEndpoint(_RestApiEndpoint):
     """Returns list of dict with project info (id, name)."""
     async def get(self) -> Response:
         output = []
@@ -82,7 +82,7 @@ class WebpublisherProjectsEndpoint(_RestApiEndpoint):
         )
 
 
-class WebpublisherHiearchyEndpoint(_RestApiEndpoint):
+class HiearchyEndpoint(_RestApiEndpoint):
     """Returns dictionary with context tree from assets."""
     async def get(self, project_name) -> Response:
         query_projection = {
@@ -181,7 +181,7 @@ class TaskNode(Node):
         self["attributes"] = {}
 
 
-class WebpublisherBatchPublishEndpoint(_RestApiEndpoint):
+class BatchPublishEndpoint(_RestApiEndpoint):
     """Triggers headless publishing of batch."""
     async def post(self, request) -> Response:
         # Validate existence of openpype executable
@@ -190,7 +190,7 @@ class WebpublisherBatchPublishEndpoint(_RestApiEndpoint):
             msg = "Non existent OpenPype executable {}".format(openpype_app)
             raise RuntimeError(msg)
 
-        log.info("WebpublisherBatchPublishEndpoint called")
+        log.info("BatchPublishEndpoint called")
         content = await request.json()
 
         # Each filter have extensions which are checked on first task item
@@ -286,7 +286,7 @@ class WebpublisherBatchPublishEndpoint(_RestApiEndpoint):
         )
 
 
-class WebpublisherTaskPublishEndpoint(_RestApiEndpoint):
+class TaskPublishEndpoint(_RestApiEndpoint):
     """Prepared endpoint triggered after each task - for future development."""
     async def post(self, request) -> Response:
         return Response(
