@@ -1175,12 +1175,13 @@ class CreatorAttrsWidget(QtWidgets.QWidget):
         content_layout = QtWidgets.QFormLayout(content_widget)
         for attr_def, attr_instances, values in result:
             widget = create_widget_for_attr_def(attr_def, content_widget)
-            if len(values) == 1:
-                value = values[0]
-                if value is not None:
-                    widget.set_value(values[0])
-            else:
-                widget.set_value(values, True)
+            if attr_def.is_value_def:
+                if len(values) == 1:
+                    value = values[0]
+                    if value is not None:
+                        widget.set_value(values[0])
+                else:
+                    widget.set_value(values, True)
 
             label = attr_def.label or attr_def.key
             content_layout.addRow(label, widget)
