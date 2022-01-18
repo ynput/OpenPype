@@ -10,11 +10,6 @@ from avalon.vendor import qtawesome
 from openpype.widgets.attribute_defs import create_widget_for_attr_def
 from openpype.tools import resources
 from openpype.tools.flickcharm import FlickCharm
-from .models import (
-    AssetsHierarchyModel,
-    TasksModel,
-    RecursiveSortFilterProxyModel,
-)
 from openpype.tools.utils import (
     PlaceholderLineEdit,
     IconButton,
@@ -22,6 +17,8 @@ from openpype.tools.utils import (
     BaseClickableFrame
 )
 from openpype.pipeline.create import SUBSET_NAME_ALLOWED_SYMBOLS
+from .assets_widget import AssetsDialog
+from .tasks_widget import TasksModel
 from .icons import (
     get_pixmap,
     get_icon_path
@@ -305,143 +302,6 @@ class AbstractInstanceView(QtWidgets.QWidget):
         raise NotImplementedError((
             "{} Method 'get_selected_items' is not implemented."
         ).format(self.__class__.__name__))
-
-
-class AssetsDialog(QtWidgets.QDialog):
-    """Dialog to select asset for a context of instance."""
-    def __init__(self, controller, parent):
-        super(AssetsDialog, self).__init__(parent)
-        self.setWindowTitle("Select asset")
-
-        model = AssetsHierarchyModel(controller)
-        proxy_model = RecursiveSortFilterProxyModel()
-        proxy_model.setSourceModel(model)
-        proxy_model.setFilterCaseSensitivity(QtCore.Qt.CaseInsensitive)
-
-        filter_input = PlaceholderLineEdit(self)
-        filter_input.setPlaceholderText("Filter assets..")
-
-        asset_view = QtWidgets.QTreeView(self)
-        asset_view.setModel(proxy_model)
-        asset_view.setHeaderHidden(True)
-        asset_view.setFrameShape(QtWidgets.QFrame.NoFrame)
-        asset_view.setEditTriggers(QtWidgets.QTreeView.NoEditTriggers)
-        asset_view.setAlternatingRowColors(True)
-        asset_view.setSelectionBehavior(QtWidgets.QTreeView.SelectRows)
-        asset_view.setAllColumnsShowFocus(True)
-
-        ok_btn = QtWidgets.QPushButton("OK", self)
-        cancel_btn = QtWidgets.QPushButton("Cancel", self)
-
-        btns_layout = QtWidgets.QHBoxLayout()
-        btns_layout.addStretch(1)
-        btns_layout.addWidget(ok_btn)
-        btns_layout.addWidget(cancel_btn)
-
-        layout = QtWidgets.QVBoxLayout(self)
-        layout.addWidget(filter_input, 0)
-        layout.addWidget(asset_view, 1)
-        layout.addLayout(btns_layout, 0)
-
-        filter_input.textChanged.connect(self._on_filter_change)
-        ok_btn.clicked.connect(self._on_ok_clicked)
-        cancel_btn.clicked.connect(self._on_cancel_clicked)
-
-        self._filter_input = filter_input
-        self._ok_btn = ok_btn
-        self._cancel_btn = cancel_btn
-
-        self._model = model
-        self._proxy_model = proxy_model
-
-        self._asset_view = asset_view
-
-        self._selected_asset = None
-        # Soft refresh is enabled
-        # - reset will happen at all cost if soft reset is enabled
-        # - adds ability to call reset on multiple places without repeating
-        self._soft_reset_enabled = True
-
-    def showEvent(self, event):
-        """Refresh asset model on show."""
-        super(AssetsDialog, self).showEvent(event)
-        # Refresh on show
-        self.reset(False)
-
-    def reset(self, force=True):
-        """Reset asset model."""
-        if not force and not self._soft_reset_enabled:
-            return
-
-        if self._soft_reset_enabled:
-            self._soft_reset_enabled = False
-
-        self._model.reset()
-
-    def name_is_valid(self, name):
-        """Is asset name valid.
-
-        Args:
-            name(str): Asset name that should be checked.
-        """
-        # Make sure we're reset
-        self.reset(False)
-        # Valid the name by model
-        return self._model.name_is_valid(name)
-
-    def _on_filter_change(self, text):
-        """Trigger change of filter of assets."""
-        self._proxy_model.setFilterFixedString(text)
-
-    def _on_cancel_clicked(self):
-        self.done(0)
-
-    def _on_ok_clicked(self):
-        index = self._asset_view.currentIndex()
-        asset_name = None
-        if index.isValid():
-            asset_name = index.data(QtCore.Qt.DisplayRole)
-        self._selected_asset = asset_name
-        self.done(1)
-
-    def set_selected_assets(self, asset_names):
-        """Change preselected asset before showing the dialog.
-
-        This also resets model and clean filter.
-        """
-        self.reset(False)
-        self._asset_view.collapseAll()
-        self._filter_input.setText("")
-
-        indexes = []
-        for asset_name in asset_names:
-            index = self._model.get_index_by_name(asset_name)
-            if index.isValid():
-                indexes.append(index)
-
-        if not indexes:
-            return
-
-        index_deque = collections.deque()
-        for index in indexes:
-            index_deque.append(index)
-
-        all_indexes = []
-        while index_deque:
-            index = index_deque.popleft()
-            all_indexes.append(index)
-
-            parent_index = index.parent()
-            if parent_index.isValid():
-                index_deque.append(parent_index)
-
-        for index in all_indexes:
-            proxy_index = self._proxy_model.mapFromSource(index)
-            self._asset_view.expand(proxy_index)
-
-    def get_selected_asset(self):
-        """Get selected asset name."""
-        return self._selected_asset
 
 
 class ClickableLineEdit(QtWidgets.QLineEdit):
