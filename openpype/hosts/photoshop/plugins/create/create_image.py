@@ -75,10 +75,15 @@ class CreateImage(openpype.api.Creator):
             group = stub.group_selected_layers(layer.name)
             groups.append(group)
 
+        creator_subset_name = self.data["subset"]
         for group in groups:
             long_names = []
             group.name = group.name.replace(stub.PUBLISH_ICON, ''). \
                 replace(stub.LOADED_ICON, '')
+
+            subset_name = creator_subset_name
+            if len(groups) > 1:
+                subset_name += group.name.title().replace(" ", "")
 
             if group.long_name:
                 for directory in group.long_name[::-1]:
@@ -86,7 +91,7 @@ class CreateImage(openpype.api.Creator):
                                       replace(stub.LOADED_ICON, '')
                     long_names.append(name)
 
-            self.data.update({"subset": self.data["subset"]})
+            self.data.update({"subset": subset_name})
             self.data.update({"uuid": str(group.id)})
             self.data.update({"long_name": "_".join(long_names)})
             stub.imprint(group, self.data)
