@@ -1504,14 +1504,16 @@ def _prepare_last_workfile(data, workdir):
     project_name = data["project_name"]
     task_name = data["task_name"]
     task_type = data["task_type"]
-    start_last_workfile = should_start_last_workfile(
-        project_name, app.host_name, task_name, task_type
-    )
-    if not data.get("start_last_workfile", True):
-        log.info("Explicitly forbidden to open last workfile")
-        start_last_workfile = False
+
+    start_last_workfile = data.get("start_last_workfile", True)
+    if start_last_workfile:
+        start_last_workfile = should_start_last_workfile(
+            project_name, app.host_name, task_name, task_type
+        )
     else:
-        data["start_last_workfile"] = start_last_workfile
+        log.info("Explicitly forbidden to open last workfile")
+
+    data["start_last_workfile"] = start_last_workfile
 
     workfile_startup = should_workfile_tool_start(
         project_name, app.host_name, task_name, task_type
