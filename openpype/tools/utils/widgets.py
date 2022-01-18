@@ -148,6 +148,65 @@ class ImageButton(QtWidgets.QPushButton):
         return self.iconSize()
 
 
+class IconButton(QtWidgets.QPushButton):
+    """PushButton with icon and size of font.
+
+    Using font metrics height as icon size reference.
+    """
+
+    def __init__(self, *args, **kwargs):
+        super(IconButton, self).__init__(*args, **kwargs)
+        self.setObjectName("IconButton")
+
+    def sizeHint(self):
+        result = super(IconButton, self).sizeHint()
+        icon_h = self.iconSize().height()
+        font_height = self.fontMetrics().height()
+        text_set = bool(self.text())
+        if not text_set and icon_h < font_height:
+            new_size = result.height() - icon_h + font_height
+            result.setHeight(new_size)
+            result.setWidth(new_size)
+
+        return result
+
+
+class PixmapLabel(QtWidgets.QLabel):
+    """Label resizing image to height of font."""
+    def __init__(self, pixmap, parent):
+        super(PixmapLabel, self).__init__(parent)
+        self._empty_pixmap = QtGui.QPixmap(0, 0)
+        self._source_pixmap = pixmap
+
+    def set_source_pixmap(self, pixmap):
+        """Change source image."""
+        self._source_pixmap = pixmap
+        self._set_resized_pix()
+
+    def _get_pix_size(self):
+        size = self.fontMetrics().height()
+        size += size % 2
+        return size, size
+
+    def _set_resized_pix(self):
+        if self._source_pixmap is None:
+            self.setPixmap(self._empty_pixmap)
+            return
+        width, height = self._get_pix_size()
+        self.setPixmap(
+            self._source_pixmap.scaled(
+                width,
+                height,
+                QtCore.Qt.KeepAspectRatio,
+                QtCore.Qt.SmoothTransformation
+            )
+        )
+
+    def resizeEvent(self, event):
+        self._set_resized_pix()
+        super(PixmapLabel, self).resizeEvent(event)
+
+
 class OptionalMenu(QtWidgets.QMenu):
     """A subclass of `QtWidgets.QMenu` to work with `OptionalAction`
 

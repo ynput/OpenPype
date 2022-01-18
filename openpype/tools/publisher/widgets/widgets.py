@@ -8,14 +8,20 @@ from Qt import QtWidgets, QtCore, QtGui
 from avalon.vendor import qtawesome
 
 from openpype.widgets.attribute_defs import create_widget_for_attr_def
+from openpype.tools import resources
 from openpype.tools.flickcharm import FlickCharm
-from openpype.tools.utils import PlaceholderLineEdit
-from openpype.pipeline.create import SUBSET_NAME_ALLOWED_SYMBOLS
 from .models import (
     AssetsHierarchyModel,
     TasksModel,
     RecursiveSortFilterProxyModel,
 )
+from openpype.tools.utils import (
+    PlaceholderLineEdit,
+    IconButton,
+    PixmapLabel,
+    BaseClickableFrame
+)
+from openpype.pipeline.create import SUBSET_NAME_ALLOWED_SYMBOLS
 from .icons import (
     get_pixmap,
     get_icon_path
@@ -26,49 +32,14 @@ from ..constants import (
 )
 
 
-class PixmapLabel(QtWidgets.QLabel):
-    """Label resizing image to height of font."""
-    def __init__(self, pixmap, parent):
-        super(PixmapLabel, self).__init__(parent)
-        self._source_pixmap = pixmap
-
-    def set_source_pixmap(self, pixmap):
-        """Change source image."""
-        self._source_pixmap = pixmap
-        self._set_resized_pix()
-
-    def _set_resized_pix(self):
+class PublishPixmapLabel(PixmapLabel):
+    def _get_pix_size(self):
         size = self.fontMetrics().height()
         size += size % 2
-        self.setPixmap(
-            self._source_pixmap.scaled(
-                size,
-                size,
-                QtCore.Qt.KeepAspectRatio,
-                QtCore.Qt.SmoothTransformation
-            )
-        )
-
-    def resizeEvent(self, event):
-        self._set_resized_pix()
-        super(PixmapLabel, self).resizeEvent(event)
+        return size, size
 
 
-class TransparentPixmapLabel(QtWidgets.QLabel):
-    """Transparent label resizing to width and height of font."""
-    def __init__(self, *args, **kwargs):
-        super(TransparentPixmapLabel, self).__init__(*args, **kwargs)
-
-    def resizeEvent(self, event):
-        size = self.fontMetrics().height()
-        size += size % 2
-        pix = QtGui.QPixmap(size, size)
-        pix.fill(QtCore.Qt.transparent)
-        self.setPixmap(pix)
-        super(TransparentPixmapLabel, self).resizeEvent(event)
-
-
-class IconValuePixmapLabel(PixmapLabel):
+class IconValuePixmapLabel(PublishPixmapLabel):
     """Label resizing to width and height of font.
 
     Handle icon parsing from creators/instances. Using of QAwesome module
@@ -125,7 +96,7 @@ class IconValuePixmapLabel(PixmapLabel):
         return self._default_pixmap()
 
 
-class ContextWarningLabel(PixmapLabel):
+class ContextWarningLabel(PublishPixmapLabel):
     """Pixmap label with warning icon."""
     def __init__(self, parent):
         pix = get_pixmap("warning")
@@ -136,29 +107,6 @@ class ContextWarningLabel(PixmapLabel):
             "Contain invalid context. Please check details."
         )
         self.setObjectName("FamilyIconLabel")
-
-
-class IconButton(QtWidgets.QPushButton):
-    """PushButton with icon and size of font.
-
-    Using font metrics height as icon size reference.
-    """
-
-    def __init__(self, *args, **kwargs):
-        super(IconButton, self).__init__(*args, **kwargs)
-        self.setObjectName("IconButton")
-
-    def sizeHint(self):
-        result = super(IconButton, self).sizeHint()
-        icon_h = self.iconSize().height()
-        font_height = self.fontMetrics().height()
-        text_set = bool(self.text())
-        if not text_set and icon_h < font_height:
-            new_size = result.height() - icon_h + font_height
-            result.setHeight(new_size)
-            result.setWidth(new_size)
-
-        return result
 
 
 class PublishIconBtn(IconButton):
@@ -314,7 +262,7 @@ class ShowPublishReportBtn(PublishIconBtn):
 class RemoveInstanceBtn(PublishIconBtn):
     """Create remove button."""
     def __init__(self, parent=None):
-        icon_path = get_icon_path("delete")
+        icon_path = resources.get_icon_path("delete")
         super(RemoveInstanceBtn, self).__init__(icon_path, parent)
         self.setToolTip("Remove selected instances")
 
@@ -357,33 +305,6 @@ class AbstractInstanceView(QtWidgets.QWidget):
         raise NotImplementedError((
             "{} Method 'get_selected_items' is not implemented."
         ).format(self.__class__.__name__))
-
-
-class ClickableFrame(QtWidgets.QFrame):
-    """Widget that catch left mouse click and can trigger a callback.
-
-    Callback is defined by overriding `_mouse_release_callback`.
-    """
-    def __init__(self, parent):
-        super(ClickableFrame, self).__init__(parent)
-
-        self._mouse_pressed = False
-
-    def _mouse_release_callback(self):
-        pass
-
-    def mousePressEvent(self, event):
-        if event.button() == QtCore.Qt.LeftButton:
-            self._mouse_pressed = True
-        super(ClickableFrame, self).mousePressEvent(event)
-
-    def mouseReleaseEvent(self, event):
-        if self._mouse_pressed:
-            self._mouse_pressed = False
-            if self.rect().contains(event.pos()):
-                self._mouse_release_callback()
-
-        super(ClickableFrame, self).mouseReleaseEvent(event)
 
 
 class AssetsDialog(QtWidgets.QDialog):
@@ -554,7 +475,7 @@ class ClickableLineEdit(QtWidgets.QLineEdit):
         event.accept()
 
 
-class AssetsField(ClickableFrame):
+class AssetsField(BaseClickableFrame):
     """Field where asset name of selected instance/s is showed.
 
     Click on the field will trigger `AssetsDialog`.

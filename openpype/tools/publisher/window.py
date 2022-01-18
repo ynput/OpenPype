@@ -4,7 +4,10 @@ from openpype import (
     resources,
     style
 )
-from openpype.tools.utils import PlaceholderLineEdit
+from openpype.tools.utils import (
+    PlaceholderLineEdit,
+    PixmapLabel
+)
 from .control import PublisherController
 from .widgets import (
     BorderedLabelWidget,
@@ -13,8 +16,6 @@ from .widgets import (
     InstanceCardView,
     InstanceListView,
     CreateDialog,
-
-    PixmapLabel,
 
     StopBtn,
     ResetBtn,
