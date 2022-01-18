@@ -1,7 +1,5 @@
 import collections
 
-import avalon.api
-
 from Qt import QtWidgets, QtCore, QtGui
 from openpype.tools.utils import (
     PlaceholderLineEdit,

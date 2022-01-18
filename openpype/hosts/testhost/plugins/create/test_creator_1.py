@@ -60,7 +60,9 @@ class TestCreatorOne(Creator):
             lib.UISeparatorDef(),
             lib.UILabelDef("Testing label"),
             lib.FileDef("filepath", folders=True, label="Filepath"),
-            lib.FileDef("filepath_2", multipath=True, folders=True, label="Filepath 2")
+            lib.FileDef(
+                "filepath_2", multipath=True, folders=True, label="Filepath 2"
+            )
         ]
         return output
 
