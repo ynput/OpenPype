@@ -387,10 +387,16 @@ QHeaderView::section:only-one {
 
 QHeaderView::down-arrow {
     image: url(:/openpype/images/down_arrow.png);
+    padding-right: 4px;
+    subcontrol-origin: padding;
+    subcontrol-position: center right;
 }
 
 QHeaderView::up-arrow {
     image: url(:/openpype/images/up_arrow.png);
+    padding-right: 4px;
+    subcontrol-origin: padding;
+    subcontrol-position: center right;
 }
 
 /* Checkboxes */
@@ -1196,6 +1202,10 @@ QScrollBar::add-page:vertical, QScrollBar::sub-page:vertical {
 
 #ShadowWidget {
     font-size: 36pt;
+}
+
+#OverlayFrame {
+    background: rgba(0, 0, 0, 127);
 }
 
 #BreadcrumbsPathInput {
