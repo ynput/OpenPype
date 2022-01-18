@@ -12,6 +12,7 @@ from .webpublish_routes import (
     RestApiResource,
     OpenPypeRestApiResource,
     WebpublisherBatchPublishEndpoint,
+    BatchReprocessEndpoint,
     WebpublisherTaskPublishEndpoint,
     WebpublisherHiearchyEndpoint,
     WebpublisherProjectsEndpoint,
@@ -93,6 +94,14 @@ def run_webserver(*args, **kwargs):
         "GET",
         "/api/publishes/{user}",
         user_status_endpoint.dispatch
+    )
+
+    webpublisher_batch_reprocess_endpoint = \
+        BatchReprocessEndpoint(openpype_resource)
+    server_manager.add_route(
+        "POST",
+        "/api/webpublish/reprocess/{batch_id}",
+        webpublisher_batch_reprocess_endpoint.dispatch
     )
 
     server_manager.start_server()

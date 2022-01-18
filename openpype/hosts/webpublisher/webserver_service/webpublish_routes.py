@@ -351,3 +351,34 @@ class ConfiguredExtensionsEndpoint(_RestApiEndpoint):
             body=self.resource.encode(dict(configured)),
             content_type="application/json"
         )
+
+
+class BatchReprocessEndpoint(_RestApiEndpoint):
+    """Marks latest 'batch_id' for reprocessing, returns 404 if not found."""
+    async def post(self, batch_id) -> Response:
+        batches = self.dbcon.find({"batch_id": batch_id,
+                                   "status": "error"}).sort("_id", -1)
+        batch = None
+        if batches:
+            batch = batches[0]
+
+        if batch:
+            self.dbcon.update_one(
+                {"_id": batch["_id"]},
+                {"$set":
+                    {
+                        "status": "reprocess"
+                    }}
+            )
+            output = [{"msg": "Batch id {} set to reprocess".format(batch_id)}]
+            status = 200
+        else:
+            output = [{"msg": "Batch id {} not found".format(batch_id)}]
+            status = 404
+        body = self.resource.encode(output)
+
+        return Response(
+            status=status,
+            body=body,
+            content_type="application/json"
+        )
