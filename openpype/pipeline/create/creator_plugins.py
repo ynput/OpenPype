@@ -163,7 +163,7 @@ class BaseCreator:
             dynamic_data=dynamic_data
         )
 
-    def get_attribute_defs(self):
+    def get_instance_attr_defs(self):
         """Plugin attribute definitions.
 
         Attribute definitions of plugin that hold data about created instance
