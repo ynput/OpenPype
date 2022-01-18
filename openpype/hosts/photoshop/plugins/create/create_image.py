@@ -62,8 +62,7 @@ class CreateImage(openpype.api.Creator):
                 # No selection creates an empty group.
                 create_group = True
         else:
-            stub.select_layers(stub.get_layers())
-            group = stub.group_selected_layers(self.name)
+            group = stub.create_group(self.name)
             groups.append(group)
 
         if create_group:
