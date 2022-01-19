@@ -301,9 +301,16 @@ class BatchStatusEndpoint(_RestApiEndpoint):
     async def get(self, batch_id) -> Response:
         output = self.dbcon.find_one({"batch_id": batch_id})
 
+        if output:
+            status = 200
+            body = self.resource.encode(output)
+        else:
+            output = [{"msg": "Batch id {} not found".format(batch_id)}]
+            status = 404
+
         return Response(
-            status=200,
-            body=self.resource.encode(output),
+            status=status,
+            body=body,
             content_type="application/json"
         )
 
@@ -313,9 +320,16 @@ class PublishesStatusEndpoint(_RestApiEndpoint):
     async def get(self, user) -> Response:
         output = list(self.dbcon.find({"user": user}))
 
+        if output:
+            status = 200
+            body = self.resource.encode(output)
+        else:
+            body = [{"msg": "User {} not found".format(user)}]
+            status = 404
+
         return Response(
-            status=200,
-            body=self.resource.encode(output),
+            status=status,
+            body=body,
             content_type="application/json"
         )
 
