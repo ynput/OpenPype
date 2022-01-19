@@ -43,8 +43,8 @@ class CollectUsername(pyblish.api.ContextPlugin):
         if not user_email:
             # for basic webpublishes
             for instance in context:
-                email = instance.data["user_email"]
-                self.log.debug("Email from instance:: {}".format(email))
+                user_email = instance.data.get("user_email")
+                self.log.debug("Email from instance:: {}".format(user_email))
                 break
 
         if not user_email:
