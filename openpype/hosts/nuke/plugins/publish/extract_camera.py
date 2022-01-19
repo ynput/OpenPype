@@ -1,10 +1,12 @@
-import nuke
 import os
 import math
+from pprint import pformat
+
+import nuke
+
 import pyblish.api
 import openpype.api
-from avalon.nuke import lib as anlib
-from pprint import pformat
+from openpype.hosts.nuke.api.lib import maintained_selection
 
 
 class ExtractCamera(openpype.api.Extractor):
@@ -52,7 +54,7 @@ class ExtractCamera(openpype.api.Extractor):
         filename = subset + ".{}".format(extension)
         file_path = os.path.join(staging_dir, filename).replace("\\", "/")
 
-        with anlib.maintained_selection():
+        with maintained_selection():
             # bake camera with axeses onto word coordinate XYZ
             rm_n = bakeCameraWithAxeses(
                 nuke.toNode(instance.data["name"]), output_range)

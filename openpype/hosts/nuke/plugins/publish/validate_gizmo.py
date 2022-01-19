@@ -1,6 +1,6 @@
-import pyblish
-from avalon.nuke import lib as anlib
 import nuke
+import pyblish
+from openpype.hosts.nuke.api.lib import maintained_selection
 
 
 class OpenFailedGroupNode(pyblish.api.Action):
@@ -25,7 +25,7 @@ class OpenFailedGroupNode(pyblish.api.Action):
         instances = pyblish.api.instances_by_plugin(failed, plugin)
 
         # maintain selection
-        with anlib.maintained_selection():
+        with maintained_selection():
             # collect all failed nodes xpos and ypos
             for instance in instances:
                 grpn = instance[0]

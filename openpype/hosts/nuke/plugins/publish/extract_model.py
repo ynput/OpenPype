@@ -1,9 +1,12 @@
-import nuke
 import os
+from pprint import pformat
+import nuke
 import pyblish.api
 import openpype.api
-from avalon.nuke import lib as anlib
-from pprint import pformat
+from openpype.hosts.nuke.api.lib import (
+    maintained_selection,
+    select_nodes
+)
 
 
 class ExtractModel(openpype.api.Extractor):
@@ -49,9 +52,9 @@ class ExtractModel(openpype.api.Extractor):
         filename = subset + ".{}".format(extension)
         file_path = os.path.join(staging_dir, filename).replace("\\", "/")
 
-        with anlib.maintained_selection():
+        with maintained_selection():
             # select model node
-            anlib.select_nodes([model_node])
+            select_nodes([model_node])
 
             # create write geo node
             wg_n = nuke.createNode("WriteGeo")
