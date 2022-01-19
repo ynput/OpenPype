@@ -62,7 +62,7 @@ jobs:
 
     - name: 🔨 Build
       run: |
-        export SKIP_THIRD_PARTY_VALIDATION=1
+        export SKIP_THIRD_PARTY_VALIDATION="1"
         ./tools/build.sh
 
   # MacOS-latest:
