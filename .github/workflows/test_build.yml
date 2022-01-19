@@ -37,7 +37,7 @@ jobs:
     - name: 🔨 Build
       shell: pwsh
       env:
-          SKIP_THIRD_PARTY_VALIDATION: "1"
+        SKIP_THIRD_PARTY_VALIDATION: 1
       run: |
         ./tools/build.ps1
 
@@ -63,9 +63,8 @@ jobs:
 
     - name: 🔨 Build
       env:
-          SKIP_THIRD_PARTY_VALIDATION: "1"
+        SKIP_THIRD_PARTY_VALIDATION: 1
       run: |
-        echo "1" >> $SKIP_THIRD_PARTY_VALIDATION
         ./tools/build.sh
 
   # MacOS-latest:
