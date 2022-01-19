@@ -126,7 +126,11 @@ def reprocess_failed(upload_dir, webserver_url):
     dbcon = mongo_client[database_name]["webpublishes"]
 
     results = dbcon.find({"status": "reprocess"})
+    reprocessed_batches = set()
     for batch in results:
+        if batch["batch_id"] in reprocessed_batches:
+            continue
+
         batch_url = os.path.join(upload_dir,
                                  batch["batch_id"],
                                  "manifest.json")
@@ -150,18 +154,24 @@ def reprocess_failed(upload_dir, webserver_url):
         with open(batch_url) as f:
             data = json.loads(f.read())
 
+        dbcon.update_many(
+            {
+                "batch_id": batch["batch_id"],
+                "status": {"$in": ["error", "reprocess"]}
+            },
+            {
+                "$set": {
+                    "finish_date": datetime.now(),
+                    "status": "sent_for_reprocessing",
+                    "progress": 100
+                }
+            }
+        )
+
         try:
             r = requests.post(server_url, json=data)
             log.info("response{}".format(r))
         except Exception:
             log.info("exception", exc_info=True)
 
-        dbcon.update_one(
-            {"_id": batch["_id"]},
-            {"$set":
-                {
-                    "finish_date": datetime.now(),
-                    "status": "sent_for_reprocessing",
-                    "progress": 100
-                }}
-        )
+        reprocessed_batches.add(batch["batch_id"])
