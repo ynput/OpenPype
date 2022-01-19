@@ -121,5 +121,5 @@ def get_preset_path_by_xml_name(xml_preset_name):
     if installed_preset_path:
         return os.path.dirname(installed_preset_path)
 
-    # if nothing found then return None
+    # if nothing found then return False
     return False
