@@ -619,6 +619,25 @@ class DeleteAssetSubset(BaseAction):
                 joined_ids_to_delete
             )
         ).all()
+        # Find all children entities and add them to list
+        # - Delete tasks first then their parents and continue
+        parent_ids_to_delete = [
+            entity["id"]
+            for entity in to_delete_entities
+        ]
+        while parent_ids_to_delete:
+            joined_parent_ids_to_delete = ",".join([
+                "\"{}\"".format(ftrack_id)
+                for ftrack_id in parent_ids_to_delete
+            ])
+            _to_delete = session.query((
+                "select id, link from TypedContext where parent_id in ({})"
+            ).format(joined_parent_ids_to_delete)).all()
+            parent_ids_to_delete = []
+            for entity in _to_delete:
+                parent_ids_to_delete.append(entity["id"])
+                to_delete_entities.append(entity)
+
         entities_by_link_len = collections.defaultdict(list)
         for entity in to_delete_entities:
             entities_by_link_len[len(entity["link"])].append(entity)
