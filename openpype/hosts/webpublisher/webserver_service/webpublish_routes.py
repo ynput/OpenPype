@@ -372,17 +372,11 @@ class BatchReprocessEndpoint(_RestApiEndpoint):
     async def post(self, batch_id) -> Response:
         batches = self.dbcon.find({"batch_id": batch_id,
                                    "status": "error"}).sort("_id", -1)
-        batch = None
-        if batches:
-            batch = batches[0]
 
-        if batch:
+        if batches:
             self.dbcon.update_one(
-                {"_id": batch["_id"]},
-                {"$set":
-                    {
-                        "status": "reprocess"
-                    }}
+                {"_id": batches[0]["_id"]},
+                {"$set": {"status": "reprocess"}}
             )
             output = [{"msg": "Batch id {} set to reprocess".format(batch_id)}]
             status = 200
