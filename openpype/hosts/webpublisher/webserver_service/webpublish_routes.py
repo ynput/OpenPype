@@ -317,7 +317,8 @@ class BatchStatusEndpoint(_RestApiEndpoint):
 class PublishesStatusEndpoint(_RestApiEndpoint):
     """Returns list of dict with batch info for user (email address)."""
     async def get(self, user) -> Response:
-        output = list(self.dbcon.find({"user": user}))
+        output = list(self.dbcon.find({"user": user},
+                                      projection={"log": False}))
 
         if output:
             status = 200
