@@ -16,6 +16,7 @@ from openpype.api import (
 )
 from openpype.lib import (
     get_openpype_execute_args,
+    op_version_control_available,
     is_current_version_studio_latest,
     is_running_from_build,
     is_running_staging,
@@ -218,7 +219,7 @@ class TrayManager:
 
     def _on_version_check_timer(self):
         # Check if is running from build and stop future validations if yes
-        if not is_running_from_build():
+        if not is_running_from_build() or not op_version_control_available():
             self._version_check_timer.stop()
             return
 
