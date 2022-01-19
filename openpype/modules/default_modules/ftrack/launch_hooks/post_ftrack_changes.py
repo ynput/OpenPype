@@ -52,7 +52,7 @@ class PostFtrackHook(PostLaunchHook):
             )
             if entity:
                 self.ftrack_status_change(session, entity, project_name)
-                self.start_timer(session, entity, ftrack_api)
+
         except Exception:
             self.log.warning(
                 "Couldn't finish Ftrack procedure.", exc_info=True
@@ -160,26 +160,3 @@ class PostFtrackHook(PostLaunchHook):
                     " on Ftrack entity type \"{}\""
                 ).format(next_status_name, entity.entity_type)
                 self.log.warning(msg)
-
-    def start_timer(self, session, entity, _ftrack_api):
-        """Start Ftrack timer on task from context."""
-        self.log.debug("Triggering timer start.")
-
-        user_entity = session.query("User where username is \"{}\"".format(
-            os.environ["FTRACK_API_USER"]
-        )).first()
-        if not user_entity:
-            self.log.warning(
-                "Couldn't find user with username \"{}\" in Ftrack".format(
-                    os.environ["FTRACK_API_USER"]
-                )
-            )
-            return
-
-        try:
-            user_entity.start_timer(entity, force=True)
-            session.commit()
-            self.log.debug("Timer start triggered successfully.")
-
-        except Exception:
-            self.log.warning("Couldn't trigger Ftrack timer.", exc_info=True)

@@ -60,6 +60,12 @@ class DictMutableKeysEntity(EndpointEntity):
     def pop(self, key, *args, **kwargs):
         if key in self.required_keys:
             raise RequiredKeyModified(self.path, key)
+
+        if self._override_state is OverrideState.STUDIO:
+            self._has_studio_override = True
+        elif self._override_state is OverrideState.PROJECT:
+            self._has_project_override = True
+
         result = self.children_by_key.pop(key, *args, **kwargs)
         self.on_change()
         return result
@@ -190,6 +196,9 @@ class DictMutableKeysEntity(EndpointEntity):
     def set_key_label(self, key, label):
         child_entity = self.children_by_key[key]
         self.set_child_label(child_entity, label)
+
+    def has_child_with_key(self, key):
+        return key in self.children_by_key
 
     def _item_initialization(self):
         self._default_metadata = {}

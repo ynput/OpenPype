@@ -43,7 +43,8 @@
             "defaults": [
                 "Main"
             ],
-            "aov_separator": "underscore"
+            "aov_separator": "underscore",
+            "default_render_image_folder": "renders"
         },
         "CreateAnimation": {
             "enabled": true,
@@ -164,6 +165,11 @@
         "ValidateShaderName": {
             "enabled": false,
             "regex": "(?P<asset>.*)_(.*)_SHD"
+        },
+        "ValidateShadingEngine": {
+            "enabled": true,
+            "optional": true,
+            "active": true
         },
         "ValidateAttributes": {
             "enabled": false,

@@ -1568,8 +1568,11 @@ class Roots:
             key_items = [self.env_prefix]
             for _key in keys:
                 key_items.append(_key.upper())
+
             key = "_".join(key_items)
-            return {key: roots.value}
+            # Make sure key and value does not contain unicode
+            #   - can happen in Python 2 hosts
+            return {str(key): str(roots.value)}
 
         output = {}
         for _key, _value in roots.items():
