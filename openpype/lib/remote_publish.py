@@ -95,7 +95,8 @@ def publish_and_log(dbcon, _id, log, close_plugin_name=None):
                 close host app
     """
     # Error exit as soon as any error occurs.
-    error_format = "Failed {plugin.__name__}: {error} -- {error.traceback}"
+    error_format = "Failed {plugin.__name__}: {error} -- {error.traceback}\n"
+    error_format += "-" * 80 + "\n"
 
     close_plugin = _get_close_plugin(close_plugin_name, log)
 
@@ -111,7 +112,7 @@ def publish_and_log(dbcon, _id, log, close_plugin_name=None):
         if result["error"]:
             log.error(error_format.format(**result))
             uninstall()
-            log_lines.append(error_format.format(**result))
+            log_lines = [error_format.format(**result)] + log_lines
             dbcon.update_one(
                 {"_id": _id},
                 {"$set":
