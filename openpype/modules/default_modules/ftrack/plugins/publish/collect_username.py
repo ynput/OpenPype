@@ -37,16 +37,27 @@ class CollectUsername(pyblish.api.ContextPlugin):
         os.environ["FTRACK_API_USER"] = os.environ["FTRACK_BOT_API_USER"]
         os.environ["FTRACK_API_KEY"] = os.environ["FTRACK_BOT_API_KEY"]
 
-        for instance in context:
-            email = instance.data["user_email"]
-            self.log.info("email:: {}".format(email))
-            session = ftrack_api.Session(auto_connect_event_hub=False)
-            user = session.query("User where email like '{}'".format(
-                email))
+        # for publishes with studio processing
+        user_email = os.environ.get("USER_EMAIL")
+        self.log.debug("Email from env:: {}".format(user_email))
+        if not user_email:
+            # for basic webpublishes
+            for instance in context:
+                email = instance.data["user_email"]
+                self.log.debug("Email from instance:: {}".format(email))
+                break
 
-            if not user:
-                raise ValueError(
-                    "Couldnt find user with {} email".format(email))
+        if not user_email:
+            self.log.info("No email found")
+            return
 
-            os.environ["FTRACK_API_USER"] = user[0].get("username")
-            break
+        session = ftrack_api.Session(auto_connect_event_hub=False)
+        user = session.query("User where email like '{}'".format(user_email))
+
+        if not user:
+            raise ValueError(
+                "Couldn't find user with {} email".format(user_email))
+
+        username = user[0].get("username")
+        self.log.debug("Resolved ftrack username:: {}".format(username))
+        os.environ["FTRACK_API_USER"] = username
