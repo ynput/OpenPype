@@ -602,7 +602,7 @@ def get_clips_in_reels(project):
     return output_clips
 
 
-def get_reformated_path(filename, padded=True):
+def get_reformated_filename(filename, padded=True):
     """
     Return fixed python expression path
 
@@ -613,7 +613,7 @@ def get_reformated_path(filename, padded=True):
         type: string with reformated path
 
     Example:
-        get_reformated_path("plate.1001.exr") > plate.%04d.exr
+        get_reformated_filename("plate.1001.exr") > plate.%04d.exr
 
     """
     found = FRAME_PATTERN.search(filename)
@@ -622,7 +622,7 @@ def get_reformated_path(filename, padded=True):
         log.info("File name is not sequence: {}".format(filename))
         return filename
 
-    padding = get_padding_from_path(filename)
+    padding = get_padding_from_filename(filename)
 
     replacement = "%0{}d".format(padding) if padded else "%d"
     start_idx, end_idx = found.span(1)
@@ -632,7 +632,7 @@ def get_reformated_path(filename, padded=True):
     )
 
 
-def get_padding_from_path(filename):
+def get_padding_from_filename(filename):
     """
     Return padding number from Flame path style
 
@@ -643,15 +643,15 @@ def get_padding_from_path(filename):
         int: padding number
 
     Example:
-        get_padding_from_path("plate.0001.exr") > 4
+        get_padding_from_filename("plate.0001.exr") > 4
 
     """
-    found = get_frame_from_path(filename)
+    found = get_frame_from_filename(filename)
 
     return len(found) if found else None
 
 
-def get_frame_from_path(filename):
+def get_frame_from_filename(filename):
     """
     Return sequence number from Flame path style
 
@@ -662,7 +662,7 @@ def get_frame_from_path(filename):
         int: sequence frame number
 
     Example:
-        def get_frame_from_path(path):
+        def get_frame_from_filename(path):
             ("plate.0001.exr") > 0001
 
     """

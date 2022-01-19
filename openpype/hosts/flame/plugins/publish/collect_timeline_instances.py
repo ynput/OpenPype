@@ -47,7 +47,7 @@ class CollectTimelineInstances(pyblish.api.ContextPlugin):
                 # get source clip
                 source_clip = self._get_reel_clip(file_path)
 
-                first_frame = opfapi.get_frame_from_path(file_path) or 0
+                first_frame = opfapi.get_frame_from_filename(file_path) or 0
 
                 head, tail = self._get_head_tail(clip_data, first_frame)
 

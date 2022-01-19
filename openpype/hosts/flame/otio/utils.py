@@ -4,6 +4,8 @@ import opentimelineio as otio
 import logging
 log = logging.getLogger(__name__)
 
+FRAME_PATTERN = re.compile(r"[\._](\d+)[\.]")
+
 
 def timecode_to_frames(timecode, framerate):
     rt = otio.opentime.from_timecode(timecode, framerate)
@@ -20,79 +22,71 @@ def frames_to_seconds(frames, framerate):
     return otio.opentime.to_seconds(rt)
 
 
-def get_reformated_path(path, padded=True):
+def get_reformated_filename(filename, padded=True):
     """
     Return fixed python expression path
 
     Args:
-        path (str): path url or simple file name
+        filename (str): file name
 
     Returns:
         type: string with reformated path
 
     Example:
-        get_reformated_path("plate.1001.exr") > plate.%04d.exr
+        get_reformated_filename("plate.1001.exr") > plate.%04d.exr
 
     """
-    basename = os.path.basename(path)
-    dirpath = os.path.dirname(path)
-    padding = get_padding_from_path(basename)
-    found = get_frame_from_path(basename)
+    found = FRAME_PATTERN.search(filename)
 
     if not found:
-        log.info("Path is not sequence: {}".format(path))
-        return path
+        log.info("File name is not sequence: {}".format(filename))
+        return filename
 
-    if padded:
-        basename = basename.replace(found, "%0{}d".format(padding))
-    else:
-        basename = basename.replace(found, "%d")
+    padding = get_padding_from_filename(filename)
 
-    return os.path.join(dirpath, basename)
+    replacement = "%0{}d".format(padding) if padded else "%d"
+    start_idx, end_idx = found.span(1)
+
+    return replacement.join(
+        [filename[:start_idx], filename[end_idx:]]
+    )
 
 
-def get_padding_from_path(path):
+def get_padding_from_filename(filename):
     """
     Return padding number from Flame path style
 
     Args:
-        path (str): path url or simple file name
+        filename (str): file name
 
     Returns:
         int: padding number
 
     Example:
-        get_padding_from_path("plate.0001.exr") > 4
+        get_padding_from_filename("plate.0001.exr") > 4
 
     """
-    found = get_frame_from_path(path)
+    found = get_frame_from_filename(filename)
 
-    if found:
-        return len(found)
-    else:
-        return None
+    return len(found) if found else None
 
 
-def get_frame_from_path(path):
+def get_frame_from_filename(filename):
     """
     Return sequence number from Flame path style
 
     Args:
-        path (str): path url or simple file name
+        filename (str): file name
 
     Returns:
         int: sequence frame number
 
     Example:
-        def get_frame_from_path(path):
+        def get_frame_from_filename(path):
             ("plate.0001.exr") > 0001
 
     """
-    frame_pattern = re.compile(r"[._](\d+)[.]")
 
-    found = re.findall(frame_pattern, path)
+    found = re.findall(FRAME_PATTERN, filename)
 
-    if found:
-        return found.pop()
-    else:
-        return None
+    return found.pop() if found else None
