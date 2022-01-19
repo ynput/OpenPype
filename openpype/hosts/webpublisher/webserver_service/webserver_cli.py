@@ -18,7 +18,7 @@ from .webpublish_routes import (
     BatchReprocessEndpoint,
     BatchStatusEndpoint,
     TaskPublishEndpoint,
-    PublishesStatusEndpoint
+    UserReportEndpoint
 )
 
 
@@ -89,7 +89,7 @@ def run_webserver(*args, **kwargs):
         batch_status_endpoint.dispatch
     )
 
-    user_status_endpoint = PublishesStatusEndpoint(openpype_resource)
+    user_status_endpoint = UserReportEndpoint(openpype_resource)
     server_manager.add_route(
         "GET",
         "/api/publishes/{user}",
