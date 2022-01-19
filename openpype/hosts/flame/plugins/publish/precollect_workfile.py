@@ -9,7 +9,7 @@ class PrecollecTimelineOCIO(pyblish.api.ContextPlugin):
     """Inject the current working context into publish context"""
 
     label = "Precollect Timeline OTIO"
-    order = pyblish.api.CollectorOrder - 0.5
+    order = pyblish.api.CollectorOrder - 0.48
 
     def process(self, context):
         # plugin defined
