@@ -163,8 +163,11 @@ class DeleteAssetSubset(BaseAction):
 
         if not selected_av_entities:
             return {
-                "success": False,
-                "message": "Didn't found entities in avalon"
+                "success": True,
+                "message": (
+                    "Didn't found entities in avalon."
+                    " You can use Ftrack's Delete button fot this selection."
+                )
             }
 
         # Remove cached action older than 2 minutes
