@@ -11,10 +11,14 @@ from avalon.api import AvalonMongoDB
 
 from openpype.lib import OpenPypeMongoConnection
 from openpype_modules.avalon_apps.rest_api import _RestApiEndpoint
-from openpype.lib.remote_publish import get_task_data
 from openpype.settings import get_project_settings
 
 from openpype.lib import PypeLogger
+from openpype.lib.remote_publish import (
+    get_task_data,
+    ERROR_STATUS,
+    REPROCESS_STATUS
+)
 
 log = PypeLogger.get_logger("WebServer")
 
@@ -371,12 +375,12 @@ class BatchReprocessEndpoint(_RestApiEndpoint):
     """Marks latest 'batch_id' for reprocessing, returns 404 if not found."""
     async def post(self, batch_id) -> Response:
         batches = self.dbcon.find({"batch_id": batch_id,
-                                   "status": "error"}).sort("_id", -1)
+                                   "status": ERROR_STATUS}).sort("_id", -1)
 
         if batches:
             self.dbcon.update_one(
                 {"_id": batches[0]["_id"]},
-                {"$set": {"status": "reprocess"}}
+                {"$set": {"status": REPROCESS_STATUS}}
             )
             output = [{"msg": "Batch id {} set to reprocess".format(batch_id)}]
             status = 200

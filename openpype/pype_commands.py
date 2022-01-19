@@ -14,7 +14,8 @@ from openpype.lib.remote_publish import (
     publish_and_log,
     fail_batch,
     find_variant_key,
-    get_task_data
+    get_task_data,
+    IN_PROGRESS_STATUS
 )
 
 
@@ -209,7 +210,7 @@ class PypeCommands:
         # safer to start logging here, launch might be broken altogether
         _id = start_webpublish_log(dbcon, batch_id, user_email)
 
-        batches_in_progress = list(dbcon.find({"status": "in_progress"}))
+        batches_in_progress = list(dbcon.find({"status": IN_PROGRESS_STATUS}))
         if len(batches_in_progress) > 1:
             fail_batch(_id, batches_in_progress, dbcon)
             print("Another batch running, probably stuck, ask admin for help")

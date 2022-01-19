@@ -11,6 +11,13 @@ from openpype import uninstall
 from openpype.lib.mongo import OpenPypeMongoConnection
 from openpype.lib.plugin_tools import parse_json
 
+ERROR_STATUS = "error"
+IN_PROGRESS_STATUS = "in_progress"
+REPROCESS_STATUS = "reprocess"
+SENT_REPROCESSING_STATUS = "sent_for_reprocessing"
+FINISHED_REPROCESS_STATUS = "republishing_finished"
+FINISHED_OK_STATUS = "finished_ok"
+
 
 def headless_publish(log, close_plugin_name=None, is_test=False):
     """Runs publish in a opened host with a context and closes Python process.
@@ -52,7 +59,7 @@ def start_webpublish_log(dbcon, batch_id, user):
         "batch_id": batch_id,
         "start_date": datetime.now(),
         "user": user,
-        "status": "in_progress",
+        "status": IN_PROGRESS_STATUS,
         "progress": 0  # integer 0-100, percentage
     }).inserted_id
 
@@ -122,7 +129,7 @@ def publish_and_log(dbcon, _id, log, close_plugin_name=None, batch_id=None):
                 {"$set":
                     {
                         "finish_date": datetime.now(),
-                        "status": "error",
+                        "status": ERROR_STATUS,
                         "log": os.linesep.join(log_lines)
 
                     }}
@@ -146,12 +153,12 @@ def publish_and_log(dbcon, _id, log, close_plugin_name=None, batch_id=None):
     # final update
     if batch_id:
         dbcon.update_many(
-            {"batch_id": batch_id, "status": "sent_for_reprocessing"},
+            {"batch_id": batch_id, "status": SENT_REPROCESSING_STATUS},
             {
                 "$set":
                     {
                         "finish_date": datetime.now(),
-                        "status": "republish_finished",
+                        "status": FINISHED_REPROCESS_STATUS,
                     }
             }
         )
@@ -162,7 +169,7 @@ def publish_and_log(dbcon, _id, log, close_plugin_name=None, batch_id=None):
             "$set":
                 {
                     "finish_date": datetime.now(),
-                    "status": "finished_ok",
+                    "status": FINISHED_OK_STATUS,
                     "progress": 100,
                     "log": os.linesep.join(log_lines)
                 }
@@ -183,7 +190,7 @@ def fail_batch(_id, batches_in_progress, dbcon):
         {"$set":
             {
                 "finish_date": datetime.now(),
-                "status": "error",
+                "status": ERROR_STATUS,
                 "log": msg
 
             }}

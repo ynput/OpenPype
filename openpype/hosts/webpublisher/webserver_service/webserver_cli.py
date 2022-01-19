@@ -20,6 +20,11 @@ from .webpublish_routes import (
     TaskPublishEndpoint,
     UserReportEndpoint
 )
+from openpype.lib.remote_publish import (
+    ERROR_STATUS,
+    REPROCESS_STATUS,
+    SENT_REPROCESSING_STATUS
+)
 
 
 log = PypeLogger().get_logger("webserver_gui")
@@ -125,7 +130,7 @@ def reprocess_failed(upload_dir, webserver_url):
     database_name = os.environ["OPENPYPE_DATABASE_NAME"]
     dbcon = mongo_client[database_name]["webpublishes"]
 
-    results = dbcon.find({"status": "reprocess"})
+    results = dbcon.find({"status": REPROCESS_STATUS})
     reprocessed_batches = set()
     for batch in results:
         if batch["batch_id"] in reprocessed_batches:
@@ -143,7 +148,7 @@ def reprocess_failed(upload_dir, webserver_url):
                 {"$set":
                     {
                         "finish_date": datetime.now(),
-                        "status": "error",
+                        "status": ERROR_STATUS,
                         "progress": 100,
                         "log": batch.get("log") + msg
                     }}
@@ -157,12 +162,12 @@ def reprocess_failed(upload_dir, webserver_url):
         dbcon.update_many(
             {
                 "batch_id": batch["batch_id"],
-                "status": {"$in": ["error", "reprocess"]}
+                "status": {"$in": [ERROR_STATUS, REPROCESS_STATUS]}
             },
             {
                 "$set": {
                     "finish_date": datetime.now(),
-                    "status": "sent_for_reprocessing",
+                    "status": SENT_REPROCESSING_STATUS,
                     "progress": 100
                 }
             }
