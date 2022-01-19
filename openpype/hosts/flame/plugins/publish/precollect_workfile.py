@@ -1,5 +1,6 @@
 import pyblish.api
 import avalon.api as avalon
+import openpype.lib as oplib
 import openpype.hosts.flame.api as opfapi
 from openpype.hosts.flame.otio import flame_export
 
@@ -8,22 +9,35 @@ class PrecollecTimelineOCIO(pyblish.api.ContextPlugin):
     """Inject the current working context into publish context"""
 
     label = "Precollect Timeline OTIO"
-    order = pyblish.api.CollectorOrder - 0.5
+    order = pyblish.api.CollectorOrder - 0.48
 
     def process(self, context):
-        asset = avalon.Session["AVALON_ASSET"]
-        subset = "otioTimeline"
+        # plugin defined
+        family = "workfile"
+        variant = "otioTimeline"
+
+        # main
+        asset_doc = context.data["assetEntity"]
+        task_name = avalon.Session["AVALON_TASK"]
         project = opfapi.get_current_project()
         sequence = opfapi.get_current_sequence(opfapi.CTX.selection)
+
+        # create subset name
+        subset_name = oplib.get_subset_name_with_asset_doc(
+            family,
+            variant,
+            task_name,
+            asset_doc,
+        )
 
         # adding otio timeline to context
         with opfapi.maintained_segment_selection(sequence):
             otio_timeline = flame_export.create_otio_timeline(sequence)
 
         instance_data = {
-            "name": "{}_{}".format(asset, subset),
-            "asset": asset,
-            "subset": "{}{}".format(asset, subset.capitalize()),
+            "name": subset_name,
+            "asset": asset_doc["name"],
+            "subset": subset_name,
             "family": "workfile"
         }
 

@@ -10,7 +10,7 @@ from pprint import pformat
 class PrecollectInstances(pyblish.api.ContextPlugin):
     """Collect all Track items selection."""
 
-    order = pyblish.api.CollectorOrder - 0.49
+    order = pyblish.api.CollectorOrder - 0.47
     label = "Precollect Instances"
     hosts = ["flame"]
 
@@ -57,16 +57,10 @@ class PrecollectInstances(pyblish.api.ContextPlugin):
                 marker_data["handleEnd"] = min(
                     marker_data["handleEnd"], tail)
 
-                # add audio to families
-                with_audio = False
-                if marker_data.pop("audio"):
-                    with_audio = True
+                with_audio = bool(marker_data.pop("audio"))
 
-                # add tag data to instance data
-                data = {
-                    k: v for k, v in marker_data.items()
-                    if k not in ("id", "applieswhole", "label")
-                }
+                # add marker data to instance data
+                inst_data = dict(marker_data.items())
 
                 asset = marker_data["asset"]
                 subset = marker_data["subset"]
@@ -83,7 +77,7 @@ class PrecollectInstances(pyblish.api.ContextPlugin):
                 label += " {}".format(subset)
                 label += " {}".format("[" + ", ".join(families) + "]")
 
-                data.update({
+                inst_data.update({
                     "name": "{}_{}".format(asset, subset),
                     "label": label,
                     "asset": asset,
@@ -96,17 +90,19 @@ class PrecollectInstances(pyblish.api.ContextPlugin):
                     "path": file_path
                 })
 
-                # otio clip data
+                # get otio clip data
                 otio_data = self._get_otio_clip_instance_data(clip_data) or {}
                 self.log.debug("__ otio_data: {}".format(pformat(otio_data)))
-                data.update(otio_data)
-                self.log.debug("__ data: {}".format(pformat(data)))
+
+                # add to instance data
+                inst_data.update(otio_data)
+                self.log.debug("__ inst_data: {}".format(pformat(inst_data)))
 
                 # add resolution
-                self._get_resolution_to_data(data, context)
+                self._get_resolution_to_data(inst_data, context)
 
                 # create instance
-                instance = context.create_instance(**data)
+                instance = context.create_instance(**inst_data)
 
                 # add colorspace data
                 instance.data.update({
@@ -116,7 +112,7 @@ class PrecollectInstances(pyblish.api.ContextPlugin):
                 })
 
                 # create shot instance for shot attributes create/update
-                self._create_shot_instance(context, clip_name, **data)
+                self._create_shot_instance(context, clip_name, **inst_data)
 
                 self.log.info("Creating instance: {}".format(instance))
                 self.log.info(
