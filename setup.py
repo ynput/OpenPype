@@ -4,14 +4,65 @@ import os
 import sys
 import re
 import platform
+import distutils.spawn
 from pathlib import Path
 
 from cx_Freeze import setup, Executable
 from sphinx.setup_command import BuildDoc
 
-version = {}
-
 openpype_root = Path(os.path.dirname(__file__))
+
+
+def validate_thirdparty_binaries():
+    """Check existence of thirdpart executables."""
+    low_platform = platform.system().lower()
+    binary_vendors_dir = os.path.join(
+        openpype_root,
+        "vendor",
+        "bin"
+    )
+
+    error_msg = (
+        "Missing binary dependency {}. Please fetch thirdparty dependencies."
+    )
+    # Validate existence of FFmpeg
+    ffmpeg_dir = os.path.join(binary_vendors_dir, "ffmpeg", low_platform)
+    if low_platform == "windows":
+        ffmpeg_dir = os.path.join(ffmpeg_dir, "bin")
+    ffmpeg_executable = os.path.join(ffmpeg_dir, "ffmpeg")
+    ffmpeg_result = distutils.spawn.find_executable(ffmpeg_executable)
+    if ffmpeg_result is None:
+        raise RuntimeError(error_msg.format("FFmpeg"))
+
+    # Validate existence of OpenImageIO (not on MacOs)
+    oiio_tool_path = None
+    if low_platform == "linux":
+        oiio_tool_path = os.path.join(
+            binary_vendors_dir,
+            "oiio",
+            low_platform,
+            "bin",
+            "oiiotool"
+        )
+    elif low_platform == "windows":
+        oiio_tool_path = os.path.join(
+            binary_vendors_dir,
+            "oiio",
+            low_platform,
+            "oiiotool"
+        )
+    oiio_result = None
+    if oiio_tool_path is not None:
+        oiio_result = distutils.spawn.find_executable(oiio_tool_path)
+        if oiio_result is None:
+            raise RuntimeError(error_msg.format("OpenImageIO"))
+
+
+# Give ability to skip vaidation
+if not os.getenv("SKIP_THIRD_PARTY_VALIDATION"):
+    validate_thirdparty_binaries()
+
+version = {}
 
 with open(openpype_root / "openpype" / "version.py") as fp:
     exec(fp.read(), version)
