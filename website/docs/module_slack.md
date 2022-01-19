@@ -76,7 +76,7 @@ Burnin version (usually .mp4) is preferred if present.
 
 Please be sure that this configuration is viable for your use case. In case of uploading large reviews to Slack, 
 all publishes will be slowed down and you might hit a file limit on Slack pretty soon (it is 5GB for Free version of Slack, any file cannot be bigger than 1GB).
-You might try to add `{review_link}` to message content. This link might help users to find review easier on their machines.
+You might try to add `{review_filepath}` to message content. This link might help users to find review easier on their machines.
 (It won't show a playable preview though!)
 
 #### Message
