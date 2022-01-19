@@ -7,11 +7,11 @@ from openpype.hosts.flame.otio import flame_export
 from pprint import pformat
 
 
-class PrecollectInstances(pyblish.api.ContextPlugin):
-    """Collect all Track items selection."""
+class CollectTimelineInstances(pyblish.api.ContextPlugin):
+    """Collect all Timeline segment selection."""
 
-    order = pyblish.api.CollectorOrder - 0.47
-    label = "Precollect Instances"
+    order = pyblish.api.CollectorOrder - 0.09
+    label = "Collect timeline Instances"
     hosts = ["flame"]
 
     audio_track_items = []
