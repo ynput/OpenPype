@@ -24,4 +24,3 @@ class CleanNodesUp(pyblish.api.InstancePlugin):
         self.log.info("Removing {} nodes".format(len(nodes_to_clean)))
         for node in nodes_to_clean:
             cmds.remove(node)
-            

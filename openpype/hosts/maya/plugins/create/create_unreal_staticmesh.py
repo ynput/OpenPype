@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 """Creator for Unreal Static Meshes."""
 from openpype.hosts.maya.api import plugin, lib
-from avalon.api import CreatorError, Session
+from avalon.api import Session
 from openpype.api import get_project_settings
 from maya import cmds  # noqa
 
@@ -38,5 +38,8 @@ class CreateUnrealStaticMesh(plugin.Creator):
             geometry = cmds.sets(name="geometry_SET", empty=True)
             collisions = cmds.sets(name="collisions_SET", empty=True)
             cmds.sets([geometry, collisions], forceElement=instance)
-            # todo: Iterate over collision prefixes and add them to correct
-            #       sets. Put rest to the geometry set.
+            for node in content:
+                if [n for n in self.collision_prefixes if node.startswith(n)]:
+                    cmds.sets(node, forceElement=collisions)
+                else:
+                    cmds.sets(node, forceElement=geometry)
