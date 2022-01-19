@@ -25,6 +25,9 @@ from .pipeline import (
     parse_container,
     update_container,
 )
+from .lib import (
+    maintained_selection
+)
 
 
 __all__ = (
@@ -49,4 +52,6 @@ __all__ = (
     "containerise",
     "parse_container",
     "update_container",
+
+    "maintained_selection",
 )
