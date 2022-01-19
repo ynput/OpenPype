@@ -314,7 +314,7 @@ class PypeCommands:
         dbcon = get_webpublish_conn()
         _id = start_webpublish_log(dbcon, batch_id, user_email)
 
-        publish_and_log(dbcon, _id, log)
+        publish_and_log(dbcon, _id, log, batch_id=batch_id)
 
         log.info("Publish finished.")
 

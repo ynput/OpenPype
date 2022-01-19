@@ -26,7 +26,7 @@ def headless_publish(log, close_plugin_name=None, is_test=False):
                         "batch will be unfinished!")
             return
 
-        publish_and_log(dbcon, _id, log, close_plugin_name)
+        publish_and_log(dbcon, _id, log, close_plugin_name=close_plugin_name)
     else:
         publish(log, close_plugin_name)
 
@@ -84,13 +84,14 @@ def publish(log, close_plugin_name=None):
             sys.exit(1)
 
 
-def publish_and_log(dbcon, _id, log, close_plugin_name=None):
+def publish_and_log(dbcon, _id, log, close_plugin_name=None, batch_id=None):
     """Loops through all plugins, logs ok and fails into OP DB.
 
         Args:
             dbcon (OpenPypeMongoConnection)
-            _id (str)
+            _id (str) - id of current job in DB
             log (OpenPypeLogger)
+            batch_id (str) - id sent from frontend
             close_plugin_name (str): name of plugin with responsibility to
                 close host app
     """
@@ -143,15 +144,29 @@ def publish_and_log(dbcon, _id, log, close_plugin_name=None):
             )
 
     # final update
+    if batch_id:
+        dbcon.update_many(
+            {"batch_id": batch_id, "status": "sent_for_reprocessing"},
+            {
+                "$set":
+                    {
+                        "finish_date": datetime.now(),
+                        "status": "republish_finished",
+                    }
+            }
+        )
+
     dbcon.update_one(
         {"_id": _id},
-        {"$set":
-            {
-                "finish_date": datetime.now(),
-                "status": "finished_ok",
-                "progress": 100,
-                "log": os.linesep.join(log_lines)
-            }}
+        {
+            "$set":
+                {
+                    "finish_date": datetime.now(),
+                    "status": "finished_ok",
+                    "progress": 100,
+                    "log": os.linesep.join(log_lines)
+                }
+        }
     )
 
 
