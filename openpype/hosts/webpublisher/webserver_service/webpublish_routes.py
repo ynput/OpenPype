@@ -303,11 +303,10 @@ class BatchStatusEndpoint(_RestApiEndpoint):
 
         if output:
             status = 200
-            body = self.resource.encode(output)
         else:
-            output = [{"msg": "Batch id {} not found".format(batch_id)}]
+            output = {"msg": "Batch id {} not found".format(batch_id)}
             status = 404
-
+        body = self.resource.encode(output)
         return Response(
             status=status,
             body=body,
@@ -322,10 +321,10 @@ class PublishesStatusEndpoint(_RestApiEndpoint):
 
         if output:
             status = 200
-            body = self.resource.encode(output)
         else:
-            body = [{"msg": "User {} not found".format(user)}]
+            output = {"msg": "User {} not found".format(user)}
             status = 404
+        body = self.resource.encode(output)
 
         return Response(
             status=status,
