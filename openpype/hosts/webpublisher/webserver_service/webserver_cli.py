@@ -140,7 +140,7 @@ def reprocess_failed(upload_dir, webserver_url):
                     {
                         "finish_date": datetime.now(),
                         "status": "error",
-                        "progress": 1,
+                        "progress": 100,
                         "log": batch.get("log") + msg
                     }}
             )
@@ -162,6 +162,6 @@ def reprocess_failed(upload_dir, webserver_url):
                 {
                     "finish_date": datetime.now(),
                     "status": "sent_for_reprocessing",
-                    "progress": 1
+                    "progress": 100
                 }}
         )
