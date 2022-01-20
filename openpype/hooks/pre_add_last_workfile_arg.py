@@ -6,6 +6,8 @@ class AddLastWorkfileToLaunchArgs(PreLaunchHook):
     """Add last workfile path to launch arguments.
 
     This is not possible to do for all applications the same way.
+    Checks 'start_last_workfile', if set to False, it will not open last
+    wokfile. This property is set explicitly in Launcher.
     """
 
     # Execute after workfile template copy
@@ -23,7 +25,7 @@ class AddLastWorkfileToLaunchArgs(PreLaunchHook):
     ]
 
     def execute(self):
-        if not self.data.get("start_last_workfile"):
+        if not self.data.get("start_last_workfile", True):
             self.log.info("It is set to not start last workfile on start.")
             return
 
