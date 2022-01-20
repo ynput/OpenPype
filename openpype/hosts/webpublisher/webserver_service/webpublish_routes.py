@@ -308,7 +308,9 @@ class BatchStatusEndpoint(_RestApiEndpoint):
         if output:
             status = 200
         else:
-            output = {"msg": "Batch id {} not found".format(batch_id)}
+            output = {"msg": "Batch id {} not found".format(batch_id),
+                      "status": "queued",
+                      "progress": 0}
             status = 404
         body = self.resource.encode(output)
         return Response(
