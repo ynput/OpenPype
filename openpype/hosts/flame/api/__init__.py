@@ -23,7 +23,11 @@ from .lib import (
     get_sequence_segments,
     maintained_segment_selection,
     reset_segment_selection,
-    get_segment_attributes
+    get_segment_attributes,
+    get_clips_in_reels,
+    get_reformated_path,
+    get_frame_from_path,
+    get_padding_from_path
 )
 from .utils import (
     setup
@@ -80,6 +84,10 @@ __all__ = [
     "maintained_segment_selection",
     "reset_segment_selection",
     "get_segment_attributes",
+    "get_clips_in_reels",
+    "get_reformated_path",
+    "get_frame_from_path",
+    "get_padding_from_path",
 
     # pipeline
     "install",

@@ -16,6 +16,7 @@ from openpype.api import Logger
 
 log = Logger.get_logger(__name__)
 
+FRAME_PATTERN = re.compile(r"[\._](\d+)[\.]")
 
 class CTX:
     # singleton used for passing data between api modules
@@ -445,6 +446,8 @@ def get_sequence_segments(sequence, selected=False):
             for segment in track.segments:
                 if segment.name.get_value() == "":
                     continue
+                if segment.hidden.get_value() is True:
+                    continue
                 if (
                     selected is True
                     and segment.selected.get_value() is not True
@@ -519,7 +522,7 @@ def _get_shot_tokens_values(clip, tokens):
 
 
 def get_segment_attributes(segment):
-    if str(segment.name)[1:-1] == "":
+    if segment.name.get_value() == "":
         return None
 
     # Add timeline segment to tree
@@ -531,6 +534,12 @@ def get_segment_attributes(segment):
         "fpath": segment.file_path,
         "PySegment": segment
     }
+
+    # head and tail with forward compatibility
+    if segment.head:
+        clip_data["segment_head"] = int(segment.head)
+    if segment.tail:
+        clip_data["segment_tail"] = int(segment.tail)
 
     # add all available shot tokens
     shot_tokens = _get_shot_tokens_values(segment, [
@@ -551,7 +560,7 @@ def get_segment_attributes(segment):
         attr = getattr(segment, attr_name)
         segment_attrs_data[attr] = str(attr).replace("+", ":")
 
-        if attr in ["record_in", "record_out"]:
+        if attr_name in ["record_in", "record_out"]:
             clip_data[attr_name] = attr.relative_frame
         else:
             clip_data[attr_name] = attr.frame
@@ -559,3 +568,105 @@ def get_segment_attributes(segment):
     clip_data["segment_timecodes"] = segment_attrs_data
 
     return clip_data
+
+
+def get_clips_in_reels(project):
+    output_clips = []
+    project_desktop = project.current_workspace.desktop
+
+    for reel_group in project_desktop.reel_groups:
+        for reel in reel_group.reels:
+            for clip in reel.clips:
+                clip_data = {
+                    "PyClip": clip,
+                    "fps": float(str(clip.frame_rate)[:-4])
+                }
+
+                attrs = [
+                    "name", "width", "height",
+                    "ratio", "sample_rate", "bit_depth"
+                ]
+
+                for attr in attrs:
+                    val = getattr(clip, attr)
+                    clip_data[attr] = val
+
+                version = clip.versions[-1]
+                track = version.tracks[-1]
+                for segment in track.segments:
+                    segment_data = get_segment_attributes(segment)
+                    clip_data.update(segment_data)
+
+                output_clips.append(clip_data)
+
+    return output_clips
+
+
+def get_reformated_path(filename, padded=True):
+    """
+    Return fixed python expression path
+
+    Args:
+        filename (str): file name
+
+    Returns:
+        type: string with reformated path
+
+    Example:
+        get_reformated_path("plate.1001.exr") > plate.%04d.exr
+
+    """
+    found = FRAME_PATTERN.search(filename)
+
+    if not found:
+        log.info("File name is not sequence: {}".format(filename))
+        return filename
+
+    padding = get_padding_from_path(filename)
+
+    replacement = "%0{}d".format(padding) if padded else "%d"
+    start_idx, end_idx = found.span(1)
+
+    return replacement.join(
+        [filename[:start_idx], filename[end_idx:]]
+    )
+
+
+def get_padding_from_path(filename):
+    """
+    Return padding number from Flame path style
+
+    Args:
+        filename (str): file name
+
+    Returns:
+        int: padding number
+
+    Example:
+        get_padding_from_path("plate.0001.exr") > 4
+
+    """
+    found = get_frame_from_path(filename)
+
+    return len(found) if found else None
+
+
+def get_frame_from_path(filename):
+    """
+    Return sequence number from Flame path style
+
+    Args:
+        filename (str): file name
+
+    Returns:
+        int: sequence frame number
+
+    Example:
+        def get_frame_from_path(path):
+            ("plate.0001.exr") > 0001
+
+    """
+
+    found = re.findall(FRAME_PATTERN, filename)
+
+    return found.pop() if found else None

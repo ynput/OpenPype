@@ -1,4 +1,5 @@
 import re
+import os
 import opentimelineio as otio
 import logging
 log = logging.getLogger(__name__)
@@ -33,19 +34,21 @@ def get_reformated_path(path, padded=True):
         get_reformated_path("plate.1001.exr") > plate.%04d.exr
 
     """
-    padding = get_padding_from_path(path)
-    found = get_frame_from_path(path)
+    basename = os.path.basename(path)
+    dirpath = os.path.dirname(path)
+    padding = get_padding_from_path(basename)
+    found = get_frame_from_path(basename)
 
     if not found:
         log.info("Path is not sequence: {}".format(path))
         return path
 
     if padded:
-        path = path.replace(found, "%0{}d".format(padding))
+        basename = basename.replace(found, "%0{}d".format(padding))
     else:
-        path = path.replace(found, "%d")
+        basename = basename.replace(found, "%d")
 
-    return path
+    return os.path.join(dirpath, basename)
 
 
 def get_padding_from_path(path):
