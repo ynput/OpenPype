@@ -1,12 +1,13 @@
 import os
 import json
 import copy
-import logging
 import collections
 import datetime
 from abc import ABCMeta, abstractmethod
 import six
-import openpype
+
+import openpype.version
+
 from .constants import (
     GLOBAL_SETTINGS_KEY,
     SYSTEM_SETTINGS_KEY,
@@ -15,9 +16,6 @@ from .constants import (
     LOCAL_SETTING_KEY,
     M_OVERRIDEN_KEY
 )
-from .lib import load_json_file
-
-JSON_EXC = getattr(json.decoder, "JSONDecodeError", ValueError)
 
 
 @six.add_metaclass(ABCMeta)
@@ -313,6 +311,7 @@ class MongoSettingsHandler(SettingsHandler):
         "production_version",
         "staging_version"
     )
+    key_suffix = "_versioned"
 
     def __init__(self):
         # Get mongo connection
@@ -325,6 +324,11 @@ class MongoSettingsHandler(SettingsHandler):
         self._attribute_keys = None
         # TODO prepare version of pype
         # - pype version should define how are settings saved and loaded
+
+        self._system_settings_key = SYSTEM_SETTINGS_KEY + self.key_suffix
+        self._project_settings_key = PROJECT_SETTINGS_KEY + self.key_suffix
+        self._project_anatomy_key = PROJECT_ANATOMY_KEY + self.key_suffix
+        self._current_version = openpype.version.__version__
 
         database_name = os.environ["OPENPYPE_DATABASE_NAME"]
         # TODO modify to not use hardcoded keys
@@ -496,11 +500,13 @@ class MongoSettingsHandler(SettingsHandler):
         # Store system settings
         self.collection.replace_one(
             {
-                "type": SYSTEM_SETTINGS_KEY
+                "type": self._system_settings_key,
+                "version": self._current_version
             },
             {
-                "type": SYSTEM_SETTINGS_KEY,
-                "data": system_settings_data
+                "type": self._system_settings_key,
+                "data": system_settings_data,
+                "version": self._current_version
             },
             upsert=True
         )
@@ -537,7 +543,7 @@ class MongoSettingsHandler(SettingsHandler):
         data_cache.update_data(overrides)
 
         self._save_project_data(
-            project_name, PROJECT_SETTINGS_KEY, data_cache
+            project_name, self._project_settings_key, data_cache
         )
 
     def save_project_anatomy(self, project_name, anatomy_data):
@@ -556,7 +562,7 @@ class MongoSettingsHandler(SettingsHandler):
 
         else:
             self._save_project_data(
-                project_name, PROJECT_ANATOMY_KEY, data_cache
+                project_name, self._project_anatomy_key, data_cache
             )
 
     @classmethod
@@ -643,12 +649,14 @@ class MongoSettingsHandler(SettingsHandler):
         is_default = bool(project_name is None)
         replace_filter = {
             "type": doc_type,
-            "is_default": is_default
+            "is_default": is_default,
+            "version": self._current_version
         }
         replace_data = {
             "type": doc_type,
             "data": data_cache.data,
-            "is_default": is_default
+            "is_default": is_default,
+            "version": self._current_version
         }
         if not is_default:
             replace_filter["project_name"] = project_name
@@ -660,24 +668,129 @@ class MongoSettingsHandler(SettingsHandler):
             upsert=True
         )
 
+    def _get_objected_version(self, version_str):
+        from openpype.lib.openpype_version import get_OpenPypeVersion
+
+        OpenPypeVersion = get_OpenPypeVersion()
+        if OpenPypeVersion is None:
+            return None
+        return OpenPypeVersion(version=version_str)
+
+    def _find_closest_settings(self, key, legacy_key, additional_filters=None):
+        doc_filters = {
+            "type": {"$in": [key, legacy_key]}
+        }
+        if additional_filters:
+            doc_filters.update(additional_filters)
+
+        other_versions = self.collection.find(
+            doc_filters,
+            {
+                "_id": True,
+                "version": True,
+                "type": True
+            }
+        )
+        legacy_settings_doc = None
+        versioned_settings = []
+        for doc in other_versions:
+            if doc["type"] == legacy_key:
+                legacy_settings_doc = doc
+            else:
+                versioned_settings.append(doc)
+
+        current_version = None
+        if versioned_settings:
+            current_version = self._get_objected_version(self._current_version)
+
+        closest_version_doc = legacy_settings_doc
+        if current_version is not None:
+            closest_version = None
+            for version_doc in versioned_settings:
+                version = self._get_objected_version(version_doc["version"])
+                if version > current_version:
+                    continue
+                if closest_version is None or closest_version < version:
+                    closest_version = version
+                    closest_version_doc = version_doc
+
+        if not closest_version_doc:
+            return None
+
+        return self.collection.find_one({"_id": closest_version_doc["_id"]})
+
+    def _find_closest_system_settings(self):
+        return self._find_closest_settings(
+            self._system_settings_key,
+            SYSTEM_SETTINGS_KEY
+        )
+
+    def _find_closest_project_settings(self, project_name):
+        if project_name is None:
+            additional_filters = {"is_default": True}
+        else:
+            additional_filters = {"project_name": project_name}
+
+        return self._find_closest_settings(
+            self._project_settings_key,
+            PROJECT_SETTINGS_KEY,
+            additional_filters
+        )
+
+    def _find_closest_project_anatomy(self):
+        additional_filters = {"is_default": True}
+        return self._find_closest_settings(
+            self._project_anatomy_key,
+            PROJECT_ANATOMY_KEY,
+            additional_filters
+        )
+
+    def _get_studio_system_settings_overrides_for_version(self, version=None):
+        if version is None:
+            version = self._current_version
+
+        return self.collection.find_one({
+            "type": self._system_settings_key,
+            "version": version
+        })
+
+    def _get_project_settings_overrides_for_version(
+        self, project_name, version=None
+    ):
+        if version is None:
+            version = self._current_version
+
+        document_filter = {
+            "type": self._project_settings_key,
+            "version": version
+        }
+        if project_name is None:
+            document_filter["is_default"] = True
+        else:
+            document_filter["project_name"] = project_name
+        return self.collection.find_one(document_filter)
+
+    def _get_project_anatomy_overrides_for_version(self, version=None):
+        if version is None:
+            version = self._current_version
+
+        return self.collection.find_one({
+            "type": self._project_settings_key,
+            "is_default": True,
+            "version": version
+        })
+
     def get_studio_system_settings_overrides(self):
         """Studio overrides of system settings."""
         if self.system_settings_cache.is_outdated:
-            system_settings_document = None
-            globals_document = None
-            docs = self.collection.find({
-                # Use `$or` as system settings may have more filters in future
-                "$or": [
-                    {"type": GLOBAL_SETTINGS_KEY},
-                    {"type": SYSTEM_SETTINGS_KEY},
-                ]
+            globals_document = self.collection.find_one({
+                "type": GLOBAL_SETTINGS_KEY
             })
-            for doc in docs:
-                doc_type = doc["type"]
-                if doc_type == GLOBAL_SETTINGS_KEY:
-                    globals_document = doc
-                elif doc_type == SYSTEM_SETTINGS_KEY:
-                    system_settings_document = doc
+            system_settings_document = (
+                self._get_studio_system_settings_overrides_for_version()
+            )
+            if system_settings_document is None:
+                system_settings_document = self._find_closest_system_settings()
 
             merged_document = self._apply_global_settings(
                 system_settings_document, globals_document
@@ -688,14 +801,11 @@ class MongoSettingsHandler(SettingsHandler):
 
     def _get_project_settings_overrides(self, project_name):
         if self.project_settings_cache[project_name].is_outdated:
-            document_filter = {
-                "type": PROJECT_SETTINGS_KEY,
-            }
-            if project_name is None:
-                document_filter["is_default"] = True
-            else:
-                document_filter["project_name"] = project_name
-            document = self.collection.find_one(document_filter)
+            document = self._get_project_settings_overrides_for_version(
+                project_name
+            )
+            if document is None:
+                document = self._find_closest_project_settings(project_name)
             self.project_settings_cache[project_name].update_from_document(
                 document
             )
@@ -761,11 +871,9 @@ class MongoSettingsHandler(SettingsHandler):
     def _get_project_anatomy_overrides(self, project_name):
         if self.project_anatomy_cache[project_name].is_outdated:
             if project_name is None:
-                document_filter = {
-                    "type": PROJECT_ANATOMY_KEY,
-                    "is_default": True
-                }
-                document = self.collection.find_one(document_filter)
+                document = self._get_project_anatomy_overrides_for_version()
+                if document is None:
+                    document = self._find_closest_project_anatomy()
                 self.project_anatomy_cache[project_name].update_from_document(
                     document
                 )
@@ -794,6 +902,81 @@ class MongoSettingsHandler(SettingsHandler):
         if not project_name:
             return {}
         return self._get_project_anatomy_overrides(project_name)
+
+    # Implementations of abstract methods to get overrides for version
+    def get_studio_system_settings_overrides_for_version(self, version):
+        return self._get_studio_system_settings_overrides_for_version(version)
+
+    def get_studio_project_anatomy_overrides_for_version(self, version):
+        return self._get_project_anatomy_overrides_for_version(version)
+
+    def get_studio_project_settings_overrides_for_version(self, version):
+        return self._get_project_settings_overrides_for_version(None, version)
+
+    def get_project_settings_overrides_for_version(
+        self, project_name, version
+    ):
+        return self._get_project_settings_overrides_for_version(
+            project_name, version
+        )
+
+    # Implementations of abstract methods to clear overrides for version
+    def clear_studio_system_settings_overrides_for_version(self, version):
+        self.collection.delete_one({
+            "type": self._system_settings_key,
+            "version": version
+        })
+
+    def clear_studio_project_settings_overrides_for_version(self, version):
+        self.collection.delete_one({
+            "type": self._project_settings_key,
+            "version": version,
+            "is_default": True
+        })
+
+    def clear_studio_project_anatomy_overrides_for_version(self, version):
+        self.collection.delete_one({
+            "type": self._project_anatomy_key,
+            "version": version
+        })
+
+    def clear_project_settings_overrides_for_version(
+        self, version, project_name
+    ):
+        self.collection.delete_one({
+            "type": self._project_settings_key,
+            "version": version,
+            "project_name": project_name
+        })
+
+    # Get available versions for settings type
+    def get_available_studio_system_settings_overrides_versions(self):
+        docs = self.collection.find(
+            {"type": self._system_settings_key},
+            {"version": True}
+        )
+        return {doc["version"] for doc in docs}
+
+    def get_available_studio_project_anatomy_overrides_versions(self):
+        docs = self.collection.find(
+            {"type": self._project_anatomy_key},
+            {"version": True}
+        )
+        return {doc["version"] for doc in docs}
+
+    def get_available_studio_project_settings_overrides_versions(self):
+        docs = self.collection.find(
+            {"type": self._project_settings_key, "is_default": True},
+            {"version": True}
+        )
+        return {doc["version"] for doc in docs}
+
+    def get_available_project_settings_overrides_versions(self, project_name):
+        docs = self.collection.find(
+            {"type": self._project_settings_key, "project_name": project_name},
+            {"version": True}
+        )
+        return {doc["version"] for doc in docs}
 
 
 class MongoLocalSettingsHandler(LocalSettingsHandler):
