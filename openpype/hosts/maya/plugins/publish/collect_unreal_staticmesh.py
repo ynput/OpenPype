@@ -19,7 +19,7 @@ class CollectUnrealStaticMesh(pyblish.api.InstancePlugin):
         # add fbx family to trigger fbx extractor
         instance.data["families"].append("fbx")
         # take the name from instance (without the `S_` prefix)
-        instance.data["staticMeshCombinedName"] = instance.name[1:]
+        instance.data["staticMeshCombinedName"] = instance.name[2:]
 
         geometry_set = [i for i in instance if i == "geometry_SET"]
         instance.data["membersToCombine"] = cmds.sets(

@@ -18,9 +18,14 @@ class CleanNodesUp(pyblish.api.InstancePlugin):
 
     def process(self, instance):
         if not instance.data.get("cleanNodes"):
-            self.log.info("nothing to clean")
+            self.log.info("Nothing to clean.")
+            return
 
-        nodes_to_clean = instance.data.pop("cleanNodes")
+        nodes_to_clean = instance.data.pop("cleanNodes", [])
         self.log.info("Removing {} nodes".format(len(nodes_to_clean)))
         for node in nodes_to_clean:
-            cmds.remove(node)
+            try:
+                cmds.delete(node)
+            except ValueError:
+                # object might be already deleted, don't complain about it
+                pass

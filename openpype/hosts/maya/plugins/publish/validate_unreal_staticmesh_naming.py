@@ -4,6 +4,8 @@ from maya import cmds  # noqa
 import pyblish.api
 import openpype.api
 import openpype.hosts.maya.api.action
+from avalon.api import Session
+from openpype.api import get_project_settings
 import re
 
 
@@ -15,14 +17,14 @@ class ValidateUnrealStaticMeshName(pyblish.api.InstancePlugin):
     in Settings UI. This plugin also validates other types of
     meshes - collision meshes:
 
-    UBX_[RenderMeshName]_##:
+    UBX_[RenderMeshName]*:
                              Boxes are created with the Box objects type in
                              Max or with the Cube polygonal primitive in Maya.
                              You cannot move the vertices around or deform it
                              in any way to make it something other than a
                              rectangular prism, or else it will not work.
 
-    UCP_[RenderMeshName]_##:
+    UCP_[RenderMeshName]*:
                              Capsules are created with the Capsule object type.
                              The capsule does not need to have many segments
                              (8 is a good number) at all because it is
@@ -30,7 +32,7 @@ class ValidateUnrealStaticMeshName(pyblish.api.InstancePlugin):
                              boxes, you should not move the individual
                              vertices around.
 
-    USP_[RenderMeshName]_##:
+    USP_[RenderMeshName]*:
                              Spheres are created with the Sphere object type.
                              The sphere does not need to have many segments
                              (8 is a good number) at all because it is
@@ -38,7 +40,7 @@ class ValidateUnrealStaticMeshName(pyblish.api.InstancePlugin):
                              boxes, you should not move the individual
                              vertices around.
 
-    UCX_[RenderMeshName]_##:
+    UCX_[RenderMeshName]*:
                              Convex objects can be any completely closed
                              convex 3D shape. For example, a box can also be
                              a convex object
@@ -53,13 +55,22 @@ class ValidateUnrealStaticMeshName(pyblish.api.InstancePlugin):
     families = ["unrealStaticMesh"]
     label = "Unreal StaticMesh Name"
     actions = [openpype.hosts.maya.api.action.SelectInvalidAction]
-    regex_mesh = r"(?P<renderName>.*)_(\d{2})"
-    regex_collision = r"_(?P<renderName>.*)_(\d{2})"
+    regex_mesh = r"(?P<renderName>.*))"
+    regex_collision = r"(?P<renderName>.*)"
 
     @classmethod
     def get_invalid(cls, instance):
 
         invalid = []
+
+        project_settings = get_project_settings(Session["AVALON_PROJECT"])
+        collision_prefixes = (
+            project_settings
+            ["maya"]
+            ["create"]
+            ["CreateUnrealStaticMesh"]
+            ["collision_prefixes"]
+        )
 
         combined_geometry_name = instance.data.get(
             "staticMeshCombinedName", None)
@@ -81,10 +92,11 @@ class ValidateUnrealStaticMeshName(pyblish.api.InstancePlugin):
                 return False
 
             regex_collision = "{}{}".format(
-                "({})_".format(
-                    "|".join("(0}".format(p) for p in cls.collision_prefixes)
+                "(?P<prefix>({}))_".format(
+                    "|".join("{0}".format(p) for p in collision_prefixes)
                 ) or "", cls.regex_collision
             )
+
             cl_r = re.compile(regex_collision)
 
             for obj in collision_set:
@@ -92,20 +104,29 @@ class ValidateUnrealStaticMeshName(pyblish.api.InstancePlugin):
                 if not cl_m:
                     cls.log.error("{} is invalid".format(obj))
                     invalid.append(obj)
-                elif cl_m.group("renderName") != combined_geometry_name:
-                    cls.log.error(
-                        "Collision object name doesn't match"
-                        "static mesh name: {} != {}".format(
-                            cl_m.group("renderName"),
-                            combined_geometry_name)
+                else:
+                    expected_collision = "{}_{}".format(
+                        cl_m.group("prefix"),
+                        combined_geometry_name
                     )
-                    invalid.append(obj)
+
+                    if not obj.startswith(expected_collision):
+
+                        cls.log.error(
+                            "Collision object name doesn't match "
+                            "static mesh name"
+                        )
+                        cls.log.error("{}_{} != {}_{}".format(
+                            cl_m.group("prefix"),
+                            cl_m.group("renderName"),
+                            cl_m.group("prefix"),
+                            combined_geometry_name,
+                        ))
+                        invalid.append(obj)
 
         return invalid
 
     def process(self, instance):
-        # todo: load prefixes from creator settings.
-
         if not self.validate_mesh and not self.validate_collision:
             self.log.info("Validation of both mesh and collision names"
                           "is disabled.")
