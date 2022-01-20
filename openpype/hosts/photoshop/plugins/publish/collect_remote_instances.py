@@ -1,10 +1,11 @@
-import pyblish.api
 import os
 import re
 
-from avalon import photoshop
+import pyblish.api
+
 from openpype.lib import prepare_template_data
 from openpype.lib.plugin_tools import parse_json
+from openpype.hosts.photoshop import api as photoshop
 
 
 class CollectRemoteInstances(pyblish.api.ContextPlugin):

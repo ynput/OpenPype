@@ -734,6 +734,13 @@ QScrollBar::add-page:vertical, QScrollBar::sub-page:vertical {
     background: {color:bg-view-hover};
 }
 
+#DeleteButton {
+    background: {color:delete-btn-bg};
+}
+#DeleteButton:disabled {
+    background: {color:delete-btn-bg-disabled};
+}
+
 /* Launcher specific stylesheets */
 #IconView[mode="icon"] {
     /* font size can't be set on items */
@@ -1219,6 +1226,11 @@ QScrollBar::add-page:vertical, QScrollBar::sub-page:vertical {
     border: 1px solid #4e5254;
     border-radius: 5px;
     background: #21252B;
+}
+
+/* Tray */
+#TrayRestartButton {
+    background: {color:restart-btn-bg};
 }
 
 /* Globally used names */

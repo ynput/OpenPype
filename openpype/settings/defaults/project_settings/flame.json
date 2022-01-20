@@ -1,0 +1,20 @@
+{
+    "create": {
+        "CreateShotClip": {
+            "hierarchy": "{folder}/{sequence}",
+            "clipRename": true,
+            "clipName": "{track}{sequence}{shot}",
+            "countFrom": 10,
+            "countSteps": 10,
+            "folder": "shots",
+            "episode": "ep01",
+            "sequence": "sq01",
+            "track": "{_track_}",
+            "shot": "sh###",
+            "vSyncOn": false,
+            "workfileFrameStart": 1001,
+            "handleStart": 10,
+            "handleEnd": 10
+        }
+    }
+}

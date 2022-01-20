@@ -7,6 +7,11 @@ from avalon import api, io
 from openpype.hosts.nuke.api.lib import (
     get_imageio_input_colorspace
 )
+from openpype.hosts.nuke.api import (
+    containerise,
+    update_container,
+    viewer_update_and_undo_stop
+)
 
 
 class LoadImage(api.Loader):
@@ -46,10 +51,6 @@ class LoadImage(api.Loader):
         return cls.representations + cls._representations
 
     def load(self, context, name, namespace, options):
-        from avalon.nuke import (
-            containerise,
-            viewer_update_and_undo_stop
-        )
         self.log.info("__ options: `{}`".format(options))
         frame_number = options.get("frame_number", 1)
 
@@ -154,11 +155,6 @@ class LoadImage(api.Loader):
         inputs:
 
         """
-
-        from avalon.nuke import (
-            update_container
-        )
-
         node = nuke.toNode(container["objectName"])
         frame_number = node["first"].value()
 
@@ -234,9 +230,6 @@ class LoadImage(api.Loader):
         self.log.info("udated to version: {}".format(version.get("name")))
 
     def remove(self, container):
-
-        from avalon.nuke import viewer_update_and_undo_stop
-
         node = nuke.toNode(container['objectName'])
         assert node.Class() == "Read", "Must be Read"
 

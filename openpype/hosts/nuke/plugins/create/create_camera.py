@@ -1,9 +1,11 @@
-from avalon.nuke import lib as anlib
-from openpype.hosts.nuke.api import plugin
 import nuke
+from openpype.hosts.nuke.api import plugin
+from openpype.hosts.nuke.api.lib import (
+    set_avalon_knob_data
+)
 
 
-class CreateCamera(plugin.PypeCreator):
+class CreateCamera(plugin.OpenPypeCreator):
     """Add Publishable Backdrop"""
 
     name = "camera"
@@ -36,7 +38,7 @@ class CreateCamera(plugin.PypeCreator):
                     # change node color
                     n["tile_color"].setValue(int(self.node_color, 16))
                     # add avalon knobs
-                    anlib.set_avalon_knob_data(n, data)
+                    set_avalon_knob_data(n, data)
                 return True
             else:
                 msg = str("Please select nodes you "
@@ -49,5 +51,5 @@ class CreateCamera(plugin.PypeCreator):
             camera_node = nuke.createNode("Camera2")
             camera_node["tile_color"].setValue(int(self.node_color, 16))
             # add avalon knobs
-            instance = anlib.set_avalon_knob_data(camera_node, self.data)
+            instance = set_avalon_knob_data(camera_node, self.data)
             return instance
