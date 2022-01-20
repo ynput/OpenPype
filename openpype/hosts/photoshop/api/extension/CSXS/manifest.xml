@@ -1,0 +1,53 @@
+<?xml version='1.0' encoding='UTF-8'?>
+<ExtensionManifest ExtensionBundleId="com.openpype.PS.panel" ExtensionBundleVersion="1.0.11" Version="7.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">
+  <ExtensionList>
+    <Extension Id="com.openpype.PS.panel" Version="1.0.1" />
+  </ExtensionList>
+  <ExecutionEnvironment>
+    <HostList>
+      <Host Name="PHSP" Version="19" />
+      <Host Name="PHXS" Version="19" />
+    </HostList>
+    <LocaleList>
+      <Locale Code="All" />
+    </LocaleList>
+    <RequiredRuntimeList>
+      <RequiredRuntime Name="CSXS" Version="7.0" />
+    </RequiredRuntimeList>
+  </ExecutionEnvironment>
+  <DispatchInfoList>
+    <Extension Id="com.openpype.PS.panel">
+      <DispatchInfo>
+        <Resources>
+          <MainPath>./index.html</MainPath>
+          <CEFCommandLine />
+        </Resources>
+        <Lifecycle>
+		  <AutoVisible>true</AutoVisible>
+          <StartOn>
+            <!-- Photoshop dispatches this event on startup -->
+            <Event>applicationActivate</Event>
+            <Event>com.adobe.csxs.events.ApplicationInitialized</Event>
+          </StartOn>
+		</Lifecycle>
+        <UI>
+          <Type>Panel</Type>
+          <Menu>OpenPype</Menu>
+          <Geometry>
+            <Size>
+              <Width>300</Width>
+              <Height>140</Height>
+            </Size>
+            <MaxSize>
+              <Width>400</Width>
+              <Height>200</Height>
+            </MaxSize>
+          </Geometry>
+          <Icons>
+            <Icon Type="Normal">./icons/avalon-logo-48.png</Icon>
+          </Icons>
+        </UI>
+      </DispatchInfo>
+    </Extension>
+  </DispatchInfoList>
+</ExtensionManifest>
