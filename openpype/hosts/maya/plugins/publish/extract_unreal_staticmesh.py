@@ -3,7 +3,6 @@
 import openpype.api
 import pyblish.api
 from maya import cmds  # noqa
-from uuid import uuid4
 
 
 class ExtractUnrealStaticMesh(openpype.api.Extractor):
@@ -24,20 +23,11 @@ class ExtractUnrealStaticMesh(openpype.api.Extractor):
             *duplicates,
             n=static_mesh_name, ch=False)
 
-        collision_duplicates = cmds.duplicate(
-            instance.data.get("collisionMembers"), ic=True)
-        cmds.parent(collision_duplicates, a=True, w=True)
-        instance.data["collisionMembers"] = collision_duplicates
-
-        self.log.info(
-            "collision members: {}".format(instance.data["collisionMembers"]))
-
         if not instance.data.get("cleanNodes"):
             instance.data["cleanNodes"] = []
 
         instance.data["cleanNodes"].append(static_mesh_name)
         instance.data["cleanNodes"] += duplicates
-        instance.data["cleanNodes"] += collision_duplicates
 
         instance.data["setMembers"] = [static_mesh_name]
         instance.data["setMembers"] += instance.data["collisionMembers"]
