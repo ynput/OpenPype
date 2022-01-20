@@ -39,6 +39,11 @@
                                 "label": "Clip name template"
                             },
                             {
+                                "type": "boolean",
+                                "key": "segmentIndex",
+                                "label": "Accept segment order"
+                            },
+                            {
                                 "type": "number",
                                 "key": "countFrom",
                                 "label": "Count sequence from"
