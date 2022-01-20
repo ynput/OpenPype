@@ -53,7 +53,7 @@ def start_webpublish_log(dbcon, batch_id, user):
         "start_date": datetime.now(),
         "user": user,
         "status": "in_progress",
-        "progress": 0.0
+        "progress": 0  # integer 0-100, percentage
     }).inserted_id
 
 
@@ -103,10 +103,13 @@ def publish_and_log(dbcon, _id, log, close_plugin_name=None):
         _id = ObjectId(_id)
 
     log_lines = []
+    processed = 0
+    log_every = 5
     for result in pyblish.util.publish_iter():
         for record in result["records"]:
             log_lines.append("{}: {}".format(
                 result["plugin"].label, record.msg))
+        processed += 1
 
         if result["error"]:
             log.error(error_format.format(**result))
@@ -126,12 +129,14 @@ def publish_and_log(dbcon, _id, log, close_plugin_name=None):
                 context = pyblish.api.Context()
                 close_plugin().process(context)
             sys.exit(1)
-        else:
+        elif processed % log_every == 0:
+            # pyblish returns progress in 0.0 - 2.0
+            progress = min(round(result["progress"] / 2 * 100), 99)
             dbcon.update_one(
                 {"_id": _id},
                 {"$set":
                     {
-                        "progress": max(result["progress"], 0.95),
+                        "progress": progress,
                         "log": os.linesep.join(log_lines)
                     }}
             )
@@ -143,7 +148,7 @@ def publish_and_log(dbcon, _id, log, close_plugin_name=None):
             {
                 "finish_date": datetime.now(),
                 "status": "finished_ok",
-                "progress": 1,
+                "progress": 100,
                 "log": os.linesep.join(log_lines)
             }}
     )
