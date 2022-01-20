@@ -1,6 +1,6 @@
 import nuke
 import pyblish.api
-from avalon.nuke import maintained_selection
+from openpype.hosts.nuke.api.lib import maintained_selection
 
 
 class CreateOutputNode(pyblish.api.ContextPlugin):

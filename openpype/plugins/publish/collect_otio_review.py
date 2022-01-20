@@ -16,13 +16,13 @@ import pyblish.api
 from pprint import pformat
 
 
-class CollectOcioReview(pyblish.api.InstancePlugin):
+class CollectOtioReview(pyblish.api.InstancePlugin):
     """Get matching otio track from defined review layer"""
 
     label = "Collect OTIO Review"
-    order = pyblish.api.CollectorOrder - 0.47
+    order = pyblish.api.CollectorOrder - 0.078
     families = ["clip"]
-    hosts = ["resolve", "hiero"]
+    hosts = ["resolve", "hiero", "flame"]
 
     def process(self, instance):
         # get basic variables

@@ -1,7 +1,10 @@
 import nuke
 import pyblish.api
 from avalon import io, api
-from avalon.nuke import lib as anlib
+from openpype.hosts.nuke.api.lib import (
+    add_publish_knob,
+    get_avalon_knob_data
+)
 
 
 @pyblish.api.log
@@ -39,7 +42,7 @@ class PreCollectNukeInstances(pyblish.api.ContextPlugin):
                 self.log.warning(E)
 
             # get data from avalon knob
-            avalon_knob_data = anlib.get_avalon_knob_data(
+            avalon_knob_data = get_avalon_knob_data(
                 node, ["avalon:", "ak:"])
 
             self.log.debug("avalon_knob_data: {}".format(avalon_knob_data))
@@ -115,7 +118,7 @@ class PreCollectNukeInstances(pyblish.api.ContextPlugin):
 
             # get publish knob value
             if "publish" not in node.knobs():
-                anlib.add_publish_knob(node)
+                add_publish_knob(node)
 
             # sync workfile version
             _families_test = [family] + families

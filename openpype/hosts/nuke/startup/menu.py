@@ -1,14 +1,19 @@
+import nuke
+import avalon.api
+
+from openpype.api import Logger
+from openpype.hosts.nuke import api
 from openpype.hosts.nuke.api.lib import (
     on_script_load,
     check_inventory_versions,
-    WorkfileSettings
+    WorkfileSettings,
+    dirmap_file_name_filter
 )
 
-import nuke
-from openpype.api import Logger
-from openpype.hosts.nuke.api.lib import dirmap_file_name_filter
+log = Logger.get_logger(__name__)
 
-log = Logger().get_logger(__name__)
+
+avalon.api.install(api)
 
 # fix ffmpeg settings on script
 nuke.addOnScriptLoad(on_script_load)
