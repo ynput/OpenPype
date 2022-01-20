@@ -4,7 +4,7 @@ import tempfile
 
 import avalon.io
 
-from . import CommunicationWrapper
+from .communication_server import CommunicationWrapper
 
 log = logging.getLogger(__name__)
 

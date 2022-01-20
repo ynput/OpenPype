@@ -1,17 +1,18 @@
 from Qt import QtWidgets, QtCore, QtGui
 
-from . import (
+from .view import HierarchyView
+from .model import (
     ProjectModel,
     ProjectProxyFilter,
 
     HierarchyModel,
-    HierarchySelectionModel,
-    HierarchyView,
-
-    CreateProjectDialog,
-    PROJECT_NAME_ROLE
+    HierarchySelectionModel
 )
-from .widgets import ConfirmProjectDeletion
+from .constants import PROJECT_NAME_ROLE
+from .widgets import (
+    ConfirmProjectDeletion,
+    CreateProjectDialog,
+)
 from .style import ResourceCache
 from openpype.style import load_stylesheet
 from openpype.lib import is_admin_password_required

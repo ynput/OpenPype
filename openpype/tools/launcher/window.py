@@ -5,9 +5,10 @@ from Qt import QtWidgets, QtCore, QtGui
 
 from avalon.api import AvalonMongoDB
 
-from openpype import style
-from openpype.api import resources
-
+from openpype import (
+    style,
+    resources
+)
 from openpype.tools.utils.assets_widget import SingleSelectAssetsWidget
 from openpype.tools.utils.tasks_widget import TasksWidget
 
