@@ -129,16 +129,23 @@ class ExtractSubsetResources(openpype.api.Extractor):
                 opfapi.export_clip(
                     export_dir_path, duplclip, preset_path, **kwargs)
 
+                extension = preset_config["ext"]
                 # create representation data
                 representation_data = {
                     "name": unique_name,
                     "outputName": unique_name,
-                    "ext": preset_config["ext"],
+                    "ext": extension,
                     "stagingDir": export_dir_path,
                     "tags": repre_tags
                 }
 
                 files = os.listdir(export_dir_path)
+                n_stage_dir, n_files = self.check_if_dirs_in_paths(
+                    export_dir_path, files, extension)
+
+                if n_stage_dir:
+                    representation_data["stagingDir"] = n_stage_dir
+                    files = n_files
 
                 # add files to represetation but add
                 # imagesequence as list
@@ -170,3 +177,35 @@ class ExtractSubsetResources(openpype.api.Extractor):
 
         self.log.debug("All representations: {}".format(
             pformat(instance.data["representations"])))
+
+    def check_if_dirs_in_paths(self, stage_dir, files_list, ext):
+
+        if (
+            len(files_list) == 1
+            and ext in os.path.splitext(files_list[0])[-1]
+        ):
+
+            return None, None
+
+        new_stage_dir = None
+        new_files_list = []
+        for file in files_list:
+            search_path = os.path.join(stage_dir, file)
+            if not os.path.isdir(search_path):
+                continue
+            for root, _dirs, files in os.walk(search_path):
+                for _file in files:
+                    _fn, _ext = os.path.splitext(_file)
+                    if ext.lower() != _ext[1:].lower():
+                        continue
+                    new_files_list.append(_file)
+                    if not new_stage_dir:
+                        new_stage_dir = root
+
+        if new_stage_dir:
+            return new_stage_dir, new_files_list
+        else:
+            raise IOError(
+                "Files in `{}` are not correct! Check `{}`".format(
+                    files_list, stage_dir)
+            )
