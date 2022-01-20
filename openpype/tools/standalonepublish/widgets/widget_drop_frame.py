@@ -5,7 +5,9 @@ import clique
 import subprocess
 import openpype.lib
 from Qt import QtWidgets, QtCore
-from . import DropEmpty, ComponentsList, ComponentItem
+from .widget_drop_empty import DropEmpty
+from .widget_component_item import ComponentItem
+from .widget_components_list import ComponentsList
 
 
 class DropDataFrame(QtWidgets.QFrame):

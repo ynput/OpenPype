@@ -1,11 +1,3 @@
-from Qt import QtCore
-
-HelpRole = QtCore.Qt.UserRole + 2
-FamilyRole = QtCore.Qt.UserRole + 3
-ExistsRole = QtCore.Qt.UserRole + 4
-PluginRole = QtCore.Qt.UserRole + 5
-PluginKeyRole = QtCore.Qt.UserRole + 6
-
 from .model_node import Node
 from .model_tree import TreeModel
 from .model_asset import AssetModel, _iter_model_rows

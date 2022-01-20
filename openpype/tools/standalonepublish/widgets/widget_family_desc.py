@@ -1,5 +1,5 @@
 from Qt import QtWidgets, QtCore, QtGui
-from . import FamilyRole, PluginRole
+from .constants import FamilyRole, PluginRole
 from avalon.vendor import qtawesome
 import six
 

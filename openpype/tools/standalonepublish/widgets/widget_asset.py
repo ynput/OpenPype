@@ -6,9 +6,13 @@ from openpype.tools.utils import PlaceholderLineEdit
 from avalon.vendor import qtawesome
 from avalon import style
 
-from . import RecursiveSortFilterProxyModel, AssetModel
-from . import TasksTemplateModel, DeselectableTreeView
-from . import _iter_model_rows
+from .model_filter_proxy_recursive_sort import RecursiveSortFilterProxyModel
+from .model_tasks_template import TasksTemplateModel
+from .model_tree_view_deselectable import DeselectableTreeView
+from .model_asset import (
+    AssetModel,
+    _iter_model_rows
+)
 
 @contextlib.contextmanager
 def preserve_expanded_rows(tree_view,

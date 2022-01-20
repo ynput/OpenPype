@@ -1,5 +1,6 @@
 from Qt import QtCore
-from . import Node, TreeModel
+from .model_node import Node
+from .model_tree import TreeModel
 from avalon.vendor import qtawesome
 from avalon import style
 

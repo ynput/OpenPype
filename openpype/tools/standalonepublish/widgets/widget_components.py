@@ -5,11 +5,12 @@ import random
 import string
 
 from Qt import QtWidgets, QtCore
-from . import DropDataFrame
+from .widget_drop_frame import DropDataFrame
 from .constants import HOST_NAME
 from avalon import io
-from openpype.api import execute, Logger
+from openpype.api import Logger
 from openpype.lib import (
+    execute,
     get_openpype_execute_args,
     apply_project_environments_value
 )

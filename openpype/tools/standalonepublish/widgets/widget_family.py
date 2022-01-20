@@ -2,8 +2,14 @@ import os
 import re
 
 from Qt import QtWidgets, QtCore
-from . import HelpRole, FamilyRole, ExistsRole, PluginRole, PluginKeyRole
-from . import FamilyDescriptionWidget
+from .constants import (
+    HelpRole,
+    FamilyRole,
+    ExistsRole,
+    PluginRole,
+    PluginKeyRole
+)
+from .widget_family_desc import FamilyDescriptionWidget
 
 from openpype.api import (
     get_project_settings,

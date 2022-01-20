@@ -1,7 +1,8 @@
 import logging
 import collections
 from Qt import QtCore, QtGui
-from . import TreeModel, Node
+from .model_tree import TreeModel
+from .model_node import Node
 from avalon.vendor import qtawesome
 from avalon import style
 

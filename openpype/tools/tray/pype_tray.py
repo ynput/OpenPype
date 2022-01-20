@@ -9,9 +9,12 @@ import platform
 from Qt import QtCore, QtGui, QtWidgets
 
 import openpype.version
+from openpype import (
+    style,
+    resources,
+)
 from openpype.api import (
     Logger,
-    resources,
     get_system_settings
 )
 from openpype.lib import (
@@ -24,7 +27,6 @@ from openpype.lib import (
     get_openpype_version
 )
 from openpype.modules import TrayModulesManager
-from openpype import style
 from openpype.settings import (
     SystemSettings,
     ProjectSettings,

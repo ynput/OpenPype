@@ -7,11 +7,16 @@ from bson.objectid import ObjectId
 from Qt import QtWidgets, QtCore, QtGui
 
 from .widgets import (
-    AssetWidget, FamilyWidget, ComponentsWidget, ShadowWidget
+    AssetWidget,
+    FamilyWidget,
+    ComponentsWidget,
+    ShadowWidget
 )
 from .widgets.constants import HOST_NAME
-from openpype import style
-from openpype.api import resources
+from openpype import (
+    style,
+    resources
+)
 from avalon.api import AvalonMongoDB
 from openpype.modules import ModulesManager
 
