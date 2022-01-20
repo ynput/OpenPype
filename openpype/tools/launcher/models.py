@@ -32,7 +32,7 @@ class ActionModel(QtGui.QStandardItemModel):
         # Cache of available actions
         self._registered_actions = list()
         self.items_by_id = {}
-        path = appdirs.user_data_dir("openpype", "pype_club")
+        path = appdirs.user_data_dir("openpype", "pypeclub")
         self.launcher_registry = JSONSettingRegistry("launcher", path)
 
         try:
@@ -198,10 +198,7 @@ class ActionModel(QtGui.QStandardItemModel):
 
                 if self.is_force_not_open_workfile(item,
                                                    stored):
-                    label = item.text()
-                    label += " (Not opening last workfile)"
-                    item.setData(label, QtCore.Qt.ToolTipRole)
-                    item.setData(True, FORCE_NOT_OPEN_WORKFILE_ROLE)
+                    self.change_action_item(item, True)
 
                 self.items_by_id[item_id] = item
                 items.append(item)
@@ -241,13 +238,18 @@ class ActionModel(QtGui.QStandardItemModel):
             key=lambda action: (action.order, action.name)
         )
 
-    def update_force_not_open_workfile_settings(self, is_checked, action):
+    def update_force_not_open_workfile_settings(self, is_checked, action_id):
         """Store/remove config for forcing to skip opening last workfile.
 
         Args:
             is_checked (bool): True to add, False to remove
-            action (ApplicationAction)
+            action_id (str)
         """
+        action_item = self.items_by_id.get(action_id)
+        if not action_item:
+            return
+
+        action = action_item.data(ACTION_ROLE)
         actual_data = self._prepare_compare_data(action)
 
         stored = self.launcher_registry.get_item("force_not_open_workfile")
@@ -262,6 +264,16 @@ class ActionModel(QtGui.QStandardItemModel):
 
         self.launcher_registry.set_item("force_not_open_workfile", stored)
         self.launcher_registry._get_item.cache_clear()
+        self.change_action_item(action_item, is_checked)
+
+    def change_action_item(self, item, checked):
+        """Modifies tooltip and sets if opening of last workfile forbidden"""
+        tooltip = item.data(QtCore.Qt.ToolTipRole)
+        if checked:
+            tooltip += " (Not opening last workfile)"
+
+        item.setData(tooltip, QtCore.Qt.ToolTipRole)
+        item.setData(checked, FORCE_NOT_OPEN_WORKFILE_ROLE)
 
     def is_application_action(self, action):
         """Checks if item is of a ApplicationAction type

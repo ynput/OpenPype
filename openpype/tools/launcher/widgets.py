@@ -139,7 +139,14 @@ class ActionBar(QtWidgets.QWidget):
         view.clicked.connect(self.on_clicked)
         view.customContextMenuRequested.connect(self.on_context_menu)
 
+        self._context_menu = None
+        self._discover_on_menu = False
+
     def discover_actions(self):
+        if self._context_menu is not None:
+            self._discover_on_menu = True
+            return
+
         if self._animation_timer.isActive():
             self._animation_timer.stop()
         self.model.discover()
@@ -200,20 +207,29 @@ class ActionBar(QtWidgets.QWidget):
         if index.data(FORCE_NOT_OPEN_WORKFILE_ROLE):
             checkbox.setChecked(True)
 
+        action_id = index.data(ACTION_ID_ROLE)
         checkbox.stateChanged.connect(
             lambda: self.on_checkbox_changed(checkbox.isChecked(),
-                                             action_item))
+                                             action_id))
         action = QtWidgets.QWidgetAction(menu)
         action.setDefaultWidget(checkbox)
 
         menu.addAction(action)
 
+        self._context_menu = menu
         global_point = self.mapToGlobal(point)
-        _ = menu.exec_(global_point)
+        menu.exec_(global_point)
+        self._context_menu = None
+        if self._discover_on_menu:
+            self._discover_on_menu = False
+            self.discover_actions()
 
-    def on_checkbox_changed(self, is_checked, action):
-        self.model.update_force_not_open_workfile_settings(is_checked, action)
-        self.discover_actions()  # repaint
+    def on_checkbox_changed(self, is_checked, action_id):
+        self.model.update_force_not_open_workfile_settings(is_checked,
+                                                           action_id)
+        self.view.update()
+        if self._context_menu is not None:
+            self._context_menu.close()
 
     def on_clicked(self, index):
         if not index or not index.isValid():
