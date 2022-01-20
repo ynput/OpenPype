@@ -105,6 +105,144 @@ class SettingsHandler:
         """
         pass
 
+    # Getters for specific version overrides
+    @abstractmethod
+    def get_studio_system_settings_overrides_for_version(self, version):
+        """Studio system settings overrides for specific version.
+
+        Args:
+            version(str): OpenPype version for which settings should be
+                returned.
+
+        Returns:
+            None: If the version does not have system settings overrides.
+            dict: Document with overrides data.
+        """
+        pass
+
+    @abstractmethod
+    def get_studio_project_anatomy_overrides_for_version(self, version):
+        """Studio project anatomy overrides for specific version.
+
+        Args:
+            version(str): OpenPype version for which settings should be
+                returned.
+
+        Returns:
+            None: If the version does not have system settings overrides.
+            dict: Document with overrides data.
+        """
+        pass
+
+    @abstractmethod
+    def get_studio_project_settings_overrides_for_version(self, version):
+        """Studio project settings overrides for specific version.
+
+        Args:
+            version(str): OpenPype version for which settings should be
+                returned.
+
+        Returns:
+            None: If the version does not have system settings overrides.
+            dict: Document with overrides data.
+        """
+        pass
+
+    @abstractmethod
+    def get_project_settings_overrides_for_version(
+        self, project_name, version
+    ):
+        """Studio project settings overrides for specific project and version.
+
+        Args:
+            project_name(str): Name of project for which the overrides should
+                be loaded.
+            version(str): OpenPype version for which settings should be
+                returned.
+
+        Returns:
+            None: If the version does not have system settings overrides.
+            dict: Document with overrides data.
+        """
+        pass
+
+    # Clear methods - per version
+    # - clearing may be helpfull when a version settings were created for
+    #   testing purposes
+    @abstractmethod
+    def clear_studio_system_settings_overrides_for_version(self, version):
+        """Remove studio system settings overrides for specific version.
+
+        If version is not available then skip processing.
+        """
+        pass
+
+    @abstractmethod
+    def clear_studio_project_settings_overrides_for_version(self, version):
+        """Remove studio project settings overrides for specific version.
+
+        If version is not available then skip processing.
+        """
+        pass
+
+    @abstractmethod
+    def clear_studio_project_anatomy_overrides_for_version(self, version):
+        """Remove studio project anatomy overrides for specific version.
+
+        If version is not available then skip processing.
+        """
+        pass
+
+    @abstractmethod
+    def clear_project_settings_overrides_for_version(
+        self, version, project_name
+    ):
+        """Remove studio project settings overrides for project and version.
+
+        If version is not available then skip processing.
+        """
+        pass
+
+    # Get versions that are available for each type of settings
+    @abstractmethod
+    def get_available_studio_system_settings_overrides_versions(self):
+        """OpenPype versions that have any studio system settings overrides.
+
+        Returns:
+            list<str>: OpenPype versions strings.
+        """
+        pass
+
+    @abstractmethod
+    def get_available_studio_project_anatomy_overrides_versions(self):
+        """OpenPype versions that have any studio project anatomy overrides.
+
+        Returns:
+            list<str>: OpenPype versions strings.
+        """
+        pass
+
+    @abstractmethod
+    def get_available_studio_project_settings_overrides_versions(self):
+        """OpenPype versions that have any studio project settings overrides.
+
+        Returns:
+            list<str>: OpenPype versions strings.
+        """
+        pass
+
+    @abstractmethod
+    def get_available_project_settings_overrides_versions(self, project_name):
+        """OpenPype versions that have any project settings overrides.
+
+        Args:
+            project_name(str): Name of project.
+
+        Returns:
+            list<str>: OpenPype versions strings.
+        """
+        pass
+
 
 @six.add_metaclass(ABCMeta)
 class LocalSettingsHandler:
