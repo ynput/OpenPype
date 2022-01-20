@@ -3,7 +3,7 @@ import json
 from Qt import QtWidgets, QtCore, QtGui
 
 from openpype.widgets.sliders import NiceSlider
-from openpype.tools.settings import CHILD_OFFSET
+from openpype.tools.settings.constants import CHILD_OFFSET
 from openpype.settings.entities.exceptions import BaseInvalidValue
 
 from .widgets import (

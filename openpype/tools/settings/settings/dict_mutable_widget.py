@@ -13,7 +13,7 @@ from .widgets import (
     ExpandingWidget,
     IconButton
 )
-from openpype.tools.settings import (
+from openpype.tools.settings.constants import (
     BTN_FIXED_SIZE,
     CHILD_OFFSET
 )

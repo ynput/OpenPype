@@ -7,7 +7,7 @@ from openpype.settings.lib import (
     get_local_settings,
     save_local_settings
 )
-from openpype.tools.settings import CHILD_OFFSET
+from openpype.tools.settings.constants import CHILD_OFFSET
 from openpype.api import (
     SystemSettings,
     ProjectSettings

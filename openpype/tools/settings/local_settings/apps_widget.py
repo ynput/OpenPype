@@ -4,7 +4,7 @@ from .widgets import (
     Separator,
     ExpandingWidget
 )
-from openpype.tools.settings import CHILD_OFFSET
+from openpype.tools.settings.constants import CHILD_OFFSET
 from openpype.tools.utils import PlaceholderLineEdit
 
 

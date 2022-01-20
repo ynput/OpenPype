@@ -5,7 +5,7 @@ import traceback
 from Qt import QtWidgets, QtGui, QtCore
 
 from openpype.settings.entities import ProjectSettings
-from openpype.tools.settings import CHILD_OFFSET
+from openpype.tools.settings.constants import CHILD_OFFSET
 
 from .widgets import ExpandingWidget
 from .lib import create_deffered_value_change_timer
