@@ -16,6 +16,7 @@ from openpype.api import Logger
 
 log = Logger.get_logger(__name__)
 
+FRAME_PATTERN = re.compile(r"[\._](\d+)[\.]")
 
 class CTX:
     # singleton used for passing data between api modules
@@ -601,72 +602,72 @@ def get_clips_in_reels(project):
     return output_clips
 
 
-def get_reformated_path(fname, padded=True):
+def get_reformated_filename(filename, padded=True):
     """
     Return fixed python expression path
 
     Args:
-        fname (str): file name
+        filename (str): file name
 
     Returns:
         type: string with reformated path
 
     Example:
-        get_reformated_path("plate.1001.exr") > plate.%04d.exr
+        get_reformated_filename("plate.1001.exr") > plate.%04d.exr
 
     """
-    padding = get_padding_from_path(fname)
-    found = get_frame_from_path(fname)
+    found = FRAME_PATTERN.search(filename)
 
     if not found:
-        log.info("File name is not sequence: {}".format(fname))
-        return fname
+        log.info("File name is not sequence: {}".format(filename))
+        return filename
 
-    if padded:
-        fname = fname.replace(found, "%0{}d".format(padding))
-    else:
-        fname = fname.replace(found, "%d")
+    padding = get_padding_from_filename(filename)
 
-    return fname
+    replacement = "%0{}d".format(padding) if padded else "%d"
+    start_idx, end_idx = found.span(1)
+
+    return replacement.join(
+        [filename[:start_idx], filename[end_idx:]]
+    )
 
 
-def get_padding_from_path(fname):
+def get_padding_from_filename(filename):
     """
     Return padding number from Flame path style
 
     Args:
-        fname (str): file name
+        filename (str): file name
 
     Returns:
         int: padding number
 
     Example:
-        get_padding_from_path("plate.0001.exr") > 4
+        get_padding_from_filename("plate.0001.exr") > 4
 
     """
-    found = get_frame_from_path(fname)
+    found = get_frame_from_filename(filename)
 
     return len(found) if found else None
 
 
-def get_frame_from_path(fname):
+def get_frame_from_filename(filename):
     """
     Return sequence number from Flame path style
 
     Args:
-        fname (str): file name
+        filename (str): file name
 
     Returns:
         int: sequence frame number
 
     Example:
-        def get_frame_from_path(path):
+        def get_frame_from_filename(path):
             ("plate.0001.exr") > 0001
 
     """
-    frame_pattern = re.compile(r"[._](\d+)[.]")
 
-    found = re.findall(frame_pattern, fname)
+    found = re.findall(FRAME_PATTERN, filename)
 
     return found.pop() if found else None
 

@@ -7,11 +7,11 @@ from openpype.hosts.flame.otio import flame_export
 from pprint import pformat
 
 
-class PrecollectInstances(pyblish.api.ContextPlugin):
-    """Collect all Track items selection."""
+class CollectTimelineInstances(pyblish.api.ContextPlugin):
+    """Collect all Timeline segment selection."""
 
-    order = pyblish.api.CollectorOrder - 0.47
-    label = "Precollect Instances"
+    order = pyblish.api.CollectorOrder - 0.09
+    label = "Collect timeline Instances"
     hosts = ["flame"]
 
     audio_track_items = []
@@ -47,7 +47,7 @@ class PrecollectInstances(pyblish.api.ContextPlugin):
                 # get source clip
                 source_clip = self._get_reel_clip(file_path)
 
-                first_frame = opfapi.get_frame_from_path(file_path) or 0
+                first_frame = opfapi.get_frame_from_filename(file_path) or 0
 
                 head, tail = self._get_head_tail(clip_data, first_frame)
 

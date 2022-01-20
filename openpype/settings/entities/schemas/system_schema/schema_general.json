@@ -48,6 +48,19 @@
             "type": "splitter"
         },
         {
+            "type": "label",
+            "label": "Trigger validation if running OpenPype is using studio defined version each 'n' <b>minutes</b>. Validation happens in OpenPype tray application."
+        },
+        {
+            "type": "number",
+            "key": "version_check_interval",
+            "label": "Version check interval",
+            "minimum": 0
+        },
+        {
+            "type": "splitter"
+        },
+        {
             "key": "environment",
             "label": "Environment",
             "type": "raw-json",

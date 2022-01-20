@@ -284,23 +284,20 @@ def create_otio_reference(clip_data):
     # get padding and other file infos
     log.debug("_ path: {}".format(path))
 
-    is_sequence = padding = utils.get_frame_from_path(path)
-    if is_sequence:
-        number = utils.get_frame_from_path(path)
-        file_head = file_name.split(number)[:-1]
-        frame_start = int(number)
-
     frame_duration = clip_data["source_duration"]
-
-    if is_sequence:
-        metadata.update({
-            "isSequence": True,
-            "padding": len(padding)
-        })
-
     otio_ex_ref_item = None
 
+    is_sequence = frame_number = utils.get_frame_from_filename(file_name)
     if is_sequence:
+        file_head = file_name.split(frame_number)[:-1]
+        frame_start = int(frame_number)
+        padding = len(frame_number)
+
+        metadata.update({
+            "isSequence": True,
+            "padding": padding
+        })
+
         # if it is file sequence try to create `ImageSequenceReference`
         # the OTIO might not be compatible so return nothing and do it old way
         try:
@@ -322,10 +319,12 @@ def create_otio_reference(clip_data):
             pass
 
     if not otio_ex_ref_item:
-        reformat_path = utils.get_reformated_path(path, padded=False)
+        dirname, file_name = os.path.split(path)
+        file_name = utils.get_reformated_filename(file_name, padded=False)
+        reformated_path = os.path.join(dirname, file_name)
         # in case old OTIO or video file create `ExternalReference`
         otio_ex_ref_item = otio.schema.ExternalReference(
-            target_url=reformat_path,
+            target_url=reformated_path,
             available_range=create_otio_time_range(
                 frame_start,
                 frame_duration,
@@ -346,7 +345,7 @@ def create_otio_clip(clip_data):
     media_reference = create_otio_reference(clip_data)
 
     # calculate source in
-    first_frame = utils.get_frame_from_path(clip_data["fpath"]) or 0
+    first_frame = utils.get_frame_from_filename(clip_data["fpath"]) or 0
     source_in = int(clip_data["source_in"]) - int(first_frame)
 
     # creatae source range

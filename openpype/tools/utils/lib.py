@@ -9,7 +9,10 @@ import avalon.api
 from avalon import style
 from avalon.vendor import qtawesome
 
-from openpype.api import get_project_settings
+from openpype.api import (
+    get_project_settings,
+    Logger
+)
 from openpype.lib import filter_profiles
 
 
@@ -598,3 +601,68 @@ def is_remove_site_loader(loader):
 
 def is_add_site_loader(loader):
     return hasattr(loader, "add_site_to_representation")
+
+
+class WrappedCallbackItem:
+    """Structure to store information about callback and args/kwargs for it.
+
+    Item can be used to execute callback in main thread which may be needed
+    for execution of Qt objects.
+
+    Item store callback (callable variable), arguments and keyword arguments
+    for the callback. Item hold information about it's process.
+    """
+    not_set = object()
+    _log = None
+
+    def __init__(self, callback, *args, **kwargs):
+        self._done = False
+        self._exception = self.not_set
+        self._result = self.not_set
+        self._callback = callback
+        self._args = args
+        self._kwargs = kwargs
+
+    def __call__(self):
+        self.execute()
+
+    @property
+    def log(self):
+        cls = self.__class__
+        if cls._log is None:
+            cls._log = Logger.get_logger(cls.__name__)
+        return cls._log
+
+    @property
+    def done(self):
+        return self._done
+
+    @property
+    def exception(self):
+        return self._exception
+
+    @property
+    def result(self):
+        return self._result
+
+    def execute(self):
+        """Execute callback and store it's result.
+
+        Method must be called from main thread. Item is marked as `done`
+        when callback execution finished. Store output of callback of exception
+        information when callback raise one.
+        """
+        if self.done:
+            self.log.warning("- item is already processed")
+            return
+
+        self.log.debug("Running callback: {}".format(str(self._callback)))
+        try:
+            result = self._callback(*self._args, **self._kwargs)
+            self._result = result
+
+        except Exception as exc:
+            self._exception = exc
+
+        finally:
+            self._done = True

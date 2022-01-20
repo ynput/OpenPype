@@ -25,9 +25,9 @@ from .lib import (
     reset_segment_selection,
     get_segment_attributes,
     get_clips_in_reels,
-    get_reformated_path,
-    get_frame_from_path,
-    get_padding_from_path,
+    get_reformated_filename,
+    get_frame_from_filename,
+    get_padding_from_filename,
     maintained_object_duplication
 )
 from .utils import (
@@ -92,9 +92,9 @@ __all__ = [
     "reset_segment_selection",
     "get_segment_attributes",
     "get_clips_in_reels",
-    "get_reformated_path",
-    "get_frame_from_path",
-    "get_padding_from_path",
+    "get_reformated_filename",
+    "get_frame_from_filename",
+    "get_padding_from_filename",
     "maintained_object_duplication",
 
     # pipeline

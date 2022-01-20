@@ -5,11 +5,11 @@ import openpype.hosts.flame.api as opfapi
 from openpype.hosts.flame.otio import flame_export
 
 
-class PrecollecTimelineOCIO(pyblish.api.ContextPlugin):
+class CollecTimelineOTIO(pyblish.api.ContextPlugin):
     """Inject the current working context into publish context"""
 
-    label = "Precollect Timeline OTIO"
-    order = pyblish.api.CollectorOrder - 0.48
+    label = "Collect Timeline OTIO"
+    order = pyblish.api.CollectorOrder - 0.099
 
     def process(self, context):
         # plugin defined

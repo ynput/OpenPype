@@ -14,7 +14,15 @@ from openpype.api import (
     resources,
     get_system_settings
 )
-from openpype.lib import get_openpype_execute_args
+from openpype.lib import (
+    get_openpype_execute_args,
+    op_version_control_available,
+    is_current_version_studio_latest,
+    is_running_from_build,
+    is_running_staging,
+    get_expected_version,
+    get_openpype_version
+)
 from openpype.modules import TrayModulesManager
 from openpype import style
 from openpype.settings import (
@@ -22,8 +30,145 @@ from openpype.settings import (
     ProjectSettings,
     DefaultsNotDefined
 )
+from openpype.tools.utils import (
+    WrappedCallbackItem,
+    paint_image_with_color
+)
 
 from .pype_info_widget import PypeInfoWidget
+
+
+# TODO PixmapLabel should be moved to 'utils' in other future PR so should be
+#   imported from there
+class PixmapLabel(QtWidgets.QLabel):
+    """Label resizing image to height of font."""
+    def __init__(self, pixmap, parent):
+        super(PixmapLabel, self).__init__(parent)
+        self._empty_pixmap = QtGui.QPixmap(0, 0)
+        self._source_pixmap = pixmap
+
+    def set_source_pixmap(self, pixmap):
+        """Change source image."""
+        self._source_pixmap = pixmap
+        self._set_resized_pix()
+
+    def _get_pix_size(self):
+        size = self.fontMetrics().height() * 3
+        return size, size
+
+    def _set_resized_pix(self):
+        if self._source_pixmap is None:
+            self.setPixmap(self._empty_pixmap)
+            return
+        width, height = self._get_pix_size()
+        self.setPixmap(
+            self._source_pixmap.scaled(
+                width,
+                height,
+                QtCore.Qt.KeepAspectRatio,
+                QtCore.Qt.SmoothTransformation
+            )
+        )
+
+    def resizeEvent(self, event):
+        self._set_resized_pix()
+        super(PixmapLabel, self).resizeEvent(event)
+
+
+class VersionDialog(QtWidgets.QDialog):
+    restart_requested = QtCore.Signal()
+    ignore_requested = QtCore.Signal()
+
+    _min_width = 400
+    _min_height = 130
+
+    def __init__(self, parent=None):
+        super(VersionDialog, self).__init__(parent)
+        self.setWindowTitle("OpenPype update is needed")
+        icon = QtGui.QIcon(resources.get_openpype_icon_filepath())
+        self.setWindowIcon(icon)
+        self.setWindowFlags(
+            self.windowFlags()
+            | QtCore.Qt.WindowStaysOnTopHint
+        )
+
+        self.setMinimumWidth(self._min_width)
+        self.setMinimumHeight(self._min_height)
+
+        top_widget = QtWidgets.QWidget(self)
+
+        gift_pixmap = self._get_gift_pixmap()
+        gift_icon_label = PixmapLabel(gift_pixmap, top_widget)
+
+        label_widget = QtWidgets.QLabel(top_widget)
+        label_widget.setWordWrap(True)
+
+        top_layout = QtWidgets.QHBoxLayout(top_widget)
+        # top_layout.setContentsMargins(0, 0, 0, 0)
+        top_layout.setSpacing(10)
+        top_layout.addWidget(gift_icon_label, 0, QtCore.Qt.AlignCenter)
+        top_layout.addWidget(label_widget, 1)
+
+        ignore_btn = QtWidgets.QPushButton("Later", self)
+        restart_btn = QtWidgets.QPushButton("Restart && Update", self)
+        restart_btn.setObjectName("TrayRestartButton")
+
+        btns_layout = QtWidgets.QHBoxLayout()
+        btns_layout.addStretch(1)
+        btns_layout.addWidget(ignore_btn, 0)
+        btns_layout.addWidget(restart_btn, 0)
+
+        layout = QtWidgets.QVBoxLayout(self)
+        layout.addWidget(top_widget, 0)
+        layout.addStretch(1)
+        layout.addLayout(btns_layout, 0)
+
+        ignore_btn.clicked.connect(self._on_ignore)
+        restart_btn.clicked.connect(self._on_reset)
+
+        self._label_widget = label_widget
+        self._restart_accepted = False
+
+        self.setStyleSheet(style.load_stylesheet())
+
+    def _get_gift_pixmap(self):
+        image_path = os.path.join(
+            os.path.dirname(os.path.abspath(__file__)),
+            "images",
+            "gifts.png"
+        )
+        src_image = QtGui.QImage(image_path)
+        colors = style.get_objected_colors()
+        color_value = colors["font"]
+
+        return paint_image_with_color(
+            src_image,
+            color_value.get_qcolor()
+        )
+
+    def showEvent(self, event):
+        super().showEvent(event)
+        self._restart_accepted = False
+
+    def closeEvent(self, event):
+        super().closeEvent(event)
+        if not self._restart_accepted:
+            self.ignore_requested.emit()
+
+    def update_versions(self, current_version, expected_version):
+        message = (
+            "Running OpenPype version is <b>{}</b>."
+            " Your production has been updated to version <b>{}</b>."
+        ).format(str(current_version), str(expected_version))
+        self._label_widget.setText(message)
+
+    def _on_ignore(self):
+        self.reject()
+
+    def _on_reset(self):
+        self._restart_accepted = True
+        self.restart_requested.emit()
+        self.accept()
 
 
 class TrayManager:
@@ -31,19 +176,30 @@ class TrayManager:
 
     Load submenus, actions, separators and modules into tray's context.
     """
-
     def __init__(self, tray_widget, main_window):
         self.tray_widget = tray_widget
         self.main_window = main_window
         self.pype_info_widget = None
+        self._restart_action = None
 
         self.log = Logger.get_logger(self.__class__.__name__)
 
-        self.module_settings = get_system_settings()["modules"]
+        system_settings = get_system_settings()
+        self.module_settings = system_settings["modules"]
+
+        version_check_interval = system_settings["general"].get(
+            "version_check_interval"
+        )
+        if version_check_interval is None:
+            version_check_interval = 5
+        self._version_check_interval = version_check_interval * 60 * 1000
 
         self.modules_manager = TrayModulesManager()
 
         self.errors = []
+
+        self._version_check_timer = None
+        self._version_dialog = None
 
         self.main_thread_timer = None
         self._main_thread_callbacks = collections.deque()
@@ -61,21 +217,73 @@ class TrayManager:
         if callback:
             self.execute_in_main_thread(callback)
 
-    def execute_in_main_thread(self, callback):
-        self._main_thread_callbacks.append(callback)
+    def _on_version_check_timer(self):
+        # Check if is running from build and stop future validations if yes
+        if not is_running_from_build() or not op_version_control_available():
+            self._version_check_timer.stop()
+            return
+
+        self.validate_openpype_version()
+
+    def validate_openpype_version(self):
+        using_requested = is_current_version_studio_latest()
+        self._restart_action.setVisible(not using_requested)
+        if using_requested:
+            if (
+                self._version_dialog is not None
+                and self._version_dialog.isVisible()
+            ):
+                self._version_dialog.close()
+            return
+
+        if self._version_dialog is None:
+            self._version_dialog = VersionDialog()
+            self._version_dialog.restart_requested.connect(
+                self._restart_and_install
+            )
+            self._version_dialog.ignore_requested.connect(
+                self._outdated_version_ignored
+            )
+
+        expected_version = get_expected_version()
+        current_version = get_openpype_version()
+        self._version_dialog.update_versions(
+            current_version, expected_version
+        )
+        self._version_dialog.show()
+        self._version_dialog.raise_()
+        self._version_dialog.activateWindow()
+
+    def _restart_and_install(self):
+        self.restart()
+
+    def _outdated_version_ignored(self):
+        self.show_tray_message(
+            "OpenPype version is outdated",
+            (
+                "Please update your OpenPype as soon as possible."
+                " To update, restart OpenPype Tray application."
+            )
+        )
+
+    def execute_in_main_thread(self, callback, *args, **kwargs):
+        if isinstance(callback, WrappedCallbackItem):
+            item = callback
+        else:
+            item = WrappedCallbackItem(callback, *args, **kwargs)
+
+        self._main_thread_callbacks.append(item)
+
+        return item
 
     def _main_thread_execution(self):
         if self._execution_in_progress:
             return
         self._execution_in_progress = True
-        while self._main_thread_callbacks:
-            try:
-                callback = self._main_thread_callbacks.popleft()
-                callback()
-            except:
-                self.log.warning(
-                    "Failed to execute {} in main thread".format(callback),
-                    exc_info=True)
+        for _ in range(len(self._main_thread_callbacks)):
+            if self._main_thread_callbacks:
+                item = self._main_thread_callbacks.popleft()
+                item.execute()
 
         self._execution_in_progress = False
 
@@ -118,6 +326,13 @@ class TrayManager:
         main_thread_timer.start()
 
         self.main_thread_timer = main_thread_timer
+
+        version_check_timer = QtCore.QTimer()
+        version_check_timer.timeout.connect(self._on_version_check_timer)
+        if self._version_check_interval > 0:
+            version_check_timer.setInterval(self._version_check_interval)
+            version_check_timer.start()
+        self._version_check_timer = version_check_timer
 
         # For storing missing settings dialog
         self._settings_validation_dialog = None
@@ -200,24 +415,47 @@ class TrayManager:
 
         version_action = QtWidgets.QAction(version_string, self.tray_widget)
         version_action.triggered.connect(self._on_version_action)
+
+        restart_action = QtWidgets.QAction(
+            "Restart && Update", self.tray_widget
+        )
+        restart_action.triggered.connect(self._on_restart_action)
+        restart_action.setVisible(False)
+
         self.tray_widget.menu.addAction(version_action)
+        self.tray_widget.menu.addAction(restart_action)
         self.tray_widget.menu.addSeparator()
 
-    def restart(self):
+        self._restart_action = restart_action
+
+    def _on_restart_action(self):
+        self.restart()
+
+    def restart(self, reset_version=True):
         """Restart Tray tool.
 
         First creates new process with same argument and close current tray.
         """
         args = get_openpype_execute_args()
+        kwargs = {
+            "env": dict(os.environ.items())
+        }
+
         # Create a copy of sys.argv
         additional_args = list(sys.argv)
         # Check last argument from `get_openpype_execute_args`
         # - when running from code it is the same as first from sys.argv
         if args[-1] == additional_args[0]:
             additional_args.pop(0)
-        args.extend(additional_args)
 
-        kwargs = {}
+        # Pop OPENPYPE_VERSION
+        if reset_version:
+            # Add staging flag if was running from staging
+            if is_running_staging():
+                args.append("--use-staging")
+            kwargs["env"].pop("OPENPYPE_VERSION", None)
+
+        args.extend(additional_args)
         if platform.system().lower() == "windows":
             flags = (
                 subprocess.CREATE_NEW_PROCESS_GROUP

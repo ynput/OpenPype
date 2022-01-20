@@ -2,7 +2,7 @@ import pyblish.api
 from openpype.action import get_errored_plugins_from_data
 from openpype.lib import version_up
 
-from avalon import aftereffects
+from openpype.hosts.aftereffects.api import get_stub
 
 
 class IncrementWorkfile(pyblish.api.InstancePlugin):
@@ -25,6 +25,6 @@ class IncrementWorkfile(pyblish.api.InstancePlugin):
             )
 
         scene_path = version_up(instance.context.data["currentFile"])
-        aftereffects.stub().saveAs(scene_path, True)
+        get_stub().saveAs(scene_path, True)
 
         self.log.info("Incremented workfile to: {}".format(scene_path))
