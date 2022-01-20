@@ -11,13 +11,19 @@ from openpype.lib import PypeLogger
 from .webpublish_routes import (
     RestApiResource,
     OpenPypeRestApiResource,
-    WebpublisherBatchPublishEndpoint,
-    WebpublisherTaskPublishEndpoint,
-    WebpublisherHiearchyEndpoint,
-    WebpublisherProjectsEndpoint,
+    HiearchyEndpoint,
+    ProjectsEndpoint,
+    ConfiguredExtensionsEndpoint,
+    BatchPublishEndpoint,
+    BatchReprocessEndpoint,
     BatchStatusEndpoint,
-    PublishesStatusEndpoint,
-    ConfiguredExtensionsEndpoint
+    TaskPublishEndpoint,
+    UserReportEndpoint
+)
+from openpype.lib.remote_publish import (
+    ERROR_STATUS,
+    REPROCESS_STATUS,
+    SENT_REPROCESSING_STATUS
 )
 
 
@@ -41,14 +47,14 @@ def run_webserver(*args, **kwargs):
                                upload_dir=kwargs["upload_dir"],
                                executable=kwargs["executable"],
                                studio_task_queue=studio_task_queue)
-    projects_endpoint = WebpublisherProjectsEndpoint(resource)
+    projects_endpoint = ProjectsEndpoint(resource)
     server_manager.add_route(
         "GET",
         "/api/projects",
         projects_endpoint.dispatch
     )
 
-    hiearchy_endpoint = WebpublisherHiearchyEndpoint(resource)
+    hiearchy_endpoint = HiearchyEndpoint(resource)
     server_manager.add_route(
         "GET",
         "/api/hierarchy/{project_name}",
@@ -64,7 +70,7 @@ def run_webserver(*args, **kwargs):
 
     # triggers publish
     webpublisher_task_publish_endpoint = \
-        WebpublisherBatchPublishEndpoint(resource)
+        BatchPublishEndpoint(resource)
     server_manager.add_route(
         "POST",
         "/api/webpublish/batch",
@@ -72,7 +78,7 @@ def run_webserver(*args, **kwargs):
     )
 
     webpublisher_batch_publish_endpoint = \
-        WebpublisherTaskPublishEndpoint(resource)
+        TaskPublishEndpoint(resource)
     server_manager.add_route(
         "POST",
         "/api/webpublish/task",
@@ -88,11 +94,19 @@ def run_webserver(*args, **kwargs):
         batch_status_endpoint.dispatch
     )
 
-    user_status_endpoint = PublishesStatusEndpoint(openpype_resource)
+    user_status_endpoint = UserReportEndpoint(openpype_resource)
     server_manager.add_route(
         "GET",
         "/api/publishes/{user}",
         user_status_endpoint.dispatch
+    )
+
+    webpublisher_batch_reprocess_endpoint = \
+        BatchReprocessEndpoint(openpype_resource)
+    server_manager.add_route(
+        "POST",
+        "/api/webpublish/reprocess/{batch_id}",
+        webpublisher_batch_reprocess_endpoint.dispatch
     )
 
     server_manager.start_server()
@@ -116,8 +130,12 @@ def reprocess_failed(upload_dir, webserver_url):
     database_name = os.environ["OPENPYPE_DATABASE_NAME"]
     dbcon = mongo_client[database_name]["webpublishes"]
 
-    results = dbcon.find({"status": "reprocess"})
+    results = dbcon.find({"status": REPROCESS_STATUS})
+    reprocessed_batches = set()
     for batch in results:
+        if batch["batch_id"] in reprocessed_batches:
+            continue
+
         batch_url = os.path.join(upload_dir,
                                  batch["batch_id"],
                                  "manifest.json")
@@ -130,7 +148,7 @@ def reprocess_failed(upload_dir, webserver_url):
                 {"$set":
                     {
                         "finish_date": datetime.now(),
-                        "status": "error",
+                        "status": ERROR_STATUS,
                         "progress": 100,
                         "log": batch.get("log") + msg
                     }}
@@ -141,18 +159,24 @@ def reprocess_failed(upload_dir, webserver_url):
         with open(batch_url) as f:
             data = json.loads(f.read())
 
+        dbcon.update_many(
+            {
+                "batch_id": batch["batch_id"],
+                "status": {"$in": [ERROR_STATUS, REPROCESS_STATUS]}
+            },
+            {
+                "$set": {
+                    "finish_date": datetime.now(),
+                    "status": SENT_REPROCESSING_STATUS,
+                    "progress": 100
+                }
+            }
+        )
+
         try:
             r = requests.post(server_url, json=data)
             log.info("response{}".format(r))
         except Exception:
             log.info("exception", exc_info=True)
 
-        dbcon.update_one(
-            {"_id": batch["_id"]},
-            {"$set":
-                {
-                    "finish_date": datetime.now(),
-                    "status": "sent_for_reprocessing",
-                    "progress": 100
-                }}
-        )
+        reprocessed_batches.add(batch["batch_id"])
