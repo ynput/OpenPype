@@ -1,5 +1,5 @@
 import os
-from openpype.lib.pype_info import is_running_staging
+from openpype.lib.openpype_version import is_running_staging
 
 RESOURCES_DIR = os.path.dirname(os.path.abspath(__file__))
 

@@ -60,7 +60,7 @@ class InstallThread(QThread):
         # find local version of OpenPype
         bs = BootstrapRepos(
             progress_callback=self.set_progress, message=self.message)
-        local_version = bs.get_local_live_version()
+        local_version = OpenPypeVersion.get_installed_version_str()
 
         # if user did entered nothing, we install OpenPype from local version.
         # zip content of `repos`, copy it to user data dir and append

@@ -469,6 +469,17 @@ class PathInput(InputEntity):
         # GUI attributes
         self.placeholder_text = self.schema_data.get("placeholder")
 
+    def set(self, value):
+        # Strip value
+        super(PathInput, self).set(value.strip())
+
+    def set_override_state(self, state, ignore_missing_defaults):
+        super(PathInput, self).set_override_state(
+            state, ignore_missing_defaults
+        )
+        # Strip current value
+        self._current_value = self._current_value.strip()
+
 
 class RawJsonEntity(InputEntity):
     schema_types = ["raw-json"]

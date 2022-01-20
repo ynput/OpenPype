@@ -1,11 +1,12 @@
 # Changelog
 
-## [3.8.0-nightly.4](https://github.com/pypeclub/OpenPype/tree/HEAD)
+## [3.8.0-nightly.5](https://github.com/pypeclub/OpenPype/tree/HEAD)
 
 [Full Changelog](https://github.com/pypeclub/OpenPype/compare/3.7.0...HEAD)
 
 ### 📖 Documentation
 
+- Renamed to proper name [\#2546](https://github.com/pypeclub/OpenPype/pull/2546)
 - Slack: Add review to notification message [\#2498](https://github.com/pypeclub/OpenPype/pull/2498)
 
 **🆕 New features**
@@ -14,6 +15,8 @@
 
 **🚀 Enhancements**
 
+- Settings: PathInput strip passed string [\#2550](https://github.com/pypeclub/OpenPype/pull/2550)
+- General: Validate if current process OpenPype version is requested version [\#2529](https://github.com/pypeclub/OpenPype/pull/2529)
 - General: Be able to use anatomy data in ffmpeg output arguments [\#2525](https://github.com/pypeclub/OpenPype/pull/2525)
 - Expose toggle publish plug-in settings for Maya Look Shading Engine Naming [\#2521](https://github.com/pypeclub/OpenPype/pull/2521)
 - Photoshop: Move implementation to OpenPype [\#2510](https://github.com/pypeclub/OpenPype/pull/2510)
@@ -48,6 +51,8 @@
 
 **Merged pull requests:**
 
+- General: Fix install thread in igniter [\#2549](https://github.com/pypeclub/OpenPype/pull/2549)
+- AfterEffects: Move implementation to OpenPype [\#2543](https://github.com/pypeclub/OpenPype/pull/2543)
 - Fix create zip tool - path argument [\#2522](https://github.com/pypeclub/OpenPype/pull/2522)
 - General: Modules import function output fix [\#2492](https://github.com/pypeclub/OpenPype/pull/2492)
 - AE: fix hiding of alert window below Publish [\#2491](https://github.com/pypeclub/OpenPype/pull/2491)
@@ -56,10 +61,6 @@
 ## [3.7.0](https://github.com/pypeclub/OpenPype/tree/3.7.0) (2022-01-04)
 
 [Full Changelog](https://github.com/pypeclub/OpenPype/compare/CI/3.7.0-nightly.14...3.7.0)
-
-**Deprecated:**
-
-- General: Default modules hierarchy n2 [\#2368](https://github.com/pypeclub/OpenPype/pull/2368)
 
 **🚀 Enhancements**
 
@@ -79,7 +80,6 @@
 - Enhancement: Settings: Use project settings values from another project [\#2382](https://github.com/pypeclub/OpenPype/pull/2382)
 - Blender 3: Support auto install for new blender version [\#2377](https://github.com/pypeclub/OpenPype/pull/2377)
 - Maya add render image path to settings [\#2375](https://github.com/pypeclub/OpenPype/pull/2375)
-- Hiero: python3 compatibility [\#2365](https://github.com/pypeclub/OpenPype/pull/2365)
 
 **🐛 Bug fixes**
 
@@ -97,7 +97,6 @@
 - hiero: fix workio and flatten [\#2378](https://github.com/pypeclub/OpenPype/pull/2378)
 - Nuke: fixing menu re-drawing during context change  [\#2374](https://github.com/pypeclub/OpenPype/pull/2374)
 - Webpublisher: Fix assignment of families of TVpaint instances [\#2373](https://github.com/pypeclub/OpenPype/pull/2373)
-- Nuke: fixing node name based on switched asset name [\#2369](https://github.com/pypeclub/OpenPype/pull/2369)
 
 **Merged pull requests:**
 

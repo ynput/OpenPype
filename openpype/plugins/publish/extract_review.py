@@ -292,6 +292,21 @@ class ExtractReview(pyblish.api.InstancePlugin):
                         temp_data["frame_start"],
                         temp_data["frame_end"])
 
+                # create or update outputName
+                output_name = new_repre.get("outputName", "")
+                output_ext = new_repre["ext"]
+                if output_name:
+                    output_name += "_"
+                output_name += output_def["filename_suffix"]
+                if temp_data["without_handles"]:
+                    output_name += "_noHandles"
+
+                # add outputName to anatomy format fill_data
+                fill_data.update({
+                    "output": output_name,
+                    "ext": output_ext
+                })
+
                 try:  # temporary until oiiotool is supported cross platform
                     ffmpeg_args = self._ffmpeg_arguments(
                         output_def, instance, new_repre, temp_data, fill_data
@@ -316,14 +331,6 @@ class ExtractReview(pyblish.api.InstancePlugin):
                 if files_to_clean:
                     for f in files_to_clean:
                         os.unlink(f)
-
-                output_name = new_repre.get("outputName", "")
-                output_ext = new_repre["ext"]
-                if output_name:
-                    output_name += "_"
-                output_name += output_def["filename_suffix"]
-                if temp_data["without_handles"]:
-                    output_name += "_noHandles"
 
                 new_repre.update({
                     "name": "{}_{}".format(output_name, output_ext),

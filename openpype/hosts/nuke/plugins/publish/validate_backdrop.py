@@ -1,6 +1,6 @@
-import pyblish
-from avalon.nuke import lib as anlib
 import nuke
+import pyblish
+from openpype.hosts.nuke.api.lib import maintained_selection
 
 
 class SelectCenterInNodeGraph(pyblish.api.Action):
@@ -28,7 +28,7 @@ class SelectCenterInNodeGraph(pyblish.api.Action):
         all_yC = list()
 
         # maintain selection
-        with anlib.maintained_selection():
+        with maintained_selection():
             # collect all failed nodes xpos and ypos
             for instance in instances:
                 bdn = instance[0]

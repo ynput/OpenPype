@@ -1,8 +1,15 @@
-from avalon import api, style, io
-import nuke
 import json
 from collections import OrderedDict
+
+import nuke
+
+from avalon import api, style, io
 from openpype.hosts.nuke.api import lib
+from openpype.hosts.nuke.api import (
+    containerise,
+    update_container,
+    viewer_update_and_undo_stop
+)
 
 
 class LoadEffectsInputProcess(api.Loader):
@@ -30,8 +37,6 @@ class LoadEffectsInputProcess(api.Loader):
         Returns:
             nuke node: containerised nuke node object
         """
-        # import dependencies
-        from avalon.nuke import containerise
 
         # get main variables
         version = context['version']
@@ -142,9 +147,6 @@ class LoadEffectsInputProcess(api.Loader):
 
         """
 
-        from avalon.nuke import (
-            update_container
-        )
         # get main variables
         # Get version from io
         version = io.find_one({
@@ -355,7 +357,6 @@ class LoadEffectsInputProcess(api.Loader):
         self.update(container, representation)
 
     def remove(self, container):
-        from avalon.nuke import viewer_update_and_undo_stop
         node = nuke.toNode(container['objectName'])
         with viewer_update_and_undo_stop():
             nuke.delete(node)
