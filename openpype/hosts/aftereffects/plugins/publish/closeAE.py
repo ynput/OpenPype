@@ -2,7 +2,7 @@
 """Close AE after publish. For Webpublishing only."""
 import pyblish.api
 
-from avalon import aftereffects
+from openpype.hosts.aftereffects.api import get_stub
 
 
 class CloseAE(pyblish.api.ContextPlugin):
@@ -20,7 +20,7 @@ class CloseAE(pyblish.api.ContextPlugin):
     def process(self, context):
         self.log.info("CloseAE")
 
-        stub = aftereffects.stub()
+        stub = get_stub()
         self.log.info("Shutting down AE")
         stub.save()
         stub.close()
