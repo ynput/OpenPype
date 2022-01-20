@@ -4,7 +4,7 @@ from openpype.hosts.nuke.api.lib import maintained_selection
 
 
 class CreateOutputNode(pyblish.api.ContextPlugin):
-    """Adding output node for each ouput write node
+    """Adding output node for each output write node
     So when latly user will want to Load .nk as LifeGroup or Precomp
     Nuke will not complain about missing Output node
     """

@@ -65,7 +65,7 @@ def _sync_utility_scripts(env=None):
             if _itm not in remove_black_list:
                 skip = True
 
-            # do not skyp if pyc in extension
+            # do not skip if pyc in extension
             if not os.path.isdir(_itm) and "pyc" in os.path.splitext(_itm)[-1]:
                 skip = False
 

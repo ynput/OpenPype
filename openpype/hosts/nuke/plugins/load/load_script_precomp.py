@@ -70,7 +70,7 @@ class LinkAsGroup(api.Loader):
         P["useOutput"].setValue(True)
 
         with P:
-            # iterate trough all nodes in group node and find pype writes
+            # iterate through all nodes in group node and find pype writes
             writes = [n.name() for n in nuke.allNodes()
                       if n.Class() == "Group"
                       if get_avalon_knob_data(n)]
@@ -150,7 +150,7 @@ class LinkAsGroup(api.Loader):
         else:
             node["tile_color"].setValue(int("0xff0ff0ff", 16))
 
-        self.log.info("udated to version: {}".format(version.get("name")))
+        self.log.info("updated to version: {}".format(version.get("name")))
 
     def remove(self, container):
         node = nuke.toNode(container['objectName'])
