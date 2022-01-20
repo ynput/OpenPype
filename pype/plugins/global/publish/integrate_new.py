@@ -109,6 +109,10 @@ class IntegrateAssetNew(pyblish.api.InstancePlugin):
     TMP_FILE_EXT = 'tmp'  # suffix to denote temporary files, use without '.'
 
     def process(self, instance):
+        # Ignore instances going to Deadline.
+        if "deadline" in instance.data["families"]:
+            return
+
         self.integrated_file_sizes = {}
         if [ef for ef in self.exclude_families
                 if instance.data["family"] in ef]:
