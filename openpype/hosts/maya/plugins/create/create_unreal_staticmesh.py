@@ -49,7 +49,10 @@ class CreateUnrealStaticMesh(plugin.Creator):
             children = cmds.ls(children, type="transform")
             for node in children:
                 if cmds.listRelatives(node, type="shape"):
-                    if [n for n in self.collision_prefixes if node.startswith(n)]:
+                    if [
+                        n for n in self.collision_prefixes
+                        if node.startswith(n)
+                    ]:
                         cmds.sets(node, forceElement=collisions_set)
                     else:
                         cmds.sets(node, forceElement=geometry_set)

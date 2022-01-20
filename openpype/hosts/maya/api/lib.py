@@ -2877,4 +2877,3 @@ def root_parent(nodes):
         for node in node_parents:
             if node[1]:
                 node[0].setParent(node[1])
-
