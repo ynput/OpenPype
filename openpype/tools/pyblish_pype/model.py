@@ -26,13 +26,14 @@ Roles:
 from __future__ import unicode_literals
 
 import pyblish
+from six import text_type
+
+import Qt
+from Qt import QtCore, QtGui
 
 from . import settings, util
 from .awesome import tags as awesome
-import Qt
-from Qt import QtCore, QtGui
-from six import text_type
-from .vendor import qtawesome
+from avalon.vendor import qtawesome
 from .constants import PluginStates, InstanceStates, GroupStates, Roles
 
 from openpype.api import get_system_settings
