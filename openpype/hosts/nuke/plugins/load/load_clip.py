@@ -3,13 +3,13 @@ from avalon.vendor import qargparse
 from avalon import api, io
 
 from openpype.hosts.nuke.api.lib import (
-    get_imageio_input_colorspace
+    get_imageio_input_colorspace,
+    maintained_selection
 )
-from avalon.nuke import (
+from openpype.hosts.nuke.api import (
     containerise,
     update_container,
-    viewer_update_and_undo_stop,
-    maintained_selection
+    viewer_update_and_undo_stop
 )
 from openpype.hosts.nuke.api import plugin
 
@@ -280,9 +280,6 @@ class LoadClip(plugin.NukeLoader):
         self.set_as_member(read_node)
 
     def remove(self, container):
-
-        from avalon.nuke import viewer_update_and_undo_stop
-
         read_node = nuke.toNode(container['objectName'])
         assert read_node.Class() == "Read", "Must be Read"
 

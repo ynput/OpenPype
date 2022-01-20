@@ -1,7 +1,15 @@
-from avalon import api, style, io
 import nuke
-from avalon.nuke import lib as anlib
-from avalon.nuke import containerise, update_container
+from avalon import api, style, io
+from openpype.hosts.nuke.api.lib import (
+    maintained_selection,
+    get_avalon_knob_data,
+    set_avalon_knob_data
+)
+from openpype.hosts.nuke.api import (
+    containerise,
+    update_container,
+    viewer_update_and_undo_stop
+)
 
 
 class LoadGizmo(api.Loader):
@@ -61,7 +69,7 @@ class LoadGizmo(api.Loader):
         # just in case we are in group lets jump out of it
         nuke.endGroup()
 
-        with anlib.maintained_selection():
+        with maintained_selection():
             # add group from nk
             nuke.nodePaste(file)
 
@@ -122,16 +130,16 @@ class LoadGizmo(api.Loader):
         # just in case we are in group lets jump out of it
         nuke.endGroup()
 
-        with anlib.maintained_selection():
+        with maintained_selection():
             xpos = GN.xpos()
             ypos = GN.ypos()
-            avalon_data = anlib.get_avalon_knob_data(GN)
+            avalon_data = get_avalon_knob_data(GN)
             nuke.delete(GN)
             # add group from nk
             nuke.nodePaste(file)
 
             GN = nuke.selectedNode()
-            anlib.set_avalon_knob_data(GN, avalon_data)
+            set_avalon_knob_data(GN, avalon_data)
             GN.setXYpos(xpos, ypos)
             GN["name"].setValue(object_name)
 
@@ -157,7 +165,6 @@ class LoadGizmo(api.Loader):
         self.update(container, representation)
 
     def remove(self, container):
-        from avalon.nuke import viewer_update_and_undo_stop
         node = nuke.toNode(container['objectName'])
         with viewer_update_and_undo_stop():
             nuke.delete(node)

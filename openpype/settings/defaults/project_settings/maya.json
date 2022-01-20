@@ -166,6 +166,11 @@
             "enabled": false,
             "regex": "(?P<asset>.*)_(.*)_SHD"
         },
+        "ValidateShadingEngine": {
+            "enabled": true,
+            "optional": true,
+            "active": true
+        },
         "ValidateAttributes": {
             "enabled": false,
             "attributes": {}

@@ -4,7 +4,7 @@ import os
 
 import pyblish.api
 
-from avalon import photoshop
+from openpype.hosts.photoshop import api as photoshop
 
 
 class ClosePS(pyblish.api.ContextPlugin):

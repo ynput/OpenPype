@@ -1,7 +1,7 @@
 import os
 from Qt import QtWidgets
 from copy import deepcopy
-
+from pprint import pformat
 from openpype.tools.utils.host_tools import HostToolsHelper
 
 menu_group_name = 'OpenPype'
@@ -26,9 +26,13 @@ default_flame_export_presets = {
 
 
 def callback_selection(selection, function):
-    import openpype.hosts.flame as opflame
-    opflame.selection = selection
-    print(opflame.selection)
+    import openpype.hosts.flame.api as opfapi
+    opfapi.CTX.selection = selection
+    print("Hook Selection: \n\t{}".format(
+        pformat({
+            index: (type(item), item.name)
+            for index, item in enumerate(opfapi.CTX.selection)})
+    ))
     function()
 
 
@@ -108,16 +112,6 @@ class FlameMenuProjectConnect(_FlameMenuApp):
         menu['actions'].append({
             "name": "Workfiles ...",
             "execute": lambda x: self.tools_helper.show_workfiles()
-        })
-        menu['actions'].append({
-            "name": "Create ...",
-            "execute": lambda x: callback_selection(
-                x, self.tools_helper.show_creator)
-        })
-        menu['actions'].append({
-            "name": "Publish ...",
-            "execute": lambda x: callback_selection(
-                x, self.tools_helper.show_publish)
         })
         menu['actions'].append({
             "name": "Load ...",

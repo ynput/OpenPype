@@ -1,9 +1,18 @@
 from avalon import api, style, io
 import nuke
 import nukescripts
-from openpype.hosts.nuke.api import lib as pnlib
-from avalon.nuke import lib as anlib
-from avalon.nuke import containerise, update_container
+
+from openpype.hosts.nuke.api.lib import (
+    find_free_space_to_paste_nodes,
+    maintained_selection,
+    reset_selection,
+    select_nodes,
+    get_avalon_knob_data,
+    set_avalon_knob_data
+)
+from openpype.hosts.nuke.api.commands import viewer_update_and_undo_stop
+from openpype.hosts.nuke.api import containerise, update_container
+
 
 class LoadBackdropNodes(api.Loader):
     """Loading Published Backdrop nodes (workfile, nukenodes)"""
@@ -66,12 +75,12 @@ class LoadBackdropNodes(api.Loader):
         # Get mouse position
         n = nuke.createNode("NoOp")
         xcursor, ycursor = (n.xpos(), n.ypos())
-        anlib.reset_selection()
+        reset_selection()
         nuke.delete(n)
 
         bdn_frame = 50
 
-        with anlib.maintained_selection():
+        with maintained_selection():
 
             # add group from nk
             nuke.nodePaste(file)
@@ -81,11 +90,13 @@ class LoadBackdropNodes(api.Loader):
             nodes = nuke.selectedNodes()
 
             # get pointer position in DAG
-            xpointer, ypointer = pnlib.find_free_space_to_paste_nodes(nodes, direction="right", offset=200+bdn_frame)
+            xpointer, ypointer = find_free_space_to_paste_nodes(
+                nodes, direction="right", offset=200 + bdn_frame
+            )
 
             # reset position to all nodes and replace inputs and output
             for n in nodes:
-                anlib.reset_selection()
+                reset_selection()
                 xpos = (n.xpos() - xcursor) + xpointer
                 ypos = (n.ypos() - ycursor) + ypointer
                 n.setXYpos(xpos, ypos)
@@ -108,7 +119,7 @@ class LoadBackdropNodes(api.Loader):
                         d.setInput(index, dot)
 
                     # remove Input node
-                    anlib.reset_selection()
+                    reset_selection()
                     nuke.delete(n)
                     continue
 
@@ -127,15 +138,15 @@ class LoadBackdropNodes(api.Loader):
                         dot.setInput(0, dep)
 
                     # remove Input node
-                    anlib.reset_selection()
+                    reset_selection()
                     nuke.delete(n)
                     continue
                 else:
                     new_nodes.append(n)
 
             # reselect nodes with new Dot instead of Inputs and Output
-            anlib.reset_selection()
-            anlib.select_nodes(new_nodes)
+            reset_selection()
+            select_nodes(new_nodes)
             # place on backdrop
             bdn = nukescripts.autoBackdrop()
 
@@ -208,16 +219,16 @@ class LoadBackdropNodes(api.Loader):
         # just in case we are in group lets jump out of it
         nuke.endGroup()
 
-        with anlib.maintained_selection():
+        with maintained_selection():
             xpos = GN.xpos()
             ypos = GN.ypos()
-            avalon_data = anlib.get_avalon_knob_data(GN)
+            avalon_data = get_avalon_knob_data(GN)
             nuke.delete(GN)
             # add group from nk
             nuke.nodePaste(file)
 
             GN = nuke.selectedNode()
-            anlib.set_avalon_knob_data(GN, avalon_data)
+            set_avalon_knob_data(GN, avalon_data)
             GN.setXYpos(xpos, ypos)
             GN["name"].setValue(object_name)
 
@@ -243,7 +254,6 @@ class LoadBackdropNodes(api.Loader):
         self.update(container, representation)
 
     def remove(self, container):
-        from avalon.nuke import viewer_update_and_undo_stop
         node = nuke.toNode(container['objectName'])
         with viewer_update_and_undo_stop():
             nuke.delete(node)

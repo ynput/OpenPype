@@ -1,17 +1,13 @@
 import os
 
-from avalon import api
-from avalon import photoshop
 from avalon.pipeline import get_representation_path_from_context
 from avalon.vendor import qargparse
 
-from openpype.lib import Anatomy
-from openpype.hosts.photoshop.plugins.lib import get_unique_layer_name
-
-stub = photoshop.stub()
+from openpype.hosts.photoshop import api as photoshop
+from openpype.hosts.photoshop.api import get_unique_layer_name
 
 
-class ImageFromSequenceLoader(api.Loader):
+class ImageFromSequenceLoader(photoshop.PhotoshopLoader):
     """ Load specific image from sequence
 
         Used only as quick load of reference file from a sequence.
@@ -35,15 +31,16 @@ class ImageFromSequenceLoader(api.Loader):
 
     def load(self, context, name=None, namespace=None, data=None):
         if data.get("frame"):
-            self.fname = os.path.join(os.path.dirname(self.fname),
-                                      data["frame"])
+            self.fname = os.path.join(
+                os.path.dirname(self.fname), data["frame"]
+            )
             if not os.path.exists(self.fname):
                 return
 
-        stub = photoshop.stub()
-        layer_name = get_unique_layer_name(stub.get_layers(),
-                                           context["asset"]["name"],
-                                           name)
+        stub = self.get_stub()
+        layer_name = get_unique_layer_name(
+            stub.get_layers(), context["asset"]["name"], name
+        )
 
         with photoshop.maintained_selection():
             layer = stub.import_smart_object(self.fname, layer_name)
