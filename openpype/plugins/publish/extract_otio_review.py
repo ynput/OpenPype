@@ -85,6 +85,28 @@ class ExtractOTIOReview(openpype.api.Extractor):
         for index, r_otio_cl in enumerate(otio_review_clips):
             # QUESTION: what if transition on clip?
 
+            # check if resolution is the same
+            width = self.to_width
+            height = self.to_height
+            otio_media = r_otio_cl.media_reference
+            media_metadata = otio_media.metadata
+
+            # get from media reference metadata source
+            if media_metadata.get("openpype.source.width"):
+                width = int(media_metadata.get("openpype.source.width"))
+            if media_metadata.get("openpype.source.height"):
+                height = int(media_metadata.get("openpype.source.height"))
+
+            # compare and reset
+            if width != self.to_width:
+                self.to_width = width
+            if height != self.to_height:
+                self.to_height = height
+
+            self.log.debug("> self.to_width x self.to_height: {} x {}".format(
+                self.to_width, self.to_height
+            ))
+
             # get frame range values
             src_range = r_otio_cl.source_range
             start = src_range.start_time.value

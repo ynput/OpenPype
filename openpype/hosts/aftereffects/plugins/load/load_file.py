@@ -1,11 +1,15 @@
-from avalon import api, aftereffects
-from openpype import lib
 import re
 
-stub = aftereffects.stub()
+import avalon.api
+from openpype import lib
+
+from openpype.hosts.aftereffects.api import (
+    AfterEffectsLoader,
+    containerise
+)
 
 
-class FileLoader(api.Loader):
+class FileLoader(AfterEffectsLoader):
     """Load images
 
     Stores the imported asset in a container named after the asset.
@@ -21,6 +25,7 @@ class FileLoader(api.Loader):
     representations = ["*"]
 
     def load(self, context, name=None, namespace=None, data=None):
+        stub = self.get_stub()
         layers = stub.get_items(comps=True, folders=True, footages=True)
         existing_layers = [layer.name for layer in layers]
         comp_name = lib.get_unique_layer_name(
@@ -60,7 +65,7 @@ class FileLoader(api.Loader):
         self[:] = [comp]
         namespace = namespace or comp_name
 
-        return aftereffects.containerise(
+        return containerise(
             name,
             namespace,
             comp,
@@ -70,6 +75,7 @@ class FileLoader(api.Loader):
 
     def update(self, container, representation):
         """ Switch asset or change version """
+        stub = self.get_stub()
         layer = container.pop("layer")
 
         context = representation.get("context", {})
@@ -86,7 +92,7 @@ class FileLoader(api.Loader):
                 "{}_{}".format(context["asset"], context["subset"]))
         else:  # switching version - keep same name
             layer_name = container["namespace"]
-        path = api.get_representation_path(representation)
+        path = avalon.api.get_representation_path(representation)
         # with aftereffects.maintained_selection():  # TODO
         stub.replace_item(layer.id, path, stub.LOADED_ICON + layer_name)
         stub.imprint(
@@ -101,6 +107,7 @@ class FileLoader(api.Loader):
         Args:
             container (dict): container to be removed - used to get layer_id
         """
+        stub = self.get_stub()
         layer = container.pop("layer")
         stub.imprint(layer, {})
         stub.delete_item(layer.id)

@@ -313,13 +313,7 @@ def attribute_values(attr_values):
 
     """
 
-    # NOTE(antirotor): this didn't work for some reason for Yeti attributes
-    # original = [(attr, cmds.getAttr(attr)) for attr in attr_values]
-    original = []
-    for attr in attr_values:
-        type = cmds.getAttr(attr, type=True)
-        value = cmds.getAttr(attr)
-        original.append((attr, str(value) if type == "string" else value))
+    original = [(attr, cmds.getAttr(attr)) for attr in attr_values]
     try:
         for attr, value in attr_values.items():
             if isinstance(value, string_types):
@@ -331,6 +325,12 @@ def attribute_values(attr_values):
         for attr, value in original:
             if isinstance(value, string_types):
                 cmds.setAttr(attr, value, type="string")
+            elif value is None and cmds.getAttr(attr, type=True) == "string":
+                # In some cases the maya.cmds.getAttr command returns None
+                # for string attributes but this value cannot assigned.
+                # Note: After setting it once to "" it will then return ""
+                #       instead of None. So this would only happen once.
+                cmds.setAttr(attr, "", type="string")
             else:
                 cmds.setAttr(attr, value)
 
