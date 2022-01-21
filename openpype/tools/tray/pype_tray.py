@@ -328,8 +328,8 @@ class TrayManager:
         self.main_thread_timer = main_thread_timer
 
         version_check_timer = QtCore.QTimer()
-        version_check_timer.timeout.connect(self._on_version_check_timer)
         if self._version_check_interval > 0:
+            version_check_timer.timeout.connect(self._on_version_check_timer)
             version_check_timer.setInterval(self._version_check_interval)
             version_check_timer.start()
         self._version_check_timer = version_check_timer
@@ -341,6 +341,9 @@ class TrayManager:
 
     def _startup_validations(self):
         """Run possible startup validations."""
+        # Trigger version validation on start
+        self._version_check_timer.timeout.emit()
+
         self._validate_settings_defaults()
 
     def _validate_settings_defaults(self):
