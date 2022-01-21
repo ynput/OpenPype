@@ -30,6 +30,7 @@ class HostToolsHelper:
         self._library_loader_tool = None
         self._look_assigner_tool = None
         self._experimental_tools_dialog = None
+        self._studio_tools_dialog = None
 
     @property
     def log(self):
@@ -247,6 +248,24 @@ class HostToolsHelper:
             dialog.raise_()
             dialog.activateWindow()
 
+    def get_studio_tools_dialog(self, parent=None):
+        if self._studio_tools_dialog is None:
+            from openpype.tools.studio_tools import (
+                StudioToolsDialog
+            )
+
+            self._studio_tools_dialog = StudioToolsDialog(parent)
+        return self._studio_tools_dialog
+
+    def show_studio_tools_dialog(self, parent=None):
+        """Show dialog with experimental tools."""
+        with qt_app_context():
+            dialog = self.get_studio_tools_dialog(parent)
+
+            dialog.show()
+            dialog.raise_()
+            dialog.activateWindow()
+
     def get_tool_by_name(self, tool_name, parent=None, *args, **kwargs):
         """Show tool by it's name.
 
@@ -278,6 +297,9 @@ class HostToolsHelper:
 
         elif tool_name == "experimental_tools":
             return self.get_experimental_tools_dialog(parent, *args, **kwargs)
+
+        elif tool_name == "studio_tools":
+            return self.get_studio_tools_dialog(parent, *args, **kwargs)
 
         else:
             self.log.warning(
@@ -315,6 +337,9 @@ class HostToolsHelper:
 
         elif tool_name == "experimental_tools":
             self.show_experimental_tools_dialog(parent, *args, **kwargs)
+
+        elif tool_name == "studio_tools":
+            self.show_studio_tools_dialog(parent, *args, **kwargs)
 
         else:
             self.log.warning(
