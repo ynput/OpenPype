@@ -9,7 +9,8 @@ from openpype.hosts.nuke.api.lib import (
 from openpype.hosts.nuke.api import (
     containerise,
     update_container,
-    viewer_update_and_undo_stop
+    viewer_update_and_undo_stop,
+    colorspace_exists_on_node
 )
 from openpype.hosts.nuke.api import plugin
 
@@ -65,12 +66,37 @@ class LoadClip(plugin.NukeLoader):
             + plugin.get_review_presets_config()
         )
 
-    def load(self, context, name, namespace, options):
+    def _set_colorspace(self, node, version_data, repre_data, path=None):
+        output_color = None
+        path = path or self.fname.replace("\\", "/")
+        # get colorspace
+        colorspace = repre_data.get("colorspace")
+        colorspace = colorspace or version_data.get("colorspace")
 
+        # colorspace from `project_anatomy/imageio/nuke/regexInputs`
+        iio_colorspace = get_imageio_input_colorspace(path)
+
+        # Set colorspace defined in version data
+        if (
+            colorspace is not None
+            and colorspace_exists_on_node(
+                node, str(colorspace)) is not False
+        ):
+            node["colorspace"].setValue(str(colorspace))
+            output_color = str(colorspace)
+        elif iio_colorspace is not None:
+            node["colorspace"].setValue(iio_colorspace)
+            output_color = iio_colorspace
+
+        return output_color
+
+
+    def load(self, context, name, namespace, options):
+        repres = context["representation"]
         # reste container id so it is always unique for each instance
         self.reset_container_id()
 
-        is_sequence = len(context["representation"]["files"]) > 1
+        is_sequence = len(repres["files"]) > 1
 
         file = self.fname.replace("\\", "/")
 
@@ -79,10 +105,9 @@ class LoadClip(plugin.NukeLoader):
 
         version = context['version']
         version_data = version.get("data", {})
-        repr_id = context["representation"]["_id"]
-        colorspace = version_data.get("colorspace")
-        iio_colorspace = get_imageio_input_colorspace(file)
-        repr_cont = context["representation"]["context"]
+        repr_id = repres["_id"]
+
+        repr_cont = repres["context"]
 
         self.log.info("version_data: {}\n".format(version_data))
         self.log.debug(
@@ -116,7 +141,7 @@ class LoadClip(plugin.NukeLoader):
                 "Representation id `{}` is failing to load".format(repr_id))
             return
 
-        read_name = self._get_node_name(context["representation"])
+        read_name = self._get_node_name(repres)
 
         # Create the Loader with the filename path set
         read_node = nuke.createNode(
@@ -128,11 +153,8 @@ class LoadClip(plugin.NukeLoader):
         with viewer_update_and_undo_stop():
             read_node["file"].setValue(file)
 
-            # Set colorspace defined in version data
-            if colorspace:
-                read_node["colorspace"].setValue(str(colorspace))
-            elif iio_colorspace is not None:
-                read_node["colorspace"].setValue(iio_colorspace)
+            set_colorspace = self._set_colorspace(
+                read_node, version_data, repres["data"])
 
             self._set_range_to_node(read_node, first, last, start_at_workfile)
 
@@ -145,6 +167,13 @@ class LoadClip(plugin.NukeLoader):
             for k in add_keys:
                 if k == 'version':
                     data_imprint.update({k: context["version"]['name']})
+                elif k == 'colorspace':
+                    colorspace = repres["data"].get(k)
+                    colorspace = colorspace or version_data.get(k)
+                    data_imprint.update({
+                        "db_colorspace": colorspace,
+                        "set_colorspace": set_colorspace
+                    })
                 else:
                     data_imprint.update(
                         {k: context["version"]['data'].get(k, str(None))})
@@ -193,9 +222,12 @@ class LoadClip(plugin.NukeLoader):
         })
         version_data = version.get("data", {})
         repr_id = representation["_id"]
-        colorspace = version_data.get("colorspace")
-        iio_colorspace = get_imageio_input_colorspace(file)
+
         repr_cont = representation["context"]
+
+        # colorspace profile
+        colorspace = representation["data"].get("colorspace")
+        colorspace = colorspace or version_data.get("colorspace")
 
         self.handle_start = version_data.get("handleStart", 0)
         self.handle_end = version_data.get("handleEnd", 0)
@@ -229,12 +261,9 @@ class LoadClip(plugin.NukeLoader):
         # to avoid multiple undo steps for rest of process
         # we will switch off undo-ing
         with viewer_update_and_undo_stop():
-
-            # Set colorspace defined in version data
-            if colorspace:
-                read_node["colorspace"].setValue(str(colorspace))
-            elif iio_colorspace is not None:
-                read_node["colorspace"].setValue(iio_colorspace)
+            set_colorspace = self._set_colorspace(
+                read_node, version_data, representation["data"],
+                path=file)
 
             self._set_range_to_node(read_node, first, last, start_at_workfile)
 
@@ -243,7 +272,8 @@ class LoadClip(plugin.NukeLoader):
                 "frameStart": str(first),
                 "frameEnd": str(last),
                 "version": str(version.get("name")),
-                "colorspace": colorspace,
+                "db_colorspace": colorspace,
+                "set_colorspace": set_colorspace,
                 "source": version_data.get("source"),
                 "handleStart": str(self.handle_start),
                 "handleEnd": str(self.handle_end),
