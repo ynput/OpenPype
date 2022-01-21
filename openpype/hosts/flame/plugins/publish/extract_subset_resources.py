@@ -47,6 +47,16 @@ class ExtractSubsetResources(openpype.api.Extractor):
     export_presets_mapping = {}
 
     def process(self, instance):
+        try:
+            self._process(instance)
+            # bring ui back
+            self.hide_ui_on_process = False
+        except Exception as msg:
+            self.log.error(msg)
+            # bring ui back
+            self.hide_ui_on_process = False
+
+    def _process(self, instance):
 
         if (
             self.keep_original_representation
@@ -140,7 +150,9 @@ class ExtractSubsetResources(openpype.api.Extractor):
                     "ext": extension,
                     "stagingDir": export_dir_path,
                     "tags": repre_tags,
-                    "colorspace": color_out
+                    "data": {
+                        "colorspace": color_out
+                    }
                 }
 
                 # collect all available content of export dir
@@ -205,8 +217,21 @@ class ExtractSubsetResources(openpype.api.Extractor):
         # exclude single files which are having extension
         # the same as input ext attr
         if (
+            # only one file in list
             len(files_list) == 1
+            # file is having extension as input
             and ext in os.path.splitext(files_list[0])[-1]
+        ):
+            return None, None
+        elif (
+            # more then one file in list
+            len(files_list) >= 1
+            # extension is correct
+            and ext in os.path.splitext(files_list[0])[-1]
+            # test file exists
+            and os.path.exists(
+                os.path.join(stage_dir, files_list[0])
+            )
         ):
             return None, None
 
