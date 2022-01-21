@@ -1381,7 +1381,7 @@ def get_container_members(container):
                                     objectsOnly=True)
         members.update(reference_members)
 
-    return members
+    return list(members)
 
 
 # region LOOKDEV
