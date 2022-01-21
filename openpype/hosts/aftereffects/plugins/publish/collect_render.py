@@ -3,7 +3,6 @@ import re
 import tempfile
 import attr
 
-from avalon import aftereffects
 import pyblish.api
 
 from openpype.settings import get_project_settings
