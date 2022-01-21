@@ -139,10 +139,14 @@ class ExtractSubsetResources(openpype.api.Extractor):
                     "tags": repre_tags
                 }
 
+                # collect all available content of export dir
                 files = os.listdir(export_dir_path)
-                n_stage_dir, n_files = self.check_if_dirs_in_paths(
+
+                # make sure no nested folders inside
+                n_stage_dir, n_files = self._unfolds_nested_folders(
                     export_dir_path, files, extension)
 
+                # fix representation in case of nested folders
                 if n_stage_dir:
                     representation_data["stagingDir"] = n_stage_dir
                     files = n_files
@@ -178,13 +182,28 @@ class ExtractSubsetResources(openpype.api.Extractor):
         self.log.debug("All representations: {}".format(
             pformat(instance.data["representations"])))
 
-    def check_if_dirs_in_paths(self, stage_dir, files_list, ext):
+    def _unfolds_nested_folders(self, stage_dir, files_list, ext):
+        """Unfolds nested folders
 
+        Args:
+            stage_dir (str): path string with directory
+            files_list (list): list of file names
+            ext (str): extension (jpg)[without dot]
+
+        Raises:
+            IOError: in case no files were collected form any directory
+
+        Returns:
+            str, list: new staging dir path, new list of file names
+            or
+            None, None: In case single file in `files_list`
+        """
+        # exclude single files which are having extension
+        # the same as input ext attr
         if (
             len(files_list) == 1
             and ext in os.path.splitext(files_list[0])[-1]
         ):
-
             return None, None
 
         new_stage_dir = None
