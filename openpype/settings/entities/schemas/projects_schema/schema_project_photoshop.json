@@ -183,6 +183,10 @@
             ]
         },
         {
+            "type": "schema",
+            "name": "schema_photoshop_scriptsmenu"
+        },
+        {
             "type": "schema_template",
             "name": "template_workfile_options",
             "skip_paths": [
