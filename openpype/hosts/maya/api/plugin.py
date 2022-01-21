@@ -184,6 +184,7 @@ class ReferenceLoader(api.Loader):
         # Get reference node from container members
         members = get_container_members(node)
         reference_node = get_reference_node(members, self.log)
+        namespace = cmds.referenceQuery(reference_node, namespace=True)
 
         file_type = {
             "ma": "mayaAscii",
@@ -201,18 +202,14 @@ class ReferenceLoader(api.Loader):
         alembic_data = {}
         if representation["name"] == "abc":
             alembic_nodes = cmds.ls(
-                "{}:*".format(members[0].split(":")[0]), type="AlembicNode"
+                "{}:*".format(namespace), type="AlembicNode"
             )
             if alembic_nodes:
                 for attr in alembic_attrs:
                     node_attr = "{}.{}".format(alembic_nodes[0], attr)
                     alembic_data[attr] = cmds.getAttr(node_attr)
             else:
-                cmds.warning(
-                    "No alembic nodes found in {}".format(
-                        cmds.ls("{}:*".format(members[0].split(":")[0]))
-                    )
-                )
+                self.log.debug("No alembic nodes found in {}".format(members))
 
         try:
             content = cmds.file(path,
@@ -236,9 +233,9 @@ class ReferenceLoader(api.Loader):
             self.log.warning("Ignoring file read error:\n%s", exc)
 
         # Reapply alembic settings.
-        if representation["name"] == "abc":
+        if representation["name"] == "abc" and alembic_data:
             alembic_nodes = cmds.ls(
-                "{}:*".format(members[0].split(":")[0]), type="AlembicNode"
+                "{}:*".format(namespace), type="AlembicNode"
             )
             if alembic_nodes:
                 for attr, value in alembic_data.items():
