@@ -178,7 +178,7 @@ class VersionDialog(QtWidgets.QDialog):
             title = "OpenPype version is higher"
             label_message = (
                 "Running OpenPype version is <b>{}</b>."
-                " Your production use version <b>{}</b>."
+                " Your production uses version <b>{}</b>."
             ).format(str(current_version), str(expected_version))
             ignore_label = "I know"
             restart_label = "Restart && Change"
