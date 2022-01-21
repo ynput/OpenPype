@@ -22,6 +22,7 @@ class ExtractSubsetResources(openpype.api.Extractor):
             "ext": "jpg",
             "xml_preset_file": "Jpeg (8-bit).xml",
             "xml_preset_dir": "",
+            "colorspace_out": "Output - sRGB",
             "representation_add_range": False,
             "representation_tags": ["thumbnail"]
         },
@@ -29,6 +30,7 @@ class ExtractSubsetResources(openpype.api.Extractor):
             "ext": "mov",
             "xml_preset_file": "Apple iPad (1920x1080).xml",
             "xml_preset_dir": "",
+            "colorspace_out": "Output - Rec.709",
             "representation_add_range": True,
             "representation_tags": [
                 "review",
@@ -84,6 +86,7 @@ class ExtractSubsetResources(openpype.api.Extractor):
                 preset_file = preset_config["xml_preset_file"]
                 preset_dir = preset_config["xml_preset_dir"]
                 repre_tags = preset_config["representation_tags"]
+                color_out = preset_config["colorspace_out"]
 
                 # validate xml preset file is filled
                 if preset_file == "":
@@ -136,7 +139,8 @@ class ExtractSubsetResources(openpype.api.Extractor):
                     "outputName": unique_name,
                     "ext": extension,
                     "stagingDir": export_dir_path,
-                    "tags": repre_tags
+                    "tags": repre_tags,
+                    "colorspace": color_out
                 }
 
                 # collect all available content of export dir

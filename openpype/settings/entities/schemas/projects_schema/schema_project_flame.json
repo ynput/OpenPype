@@ -167,6 +167,11 @@
                                         "type": "text"
                                     },
                                     {
+                                        "key": "colorspace_out",
+                                        "label": "Output color (imageio)",
+                                        "type": "text"
+                                    },
+                                    {
                                         "type": "separator"
                                     },
                                     {
