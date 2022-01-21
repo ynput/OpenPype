@@ -66,31 +66,6 @@ class LoadClip(plugin.NukeLoader):
             + plugin.get_review_presets_config()
         )
 
-    def _set_colorspace(self, node, version_data, repre_data, path=None):
-        output_color = None
-        path = path or self.fname.replace("\\", "/")
-        # get colorspace
-        colorspace = repre_data.get("colorspace")
-        colorspace = colorspace or version_data.get("colorspace")
-
-        # colorspace from `project_anatomy/imageio/nuke/regexInputs`
-        iio_colorspace = get_imageio_input_colorspace(path)
-
-        # Set colorspace defined in version data
-        if (
-            colorspace is not None
-            and colorspace_exists_on_node(
-                node, str(colorspace)) is not False
-        ):
-            node["colorspace"].setValue(str(colorspace))
-            output_color = str(colorspace)
-        elif iio_colorspace is not None:
-            node["colorspace"].setValue(iio_colorspace)
-            output_color = iio_colorspace
-
-        return output_color
-
-
     def load(self, context, name, namespace, options):
         repres = context["representation"]
         # reste container id so it is always unique for each instance
@@ -406,3 +381,27 @@ class LoadClip(plugin.NukeLoader):
         }
 
         return self.node_name_template.format(**name_data)
+
+    def _set_colorspace(self, node, version_data, repre_data, path=None):
+        output_color = None
+        path = path or self.fname.replace("\\", "/")
+        # get colorspace
+        colorspace = repre_data.get("colorspace")
+        colorspace = colorspace or version_data.get("colorspace")
+
+        # colorspace from `project_anatomy/imageio/nuke/regexInputs`
+        iio_colorspace = get_imageio_input_colorspace(path)
+
+        # Set colorspace defined in version data
+        if (
+            colorspace is not None
+            and colorspace_exists_on_node(
+                node, str(colorspace)) is not False
+        ):
+            node["colorspace"].setValue(str(colorspace))
+            output_color = str(colorspace)
+        elif iio_colorspace is not None:
+            node["colorspace"].setValue(iio_colorspace)
+            output_color = iio_colorspace
+
+        return output_color
