@@ -85,7 +85,7 @@ class VersionDialog(QtWidgets.QDialog):
 
     def __init__(self, parent=None):
         super(VersionDialog, self).__init__(parent)
-        self.setWindowTitle("OpenPype update is needed")
+
         icon = QtGui.QIcon(resources.get_openpype_icon_filepath())
         self.setWindowIcon(icon)
         self.setWindowFlags(
@@ -167,6 +167,7 @@ class VersionDialog(QtWidgets.QDialog):
         self, current_version, expected_version, current_is_higher
     ):
         if not current_is_higher:
+            title = "OpenPype update is needed"
             label_message = (
                 "Running OpenPype version is <b>{}</b>."
                 " Your production has been updated to version <b>{}</b>."
@@ -174,12 +175,15 @@ class VersionDialog(QtWidgets.QDialog):
             ignore_label = "Later"
             restart_label = "Restart && Update"
         else:
+            title = "OpenPype version is higher"
             label_message = (
                 "Running OpenPype version is <b>{}</b>."
                 " Your production should use version <b>{}</b>."
             ).format(str(current_version), str(expected_version))
             ignore_label = "I know"
             restart_label = "Restart && Change"
+
+        self.setWindowTitle(title)
 
         self._current_is_higher = current_is_higher
 
