@@ -18,6 +18,7 @@ from openpype.lib import (
     get_openpype_execute_args,
     op_version_control_available,
     is_current_version_studio_latest,
+    is_current_version_higher_than_expected,
     is_running_from_build,
     is_running_staging,
     get_expected_version,
@@ -104,13 +105,12 @@ class VersionDialog(QtWidgets.QDialog):
         label_widget.setWordWrap(True)
 
         top_layout = QtWidgets.QHBoxLayout(top_widget)
-        # top_layout.setContentsMargins(0, 0, 0, 0)
         top_layout.setSpacing(10)
         top_layout.addWidget(gift_icon_label, 0, QtCore.Qt.AlignCenter)
         top_layout.addWidget(label_widget, 1)
 
-        ignore_btn = QtWidgets.QPushButton("Later", self)
-        restart_btn = QtWidgets.QPushButton("Restart && Update", self)
+        ignore_btn = QtWidgets.QPushButton(self)
+        restart_btn = QtWidgets.QPushButton(self)
         restart_btn.setObjectName("TrayRestartButton")
 
         btns_layout = QtWidgets.QHBoxLayout()
@@ -127,7 +127,12 @@ class VersionDialog(QtWidgets.QDialog):
         restart_btn.clicked.connect(self._on_reset)
 
         self._label_widget = label_widget
+        self._gift_icon_label = gift_icon_label
+        self._ignore_btn = ignore_btn
+        self._restart_btn = restart_btn
+
         self._restart_accepted = False
+        self._current_is_higher = False
 
         self.setStyleSheet(style.load_stylesheet())
 
@@ -152,15 +157,37 @@ class VersionDialog(QtWidgets.QDialog):
 
     def closeEvent(self, event):
         super().closeEvent(event)
-        if not self._restart_accepted:
-            self.ignore_requested.emit()
+        if self._restart_accepted or self._current_is_higher:
+            return
+        # Trigger ignore requested only if restart was not clicked and current
+        #   version is lower
+        self.ignore_requested.emit()
 
-    def update_versions(self, current_version, expected_version):
-        message = (
-            "Running OpenPype version is <b>{}</b>."
-            " Your production has been updated to version <b>{}</b>."
-        ).format(str(current_version), str(expected_version))
-        self._label_widget.setText(message)
+    def update_versions(
+        self, current_version, expected_version, current_is_higher
+    ):
+        if not current_is_higher:
+            label_message = (
+                "Running OpenPype version is <b>{}</b>."
+                " Your production has been updated to version <b>{}</b>."
+            ).format(str(current_version), str(expected_version))
+            ignore_label = "Later"
+            restart_label = "Restart && Update"
+        else:
+            label_message = (
+                "Running OpenPype version is <b>{}</b>."
+                " Your production should use version <b>{}</b>."
+            ).format(str(current_version), str(expected_version))
+            ignore_label = "I know"
+            restart_label = "Restart && Change"
+
+        self._current_is_higher = current_is_higher
+
+        self._gift_icon_label.setVisible(not current_is_higher)
+
+        self._label_widget.setText(label_message)
+        self._ignore_btn.setText(ignore_label)
+        self._restart_btn.setText(restart_label)
 
     def _on_ignore(self):
         self.reject()
@@ -247,15 +274,17 @@ class TrayManager:
 
         expected_version = get_expected_version()
         current_version = get_openpype_version()
+        current_is_higher = is_current_version_higher_than_expected()
+
         self._version_dialog.update_versions(
-            current_version, expected_version
+            current_version, expected_version, current_is_higher
         )
         self._version_dialog.show()
         self._version_dialog.raise_()
         self._version_dialog.activateWindow()
 
     def _restart_and_install(self):
-        self.restart()
+        self.restart(use_expected_version=True)
 
     def _outdated_version_ignored(self):
         self.show_tray_message(
@@ -432,12 +461,18 @@ class TrayManager:
         self._restart_action = restart_action
 
     def _on_restart_action(self):
-        self.restart()
+        self.restart(use_expected_version=True)
 
-    def restart(self, reset_version=True):
+    def restart(self, use_expected_version=False, reset_version=False):
         """Restart Tray tool.
 
         First creates new process with same argument and close current tray.
+
+        Args:
+            use_expected_version(bool): OpenPype version is set to expected
+                version.
+            reset_version(bool): OpenPype version is cleaned up so igniters
+                logic will decide which version will be used.
         """
         args = get_openpype_execute_args()
         kwargs = {
@@ -450,6 +485,15 @@ class TrayManager:
         # - when running from code it is the same as first from sys.argv
         if args[-1] == additional_args[0]:
             additional_args.pop(0)
+
+        if use_expected_version:
+            expected_version = get_expected_version()
+            if expected_version is not None:
+                reset_version = False
+                kwargs["env"]["OPENPYPE_VERSION"] = str(expected_version)
+            else:
+                # Trigger reset of version if expected version was not found
+                reset_version = True
 
         # Pop OPENPYPE_VERSION
         if reset_version:
