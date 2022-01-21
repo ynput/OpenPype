@@ -115,7 +115,7 @@ def _darwin_get_engine_version() -> dict:
     Returns:
         dict: version as a key and path as a value.
 
-    See Aslo:
+    See Also:
         :func:`_win_get_engine_versions`.
 
     """

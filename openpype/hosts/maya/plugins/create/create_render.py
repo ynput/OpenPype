@@ -53,8 +53,8 @@ class CreateRender(plugin.Creator):
             renderer.
         ass (bool): Submit as ``ass`` file for standalone Arnold renderer.
         tileRendering (bool): Instance is set to tile rendering mode. We
-            won't submit actuall render, but we'll make publish job to wait
-            for Tile Assemly job done and then publish.
+            won't submit actual render, but we'll make publish job to wait
+            for Tile Assembly job done and then publish.
 
     See Also:
         https://pype.club/docs/artist_hosts_maya#creating-basic-render-setup

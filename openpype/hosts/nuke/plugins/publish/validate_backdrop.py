@@ -1,6 +1,6 @@
-import pyblish
-from avalon.nuke import lib as anlib
 import nuke
+import pyblish
+from openpype.hosts.nuke.api.lib import maintained_selection
 
 
 class SelectCenterInNodeGraph(pyblish.api.Action):
@@ -28,7 +28,7 @@ class SelectCenterInNodeGraph(pyblish.api.Action):
         all_yC = list()
 
         # maintain selection
-        with anlib.maintained_selection():
+        with maintained_selection():
             # collect all failed nodes xpos and ypos
             for instance in instances:
                 bdn = instance[0]
@@ -48,7 +48,7 @@ class SelectCenterInNodeGraph(pyblish.api.Action):
 @pyblish.api.log
 class ValidateBackdrop(pyblish.api.InstancePlugin):
     """Validate amount of nodes on backdrop node in case user
-    forgoten to add nodes above the publishing backdrop node"""
+    forgotten to add nodes above the publishing backdrop node"""
 
     order = pyblish.api.ValidatorOrder
     optional = True

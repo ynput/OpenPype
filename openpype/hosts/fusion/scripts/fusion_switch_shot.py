@@ -85,7 +85,7 @@ def _format_filepath(session):
     new_filename = "{}_{}_slapcomp_v001.comp".format(project, asset)
     new_filepath = os.path.join(slapcomp_dir, new_filename)
 
-    # Create new unqiue filepath
+    # Create new unique filepath
     if os.path.exists(new_filepath):
         new_filepath = pype.version_up(new_filepath)
 

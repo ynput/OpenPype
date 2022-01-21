@@ -1228,6 +1228,11 @@ QScrollBar::add-page:vertical, QScrollBar::sub-page:vertical {
     background: #21252B;
 }
 
+/* Tray */
+#TrayRestartButton {
+    background: {color:restart-btn-bg};
+}
+
 /* Globally used names */
 #Separator {
     background: {color:bg-menu-separator};

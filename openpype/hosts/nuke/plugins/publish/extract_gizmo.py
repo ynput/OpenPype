@@ -1,9 +1,15 @@
-import pyblish.api
-from avalon.nuke import lib as anlib
-from openpype.hosts.nuke.api import utils as pnutils
-import nuke
 import os
+import nuke
+
+import pyblish.api
+
 import openpype
+from openpype.hosts.nuke.api import utils as pnutils
+from openpype.hosts.nuke.api.lib import (
+    maintained_selection,
+    reset_selection,
+    select_nodes
+)
 
 
 class ExtractGizmo(openpype.api.Extractor):
@@ -26,17 +32,17 @@ class ExtractGizmo(openpype.api.Extractor):
         path = os.path.join(stagingdir, filename)
 
         # maintain selection
-        with anlib.maintained_selection():
+        with maintained_selection():
             orig_grpn_name = orig_grpn.name()
             tmp_grpn_name = orig_grpn_name + "_tmp"
             # select original group node
-            anlib.select_nodes([orig_grpn])
+            select_nodes([orig_grpn])
 
             # copy to clipboard
             nuke.nodeCopy("%clipboard%")
 
             # reset selection to none
-            anlib.reset_selection()
+            reset_selection()
 
             # paste clipboard
             nuke.nodePaste("%clipboard%")
