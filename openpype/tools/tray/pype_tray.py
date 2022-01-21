@@ -258,6 +258,10 @@ class TrayManager:
 
     def validate_openpype_version(self):
         using_requested = is_current_version_studio_latest()
+        # TODO Handle situations when version can't be detected
+        if using_requested is None:
+            using_requested = True
+
         self._restart_action.setVisible(not using_requested)
         if using_requested:
             if (
