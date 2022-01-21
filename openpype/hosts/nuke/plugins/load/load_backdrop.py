@@ -246,7 +246,7 @@ class LoadBackdropNodes(api.Loader):
         else:
             GN["tile_color"].setValue(int(self.node_color, 16))
 
-        self.log.info("udated to version: {}".format(version.get("name")))
+        self.log.info("updated to version: {}".format(version.get("name")))
 
         return update_container(GN, data_imprint)
 

@@ -9,7 +9,7 @@ import addon_utils
 def load_scripts(paths):
     """Copy of `load_scripts` from Blender's implementation.
 
-    It is possible that whis function will be changed in future and usage will
+    It is possible that this function will be changed in future and usage will
     be based on Blender version.
     """
     import bpy_types
