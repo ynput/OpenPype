@@ -1,5 +1,5 @@
 import pyblish.api
-import avalon.blender.workio
+from openpype.hosts.blender.api.workio import save_file
 
 
 class IncrementWorkfileVersion(pyblish.api.ContextPlugin):
@@ -20,6 +20,6 @@ class IncrementWorkfileVersion(pyblish.api.ContextPlugin):
         path = context.data["currentFile"]
         filepath = version_up(path)
 
-        avalon.blender.workio.save_file(filepath, copy=False)
+        save_file(filepath, copy=False)
 
         self.log.info('Incrementing script version')
