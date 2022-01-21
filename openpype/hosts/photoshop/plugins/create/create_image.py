@@ -1,6 +1,6 @@
 from Qt import QtWidgets
 import openpype.api
-from avalon import photoshop
+from openpype.hosts.photoshop import api as photoshop
 
 
 class CreateImage(openpype.api.Creator):

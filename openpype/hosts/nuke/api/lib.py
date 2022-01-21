@@ -3,15 +3,15 @@ import re
 import sys
 import six
 import platform
+import contextlib
 from collections import OrderedDict
 
+import clique
+
+import nuke
 
 from avalon import api, io, lib
-import avalon.nuke
-from avalon.nuke import lib as anlib
-from avalon.nuke import (
-    save_file, open_file
-)
+
 from openpype.api import (
     Logger,
     Anatomy,
@@ -28,21 +28,476 @@ from openpype.lib.path_tools import HostDirmap
 from openpype.settings import get_project_settings
 from openpype.modules import ModulesManager
 
-import nuke
+from .workio import (
+    save_file,
+    open_file
+)
 
-from .utils import set_context_favorites
+log = Logger.get_logger(__name__)
 
-log = Logger().get_logger(__name__)
+_NODE_TAB_NAME = "{}".format(os.getenv("AVALON_LABEL") or "Avalon")
+AVALON_LABEL = os.getenv("AVALON_LABEL") or "Avalon"
+AVALON_TAB = "{}".format(AVALON_LABEL)
+AVALON_DATA_GROUP = "{}DataGroup".format(AVALON_LABEL.capitalize())
+EXCLUDED_KNOB_TYPE_ON_READ = (
+    20,  # Tab Knob
+    26,  # Text Knob (But for backward compatibility, still be read
+         #  if value is not an empty string.)
+)
 
-opnl = sys.modules[__name__]
-opnl._project = None
-opnl.project_name = os.getenv("AVALON_PROJECT")
-opnl.workfiles_launched = False
-opnl._node_tab_name = "{}".format(os.getenv("AVALON_LABEL") or "Avalon")
+
+class Context:
+    main_window = None
+    context_label = None
+    project_name = os.getenv("AVALON_PROJECT")
+    workfiles_launched = False
+    # Seems unused
+    _project_doc = None
+
+
+class Knobby(object):
+    """For creating knob which it's type isn't mapped in `create_knobs`
+
+    Args:
+        type (string): Nuke knob type name
+        value: Value to be set with `Knob.setValue`, put `None` if not required
+        flags (list, optional): Knob flags to be set with `Knob.setFlag`
+        *args: Args other than knob name for initializing knob class
+
+    """
+
+    def __init__(self, type, value, flags=None, *args):
+        self.type = type
+        self.value = value
+        self.flags = flags or []
+        self.args = args
+
+    def create(self, name, nice=None):
+        knob_cls = getattr(nuke, self.type)
+        knob = knob_cls(name, nice, *self.args)
+        if self.value is not None:
+            knob.setValue(self.value)
+        for flag in self.flags:
+            knob.setFlag(flag)
+        return knob
+
+
+def create_knobs(data, tab=None):
+    """Create knobs by data
+
+    Depending on the type of each dict value and creates the correct Knob.
+
+    Mapped types:
+        bool: nuke.Boolean_Knob
+        int: nuke.Int_Knob
+        float: nuke.Double_Knob
+        list: nuke.Enumeration_Knob
+        six.string_types: nuke.String_Knob
+
+        dict: If it's a nested dict (all values are dict), will turn into
+            A tabs group. Or just a knobs group.
+
+    Args:
+        data (dict): collection of attributes and their value
+        tab (string, optional): Knobs' tab name
+
+    Returns:
+        list: A list of `nuke.Knob` objects
+
+    """
+    def nice_naming(key):
+        """Convert camelCase name into UI Display Name"""
+        words = re.findall('[A-Z][^A-Z]*', key[0].upper() + key[1:])
+        return " ".join(words)
+
+    # Turn key-value pairs into knobs
+    knobs = list()
+
+    if tab:
+        knobs.append(nuke.Tab_Knob(tab))
+
+    for key, value in data.items():
+        # Knob name
+        if isinstance(key, tuple):
+            name, nice = key
+        else:
+            name, nice = key, nice_naming(key)
+
+        # Create knob by value type
+        if isinstance(value, Knobby):
+            knobby = value
+            knob = knobby.create(name, nice)
+
+        elif isinstance(value, float):
+            knob = nuke.Double_Knob(name, nice)
+            knob.setValue(value)
+
+        elif isinstance(value, bool):
+            knob = nuke.Boolean_Knob(name, nice)
+            knob.setValue(value)
+            knob.setFlag(nuke.STARTLINE)
+
+        elif isinstance(value, int):
+            knob = nuke.Int_Knob(name, nice)
+            knob.setValue(value)
+
+        elif isinstance(value, six.string_types):
+            knob = nuke.String_Knob(name, nice)
+            knob.setValue(value)
+
+        elif isinstance(value, list):
+            knob = nuke.Enumeration_Knob(name, nice, value)
+
+        elif isinstance(value, dict):
+            if all(isinstance(v, dict) for v in value.values()):
+                # Create a group of tabs
+                begain = nuke.BeginTabGroup_Knob()
+                end = nuke.EndTabGroup_Knob()
+                begain.setName(name)
+                end.setName(name + "_End")
+                knobs.append(begain)
+                for k, v in value.items():
+                    knobs += create_knobs(v, tab=k)
+                knobs.append(end)
+            else:
+                # Create a group of knobs
+                knobs.append(nuke.Tab_Knob(
+                    name, nice, nuke.TABBEGINCLOSEDGROUP))
+                knobs += create_knobs(value)
+                knobs.append(
+                    nuke.Tab_Knob(name + "_End", nice, nuke.TABENDGROUP))
+            continue
+
+        else:
+            raise TypeError("Unsupported type: %r" % type(value))
+
+        knobs.append(knob)
+
+    return knobs
+
+
+def imprint(node, data, tab=None):
+    """Store attributes with value on node
+
+    Parse user data into Node knobs.
+    Use `collections.OrderedDict` to ensure knob order.
+
+    Args:
+        node(nuke.Node): node object from Nuke
+        data(dict): collection of attributes and their value
+
+    Returns:
+        None
+
+    Examples:
+        ```
+        import nuke
+        from avalon.nuke import lib
+
+        node = nuke.createNode("NoOp")
+        data = {
+            # Regular type of attributes
+            "myList": ["x", "y", "z"],
+            "myBool": True,
+            "myFloat": 0.1,
+            "myInt": 5,
+
+            # Creating non-default imprint type of knob
+            "MyFilePath": lib.Knobby("File_Knob", "/file/path"),
+            "divider": lib.Knobby("Text_Knob", ""),
+
+            # Manual nice knob naming
+            ("my_knob", "Nice Knob Name"): "some text",
+
+            # dict type will be created as knob group
+            "KnobGroup": {
+                "knob1": 5,
+                "knob2": "hello",
+                "knob3": ["a", "b"],
+            },
+
+            # Nested dict will be created as tab group
+            "TabGroup": {
+                "tab1": {"count": 5},
+                "tab2": {"isGood": True},
+                "tab3": {"direction": ["Left", "Right"]},
+            },
+        }
+        lib.imprint(node, data, tab="Demo")
+
+        ```
+
+    """
+    for knob in create_knobs(data, tab):
+        node.addKnob(knob)
+
+
+def add_publish_knob(node):
+    """Add Publish knob to node
+
+    Arguments:
+        node (nuke.Node): nuke node to be processed
+
+    Returns:
+        node (nuke.Node): processed nuke node
+
+    """
+    if "publish" not in node.knobs():
+        body = OrderedDict()
+        body[("divd", "Publishing")] = Knobby("Text_Knob", '')
+        body["publish"] = True
+        imprint(node, body)
+    return node
+
+
+def set_avalon_knob_data(node, data=None, prefix="avalon:"):
+    """ Sets data into nodes's avalon knob
+
+    Arguments:
+        node (nuke.Node): Nuke node to imprint with data,
+        data (dict, optional): Data to be imprinted into AvalonTab
+        prefix (str, optional): filtering prefix
+
+    Returns:
+        node (nuke.Node)
+
+    Examples:
+        data = {
+            'asset': 'sq020sh0280',
+            'family': 'render',
+            'subset': 'subsetMain'
+        }
+    """
+    data = data or dict()
+    create = OrderedDict()
+
+    tab_name = AVALON_TAB
+    editable = ["asset", "subset", "name", "namespace"]
+
+    existed_knobs = node.knobs()
+
+    for key, value in data.items():
+        knob_name = prefix + key
+        gui_name = key
+
+        if knob_name in existed_knobs:
+            # Set value
+            try:
+                node[knob_name].setValue(value)
+            except TypeError:
+                node[knob_name].setValue(str(value))
+        else:
+            # New knob
+            name = (knob_name, gui_name)  # Hide prefix on GUI
+            if key in editable:
+                create[name] = value
+            else:
+                create[name] = Knobby("String_Knob",
+                                      str(value),
+                                      flags=[nuke.READ_ONLY])
+    if tab_name in existed_knobs:
+        tab_name = None
+    else:
+        tab = OrderedDict()
+        warn = Knobby("Text_Knob", "Warning! Do not change following data!")
+        divd = Knobby("Text_Knob", "")
+        head = [
+            (("warn", ""), warn),
+            (("divd", ""), divd),
+        ]
+        tab[AVALON_DATA_GROUP] = OrderedDict(head + list(create.items()))
+        create = tab
+
+    imprint(node, create, tab=tab_name)
+    return node
+
+
+def get_avalon_knob_data(node, prefix="avalon:"):
+    """ Gets a data from nodes's avalon knob
+
+    Arguments:
+        node (obj): Nuke node to search for data,
+        prefix (str, optional): filtering prefix
+
+    Returns:
+        data (dict)
+    """
+
+    # check if lists
+    if not isinstance(prefix, list):
+        prefix = list([prefix])
+
+    data = dict()
+
+    # loop prefix
+    for p in prefix:
+        # check if the node is avalon tracked
+        if AVALON_TAB not in node.knobs():
+            continue
+        try:
+            # check if data available on the node
+            test = node[AVALON_DATA_GROUP].value()
+            log.debug("Only testing if data avalable: `{}`".format(test))
+        except NameError as e:
+            # if it doesn't then create it
+            log.debug("Creating avalon knob: `{}`".format(e))
+            node = set_avalon_knob_data(node)
+            return get_avalon_knob_data(node)
+
+        # get data from filtered knobs
+        data.update({k.replace(p, ''): node[k].value()
+                    for k in node.knobs().keys()
+                    if p in k})
+
+    return data
+
+
+def fix_data_for_node_create(data):
+    """Fixing data to be used for nuke knobs
+    """
+    for k, v in data.items():
+        if isinstance(v, six.text_type):
+            data[k] = str(v)
+        if str(v).startswith("0x"):
+            data[k] = int(v, 16)
+    return data
+
+
+def add_write_node(name, **kwarg):
+    """Adding nuke write node
+
+    Arguments:
+        name (str): nuke node name
+        kwarg (attrs): data for nuke knobs
+
+    Returns:
+        node (obj): nuke write node
+    """
+    frame_range = kwarg.get("frame_range", None)
+
+    w = nuke.createNode(
+        "Write",
+        "name {}".format(name))
+
+    w["file"].setValue(kwarg["file"])
+
+    for k, v in kwarg.items():
+        if "frame_range" in k:
+            continue
+        log.info([k, v])
+        try:
+            w[k].setValue(v)
+        except KeyError as e:
+            log.debug(e)
+            continue
+
+    if frame_range:
+        w["use_limit"].setValue(True)
+        w["first"].setValue(frame_range[0])
+        w["last"].setValue(frame_range[1])
+
+    return w
+
+
+def read(node):
+    """Return user-defined knobs from given `node`
+
+    Args:
+        node (nuke.Node): Nuke node object
+
+    Returns:
+        list: A list of nuke.Knob object
+
+    """
+    def compat_prefixed(knob_name):
+        if knob_name.startswith("avalon:"):
+            return knob_name[len("avalon:"):]
+        elif knob_name.startswith("ak:"):
+            return knob_name[len("ak:"):]
+        else:
+            return knob_name
+
+    data = dict()
+
+    pattern = ("(?<=addUserKnob {)"
+               "([0-9]*) (\\S*)"  # Matching knob type and knob name
+               "(?=[ |}])")
+    tcl_script = node.writeKnobs(nuke.WRITE_USER_KNOB_DEFS)
+    result = re.search(pattern, tcl_script)
+
+    if result:
+        first_user_knob = result.group(2)
+        # Collect user knobs from the end of the knob list
+        for knob in reversed(node.allKnobs()):
+            knob_name = knob.name()
+            if not knob_name:
+                # Ignore unnamed knob
+                continue
+
+            knob_type = nuke.knob(knob.fullyQualifiedName(), type=True)
+            value = knob.value()
+
+            if (
+                knob_type not in EXCLUDED_KNOB_TYPE_ON_READ or
+                # For compating read-only string data that imprinted
+                # by `nuke.Text_Knob`.
+                (knob_type == 26 and value)
+            ):
+                key = compat_prefixed(knob_name)
+                data[key] = value
+
+            if knob_name == first_user_knob:
+                break
+
+    return data
+
+
+def get_node_path(path, padding=4):
+    """Get filename for the Nuke write with padded number as '#'
+
+    Arguments:
+        path (str): The path to render to.
+
+    Returns:
+        tuple: head, padding, tail (extension)
+
+    Examples:
+        >>> get_frame_path("test.exr")
+        ('test', 4, '.exr')
+
+        >>> get_frame_path("filename.#####.tif")
+        ('filename.', 5, '.tif')
+
+        >>> get_frame_path("foobar##.tif")
+        ('foobar', 2, '.tif')
+
+        >>> get_frame_path("foobar_%08d.tif")
+        ('foobar_', 8, '.tif')
+    """
+    filename, ext = os.path.splitext(path)
+
+    # Find a final number group
+    if '%' in filename:
+        match = re.match('.*?(%[0-9]+d)$', filename)
+        if match:
+            padding = int(match.group(1).replace('%', '').replace('d', ''))
+            # remove number from end since fusion
+            # will swap it with the frame number
+            filename = filename.replace(match.group(1), '')
+    elif '#' in filename:
+        match = re.match('.*?(#+)$', filename)
+
+        if match:
+            padding = len(match.group(1))
+            # remove number from end since fusion
+            # will swap it with the frame number
+            filename = filename.replace(match.group(1), '')
+
+    return filename, padding, ext
 
 
 def get_nuke_imageio_settings():
-    return get_anatomy_settings(opnl.project_name)["imageio"]["nuke"]
+    return get_anatomy_settings(Context.project_name)["imageio"]["nuke"]
 
 
 def get_created_node_imageio_setting(**kwarg):
@@ -103,14 +558,15 @@ def check_inventory_versions():
     and check if the node is having actual version. If not then it will color
     it to red.
     """
+    from .pipeline import parse_container
+
     # get all Loader nodes by avalon attribute metadata
     for each in nuke.allNodes():
-        container = avalon.nuke.parse_container(each)
+        container = parse_container(each)
 
         if container:
             node = nuke.toNode(container["objectName"])
-            avalon_knob_data = avalon.nuke.read(
-                node)
+            avalon_knob_data = read(node)
 
             # get representation from io
             representation = io.find_one({
@@ -141,7 +597,7 @@ def check_inventory_versions():
             max_version = max(versions)
 
             # check the available version and do match
-            # change color of node if not max verion
+            # change color of node if not max version
             if version.get("name") not in [max_version]:
                 node["tile_color"].setValue(int("0xd84f20ff", 16))
             else:
@@ -163,11 +619,10 @@ def writes_version_sync():
 
     for each in nuke.allNodes(filter="Write"):
         # check if the node is avalon tracked
-        if opnl._node_tab_name not in each.knobs():
+        if _NODE_TAB_NAME not in each.knobs():
             continue
 
-        avalon_knob_data = avalon.nuke.read(
-            each)
+        avalon_knob_data = read(each)
 
         try:
             if avalon_knob_data['families'] not in ["render"]:
@@ -209,14 +664,14 @@ def check_subsetname_exists(nodes, subset_name):
         bool: True of False
     """
     return next((True for n in nodes
-                 if subset_name in avalon.nuke.read(n).get("subset", "")),
+                 if subset_name in read(n).get("subset", "")),
                 False)
 
 
 def get_render_path(node):
     ''' Generate Render path from presets regarding avalon knob data
     '''
-    data = {'avalon': avalon.nuke.read(node)}
+    data = {'avalon': read(node)}
     data_preset = {
         "nodeclass": data['avalon']['family'],
         "families": [data['avalon']['families']],
@@ -236,10 +691,10 @@ def get_render_path(node):
 
 
 def format_anatomy(data):
-    ''' Helping function for formating of anatomy paths
+    ''' Helping function for formatting of anatomy paths
 
     Arguments:
-        data (dict): dictionary with attributes used for formating
+        data (dict): dictionary with attributes used for formatting
 
     Return:
         path (str)
@@ -385,7 +840,7 @@ def create_write_node(name, data, input=None, prenodes=None,
     for knob in imageio_writes["knobs"]:
         _data.update({knob["name"]: knob["value"]})
 
-    _data = anlib.fix_data_for_node_create(_data)
+    _data = fix_data_for_node_create(_data)
 
     log.debug("_data: `{}`".format(_data))
 
@@ -462,11 +917,11 @@ def create_write_node(name, data, input=None, prenodes=None,
                 else:
                     now_node.setInput(0, prev_node)
 
-                # swith actual node to previous
+                # switch actual node to previous
                 prev_node = now_node
 
         # creating write node
-        write_node = now_node = anlib.add_write_node(
+        write_node = now_node = add_write_node(
             "inside_{}".format(name),
             **_data
         )
@@ -474,7 +929,7 @@ def create_write_node(name, data, input=None, prenodes=None,
         # connect to previous node
         now_node.setInput(0, prev_node)
 
-        # swith actual node to previous
+        # switch actual node to previous
         prev_node = now_node
 
         now_node = nuke.createNode("Output", "name Output1")
@@ -484,8 +939,8 @@ def create_write_node(name, data, input=None, prenodes=None,
         now_node.setInput(0, prev_node)
 
     # imprinting group node
-    anlib.set_avalon_knob_data(GN, data["avalon"])
-    anlib.add_publish_knob(GN)
+    set_avalon_knob_data(GN, data["avalon"])
+    add_publish_knob(GN)
     add_rendering_knobs(GN, farm)
 
     if review:
@@ -516,7 +971,7 @@ def create_write_node(name, data, input=None, prenodes=None,
             GN.addKnob(knob)
         else:
             if "___" in _k_name:
-                # add devider
+                # add divider
                 GN.addKnob(nuke.Text_Knob(""))
             else:
                 # add linked knob by _k_name
@@ -537,7 +992,7 @@ def create_write_node(name, data, input=None, prenodes=None,
     add_deadline_tab(GN)
 
     # open the our Tab as default
-    GN[opnl._node_tab_name].setFlag(0)
+    GN[_NODE_TAB_NAME].setFlag(0)
 
     # set tile color
     tile_color = _data.get("tile_color", "0xff0000ff")
@@ -663,7 +1118,7 @@ class WorkfileSettings(object):
                  root_node=None,
                  nodes=None,
                  **kwargs):
-        opnl._project = kwargs.get(
+        Context._project_doc = kwargs.get(
             "project") or io.find_one({"type": "project"})
         self._asset = kwargs.get("asset_name") or api.Session["AVALON_ASSET"]
         self._asset_entity = get_asset(self._asset)
@@ -725,7 +1180,7 @@ class WorkfileSettings(object):
                 for i, n in enumerate(copy_inputs):
                     nv.setInput(i, n)
 
-                # set coppied knobs
+                # set copied knobs
                 for k, v in copy_knobs.items():
                     print(k, v)
                     nv[k].setValue(v)
@@ -804,8 +1259,6 @@ class WorkfileSettings(object):
         ''' Adds correct colorspace to write node dict
 
         '''
-        from avalon.nuke import read
-
         for node in nuke.allNodes(filter="Group"):
 
             # get data from avalon knob
@@ -862,7 +1315,7 @@ class WorkfileSettings(object):
     def set_reads_colorspace(self, read_clrs_inputs):
         """ Setting colorspace to Read nodes
 
-        Looping trought all read nodes and tries to set colorspace based
+        Looping through all read nodes and tries to set colorspace based
         on regex rules in presets
         """
         changes = {}
@@ -871,7 +1324,7 @@ class WorkfileSettings(object):
             if n.Class() != "Read":
                 continue
 
-            # check if any colorspace presets for read is mathing
+            # check if any colorspace presets for read is matching
             preset_clrsp = None
 
             for input in read_clrs_inputs:
@@ -1005,7 +1458,7 @@ class WorkfileSettings(object):
             node['frame_range_lock'].setValue(True)
 
         # adding handle_start/end to root avalon knob
-        if not anlib.set_avalon_knob_data(self._root_node, {
+        if not set_avalon_knob_data(self._root_node, {
             "handleStart": int(handle_start),
             "handleEnd": int(handle_end)
         }):
@@ -1013,7 +1466,7 @@ class WorkfileSettings(object):
 
     def reset_resolution(self):
         """Set resolution to project resolution."""
-        log.info("Reseting resolution")
+        log.info("Resetting resolution")
         project = io.find_one({"type": "project"})
         asset = api.Session["AVALON_ASSET"]
         asset = io.find_one({"name": asset, "type": "asset"})
@@ -1089,6 +1542,8 @@ class WorkfileSettings(object):
         self.set_colorspace()
 
     def set_favorites(self):
+        from .utils import set_context_favorites
+
         work_dir = os.getenv("AVALON_WORKDIR")
         asset = os.getenv("AVALON_ASSET")
         favorite_items = OrderedDict()
@@ -1096,9 +1551,9 @@ class WorkfileSettings(object):
         # project
         # get project's root and split to parts
         projects_root = os.path.normpath(work_dir.split(
-            opnl.project_name)[0])
+            Context.project_name)[0])
         # add project name
-        project_dir = os.path.join(projects_root, opnl.project_name) + "/"
+        project_dir = os.path.join(projects_root, Context.project_name) + "/"
         # add to favorites
         favorite_items.update({"Project dir": project_dir.replace("\\", "/")})
 
@@ -1145,8 +1600,7 @@ def get_write_node_template_attr(node):
     '''
     # get avalon data from node
     data = dict()
-    data['avalon'] = avalon.nuke.read(
-        node)
+    data['avalon'] = read(node)
     data_preset = {
         "nodeclass": data['avalon']['family'],
         "families": [data['avalon']['families']],
@@ -1167,7 +1621,7 @@ def get_write_node_template_attr(node):
      if k not in ["_id", "_previous"]}
 
     # fix badly encoded data
-    return anlib.fix_data_for_node_create(correct_data)
+    return fix_data_for_node_create(correct_data)
 
 
 def get_dependent_nodes(nodes):
@@ -1274,13 +1728,53 @@ def find_free_space_to_paste_nodes(
             return xpos, ypos
 
 
+@contextlib.contextmanager
+def maintained_selection():
+    """Maintain selection during context
+
+    Example:
+        >>> with maintained_selection():
+        ...     node['selected'].setValue(True)
+        >>> print(node['selected'].value())
+        False
+    """
+    previous_selection = nuke.selectedNodes()
+    try:
+        yield
+    finally:
+        # unselect all selection in case there is some
+        current_seletion = nuke.selectedNodes()
+        [n['selected'].setValue(False) for n in current_seletion]
+        # and select all previously selected nodes
+        if previous_selection:
+            [n['selected'].setValue(True) for n in previous_selection]
+
+
+def reset_selection():
+    """Deselect all selected nodes"""
+    for node in nuke.selectedNodes():
+        node["selected"].setValue(False)
+
+
+def select_nodes(nodes):
+    """Selects all inputed nodes
+
+    Arguments:
+        nodes (list): nuke nodes to be selected
+    """
+    assert isinstance(nodes, (list, tuple)), "nodes has to be list or tuple"
+
+    for node in nodes:
+        node["selected"].setValue(True)
+
+
 def launch_workfiles_app():
     '''Function letting start workfiles after start of host
     '''
     from openpype.lib import (
         env_value_to_bool
     )
-    from avalon.nuke.pipeline import get_main_window
+    from .pipeline import get_main_window
 
     # get all imortant settings
     open_at_start = env_value_to_bool(
@@ -1291,8 +1785,8 @@ def launch_workfiles_app():
     if not open_at_start:
         return
 
-    if not opnl.workfiles_launched:
-        opnl.workfiles_launched = True
+    if not Context.workfiles_launched:
+        Context.workfiles_launched = True
         main_window = get_main_window()
         host_tools.show_workfiles(parent=main_window)
 
@@ -1378,7 +1872,7 @@ def recreate_instance(origin_node, avalon_data=None):
     knobs_wl = ["render", "publish", "review", "ypos",
                 "use_limit", "first", "last"]
     # get data from avalon knobs
-    data = anlib.get_avalon_knob_data(
+    data = get_avalon_knob_data(
         origin_node)
 
     # add input data to avalon data
@@ -1494,3 +1988,45 @@ def dirmap_file_name_filter(file_name):
     if os.path.exists(dirmap_processor.file_name):
         return dirmap_processor.file_name
     return file_name
+
+
+# ------------------------------------
+# This function seems to be deprecated
+# ------------------------------------
+def ls_img_sequence(path):
+    """Listing all available coherent image sequence from path
+
+    Arguments:
+        path (str): A nuke's node object
+
+    Returns:
+        data (dict): with nuke formated path and frameranges
+    """
+    file = os.path.basename(path)
+    dirpath = os.path.dirname(path)
+    base, ext = os.path.splitext(file)
+    name, padding = os.path.splitext(base)
+
+    # populate list of files
+    files = [
+        f for f in os.listdir(dirpath)
+        if name in f
+        if ext in f
+    ]
+
+    # create collection from list of files
+    collections, reminder = clique.assemble(files)
+
+    if len(collections) > 0:
+        head = collections[0].format("{head}")
+        padding = collections[0].format("{padding}") % 1
+        padding = "#" * len(padding)
+        tail = collections[0].format("{tail}")
+        file = head + padding + tail
+
+        return {
+            "path": os.path.join(dirpath, file).replace("\\", "/"),
+            "frames": collections[0].format("[{ranges}]")
+        }
+
+    return False

@@ -116,10 +116,10 @@ def get_last_version_from_path(path_dir, filter):
     filtred_files = list()
 
     # form regex for filtering
-    patern = r".*".join(filter)
+    pattern = r".*".join(filter)
 
     for file in os.listdir(path_dir):
-        if not re.findall(patern, file):
+        if not re.findall(pattern, file):
             continue
         filtred_files.append(file)
 

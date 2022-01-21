@@ -306,7 +306,7 @@ def create_otio_timeline(resolve_project):
                         if index == 0:
                             otio_track.append(clip)
                         else:
-                            # add previouse otio track to timeline
+                            # add previous otio track to timeline
                             otio_timeline.tracks.append(otio_track)
                             # convert track to otio
                             otio_track = create_otio_track(

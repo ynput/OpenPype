@@ -2,7 +2,7 @@ import os
 
 import openpype.api
 import openpype.lib
-from avalon import photoshop
+from openpype.hosts.photoshop import api as photoshop
 
 
 class ExtractReview(openpype.api.Extractor):

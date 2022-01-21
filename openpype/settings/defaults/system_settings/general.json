@@ -4,6 +4,7 @@
     "admin_password": "",
     "production_version": "",
     "staging_version": "",
+    "version_check_interval": 5,
     "environment": {
         "__environment_keys__": {
             "global": []

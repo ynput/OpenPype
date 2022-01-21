@@ -1,8 +1,13 @@
 # Changelog
 
-## [3.8.0-nightly.2](https://github.com/pypeclub/OpenPype/tree/HEAD)
+## [3.8.0-nightly.5](https://github.com/pypeclub/OpenPype/tree/HEAD)
 
 [Full Changelog](https://github.com/pypeclub/OpenPype/compare/3.7.0...HEAD)
+
+### 📖 Documentation
+
+- Renamed to proper name [\#2546](https://github.com/pypeclub/OpenPype/pull/2546)
+- Slack: Add review to notification message [\#2498](https://github.com/pypeclub/OpenPype/pull/2498)
 
 **🆕 New features**
 
@@ -10,38 +15,52 @@
 
 **🚀 Enhancements**
 
+- Settings: PathInput strip passed string [\#2550](https://github.com/pypeclub/OpenPype/pull/2550)
+- General: Validate if current process OpenPype version is requested version [\#2529](https://github.com/pypeclub/OpenPype/pull/2529)
+- General: Be able to use anatomy data in ffmpeg output arguments [\#2525](https://github.com/pypeclub/OpenPype/pull/2525)
+- Expose toggle publish plug-in settings for Maya Look Shading Engine Naming [\#2521](https://github.com/pypeclub/OpenPype/pull/2521)
+- Photoshop: Move implementation to OpenPype [\#2510](https://github.com/pypeclub/OpenPype/pull/2510)
+- TimersManager: Move module one hierarchy higher [\#2501](https://github.com/pypeclub/OpenPype/pull/2501)
+- Slack: notifications are sent with Openpype logo and bot name [\#2499](https://github.com/pypeclub/OpenPype/pull/2499)
 - Ftrack: Event handlers settings [\#2496](https://github.com/pypeclub/OpenPype/pull/2496)
+- Flame - create publishable clips [\#2495](https://github.com/pypeclub/OpenPype/pull/2495)
 - Tools: Fix style and modality of errors in loader and creator [\#2489](https://github.com/pypeclub/OpenPype/pull/2489)
+- Project Manager: Remove project button cleanup [\#2482](https://github.com/pypeclub/OpenPype/pull/2482)
 - Tools: Be able to change models of tasks and assets widgets [\#2475](https://github.com/pypeclub/OpenPype/pull/2475)
 - Publish pype: Reduce publish process defering [\#2464](https://github.com/pypeclub/OpenPype/pull/2464)
 - Maya: Improve speed of Collect History logic [\#2460](https://github.com/pypeclub/OpenPype/pull/2460)
 - Maya: Validate Rig Controllers - fix Error: in script editor [\#2459](https://github.com/pypeclub/OpenPype/pull/2459)
 - Maya: Optimize Validate Locked Normals speed for dense polymeshes [\#2457](https://github.com/pypeclub/OpenPype/pull/2457)
+- Fix \#2453 Refactor missing \_get\_reference\_node method [\#2455](https://github.com/pypeclub/OpenPype/pull/2455)
+- Houdini: Remove broken unique name counter [\#2450](https://github.com/pypeclub/OpenPype/pull/2450)
+- Maya: Improve lib.polyConstraint performance when Select tool is not the active tool context [\#2447](https://github.com/pypeclub/OpenPype/pull/2447)
+- General: Validate third party before build [\#2425](https://github.com/pypeclub/OpenPype/pull/2425)
 - Maya : add option to not group reference in ReferenceLoader [\#2383](https://github.com/pypeclub/OpenPype/pull/2383)
 
 **🐛 Bug fixes**
 
+- Fix published frame content for sequence starting with 0 [\#2513](https://github.com/pypeclub/OpenPype/pull/2513)
+- Fix \#2497: reset empty string attributes correctly to "" instead of "None" [\#2506](https://github.com/pypeclub/OpenPype/pull/2506)
 - General: Settings work if OpenPypeVersion is available [\#2494](https://github.com/pypeclub/OpenPype/pull/2494)
+- General: PYTHONPATH may break OpenPype dependencies [\#2493](https://github.com/pypeclub/OpenPype/pull/2493)
 - Workfiles tool: Files widget show files on first show [\#2488](https://github.com/pypeclub/OpenPype/pull/2488)
 - General: Custom template paths filter fix [\#2483](https://github.com/pypeclub/OpenPype/pull/2483)
 - Loader: Remove always on top flag in tray [\#2480](https://github.com/pypeclub/OpenPype/pull/2480)
 - General: Anatomy does not return root envs as unicode [\#2465](https://github.com/pypeclub/OpenPype/pull/2465)
-- Webpublisher: Fix assignment of families of TVpaint instances [\#2373](https://github.com/pypeclub/OpenPype/pull/2373)
+- Maya: Validate Shape Zero do not keep fixed geometry vertices selected/active after repair [\#2456](https://github.com/pypeclub/OpenPype/pull/2456)
 
 **Merged pull requests:**
 
+- General: Fix install thread in igniter [\#2549](https://github.com/pypeclub/OpenPype/pull/2549)
+- AfterEffects: Move implementation to OpenPype [\#2543](https://github.com/pypeclub/OpenPype/pull/2543)
+- Fix create zip tool - path argument [\#2522](https://github.com/pypeclub/OpenPype/pull/2522)
 - General: Modules import function output fix [\#2492](https://github.com/pypeclub/OpenPype/pull/2492)
 - AE: fix hiding of alert window below Publish [\#2491](https://github.com/pypeclub/OpenPype/pull/2491)
 - Maya: Validate NGONs re-use polyConstraint code from openpype.host.maya.api.lib [\#2458](https://github.com/pypeclub/OpenPype/pull/2458)
-- Version handling [\#2363](https://github.com/pypeclub/OpenPype/pull/2363)
 
 ## [3.7.0](https://github.com/pypeclub/OpenPype/tree/3.7.0) (2022-01-04)
 
 [Full Changelog](https://github.com/pypeclub/OpenPype/compare/CI/3.7.0-nightly.14...3.7.0)
-
-**Deprecated:**
-
-- General: Default modules hierarchy n2 [\#2368](https://github.com/pypeclub/OpenPype/pull/2368)
 
 **🚀 Enhancements**
 
@@ -61,9 +80,6 @@
 - Enhancement: Settings: Use project settings values from another project [\#2382](https://github.com/pypeclub/OpenPype/pull/2382)
 - Blender 3: Support auto install for new blender version [\#2377](https://github.com/pypeclub/OpenPype/pull/2377)
 - Maya add render image path to settings [\#2375](https://github.com/pypeclub/OpenPype/pull/2375)
-- Hiero: python3 compatibility [\#2365](https://github.com/pypeclub/OpenPype/pull/2365)
-- Maya: Add is\_static\_image\_plane and is\_in\_all\_views option in imagePlaneLoader [\#2356](https://github.com/pypeclub/OpenPype/pull/2356)
-- TVPaint: Move implementation to OpenPype [\#2336](https://github.com/pypeclub/OpenPype/pull/2336)
 
 **🐛 Bug fixes**
 
@@ -80,8 +96,7 @@
 - hiero: solve custom ocio path  [\#2379](https://github.com/pypeclub/OpenPype/pull/2379)
 - hiero: fix workio and flatten [\#2378](https://github.com/pypeclub/OpenPype/pull/2378)
 - Nuke: fixing menu re-drawing during context change  [\#2374](https://github.com/pypeclub/OpenPype/pull/2374)
-- Nuke: fixing node name based on switched asset name [\#2369](https://github.com/pypeclub/OpenPype/pull/2369)
-- Houdini: Fix HDA creation [\#2350](https://github.com/pypeclub/OpenPype/pull/2350)
+- Webpublisher: Fix assignment of families of TVpaint instances [\#2373](https://github.com/pypeclub/OpenPype/pull/2373)
 
 **Merged pull requests:**
 
@@ -89,7 +104,6 @@
 - Maya: Replaced PATH usage with vendored oiio path for maketx utility [\#2405](https://github.com/pypeclub/OpenPype/pull/2405)
 - \[Fix\]\[MAYA\] Handle message type attribute within CollectLook [\#2394](https://github.com/pypeclub/OpenPype/pull/2394)
 - Add validator to check correct version of extension for PS and AE [\#2387](https://github.com/pypeclub/OpenPype/pull/2387)
-- Linux : flip updating submodules logic [\#2357](https://github.com/pypeclub/OpenPype/pull/2357)
 
 ## [3.6.4](https://github.com/pypeclub/OpenPype/tree/3.6.4) (2021-11-23)
 

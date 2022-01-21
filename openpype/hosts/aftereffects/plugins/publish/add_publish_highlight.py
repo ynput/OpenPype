@@ -1,6 +1,6 @@
 import pyblish.api
 
-from avalon import aftereffects
+from openpype.hosts.aftereffects.api import get_stub
 
 
 class AddPublishHighlight(pyblish.api.InstancePlugin):
@@ -15,7 +15,7 @@ class AddPublishHighlight(pyblish.api.InstancePlugin):
     optional = True
 
     def process(self, instance):
-        stub = aftereffects.stub()
+        stub = get_stub()
         item = instance.data
         # comp name contains highlight icon
         stub.rename_item(item["comp_id"], item["comp_name"])

@@ -99,7 +99,7 @@ class CollectHierarchyInstance(pyblish.api.ContextPlugin):
                 # in case SP context is set to the same folder
                 if (_index == 0) and ("folder" in parent_key) \
                         and (parents[-1]["entity_name"] == parent_filled):
-                    self.log.debug(f" skiping : {parent_filled}")
+                    self.log.debug(f" skipping : {parent_filled}")
                     continue
 
                 # in case first parent is project then start parents from start
@@ -119,7 +119,7 @@ class CollectHierarchyInstance(pyblish.api.ContextPlugin):
         # convert hierarchy to string
         hierarchy = "/".join(hierarchy)
 
-        # assing to instance data
+        # assign to instance data
         instance.data["hierarchy"] = hierarchy
         instance.data["parents"] = parents
 
@@ -202,7 +202,7 @@ class CollectHierarchyInstance(pyblish.api.ContextPlugin):
 
 
 class CollectHierarchyContext(pyblish.api.ContextPlugin):
-    '''Collecting Hierarchy from instaces and building
+    '''Collecting Hierarchy from instances and building
     context hierarchy tree
     '''
 

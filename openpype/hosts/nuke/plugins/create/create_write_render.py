@@ -1,11 +1,12 @@
 from collections import OrderedDict
-from openpype.hosts.nuke.api import (
-    plugin,
-    lib)
+
 import nuke
 
+from openpype.hosts.nuke.api import plugin
+from openpype.hosts.nuke.api.lib import create_write_node
 
-class CreateWriteRender(plugin.PypeCreator):
+
+class CreateWriteRender(plugin.OpenPypeCreator):
     # change this to template preset
     name = "WriteRender"
     label = "Create Write Render"
@@ -119,7 +120,7 @@ class CreateWriteRender(plugin.PypeCreator):
             }
         ]
 
-        write_node = lib.create_write_node(
+        write_node = create_write_node(
             self.data["subset"],
             write_data,
             input=selected_node,

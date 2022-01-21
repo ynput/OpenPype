@@ -24,10 +24,13 @@ from .env_tools import (
 
 from .terminal import Terminal
 from .execute import (
+    get_openpype_execute_args,
     get_pype_execute_args,
     get_linux_launcher_args,
     execute,
     run_subprocess,
+    run_openpype_process,
+    clean_envs_for_openpype_process,
     path_to_subprocess_arg,
     CREATE_NO_WINDOW
 )
@@ -165,18 +168,26 @@ from .editorial import (
     make_sequence_collection
 )
 
-from .pype_info import (
+from .openpype_version import (
+    op_version_control_available,
     get_openpype_version,
-    get_build_version
+    get_build_version,
+    get_expected_version,
+    is_running_from_build,
+    is_running_staging,
+    is_current_version_studio_latest
 )
 
 terminal = Terminal
 
 __all__ = [
+    "get_openpype_execute_args",
     "get_pype_execute_args",
     "get_linux_launcher_args",
     "execute",
     "run_subprocess",
+    "run_openpype_process",
+    "clean_envs_for_openpype_process",
     "path_to_subprocess_arg",
     "CREATE_NO_WINDOW",
 
@@ -296,6 +307,11 @@ __all__ = [
     "create_workdir_extra_folders",
     "get_project_basic_paths",
 
+    "op_version_control_available",
     "get_openpype_version",
     "get_build_version",
+    "get_expected_version",
+    "is_running_from_build",
+    "is_running_staging",
+    "is_current_version_studio_latest",
 ]

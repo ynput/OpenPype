@@ -8,6 +8,8 @@ from collections import defaultdict
 from openpype.widgets.message_window import ScrollMessageBox
 from Qt import QtWidgets
 
+from openpype.hosts.maya.api.plugin import get_reference_node
+
 
 class LookLoader(openpype.hosts.maya.api.plugin.ReferenceLoader):
     """Specific loader for lookdev"""
