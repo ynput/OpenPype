@@ -84,7 +84,7 @@ class LoadVDBtoVRay(api.Loader):
         from avalon.maya.pipeline import containerise
 
         assert os.path.exists(self.fname), (
-                "Path does not exist: %s" % self.fname
+            "Path does not exist: %s" % self.fname
         )
 
         try:
@@ -128,10 +128,9 @@ class LoadVDBtoVRay(api.Loader):
         if c is not None:
             cmds.setAttr(root + ".useOutlinerColor", 1)
             cmds.setAttr(root + ".outlinerColor",
-                float(c[0])/255,
-                float(c[1])/255,
-                float(c[2])/255
-            )
+                         float(c[0]) / 255,
+                         float(c[1]) / 255,
+                         float(c[2]) / 255)
 
         # Create VRayVolumeGrid
         grid_node = cmds.createNode("VRayVolumeGrid",
@@ -179,8 +178,8 @@ class LoadVDBtoVRay(api.Loader):
                 # todo: check support for negative frames as input
                 collections, remainder = clique.assemble(files)
                 assert len(collections) == 1, (
-                        "Must find a single image sequence, "
-                        "found: %s" % (collections,)
+                    "Must find a single image sequence, "
+                    "found: %s" % (collections,)
                 )
                 collection = collections[0]
 
