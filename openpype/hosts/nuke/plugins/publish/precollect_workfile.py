@@ -1,8 +1,13 @@
-import nuke
-import pyblish.api
 import os
+
+import nuke
+
+import pyblish.api
 import openpype.api as pype
-from avalon.nuke import lib as anlib
+from openpype.hosts.nuke.api.lib import (
+    add_publish_knob,
+    get_avalon_knob_data
+)
 
 
 class CollectWorkfile(pyblish.api.ContextPlugin):
@@ -17,9 +22,9 @@ class CollectWorkfile(pyblish.api.ContextPlugin):
 
         current_file = os.path.normpath(nuke.root().name())
 
-        knob_data = anlib.get_avalon_knob_data(root)
+        knob_data = get_avalon_knob_data(root)
 
-        anlib.add_publish_knob(root)
+        add_publish_knob(root)
 
         family = "workfile"
         task = os.getenv("AVALON_TASK", None)

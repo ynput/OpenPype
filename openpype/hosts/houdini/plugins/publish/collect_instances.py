@@ -74,6 +74,9 @@ class CollectInstances(pyblish.api.ContextPlugin):
 
             instance = context.create_instance(label)
 
+            # Include `families` using `family` data
+            instance.data["families"] = [instance.data["family"]]
+
             instance[:] = [node]
             instance.data.update(data)
 

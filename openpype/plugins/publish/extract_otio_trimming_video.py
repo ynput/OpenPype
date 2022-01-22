@@ -19,7 +19,7 @@ class ExtractOTIOTrimmingVideo(openpype.api.Extractor):
     order = api.ExtractorOrder
     label = "Extract OTIO trim longer video"
     families = ["trim"]
-    hosts = ["resolve", "hiero"]
+    hosts = ["resolve", "hiero", "flame"]
 
     def process(self, instance):
         self.staging_dir = self.staging_dir(instance)

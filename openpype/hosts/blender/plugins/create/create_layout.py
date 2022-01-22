@@ -22,7 +22,7 @@ class CreateLayout(plugin.Creator):
         ops.execute_in_main_thread(mti)
 
     def _process(self):
-        # Get Instance Containter or create it if it does not exist
+        # Get Instance Container or create it if it does not exist
         instances = bpy.data.collections.get(AVALON_INSTANCES)
         if not instances:
             instances = bpy.data.collections.new(name=AVALON_INSTANCES)

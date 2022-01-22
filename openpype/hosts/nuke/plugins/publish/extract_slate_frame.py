@@ -1,8 +1,8 @@
 import os
 import nuke
-from avalon.nuke import lib as anlib
 import pyblish.api
 import openpype
+from openpype.hosts.nuke.api.lib import maintained_selection
 
 
 class ExtractSlateFrame(openpype.api.Extractor):
@@ -25,7 +25,7 @@ class ExtractSlateFrame(openpype.api.Extractor):
         else:
             self.viewer_lut_raw = False
 
-        with anlib.maintained_selection():
+        with maintained_selection():
             self.log.debug("instance: {}".format(instance))
             self.log.debug("instance.data[families]: {}".format(
                 instance.data["families"]))

@@ -48,7 +48,7 @@ class CollectVrayScene(pyblish.api.InstancePlugin):
                 expected_layer_name = re.search(r"^.+:(.*)", layer).group(1)
             except IndexError:
                 msg = "Invalid layer name in set [ {} ]".format(layer)
-                self.log.warnig(msg)
+                self.log.warning(msg)
                 continue
 
             self.log.info("processing %s" % layer)

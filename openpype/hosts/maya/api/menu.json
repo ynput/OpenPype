@@ -506,8 +506,8 @@
                             "transforms",
                             "local"
                         ],
-                        "title": "# Copy Local Transfroms",
-                        "tooltip": "Copy local transfroms"
+                        "title": "# Copy Local Transforms",
+                        "tooltip": "Copy local transforms"
                     },
                     {
                         "type": "action",
@@ -520,8 +520,8 @@
                             "transforms",
                             "matrix"
                         ],
-                        "title": "# Copy Matrix Transfroms",
-                        "tooltip": "Copy Matrix transfroms"
+                        "title": "# Copy Matrix Transforms",
+                        "tooltip": "Copy Matrix transforms"
                     },
                     {
                         "type": "action",
@@ -842,7 +842,7 @@
                 "sourcetype": "file",
                 "tags": ["cleanup", "remove_user_defined_attributes"],
                 "title": "# Remove User Defined Attributes",
-                "tooltip": "Remove all user-defined attributs from all nodes"
+                "tooltip": "Remove all user-defined attributes from all nodes"
             },
             {
                 "type": "action",

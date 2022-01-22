@@ -24,7 +24,6 @@ from .commands import (
 )
 from .vray_proxies import vrayproxy_assign_look
 
-
 module = sys.modules[__name__]
 module.window = None
 
@@ -210,7 +209,7 @@ class App(QtWidgets.QWidget):
             # Assign the first matching look relevant for this asset
             # (since assigning multiple to the same nodes makes no sense)
             assign_look = next((subset for subset in item["looks"]
-                               if subset["name"] in looks), None)
+                                if subset["name"] in looks), None)
             if not assign_look:
                 self.echo("{} No matching selected "
                           "look for {}".format(prefix, asset))
@@ -229,11 +228,14 @@ class App(QtWidgets.QWidget):
 
             if cmds.pluginInfo('vrayformaya', query=True, loaded=True):
                 self.echo("Getting vray proxy nodes ...")
-                vray_proxies = set(cmds.ls(type="VRayProxy"))
-                nodes = list(set(item["nodes"]).difference(vray_proxies))
+                vray_proxies = set(cmds.ls(type="VRayProxy", long=True))
+
                 if vray_proxies:
                     for vp in vray_proxies:
-                        vrayproxy_assign_look(vp, subset_name)
+                        if vp in nodes:
+                            vrayproxy_assign_look(vp, subset_name)
+
+                    nodes = list(set(item["nodes"]).difference(vray_proxies))
 
                 # Assign look
             if nodes:

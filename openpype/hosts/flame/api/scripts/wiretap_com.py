@@ -25,7 +25,7 @@ class WireTapCom(object):
 
     This way we are able to set new project with settings and
     correct colorspace policy. Also we are able to create new user
-    or get actuall user with similar name (users are usually cloning
+    or get actual user with similar name (users are usually cloning
     their profiles and adding date stamp into suffix).
     """
 
@@ -214,7 +214,7 @@ class WireTapCom(object):
 
         volumes = []
 
-        # go trough all children and get volume names
+        # go through all children and get volume names
         child_obj = WireTapNodeHandle()
         for child_idx in range(children_num):
 
@@ -254,7 +254,7 @@ class WireTapCom(object):
         filtered_users = [user for user in used_names if user_name in user]
 
         if filtered_users:
-            # todo: need to find lastly created following regex patern for
+            # todo: need to find lastly created following regex pattern for
             # date used in name
             return filtered_users.pop()
 
@@ -299,7 +299,7 @@ class WireTapCom(object):
 
         usernames = []
 
-        # go trough all children and get volume names
+        # go through all children and get volume names
         child_obj = WireTapNodeHandle()
         for child_idx in range(children_num):
 
@@ -346,7 +346,7 @@ class WireTapCom(object):
         if not requested:
             raise AttributeError((
                 "Error: Cannot request number of "
-                "childrens from the node {}. Make sure your "
+                "children from the node {}. Make sure your "
                 "wiretap service is running: {}").format(
                     parent_path, parent.lastError())
             )
