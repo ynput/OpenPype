@@ -287,15 +287,12 @@ class CreateRender(plugin.Creator):
             raise RuntimeError("Both Deadline and Muster are enabled")
 
         if deadline_enabled:
-            # if default server is not between selected, use first one for
-            # initial list of pools.
             try:
                 deadline_url = self.deadline_servers["default"]
             except KeyError:
-                deadline_url = [
-                    self.deadline_servers[k]
-                    for k in self.deadline_servers.keys()
-                ][0]
+                # if 'default' server is not between selected,
+                # use first one for initial list of pools.
+                deadline_url = next(iter(self.deadline_servers.values()))
 
             pool_names = self._get_deadline_pools(deadline_url)
 
