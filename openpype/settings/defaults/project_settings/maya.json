@@ -46,6 +46,20 @@
             "aov_separator": "underscore",
             "default_render_image_folder": "renders"
         },
+        "CreateUnrealStaticMesh": {
+            "enabled": true,
+            "defaults": [
+                "",
+                "_Main"
+            ],
+            "static_mesh_prefix": "S_",
+            "collision_prefixes": [
+                "UBX",
+                "UCP",
+                "USP",
+                "UCX"
+            ]
+        },
         "CreateAnimation": {
             "enabled": true,
             "defaults": [
@@ -121,19 +135,6 @@
             "defaults": [
                 "Main",
                 "Anim"
-            ]
-        },
-        "CreateUnrealStaticMesh": {
-            "enabled": true,
-            "defaults": [
-                "Main"
-            ],
-            "static_mesh_prefix": "S_",
-            "collision_prefixes": [
-                "UBX",
-                "UCP",
-                "USP",
-                "UCX"
             ]
         },
         "CreateVrayProxy": {
