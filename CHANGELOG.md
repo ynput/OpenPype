@@ -1,12 +1,8 @@
 # Changelog
 
-## [3.8.0-nightly.7](https://github.com/pypeclub/OpenPype/tree/HEAD)
+## [3.8.0](https://github.com/pypeclub/OpenPype/tree/3.8.0) (2022-01-24)
 
-[Full Changelog](https://github.com/pypeclub/OpenPype/compare/3.7.0...HEAD)
-
-### 📖 Documentation
-
-- Variable in docs renamed to proper name [\#2546](https://github.com/pypeclub/OpenPype/pull/2546)
+[Full Changelog](https://github.com/pypeclub/OpenPype/compare/3.7.0...3.8.0)
 
 **🆕 New features**
 
@@ -54,6 +50,10 @@
 - Improve FusionPreLaunch hook errors [\#2505](https://github.com/pypeclub/OpenPype/pull/2505)
 - Maya: Validate Shape Zero do not keep fixed geometry vertices selected/active after repair [\#2456](https://github.com/pypeclub/OpenPype/pull/2456)
 
+### 📖 Documentation
+
+- Variable in docs renamed to proper name [\#2546](https://github.com/pypeclub/OpenPype/pull/2546)
+
 **Merged pull requests:**
 
 - AfterEffects: Move implementation to OpenPype [\#2543](https://github.com/pypeclub/OpenPype/pull/2543)
@@ -78,7 +78,6 @@
 
 **🐛 Bug fixes**
 
-- TVPaint: Create render layer dialog is in front [\#2471](https://github.com/pypeclub/OpenPype/pull/2471)
 - Short Pyblish plugin path [\#2428](https://github.com/pypeclub/OpenPype/pull/2428)
 - PS: Introduced settings for invalid characters to use in ValidateNaming plugin [\#2417](https://github.com/pypeclub/OpenPype/pull/2417)
 
