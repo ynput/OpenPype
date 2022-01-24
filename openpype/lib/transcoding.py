@@ -264,3 +264,100 @@ def convert_for_ffmpeg(
 
     logger.debug("Conversion command: {}".format(" ".join(oiio_cmd)))
     run_subprocess(oiio_cmd, logger=logger)
+
+def input_info_channels(input_info):
+    """Create a dict of image channels.
+
+    The dict contain beauty name of layer as key
+    and list of layer channels as value
+
+    Args:
+        input_info (dict): Output of parse_oiio_info().
+
+    Returns:
+        dict: layers name and channels.
+    """
+    channels_dict = {}
+    channel_names = input_info["channels_info"].keys()
+
+    if all(x in channel_names for x in ["R", "G", "B"]):
+        channels_dict["RGB"] = ["R", "G", "B"]
+
+    if "A" in channel_names:
+        channels_dict["alpha"] = ["A"]
+
+    for channel in channel_names:
+        channel_name = channel.split(".")[0]
+
+        if channel_name in ["R", "G", "B", "A"]:
+            continue
+
+        if channel_name in channels_dict:
+            channels = channels_dict[channel_name] + [channel]
+            channels_dict[channel_name] = channels
+        else:
+            channels_dict[channel_name] = [channel]
+
+    return channels_dict
+
+
+def split_multichannel_exr(
+    first_input_path, output_dir, input_frame_start, input_frame_end, logger=None
+):
+    """Content source multi channel exr to seprate exr's .
+
+    Args:
+        first_input_path (str): Path to first file of a sequence or a single
+            file path for non-sequential input.
+        output_dir (str): Path to directory where output will be rendered.
+            Must not be same as input's directory.
+        input_frame_start (int): Frame start of input.
+        input_frame_end (int): Frame end of input.
+        logger (logging.Logger): Logger used for logging.
+
+    Raises:
+        ValueError: If input filepath has extension not ".exr" extension.
+    """
+    if logger is None:
+        logger = logging.getLogger(__name__)
+
+    ext = os.path.splitext(first_input_path)[1].lower()
+    if ext != ".exr":
+        raise ValueError(
+            (
+                "Function 'split_multichannel_exr' support only"
+                ' ".exr" extension. Got "{}".'
+            ).format(ext)
+        )
+
+    is_sequence = False
+    if input_frame_start is not None and input_frame_end is not None:
+        is_sequence = int(input_frame_end) != int(input_frame_start)
+
+    oiio_info = get_oiio_info_for_input(first_input_path)
+    input_info = parse_oiio_info(oiio_info)
+    channels_dict = input_info_channels(input_info)
+
+    # Prepare subprocess arguments
+    oiio_cmd = [get_oiio_tools_path(), first_input_path]
+
+    # Add frame definitions to arguments
+    if is_sequence:
+        oiio_cmd.append("--frames")
+        oiio_cmd.append("{}-{}".format(input_frame_start, input_frame_end))
+
+    for channel_name, channels in channels_dict.items() :
+
+        oiio_cmd.append("--ch")
+        oiio_cmd.append(",".join(channels))
+
+        # Add last argument - path to output
+        name, ext = os.path.splitext(os.path.basename(first_input_path))
+        out_name = name + "_" + channel_name + ext
+        output_path = os.path.join(output_dir, out_name)
+
+        oiio_cmd.append("-o")
+        oiio_cmd.append(output_path)
+
+        logger.debug("Conversion command: {}".format(" ".join(oiio_cmd)))
+        run_subprocess(oiio_cmd, logger=logger)

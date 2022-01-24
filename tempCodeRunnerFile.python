@@ -1,0 +1,51 @@
+input_info = {'C:/Users/Windows/Documents/test/images.exr ': '1280 x  720, 16 channel, float openexr',
+ 'DateTime': '"2022:01:24 10:58:23"',
+ 'PixelAspectRatio': '1',
+ 'channel list': 'R, G, B, A, albedo.R, albedo.G, albedo.B, diffuse_albedo.R, diffuse_albedo.G, diffuse_albedo.B, shadow_matte.R, shadow_matte.G, shadow_matte.B, specular.R, specular.G, specular.B',
+ 'channels_info': {'A': 'uint',
+                   'B': 'uint',
+                   'G': 'uint',
+                   'R': 'uint',
+                   'albedo.B': 'uint',
+                   'albedo.G': 'uint',
+                   'albedo.R': 'uint',
+                   'diffuse_albedo.B': 'uint',
+                   'diffuse_albedo.G': 'uint',
+                   'diffuse_albedo.R': 'uint',
+                   'shadow_matte.B': 'uint',
+                   'shadow_matte.G': 'uint',
+                   'shadow_matte.R': 'uint',
+                   'specular.B': 'uint',
+                   'specular.G': 'uint',
+                   'specular.R': 'uint'},
+ 'compression': 'zip',
+ 'oiio:ColorSpace': '"Linear"',
+ 'oiio:subimages': '1',
+ 'screenWindowCenter': '0, 0',
+ 'screenWindowWidth': '1'}
+
+def input_info_channels(input_info) :
+    channels_dict = {}
+    channel_names = input_info['channels_info'].keys() 
+    
+    if all(x in channel_names for x in ['R', 'G', 'B'] ):
+        channels_dict['RGB'] = ['R', 'G', 'B']
+        
+    if 'A' in channel_names:
+        channels_dict['alpha'] = ['A']
+        
+    for channel in channel_names :
+        channel_name = channel.split(".")[0]
+        
+        if channel_name in ['R', 'G', 'B', 'A']:
+            continue
+            
+        if channel_name in channels_dict :
+            channels = channels_dict[channel_name] + [channel]
+            channels_dict[channel_name] = channels
+        else :
+            channels_dict[channel_name] = [channel]
+    return channels_dict
+
+from pprint import pprint
+pprint (input_info_channels(input_info))
