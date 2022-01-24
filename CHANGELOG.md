@@ -1,16 +1,18 @@
 # Changelog
 
-## [3.8.0-nightly.6](https://github.com/pypeclub/OpenPype/tree/HEAD)
+## [3.8.0-nightly.7](https://github.com/pypeclub/OpenPype/tree/HEAD)
 
 [Full Changelog](https://github.com/pypeclub/OpenPype/compare/3.7.0...HEAD)
 
 ### 📖 Documentation
 
-- Renamed to proper name [\#2546](https://github.com/pypeclub/OpenPype/pull/2546)
-- Slack: Add review to notification message [\#2498](https://github.com/pypeclub/OpenPype/pull/2498)
+- Variable in docs renamed to proper name [\#2546](https://github.com/pypeclub/OpenPype/pull/2546)
 
 **🆕 New features**
 
+- Flame: extracting segments with trans-coding  [\#2547](https://github.com/pypeclub/OpenPype/pull/2547)
+- Maya : V-Ray Proxy - load all ABC files via proxy [\#2544](https://github.com/pypeclub/OpenPype/pull/2544)
+- Maya to Unreal: Extended static mesh workflow [\#2537](https://github.com/pypeclub/OpenPype/pull/2537)
 - Flame: collecting publishable instances [\#2519](https://github.com/pypeclub/OpenPype/pull/2519)
 - Flame: create publishable clips [\#2495](https://github.com/pypeclub/OpenPype/pull/2495)
 
@@ -21,23 +23,20 @@
 - Webpublisher: Added endpoint to reprocess batch through UI [\#2555](https://github.com/pypeclub/OpenPype/pull/2555)
 - Settings: PathInput strip passed string [\#2550](https://github.com/pypeclub/OpenPype/pull/2550)
 - Global: Exctract Review anatomy fill data with output name [\#2548](https://github.com/pypeclub/OpenPype/pull/2548)
-- Flame: extracting segments with trans-coding  [\#2547](https://github.com/pypeclub/OpenPype/pull/2547)
 - Cosmetics: Clean up some cosmetics / typos [\#2542](https://github.com/pypeclub/OpenPype/pull/2542)
 - General: Validate if current process OpenPype version is requested version [\#2529](https://github.com/pypeclub/OpenPype/pull/2529)
 - General: Be able to use anatomy data in ffmpeg output arguments [\#2525](https://github.com/pypeclub/OpenPype/pull/2525)
 - Expose toggle publish plug-in settings for Maya Look Shading Engine Naming [\#2521](https://github.com/pypeclub/OpenPype/pull/2521)
 - Photoshop: Move implementation to OpenPype [\#2510](https://github.com/pypeclub/OpenPype/pull/2510)
-- TimersManager: Move module one hierarchy higher [\#2501](https://github.com/pypeclub/OpenPype/pull/2501)
 - Slack: notifications are sent with Openpype logo and bot name [\#2499](https://github.com/pypeclub/OpenPype/pull/2499)
-- Project Manager: Remove project button cleanup [\#2482](https://github.com/pypeclub/OpenPype/pull/2482)
-- Maya: Refactor missing \_get\_reference\_node method [\#2455](https://github.com/pypeclub/OpenPype/pull/2455)
-- Houdini: Remove broken unique name counter [\#2450](https://github.com/pypeclub/OpenPype/pull/2450)
-- Maya: Improve lib.polyConstraint performance when Select tool is not the active tool context [\#2447](https://github.com/pypeclub/OpenPype/pull/2447)
+- Slack: Add review to notification message [\#2498](https://github.com/pypeclub/OpenPype/pull/2498)
+- Maya: Collect 'fps' animation data only for "review" instances [\#2486](https://github.com/pypeclub/OpenPype/pull/2486)
 - General: Validate third party before build [\#2425](https://github.com/pypeclub/OpenPype/pull/2425)
 
 **🐛 Bug fixes**
 
 - AfterEffects: Fix - removed obsolete import [\#2577](https://github.com/pypeclub/OpenPype/pull/2577)
+- General: OpenPype version updates [\#2575](https://github.com/pypeclub/OpenPype/pull/2575)
 - Ftrack: Delete action revision [\#2563](https://github.com/pypeclub/OpenPype/pull/2563)
 - Webpublisher: ftrack shows incorrect user names [\#2560](https://github.com/pypeclub/OpenPype/pull/2560)
 - General: Do not validate version if build does not support it [\#2557](https://github.com/pypeclub/OpenPype/pull/2557)
@@ -46,6 +45,8 @@
 - General: Fix install thread in igniter [\#2549](https://github.com/pypeclub/OpenPype/pull/2549)
 - Houdini: vdbcache family preserve frame numbers on publish integration + enable validate version for Houdini [\#2535](https://github.com/pypeclub/OpenPype/pull/2535)
 - Maya: Fix Load VDB to V-Ray [\#2533](https://github.com/pypeclub/OpenPype/pull/2533)
+- Maya: ReferenceLoader fix not unique group name error for attach to root [\#2532](https://github.com/pypeclub/OpenPype/pull/2532)
+- Maya: namespaced context go back to original namespace when started from inside a namespace [\#2531](https://github.com/pypeclub/OpenPype/pull/2531)
 - Fix create zip tool - path argument [\#2522](https://github.com/pypeclub/OpenPype/pull/2522)
 - Maya: Fix Extract Look with space in names [\#2518](https://github.com/pypeclub/OpenPype/pull/2518)
 - Fix published frame content for sequence starting with 0 [\#2513](https://github.com/pypeclub/OpenPype/pull/2513)
@@ -59,8 +60,6 @@
 - Maya: Remove Maya Look Assigner check on startup [\#2540](https://github.com/pypeclub/OpenPype/pull/2540)
 - build\(deps\): bump shelljs from 0.8.4 to 0.8.5 in /website [\#2538](https://github.com/pypeclub/OpenPype/pull/2538)
 - build\(deps\): bump follow-redirects from 1.14.4 to 1.14.7 in /website [\#2534](https://github.com/pypeclub/OpenPype/pull/2534)
-- Maya: ReferenceLoader fix not unique group name error for attach to root [\#2532](https://github.com/pypeclub/OpenPype/pull/2532)
-- Maya: namespaced context go back to original namespace when started from inside a namespace [\#2531](https://github.com/pypeclub/OpenPype/pull/2531)
 - Nuke: Merge avalon's implementation into OpenPype [\#2514](https://github.com/pypeclub/OpenPype/pull/2514)
 
 ## [3.7.0](https://github.com/pypeclub/OpenPype/tree/3.7.0) (2022-01-04)
@@ -76,16 +75,12 @@
 - Settings UI: Hyperlinks to settings [\#2420](https://github.com/pypeclub/OpenPype/pull/2420)
 - Modules: JobQueue module moved one hierarchy level higher [\#2419](https://github.com/pypeclub/OpenPype/pull/2419)
 - TimersManager: Start timer post launch hook [\#2418](https://github.com/pypeclub/OpenPype/pull/2418)
-- General: Run applications as separate processes under linux [\#2408](https://github.com/pypeclub/OpenPype/pull/2408)
 
 **🐛 Bug fixes**
 
 - TVPaint: Create render layer dialog is in front [\#2471](https://github.com/pypeclub/OpenPype/pull/2471)
 - Short Pyblish plugin path [\#2428](https://github.com/pypeclub/OpenPype/pull/2428)
 - PS: Introduced settings for invalid characters to use in ValidateNaming plugin [\#2417](https://github.com/pypeclub/OpenPype/pull/2417)
-- Settings UI: Breadcrumbs path does not create new entities [\#2416](https://github.com/pypeclub/OpenPype/pull/2416)
-- AfterEffects: Variant 2022 is in defaults but missing in schemas [\#2412](https://github.com/pypeclub/OpenPype/pull/2412)
-- Nuke: baking representations was not additive [\#2406](https://github.com/pypeclub/OpenPype/pull/2406)
 
 **Merged pull requests:**
 
