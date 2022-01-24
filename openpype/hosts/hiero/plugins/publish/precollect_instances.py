@@ -264,7 +264,7 @@ class PrecollectInstances(pyblish.api.ContextPlugin):
         timeline_range = self.create_otio_time_range_from_timeline_item_data(
             track_item)
 
-        # loop trough audio track items and search for overlaping clip
+        # loop through audio track items and search for overlapping clip
         for otio_audio in self.audio_track_items:
             parent_range = otio_audio.range_in_parent()
 

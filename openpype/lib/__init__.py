@@ -169,6 +169,7 @@ from .editorial import (
 )
 
 from .openpype_version import (
+    op_version_control_available,
     get_openpype_version,
     get_build_version,
     get_expected_version,
@@ -306,6 +307,7 @@ __all__ = [
     "create_workdir_extra_folders",
     "get_project_basic_paths",
 
+    "op_version_control_available",
     "get_openpype_version",
     "get_build_version",
     "get_expected_version",

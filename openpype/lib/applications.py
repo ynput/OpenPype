@@ -47,7 +47,7 @@ DEFAULT_ENV_SUBGROUP = "standard"
 
 
 def parse_environments(env_data, env_group=None, platform_name=None):
-    """Parse environment values from settings byt group and platfrom.
+    """Parse environment values from settings byt group and platform.
 
     Data may contain up to 2 hierarchical levels of dictionaries. At the end
     of the last level must be string or list. List is joined using platform
@@ -261,7 +261,7 @@ class Application:
         data (dict): Data for the version containing information about
             executables, variant label or if is enabled.
             Only required key is `executables`.
-        group (ApplicationGroup): App group object that created the applicaiton
+        group (ApplicationGroup): App group object that created the application
             and under which application belongs.
     """
 
@@ -775,7 +775,7 @@ class PostLaunchHook(LaunchHook):
 class ApplicationLaunchContext:
     """Context of launching application.
 
-    Main purpose of context is to prepare launch arguments and keword arguments
+    Main purpose of context is to prepare launch arguments and keyword arguments
     for new process. Most important part of keyword arguments preparations
     are environment variables.
 
@@ -969,7 +969,7 @@ class ApplicationLaunchContext:
                     hook = klass(self)
                     if not hook.is_valid:
                         self.log.debug(
-                            "Hook is not valid for curent launch context."
+                            "Hook is not valid for current launch context."
                         )
                         continue
 
@@ -1113,7 +1113,7 @@ class ApplicationLaunchContext:
             ))
 
             # TODO how to handle errors?
-            # - store to variable to let them accesible?
+            # - store to variable to let them accessible?
             try:
                 postlaunch_hook.execute()
 
@@ -1357,11 +1357,11 @@ def apply_project_environments_value(
 ):
     """Apply project specific environments on passed environments.
 
-    The enviornments are applied on passed `env` argument value so it is not
+    The environments are applied on passed `env` argument value so it is not
     required to apply changes back.
 
     Args:
-        project_name (str): Name of project for which environemnts should be
+        project_name (str): Name of project for which environments should be
             received.
         env (dict): Environment values on which project specific environments
             will be applied.
@@ -1391,7 +1391,7 @@ def apply_project_environments_value(
 
 
 def prepare_context_environments(data, env_group=None):
-    """Modify launch environemnts with context data for launched host.
+    """Modify launch environments with context data for launched host.
 
     Args:
         data (EnvironmentPrepData): Dictionary where result and intermediate
@@ -1463,7 +1463,7 @@ def prepare_context_environments(data, env_group=None):
         "AVALON_WORKDIR": workdir
     }
     log.debug(
-        "Context environemnts set:\n{}".format(
+        "Context environments set:\n{}".format(
             json.dumps(context_env, indent=4)
         )
     )
@@ -1567,7 +1567,7 @@ def should_start_last_workfile(
 ):
     """Define if host should start last version workfile if possible.
 
-    Default output is `False`. Can be overriden with environment variable
+    Default output is `False`. Can be overridden with environment variable
     `AVALON_OPEN_LAST_WORKFILE`, valid values without case sensitivity are
     `"0", "1", "true", "false", "yes", "no"`.
 
@@ -1617,7 +1617,7 @@ def should_workfile_tool_start(
 ):
     """Define if host should start workfile tool at host launch.
 
-    Default output is `False`. Can be overriden with environment variable
+    Default output is `False`. Can be overridden with environment variable
     `OPENPYPE_WORKFILE_TOOL_ON_START`, valid values without case sensitivity are
     `"0", "1", "true", "false", "yes", "no"`.
 

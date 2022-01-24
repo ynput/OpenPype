@@ -1,8 +1,11 @@
 import os
 import pyblish.api
 import openpype.utils
-import openpype.hosts.nuke.lib as nukelib
-import avalon.nuke
+from openpype.hosts.nuke.api.lib import (
+    get_write_node_template_attr,
+    get_node_path
+)
+
 
 @pyblish.api.log
 class RepairNukeWriteNodeAction(pyblish.api.Action):
@@ -15,7 +18,7 @@ class RepairNukeWriteNodeAction(pyblish.api.Action):
 
         for instance in instances:
             node = instance[1]
-            correct_data = nukelib.get_write_node_template_attr(node)
+            correct_data = get_write_node_template_attr(node)
             for k, v in correct_data.items():
                 node[k].setValue(v)
             self.log.info("Node attributes were fixed")
@@ -34,14 +37,14 @@ class ValidateNukeWriteNode(pyblish.api.InstancePlugin):
     def process(self, instance):
 
         node = instance[1]
-        correct_data = nukelib.get_write_node_template_attr(node)
+        correct_data = get_write_node_template_attr(node)
 
         check = []
         for k, v in correct_data.items():
             if k is 'file':
                 padding = len(v.split('#'))
-                ref_path = avalon.nuke.lib.get_node_path(v, padding)
-                n_path = avalon.nuke.lib.get_node_path(node[k].value(), padding)
+                ref_path = get_node_path(v, padding)
+                n_path = get_node_path(node[k].value(), padding)
                 isnt = False
                 for i, p in enumerate(ref_path):
                     if str(n_path[i]) not in str(p):

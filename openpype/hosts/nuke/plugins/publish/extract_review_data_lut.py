@@ -1,8 +1,8 @@
 import os
 import pyblish.api
-from avalon.nuke import lib as anlib
-from openpype.hosts.nuke.api import plugin
 import openpype
+from openpype.hosts.nuke.api import plugin
+from openpype.hosts.nuke.api.lib import maintained_selection
 
 
 class ExtractReviewDataLut(openpype.api.Extractor):
@@ -37,7 +37,7 @@ class ExtractReviewDataLut(openpype.api.Extractor):
             "StagingDir `{0}`...".format(instance.data["stagingDir"]))
 
         # generate data
-        with anlib.maintained_selection():
+        with maintained_selection():
             exporter = plugin.ExporterReviewLut(
                 self, instance
                 )
