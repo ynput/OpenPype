@@ -37,5 +37,7 @@ class ExtractVDBCache(openpype.api.Extractor):
             "ext": "vdb",
             "files": output,
             "stagingDir": staging_dir,
+            "frameStart": instance.data["frameStart"],
+            "frameEnd": instance.data["frameEnd"],
         }
         instance.data["representations"].append(representation)
