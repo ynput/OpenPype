@@ -348,16 +348,17 @@ def split_multichannel_exr(
 
     for channel_name, channels in channels_dict.items() :
 
-        oiio_cmd.append("--ch")
-        oiio_cmd.append(",".join(channels))
+        channle_oiio_cmd = oiio_cmd
+        channle_oiio_cmd.append("--ch")
+        channle_oiio_cmd.append(",".join(channels))
 
         # Add last argument - path to output
         name, ext = os.path.splitext(os.path.basename(first_input_path))
         out_name = name + "_" + channel_name + ext
         output_path = os.path.join(output_dir, out_name)
 
-        oiio_cmd.append("-o")
-        oiio_cmd.append(output_path)
+        channle_oiio_cmd.append("-o")
+        channle_oiio_cmd.append(output_path)
 
-        logger.debug("Conversion command: {}".format(" ".join(oiio_cmd)))
-        run_subprocess(oiio_cmd, logger=logger)
+        logger.debug("Conversion command: {}".format(" ".join(channle_oiio_cmd)))
+        run_subprocess(channle_oiio_cmd, logger=logger)
