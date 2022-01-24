@@ -597,7 +597,7 @@ def check_inventory_versions():
             max_version = max(versions)
 
             # check the available version and do match
-            # change color of node if not max verion
+            # change color of node if not max version
             if version.get("name") not in [max_version]:
                 node["tile_color"].setValue(int("0xd84f20ff", 16))
             else:
@@ -691,10 +691,10 @@ def get_render_path(node):
 
 
 def format_anatomy(data):
-    ''' Helping function for formating of anatomy paths
+    ''' Helping function for formatting of anatomy paths
 
     Arguments:
-        data (dict): dictionary with attributes used for formating
+        data (dict): dictionary with attributes used for formatting
 
     Return:
         path (str)
@@ -917,7 +917,7 @@ def create_write_node(name, data, input=None, prenodes=None,
                 else:
                     now_node.setInput(0, prev_node)
 
-                # swith actual node to previous
+                # switch actual node to previous
                 prev_node = now_node
 
         # creating write node
@@ -929,7 +929,7 @@ def create_write_node(name, data, input=None, prenodes=None,
         # connect to previous node
         now_node.setInput(0, prev_node)
 
-        # swith actual node to previous
+        # switch actual node to previous
         prev_node = now_node
 
         now_node = nuke.createNode("Output", "name Output1")
@@ -971,7 +971,7 @@ def create_write_node(name, data, input=None, prenodes=None,
             GN.addKnob(knob)
         else:
             if "___" in _k_name:
-                # add devider
+                # add divider
                 GN.addKnob(nuke.Text_Knob(""))
             else:
                 # add linked knob by _k_name
@@ -1180,7 +1180,7 @@ class WorkfileSettings(object):
                 for i, n in enumerate(copy_inputs):
                     nv.setInput(i, n)
 
-                # set coppied knobs
+                # set copied knobs
                 for k, v in copy_knobs.items():
                     print(k, v)
                     nv[k].setValue(v)
@@ -1315,7 +1315,7 @@ class WorkfileSettings(object):
     def set_reads_colorspace(self, read_clrs_inputs):
         """ Setting colorspace to Read nodes
 
-        Looping trought all read nodes and tries to set colorspace based
+        Looping through all read nodes and tries to set colorspace based
         on regex rules in presets
         """
         changes = {}
@@ -1324,7 +1324,7 @@ class WorkfileSettings(object):
             if n.Class() != "Read":
                 continue
 
-            # check if any colorspace presets for read is mathing
+            # check if any colorspace presets for read is matching
             preset_clrsp = None
 
             for input in read_clrs_inputs:
@@ -1466,7 +1466,7 @@ class WorkfileSettings(object):
 
     def reset_resolution(self):
         """Set resolution to project resolution."""
-        log.info("Reseting resolution")
+        log.info("Resetting resolution")
         project = io.find_one({"type": "project"})
         asset = api.Session["AVALON_ASSET"]
         asset = io.find_one({"name": asset, "type": "asset"})

@@ -485,7 +485,7 @@ class AbstractSubmitDeadline(pyblish.api.InstancePlugin):
     def get_aux_files(self):
         """Return list of auxiliary files for Deadline job.
 
-        If needed this should be overriden, otherwise return empty list as
+        If needed this should be overridden, otherwise return empty list as
         that field even empty must be present on Deadline submission.
 
         Returns:

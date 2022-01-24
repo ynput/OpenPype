@@ -234,7 +234,7 @@ class FtrackComponentCreator:
         ).first()
 
         if component_entity:
-            # overwrite existing members in component enity
+            # overwrite existing members in component entity
             # - get data for member from `ftrack.origin` location
             self._overwrite_members(component_entity, comp_data)
 

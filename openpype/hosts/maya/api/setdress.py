@@ -341,7 +341,7 @@ def update_package(set_container, representation):
 def update_scene(set_container, containers, current_data, new_data, new_file):
     """Updates the hierarchy, assets and their matrix
 
-    Updates the following withing the scene:
+    Updates the following within the scene:
         * Setdress hierarchy alembic
         * Matrix
         * Parenting

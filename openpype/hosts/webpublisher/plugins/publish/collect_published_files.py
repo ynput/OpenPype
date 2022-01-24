@@ -21,6 +21,11 @@ class CollectPublishedFiles(pyblish.api.ContextPlugin):
     This collector will try to find json files in provided
     `OPENPYPE_PUBLISH_DATA`. Those files _MUST_ share same context.
 
+    This covers 'basic' webpublishes, eg artists uses Standalone Publisher to
+    publish rendered frames or assets.
+
+    This is not applicable for 'studio' processing where host application is
+    called to process uploaded workfile and render frames itself.
     """
     # must be really early, context values are only in json file
     order = pyblish.api.CollectorOrder - 0.490

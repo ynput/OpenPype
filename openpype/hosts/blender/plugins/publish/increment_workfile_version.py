@@ -14,7 +14,7 @@ class IncrementWorkfileVersion(pyblish.api.ContextPlugin):
     def process(self, context):
 
         assert all(result["success"] for result in context.data["results"]), (
-            "Publishing not succesfull so version is not increased.")
+            "Publishing not successful so version is not increased.")
 
         from openpype.lib import version_up
         path = context.data["currentFile"]

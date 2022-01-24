@@ -1,5 +1,6 @@
 from avalon import api
 import openpype.hosts.maya.api.plugin
+from openpype.hosts.maya.api.plugin import get_reference_node
 import os
 from openpype.api import get_project_settings
 import clique
@@ -111,7 +112,7 @@ class AssProxyLoader(openpype.hosts.maya.api.plugin.ReferenceLoader):
 
         # Get reference node from container members
         members = cmds.sets(node, query=True, nodesOnly=True)
-        reference_node = self._get_reference_node(members)
+        reference_node = get_reference_node(members)
 
         assert os.path.exists(proxyPath), "%s does not exist." % proxyPath
 

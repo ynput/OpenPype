@@ -8,7 +8,7 @@ class CollectRepresentationNames(pyblish.api.InstancePlugin):
     Sets the representation names for given families based on RegEx filter
     """
 
-    label = "Collect Representaion Names"
+    label = "Collect Representation Names"
     order = pyblish.api.CollectorOrder
     families = []
     hosts = ["standalonepublisher"]
