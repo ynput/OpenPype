@@ -180,7 +180,7 @@ class VersionDialog(QtWidgets.QDialog):
                 "Running OpenPype version is <b>{}</b>."
                 " Your production uses version <b>{}</b>."
             ).format(str(current_version), str(expected_version))
-            ignore_label = "I know"
+            ignore_label = "Later"
             restart_label = "Restart && Change"
 
         self.setWindowTitle(title)
