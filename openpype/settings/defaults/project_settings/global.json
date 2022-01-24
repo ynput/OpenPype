@@ -219,7 +219,7 @@
                     "hosts": [],
                     "task_types": [],
                     "tasks": [],
-                    "template": "{family}{Variant}"
+                    "template": "{family}{variant}"
                 },
                 {
                     "families": [
@@ -264,6 +264,17 @@
                     "task_types": [],
                     "tasks": [],
                     "template": "render{Task}{Variant}"
+                },
+                {
+                    "families": [
+                        "unrealStaticMesh"
+                    ],
+                    "hosts": [
+                        "maya"
+                    ],
+                    "task_types": [],
+                    "tasks": [],
+                    "template": "S_{asset}{variant}"
                 }
             ]
         },
