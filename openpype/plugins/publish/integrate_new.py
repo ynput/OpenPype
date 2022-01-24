@@ -389,6 +389,7 @@ class IntegrateAssetNew(pyblish.api.InstancePlugin):
             repre["ext"] = ext
             template_data["ext"] = ext
 
+            self.log.info(template_name)
             template = os.path.normpath(
                 anatomy.templates[template_name]["path"])
 
