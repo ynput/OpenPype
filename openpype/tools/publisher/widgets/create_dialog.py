@@ -17,7 +17,7 @@ from openpype.pipeline.create import (
 from .widgets import IconValuePixmapLabel
 from .assets_widget import CreateDialogAssetsWidget
 from .tasks_widget import CreateDialogTasksWidget
-from .precreate_widget import AttributesWidget
+from .precreate_widget import PreCreateWidget
 from ..constants import (
     VARIANT_TOOLTIP,
     CREATOR_IDENTIFIER_ROLE,
@@ -216,22 +216,11 @@ class CreateDialog(QtWidgets.QDialog):
         context_layout.addWidget(assets_widget, 2)
         context_layout.addWidget(tasks_widget, 1)
 
-        pre_create_scroll_area = QtWidgets.QScrollArea(self)
-        pre_create_contet_widget = QtWidgets.QWidget(pre_create_scroll_area)
-        pre_create_scroll_area.setWidget(pre_create_contet_widget)
-        pre_create_scroll_area.setWidgetResizable(True)
+        # Precreate attributes widgets
+        pre_create_widget = PreCreateWidget(self)
 
-        pre_create_contet_layout = QtWidgets.QVBoxLayout(
-            pre_create_contet_widget
-        )
-        pre_create_attributes_widget = AttributesWidget(
-            pre_create_contet_widget
-        )
-        pre_create_contet_layout.addWidget(pre_create_attributes_widget, 0)
-        pre_create_contet_layout.addStretch(1)
-
-        creator_description_widget = CreatorDescriptionWidget(self)
         # TODO add HELP button
+        creator_description_widget = CreatorDescriptionWidget(self)
         creator_description_widget.setVisible(False)
 
         creators_view = QtWidgets.QListView(self)
@@ -273,17 +262,11 @@ class CreateDialog(QtWidgets.QDialog):
         mid_layout.addLayout(form_layout, 0)
         mid_layout.addWidget(create_btn, 0)
 
-        left_layout = QtWidgets.QVBoxLayout()
-        left_layout.addWidget(QtWidgets.QLabel("Choose family:", self))
-        left_layout.addWidget(creators_view, 1)
-        left_layout.addLayout(form_layout, 0)
-        left_layout.addWidget(create_btn, 0)
-
         layout = QtWidgets.QHBoxLayout(self)
         layout.setSpacing(10)
         layout.addWidget(context_widget, 1)
         layout.addWidget(mid_widget, 1)
-        layout.addWidget(pre_create_scroll_area, 1)
+        layout.addWidget(pre_create_widget, 1)
 
         prereq_timer = QtCore.QTimer()
         prereq_timer.setInterval(50)
@@ -306,7 +289,8 @@ class CreateDialog(QtWidgets.QDialog):
 
         controller.add_plugins_refresh_callback(self._on_plugins_refresh)
 
-        self._pre_create_attributes_widget = pre_create_attributes_widget
+        self._pre_create_widget = pre_create_widget
+
         self._context_widget = context_widget
         self._assets_widget = assets_widget
         self._tasks_widget = tasks_widget
@@ -519,10 +503,11 @@ class CreateDialog(QtWidgets.QDialog):
         creator = self.controller.manual_creators.get(identifier)
 
         self.creator_description_widget.set_plugin(creator)
+        self._pre_create_widget.set_plugin(creator)
 
         self._selected_creator = creator
+
         if not creator:
-            self._pre_create_attributes_widget.set_attr_defs([])
             self._set_context_enabled(False)
             return
 
@@ -532,9 +517,6 @@ class CreateDialog(QtWidgets.QDialog):
         ):
             self._set_context_enabled(creator.create_allow_context_change)
             self._refresh_asset()
-
-        attr_defs = creator.get_pre_create_attr_defs()
-        self._pre_create_attributes_widget.set_attr_defs(attr_defs)
 
         default_variants = creator.get_default_variants()
         if not default_variants:
@@ -682,7 +664,7 @@ class CreateDialog(QtWidgets.QDialog):
         variant = self.variant_input.text()
         asset_name = self._get_asset_name()
         task_name = self._get_task_name()
-        pre_create_data = self._pre_create_attributes_widget.current_value()
+        pre_create_data = self._pre_create_widget.current_value()
         # Where to define these data?
         # - what data show be stored?
         instance_data = {
