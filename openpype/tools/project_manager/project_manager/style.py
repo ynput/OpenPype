@@ -1,6 +1,7 @@
 import os
 from Qt import QtCore, QtGui
 
+from openpype.style import get_objected_colors
 from avalon.vendor import qtawesome
 
 
@@ -90,12 +91,32 @@ class ResourceCache:
         icon.addPixmap(disabled_pix, QtGui.QIcon.Disabled, QtGui.QIcon.Off)
         return icon
 
+    @classmethod
+    def get_warning_pixmap(cls):
+        src_image = get_warning_image()
+        colors = get_objected_colors()
+        color_value = colors["delete-btn-bg"]
+
+        return paint_image_with_color(
+            src_image,
+            color_value.get_qcolor()
+        )
+
 
 def get_remove_image():
     image_path = os.path.join(
         os.path.dirname(os.path.abspath(__file__)),
         "images",
         "bin.png"
+    )
+    return QtGui.QImage(image_path)
+
+
+def get_warning_image():
+    image_path = os.path.join(
+        os.path.dirname(os.path.abspath(__file__)),
+        "images",
+        "warning.png"
     )
     return QtGui.QImage(image_path)
 

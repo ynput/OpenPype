@@ -278,7 +278,7 @@ def _cleanup_out_range_frames(output_idx_by_frame_idx, range_start, range_end):
     }
     // Result
     {
-        2: 2, // Redirect to self as is first that refence out range
+        2: 2, // Redirect to self as is first that reference out range
         3: 2 // Redirect to first redirected frame
     }
     ```
@@ -593,7 +593,7 @@ def composite_rendered_layers(
             transparent_filepaths.add(dst_filepath)
             continue
 
-        # Store first destionation filepath to be used for transparent images
+        # Store first destination filepath to be used for transparent images
         if first_dst_filepath is None:
             first_dst_filepath = dst_filepath
 
@@ -657,7 +657,7 @@ def rename_filepaths_by_frame_start(
         max(range_end, new_frame_end)
     )
 
-    # Use differnet ranges based on Mark In and output Frame Start values
+    # Use different ranges based on Mark In and output Frame Start values
     # - this is to make sure that filename renaming won't affect files that
     #   are not renamed yet
     if range_start < new_frame_start:
