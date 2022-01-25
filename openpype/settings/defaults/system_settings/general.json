@@ -2,9 +2,6 @@
     "studio_name": "Studio name",
     "studio_code": "stu",
     "admin_password": "",
-    "production_version": "",
-    "staging_version": "",
-    "version_check_interval": 5,
     "environment": {
         "__environment_keys__": {
             "global": []
@@ -19,5 +16,8 @@
         "windows": [],
         "darwin": [],
         "linux": []
-    }
+    },
+    "production_version": "",
+    "staging_version": "",
+    "version_check_interval": 5
 }

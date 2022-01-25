@@ -16,7 +16,7 @@ class ValidateTextureBatchNaming(pyblish.api.InstancePlugin):
         if isinstance(file_name, list):
             file_name = file_name[0]
 
-        msg = "Couldnt find asset name in '{}'\n".format(file_name) + \
+        msg = "Couldn't find asset name in '{}'\n".format(file_name) + \
               "File name doesn't follow configured pattern.\n" + \
               "Please rename the file."
         assert "NOT_AVAIL" not in instance.data["asset_build"], msg

@@ -304,7 +304,7 @@ class FlameToFtrackPanel(object):
         self._resolve_project_entity()
         self._save_ui_state_to_cfg()
 
-        # get hanldes from gui input
+        # get handles from gui input
         handles = self.handles_input.text()
 
         # get frame start from gui input
@@ -517,7 +517,7 @@ class FlameToFtrackPanel(object):
         if self.temp_data_dir:
             shutil.rmtree(self.temp_data_dir)
         self.temp_data_dir = None
-        print("All Temp data were destroied ...")
+        print("All Temp data were destroyed ...")
 
     def close(self):
         self._save_ui_state_to_cfg()

@@ -260,7 +260,7 @@ class LoadEffectsInputProcess(api.Loader):
         else:
             GN["tile_color"].setValue(int("0x3469ffff", 16))
 
-        self.log.info("udated to version: {}".format(version.get("name")))
+        self.log.info("updated to version: {}".format(version.get("name")))
 
     def connect_active_viewer(self, group_node):
         """
@@ -333,7 +333,7 @@ class LoadEffectsInputProcess(api.Loader):
     def byteify(self, input):
         """
         Converts unicode strings to strings
-        It goes trought all dictionary
+        It goes through all dictionary
 
         Arguments:
             input (dict/str): input

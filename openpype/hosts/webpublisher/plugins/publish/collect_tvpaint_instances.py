@@ -28,7 +28,7 @@ class CollectTVPaintInstances(pyblish.api.ContextPlugin):
     render_layer_pass_name = "beauty"
 
     # Set by settings
-    # Regex must constain 'layer' and 'variant' groups which are extracted from
+    # Regex must contain 'layer' and 'variant' groups which are extracted from
     #   name when instances are created
     layer_name_regex = r"(?P<layer>L[0-9]{3}_\w+)_(?P<pass>.+)"
 

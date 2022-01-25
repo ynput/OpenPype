@@ -36,7 +36,7 @@ class ExtractVrayscene(openpype.api.Extractor):
         else:
             node = vray_settings[0]
 
-        # setMembers on vrayscene_layer shoudl contain layer name.
+        # setMembers on vrayscene_layer should contain layer name.
         layer_name = instance.data.get("layer")
 
         staging_dir = self.staging_dir(instance)
@@ -111,7 +111,7 @@ class ExtractVrayscene(openpype.api.Extractor):
             layer (str): layer name.
             template (str): token template.
             start_frame (int, optional): start frame - if set we use
-                mutliple files export mode.
+                multiple files export mode.
 
         Returns:
             str: formatted path.

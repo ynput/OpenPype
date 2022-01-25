@@ -267,7 +267,9 @@
                                 "label": "Task types"
                             },
                             {
-                                "type": "splitter"
+                                "type": "boolean",
+                                "key": "is_include",
+                                "label": "Exclude / Include"
                             },
                             {
                                 "type": "template",

@@ -1,9 +1,9 @@
 import os
 
+import bpy
+
 from openpype import api
 from openpype.hosts.blender.api import plugin
-
-import bpy
 
 
 class ExtractCamera(api.Extractor):

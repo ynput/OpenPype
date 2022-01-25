@@ -23,10 +23,17 @@ from .lib import (
     get_sequence_segments,
     maintained_segment_selection,
     reset_segment_selection,
-    get_segment_attributes
+    get_segment_attributes,
+    get_clips_in_reels,
+    get_reformated_filename,
+    get_frame_from_filename,
+    get_padding_from_filename,
+    maintained_object_duplication
 )
 from .utils import (
-    setup
+    setup,
+    get_flame_version,
+    get_flame_install_root
 )
 from .pipeline import (
     install,
@@ -55,6 +62,10 @@ from .workio import (
     file_extensions,
     work_root
 )
+from .render_utils import (
+    export_clip,
+    get_preset_path_by_xml_name
+)
 
 __all__ = [
     # constants
@@ -80,6 +91,11 @@ __all__ = [
     "maintained_segment_selection",
     "reset_segment_selection",
     "get_segment_attributes",
+    "get_clips_in_reels",
+    "get_reformated_filename",
+    "get_frame_from_filename",
+    "get_padding_from_filename",
+    "maintained_object_duplication",
 
     # pipeline
     "install",
@@ -96,6 +112,8 @@ __all__ = [
 
     # utils
     "setup",
+    "get_flame_version",
+    "get_flame_install_root",
 
     # menu
     "FlameMenuProjectConnect",
@@ -111,5 +129,9 @@ __all__ = [
     "current_file",
     "has_unsaved_changes",
     "file_extensions",
-    "work_root"
+    "work_root",
+
+    # render utils
+    "export_clip",
+    "get_preset_path_by_xml_name"
 ]
