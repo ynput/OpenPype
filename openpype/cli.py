@@ -421,10 +421,14 @@ def getsecurevalue(
     variable and its value.
     Format keyring://file/environment/OPENPYPE_MONGO
     """
-    return click.echo("getsecurevalue:{}".format(PypeCommands.get_secure_value(
-        set_url,
-        project
-    )))
+    try:
+        return click.echo(
+            "getsecurevalue:{}".format(PypeCommands.get_secure_value(
+                set_url,
+                project
+            )))
+    except Exception as e:
+        return click.echo(str(e))
 
 
 @main.command()

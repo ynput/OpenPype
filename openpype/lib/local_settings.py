@@ -671,15 +671,16 @@ def get_secure_value(get_url, project=None):
 
     Args:
         get_url (str)
+    Returns:
+        (str)
+    Throws:
+        (ValueError) if key not found
     """
     general_location, path_part, key, value = parse_get_url(get_url)
 
     if general_location == "keyring":
         registry = OpenPypeSecureRegistry(path_part)
-        try:
-            return registry.get_item(key)
-        except ValueError as exp:
-            print(str(exp))
+        return registry.get_item(key)
 
 
 def set_secure_value(set_url, project=None):
