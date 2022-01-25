@@ -9,6 +9,7 @@ import sys
 from collections import Counter
 import attr
 import logging
+from abc import ABCMeta
 
 from maya import cmds  # noqa
 import maya.app.renderSetup.model.renderSetup as renderSetup  # noqa
@@ -28,6 +29,10 @@ from avalon.api import CreatorError
 
 
 log = logging.getLogger(__name__)
+
+
+class FarmFactory(object):
+    pass
 
 
 class CreateRender(plugin.Creator):
@@ -63,24 +68,36 @@ class CreateRender(plugin.Creator):
     def __init__(self, *args, **kwargs):
         """Constructor."""
         super(CreateRender, self).__init__(*args, **kwargs)
+        self.instance = None
+        self.farm_instance = None
         self._project_settings = get_project_settings(
             Session["AVALON_PROJECT"])
 
         # process available render farm settings
-        deadline_settings = get_system_settings()["modules"]["deadline"]
-        muster_settings = get_system_settings()["modules"]["muster"]
-        royalrender_settings = get_system_settings()["modules"]["royalrender"]
+        self.deadline_settings = get_system_settings()["modules"]["deadline"]
+        self.muster_settings = get_system_settings()["modules"]["muster"]
+        self.royalrender_settings = get_system_settings()["modules"]["royalrender"]
 
         if [deadline_settings["enabled"],
                 muster_settings["enabled"],
                 royalrender_settings["enabled"]].count(True) > 1:
             raise CreatorError("More then one render farm module enabled")
 
-        self.farm_module_settings = None
-        self.farm_init = None
+        try:
+            self.aov_separator = self._aov_chars[(
+                self._project_settings["maya"]
+                ["create"]
+                ["CreateRender"]
+                ["aov_separator"]
+            )]
+        except KeyError:
+            self.aov_separator = "_"
+
+    def process(self):
+        """Entry point."""
         if deadline_settings["enabled"]:
-            self.farm_module = DeadlineRenderInstance(
-                deadline_settings, self._project_settings)
+            self.farm_instance = DeadlineRenderInstance(
+                Deadline, deadline_settings, self._project_settings)
 
         elif muster_settings["enabled"]:
             self.farm_module_settings = muster_settings
@@ -89,13 +106,43 @@ class CreateRender(plugin.Creator):
             self.farm_module_settings = royalrender_settings
 
 
-    def process(self):
-        """Entry point."""
-        ...
+        # check if render instance already exists
+        exists = cmds.ls(self.name)
+        if exists:
+            cmds.warning("%s already exists." % exists[0])
+            return
+
+        with lib.undo_chunk():
+            self.instance = super(CreateRender, self).process()
+            self.data.update(
+                self.farm_instance.module.get_instance_data(self.instance))
+            self._create_render_settings()
+
+    def _create_namespace(self):
+        # create namespace with instance
+        index = 1
+        namespace_name = "_{}".format(str(self.instance))
+        try:
+            cmds.namespace(rm=namespace_name)
+        except RuntimeError:
+            # namespace is not empty, so we leave it untouched
+            pass
+
+        while cmds.namespace(exists=namespace_name):
+            namespace_name = "_{}{}".format(str(self.instance), index)
+            index += 1
+
+        return cmds.namespace(add=namespace_name)
+
+    def _create_render_settings(self):
+        pass
 
 
 @attr.s
-class RenderInstance:
+class RenderInstance(object):
+    module_klass = attr.ib()
+    module_settings = attr.ib()
+    project_settings = attr.ib()
     review = attr.ib(default=True)
     extendFrames = attr.ib(default=False)
     overrideExistingFrame = attr.ib(default=True)
@@ -104,6 +151,11 @@ class RenderInstance:
     tilesY = attr.ib(default=2)
     convertToScanline = attr.ib(default=False)
     useReferencedAovs = attr.ib(default=False)
+
+    def __attrs_post_init__(self):
+        # post initialization hook to instantiate class for farm
+        # implementation
+        self.module = self.module_klass(self)
 
 
 @attr.s
@@ -117,11 +169,25 @@ class DeadlineRenderInstance(RenderInstance):
     suspendPublishJob = attr.ib(default=False)
 
 
-class Deadline:
+class FarmModule(object):
+    def __init__(self, render_instance):
+        # type: (RenderInstance) -> FarmModule
+        self.settings = render_instance.module_settings
+        self.project_settings = render_instance.project_settings
+        self.render_instance = render_instance
+        self.instance = None
 
-    def __init__(self, settings, project_settings):
-        self.settings = settings
-        self.project_settings = project_settings
+    def get_instance_data(self):
+        return {k: v for k, v in attr.asdict(self.render_instance)}
+
+
+class Deadline(FarmModule):
+    def __init__(self, render_instance):
+        # type: (DeadlineRenderInstance) -> Deadline
+        super(Deadline, self).__init__(render_instance)
+        self.settings = render_instance.module_settings
+        self.project_settings = render_instance.project_settings
+        self.render_instance = render_instance
         self.instance = None
         self.deadline_servers = []
         self.server_aliases = []
