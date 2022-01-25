@@ -32,7 +32,7 @@ class PreCreateWidget(QtWidgets.QWidget):
 
         # Creator does not have precreate attributes
         empty_label = QtWidgets.QLabel(
-            "This creator had no configurable options",
+            "This creator has no configurable options",
             empty_widget
         )
         empty_label.setWordWrap(True)
@@ -40,10 +40,8 @@ class PreCreateWidget(QtWidgets.QWidget):
 
         empty_layout = QtWidgets.QVBoxLayout(empty_widget)
         empty_layout.setContentsMargins(0, 0, 0, 0)
-        empty_layout.addStretch(1)
         empty_layout.addWidget(empty_label, 0, QtCore.Qt.AlignCenter)
         empty_layout.addWidget(no_creator_label, 0, QtCore.Qt.AlignCenter)
-        empty_layout.addStretch(1)
 
         main_layout = QtWidgets.QHBoxLayout(self)
         main_layout.setContentsMargins(0, 0, 0, 0)
