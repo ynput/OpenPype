@@ -37,6 +37,7 @@ jobs:
     - name: 🔨 Build
       shell: pwsh
       run: |
+        $env:SKIP_THIRD_PARTY_VALIDATION="1"
         ./tools/build.ps1
 
   Ubuntu-latest:
@@ -61,6 +62,7 @@ jobs:
 
     - name: 🔨 Build
       run: |
+        export SKIP_THIRD_PARTY_VALIDATION="1"
         ./tools/build.sh
 
   # MacOS-latest:

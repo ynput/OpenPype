@@ -3,8 +3,8 @@
 import bpy
 
 from avalon import api
-from avalon.blender import lib
 import openpype.hosts.blender.api.plugin
+from openpype.hosts.blender.api import lib
 
 
 class CreatePointcache(openpype.hosts.blender.api.plugin.Creator):

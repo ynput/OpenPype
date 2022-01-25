@@ -2,23 +2,30 @@ import os
 import random
 import string
 
-import avalon.nuke
-from avalon.nuke import lib as anlib
-from avalon import api
+import nuke
+
+import avalon.api
 
 from openpype.api import (
     get_current_project_settings,
     PypeCreatorMixin
 )
-from .lib import check_subsetname_exists
-import nuke
+from .lib import (
+    Knobby,
+    check_subsetname_exists,
+    reset_selection,
+    maintained_selection,
+    set_avalon_knob_data,
+    add_publish_knob
+)
 
 
-class PypeCreator(PypeCreatorMixin, avalon.nuke.pipeline.Creator):
-    """Pype Nuke Creator class wrapper
-    """
+class OpenPypeCreator(PypeCreatorMixin, avalon.api.Creator):
+    """Pype Nuke Creator class wrapper"""
+    node_color = "0xdfea5dff"
+
     def __init__(self, *args, **kwargs):
-        super(PypeCreator, self).__init__(*args, **kwargs)
+        super(OpenPypeCreator, self).__init__(*args, **kwargs)
         self.presets = get_current_project_settings()["nuke"]["create"].get(
             self.__class__.__name__, {}
         )
@@ -30,6 +37,38 @@ class PypeCreator(PypeCreatorMixin, avalon.nuke.pipeline.Creator):
             self.log.error(msg + "\n\nPlease use other subset name!")
             raise NameError("`{0}: {1}".format(__name__, msg))
         return
+
+    def process(self):
+        from nukescripts import autoBackdrop
+
+        instance = None
+
+        if (self.options or {}).get("useSelection"):
+
+            nodes = nuke.selectedNodes()
+            if not nodes:
+                nuke.message("Please select nodes that you "
+                             "wish to add to a container")
+                return
+
+            elif len(nodes) == 1:
+                # only one node is selected
+                instance = nodes[0]
+
+        if not instance:
+            # Not using selection or multiple nodes selected
+            bckd_node = autoBackdrop()
+            bckd_node["tile_color"].setValue(int(self.node_color, 16))
+            bckd_node["note_font_size"].setValue(24)
+            bckd_node["label"].setValue("[{}]".format(self.name))
+
+            instance = bckd_node
+
+        # add avalon knobs
+        set_avalon_knob_data(instance, self.data)
+        add_publish_knob(instance)
+
+        return instance
 
 
 def get_review_presets_config():
@@ -48,7 +87,7 @@ def get_review_presets_config():
     return [str(name) for name, _prop in outputs.items()]
 
 
-class NukeLoader(api.Loader):
+class NukeLoader(avalon.api.Loader):
     container_id_knob = "containerId"
     container_id = None
 
@@ -74,7 +113,7 @@ class NukeLoader(api.Loader):
             node[self.container_id_knob].setValue(source_id)
         else:
             HIDEN_FLAG = 0x00040000
-            _knob = anlib.Knobby(
+            _knob = Knobby(
                 "String_Knob",
                 self.container_id,
                 flags=[
@@ -183,7 +222,7 @@ class ExporterReview(object):
         Returns:
             nuke.Node: copy node of Input Process node
         """
-        anlib.reset_selection()
+        reset_selection()
         ipn_orig = None
         for v in nuke.allNodes(filter="Viewer"):
             ip = v["input_process"].getValue()
@@ -196,7 +235,7 @@ class ExporterReview(object):
             # copy selected to clipboard
             nuke.nodeCopy("%clipboard%")
             # reset selection
-            anlib.reset_selection()
+            reset_selection()
             # paste node and selection is on it only
             nuke.nodePaste("%clipboard%")
             # assign to variable
@@ -209,7 +248,7 @@ class ExporterReview(object):
         nuke_imageio = opnlib.get_nuke_imageio_settings()
 
         # TODO: this is only securing backward compatibility lets remove
-        # this once all projects's anotomy are upated to newer config
+        # this once all projects's anotomy are updated to newer config
         if "baking" in nuke_imageio.keys():
             return nuke_imageio["baking"]["viewerProcess"]
         else:
@@ -396,7 +435,7 @@ class ExporterReviewMov(ExporterReview):
 
     def save_file(self):
         import shutil
-        with anlib.maintained_selection():
+        with maintained_selection():
             self.log.info("Saving nodes as file...  ")
             # create nk path
             path = os.path.splitext(self.path)[0] + ".nk"
@@ -477,7 +516,7 @@ class ExporterReviewMov(ExporterReview):
         write_node["file_type"].setValue(str(self.ext))
 
         # Knobs `meta_codec` and `mov64_codec` are not available on centos.
-        # TODO should't this come from settings on outputs?
+        # TODO shouldn't this come from settings on outputs?
         try:
             write_node["meta_codec"].setValue("ap4h")
         except Exception:

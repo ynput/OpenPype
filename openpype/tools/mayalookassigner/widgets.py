@@ -20,7 +20,6 @@ MODELINDEX = QtCore.QModelIndex()
 
 
 class AssetOutliner(QtWidgets.QWidget):
-
     refreshed = QtCore.Signal()
     selection_changed = QtCore.Signal()
 
@@ -84,14 +83,13 @@ class AssetOutliner(QtWidgets.QWidget):
         """
 
         selection_model = self.view.selectionModel()
-        items = [row.data(TreeModel.ItemRole) for row in
-                 selection_model.selectedRows(0)]
-
-        return items
+        return [row.data(TreeModel.ItemRole)
+                for row in selection_model.selectedRows(0)]
 
     def get_all_assets(self):
         """Add all items from the current scene"""
 
+        items = []
         with lib.preserve_expanded_rows(self.view):
             with lib.preserve_selection(self.view):
                 self.clear()
@@ -118,7 +116,7 @@ class AssetOutliner(QtWidgets.QWidget):
 
         # Collect all nodes by hash (optimization)
         if not selection:
-            nodes = cmds.ls(dag=True,  long=True)
+            nodes = cmds.ls(dag=True, long=True)
         else:
             nodes = commands.get_selected_nodes()
         id_nodes = commands.create_asset_id_hash(nodes)
@@ -187,7 +185,6 @@ class AssetOutliner(QtWidgets.QWidget):
 
 
 class LookOutliner(QtWidgets.QWidget):
-
     menu_apply_action = QtCore.Signal()
 
     def __init__(self, parent=None):
@@ -237,9 +234,7 @@ class LookOutliner(QtWidgets.QWidget):
         """
 
         datas = [i.data(TreeModel.ItemRole) for i in self.view.get_indices()]
-        items = [d for d in datas if d is not None]  # filter Nones
-
-        return items
+        return [d for d in datas if d is not None]
 
     def right_mouse_menu(self, pos):
         """Build RMB menu for look view"""

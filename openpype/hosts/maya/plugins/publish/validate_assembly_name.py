@@ -30,7 +30,8 @@ class ValidateAssemblyName(pyblish.api.InstancePlugin):
         descendants = cmds.listRelatives(content_instance,
                                          allDescendents=True,
                                          fullPath=True) or []
-        descendants = cmds.ls(descendants, noIntermediate=True, long=True)
+        descendants = cmds.ls(
+            descendants, noIntermediate=True, type="transform")
         content_instance = list(set(content_instance + descendants))
         assemblies = cmds.ls(content_instance, assemblies=True, long=True)
 

@@ -3,13 +3,13 @@ from avalon.vendor import qargparse
 from avalon import api, io
 
 from openpype.hosts.nuke.api.lib import (
-    get_imageio_input_colorspace
+    get_imageio_input_colorspace,
+    maintained_selection
 )
-from avalon.nuke import (
+from openpype.hosts.nuke.api import (
     containerise,
     update_container,
-    viewer_update_and_undo_stop,
-    maintained_selection
+    viewer_update_and_undo_stop
 )
 from openpype.hosts.nuke.api import plugin
 
@@ -270,7 +270,7 @@ class LoadClip(plugin.NukeLoader):
                 read_node,
                 updated_dict
             )
-            self.log.info("udated to version: {}".format(version.get("name")))
+            self.log.info("updated to version: {}".format(version.get("name")))
 
         if version_data.get("retime", None):
             self._make_retimes(read_node, version_data)
@@ -280,9 +280,6 @@ class LoadClip(plugin.NukeLoader):
         self.set_as_member(read_node)
 
     def remove(self, container):
-
-        from avalon.nuke import viewer_update_and_undo_stop
-
         read_node = nuke.toNode(container['objectName'])
         assert read_node.Class() == "Read", "Must be Read"
 
@@ -302,7 +299,7 @@ class LoadClip(plugin.NukeLoader):
         self._loader_shift(read_node, start_at_workfile)
 
     def _make_retimes(self, parent_node, version_data):
-        ''' Create all retime and timewarping nodes with coppied animation '''
+        ''' Create all retime and timewarping nodes with copied animation '''
         speed = version_data.get('speed', 1)
         time_warp_nodes = version_data.get('timewarps', [])
         last_node = None
