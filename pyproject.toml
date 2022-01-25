@@ -97,6 +97,7 @@ toml = "^0.10.2" # for parsing pyproject.toml
 [[tool.poetry.source]]
 name = "openpype"
 url = "https://distribute.openpype.io/wheels/"
+secondary = true
 
 [build-system]
 requires = ["poetry-core>=1.0.0"]
