@@ -312,6 +312,7 @@ class MongoSettingsHandler(SettingsHandler):
         "staging_version"
     )
     key_suffix = "_versioned"
+    _version_order_key = "versions_order"
 
     def __init__(self):
         # Get mongo connection
@@ -322,8 +323,8 @@ class MongoSettingsHandler(SettingsHandler):
 
         self._anatomy_keys = None
         self._attribute_keys = None
-        # TODO prepare version of pype
-        # - pype version should define how are settings saved and loaded
+
+        self._version_order_checked = False
 
         self._system_settings_key = SYSTEM_SETTINGS_KEY + self.key_suffix
         self._project_settings_key = PROJECT_SETTINGS_KEY + self.key_suffix
@@ -668,21 +669,88 @@ class MongoSettingsHandler(SettingsHandler):
             upsert=True
         )
 
-    def _get_objected_version(self, version_str):
+    def _check_version_order(self):
+        """This method will work only in OpenPype process.
+
+        Will create/update mongo document where OpenPype versions are stored
+        in semantic version order.
+
+        This document can be then used to find closes version of settings in
+        processes where 'OpenPypeVersion' is not available.
+        """
+        # Do this step only once
+        if self._version_order_checked:
+            return
+        self._version_order_checked = True
+
         from openpype.lib.openpype_version import get_OpenPypeVersion
 
         OpenPypeVersion = get_OpenPypeVersion()
+        # Skip if 'OpenPypeVersion' is not available
         if OpenPypeVersion is None:
-            return None
-        return OpenPypeVersion(version=version_str)
+            return
+
+        # Query document holding sorted list of version strings
+        doc = self.collection.find_one({"type": self._version_order_key})
+        if not doc:
+            # Just create the document if does not exists yet
+            self.collection.replace_one(
+                {"type": self._version_order_key},
+                {
+                    "type": self._version_order_key,
+                    "versions": [self._current_version]
+                },
+                upsert=True
+            )
+            return
+
+        # Skip if current version is already available
+        if self._current_version in doc["versions"]:
+            return
+
+        # Add all versions into list
+        objected_versions = [
+            OpenPypeVersion(version=self._current_version)
+        ]
+        for version_str in doc["versions"]:
+            objected_versions.append(OpenPypeVersion(version=version_str))
+
+        # Store version string by their order
+        new_versions = []
+        for version in sorted(objected_versions):
+            new_versions.append(str(version))
+
+        # Update versions list and push changes to Mongo
+        doc["versions"] = new_versions
+        self.collection.replace_one(
+            {"type": self._version_order_key},
+            doc,
+            upsert=True
+        )
 
     def _find_closest_settings(self, key, legacy_key, additional_filters=None):
+        """Try to find closes available versioned settings for settings key.
+
+        This method should be used only if settings for current OpenPype
+        version are not available.
+
+        Args:
+            key(str): Settings key under which are settings stored ("type").
+            legacy_key(str): Settings key under which were stored not versioned
+                settings.
+            additional_filters(dict): Additional filters of document. Used
+                for project specific settings.
+        """
+        # Trigger check of versions
+        self._check_version_order()
+
         doc_filters = {
             "type": {"$in": [key, legacy_key]}
         }
         if additional_filters:
             doc_filters.update(additional_filters)
 
+        # Query base data of each settings doc
         other_versions = self.collection.find(
             doc_filters,
             {
@@ -691,33 +759,73 @@ class MongoSettingsHandler(SettingsHandler):
                 "type": True
             }
         )
+        # Query doc with list of sorted versions
+        versioned_doc = self.collection.find_one(
+            {"type": self._version_order_key}
+        )
+        # Separate queried docs
         legacy_settings_doc = None
-        versioned_settings = []
+        versioned_settings_by_version = {}
         for doc in other_versions:
             if doc["type"] == legacy_key:
                 legacy_settings_doc = doc
+            elif doc["type"] == key:
+                versioned_settings_by_version[doc["version"]] = doc
+
+        # Cases when only legacy settings can be used
+        if (
+            # There are not versioned documents yet
+            not versioned_settings_by_version
+            # Versioned document is not available at all
+            # - this can happen only if old build of OpenPype was used
+            or not versioned_doc
+            # Current OpenPype version is not available
+            # - something went really wrong when this happens
+            or self._current_version not in versioned_doc["versions"]
+        ):
+            if not legacy_settings_doc:
+                return None
+            return self.collection.find_one(
+                {"_id": legacy_settings_doc["_id"]}
+            )
+
+        # Separate versions to lower and higher and keep their order
+        lower_versions = []
+        higher_versions = []
+        before = True
+        for version_str in versioned_doc["versions"]:
+            if version_str == self._current_version:
+                before = False
+            elif before:
+                lower_versions.append(version_str)
             else:
-                versioned_settings.append(doc)
+                higher_versions.append(version_str)
 
-        current_version = None
-        if versioned_settings:
-            current_version = self._get_objected_version(self._current_version)
+        # Use legacy settings doc as source document
+        src_doc_id = None
+        if legacy_settings_doc:
+            src_doc_id = legacy_settings_doc["_id"]
 
-        closest_version_doc = legacy_settings_doc
-        if current_version is not None:
-            closest_version = None
-            for version_doc in versioned_settings:
-                version = self._get_objected_version(version_doc["version"])
-                if version > current_version:
-                    continue
-                if closest_version is None or closest_version < version:
-                    closest_version = version
-                    closest_version_doc = version_doc
+        # Find highest version which has available settings
+        if lower_versions:
+            for version_str in reversed(lower_versions):
+                doc = versioned_settings_by_version.get(version_str)
+                if doc:
+                    src_doc_id = doc["_id"]
+                    break
 
-        if not closest_version_doc:
-            return None
+        # Use versions with higher version only if there are not legacy
+        #   settings and there are not any versions before
+        if src_doc_id is None and higher_versions:
+            for version_str in higher_versions:
+                doc = versioned_settings_by_version.get(version_str)
+                if doc:
+                    src_doc_id = doc["_id"]
+                    break
 
-        return self.collection.find_one({"_id": closest_version_doc["_id"]})
+        if src_doc_id is None:
+            return src_doc_id
+        return self.collection.find_one({"_id": src_doc_id})
 
     def _find_closest_system_settings(self):
         return self._find_closest_settings(
