@@ -1,27 +1,30 @@
 # -*- coding: utf-8 -*-
 
-from maya import cmds
+from maya import cmds  # noqa
 import pyblish.api
 import openpype.api
 import openpype.hosts.maya.api.action
+from avalon.api import Session
+from openpype.api import get_project_settings
 import re
 
 
-class ValidateUnrealStaticmeshName(pyblish.api.InstancePlugin):
+class ValidateUnrealStaticMeshName(pyblish.api.InstancePlugin):
     """Validate name of Unreal Static Mesh
 
     Unreals naming convention states that staticMesh should start with `SM`
-    prefix - SM_[Name]_## (Eg. SM_sube_01). This plugin also validates other
-    types of meshes - collision meshes:
+    prefix - SM_[Name]_## (Eg. SM_sube_01).These prefixes can be configured
+    in Settings UI. This plugin also validates other types of
+    meshes - collision meshes:
 
-    UBX_[RenderMeshName]_##:
+    UBX_[RenderMeshName]*:
                              Boxes are created with the Box objects type in
                              Max or with the Cube polygonal primitive in Maya.
                              You cannot move the vertices around or deform it
                              in any way to make it something other than a
                              rectangular prism, or else it will not work.
 
-    UCP_[RenderMeshName]_##:
+    UCP_[RenderMeshName]*:
                              Capsules are created with the Capsule object type.
                              The capsule does not need to have many segments
                              (8 is a good number) at all because it is
@@ -29,7 +32,7 @@ class ValidateUnrealStaticmeshName(pyblish.api.InstancePlugin):
                              boxes, you should not move the individual
                              vertices around.
 
-    USP_[RenderMeshName]_##:
+    USP_[RenderMeshName]*:
                              Spheres are created with the Sphere object type.
                              The sphere does not need to have many segments
                              (8 is a good number) at all because it is
@@ -37,7 +40,7 @@ class ValidateUnrealStaticmeshName(pyblish.api.InstancePlugin):
                              boxes, you should not move the individual
                              vertices around.
 
-    UCX_[RenderMeshName]_##:
+    UCX_[RenderMeshName]*:
                              Convex objects can be any completely closed
                              convex 3D shape. For example, a box can also be
                              a convex object
@@ -52,67 +55,86 @@ class ValidateUnrealStaticmeshName(pyblish.api.InstancePlugin):
     families = ["unrealStaticMesh"]
     label = "Unreal StaticMesh Name"
     actions = [openpype.hosts.maya.api.action.SelectInvalidAction]
-    regex_mesh = r"SM_(?P<renderName>.*)_(\d{2})"
-    regex_collision = r"((UBX)|(UCP)|(USP)|(UCX))_(?P<renderName>.*)_(\d{2})"
+    regex_mesh = r"(?P<renderName>.*))"
+    regex_collision = r"(?P<renderName>.*)"
 
     @classmethod
     def get_invalid(cls, instance):
 
-        # find out if supplied transform is group or not
-        def is_group(groupName):
-            try:
-                children = cmds.listRelatives(groupName, children=True)
-                for child in children:
-                    if not cmds.ls(child, transforms=True):
-                        return False
+        invalid = []
+
+        project_settings = get_project_settings(Session["AVALON_PROJECT"])
+        collision_prefixes = (
+            project_settings
+            ["maya"]
+            ["create"]
+            ["CreateUnrealStaticMesh"]
+            ["collision_prefixes"]
+        )
+
+        combined_geometry_name = instance.data.get(
+            "staticMeshCombinedName", None)
+        if cls.validate_mesh:
+            # compile regex for testing names
+            regex_mesh = "{}{}".format(
+                ("_" + cls.static_mesh_prefix) or "", cls.regex_mesh
+            )
+            sm_r = re.compile(regex_mesh)
+            if not sm_r.match(combined_geometry_name):
+                cls.log.error("Mesh doesn't comply with name validation.")
                 return True
-            except Exception:
+
+        if cls.validate_collision:
+            collision_set = instance.data.get("collisionMembers", None)
+            # soft-fail is there are no collision objects
+            if not collision_set:
+                cls.log.warning("No collision objects to validate.")
                 return False
 
-        invalid = []
-        content_instance = instance.data.get("setMembers", None)
-        if not content_instance:
-            cls.log.error("Instance has no nodes!")
-            return True
-        pass
-        descendants = cmds.listRelatives(content_instance,
-                                         allDescendents=True,
-                                         fullPath=True) or []
+            regex_collision = "{}{}".format(
+                "(?P<prefix>({}))_".format(
+                    "|".join("{0}".format(p) for p in collision_prefixes)
+                ) or "", cls.regex_collision
+            )
 
-        descendants = cmds.ls(descendants, noIntermediate=True, long=True)
-        trns = cmds.ls(descendants, long=False, type=('transform'))
+            cl_r = re.compile(regex_collision)
 
-        # filter out groups
-        filter = [node for node in trns if not is_group(node)]
-
-        # compile regex for testing names
-        sm_r = re.compile(cls.regex_mesh)
-        cl_r = re.compile(cls.regex_collision)
-
-        sm_names = []
-        col_names = []
-        for obj in filter:
-            sm_m = sm_r.match(obj)
-            if sm_m is None:
-                # test if it matches collision mesh
-                cl_r = sm_r.match(obj)
-                if cl_r is None:
-                    cls.log.error("invalid mesh name on: {}".format(obj))
+            for obj in collision_set:
+                cl_m = cl_r.match(obj)
+                if not cl_m:
+                    cls.log.error("{} is invalid".format(obj))
                     invalid.append(obj)
                 else:
-                    col_names.append((cl_r.group("renderName"), obj))
-            else:
-                sm_names.append(sm_m.group("renderName"))
+                    expected_collision = "{}_{}".format(
+                        cl_m.group("prefix"),
+                        combined_geometry_name
+                    )
 
-        for c_mesh in col_names:
-            if c_mesh[0] not in sm_names:
-                cls.log.error(("collision name {} doesn't match any "
-                               "static mesh names.").format(obj))
-                invalid.append(c_mesh[1])
+                    if not obj.startswith(expected_collision):
+
+                        cls.log.error(
+                            "Collision object name doesn't match "
+                            "static mesh name"
+                        )
+                        cls.log.error("{}_{} != {}_{}".format(
+                            cl_m.group("prefix"),
+                            cl_m.group("renderName"),
+                            cl_m.group("prefix"),
+                            combined_geometry_name,
+                        ))
+                        invalid.append(obj)
 
         return invalid
 
     def process(self, instance):
+        if not self.validate_mesh and not self.validate_collision:
+            self.log.info("Validation of both mesh and collision names"
+                          "is disabled.")
+            return
+
+        if not instance.data.get("collisionMembers", None):
+            self.log.info("There are no collision objects to validate")
+            return
 
         invalid = self.get_invalid(instance)
 
