@@ -202,7 +202,7 @@ class ActionBar(QtWidgets.QWidget):
             return
 
         menu = QtWidgets.QMenu(self.view)
-        checkbox = QtWidgets.QCheckBox("Force not open last workfile",
+        checkbox = QtWidgets.QCheckBox("Skip opening last workfile.",
                                        menu)
         if index.data(FORCE_NOT_OPEN_WORKFILE_ROLE):
             checkbox.setChecked(True)
