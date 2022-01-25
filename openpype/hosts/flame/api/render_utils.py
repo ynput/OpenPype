@@ -199,6 +199,7 @@ def get_open_clip(
     # Check media type for valid extension
     try:
         tmp_xml = ET.parse(tmp_file)
+        print(tmp_xml)
     except:
         print("XML is probably empty.")
         print('{}'.format(traceback.print_exc()))
@@ -224,34 +225,23 @@ def get_open_clip(
     if not create_new_clip:
         print("Updating openClip ..")
 
-        try:
-            source_xml = ET.parse(openclip_file_path)
-        except:
-            print("XML is probably empty.")
-            print('%s' % traceback.print_exc())
-            if os.path.isfile(tmp_file):
-                os.remove(tmp_file)
-            return False
+        source_xml = ET.parse(openclip_file_path)
+        new_xml = ET.parse(tmp_file)
+
+        print(">> source_xml: {}".format(source_xml))
+        print(">> new_xml: {}".format(new_xml))
+
+
+        feed_exists = False
+        feed_added = 0
+
+        src_editRateNumerator = None
+        src_editRateDenominator = None
+        src_nbTicks = None
+        src_rate = None
+        src_dropMode = None
 
         try:
-            new_xml = ET.parse(tmp_file)
-        except:
-            print("XML is probably empty.")
-            print('%s' % traceback.print_exc())
-            if os.path.isfile(tmp_file):
-                os.remove(tmp_file)
-            return False
-
-        try:
-            feed_exists = False
-            feed_added = 0
-
-            src_editRateNumerator = None
-            src_editRateDenominator = None
-            src_nbTicks = None
-            src_rate = None
-            src_dropMode = None
-
             for srcTrack in source_xml.iter('track'):
                 src_editRateNumeratorObj = srcTrack.find('editRate/numerator')
                 src_editRateNumerator = src_editRateNumeratorObj.text
@@ -270,103 +260,98 @@ def get_open_clip(
                 else:
                     continue
                 break
+        except Exception as msg:
+            print(msg)
 
-            print("Source editRate/numerator: %s" % src_editRateNumerator)
-            print("Source editRate/denominator: %s" % src_editRateDenominator)
-            print("Source startTimecode/nbTicks: %s" % src_nbTicks)
-            print("Source startTimecode/rate: %s" % src_rate)
-            print("Source startTimecode/dropMode: %s" % src_dropMode)
+        print("Source editRate/numerator: %s" % src_editRateNumerator)
+        print("Source editRate/denominator: %s" % src_editRateDenominator)
+        print("Source startTimecode/nbTicks: %s" % src_nbTicks)
+        print("Source startTimecode/rate: %s" % src_rate)
+        print("Source startTimecode/dropMode: %s" % src_dropMode)
 
-            # Get new feed from file
-            for newTrack in new_xml.iter('track'):
-                uid = newTrack.get('uid')
-                newFeed = newTrack.find('feeds/feed')
+        # Get new feed from file
+        for newTrack in new_xml.iter('track'):
+            uid = newTrack.get('uid')
+            newFeed = newTrack.find('feeds/feed')
 
-                feedHandler = newFeed.find("./handler")
-                newFeed.remove(feedHandler)
+            feedHandler = newFeed.find("./handler")
+            newFeed.remove(feedHandler)
 
-                if src_editRateNumerator:
-                    new_editRateNumeratorObject = newTrack.find(
-                        "feeds/feed/sampleRate/numerator")
-                    new_editRateNumeratorObject.text = src_editRateNumerator
-                if src_editRateDenominator:
-                    new_editRateDenominatorObject = newTrack.find(
-                        "feeds/feed/sampleRate/denominator")
-                    new_editRateDenominatorObject.text = src_editRateDenominator
-                if src_rate:
-                    new_rateObject = newTrack.find(
-                        "feeds/feed/startTimecode/rate")
-                    new_rateObject.text = src_rate
-                if src_nbTicks:
-                    new_nbTicksObject = newTrack.find(
-                        "feeds/feed/startTimecode/nbTicks")
-                    new_nbTicksObject.text = src_nbTicks
-                if src_dropMode:
-                    new_dropModeObj = newTrack.find(
-                        "feeds/feed/startTimecode/dropMode")
-                    new_dropModeObj.text = src_dropMode
+            if src_editRateNumerator:
+                new_editRateNumeratorObject = newTrack.find(
+                    "feeds/feed/sampleRate/numerator")
+                new_editRateNumeratorObject.text = src_editRateNumerator
+            if src_editRateDenominator:
+                new_editRateDenominatorObject = newTrack.find(
+                    "feeds/feed/sampleRate/denominator")
+                new_editRateDenominatorObject.text = src_editRateDenominator
+            if src_rate:
+                new_rateObject = newTrack.find(
+                    "feeds/feed/startTimecode/rate")
+                new_rateObject.text = src_rate
+            if src_nbTicks:
+                new_nbTicksObject = newTrack.find(
+                    "feeds/feed/startTimecode/nbTicks")
+                new_nbTicksObject.text = src_nbTicks
+            if src_dropMode:
+                new_dropModeObj = newTrack.find(
+                    "feeds/feed/startTimecode/dropMode")
+                new_dropModeObj.text = src_dropMode
 
-                new_path_obj = newTrack.find("feeds/feed/spans/span/path")
-                new_path = new_path_obj.text
+            new_path_obj = newTrack.find("feeds/feed/spans/span/path")
+            new_path = new_path_obj.text
 
-                print(">> uid: {}".format(uid))
-                print(">> new_path: {}".format(new_path))
+            print(">> uid: {}".format(uid))
+            print(">> new_path: {}".format(new_path))
 
-                # Check for path in sourceFile
-                # If Path exists ... skip append
-                for srcPath in source_xml.iter('path'):
-                    if new_path == srcPath.text:
-                        print("Element exists in clip... skipping append")
-                        feed_exists = True
+            # Check for path in sourceFile
+            # If Path exists ... skip append
+            for srcPath in source_xml.iter('path'):
+                if new_path == srcPath.text:
+                    print("Element exists in clip... skipping append")
+                    feed_exists = True
 
-                if not feed_exists:
-                    # Append new feed to source track
-                    for srcTrack in source_xml.iter('track'):
-                        newFeed.set('vuid', feed_version_name)
-                        srcTrack.find('feeds').append(newFeed)
-                        print(
-                            "Appending new feed: {}".format(feed_version_name))
-                        feed_added += 1
+            if not feed_exists:
+                # Append new feed to source track
+                for srcTrack in source_xml.iter('track'):
+                    newFeed.set('vuid', feed_version_name)
+                    srcTrack.find('feeds').append(newFeed)
+                    print(
+                        "Appending new feed: {}".format(feed_version_name))
+                    feed_added += 1
 
-            if feed_added > 0:
-                # Append vUID to versions
-                newVersion = source_xml.find('versions')
-                newVersionElement = ET.Element(
-                    "version", {"type": "version", "uid": feed_version_name})
-                newVersion.insert(0, newVersionElement)
-                xmlRoot = source_xml.getroot()
+        if feed_added > 0:
+            # Append vUID to versions
+            newVersion = source_xml.find('versions')
+            newVersionElement = ET.Element(
+                "version", {"type": "version", "uid": feed_version_name})
+            newVersion.insert(0, newVersionElement)
+            xmlRoot = source_xml.getroot()
 
-                # Clean tmp_file - brute force remove errant <root/handler>
-                print("Removing Handler")
-                for handler in xmlRoot.findall("./handler"):
-                    print("Handler found")
-                    xmlRoot.remove(handler)
+            # Clean tmp_file - brute force remove errant <root/handler>
+            print("Removing Handler")
+            for handler in xmlRoot.findall("./handler"):
+                print("Handler found")
+                xmlRoot.remove(handler)
 
-                resultXML = ET.tostring(xmlRoot).decode('utf-8')
+            resultXML = ET.tostring(xmlRoot).decode('utf-8')
 
-                # fist create backup
-                create_openclip_backup_file(openclip_file_path)
+            # fist create backup
+            create_openclip_backup_file(openclip_file_path)
 
-                out_file = openclip_file_path
+            out_file = openclip_file_path
 
-                print("Adding feed version: {}".format(feed_version_name))
+            print("Adding feed version: {}".format(feed_version_name))
 
-                with open(out_file, "w") as f:
-                    f.write(resultXML)
+            with open(out_file, "w") as f:
+                f.write(resultXML)
 
-                print("openClip Updated: {}".format(out_file))
+            print("openClip Updated: {}".format(out_file))
 
-                clip_uploaded = True
+            clip_uploaded = True
 
-            if os.path.isfile(tmp_file):
-                os.remove(tmp_file)
-
-        except:
-            print("Failed reading XML")
-            print('%s' % traceback.print_exc())
-            if os.path.isfile(tmp_file):
-                os.remove(tmp_file)
-            return False
+        if os.path.isfile(tmp_file):
+            os.remove(tmp_file)
 
     else:
         # New openClip
