@@ -1,5 +1,5 @@
 import openpype.api
-from avalon import aftereffects
+from openpype.hosts.aftereffects.api import get_stub
 
 
 class ExtractSaveScene(openpype.api.Extractor):
@@ -11,5 +11,5 @@ class ExtractSaveScene(openpype.api.Extractor):
     families = ["workfile"]
 
     def process(self, instance):
-        stub = aftereffects.stub()
+        stub = get_stub()
         stub.save()

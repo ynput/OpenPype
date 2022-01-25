@@ -73,6 +73,17 @@
         },
 
         {
+            "type": "schema_template",
+            "name": "template_publish_plugin",
+            "template_data": [
+                {
+                    "key": "ValidateShadingEngine",
+                    "label": "Validate Look Shading Engine Naming"
+                }
+            ]
+        },
+
+        {
             "type": "dict",
             "collapsible": true,
             "key": "ValidateAttributes",
@@ -114,6 +125,31 @@
                     "key": "authorized_plugins",
                     "label": "Authorized plugins",
                     "object_type": "text"
+                }
+            ]
+        },
+
+        {
+            "type": "dict",
+            "collapsible": true,
+            "key": "ValidateUnrealStaticMeshName",
+            "label": "Validate Unreal Static Mesh Name",
+            "checkbox_key": "enabled",
+            "children": [
+                {
+                    "type": "boolean",
+                    "key": "enabled",
+                    "label": "Enabled"
+                },
+                {
+                    "type": "boolean",
+                    "key": "validate_mesh",
+                    "label": "Validate mesh Names "
+                },
+                {
+                    "type": "boolean",
+                    "key": "validate_collision",
+                    "label": "Validate collision names"
                 }
             ]
         },

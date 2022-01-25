@@ -445,7 +445,11 @@ class CreatorWindow(QtWidgets.QDialog):
 
         if error_info:
             box = CreateErrorMessageBox(
-                creator_plugin.family, subset_name, asset_name, *error_info
+                creator_plugin.family,
+                subset_name,
+                asset_name,
+                *error_info,
+                parent=self
             )
             box.show()
             # Store dialog so is not garbage collected before is shown

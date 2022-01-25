@@ -22,7 +22,7 @@ class CreateReview(plugin.Creator):
 
         # get basic animation data : start / end / handles / steps
         data = OrderedDict(**self.data)
-        animation_data = lib.collect_animation_data()
+        animation_data = lib.collect_animation_data(fps=True)
         for key, value in animation_data.items():
             data[key] = value
 

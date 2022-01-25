@@ -42,6 +42,7 @@ DEFAULT_OPENPYPE_MODULES = (
     "settings_action",
     "standalonepublish_action",
     "job_queue",
+    "timers_manager",
 )
 
 

@@ -98,7 +98,7 @@ class PointCacheAlembicLoader(api.Loader):
         frame_start = context.get('asset').get('data').get('frameStart')
         frame_end = context.get('asset').get('data').get('frameEnd')
 
-        # If frame start and end are the same, we increse the end frame by
+        # If frame start and end are the same, we increase the end frame by
         # one, otherwise Unreal will not import it
         if frame_start == frame_end:
             frame_end += 1

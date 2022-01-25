@@ -536,6 +536,27 @@ QAbstractItemView::branch:!has-children:!has-siblings:adjoins-item {
     background: transparent;
 }
 
+CompleterView {
+    border: 1px solid #555555;
+    background: {color:bg-inputs};
+}
+
+CompleterView::item:selected {
+    background: {color:bg-view-hover};
+}
+
+CompleterView::item:selected:hover {
+    background: {color:bg-view-hover};
+}
+
+CompleterView::right-arrow {
+    min-width: 10px;
+}
+CompleterView::separator {
+    background: {color:bg-menu-separator};
+    height: 2px;
+    margin-right: 5px;
+}
 
 /* Progress bar */
 QProgressBar {
@@ -711,6 +732,13 @@ QScrollBar::add-page:vertical, QScrollBar::sub-page:vertical {
 
 #CompleterView::item:hover {
     background: {color:bg-view-hover};
+}
+
+#DeleteButton {
+    background: {color:delete-btn-bg};
+}
+#DeleteButton:disabled {
+    background: {color:delete-btn-bg-disabled};
 }
 
 /* Launcher specific stylesheets */
@@ -1158,6 +1186,14 @@ QScrollBar::add-page:vertical, QScrollBar::sub-page:vertical {
     border-radius: 5px;
 }
 
+#OpenPypeVersionLabel[state="success"] {
+    color: {color:settings:version-exists};
+}
+
+#OpenPypeVersionLabel[state="warning"] {
+    color: {color:settings:version-not-found};
+}
+
 #ShadowWidget {
     font-size: 36pt;
 }
@@ -1190,6 +1226,11 @@ QScrollBar::add-page:vertical, QScrollBar::sub-page:vertical {
     border: 1px solid #4e5254;
     border-radius: 5px;
     background: #21252B;
+}
+
+/* Tray */
+#TrayRestartButton {
+    background: {color:restart-btn-bg};
 }
 
 /* Globally used names */

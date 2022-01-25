@@ -159,7 +159,7 @@ def get_layers_data(layer_ids=None, communicator=None):
 
 
 def parse_group_data(data):
-    """Paser group data collected in 'get_groups_data'."""
+    """Parse group data collected in 'get_groups_data'."""
     output = []
     groups_raw = data.split("\n")
     for group_raw in groups_raw:

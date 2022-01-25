@@ -1,13 +1,14 @@
 import os
 import nuke
-from avalon.nuke import lib as anlib
+
 from openpype.api import resources
+from .lib import maintained_selection
 
 
 def set_context_favorites(favorites=None):
-    """ Addig favorite folders to nuke's browser
+    """ Adding favorite folders to nuke's browser
 
-    Argumets:
+    Arguments:
         favorites (dict): couples of {name:path}
     """
     favorites = favorites or {}
@@ -48,14 +49,16 @@ def gizmo_is_nuke_default(gizmo):
     return gizmo.filename().startswith(plug_dir)
 
 
-def bake_gizmos_recursively(in_group=nuke.Root()):
+def bake_gizmos_recursively(in_group=None):
     """Converting a gizmo to group
 
-    Argumets:
+    Arguments:
         is_group (nuke.Node)[optonal]: group node or all nodes
     """
+    if in_group is None:
+        in_group = nuke.Root()
     # preserve selection after all is done
-    with anlib.maintained_selection():
+    with maintained_selection():
         # jump to the group
         with in_group:
             for node in nuke.allNodes():
