@@ -70,7 +70,9 @@ def main(*subprocess_args):
     app = QtWidgets.QApplication([])
     app.setQuitOnLastWindowClosed(False)
 
-    ConsoleTrayApp('harmony', launch, subprocess_args, is_host_connected)
+    instance = ConsoleTrayApp('harmony', launch,
+                              subprocess_args, is_host_connected)
+    ConsoleTrayApp._instance = instance
 
     sys.exit(app.exec_())
 
@@ -205,13 +207,13 @@ def launch_zip_file(filepath):
         return
 
     print("Launching {}".format(scene_path))
-    ConsoleTrayApp.websocket_server = self.server
-    ConsoleTrayApp.process = subprocess.Popen(
+    ConsoleTrayApp.instance().websocket_server = self.server
+    ConsoleTrayApp.instance().process = subprocess.Popen(
         [self.application_path, scene_path],
         stdout=subprocess.DEVNULL,
         stderr=subprocess.DEVNULL
     )
-    self.pid = ConsoleTrayApp.process.pid
+    self.pid = ConsoleTrayApp.instance().process.pid
 
 
 def on_file_changed(path, threaded=True):
@@ -276,7 +278,7 @@ def show(module_name):
     if tool_name == "loader":
         kwargs["use_context"] = True
 
-    ConsoleTrayApp.execute_in_main_thread(
+    ConsoleTrayApp.instance().execute_in_main_thread(
         lambda: host_tools.show_tool_by_name(tool_name, **kwargs)
     )
 
