@@ -7,7 +7,7 @@ from maya import cmds
 
 import pyblish.api
 from avalon import api
-from openpype.hosts.maya import lib
+from openpype.hosts.maya.api import lib
 
 
 class CollectVrayScene(pyblish.api.InstancePlugin):
