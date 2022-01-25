@@ -7,7 +7,7 @@ class AddLastWorkfileToLaunchArgs(PreLaunchHook):
 
     This is not possible to do for all applications the same way.
     Checks 'start_last_workfile', if set to False, it will not open last
-    wokfile. This property is set explicitly in Launcher.
+    workfile. This property is set explicitly in Launcher.
     """
 
     # Execute after workfile template copy

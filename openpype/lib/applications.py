@@ -1511,7 +1511,7 @@ def _prepare_last_workfile(data, workdir):
             project_name, app.host_name, task_name, task_type
         )
     else:
-        log.info("Explicitly forbidden to open last workfile")
+        log.info("Opening of last workfile was disabled by user")
 
     data["start_last_workfile"] = start_last_workfile
 
