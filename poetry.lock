@@ -302,11 +302,6 @@ python-versions = ">=3.6"
 cx-logging = {version = ">=3.0", markers = "sys_platform == \"win32\""}
 importlib-metadata = ">=4.3.1"
 
-[package.source]
-type = "legacy"
-url = "https://distribute.openpype.io/wheels"
-reference = "openpype"
-
 [[package]]
 name = "cx-logging"
 version = "3.0"
@@ -1286,8 +1281,8 @@ python-versions = "*"
 
 [[package]]
 name = "speedcopy"
-version = "2.1.0"
-description = "Replacement or alternative for python copyfile()utilizing server side copy on network shares for fastercopying."
+version = "2.1.2"
+description = "Replacement or alternative for python copyfile() utilizing server side copy on network shares for faster copying."
 category = "main"
 optional = false
 python-versions = "*"
@@ -1580,7 +1575,7 @@ testing = ["pytest (>=4.6)", "pytest-checkdocs (>=2.4)", "pytest-flake8", "pytes
 [metadata]
 lock-version = "1.1"
 python-versions = "3.7.*"
-content-hash = "877c1c6292735f495d915fc6aa85450eb20fc63f266a9c6bf7ba1125af3579a5"
+content-hash = "8bbbb69661d3eefbabf4a18398804bce436a910e61355de66ebefb5c2c23307c"
 
 [metadata.files]
 acre = []
@@ -1821,7 +1816,17 @@ cryptography = [
     {file = "cryptography-35.0.0-pp37-pypy37_pp73-win_amd64.whl", hash = "sha256:1ed82abf16df40a60942a8c211251ae72858b25b7421ce2497c2eb7a1cee817c"},
     {file = "cryptography-35.0.0.tar.gz", hash = "sha256:9933f28f70d0517686bd7de36166dda42094eac49415459d9bdf5e7df3e0086d"},
 ]
-cx-freeze = []
+cx-freeze = [
+    {file = "cx_Freeze-6.7-cp36-cp36m-win32.whl", hash = "sha256:befd5a2fb915eae03bfb237ffebeb7a5dfe8f58bc8c93c18f19a47c1fc800d8a"},
+    {file = "cx_Freeze-6.7-cp36-cp36m-win_amd64.whl", hash = "sha256:7718801da4a3ad499b0d648c507759f3b7ffef24ba4e9fd8ff3b129b77dda0e3"},
+    {file = "cx_Freeze-6.7-cp37-cp37m-win32.whl", hash = "sha256:361f27b1575b508a52fe3eb0afe83f2594c44235d084e04815924ea48742f0ea"},
+    {file = "cx_Freeze-6.7-cp37-cp37m-win_amd64.whl", hash = "sha256:65aec3b37b91b0a41ccf61b9794d8660b809d665a529479489ab410a201736fc"},
+    {file = "cx_Freeze-6.7-cp38-cp38-win32.whl", hash = "sha256:ec3bb21bc74c4fea458563f6e47191daa5486f089aebb1d00a922b5aa9834c87"},
+    {file = "cx_Freeze-6.7-cp38-cp38-win_amd64.whl", hash = "sha256:1b76c72f8a2c0e1a416b7bced9d5fd247a0120f6b1b35d4678568beb1ccf9380"},
+    {file = "cx_Freeze-6.7-cp39-cp39-win32.whl", hash = "sha256:beb38b2df37af44d08a1e62f09f0e1c5b991ded751f7cc3ab0ac93fba013ba54"},
+    {file = "cx_Freeze-6.7-cp39-cp39-win_amd64.whl", hash = "sha256:967c86416b8dea3b00c0f1e2c94f5118004c9297afc8b1ae88002aec28a9097c"},
+    {file = "cx_Freeze-6.7.tar.gz", hash = "sha256:050f1dd133a04810bd7f38ac7ae3b290054acb2ff4f6e73f7a286266d153495d"},
+]
 cx-logging = [
     {file = "cx_Logging-3.0-cp36-cp36m-manylinux1_x86_64.whl", hash = "sha256:9fcd297e5c51470521c47eff0f86ba844aeca6be97e13c3e2114ebdf03fa3c96"},
     {file = "cx_Logging-3.0-cp36-cp36m-win32.whl", hash = "sha256:0df4be47c5022cc54316949e283403214568ef599817ced0c0972183d6d4fabb"},
@@ -2538,8 +2543,8 @@ snowballstemmer = [
     {file = "snowballstemmer-2.1.0.tar.gz", hash = "sha256:e997baa4f2e9139951b6f4c631bad912dfd3c792467e2f03d7239464af90e914"},
 ]
 speedcopy = [
-    {file = "speedcopy-2.1.0-py3-none-any.whl", hash = "sha256:b80926ff900c0d7c8a0cb5f0a407258dde83976d923e3a449ac5417aa6608f63"},
-    {file = "speedcopy-2.1.0.tar.gz", hash = "sha256:8bb1a6c735900b83901a7be84ba2175ed3887c13c6786f97dea48f2ea7d504c2"},
+    {file = "speedcopy-2.1.2-py3-none-any.whl", hash = "sha256:91e271b84c00952812dbf669d360b2610fd8fa198670373e02acf2a04db89a4c"},
+    {file = "speedcopy-2.1.2.tar.gz", hash = "sha256:1b2d779fadebd53a59384f7d286c40b2ef382e0d000fa53011699fcd3190d33f"},
 ]
 sphinx = [
     {file = "Sphinx-3.5.3-py3-none-any.whl", hash = "sha256:3f01732296465648da43dec8fb40dc451ba79eb3e2cc5c6d79005fd98197107d"},
