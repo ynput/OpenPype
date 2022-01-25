@@ -46,6 +46,8 @@ class AbtractAttrDef:
     def __init__(
         self, key, default, label=None, tooltip=None, is_label_horizontal=None
     ):
+        if is_label_horizontal is None:
+            is_label_horizontal = True
         self.key = key
         self.label = label
         self.tooltip = tooltip
@@ -342,8 +344,11 @@ class FileDef(AbtractAttrDef):
 
         # Change horizontal label
         is_label_horizontal = kwargs.get("is_label_horizontal")
-        if is_label_horizontal is None and multipath:
-            kwargs["is_label_horizontal"] = False
+        if is_label_horizontal is None:
+            is_label_horizontal = True
+            if multipath:
+                is_label_horizontal = False
+            kwargs["is_label_horizontal"] = is_label_horizontal
 
         self.multipath = multipath
         self.folders = folders
