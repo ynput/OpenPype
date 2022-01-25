@@ -8,7 +8,7 @@ from openpype.hosts.photoshop.api import get_unique_layer_name
 
 
 class ImageFromSequenceLoader(photoshop.PhotoshopLoader):
-    """ Load specifing image from sequence
+    """ Load specific image from sequence
 
         Used only as quick load of reference file from a sequence.
 
@@ -92,3 +92,4 @@ class ImageFromSequenceLoader(photoshop.PhotoshopLoader):
     def remove(self, container):
         """No update possible, not containerized."""
         pass
+

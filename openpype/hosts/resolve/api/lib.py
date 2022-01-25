@@ -16,7 +16,7 @@ self = sys.modules[__name__]
 self.project_manager = None
 self.media_storage = None
 
-# OpenPype sequencial rename variables
+# OpenPype sequential rename variables
 self.rename_index = 0
 self.rename_add = 0
 
@@ -59,7 +59,7 @@ def maintain_current_timeline(to_timeline: object,
     project = get_current_project()
     working_timeline = from_timeline or project.GetCurrentTimeline()
 
-    # swith to the input timeline
+    # switch to the input timeline
     project.SetCurrentTimeline(to_timeline)
 
     try:
@@ -566,7 +566,7 @@ def create_compound_clip(clip_data, name, folder):
     mp_in_rc = opentime.RationalTime((ci_l_offset), rate)
     mp_out_rc = opentime.RationalTime((ci_l_offset + ci_duration - 1), rate)
 
-    # get frame in and out for clip swaping
+    # get frame in and out for clip swapping
     in_frame = opentime.to_frames(mp_in_rc)
     out_frame = opentime.to_frames(mp_out_rc)
 
@@ -628,7 +628,7 @@ def create_compound_clip(clip_data, name, folder):
 
 def swap_clips(from_clip, to_clip, to_in_frame, to_out_frame):
     """
-    Swaping clips on timeline in timelineItem
+    Swapping clips on timeline in timelineItem
 
     It will add take and activate it to the frame range which is inputted
 
@@ -699,7 +699,7 @@ def get_pype_clip_metadata(clip):
 
 def get_clip_attributes(clip):
     """
-    Collect basic atrributes from resolve timeline item
+    Collect basic attributes from resolve timeline item
 
     Args:
         clip (resolve.TimelineItem): timeline item object

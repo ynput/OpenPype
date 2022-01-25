@@ -172,7 +172,7 @@ def add_tags_to_workfile():
                     }
                 }
 
-    # loop trough tag data dict and create deep tag structure
+    # loop through tag data dict and create deep tag structure
     for _k, _val in nks_pres_tags.items():
         # check if key is not decorated with [] so it is defined as bin
         bin_find = None

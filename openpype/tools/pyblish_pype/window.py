@@ -909,6 +909,13 @@ class Window(QtWidgets.QDialog):
             self.tr("Processing"), plugin_item.data(QtCore.Qt.DisplayRole)
         ))
 
+        visibility = True
+        if hasattr(plugin, "hide_ui_on_process") and plugin.hide_ui_on_process:
+            visibility = False
+
+        if self.isVisible() != visibility:
+            self.setVisible(visibility)
+
     def on_plugin_action_menu_requested(self, pos):
         """The user right-clicked on a plug-in
          __________

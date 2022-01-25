@@ -7,7 +7,7 @@ import bpy_extras.anim_utils
 
 from openpype import api
 from openpype.hosts.blender.api import plugin
-from avalon.blender.pipeline import AVALON_PROPERTY
+from openpype.hosts.blender.api.pipeline import AVALON_PROPERTY
 
 
 class ExtractAnimationFBX(api.Extractor):

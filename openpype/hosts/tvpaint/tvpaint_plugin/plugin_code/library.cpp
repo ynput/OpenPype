@@ -41,7 +41,7 @@ static struct {
     nlohmann::json menuItemsById;
     std::list<int> menuItemsIds;
     // Messages from server before processing.
-    // - messages can't be process at the moment of recieve as client is running in thread
+    // - messages can't be process at the moment of receive as client is running in thread
     std::queue<std::string> messages;
     // Responses to requests mapped by request id
     std::map<int, jsonrpcpp::Response> responses;
@@ -694,7 +694,7 @@ int newMenuItemsProcess(PIFilter* iFilter) {
     return 1;
 }
 /**************************************************************************************/
-// something happenned that needs our attention.
+// something happened that needs our attention.
 // Global variable where current button up data are stored
 std::string button_up_item_id_str;
 int FAR PASCAL PI_Msg( PIFilter* iFilter, INTPTR iEvent, INTPTR iReq, INTPTR* iArgs )
