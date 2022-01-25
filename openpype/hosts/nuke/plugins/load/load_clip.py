@@ -67,11 +67,11 @@ class LoadClip(plugin.NukeLoader):
         )
 
     def load(self, context, name, namespace, options):
-        repres = context["representation"]
+        repre = context["representation"]
         # reste container id so it is always unique for each instance
         self.reset_container_id()
 
-        is_sequence = len(repres["files"]) > 1
+        is_sequence = len(repre["files"]) > 1
 
         file = self.fname.replace("\\", "/")
 
@@ -80,13 +80,13 @@ class LoadClip(plugin.NukeLoader):
 
         version = context['version']
         version_data = version.get("data", {})
-        repr_id = repres["_id"]
+        repre_id = repre["_id"]
 
-        repr_cont = repres["context"]
+        repre_cont = repre["context"]
 
         self.log.info("version_data: {}\n".format(version_data))
         self.log.debug(
-            "Representation id `{}` ".format(repr_id))
+            "Representation id `{}` ".format(repre_id))
 
         self.handle_start = version_data.get("handleStart", 0)
         self.handle_end = version_data.get("handleEnd", 0)
@@ -101,7 +101,7 @@ class LoadClip(plugin.NukeLoader):
             first = 1
             last = first + duration
         elif "#" not in file:
-            frame = repr_cont.get("frame")
+            frame = repre_cont.get("frame")
             assert frame, "Representation is not sequence"
 
             padding = len(frame)
@@ -113,10 +113,10 @@ class LoadClip(plugin.NukeLoader):
 
         if not file:
             self.log.warning(
-                "Representation id `{}` is failing to load".format(repr_id))
+                "Representation id `{}` is failing to load".format(repre_id))
             return
 
-        read_name = self._get_node_name(repres)
+        read_name = self._get_node_name(repre)
 
         # Create the Loader with the filename path set
         read_node = nuke.createNode(
@@ -129,7 +129,7 @@ class LoadClip(plugin.NukeLoader):
             read_node["file"].setValue(file)
 
             set_colorspace = self._set_colorspace(
-                read_node, version_data, repres["data"])
+                read_node, version_data, repre["data"])
 
             self._set_range_to_node(read_node, first, last, start_at_workfile)
 
@@ -143,7 +143,7 @@ class LoadClip(plugin.NukeLoader):
                 if k == 'version':
                     data_imprint.update({k: context["version"]['name']})
                 elif k == 'colorspace':
-                    colorspace = repres["data"].get(k)
+                    colorspace = repre["data"].get(k)
                     colorspace = colorspace or version_data.get(k)
                     data_imprint.update({
                         "db_colorspace": colorspace,
@@ -196,9 +196,9 @@ class LoadClip(plugin.NukeLoader):
             "_id": representation["parent"]
         })
         version_data = version.get("data", {})
-        repr_id = representation["_id"]
+        repre_id = representation["_id"]
 
-        repr_cont = representation["context"]
+        repre_cont = representation["context"]
 
         # colorspace profile
         colorspace = representation["data"].get("colorspace")
@@ -217,7 +217,7 @@ class LoadClip(plugin.NukeLoader):
             first = 1
             last = first + duration
         elif "#" not in file:
-            frame = repr_cont.get("frame")
+            frame = repre_cont.get("frame")
             assert frame, "Representation is not sequence"
 
             padding = len(frame)
@@ -225,7 +225,7 @@ class LoadClip(plugin.NukeLoader):
 
         if not file:
             self.log.warning(
-                "Representation id `{}` is failing to load".format(repr_id))
+                "Representation id `{}` is failing to load".format(repre_id))
             return
 
         read_name = self._get_node_name(representation)
@@ -370,12 +370,12 @@ class LoadClip(plugin.NukeLoader):
 
     def _get_node_name(self, representation):
 
-        repr_cont = representation["context"]
+        repre_cont = representation["context"]
         name_data = {
-            "asset": repr_cont["asset"],
-            "subset": repr_cont["subset"],
+            "asset": repre_cont["asset"],
+            "subset": repre_cont["subset"],
             "representation": representation["name"],
-            "ext": repr_cont["representation"],
+            "ext": repre_cont["representation"],
             "id": representation["_id"],
             "class_name": self.__class__.__name__
         }
