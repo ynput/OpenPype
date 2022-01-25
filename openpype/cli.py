@@ -389,17 +389,20 @@ def runtests(folder, mark, pyargs, test_data_folder, persist, app_variant):
 @main.command()
 @click.argument("set_url")
 @click.option("--project", help="Define project context", default=None)
-def setvalue(
+def setsecurevalue(
     set_url,
     project
 ):
     """Stores value into keyring or potentially settings
 
-        Define general location (keyring or setting) with specific path,
-        variable and its value.
-        Format keyring://file/environment/OPENPYPE_MONGO=foo
+    Define general location (keyring or setting) with specific path,
+    variable and its value.
+    Format keyring://file/environment/OPENPYPE_MONGO=foo
+
+    'project' is prepared here if project specific values should be used in the
+    future
     """
-    PypeCommands.set_value(
+    PypeCommands.set_secure_value(
         set_url,
         project
     )
@@ -408,17 +411,17 @@ def setvalue(
 @main.command()
 @click.argument("set_url")
 @click.option("--project", help="Define project context", default=None)
-def getvalue(
+def getsecurevalue(
     set_url,
     project
 ):
     """Prints value from keyring or potentially settings to stdout
 
-        Define general location (keyring or setting) with specific path,
-        variable and its value.
-        Format keyring://file/environment/OPENPYPE_MONGO
+    Define general location (keyring or setting) with specific path,
+    variable and its value.
+    Format keyring://file/environment/OPENPYPE_MONGO
     """
-    return click.echo("getvalue:{}".format(PypeCommands.get_value(
+    return click.echo("getsecurevalue:{}".format(PypeCommands.get_secure_value(
         set_url,
         project
     )))

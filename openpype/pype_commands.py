@@ -17,6 +17,8 @@ from openpype.lib.remote_publish import (
     get_task_data
 )
 
+from openpype.lib.local_settings import set_secure_value, get_secure_value
+
 
 class PypeCommands:
     """Class implementing commands used by Pype.
@@ -385,28 +387,28 @@ class PypeCommands:
         pytest.main(args)
 
     @staticmethod
-    def set_value(set_url, project=None):
-        from openpype.lib.local_settings import (OpenPypeSecureRegistry,
-                                                 parse_set_url)
+    def set_secure_value(set_url, project=None):
+        """Parses 'set_url' and stores key,value into keyring
 
-        general_location, path_part, key, value = parse_set_url(set_url)
-        if general_location == "keyring":
-            registry = OpenPypeSecureRegistry(path_part)
-            registry.set_item(key, value)
+        Expects set_url as keyring://file/environment/foo=bar
+
+        Args:
+            set_url (str)
+        """
+        set_secure_value(set_url, project)
 
     @staticmethod
-    def get_value(get_url, project=None):
-        from openpype.lib.local_settings import (OpenPypeSecureRegistry,
-                                                 parse_get_url)
+    def get_secure_value(get_url, project=None):
+        """Returns stored value for 'get_url' from keyring
 
-        general_location, path_part, key, value = parse_get_url(get_url)
+        Expects get_url as keyring://file/environment/foo
 
-        if general_location == "keyring":
-            registry = OpenPypeSecureRegistry(path_part)
-            try:
-                return registry.get_item(key)
-            except ValueError as exp:
-                print(str(exp))
+        Args:
+            get_url (str)
+        Returns:
+            (str)
+        """
+        return get_secure_value(get_url, project)
 
     def syncserver(self, active_site):
         """Start running sync_server in background."""

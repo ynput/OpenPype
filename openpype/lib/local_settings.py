@@ -662,3 +662,35 @@ def _parse_url(url):
                          format(url, implemented_locations))
 
     return general_location, rest
+
+
+def get_secure_value(get_url, project=None):
+    """Returns stored value for 'get_url' from keyring
+
+    Expects get_url as keyring://file/environment/foo
+
+    Args:
+        get_url (str)
+    """
+    general_location, path_part, key, value = parse_get_url(get_url)
+
+    if general_location == "keyring":
+        registry = OpenPypeSecureRegistry(path_part)
+        try:
+            return registry.get_item(key)
+        except ValueError as exp:
+            print(str(exp))
+
+
+def set_secure_value(set_url, project=None):
+    """Parses 'set_url' and stores key,value into keyring
+
+    Expects set_url as keyring://file/environment/foo=bar
+
+    Args:
+        set_url (str)
+    """
+    general_location, path_part, key, value = parse_set_url(set_url)
+    if general_location == "keyring":
+        registry = OpenPypeSecureRegistry(path_part)
+        registry.set_item(key, value)
