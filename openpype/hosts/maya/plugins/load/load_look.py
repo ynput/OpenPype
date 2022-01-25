@@ -70,8 +70,8 @@ class LookLoader(openpype.hosts.maya.api.plugin.ReferenceLoader):
 
         # Get reference node from container members
         members = openpype.hosts.maya.api.lib.get_container_members(container)
-        reference_node = openpype.hosts.maya.api.lib.get_reference_node(
-            members
+        reference_node = openpype.hosts.maya.api.plugin.get_reference_node(
+            members, log=self.log
         )
 
         shader_nodes = cmds.ls(members, type='shadingEngine')
