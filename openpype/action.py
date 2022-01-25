@@ -72,7 +72,7 @@ class RepairContextAction(pyblish.api.Action):
     is available on the plugin.
 
     """
-    label = "Repair Context"
+    label = "Repair"
     on = "failed"  # This action is only available on a failed plug-in
 
     def process(self, context, plugin):

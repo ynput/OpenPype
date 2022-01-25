@@ -369,7 +369,8 @@ class ModifiedBurnins(ffmpeg_burnins.Burnins):
             if frame_start is None:
                 replacement_final = replacement_size = str(MISSING_KEY_VALUE)
             else:
-                replacement_final = "%{eif:n+" + str(frame_start) + ":d}"
+                replacement_final = "%{eif:n+" + str(frame_start) + ":d:" + \
+                                    str(len(str(frame_end))) + "}"
                 replacement_size = str(frame_end)
 
             final_text = final_text.replace(

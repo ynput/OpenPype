@@ -48,7 +48,7 @@ class GlobalHostDataHook(PreLaunchHook):
             "log": self.log
         })
 
-        prepare_host_environments(temp_data)
+        prepare_host_environments(temp_data, self.launch_context.env_group)
         prepare_context_environments(temp_data)
 
         temp_data.pop("log")

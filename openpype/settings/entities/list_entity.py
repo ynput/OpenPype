@@ -1,4 +1,6 @@
 import copy
+import six
+import re
 from . import (
     BaseEntity,
     EndpointEntity
@@ -21,6 +23,7 @@ class ListEntity(EndpointEntity):
         "collapsible": True,
         "collapsed": False
     }
+    _key_regex = re.compile(r"[0-9]+")
 
     def __iter__(self):
         for item in self.children:
@@ -143,6 +146,19 @@ class ListEntity(EndpointEntity):
             self.children[index_2], self.children[index_1]
         )
         self.on_change()
+
+    def has_child_with_key(self, key):
+        if (
+            key
+            and isinstance(key, six.string_types)
+            and self._key_regex.match(key)
+        ):
+            key = int(key)
+
+        if not isinstance(key, int):
+            return False
+
+        return 0 <= key < len(self.children)
 
     def _convert_to_valid_type(self, value):
         if isinstance(value, (set, tuple)):

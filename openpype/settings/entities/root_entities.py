@@ -127,6 +127,9 @@ class RootEntity(BaseItemEntity):
         for _key, _value in new_value.items():
             self.non_gui_children[_key].set(_value)
 
+    def has_child_with_key(self, key):
+        return key in self.non_gui_children
+
     def keys(self):
         return self.non_gui_children.keys()
 

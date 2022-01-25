@@ -1,8 +1,8 @@
 import os
 import pyblish.api
-from avalon.nuke import lib as anlib
-from openpype.hosts.nuke.api import plugin
 import openpype
+from openpype.hosts.nuke.api import plugin
+from openpype.hosts.nuke.api.lib import maintained_selection
 
 
 class ExtractReviewDataMov(openpype.api.Extractor):
@@ -41,7 +41,7 @@ class ExtractReviewDataMov(openpype.api.Extractor):
         self.log.info(self.outputs)
 
         # generate data
-        with anlib.maintained_selection():
+        with maintained_selection():
             generated_repres = []
             for o_name, o_data in self.outputs.items():
                 f_families = o_data["filter"]["families"]
@@ -49,7 +49,7 @@ class ExtractReviewDataMov(openpype.api.Extractor):
 
                 # test if family found in context
                 test_families = any([
-                    # first if exact family set is mathing
+                    # first if exact family set is matching
                     # make sure only interesetion of list is correct
                     bool(set(families).intersection(f_families)),
                     # and if famiies are set at all

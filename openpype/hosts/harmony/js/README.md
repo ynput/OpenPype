@@ -2,13 +2,13 @@
 
 ### Development
 
-#### Setting up ESLint as linter for javasript code
+#### Setting up ESLint as linter for javascript code
 
 You nee [node.js](https://nodejs.org/en/) installed. All you need to do then
 is to run:
 
 ```sh
-npm intall
+npm install
 ```
 in **js** directory. This will install eslint and all requirements locally.
 

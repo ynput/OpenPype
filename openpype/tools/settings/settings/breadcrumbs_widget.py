@@ -71,17 +71,35 @@ class SettingsBreadcrumbs(BreadcrumbsModel):
                 return True
         return False
 
+    def get_valid_path(self, path):
+        if not path:
+            return ""
+
+        path_items = path.split("/")
+        new_path_items = []
+        entity = self.entity
+        for item in path_items:
+            if not entity.has_child_with_key(item):
+                break
+
+            new_path_items.append(item)
+            entity = entity[item]
+
+        return "/".join(new_path_items)
+
     def is_valid_path(self, path):
         if not path:
             return True
 
         path_items = path.split("/")
-        try:
-            entity = self.entity
-            for item in path_items:
-                entity = entity[item]
-        except Exception:
-            return False
+
+        entity = self.entity
+        for item in path_items:
+            if not entity.has_child_with_key(item):
+                return False
+
+            entity = entity[item]
+
         return True
 
 
@@ -436,6 +454,7 @@ class BreadcrumbsAddressBar(QtWidgets.QFrame):
         self.change_path(path)
 
     def change_path(self, path):
+        path = self._model.get_valid_path(path)
         if self._model and not self._model.is_valid_path(path):
             self._show_address_field()
         else:

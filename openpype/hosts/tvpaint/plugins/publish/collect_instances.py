@@ -77,7 +77,7 @@ class CollectInstances(pyblish.api.ContextPlugin):
 
                 # Project name from workfile context
                 project_name = context.data["workfile_context"]["project"]
-                # Host name from environemnt variable
+                # Host name from environment variable
                 host_name = os.environ["AVALON_APP"]
                 # Use empty variant value
                 variant = ""
@@ -218,7 +218,7 @@ class CollectInstances(pyblish.api.ContextPlugin):
             # - not 100% working as it was found out that layer ids can't be
             #   used as unified identifier across multiple workstations
             layers_by_id = {
-                layer["id"]: layer
+                layer["layer_id"]: layer
                 for layer in layers_data
             }
             layer_ids = instance_data["layer_ids"]
