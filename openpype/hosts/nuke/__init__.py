@@ -6,10 +6,7 @@ def add_implementation_envs(env, _app):
     # Add requirements to NUKE_PATH
     pype_root = os.environ["OPENPYPE_REPOS_ROOT"]
     new_nuke_paths = [
-        os.path.join(pype_root, "openpype", "hosts", "nuke", "startup"),
-        os.path.join(
-            pype_root, "repos", "avalon-core", "setup", "nuke", "nuke_path"
-        )
+        os.path.join(pype_root, "openpype", "hosts", "nuke", "startup")
     ]
     old_nuke_path = env.get("NUKE_PATH") or ""
     for path in old_nuke_path.split(os.pathsep):

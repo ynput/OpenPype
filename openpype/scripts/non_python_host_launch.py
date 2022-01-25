@@ -81,9 +81,9 @@ def main(argv):
 
     host_name = os.environ["AVALON_APP"].lower()
     if host_name == "photoshop":
-        from avalon.photoshop.lib import main
+        from openpype.hosts.photoshop.api.lib import main
     elif host_name == "aftereffects":
-        from avalon.aftereffects.lib import main
+        from openpype.hosts.aftereffects.api.lib import main
     elif host_name == "harmony":
         from avalon.harmony.lib import main
     else:

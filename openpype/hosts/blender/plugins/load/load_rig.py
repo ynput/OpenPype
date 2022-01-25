@@ -7,11 +7,13 @@ from typing import Dict, List, Optional
 import bpy
 
 from avalon import api
-from avalon.blender.pipeline import AVALON_CONTAINERS
-from avalon.blender.pipeline import AVALON_CONTAINER_ID
-from avalon.blender.pipeline import AVALON_PROPERTY
 from openpype import lib
 from openpype.hosts.blender.api import plugin
+from openpype.hosts.blender.api.pipeline import (
+    AVALON_CONTAINERS,
+    AVALON_PROPERTY,
+    AVALON_CONTAINER_ID
+)
 
 
 class BlendRigLoader(plugin.AssetLoader):

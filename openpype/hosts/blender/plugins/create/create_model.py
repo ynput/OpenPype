@@ -3,9 +3,8 @@
 import bpy
 
 from avalon import api
-from avalon.blender import lib, ops
-from avalon.blender.pipeline import AVALON_INSTANCES
-from openpype.hosts.blender.api import plugin
+from openpype.hosts.blender.api import plugin, lib, ops
+from openpype.hosts.blender.api.pipeline import AVALON_INSTANCES
 
 
 class CreateModel(plugin.Creator):
@@ -22,7 +21,7 @@ class CreateModel(plugin.Creator):
         ops.execute_in_main_thread(mti)
 
     def _process(self):
-        # Get Instance Containter or create it if it does not exist
+        # Get Instance Container or create it if it does not exist
         instances = bpy.data.collections.get(AVALON_INSTANCES)
         if not instances:
             instances = bpy.data.collections.new(name=AVALON_INSTANCES)

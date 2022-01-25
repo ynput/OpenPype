@@ -22,6 +22,11 @@ COPY = 1
 HARDLINK = 2
 
 
+def escape_space(path):
+    """Ensure path is enclosed by quotes to allow paths with spaces"""
+    return '"{}"'.format(path) if " " in path else path
+
+
 def find_paths_by_hash(texture_hash):
     """Find the texture hash key in the dictionary.
 
@@ -55,8 +60,16 @@ def maketx(source, destination, *args):
         str: Output of `maketx` command.
 
     """
+    from openpype.lib import get_oiio_tools_path
+
+    maketx_path = get_oiio_tools_path("maketx")
+    if not os.path.exists(maketx_path):
+        print(
+            "OIIO tool not found in {}".format(maketx_path))
+        raise AssertionError("OIIO tool not found")
+
     cmd = [
-        "maketx",
+        maketx_path,
         "-v",  # verbose
         "-u",  # update mode
         # unpremultiply before conversion (recommended when alpha present)
@@ -68,7 +81,7 @@ def maketx(source, destination, *args):
     ]
 
     cmd.extend(args)
-    cmd.extend(["-o", destination, source])
+    cmd.extend(["-o", escape_space(destination), escape_space(source)])
 
     cmd = " ".join(cmd)
 
@@ -306,7 +319,6 @@ class ExtractLook(openpype.api.Extractor):
         do_maketx = instance.data.get("maketx", False)
 
         # Collect all unique files used in the resources
-        files = set()
         files_metadata = {}
         for resource in resources:
             # Preserve color space values (force value after filepath change)
@@ -317,7 +329,6 @@ class ExtractLook(openpype.api.Extractor):
             for f in resource["files"]:
                 files_metadata[os.path.normpath(f)] = {
                     "color_space": color_space}
-                # files.update(os.path.normpath(f))
 
         # Process the resource files
         transfers = []
@@ -325,7 +336,6 @@ class ExtractLook(openpype.api.Extractor):
         hashes = {}
         force_copy = instance.data.get("forceCopy", False)
 
-        self.log.info(files)
         for filepath in files_metadata:
 
             linearize = False
@@ -484,7 +494,7 @@ class ExtractLook(openpype.api.Extractor):
                 # Include `source-hash` as string metadata
                 "-sattrib",
                 "sourceHash",
-                texture_hash,
+                escape_space(texture_hash),
                 colorconvert,
             )
 

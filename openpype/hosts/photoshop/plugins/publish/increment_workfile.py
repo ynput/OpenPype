@@ -3,7 +3,7 @@ import pyblish.api
 from openpype.action import get_errored_plugins_from_data
 from openpype.lib import version_up
 
-from avalon import photoshop
+from openpype.hosts.photoshop import api as photoshop
 
 
 class IncrementWorkfile(pyblish.api.InstancePlugin):

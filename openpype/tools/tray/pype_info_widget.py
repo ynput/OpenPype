@@ -9,7 +9,7 @@ from openpype.api import resources
 from openpype.settings.lib import get_local_settings
 from openpype.lib.pype_info import (
     get_all_current_info,
-    get_pype_info,
+    get_openpype_info,
     get_workstation_info,
     extract_pype_info_to_file
 )
@@ -426,7 +426,7 @@ class PypeInfoSubWidget(QtWidgets.QWidget):
         """Create widget with information about OpenPype application."""
 
         # Get pype info data
-        pype_info = get_pype_info()
+        pype_info = get_openpype_info()
         # Modify version key/values
         version_value = "{} ({})".format(
             pype_info.pop("version", self.not_applicable),
@@ -435,13 +435,20 @@ class PypeInfoSubWidget(QtWidgets.QWidget):
         pype_info["version_value"] = version_value
         # Prepare lable mapping
         key_label_mapping = {
-            "version_value": "OpenPype version:",
+            "version_value": "Running version:",
+            "build_verison": "Build version:",
             "executable": "OpenPype executable:",
             "pype_root": "OpenPype location:",
             "mongo_url": "OpenPype Mongo URL:"
         }
         # Prepare keys order
-        keys_order = ["version_value", "executable", "pype_root", "mongo_url"]
+        keys_order = [
+            "version_value",
+            "build_verison",
+            "executable",
+            "pype_root",
+            "mongo_url"
+        ]
         for key in pype_info.keys():
             if key not in keys_order:
                 keys_order.append(key)

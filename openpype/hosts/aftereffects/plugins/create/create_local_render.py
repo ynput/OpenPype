@@ -1,9 +1,5 @@
 from openpype.hosts.aftereffects.plugins.create import create_render
 
-import logging
-
-log = logging.getLogger(__name__)
-
 
 class CreateLocalRender(create_render.CreateRender):
     """ Creator to render locally.

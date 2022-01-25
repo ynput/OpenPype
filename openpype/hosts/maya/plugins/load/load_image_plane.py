@@ -77,7 +77,7 @@ class ImagePlaneLoader(api.Loader):
     """Specific loader of plate for image planes on selected camera."""
 
     families = ["image", "plate", "render"]
-    label = "Load imagePlane."
+    label = "Load imagePlane"
     representations = ["mov", "exr", "preview", "png"]
     icon = "image"
     color = "orange"
@@ -118,7 +118,7 @@ class ImagePlaneLoader(api.Loader):
             camera = pm.createNode("camera")
 
         if camera is None:
-                return
+            return
 
         try:
             camera.displayResolution.set(1)

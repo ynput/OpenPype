@@ -31,8 +31,6 @@ from .lib import (
 )
 
 from .lib.mongo import (
-    decompose_url,
-    compose_url,
     get_default_components
 )
 
@@ -84,8 +82,6 @@ __all__ = [
     "Anatomy",
     "config",
     "execute",
-    "decompose_url",
-    "compose_url",
     "get_default_components",
     "ApplicationManager",
     "BuildWorkfile",

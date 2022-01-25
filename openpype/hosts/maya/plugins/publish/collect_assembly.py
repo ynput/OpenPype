@@ -24,7 +24,7 @@ class CollectAssembly(pyblish.api.InstancePlugin):
     """
 
     order = pyblish.api.CollectorOrder + 0.49
-    label = "Assemby"
+    label = "Assembly"
     families = ["assembly"]
 
     def process(self, instance):

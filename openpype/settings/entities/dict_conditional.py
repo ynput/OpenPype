@@ -107,6 +107,9 @@ class DictConditionalEntity(ItemEntity):
         for _key, _value in new_value.items():
             self.non_gui_children[self.current_enum][_key].set(_value)
 
+    def has_child_with_key(self, key):
+        return key in self.keys()
+
     def _item_initialization(self):
         self._default_metadata = NOT_SET
         self._studio_override_metadata = NOT_SET
