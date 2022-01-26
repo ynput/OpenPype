@@ -1,18 +1,20 @@
 """Load a layout in Blender."""
 
+import json
 from pathlib import Path
 from pprint import pformat
 from typing import Dict, Optional
 
 import bpy
-import json
 
 from avalon import api
-from avalon.blender.pipeline import AVALON_CONTAINERS
-from avalon.blender.pipeline import AVALON_CONTAINER_ID
-from avalon.blender.pipeline import AVALON_PROPERTY
-from avalon.blender.pipeline import AVALON_INSTANCES
 from openpype import lib
+from openpype.hosts.blender.api.pipeline import (
+    AVALON_INSTANCES,
+    AVALON_CONTAINERS,
+    AVALON_PROPERTY,
+    AVALON_CONTAINER_ID
+)
 from openpype.hosts.blender.api import plugin
 
 

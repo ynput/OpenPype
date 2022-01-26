@@ -1,10 +1,10 @@
 import os
 
+import bpy
+
 from openpype import api
 from openpype.hosts.blender.api import plugin
-from avalon.blender.pipeline import AVALON_PROPERTY
-
-import bpy
+from openpype.hosts.blender.api.pipeline import AVALON_PROPERTY
 
 
 class ExtractABC(api.Extractor):
