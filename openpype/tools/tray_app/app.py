@@ -5,14 +5,15 @@ import collections
 import queue
 import websocket
 import json
-import itertools
 from datetime import datetime
 
 from avalon import style
 from openpype_modules.webserver import host_console_listener
+from openpype.api import Logger
 
 from Qt import QtWidgets, QtCore
 
+log = Logger.get_logger(__name__)
 
 class ConsoleTrayApp:
     """
@@ -22,6 +23,7 @@ class ConsoleTrayApp:
     callback_queue = None
     process = None
     webserver_client = None
+    _instance = None
 
     MAX_LINES = 10000
 
@@ -65,71 +67,90 @@ class ConsoleTrayApp:
     def __init__(self, host, launch_method, subprocess_args, is_host_connected,
                  parent=None):
         self.host = host
-
-        self.initialized = False
         self.websocket_server = None
-        self.initializing = False
-        self.tray = False
         self.launch_method = launch_method
         self.subprocess_args = subprocess_args
         self.is_host_connected = is_host_connected
-        self.tray_reconnect = True
+        self.process = None
 
         self.original_stdout_write = None
         self.original_stderr_write = None
         self.new_text = collections.deque()
 
-        timer = QtCore.QTimer()
-        timer.timeout.connect(self.on_timer)
-        timer.setInterval(200)
-        timer.start()
+        start_process_timer = QtCore.QTimer()
+        start_process_timer.setInterval(200)
+        start_process_timer.timeout.connect(self._on_start_process_timer)
+        start_process_timer.start()
 
-        self.timer = timer
+        self.start_process_timer = start_process_timer
+
+        loop_timer = QtCore.QTimer()
+        loop_timer.setInterval(200)
+        self.loop_timer = loop_timer
+
+        start_process_timer.timeout.connect(self._on_start_process_timer)
+        loop_timer.timeout.connect(self._on_loop_timer)
 
         self.catch_std_outputs()
         date_str = datetime.now().strftime("%d%m%Y%H%M%S")
         self.host_id = "{}_{}".format(self.host, date_str)
 
-    def _connect(self):
+    @classmethod
+    def instance(cls):
+        if not cls._instance:
+            raise RuntimeError("Not initialized yet")
+        return cls._instance
+
+    @property
+    def websocket_server_is_running(self):
+        if self.websocket_server is not None:
+            return self.websocket_server.is_running
+        return False
+
+    @property
+    def is_process_running(self):
+        if self.process is not None:
+            return self.process.poll() is None
+        return False
+
+    def _start_process(self):
+        if self.process is not None:
+            return
+        log.info("Starting host process")
+        try:
+            self.launch_method(*self.subprocess_args)
+        except Exception as exp:
+            log.info("exce", exc_info=True)
+            self.exit()
+
+    def set_process(self, proc):
+        if not self.process:
+            self.process = proc
+
+    def _connect_to_tray(self):
         """ Connect to Tray webserver to pass console output. """
         ws = websocket.WebSocket()
         webserver_url = os.environ.get("OPENPYPE_WEBSERVER_URL")
 
         if not webserver_url:
             print("Unknown webserver url, cannot connect to pass log")
-            self.tray_reconnect = False
             return
 
         webserver_url = webserver_url.replace("http", "ws")
         ws.connect("{}/ws/host_listener".format(webserver_url))
-        ConsoleTrayApp.webserver_client = ws
+        self.webserver_client = ws
 
         payload = {
             "host": self.host_id,
             "action": host_console_listener.MsgAction.CONNECTING,
             "text": "Integration with {}".format(str.capitalize(self.host))
         }
-        self.tray_reconnect = False
         self._send(payload)
 
-    def _connected(self):
-        """ Send to Tray console that host is ready - icon change. """
-        print("Host {} connected".format(self.host))
-        if not ConsoleTrayApp.webserver_client:
-            return
-
-        payload = {
-            "host": self.host_id,
-            "action": host_console_listener.MsgAction.INITIALIZED,
-            "text": "Integration with {}".format(str.capitalize(self.host))
-        }
-        self.tray_reconnect = False
-        self._send(payload)
-
-    def _close(self):
+    def _disconnect_from_tray(self):
         """ Send to Tray that host is closing - remove from Services. """
         print("Host {} closing".format(self.host))
-        if not ConsoleTrayApp.webserver_client:
+        if not self.webserver_client:
             return
 
         payload = {
@@ -139,8 +160,22 @@ class ConsoleTrayApp:
         }
 
         self._send(payload)
-        self.tray_reconnect = False
-        ConsoleTrayApp.webserver_client.close()
+        self.webserver_client.close()
+
+    def _host_connected(self):
+        """ Send to Tray console that host is ready - icon change. """
+        print("Host {} connected".format(self.host))
+        self.start_process_timer.stop()
+        self.loop_timer.start()
+
+        self.callback_queue = queue.Queue()
+
+        payload = {
+            "host": self.host_id,
+            "action": host_console_listener.MsgAction.INITIALIZED,
+            "text": "Integration with {}".format(str.capitalize(self.host))
+        }
+        self._send(payload)
 
     def _send_text_queue(self):
         """Sends lines and purges queue"""
@@ -152,7 +187,7 @@ class ConsoleTrayApp:
 
     def _send_lines(self, lines):
         """ Send console content. """
-        if not ConsoleTrayApp.webserver_client:
+        if not self.webserver_client:
             return
 
         payload = {
@@ -165,92 +200,86 @@ class ConsoleTrayApp:
 
     def _send(self, payload):
         """ Worker method to send to existing websocket connection. """
-        if not ConsoleTrayApp.webserver_client:
+        if not self.webserver_client:
             return
 
         try:
-            ConsoleTrayApp.webserver_client.send(json.dumps(payload))
+            self.webserver_client.send(json.dumps(payload))
         except ConnectionResetError:  # Tray closed
-            ConsoleTrayApp.webserver_client = None
-            self.tray_reconnect = True
+            self._connect_to_tray()
 
-    def on_timer(self):
+    def _on_start_process_timer(self):
         """Called periodically to initialize and run function on main thread"""
-        if self.tray_reconnect:
-            self._connect()  # reconnect
+        if not self.webserver_client:
+            self._connect_to_tray()
 
         self._send_text_queue()
 
-        if not self.initialized:
-            if self.initializing:
-                host_connected = self.is_host_connected()
-                if host_connected is None:  # keep trying
-                    return
-                elif not host_connected:
-                    text = "{} process is not alive. Exiting".format(self.host)
-                    print(text)
-                    self._send_lines([text])
-                    ConsoleTrayApp.websocket_server.stop()
-                    sys.exit(1)
-                elif host_connected:
-                    self.initialized = True
-                    self.initializing = False
-                    self._connected()
+        # Start application process
+        if self.process is None:
+            self._start_process()
+            log.info("Waiting for host to connect")
+            return
 
-                    return
+        host_connected = self.is_host_connected()
+        if host_connected is None:  # keep trying
+            return
+        elif not host_connected:
+            text = "{} process is not alive. Exiting".format(self.host)
+            print(text)
+            self._send_lines([text])
+            self.exit()
+        elif host_connected:
+            self._host_connected()
 
-            ConsoleTrayApp.callback_queue = queue.Queue()
-            self.initializing = True
-
-            self.launch_method(*self.subprocess_args)
-        elif ConsoleTrayApp.callback_queue and \
-                not ConsoleTrayApp.callback_queue.empty():
+    def _on_loop_timer(self):
+        """Regular processing of queue"""
+        if self.callback_queue and \
+                not self.callback_queue.empty():
             try:
-                callback = ConsoleTrayApp.callback_queue.get(block=False)
+                callback = self.callback_queue.get(block=False)
                 callback()
             except queue.Empty:
                 pass
-        elif ConsoleTrayApp.process.poll() is not None:
+        elif self.process.poll() is not None:
             self.exit()
 
-    @classmethod
-    def execute_in_main_thread(cls, func_to_call_from_main_thread):
+    def execute_in_main_thread(self, func_to_call_from_main_thread):
         """Put function to the queue to be picked by 'on_timer'"""
-        if not cls.callback_queue:
-            cls.callback_queue = queue.Queue()
-        cls.callback_queue.put(func_to_call_from_main_thread)
+        if not self.callback_queue:
+            self.callback_queue = queue.Queue()
+        self.callback_queue.put(func_to_call_from_main_thread)
 
-    @classmethod
-    def restart_server(cls):
-        if ConsoleTrayApp.websocket_server:
-            ConsoleTrayApp.websocket_server.stop_server(restart=True)
+    def restart_server(self):
+        if self.websocket_server:
+            self.websocket_server.stop_server(restart=True)
 
-    # obsolete
     def exit(self):
         """ Exit whole application. """
-        self._close()
-        if ConsoleTrayApp.websocket_server:
-            ConsoleTrayApp.websocket_server.stop()
-        if ConsoleTrayApp.process:
-            ConsoleTrayApp.process.kill()
-            ConsoleTrayApp.process.wait()
-        if self.timer:
-            self.timer.stop()
+        self._disconnect_from_tray()
+
+        if self.websocket_server:
+            self.websocket_server.stop()
+        if self.process:
+            self.process.kill()
+            self.process.wait()
+        if self.loop_timer:
+            self.loop_timer.stop()
         QtCore.QCoreApplication.exit()
 
     def catch_std_outputs(self):
         """Redirects standard out and error to own functions"""
-        if not sys.stdout:
-            self.dialog.append_text("Cannot read from stdout!")
-        else:
-            self.original_stdout_write = sys.stdout.write
-            sys.stdout.write = self.my_stdout_write
-
-        if not sys.stderr:
-            self.dialog.append_text("Cannot read from stderr!")
-        else:
-            self.original_stderr_write = sys.stderr.write
-            sys.stderr.write = self.my_stderr_write
+        # if not sys.stdout:
+        #     dialog.append_text("Cannot read from stdout!")
+        # else:
+        #     self.original_stdout_write = sys.stdout.write
+        #     sys.stdout.write = self.my_stdout_write
+        #
+        # if not sys.stderr:
+        #     self.dialog.append_text("Cannot read from stderr!")
+        # else:
+        #     self.original_stderr_write = sys.stderr.write
+        #     sys.stderr.write = self.my_stderr_write
 
     def my_stdout_write(self, text):
         """Appends outputted text to queue, keep writing to original stdout"""
