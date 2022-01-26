@@ -85,57 +85,33 @@ class OpenPypeEventListener(Deadline.Events.DeadlineEventListener):
         del self.OnThermalShutdownCallback
         del self.OnMachineRestartCallback
 
-    def set_openpype_executable_path(self, job):
-        """
-            Sets configurable OpenPypeExecutable value to job extra infos.
-
-            GlobalJobPreLoad takes this value, pulls env vars for each task
-            from specific worker itself. GlobalJobPreLoad is not easily
-            configured, so we are configuring Event itself.
-        """
-        openpype_execs = self.GetConfigEntryWithDefault("OpenPypeExecutable",
-                                                        "")
-        job.SetJobExtraInfoKeyValue("openpype_executables", openpype_execs)
-
-        Deadline.Scripting.RepositoryUtils.SaveJob(job)
-
     def updateFtrackStatus(self, job, statusName, createIfMissing=False):
         """Updates version status on ftrack"""
         pass
 
     def OnJobSubmitted(self, job):
-        # self.LogInfo("OnJobSubmitted LOGGING")
         # for 1st time submit
-        self.set_openpype_executable_path(job)
         self.updateFtrackStatus(job, "Render Queued")
 
     def OnJobStarted(self, job):
         # self.LogInfo("OnJobStarted")
-        self.set_openpype_executable_path(job)
         self.updateFtrackStatus(job, "Rendering")
 
     def OnJobFinished(self, job):
-        # self.LogInfo("OnJobFinished")
         self.updateFtrackStatus(job, "Artist Review")
 
     def OnJobRequeued(self, job):
-        # self.LogInfo("OnJobRequeued LOGGING")
-        self.set_openpype_executable_path(job)
 
     def OnJobFailed(self, job):
         pass
 
     def OnJobSuspended(self, job):
-        # self.LogInfo("OnJobSuspended LOGGING")
         self.updateFtrackStatus(job, "Render Queued")
 
     def OnJobResumed(self, job):
-        # self.LogInfo("OnJobResumed LOGGING")
-        self.set_openpype_executable_path(job)
         self.updateFtrackStatus(job, "Rendering")
 
     def OnJobPended(self, job):
-        # self.LogInfo("OnJobPended LOGGING")
         pass
 
     def OnJobReleased(self, job):
@@ -145,7 +121,6 @@ class OpenPypeEventListener(Deadline.Events.DeadlineEventListener):
         pass
 
     def OnJobError(self, job, task, report):
-        # self.LogInfo("OnJobError LOGGING")
         pass
 
     def OnJobPurged(self, job):
@@ -158,7 +133,6 @@ class OpenPypeEventListener(Deadline.Events.DeadlineEventListener):
         pass
 
     def OnSlaveStarted(self, job):
-        # self.LogInfo("OnSlaveStarted LOGGING")
         pass
 
     def OnSlaveStopped(self, job):
@@ -168,12 +142,10 @@ class OpenPypeEventListener(Deadline.Events.DeadlineEventListener):
         pass
 
     def OnSlaveRendering(self, host_name, job):
-        # self.LogInfo("OnSlaveRendering LOGGING")
         pass
 
     def OnSlaveStartingJob(self, host_name, job):
-        # self.LogInfo("OnSlaveStartingJob LOGGING")
-        self.set_openpype_executable_path(job)
+        pass
 
     def OnSlaveStalled(self, job):
         pass
