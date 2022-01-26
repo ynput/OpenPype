@@ -241,6 +241,8 @@ class ActionBar(QtWidgets.QWidget):
             action = index.data(ACTION_ROLE)
             if index.data(FORCE_NOT_OPEN_WORKFILE_ROLE):
                 action.data["start_last_workfile"] = False
+            else:
+                action.data.pop("start_last_workfile", None)
             self._start_animation(index)
             self.action_clicked.emit(action)
             return
