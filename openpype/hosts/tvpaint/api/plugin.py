@@ -35,7 +35,7 @@ class Creator(PypeCreatorMixin, avalon.api.Creator):
     def are_instances_same(instance_1, instance_2):
         """Compare instances but skip keys with unique values.
 
-        During compare are skiped keys that will be 100% sure
+        During compare are skipped keys that will be 100% sure
         different on new instance, like "id".
 
         Returns:

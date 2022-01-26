@@ -21,7 +21,7 @@ class InstallPySideToBlender(PreLaunchHook):
     platforms = ["windows"]
 
     def execute(self):
-        # Prelaunch hook is not crutial
+        # Prelaunch hook is not crucial
         try:
             self.inner_execute()
         except Exception:
@@ -156,7 +156,7 @@ class InstallPySideToBlender(PreLaunchHook):
         except pywintypes.error:
             pass
 
-        self.log.warning("Failed to instal PySide2 module to blender.")
+        self.log.warning("Failed to install PySide2 module to blender.")
 
     def is_pyside_installed(self, python_executable):
         """Check if PySide2 module is in blender's pip list.

@@ -1,9 +1,11 @@
-from avalon.nuke import lib as anlib
-from openpype.hosts.nuke.api import plugin
 import nuke
+from openpype.hosts.nuke.api import plugin
+from openpype.hosts.nuke.api.lib import (
+    set_avalon_knob_data
+)
 
 
-class CreateModel(plugin.PypeCreator):
+class CreateModel(plugin.OpenPypeCreator):
     """Add Publishable Model Geometry"""
 
     name = "model"
@@ -68,7 +70,7 @@ class CreateModel(plugin.PypeCreator):
                     # change node color
                     n["tile_color"].setValue(int(self.node_color, 16))
                     # add avalon knobs
-                    anlib.set_avalon_knob_data(n, data)
+                    set_avalon_knob_data(n, data)
                 return True
             else:
                 msg = str("Please select nodes you "
@@ -81,5 +83,5 @@ class CreateModel(plugin.PypeCreator):
             model_node = nuke.createNode("WriteGeo")
             model_node["tile_color"].setValue(int(self.node_color, 16))
             # add avalon knobs
-            instance = anlib.set_avalon_knob_data(model_node, self.data)
+            instance = set_avalon_knob_data(model_node, self.data)
             return instance

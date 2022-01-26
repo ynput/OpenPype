@@ -39,6 +39,11 @@
                                 "label": "Clip name template"
                             },
                             {
+                                "type": "boolean",
+                                "key": "segmentIndex",
+                                "label": "Accept segment order"
+                            },
+                            {
                                 "type": "number",
                                 "key": "countFrom",
                                 "label": "Count sequence from"
@@ -115,6 +120,71 @@
                                 "label": "Handle end (tail)"
                             }
                           ]
+                        }
+                    ]
+                }
+            ]
+        },
+        {
+            "type": "dict",
+            "collapsible": true,
+            "key": "publish",
+            "label": "Publish plugins",
+            "children": [
+                {
+                    "type": "dict",
+                    "collapsible": true,
+                    "key": "ExtractSubsetResources",
+                    "label": "Extract Subset Resources",
+                    "is_group": true,
+                    "children": [
+                        {
+                            "type": "boolean",
+                            "key": "keep_original_representation",
+                            "label": "Publish clip's original media"
+                        },
+                        {
+                            "key": "export_presets_mapping",
+                            "label": "Export presets mapping",
+                            "type": "dict-modifiable",
+                            "highlight_content": true,
+                            "object_type": {
+                                "type": "dict",
+                                "children": [
+                                    {
+                                        "key": "ext",
+                                        "label": "Output extension",
+                                        "type": "text"
+                                    },
+                                    {
+                                        "key": "xml_preset_file",
+                                        "label": "XML preset file (with ext)",
+                                        "type": "text"
+                                    },
+                                    {
+                                        "key": "xml_preset_dir",
+                                        "label": "XML preset folder (optional)",
+                                        "type": "text"
+                                    },
+                                    {
+                                        "type": "separator"
+                                    },
+                                    {
+                                        "type": "boolean",
+                                        "key": "representation_add_range",
+                                        "label": "Add frame range to representation"
+                                    },
+                                    {
+                                        "type": "list",
+                                        "key": "representation_tags",
+                                        "label": "Add representation tags",
+                                        "object_type": {
+                                            "type": "text",
+                                            "multiline": false
+                                        }
+                                    }
+                                ]
+                            }
                         }
                     ]
                 }

@@ -1,6 +1,8 @@
 import os
+import time
 import subprocess
 from operator import itemgetter
+from openpype.lib import ApplicationManager
 from openpype_modules.ftrack.lib import BaseAction, statics_icon
 
 
@@ -23,15 +25,25 @@ class DJVViewAction(BaseAction):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
 
-        self.djv_path = self.find_djv_path()
+        self.application_manager = ApplicationManager()
+        self._last_check = time.time()
+        self._check_interval = 10
 
-    def preregister(self):
-        if self.djv_path is None:
-            return (
-                'DJV View is not installed'
-                ' or paths in presets are not set correctly'
-            )
-        return True
+    def _get_djv_apps(self):
+        app_group = self.application_manager.app_groups["djvview"]
+
+        output = []
+        for app in app_group:
+            executable = app.find_executable()
+            if executable is not None:
+                output.append(app)
+        return output
+
+    def get_djv_apps(self):
+        cur_time = time.time()
+        if (cur_time - self._last_check) > self._check_interval:
+            self.application_manager.refresh()
+        return self._get_djv_apps()
 
     def discover(self, session, entities, event):
         """Return available actions based on *event*. """
@@ -40,14 +52,12 @@ class DJVViewAction(BaseAction):
             return False
 
         entityType = selection[0].get("entityType", None)
-        if entityType in ["assetversion", "task"]:
+        if entityType not in ["assetversion", "task"]:
+            return False
+
+        if self.get_djv_apps():
             return True
         return False
-
-    def find_djv_path(self):
-        for path in (os.environ.get("DJV_PATH") or "").split(os.pathsep):
-            if os.path.exists(path):
-                return path
 
     def interface(self, session, entities, event):
         if event['data'].get('values', {}):
@@ -88,7 +98,37 @@ class DJVViewAction(BaseAction):
                 'message': 'There are no Asset Versions to open.'
             }
 
-        items = []
+        # TODO sort them (somehow?)
+        enum_items = []
+        first_value = None
+        for app in self.get_djv_apps():
+            if first_value is None:
+                first_value = app.full_name
+            enum_items.append({
+                "value": app.full_name,
+                "label": app.full_label
+            })
+
+        if not enum_items:
+            return {
+                "success": False,
+                "message": "Couldn't find DJV executable."
+            }
+
+        items = [
+            {
+                "type": "enumerator",
+                "label": "DJV version:",
+                "name": "djv_app_name",
+                "data": enum_items,
+                "value": first_value
+            },
+            {
+                "type": "label",
+                "value": "---"
+            }
+        ]
+        version_items = []
         base_label = "v{0} - {1} - {2}"
         default_component = None
         last_available = None
@@ -115,11 +155,11 @@ class DJVViewAction(BaseAction):
                     last_available = file_path
                     if component['name'] == default_component:
                         select_value = file_path
-                    items.append(
+                    version_items.append(
                         {'label': label, 'value': file_path}
                     )
 
-        if len(items) == 0:
+        if len(version_items) == 0:
             return {
                 'success': False,
                 'message': (
@@ -132,7 +172,7 @@ class DJVViewAction(BaseAction):
             'type': 'enumerator',
             'name': 'path',
             'data': sorted(
-                items,
+                version_items,
                 key=itemgetter('label'),
                 reverse=True
             )
@@ -142,21 +182,37 @@ class DJVViewAction(BaseAction):
         else:
             item['value'] = last_available
 
-        return {'items': [item]}
+        items.append(item)
+
+        return {'items': items}
 
     def launch(self, session, entities, event):
         """Callback method for DJVView action."""
 
         # Launching application
-        if "values" not in event["data"]:
+        event_data = event["data"]
+        if "values" not in event_data:
             return
-        filpath = event['data']['values']['path']
+
+        djv_app_name = event_data["djv_app_name"]
+        app = self.applicaion_manager.applications.get(djv_app_name)
+        executable = None
+        if app is not None:
+            executable = app.find_executable()
+
+        if not executable:
+            return {
+                "success": False,
+                "message": "Couldn't find DJV executable."
+            }
+
+        filpath = os.path.normpath(event_data["values"]["path"])
 
         cmd = [
             # DJV path
-            os.path.normpath(self.djv_path),
+            executable,
             # PATH TO COMPONENT
-            os.path.normpath(filpath)
+            filpath
         ]
 
         try:
@@ -164,8 +220,8 @@ class DJVViewAction(BaseAction):
             subprocess.Popen(cmd)
         except FileNotFoundError:
             return {
-                'success': False,
-                'message': 'File "{}" was not found.'.format(
+                "success": False,
+                "message": "File \"{}\" was not found.".format(
                     os.path.basename(filpath)
                 )
             }

@@ -112,7 +112,7 @@ def containerise(
         members (list): List of members that were loaded and belongs
             to the container (layer names).
         current_containers (list): Preloaded containers. Should be used only
-            on update/switch when containers were modified durring the process.
+            on update/switch when containers were modified during the process.
 
     Returns:
         dict: Container data stored to workfile metadata.
@@ -166,7 +166,7 @@ def split_metadata_string(text, chunk_length=None):
             set to global variable `TVPAINT_CHUNK_LENGTH`.
 
     Returns:
-        list: List of strings wil at least one item.
+        list: List of strings with at least one item.
     """
     if chunk_length is None:
         chunk_length = TVPAINT_CHUNK_LENGTH

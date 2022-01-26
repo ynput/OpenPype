@@ -31,36 +31,6 @@
             "type": "splitter"
         },
         {
-            "type": "label",
-            "label": "Define explicit OpenPype version that should be used. Keep empty to use latest available version."
-        },
-        {
-            "type": "production-versions-text",
-            "key": "production_version",
-            "label": "Production version"
-        },
-        {
-            "type": "staging-versions-text",
-            "key": "staging_version",
-            "label": "Staging version"
-        },
-        {
-            "type": "splitter"
-        },
-        {
-            "type": "label",
-            "label": "Trigger validation if running OpenPype is using studio defined version each 'n' <b>minutes</b>. Validation happens in OpenPype tray application."
-        },
-        {
-            "type": "number",
-            "key": "version_check_interval",
-            "label": "Version check interval",
-            "minimum": 0
-        },
-        {
-            "type": "splitter"
-        },
-        {
             "key": "environment",
             "label": "Environment",
             "type": "raw-json",
@@ -141,12 +111,49 @@
             "type": "splitter"
         },
         {
-            "type": "path",
-            "key": "openpype_path",
-            "label": "Versions Repository",
-            "multiplatform": true,
-            "multipath": true,
-            "require_restart": true
+            "type": "collapsible-wrap",
+            "label": "OpenPype deployment control",
+            "collapsible": false,
+            "children": [
+                {
+                    "type": "path",
+                    "key": "openpype_path",
+                    "label": "Versions Repository",
+                    "multiplatform": true,
+                    "multipath": true,
+                    "require_restart": true
+                },
+                {
+                    "type": "splitter"
+                },
+                {
+                    "type": "label",
+                    "label": "Define explicit OpenPype version that should be used. Keep empty to use latest available version."
+                },
+                {
+                    "type": "production-versions-text",
+                    "key": "production_version",
+                    "label": "Production version"
+                },
+                {
+                    "type": "staging-versions-text",
+                    "key": "staging_version",
+                    "label": "Staging version"
+                },
+                {
+                    "type": "splitter"
+                },
+                {
+                    "type": "label",
+                    "label": "Trigger validation if running OpenPype is using studio defined version each 'n' <b>minutes</b>. Validation happens in OpenPype tray application."
+                },
+                {
+                    "type": "number",
+                    "key": "version_check_interval",
+                    "label": "Version check interval",
+                    "minimum": 0
+                }
+            ]
         }
     ]
 }

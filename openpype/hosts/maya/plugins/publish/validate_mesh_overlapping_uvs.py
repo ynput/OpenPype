@@ -78,7 +78,7 @@ class GetOverlappingUVs(object):
         if len(uarray) == 0 or len(varray) == 0:
             return (False, None, None)
 
-        # loop throught all vertices to construct edges/rays
+        # loop through all vertices to construct edges/rays
         u = uarray[-1]
         v = varray[-1]
         for i in xrange(len(uarray)):  # noqa: F821

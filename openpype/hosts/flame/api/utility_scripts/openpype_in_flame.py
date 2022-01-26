@@ -13,7 +13,7 @@ def openpype_install():
     """
     openpype.install()
     avalon.api.install(opfapi)
-    print("Avalon registred hosts: {}".format(
+    print("Avalon registered hosts: {}".format(
         avalon.api.registered_host()))
 
 
@@ -101,7 +101,7 @@ def app_initialized(parent=None):
 """
 Initialisation of the hook is starting from here
 
-First it needs to test if it can import the flame modul.
+First it needs to test if it can import the flame module.
 This will happen only in case a project has been loaded.
 Then `app_initialized` will load main Framework which will load
 all menu objects as flame_apps.

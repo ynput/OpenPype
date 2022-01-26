@@ -169,12 +169,14 @@ from .editorial import (
 )
 
 from .openpype_version import (
+    op_version_control_available,
     get_openpype_version,
     get_build_version,
     get_expected_version,
     is_running_from_build,
     is_running_staging,
-    is_current_version_studio_latest
+    is_current_version_studio_latest,
+    is_current_version_higher_than_expected
 )
 
 terminal = Terminal
@@ -306,6 +308,7 @@ __all__ = [
     "create_workdir_extra_folders",
     "get_project_basic_paths",
 
+    "op_version_control_available",
     "get_openpype_version",
     "get_build_version",
     "get_expected_version",

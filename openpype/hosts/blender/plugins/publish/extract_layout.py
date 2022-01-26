@@ -4,7 +4,7 @@ import json
 import bpy
 
 from avalon import io
-from avalon.blender.pipeline import AVALON_PROPERTY
+from openpype.hosts.blender.api.pipeline import AVALON_PROPERTY
 import openpype.api
 
 
