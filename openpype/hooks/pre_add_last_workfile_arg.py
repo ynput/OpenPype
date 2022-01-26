@@ -25,7 +25,7 @@ class AddLastWorkfileToLaunchArgs(PreLaunchHook):
     ]
 
     def execute(self):
-        if not self.data.get("start_last_workfile", True):
+        if not self.data.get("start_last_workfile"):
             self.log.info("It is set to not start last workfile on start.")
             return
 
