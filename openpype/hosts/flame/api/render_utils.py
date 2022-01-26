@@ -132,7 +132,7 @@ def get_preset_path_by_xml_name(xml_preset_name):
 
 
 def get_open_clip(
-        openclip_file_path, feed_data, recursive=False):
+        name,  openclip_file_path, feed_data):
 
     # establish media script path and test it
     media_script_path = "/opt/Autodesk/mio/current/dl_get_media_info"
@@ -140,26 +140,22 @@ def get_open_clip(
         raise IOError("Media Scirpt does not exist: `{}`".format(
             media_script_path))
 
+    # openclip will be updated via temp.clip file
+    tmp_name = "_tmp.clip"
+
     # new feed variables:
     feed_path = feed_data["path"]
-    feed_basename = os.path.basename(feed_path)
     feed_version_name = feed_data["version"]
+    feed_colorspace = feed_data.get("colorspace")
+
+    # derivate other feed variables
+    feed_basename = os.path.basename(feed_path)
+    feed_dir = os.path.dirname(feed_path)
 
     clip_uploaded = False
     create_new_clip = False
 
-    ext_whitelist = [
-        "cin", "als", "jpg", "jpeg", "pict", "pct", "picio",
-        "sgi", "pic", "tga", "iff", "tdi", "tif", "tiff", "rla",
-        "cin.pxz", "tif.pxz", "tiff.pxz", "dpx", "dpx.pxz",
-        "hdr", "png", "exr", "exr.pxz", "psd"
-    ]
-
     feed_ext = os.path.splitext(feed_basename)[1][1:].lower()
-
-    if feed_ext not in ext_whitelist:
-        print("File extension `{}` is not supported".format(feed_ext))
-        return False
 
     if not os.path.isfile(openclip_file_path):
         # openclip does not exist yet and will be created
@@ -168,11 +164,6 @@ def get_open_clip(
         create_new_clip = True
         clip_uploaded = True
     else:
-        # openclip will be updated via temp.clip file
-        tmp_name = "tmp.clip"
-        feed_path = os.path.abspath(feed_path)
-        feed_dir = os.path.dirname(feed_path)
-
         # output a temp file
         tmp_file = os.path.join(feed_dir, tmp_name)
         if os.path.isfile(tmp_file):
@@ -180,21 +171,20 @@ def get_open_clip(
 
     print("Temp File: {}".format(tmp_file))
 
-    # Write output of getMediaScript to file
-    cmd_args = [media_script_path, feed_path]
-    if recursive:
-        print("recursive enabled on dl_get_media_info")
-        cmd_args = [media_script_path, "-r", feed_path]
+    # Create cmd arguments for gettig xml file info file
+    cmd_args = [
+        media_script_path,
+        "-e", feed_ext,
+        "-o", tmp_file,
+        feed_dir
+    ]
 
     # execute creation of clip xml template data
     try:
-        output = openpype.lib.run_subprocess(cmd_args)
+        openpype.lib.run_subprocess(cmd_args)
     except TypeError:
         print("Error createing tmp_file")
         six.reraise(*sys.exc_info())
-
-    with open(tmp_file, "w") as f:
-        f.write("{}".format(output))
 
     # Check media type for valid extension
     try:
@@ -212,17 +202,49 @@ def get_open_clip(
         new_path = new_path_obj.text
         print("tmp_xml new_path: {}".format(new_path))
 
-        new_path_ext = os.path.splitext(new_path)[1][1:].strip().lower()
-        if new_path_ext in ext_whitelist:
-            print("Found media `{}`".format(new_path_ext))
-        else:
-            print("Extension {} is not supported".format(
-                new_path_ext))
-            if os.path.isfile(tmp_file):
-                os.remove(tmp_file)
-            return False
+    if create_new_clip:
+        # New openClip
+        print("Building new openClip")
 
-    if not create_new_clip:
+        new_xml = ET.parse(tmp_file)
+
+        for new_feed in new_xml.iter('feeds'):
+            feed = new_feed.find('feed')
+            feed.set('vuid', feed_basename)
+
+            # add colorspace if any is set
+            if feed_colorspace:
+                _add_colorspace(feed, feed_colorspace)
+
+            feedHandler = feed.find("./handler")
+            feed.remove(feedHandler)
+
+        for newVersion in new_xml.iter('versions'):
+            newVersion.set('currentVersion', feed_basename)
+            version = newVersion.find('version')
+            version.set('uid', feed_basename)
+            version.set('type', 'version')
+
+        xmlRoot = new_xml.getroot()
+
+        # Clean tmp_file - brute force remove errant <root/handler>
+        print("Removing Handler")
+        for handler in xmlRoot.findall("./handler"):
+            print("Handler found")
+            xmlRoot.remove(handler)
+
+        resultXML = ET.tostring(xmlRoot).decode('utf-8')
+
+        print("Adding feed version: {}".format(feed_basename))
+
+        with open(tmp_file, "w") as f:
+            f.write(resultXML)
+
+        print("openClip Updated: %s" % tmp_file)
+
+        clip_uploaded = True
+
+    else:
         print("Updating openClip ..")
 
         source_xml = ET.parse(openclip_file_path)
@@ -231,31 +253,25 @@ def get_open_clip(
         print(">> source_xml: {}".format(source_xml))
         print(">> new_xml: {}".format(new_xml))
 
-
         feed_exists = False
         feed_added = 0
 
-        src_editRateNumerator = None
-        src_editRateDenominator = None
-        src_nbTicks = None
-        src_rate = None
-        src_dropMode = None
+        feed_src_nb_ticks = None
+        feed_src_fps = None
+        feed_src_drop_mode = None
 
         try:
-            for srcTrack in source_xml.iter('track'):
-                src_editRateNumeratorObj = srcTrack.find('editRate/numerator')
-                src_editRateNumerator = src_editRateNumeratorObj.text
-                src_editRateDenominatorObj = srcTrack.find(
-                    'editRate/denominator')
-                src_editRateDenominator = src_editRateDenominatorObj.text
-
-                for srcFeed in srcTrack.iter('feed'):
-                    src_nbTicksObj = srcFeed.find('startTimecode/nbTicks')
-                    src_nbTicks = src_nbTicksObj.text
-                    src_rateObj = srcFeed.find('startTimecode/rate')
-                    src_rate = src_rateObj.text
-                    src_dropModeObj = srcFeed.find('startTimecode/dropMode')
-                    src_dropMode = src_dropModeObj.text
+            for src_track in source_xml.iter('track'):
+                for srcFeed in src_track.iter('feed'):
+                    feed_src_nb_ticksObj = srcFeed.find(
+                        'startTimecode/nbTicks')
+                    feed_src_nb_ticks = feed_src_nb_ticksObj.text
+                    feed_src_fpsObj = srcFeed.find(
+                        'startTimecode/rate')
+                    feed_src_fps = feed_src_fpsObj.text
+                    feed_src_drop_modeObj = srcFeed.find(
+                        'startTimecode/dropMode')
+                    feed_src_drop_mode = feed_src_drop_modeObj.text
                     break
                 else:
                     continue
@@ -263,59 +279,52 @@ def get_open_clip(
         except Exception as msg:
             print(msg)
 
-        print("Source editRate/numerator: %s" % src_editRateNumerator)
-        print("Source editRate/denominator: %s" % src_editRateDenominator)
-        print("Source startTimecode/nbTicks: %s" % src_nbTicks)
-        print("Source startTimecode/rate: %s" % src_rate)
-        print("Source startTimecode/dropMode: %s" % src_dropMode)
+        print("Source startTimecode/nbTicks: %s" % feed_src_nb_ticks)
+        print("Source startTimecode/rate: %s" % feed_src_fps)
+        print("Source startTimecode/dropMode: %s" % feed_src_drop_mode)
 
         # Get new feed from file
         for newTrack in new_xml.iter('track'):
             uid = newTrack.get('uid')
-            newFeed = newTrack.find('feeds/feed')
+            new_feed = newTrack.find('feeds/feed')
 
-            feedHandler = newFeed.find("./handler")
-            newFeed.remove(feedHandler)
+            feedHandler = new_feed.find("./handler")
+            new_feed.remove(feedHandler)
 
-            if src_editRateNumerator:
-                new_editRateNumeratorObject = newTrack.find(
-                    "feeds/feed/sampleRate/numerator")
-                new_editRateNumeratorObject.text = src_editRateNumerator
-            if src_editRateDenominator:
-                new_editRateDenominatorObject = newTrack.find(
-                    "feeds/feed/sampleRate/denominator")
-                new_editRateDenominatorObject.text = src_editRateDenominator
-            if src_rate:
+            if feed_src_fps:
                 new_rateObject = newTrack.find(
                     "feeds/feed/startTimecode/rate")
-                new_rateObject.text = src_rate
-            if src_nbTicks:
+                new_rateObject.text = feed_src_fps
+            if feed_src_nb_ticks:
                 new_nbTicksObject = newTrack.find(
                     "feeds/feed/startTimecode/nbTicks")
-                new_nbTicksObject.text = src_nbTicks
-            if src_dropMode:
+                new_nbTicksObject.text = feed_src_nb_ticks
+            if feed_src_drop_mode:
                 new_dropModeObj = newTrack.find(
                     "feeds/feed/startTimecode/dropMode")
-                new_dropModeObj.text = src_dropMode
+                new_dropModeObj.text = feed_src_drop_mode
 
-            new_path_obj = newTrack.find("feeds/feed/spans/span/path")
+            new_path_obj = newTrack.find(
+                "feeds/feed/spans/span/path")
             new_path = new_path_obj.text
 
-            print(">> uid: {}".format(uid))
-            print(">> new_path: {}".format(new_path))
-
-            # Check for path in sourceFile
-            # If Path exists ... skip append
-            for srcPath in source_xml.iter('path'):
-                if new_path == srcPath.text:
-                    print("Element exists in clip... skipping append")
+            # loop all available feed paths and check if
+            # the path is not already in file
+            for src_path in source_xml.iter('path'):
+                if new_path == src_path.text:
+                    print("Not appending file as it already is in .clip file")
                     feed_exists = True
 
             if not feed_exists:
-                # Append new feed to source track
-                for srcTrack in source_xml.iter('track'):
-                    newFeed.set('vuid', feed_version_name)
-                    srcTrack.find('feeds').append(newFeed)
+                # Append new temp file feed to .clip source xml tree
+                for src_track in source_xml.iter('track'):
+                    new_feed.set('vuid', feed_version_name)
+
+                    # add colorspace if any is set
+                    if feed_colorspace:
+                        _add_colorspace(new_feed, feed_colorspace)
+
+                    src_track.find('feeds').append(new_feed)
                     print(
                         "Appending new feed: {}".format(feed_version_name))
                     feed_added += 1
@@ -353,57 +362,6 @@ def get_open_clip(
         if os.path.isfile(tmp_file):
             os.remove(tmp_file)
 
-    else:
-        # New openClip
-        print("Building new openClip")
-
-        # Update uid name with element_name
-        try:
-            new_xml = ET.parse(tmp_file)
-        except:
-            print("Failed reading XML")
-            print('%s' % traceback.print_exc())
-            if os.path.isfile(tmp_file):
-                os.remove(tmp_file)
-            return False
-
-        try:
-            for newFeed in new_xml.iter('feeds'):
-                feed = newFeed.find('feed')
-                feed.set('vuid', feed_basename)
-
-                feedHandler = feed.find("./handler")
-                feed.remove(feedHandler)
-
-            for newVersion in new_xml.iter('versions'):
-                newVersion.set('currentVersion', feed_basename)
-                version = newVersion.find('version')
-                version.set('uid', feed_basename)
-                version.set('type', 'version')
-
-            xmlRoot = new_xml.getroot()
-
-            # Clean tmp_file - brute force remove errant <root/handler>
-            print("Removing Handler")
-            for handler in xmlRoot.findall("./handler"):
-                print("Handler found")
-                xmlRoot.remove(handler)
-
-            resultXML = ET.tostring(xmlRoot).decode('utf-8')
-
-            print("Adding feed version: %s" % feed_basename)
-
-            with open(tmp_file, "w") as f:
-                f.write(resultXML)
-
-            print("openClip Updated: %s" % tmp_file)
-
-            clip_uploaded = True
-
-        except:
-            print("Failed to update openClip: %s" % tmp_file)
-            print('%s' % traceback.print_exc())
-
     return clip_uploaded
 
 
@@ -428,3 +386,14 @@ def create_openclip_backup_file(file):
         if not created:
             bck_file = "{}.bak.last".format(file)
             shutil.copy2(file, bck_file)
+
+
+def _add_colorspace(feed_obj, profile_name):
+    feed_storage_obj = feed_obj.find("storageFormat")
+    feed_clr_obj = feed_storage_obj.find("colourSpace")
+    if not feed_clr_obj:
+        feed_clr_obj = ET.Element(
+            "colourSpace", {"type": "string"})
+        feed_storage_obj.append(feed_clr_obj)
+
+    feed_clr_obj.text = profile_name
