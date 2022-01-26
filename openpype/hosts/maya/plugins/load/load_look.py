@@ -1,14 +1,12 @@
 # -*- coding: utf-8 -*-
 """Look loader."""
-import openpype.hosts.maya.api.plugin
 from avalon import api, io
 import json
+import openpype.hosts.maya.api.plugin
 import openpype.hosts.maya.api.lib
 from collections import defaultdict
 from openpype.widgets.message_window import ScrollMessageBox
 from Qt import QtWidgets
-
-from openpype.hosts.maya.api.plugin import get_reference_node
 
 
 class LookLoader(openpype.hosts.maya.api.plugin.ReferenceLoader):
