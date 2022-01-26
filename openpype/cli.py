@@ -138,7 +138,10 @@ def webpublisherwebserver(debug, executable, upload_dir, host=None, port=None):
 @click.option("--asset", help="Asset name", default=None)
 @click.option("--task", help="Task name", default=None)
 @click.option("--app", help="Application name", default=None)
-def extractenvironments(output_json_path, project, asset, task, app):
+@click.option(
+    "--envgroup", help="Environment group (e.g. \"farm\")", default=None
+)
+def extractenvironments(output_json_path, project, asset, task, app, envgroup):
     """Extract environment variables for entered context to a json file.
 
     Entered output filepath will be created if does not exists.
@@ -149,7 +152,7 @@ def extractenvironments(output_json_path, project, asset, task, app):
     Context options are "project", "asset", "task", "app"
     """
     PypeCommands.extractenvironments(
-        output_json_path, project, asset, task, app
+        output_json_path, project, asset, task, app, envgroup
     )
 
 

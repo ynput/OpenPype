@@ -299,7 +299,7 @@ def get_track_item_pype_data(track_item):
     if not tag:
         return None
 
-    # get tag metadata attribut
+    # get tag metadata attribute
     tag_data = tag.metadata()
     # convert tag metadata to normal keys names and values to correct types
     for k, v in dict(tag_data).items():
@@ -402,7 +402,7 @@ def sync_avalon_data_to_workfile():
     try:
         project.setProjectDirectory(active_project_root)
     except Exception:
-        # old way of seting it
+        # old way of setting it
         project.setProjectRoot(active_project_root)
 
     # get project data from avalon db
@@ -614,7 +614,7 @@ def create_nuke_workfile_clips(nuke_workfiles, seq=None):
     if not seq:
         seq = hiero.core.Sequence('NewSequences')
         root.addItem(hiero.core.BinItem(seq))
-    # todo will ned to define this better
+    # todo will need to define this better
     # track = seq[1]  # lazy example to get a destination#  track
     clips_lst = []
     for nk in nuke_workfiles:
@@ -838,7 +838,7 @@ def apply_colorspace_project():
         # remove the TEMP file as we dont need it
         os.remove(copy_current_file_tmp)
 
-    # use the code from bellow for changing xml hrox Attributes
+    # use the code from below for changing xml hrox Attributes
     presets.update({"name": os.path.basename(copy_current_file)})
 
     # read HROX in as QDomSocument
@@ -874,7 +874,7 @@ def apply_colorspace_clips():
         if "default" in clip_colorspace:
             continue
 
-        # check if any colorspace presets for read is mathing
+        # check if any colorspace presets for read is matching
         preset_clrsp = None
         for k in presets:
             if not bool(re.search(k["regex"], clip_media_source_path)):
@@ -931,7 +931,7 @@ def get_sequence_pattern_and_padding(file):
         Can find file.0001.ext, file.%02d.ext, file.####.ext
 
     Return:
-        string: any matching sequence patern
+        string: any matching sequence pattern
         int: padding of sequnce numbering
     """
     foundall = re.findall(
@@ -950,7 +950,7 @@ def get_sequence_pattern_and_padding(file):
 
 
 def sync_clip_name_to_data_asset(track_items_list):
-    # loop trough all selected clips
+    # loop through all selected clips
     for track_item in track_items_list:
         # ignore if parent track is locked or disabled
         if track_item.parent().isLocked():

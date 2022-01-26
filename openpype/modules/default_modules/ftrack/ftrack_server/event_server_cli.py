@@ -14,7 +14,7 @@ import uuid
 import ftrack_api
 import pymongo
 from openpype.lib import (
-    get_pype_execute_args,
+    get_openpype_execute_args,
     OpenPypeMongoConnection,
     get_openpype_version,
     get_build_version,
@@ -136,7 +136,7 @@ def legacy_server(ftrack_url):
 
         if subproc is None:
             if subproc_failed_count < max_fail_count:
-                args = get_pype_execute_args("run", subproc_path)
+                args = get_openpype_execute_args("run", subproc_path)
                 subproc = subprocess.Popen(
                     args,
                     stdout=subprocess.PIPE
@@ -248,7 +248,7 @@ def main_loop(ftrack_url):
         ["Username", getpass.getuser()],
         ["Host Name", host_name],
         ["Host IP", socket.gethostbyname(host_name)],
-        ["OpenPype executable", get_pype_execute_args()[-1]],
+        ["OpenPype executable", get_openpype_execute_args()[-1]],
         ["OpenPype version", get_openpype_version() or "N/A"],
         ["OpenPype build version", get_build_version() or "N/A"]
     ]

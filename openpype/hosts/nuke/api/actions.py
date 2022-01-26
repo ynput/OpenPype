@@ -1,11 +1,10 @@
 import pyblish.api
 
-from avalon.nuke.lib import (
+from openpype.api import get_errored_instances_from_context
+from .lib import (
     reset_selection,
     select_nodes
 )
-
-from openpype.api import get_errored_instances_from_context
 
 
 class SelectInvalidAction(pyblish.api.Action):

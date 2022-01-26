@@ -16,8 +16,14 @@ from openpype_modules.ftrack.ftrack_server.lib import (
     TOPIC_STATUS_SERVER_RESULT
 )
 from openpype.api import Logger
+from openpype.lib import (
+    is_current_version_studio_latest,
+    is_running_from_build,
+    get_expected_version,
+    get_openpype_version
+)
 
-log = Logger().get_logger("Event storer")
+log = Logger.get_logger("Event storer")
 action_identifier = (
     "event.server.status" + os.environ["FTRACK_EVENT_SUB_ID"]
 )
@@ -203,8 +209,57 @@ class StatusFactory:
             })
         return items
 
+    def openpype_version_items(self):
+        items = []
+        is_latest = is_current_version_studio_latest()
+        items.append({
+            "type": "label",
+            "value": "# OpenPype version"
+        })
+        if not is_running_from_build():
+            items.append({
+                "type": "label",
+                "value": (
+                    "OpenPype event server is running from code <b>{}</b>."
+                ).format(str(get_openpype_version()))
+            })
+
+        elif is_latest is None:
+            items.append({
+                "type": "label",
+                "value": (
+                    "Can't determine if OpenPype version is outdated"
+                    " <b>{}</b>. OpenPype build version should be updated."
+                ).format(str(get_openpype_version()))
+            })
+        elif is_latest:
+            items.append({
+                "type": "label",
+                "value": "OpenPype version is up to date <b>{}</b>.".format(
+                    str(get_openpype_version())
+                )
+            })
+        else:
+            items.append({
+                "type": "label",
+                "value": (
+                    "Using <b>outdated</b> OpenPype version <b>{}</b>."
+                    " Expected version is <b>{}</b>."
+                    "<br/>- Please restart event server for automatic"
+                    " updates or update manually."
+                ).format(
+                    str(get_openpype_version()),
+                    str(get_expected_version())
+                )
+            })
+
+        items.append({"type": "label", "value": "---"})
+
+        return items
+
     def items(self):
         items = []
+        items.extend(self.openpype_version_items())
         items.append(self.note_item)
         items.extend(self.bool_items())
 

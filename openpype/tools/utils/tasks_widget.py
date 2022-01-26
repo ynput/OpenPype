@@ -233,6 +233,11 @@ class TasksWidget(QtWidgets.QWidget):
         self._last_selected_task_name = None
 
     def _create_source_model(self):
+        """Create source model of tasks widget.
+
+        Model must have available 'refresh' method and 'set_asset_id' to change
+        context of asset.
+        """
         return TasksModel(self._dbcon)
 
     def _create_proxy_model(self, source_model):

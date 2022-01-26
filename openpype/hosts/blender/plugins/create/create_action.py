@@ -4,7 +4,7 @@ import bpy
 
 from avalon import api
 import openpype.hosts.blender.api.plugin
-from avalon.blender import lib
+from openpype.hosts.blender.api import lib
 
 
 class CreateAction(openpype.hosts.blender.api.plugin.Creator):

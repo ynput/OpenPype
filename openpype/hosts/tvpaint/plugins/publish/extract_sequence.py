@@ -2,17 +2,18 @@ import os
 import copy
 import tempfile
 
+from PIL import Image
+
 import pyblish.api
-from avalon.tvpaint import lib
-from openpype.hosts.tvpaint.api.lib import composite_images
+from openpype.hosts.tvpaint.api import lib
 from openpype.hosts.tvpaint.lib import (
     calculate_layers_extraction_data,
     get_frame_filename_template,
     fill_reference_frames,
     composite_rendered_layers,
-    rename_filepaths_by_frame_start
+    rename_filepaths_by_frame_start,
+    composite_images
 )
-from PIL import Image
 
 
 class ExtractSequence(pyblish.api.Extractor):
@@ -167,7 +168,7 @@ class ExtractSequence(pyblish.api.Extractor):
         if single_file:
             repre_files = repre_files[0]
 
-        # Extension is harcoded
+        # Extension is hardcoded
         #   - changing extension would require change code
         new_repre = {
             "name": "png",
@@ -234,7 +235,7 @@ class ExtractSequence(pyblish.api.Extractor):
             scene_bg_color (list): Bg color set in scene. Result of george
                 script command `tv_background`.
 
-        Retruns:
+        Returns:
             tuple: With 2 items first is list of filenames second is path to
                 thumbnail.
         """
@@ -310,7 +311,7 @@ class ExtractSequence(pyblish.api.Extractor):
             mark_out (int): On which frame index export will end.
             layers (list): List of layers to be exported.
 
-        Retruns:
+        Returns:
             tuple: With 2 items first is list of filenames second is path to
                 thumbnail.
         """

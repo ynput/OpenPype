@@ -704,6 +704,12 @@ class AssetsWidget(QtWidgets.QWidget):
         self._proxy.setFilterFixedString(new_text)
 
     def _on_model_refresh(self, has_item):
+        """This method should be triggered on model refresh.
+
+        Default implementation register this callback in '_create_source_model'
+        so if you're modifying model keep in mind that this method should be
+        called when refresh is done.
+        """
         self._proxy.sort(0)
         self._set_loading_state(loading=False, empty=not has_item)
         self.refreshed.emit()

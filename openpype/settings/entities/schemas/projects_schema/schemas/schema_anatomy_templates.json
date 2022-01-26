@@ -144,6 +144,28 @@
             "object_type": "text"
         },
         {
+            "type": "dict",
+            "key": "unreal",
+            "label": "Unreal",
+            "children": [
+                {
+                    "type": "text",
+                    "key": "folder",
+                    "label": "Folder"
+                },
+                {
+                    "type": "text",
+                    "key": "file",
+                    "label": "File"
+                },
+                {
+                    "type": "text",
+                    "key": "path",
+                    "label": "Path"
+                }
+            ]
+        },
+        {
             "type": "dict-modifiable",
             "key": "others",
             "label": "Others",

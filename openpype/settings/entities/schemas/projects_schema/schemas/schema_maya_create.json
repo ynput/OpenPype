@@ -67,6 +67,38 @@
             ]
         },
         {
+            "type": "dict",
+            "collapsible": true,
+            "key": "CreateUnrealStaticMesh",
+            "label": "Create Unreal - Static Mesh",
+            "checkbox_key": "enabled",
+            "children": [
+                {
+                    "type": "boolean",
+                    "key": "enabled",
+                    "label": "Enabled"
+                },
+                {
+                    "type": "list",
+                    "key": "defaults",
+                    "label": "Default Subsets",
+                    "object_type": "text"
+                },
+                {
+                    "type": "text",
+                    "key": "static_mesh_prefix",
+                    "label": "Static Mesh Prefix"
+                },
+                {
+                    "type": "list",
+                    "key": "collision_prefixes",
+                    "label": "Collision Mesh Prefixes",
+                    "object_type": "text"
+                }
+            ]
+
+        },
+        {
             "type": "schema_template",
             "name": "template_create_plugin",
             "template_data": [
@@ -117,10 +149,6 @@
                 {
                     "key": "CreateSetDress",
                     "label": "Create Set Dress"
-                },
-                {
-                    "key": "CreateUnrealStaticMesh",
-                    "label": "Create Unreal - Static Mesh"
                 },
                 {
                     "key": "CreateVrayProxy",

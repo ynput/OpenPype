@@ -27,5 +27,10 @@
         "path": "{@folder}/{@file}"
     },
     "delivery": {},
+    "unreal": {
+        "folder": "{root[work]}/{project[name]}/{hierarchy}/{asset}/publish/{family}/{subset}/{@version}",
+        "file": "{subset}_{@version}<_{output}><.{@frame}>.{ext}",
+        "path": "{@folder}/{@file}"
+    },
     "others": {}
 }
