@@ -3,9 +3,6 @@ import logging
 
 import Qt
 from Qt import QtCore, QtGui
-from avalon.vendor import qtawesome
-from avalon import style, io
-from . import lib
 from .constants import (
     PROJECT_IS_ACTIVE_ROLE,
     PROJECT_NAME_ROLE,

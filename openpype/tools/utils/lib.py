@@ -14,6 +14,8 @@ from openpype.api import (
     Logger
 )
 from openpype.lib import filter_profiles
+from openpype.style import get_objected_colors
+from openpype.resources import get_image_path
 
 
 def center_window(window):
@@ -670,3 +672,19 @@ class WrappedCallbackItem:
 
         finally:
             self._done = True
+
+
+def get_warning_pixmap(color=None):
+    """Warning icon as QPixmap.
+
+    Args:
+        color(QtGui.QColor): Color that will be used to paint warning icon.
+    """
+    src_image_path = get_image_path("warning.png")
+    src_image = QtGui.QImage(src_image_path)
+    if color is None:
+        colors = get_objected_colors()
+        color_value = colors["delete-btn-bg"]
+        color = color_value.get_qcolor()
+
+    return paint_image_with_color(src_image, color)
