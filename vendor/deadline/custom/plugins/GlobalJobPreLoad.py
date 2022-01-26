@@ -8,6 +8,12 @@ import platform
 from Deadline.Scripting import RepositoryUtils, FileUtils
 
 
+def get_openpype_executable():
+    """Return OpenPype Executable from Event Plug-in Settings"""
+    config = RepositoryUtils.GetEventPluginConfig("OpenPype")
+    return config.GetConfigEntryWithDefault("OpenPypeExecutable", "")
+
+
 def inject_openpype_environment(deadlinePlugin):
     """ Pull env vars from OpenPype and push them to rendering process.
 
@@ -19,7 +25,7 @@ def inject_openpype_environment(deadlinePlugin):
     print(">>> Injecting OpenPype environments ...")
     try:
         print(">>> Getting OpenPype executable ...")
-        exe_list = job.GetJobExtraInfoKeyValue("openpype_executables")
+        exe_list = get_openpype_executable()
         openpype_app = FileUtils.SearchFileList(exe_list)
         if openpype_app == "":
             raise RuntimeError(
