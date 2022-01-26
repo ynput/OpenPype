@@ -28,62 +28,64 @@ class OpenPypeEventListener(Deadline.Events.DeadlineEventListener):
 
     """
     def __init__(self):
-        self.OnJobSubmittedCallback += self.OnJobSubmitted
-        self.OnJobStartedCallback += self.OnJobStarted
-        self.OnJobFinishedCallback += self.OnJobFinished
-        self.OnJobRequeuedCallback += self.OnJobRequeued
-        self.OnJobFailedCallback += self.OnJobFailed
-        self.OnJobSuspendedCallback += self.OnJobSuspended
-        self.OnJobResumedCallback += self.OnJobResumed
-        self.OnJobPendedCallback += self.OnJobPended
-        self.OnJobReleasedCallback += self.OnJobReleased
-        self.OnJobDeletedCallback += self.OnJobDeleted
-        self.OnJobErrorCallback += self.OnJobError
-        self.OnJobPurgedCallback += self.OnJobPurged
-
-        self.OnHouseCleaningCallback += self.OnHouseCleaning
-        self.OnRepositoryRepairCallback += self.OnRepositoryRepair
-
-        self.OnSlaveStartedCallback += self.OnSlaveStarted
-        self.OnSlaveStoppedCallback += self.OnSlaveStopped
-        self.OnSlaveIdleCallback += self.OnSlaveIdle
-        self.OnSlaveRenderingCallback += self.OnSlaveRendering
-        self.OnSlaveStartingJobCallback += self.OnSlaveStartingJob
-        self.OnSlaveStalledCallback += self.OnSlaveStalled
-
-        self.OnIdleShutdownCallback += self.OnIdleShutdown
-        self.OnMachineStartupCallback += self.OnMachineStartup
-        self.OnThermalShutdownCallback += self.OnThermalShutdown
-        self.OnMachineRestartCallback += self.OnMachineRestart
+        pass
+        # self.OnJobSubmittedCallback += self.OnJobSubmitted
+        # self.OnJobStartedCallback += self.OnJobStarted
+        # self.OnJobFinishedCallback += self.OnJobFinished
+        # self.OnJobRequeuedCallback += self.OnJobRequeued
+        # self.OnJobFailedCallback += self.OnJobFailed
+        # self.OnJobSuspendedCallback += self.OnJobSuspended
+        # self.OnJobResumedCallback += self.OnJobResumed
+        # self.OnJobPendedCallback += self.OnJobPended
+        # self.OnJobReleasedCallback += self.OnJobReleased
+        # self.OnJobDeletedCallback += self.OnJobDeleted
+        # self.OnJobErrorCallback += self.OnJobError
+        # self.OnJobPurgedCallback += self.OnJobPurged
+        #
+        # self.OnHouseCleaningCallback += self.OnHouseCleaning
+        # self.OnRepositoryRepairCallback += self.OnRepositoryRepair
+        #
+        # self.OnSlaveStartedCallback += self.OnSlaveStarted
+        # self.OnSlaveStoppedCallback += self.OnSlaveStopped
+        # self.OnSlaveIdleCallback += self.OnSlaveIdle
+        # self.OnSlaveRenderingCallback += self.OnSlaveRendering
+        # self.OnSlaveStartingJobCallback += self.OnSlaveStartingJob
+        # self.OnSlaveStalledCallback += self.OnSlaveStalled
+        #
+        # self.OnIdleShutdownCallback += self.OnIdleShutdown
+        # self.OnMachineStartupCallback += self.OnMachineStartup
+        # self.OnThermalShutdownCallback += self.OnThermalShutdown
+        # self.OnMachineRestartCallback += self.OnMachineRestart
 
     def Cleanup(self):
-        del self.OnJobSubmittedCallback
-        del self.OnJobStartedCallback
-        del self.OnJobFinishedCallback
-        del self.OnJobRequeuedCallback
-        del self.OnJobFailedCallback
-        del self.OnJobSuspendedCallback
-        del self.OnJobResumedCallback
-        del self.OnJobPendedCallback
-        del self.OnJobReleasedCallback
-        del self.OnJobDeletedCallback
-        del self.OnJobErrorCallback
-        del self.OnJobPurgedCallback
-
-        del self.OnHouseCleaningCallback
-        del self.OnRepositoryRepairCallback
-
-        del self.OnSlaveStartedCallback
-        del self.OnSlaveStoppedCallback
-        del self.OnSlaveIdleCallback
-        del self.OnSlaveRenderingCallback
-        del self.OnSlaveStartingJobCallback
-        del self.OnSlaveStalledCallback
-
-        del self.OnIdleShutdownCallback
-        del self.OnMachineStartupCallback
-        del self.OnThermalShutdownCallback
-        del self.OnMachineRestartCallback
+        pass
+        # del self.OnJobSubmittedCallback
+        # del self.OnJobStartedCallback
+        # del self.OnJobFinishedCallback
+        # del self.OnJobRequeuedCallback
+        # del self.OnJobFailedCallback
+        # del self.OnJobSuspendedCallback
+        # del self.OnJobResumedCallback
+        # del self.OnJobPendedCallback
+        # del self.OnJobReleasedCallback
+        # del self.OnJobDeletedCallback
+        # del self.OnJobErrorCallback
+        # del self.OnJobPurgedCallback
+        #
+        # del self.OnHouseCleaningCallback
+        # del self.OnRepositoryRepairCallback
+        #
+        # del self.OnSlaveStartedCallback
+        # del self.OnSlaveStoppedCallback
+        # del self.OnSlaveIdleCallback
+        # del self.OnSlaveRenderingCallback
+        # del self.OnSlaveStartingJobCallback
+        # del self.OnSlaveStalledCallback
+        #
+        # del self.OnIdleShutdownCallback
+        # del self.OnMachineStartupCallback
+        # del self.OnThermalShutdownCallback
+        # del self.OnMachineRestartCallback
 
     def updateFtrackStatus(self, job, statusName, createIfMissing=False):
         """Updates version status on ftrack"""
