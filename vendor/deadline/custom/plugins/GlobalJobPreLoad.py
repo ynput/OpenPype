@@ -20,7 +20,6 @@ def inject_openpype_environment(deadlinePlugin):
         Used for correct paths, configuration from OpenPype etc.
     """
     job = deadlinePlugin.GetJob()
-    job = RepositoryUtils.GetJob(job.JobId, True)  # invalidates cache
 
     print(">>> Injecting OpenPype environments ...")
     try:
@@ -102,7 +101,6 @@ def inject_render_job_id(deadlinePlugin):
     """Inject dependency ids to publish process as env var for validation."""
     print(">>> Injecting render job id ...")
     job = deadlinePlugin.GetJob()
-    job = RepositoryUtils.GetJob(job.JobId, True)  # invalidates cache
 
     dependency_ids = job.JobDependencyIDs
     print(">>> Dependency IDs: {}".format(dependency_ids))
@@ -189,7 +187,6 @@ def __main__(deadlinePlugin):
     print("*** GlobalJobPreload start ...")
     print(">>> Getting job ...")
     job = deadlinePlugin.GetJob()
-    job = RepositoryUtils.GetJob(job.JobId, True)  # invalidates cache
 
     openpype_render_job = \
         job.GetJobEnvironmentKeyValue('OPENPYPE_RENDER_JOB') or '0'
