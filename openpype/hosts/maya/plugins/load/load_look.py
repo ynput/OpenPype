@@ -23,18 +23,6 @@ class LookLoader(openpype.hosts.maya.api.plugin.ReferenceLoader):
     color = "orange"
 
     def process_reference(self, context, name, namespace, options):
-        """
-        Load and try to assign Lookdev to nodes based on relationship data.
-
-        Args:
-            name:
-            namespace:
-            context:
-            options:
-
-        Returns:
-
-        """
         import maya.cmds as cmds
         from avalon import maya
 
