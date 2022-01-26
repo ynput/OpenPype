@@ -4,25 +4,31 @@ import pyblish.api
 
 
 class CollectUnrealStaticMesh(pyblish.api.InstancePlugin):
-    """Collect unreal static mesh
+    """Collect Unreal Static Mesh
 
     Ensures always only a single frame is extracted (current frame). This
     also sets correct FBX options for later extraction.
 
-    Note:
-        This is a workaround so that the `pype.model` family can use the
-        same pointcache extractor implementation as animation and pointcaches.
-        This always enforces the "current" frame to be published.
-
     """
 
     order = pyblish.api.CollectorOrder + 0.2
-    label = "Collect Model Data"
+    label = "Collect Unreal Static Meshes"
     families = ["unrealStaticMesh"]
 
     def process(self, instance):
         # add fbx family to trigger fbx extractor
         instance.data["families"].append("fbx")
+        # take the name from instance (without the `S_` prefix)
+        instance.data["staticMeshCombinedName"] = instance.name[2:]
+
+        geometry_set = [i for i in instance if i == "geometry_SET"]
+        instance.data["membersToCombine"] = cmds.sets(
+            geometry_set, query=True)
+
+        collision_set = [i for i in instance if i == "collisions_SET"]
+        instance.data["collisionMembers"] = cmds.sets(
+            collision_set, query=True)
+
         # set fbx overrides on instance
         instance.data["smoothingGroups"] = True
         instance.data["smoothMesh"] = True
