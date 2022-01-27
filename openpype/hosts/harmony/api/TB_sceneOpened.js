@@ -373,7 +373,7 @@ function start() {
      */
     self.onCreator = function() {
         app.avalonClient.send({
-            'module': 'avalon.harmony.lib',
+            'module': 'openpype.hosts.harmony.api.lib',
             'method': 'show',
             'args': ['creator']
         }, false);
@@ -388,7 +388,7 @@ function start() {
      */
     self.onWorkfiles = function() {
         app.avalonClient.send({
-            'module': 'avalon.harmony.lib',
+            'module': 'openpype.hosts.harmony.api.lib',
             'method': 'show',
             'args': ['workfiles']
         }, false);
@@ -403,7 +403,7 @@ function start() {
      */
     self.onLoad = function() {
         app.avalonClient.send({
-            'module': 'avalon.harmony.lib',
+            'module': 'openpype.hosts.harmony.api.lib',
             'method': 'show',
             'args': ['loader']
         }, false);
@@ -419,7 +419,7 @@ function start() {
      */
     self.onPublish = function() {
         app.avalonClient.send({
-            'module': 'avalon.harmony.lib',
+            'module': 'openpype.hosts.harmony.api.lib',
             'method': 'show',
             'args': ['publish']
         }, false);
@@ -435,7 +435,7 @@ function start() {
      */
     self.onManage = function() {
         app.avalonClient.send({
-            'module': 'avalon.harmony.lib',
+            'module': 'openpype.hosts.harmony.api.lib',
             'method': 'show',
             'args': ['sceneinventory']
         }, false);
@@ -451,7 +451,7 @@ function start() {
       */
     self.onSubsetManage = function() {
         app.avalonClient.send({
-            'module': 'avalon.harmony.lib',
+            'module': 'openpype.hosts.harmony.api.lib',
             'method': 'show',
             'args': ['subsetmanager']
         }, false);
@@ -467,7 +467,7 @@ function start() {
       */
     self.onExperimentalTools = function() {
         app.avalonClient.send({
-            'module': 'avalon.harmony.lib',
+            'module': 'openpype.hosts.harmony.api.lib',
             'method': 'show',
             'args': ['experimental_tools']
         }, false);
@@ -517,7 +517,7 @@ function ensureSceneSettings() {
   var app = QCoreApplication.instance();
   app.avalonClient.send(
     {
-      "module": "pype.hosts.harmony.api",
+      "module": "openpype.hosts.harmony.api",
       "method": "ensure_scene_settings",
       "args": []
     },

@@ -56,9 +56,7 @@ def setup_startup_scripts():
         * Use TB_sceneOpenedUI.js instead to manage startup logic
         * Add their startup logic to avalon/harmony/TB_sceneOpened.js
     """
-    avalon_dcc_dir = os.path.join(
-        os.path.dirname(os.path.dirname(__file__)), "harmony"
-    )
+    avalon_dcc_dir = os.path.dirname(os.path.dirname(__file__))
     startup_js = "TB_sceneOpened.js"
 
     if os.getenv("TOONBOOM_GLOBAL_SCRIPT_LOCATION"):

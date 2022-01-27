@@ -1,6 +1,6 @@
-from avalon import harmony
+from openpype.hosts.harmony.api import Creator
 from openpype.api import PypeCreatorMixin
 
 
-class Creator(PypeCreatorMixin, harmony.Creator):
+class Creator(PypeCreatorMixin, Creator):
     pass
