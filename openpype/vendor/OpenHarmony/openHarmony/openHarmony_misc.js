@@ -46,45 +46,42 @@
 //////////////////////////////////////
 //                                  //
 //                                  //
-//           $.oTools class         //
+//           $.oUtils class         //
 //                                  //
 //                                  //
 //////////////////////////////////////
 //////////////////////////////////////
- 
+
 
 /**
- * The $.oUtils helper class -- providing generic utilities.
- * @constructor
- * @classdesc  $.tools utility Class
+ * The $.oUtils helper class -- providing generic utilities. Doesn't need instanciation.
+ * @classdesc  $.oUtils utility Class
  */
 $.oUtils = function(){
-    this._type = "tools";
+    this._type = "utils";
 }
 
 /**
- * Copies the file to the folder.
- * @param   {string}   [folder]                Content to write to the file.
- * @param   {string}   [copyName]              Name of the copied file.
- * @param   {bool}     [overwrite]             Whether to overwrite the file.   
- *  
- * @return: { object }                           The result of the copy.     
+ * Finds the longest common substring between two strings.
+ * @param   {string}   str1
+ * @param   {string}   str2
+ * @returns {string} the found string
  */
-$.oUtils.prototype.longestCommonSubstring = function( str1, str2 ){
+$.oUtils.longestCommonSubstring = function( str1, str2 ){
 	if (!str1 || !str2)
 		return {
 			length: 0,
 			sequence: "",
 			offset: 0
 		};
- 
+
 	var sequence = "",
 		str1Length = str1.length,
 		str2Length = str2.length,
 		num = new Array(str1Length),
 		maxlen = 0,
 		lastSubsBegin = 0;
- 
+
 	for (var i = 0; i < str1Length; i++) {
 		var subArray = new Array(str2Length);
 		for (var j = 0; j < str2Length; j++)

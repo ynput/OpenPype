@@ -60,8 +60,14 @@
 $.oFolder = function(path){
     this._type = "folder";
     this._path = fileMapper.toNativePath(path).split("\\").join("/");
-    // if (this.path.slice(-1) == "/") this.path += this.path.slice(0, -1);
 
+    // fix lowercase drive letter
+    var path_components = this._path.split("/");
+    if (path_components[0] && about.isWindowsArch()){
+      // local path that starts with a drive letter
+      path_components[0] = path_components[0].toUpperCase()
+      this._path = path_components.join("/");
+    }
 }
 
 
@@ -205,7 +211,7 @@ Object.defineProperty($.oFolder.prototype, 'content', {
  * Lists the file names contained inside the folder.
  * @param   {string}   [filter]               Filter wildcards for the content of the folder.
  *
- * @return: { string[] }                      The file content of folder.
+ * @returns {string[]}   The names of the files contained in the folder that match the filter.
  */
 $.oFolder.prototype.listFiles = function(filter){
     if (typeof filter === 'undefined') var filter = "*";
@@ -223,9 +229,9 @@ $.oFolder.prototype.listFiles = function(filter){
 
 /**
  * get the files from the folder
- * @param   {string}   [filter]                Filter wildcards for the content of the folder.
+ * @param   {string}   [filter]     Filter wildcards for the content of the folder.
  *
- * @return: { $.oFile[] }                      The file content of the folder.
+ * @returns {$.oFile[]}   A list of files contained in the folder as oFile objects.
  */
 $.oFolder.prototype.getFiles = function( filter ){
     if (typeof filter === 'undefined') var filter = "*";
@@ -245,9 +251,9 @@ $.oFolder.prototype.getFiles = function( filter ){
 
 /**
  * lists the folder names contained inside the folder.
- * @param   {string}   [filter]               Filter wildcards for the content of the folder.
+ * @param   {string}   [filter="*.*"]    Filter wildcards for the content of the folder.
  *
- * @return: { string[] }                      The file content of folder.
+ * @returns {string[]}  The names of the files contained in the folder that match the filter.
  */
 $.oFolder.prototype.listFolders = function(filter){
 
@@ -275,7 +281,7 @@ $.oFolder.prototype.listFolders = function(filter){
  * gets the folders inside the oFolder
  * @param   {string}   [filter]              Filter wildcards for the content of the folder.
  *
- * @return: { $.oFolder[] }                  The folder contents of the folder.
+ * @returns {$.oFolder[]}      A list of folders contained in the folder, as oFolder objects.
  */
 $.oFolder.prototype.getFolders = function( filter ){
     if (typeof filter === 'undefined') var filter = "*";
@@ -295,44 +301,58 @@ $.oFolder.prototype.getFolders = function( filter ){
 
  /**
  * Creates the folder, if it doesn't already exist.
- *
- * @return: { bool }                         The existence of the newly created folder.
+ * @returns { bool }      The existence of the newly created folder.
  */
 $.oFolder.prototype.create = function(){
-    if( this.exists ){
-      this.$.debug("folder "+this.path+" already exists and will not be created", this.$.DEBUG_LEVEL.WARNING)
-      return true;
-    }
+  if( this.exists ){
+    this.$.debug("folder "+this.path+" already exists and will not be created", this.$.DEBUG_LEVEL.WARNING)
+    return true;
+  }
 
-    var dir = new QDir(this.path);
-    //dir.path = this.path;
-    try{
-      dir.mkpath(this.path);
-      return this.exists;
-    }catch(err){
-      this.$.debug(err+" ", this.$.DEBUG_LEVEL.ERROR)
-      return false;
-    }
+  var dir = new QDir(this.path);
+
+  dir.mkpath(this.path);
+  if (!this.exists) throw new Error ("folder " + this.path + " could not be created.")
 }
 
 
 /**
- * WIP Copy the folder and its contents to another path. WIP
- * @param   {string}   [folderPath]          The path to the folder location to copy to (CFNote: Should this not be a $.oFolder?)
- * @param   {string}   [copyName]            The name of the folder to copy (CFNote: Should this be avoided and the folderPath be the full path?)
- * @param   {bool}     [overwrite]           Whether to overwrite the target.
+ * Copy the folder and its contents to another path.
+ * @param   {string}   folderPath          The path to an existing folder in which to copy this folder. (Can provide an oFolder)
+ * @param   {string}   [copyName]          Optionally, a name for the folder copy, if different from the original
+ * @param   {bool}     [overwrite=false]   Whether to overwrite the files that are already present at the copy location.
+ * @returns {$.oFolder} the oFolder describing the newly created copy.
  */
 $.oFolder.prototype.copy = function( folderPath, copyName, overwrite ){
-    if (typeof overwrite === 'undefined') var overwrite = false;
-    if (typeof copyName === 'undefined') var copyName = this.name;
-    if (typeof folderPath === 'undefined') var folderPath = this.folder.path;
+  // TODO: it should propagate errors from the recursive copy and throw them before ending?
+  if (typeof overwrite === 'undefined') var overwrite = false;
+  if (typeof copyName === 'undefined' || !copyName) var copyName = this.name;
+  if (!(folderPath instanceof this.$.oFolder)) folderPath = new $.oFolder(folderPath);
+  if (this.name == copyName && folderPath == this.folder.path) copyName += "_copy";
 
-    if (this.name == copyName && folderPath == this.folder.path) copyName += "_copy";
+  if (!folderPath.exists) throw new Error("Target folder " + folderPath +" doesn't exist. Can't copy folder "+this.path)
 
-    var copyPath = folderPath+copyName;
+  var nextFolder = new $.oFolder(folderPath.path + "/" + copyName);
+  nextFolder.create();
+  var files = this.getFiles();
+  for (var i in files){
+    var _file = files[i];
+    var targetFile = new $.oFile(nextFolder.path + "/" + _file.fullName);
 
-    // TODO: deep recursive copy file by file of the contents
+    // deal with overwriting
+    if (targetFile.exists && !overwrite){
+      this.$.debug("File " + targetFile + " already exists, skipping copy of "+ _file, this.$.DEBUG_LEVEL.ERROR);
+      continue;
+    }
 
+    _file.copy(nextFolder, undefined, overwrite);
+  }
+  var folders = this.getFolders();
+  for (var i in folders){
+    folders[i].copy(nextFolder, undefined, overwrite);
+  }
+
+  return nextFolder;
 }
 
 
@@ -365,7 +385,7 @@ $.oFolder.prototype.move = function( destFolderPath, overwrite ){
 
         return true;
     }catch (err){
-        throw new Error ("Couldn't move folder "+this.path+" to new address "+destPath);
+        throw new Error ("Couldn't move folder "+this.path+" to new address "+destPath + ": " + err);
     }
 }
 
@@ -383,7 +403,7 @@ $.oFolder.prototype.moveToFolder = function( destFolderPath, overwrite ){
   var folder = destFolderPath.path;
   var name = this.name;
 
-  destFolderPath.move(folder+"/"+name, overwrite);
+  this.move(folder+"/"+name, overwrite);
 }
 
 
@@ -393,6 +413,8 @@ $.oFolder.prototype.moveToFolder = function( destFolderPath, overwrite ){
  */
 $.oFolder.prototype.rename = function(newName){
   var destFolderPath = this.folder.path+"/"+newName
+  if ((new this.$.oFolder(destFolderPath)).exists) throw new Error("Can't rename folder "+this.path + " to "+newName+", a folder already exists at this location")
+
   this.move(destFolderPath)
 }
 
@@ -460,8 +482,16 @@ $.oFolder.prototype.toString = function(){
  * @property    {string}             path                     The path to the file.
  */
 $.oFile = function(path){
-    this._type = "file";
-    this._path = fileMapper.toNativePath(path).split('\\').join('/');
+  this._type = "file";
+  this._path = fileMapper.toNativePath(path).split('\\').join('/');
+
+  // fix lowercase drive letter
+  var path_components = this._path.split("/");
+  if (path_components[0] && about.isWindowsArch()){
+    // local path that starts with a drive letter
+    path_components[0] = path_components[0].toUpperCase()
+    this._path = path_components.join("/");
+  }
 }
 
 
@@ -714,21 +744,15 @@ $.oFile.prototype.copy = function( destfolder, copyName, overwrite){
     var _dest = new PermanentFile(destfolder+"/"+_fileName);
 
     if (_dest.exists() && !overwrite){
-        this.$.debug("Destination file "+destfolder+"/"+_fileName+" exists and will not be overwritten. Can't copy file.", this.DEBUG_LEVEL.ERROR);
-        return false;
+        throw new Error("Destination file "+destfolder+"/"+_fileName+" exists and will not be overwritten. Can't copy file.", this.DEBUG_LEVEL.ERROR);
     }
 
     this.$.debug("copying "+_file.path()+" to "+_dest.path(), this.$.DEBUG_LEVEL.LOG)
 
-    try{
-      var success = _file.copy(_dest);
-      if (!success) throw new Error ();
-    }catch(err){
-      this.$.debug("Copy of file "+_file.path()+" to location "+_dest.path()+" has failed.", this.$.DEBUG_LEVEL.ERROR)
-    }
+    var success = _file.copy(_dest);
+    if (!success) throw new Error ("Copy of file "+_file.path()+" to location "+_dest.path()+" has failed.", this.$.DEBUG_LEVEL.ERROR)
 
-    if (success) return new this.$.oFile(_dest.path());
-    return false;
+    return new this.$.oFile(_dest.path());
 }
 
 

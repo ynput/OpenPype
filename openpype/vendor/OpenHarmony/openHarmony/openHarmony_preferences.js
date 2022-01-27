@@ -64,7 +64,7 @@
 $.oPreferences = function( ){
   this._type             = "preferences";
   this._addedPreferences = []
-  
+
   this.refresh();
 }
 
@@ -83,22 +83,22 @@ $.oPreferences.prototype.refresh = function(){
     this.$.debug( "Unable to find preference file: " + fl, this.$.DEBUG_LEVEL.ERROR );
     return;
   }
-  
+
   var xmlDom = new QDomDocument();
       xmlDom.setContent( nfl.read() );
-  
+
   if( !xmlDom ){
     return;
   }
-  
+
   var prefXML = xmlDom.elementsByTagName( "preferences" );
   if( prefXML.length() == 0 ){
     this.$.debug( "Unable to find preferences in file: " + fl, this.$.DEBUG_LEVEL.ERROR );
     return;
   }
-  
+
   var XMLpreferences = prefXML.at(0);
-  
+
   //Clear this objects previous getter/setters to make room for new ones.
   if( this._preferences ){
     for( n in this._preferences ){ //Remove them if they've disappeared.
@@ -111,16 +111,16 @@ $.oPreferences.prototype.refresh = function(){
     }
   }
   this._preferences = {};
-    
+
   if( !XMLpreferences.hasChildNodes() ){
     this.$.debug( "Unable to find preferences in file: " + fl, this.$.DEBUG_LEVEL.ERROR );
     return;
   }
-  
+
   //THE DEFAULT SETTER
   var set_val = function( pref, name, val ){
     var prefObj = pref._preferences[name];
-    
+
     //Check against types, unable to set types differently.
     switch( typeof val ){
       case 'string':
@@ -156,13 +156,13 @@ $.oPreferences.prototype.refresh = function(){
             if( prefObj["type"] != "color" ){
               throw ReferenceError( "Harmony does not support preference type-changes. Preference must remain " + prefObj["type"] );
             }
-        
+
             value = preferences.setColor( name, new ColorRGBA( val.r, val.g, val.b, val.a ) );
             set = true;
           }
         }catch(err){
         }
-        
+
         if(!set){
           if( prefObj["type"] != "string" ){
             throw ReferenceError( "Harmony does not support preference type-changes. Preference must remain " + prefObj["type"] );
@@ -172,18 +172,18 @@ $.oPreferences.prototype.refresh = function(){
         }
         break
     }
-    
+
     {
       pref._preferences[name].value = val;
     }
   }
-  
+
   //THE DEFAULT GETTER
   var get_val = function( pref, name ){
     return pref._preferences[name].value;
   }
-  
-  
+
+
   var getterSetter_create = function( targ, id, type ){
       switch( type ){
       case 'color':
@@ -199,7 +199,7 @@ $.oPreferences.prototype.refresh = function(){
       case 'bool':
         value = preferences.getBool( id, false );
         break
-      case 'string': 
+      case 'string':
         value = preferences.getString( id, "unknown" );
         if( value.slice( 0, 5 ) == "json(" ){
           var obj = value.slice( 5, value.length-1 );
@@ -210,9 +210,9 @@ $.oPreferences.prototype.refresh = function(){
         break;
     }
     if( value === null ) return;
-    
+
     targ._preferences[ id ] = { "value": value, "type":type };
-   
+
     //Create a getter/setter for it!
     Object.defineProperty( targ, id, {
       enumerable : true,
@@ -221,8 +221,8 @@ $.oPreferences.prototype.refresh = function(){
       get : eval( 'val = function(){ return get_val( targ, "'+id+'"); }' )
     });
   }
-  
-  
+
+
   //Get all the children preferences.
   var childNodes = XMLpreferences.childNodes();
   for( var cn=0;cn<childNodes.length();cn++ ){
@@ -232,9 +232,9 @@ $.oPreferences.prototype.refresh = function(){
         var e = thisChild.toElement();
         var type = e.tagName();
         var id   = e.attribute( "id", "null" );
-        
+
         if( id == "null" ){ continue; }
-        
+
         var value = null;
 
         getterSetter_create( this, id, type );
@@ -244,15 +244,15 @@ $.oPreferences.prototype.refresh = function(){
       System.println( err );
     }
   }
-  
+
   for( var n=0;n<this._addedPreferences.length;n++ ){
     var pref = this._addedPreferences[n];
     var id   = pref["name"];
     var type = pref["type"];
-    
+
     getterSetter_create( this, id, type );
   }
-  
+
 }
 
 
@@ -266,7 +266,7 @@ $.oPreferences.prototype.create = function( name, val ){
   if( this[ name ] ){
     throw ReferenceError( "Preference already exists by name: " + name );
   }
-  
+
   var type = '';
   //Check against types, unable to set types differently.
   switch( typeof val ){
@@ -289,13 +289,13 @@ $.oPreferences.prototype.create = function( name, val ){
       var set = false;
       try{
         if( val.r && val.g && val.b && val.a ){
-          type = 'color'; 
+          type = 'color';
           value = preferences.setColor( name, new ColorRGBA( val.r, val.g, val.b, val.a ) );
           set = true;
         }
       }catch(err){
       }
-      
+
       if(!set){
         type = 'string';
         var json_val = 'json('+JSON.stringify( val )+')';
@@ -303,8 +303,8 @@ $.oPreferences.prototype.create = function( name, val ){
       }
       break
   }
-  
-  this._addedPreferences.push( {"type":type, "name":name } ); 
+
+  this._addedPreferences.push( {"type":type, "name":name } );
   this.refresh();
 }
 
@@ -319,9 +319,9 @@ $.oPreferences.prototype.create = function( name, val ){
  * //This new preference won't be available in the file until Harmony closes.
  * //So if preferences are reinstantiated, it won't be readily available -- but it can still be retrieved with get.
  *
- * var pref2 = $.getPreferences(); 
+ * var pref2 = $.getPreferences();
  * pref["MyNewPreferenceName"];     // Provides: undefined -- its not in the Harmony preference file.
- * pref.get("MyNewPreferenceName"); // Provides: MyPreferenceValue, its still available 
+ * pref.get("MyNewPreferenceName"); // Provides: MyPreferenceValue, its still available
  */
 $.oPreferences.prototype.get = function( name ){
   if( this[name] ){
@@ -331,53 +331,39 @@ $.oPreferences.prototype.get = function( name ){
   var testTime   = (new Date()).getTime();
   var doubleExist = preferences.getDouble( name, testTime );
   if( doubleExist!= testTime ){
-    this._addedPreferences.push( {"type":'double', "name":name } ); 
+    this._addedPreferences.push( {"type":'double', "name":name } );
     this.refresh();
-    
+
     return doubleExist;
   }
 
   var intExist = preferences.getInt( name, testTime );
   if( intExist!= testTime ){
-    this._addedPreferences.push( {"type":'int', "name":name } ); 
+    this._addedPreferences.push( {"type":'int', "name":name } );
     this.refresh();
-    
+
     return intExist;
   }
-  
-  
+
+
   var colorExist = preferences.getColor( name, new ColorRGBA(1,2,3,4) );
   if( !( (colorExist.r==1) && (colorExist.g==2) && (colorExist.b==3) && (colorExist.a==4) ) ){
-    this._addedPreferences.push( {"type":'color', "name":name } ); 
+    this._addedPreferences.push( {"type":'color', "name":name } );
     this.refresh();
-    
+
     return colorExist;
   }
-  
+
   var stringExist = preferences.getString( name, "doesntExist" );
   if( stringExist != "doesntExist" ){
-    this._addedPreferences.push( {"type":'color', "name":name } ); 
+    this._addedPreferences.push( {"type":'color', "name":name } );
     this.refresh();
-    
+
     return this[name];
   }
-  
+
   return preferences.getBool( name, false );
 }
-
-
-
-//////////////////////////////////////
-//////////////////////////////////////
-//                                  //
-//                                  //
-//       $.oPreference class        //
-//                                  //
-//                                  //
-//////////////////////////////////////
-//////////////////////////////////////
-
-
 
 
 //////////////////////////////////////
@@ -393,7 +379,7 @@ $.oPreferences.prototype.get = function( name ){
 /**
  * The constructor for the oPreference Class.
  * @classdesc
- * The oPreference class wraps a single preference item. 
+ * The oPreference class wraps a single preference item.
  * @constructor
  * @param {string} category             The category of the preference
  * @param {string} keyword              The keyword used by the preference
@@ -403,24 +389,24 @@ $.oPreferences.prototype.get = function( name ){
  * @example
  * // To access the preferences of Harmony, grab the preference object in the $.oApp class:
  * var prefs = $.app.preferences;
- * 
+ *
  * // It's then possible to access all available preferences of the software:
  * for (var i in prefs){
  *   log (i+" "+prefs[i]);
  * }
- * 
+ *
  * // accessing the preference value can be done directly by using the dot notation:
  * prefs.USE_OVERLAY_UNDERLAY_ART = true;
  * log (prefs.USE_OVERLAY_UNDERLAY_ART);
- * 
+ *
  * //the details objects of the preferences object allows access to more information about each preference
  * var details = prefs.details
  * log(details.USE_OVERLAY_UNDERLAY_ART.category+" "+details.USE_OVERLAY_UNDERLAY_ART.id+" "+details.USE_OVERLAY_UNDERLAY_ART.type);
- * 
+ *
  * for (var i in details){
  *   log(i+" "+JSON.stringify(details[i]))       // each object inside detail is a complete oPreference instance
  * }
- * 
+ *
  * // the preference object also holds a categories array with the list of all categories
  * log (prefs.categories)
  */
@@ -459,9 +445,9 @@ Object.defineProperty ($.oPreference.prototype, 'value', {
           var _value = preferences.getString(this.keyword, this.defaultValue);
       }
     }catch(err){
-      this.$.debug(err, this.$.DEBUG_LEVEL.ERROR) 
+      this.$.debug(err, this.$.DEBUG_LEVEL.ERROR)
     }
-    this.$.debug("Getting value of Preference "+this.keyword+" : "+_value, this.$.DEBUG_LEVEL.ERROR)
+    this.$.debug("Getting value of Preference "+this.keyword+" : "+_value, this.$.DEBUG_LEVEL.LOG)
     return _value;
   },
 
@@ -483,7 +469,7 @@ Object.defineProperty ($.oPreference.prototype, 'value', {
       default:
         preferences.setString(this.keyword, newValue);
     }
-    this.$.debug("Preference "+this.keyword+" was set to : "+newValue, this.$.DEBUG_LEVEL.ERROR)
+    this.$.debug("Preference "+this.keyword+" was set to : "+newValue, this.$.DEBUG_LEVEL.LOG)
   }
 })
 

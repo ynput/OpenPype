@@ -100,8 +100,6 @@ $ = {
                 },
   file      : __file__,
   directory : false,
-  batchMode : false,
-
   pi        : 3.14159265359
 };
 
@@ -118,6 +116,25 @@ Object.defineProperty( $, "directory", {
   }
 });
 
+
+/**
+ * Wether Harmony is run with the interface or simply from command line
+ */
+Object.defineProperty( $, "batchMode", {
+  get: function(){
+    // use a cache to avoid pulling the widgets every time
+    if (!this.hasOwnProperty("_batchMode")){
+      this._batchMode = true;
+
+      // batchmode is false if there are any widgets visible in the application
+      var _widgets = QApplication.topLevelWidgets();
+      for (var i in _widgets){
+        if (_widgets[i].visible) this._batchMode = false;
+      }
+    }
+    return this._batchMode
+  }
+})
 
 /**
  * Function to load openHarmony files from the %installdir%/openHarmony/ folder.
@@ -148,6 +165,7 @@ $.debug = function( obj, level ){
   if( level > this.debug_level ) return;
 
   try{
+    if (typeof obj !== 'object') throw new Error();
     this.log(JSON.stringify(obj));
   }catch(err){
     this.log(obj);
@@ -241,6 +259,19 @@ $.alertBox = function(){ return $.dialog.alertBox.apply( $.dialog, arguments ) }
 
 
 /**
+ * Prompts with an toast alert. This is a small message that can't be clicked and only stays on the screen for the duration specified.
+ * @function
+ * @name    $#toast
+ * @param   {string}         labelText          The label/internal text of the dialog.
+ * @param   {$.oPoint}       [position]         The position on the screen where the toast will appear (by default, slightly under the middle of the screen).
+ * @param   {float}          [duration=2000]    The duration of the display (in milliseconds).
+ * @param   {$.oColorValue}  [color="#000000"]  The color of the background (a 50% alpha value will be applied).
+ */
+$.toast = function(){ return $.dialog.toast.apply( $.dialog, arguments ) };
+
+
+
+/**
  * Prompts for a user input.
  * @function
  * @name    $#prompt
@@ -254,12 +285,12 @@ $.prompt = function(){ return $.dialog.prompt.apply( $.dialog, arguments ) };
 /**
  * Prompts with a file selector window
  * @function
- * @name    $#browseForFile
- * @param   {string}           [text="Select a file:"]       The title of the confirmation dialog.
- * @param   {string}           [filter="*"]                  The filter for the file type and/or file name that can be selected. Accepts wildcard character "*".
- * @param   {string}           [getExisting=true]            Whether to select an existing file or a save location
- * @param   {string}           [acceptMultiple=false]        Whether or not selecting more than one file is ok. Is ignored if getExisting is false.
- * @param   {string}           [startDirectory]              The directory showed at the opening of the dialog.
+ * @name $#browseForFile
+ * @param {string} [text="Select a file:"] The title of the file select dialog.
+ * @param {string} [filter="*"]            The filter for the file type and/or file name that can be selected. Accepts wildcard character "*".
+ * @param {string} [getExisting=true]      Whether to select an existing file or a save location
+ * @param {string} [acceptMultiple=false]  Whether or not selecting more than one file is ok. Is ignored if getExisting is false.
+ * @param {string} [startDirectory]        The directory showed at the opening of the dialog.
  *
  * @return  {string[]}         The list of selected Files, 'undefined' if the dialog is cancelled
  */
@@ -269,11 +300,11 @@ $.browseForFile = function(){ return $.dialog.browseForFile.apply( $.dialog, arg
 /**
  * Prompts with a folder selector window.
  * @function
- * @name    $#browseForFolder
- * @param   {string}           [text]                        The title of the confirmation dialog.
- * @param   {string}           [startDirectory]              The directory showed at the opening of the dialog.
+ * @name $#browseForFolder
+ * @param {string} [text]                The title of the confirmation dialog.
+ * @param {string} [startDirectory]      The directory showed at the opening of the dialog.
  *
- * @return  {string[]}         The path of the selected folder, 'undefined' if the dialog is cancelled
+ * @return  {string}         The path of the selected folder, 'undefined' if the dialog is cancelled
  */
 $.browseForFolder = function(){ return $.dialog.browseForFolder.apply( $.dialog, arguments ) };
 
@@ -299,16 +330,19 @@ $.cache_oNode = {};
 
 /**
  * Starts the tracking of the undo accumulation, all subsequent actions are done in a single undo operation.<br>Close the undo accum with $.endUndo().
- * @param   {string}           undoName                                       The name of the operation that is being done in the undo accum.
+ * If this function is called multiple time, only the first time will count.
+ * (this prevents small functions wrapped in their own undo block to interfere with global script undo)
+ * @param   {string}           undoName        The name of the operation that is being done in the undo accum.
  * @name $#beginUndo
  * @function
  * @see $.endUndo
  */
 $.beginUndo = function( undoName ){
-  //Using epoch as the temp name.
+  if ($.batchMode) return
   if (typeof undoName === 'undefined') var undoName = ''+((new Date()).getTime());
-
-  scene.beginUndoRedoAccum( undoName );
+  if (!$.hasOwnProperty("undoStackSize")) $.undoStackSize = 0;
+  if ($.undoStackSize == 0) scene.beginUndoRedoAccum( undoName );
+  $.undoStackSize++;
 }
 
 /**
@@ -322,19 +356,25 @@ $.cancelUndo = function( ){
 
 /**
  * Stops the tracking of the undo accumulation, everything between this and the start of the accumulation behaves as a single undo operation.
+ * If beginUndo function is called multiple time, each call must be matched with this function.
+ * (this prevents small functions wrapped in their own undo block to interfere with global script undo)
  * @name $#endUndo
  * @function
  * @see $.beginUndo
  */
 $.endUndo = function( ){
-  scene.endUndoRedoAccum( );
+  if ($.batchMode) return
+
+  if (!$.hasOwnProperty("undoStackSize")) $.undoStackSize = 1;
+  $.undoStackSize--;
+  if ($.undoStackSize == 0)   scene.endUndoRedoAccum();
 }
 
 /**
  * 	Undoes the last n operations. If n is not specified, it will be 1
  * @name $#undo
  * @function
- * @param   {int}           n                                       The amount of operations to undo.
+ * @param   {int}           dist                                    The amount of operations to undo.
  */
 $.undo = function( dist ){
   if (typeof dist === 'undefined'){ var dist = 1; }
@@ -345,7 +385,7 @@ $.undo = function( dist ){
  * 	Redoes the last n operations. If n is not specified, it will be 1
  * @name $#redo
  * @function
- * @param   {int}           n                                       The amount of operations to undo.
+ * @param   {int}           dist                                    The amount of operations to undo.
  */
 $.redo = function( dist ){
   if (typeof dist === 'undefined'){ var dist = 1; }
@@ -363,10 +403,70 @@ $.getPreferences = function( ){
 }
 
 //---- Attach Helpers ------
-$.network     = new $.oNetwork( );
-$.utils       = new $.oUtils( );
-$.dialog      = new $.oDialog( );
+$.network     = new $.oNetwork();
+$.utils       = $.oUtils;
+$.dialog      = new $.oDialog();
 $.global      = this;
+
+
+//---- Self caching -----
+
+/**
+ * change this value to allow self caching across openHarmony when initialising objects.
+ * @name $#useCache
+ * @type {bool}
+ */
+$.useCache = false;
+
+
+/**
+ * function to call in constructors of classes so that instances of this class
+ * are cached and unique based on constructor arguments.
+ * @returns a cached class instance or null if no cached instance exists.
+ */
+$.getInstanceFromCache = function(){
+  if (!this.__proto__.hasOwnProperty("__cache__")) {
+    this.__proto__.__cache__ = {};
+  }
+  var _cache = this.__proto__.__cache__;
+
+  if (!this.$.useCache) return;
+
+  var key = [];
+  for (var i=0; i<arguments.length; i++){
+    try{
+      key.push(arguments[i]+"")
+    }catch(err){} // ignore arguments that can't be converted to string
+  }
+
+  if (_cache.hasOwnProperty(key)) {
+    this.$.log("instance returned from cache for "+key, this.$.DEBUG_LEVEL.ERROR)
+    return _cache[key];
+  }
+  this.$.log("creating new instance for "+key, this.$.DEBUG_LEVEL.ERROR)
+  _cache[key] = this;
+
+  this.constructor.invalidateCache = function(){
+    delete this.prototype.__cache__;
+  }
+  return
+}
+
+
+/**
+ * invalidate all cache for classes that are self caching.
+ * Will be run at each include('openHarmony.js') statement.
+ */
+$.clearOpenHarmonyCache = function(){
+  // clear cache at openHarmony loading.
+  for (var classItem in this.$){
+    var ohClass = this.$[classItem]
+    if (typeof ohClass === "function" && ohClass.prototype.hasOwnProperty('__cache__')){
+      ohClass.invalidateCache();
+    }
+  }
+}
+$.clearOpenHarmonyCache();
 
 
 //---- Instantiate Class $ DOM Access ------
@@ -384,10 +484,14 @@ for( var classItem in $ ){
     try{
       addDOMAccess( $[classItem].prototype, $ );
     }catch(err){
-      $.debug( "Error extending DOM access to : " + classItem, $.DEBUG_LEVEL.ERROR );
+      $.debug( "Error extending DOM access to : " + classItem + ": "+err, $.DEBUG_LEVEL.ERROR );
     }
 
     //Also extend it to the global object.
     this[classItem] = $[classItem];
   }
 }
+
+
+// Add global access to $ object
+this.__proto__.$ = $

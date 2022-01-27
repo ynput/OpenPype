@@ -49,14 +49,14 @@
 
 
 /**
- * The base class for the oList.
+ * The constructor for the $.oPathPoint class.
  * @constructor
- * @classdesc  oList Base Class
- * @param   {oColumn}                  oColumnObject         The array that this oList represents.
- * @param   {oFrame}                   oFrameObject          The index at which this list starts.
+ * @classdesc  The $.oPathPoint Class represents a point on a column of type 3DPath. This class is used to access information about the curve that this point belongs to.
+ * @param   {oColumn}                  oColumnObject         The 3DPath column that contains this information
+ * @param   {oFrame}                   oFrameObject          The frame on which the point is placed
  *
- * @property {oColumn}                 column                The indexed object of the item.
- * @property {oFrame}                  frame                 The indexed object of the item.
+ * @property {oColumn}                 column                The column this point belongs to
+ * @property {oFrame}                  frame                 The frame on which the point is placed.
  */
 $.oPathPoint = function(oColumnObject, oFrameObject){
     this.column = oColumnObject;
@@ -86,7 +86,7 @@ Object.defineProperty($.oPathPoint.prototype, 'x', {
          var _column = this.column.uniqueName;
          var _index = this.pointIndex;
          var _x = func.pointXPath3d(_column, _index);
-         
+
          return _x;
     },
 

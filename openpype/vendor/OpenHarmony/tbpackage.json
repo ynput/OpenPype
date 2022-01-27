@@ -6,7 +6,7 @@
  "extensions": [
   {
    "name": "openHarmony",
-   "version": "0.2.10",
+   "version": "0.8.0",
    "compatibility": "Harmony Premium 15",
    "description": "<p>The openHarmony library enables people to create scripts for Harmony using less code and a simpler synthax.</p><p>The complete documentation is available at this address:<a href='https://cfourney.github.io/OpenHarmony/'>https://cfourney.github.io/OpenHarmony/</a></p><p>Install this library to be able to use the scripts that require it.</p>",
    "repository": "https://github.com/cfourney/OpenHarmony/",
@@ -58,7 +58,7 @@
     "openHarmony",
     "palettes"
    ],
-   "author": "OpenHarmony",
+   "author": "Chris F",
    "license": "MPL-v2.0",
    "website": "https://github.com/cfourney/OpenHarmony/",
    "localFiles": ""

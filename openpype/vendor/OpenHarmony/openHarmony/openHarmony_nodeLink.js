@@ -1256,6 +1256,21 @@ Object.defineProperty($.oLink.prototype, 'isMultiLevel', {
 
 
 /**
+ * Compares the start and end nodes groups to see if the path traverses several groups or not.
+ * @name $.oLink#isMultiLevel
+ * @readonly
+ * @type {bool}
+ */
+Object.defineProperty($.oLink.prototype, 'waypoints', {
+  get : function(){
+    if (!this.linked) return []
+    var _waypoints = waypoint.getAllWaypointsAbove (this.inNode, this.inPort)
+    return _waypoints;
+  }
+});
+
+
+/**
  * Get a link that can be connected by working out ports that can be used. If a link already exists, it will be returned.
  * @return {$.oLink} A separate $.oLink object that can be connected. Null if none could be constructed.
  */
@@ -1266,6 +1281,11 @@ $.oLink.prototype.getValidLink = function(createOutPorts, createInPorts){
   var end = this.inNode;
   var outPort = this._outPort;
   var inPort = this._inPort;
+
+  if (!start || !end) {
+    $.debug("A valid link can't be found: node missing in link "+this.toString(), this.$.DEBUG_LEVEL.ERROR)
+    return null;
+  }
 
   if (this.isMultiLevel) return null;
 
@@ -1298,8 +1318,6 @@ $.oLink.prototype.getValidLink = function(createOutPorts, createInPorts){
     }
   }
 
-  // this.$.log("succesfully created abstract link : "+_link)
-
   return _link;
 }
 
@@ -1310,7 +1328,6 @@ $.oLink.prototype.getValidLink = function(createOutPorts, createInPorts){
  */
 $.oLink.prototype.connect = function(){
   if (this._linked){
-    //this.$.debug("Nodes "+this._outNode+", "+this.inNode+" already linked", this.$.DEBUG_LEVEL.LOG);
     return true;
   }
 
@@ -1341,9 +1358,8 @@ $.oLink.prototype.connect = function(){
     return success;
 
   }catch(err){
-    // this.$.debug(err, this.$.DEBUG_LEVEL.ERROR)
     this.$.debug("linking nodes "+this._outNode+" to "+this._inNode+" through outPort: "+this._outPort+", inPort: "+this._inPort+", create outports: "+createOutPorts+", create inports:"+createInPorts, this.$.DEBUG_LEVEL.ERROR);
-    this.$.debug("linking nodes failed", this.$.DEBUG_LEVEL.ERROR);
+    this.$.debug("Error linking nodes: " +err, this.$.DEBUG_LEVEL.ERROR);
     return false;
   }
 }
@@ -1373,7 +1389,7 @@ $.oLink.prototype.disconnect = function(){
 $.oLink.prototype.findPorts = function(){
   // Unless some ports are specified, this will always find the first link and stop there. Provide more info in case of multiple links
 
-  if (this.outNode === undefined || this.inNode === undefined) {
+  if (!this.outNode|| !this.inNode) {
     this.$.debug("calling 'findPorts' for invalid link: "+this.outNode+" > "+this.inNode, this.$.DEBUG_LEVEL.ERROR);
     return false;
   }

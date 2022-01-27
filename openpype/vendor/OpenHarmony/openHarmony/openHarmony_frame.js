@@ -47,8 +47,8 @@
 //                                  //
 //////////////////////////////////////
 //////////////////////////////////////
- 
- 
+
+
 /**
  * The constructor for the $.oFrame.
  * @constructor
@@ -64,7 +64,7 @@
  * @example
  * // to access the frames of a column, simply call oColumn.frames:
  * var myColumn = $.scn.columns[O]      // access the first column of the list of columns present in the scene
- * 
+ *
  * var frames = myColumn.frames;
  *
  * // then you can iterate over them to check their properties:
@@ -73,8 +73,8 @@
  *   $.log(frames[i].isKeyframe);
  *   $.log(frames[i].continuity);
  * }
- * 
- * // you can get and set the value of the frame 
+ *
+ * // you can get and set the value of the frame
  *
  * frames[1].value = 5;   // frame array values and frameNumbers are matched, so this sets the value of frame 1
  */
@@ -82,26 +82,26 @@ $.oFrame = function( frameNumber, oColumnObject, subColumns ){
   this._type = "frame";
 
   this.frameNumber = frameNumber;
-  
+
   if( oColumnObject instanceof $.oAttribute ){  //Direct access to an attribute, when not keyable. We still provide a frame access for consistency.  > MCNote ?????
     this.column = false;
-    this.attributeObject = oColumnObject;  
+    this.attributeObject = oColumnObject;
   }else if( oColumnObject instanceof $.oColumn ){
     this.column = oColumnObject;
-    
+
     if (this.column && typeof subColumns === 'undefined'){
       var subColumns = this.column.subColumns;
     }else{
       var subColumns = { a : 1 };
     }
-    
+
     this.attributeObject = this.column.attributeObject;
   }
-  
+
   this.subColumns = subColumns;
 }
- 
- 
+
+
 // $.oFrame Object Properties
 /**
  * The value of the frame. Contextual to the attribute type.
@@ -119,7 +119,7 @@ Object.defineProperty($.oFrame.prototype, 'value', {
       return this.column.getValue(this.frameNumber);
     }
     /*
-      // this.$.log("Getting value of frame "+this.frameNumber+" of column "+this.column.name) 
+      // this.$.log("Getting value of frame "+this.frameNumber+" of column "+this.column.name)
     if (this.attributeObject){
       return this.attributeObject.getValue(this.frameNumber);
     }else{
@@ -139,11 +139,11 @@ Object.defineProperty($.oFrame.prototype, 'value', {
 
     /*// this.$.log("Setting frame "+this.frameNumber+" of column "+this.column.name+" to value: "+newValue)
     if (this.attributeObject){
-      this.attributeObject.setValue( newValue, this.frameNumber );   
+      this.attributeObject.setValue( newValue, this.frameNumber );
     }else{
       this.$.debug("setting unlinked column "+this.name+" value to "+newValue+" at frame "+this.frameNumber, this.$.DEBUG_LEVEL.ERROR);
       this.$.debug("warning : setting a value on a column without attribute destroys value fidelity", this.$.DEBUG_LEVEL.ERROR);
-      
+
       var _subColumns = this.subColumns;
       for (var i in _subColumns){
         column.setEntry (this.name, _subColumns[i], this.frameNumber, newValue);
@@ -151,7 +151,7 @@ Object.defineProperty($.oFrame.prototype, 'value', {
     }*/
   }
 });
- 
+
 
 /**
  * Whether the frame is a keyframe.
@@ -162,7 +162,7 @@ Object.defineProperty($.oFrame.prototype, 'isKeyframe', {
     get : function(){
       if( !this.column ) return true;
       if( this.frameNumber == 0 ) return false;  // frames array start at 0 but first index is not a real frame
-     
+
       var _column = this.column.uniqueName;
       if (this.column.type == 'DRAWING' || this.column.type == 'TIMING'){
         if( column.getTimesheetEntry){
@@ -175,14 +175,14 @@ Object.defineProperty($.oFrame.prototype, 'isKeyframe', {
       }
       return false;
     },
- 
+
     set : function(keyframe){
       this.$.log("setting keyframe for frame "+this.frameNumber);
       var col = this.column;
       if( !col ) return;
-      
+
       var _column = col.uniqueName;
-      
+
       if( col.type == "DRAWING" ){
         if (keyframe){
           column.addKeyDrawingExposureAt( _column, this.frameNumber );
@@ -193,27 +193,27 @@ Object.defineProperty($.oFrame.prototype, 'isKeyframe', {
         if (keyframe){
           //Sanity check, in certain situations, the setKeyframe resets to 0 (specifically if there is no pre-existing key elsewhere.)
           //This will check the value prior to the key, set the key, and enforce the value after.
-          
+
           //var val = 0.0;
           // try{
           var val = this.value;
           // }catch(err){}
           //this.$.log("setting keyframe for frame "+this.frameNumber);
           column.setKeyFrame( _column, this.frameNumber );
-          
+
           // try{
           //var post_val = this.value;
           //if (val != post_val) {
             this.value = val;
           //}
-          // }catch(err){}         
+          // }catch(err){}
         }else{
           column.clearKeyFrame( _column, this.frameNumber );
         }
       }
     }
 });
- 
+
 
 /**
  * Whether the frame is a keyframe.
@@ -225,13 +225,13 @@ Object.defineProperty($.oFrame.prototype, 'isKeyFrame', {
     get : function(){
       return this.isKeyframe;
     },
- 
+
     set : function(keyframe){
       this.$.debug("oFrame.isKeyFrame is deprecated. Use oFrame.isKeyframe instead.", this.$.DEBUG_LEVEL.ERROR);
       this.isKeyframe = keyframe;
     }
 });
- 
+
 
 /**
  * Whether the frame is a keyframe.
@@ -242,13 +242,13 @@ Object.defineProperty($.oFrame.prototype, 'isKey', {
     get : function(){
       return this.isKeyframe;
     },
- 
+
     set : function(keyFrame){
       this.isKeyframe = keyFrame;
     }
 });
- 
- 
+
+
 /**
  * The duration of the keyframe exposure of the frame.
  * @name $.oFrame#duration
@@ -258,7 +258,7 @@ Object.defineProperty($.oFrame.prototype, 'duration', {
     get : function(){
         var _startFrame = this.startFrame;
         var _sceneLength = frame.numberOf()
-        
+
         if( !this.column ){
           return _sceneLength;
         }
@@ -270,13 +270,13 @@ Object.defineProperty($.oFrame.prototype, 'duration', {
         }
         return _sceneLength - _startFrame;
     },
-    
+
     set : function( val ){
       throw "Not implemented.";
     }
 });
- 
- 
+
+
 /**
  * Identifies if the frame is blank/empty.
  * @name $.oFrame#isBlank
@@ -288,21 +288,21 @@ Object.defineProperty($.oFrame.prototype, 'isBlank', {
       if( !col ){
         return false;
       }
-      
+
       if ( col.type != "DRAWING") return false;
-      
+
       if( !column.getTimesheetEntry ){
         return (this.value == "");
       }
-      
+
       return column.getTimesheetEntry( col.uniqueName, 1, this.frameNumber ).emptyCell;
     },
-    
+
     set : function( val ){
       throw "Not implemented.";
     }
 });
- 
+
 
 /**
  * Identifies the starting frame of the exposed drawing.
@@ -315,10 +315,10 @@ Object.defineProperty($.oFrame.prototype, 'startFrame', {
       if( !this.column ){
         return 1;
       }
-    
+
       if (this.isKeyframe) return this.frameNumber;
       if (this.isBlank) return -1;
-     
+
       var _frames = this.column.frames;
       for (var i=this.frameNumber-1; i>=1; i--){
           if (_frames[i].isKeyframe) return _frames[i].frameNumber;
@@ -326,8 +326,8 @@ Object.defineProperty($.oFrame.prototype, 'startFrame', {
       return -1;
     }
 });
- 
- 
+
+
 /**
  * Returns the drawing types used in the drawing column. K = key drawings, I = inbetween, B = breakdown
  * @name $.oFrame#marker
@@ -338,24 +338,24 @@ Object.defineProperty($.oFrame.prototype, 'marker', {
         if( !this.column ){
           return "";
         }
-      
+
         var _column = this.column;
         if (_column.type != "DRAWING") return "";
         return column.getDrawingType(_column.uniqueName, this.frameNumber);
     },
-   
+
     set: function( marker ){
         if( !this.column ){
           return;
         }
-        
+
         var _column = this.column;
         if (_column.type != "DRAWING") throw "can't set 'marker' property on columns that are not 'DRAWING' type"
         column.setDrawingType( _column.uniqueName, this.frameNumber, marker );
     }
 });
- 
- 
+
+
 /**
  * Find the index of this frame in the corresponding columns keyframes. -1 if unavailable.
  * @name $.oFrame#keyframeIndex
@@ -368,8 +368,8 @@ Object.defineProperty($.oFrame.prototype, 'keyframeIndex', {
         return _kfIndex;
     }
 });
- 
- 
+
+
 /**
  * Find the the nearest keyframe to this, on the left. Returns itself if it is a key.
  * @name $.oFrame#keyframeLeft
@@ -380,8 +380,8 @@ Object.defineProperty($.oFrame.prototype, 'keyframeLeft', {
       return (new this.$.oFrame(this.startFrame, this.column));
     }
 });
- 
- 
+
+
 /**
  * Find the the nearest keyframe to this, on the right.
  * @name $.oFrame#keyframeRight
@@ -392,7 +392,7 @@ Object.defineProperty($.oFrame.prototype, 'keyframeRight', {
       return (new this.$.oFrame(this.startFrame+this.duration, this.column));
     }
 });
- 
+
 
 /**
  * Access the velocity value of a keyframe from a 3DPATH column.
@@ -418,7 +418,7 @@ Object.defineProperty($.oFrame.prototype, 'velocity', {
   }
 });
 
- 
+
 /**
  * Gets a general ease object for the frame, which can be used to set frames to the same ease values. ease Objects contain the following properties:
  * x : frame number
@@ -446,7 +446,7 @@ Object.defineProperty($.oFrame.prototype, 'ease', {
       constant : func.pointConstSeg(_columnName, _index),
       continuity : func.pointContinuity(_columnName, _index)
     }
-  
+
     if( _column.easeType == "BEZIER" ){
       ease.easeIn = new this.$.oPoint(func.pointHandleLeftX(_columnName, _index), func.pointHandleLeftY(_columnName, _index),0);
       ease.easeOut = new this.$.oPoint(func.pointHandleRightX(_columnName, _index), func.pointHandleRightY(_columnName, _index),0);
@@ -529,7 +529,7 @@ Object.defineProperty($.oFrame.prototype, 'continuity', {
     var _frame = this.keyframeLeft;    //Works on the left keyframe, in the event that this is not a keyframe itself.
 
     return _frame.ease.continuity;
-  }, 
+  },
 
   set : function( newContinuity ){
     var _frame = this.keyframeLeft;    //Works on the left keyframe, in the event that this is not a keyframe itself.
@@ -551,8 +551,8 @@ Object.defineProperty($.oFrame.prototype, 'constant', {
     var _frame = this.keyframeLeft;    //Works on the left keyframe, in the event that this is not a keyframe itself.
 
     return _frame.ease.constant;
-  }, 
-  
+  },
+
   set : function( newConstant ){
     if( this.column ){
       var _frame = this.keyframeLeft;    //Works on the left keyframe, in the event that this is not a keyframe itself.
@@ -573,7 +573,7 @@ Object.defineProperty($.oFrame.prototype, 'constant', {
 Object.defineProperty($.oFrame.prototype, 'tween', {
   get : function(){
     return !this.constant;
-  }, 
+  },
   set : function( new_tween ){
     this.constant = !new_tween;
   }
@@ -592,35 +592,32 @@ Object.defineProperty($.oFrame.prototype, 'tween', {
 $.oFrame.prototype.extend = function( duration, replace ){
     if (typeof replace === 'undefined') var replace = true;
     // setting this to false will insert frames as opposed to overwrite existing ones
- 
+
     if( !this.column ){
       return;
     }
- 
+
     var _frames = this.column.frames;
- 
+
     if (typeof duration === 'undefined'){
         // extend to next non blank keyframe if not set
         var duration = 0;
         var curFrameEnd = this.startFrame + this.duration;
-        var sceneLength = frame.numberOf();
-       
+        var sceneLength = this.$.scene.length;
+
         // find next non blank keyframe
-        while (_frames[ curFrameEnd + duration].isBlank && (curFrameEnd + duration) < sceneLength){
-            duration += _frames[curFrameEnd+duration].duration;
+        while ((curFrameEnd + duration) <= sceneLength && _frames[curFrameEnd + duration].isBlank){
+            duration ++;
         }
-       
-        // set to sceneEnd if sceneEnd is reached
-        if (curFrameEnd+duration >= sceneLength) duration = sceneLength-curFrameEnd+1;
     }
- 
+
     var _value = this.value;
     var startExtending = this.startFrame+this.duration;
-   
+
     for (var i = 0; i<duration; i++){
         if (!replace){
             // TODO : push all other frames back
         }
         _frames[startExtending+i].value = _value;
-    }  
+    }
 }

@@ -155,21 +155,21 @@ Object.defineProperty($.oApp.prototype, 'globalMousePosition', {
  * @example
  * // Access the list of currently existing tools by using the $.app object
  * var tools = $.app.tools;
- * 
+ *
  * // output the list of tools names and ids
  * for (var i in tools){
  *   log(i+" "+tools[i].name)
  * }
- * 
+ *
  * // To get a tool by name, use the $.app.getToolByName() function
  * var brushTool = $.app.getToolByName("Brush");
  * log (brushTool.name+" "+brushTool.id)            // Output: Brush 9
- * 
+ *
  * // it's also possible to activate a tool in several ways:
  * $.app.currentTool = 9;         // using the tool "id"
  * $.app.currentTool = brushTool  // by passing a oTool object
  * $.app.currentTool = "Brush"    // using the tool name
- * 
+ *
  * brushTool.activate()           // by using the activate function of the oTool class
  */
 Object.defineProperty($.oApp.prototype, 'tools', {
@@ -208,14 +208,18 @@ Object.defineProperty($.oApp.prototype, 'currentTool', {
       return
     }
     if (typeof tool == "string"){
-      this.getToolByName(tool).activate();
-      return
+      try{
+        this.getToolByName(tool).activate();
+        return
+      }catch(err){
+        this.$.debug("'"+ tool + "' is not a valid tool name. Valid: "+this.tools.map(function(x){return x.name}).join(", "))
+      }
     }
     if (typeof tool == "number"){
       this.tools[tool].activate();
       return
     }
-  } 
+  }
 });
 
 
@@ -243,24 +247,24 @@ $.oApp.prototype.getWidgetByName = function(name, parentName){
  * @example
  * // To access the preferences of Harmony, grab the preference object in the $.oApp class:
  * var prefs = $.app.preferences;
- * 
+ *
  * // It's then possible to access all available preferences of the software:
  * for (var i in prefs){
  *   log (i+" "+prefs[i]);
  * }
- * 
+ *
  * // accessing the preference value can be done directly by using the dot notation:
  * prefs.USE_OVERLAY_UNDERLAY_ART = true;
  * log (prefs.USE_OVERLAY_UNDERLAY_ART);
- * 
+ *
  * //the details objects of the preferences object allows access to more information about each preference
  * var details = prefs.details
  * log(details.USE_OVERLAY_UNDERLAY_ART.category+" "+details.USE_OVERLAY_UNDERLAY_ART.id+" "+details.USE_OVERLAY_UNDERLAY_ART.type);
- * 
+ *
  * for (var i in details){
  *   log(i+" "+JSON.stringify(details[i]))       // each object inside detail is a complete oPreference instance
  * }
- * 
+ *
  * // the preference object also holds a categories array with the list of all categories
  * log (prefs.categories)
  */
@@ -275,16 +279,22 @@ Object.defineProperty($.oApp.prototype, 'preferences', {
         enumerable:false,
         value:_categories
       })
-      
+
       Object.defineProperty(_prefsObject, "details", {
         enumerable:false,
         value:_details
       })
-      
+
       var prefFile = (new oFile(specialFolders.resource+"/prefs.xml")).parseAsXml().children[0].children;
 
-      var userPrefFile = {objectName: "category", id: "user", children:(new oFile(specialFolders.userConfig + "/Harmony Premium-pref.xml")).parseAsXml().children[0].children};
-      prefFile.push(userPrefFile);
+      var userPrefFile = new oFile(specialFolders.userConfig + "/Harmony Premium-pref.xml")
+      // Harmony Pref file is called differently on the database userConfig
+      if (!userPrefFile.exists) userPrefFile = new oFile(specialFolders.userConfig + "/Harmony-pref.xml")
+
+      if (userPrefFile.exists){
+        var userPref = {objectName: "category", id: "user", children:userPrefFile.parseAsXml().children[0].children};
+        prefFile.push(userPref);
+      }
 
       for (var i in prefFile){
         if (prefFile[i].objectName != "category" || prefFile[i].id == "Storyboard") continue;
@@ -336,7 +346,7 @@ Object.defineProperty($.oApp.prototype, 'preferences', {
  * @example
  * // Access the stencils list through the $.app object.
  * var stencils = $.app.stencils
- * 
+ *
  * // list all the properties of stencils
  * for (var i in stencils){
  *   log(" ---- "+stencils[i].type+" "+stencils[i].name+" ---- ")
@@ -354,12 +364,30 @@ Object.defineProperty($.oApp.prototype, 'stencils', {
       var stencils = [];
       var stencilXml;
       while(stencilXml = penRegex.exec(stencilsFile)){
-        var stencilObject = new this.$.oStencil(stencilXml[1]);
+        var stencilObject = this.$.oStencil.getFromXml(stencilXml[1]);
         stencils.push(stencilObject);
       }
       this._stencilsObject = stencils;
     }
     return this._stencilsObject;
+  }
+})
+
+
+
+/**
+ * The currently selected stencil. Always returns the pencil tool current stencil.
+ * @name $.oApp#currentStencil
+ * @type {$.oStencil}
+ */
+Object.defineProperty($.oApp.prototype, 'currentStencil', {
+  get: function(){
+    return this.stencils[PaletteManager.getCurrentPenstyleIndex()];
+  },
+  set: function(stencil){
+    if (stencil instanceof this.$.oStencil) var stencil = stencil.name
+    this.$.debug("Setting current pen: "+ stencil)
+    PenstyleManager.setCurrentPenstyleByName(stencil);
   }
 })
 
@@ -374,7 +402,7 @@ Object.defineProperty($.oApp.prototype, 'stencils', {
 $.oApp.prototype.getToolByName = function(toolName){
   var _tools  = this.tools;
   for (var i in _tools){
-    if (_tools[i].name == toolName) return _tools[i];
+    if (_tools[i].name.toLowerCase() == toolName.toLowerCase()) return _tools[i];
   }
   return null;
 }

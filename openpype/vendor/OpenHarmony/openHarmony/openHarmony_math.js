@@ -39,7 +39,6 @@
 //////////////////////////////////////////////////////////////////////////////////////
 
 
-/* TODO, CURVES, SPLINES */
 
 //////////////////////////////////////
 //////////////////////////////////////
@@ -103,7 +102,7 @@ Object.defineProperty( $.oPoint.prototype, 'polarCoordinates', {
  * @param   {int}       y                  the y value to move the point by.
  * @param   {int}       z                  the z value to move the point by.
  *
- * @return: { $.oPoint }                   Returns self (for inline addition).
+ * @returns { $.oPoint }                   Returns self (for inline addition).
  */
 $.oPoint.prototype.translate = function( x, y, z){
   if (typeof x === 'undefined') var x = 0;
@@ -117,12 +116,43 @@ $.oPoint.prototype.translate = function( x, y, z){
   return this;
 }
 
+/**
+ * Translate the point by the provided values.
+ * @param   {int}       x                  the x value to move the point by.
+ * @param   {int}       y                  the y value to move the point by.
+ * @param   {int}       z                  the z value to move the point by.
+ *
+ * @return: { $.oPoint }                   Returns self (for inline addition).
+ */
+ $.oPoint.prototype.add = function( x, y, z ){
+  if (typeof x === 'undefined') var x = 0;
+  if (typeof y === 'undefined') var y = 0;
+  if (typeof z === 'undefined') var z = 0;
+
+  var x = this.x + x;
+  var y = this.y + y;
+  var z = this.z + z;
+
+  return new this.$.oPoint(x, y, z);
+}
 
 /**
- * Adds the input box to the bounds of the current $.oBox.
+ * The distance between two points.
+ * @param {$.oPoint}     point            the other point to calculate the distance from.
+ * @returns {float}
+ */
+$.oPoint.prototype.distance = function ( point ){
+  var distanceX = point.x-this.x;
+  var distanceY = point.y-this.y;
+  var distanceZ = point.z-this.z;
+
+  return Math.sqrt(distanceX*distanceX + distanceY*distanceY + distanceZ*distanceZ)
+}
+
+/**
+ * Adds the point to the coordinates of the current oPoint.
  * @param   {$.oPoint}       add_pt                The point to add to this point.
- *
- * @return: { $.oPoint }                           Returns self (for inline addition).
+ * @returns { $.oPoint }                           Returns itself (for inline addition).
  */
 $.oPoint.prototype.pointAdd = function( add_pt ){
   this.x += add_pt.x;
@@ -133,10 +163,23 @@ $.oPoint.prototype.pointAdd = function( add_pt ){
 }
 
 /**
- * Subtracts the input box to the bounds of the current $.oBox.
+ * Adds the point to the coordinates of the current oPoint and returns a new oPoint with the result.
+ * @param {$.oPoint}   oPoint                The point to add to this point.
+ * @returns {$.oPoint}
+ */
+$.oPoint.prototype.addPoint = function( point ){
+  var x = this.x + point.x;
+  var y = this.y + point.y;
+  var z = this.z + point.z;
+
+  return new this.$.oPoint(x, y, z);
+}
+
+
+/**
+ * Subtracts the point to the coordinates of the current oPoint.
  * @param   {$.oPoint}       sub_pt                The point to subtract to this point.
- *
- * @return: { $.oPoint }                           Returns self (for inline addition).
+ * @returns { $.oPoint }                           Returns itself (for inline addition).
  */
 $.oPoint.prototype.pointSubtract = function( sub_pt ){
   this.x -= sub_pt.x;
@@ -146,11 +189,25 @@ $.oPoint.prototype.pointSubtract = function( sub_pt ){
   return this;
 }
 
+
+/**
+ * Subtracts the point to the coordinates of the current oPoint and returns a new oPoint with the result.
+ * @param {$.oPoint}   point                The point to subtract to this point.
+ * @returns {$.oPoint} a new independant oPoint.
+ */
+$.oPoint.prototype.subtractPoint = function( point ){
+  var x = this.x - point.x;
+  var y = this.y - point.y;
+  var z = this.z - point.z;
+
+  return new this.$.oPoint(x, y, z);
+}
+
 /**
  * Multiply all coordinates by this value.
  * @param   {float}       float_val                Multiply all coordinates by this value.
  *
- * @return: { $.oPoint }                           Returns self (for inline addition).
+ * @returns { $.oPoint }                           Returns itself (for inline addition).
  */
 $.oPoint.prototype.multiply = function( float_val ){
   this.x *= float_val;
@@ -164,7 +221,7 @@ $.oPoint.prototype.multiply = function( float_val ){
  * Divides all coordinates by this value.
  * @param   {float}       float_val                Divide all coordinates by this value.
  *
- * @return: { $.oPoint }                           Returns self (for inline addition).
+ * @returns { $.oPoint }                           Returns itself (for inline addition).
  */
 $.oPoint.prototype.divide = function( float_val ){
   this.x /= float_val;
@@ -178,43 +235,43 @@ $.oPoint.prototype.divide = function( float_val ){
  * Find average of provided points.
  * @param   {$.oPoint[]}       point_array         The array of points to get the average.
  *
- * @return: { $.oPoint }                           Returns the $.oPoint average of provided points.
+ * @returns { $.oPoint }                           Returns the $.oPoint average of provided points.
  */
 $.oPoint.prototype.pointAverage = function( point_array ){
   var _avg = new this.$.oPoint( 0.0, 0.0, 0.0 );
-  for( var x=0;x<point_array.length;x++ ){
-    _avg.pointAdd( point_array[x] );
+  for (var x=0; x<point_array.length; x++) {
+    _avg.pointAdd(point_array[x]);
   }
-  _avg.divide( point_array.length );
+  _avg.divide(point_array.length);
 
   return _avg;
 }
 
 
 /**
- * Converts a Drawing point coordinate into a scene coordinate, as used by pegs
+ * Converts a Drawing point coordinate into a scene coordinate, as used by pegs (since drawings are 2D, z is untouched)
  * @returns {$.oPoint}
  */
 $.oPoint.prototype.convertToSceneCoordinates = function () {
-  var _point = scene.fromOGL( new Point3d( this.x/1875, this.y/1875, this.z ) );
-  return new this.$.oPoint(_point.x, _point.y, _point.z)
+  return new this.$.oPoint(this.x/this.$.scene.fieldVectorResolutionX, this.y/this.$.scene.fieldVectorResolutionY, this.z);
 }
 
 
 /**
- * Converts a scene coordinate point into a Drawing space coordinate, as used by Drawing tools and $.oShape
+ * Converts a scene coordinate point into a Drawing space coordinate, as used by Drawing tools and $.oShape (since drawings are 2D, z is untouched)
  * @returns {$.oPoint}
  */
 $.oPoint.prototype.convertToDrawingSpace = function () {
-  var _point = scene.toOGL( new Point3d( this.x, this.y, this.z ) );
-  return new this.$.oPoint(_point.x*1875, _point.y*1875, _point.z)
+  return new this.$.oPoint(this.x * this.$.scene.fieldVectorResolutionX, this.y * this.$.scene.fieldVectorResolutionY, this.z);
 }
 
 
 /**
  * Uses the scene settings to convert this as a worldspace point into an OpenGL point, used in underlying transformation operations in Harmony.
+ * OpenGL units have a square aspect ratio and go from -1 to 1 vertically in the camera field.
+ * @returns nothing
  */
-$.oPoint.convertToOpenGL = function(){
+$.oPoint.prototype.convertToOpenGL = function(){
 
   var qpt = scene.toOGL( new Point3d( this.x, this.y, this.z ) );
 
@@ -226,9 +283,10 @@ $.oPoint.convertToOpenGL = function(){
 
 
 /**
- * Uses the scene settings to convert this as an OpenGL point into a Harmony worldspace point, used in all displayed modules and Harmony coordinates.
+ * Uses the scene settings to convert this as an OpenGL point into a Harmony worldspace point.
+ * @returns nothing
  */
-$.oPoint.convertToWorldspace = function(){
+$.oPoint.prototype.convertToWorldspace = function(){
 
   var qpt = scene.fromOGL( new Point3d( this.x, this.y, this.z ) );
 
@@ -255,6 +313,12 @@ $.oPoint.prototype.lerp = function( point, perc ){
 
   return delta;
 }
+
+
+$.oPoint.prototype.toString = function(){
+  return this._type+": {x:"+this.x+", y:"+this.y+", z:"+this.z+"}";
+}
+
 
 //////////////////////////////////////
 //////////////////////////////////////
@@ -344,6 +408,28 @@ $.oBox.prototype.include = function(box){
   if (box.bottom > this.bottom) this.bottom = box.bottom;
 }
 
+
+/**
+ * Checks wether the box contains another $.oBox.
+ * @param   {$.oBox}       box                The $.oBox to check for.
+ * @param   {bool}         [partial=false]    wether to accept partially contained boxes.
+ */
+$.oBox.prototype.contains = function(box, partial){
+  if (typeof partial === 'undefined') var partial = false;
+
+  var fitLeft = (box.left >= this.left);
+  var fitTop = (box.top >= this.top);
+  var fitRight =(box.right <= this.right);
+  var fitBottom = (box.bottom <= this.bottom);
+
+  if (partial){
+    return (fitLeft || fitRight) && (fitTop || fitBottom);
+  }else{
+    return fitLeft && fitRight && fitTop && fitBottom;
+  }
+
+}
+
 /**
  * Adds the bounds of the nodes to the current $.oBox.
  * @param   {oNode[]}       oNodeArray                An array of nodes to include in the box.
@@ -359,7 +445,273 @@ $.oBox.prototype.includeNodes = function(oNodeArray){
   }
 }
 
-
+/**
+ * @private
+ */
 $.oBox.prototype.toString = function(){
   return "{top:"+this.top+", right:"+this.right+", bottom:"+this.bottom+", left:"+this.left+"}"
 }
+
+
+
+//////////////////////////////////////
+//////////////////////////////////////
+//                                  //
+//                                  //
+//         $.oMatrix class          //
+//                                  //
+//                                  //
+//////////////////////////////////////
+//////////////////////////////////////
+
+/**
+ * The $.oMatrix constructor.
+ * @constructor
+ * @classdesc The $.oMatrix is a subclass of the native Matrix4x4 object from Harmony. It has the same methods and properties plus the ones listed here.
+ * @param {Matrix4x4} matrixObject a matrix object to initialize the instance from
+ */
+$.oMatrix = function(matrixObject){
+  Matrix4x4.constructor.call(this);
+  if (matrixObject){
+    log(matrixObject)
+    this.m00 = matrixObject.m00;
+    this.m01 = matrixObject.m01;
+    this.m02 = matrixObject.m02;
+    this.m03 = matrixObject.m03;
+    this.m10 = matrixObject.m10;
+    this.m11 = matrixObject.m11;
+    this.m12 = matrixObject.m12;
+    this.m13 = matrixObject.m13;
+    this.m20 = matrixObject.m20;
+    this.m21 = matrixObject.m21;
+    this.m22 = matrixObject.m22;
+    this.m23 = matrixObject.m23;
+    this.m30 = matrixObject.m30;
+    this.m31 = matrixObject.m31;
+    this.m32 = matrixObject.m32;
+    this.m33 = matrixObject.m33;
+  }
+}
+$.oMatrix.prototype = Object.create(Matrix4x4.prototype)
+
+
+/**
+ * A 2D array that contains the values from the matrix, rows by rows.
+ * @name $.oMatrix#values
+ * @type {Array}
+ */
+Object.defineProperty($.oMatrix.prototype, "values", {
+  get:function(){
+    return [
+      [this.m00, this.m01, this.m02, this.m03],
+      [this.m10, this.m11, this.m12, this.m13],
+      [this.m20, this.m21, this.m22, this.m23],
+      [this.m30, this.m31, this.m32, this.m33],
+    ]
+  }
+})
+
+
+/**
+ * @private
+ */
+$.oMatrix.prototype.toString = function(){
+  return "< $.oMatrix object : \n"+this.values.join("\n")+">";
+}
+
+
+//////////////////////////////////////
+//////////////////////////////////////
+//                                  //
+//                                  //
+//         $.oVector class          //
+//                                  //
+//                                  //
+//////////////////////////////////////
+//////////////////////////////////////
+
+
+/**
+ * The $.oVector constructor.
+ * @constructor
+ * @classdesc The $.oVector is a replacement for the Vector3d objects of Harmony.
+ * @param {float} x a x coordinate for this vector.
+ * @param {float} y a y coordinate for this vector.
+ * @param {float} [z=0] a z coordinate for this vector. If ommited, will be set to 0 and vector will be 2D.
+ */
+$.oVector = function(x, y, z){
+  if (typeof z === "undefined" || isNaN(z)) var z = 0;
+
+  // since Vector3d doesn't have a prototype, we need to cheat to subclass it.
+  this._vector = new Vector3d(x, y, z);
+}
+
+
+/**
+ * The X Coordinate of the vector.
+ * @name $.oVector#x
+ * @type {float}
+ */
+Object.defineProperty($.oVector.prototype, "x", {
+  get: function(){
+    return this._vector.x;
+  },
+  set: function(newX){
+    this._vector.x = newX;
+  }
+})
+
+
+/**
+ * The Y Coordinate of the vector.
+ * @name $.oVector#y
+ * @type {float}
+ */
+Object.defineProperty($.oVector.prototype, "y", {
+  get: function(){
+    return this._vector.y;
+  },
+  set: function(newY){
+    this._vector.y = newY;
+  }
+})
+
+
+/**
+ * The Z Coordinate of the vector.
+ * @name $.oVector#z
+ * @type {float}
+ */
+Object.defineProperty($.oVector.prototype, "z", {
+  get: function(){
+    return this._vector.z;
+  },
+  set: function(newX){
+    this._vector.z = newX;
+  }
+})
+
+
+/**
+ * The length of the vector.
+ * @name $.oVector#length
+ * @type {float}
+ * @readonly
+ */
+Object.defineProperty($.oVector.prototype, "length", {
+  get: function(){
+    return this._vector.length();
+  }
+})
+
+
+/**
+ * @static
+ * A function of the oVector class (not oVector objects) that gives a vector from two points.
+ */
+$.oVector.fromPoints = function(pointA, pointB){
+  return new $.oVector(pointB.x-pointA.x, pointB.y-pointA.y, pointB.z-pointA.z);
+}
+
+
+/**
+ * Adds another vector to this one.
+ * @param {$.oVector} vector2
+ * @returns {$.oVector} returns itself.
+ */
+$.oVector.prototype.add = function (vector2){
+  this.x += vector2.x;
+  this.y += vector2.y;
+  this.z += vector2.z;
+
+  return this;
+}
+
+
+/**
+ * Multiply this vector coordinates by a number (scalar multiplication)
+ * @param {float} num
+ * @returns {$.oVector} returns itself
+ */
+$.oVector.prototype.multiply = function(num){
+  this.x = num*this.x;
+  this.y = num*this.y;
+  this.z = num*this.z;
+
+  return this;
+}
+
+
+/**
+ * The dot product of the two vectors
+ * @param {$.oVector} vector2 a vector object.
+ * @returns {float} the resultant vector from the dot product of the two vectors.
+ */
+$.oVector.prototype.dot = function(vector2){
+  var _dot = this._vector.dot(new Vector3d(vector2.x, vector2.y, vector2.z));
+  return _dot;
+}
+
+/**
+ * The cross product of the two vectors
+ * @param {$.oVector} vector2 a vector object.
+ * @returns {$.oVector} the resultant vector from the dot product of the two vectors.
+ */
+$.oVector.prototype.cross = function(vector2){
+  var _cross = this._vector.cross(new Vector3d(vector2.x, vector2.y, vector2.z));
+  return new this.$.oVector(_cross.x, _cross.y, _cross.z);
+}
+
+/**
+ * The projected vectors resulting from the operation
+ * @param {$.oVector} vector2 a vector object.
+ * @returns {$.oVector} the resultant vector from the projection of the current vector.
+ */
+$.oVector.prototype.project = function(vector2){
+  var _projection = this._vector.project(new Vector3d(vector2.x, vector2.y, vector2.z));
+  return new this.$.oVector(_projection.x, _projection.y, _projection.z);
+}
+
+/**
+ * Normalize the vector.
+ * @returns {$.oVector} returns itself after normalization.
+ */
+$.oVector.prototype.normalize = function(){
+  this._vector.normalize();
+  return this;
+}
+
+
+/**
+ * The angle of this vector in radians.
+ * @name $.oVector#angle
+ * @type {float}
+ * @readonly
+ */
+Object.defineProperty($.oVector.prototype, "angle", {
+  get: function(){
+    return Math.atan2(this.y, this.x);
+  }
+})
+
+
+/**
+ * The angle of this vector in degrees.
+ * @name $.oVector#degreesAngle
+ * @type {float}
+ * @readonly
+ */
+Object.defineProperty($.oVector.prototype, "degreesAngle", {
+  get: function(){
+    return this.angle * (180 / Math.PI);
+  }
+})
+
+
+/**
+ * @private
+ */
+$.oVector.prototype.toString = function(){
+  return "<$.oVector ["+this.x+", "+this.y+", "+this.z+"]>";
+}
+

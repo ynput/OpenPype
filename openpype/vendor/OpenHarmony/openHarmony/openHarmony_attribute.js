@@ -53,7 +53,7 @@
  * The constructor for the $.oAttribute class.
  * @classdesc
  * The $.oAttribute class holds the smart version of the parameter you can find in layer property.<br>
- * It is used internally to get and set values and link a oColumn to a parameter in order to animate it.<br>
+ * It is used internally to get and set values and link a oColumn to a parameter in order to animate it. (Users should never have to instantiate this class) <br>
  * For a list of attributes existing in each node type and their type, as well as examples of the values they can hold, refer to :<br>
  * {@link NodeType}.
  * @constructor
@@ -61,12 +61,12 @@
  * @param   {attr}                     attributeObject            The internal harmony Attribute Object.
  * @param   {$.oAttribute}             parentAttribute            The parent attribute of the subattribute.
  *
- * @property {$.oNode}                 node                       The name of the drawing.
- * @property {attr}                    attributeObject            The element object associated to the element.
- * @property {string}                  keyword                    The name of the drawing.
- * @property {string}                  shortKeyword               The element object associated to the element.
- * @property {$.oAttribute}            parentAttribute            The element object associated to the element.
- * @property {$.oAttribute[]}          subAttributes              The subattributes, if any exist, of this attribute.
+ * @property {$.oNode}                 node                       The oNode this attribute belongs to.
+ * @property {attr}                    attributeObject            The internal harmony Attribute Object.
+ * @property {string}                  keyword                    The keyword describing this attribute. (always in lower case)
+ * @property {string}                  shortKeyword               The full keyword describing this attribute, including parent attributes separated with a "." (always in lower case)
+ * @property {$.oAttribute}            parentAttribute            The parent oAttribute object
+ * @property {$.oAttribute[]}          subAttributes              The subattributes of this attribute.
  * @example
  * // oAttribute objects can be grabbed from the node .attributes object with dot notation, by calling the attribute keyword in lowercase.
  *
@@ -76,6 +76,9 @@
  * var Xcolumn = Xattribute.column;                   // retrieve the linked column to the element (The object that holds the animation)
  *
  * Xattribute.setValue(5, 5);                         // sets the value to 5 at frame 5
+ *
+ * // attribute values can also be set directly on the node when not animated:
+ * myNode.position.x = 5;
  *
  */
 $.oAttribute = function( oNodeObject, attributeObject, parentAttribute ){
@@ -173,6 +176,18 @@ $.oAttribute.prototype.getSubAttributes_oldVersion = function (){
   return sub_attrs;
 }
 
+
+/**
+ * The display name of the attribute
+ * @name $.oAttribute#name
+ * @type {string}
+ */
+Object.defineProperty($.oAttribute.prototype, 'name', {
+  get: function(){
+    return this.attributeObject.name();
+  }
+})
+
 /**
  * The full keyword of the attribute.
  * @name $.oAttribute#keyword
@@ -220,27 +235,37 @@ Object.defineProperty($.oAttribute.prototype, 'type', {
  * The column attached to the attribute.
  * @name $.oAttribute#column
  * @type {$.oColumn}
+ * @example
+// link a new column to an attribute by setting this value:
+var myColumn = $.scn.addColumn("BEZIER");
+myNode.attributes.position.x.column = myColumn; // values contained in "myColumn" now define the animation of our peg's x position
+
+// to automatically create a column and link it to the attribute, use:
+myNode.attributes.position.x.addColumn(); // if the column exist already, it will just be returned.
+
+// to unlink a column, just set it to null/undefined:
+myNode.attributes.position.x.column = null; // values are no longer animated.
  */
 Object.defineProperty($.oAttribute.prototype, 'column', {
-    get : function(){
-        var _column = node.linkedColumn ( this.node.path, this._keyword );
-        if( _column && _column.length ){
-          return this.node.scene.$column( _column, this );
-        }else{
-          return null;
-        }
-    },
-
-    set : function(columnObject){
-        // unlink if provided with null value or empty string
-        if (columnObject == "" || columnObject == null){
-            node.unlinkAttr(this.node.path, this._keyword);
-        }else{
-            node.linkAttr(this.node.path, this._keyword, columnObject.uniqueName);
-            columnObject.attributeObject = this;
-            // TODO: transfer current value of attribute to a first key on the column if column is empty
-        }
+  get : function(){
+    var _column = node.linkedColumn ( this.node.path, this._keyword );
+    if( _column && _column.length ){
+      return this.node.scene.$column( _column, this );
+    }else{
+      return null;
     }
+  },
+
+  set : function(columnObject){
+    // unlink if provided with null value or empty string
+    if (!columnObject){
+      node.unlinkAttr(this.node.path, this._keyword);
+    }else{
+      node.linkAttr(this.node.path, this._keyword, columnObject.uniqueName);
+      columnObject.attributeObject = this;
+      // TODO: transfer current value of attribute to a first key on the column if column is empty
+    }
+  }
 });
 
 
@@ -415,7 +440,7 @@ $.oAttribute.prototype.getLinkedColumns = function(){
   if (_ownColumn != null) _columns.push(_ownColumn);
 
   for (var i=0; i<_subAttributes.length; i++) {
-    _columns = _column.concat(_subAttributes[i].getLinkedColumns());
+    _columns = _columns.concat(_subAttributes[i].getLinkedColumns());
   }
 
   return _columns;
@@ -523,8 +548,10 @@ $.oAttribute.prototype.getValue = function (frame) {
         case 'ELEMENT':
             // an element always has a column, so we'll fetch it from there
             _value = column.getEntry(_column.uniqueName, 1, frame);
-            // Convert to an instance of oDrawing
-            _value = _column.element.getDrawingByName(_value);
+
+            // Convert to an instance of oDrawing, with a safety in case of psd import
+            _drawing = _column.element.getDrawingByName(_value);
+            if (_drawing) _value = _drawing;
             break;
 
         // TODO: How does QUATERNION_PATH work? subcolumns I imagine
@@ -553,14 +580,25 @@ $.oAttribute.prototype.getValue = function (frame) {
 
 /**
  * Sets the value of the attribute at the given frame.
- * @param   {string}     value                 The value to set on the attribute.
- * @param   {int}        [frame]               The frame at which to set the value, if not set, assumes 1
+ * @param   {string}     value        The value to set on the attribute.
+ * @param   {int}        [frame=1]    The frame at which to set the value, if not set, assumes 1
  */
 $.oAttribute.prototype.setValue = function (value, frame) {
-    var frame_set = true;
-    if (typeof frame === 'undefined'){
-      frame     = 1;
-      frame_set = false;
+    var _attr = this.attributeObject;
+    var _column = this.column;
+    var _type = this.type;
+    var _animate = false;
+
+    if (!frame){
+      // we don't animate
+      var frame = 1;
+    }else if (!_column){
+      // generate a new column to be able to animate
+      _column = this.addColumn();
+    }
+
+    if( _column ){
+      _animate = true;
     }
 
     try{
@@ -568,22 +606,6 @@ $.oAttribute.prototype.setValue = function (value, frame) {
     }catch(err){
       this.$.debug("setting attr "+this._keyword+" at frame "+frame, this.$.DEBUG_LEVEL.LOG)
     };
-
-    var _attr = this.attributeObject;
-    var _column = this.column;
-    var _type = this.type;
-    var _animate = false;
-
-    if ( frame_set && _column == null ){
-        // generate a new column to be able to animate
-        var _doc = new this.$.oScene();
-        _column = _doc.addColumn();         //this might fail if the type is wrong (by default addColumn creates BEZIER columns)
-        this.column = _column;
-    }
-
-    if( _column ){
-      _animate = true;
-    }
 
     switch(_type){
         // TODO: sanitize input
@@ -602,7 +624,6 @@ $.oAttribute.prototype.setValue = function (value, frame) {
           // check if frame is tied to a column or an attribute
           var _frame = _column?(new this.$.oFrame(frame, this.column)):(new this.$.oFrame(frame, _attr));
           if (_column){
-            //this.$.log(_column.name+" "+_frame.frameNumber+" "+_frame.isKeyframe)
             if (!_frame.isKeyframe) _frame.isKeyframe = true;
             var _point = new this.$.oPathPoint (this.column, _frame);
             _point.set(value);
@@ -624,36 +645,94 @@ $.oAttribute.prototype.setValue = function (value, frame) {
 
         case "ELEMENT" :
             _column = this.column;
+            value = (value instanceof this.$.oDrawing) ? value.name : value;
             column.setEntry(_column.uniqueName, 1, frame, value+"");
             break;
 
         case "QUATERNIONPATH" :
-            break;
-
-        //case "STRING" :
-        //  node.setTextAttr( this.node.path, this._keyword, frame, value);
+            // set quaternion paths as textattr until a better way is found
 
         default :
             try{
               _animate ? _attr.setValueAt( value, frame ) : _attr.setValue( value );
             }catch(err){
-              this.$.debug("setting text attr "+this._keyword+" value "+value+" as textAttr ", this.$.DEBUG_LEVEL.ERROR)
+              this.$.debug("error setting attr "+this._keyword+" value "+value+": "+err, this.$.DEBUG_LEVEL.DEBUG);
+              this.$.debug("setting text attr "+this._keyword+" value "+value+" as textAttr ", this.$.DEBUG_LEVEL.ERROR);
               node.setTextAttr( this.node.path, this._keyword, frame, value );
-
-              // throw new Error("Couldn't set attribute "+this.keyword+" to value "+value+". Incompatible type.")
             }
     }
 }
 
 
-// MCNote: I think it would be good practice if functions had verbs in their names and properties were noun. it makes it easier to remember if you need to pass parameters or even include empty brackets
-// for example: doc.selection   vs doc.getSelection();
+/**
+ * Adds a column with a default name, based on the attribute type.
+ * If a column already exists, it returns it.
+ * @returns {$.oColumn} the created column
+ */
+$.oAttribute.prototype.addColumn = function(){
+  var _column = this.column;
+  if (_column) return _column;
+
+  if (this.hasSubAttributes){
+    throw new Error("Can't create columns for attribute "+this.keyword+", column must be created for its subattributes.");
+  }
+
+  var _type = this.type;
+  var _columnType = "";
+  var _columnName = this.node.name+": "+this.name.replace(/\s/g, "_");
+
+  switch(_type){
+    case 'INT':
+    case 'DOUBLE':
+    case 'DOUBLEVB':
+      _columnType = "BEZIER";
+      break;
+
+    case "QUATERNIONPATH" :
+      _columnName = "QUARTERNION";
+      break;
+
+      case "PATH_3D" :
+      _columnName = "3DPATH";
+      break;
+
+    case "ELEMENT" :
+      _columnType = "DRAWING";
+      _columnName = this.node.name;
+      break;
+
+    default :
+      throw new Error("Can't create columns for attribute "+this.keyword+", not supported by attribute type '"+_type+"'");
+  }
+
+  var _column = this.$.scn.addColumn(_columnType, _columnName);
+  this.column = _column;
+
+  if (!this.column) {
+    _column.remove();
+    throw new Error("Can't create columns for attribute "+this.keyword+", animation not supported.");
+  }
+
+  return this.column;
+}
+
+
 /**
  * Gets the value of the attribute at the given frame.
  * @param   {int}        frame                 The frame at which to set the value, if not set, assumes 1
- *
+ * @deprecated use oAttribute.getValue(frame) instead (see: function names as verbs)
  * @return {object}      The value of the attribute in the native format of that attribute (contextual to the attribute).
  */
 $.oAttribute.prototype.value = function(frame){
   return this.getValue( frame );
+}
+
+
+/**
+ * Represents an oAttribute object in string form
+ * @private
+ * @returns {string}
+ */
+$.oAttribute.prototype.toString = function(){
+  return "[object $.oAttribute '"+this.keyword+(this.subAttributes.length?"' subAttributes: "+this.subAttributes.map(function(x){return x.shortKeyword}):"")+"]";
 }

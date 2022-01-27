@@ -95,8 +95,8 @@ $.oBackdrop = function( groupPath, backdropObject ){
  */
 Object.defineProperty($.oBackdrop.prototype, 'index', {
     get : function(){
-         var _groupBackdrops = Backdrop.backdrops(this.group).map(function(x){return x.title.text})
-		 return _groupBackdrops.indexOf(this.title)
+      var _groupBackdrops = Backdrop.backdrops(this.group).map(function(x){return x.title.text})
+		  return _groupBackdrops.indexOf(this.title)
     }
 })
 
@@ -114,12 +114,12 @@ Object.defineProperty($.oBackdrop.prototype, 'title', {
 
   set : function(newTitle){
     var _backdrops = Backdrop.backdrops(this.group);
-  
+
     // incrementing to prevent two backdrops to have the same title
     var names = _backdrops.map(function(x){return x.title.text})
     var count = 0;
     var title = newTitle
-    
+
     while (names.indexOf(title) != -1){
       count++;
       title = newTitle+"_"+count;
@@ -127,7 +127,7 @@ Object.defineProperty($.oBackdrop.prototype, 'title', {
     newTitle = title;
 
     var _index = this.index;
-    
+
     _backdrops[_index].title.text = newTitle;
 
     this.backdropObject = _backdrops[_index];
@@ -146,10 +146,10 @@ Object.defineProperty($.oBackdrop.prototype, 'body', {
          var _title = this.backdropObject.description.text;
          return _title;
     },
- 
+
     set : function(newBody){
         var _backdrops = Backdrop.backdrops(this.group);
-		
+
 		var _index = this.index;
         _backdrops[_index].description.text = newBody;
 
@@ -171,11 +171,11 @@ Object.defineProperty($.oBackdrop.prototype, 'titleFont', {
                       color : ( new oColorValue() ).parseColorFromInt(this.backdropObject.title.color)}
          return _font;
     },
- 
+
     set : function(newFont){
         var _backdrops = Backdrop.backdrops(this.group);
 		var _index = this.index;
-				
+
         _backdrops[_index].title.font = newFont.family;
         _backdrops[_index].title.size = newFont.size;
         _backdrops[_index].title.color = newFont.color.toInt();
@@ -198,7 +198,7 @@ Object.defineProperty($.oBackdrop.prototype, 'bodyFont', {
                       color : ( new oColorValue() ).parseColorFromInt(this.backdropObject.description.color)}
          return _font;
     },
- 
+
     set : function(newFont){
         var _backdrops = Backdrop.backdrops(this.group);
 		var _index = this.index;
@@ -206,12 +206,46 @@ Object.defineProperty($.oBackdrop.prototype, 'bodyFont', {
         _backdrops[_index].title.font = newFont.family;
         _backdrops[_index].title.size = newFont.size;
         _backdrops[_index].title.color = newFont.color.toInt();
-		
+
 		this.backdropObject = _backdrops[_index];
         Backdrop.setBackdrops(this.group, _backdrops);
     }
 })
 
+
+/**
+ * The nodes contained within this backdrop
+ * @name $.oBackdrop#parent
+ * @type {$.oNode[]}
+ * @readonly
+ */
+ Object.defineProperty($.oBackdrop.prototype, 'parent', {
+  get : function(){
+    if (!this.hasOwnProperty("_parent")){
+      this._parent = this.$.scn.getNodeByPath(this.group);
+    }
+    return this._parent
+  }
+})
+
+
+/**
+ * The nodes contained within this backdrop
+ * @name $.oBackdrop#nodes
+ * @type {$.oNode[]}
+ * @readonly
+ */
+Object.defineProperty($.oBackdrop.prototype, 'nodes', {
+  get : function(){
+    var _nodes = this.parent.nodes;
+    var _bounds = this.bounds;
+    _nodes = _nodes.filter(function(x){
+      return _bounds.contains(x.bounds);
+    })
+
+    return _nodes;
+  }
+})
 
 /**
  * The position of the backdrop on the horizontal axis.
@@ -223,7 +257,7 @@ Object.defineProperty($.oBackdrop.prototype, 'x', {
     var _x = this.backdropObject.position.x;
     return _x;
   },
- 
+
   set : function(newX){
     var _backdrops = Backdrop.backdrops(this.group);
     var _index = this.index;
@@ -242,20 +276,20 @@ Object.defineProperty($.oBackdrop.prototype, 'x', {
  * @type {float}
  */
 Object.defineProperty($.oBackdrop.prototype, 'y', {
-    get : function(){
-         var _y = this.backdropObject.position.y;
-         return _y;
-    },
- 
-    set : function(newY){
-		var _backdrops = Backdrop.backdrops(this.group);
-		var _index = this.index;
+  get : function(){
+    var _y = this.backdropObject.position.y;
+    return _y;
+  },
 
-        _backdrops[_index].position.y = newY;
+  set : function(newY){
+    var _backdrops = Backdrop.backdrops(this.group);
+    var _index = this.index;
 
-		this.backdropObject = _backdrops[_index];
-        Backdrop.setBackdrops(this.group, _backdrops);
-    }
+    _backdrops[_index].position.y = newY;
+
+    this.backdropObject = _backdrops[_index];
+    Backdrop.setBackdrops(this.group, _backdrops);
+  }
 })
 
 
@@ -265,20 +299,20 @@ Object.defineProperty($.oBackdrop.prototype, 'y', {
  * @type {float}
  */
 Object.defineProperty($.oBackdrop.prototype, 'width', {
-    get : function(){
-         var _width = this.backdropObject.position.w;
-         return _width;
-    },
- 
-    set : function(newWidth){
-        var _backdrops = Backdrop.backdrops(this.group);
-		var _index = this.index;
+  get : function(){
+    var _width = this.backdropObject.position.w;
+    return _width;
+  },
 
-        _backdrops[_index].position.w = newWidth;
+  set : function(newWidth){
+    var _backdrops = Backdrop.backdrops(this.group);
+    var _index = this.index;
 
-		this.backdropObject = _backdrops[_index];
-        Backdrop.setBackdrops(this.group, _backdrops);
-    }
+    _backdrops[_index].position.w = newWidth;
+
+    this.backdropObject = _backdrops[_index];
+    Backdrop.setBackdrops(this.group, _backdrops);
+  }
 })
 
 
@@ -289,20 +323,20 @@ Object.defineProperty($.oBackdrop.prototype, 'width', {
  * @type {float}
  */
 Object.defineProperty($.oBackdrop.prototype, 'height', {
-    get : function(){
-         var _height = this.backdropObject.position.h;
-         return _height;
-    },
- 
-    set : function(newHeight){
-        var _backdrops = Backdrop.backdrops(this.group);
-		var _index = this.index;
+  get : function(){
+    var _height = this.backdropObject.position.h;
+    return _height;
+  },
 
-        _backdrops[_index].position.h = newHeight;
+  set : function(newHeight){
+    var _backdrops = Backdrop.backdrops(this.group);
+    var _index = this.index;
 
-		this.backdropObject = _backdrops[_index];
-        Backdrop.setBackdrops(this.group, _backdrops);
-    }
+    _backdrops[_index].position.h = newHeight;
+
+    this.backdropObject = _backdrops[_index];
+    Backdrop.setBackdrops(this.group, _backdrops);
+  }
 })
 
 
@@ -312,21 +346,21 @@ Object.defineProperty($.oBackdrop.prototype, 'height', {
  * @type {oPoint}
  */
 Object.defineProperty($.oBackdrop.prototype, 'position', {
-    get : function(){
-         var _position = new oPoint(this.x, this.y, this.index)
-         return _position;
-    },
- 
-    set : function(newPos){
-        var _backdrops = Backdrop.backdrops(this.group);
-		var _index = this.index;
+  get : function(){
+    var _position = new oPoint(this.x, this.y, this.index)
+    return _position;
+  },
 
-        _backdrops[_index].position.x = newPos.x;
-        _backdrops[_index].position.y = newPos.y;
-		
-		this.backdropObject = _backdrops[_index];
-        Backdrop.setBackdrops(this.group, _backdrops);
-    }
+  set : function(newPos){
+    var _backdrops = Backdrop.backdrops(this.group);
+    var _index = this.index;
+
+    _backdrops[_index].position.x = newPos.x;
+    _backdrops[_index].position.y = newPos.y;
+
+    this.backdropObject = _backdrops[_index];
+    Backdrop.setBackdrops(this.group, _backdrops);
+  }
 })
 
 
@@ -336,23 +370,23 @@ Object.defineProperty($.oBackdrop.prototype, 'position', {
  * @type {oBox}
  */
 Object.defineProperty($.oBackdrop.prototype, 'bounds', {
-    get : function(){
-         var _box = new oBox(this.x, this.y, this.width+this.x, this.heigth+this.y)
-         return _box;
-    },
- 
-    set : function(newBounds){
-        var _backdrops = Backdrop.backdrops(this.group);
-		var _index = this.index;
+  get : function(){
+    var _box = new oBox(this.x, this.y, this.width+this.x, this.height+this.y)
+    return _box;
+  },
 
-        _backdrops[_index].position.x = newBounds.top;
-        _backdrops[_index].position.y = newBounds.left;
-        _backdrops[_index].position.w = newBounds.width;
-        _backdrops[_index].position.h = newBounds.height;
+  set : function(newBounds){
+    var _backdrops = Backdrop.backdrops(this.group);
+    var _index = this.index;
 
-		this.backdropObject = _backdrops[_index];
-        Backdrop.setBackdrops(this.group, _backdrops);
-    }
+    _backdrops[_index].position.x = newBounds.top;
+    _backdrops[_index].position.y = newBounds.left;
+    _backdrops[_index].position.w = newBounds.width;
+    _backdrops[_index].position.h = newBounds.height;
+
+    this.backdropObject = _backdrops[_index];
+    Backdrop.setBackdrops(this.group, _backdrops);
+  }
 })
 
 
@@ -362,21 +396,20 @@ Object.defineProperty($.oBackdrop.prototype, 'bounds', {
  * @type {oColorValue}
  */
 Object.defineProperty($.oBackdrop.prototype, 'color', {
-    get : function(){
-         var _color = this.backdropObject.color;
-         // TODO: get the rgba values from the int
-         return _color;
-    },
- 
-    set : function(newOColorValue){
-		var _color = new oColorValue(newOColorValue);
-		var _index = this.index;
+  get : function(){
+    var _color = this.backdropObject.color;
+    // TODO: get the rgba values from the int
+    return _color;
+  },
 
+  set : function(newOColorValue){
+    var _color = new oColorValue(newOColorValue);
+    var _index = this.index;
 
-        var _backdrops = Backdrop.backdrops(this.group);
-        _backdrops[_index].color = _color.toInt();
+    var _backdrops = Backdrop.backdrops(this.group);
+    _backdrops[_index].color = _color.toInt();
 
-		this.backdropObject = _backdrops[_index];
-        Backdrop.setBackdrops(this.group, _backdrops);
-    }
+    this.backdropObject = _backdrops[_index];
+    Backdrop.setBackdrops(this.group, _backdrops);
+  }
 })

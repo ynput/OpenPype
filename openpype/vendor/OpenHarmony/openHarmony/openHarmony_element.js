@@ -149,26 +149,46 @@ Object.defineProperty($.oElement.prototype, 'palettes', {
 
 /**
  * Adds a drawing to the element. Provide a filename to import an external file as a drawing.
- * @param   {int}        [atFrame]              The frame at which to add the drawing on the $.oDrawingColumn. Values < 1 create no exposure.
+ * @param   {int}        [atFrame=1]            The frame at which to add the drawing on the $.oDrawingColumn. Values < 1 create no exposure.
  * @param   {name}       [name]                 The name of the drawing to add.
- * @param   {string}     [filename]             The filename for the drawing to add.
+ * @param   {string}     [filename]             Optionally, a path for a drawing file to use for this drawing. Can pass an oFile object as well.
+ * @param   {bool}       [convertToTvg=false]   If the filename isn't a tvg file, specify if you want it converted (this doesn't vectorize the drawing).
  *
  * @return {$.oDrawing}      The added drawing
  */
-$.oElement.prototype.addDrawing = function( atFrame, name, filename ){
+$.oElement.prototype.addDrawing = function( atFrame, name, filename, convertToTvg ){
   if (typeof atFrame === 'undefined') var atFrame = 1;
   if (typeof filename === 'undefined') var filename = null;
-  if (typeof name === 'undefined') var name = atFrame+'';
+  var nameByFrame = this.$.app.preferences.XSHEET_NAME_BY_FRAME;
+  if (typeof name === 'undefined') var name = nameByFrame?atFrame:1;
+  var name = name +""; // convert name to string
+
+  // ensure a new drawing is always created by incrementing depending on preference
+  var _drawingNames = this.drawings.map(function(x){return x.name}); // index of existing names
+  var _nameFormat = /(.*?)_(\d+)$/
+  while (_drawingNames.indexOf(name) != -1){
+    if (nameByFrame || isNaN(name)){
+      var nameGroups = name.match(_nameFormat);
+      if (nameGroups){
+        // increment the part after the underscore
+        name = nameGroups[1] + "_" + (parseInt(nameGroups[2])+1);
+      }else{
+        name += "_1";
+      }
+    }else{
+      name = parseInt(name, 10);
+      if (isNaN(name)) name = 0;
+      name = name + 1 + ""; // increment and convert back to string
+    }
+  }
 
   if (!(filename instanceof this.$.oFile)) filename = new this.$.oFile(filename);
-
   var _fileExists = filename.exists;
-  // TODO deal with fileExists and storeInProjectFolder
   Drawing.create (this.id, name, _fileExists, true);
 
   var _drawing = new this.$.oDrawing( name, this );
 
-  if (_fileExists) _drawing.importBitmap(filename);
+  if (_fileExists) _drawing.importBitmap(filename, convertToTvg);
 
   // place drawing on the column at the provided frame
   if (this.column != null || this.column != undefined && atFrame >= 1){
@@ -181,12 +201,16 @@ $.oElement.prototype.addDrawing = function( atFrame, name, filename ){
 
 /**
  * Gets a drawing object by the name.
- * @param   {string}     name              The name of the drawing to get.
+ * @param   {string}  name  The name of the drawing to get.
  *
- * @return { $.oDrawing }      The drawing found by the search
+ * @return  {$.oDrawing}      The drawing found by the search
  */
 $.oElement.prototype.getDrawingByName = function ( name ){
-    return new this.$.oDrawing( name, this );
+  var _drawings = this.drawings;
+  for (var i in _drawings){
+    if (_drawings[i].name == name) return _drawings[i];
+  }
+  return null;
 }
 
 
@@ -210,14 +234,14 @@ $.oElement.prototype.linkPalette = function ( oPaletteObject , listIndex){
 /**
  * If the palette passed as a parameter is linked to this element, it will be unlinked, and moved to the scene palette list.
  * @param {$.oPalette} oPaletteObject
+ * @return {bool} the success of the unlinking process.
  */
-$.oElement.prototype.unlinkPalette = function ( oPaletteObject) {
-  log(oPaletteObject.id)
+$.oElement.prototype.unlinkPalette = function (oPaletteObject) {
   var _palettes = this.palettes;
   var _ids = _palettes.map(function(x){return x.id});
   var _paletteId = oPaletteObject.id;
   var _paletteIndex = _ids.indexOf(_paletteId);
-  log(_paletteIndex)
+
   if (_paletteIndex == -1) return; // palette already isn't linked
 
   var _palette = _palettes[_paletteIndex];
