@@ -175,6 +175,7 @@ def install():
     """Install Pype as host config."""
     print("Installing Pype config ...")
 
+    pyblish.api.register_host("harmony")
     pyblish.api.register_plugin_path(PUBLISH_PATH)
     avalon.api.register_plugin_path(avalon.api.Loader, LOAD_PATH)
     avalon.api.register_plugin_path(avalon.api.Creator, CREATE_PATH)
