@@ -1,7 +1,8 @@
 import os
 import shutil
 
-from avalon import api, harmony
+from avalon import api
+import openpype.hosts.harmony.api as harmony
 
 
 class ImportPaletteLoader(api.Loader):

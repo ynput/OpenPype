@@ -1,7 +1,8 @@
 import os
 import json
 
-from avalon import api, harmony
+from avalon import api
+import openpype.hosts.harmony.api as harmony
 import openpype.lib
 
 
