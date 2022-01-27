@@ -1,750 +1,771 @@
 {
-    "type": "dict",
-    "key": "ftrack",
-    "label": "Ftrack",
-    "collapsible": true,
-    "is_file": true,
-    "children": [
-        {
-            "type": "dict",
-            "key": "events",
-            "label": "Server Actions/Events",
-            "children": [
-                {
-                    "type": "dict",
-                    "key": "sync_to_avalon",
-                    "label": "Sync to avalon",
-                    "children": [
-                        {
-                            "type": "label",
-                            "label": "Allow name and hierarchy change only if following statuses are on all children tasks"
-                        },
-                        {
-                            "type": "list",
-                            "key": "statuses_name_change",
-                            "label": "Statuses",
-                            "object_type": {
-                                "type": "text",
-                                "multiline": false
-                            }
-                        }
-                    ]
-                },
-                {
-                    "type": "dict",
-                    "key": "prepare_project",
-                    "label": "Prepare Project",
-                    "checkbox_key": "enabled",
-                    "children": [
-                        {
-                            "type": "boolean",
-                            "key": "enabled",
-                            "label": "Enabled"
-                        },
-                        {
-                            "type": "list",
-                            "key": "role_list",
-                            "label": "Roles",
-                            "object_type": "text"
-                        }
-                    ]
-                },
-                {
-                    "type": "dict",
-                    "key": "sync_hier_entity_attributes",
-                    "label": "Sync Hierarchical and Entity Attributes",
-                    "checkbox_key": "enabled",
-                    "children": [
-                        {
-                            "type": "boolean",
-                            "key": "enabled",
-                            "label": "Enabled"
-                        },
-                        {
-                            "type": "list",
-                            "key": "interest_entity_types",
-                            "label": "Entity types of interest",
-                            "object_type": {
-                                "type": "text",
-                                "multiline": false
-                            }
-                        },
-                        {
-                            "type": "list",
-                            "key": "interest_attributes",
-                            "label": "Attributes to sync",
-                            "object_type": {
-                                "type": "text",
-                                "multiline": false
-                            }
-                        },
-                        {
-                            "type": "separator"
-                        },
-                        {
-                            "type": "boolean",
-                            "key": "action_enabled",
-                            "label": "Enable Action"
-                        },
-                        {
-                            "type": "list",
-                            "key": "role_list",
-                            "label": "Roles for action",
-                            "object_type": "text"
-                        }
-                    ]
-                },
-                {
-                    "type": "dict",
-                    "key": "clone_review_session",
-                    "label": "Clone Review Session",
-                    "checkbox_key": "enabled",
-                    "children": [
-                        {
-                            "type": "boolean",
-                            "key": "enabled",
-                            "label": "Enabled"
-                        },
-                        {
-                            "type": "list",
-                            "key": "role_list",
-                            "label": "Roles for action",
-                            "object_type": "text"
-                        }
-                    ]
-                },
-                {
-                    "type": "dict",
-                    "key": "thumbnail_updates",
-                    "label": "Update Hierarchy thumbnails",
-                    "checkbox_key": "enabled",
-                    "children": [
-                        {
-                            "type": "boolean",
-                            "key": "enabled",
-                            "label": "Enabled"
-                        },
-                        {
-                            "type": "label",
-                            "label": "Push thumbnail from version, up through multiple hierarchy levels."
-                        },
-                        {
-                            "type": "number",
-                            "key": "levels",
-                            "label": "Levels"
-                        }
-                    ]
-                },
-                {
-                    "type": "dict",
-                    "key": "user_assignment",
-                    "label": "Run script on user assignments",
-                    "checkbox_key": "enabled",
-                    "children": [
-                        {
-                            "type": "boolean",
-                            "key": "enabled",
-                            "label": "Enabled"
-                        }
-                    ]
-                },
-                {
-                    "type": "dict",
-                    "key": "status_update",
-                    "label": "Update status on task action",
-                    "is_group": true,
-                    "checkbox_key": "enabled",
-                    "children": [
-                        {
-                            "type": "boolean",
-                            "key": "enabled",
-                            "label": "Enabled"
-                        },
-                        {
-                            "key": "mapping",
-                            "type": "dict-modifiable",
-                            "object_type": {
-                                "type": "list",
-                                "object_type": "text"
-                            }
-                        }
-                    ]
-                },
-                {
-                    "type": "dict",
-                    "key": "status_task_to_parent",
-                    "label": "Sync status from Task to Parent",
-                    "checkbox_key": "enabled",
-                    "children": [
-                        {
-                            "type": "boolean",
-                            "key": "enabled",
-                            "label": "Enabled"
-                        },
-                        {
-                            "type": "label",
-                            "label": "List of parent object types where this is triggered (\"Shot\", \"Asset Build\", etc.). Skipped if list is empty."
-                        },
-                        {
-                            "type": "list",
-                            "object_type": "text",
-                            "key": "parent_object_types",
-                            "label": "Object types"
-                        },
-                        {
-                            "key": "parent_status_match_all_task_statuses",
-                            "type": "dict-modifiable",
-                            "label": "Change parent if all tasks match",
-                            "object_type": {
-                                "type": "list",
-                                "object_type": "text"
-                            }
-                        },
-                        {
-                            "type": "list",
-                            "key": "parent_status_by_task_status",
-                            "label": "Change parent status if a single task matches",
-                            "use_label_wrap": true,
-                            "object_type": {
-                                "type": "dict",
-                                "children": [
-                                    {
-                                        "type": "text",
-                                        "label": "New parent status",
-                                        "key": "new_status"
-                                    },
-                                    {
-                                        "type": "separator"
-                                    },
-                                    {
-                                        "type": "list",
-                                        "label": "Task status",
-                                        "key": "task_statuses",
-                                        "object_type": "text"
-                                    }
-                                ]
-                            }
-                        }
-                    ]
-                },
-                {
-                    "type": "dict",
-                    "key": "status_task_to_version",
-                    "label": "Sync status from Task to Version",
-                    "is_group": true,
-                    "checkbox_key": "enabled",
-                    "children": [
-                        {
-                            "type": "boolean",
-                            "key": "enabled",
-                            "label": "Enabled"
-                        },
-                        {
-                            "type": "dict-modifiable",
-                            "key": "mapping",
-                            "object_type":
-                            {
-                                "type": "list",
-                                "object_type": "text"
-                            }
-                        },
-                        {
-                            "type": "label",
-                            "label": "<b>Limit<b/> status changes to entered asset types. Limitation is ignored if nothing is entered."
-                        },
-                        {
-                            "type": "list",
-                            "key": "asset_types_filter",
-                            "label": "Asset types (short)",
-                            "object_type": "text"
-                        }
-                    ]
-                },
-                {
-                    "type": "dict",
-                    "key": "status_version_to_task",
-                    "label": "Sync status from Version to Task",
-                    "is_group": true,
-                    "checkbox_key": "enabled",
-                    "children": [
-                        {
-                            "type": "boolean",
-                            "key": "enabled",
-                            "label": "Enabled"
-                        },
-                        {
-                            "type": "label",
-                            "label": "<b>Change Task status based on a changed Version status.</b><br/>Version's new status on the <b>left</b> will trigger a change of a task status to the first available from the list on <b>right</b>.<br/> - if no status from the list is available it will use the same status as the version."
-                        },
-                        {
-                            "type": "dict-modifiable",
-                            "key": "mapping",
-                            "object_type": {
-                                "type": "list",
-                                "object_type": "text"
-                            }
-                        },
-                        {
-                            "type": "separator"
-                        },
-                        {
-                            "type": "label",
-                            "label": "<b>Disable<b/> event if status was changed on specific Asset type."
-                        },
-                        {
-                            "type": "list",
-                            "label": "Asset types (short)",
-                            "key": "asset_types_to_skip",
-                            "object_type": "text"
-                        }
-                    ]
-                },
-                {
-                    "type": "dict",
-                    "key": "first_version_status",
-                    "label": "Set status on first created version",
-                    "checkbox_key": "enabled",
-                    "children": [
-                        {
-                            "type": "boolean",
-                            "key": "enabled",
-                            "label": "Enabled"
-                        },
-                        {
-                            "type": "text",
-                            "key": "status",
-                            "label": "Status"
-                        }
-                    ]
-                },
-                {
-                    "type": "dict",
-                    "key": "next_task_update",
-                    "is_group": true,
-                    "label": "Update status on next task",
-                    "checkbox_key": "enabled",
-                    "children": [
-                        {
-                            "type": "boolean",
-                            "key": "enabled",
-                            "label": "Enabled"
-                        },
-                        {
-                            "type": "label",
-                            "label": "Change status on next task by <b>task types order</b> when task status state changed to \"Done\". All tasks with same Task type must be \"Done\"."
-                        },
-                        {
-                            "type": "label",
-                            "label": "Mapping of next task status changes <b>From</b> -> <b>To</b>."
-                        },
-                        {
-                            "type": "dict-modifiable",
-                            "key": "mapping",
-                            "object_type": {
-                                "type": "text"
-                            }
-                        },
-                        {
-                            "type": "separator"
-                        },
-                        {
-                            "type": "label",
-                            "label": "Status names that are ignored on \"Done\" check (e.g. \"Omitted\")."
-                        },
-                        {
-                            "type": "list",
-                            "key": "ignored_statuses",
-                            "object_type": "text"
-                        },
-                        {
-                            "type": "separator"
-                        },
-                        {
-                            "type": "label",
-                            "label": "Allow to break rule that all tasks with same Task type must be \"Done\" and change statuses with same type tasks ordered by name."
-                        },
-                        {
-                            "label": "Name sorting",
-                            "type": "boolean",
-                            "key": "name_sorting"
-                        }
-                    ]
-                }
-            ]
-        },
-        {
-            "type": "dict",
-            "key": "user_handlers",
-            "label": "User Actions/Events",
-            "children": [
-                {
-                    "type": "dict",
-                    "key": "application_launch_statuses",
-                    "is_group": true,
-                    "label": "Application - Status change on launch",
-                    "checkbox_key": "enabled",
-                    "children": [
-                        {
-                            "type": "boolean",
-                            "key": "enabled",
-                            "label": "Enabled"
-                        },
-                        {
-                            "type": "label",
-                            "label": "<b>Do not change status if current status is:</b>"
-                        },
-                        {
-                            "type": "list",
-                            "key": "ignored_statuses",
-                            "object_type": "text"
-                        },
-                        {
-                            "type": "label",
-                            "label": "Change task's status to <b>left side</b> if current task status is in list on <b>right side</b>."
-                        },
-                        {
-                            "type": "dict-modifiable",
-                            "key": "status_change",
-                            "object_type": {
-                                "type": "list",
-                                "object_type": "text"
-                            }
-                        }
-                    ]
-                },
-                {
-                    "type": "dict",
-                    "key": "create_update_attributes",
-                    "label": "Create/Update Avalon Attributes",
-                    "children": [
-                        {
-                            "type": "list",
-                            "key": "role_list",
-                            "label": "Roles",
-                            "object_type": "text"
-                        }
-                    ]
-                },
-                {
-                    "type": "dict",
-                    "key": "prepare_project",
-                    "label": "Prepare Project",
-                    "checkbox_key": "enabled",
-                    "children": [
-                        {
-                            "type": "boolean",
-                            "key": "enabled",
-                            "label": "Enabled"
-                        },
-                        {
-                            "type": "list",
-                            "key": "role_list",
-                            "label": "Roles",
-                            "object_type": "text"
-                        },
-                        {
-                          "type": "separator"
-                        },
-                        {
-                          "type": "label",
-                          "label": "Check \"Create project structure\" by default"
-                        },
-                        {
-                            "type": "boolean",
-                            "key": "create_project_structure_checked",
-                            "label": "Checked"
-                        }
-                    ]
-                },
-                {
-                    "type": "dict",
-                    "key": "clean_hierarchical_attr",
-                    "label": "Clean hierarchical custom attributes",
-                    "checkbox_key": "enabled",
-                    "children": [
-                        {
-                            "type": "boolean",
-                            "key": "enabled",
-                            "label": "Enabled"
-                        },
-                        {
-                            "type": "list",
-                            "key": "role_list",
-                            "label": "Roles",
-                            "object_type": "text"
-                        }
-                    ]
-                },
-                {
-                    "type": "dict",
-                    "key": "delete_asset_subset",
-                    "label": "Delete Asset/Subsets",
-                    "checkbox_key": "enabled",
-                    "children": [
-                        {
-                            "type": "boolean",
-                            "key": "enabled",
-                            "label": "Enabled"
-                        },
-                        {
-                            "type": "list",
-                            "key": "role_list",
-                            "label": "Roles",
-                            "object_type": "text"
-                        }
-                    ]
-                },
-                {
-                    "type": "dict",
-                    "key": "delete_old_versions",
-                    "label": "Delete old versions",
-                    "checkbox_key": "enabled",
-                    "children": [
-                        {
-                            "type": "boolean",
-                            "key": "enabled",
-                            "label": "Enabled"
-                        },
-                        {
-                            "type": "list",
-                            "key": "role_list",
-                            "label": "Roles",
-                            "object_type": "text"
-                        }
-                    ]
-                },
-                {
-                    "type": "dict",
-                    "key": "delivery_action",
-                    "label": "Delivery",
-                    "checkbox_key": "enabled",
-                    "children": [
-                        {
-                            "type": "boolean",
-                            "key": "enabled",
-                            "label": "Enabled"
-                        },
-                        {
-                            "type": "list",
-                            "key": "role_list",
-                            "label": "Roles",
-                            "object_type": "text"
-                        }
-                    ]
-                },
-                {
-                    "type": "dict",
-                    "key": "store_thubmnail_to_avalon",
-                    "label": "Store Thumbnails to avalon",
-                    "checkbox_key": "enabled",
-                    "children": [
-                        {
-                            "type": "boolean",
-                            "key": "enabled",
-                            "label": "Enabled"
-                        },
-                        {
-                            "type": "list",
-                            "key": "role_list",
-                            "label": "Roles",
-                            "object_type": "text"
-                        }
-                    ]
-                },
-                {
-                    "type": "dict",
-                    "key": "job_killer",
-                    "label": "Job Killer",
-                    "checkbox_key": "enabled",
-                    "children": [
-                        {
-                            "type": "boolean",
-                            "key": "enabled",
-                            "label": "Enabled"
-                        },
-                        {
-                            "type": "list",
-                            "key": "role_list",
-                            "label": "Roles",
-                            "object_type": "text"
-                        }
-                    ]
-                },
-                {
-                    "type": "dict",
-                    "key": "sync_to_avalon_local",
-                    "label": "Sync to avalon (local) - For development",
-                    "checkbox_key": "enabled",
-                    "children": [
-                        {
-                            "type": "boolean",
-                            "key": "enabled",
-                            "label": "Enabled"
-                        },
-                        {
-                            "type": "list",
-                            "key": "role_list",
-                            "label": "Roles",
-                            "object_type": "text"
-                        }
-                    ]
-                },
-                {
-                    "type": "dict",
-                    "key": "seed_project",
-                    "label": "Seed Debug Project",
-                    "checkbox_key": "enabled",
-                    "children": [
-                        {
-                            "type": "boolean",
-                            "key": "enabled",
-                            "label": "Enabled"
-                        },
-                        {
-                            "type": "list",
-                            "key": "role_list",
-                            "label": "Roles",
-                            "object_type": "text"
-                        }
-                    ]
-                }
-            ]
-        },
-        {
-            "type": "dict",
-            "collapsible": true,
-            "key": "publish",
-            "label": "Publish plugins",
-            "children": [
-                {
-                    "type": "dict",
-                    "collapsible": true,
-                    "checkbox_key": "enabled",
-                    "key": "CollectFtrackFamily",
-                    "label": "Collect Ftrack Family",
-                    "is_group": true,
-                    "children": [
-                        {
-                            "type": "boolean",
-                            "key": "enabled",
-                            "label": "Enabled"
-                        },
-                        {
-                            "type": "list",
-                            "collapsible": true,
-                            "key": "profiles",
-                            "label": "Profiles",
-                            "use_label_wrap": true,
-                            "object_type": {
-                                "type": "dict",
-                                "children": [
-                                    {
-                                        "key": "hosts",
-                                        "label": "Host names",
-                                        "type": "list",
-                                        "object_type": "text"
-                                    },
-                                    {
-                                        "key": "families",
-                                        "label": "Families",
-                                        "type": "list",
-                                        "object_type": "text"
-                                    },
-                                    {
-                                        "key": "task_types",
-                                        "label": "Task types",
-                                        "type": "task-types-enum"
-                                    },
-                                    {
-                                        "key": "tasks",
-                                        "label": "Task names",
-                                        "type": "list",
-                                        "object_type": "text"
-                                    },
-                                    {
-                                        "type": "separator"
-                                    },
-                                    {
-                                        "key": "add_ftrack_family",
-                                        "label": "Add Ftrack Family",
-                                        "type": "boolean"
-                                    },
-                                    {
-                                        "type": "list",
-                                        "collapsible": true,
-                                        "key": "advanced_filtering",
-                                        "label": "Advanced adding if additional families present",
-                                        "use_label_wrap": true,
-                                        "object_type": {
-                                            "type": "dict",
-                                            "children": [
-                                                {
-                                                    "key": "families",
-                                                    "label": "Additional Families",
-                                                    "type": "list",
-                                                    "object_type": "text"
-                                                },
-                                                {
-                                                    "key": "add_ftrack_family",
-                                                    "label": "Add Ftrack Family",
-                                                    "type": "boolean"
-                                                }
-                                            ]
-                                        }
-                                    }
-                                ]
-                            }
-                        }
-                    ]
-                },
-                {
-                    "type": "dict",
-                    "collapsible": true,
-                    "checkbox_key": "enabled",
-                    "key": "IntegrateFtrackNote",
-                    "label": "IntegrateFtrackNote",
-                    "is_group": true,
-                    "children": [
-                        {
-                            "type": "boolean",
-                            "key": "enabled",
-                            "label": "Enabled"
-                        },
-                        {
-                            "type": "text",
-                            "key": "note_with_intent_template",
-                            "label": "Note with intent template"
-                        },
-                        {
-                            "type": "list",
-                            "object_type": "text",
-                            "key": "note_labels",
-                            "label": "Note labels"
-                        }
-                    ]
-                },
-
-                {
-                    "type": "dict",
-                    "collapsible": true,
-                    "checkbox_key": "enabled",
-                    "key": "ValidateFtrackAttributes",
-                    "label": "ValidateFtrackAttributes",
-                    "is_group": true,
-                    "children": [
-                        {
-                            "type": "boolean",
-                            "key": "enabled",
-                            "label": "Enabled"
-                        },
-                        {
-                            "type": "raw-json",
-                            "key": "ftrack_custom_attributes",
-                            "label": "Custom attributes to validate"
-                        }
-                    ]
-                }
-            ]
-        }
-    ]
+	"type" : "dict",
+	"key" : "ftrack",
+	"label" : "Ftrack",
+	"collapsible" : true,
+	"is_file" : true,
+	"children" : [
+		{
+			"type" : "dict",
+			"key" : "events",
+			"label" : "Server Actions/Events",
+			"children" : [
+				{
+					"type" : "dict",
+					"key" : "sync_to_avalon",
+					"label" : "Sync to avalon",
+					"children" : [
+						{
+							"type" : "label",
+							"label" : "Allow name and hierarchy change only if following statuses are on all children tasks"
+						},
+						{
+							"type" : "list",
+							"key" : "statuses_name_change",
+							"label" : "Statuses",
+							"object_type" : {
+								"type" : "text",
+								"multiline" : false
+							}
+						}
+					]
+				},
+				{
+					"type" : "dict",
+					"key" : "prepare_project",
+					"label" : "Prepare Project",
+					"checkbox_key" : "enabled",
+					"children" : [
+						{
+							"type" : "boolean",
+							"key" : "enabled",
+							"label" : "Enabled"
+						},
+						{
+							"type" : "list",
+							"key" : "role_list",
+							"label" : "Roles",
+							"object_type" : "text"
+						}
+					]
+				},
+				{
+					"type" : "dict",
+					"key" : "sync_hier_entity_attributes",
+					"label" : "Sync Hierarchical and Entity Attributes",
+					"checkbox_key" : "enabled",
+					"children" : [
+						{
+							"type" : "boolean",
+							"key" : "enabled",
+							"label" : "Enabled"
+						},
+						{
+							"type" : "list",
+							"key" : "interest_entity_types",
+							"label" : "Entity types of interest",
+							"object_type" : {
+								"type" : "text",
+								"multiline" : false
+							}
+						},
+						{
+							"type" : "list",
+							"key" : "interest_attributes",
+							"label" : "Attributes to sync",
+							"object_type" : {
+								"type" : "text",
+								"multiline" : false
+							}
+						},
+						{
+							"type" : "separator"
+						},
+						{
+							"type" : "boolean",
+							"key" : "action_enabled",
+							"label" : "Enable Action"
+						},
+						{
+							"type" : "list",
+							"key" : "role_list",
+							"label" : "Roles for action",
+							"object_type" : "text"
+						}
+					]
+				},
+				{
+					"type" : "dict",
+					"key" : "clone_review_session",
+					"label" : "Clone Review Session",
+					"checkbox_key" : "enabled",
+					"children" : [
+						{
+							"type" : "boolean",
+							"key" : "enabled",
+							"label" : "Enabled"
+						},
+						{
+							"type" : "list",
+							"key" : "role_list",
+							"label" : "Roles for action",
+							"object_type" : "text"
+						}
+					]
+				},
+				{
+					"type" : "dict",
+					"key" : "thumbnail_updates",
+					"label" : "Update Hierarchy thumbnails",
+					"checkbox_key" : "enabled",
+					"children" : [
+						{
+							"type" : "boolean",
+							"key" : "enabled",
+							"label" : "Enabled"
+						},
+						{
+							"type" : "label",
+							"label" : "Push thumbnail from version, up through multiple hierarchy levels."
+						},
+						{
+							"type" : "number",
+							"key" : "levels",
+							"label" : "Levels"
+						}
+					]
+				},
+				{
+					"type" : "dict",
+					"key" : "user_assignment",
+					"label" : "Run script on user assignments",
+					"checkbox_key" : "enabled",
+					"children" : [
+						{
+							"type" : "boolean",
+							"key" : "enabled",
+							"label" : "Enabled"
+						}
+					]
+				},
+				{
+					"type" : "dict",
+					"key" : "status_update",
+					"label" : "Update status on task action",
+					"is_group" : true,
+					"checkbox_key" : "enabled",
+					"children" : [
+						{
+							"type" : "boolean",
+							"key" : "enabled",
+							"label" : "Enabled"
+						},
+						{
+							"key" : "mapping",
+							"type" : "dict-modifiable",
+							"object_type" : {
+								"type" : "list",
+								"object_type" : "text"
+							}
+						}
+					]
+				},
+				{
+					"type" : "dict",
+					"key" : "status_task_to_parent",
+					"label" : "Sync status from Task to Parent",
+					"checkbox_key" : "enabled",
+					"children" : [
+						{
+							"type" : "boolean",
+							"key" : "enabled",
+							"label" : "Enabled"
+						},
+						{
+							"type" : "label",
+							"label" : "List of parent object types where this is triggered (\"Shot\", \"Asset Build\", etc.). Skipped if list is empty."
+						},
+						{
+							"type" : "list",
+							"object_type" : "text",
+							"key" : "parent_object_types",
+							"label" : "Object types"
+						},
+						{
+							"key" : "parent_status_match_all_task_statuses",
+							"type" : "dict-modifiable",
+							"label" : "Change parent if all tasks match",
+							"object_type" : {
+								"type" : "list",
+								"object_type" : "text"
+							}
+						},
+						{
+							"type" : "list",
+							"key" : "parent_status_by_task_status",
+							"label" : "Change parent status if a single task matches",
+							"use_label_wrap" : true,
+							"object_type" : {
+								"type" : "dict",
+								"children" : [
+									{
+										"type" : "text",
+										"label" : "New parent status",
+										"key" : "new_status"
+									},
+									{
+										"type" : "separator"
+									},
+									{
+										"type" : "list",
+										"label" : "Task status",
+										"key" : "task_statuses",
+										"object_type" : "text"
+									}
+								]
+							}
+						}
+					]
+				},
+				{
+					"type" : "dict",
+					"key" : "status_task_to_version",
+					"label" : "Sync status from Task to Version",
+					"is_group" : true,
+					"checkbox_key" : "enabled",
+					"children" : [
+						{
+							"type" : "boolean",
+							"key" : "enabled",
+							"label" : "Enabled"
+						},
+						{
+							"type" : "dict-modifiable",
+							"key" : "mapping",
+							"object_type" : {
+								"type" : "list",
+								"object_type" : "text"
+							}
+						},
+						{
+							"type" : "label",
+							"label" : "<b>Limit<b/> status changes to entered asset types. Limitation is ignored if nothing is entered."
+						},
+						{
+							"type" : "list",
+							"key" : "asset_types_filter",
+							"label" : "Asset types (short)",
+							"object_type" : "text"
+						}
+					]
+				},
+				{
+					"type" : "dict",
+					"key" : "status_version_to_task",
+					"label" : "Sync status from Version to Task",
+					"is_group" : true,
+					"checkbox_key" : "enabled",
+					"children" : [
+						{
+							"type" : "boolean",
+							"key" : "enabled",
+							"label" : "Enabled"
+						},
+						{
+							"type" : "label",
+							"label" : "<b>Change Task status based on a changed Version status.</b><br/>Version's new status on the <b>left</b> will trigger a change of a task status to the first available from the list on <b>right</b>.<br/> - if no status from the list is available it will use the same status as the version."
+						},
+						{
+							"type" : "dict-modifiable",
+							"key" : "mapping",
+							"object_type" : {
+								"type" : "list",
+								"object_type" : "text"
+							}
+						},
+						{
+							"type" : "separator"
+						},
+						{
+							"type" : "label",
+							"label" : "<b>Disable<b/> event if status was changed on specific Asset type."
+						},
+						{
+							"type" : "list",
+							"label" : "Asset types (short)",
+							"key" : "asset_types_to_skip",
+							"object_type" : "text"
+						}
+					]
+				},
+				{
+					"type" : "dict",
+					"key" : "first_version_status",
+					"label" : "Set status on first created version",
+					"checkbox_key" : "enabled",
+					"children" : [
+						{
+							"type" : "boolean",
+							"key" : "enabled",
+							"label" : "Enabled"
+						},
+						{
+							"type" : "text",
+							"key" : "status",
+							"label" : "Status"
+						}
+					]
+				},
+				{
+					"type" : "dict",
+					"key" : "next_task_update",
+					"is_group" : true,
+					"label" : "Update status on next task",
+					"checkbox_key" : "enabled",
+					"children" : [
+						{
+							"type" : "boolean",
+							"key" : "enabled",
+							"label" : "Enabled"
+						},
+						{
+							"type" : "label",
+							"label" : "Change status on next task by <b>task types order</b> when task status state changed to \"Done\". All tasks with same Task type must be \"Done\"."
+						},
+						{
+							"type" : "label",
+							"label" : "Mapping of next task status changes <b>From</b> -> <b>To</b>."
+						},
+						{
+							"type" : "dict-modifiable",
+							"key" : "mapping",
+							"object_type" : {
+								"type" : "text"
+							}
+						},
+						{
+							"type" : "separator"
+						},
+						{
+							"type" : "label",
+							"label" : "Status names that are ignored on \"Done\" check (e.g. \"Omitted\")."
+						},
+						{
+							"type" : "list",
+							"key" : "ignored_statuses",
+							"object_type" : "text"
+						},
+						{
+							"type" : "separator"
+						},
+						{
+							"type" : "label",
+							"label" : "Allow to break rule that all tasks with same Task type must be \"Done\" and change statuses with same type tasks ordered by name."
+						},
+						{
+							"label" : "Name sorting",
+							"type" : "boolean",
+							"key" : "name_sorting"
+						}
+					]
+				}
+			]
+		},
+		{
+			"type" : "dict",
+			"key" : "user_handlers",
+			"label" : "User Actions/Events",
+			"children" : [
+				{
+					"type" : "dict",
+					"key" : "application_launch_statuses",
+					"is_group" : true,
+					"label" : "Application - Status change on launch",
+					"checkbox_key" : "enabled",
+					"children" : [
+						{
+							"type" : "boolean",
+							"key" : "enabled",
+							"label" : "Enabled"
+						},
+						{
+							"type" : "label",
+							"label" : "<b>Do not change status if current status is:</b>"
+						},
+						{
+							"type" : "list",
+							"key" : "ignored_statuses",
+							"object_type" : "text"
+						},
+						{
+							"type" : "label",
+							"label" : "Change task's status to <b>left side</b> if current task status is in list on <b>right side</b>."
+						},
+						{
+							"type" : "dict-modifiable",
+							"key" : "status_change",
+							"object_type" : {
+								"type" : "list",
+								"object_type" : "text"
+							}
+						}
+					]
+				},
+				{
+					"type" : "dict",
+					"key" : "create_update_attributes",
+					"label" : "Create/Update Avalon Attributes",
+					"children" : [
+						{
+							"type" : "list",
+							"key" : "role_list",
+							"label" : "Roles",
+							"object_type" : "text"
+						}
+					]
+				},
+				{
+					"type" : "dict",
+					"key" : "prepare_project",
+					"label" : "Prepare Project",
+					"checkbox_key" : "enabled",
+					"children" : [
+						{
+							"type" : "boolean",
+							"key" : "enabled",
+							"label" : "Enabled"
+						},
+						{
+							"type" : "list",
+							"key" : "role_list",
+							"label" : "Roles",
+							"object_type" : "text"
+						},
+						{
+							"type" : "separator"
+						},
+						{
+							"type" : "label",
+							"label" : "Check \"Create project structure\" by default"
+						},
+						{
+							"type" : "boolean",
+							"key" : "create_project_structure_checked",
+							"label" : "Checked"
+						}
+					]
+				},
+				{
+					"type" : "dict",
+					"key" : "clean_hierarchical_attr",
+					"label" : "Clean hierarchical custom attributes",
+					"checkbox_key" : "enabled",
+					"children" : [
+						{
+							"type" : "boolean",
+							"key" : "enabled",
+							"label" : "Enabled"
+						},
+						{
+							"type" : "list",
+							"key" : "role_list",
+							"label" : "Roles",
+							"object_type" : "text"
+						}
+					]
+				},
+				{
+					"type" : "dict",
+					"key" : "delete_asset_subset",
+					"label" : "Delete Asset/Subsets",
+					"checkbox_key" : "enabled",
+					"children" : [
+						{
+							"type" : "boolean",
+							"key" : "enabled",
+							"label" : "Enabled"
+						},
+						{
+							"type" : "list",
+							"key" : "role_list",
+							"label" : "Roles",
+							"object_type" : "text"
+						}
+					]
+				},
+				{
+					"type" : "dict",
+					"key" : "delete_old_versions",
+					"label" : "Delete old versions",
+					"checkbox_key" : "enabled",
+					"children" : [
+						{
+							"type" : "boolean",
+							"key" : "enabled",
+							"label" : "Enabled"
+						},
+						{
+							"type" : "list",
+							"key" : "role_list",
+							"label" : "Roles",
+							"object_type" : "text"
+						}
+					]
+				},
+				{
+					"type" : "dict",
+					"key" : "delivery_action",
+					"label" : "Delivery",
+					"checkbox_key" : "enabled",
+					"children" : [
+						{
+							"type" : "boolean",
+							"key" : "enabled",
+							"label" : "Enabled"
+						},
+						{
+							"type" : "list",
+							"key" : "role_list",
+							"label" : "Roles",
+							"object_type" : "text"
+						}
+					]
+				},
+				{
+					"type" : "dict",
+					"key" : "store_thubmnail_to_avalon",
+					"label" : "Store Thumbnails to avalon",
+					"checkbox_key" : "enabled",
+					"children" : [
+						{
+							"type" : "boolean",
+							"key" : "enabled",
+							"label" : "Enabled"
+						},
+						{
+							"type" : "list",
+							"key" : "role_list",
+							"label" : "Roles",
+							"object_type" : "text"
+						}
+					]
+				},
+				{
+					"type" : "dict",
+					"key" : "job_killer",
+					"label" : "Job Killer",
+					"checkbox_key" : "enabled",
+					"children" : [
+						{
+							"type" : "boolean",
+							"key" : "enabled",
+							"label" : "Enabled"
+						},
+						{
+							"type" : "list",
+							"key" : "role_list",
+							"label" : "Roles",
+							"object_type" : "text"
+						}
+					]
+				},
+				{
+					"type" : "dict",
+					"key" : "sync_to_avalon_local",
+					"label" : "Sync to avalon (local) - For development",
+					"checkbox_key" : "enabled",
+					"children" : [
+						{
+							"type" : "boolean",
+							"key" : "enabled",
+							"label" : "Enabled"
+						},
+						{
+							"type" : "list",
+							"key" : "role_list",
+							"label" : "Roles",
+							"object_type" : "text"
+						}
+					]
+				},
+				{
+					"type" : "dict",
+					"key" : "seed_project",
+					"label" : "Seed Debug Project",
+					"checkbox_key" : "enabled",
+					"children" : [
+						{
+							"type" : "boolean",
+							"key" : "enabled",
+							"label" : "Enabled"
+						},
+						{
+							"type" : "list",
+							"key" : "role_list",
+							"label" : "Roles",
+							"object_type" : "text"
+						}
+					]
+				}
+			]
+		},
+		{
+			"type" : "dict",
+			"collapsible" : true,
+			"key" : "publish",
+			"label" : "Publish plugins",
+			"children" : [
+				{
+					"type" : "dict",
+					"collapsible" : true,
+					"checkbox_key" : "enabled",
+					"key" : "CollectFtrackFamily",
+					"label" : "Collect Ftrack Family",
+					"is_group" : true,
+					"children" : [
+						{
+							"type" : "boolean",
+							"key" : "enabled",
+							"label" : "Enabled"
+						},
+						{
+							"type" : "list",
+							"collapsible" : true,
+							"key" : "profiles",
+							"label" : "Profiles",
+							"use_label_wrap" : true,
+							"object_type" : {
+								"type" : "dict",
+								"children" : [
+									{
+										"key" : "hosts",
+										"label" : "Host names",
+										"type" : "list",
+										"object_type" : "text"
+									},
+									{
+										"key" : "families",
+										"label" : "Families",
+										"type" : "list",
+										"object_type" : "text"
+									},
+									{
+										"key" : "task_types",
+										"label" : "Task types",
+										"type" : "task-types-enum"
+									},
+									{
+										"key" : "tasks",
+										"label" : "Task names",
+										"type" : "list",
+										"object_type" : "text"
+									},
+									{
+										"type" : "separator"
+									},
+									{
+										"key" : "add_ftrack_family",
+										"label" : "Add Ftrack Family",
+										"type" : "boolean"
+									},
+									{
+										"type" : "list",
+										"collapsible" : true,
+										"key" : "advanced_filtering",
+										"label" : "Advanced adding if additional families present",
+										"use_label_wrap" : true,
+										"object_type" : {
+											"type" : "dict",
+											"children" : [
+												{
+													"key" : "families",
+													"label" : "Additional Families",
+													"type" : "list",
+													"object_type" : "text"
+												},
+												{
+													"key" : "add_ftrack_family",
+													"label" : "Add Ftrack Family",
+													"type" : "boolean"
+												}
+											]
+										}
+									}
+								]
+							}
+						}
+					]
+				},
+				{
+					"type" : "dict",
+					"collapsible" : true,
+					"checkbox_key" : "enabled",
+					"key" : "IntegrateFtrackNote",
+					"label" : "IntegrateFtrackNote",
+					"is_group" : true,
+					"children" : [
+						{
+							"type" : "boolean",
+							"key" : "enabled",
+							"label" : "Enabled"
+						},
+						{
+							"type" : "text",
+							"key" : "note_with_intent_template",
+							"label" : "Note with intent template"
+						},
+						{
+							"type" : "list",
+							"object_type" : "text",
+							"key" : "note_labels",
+							"label" : "Note labels"
+						}
+					]
+				},
+				{
+					"type" : "dict",
+					"collapsible" : true,
+					"checkbox_key" : "enabled",
+					"key" : "ValidateFtrackAttributes",
+					"label" : "ValidateFtrackAttributes",
+					"is_group" : true,
+					"children" : [
+						{
+							"type" : "boolean",
+							"key" : "enabled",
+							"label" : "Enabled"
+						},
+						{
+							"type" : "raw-json",
+							"key" : "ftrack_custom_attributes",
+							"label" : "Custom attributes to validate"
+						}
+					]
+				},
+				{
+					"type" : "dict",
+					"collapsible" : true,
+					"checkbox_key" : "enabled",
+					"key" : "IntegrateFtrackInstance",
+					"label" : "IntegrateFtrackInstance",
+					"is_group" : true,
+					"children" : [
+						{
+							"type" : "boolean",
+							"key" : "enabled",
+							"label" : "Enabled"
+						},
+						{
+							"type" : "dict-modifiable",
+							"key" : "family_mapping",
+							"label" : "Family Mapping",
+							"object_type" : {
+								"type" : "text"
+							}
+						}
+					]
+				}
+			]
+		}
+	]
 }
