@@ -237,12 +237,8 @@ class HarmonySubmitDeadline(
     order = pyblish.api.IntegratorOrder + 0.1
     hosts = ["harmony"]
     families = ["render.farm"]
-    if not os.environ.get("DEADLINE_REST_URL"):
-        optional = False
-        active = False
-    else:
-        optional = True
 
+    optional = True
     use_published = False
     primary_pool = ""
     secondary_pool = ""
