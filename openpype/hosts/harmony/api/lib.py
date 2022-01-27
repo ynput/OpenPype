@@ -35,6 +35,9 @@ self.port = None
 self.log = logging.getLogger(__name__)
 self.log.setLevel(logging.DEBUG)
 
+def execute_in_main_thread(func, *args, **kwargs):
+    ConsoleTrayApp.instance().execute_in_main_thread(func, *args, **kwargs)
+
 
 def signature(postfix="func") -> str:
     """Return random ECMA6 compatible function name.
