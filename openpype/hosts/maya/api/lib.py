@@ -6,19 +6,19 @@ import platform
 import uuid
 import math
 
-import bson
 import json
 import logging
 import itertools
 import contextlib
 from collections import OrderedDict, defaultdict
 from math import ceil
+from six import string_types
+import bson
 
 from maya import cmds, mel
 import maya.api.OpenMaya as om
 
 from avalon import api, maya, io, pipeline
-from avalon.vendor.six import string_types
 import avalon.maya.lib
 import avalon.maya.interactive
 
@@ -184,7 +184,7 @@ def uv_from_element(element):
             parent = element.split(".", 1)[0]
 
             # Maya is funny in that when the transform of the shape
-            # of the component elemen has children, the name returned
+            # of the component element has children, the name returned
             # by that elementection is the shape. Otherwise, it is
             # the transform. So lets see what type we're dealing with here.
             if cmds.nodeType(parent) in supported:
@@ -280,7 +280,7 @@ def shape_from_element(element):
         return node
 
 
-def collect_animation_data():
+def collect_animation_data(fps=False):
     """Get the basic animation data
 
     Returns:
@@ -291,7 +291,6 @@ def collect_animation_data():
     # get scene values as defaults
     start = cmds.playbackOptions(query=True, animationStartTime=True)
     end = cmds.playbackOptions(query=True, animationEndTime=True)
-    fps = mel.eval('currentTimeUnitToFPS()')
 
     # build attributes
     data = OrderedDict()
@@ -299,7 +298,9 @@ def collect_animation_data():
     data["frameEnd"] = end
     data["handles"] = 0
     data["step"] = 1.0
-    data["fps"] = fps
+
+    if fps:
+        data["fps"] = mel.eval('currentTimeUnitToFPS()')
 
     return data
 
@@ -313,13 +314,7 @@ def attribute_values(attr_values):
 
     """
 
-    # NOTE(antirotor): this didn't work for some reason for Yeti attributes
-    # original = [(attr, cmds.getAttr(attr)) for attr in attr_values]
-    original = []
-    for attr in attr_values:
-        type = cmds.getAttr(attr, type=True)
-        value = cmds.getAttr(attr)
-        original.append((attr, str(value) if type == "string" else value))
+    original = [(attr, cmds.getAttr(attr)) for attr in attr_values]
     try:
         for attr, value in attr_values.items():
             if isinstance(value, string_types):
@@ -331,6 +326,12 @@ def attribute_values(attr_values):
         for attr, value in original:
             if isinstance(value, string_types):
                 cmds.setAttr(attr, value, type="string")
+            elif value is None and cmds.getAttr(attr, type=True) == "string":
+                # In some cases the maya.cmds.getAttr command returns None
+                # for string attributes but this value cannot assigned.
+                # Note: After setting it once to "" it will then return ""
+                #       instead of None. So this would only happen once.
+                cmds.setAttr(attr, "", type="string")
             else:
                 cmds.setAttr(attr, value)
 
@@ -733,7 +734,7 @@ def namespaced(namespace, new=True):
         str: The namespace that is used during the context
 
     """
-    original = cmds.namespaceInfo(cur=True)
+    original = cmds.namespaceInfo(cur=True, absoluteName=True)
     if new:
         namespace = avalon.maya.lib.unique_namespace(namespace)
         cmds.namespace(add=namespace)
@@ -743,6 +744,33 @@ def namespaced(namespace, new=True):
         yield namespace
     finally:
         cmds.namespace(set=original)
+
+
+@contextlib.contextmanager
+def maintained_selection_api():
+    """Maintain selection using the Maya Python API.
+
+    Warning: This is *not* added to the undo stack.
+
+    """
+    original = om.MGlobal.getActiveSelectionList()
+    try:
+        yield
+    finally:
+        om.MGlobal.setActiveSelectionList(original)
+
+
+@contextlib.contextmanager
+def tool(context):
+    """Set a tool context during the context manager.
+
+    """
+    original = cmds.currentCtx()
+    try:
+        cmds.setToolTo(context)
+        yield
+    finally:
+        cmds.setToolTo(original)
 
 
 def polyConstraint(components, *args, **kwargs):
@@ -763,17 +791,25 @@ def polyConstraint(components, *args, **kwargs):
     kwargs.pop('mode', None)
 
     with no_undo(flush=False):
-        with maya.maintained_selection():
-            # Apply constraint using mode=2 (current and next) so
-            # it applies to the selection made before it; because just
-            # a `maya.cmds.select()` call will not trigger the constraint.
-            with reset_polySelectConstraint():
-                cmds.select(components, r=1, noExpand=True)
-                cmds.polySelectConstraint(*args, mode=2, **kwargs)
-                result = cmds.ls(selection=True)
-                cmds.select(clear=True)
-
-    return result
+        # Reverting selection to the original selection using
+        # `maya.cmds.select` can be slow in rare cases where previously
+        # `maya.cmds.polySelectConstraint` had set constrain to "All and Next"
+        # and the "Random" setting was activated. To work around this we
+        # revert to the original selection using the Maya API. This is safe
+        # since we're not generating any undo change anyway.
+        with tool("selectSuperContext"):
+            # Selection can be very slow when in a manipulator mode.
+            # So we force the selection context which is fast.
+            with maintained_selection_api():
+                # Apply constraint using mode=2 (current and next) so
+                # it applies to the selection made before it; because just
+                # a `maya.cmds.select()` call will not trigger the constraint.
+                with reset_polySelectConstraint():
+                    cmds.select(components, r=1, noExpand=True)
+                    cmds.polySelectConstraint(*args, mode=2, **kwargs)
+                    result = cmds.ls(selection=True)
+                    cmds.select(clear=True)
+                    return result
 
 
 @contextlib.contextmanager
@@ -1595,7 +1631,7 @@ def get_container_transforms(container, members=None, root=False):
     Args:
         container (dict): the container
         members (list): optional and convenience argument
-        root (bool): return highest node in hierachy if True
+        root (bool): return highest node in hierarchy if True
 
     Returns:
         root (list / str):
@@ -1936,7 +1972,7 @@ def validate_fps():
 
     if current_fps != fps:
 
-        from avalon.vendor.Qt import QtWidgets
+        from Qt import QtWidgets
         from ...widgets import popup
 
         # Find maya main window
@@ -2482,7 +2518,7 @@ class shelf():
 def _get_render_instances():
     """Return all 'render-like' instances.
 
-    This returns list of instance sets that needs to receive informations
+    This returns list of instance sets that needs to receive information
     about render layer changes.
 
     Returns:
@@ -2694,7 +2730,7 @@ def update_content_on_context_change():
 
 
 def show_message(title, msg):
-    from avalon.vendor.Qt import QtWidgets
+    from Qt import QtWidgets
     from openpype.widgets import message_window
 
     # Find maya main window
@@ -2818,3 +2854,27 @@ def set_colorspace():
     cmds.colorManagementPrefs(e=True, renderingSpaceName=renderSpace)
     viewTransform = root_dict["viewTransform"]
     cmds.colorManagementPrefs(e=True, viewTransformName=viewTransform)
+
+
+@contextlib.contextmanager
+def root_parent(nodes):
+    # type: (list) -> list
+    """Context manager to un-parent provided nodes and return then back."""
+    import pymel.core as pm  # noqa
+
+    node_parents = []
+    for node in nodes:
+        n = pm.PyNode(node)
+        try:
+            root = pm.listRelatives(n, parent=1)[0]
+        except IndexError:
+            root = None
+        node_parents.append((n, root))
+    try:
+        for node in node_parents:
+            node[0].setParent(world=True)
+        yield
+    finally:
+        for node in node_parents:
+            if node[1]:
+                node[0].setParent(node[1])

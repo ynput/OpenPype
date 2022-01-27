@@ -22,6 +22,9 @@ def import_filepath(filepath, module_name=None):
     if module_name is None:
         module_name = os.path.splitext(os.path.basename(filepath))[0]
 
+    # Make sure it is not 'unicode' in Python 2
+    module_name = str(module_name)
+
     # Prepare module object where content of file will be parsed
     module = types.ModuleType(module_name)
 
@@ -46,32 +49,30 @@ def modules_from_path(folder_path):
 
     Arguments:
         path (str): Path to folder containing python scripts.
-        return_crasher (bool): Crashed module paths with exception info
-            will be returned too.
 
     Returns:
-        list, tuple: List of modules when `return_crashed` is False else tuple
-            with list of modules at first place and tuple of path and exception
-            info at second place.
+        tuple<list, list>: First list contains successfully imported modules
+            and second list contains tuples of path and exception.
     """
     crashed = []
     modules = []
+    output = (modules, crashed)
     # Just skip and return empty list if path is not set
     if not folder_path:
-        return modules
+        return output
 
     # Do not allow relative imports
     if folder_path.startswith("."):
         log.warning((
             "BUG: Relative paths are not allowed for security reasons. {}"
         ).format(folder_path))
-        return modules
+        return output
 
     folder_path = os.path.normpath(folder_path)
 
     if not os.path.isdir(folder_path):
         log.warning("Not a directory path: {}".format(folder_path))
-        return modules
+        return output
 
     for filename in os.listdir(folder_path):
         # Ignore files which start with underscore
@@ -98,7 +99,7 @@ def modules_from_path(folder_path):
             )
             continue
 
-    return modules, crashed
+    return output
 
 
 def recursive_bases_from_class(klass):

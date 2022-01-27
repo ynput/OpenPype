@@ -11,7 +11,7 @@ from openpype.tools.loader.widgets import (
     FamilyListView,
     RepresentationWidget
 )
-from openpype.tools.utils.widgets import AssetWidget
+from openpype.tools.utils.assets_widget import MultiSelectAssetsWidget
 
 from openpype.modules import ModulesManager
 
@@ -31,7 +31,7 @@ class LibraryLoaderWindow(QtWidgets.QDialog):
     message_timeout = 5000
 
     def __init__(
-        self, parent=None, icon=None, show_projects=False, show_libraries=True
+        self, parent=None, show_projects=False, show_libraries=True
     ):
         super(LibraryLoaderWindow, self).__init__(parent)
 
@@ -76,8 +76,8 @@ class LibraryLoaderWindow(QtWidgets.QDialog):
         projects_combobox.setItemDelegate(combobox_delegate)
 
         # Assets widget
-        assets_widget = AssetWidget(
-            dbcon, multiselection=True, parent=left_side_splitter
+        assets_widget = MultiSelectAssetsWidget(
+            dbcon, parent=left_side_splitter
         )
 
         # Families widget
@@ -165,7 +165,6 @@ class LibraryLoaderWindow(QtWidgets.QDialog):
         )
         assets_widget.selection_changed.connect(self.on_assetschanged)
         assets_widget.refresh_triggered.connect(self.on_assetschanged)
-        assets_widget.view.clicked.connect(self.on_assetview_click)
         subsets_widget.active_changed.connect(self.on_subsetschanged)
         subsets_widget.version_changed.connect(self.on_versionschanged)
         subsets_widget.refreshed.connect(self._on_subset_refresh)
@@ -203,11 +202,6 @@ class LibraryLoaderWindow(QtWidgets.QDialog):
         if not self._initial_refresh:
             self._initial_refresh = True
             self.refresh()
-
-    def on_assetview_click(self, *args):
-        selection_model = self._subsets_widget.view.selectionModel()
-        if selection_model.selectedIndexes():
-            selection_model.clearSelection()
 
     def _set_projects(self):
         # Store current project
@@ -348,25 +342,14 @@ class LibraryLoaderWindow(QtWidgets.QDialog):
         self._families_filter_view.set_enabled_families(set())
         self._families_filter_view.refresh()
 
-        self._assets_widget.model.stop_fetch_thread()
+        self._assets_widget.stop_refresh()
         self._assets_widget.refresh()
         self._assets_widget.setFocus()
 
     def clear_assets_underlines(self):
         last_asset_ids = self.data["state"]["assetIds"]
-        if not last_asset_ids:
-            return
-
-        assets_model = self._assets_widget.model
-        id_role = assets_model.ObjectIdRole
-
-        for index in tools_lib.iter_model_rows(assets_model, 0):
-            if index.data(id_role) not in last_asset_ids:
-                continue
-
-            assets_model.setData(
-                index, [], assets_model.subsetColorsRole
-            )
+        if last_asset_ids:
+            self._assets_widget.clear_underlines()
 
     def _assetschanged(self):
         """Selected assets have changed"""
@@ -382,12 +365,8 @@ class LibraryLoaderWindow(QtWidgets.QDialog):
             )
             return
 
-        # filter None docs they are silo
-        asset_docs = self._assets_widget.get_selected_assets()
-        if len(asset_docs) == 0:
-            return
+        asset_ids = self._assets_widget.get_selected_asset_ids()
 
-        asset_ids = [asset_doc["_id"] for asset_doc in asset_docs]
         # Start loading
         self._subsets_widget.set_loading_state(
             loading=bool(asset_ids),
@@ -402,12 +381,13 @@ class LibraryLoaderWindow(QtWidgets.QDialog):
 
         # Clear the version information on asset change
         self._version_info_widget.set_version(None)
-        self._thumbnail_widget.set_thumbnail(asset_docs)
+        self._thumbnail_widget.set_thumbnail(asset_ids)
 
         self.data["state"]["assetIds"] = asset_ids
 
         # reset repre list
-        self._repres_widget.set_version_ids([])
+        if self._repres_widget:
+            self._repres_widget.set_version_ids([])
 
     def _subsetschanged(self):
         asset_ids = self.data["state"]["assetIds"]
@@ -420,7 +400,7 @@ class LibraryLoaderWindow(QtWidgets.QDialog):
             _merged=True, _other=False
         )
 
-        asset_models = {}
+        asset_colors = {}
         asset_ids = []
         for subset_node in selected_subsets:
             asset_ids.extend(subset_node.get("assetIds", []))
@@ -428,30 +408,17 @@ class LibraryLoaderWindow(QtWidgets.QDialog):
 
         for subset_node in selected_subsets:
             for asset_id in asset_ids:
-                if asset_id not in asset_models:
-                    asset_models[asset_id] = []
+                if asset_id not in asset_colors:
+                    asset_colors[asset_id] = []
 
                 color = None
                 if asset_id in subset_node.get("assetIds", []):
                     color = subset_node["subsetColor"]
 
-                asset_models[asset_id].append(color)
+                asset_colors[asset_id].append(color)
 
-        self.clear_assets_underlines()
+        self._assets_widget.set_underline_colors(asset_colors)
 
-        indexes = self._assets_widget.view.selectionModel().selectedRows()
-
-        assets_model = self._assets_widget.model
-        for index in indexes:
-            id = index.data(assets_model.ObjectIdRole)
-            if id not in asset_models:
-                continue
-
-            assets_model.setData(
-                index, asset_models[id], assets_model.subsetColorsRole
-            )
-        # Trigger repaint
-        self._assets_widget.view.updateGeometries()
         # Set version in Version Widget
         self._versionschanged()
 
@@ -488,16 +455,18 @@ class LibraryLoaderWindow(QtWidgets.QDialog):
 
         self._version_info_widget.set_version(version_doc)
 
-        thumbnail_docs = version_docs
-        if not thumbnail_docs:
-            asset_docs = self._assets_widget.get_selected_assets()
-            if len(asset_docs) > 0:
-                thumbnail_docs = asset_docs
+        thumbnail_src_ids = [
+            version_doc["_id"]
+            for version_doc in version_docs
+        ]
+        if not thumbnail_src_ids:
+            thumbnail_src_ids = self._assets_widget.get_selected_asset_ids()
 
-        self._thumbnail_widget.set_thumbnail(thumbnail_docs)
+        self._thumbnail_widget.set_thumbnail(thumbnail_src_ids)
 
         version_ids = [doc["_id"] for doc in version_docs or []]
-        self._repres_widget.set_version_ids(version_ids)
+        if self._repres_widget:
+            self._repres_widget.set_version_ids(version_ids)
 
     def _set_context(self, context, refresh=True):
         """Set the selection in the interface using a context.
@@ -512,8 +481,8 @@ class LibraryLoaderWindow(QtWidgets.QDialog):
             None
         """
 
-        asset = context.get("asset", None)
-        if asset is None:
+        asset_name = context.get("asset", None)
+        if asset_name is None:
             return
 
         if refresh:
@@ -525,7 +494,7 @@ class LibraryLoaderWindow(QtWidgets.QDialog):
             # scheduled refresh and the silo tabs are not shown.
             self._refresh_assets()
 
-        self._assets_widget.select_assets(asset)
+        self._assets_widget.select_asset_by_name(asset_name)
 
     def _on_message_timeout(self):
         self._message_label.setText("")
@@ -548,10 +517,7 @@ class LibraryLoaderWindow(QtWidgets.QDialog):
         return super(LibraryLoaderWindow, self).closeEvent(event)
 
 
-def show(
-    debug=False, parent=None, icon=None,
-    show_projects=False, show_libraries=True
-):
+def show(debug=False, parent=None, show_projects=False, show_libraries=True):
     """Display Loader GUI
 
     Arguments:
@@ -586,9 +552,9 @@ def show(
         import traceback
         sys.excepthook = lambda typ, val, tb: traceback.print_last()
 
-    with tools_lib.application():
+    with tools_lib.qt_app_context():
         window = LibraryLoaderWindow(
-            parent, icon, show_projects, show_libraries
+            parent, show_projects, show_libraries
         )
         window.show()
 

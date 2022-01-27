@@ -3,7 +3,7 @@ import subprocess
 
 from openpype.lib import (
     PreLaunchHook,
-    get_pype_execute_args
+    get_openpype_execute_args
 )
 
 from openpype import PACKAGE_DIR as OPENPYPE_DIR
@@ -35,7 +35,7 @@ class NonPythonHostHook(PreLaunchHook):
             "non_python_host_launch.py"
         )
 
-        new_launch_args = get_pype_execute_args(
+        new_launch_args = get_openpype_execute_args(
             "run", script_path, executable_path
         )
         # Add workfile path if exists
@@ -48,8 +48,3 @@ class NonPythonHostHook(PreLaunchHook):
 
         if remainders:
             self.launch_context.launch_args.extend(remainders)
-
-        # This must be set otherwise it wouldn't be possible to catch output
-        #   when build OpenPype is used.
-        self.launch_context.kwargs["stdout"] = subprocess.DEVNULL
-        self.launch_context.kwargs["stderr"] = subprocess.DEVNULL

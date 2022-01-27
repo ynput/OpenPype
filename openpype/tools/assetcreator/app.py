@@ -1,16 +1,12 @@
 import os
 import sys
-import json
 from subprocess import Popen
-try:
-    import ftrack_api_old as ftrack_api
-except Exception:
-    import ftrack_api
+
+import ftrack_api
+from Qt import QtWidgets, QtCore
 from openpype.api import get_current_project_settings
-from openpype import lib as pypelib
-from avalon.vendor.Qt import QtWidgets, QtCore
+from openpype.tools.utils.lib import qt_app_context
 from avalon import io, api, style, schema
-from avalon.tools import lib as parentlib
 from . import widget, model
 
 module = sys.modules[__name__]
@@ -630,7 +626,7 @@ def show(parent=None, debug=False, context=None):
     if debug is True:
         io.install()
 
-    with parentlib.application():
+    with qt_app_context():
         window = Window(parent, context)
         window.setStyleSheet(style.load_stylesheet())
         window.show()

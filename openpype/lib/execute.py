@@ -1,7 +1,6 @@
 import os
-import shlex
 import subprocess
-import platform
+import distutils.spawn
 
 from .log import PypeLogger as Logger
 
@@ -80,7 +79,7 @@ def run_subprocess(*args, **kwargs):
 
     Args:
         *args: Variable length arument list passed to Popen.
-        **kwargs : Arbitary keyword arguments passed to Popen. Is possible to
+        **kwargs : Arbitrary keyword arguments passed to Popen. Is possible to
             pass `logging.Logger` object under "logger" if want to use
             different than lib's logger.
 
@@ -120,11 +119,11 @@ def run_subprocess(*args, **kwargs):
 
     if _stderr:
         _stderr = _stderr.decode("utf-8")
-        # Add additional line break if output already containt stdout
+        # Add additional line break if output already contains stdout
         if full_output:
             full_output += "\n"
         full_output += _stderr
-        logger.warning(_stderr)
+        logger.info(_stderr)
 
     if proc.returncode != 0:
         exc_msg = "Executing arguments was not successful: \"{}\"".format(args)
@@ -139,6 +138,49 @@ def run_subprocess(*args, **kwargs):
     return full_output
 
 
+def clean_envs_for_openpype_process(env=None):
+    """Modify environemnts that may affect OpenPype process.
+
+    Main reason to implement this function is to pop PYTHONPATH which may be
+    affected by in-host environments.
+    """
+    if env is None:
+        env = os.environ
+    return {
+        key: value
+        for key, value in env.items()
+        if key not in ("PYTHONPATH",)
+    }
+
+
+def run_openpype_process(*args, **kwargs):
+    """Execute OpenPype process with passed arguments and wait.
+
+    Wrapper for 'run_process' which prepends OpenPype executable arguments
+    before passed arguments and define environments if are not passed.
+
+    Values from 'os.environ' are used for environments if are not passed.
+    They are cleaned using 'clean_envs_for_openpype_process' function.
+
+    Example:
+    ```
+    run_openpype_process("run", "<path to .py script>")
+    ```
+
+    Args:
+        *args (tuple): OpenPype cli arguments.
+        **kwargs (dict): Keyword arguments for for subprocess.Popen.
+    """
+    args = get_openpype_execute_args(*args)
+    env = kwargs.pop("env", None)
+    # Keep env untouched if are passed and not empty
+    if not env:
+        # Skip envs that can affect OpenPype process
+        # - fill more if you find more
+        env = clean_envs_for_openpype_process(os.environ)
+    return run_subprocess(args, env=env, **kwargs)
+
+
 def path_to_subprocess_arg(path):
     """Prepare path for subprocess arguments.
 
@@ -148,6 +190,18 @@ def path_to_subprocess_arg(path):
 
 
 def get_pype_execute_args(*args):
+    """Backwards compatible function for 'get_openpype_execute_args'."""
+    import traceback
+
+    log = Logger.get_logger("get_pype_execute_args")
+    stack = "\n".join(traceback.format_stack())
+    log.warning((
+        "Using deprecated function 'get_pype_execute_args'. Called from:\n{}"
+    ).format(stack))
+    return get_openpype_execute_args(*args)
+
+
+def get_openpype_execute_args(*args):
     """Arguments to run pype command.
 
     Arguments for subprocess when need to spawn new pype process. Which may be
@@ -175,3 +229,46 @@ def get_pype_execute_args(*args):
         pype_args.extend(args)
 
     return pype_args
+
+
+def get_linux_launcher_args(*args):
+    """Path to application mid process executable.
+
+    This function should be able as arguments are different when used
+    from code and build.
+
+    It is possible that this function is used in OpenPype build which does
+    not have yet the new executable. In that case 'None' is returned.
+
+    Args:
+        args (iterable): List of additional arguments added after executable
+            argument.
+
+    Returns:
+        list: Executables with possible positional argument to script when
+            called from code.
+    """
+    filename = "app_launcher"
+    openpype_executable = os.environ["OPENPYPE_EXECUTABLE"]
+
+    executable_filename = os.path.basename(openpype_executable)
+    if "python" in executable_filename.lower():
+        script_path = os.path.join(
+            os.environ["OPENPYPE_ROOT"],
+            "{}.py".format(filename)
+        )
+        launch_args = [openpype_executable, script_path]
+    else:
+        new_executable = os.path.join(
+            os.path.dirname(openpype_executable),
+            filename
+        )
+        executable_path = distutils.spawn.find_executable(new_executable)
+        if executable_path is None:
+            return None
+        launch_args = [executable_path]
+
+    if args:
+        launch_args.extend(args)
+
+    return launch_args

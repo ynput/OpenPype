@@ -6,8 +6,8 @@ import bpy_extras
 import bpy_extras.anim_utils
 
 from avalon import io
-from avalon.blender.pipeline import AVALON_PROPERTY
 from openpype.hosts.blender.api import plugin
+from openpype.hosts.blender.api.pipeline import AVALON_PROPERTY
 import openpype.api
 
 

@@ -909,6 +909,13 @@ class Window(QtWidgets.QDialog):
             self.tr("Processing"), plugin_item.data(QtCore.Qt.DisplayRole)
         ))
 
+        visibility = True
+        if hasattr(plugin, "hide_ui_on_process") and plugin.hide_ui_on_process:
+            visibility = False
+
+        if self.isVisible() != visibility:
+            self.setVisible(visibility)
+
     def on_plugin_action_menu_requested(self, pos):
         """The user right-clicked on a plug-in
          __________
@@ -1148,7 +1155,7 @@ class Window(QtWidgets.QDialog):
         self.comment_box.placeholder.setVisible(False)
         self.comment_box.placeholder.setVisible(True)
         # Launch controller reset
-        util.defer(500, self.controller.reset)
+        self.controller.reset()
 
     def validate(self):
         self.info(self.tr("Preparing validate.."))
@@ -1159,7 +1166,7 @@ class Window(QtWidgets.QDialog):
 
         self.button_suspend_logs.setEnabled(False)
 
-        util.defer(5, self.controller.validate)
+        self.controller.validate()
 
     def publish(self):
         self.info(self.tr("Preparing publish.."))
@@ -1170,7 +1177,7 @@ class Window(QtWidgets.QDialog):
 
         self.button_suspend_logs.setEnabled(False)
 
-        util.defer(5, self.controller.publish)
+        self.controller.publish()
 
     def act(self, plugin_item, action):
         self.info("%s %s.." % (self.tr("Preparing"), action))
@@ -1187,9 +1194,7 @@ class Window(QtWidgets.QDialog):
         )
 
         # Give Qt time to draw
-        util.defer(100, lambda: self.controller.act(
-            plugin_item.plugin, action
-        ))
+        self.controller.act(plugin_item.plugin, action)
 
         self.info(self.tr("Action prepared."))
 
@@ -1267,7 +1272,7 @@ class Window(QtWidgets.QDialog):
             self.info(self.tr("..as soon as processing is finished.."))
             self.controller.stop()
             self.finished.connect(self.close)
-            util.defer(2000, on_problem)
+            util.defer(200, on_problem)
             return event.ignore()
 
         self.state["is_closing"] = True

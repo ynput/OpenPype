@@ -7,11 +7,6 @@
         }
     },
     "publish": {
-        "ValidateContainers": {
-            "enabled": true,
-            "optional": true,
-            "active": true
-        },
         "CollectRemoteInstances": {
             "color_code_mapping": [
                 {
@@ -22,6 +17,15 @@
                 }
             ]
         },
+        "ValidateContainers": {
+            "enabled": true,
+            "optional": true,
+            "active": true
+        },
+        "ValidateNaming": {
+            "invalid_chars": "[ \\\\/+\\*\\?\\(\\)\\[\\]\\{\\}:,]",
+            "replace_char": "_"
+        },
         "ExtractImage": {
             "formats": [
                 "png",
@@ -30,8 +34,7 @@
         },
         "ExtractReview": {
             "jpg_options": {
-                "tags": [
-                ]
+                "tags": []
             },
             "mov_options": {
                 "tags": [

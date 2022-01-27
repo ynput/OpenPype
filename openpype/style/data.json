@@ -18,7 +18,6 @@
         "green-light": "hsl(155, 80%, 80%)"
     },
     "color": {
-
         "font": "#D3D8DE",
         "font-hover": "#F0F2F5",
         "font-disabled": "#99A3B2",
@@ -50,8 +49,27 @@
 
         "border": "#373D48",
         "border-hover": "rgba(168, 175, 189, .3)",
-        "border-focus": "hsl(200, 60%, 60%)",
+        "border-focus": "rgb(92, 173, 214)",
 
+        "restart-btn-bg": "#458056",
+
+        "delete-btn-bg": "rgb(201, 54, 54)",
+        "delete-btn-bg-disabled": "rgba(201, 54, 54, 64)",
+
+        "tab-widget": {
+            "bg": "#21252B",
+            "bg-selected": "#434a56",
+            "bg-hover": "#373D48",
+            "color": "#99A3B2",
+            "color-selected": "#F0F2F5",
+            "color-hover": "#F0F2F5"
+        },
+        "nice-checkbox": {
+            "bg-checked": "#56a06f",
+            "bg-unchecked": "#434b56",
+            "bg-checker": "#D3D8DE",
+            "bg-checker-hover": "#F0F2F5"
+        },
         "loader": {
             "asset-view": {
                 "selected": "rgba(168, 175, 189, 0.6)",
@@ -71,6 +89,36 @@
                 "bg-expander-hover": "#2d6c9f",
                 "bg-expander-selected-hover": "#3784c5"
             }
+        },
+        "settings": {
+            "invalid-light": "#C93636",
+            "invalid-dark": "#AD2E2E",
+
+            "modified-light": "#46b1f3",
+            "modified-mid": "#189AEA",
+            "modified-dark": "#106AA2",
+
+            "studio-light": "#73C990",
+            "studio-dark": "#56a06f",
+            "studio-label-hover": "#FFFFFF",
+
+            "project-light": "#FFA64D",
+            "project-mid": "#FF8C1A",
+            "project-dark": "#E67300",
+
+            "label-fg": "#969b9e",
+            "label-fg-hover": "#b8c1c5",
+
+            "breadcrumbs-btn-bg": "rgba(127, 127, 127, 60)",
+            "breadcrumbs-btn-bg-hover": "rgba(127, 127, 127, 90)",
+
+            "content-hightlighted": "rgba(19, 26, 32, 15)",
+            "focus-border": "#839caf",
+            "image-btn": "#bfccd6",
+            "image-btn-hover": "#189aea",
+            "image-btn-disabled": "#bfccd6",
+            "version-exists": "#458056",
+            "version-not-found": "#ffc671"
         }
     }
 }

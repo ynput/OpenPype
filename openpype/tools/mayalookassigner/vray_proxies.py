@@ -41,7 +41,12 @@ def get_alembic_paths_by_property(filename, attr, verbose=False):
     filename = filename.replace("\\", "/")
     filename = str(filename)  # path must be string
 
-    archive = alembic.Abc.IArchive(filename)
+    try:
+        archive = alembic.Abc.IArchive(filename)
+    except RuntimeError:
+        # invalid alembic file - probably vrmesh
+        log.warning("{} is not an alembic file".format(filename))
+        return {}
     root = archive.getTop()
 
     iterator = list(root.children)
@@ -201,9 +206,7 @@ def load_look(version_id):
         with avalon.maya.maintained_selection():
             container_node = api.load(loader, look_representation)
 
-    # Get container members
-    shader_nodes = cmds.sets(container_node, query=True)
-    return shader_nodes
+    return cmds.sets(container_node, query=True)
 
 
 def get_latest_version(asset_id, subset):

@@ -5,7 +5,7 @@ from .categories import (
     ProjectWidget
 )
 from .widgets import ShadowWidget, RestartDialog
-from . import style
+from openpype import style
 
 from openpype.lib import is_admin_password_required
 from openpype.widgets import PasswordDialog
@@ -25,7 +25,7 @@ class MainWidget(QtWidgets.QWidget):
 
         self._password_dialog = None
 
-        self.setObjectName("MainWidget")
+        self.setObjectName("SettingsMainWidget")
         self.setWindowTitle("OpenPype Settings")
 
         self.resize(self.widget_width, self.widget_height)
@@ -63,7 +63,9 @@ class MainWidget(QtWidgets.QWidget):
             tab_widget.restart_required_trigger.connect(
                 self._on_restart_required
             )
+            tab_widget.full_path_requested.connect(self._on_full_path_request)
 
+        self._header_tab_widget = header_tab_widget
         self.tab_widgets = tab_widgets
 
     def _on_tab_save(self, source_widget):
@@ -89,6 +91,14 @@ class MainWidget(QtWidgets.QWidget):
         app = QtWidgets.QApplication.instance()
         if app:
             app.processEvents()
+
+    def _on_full_path_request(self, category, path):
+        for tab_widget in self.tab_widgets:
+            if tab_widget.contain_category_key(category):
+                idx = self._header_tab_widget.indexOf(tab_widget)
+                self._header_tab_widget.setCurrentIndex(idx)
+                tab_widget.set_category_path(category, path)
+                break
 
     def showEvent(self, event):
         super(MainWidget, self).showEvent(event)

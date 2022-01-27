@@ -1,6 +1,6 @@
-from Qt import QtWidgets, QtCore
 import sys
 import logging
+from Qt import QtWidgets, QtCore
 
 log = logging.getLogger(__name__)
 

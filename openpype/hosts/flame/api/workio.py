@@ -8,7 +8,7 @@ from openpype.api import Logger
 # )
 
 
-log = Logger().get_logger(__name__)
+log = Logger.get_logger(__name__)
 
 exported_projet_ext = ".otoc"
 

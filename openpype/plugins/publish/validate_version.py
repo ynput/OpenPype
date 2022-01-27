@@ -10,7 +10,7 @@ class ValidateVersion(pyblish.api.InstancePlugin):
     order = pyblish.api.ValidatorOrder
 
     label = "Validate Version"
-    hosts = ["nuke", "maya", "blender", "standalonepublisher"]
+    hosts = ["nuke", "maya", "houdini", "blender", "standalonepublisher"]
 
     optional = False
     active = True
@@ -21,8 +21,9 @@ class ValidateVersion(pyblish.api.InstancePlugin):
 
         if latest_version is not None:
             msg = (
-                "Version `{0}` that you are trying to publish, already exists"
-                " in the database. Version in database: `{1}`. Please version "
-                "up your workfile to a higher version number than: `{1}`."
-            ).format(version, latest_version)
+                "Version `{0}` from instance `{1}` that you are trying to"
+                " publish, already exists in the database. Version in"
+                " database: `{2}`. Please version up your workfile to a higher"
+                " version number than: `{2}`."
+            ).format(version, instance.data["name"], latest_version)
             assert (int(version) > int(latest_version)), msg

@@ -1,305 +1,151 @@
 import logging
-import time
-
-from . import lib
 
 from Qt import QtWidgets, QtCore, QtGui
+
 from avalon.vendor import qtawesome, qargparse
-
-from avalon import style
-
-from .models import AssetModel, RecursiveSortFilterProxyModel
-from .views import AssetsView
-from .delegates import AssetDelegate
+from openpype.style import (
+    get_objected_colors,
+    get_style_image_path
+)
 
 log = logging.getLogger(__name__)
 
 
-class AssetWidget(QtWidgets.QWidget):
-    """A Widget to display a tree of assets with filter
+class PlaceholderLineEdit(QtWidgets.QLineEdit):
+    """Set placeholder color of QLineEdit in Qt 5.12 and higher."""
+    def __init__(self, *args, **kwargs):
+        super(PlaceholderLineEdit, self).__init__(*args, **kwargs)
+        # Change placeholder palette color
+        if hasattr(QtGui.QPalette, "PlaceholderText"):
+            filter_palette = self.palette()
+            color_obj = get_objected_colors()["font"]
+            color = color_obj.get_qcolor()
+            color.setAlpha(67)
+            filter_palette.setColor(
+                QtGui.QPalette.PlaceholderText,
+                color
+            )
+            self.setPalette(filter_palette)
 
-    To list the assets of the active project:
-        >>> # widget = AssetWidget()
-        >>> # widget.refresh()
-        >>> # widget.show()
 
+class BaseClickableFrame(QtWidgets.QFrame):
+    """Widget that catch left mouse click and can trigger a callback.
+
+    Callback is defined by overriding `_mouse_release_callback`.
     """
+    def __init__(self, parent):
+        super(BaseClickableFrame, self).__init__(parent)
 
-    refresh_triggered = QtCore.Signal()   # on model refresh
-    refreshed = QtCore.Signal()
-    selection_changed = QtCore.Signal()  # on view selection change
-    current_changed = QtCore.Signal()    # on view current index change
+        self._mouse_pressed = False
 
-    def __init__(self, dbcon, multiselection=False, parent=None):
-        super(AssetWidget, self).__init__(parent=parent)
+    def _mouse_release_callback(self):
+        pass
 
-        self.dbcon = dbcon
+    def mousePressEvent(self, event):
+        if event.button() == QtCore.Qt.LeftButton:
+            self._mouse_pressed = True
+        super(BaseClickableFrame, self).mousePressEvent(event)
 
-        # Tree View
-        model = AssetModel(dbcon=self.dbcon, parent=self)
-        proxy = RecursiveSortFilterProxyModel()
-        proxy.setSourceModel(model)
-        proxy.setFilterCaseSensitivity(QtCore.Qt.CaseInsensitive)
+    def mouseReleaseEvent(self, event):
+        if self._mouse_pressed:
+            self._mouse_pressed = False
+            if self.rect().contains(event.pos()):
+                self._mouse_release_callback()
 
-        view = AssetsView(self)
-        view.setModel(proxy)
-        if multiselection:
-            asset_delegate = AssetDelegate()
-            view.setSelectionMode(view.ExtendedSelection)
-            view.setItemDelegate(asset_delegate)
+        super(BaseClickableFrame, self).mouseReleaseEvent(event)
 
-        icon = qtawesome.icon("fa.arrow-down", color=style.colors.light)
-        set_current_asset_btn = QtWidgets.QPushButton(icon, "")
-        set_current_asset_btn.setToolTip("Go to Asset from current Session")
-        # Hide by default
-        set_current_asset_btn.setVisible(False)
 
-        icon = qtawesome.icon("fa.refresh", color=style.colors.light)
-        refresh = QtWidgets.QPushButton(icon, "", parent=self)
-        refresh.setToolTip("Refresh items")
+class ClickableFrame(BaseClickableFrame):
+    """Extended clickable frame which triggers 'clicked' signal."""
+    clicked = QtCore.Signal()
 
-        filter_input = QtWidgets.QLineEdit(self)
-        filter_input.setPlaceholderText("Filter assets..")
+    def _mouse_release_callback(self):
+        self.clicked.emit()
 
-        # Header
-        header_layout = QtWidgets.QHBoxLayout()
-        header_layout.addWidget(filter_input)
-        header_layout.addWidget(set_current_asset_btn)
-        header_layout.addWidget(refresh)
 
-        # Layout
-        layout = QtWidgets.QVBoxLayout(self)
-        layout.setContentsMargins(0, 0, 0, 0)
-        layout.setSpacing(4)
-        layout.addLayout(header_layout)
-        layout.addWidget(view)
-
-        # Signals/Slots
-        filter_input.textChanged.connect(proxy.setFilterFixedString)
-
-        selection = view.selectionModel()
-        selection.selectionChanged.connect(self.selection_changed)
-        selection.currentChanged.connect(self.current_changed)
-        refresh.clicked.connect(self.refresh)
-        set_current_asset_btn.clicked.connect(self.set_current_session_asset)
-
-        self.set_current_asset_btn = set_current_asset_btn
-        self.model = model
-        self.proxy = proxy
-        self.view = view
-
-        self.model_selection = {}
-
-    def set_current_asset_btn_visibility(self, visible=None):
-        """Hide set current asset button.
-
-        Not all tools support using of current context asset.
-        """
-        if visible is None:
-            visible = not self.set_current_asset_btn.isVisible()
-        self.set_current_asset_btn.setVisible(visible)
-
-    def _refresh_model(self):
-        # Store selection
-        self._store_model_selection()
-        time_start = time.time()
-
-        self.set_loading_state(
-            loading=True,
-            empty=True
+class ExpandBtnLabel(QtWidgets.QLabel):
+    """Label showing expand icon meant for ExpandBtn."""
+    def __init__(self, parent):
+        super(ExpandBtnLabel, self).__init__(parent)
+        self._source_collapsed_pix = QtGui.QPixmap(
+            get_style_image_path("branch_closed")
+        )
+        self._source_expanded_pix = QtGui.QPixmap(
+            get_style_image_path("branch_open")
         )
 
-        def on_refreshed(has_item):
-            self.set_loading_state(loading=False, empty=not has_item)
-            self._restore_model_selection()
-            self.model.refreshed.disconnect()
-            self.refreshed.emit()
-            print("Duration: %.3fs" % (time.time() - time_start))
+        self._current_image = self._source_collapsed_pix
+        self._collapsed = True
 
-        # Connect to signal
-        self.model.refreshed.connect(on_refreshed)
-        # Trigger signal before refresh is called
-        self.refresh_triggered.emit()
-        # Refresh model
-        self.model.refresh()
+    def set_collapsed(self, collapsed):
+        if self._collapsed == collapsed:
+            return
+        self._collapsed = collapsed
+        if collapsed:
+            self._current_image = self._source_collapsed_pix
+        else:
+            self._current_image = self._source_expanded_pix
+        self._set_resized_pix()
 
-    def refresh(self):
-        self._refresh_model()
+    def resizeEvent(self, event):
+        self._set_resized_pix()
+        super(ExpandBtnLabel, self).resizeEvent(event)
 
-    def get_active_asset(self):
-        """Return the asset item of the current selection."""
-        current = self.view.currentIndex()
-        return current.data(self.model.ItemRole)
-
-    def get_active_asset_document(self):
-        """Return the asset document of the current selection."""
-        current = self.view.currentIndex()
-        return current.data(self.model.DocumentRole)
-
-    def get_active_index(self):
-        return self.view.currentIndex()
-
-    def get_selected_assets(self):
-        """Return the documents of selected assets."""
-        selection = self.view.selectionModel()
-        rows = selection.selectedRows()
-        assets = [row.data(self.model.DocumentRole) for row in rows]
-
-        # NOTE: skip None object assumed they are silo (backwards comp.)
-        return [asset for asset in assets if asset]
-
-    def select_assets(self, assets, expand=True, key="name"):
-        """Select assets by item key.
-
-        Args:
-            assets (list): List of asset values that can be found under
-                specified `key`
-            expand (bool): Whether to also expand to the asset in the view
-            key (string): Key that specifies where to look for `assets` values
-
-        Returns:
-            None
-
-        Default `key` is "name" in that case `assets` should contain single
-        asset name or list of asset names. (It is good idea to use "_id" key
-        instead of name in that case `assets` must contain `ObjectId` object/s)
-        It is expected that each value in `assets` will be found only once.
-        If the filters according to the `key` and `assets` correspond to
-        the more asset, only the first found will be selected.
-
-        """
-
-        if not isinstance(assets, (tuple, list)):
-            assets = [assets]
-
-        # convert to list - tuple cant be modified
-        assets = set(assets)
-
-        # Clear selection
-        selection_model = self.view.selectionModel()
-        selection_model.clearSelection()
-
-        # Select
-        mode = selection_model.Select | selection_model.Rows
-        for index in lib.iter_model_rows(
-            self.proxy, column=0, include_root=False
-        ):
-            # stop iteration if there are no assets to process
-            if not assets:
-                break
-
-            value = index.data(self.model.ItemRole).get(key)
-            if value not in assets:
-                continue
-
-            # Remove processed asset
-            assets.discard(value)
-
-            selection_model.select(index, mode)
-            if expand:
-                # Expand parent index
-                self.view.expand(self.proxy.parent(index))
-
-            # Set the currently active index
-            self.view.setCurrentIndex(index)
-
-    def set_loading_state(self, loading, empty):
-        if self.view.is_loading != loading:
-            if loading:
-                self.view.spinner.repaintNeeded.connect(
-                    self.view.viewport().update
-                )
-            else:
-                self.view.spinner.repaintNeeded.disconnect()
-
-        self.view.is_loading = loading
-        self.view.is_empty = empty
-
-    def _store_model_selection(self):
-        index = self.view.currentIndex()
-        current = None
-        if index and index.isValid():
-            current = index.data(self.model.ObjectIdRole)
-
-        expanded = set()
-        model = self.view.model()
-        for index in lib.iter_model_rows(
-            model, column=0, include_root=False
-        ):
-            if self.view.isExpanded(index):
-                value = index.data(self.model.ObjectIdRole)
-                expanded.add(value)
-
-        selection_model = self.view.selectionModel()
-
-        selected = None
-        selected_rows = selection_model.selectedRows()
-        if selected_rows:
-            selected = set(
-                row.data(self.model.ObjectIdRole)
-                for row in selected_rows
+    def _set_resized_pix(self):
+        size = int(self.fontMetrics().height() / 2)
+        if size < 1:
+            size = 1
+        size += size % 2
+        self.setPixmap(
+            self._current_image.scaled(
+                size,
+                size,
+                QtCore.Qt.KeepAspectRatio,
+                QtCore.Qt.SmoothTransformation
             )
+        )
 
-        self.model_selection = {
-            "expanded": expanded,
-            "selected": selected,
-            "current": current
-        }
 
-    def _restore_model_selection(self):
-        model = self.view.model()
-        not_set = object()
-        expanded = self.model_selection.pop("expanded", not_set)
-        selected = self.model_selection.pop("selected", not_set)
-        current = self.model_selection.pop("current", not_set)
+class ExpandBtn(ClickableFrame):
+    def __init__(self, parent=None):
+        super(ExpandBtn, self).__init__(parent)
 
-        if (
-            expanded is not_set
-            or selected is not_set
-            or current is not_set
-        ):
-            return
+        pixmap_label = ExpandBtnLabel(self)
 
-        if expanded:
-            for index in lib.iter_model_rows(
-                model, column=0, include_root=False
-            ):
-                is_expanded = index.data(self.model.ObjectIdRole) in expanded
-                self.view.setExpanded(index, is_expanded)
+        layout = QtWidgets.QHBoxLayout(self)
+        layout.setContentsMargins(0, 0, 0, 0)
+        layout.addWidget(pixmap_label)
 
-        if not selected and not current:
-            self.set_current_session_asset()
-            return
+        self._pixmap_label = pixmap_label
 
-        current_index = None
-        selected_indexes = []
-        # Go through all indices, select the ones with similar data
-        for index in lib.iter_model_rows(
-            model, column=0, include_root=False
-        ):
-            object_id = index.data(self.model.ObjectIdRole)
-            if object_id in selected:
-                selected_indexes.append(index)
+    def set_collapsed(self, collapsed):
+        self._pixmap_label.set_collapsed(collapsed)
 
-            if not current_index and object_id == current:
-                current_index = index
 
-        if current_index:
-            self.view.setCurrentIndex(current_index)
+class ImageButton(QtWidgets.QPushButton):
+    """PushButton with icon and size of font.
 
-        if not selected_indexes:
-            return
-        selection_model = self.view.selectionModel()
-        flags = selection_model.Select | selection_model.Rows
-        for index in selected_indexes:
-            # Ensure item is visible
-            self.view.scrollTo(index)
-            selection_model.select(index, flags)
+    Using font metrics height as icon size reference.
 
-    def set_current_session_asset(self):
-        asset_name = self.dbcon.Session.get("AVALON_ASSET")
-        if asset_name:
-            self.select_assets([asset_name])
+    TODO:
+    - handle changes of screen (different resolution)
+    """
+
+    def __init__(self, *args, **kwargs):
+        super(ImageButton, self).__init__(*args, **kwargs)
+        self.setObjectName("ImageButton")
+
+    def _change_size(self):
+        font_height = self.fontMetrics().height()
+        self.setIconSize(QtCore.QSize(font_height, font_height))
+
+    def showEvent(self, event):
+        super(ImageButton, self).showEvent(event)
+
+        self._change_size()
+
+    def sizeHint(self):
+        return self.iconSize()
 
 
 class OptionalMenu(QtWidgets.QMenu):

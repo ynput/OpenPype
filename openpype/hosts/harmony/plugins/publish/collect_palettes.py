@@ -28,7 +28,7 @@ class CollectPalettes(pyblish.api.ContextPlugin):
 
         # skip collecting if not in allowed task
         if self.allowed_tasks:
-            task_name = context.data["anatomyData"]["task"].lower()
+            task_name = context.data["anatomyData"]["task"]["name"].lower()
             if (not any([re.search(pattern, task_name)
                          for pattern in self.allowed_tasks])):
                 return

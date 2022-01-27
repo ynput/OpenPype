@@ -1,16 +1,11 @@
 """Load an animation in Blender."""
 
-import logging
 from typing import Dict, List, Optional
 
 import bpy
 
-from avalon.blender.pipeline import AVALON_PROPERTY
 from openpype.hosts.blender.api import plugin
-
-
-logger = logging.getLogger("openpype").getChild(
-    "blender").getChild("load_animation")
+from openpype.hosts.blender.api.pipeline import AVALON_PROPERTY
 
 
 class BlendAnimationLoader(plugin.AssetLoader):

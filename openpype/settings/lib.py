@@ -856,6 +856,7 @@ def get_anatomy_settings(
         apply_local_settings_on_anatomy_settings(
             result, local_settings, project_name, site_name
         )
+
     return result
 
 
@@ -932,8 +933,10 @@ def get_general_environments():
     # - prevent to use `get_system_settings` where `get_default_settings`
     #   is used
     default_values = load_openpype_default_settings()
+    system_settings = default_values["system_settings"]
     studio_overrides = get_studio_system_settings_overrides()
-    result = apply_overrides(default_values, studio_overrides)
+
+    result = apply_overrides(system_settings, studio_overrides)
     environments = result["general"]["environment"]
 
     clear_metadata_from_settings(environments)

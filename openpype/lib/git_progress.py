@@ -33,7 +33,7 @@ class _GitProgress(git.remote.RemoteProgress):
             self._t.close()
 
     def _detroy_tqdm(self):
-        """ Used to close tqdm when opration ended.
+        """ Used to close tqdm when operation ended.
 
         """
         if self._t is not None:

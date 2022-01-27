@@ -1,5 +1,8 @@
 {
     "publish": {
+        "CollectAnatomyInstanceData": {
+            "follow_workfile_version": false
+        },
         "ValidateEditorialAssetName": {
             "enabled": true,
             "optional": false
@@ -49,6 +52,7 @@
                                 "burnin",
                                 "ftrackreview"
                             ],
+                            "burnins": [],
                             "ffmpeg_args": {
                                 "video_filters": [],
                                 "audio_filters": [],
@@ -215,7 +219,7 @@
                     "hosts": [],
                     "task_types": [],
                     "tasks": [],
-                    "template": "{family}{Variant}"
+                    "template": "{family}{variant}"
                 },
                 {
                     "families": [
@@ -260,6 +264,17 @@
                     "task_types": [],
                     "tasks": [],
                     "template": "render{Task}{Variant}"
+                },
+                {
+                    "families": [
+                        "unrealStaticMesh"
+                    ],
+                    "hosts": [
+                        "maya"
+                    ],
+                    "task_types": [],
+                    "tasks": [],
+                    "template": "S_{asset}{variant}"
                 }
             ]
         },
@@ -287,26 +302,13 @@
                     "enabled": false
                 }
             ],
-            "sw_folders": {
-                "compositing": [
-                    "nuke",
-                    "ae"
-                ],
-                "modeling": [
-                    "maya",
-                    "blender",
-                    "zbrush"
-                ],
-                "lookdev": [
-                    "substance",
-                    "textures"
-                ]
-            }
+            "extra_folders": []
         },
         "loader": {
             "family_filter_profiles": [
                 {
                     "hosts": [],
+                    "is_include": true,
                     "task_types": [],
                     "filter_families": []
                 }
@@ -315,10 +317,11 @@
     },
     "project_folder_structure": "{\"__project_root__\": {\"prod\": {}, \"resources\": {\"footage\": {\"plates\": {}, \"offline\": {}}, \"audio\": {}, \"art_dept\": {}}, \"editorial\": {}, \"assets[ftrack.Library]\": {\"characters[ftrack]\": {}, \"locations[ftrack]\": {}}, \"shots[ftrack.Sequence]\": {\"scripts\": {}, \"editorial[ftrack.Folder]\": {}}}}",
     "sync_server": {
-        "enabled": true,
+        "enabled": false,
         "config": {
             "retry_cnt": "3",
             "loop_delay": "60",
+            "always_accessible_on": [],
             "active_site": "studio",
             "remote_site": "studio"
         },

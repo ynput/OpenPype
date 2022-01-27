@@ -5,10 +5,17 @@ from typing import Dict, List, Optional
 
 import bpy
 
-from avalon import api, blender
-from avalon.blender import ops
-from avalon.blender.pipeline import AVALON_CONTAINERS
+import avalon.api
 from openpype.api import PypeCreatorMixin
+from .pipeline import AVALON_CONTAINERS
+from .ops import (
+    MainThreadItem,
+    execute_in_main_thread
+)
+from .lib import (
+    imprint,
+    get_selection
+)
 
 VALID_EXTENSIONS = [".blend", ".json", ".abc", ".fbx"]
 
@@ -122,11 +129,27 @@ def deselect_all():
     bpy.context.view_layer.objects.active = active
 
 
-class Creator(PypeCreatorMixin, blender.Creator):
-    pass
+class Creator(PypeCreatorMixin, avalon.api.Creator):
+    """Base class for Creator plug-ins."""
+    def process(self):
+        collection = bpy.data.collections.new(name=self.data["subset"])
+        bpy.context.scene.collection.children.link(collection)
+        imprint(collection, self.data)
+
+        if (self.options or {}).get("useSelection"):
+            for obj in get_selection():
+                collection.objects.link(obj)
+
+        return collection
 
 
-class AssetLoader(api.Loader):
+class Loader(avalon.api.Loader):
+    """Base class for Loader plug-ins."""
+
+    hosts = ["blender"]
+
+
+class AssetLoader(avalon.api.Loader):
     """A basic AssetLoader for Blender
 
     This will implement the basic logic for linking/appending assets
@@ -194,8 +217,8 @@ class AssetLoader(api.Loader):
              namespace: Optional[str] = None,
              options: Optional[Dict] = None) -> Optional[bpy.types.Collection]:
         """ Run the loader on Blender main thread"""
-        mti = ops.MainThreadItem(self._load, context, name, namespace, options)
-        ops.execute_in_main_thread(mti)
+        mti = MainThreadItem(self._load, context, name, namespace, options)
+        execute_in_main_thread(mti)
 
     def _load(self,
               context: dict,
@@ -260,8 +283,8 @@ class AssetLoader(api.Loader):
 
     def update(self, container: Dict, representation: Dict):
         """ Run the update on Blender main thread"""
-        mti = ops.MainThreadItem(self.exec_update, container, representation)
-        ops.execute_in_main_thread(mti)
+        mti = MainThreadItem(self.exec_update, container, representation)
+        execute_in_main_thread(mti)
 
     def exec_remove(self, container: Dict) -> bool:
         """Must be implemented by a sub-class"""
@@ -269,5 +292,5 @@ class AssetLoader(api.Loader):
 
     def remove(self, container: Dict) -> bool:
         """ Run the remove on Blender main thread"""
-        mti = ops.MainThreadItem(self.exec_remove, container)
-        ops.execute_in_main_thread(mti)
+        mti = MainThreadItem(self.exec_remove, container)
+        execute_in_main_thread(mti)

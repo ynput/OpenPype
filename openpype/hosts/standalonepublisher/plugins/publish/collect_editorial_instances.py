@@ -83,7 +83,7 @@ class CollectInstances(pyblish.api.InstancePlugin):
                 if isinstance(clip, otio.schema.Gap):
                     continue
 
-                # skip all generators like black ampty
+                # skip all generators like black empty
                 if isinstance(
                     clip.media_reference,
                         otio.schema.GeneratorReference):
@@ -142,7 +142,7 @@ class CollectInstances(pyblish.api.InstancePlugin):
                     "item": clip,
                     "clipName": clip_name,
 
-                    # parent time properities
+                    # parent time properties
                     "trackStartFrame": track_start_frame,
                     "handleStart": handle_start,
                     "handleEnd": handle_end,
@@ -180,14 +180,14 @@ class CollectInstances(pyblish.api.InstancePlugin):
                         "families": []
                     }
                 })
-                for subset, properities in self.subsets.items():
-                    version = properities.get("version")
+                for subset, properties in self.subsets.items():
+                    version = properties.get("version")
                     if version == 0:
-                        properities.pop("version")
+                        properties.pop("version")
 
                     # adding Review-able instance
                     subset_instance_data = deepcopy(instance_data)
-                    subset_instance_data.update(deepcopy(properities))
+                    subset_instance_data.update(deepcopy(properties))
                     subset_instance_data.update({
                         # unique attributes
                         "name": f"{name}_{subset}",

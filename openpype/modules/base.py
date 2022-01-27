@@ -29,6 +29,23 @@ from openpype.settings.lib import (
 from openpype.lib import PypeLogger
 
 
+DEFAULT_OPENPYPE_MODULES = (
+    "avalon_apps",
+    "clockify",
+    "log_viewer",
+    "muster",
+    "python_console_interpreter",
+    "slack",
+    "webserver",
+    "launcher_action",
+    "project_manager_action",
+    "settings_action",
+    "standalonepublish_action",
+    "job_queue",
+    "timers_manager",
+)
+
+
 # Inherit from `object` for Python 2 hosts
 class _ModuleClass(object):
     """Fake module class for storing OpenPype modules.
@@ -107,12 +124,9 @@ class _InterfacesClass(_ModuleClass):
             if attr_name in ("__path__", "__file__"):
                 return None
 
-            # Fake Interface if is not missing
-            self.__attributes__[attr_name] = type(
-                attr_name,
-                (MissingInteface, ),
-                {}
-            )
+            raise ImportError((
+                "cannot import name '{}' from 'openpype_interfaces'"
+            ).format(attr_name))
 
         return self.__attributes__[attr_name]
 
@@ -212,54 +226,17 @@ def _load_interfaces():
         _InterfacesClass(modules_key)
     )
 
-    log = PypeLogger.get_logger("InterfacesLoader")
+    from . import interfaces
 
-    dirpaths = get_module_dirs()
-
-    interface_paths = []
-    interface_paths.append(
-        os.path.join(get_default_modules_dir(), "interfaces.py")
-    )
-    for dirpath in dirpaths:
-        if not os.path.exists(dirpath):
+    for attr_name in dir(interfaces):
+        attr = getattr(interfaces, attr_name)
+        if (
+            not inspect.isclass(attr)
+            or attr is OpenPypeInterface
+            or not issubclass(attr, OpenPypeInterface)
+        ):
             continue
-
-        for filename in os.listdir(dirpath):
-            if filename in ("__pycache__", ):
-                continue
-
-            full_path = os.path.join(dirpath, filename)
-            if not os.path.isdir(full_path):
-                continue
-
-            interfaces_path = os.path.join(full_path, "interfaces.py")
-            if os.path.exists(interfaces_path):
-                interface_paths.append(interfaces_path)
-
-    for full_path in interface_paths:
-        if not os.path.exists(full_path):
-            continue
-
-        try:
-            # Prepare module object where content of file will be parsed
-            module = import_filepath(full_path)
-
-        except Exception:
-            log.warning(
-                "Failed to load path: \"{0}\"".format(full_path),
-                exc_info=True
-            )
-            continue
-
-        for attr_name in dir(module):
-            attr = getattr(module, attr_name)
-            if (
-                not inspect.isclass(attr)
-                or attr is OpenPypeInterface
-                or not issubclass(attr, OpenPypeInterface)
-            ):
-                continue
-            setattr(openpype_interfaces, attr_name, attr)
+        setattr(openpype_interfaces, attr_name, attr)
 
 
 def load_modules(force=False):
@@ -311,9 +288,24 @@ def _load_modules():
 
     log = PypeLogger.get_logger("ModulesLoader")
 
-    # Look for OpenPype modules in paths defined with `get_module_dirs`
-    dirpaths = get_module_dirs()
+    # Import default modules imported from 'openpype.modules'
+    for default_module_name in DEFAULT_OPENPYPE_MODULES:
+        try:
+            import_str = "openpype.modules.{}".format(default_module_name)
+            new_import_str = "{}.{}".format(modules_key, default_module_name)
+            default_module = __import__(import_str, fromlist=("", ))
+            sys.modules[new_import_str] = default_module
+            setattr(openpype_modules, default_module_name, default_module)
 
+        except Exception:
+            msg = (
+                "Failed to import default module '{}'."
+            ).format(default_module_name)
+            log.error(msg, exc_info=True)
+
+    # Look for OpenPype modules in paths defined with `get_module_dirs`
+    #   - dynamically imported OpenPype modules and addons
+    dirpaths = get_module_dirs()
     for dirpath in dirpaths:
         if not os.path.exists(dirpath):
             log.warning((
@@ -333,6 +325,15 @@ def _load_modules():
             # - check manifest and content of manifest
             try:
                 if os.path.isdir(fullpath):
+                    # Module without init file can't be used as OpenPype module
+                    #   because the module class could not be imported
+                    init_file = os.path.join(fullpath, "__init__.py")
+                    if not os.path.exists(init_file):
+                        log.info((
+                            "Skipping module directory because of"
+                            " missing \"__init__.py\" file. \"{}\""
+                        ).format(fullpath))
+                        continue
                     import_module_from_dirpath(dirpath, filename, modules_key)
 
                 elif ext in (".py", ):
@@ -365,14 +366,6 @@ class OpenPypeInterface:
     Child classes of OpenPypeInterface may be used as mixin in different
     OpenPype modules which means they have to have implemented methods defined
     in the interface. By default interface does not have any abstract parts.
-    """
-    pass
-
-
-class MissingInteface(OpenPypeInterface):
-    """Class representing missing interface class.
-
-    Used when interface is not available from currently registered paths.
     """
     pass
 
@@ -430,6 +423,28 @@ class OpenPypeModule:
         Environment variables that can be get only from system settings.
         """
         return {}
+
+    def cli(self, module_click_group):
+        """Add commands to click group.
+
+        The best practise is to create click group for whole module which is
+        used to separate commands.
+
+        class MyPlugin(OpenPypeModule):
+            ...
+            def cli(self, module_click_group):
+                module_click_group.add_command(cli_main)
+
+
+        @click.group(<module name>, help="<Any help shown in cmd>")
+        def cli_main():
+            pass
+
+        @cli_main.command()
+        def mycommand():
+            print("my_command")
+        """
+        pass
 
 
 class OpenPypeAddOn(OpenPypeModule):

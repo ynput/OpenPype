@@ -6,7 +6,7 @@ def add_implementation_envs(env, _app):
     # Add requirements to HIERO_PLUGIN_PATH
     pype_root = os.environ["OPENPYPE_REPOS_ROOT"]
     new_hiero_paths = [
-        os.path.join(pype_root, "openpype", "hosts", "hiero", "startup")
+        os.path.join(pype_root, "openpype", "hosts", "hiero", "api", "startup")
     ]
     old_hiero_path = env.get("HIERO_PLUGIN_PATH") or ""
     for path in old_hiero_path.split(os.pathsep):

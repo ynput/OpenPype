@@ -109,6 +109,7 @@ class SyncServerModule(OpenPypeModule, ITrayModule):
 
         # some parts of code need to run sequentially, not in async
         self.lock = None
+        self._sync_system_settings = None
         # settings for all enabled projects for sync
         self._sync_project_settings = None
         self.sync_server_thread = None  # asyncio requires new thread
@@ -152,9 +153,9 @@ class SyncServerModule(OpenPypeModule, ITrayModule):
         if not site_name:
             site_name = self.DEFAULT_SITE
 
-        self.reset_provider_for_file(collection,
-                                     representation_id,
-                                     site_name=site_name, force=force)
+        self.reset_site_on_representation(collection,
+                                          representation_id,
+                                          site_name=site_name, force=force)
 
     # public facing API
     def remove_site(self, collection, representation_id, site_name,
@@ -176,10 +177,10 @@ class SyncServerModule(OpenPypeModule, ITrayModule):
         if not self.get_sync_project_setting(collection):
             raise ValueError("Project not configured")
 
-        self.reset_provider_for_file(collection,
-                                     representation_id,
-                                     site_name=site_name,
-                                     remove=True)
+        self.reset_site_on_representation(collection,
+                                          representation_id,
+                                          site_name=site_name,
+                                          remove=True)
         if remove_local_files:
             self._remove_local_file(collection, representation_id, site_name)
 
@@ -314,8 +315,8 @@ class SyncServerModule(OpenPypeModule, ITrayModule):
         """
         log.info("Pausing SyncServer for {}".format(representation_id))
         self._paused_representations.add(representation_id)
-        self.reset_provider_for_file(collection, representation_id,
-                                     site_name=site_name, pause=True)
+        self.reset_site_on_representation(collection, representation_id,
+                                          site_name=site_name, pause=True)
 
     def unpause_representation(self, collection, representation_id, site_name):
         """
@@ -334,8 +335,8 @@ class SyncServerModule(OpenPypeModule, ITrayModule):
         except KeyError:
             pass
         # self.paused_representations is not persistent
-        self.reset_provider_for_file(collection, representation_id,
-                                     site_name=site_name, pause=False)
+        self.reset_site_on_representation(collection, representation_id,
+                                          site_name=site_name, pause=False)
 
     def is_representation_paused(self, representation_id,
                                  check_parents=False, project_name=None):
@@ -769,6 +770,58 @@ class SyncServerModule(OpenPypeModule, ITrayModule):
                     enabled_projects.append(project_name)
 
         return enabled_projects
+
+    def handle_alternate_site(self, collection, representation, processed_site,
+                              file_id, synced_file_id):
+        """
+            For special use cases where one site vendors another.
+
+            Current use case is sftp site vendoring (exposing) same data as
+            regular site (studio). Each site is accessible for different
+            audience. 'studio' for artists in a studio, 'sftp' for externals.
+
+            Change of file status on one site actually means same change on
+            'alternate' site. (eg. artists publish to 'studio', 'sftp' is using
+            same location >> file is accesible on 'sftp' site right away.
+
+            Args:
+                collection (str): name of project
+                representation (dict)
+                processed_site (str): real site_name of published/uploaded file
+                file_id (ObjectId): DB id of file handled
+                synced_file_id (str): id of the created file returned
+                    by provider
+        """
+        sites = self.sync_system_settings.get("sites", {})
+        sites[self.DEFAULT_SITE] = {"provider": "local_drive",
+                                    "alternative_sites": []}
+
+        alternate_sites = []
+        for site_name, site_info in sites.items():
+            conf_alternative_sites = site_info.get("alternative_sites", [])
+            if processed_site in conf_alternative_sites:
+                alternate_sites.append(site_name)
+                continue
+            if processed_site == site_name and conf_alternative_sites:
+                alternate_sites.extend(conf_alternative_sites)
+                continue
+
+        alternate_sites = set(alternate_sites)
+
+        for alt_site in alternate_sites:
+            query = {
+                "_id": representation["_id"]
+            }
+            elem = {"name": alt_site,
+                    "created_dt": datetime.now(),
+                    "id": synced_file_id}
+
+            self.log.debug("Adding alternate {} to {}".format(
+                alt_site, representation["_id"]))
+            self._add_site(collection, query,
+                           [representation], elem,
+                           alt_site, file_id=file_id, force=True)
+
     """ End of Public API """
 
     def get_local_file_path(self, collection, site_name, file_path):
@@ -799,12 +852,19 @@ class SyncServerModule(OpenPypeModule, ITrayModule):
 
     def tray_init(self):
         """
-            Actual initialization of Sync Server.
+            Actual initialization of Sync Server for Tray.
 
             Called when tray is initialized, it checks if module should be
             enabled. If not, no initialization necessary.
         """
-        # import only in tray, because of Python2 hosts
+        self.server_init()
+
+        from .tray.app import SyncServerWindow
+        self.widget = SyncServerWindow(self)
+
+    def server_init(self):
+        """Actual initialization of Sync Server."""
+        # import only in tray or Python3, because of Python2 hosts
         from .sync_server import SyncServerThread
 
         if not self.enabled:
@@ -816,6 +876,7 @@ class SyncServerModule(OpenPypeModule, ITrayModule):
             return
 
         self.lock = threading.Lock()
+
         self.sync_server_thread = SyncServerThread(self)
 
     def tray_start(self):
@@ -829,6 +890,9 @@ class SyncServerModule(OpenPypeModule, ITrayModule):
         Returns:
             None
         """
+        self.server_start()
+
+    def server_start(self):
         if self.sync_project_settings and self.enabled:
             self.sync_server_thread.start()
         else:
@@ -841,6 +905,9 @@ class SyncServerModule(OpenPypeModule, ITrayModule):
 
             Called from Module Manager
         """
+        self.server_exit()
+
+    def server_exit(self):
         if not self.sync_server_thread:
             return
 
@@ -850,6 +917,7 @@ class SyncServerModule(OpenPypeModule, ITrayModule):
             log.info("Stopping sync server server")
             self.sync_server_thread.is_running = False
             self.sync_server_thread.stop()
+            log.info("Sync server stopped")
         except Exception:
             log.warning(
                 "Error has happened during Killing sync server",
@@ -891,6 +959,14 @@ class SyncServerModule(OpenPypeModule, ITrayModule):
             self._connection = AvalonMongoDB()
 
         return self._connection
+
+    @property
+    def sync_system_settings(self):
+        if self._sync_system_settings is None:
+            self._sync_system_settings = get_system_settings()["modules"].\
+                get("sync_server")
+
+        return self._sync_system_settings
 
     @property
     def sync_project_settings(self):
@@ -977,9 +1053,7 @@ class SyncServerModule(OpenPypeModule, ITrayModule):
                 (dict): {'studio': {'provider':'local_drive'...},
                          'MY_LOCAL': {'provider':....}}
         """
-        sys_sett = get_system_settings()
-        sync_sett = sys_sett["modules"].get("sync_server")
-
+        sync_sett = self.sync_system_settings
         project_enabled = True
         if project_name:
             project_enabled = project_name in self.get_enabled_projects()
@@ -1037,10 +1111,9 @@ class SyncServerModule(OpenPypeModule, ITrayModule):
             if provider:
                 return provider
 
-        sys_sett = get_system_settings()
-        sync_sett = sys_sett["modules"].get("sync_server")
-        for site, detail in sync_sett.get("sites", {}).items():
-            sites[site] = detail.get("provider")
+        sync_sett = self.sync_system_settings
+        for conf_site, detail in sync_sett.get("sites", {}).items():
+            sites[conf_site] = detail.get("provider")
 
         return sites.get(site, 'N/A')
 
@@ -1319,9 +1392,9 @@ class SyncServerModule(OpenPypeModule, ITrayModule):
 
         return -1, None
 
-    def reset_provider_for_file(self, collection, representation_id,
-                                side=None, file_id=None, site_name=None,
-                                remove=False, pause=None, force=False):
+    def reset_site_on_representation(self, collection, representation_id,
+                                     side=None, file_id=None, site_name=None,
+                                     remove=False, pause=None, force=False):
         """
             Reset information about synchronization for particular 'file_id'
             and provider.
@@ -1407,9 +1480,12 @@ class SyncServerModule(OpenPypeModule, ITrayModule):
         update = {
             "$set": {"files.$[f].sites.$[s]": elem}
         }
+        if not isinstance(file_id, ObjectId):
+            file_id = ObjectId(file_id)
+
         arr_filter = [
             {'s.name': site_name},
-            {'f._id': ObjectId(file_id)}
+            {'f._id': file_id}
         ]
 
         self._update_site(collection, query, update, arr_filter)
@@ -1498,6 +1574,7 @@ class SyncServerModule(OpenPypeModule, ITrayModule):
 
             Use 'force' to remove existing or raises ValueError
         """
+        reseted_existing = False
         for repre_file in representation.pop().get("files"):
             if file_id and file_id != repre_file["_id"]:
                 continue
@@ -1508,11 +1585,14 @@ class SyncServerModule(OpenPypeModule, ITrayModule):
                         self._reset_site_for_file(collection, query,
                                                   elem, repre_file["_id"],
                                                   site_name)
-                        return
+                        reseted_existing = True
                     else:
                         msg = "Site {} already present".format(site_name)
                         log.info(msg)
                         raise ValueError(msg)
+
+        if reseted_existing:
+            return
 
         if not file_id:
             update = {

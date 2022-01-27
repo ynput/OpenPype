@@ -22,6 +22,20 @@ from .models import (
 from . import lib
 from . import delegates
 
+from openpype.tools.utils.constants import (
+    LOCAL_PROGRESS_ROLE,
+    REMOTE_PROGRESS_ROLE,
+    HEADER_NAME_ROLE,
+    STATUS_ROLE,
+    PATH_ROLE,
+    LOCAL_SITE_NAME_ROLE,
+    REMOTE_SITE_NAME_ROLE,
+    LOCAL_DATE_ROLE,
+    REMOTE_DATE_ROLE,
+    ERROR_ROLE,
+    TRIES_ROLE
+)
+
 log = PypeLogger().get_logger("SyncServer")
 
 
@@ -140,7 +154,7 @@ class SyncProjectListWidget(QtWidgets.QWidget):
            selected_index.isValid() and \
            not self._selection_changed:
             mode = QtCore.QItemSelectionModel.Select | \
-                   QtCore.QItemSelectionModel.Rows
+                QtCore.QItemSelectionModel.Rows
             self.project_list.selectionModel().select(selected_index, mode)
 
         if self.current_project:
@@ -289,14 +303,19 @@ class _SyncRepresentationWidget(QtWidgets.QWidget):
 
         if is_multi:
             index = self.model.get_index(list(self._selected_ids)[0])
-            item = self.model.data(index, lib.FullItemRole)
+            local_progress = self.model.data(index, LOCAL_PROGRESS_ROLE)
+            remote_progress = self.model.data(index, REMOTE_PROGRESS_ROLE)
+            status = self.model.data(index, STATUS_ROLE)
         else:
-            item = self.model.data(point_index, lib.FullItemRole)
+            local_progress = self.model.data(point_index, LOCAL_PROGRESS_ROLE)
+            remote_progress = self.model.data(point_index,
+                                              REMOTE_PROGRESS_ROLE)
+            status = self.model.data(point_index, STATUS_ROLE)
+
 
         can_edit = self.model.can_edit
-        action_kwarg_map, actions_mapping, menu = self._prepare_menu(item,
-                                                                     is_multi,
-                                                                     can_edit)
+        action_kwarg_map, actions_mapping, menu = self._prepare_menu(
+            local_progress, remote_progress, is_multi, can_edit, status)
 
         result = menu.exec_(QtGui.QCursor.pos())
         if result:
@@ -307,7 +326,8 @@ class _SyncRepresentationWidget(QtWidgets.QWidget):
 
         self.model.refresh()
 
-    def _prepare_menu(self, item, is_multi, can_edit):
+    def _prepare_menu(self, local_progress, remote_progress,
+                      is_multi, can_edit, status=None):
         menu = QtWidgets.QMenu(self)
 
         actions_mapping = {}
@@ -315,11 +335,6 @@ class _SyncRepresentationWidget(QtWidgets.QWidget):
 
         active_site = self.model.active_site
         remote_site = self.model.remote_site
-
-        local_progress = item.local_progress
-        remote_progress = item.remote_progress
-
-        project = self.model.project
 
         for site, progress in {active_site: local_progress,
                                remote_site: remote_progress}.items():
@@ -360,12 +375,6 @@ class _SyncRepresentationWidget(QtWidgets.QWidget):
             actions_mapping[action] = self._change_priority
             menu.addAction(action)
 
-        # # temp for testing only !!!
-        # action = QtWidgets.QAction("Download")
-        # action_kwarg_map[action] = self._get_action_kwargs(active_site)
-        # actions_mapping[action] = self._add_site
-        # menu.addAction(action)
-
         if not actions_mapping:
             action = QtWidgets.QAction("< No action >")
             actions_mapping[action] = None
@@ -376,11 +385,15 @@ class _SyncRepresentationWidget(QtWidgets.QWidget):
     def _pause(self, selected_ids=None):
         log.debug("Pause {}".format(selected_ids))
         for representation_id in selected_ids:
-            item = lib.get_item_by_id(self.model, representation_id)
-            if item.status not in [lib.STATUS[0], lib.STATUS[1]]:
+            status = lib.get_value_from_id_by_role(self.model,
+                                                   representation_id,
+                                                   STATUS_ROLE)
+            if status not in [lib.STATUS[0], lib.STATUS[1]]:
                 continue
             for site_name in [self.model.active_site, self.model.remote_site]:
-                check_progress = self._get_progress(item, site_name)
+                check_progress = self._get_progress(self.model,
+                                                    representation_id,
+                                                    site_name)
                 if check_progress < 1:
                     self.sync_server.pause_representation(self.model.project,
                                                           representation_id,
@@ -391,11 +404,15 @@ class _SyncRepresentationWidget(QtWidgets.QWidget):
     def _unpause(self, selected_ids=None):
         log.debug("UnPause {}".format(selected_ids))
         for representation_id in selected_ids:
-            item = lib.get_item_by_id(self.model, representation_id)
-            if item.status not in lib.STATUS[3]:
+            status = lib.get_value_from_id_by_role(self.model,
+                                                   representation_id,
+                                                   STATUS_ROLE)
+            if status not in lib.STATUS[3]:
                 continue
             for site_name in [self.model.active_site, self.model.remote_site]:
-                check_progress = self._get_progress(item, site_name)
+                check_progress = self._get_progress(self.model,
+                                                    representation_id,
+                                                    site_name)
                 if check_progress < 1:
                     self.sync_server.unpause_representation(
                         self.model.project,
@@ -408,8 +425,11 @@ class _SyncRepresentationWidget(QtWidgets.QWidget):
     def _add_site(self, selected_ids=None, site_name=None):
         log.debug("Add site {}:{}".format(selected_ids, site_name))
         for representation_id in selected_ids:
-            item = lib.get_item_by_id(self.model, representation_id)
-            if item.local_site == site_name or item.remote_site == site_name:
+            item_local_site = lib.get_value_from_id_by_role(
+                self.model, representation_id, LOCAL_SITE_NAME_ROLE)
+            item_remote_site = lib.get_value_from_id_by_role(
+                self.model, representation_id, REMOTE_SITE_NAME_ROLE)
+            if site_name in [item_local_site, item_remote_site]:
                 # site already exists skip
                 continue
 
@@ -460,8 +480,8 @@ class _SyncRepresentationWidget(QtWidgets.QWidget):
         """
         log.debug("Reset site {}:{}".format(selected_ids, site_name))
         for representation_id in selected_ids:
-            item = lib.get_item_by_id(self.model, representation_id)
-            check_progress = self._get_progress(item, site_name, True)
+            check_progress = self._get_progress(self.model, representation_id,
+                                                site_name, True)
 
             # do not reset if opposite side is not fully there
             if check_progress != 1:
@@ -469,7 +489,7 @@ class _SyncRepresentationWidget(QtWidgets.QWidget):
                           format(check_progress))
                 continue
 
-            self.sync_server.reset_provider_for_file(
+            self.sync_server.reset_site_on_representation(
                 self.model.project,
                 representation_id,
                 site_name=site_name,
@@ -482,11 +502,8 @@ class _SyncRepresentationWidget(QtWidgets.QWidget):
     def _open_in_explorer(self, selected_ids=None, site_name=None):
         log.debug("Open in Explorer {}:{}".format(selected_ids, site_name))
         for selected_id in selected_ids:
-            item = lib.get_item_by_id(self.model, selected_id)
-            if not item:
-                return
-
-            fpath = item.path
+            fpath = lib.get_value_from_id_by_role(self.model, selected_id,
+                                                  PATH_ROLE)
             project = self.model.project
             fpath = self.sync_server.get_local_file_path(project,
                                                          site_name,
@@ -514,10 +531,17 @@ class _SyncRepresentationWidget(QtWidgets.QWidget):
             self.model.is_editing = True
             self.table_view.openPersistentEditor(real_index)
 
-    def _get_progress(self, item, site_name, opposite=False):
+    def _get_progress(self, model, representation_id,
+                      site_name, opposite=False):
         """Returns progress value according to site (side)"""
-        progress = {'local': item.local_progress,
-                    'remote': item.remote_progress}
+        local_progress = lib.get_value_from_id_by_role(model,
+                                                       representation_id,
+                                                       LOCAL_PROGRESS_ROLE)
+        remote_progress = lib.get_value_from_id_by_role(model,
+                                                        representation_id,
+                                                        REMOTE_PROGRESS_ROLE)
+        progress = {'local': local_progress,
+                    'remote': remote_progress}
         side = 'remote'
         if site_name == self.model.active_site:
             side = 'local'
@@ -591,11 +615,11 @@ class SyncRepresentationSummaryWidget(_SyncRepresentationWidget):
         table_view.viewport().setAttribute(QtCore.Qt.WA_Hover, True)
 
         column = table_view.model().get_header_index("local_site")
-        delegate = delegates.ImageDelegate(self)
+        delegate = delegates.ImageDelegate(self, side="local")
         table_view.setItemDelegateForColumn(column, delegate)
 
         column = table_view.model().get_header_index("remote_site")
-        delegate = delegates.ImageDelegate(self)
+        delegate = delegates.ImageDelegate(self, side="remote")
         table_view.setItemDelegateForColumn(column, delegate)
 
         column = table_view.model().get_header_index("priority")
@@ -631,19 +655,21 @@ class SyncRepresentationSummaryWidget(_SyncRepresentationWidget):
         self.selection_model = self.table_view.selectionModel()
         self.selection_model.selectionChanged.connect(self._selection_changed)
 
-    def _prepare_menu(self, item, is_multi, can_edit):
+    def _prepare_menu(self, local_progress, remote_progress,
+                      is_multi, can_edit, status=None):
         action_kwarg_map, actions_mapping, menu = \
-            super()._prepare_menu(item, is_multi, can_edit)
+            super()._prepare_menu(local_progress, remote_progress,
+                                  is_multi, can_edit)
 
         if can_edit and (
-                item.status in [lib.STATUS[0], lib.STATUS[1]] or is_multi):
+                status in [lib.STATUS[0], lib.STATUS[1]] or is_multi):
             action = QtWidgets.QAction("Pause in queue")
             actions_mapping[action] = self._pause
             # pause handles which site_name it will pause itself
             action_kwarg_map[action] = {"selected_ids": self._selected_ids}
             menu.addAction(action)
 
-        if can_edit and (item.status == lib.STATUS[3] or is_multi):
+        if can_edit and (status == lib.STATUS[3] or is_multi):
             action = QtWidgets.QAction("Unpause  in queue")
             actions_mapping[action] = self._unpause
             action_kwarg_map[action] = {"selected_ids": self._selected_ids}
@@ -753,11 +779,11 @@ class SyncRepresentationDetailWidget(_SyncRepresentationWidget):
         table_view.verticalHeader().hide()
 
         column = model.get_header_index("local_site")
-        delegate = delegates.ImageDelegate(self)
+        delegate = delegates.ImageDelegate(self, side="local")
         table_view.setItemDelegateForColumn(column, delegate)
 
         column = model.get_header_index("remote_site")
-        delegate = delegates.ImageDelegate(self)
+        delegate = delegates.ImageDelegate(self, side="remote")
         table_view.setItemDelegateForColumn(column, delegate)
 
         if model.can_edit:
@@ -815,12 +841,14 @@ class SyncRepresentationDetailWidget(_SyncRepresentationWidget):
 
         detail_window.exec()
 
-    def _prepare_menu(self, item, is_multi, can_edit):
+    def _prepare_menu(self, local_progress, remote_progress,
+                      is_multi, can_edit, status=None):
         """Adds view (and model) dependent actions to default ones"""
         action_kwarg_map, actions_mapping, menu = \
-            super()._prepare_menu(item, is_multi, can_edit)
+            super()._prepare_menu(local_progress, remote_progress,
+                                  is_multi, can_edit, status)
 
-        if item.status == lib.STATUS[2] or is_multi:
+        if status == lib.STATUS[2] or is_multi:
             action = QtWidgets.QAction("Open error detail")
             actions_mapping[action] = self._show_detail
             action_kwarg_map[action] = {"selected_ids": self._selected_ids}
@@ -835,8 +863,8 @@ class SyncRepresentationDetailWidget(_SyncRepresentationWidget):
             redo of upload/download
         """
         for file_id in selected_ids:
-            item = lib.get_item_by_id(self.model, file_id)
-            check_progress = self._get_progress(item, site_name, True)
+            check_progress = self._get_progress(self.model, file_id,
+                                                site_name, True)
 
             # do not reset if opposite side is not fully there
             if check_progress != 1:
@@ -844,7 +872,7 @@ class SyncRepresentationDetailWidget(_SyncRepresentationWidget):
                           format(check_progress))
                 continue
 
-            self.sync_server.reset_provider_for_file(
+            self.sync_server.reset_site_on_representation(
                 self.model.project,
                 self.representation_id,
                 site_name=site_name,
@@ -895,20 +923,28 @@ class SyncRepresentationErrorWidget(QtWidgets.QWidget):
 
         no_errors = True
         for file_id in selected_ids:
-            item = lib.get_item_by_id(model, file_id)
-            if not item.created_dt or not item.sync_dt or not item.error:
+            created_dt = lib.get_value_from_id_by_role(model, file_id,
+                                                       LOCAL_DATE_ROLE)
+            sync_dt = lib.get_value_from_id_by_role(model, file_id,
+                                                    REMOTE_DATE_ROLE)
+            errors = lib.get_value_from_id_by_role(model, file_id,
+                                                   ERROR_ROLE)
+            if not created_dt or not sync_dt or not errors:
                 continue
 
+            tries = lib.get_value_from_id_by_role(model, file_id,
+                                                  TRIES_ROLE)
+
             no_errors = False
-            dt = max(item.created_dt, item.sync_dt)
+            dt = max(created_dt, sync_dt)
 
             txts = []
             txts.append("{}: {}<br>".format("<b>Last update date</b>",
                                             pretty_timestamp(dt)))
             txts.append("{}: {}<br>".format("<b>Retries</b>",
-                                            str(item.tries)))
+                                            str(tries)))
             txts.append("{}: {}<br>".format("<b>Error message</b>",
-                                            item.error))
+                                            errors))
 
             text_area = QtWidgets.QTextEdit("\n\n".join(txts))
             text_area.setReadOnly(True)
@@ -1162,7 +1198,7 @@ class HorizontalHeader(QtWidgets.QHeaderView):
 
             column_name = self.model.headerData(column_idx,
                                                 QtCore.Qt.Horizontal,
-                                                lib.HeaderNameRole)
+                                                HEADER_NAME_ROLE)
             button = self.filter_buttons.get(column_name)
             if not button:
                 continue

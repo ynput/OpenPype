@@ -8,6 +8,13 @@
             "build_workfile": "ctrl+alt+b"
         }
     },
+    "nuke-dirmap": {
+        "enabled": false,
+        "paths": {
+            "source-path": [],
+            "destination-path": []
+        }
+    },
     "create": {
         "CreateWriteRender": {
             "fpath_template": "{work}/renders/nuke/{subset}/{subset}.{frame}.{ext}",
@@ -103,7 +110,20 @@
         },
         "ExtractReviewDataMov": {
             "enabled": true,
-            "viewer_lut_raw": false
+            "viewer_lut_raw": false,
+            "outputs": {
+                "baking": {
+                    "filter": {
+                        "task_types": [],
+                        "families": []
+                    },
+                    "extension": "mov",
+                    "viewer_process_override": "",
+                    "bake_viewer_process": true,
+                    "bake_viewer_input_process": true,
+                    "add_tags": []
+                }
+            }
         },
         "ExtractSlateFrame": {
             "viewer_lut_raw": false
@@ -130,8 +150,7 @@
         },
         "LoadClip": {
             "enabled": true,
-            "_representations": [
-            ],
+            "_representations": [],
             "node_name_template": "{class_name}_{ext}"
         }
     },

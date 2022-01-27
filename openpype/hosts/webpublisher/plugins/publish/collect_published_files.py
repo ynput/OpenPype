@@ -1,21 +1,19 @@
-"""Loads publishing context from json and continues in publish process.
+"""Create instances from batch data and continues in publish process.
 
 Requires:
-    anatomy -> context["anatomy"] *(pyblish.api.CollectorOrder - 0.11)
+    CollectBatchData
 
 Provides:
     context, instances -> All data from previous publishing process.
 """
 
 import os
-import json
 import clique
 import tempfile
-
-import pyblish.api
 from avalon import io
+import pyblish.api
 from openpype.lib import prepare_template_data
-from openpype.lib.plugin_tools import parse_json, get_batch_asset_task_info
+from openpype.lib.plugin_tools import parse_json
 
 
 class CollectPublishedFiles(pyblish.api.ContextPlugin):
@@ -23,33 +21,38 @@ class CollectPublishedFiles(pyblish.api.ContextPlugin):
     This collector will try to find json files in provided
     `OPENPYPE_PUBLISH_DATA`. Those files _MUST_ share same context.
 
+    This covers 'basic' webpublishes, eg artists uses Standalone Publisher to
+    publish rendered frames or assets.
+
+    This is not applicable for 'studio' processing where host application is
+    called to process uploaded workfile and render frames itself.
     """
     # must be really early, context values are only in json file
     order = pyblish.api.CollectorOrder - 0.490
     label = "Collect rendered frames"
     host = ["webpublisher"]
-
-    _context = None
+    targets = ["filespublish"]
 
     # from Settings
     task_type_to_family = {}
 
-    def _process_batch(self, dir_url):
-        task_subfolders = [
-            os.path.join(dir_url, o)
-            for o in os.listdir(dir_url)
-            if os.path.isdir(os.path.join(dir_url, o))]
+    def process(self, context):
+        batch_dir = context.data["batchDir"]
+        task_subfolders = []
+        for folder_name in os.listdir(batch_dir):
+            full_path = os.path.join(batch_dir, folder_name)
+            if os.path.isdir(full_path):
+                task_subfolders.append(full_path)
+
         self.log.info("task_sub:: {}".format(task_subfolders))
+
+        asset_name = context.data["asset"]
+        task_name = context.data["task"]
+        task_type = context.data["taskType"]
         for task_dir in task_subfolders:
             task_data = parse_json(os.path.join(task_dir,
                                                 "manifest.json"))
             self.log.info("task_data:: {}".format(task_data))
-            ctx = task_data["context"]
-
-            asset, task_name, task_type = get_batch_asset_task_info(ctx)
-
-            if task_name:
-                os.environ["AVALON_TASK"] = task_name
 
             is_sequence = len(task_data["files"]) > 1
 
@@ -60,25 +63,19 @@ class CollectPublishedFiles(pyblish.api.ContextPlugin):
                 is_sequence,
                 extension.replace(".", ''))
 
-            subset = self._get_subset_name(family, subset_template, task_name,
-                                           task_data["variant"])
+            subset = self._get_subset_name(
+                family, subset_template, task_name, task_data["variant"]
+            )
+            version = self._get_last_version(asset_name, subset) + 1
 
-            os.environ["AVALON_ASSET"] = asset
-            io.Session["AVALON_ASSET"] = asset
-
-            instance = self._context.create_instance(subset)
-            instance.data["asset"] = asset
+            instance = context.create_instance(subset)
+            instance.data["asset"] = asset_name
             instance.data["subset"] = subset
             instance.data["family"] = family
             instance.data["families"] = families
-            instance.data["version"] = \
-                self._get_last_version(asset, subset) + 1
+            instance.data["version"] = version
             instance.data["stagingDir"] = tempfile.mkdtemp()
             instance.data["source"] = "webpublisher"
-
-            # to store logging info into DB openpype.webpublishes
-            instance.data["ctx_path"] = ctx["path"]
-            instance.data["batch_id"] = task_data["batch"]
 
             # to convert from email provided into Ftrack username
             instance.data["user_email"] = task_data["user"]
@@ -230,23 +227,3 @@ class CollectPublishedFiles(pyblish.api.ContextPlugin):
             return version[0].get("version") or 0
         else:
             return 0
-
-    def process(self, context):
-        self._context = context
-
-        batch_dir = os.environ.get("OPENPYPE_PUBLISH_DATA")
-
-        assert batch_dir, (
-            "Missing `OPENPYPE_PUBLISH_DATA`")
-
-        assert os.path.exists(batch_dir), \
-            "Folder {} doesn't exist".format(batch_dir)
-
-        project_name = os.environ.get("AVALON_PROJECT")
-        if project_name is None:
-            raise AssertionError(
-                "Environment `AVALON_PROJECT` was not found."
-                "Could not set project `root` which may cause issues."
-            )
-
-        self._process_batch(batch_dir)

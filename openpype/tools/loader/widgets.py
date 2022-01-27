@@ -11,16 +11,23 @@ from Qt import QtWidgets, QtCore, QtGui
 from avalon import api, pipeline
 from avalon.lib import HeroVersionType
 
-from openpype.tools.utils import lib as tools_lib
+from openpype.tools.utils import (
+    ErrorMessageBox,
+    lib as tools_lib
+)
 from openpype.tools.utils.delegates import (
     VersionDelegate,
     PrettyTimeDelegate
 )
-from openpype.tools.utils.widgets import OptionalMenu
+from openpype.tools.utils.widgets import (
+    OptionalMenu,
+    PlaceholderLineEdit
+)
 from openpype.tools.utils.views import (
     TreeViewSpinner,
     DeselectableTreeView
 )
+from openpype.tools.assetlinks.widgets import SimpleLinkView
 
 from .model import (
     SubsetsModel,
@@ -30,6 +37,13 @@ from .model import (
     RepresentationSortProxyModel
 )
 from . import lib
+
+from openpype.tools.utils.constants import (
+    LOCAL_PROVIDER_ROLE,
+    REMOTE_PROVIDER_ROLE,
+    LOCAL_AVAILABILITY_ROLE,
+    REMOTE_AVAILABILITY_ROLE
+)
 
 
 class OverlayFrame(QtWidgets.QFrame):
@@ -53,20 +67,37 @@ class OverlayFrame(QtWidgets.QFrame):
         self.label_widget.setText(label)
 
 
-class LoadErrorMessageBox(QtWidgets.QDialog):
+class LoadErrorMessageBox(ErrorMessageBox):
     def __init__(self, messages, parent=None):
-        super(LoadErrorMessageBox, self).__init__(parent)
-        self.setWindowTitle("Loading failed")
-        self.setFocusPolicy(QtCore.Qt.StrongFocus)
+        self._messages = messages
+        super(LoadErrorMessageBox, self).__init__("Loading failed", parent)
 
-        body_layout = QtWidgets.QVBoxLayout(self)
-
-        main_label = (
+    def _create_top_widget(self, parent_widget):
+        label_widget = QtWidgets.QLabel(parent_widget)
+        label_widget.setText(
             "<span style='font-size:18pt;'>Failed to load items</span>"
         )
-        main_label_widget = QtWidgets.QLabel(main_label, self)
-        body_layout.addWidget(main_label_widget)
+        return label_widget
 
+    def _get_report_data(self):
+        report_data = []
+        for exc_msg, tb_text, repre, subset, version in self._messages:
+            report_message = (
+                "During load error happened on Subset: \"{subset}\""
+                " Representation: \"{repre}\" Version: {version}"
+                "\n\nError message: {message}"
+            ).format(
+                subset=subset,
+                repre=repre,
+                version=version,
+                message=exc_msg
+            )
+            if tb_text:
+                report_message += "\n\n{}".format(tb_text)
+            report_data.append(report_message)
+        return report_data
+
+    def _create_content(self, content_layout):
         item_name_template = (
             "<span style='font-weight:bold;'>Subset:</span> {}<br>"
             "<span style='font-weight:bold;'>Version:</span> {}<br>"
@@ -74,46 +105,27 @@ class LoadErrorMessageBox(QtWidgets.QDialog):
         )
         exc_msg_template = "<span style='font-weight:bold'>{}</span>"
 
-        for exc_msg, tb, repre, subset, version in messages:
+        for exc_msg, tb_text, repre, subset, version in self._messages:
             line = self._create_line()
-            body_layout.addWidget(line)
+            content_layout.addWidget(line)
 
             item_name = item_name_template.format(subset, version, repre)
             item_name_widget = QtWidgets.QLabel(
                 item_name.replace("\n", "<br>"), self
             )
-            body_layout.addWidget(item_name_widget)
+            item_name_widget.setWordWrap(True)
+            content_layout.addWidget(item_name_widget)
 
             exc_msg = exc_msg_template.format(exc_msg.replace("\n", "<br>"))
             message_label_widget = QtWidgets.QLabel(exc_msg, self)
-            body_layout.addWidget(message_label_widget)
+            message_label_widget.setWordWrap(True)
+            content_layout.addWidget(message_label_widget)
 
-            if tb:
-                tb_widget = QtWidgets.QLabel(tb.replace("\n", "<br>"), self)
-                tb_widget.setTextInteractionFlags(
-                    QtCore.Qt.TextBrowserInteraction
-                )
-                body_layout.addWidget(tb_widget)
-
-        footer_widget = QtWidgets.QWidget(self)
-        footer_layout = QtWidgets.QHBoxLayout(footer_widget)
-        buttonBox = QtWidgets.QDialogButtonBox(QtCore.Qt.Vertical)
-        buttonBox.setStandardButtons(
-            QtWidgets.QDialogButtonBox.StandardButton.Ok
-        )
-        buttonBox.accepted.connect(self._on_accept)
-        footer_layout.addWidget(buttonBox, alignment=QtCore.Qt.AlignRight)
-        body_layout.addWidget(footer_widget)
-
-    def _on_accept(self):
-        self.close()
-
-    def _create_line(self):
-        line = QtWidgets.QFrame(self)
-        line.setFixedHeight(2)
-        line.setFrameShape(QtWidgets.QFrame.HLine)
-        line.setFrameShadow(QtWidgets.QFrame.Sunken)
-        return line
+            if tb_text:
+                line = self._create_line()
+                tb_widget = self._create_traceback_widget(tb_text, self)
+                content_layout.addWidget(line)
+                content_layout.addWidget(tb_widget)
 
 
 class SubsetWidget(QtWidgets.QWidget):
@@ -167,7 +179,7 @@ class SubsetWidget(QtWidgets.QWidget):
         family_proxy = FamiliesFilterProxyModel()
         family_proxy.setSourceModel(proxy)
 
-        subset_filter = QtWidgets.QLineEdit(self)
+        subset_filter = PlaceholderLineEdit(self)
         subset_filter.setPlaceholderText("Filter subsets..")
 
         group_checkbox = QtWidgets.QCheckBox("Enable Grouping", self)
@@ -196,6 +208,10 @@ class SubsetWidget(QtWidgets.QWidget):
         time_delegate = PrettyTimeDelegate(view)
         column = model.Columns.index("time")
         view.setItemDelegateForColumn(column, time_delegate)
+
+        avail_delegate = AvailabilityDelegate(self.dbcon, view)
+        column = model.Columns.index("repre_info")
+        view.setItemDelegateForColumn(column, avail_delegate)
 
         layout = QtWidgets.QVBoxLayout(self)
         layout.setContentsMargins(0, 0, 0, 0)
@@ -520,7 +536,7 @@ class SubsetWidget(QtWidgets.QWidget):
         self.load_ended.emit()
 
         if error_info:
-            box = LoadErrorMessageBox(error_info)
+            box = LoadErrorMessageBox(error_info, self)
             box.show()
 
     def selected_subsets(self, _groups=False, _merged=False, _other=True):
@@ -783,19 +799,24 @@ class ThumbnailWidget(QtWidgets.QLabel):
             QtCore.Qt.SmoothTransformation
         )
 
-    def set_thumbnail(self, entity=None):
-        if not entity:
+    def set_thumbnail(self, doc_id=None):
+        if not doc_id:
             self.set_pixmap()
             return
 
-        if isinstance(entity, (list, tuple)):
-            if len(entity) == 1:
-                entity = entity[0]
-            else:
+        if isinstance(doc_id, (list, tuple)):
+            if len(doc_id) < 1:
                 self.set_pixmap()
                 return
+            doc_id = doc_id[0]
 
-        thumbnail_id = entity.get("data", {}).get("thumbnail_id")
+        doc = self.dbcon.find_one(
+            {"_id": doc_id},
+            {"data.thumbnail_id"}
+        )
+        thumbnail_id = None
+        if doc:
+            thumbnail_id = doc.get("data", {}).get("thumbnail_id")
         if thumbnail_id == self.current_thumb_id:
             if self.current_thumbnail is None:
                 self.set_pixmap()
@@ -830,19 +851,25 @@ class VersionWidget(QtWidgets.QWidget):
     def __init__(self, dbcon, parent=None):
         super(VersionWidget, self).__init__(parent=parent)
 
-        layout = QtWidgets.QVBoxLayout(self)
-        layout.setContentsMargins(0, 0, 0, 0)
-        label = QtWidgets.QLabel("Version", self)
         data = VersionTextEdit(dbcon, self)
         data.setReadOnly(True)
 
-        layout.addWidget(label)
-        layout.addWidget(data)
+        depend_widget = SimpleLinkView(dbcon, self)
+
+        tab = QtWidgets.QTabWidget()
+        tab.addTab(data, "Version Info")
+        tab.addTab(depend_widget, "Dependency")
+
+        layout = QtWidgets.QVBoxLayout(self)
+        layout.setContentsMargins(0, 0, 0, 0)
+        layout.addWidget(tab)
 
         self.data = data
+        self.depend_widget = depend_widget
 
     def set_version(self, version_doc):
         self.data.set_version(version_doc)
+        self.depend_widget.set_version(version_doc)
 
 
 class FamilyModel(QtGui.QStandardItemModel):
@@ -1405,7 +1432,7 @@ class RepresentationWidget(QtWidgets.QWidget):
         self.load_ended.emit()
 
         if errors:
-            box = LoadErrorMessageBox(errors)
+            box = LoadErrorMessageBox(errors, self)
             box.show()
 
     def _get_optional_labels(self, loaders, selected_side):
@@ -1578,3 +1605,54 @@ def _load_subsets_by_loader(loader, subset_contexts, options,
                 ))
 
     return error_info
+
+
+class AvailabilityDelegate(QtWidgets.QStyledItemDelegate):
+    """
+        Prints icons and downloaded representation ration for both sides.
+    """
+
+    def __init__(self, dbcon, parent=None):
+        super(AvailabilityDelegate, self).__init__(parent)
+        self.icons = tools_lib.get_repre_icons()
+
+    def paint(self, painter, option, index):
+        super(AvailabilityDelegate, self).paint(painter, option, index)
+        option = QtWidgets.QStyleOptionViewItem(option)
+        option.showDecorationSelected = True
+
+        provider_active = index.data(LOCAL_PROVIDER_ROLE)
+        provider_remote = index.data(REMOTE_PROVIDER_ROLE)
+
+        availability_active = index.data(LOCAL_AVAILABILITY_ROLE)
+        availability_remote = index.data(REMOTE_AVAILABILITY_ROLE)
+
+        if not availability_active or not availability_remote:  # group lines
+            return
+
+        idx = 0
+        height = width = 24
+        for value, provider in [(availability_active, provider_active),
+                                (availability_remote, provider_remote)]:
+            icon = self.icons.get(provider)
+            if not icon:
+                continue
+
+            pixmap = icon.pixmap(icon.actualSize(QtCore.QSize(height, width)))
+            padding = 10 + (70 * idx)
+            point = QtCore.QPoint(option.rect.x() + padding,
+                                  option.rect.y() +
+                                  (option.rect.height() - pixmap.height()) / 2)
+            painter.drawPixmap(point, pixmap)
+
+            text_rect = option.rect.translated(padding + width + 10, 0)
+            painter.drawText(
+                text_rect,
+                option.displayAlignment,
+                value
+            )
+
+            idx += 1
+
+    def displayText(self, value, locale):
+        pass

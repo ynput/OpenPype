@@ -1,8 +1,12 @@
 import contextlib
 from Qt import QtWidgets, QtCore
-from . import RecursiveSortFilterProxyModel, AssetModel
+
+from openpype.tools.utils import PlaceholderLineEdit
+
 from avalon.vendor import qtawesome
 from avalon import style
+
+from . import RecursiveSortFilterProxyModel, AssetModel
 from . import TasksTemplateModel, DeselectableTreeView
 from . import _iter_model_rows
 
@@ -165,7 +169,7 @@ class AssetWidget(QtWidgets.QWidget):
         refresh = QtWidgets.QPushButton(icon, "")
         refresh.setToolTip("Refresh items")
 
-        filter = QtWidgets.QLineEdit()
+        filter = PlaceholderLineEdit()
         filter.textChanged.connect(proxy.setFilterFixedString)
         filter.setPlaceholderText("Filter assets..")
 

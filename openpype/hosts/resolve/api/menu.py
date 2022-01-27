@@ -61,6 +61,9 @@ class OpenPypeMenu(QtWidgets.QWidget):
         inventory_btn = QtWidgets.QPushButton("Inventory ...", self)
         subsetm_btn = QtWidgets.QPushButton("Subset Manager ...", self)
         libload_btn = QtWidgets.QPushButton("Library ...", self)
+        experimental_btn = QtWidgets.QPushButton(
+            "Experimental tools ...", self
+        )
         # rename_btn = QtWidgets.QPushButton("Rename", self)
         # set_colorspace_btn = QtWidgets.QPushButton(
         #     "Set colorspace from presets", self
@@ -91,6 +94,8 @@ class OpenPypeMenu(QtWidgets.QWidget):
 
         # layout.addWidget(set_colorspace_btn)
         # layout.addWidget(reset_resolution_btn)
+        layout.addWidget(Spacer(15, self))
+        layout.addWidget(experimental_btn)
 
         self.setLayout(layout)
 
@@ -104,6 +109,7 @@ class OpenPypeMenu(QtWidgets.QWidget):
         # rename_btn.clicked.connect(self.on_rename_clicked)
         # set_colorspace_btn.clicked.connect(self.on_set_colorspace_clicked)
         # reset_resolution_btn.clicked.connect(self.on_reset_resolution_clicked)
+        experimental_btn.clicked.connect(self.on_experimental_clicked)
 
     def on_workfile_clicked(self):
         print("Clicked Workfile")
@@ -141,6 +147,9 @@ class OpenPypeMenu(QtWidgets.QWidget):
 
     def on_reset_resolution_clicked(self):
         print("Clicked Reset Resolution")
+
+    def on_experimental_clicked(self):
+        host_tools.show_experimental_tools_dialog()
 
 
 def launch_pype_menu():

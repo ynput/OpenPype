@@ -1,10 +1,10 @@
 import os
 import json
 
+import requests
 import hou
 
 from avalon import api, io
-from avalon.vendor import requests
 
 import pyblish.api
 

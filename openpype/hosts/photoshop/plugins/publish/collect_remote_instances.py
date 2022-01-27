@@ -1,10 +1,11 @@
-import pyblish.api
 import os
 import re
 
-from avalon import photoshop
+import pyblish.api
+
 from openpype.lib import prepare_template_data
 from openpype.lib.plugin_tools import parse_json
+from openpype.hosts.photoshop import api as photoshop
 
 
 class CollectRemoteInstances(pyblish.api.ContextPlugin):
@@ -21,6 +22,7 @@ class CollectRemoteInstances(pyblish.api.ContextPlugin):
     label = "Instances"
     order = pyblish.api.CollectorOrder
     hosts = ["photoshop"]
+    targets = ["remotepublish"]
 
     # configurable by Settings
     color_code_mapping = []
@@ -28,9 +30,6 @@ class CollectRemoteInstances(pyblish.api.ContextPlugin):
     def process(self, context):
         self.log.info("CollectRemoteInstances")
         self.log.info("mapping:: {}".format(self.color_code_mapping))
-        if not os.environ.get("IS_HEADLESS"):
-            self.log.debug("Not headless publishing, skipping.")
-            return
 
         # parse variant if used in webpublishing, comes from webpublisher batch
         batch_dir = os.environ.get("OPENPYPE_PUBLISH_DATA")
@@ -70,7 +69,7 @@ class CollectRemoteInstances(pyblish.api.ContextPlugin):
             instance.data["family"] = resolved_family
             instance.data["publish"] = layer.visible
             instance.data["asset"] = context.data["assetEntity"]["name"]
-            instance.data["task"] = context.data["taskType"]
+            instance.data["task"] = context.data["task"]
 
             fill_pairs = {
                 "variant": variant,

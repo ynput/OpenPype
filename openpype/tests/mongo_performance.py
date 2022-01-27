@@ -104,8 +104,8 @@ class TestPerformance():
                         "name": "mb",
                         "parent": {"oid": '{}'.format(id)},
                         "data": {
-                            "path": "C:\\projects\\test_performance\\Assets\\Cylinder\\publish\\workfile\\workfileLookdev\\{}\\{}".format(version_str, file_name),  # noqa
-                            "template": "{root[work]}\\{project[name]}\\{hierarchy}\\{asset}\\publish\\{family}\\{subset}\\v{version:0>3}\\{project[code]}_{asset}_{subset}_v{version:0>3}<_{output}><.{frame:0>4}>.{representation}"  # noqa
+                            "path": "C:\\projects\\test_performance\\Assets\\Cylinder\\publish\\workfile\\workfileLookdev\\{}\\{}".format(version_str, file_name),  # noqa: E501
+                            "template": "{root[work]}\\{project[name]}\\{hierarchy}\\{asset}\\publish\\{family}\\{subset}\\v{version:0>3}\\{project[code]}_{asset}_{subset}_v{version:0>3}<_{output}><.{frame:0>4}>.{representation}"  # noqa: E501
                         },
                         "type": "representation",
                         "schema": "openpype:representation-2.0"
@@ -188,21 +188,21 @@ class TestPerformance():
                         create_files=False):
         ret = [
             {
-                 "path": "{root[work]}" + "{root[work]}/test_performance/Assets/Cylinder/publish/workfile/workfileLookdev/v{:03d}/test_Cylinder_A_workfileLookdev_v{:03d}.dat".format(i, i),  #noqa
+                 "path": "{root[work]}" + "{root[work]}/test_performance/Assets/Cylinder/publish/workfile/workfileLookdev/v{:03d}/test_Cylinder_A_workfileLookdev_v{:03d}.dat".format(i, i),  # noqa: E501
                  "_id": '{}'.format(file_id),
                  "hash": "temphash",
                  "sites": self.get_sites(self.MAX_NUMBER_OF_SITES),
                  "size": random.randint(0, self.MAX_FILE_SIZE_B)
             },
             {
-                "path": "{root[work]}" + "/test_performance/Assets/Cylinder/publish/workfile/workfileLookdev/v{:03d}/test_Cylinder_B_workfileLookdev_v{:03d}.dat".format(i, i),  #noqa
+                "path": "{root[work]}" + "/test_performance/Assets/Cylinder/publish/workfile/workfileLookdev/v{:03d}/test_Cylinder_B_workfileLookdev_v{:03d}.dat".format(i, i),  # noqa: E501
                 "_id": '{}'.format(file_id2),
                 "hash": "temphash",
                 "sites": self.get_sites(self.MAX_NUMBER_OF_SITES),
                 "size": random.randint(0, self.MAX_FILE_SIZE_B)
             },
             {
-                "path": "{root[work]}" + "/test_performance/Assets/Cylinder/publish/workfile/workfileLookdev/v{:03d}/test_Cylinder_C_workfileLookdev_v{:03d}.dat".format(i, i),  #noqa
+                "path": "{root[work]}" + "/test_performance/Assets/Cylinder/publish/workfile/workfileLookdev/v{:03d}/test_Cylinder_C_workfileLookdev_v{:03d}.dat".format(i, i),  # noqa: E501
                 "_id": '{}'.format(file_id3),
                 "hash": "temphash",
                 "sites": self.get_sites(self.MAX_NUMBER_OF_SITES),
@@ -223,8 +223,8 @@ class TestPerformance():
         ret = {}
         ret['{}'.format(file_id)] = {
             "path": "{root[work]}" +
-                    "/test_performance/Assets/Cylinder/publish/workfile/workfileLookdev/"  #noqa
-                    "v{:03d}/test_CylinderA_workfileLookdev_v{:03d}.mb".format(i, i),  # noqa
+                    "/test_performance/Assets/Cylinder/publish/workfile/workfileLookdev/"  # noqa: E501
+                    "v{:03d}/test_CylinderA_workfileLookdev_v{:03d}.mb".format(i, i),  # noqa: E501
             "hash": "temphash",
             "sites": ["studio"],
             "size": 87236
@@ -232,16 +232,16 @@ class TestPerformance():
 
         ret['{}'.format(file_id2)] = {
             "path": "{root[work]}" +
-                    "/test_performance/Assets/Cylinder/publish/workfile/workfileLookdev/"  #noqa
-                    "v{:03d}/test_CylinderB_workfileLookdev_v{:03d}.mb".format(i, i),  # noqa
+                    "/test_performance/Assets/Cylinder/publish/workfile/workfileLookdev/"  # noqa: E501
+                    "v{:03d}/test_CylinderB_workfileLookdev_v{:03d}.mb".format(i, i),  # noqa: E501
             "hash": "temphash",
             "sites": ["studio"],
             "size": 87236
         }
         ret['{}'.format(file_id3)] = {
             "path": "{root[work]}" +
-                    "/test_performance/Assets/Cylinder/publish/workfile/workfileLookdev/"  #noqa
-                    "v{:03d}/test_CylinderC_workfileLookdev_v{:03d}.mb".format(i, i),  # noqa
+                    "/test_performance/Assets/Cylinder/publish/workfile/workfileLookdev/"  # noqa: E501
+                    "v{:03d}/test_CylinderC_workfileLookdev_v{:03d}.mb".format(i, i),  # noqa: E501
             "hash": "temphash",
             "sites": ["studio"],
             "size": 87236

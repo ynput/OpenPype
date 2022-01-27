@@ -15,8 +15,16 @@
     "ftrack": {
         "enabled": true,
         "ftrack_server": "",
-        "ftrack_actions_path": [],
-        "ftrack_events_path": [],
+        "ftrack_actions_path": {
+            "windows": [],
+            "darwin": [],
+            "linux": []
+        },
+        "ftrack_events_path": {
+            "windows": [],
+            "darwin": [],
+            "linux": []
+        },
         "intent": {
             "items": {
                 "-": "-",
@@ -167,6 +175,16 @@
             "ffmpeg": 48
         }
     },
+    "royalrender": {
+        "enabled": false,
+        "rr_paths": {
+            "default": {
+                "windows": "",
+                "darwin": "",
+                "linux": ""
+            }
+        }
+    },
     "log_viewer": {
         "enabled": true
     },
@@ -178,5 +196,13 @@
     },
     "slack": {
         "enabled": false
+    },
+    "job_queue": {
+        "server_url": "",
+        "jobs_root": {
+            "windows": "",
+            "darwin": "",
+            "linux": ""
+        }
     }
 }

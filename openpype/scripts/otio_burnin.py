@@ -37,7 +37,7 @@ TIMECODE_KEY = "{timecode}"
 SOURCE_TIMECODE_KEY = "{source_timecode}"
 
 
-def _streams(source):
+def _get_ffprobe_data(source):
     """Reimplemented from otio burnins to be able use full path to ffprobe
     :param str source: source media file
     :rtype: [{}, ...]
@@ -47,7 +47,7 @@ def _streams(source):
     out = proc.communicate()[0]
     if proc.returncode != 0:
         raise RuntimeError("Failed to run: %s" % command)
-    return json.loads(out)['streams']
+    return json.loads(out)
 
 
 def get_fps(str_value):
@@ -69,10 +69,10 @@ def get_fps(str_value):
     return str(fps)
 
 
-def _prores_codec_args(ffprobe_data, source_ffmpeg_cmd):
+def _prores_codec_args(stream_data, source_ffmpeg_cmd):
     output = []
 
-    tags = ffprobe_data.get("tags") or {}
+    tags = stream_data.get("tags") or {}
     encoder = tags.get("encoder") or ""
     if encoder.endswith("prores_ks"):
         codec_name = "prores_ks"
@@ -85,7 +85,7 @@ def _prores_codec_args(ffprobe_data, source_ffmpeg_cmd):
 
     output.extend(["-codec:v", codec_name])
 
-    pix_fmt = ffprobe_data.get("pix_fmt")
+    pix_fmt = stream_data.get("pix_fmt")
     if pix_fmt:
         output.extend(["-pix_fmt", pix_fmt])
 
@@ -99,7 +99,7 @@ def _prores_codec_args(ffprobe_data, source_ffmpeg_cmd):
             "ap4h": "4444",
             "ap4x": "4444xq"
         }
-        codec_tag_str = ffprobe_data.get("codec_tag_string")
+        codec_tag_str = stream_data.get("codec_tag_string")
         if codec_tag_str:
             profile = codec_tag_to_profile_map.get(codec_tag_str)
             if profile:
@@ -108,7 +108,7 @@ def _prores_codec_args(ffprobe_data, source_ffmpeg_cmd):
     return output
 
 
-def _h264_codec_args(ffprobe_data, source_ffmpeg_cmd):
+def _h264_codec_args(stream_data, source_ffmpeg_cmd):
     output = ["-codec:v", "h264"]
 
     # Use arguments from source if are available source arguments
@@ -125,7 +125,7 @@ def _h264_codec_args(ffprobe_data, source_ffmpeg_cmd):
             if arg in copy_args:
                 output.extend([arg, args[idx + 1]])
 
-    pix_fmt = ffprobe_data.get("pix_fmt")
+    pix_fmt = stream_data.get("pix_fmt")
     if pix_fmt:
         output.extend(["-pix_fmt", pix_fmt])
 
@@ -135,11 +135,11 @@ def _h264_codec_args(ffprobe_data, source_ffmpeg_cmd):
     return output
 
 
-def _dnxhd_codec_args(ffprobe_data, source_ffmpeg_cmd):
+def _dnxhd_codec_args(stream_data, source_ffmpeg_cmd):
     output = ["-codec:v", "dnxhd"]
 
     # Use source profile (profiles in metadata are not usable in args directly)
-    profile = ffprobe_data.get("profile") or ""
+    profile = stream_data.get("profile") or ""
     # Lower profile and replace space with underscore
     cleaned_profile = profile.lower().replace(" ", "_")
     dnx_profiles = {
@@ -153,37 +153,65 @@ def _dnxhd_codec_args(ffprobe_data, source_ffmpeg_cmd):
     if cleaned_profile in dnx_profiles:
         output.extend(["-profile:v", cleaned_profile])
 
-    pix_fmt = ffprobe_data.get("pix_fmt")
+    pix_fmt = stream_data.get("pix_fmt")
     if pix_fmt:
         output.extend(["-pix_fmt", pix_fmt])
+
+    # Use arguments from source if are available source arguments
+    if source_ffmpeg_cmd:
+        copy_args = (
+            "-b:v", "-vb",
+        )
+        args = source_ffmpeg_cmd.split(" ")
+        for idx, arg in enumerate(args):
+            if arg in copy_args:
+                output.extend([arg, args[idx + 1]])
 
     output.extend(["-g", "1"])
     return output
 
 
+def _mxf_format_args(ffprobe_data, source_ffmpeg_cmd):
+    input_format = ffprobe_data["format"]
+    format_tags = input_format.get("tags") or {}
+    product_name = format_tags.get("product_name") or ""
+    output = []
+    if "opatom" in product_name.lower():
+        output.extend(["-f", "mxf_opatom"])
+    return output
+
+
+def get_format_args(ffprobe_data, source_ffmpeg_cmd):
+    input_format = ffprobe_data.get("format") or {}
+    if input_format.get("format_name") == "mxf":
+        return _mxf_format_args(ffprobe_data, source_ffmpeg_cmd)
+    return []
+
+
 def get_codec_args(ffprobe_data, source_ffmpeg_cmd):
-    codec_name = ffprobe_data.get("codec_name")
+    stream_data = ffprobe_data["streams"][0]
+    codec_name = stream_data.get("codec_name")
     # Codec "prores"
     if codec_name == "prores":
-        return _prores_codec_args(ffprobe_data, source_ffmpeg_cmd)
+        return _prores_codec_args(stream_data, source_ffmpeg_cmd)
 
     # Codec "h264"
     if codec_name == "h264":
-        return _h264_codec_args(ffprobe_data, source_ffmpeg_cmd)
+        return _h264_codec_args(stream_data, source_ffmpeg_cmd)
 
     # Coded DNxHD
     if codec_name == "dnxhd":
-        return _dnxhd_codec_args(ffprobe_data, source_ffmpeg_cmd)
+        return _dnxhd_codec_args(stream_data, source_ffmpeg_cmd)
 
     output = []
     if codec_name:
         output.extend(["-codec:v", codec_name])
 
-    bit_rate = ffprobe_data.get("bit_rate")
+    bit_rate = stream_data.get("bit_rate")
     if bit_rate:
         output.extend(["-b:v", bit_rate])
 
-    pix_fmt = ffprobe_data.get("pix_fmt")
+    pix_fmt = stream_data.get("pix_fmt")
     if pix_fmt:
         output.extend(["-pix_fmt", pix_fmt])
 
@@ -244,15 +272,16 @@ class ModifiedBurnins(ffmpeg_burnins.Burnins):
     }
 
     def __init__(
-        self, source, streams=None, options_init=None, first_frame=None
+        self, source, ffprobe_data=None, options_init=None, first_frame=None
     ):
-        if not streams:
-            streams = _streams(source)
+        if not ffprobe_data:
+            ffprobe_data = _get_ffprobe_data(source)
 
+        self.ffprobe_data = ffprobe_data
         self.first_frame = first_frame
         self.input_args = []
 
-        super().__init__(source, streams)
+        super().__init__(source, ffprobe_data["streams"])
 
         if options_init:
             self.options_init.update(options_init)
@@ -340,7 +369,8 @@ class ModifiedBurnins(ffmpeg_burnins.Burnins):
             if frame_start is None:
                 replacement_final = replacement_size = str(MISSING_KEY_VALUE)
             else:
-                replacement_final = "%{eif:n+" + str(frame_start) + ":d}"
+                replacement_final = "%{eif:n+" + str(frame_start) + ":d:" + \
+                                    str(len(str(frame_end))) + "}"
                 replacement_size = str(frame_end)
 
             final_text = final_text.replace(
@@ -492,8 +522,6 @@ def example(input_path, output_path):
         'bg_opacity': 0.5,
         'font_size': 52
     }
-    # First frame in burnin
-    start_frame = 2000
     # Options init sets burnin look
     burnin = ModifiedBurnins(input_path, options_init=options_init)
     # Static text
@@ -564,11 +592,11 @@ def burnins_from_data(
         "shot": "sh0010"
     }
     """
-    streams = None
+    ffprobe_data = None
     if full_input_path:
-        streams = _streams(full_input_path)
+        ffprobe_data = _get_ffprobe_data(full_input_path)
 
-    burnin = ModifiedBurnins(input_path, streams, options, first_frame)
+    burnin = ModifiedBurnins(input_path, ffprobe_data, options, first_frame)
 
     frame_start = data.get("frame_start")
     frame_end = data.get("frame_end")
@@ -594,6 +622,14 @@ def burnins_from_data(
     source_timecode = stream.get("timecode")
     if source_timecode is None:
         source_timecode = stream.get("tags", {}).get("timecode")
+
+    # Use "format" key from ffprobe data
+    #   - this is used e.g. in mxf extension
+    if source_timecode is None:
+        input_format = burnin.ffprobe_data.get("format") or {}
+        source_timecode = input_format.get("timecode")
+        if source_timecode is None:
+            source_timecode = input_format.get("tags", {}).get("timecode")
 
     if source_timecode is not None:
         data[SOURCE_TIMECODE_KEY[1:-1]] = SOURCE_TIMECODE_KEY
@@ -684,8 +720,21 @@ def burnins_from_data(
         ffmpeg_args.append("-g 1")
 
     else:
-        ffprobe_data = burnin._streams[0]
-        ffmpeg_args.extend(get_codec_args(ffprobe_data, source_ffmpeg_cmd))
+        ffmpeg_args.extend(
+            get_format_args(burnin.ffprobe_data, source_ffmpeg_cmd)
+        )
+        ffmpeg_args.extend(
+            get_codec_args(burnin.ffprobe_data, source_ffmpeg_cmd)
+        )
+        # Use arguments from source if are available source arguments
+        if source_ffmpeg_cmd:
+            copy_args = (
+                "-metadata",
+            )
+            args = source_ffmpeg_cmd.split(" ")
+            for idx, arg in enumerate(args):
+                if arg in copy_args:
+                    ffmpeg_args.extend([arg, args[idx + 1]])
 
     # Use group one (same as `-intra` argument, which is deprecated)
     ffmpeg_args_str = " ".join(ffmpeg_args)

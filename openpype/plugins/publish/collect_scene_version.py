@@ -10,7 +10,7 @@ class CollectSceneVersion(pyblish.api.ContextPlugin):
     """
 
     order = pyblish.api.CollectorOrder
-    label = 'Collect Version'
+    label = 'Collect Scene Version'
     hosts = [
         "aftereffects",
         "blender",

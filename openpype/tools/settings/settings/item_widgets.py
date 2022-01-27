@@ -2,13 +2,17 @@ import json
 
 from Qt import QtWidgets, QtCore, QtGui
 
+from openpype.widgets.sliders import NiceSlider
+from openpype.tools.settings import CHILD_OFFSET
+from openpype.settings.entities.exceptions import BaseInvalidValue
+
 from .widgets import (
     ExpandingWidget,
     NumberSpinBox,
     GridLabelWidget,
     SettingsComboBox,
-    NiceCheckbox,
     SettingsPlainTextEdit,
+    SettingsNiceCheckbox,
     SettingsLineEdit
 )
 from .multiselection_combobox import MultiSelectionComboBox
@@ -21,8 +25,6 @@ from .base import (
     BaseWidget,
     InputWidget
 )
-from openpype.widgets.sliders import NiceSlider
-from openpype.tools.settings import CHILD_OFFSET
 
 
 class DictImmutableKeysWidget(BaseWidget):
@@ -129,6 +131,7 @@ class DictImmutableKeysWidget(BaseWidget):
         content_widget.setProperty("show_borders", show_borders)
 
         label_widget = QtWidgets.QLabel(self.entity.label)
+        label_widget.setObjectName("SettingsLabel")
 
         content_layout = QtWidgets.QGridLayout(content_widget)
         content_layout.setContentsMargins(5, 5, 5, 5)
@@ -324,12 +327,7 @@ class DictImmutableKeysWidget(BaseWidget):
 
 class BoolWidget(InputWidget):
     def _add_inputs_to_layout(self):
-        checkbox_height = self.style().pixelMetric(
-            QtWidgets.QStyle.PM_IndicatorHeight
-        )
-        self.input_field = NiceCheckbox(
-            height=checkbox_height, parent=self.content_widget
-        )
+        self.input_field = SettingsNiceCheckbox(parent=self.content_widget)
 
         self.content_layout.addWidget(self.input_field, 0)
         self.content_layout.addStretch(1)
@@ -352,6 +350,9 @@ class BoolWidget(InputWidget):
     def _on_value_change(self):
         if self.ignore_input_changes:
             return
+        self.start_value_timer()
+
+    def _on_value_change_timer(self):
         self.entity.set(self.input_field.isChecked())
 
 
@@ -377,6 +378,16 @@ class TextWidget(InputWidget):
 
         self.input_field.focused_in.connect(self._on_input_focus)
         self.input_field.textChanged.connect(self._on_value_change)
+
+        self._refresh_completer()
+
+    def _refresh_completer(self):
+        # Multiline entity can't have completer
+        #   - there is not space for this UI component
+        if self.entity.multiline:
+            return
+
+        self.input_field.update_completer_values(self.entity.value_hints)
 
     def _on_input_focus(self):
         self.focused_in()
@@ -404,6 +415,86 @@ class TextWidget(InputWidget):
 
     def _on_value_change_timer(self):
         self.entity.set(self.input_value())
+
+
+class OpenPypeVersionText(TextWidget):
+    def __init__(self, *args, **kwargs):
+        self._info_widget = None
+        super(OpenPypeVersionText, self).__init__(*args, **kwargs)
+
+    def create_ui(self):
+        super(OpenPypeVersionText, self).create_ui()
+        info_widget = QtWidgets.QLabel(self)
+        info_widget.setObjectName("OpenPypeVersionLabel")
+        self.content_layout.addWidget(info_widget, 1)
+
+        self._info_widget = info_widget
+
+    def _update_info_widget(self):
+        value = self.input_value()
+
+        message = ""
+        tooltip = ""
+        state = None
+        if self._is_invalid:
+            message = "Invalid OpenPype version format"
+
+        elif value == "":
+            message = "Use latest available version"
+            tooltip = (
+                "Latest version from OpenPype zip repository will be used"
+            )
+
+        elif value in self.entity.value_hints:
+            state = "success"
+            message = "Version {} will be used".format(value)
+
+        else:
+            state = "warning"
+            message = (
+                "Version {} not found in listed versions".format(value)
+            )
+            if self.entity.value_hints:
+                tooltip = "Listed versions: {}".format(", ".join(
+                    ['"{}"'.format(hint) for hint in self.entity.value_hints]
+                ))
+            else:
+                tooltip = "No versions were listed"
+
+        self._info_widget.setText(message)
+        self._info_widget.setToolTip(tooltip)
+        self.set_style_property(self._info_widget, "state", state)
+
+    def set_entity_value(self):
+        super(OpenPypeVersionText, self).set_entity_value()
+        self._invalidate()
+        self._update_info_widget()
+
+    def _on_value_change_timer(self):
+        value = self.input_value()
+        self._invalidate()
+        if not self.is_invalid:
+            self.entity.set(value)
+            self.update_style()
+        else:
+            # Manually trigger hierachical style update
+            self.ignore_input_changes.set_ignore(True)
+            self.ignore_input_changes.set_ignore(False)
+
+        self._update_info_widget()
+
+    def _invalidate(self):
+        value = self.input_value()
+        try:
+            self.entity.convert_to_valid_type(value)
+            is_invalid = False
+        except BaseInvalidValue:
+            is_invalid = True
+        self._is_invalid = is_invalid
+
+    def _on_entity_change(self):
+        super(OpenPypeVersionText, self)._on_entity_change()
+        self._refresh_completer()
 
 
 class NumberWidget(InputWidget):

@@ -100,6 +100,13 @@ class ReferenceLoader(api.Loader):
             "offset",
             label="Position Offset",
             help="Offset loaded models for easier selection."
+        ),
+        qargparse.Boolean(
+            "attach_to_root",
+            label="Group imported asset",
+            default=True,
+            help="Should a group be created to encapsulate"
+                 " imported representation ?"
         )
     ]
 
