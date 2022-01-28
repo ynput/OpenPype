@@ -1,5 +1,3 @@
-import hou
-
 from avalon import houdini
 
 

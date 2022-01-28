@@ -14,8 +14,6 @@ class ExtractAss(openpype.api.Extractor):
 
     def process(self, instance):
 
-        import hou
-
         ropnode = instance[0]
 
         # Get the filename from the filename parameter
