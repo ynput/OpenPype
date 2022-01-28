@@ -9,7 +9,8 @@ class SaveCurrentScene(pyblish.api.InstancePlugin):
     order = pyblish.api.IntegratorOrder - 0.49
     hosts = ["houdini"]
     families = ["usdrender",
-                "redshift_rop"]
+                "redshift_rop",
+                "arnold_rop"]
     targets = ["local"]
 
     def process(self, instance):
