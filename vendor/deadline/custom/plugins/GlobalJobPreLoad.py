@@ -10,7 +10,7 @@ from Deadline.Scripting import RepositoryUtils, FileUtils
 
 def get_openpype_executable():
     """Return OpenPype Executable from Event Plug-in Settings"""
-    config = RepositoryUtils.GetEventPluginConfig("OpenPype")
+    config = RepositoryUtils.GetPluginConfig("OpenPype")
     return config.GetConfigEntryWithDefault("OpenPypeExecutable", "")
 
 
