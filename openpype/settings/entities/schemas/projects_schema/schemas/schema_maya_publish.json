@@ -157,6 +157,33 @@
         {
             "type": "dict",
             "collapsible": true,
+            "checkbox_key": "enabled",
+            "key": "ValidateCycleError",
+            "label": "Validate Cycle Error",
+            "is_group": true,
+            "children": [
+                {
+                    "type": "boolean",
+                    "key": "enabled",
+                    "label": "Enabled"
+                },
+                {
+                    "type": "boolean",
+                    "key": "optional",
+                    "label": "Optional"
+                },
+                {
+                    "key": "families",
+                    "label": "Families",
+                    "type": "list",
+                    "object_type": "text"
+                }
+            ]
+        },
+
+        {
+            "type": "dict",
+            "collapsible": true,
             "key": "ValidateRenderSettings",
             "label": "ValidateRenderSettings",
             "children": [

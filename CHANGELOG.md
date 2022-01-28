@@ -1,8 +1,30 @@
 # Changelog
 
+## [3.8.1-nightly.1](https://github.com/pypeclub/OpenPype/tree/HEAD)
+
+[Full Changelog](https://github.com/pypeclub/OpenPype/compare/3.8.0...HEAD)
+
+**🚀 Enhancements**
+
+- Loader: Allow to toggle default family filters between "include" or "exclude" filtering [\#2541](https://github.com/pypeclub/OpenPype/pull/2541)
+
+**🐛 Bug fixes**
+
+- Webpublisher: Fix - subset names from processed .psd used wrong value for task [\#2586](https://github.com/pypeclub/OpenPype/pull/2586)
+- `vrscene` creator Deadline webservice URL handling [\#2580](https://github.com/pypeclub/OpenPype/pull/2580)
+- global: track name was failing if duplicated root word in name [\#2568](https://github.com/pypeclub/OpenPype/pull/2568)
+
+**Merged pull requests:**
+
+- build\(deps\): bump pillow from 8.4.0 to 9.0.0 [\#2523](https://github.com/pypeclub/OpenPype/pull/2523)
+
 ## [3.8.0](https://github.com/pypeclub/OpenPype/tree/3.8.0) (2022-01-24)
 
-[Full Changelog](https://github.com/pypeclub/OpenPype/compare/3.7.0...3.8.0)
+[Full Changelog](https://github.com/pypeclub/OpenPype/compare/CI/3.8.0-nightly.7...3.8.0)
+
+### 📖 Documentation
+
+- Variable in docs renamed to proper name [\#2546](https://github.com/pypeclub/OpenPype/pull/2546)
 
 **🆕 New features**
 
@@ -50,10 +72,6 @@
 - Improve FusionPreLaunch hook errors [\#2505](https://github.com/pypeclub/OpenPype/pull/2505)
 - Maya: Validate Shape Zero do not keep fixed geometry vertices selected/active after repair [\#2456](https://github.com/pypeclub/OpenPype/pull/2456)
 
-### 📖 Documentation
-
-- Variable in docs renamed to proper name [\#2546](https://github.com/pypeclub/OpenPype/pull/2546)
-
 **Merged pull requests:**
 
 - AfterEffects: Move implementation to OpenPype [\#2543](https://github.com/pypeclub/OpenPype/pull/2543)
@@ -70,16 +88,10 @@
 
 - General: Workdir extra folders [\#2462](https://github.com/pypeclub/OpenPype/pull/2462)
 - Photoshop: New style validations for New publisher [\#2429](https://github.com/pypeclub/OpenPype/pull/2429)
-- General: Environment variables groups [\#2424](https://github.com/pypeclub/OpenPype/pull/2424)
-- Unreal: Dynamic menu created in Python [\#2422](https://github.com/pypeclub/OpenPype/pull/2422)
-- Settings UI: Hyperlinks to settings [\#2420](https://github.com/pypeclub/OpenPype/pull/2420)
-- Modules: JobQueue module moved one hierarchy level higher [\#2419](https://github.com/pypeclub/OpenPype/pull/2419)
-- TimersManager: Start timer post launch hook [\#2418](https://github.com/pypeclub/OpenPype/pull/2418)
 
 **🐛 Bug fixes**
 
 - Short Pyblish plugin path [\#2428](https://github.com/pypeclub/OpenPype/pull/2428)
-- PS: Introduced settings for invalid characters to use in ValidateNaming plugin [\#2417](https://github.com/pypeclub/OpenPype/pull/2417)
 
 **Merged pull requests:**
 

@@ -21,7 +21,7 @@ speed.
 import os
 import sys
 import site
-from distutils.util import get_platform
+from sysconfig import get_platform
 import platform
 import subprocess
 from pathlib import Path
