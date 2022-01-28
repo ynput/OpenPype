@@ -21,6 +21,8 @@ PROJECT_SETTINGS_KEY = "project_settings"
 PROJECT_ANATOMY_KEY = "project_anatomy"
 LOCAL_SETTING_KEY = "local_settings"
 
+LEGACY_SETTINGS_VERSION = "legacy"
+
 # Schema hub names
 SCHEMA_KEY_SYSTEM_SETTINGS = "system_schema"
 SCHEMA_KEY_PROJECT_SETTINGS = "projects_schema"

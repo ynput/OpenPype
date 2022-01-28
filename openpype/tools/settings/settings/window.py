@@ -4,7 +4,11 @@ from .categories import (
     SystemWidget,
     ProjectWidget
 )
-from .widgets import ShadowWidget, RestartDialog
+from .widgets import (
+    ShadowWidget,
+    RestartDialog,
+    SettingsTabWidget
+)
 from openpype import style
 
 from openpype.lib import is_admin_password_required
@@ -34,7 +38,7 @@ class MainWidget(QtWidgets.QWidget):
         self.setStyleSheet(stylesheet)
         self.setWindowIcon(QtGui.QIcon(style.app_icon_path()))
 
-        header_tab_widget = QtWidgets.QTabWidget(parent=self)
+        header_tab_widget = SettingsTabWidget(parent=self)
 
         studio_widget = SystemWidget(user_role, header_tab_widget)
         project_widget = ProjectWidget(user_role, header_tab_widget)
@@ -64,6 +68,10 @@ class MainWidget(QtWidgets.QWidget):
                 self._on_restart_required
             )
             tab_widget.full_path_requested.connect(self._on_full_path_request)
+
+        header_tab_widget.context_menu_requested.connect(
+            self._on_context_menu_request
+        )
 
         self._header_tab_widget = header_tab_widget
         self.tab_widgets = tab_widgets
@@ -99,6 +107,18 @@ class MainWidget(QtWidgets.QWidget):
                 self._header_tab_widget.setCurrentIndex(idx)
                 tab_widget.set_category_path(category, path)
                 break
+
+    def _on_context_menu_request(self, tab_idx):
+        widget = self._header_tab_widget.widget(tab_idx)
+        if not widget:
+            return
+
+        menu = QtWidgets.QMenu(self)
+        widget.add_context_actions(menu)
+        if menu.actions():
+            result = menu.exec_(QtGui.QCursor.pos())
+            if result is not None:
+                self._header_tab_widget.setCurrentIndex(tab_idx)
 
     def showEvent(self, event):
         super(MainWidget, self).showEvent(event)

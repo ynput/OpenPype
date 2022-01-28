@@ -1111,6 +1111,19 @@ QScrollBar::add-page:vertical, QScrollBar::sub-page:vertical {
 #ExpandLabel[state="invalid"]:hover, #SettingsLabel[state="invalid"]:hover {
     color: {color:settings:invalid-dark};
 }
+#SourceVersionLabel {
+  border-radius: 0.48em;
+  padding-left: 3px;
+  padding-right: 3px;
+}
+
+#SourceVersionLabel[state="same"] {
+  border: 1px solid {color:font};
+}
+#SourceVersionLabel[state="different"] {
+  border: 1px solid {color:font-disabled};
+  color: {color:font-disabled};
+}
 
 /* TODO Replace these with explicit widget types if possible */
 #SettingsMainWidget QWidget[input-state="modified"] {

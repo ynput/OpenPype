@@ -266,28 +266,153 @@ def save_project_anatomy(project_name, anatomy_data):
 
 
 @require_handler
-def get_studio_system_settings_overrides():
-    return _SETTINGS_HANDLER.get_studio_system_settings_overrides()
+def get_studio_system_settings_overrides(return_version=False):
+    return _SETTINGS_HANDLER.get_studio_system_settings_overrides(
+        return_version
+    )
 
 
 @require_handler
-def get_studio_project_settings_overrides():
-    return _SETTINGS_HANDLER.get_studio_project_settings_overrides()
+def get_studio_project_settings_overrides(return_version=False):
+    return _SETTINGS_HANDLER.get_studio_project_settings_overrides(
+        return_version
+    )
 
 
 @require_handler
-def get_studio_project_anatomy_overrides():
-    return _SETTINGS_HANDLER.get_studio_project_anatomy_overrides()
+def get_studio_project_anatomy_overrides(return_version=False):
+    return _SETTINGS_HANDLER.get_studio_project_anatomy_overrides(
+        return_version
+    )
 
 
 @require_handler
-def get_project_settings_overrides(project_name):
-    return _SETTINGS_HANDLER.get_project_settings_overrides(project_name)
+def get_project_settings_overrides(project_name, return_version=False):
+    return _SETTINGS_HANDLER.get_project_settings_overrides(
+        project_name, return_version
+    )
 
 
 @require_handler
 def get_project_anatomy_overrides(project_name):
     return _SETTINGS_HANDLER.get_project_anatomy_overrides(project_name)
+
+
+@require_handler
+def get_studio_system_settings_overrides_for_version(version):
+    return (
+        _SETTINGS_HANDLER
+        .get_studio_system_settings_overrides_for_version(version)
+    )
+
+
+@require_handler
+def get_studio_project_anatomy_overrides_for_version(version):
+    return (
+        _SETTINGS_HANDLER
+        .get_studio_project_anatomy_overrides_for_version(version)
+    )
+
+
+@require_handler
+def get_studio_project_settings_overrides_for_version(version):
+    return (
+        _SETTINGS_HANDLER
+        .get_studio_project_settings_overrides_for_version(version)
+    )
+
+
+@require_handler
+def get_project_settings_overrides_for_version(
+    project_name, version
+):
+    return (
+        _SETTINGS_HANDLER
+        .get_project_settings_overrides_for_version(project_name, version)
+    )
+
+
+@require_handler
+def get_available_studio_system_settings_overrides_versions(sorted=None):
+    return (
+        _SETTINGS_HANDLER
+        .get_available_studio_system_settings_overrides_versions(
+            sorted=sorted
+        )
+    )
+
+
+@require_handler
+def get_available_studio_project_anatomy_overrides_versions(sorted=None):
+    return (
+        _SETTINGS_HANDLER
+        .get_available_studio_project_anatomy_overrides_versions(
+            sorted=sorted
+        )
+    )
+
+
+@require_handler
+def get_available_studio_project_settings_overrides_versions(sorted=None):
+    return (
+        _SETTINGS_HANDLER
+        .get_available_studio_project_settings_overrides_versions(
+            sorted=sorted
+        )
+    )
+
+
+@require_handler
+def get_available_project_settings_overrides_versions(
+    project_name, sorted=None
+):
+    return (
+        _SETTINGS_HANDLER
+        .get_available_project_settings_overrides_versions(
+            project_name, sorted=sorted
+        )
+    )
+
+
+@require_handler
+def find_closest_version_for_projects(project_names):
+    return (
+        _SETTINGS_HANDLER
+        .find_closest_version_for_projects(project_names)
+    )
+
+
+@require_handler
+def clear_studio_system_settings_overrides_for_version(version):
+    return (
+        _SETTINGS_HANDLER
+        .clear_studio_system_settings_overrides_for_version(version)
+    )
+
+
+@require_handler
+def clear_studio_project_settings_overrides_for_version(version):
+    return (
+        _SETTINGS_HANDLER
+        .clear_studio_project_settings_overrides_for_version(version)
+    )
+
+
+@require_handler
+def clear_studio_project_anatomy_overrides_for_version(version):
+    return (
+        _SETTINGS_HANDLER
+        .clear_studio_project_anatomy_overrides_for_version(version)
+    )
+
+
+@require_handler
+def clear_project_settings_overrides_for_version(
+    version, project_name
+):
+    return _SETTINGS_HANDLER.clear_project_settings_overrides_for_version(
+        version, project_name
+    )
 
 
 @require_local_handler
