@@ -2,14 +2,12 @@ import re
 import os
 
 import hou
-import avalon.io as io
-import avalon.api as api
 import pyblish.api
 
 
 def get_top_referenced_parm(parm):
 
-    processed = set() # disallow infinite loop
+    processed = set()  # disallow infinite loop
     while True:
         if parm.path() in processed:
             raise RuntimeError("Parameter references result in cycle.")

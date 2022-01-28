@@ -68,7 +68,7 @@ class HoudiniSubmitRenderDeadline(pyblish.api.InstancePlugin):
                 "UserName": deadline_user,
 
                 "Plugin": "Houdini",
-                #"Pool": "houdini",    # todo(roy): Add pool options
+                # "Pool": "houdini",    # todo(roy): Add pool options
                 "Frames": frames,
 
                 "ChunkSize": instance.data.get("chunkSize", 10),
