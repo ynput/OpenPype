@@ -71,8 +71,18 @@ class AnimationFBXLoader(api.Loader):
 
         if instance_name:
             automated = True
-            actor_name = 'PersistentLevel.' + instance_name
-            actor = unreal.EditorLevelLibrary.get_actor_reference(actor_name)
+            # Old method to get the actor
+            # actor_name = 'PersistentLevel.' + instance_name
+            # actor = unreal.EditorLevelLibrary.get_actor_reference(actor_name)
+            actors = unreal.EditorLevelLibrary.get_all_level_actors()
+            for a in actors:
+                if a.get_class().get_name() != "SkeletalMeshActor":
+                    continue
+                if a.get_actor_label() == instance_name:
+                    actor = a
+                    break
+            if not actor:
+                raise Exception(f"Could not find actor {instance_name}")
             skeleton = actor.skeletal_mesh_component.skeletal_mesh.skeleton
             task.options.set_editor_property('skeleton', skeleton)
 
@@ -173,20 +183,35 @@ class AnimationFBXLoader(api.Loader):
         task.set_editor_property('destination_name', name)
         task.set_editor_property('replace_existing', True)
         task.set_editor_property('automated', True)
-        task.set_editor_property('save', False)
+        task.set_editor_property('save', True)
 
         # set import options here
         task.options.set_editor_property(
-            'automated_import_should_detect_type', True)
+            'automated_import_should_detect_type', False)
         task.options.set_editor_property(
-            'original_import_type', unreal.FBXImportType.FBXIT_ANIMATION)
+            'original_import_type', unreal.FBXImportType.FBXIT_SKELETAL_MESH)
+        task.options.set_editor_property(
+            'mesh_type_to_import', unreal.FBXImportType.FBXIT_ANIMATION)
         task.options.set_editor_property('import_mesh', False)
         task.options.set_editor_property('import_animations', True)
+        task.options.set_editor_property('override_full_name', True)
 
-        task.options.skeletal_mesh_import_data.set_editor_property(
-            'import_content_type',
-            unreal.FBXImportContentType.FBXICT_SKINNING_WEIGHTS
+        task.options.anim_sequence_import_data.set_editor_property(
+            'animation_length',
+            unreal.FBXAnimationLengthImportType.FBXALIT_EXPORTED_TIME
         )
+        task.options.anim_sequence_import_data.set_editor_property(
+            'import_meshes_in_bone_hierarchy', False)
+        task.options.anim_sequence_import_data.set_editor_property(
+            'use_default_sample_rate', True)
+        task.options.anim_sequence_import_data.set_editor_property(
+            'import_custom_attribute', True)
+        task.options.anim_sequence_import_data.set_editor_property(
+            'import_bone_tracks', True)
+        task.options.anim_sequence_import_data.set_editor_property(
+            'remove_redundant_keys', True)
+        task.options.anim_sequence_import_data.set_editor_property(
+            'convert_scene', True)
 
         skeletal_mesh = unreal.EditorAssetLibrary.load_asset(
             container.get('namespace') + "/" + container.get('asset_name'))
@@ -219,7 +244,7 @@ class AnimationFBXLoader(api.Loader):
         unreal.EditorAssetLibrary.delete_directory(path)
 
         asset_content = unreal.EditorAssetLibrary.list_assets(
-            parent_path, recursive=False
+            parent_path, recursive=False, include_folder=True
         )
 
         if len(asset_content) == 0:
