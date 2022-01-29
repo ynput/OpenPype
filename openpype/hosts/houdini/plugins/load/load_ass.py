@@ -54,8 +54,21 @@ class AssLoader(api.Loader):
         collections, remainder = clique.assemble(frames,
                                                  minimum_items=1,
                                                  patterns=patterns)
-        assert len(collections) == 1
-        assert not remainder
+        self.log.debug("Detected collections: {}".format(collections))
+        self.log.debug("Detected remainder: {}".format(remainder))
+
+        if not collections and remainder:
+            if len(remainder) != 1:
+                raise ValueError("Frames not correctly detected "
+                                 "in: {}".format(remainder))
+
+            # A single frame without frame range detected
+            filepath = remainder[0]
+            return os.path.normpath(filepath).replace("\\", "/")
+
+        # Frames detected with a valid "frame" number pattern
+        # Then we don't want to have any remainder files found
+        assert len(collections) == 1 and not remainder
         collection = collections[0]
 
         num_frames = len(collection.indexes)
@@ -63,6 +76,7 @@ class AssLoader(api.Loader):
             # Return the input path without dynamic $F variable
             result = path
         else:
+            # More than a single frame detected - use $F{padding}
             fname = "{}$F{}{}".format(collection.head,
                                       collection.padding,
                                       collection.tail)
