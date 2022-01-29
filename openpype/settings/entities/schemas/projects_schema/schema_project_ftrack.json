@@ -744,17 +744,10 @@
 				},
 				{
 					"type" : "dict",
-					"collapsible" : true,
-					"checkbox_key" : "enabled",
 					"key" : "IntegrateFtrackInstance",
 					"label" : "IntegrateFtrackInstance",
 					"is_group" : true,
 					"children" : [
-						{
-							"type" : "boolean",
-							"key" : "enabled",
-							"label" : "Enabled"
-						},
 						{
 							"type" : "dict-modifiable",
 							"key" : "family_mapping",
