@@ -141,10 +141,9 @@ class OpenClip:
     out_feed_fps = None
     out_feed_drop_mode = None
 
-    def __init__(self, name,  openclip_file_path, feed_data):
+    def __init__(self, name, openclip_file_path, feed_data):
         # test if media script paht exists
         self._validate_media_script_path()
-
 
         # new feed variables:
         feed_path = feed_data["path"]
@@ -204,22 +203,22 @@ class OpenClip:
 
         tmp_xml = ET.parse(self.tmp_file)
 
-        for tmp_xml_feed in tmp_xml.iter('feeds'):
-            feed = tmp_xml_feed.find('feed')
-            feed.set('vuid', self.feed_basename)
+        tmp_xml_feeds = tmp_xml.find('tracks/track/feeds')
+        tmp_xml_feeds.set('currentVersion', self.feed_version_name)
+        for tmp_feed in tmp_xml_feeds:
+            tmp_feed.set('vuid', self.feed_version_name)
 
             # add colorspace if any is set
             if self.feed_colorspace:
-                self._add_colorspace(feed, self.feed_colorspace)
+                self._add_colorspace(tmp_feed, self.feed_colorspace)
 
-            self._clear_handler(feed)
+            self._clear_handler(tmp_feed)
 
         tmp_xml_versions_obj = tmp_xml.find('versions')
         tmp_xml_versions_obj.set('currentVersion', self.feed_version_name)
         for xml_new_version in tmp_xml_versions_obj:
-            version = xml_new_version.find('version')
-            version.set('uid', self.feed_version_name)
-            version.set('type', 'version')
+            xml_new_version.set('uid', self.feed_version_name)
+            xml_new_version.set('type', 'version')
 
         xml_data = self._fix_xml_data(tmp_xml)
         print("Adding feed version: {}".format(self.feed_basename))
@@ -269,7 +268,10 @@ class OpenClip:
             if self.feed_colorspace:
                 self._add_colorspace(tmp_xml_feed, self.feed_colorspace)
 
-            out_track.find('feeds').append(tmp_xml_feed)
+            out_feeds = out_track.find('feeds')
+            out_feeds.set('currentVersion', self.feed_version_name)
+            out_feeds.append(tmp_xml_feed)
+
             print(
                 "Appending new feed: {}".format(
                     self.feed_version_name))
@@ -363,7 +365,6 @@ class OpenClip:
             if not created:
                 bck_file = "{}.bak.last".format(file)
                 shutil.copy2(file, bck_file)
-
 
     def _add_colorspace(self, feed_obj, profile_name):
         feed_storage_obj = feed_obj.find("storageFormat")
