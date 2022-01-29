@@ -86,7 +86,7 @@ Todo:
     Move or remove bootstrapping environments out of the code.
 
 Attributes:
-    silent_commands (list): list of commands for which we won't print OpenPype
+    silent_commands (set): list of commands for which we won't print OpenPype
         logo and info header.
 
 .. _MongoDB:
@@ -202,8 +202,8 @@ from igniter.tools import (
 from igniter.bootstrap_repos import OpenPypeVersion  # noqa: E402
 
 bootstrap = BootstrapRepos()
-silent_commands = ["run", "igniter", "standalonepublisher",
-                   "extractenvironments"]
+silent_commands = {"run", "igniter", "standalonepublisher",
+                   "extractenvironments"}
 
 
 def list_versions(openpype_versions: list, local_version=None) -> None:
@@ -1057,29 +1057,30 @@ def boot():
     _print("  - for modules ...")
     set_modules_environments()
 
-    from openpype import cli
-    from openpype.lib import terminal as t
-    from openpype.version import __version__
-
     assert version_path, "Version path not defined."
-    info = get_info(use_staging)
-    info.insert(0, f">>> Using OpenPype from [ {version_path} ]")
 
-    t_width = 20
-    try:
-        t_width = os.get_terminal_size().columns - 2
-    except (ValueError, OSError):
-        # running without terminal
-        pass
+    # print info when not running scripts defined in 'silent commands'
+    if all(arg not in silent_commands for arg in sys.argv):
+        from openpype.lib import terminal as t
+        from openpype.version import __version__
 
-    _header = f"*** OpenPype [{__version__}] "
+        info = get_info(use_staging)
+        info.insert(0, f">>> Using OpenPype from [ {version_path} ]")
 
-    info.insert(0, _header + "-" * (t_width - len(_header)))
-    for i in info:
-        # don't show for running scripts
-        if all(item not in sys.argv for item in silent_commands):
+        t_width = 20
+        try:
+            t_width = os.get_terminal_size().columns - 2
+        except (ValueError, OSError):
+            # running without terminal
+            pass
+
+        _header = f"*** OpenPype [{__version__}] "
+        info.insert(0, _header + "-" * (t_width - len(_header)))
+
+        for i in info:
             t.echo(i)
 
+    from openpype import cli
     try:
         cli.main(obj={}, prog_name="openpype")
     except Exception:  # noqa
