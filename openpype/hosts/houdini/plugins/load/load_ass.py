@@ -78,10 +78,10 @@ class AssLoader(api.Loader):
         file_path = file_path.replace("\\", "/")
 
         procedural = container["node"]
-        procedural.setParms({"ar_filename": file_path})
+        procedural.setParms({"ar_filename": self.get_path(file_path)})
 
         # Update attribute
-        node.setParms({"representation": str(representation["_id"])})
+        procedural.setParms({"representation": str(representation["_id"])})
 
     def remove(self, container):
 
