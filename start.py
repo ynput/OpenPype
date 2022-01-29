@@ -281,12 +281,11 @@ def run(arguments: list, env: dict = None) -> int:
     return p.returncode
 
 
-def run_disk_mapping_commands(mongo_url):
+def run_disk_mapping_commands(settings):
     """ Run disk mapping command
 
         Used to map shared disk for OP to pull codebase.
     """
-    settings = get_openpype_global_settings(mongo_url)
 
     low_platform = platform.system().lower()
     disk_mapping = settings.get("disk_mapping")
@@ -923,12 +922,14 @@ def boot():
     os.environ["OPENPYPE_DATABASE_NAME"] = \
         os.environ.get("OPENPYPE_DATABASE_NAME") or "openpype"
 
+    global_settings = get_openpype_global_settings(openpype_mongo)
+
     _print(">>> run disk mapping command ...")
-    run_disk_mapping_commands(openpype_mongo)
+    run_disk_mapping_commands(global_settings)
 
     # Get openpype path from database and set it to environment so openpype can
     # find its versions there and bootstrap them.
-    openpype_path = get_openpype_path_from_db(openpype_mongo)
+    openpype_path = get_openpype_path_from_db(global_settings)
 
     if getattr(sys, 'frozen', False):
         local_version = bootstrap.get_version(Path(OPENPYPE_ROOT))
