@@ -168,7 +168,7 @@ class BaseWidget(QtWidgets.QWidget):
             with self.category_widget.working_state_context():
                 self.entity.add_to_project_override
 
-        action = QtWidgets.QAction("Add to project project override")
+        action = QtWidgets.QAction("Add to project override")
         actions_mapping[action] = add_to_project_override
         menu.addAction(action)
 
