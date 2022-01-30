@@ -833,7 +833,7 @@ class SidePanelWidget(QtWidgets.QWidget):
         self.note_input.setEnabled(enabled)
         self.btn_note_save.setEnabled(enabled)
 
-        # Make sure workfile doc is overriden
+        # Make sure workfile doc is overridden
         self._workfile_doc = workfile_doc
         # Disable inputs and remove texts if any required arguments are missing
         if not enabled:

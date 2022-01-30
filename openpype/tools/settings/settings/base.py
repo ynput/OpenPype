@@ -93,7 +93,7 @@ class BaseWidget(QtWidgets.QWidget):
         if is_modified:
             return "modified"
         if has_project_override:
-            return "overriden"
+            return "overridden"
         if has_studio_override:
             return "studio"
         return ""
