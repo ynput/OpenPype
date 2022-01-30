@@ -102,7 +102,7 @@ class ActionModel(QtGui.QStandardItemModel):
             # Groups
             group_name = getattr(action, "group", None)
 
-            # Lable variants
+            # Label variants
             label = getattr(action, "label", None)
             label_variant = getattr(action, "label_variant", None)
             if label_variant and not label:

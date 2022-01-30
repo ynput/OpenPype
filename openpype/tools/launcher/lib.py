@@ -29,7 +29,7 @@ class ProjectHandler(QtCore.QObject):
     Helps to organize two separate widgets handling current project selection.
 
     It is easier to trigger project change callbacks from one place than from
-    multiple differect places without proper handling or sequence changes.
+    multiple different places without proper handling or sequence changes.
 
     Args:
         dbcon(AvalonMongoDB): Mongo connection with Session.
@@ -42,7 +42,7 @@ class ProjectHandler(QtCore.QObject):
     #   that may require reshing of projects
     refresh_interval = 10000
 
-    # Signal emmited when project has changed
+    # Signal emitted when project has changed
     project_changed = QtCore.Signal(str)
     projects_refreshed = QtCore.Signal()
     timer_timeout = QtCore.Signal()

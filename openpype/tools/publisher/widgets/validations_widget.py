@@ -276,7 +276,7 @@ class VerticallScrollArea(QtWidgets.QScrollArea):
     The biggest difference is that the scroll area has scroll bar on left side
     and resize of content will also resize scrollarea itself.
 
-    Resize if deffered by 100ms because at the moment of resize are not yet
+    Resize if deferred by 100ms because at the moment of resize are not yet
     propagated sizes and visibility of scroll bars.
     """
     def __init__(self, *args, **kwargs):

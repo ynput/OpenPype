@@ -162,7 +162,7 @@ class NameWindow(QtWidgets.QDialog):
 
         # Build inputs
         inputs_layout = QtWidgets.QFormLayout(inputs_widget)
-        # Add version only if template contain version key
+        # Add version only if template contains version key
         # - since the version can be padded with "{version:0>4}" we only search
         #   for "{version".
         if "{version" in self.template:
@@ -170,7 +170,7 @@ class NameWindow(QtWidgets.QDialog):
         else:
             version_widget.setVisible(False)
 
-        # Add subversion only if template containt `{comment}`
+        # Add subversion only if template contains `{comment}`
         if "{comment}" in self.template:
             inputs_layout.addRow("Subversion:", subversion_input)
         else:
@@ -183,7 +183,7 @@ class NameWindow(QtWidgets.QDialog):
         main_layout.addWidget(inputs_widget)
         main_layout.addWidget(btns_widget)
 
-        # Singal callback registration
+        # Signal callback registration
         version_input.valueChanged.connect(self.on_version_spinbox_changed)
         last_version_check.stateChanged.connect(
             self.on_version_checkbox_changed
@@ -833,7 +833,7 @@ class SidePanelWidget(QtWidgets.QWidget):
         self.note_input.setEnabled(enabled)
         self.btn_note_save.setEnabled(enabled)
 
-        # Make sure workfile doc is overriden
+        # Make sure workfile doc is overridden
         self._workfile_doc = workfile_doc
         # Disable inputs and remove texts if any required arguments are missing
         if not enabled:
@@ -978,7 +978,7 @@ class Window(QtWidgets.QMainWindow):
 
         Override keyPressEvent to do nothing so that Maya's panels won't
         take focus when pressing "SHIFT" whilst mouse is over viewport or
-        outliner. This way users don't accidently perform Maya commands
+        outliner. This way users don't accidentally perform Maya commands
         whilst trying to name an instance.
 
         """

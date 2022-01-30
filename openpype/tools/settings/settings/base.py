@@ -289,7 +289,7 @@ class BaseWidget(QtWidgets.QWidget):
         action = QtWidgets.QAction("Paste", menu)
         output.append((action, paste_value))
 
-        # Paste value to matchin entity
+        # Paste value to matching entity
         def paste_value_to_path():
             with self.category_widget.working_state_context():
                 _set_entity_value(matching_entity, value)
