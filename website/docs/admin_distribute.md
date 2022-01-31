@@ -32,7 +32,7 @@ You have two ways of making this happen
 
 #### Automatic Updates
 
-Every time and Artist launches OpenPype on their workstation, it will look to a pre-defined 
+Every time an Artist launches OpenPype on their workstation, it will look to a pre-defined 
 [openPype update location](#self) for any versions that are newer than the
 latest, locally installed version. If such version is found, it will be downloaded,  
 automatically extracted to the correct place and launched. This will become the default 
