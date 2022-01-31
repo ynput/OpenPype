@@ -44,9 +44,10 @@ class CreateRender(Creator):
 
         for a in selection:
             d = self.data.copy()
+            d["members"] = [a]
             d["sequence"] = a
+            d["map"] = unreal.EditorLevelLibrary.get_editor_world().get_path_name()
             asset = ar.get_asset_by_object_path(a).get_asset()
-            container_name = asset.get_name()
+            container_name = f"{asset.get_name()}{self.suffix}"
             pipeline.create_publish_instance(instance=container_name, path=path)
             pipeline.imprint("{}/{}".format(path, container_name), d)
-
