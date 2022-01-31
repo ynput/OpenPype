@@ -6,8 +6,11 @@ import nuke
 
 import pyblish.api
 import openpype.api
-import avalon.nuke.lib
-import openpype.hosts.nuke.api as nuke_api
+from openpype.hosts.nuke.api.lib import (
+    recreate_instance,
+    reset_selection,
+    select_nodes
+)
 
 
 class SelectInvalidInstances(pyblish.api.Action):
@@ -47,12 +50,12 @@ class SelectInvalidInstances(pyblish.api.Action):
             self.deselect()
 
     def select(self, instances):
-        avalon.nuke.lib.select_nodes(
+        select_nodes(
             [nuke.toNode(str(x)) for x in instances]
         )
 
     def deselect(self):
-        avalon.nuke.lib.reset_selection()
+        reset_selection()
 
 
 class RepairSelectInvalidInstances(pyblish.api.Action):
@@ -82,7 +85,7 @@ class RepairSelectInvalidInstances(pyblish.api.Action):
         context_asset = context.data["assetEntity"]["name"]
         for instance in instances:
             origin_node = instance[0]
-            nuke_api.lib.recreate_instance(
+            recreate_instance(
                 origin_node, avalon_data={"asset": context_asset}
             )
 

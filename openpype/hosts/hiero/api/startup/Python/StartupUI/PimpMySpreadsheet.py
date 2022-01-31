@@ -1,5 +1,5 @@
 # PimpMySpreadsheet 1.0, Antony Nasce, 23/05/13.
-# Adds custom spreadsheet columns and right-click menu for setting the Shot Status, and Artist Shot Assignement.
+# Adds custom spreadsheet columns and right-click menu for setting the Shot Status, and Artist Shot Assignment.
 # gStatusTags is a global dictionary of key(status)-value(icon) pairs, which can be overridden with custom icons if required
 # Requires Hiero 1.7v2 or later.
 # Install Instructions: Copy to ~/.hiero/Python/StartupUI

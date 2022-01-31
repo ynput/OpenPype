@@ -92,7 +92,7 @@ def create_time_effects(otio_clip, track_item):
         # add otio effect to clip effects
         otio_clip.effects.append(otio_effect)
 
-    # loop trought and get all Timewarps
+    # loop through and get all Timewarps
     for effect in subTrackItems:
         if ((track_item not in effect.linkedItems())
                 and (len(effect.linkedItems()) > 0)):
@@ -388,11 +388,11 @@ def create_otio_timeline():
         # Add Gap if needed
         if itemindex == 0:
             # if it is first track item at track then add
-            # it to previouse item
+            # it to previous item
             return track_item
 
         else:
-            # get previouse item
+            # get previous item
             return track_item.parent().items()[itemindex - 1]
 
     # get current timeline
@@ -416,11 +416,11 @@ def create_otio_timeline():
             # Add Gap if needed
             if itemindex == 0:
                 # if it is first track item at track then add
-                # it to previouse item
+                # it to previous item
                 prev_item = track_item
 
             else:
-                # get previouse item
+                # get previous item
                 prev_item = track_item.parent().items()[itemindex - 1]
 
             # calculate clip frame range difference from each other

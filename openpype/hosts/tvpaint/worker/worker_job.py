@@ -41,7 +41,7 @@ class BaseCommand:
     Command also have id which is created on command creation.
 
     The idea is that command is just a data container on sender side send
-    througth server to a worker where is replicated one by one, executed and
+    through server to a worker where is replicated one by one, executed and
     result sent back to sender through server.
     """
     @abstractproperty
@@ -248,7 +248,7 @@ class ExecuteGeorgeScript(BaseCommand):
 
 
 class CollectSceneData(BaseCommand):
-    """Helper command which will collect all usefull info about workfile.
+    """Helper command which will collect all useful info about workfile.
 
     Result is dictionary with all layers data, exposure frames by layer ids
     pre/post behavior of layers by their ids, group information and scene data.
@@ -256,7 +256,7 @@ class CollectSceneData(BaseCommand):
     name = "collect_scene_data"
 
     def execute(self):
-        from avalon.tvpaint.lib import (
+        from openpype.hosts.tvpaint.api.lib import (
             get_layers_data,
             get_groups_data,
             get_layers_pre_post_behavior,

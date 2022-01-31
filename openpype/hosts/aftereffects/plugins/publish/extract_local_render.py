@@ -1,9 +1,9 @@
 import os
-import six
 import sys
+import six
 
 import openpype.api
-from avalon import aftereffects
+from openpype.hosts.aftereffects.api import get_stub
 
 
 class ExtractLocalRender(openpype.api.Extractor):
@@ -15,7 +15,7 @@ class ExtractLocalRender(openpype.api.Extractor):
     families = ["render"]
 
     def process(self, instance):
-        stub = aftereffects.stub()
+        stub = get_stub()
         staging_dir = instance.data["stagingDir"]
         self.log.info("staging_dir::{}".format(staging_dir))
 
@@ -55,8 +55,7 @@ class ExtractLocalRender(openpype.api.Extractor):
 
         ffmpeg_path = openpype.lib.get_ffmpeg_tool_path("ffmpeg")
         # Generate thumbnail.
-        thumbnail_path = os.path.join(staging_dir,
-                                      "thumbnail.jpg")
+        thumbnail_path = os.path.join(staging_dir, "thumbnail.jpg")
 
         args = [
             ffmpeg_path, "-y",

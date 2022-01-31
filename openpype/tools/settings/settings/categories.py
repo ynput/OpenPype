@@ -29,6 +29,9 @@ from openpype.settings.entities import (
     StudioDefaultsNotDefined,
     SchemaError
 )
+from openpype.settings.entities.op_version_entity import (
+    OpenPypeVersionInput
+)
 
 from openpype.settings import SaveWarningExc
 from .widgets import ProjectListWidget
@@ -47,6 +50,7 @@ from .item_widgets import (
     BoolWidget,
     DictImmutableKeysWidget,
     TextWidget,
+    OpenPypeVersionText,
     NumberWidget,
     RawJsonWidget,
     EnumeratorWidget,
@@ -82,6 +86,7 @@ class SettingsCategoryWidget(QtWidgets.QWidget):
     state_changed = QtCore.Signal()
     saved = QtCore.Signal(QtWidgets.QWidget)
     restart_required_trigger = QtCore.Signal()
+    full_path_requested = QtCore.Signal(str, str)
 
     def __init__(self, user_role, parent=None):
         super(SettingsCategoryWidget, self).__init__(parent)
@@ -116,6 +121,9 @@ class SettingsCategoryWidget(QtWidgets.QWidget):
 
         elif isinstance(entity, BoolEntity):
             return BoolWidget(*args)
+
+        elif isinstance(entity, OpenPypeVersionInput):
+            return OpenPypeVersionText(*args)
 
         elif isinstance(entity, TextEntity):
             return TextWidget(*args)
@@ -267,6 +275,37 @@ class SettingsCategoryWidget(QtWidgets.QWidget):
             QtWidgets.QApplication.processEvents()
             # Scroll to widget
             self.scroll_widget.ensureWidgetVisible(widget)
+
+    def go_to_fullpath(self, full_path):
+        """Full path of settings entity which can lead to different category.
+
+        Args:
+            full_path (str): Full path to settings entity. It is expected that
+                path starts with category name ("system_setting" etc.).
+        """
+        if not full_path:
+            return
+        items = full_path.split("/")
+        category = items[0]
+        path = ""
+        if len(items) > 1:
+            path = "/".join(items[1:])
+        self.full_path_requested.emit(category, path)
+
+    def contain_category_key(self, category):
+        """Parent widget ask if category of full path lead to this widget.
+
+        Args:
+            category (str): The category name.
+
+        Returns:
+            bool: Passed category lead to this widget.
+        """
+        return False
+
+    def set_category_path(self, category, path):
+        """Change path of widget based on category full path."""
+        pass
 
     def set_path(self, path):
         self.breadcrumbs_widget.set_path(path)
@@ -555,6 +594,14 @@ class SettingsCategoryWidget(QtWidgets.QWidget):
 
 
 class SystemWidget(SettingsCategoryWidget):
+    def contain_category_key(self, category):
+        if category == "system_settings":
+            return True
+        return False
+
+    def set_category_path(self, category, path):
+        self.breadcrumbs_widget.change_path(path)
+
     def _create_root_entity(self):
         self.entity = SystemSettings(set_studio_state=False)
         self.entity.on_change_callbacks.append(self._on_entity_change)
@@ -591,6 +638,21 @@ class SystemWidget(SettingsCategoryWidget):
 
 
 class ProjectWidget(SettingsCategoryWidget):
+    def contain_category_key(self, category):
+        if category in ("project_settings", "project_anatomy"):
+            return True
+        return False
+
+    def set_category_path(self, category, path):
+        if path:
+            path_items = path.split("/")
+            if path_items[0] not in ("project_settings", "project_anatomy"):
+                path = "/".join([category, path])
+        else:
+            path = category
+
+        self.breadcrumbs_widget.change_path(path)
+
     def initialize_attributes(self):
         self.project_name = None
 

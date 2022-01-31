@@ -205,6 +205,9 @@ class DictImmutableKeysEntity(ItemEntity):
         )
         self.show_borders = self.schema_data.get("show_borders", True)
 
+    def has_child_with_key(self, key):
+        return key in self.non_gui_children
+
     def collect_static_entities_by_path(self):
         output = {}
         if self.is_dynamic_item or self.is_in_dynamic_item:

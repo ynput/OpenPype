@@ -164,7 +164,7 @@ def prepare_template_data(fill_pairs):
     """
         Prepares formatted data for filling template.
 
-        It produces mutliple variants of keys (key, Key, KEY) to control
+        It produces multiple variants of keys (key, Key, KEY) to control
         format of filled template.
 
         Args:
@@ -227,20 +227,27 @@ def filter_pyblish_plugins(plugins):
     # iterate over plugins
     for plugin in plugins[:]:
 
-        file = os.path.normpath(inspect.getsourcefile(plugin))
-        file = os.path.normpath(file)
-
-        # host determined from path
-        host_from_file = file.split(os.path.sep)[-4:-3][0]
-        plugin_kind = file.split(os.path.sep)[-2:-1][0]
-
-        # TODO: change after all plugins are moved one level up
-        if host_from_file == "openpype":
-            host_from_file = "global"
-
         try:
             config_data = presets[host]["publish"][plugin.__name__]
         except KeyError:
+            # host determined from path
+            file = os.path.normpath(inspect.getsourcefile(plugin))
+            file = os.path.normpath(file)
+
+            split_path = file.split(os.path.sep)
+            if len(split_path) < 4:
+                log.warning(
+                    'plugin path too short to extract host {}'.format(file)
+                )
+                continue
+
+            host_from_file = split_path[-4]
+            plugin_kind = split_path[-2]
+
+            # TODO: change after all plugins are moved one level up
+            if host_from_file == "openpype":
+                host_from_file = "global"
+
             try:
                 config_data = presets[host_from_file][plugin_kind][plugin.__name__]  # noqa: E501
             except KeyError:
@@ -281,7 +288,7 @@ def set_plugin_attributes_from_settings(
     if project_name is None:
         project_name = os.environ.get("AVALON_PROJECT")
 
-    # map plugin superclass to preset json. Currenly suppoted is load and
+    # map plugin superclass to preset json. Currently supported is load and
     # create (avalon.api.Loader and avalon.api.Creator)
     plugin_type = None
     if superclass.__name__.split(".")[-1] in ("Loader", "SubsetLoader"):

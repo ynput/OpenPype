@@ -35,7 +35,7 @@ class CollectWorkfile(pyblish.api.ContextPlugin):
 
         # Project name from workfile context
         project_name = context.data["workfile_context"]["project"]
-        # Host name from environemnt variable
+        # Host name from environment variable
         host_name = os.environ["AVALON_APP"]
         # Use empty variant value
         variant = ""

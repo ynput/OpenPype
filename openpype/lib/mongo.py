@@ -15,7 +15,19 @@ class MongoEnvNotSet(Exception):
     pass
 
 
-def decompose_url(url):
+def _decompose_url(url):
+    """Decompose mongo url to basic components.
+
+    Used for creation of MongoHandler which expect mongo url components as
+    separated kwargs. Components are at the end not used as we're setting
+    connection directly this is just a dumb components for MongoHandler
+    validation pass.
+    """
+    # Use first url from passed url
+    #   - this is because it is possible to pass multiple urls for multiple
+    #       replica sets which would crash on urlparse otherwise
+    #   - please don't use comma in username of password
+    url = url.split(",")[0]
     components = {
         "scheme": None,
         "host": None,
@@ -48,42 +60,13 @@ def decompose_url(url):
     return components
 
 
-def compose_url(scheme=None,
-                host=None,
-                username=None,
-                password=None,
-                port=None,
-                auth_db=None):
-
-    url = "{scheme}://"
-
-    if username and password:
-        url += "{username}:{password}@"
-
-    url += "{host}"
-    if port:
-        url += ":{port}"
-
-    if auth_db:
-        url += "?authSource={auth_db}"
-
-    return url.format(**{
-        "scheme": scheme,
-        "host": host,
-        "username": username,
-        "password": password,
-        "port": port,
-        "auth_db": auth_db
-    })
-
-
 def get_default_components():
     mongo_url = os.environ.get("OPENPYPE_MONGO")
     if mongo_url is None:
         raise MongoEnvNotSet(
             "URL for Mongo logging connection is not set."
         )
-    return decompose_url(mongo_url)
+    return _decompose_url(mongo_url)
 
 
 def should_add_certificate_path_to_mongo_url(mongo_url):

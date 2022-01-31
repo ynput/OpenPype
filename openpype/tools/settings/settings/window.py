@@ -63,7 +63,9 @@ class MainWidget(QtWidgets.QWidget):
             tab_widget.restart_required_trigger.connect(
                 self._on_restart_required
             )
+            tab_widget.full_path_requested.connect(self._on_full_path_request)
 
+        self._header_tab_widget = header_tab_widget
         self.tab_widgets = tab_widgets
 
     def _on_tab_save(self, source_widget):
@@ -89,6 +91,14 @@ class MainWidget(QtWidgets.QWidget):
         app = QtWidgets.QApplication.instance()
         if app:
             app.processEvents()
+
+    def _on_full_path_request(self, category, path):
+        for tab_widget in self.tab_widgets:
+            if tab_widget.contain_category_key(category):
+                idx = self._header_tab_widget.indexOf(tab_widget)
+                self._header_tab_widget.setCurrentIndex(idx)
+                tab_widget.set_category_path(category, path)
+                break
 
     def showEvent(self, event):
         super(MainWidget, self).showEvent(event)
