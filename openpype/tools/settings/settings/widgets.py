@@ -14,6 +14,7 @@ from openpype.tools.utils.lib import paint_image_with_color
 from openpype.widgets.nice_checkbox import NiceCheckbox
 from openpype.tools.utils import PlaceholderLineEdit
 from openpype.settings.lib import find_closest_version_for_projects
+from openpype.lib import get_openpype_version
 from .images import (
     get_pixmap,
     get_image
@@ -779,6 +780,7 @@ class ProjectModel(QtGui.QStandardItemModel):
         font_color = colors["font"].get_qcolor()
         font_color.setAlpha(67)
         self._version_font_color = font_color
+        self._current_version = get_openpype_version()
 
     def flags(self, index):
         if index.column() == 1:
@@ -830,14 +832,15 @@ class ProjectModel(QtGui.QStandardItemModel):
         all_project_names = list(project_names)
         all_project_names.append(None)
         closes_by_project_name = find_closest_version_for_projects(
-            project_names
+            all_project_names
         )
         for project_name, version in closes_by_project_name.items():
             if project_name is None:
                 item = self._default_item
             else:
                 item = self._items_by_name.get(project_name)
-            if item:
+
+            if item and version != self._current_version:
                 item.setData(version, PROJECT_VERSION_ROLE)
         root_item = self.invisibleRootItem()
         for project_name in tuple(self._items_by_name.keys()):
@@ -1003,8 +1006,6 @@ class ProjectListWidget(QtWidgets.QWidget):
         project_list.right_mouse_released_at.connect(
             self._on_item_right_clicked
         )
-
-        self._default_project_item = None
 
         self.project_list = project_list
         self.project_proxy = project_proxy
