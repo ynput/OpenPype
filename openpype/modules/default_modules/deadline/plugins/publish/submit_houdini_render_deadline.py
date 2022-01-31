@@ -101,6 +101,10 @@ class HoudiniSubmitRenderDeadline(pyblish.api.InstancePlugin):
             # similar environment using it, e.g. "maya2018;vray4.x;yeti3.1.9"
             "AVALON_TOOLS",
         ]
+        # Add mongo url if it's enabled
+        if context.get("deadlinePassMongoUrl"):
+            keys.append("OPENPYPE_MONGO")
+
         environment = dict({key: os.environ[key] for key in keys
                             if key in os.environ}, **api.Session)
 

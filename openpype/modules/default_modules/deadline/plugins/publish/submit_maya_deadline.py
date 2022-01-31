@@ -498,6 +498,9 @@ class MayaSubmitDeadline(pyblish.api.InstancePlugin):
             "OPENPYPE_DEV",
             "OPENPYPE_LOG_NO_COLORS"
         ]
+        # Add mongo url if it's enabled
+        if instance.context.get("deadlinePassMongoUrl"):
+            keys.append("OPENPYPE_MONGO")
 
         environment = dict({key: os.environ[key] for key in keys
                             if key in os.environ}, **api.Session)
