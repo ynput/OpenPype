@@ -29,9 +29,7 @@ class CollectSceneVersion(pyblish.api.ContextPlugin):
 
     # in some cases of headless publishing (for example webpublisher using PS)
     # you want to ignore version from name and let integrate use next version
-    skip_hosts_headless_publish = [
-
-    ]
+    skip_hosts_headless_publish = []
 
     def process(self, context):
         # tests should be close to regular publish as possible
