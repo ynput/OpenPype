@@ -9,7 +9,7 @@ from unreal import AssetToolsHelpers
 from unreal import FBXImportType
 from unreal import MathLibrary as umath
 
-from avalon import api, pipeline
+from avalon import api, io, pipeline
 from avalon.unreal import lib
 from avalon.unreal import pipeline as unreal_pipeline
 
@@ -74,10 +74,26 @@ class LayoutLoader(api.Loader):
 
         return None
 
-    def _process_family(self, assets, classname, transform, inst_name=None):
+    def _add_sub_sequence(self, master, sub):
+        track = master.add_master_track(unreal.MovieSceneCinematicShotTrack)
+        section = track.add_section()
+        section.set_editor_property('sub_sequence', sub)
+        return section
+
+    def _get_data(self, asset_name):
+        asset_doc = io.find_one({
+            "type": "asset",
+            "name": asset_name
+        })
+
+        return asset_doc.get("data")
+
+    def _process_family(
+        self, assets, classname, transform, sequence, inst_name=None):
         ar = unreal.AssetRegistryHelpers.get_asset_registry()
 
         actors = []
+        bindings = []
 
         for asset in assets:
             obj = ar.get_asset_by_object_path(asset).get_asset()
@@ -109,11 +125,17 @@ class LayoutLoader(api.Loader):
 
                 actors.append(actor)
 
-        return actors
+                binding = sequence.add_possessable(actor)
+                # root_component_binding = sequence.add_possessable(actor.root_component)
+                # root_component_binding.set_parent(binding)
+
+                bindings.append(binding)
+
+        return actors, bindings
 
     def _import_animation(
             self, asset_dir, path, instance_name, skeleton, actors_dict,
-            animation_file):
+            animation_file, bindings_dict, sequence):
         anim_file = Path(animation_file)
         anim_file_name = anim_file.with_suffix('')
 
@@ -192,7 +214,20 @@ class LayoutLoader(api.Loader):
             actor.skeletal_mesh_component.animation_data.set_editor_property(
                 'anim_to_play', animation)
 
-    def _process(self, libpath, asset_dir, loaded=None):
+            # Add animation to the sequencer
+            bindings = bindings_dict.get(instance_name)
+
+            for binding in bindings:
+                binding.add_track(unreal.MovieSceneSkeletalAnimationTrack)
+                for track in binding.get_tracks():
+                    section = track.add_section()
+                    section.set_range(
+                        sequence.get_playback_start(),
+                        sequence.get_playback_end())
+                    sec_params = section.get_editor_property('params')
+                    sec_params.set_editor_property('animation', animation)
+
+    def _process(self, libpath, asset_dir, sequence, loaded=None):
         ar = unreal.AssetRegistryHelpers.get_asset_registry()
 
         with open(libpath, "r") as fp:
@@ -207,6 +242,7 @@ class LayoutLoader(api.Loader):
 
         skeleton_dict = {}
         actors_dict = {}
+        bindings_dict = {}
 
         for element in data:
             reference = None
@@ -264,12 +300,13 @@ class LayoutLoader(api.Loader):
                     actors = []
 
                     if family == 'model':
-                        actors = self._process_family(
-                            assets, 'StaticMesh', transform, inst)
+                        actors, _ = self._process_family(
+                            assets, 'StaticMesh', transform, sequence, inst)
                     elif family == 'rig':
-                        actors = self._process_family(
-                            assets, 'SkeletalMesh', transform, inst)
+                        actors, bindings = self._process_family(
+                            assets, 'SkeletalMesh', transform, sequence, inst)
                         actors_dict[inst] = actors
+                        bindings_dict[inst] = bindings
 
                 if family == 'rig':
                     # Finds skeleton among the imported assets
@@ -289,8 +326,13 @@ class LayoutLoader(api.Loader):
 
             if animation_file and skeleton:
                 self._import_animation(
-                    asset_dir, path, instance_name, skeleton,
-                    actors_dict, animation_file)
+                    asset_dir, path, instance_name, skeleton, actors_dict, 
+                    animation_file, bindings_dict, sequence)
+
+            # track = sequence.add_master_track(
+            #     unreal.MovieSceneActorReferenceTrack)
+            # section = track.add_section()
+            # section.set_editor_property('sub_sequence', sequence)
 
     def _remove_family(self, assets, components, classname, propname):
         ar = unreal.AssetRegistryHelpers.get_asset_registry()
@@ -356,7 +398,13 @@ class LayoutLoader(api.Loader):
             list(str): list of container content
         """
         # Create directory for asset and avalon container
-        root = "/Game/Avalon/Assets"
+        hierarchy = context.get('asset').get('data').get('parents')
+        root = "/Game/Avalon"
+        hierarchy_dir = root
+        hierarchy_list = []
+        for h in hierarchy:
+            hierarchy_dir = f"{hierarchy_dir}/{h}"
+            hierarchy_list.append(hierarchy_dir)
         asset = context.get('asset').get('name')
         suffix = "_CON"
         if asset:
@@ -366,13 +414,86 @@ class LayoutLoader(api.Loader):
 
         tools = unreal.AssetToolsHelpers().get_asset_tools()
         asset_dir, container_name = tools.create_unique_asset_name(
-            "{}/{}/{}".format(root, asset, name), suffix="")
+            "{}/{}/{}".format(hierarchy_dir, asset, name), suffix="")
 
         container_name += suffix
 
         EditorAssetLibrary.make_directory(asset_dir)
 
-        self._process(self.fname, asset_dir)
+        # Get all the sequences in the hierarchy. It will create them, if 
+        # they don't exist.
+        sequences = []
+        i = 0
+        for h in hierarchy_list:
+            root_content = EditorAssetLibrary.list_assets(
+                h, recursive=False, include_folder=False)
+
+            existing_sequences = [
+                EditorAssetLibrary.find_asset_data(asset)
+                for asset in root_content
+                if EditorAssetLibrary.find_asset_data(
+                    asset).get_class().get_name() == 'LevelSequence'
+            ]
+
+            # for asset in root_content:
+            #     asset_data = EditorAssetLibrary.find_asset_data(asset)
+            #     # imported_asset = unreal.AssetRegistryHelpers.get_asset(
+            #     #     imported_asset_data)
+            #     if asset_data.get_class().get_name() == 'LevelSequence':
+            #         break
+
+            if not existing_sequences:
+                scene = tools.create_asset(
+                    asset_name=hierarchy[i],
+                    package_path=h,
+                    asset_class=unreal.LevelSequence,
+                    factory=unreal.LevelSequenceFactoryNew()
+                )
+                sequences.append(scene)
+            else:
+                for e in existing_sequences:
+                    sequences.append(e.get_asset())
+
+            i += 1
+
+        # TODO: check if shot already exists
+
+        shot = tools.create_asset(
+            asset_name=asset,
+            package_path=asset_dir,
+            asset_class=unreal.LevelSequence,
+            factory=unreal.LevelSequenceFactoryNew()
+        )
+
+        sequences.append(shot)
+
+        # Add sequences data to hierarchy
+        data_i = self._get_data(sequences[0].get_name())
+
+        for i in range(0, len(sequences) - 1):
+            section = self._add_sub_sequence(sequences[i], sequences[i + 1])
+
+            data_j = self._get_data(sequences[i + 1].get_name())
+
+            if data_i:
+                sequences[i].set_display_rate(unreal.FrameRate(data_i.get("fps"), 1.0))
+                sequences[i].set_playback_start(data_i.get("frameStart"))
+                sequences[i].set_playback_end(data_i.get("frameEnd"))
+            if data_j:
+                section.set_range(
+                    data_j.get("frameStart"),
+                    data_j.get("frameEnd"))
+
+            data_i = data_j
+
+        data = self._get_data(asset)
+
+        if data:
+            shot.set_display_rate(unreal.FrameRate(data.get("fps"), 1.0))
+            shot.set_playback_start(data.get("frameStart"))
+            shot.set_playback_end(data.get("frameEnd"))
+
+        self._process(self.fname, asset_dir, shot)
 
         # Create Asset Container
         lib.create_avalon_container(
