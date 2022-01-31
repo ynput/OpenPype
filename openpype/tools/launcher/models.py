@@ -2,19 +2,21 @@ import uuid
 import copy
 import logging
 import collections
+import appdirs
 
 from . import lib
 from .constants import (
     ACTION_ROLE,
     GROUP_ROLE,
     VARIANT_GROUP_ROLE,
-    ACTION_ID_ROLE
+    ACTION_ID_ROLE,
+    FORCE_NOT_OPEN_WORKFILE_ROLE
 )
 from .actions import ApplicationAction
 from Qt import QtCore, QtGui
 from avalon.vendor import qtawesome
 from avalon import style, api
-from openpype.lib import ApplicationManager
+from openpype.lib import ApplicationManager, JSONSettingRegistry
 
 log = logging.getLogger(__name__)
 
@@ -30,6 +32,13 @@ class ActionModel(QtGui.QStandardItemModel):
         # Cache of available actions
         self._registered_actions = list()
         self.items_by_id = {}
+        path = appdirs.user_data_dir("openpype", "pypeclub")
+        self.launcher_registry = JSONSettingRegistry("launcher", path)
+
+        try:
+            _ = self.launcher_registry.get_item("force_not_open_workfile")
+        except ValueError:
+            self.launcher_registry.set_item("force_not_open_workfile", [])
 
     def discover(self):
         """Set up Actions cache. Run this for each new project."""
@@ -75,7 +84,8 @@ class ActionModel(QtGui.QStandardItemModel):
                     "group": None,
                     "icon": app.icon,
                     "color": getattr(app, "color", None),
-                    "order": getattr(app, "order", None) or 0
+                    "order": getattr(app, "order", None) or 0,
+                    "data": {}
                 }
             )
 
@@ -179,11 +189,17 @@ class ActionModel(QtGui.QStandardItemModel):
 
         self.beginResetModel()
 
+        stored = self.launcher_registry.get_item("force_not_open_workfile")
         items = []
         for order in sorted(items_by_order.keys()):
             for item in items_by_order[order]:
                 item_id = str(uuid.uuid4())
                 item.setData(item_id, ACTION_ID_ROLE)
+
+                if self.is_force_not_open_workfile(item,
+                                                   stored):
+                    self.change_action_item(item, True)
+
                 self.items_by_id[item_id] = item
                 items.append(item)
 
@@ -221,6 +237,90 @@ class ActionModel(QtGui.QStandardItemModel):
             compatible,
             key=lambda action: (action.order, action.name)
         )
+
+    def update_force_not_open_workfile_settings(self, is_checked, action_id):
+        """Store/remove config for forcing to skip opening last workfile.
+
+        Args:
+            is_checked (bool): True to add, False to remove
+            action_id (str)
+        """
+        action_item = self.items_by_id.get(action_id)
+        if not action_item:
+            return
+
+        action = action_item.data(ACTION_ROLE)
+        actual_data = self._prepare_compare_data(action)
+
+        stored = self.launcher_registry.get_item("force_not_open_workfile")
+        if is_checked:
+            stored.append(actual_data)
+        else:
+            final_values = []
+            for config in stored:
+                if config != actual_data:
+                    final_values.append(config)
+            stored = final_values
+
+        self.launcher_registry.set_item("force_not_open_workfile", stored)
+        self.launcher_registry._get_item.cache_clear()
+        self.change_action_item(action_item, is_checked)
+
+    def change_action_item(self, item, checked):
+        """Modifies tooltip and sets if opening of last workfile forbidden"""
+        tooltip = item.data(QtCore.Qt.ToolTipRole)
+        if checked:
+            tooltip += " (Not opening last workfile)"
+
+        item.setData(tooltip, QtCore.Qt.ToolTipRole)
+        item.setData(checked, FORCE_NOT_OPEN_WORKFILE_ROLE)
+
+    def is_application_action(self, action):
+        """Checks if item is of a ApplicationAction type
+
+        Args:
+            action (action)
+        """
+        if isinstance(action, list) and action:
+            action = action[0]
+
+        return ApplicationAction in action.__bases__
+
+    def is_force_not_open_workfile(self, item, stored):
+        """Checks if application for task is marked to not open workfile
+
+        There might be specific tasks where is unwanted to open workfile right
+        always (broken file, low performance). This allows artist to mark to
+        skip opening for combination (project, asset, task_name, app)
+
+        Args:
+            item (QStandardItem)
+            stored (list) of dict
+        """
+        action = item.data(ACTION_ROLE)
+        if not self.is_application_action(action):
+            return False
+
+        actual_data = self._prepare_compare_data(action)
+        for config in stored:
+            if config == actual_data:
+                return True
+
+        return False
+
+    def _prepare_compare_data(self, action):
+        if isinstance(action, list) and action:
+            action = action[0]
+
+        compare_data = {}
+        if action:
+            compare_data = {
+                "app_label": action.label.lower(),
+                "project_name": self.dbcon.Session["AVALON_PROJECT"],
+                "asset": self.dbcon.Session["AVALON_ASSET"],
+                "task_name": self.dbcon.Session["AVALON_TASK"]
+            }
+        return compare_data
 
 
 class ProjectModel(QtGui.QStandardItemModel):
