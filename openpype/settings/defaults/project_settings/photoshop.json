@@ -12,7 +12,7 @@
                 {
                     "color_code": [],
                     "layer_name_regex": [],
-                    "family": "",
+                    "family": "image",
                     "subset_template_name": ""
                 }
             ]
