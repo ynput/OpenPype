@@ -1118,11 +1118,12 @@ QScrollBar::add-page:vertical, QScrollBar::sub-page:vertical {
 }
 
 #SourceVersionLabel[state="same"] {
-  border: 1px solid {color:font};
+  border: 1px solid {color:settings:source-version};
+  color: {color:settings:source-version};
 }
 #SourceVersionLabel[state="different"] {
-  border: 1px solid {color:font-disabled};
-  color: {color:font-disabled};
+  border: 1px solid {color:settings:source-version-outdated};
+  color: {color:settings:source-version-outdated};
 }
 
 /* TODO Replace these with explicit widget types if possible */
