@@ -52,7 +52,10 @@ from .menu import (
 )
 from .plugin import (
     Creator,
-    PublishableClip
+    PublishableClip,
+    ClipLoader,
+    OpenClipSolver
+
 )
 from .workio import (
     open_file,
@@ -122,6 +125,8 @@ __all__ = [
     # plugin
     "Creator",
     "PublishableClip",
+    "ClipLoader",
+    "OpenClipSolver",
 
     # workio
     "open_file",
