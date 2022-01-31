@@ -372,7 +372,9 @@
                 "rendersetup": "rendersetup",
                 "assembly": "assembly",
                 "layout": "layout",
-                "unrealStaticMesh": "geo"
+                "unrealStaticMesh": "geo",
+                "vrayproxy": "cache",
+                "redshiftproxy": "cache"
             }
         }
     }
