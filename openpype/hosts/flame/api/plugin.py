@@ -701,6 +701,8 @@ class OpenClipSolver:
     out_feed_fps = None
     out_feed_drop_mode = None
 
+    log = log
+
     def __init__(self, openclip_file_path, feed_data):
         # test if media script paht exists
         self._validate_media_script_path()
@@ -709,6 +711,9 @@ class OpenClipSolver:
         feed_path = feed_data["path"]
         self.feed_version_name = feed_data["version"]
         self.feed_colorspace = feed_data.get("colorspace")
+
+        if feed_data.get("logger"):
+            self.log = feed_data["logger"]
 
         # derivate other feed variables
         self.feed_basename = os.path.basename(feed_path)
@@ -726,7 +731,7 @@ class OpenClipSolver:
             self.tmp_file = os.path.join(self.feed_dir, self.tmp_name)
             self._clear_tmp_file()
 
-        print("Temp File: {}".format(self.tmp_file))
+        self.log.info("Temp File: {}".format(self.tmp_file))
 
     def make(self):
         self._get_media_info_args()
@@ -753,9 +758,9 @@ class OpenClipSolver:
 
         # execute creation of clip xml template data
         try:
-            flib.run_subprocess(cmd_args)
+            openpype.run_subprocess(cmd_args)
         except TypeError:
-            print("Error createing self.tmp_file")
+            self.log.error("Error createing self.tmp_file")
             six.reraise(*sys.exc_info())
 
     def _clear_tmp_file(self):
@@ -764,11 +769,11 @@ class OpenClipSolver:
 
     def _clear_handler(self, xml_object):
         for handler in xml_object.findall("./handler"):
-            print("Handler found")
+            self.log.debug("Handler found")
             xml_object.remove(handler)
 
     def _create_new_open_clip(self):
-        print("Building new openClip")
+        self.log.info("Building new openClip")
 
         tmp_xml = ET.parse(self.tmp_file)
 
@@ -790,20 +795,20 @@ class OpenClipSolver:
             xml_new_version.set('type', 'version')
 
         xml_data = self._fix_xml_data(tmp_xml)
-        print("Adding feed version: {}".format(self.feed_basename))
+        self.log.info("Adding feed version: {}".format(self.feed_basename))
 
         self._write_result_xml_to_file(xml_data)
 
-        print("openClip Updated: %s" % self.tmp_file)
+        self.log.info("openClip Updated: {}".format(self.tmp_file))
 
     def _update_open_clip(self):
-        print("Updating openClip ..")
+        self.log.info("Updating openClip ..")
 
         out_xml = ET.parse(self.out_file)
         tmp_xml = ET.parse(self.tmp_file)
 
-        print(">> out_xml: {}".format(out_xml))
-        print(">> tmp_xml: {}".format(tmp_xml))
+        self.log.debug(">> out_xml: {}".format(out_xml))
+        self.log.debug(">> tmp_xml: {}".format(tmp_xml))
 
         # Get new feed from tmp file
         tmp_xml_feed = tmp_xml.find('tracks/track/feeds/feed')
@@ -841,7 +846,7 @@ class OpenClipSolver:
             out_feeds.set('currentVersion', self.feed_version_name)
             out_feeds.append(tmp_xml_feed)
 
-            print(
+            self.log.info(
                 "Appending new feed: {}".format(
                     self.feed_version_name))
             feed_added = True
@@ -860,11 +865,12 @@ class OpenClipSolver:
             # fist create backup
             self._create_openclip_backup_file(self.out_file)
 
-            print("Adding feed version: {}".format(self.feed_version_name))
+            self.log.info("Adding feed version: {}".format(
+                self.feed_version_name))
 
             self._write_result_xml_to_file(xml_data)
 
-            print("openClip Updated: {}".format(self.out_file))
+            self.log.info("openClip Updated: {}".format(self.out_file))
 
         self._clear_tmp_file()
 
@@ -885,14 +891,15 @@ class OpenClipSolver:
                 else:
                     continue
         except Exception as msg:
-            print(msg)
+            self.log.warning(msg)
 
     def _feed_exists(self, xml_data, path):
         # loop all available feed paths and check if
         # the path is not already in file
         for src_path in xml_data.iter('path'):
             if path == src_path.text:
-                print("Not appending file as it already is in .clip file")
+                self.log.warning(
+                    "Not appending file as it already is in .clip file")
                 return True
 
     def _fix_xml_data(self, xml_data):
@@ -929,7 +936,7 @@ class OpenClipSolver:
     def _add_colorspace(self, feed_obj, profile_name):
         feed_storage_obj = feed_obj.find("storageFormat")
         feed_clr_obj = feed_storage_obj.find("colourSpace")
-        if not feed_clr_obj:
+        if feed_clr_obj is not None:
             feed_clr_obj = ET.Element(
                 "colourSpace", {"type": "string"})
             feed_storage_obj.append(feed_clr_obj)

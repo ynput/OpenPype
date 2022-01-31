@@ -1,6 +1,6 @@
 import os
 import flame
-from avalon import io, api
+from pprint import pformat
 import openpype.hosts.flame.api as opfapi
 
 
@@ -24,7 +24,6 @@ class LoadClip(opfapi.ClipLoader):
     reel_name = "Loaded"
     clip_name_template = "{asset}_{subset}_{representation}"
 
-
     def load(self, context, name, namespace, options):
 
         # get flame objects
@@ -47,17 +46,27 @@ class LoadClip(opfapi.ClipLoader):
 
         # create workfile path
         workfile_dir = os.environ["AVALON_WORKDIR"]
-        openclip_path = os.path.join(
-            workfile_dir, clip_name, clip_name + ".clip"
+        openclip_dir = os.path.join(
+            workfile_dir, clip_name
         )
+        openclip_path = os.path.join(
+            openclip_dir, clip_name + ".clip"
+        )
+        if not os.path.exists(openclip_dir):
+            os.makedirs(openclip_dir)
 
         # prepare clip data from context ad send it to openClipLoader
         loading_context = {
             "path": self.fname.replace("\\", "/"),
             "colorspace": colorspace,
-            "version": version_name
+            "version": "v{:0>3}".format(version_name),
+            "logger": self.log
 
         }
+        self.log.debug(pformat(
+            loading_context
+        ))
+        self.log.debug(openclip_path)
 
         # make openpype clip file
         opfapi.OpenClipSolver(openclip_path, loading_context).make()
@@ -102,7 +111,8 @@ class LoadClip(opfapi.ClipLoader):
         if matching_clip:
             return matching_clip.pop()
         else:
-            return flame.import_clips(clip_path, reel)
+            created_clips = flame.import_clips(str(clip_path), reel)
+            return created_clips.pop()
 
     def _get_reel(self):
 
@@ -112,7 +122,12 @@ class LoadClip(opfapi.ClipLoader):
         ]
 
         if not matching_rgroup:
-            reel_group = self.fpd.create_reel_group(self.reel_group_name)
+            reel_group = self.fpd.create_reel_group(str(self.reel_group_name))
+            for _r in reel_group.reels:
+                if "reel" not in _r.name.get_value().lower():
+                    continue
+                self.log.debug("Removing: {}".format(_r.name))
+                flame.delete(_r)
         else:
             reel_group = matching_rgroup.pop()
 
@@ -122,7 +137,7 @@ class LoadClip(opfapi.ClipLoader):
         ]
 
         if not matching_reel:
-            reel_group = reel_group.create_reel(self.reel_name)
+            reel_group = reel_group.create_reel(str(self.reel_name))
         else:
             reel_group = matching_reel.pop()
 
