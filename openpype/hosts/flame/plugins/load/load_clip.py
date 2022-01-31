@@ -1,3 +1,5 @@
+import os
+import flame
 from avalon import io, api
 import openpype.hosts.flame.api as opfapi
 
@@ -17,9 +19,17 @@ class LoadClip(opfapi.ClipLoader):
     icon = "code-fork"
     color = "orange"
 
+    # settings
+    reel_group_name = "OpenPype_Reels"
+    reel_name = "Loaded"
     clip_name_template = "{asset}_{subset}_{representation}"
 
+
     def load(self, context, name, namespace, options):
+
+        # get flame objects
+        fproject = flame.project.current_project
+        self.fpd = fproject.current_workspace.desktop
 
         # load clip to timeline and get main variables
         namespace = namespace
@@ -35,27 +45,28 @@ class LoadClip(opfapi.ClipLoader):
         # in imageio flame section
         colorspace = colorspace
 
-        # create new workfile version in conform task for _v###.clip
-        # every new version is also the *_latest.clip
-        openclip_name = clip_name
-
-        # prepare Reel group in actual desktop
-        reel_object = "prepared reel object"
+        # create workfile path
+        workfile_dir = os.environ["AVALON_WORKDIR"]
+        openclip_path = os.path.join(
+            workfile_dir, clip_name, clip_name + ".clip"
+        )
 
         # prepare clip data from context ad send it to openClipLoader
         loading_context = {
             "path": self.fname.replace("\\", "/"),
             "colorspace": colorspace,
-            "clip_name": openclip_name,
-            "reel_object": reel_object
+            "version": version_name
 
         }
 
-        # with maintained openclip as opc
-        opc = "loaded open pype clip "
-        # opc set in and out marks if handles
+        # make openpype clip file
+        opfapi.OpenClipSolver(openclip_path, loading_context).make()
 
-        # opc refresh versions
+        # prepare Reel group in actual desktop
+        opc = self._get_clip(
+            clip_name,
+            openclip_path
+        )
 
         # add additional metadata from the version to imprint Avalon knob
         add_keys = [
@@ -77,109 +88,140 @@ class LoadClip(opfapi.ClipLoader):
             "objectName": clip_name
         })
 
-        # unwrap segment from clip
-        open_clip_segment = self._get_segment_from_clip(opc)
-
         return opfapi.containerise(
-            open_clip_segment,
+            opc,
             name, namespace, context,
             self.__class__.__name__,
             data_imprint)
+
+    def _get_clip(self, name, clip_path):
+        reel = self._get_reel()
+        # with maintained openclip as opc
+        matching_clip = [cl for cl in reel.clips
+                         if cl.name.get_value() == name]
+        if matching_clip:
+            return matching_clip.pop()
+        else:
+            return flame.import_clips(clip_path, reel)
+
+    def _get_reel(self):
+
+        matching_rgroup = [
+            rg for rg in self.fpd.reel_groups
+            if rg.name.get_value() == self.reel_group_name
+        ]
+
+        if not matching_rgroup:
+            reel_group = self.fpd.create_reel_group(self.reel_group_name)
+        else:
+            reel_group = matching_rgroup.pop()
+
+        matching_reel = [
+            re for re in reel_group.reels
+            if re.name.get_value() == self.reel_name
+        ]
+
+        if not matching_reel:
+            reel_group = reel_group.create_reel(self.reel_name)
+        else:
+            reel_group = matching_reel.pop()
+
+        return reel_group
 
     def _get_segment_from_clip(self, clip):
         # unwrapping segment from input clip
         pass
 
-    def switch(self, container, representation):
-        self.update(container, representation)
+    # def switch(self, container, representation):
+    #     self.update(container, representation)
 
-    def update(self, container, representation):
-        """ Updating previously loaded clips
-        """
+    # def update(self, container, representation):
+    #     """ Updating previously loaded clips
+    #     """
 
-        # load clip to timeline and get main variables
-        name = container['name']
-        namespace = container['namespace']
-        track_item = phiero.get_track_items(
-            track_item_name=namespace)
-        version = io.find_one({
-            "type": "version",
-            "_id": representation["parent"]
-        })
-        version_data = version.get("data", {})
-        version_name = version.get("name", None)
-        colorspace = version_data.get("colorspace", None)
-        object_name = "{}_{}".format(name, namespace)
-        file = api.get_representation_path(representation).replace("\\", "/")
-        clip = track_item.source()
+    #     # load clip to timeline and get main variables
+    #     name = container['name']
+    #     namespace = container['namespace']
+    #     track_item = phiero.get_track_items(
+    #         track_item_name=namespace)
+    #     version = io.find_one({
+    #         "type": "version",
+    #         "_id": representation["parent"]
+    #     })
+    #     version_data = version.get("data", {})
+    #     version_name = version.get("name", None)
+    #     colorspace = version_data.get("colorspace", None)
+    #     object_name = "{}_{}".format(name, namespace)
+    #     file = api.get_representation_path(representation).replace("\\", "/")
+    #     clip = track_item.source()
 
-        # reconnect media to new path
-        clip.reconnectMedia(file)
+    #     # reconnect media to new path
+    #     clip.reconnectMedia(file)
 
-        # set colorspace
-        if colorspace:
-            clip.setSourceMediaColourTransform(colorspace)
+    #     # set colorspace
+    #     if colorspace:
+    #         clip.setSourceMediaColourTransform(colorspace)
 
-        # add additional metadata from the version to imprint Avalon knob
-        add_keys = [
-            "frameStart", "frameEnd", "source", "author",
-            "fps", "handleStart", "handleEnd"
-        ]
+    #     # add additional metadata from the version to imprint Avalon knob
+    #     add_keys = [
+    #         "frameStart", "frameEnd", "source", "author",
+    #         "fps", "handleStart", "handleEnd"
+    #     ]
 
-        # move all version data keys to tag data
-        data_imprint = {}
-        for key in add_keys:
-            data_imprint.update({
-                key: version_data.get(key, str(None))
-            })
+    #     # move all version data keys to tag data
+    #     data_imprint = {}
+    #     for key in add_keys:
+    #         data_imprint.update({
+    #             key: version_data.get(key, str(None))
+    #         })
 
-        # add variables related to version context
-        data_imprint.update({
-            "representation": str(representation["_id"]),
-            "version": version_name,
-            "colorspace": colorspace,
-            "objectName": object_name
-        })
+    #     # add variables related to version context
+    #     data_imprint.update({
+    #         "representation": str(representation["_id"]),
+    #         "version": version_name,
+    #         "colorspace": colorspace,
+    #         "objectName": object_name
+    #     })
 
-        # update color of clip regarding the version order
-        self.set_item_color(track_item, version)
+    #     # update color of clip regarding the version order
+    #     self.set_item_color(track_item, version)
 
-        return phiero.update_container(track_item, data_imprint)
+    #     return phiero.update_container(track_item, data_imprint)
 
-    def remove(self, container):
-        """ Removing previously loaded clips
-        """
-        # load clip to timeline and get main variables
-        namespace = container['namespace']
-        track_item = phiero.get_track_items(
-            track_item_name=namespace)
-        track = track_item.parent()
+    # def remove(self, container):
+    #     """ Removing previously loaded clips
+    #     """
+    #     # load clip to timeline and get main variables
+    #     namespace = container['namespace']
+    #     track_item = phiero.get_track_items(
+    #         track_item_name=namespace)
+    #     track = track_item.parent()
 
-        # remove track item from track
-        track.removeItem(track_item)
+    #     # remove track item from track
+    #     track.removeItem(track_item)
 
-    @classmethod
-    def multiselection(cls, track_item):
-        if not cls.track:
-            cls.track = track_item.parent()
-            cls.sequence = cls.track.parent()
+    # @classmethod
+    # def multiselection(cls, track_item):
+    #     if not cls.track:
+    #         cls.track = track_item.parent()
+    #         cls.sequence = cls.track.parent()
 
-    @classmethod
-    def set_item_color(cls, track_item, version):
+    # @classmethod
+    # def set_item_color(cls, track_item, version):
 
-        clip = track_item.source()
-        # define version name
-        version_name = version.get("name", None)
-        # get all versions in list
-        versions = io.find({
-            "type": "version",
-            "parent": version["parent"]
-        }).distinct('name')
+    #     clip = track_item.source()
+    #     # define version name
+    #     version_name = version.get("name", None)
+    #     # get all versions in list
+    #     versions = io.find({
+    #         "type": "version",
+    #         "parent": version["parent"]
+    #     }).distinct('name')
 
-        max_version = max(versions)
+    #     max_version = max(versions)
 
-        # set clip colour
-        if version_name == max_version:
-            clip.binItem().setColor(cls.clip_color_last)
-        else:
-            clip.binItem().setColor(cls.clip_color)
+    #     # set clip colour
+    #     if version_name == max_version:
+    #         clip.binItem().setColor(cls.clip_color_last)
+    #     else:
+    #         clip.binItem().setColor(cls.clip_color)

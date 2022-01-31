@@ -701,7 +701,7 @@ class OpenClipSolver:
     out_feed_fps = None
     out_feed_drop_mode = None
 
-    def __init__(self, name, openclip_file_path, feed_data):
+    def __init__(self, openclip_file_path, feed_data):
         # test if media script paht exists
         self._validate_media_script_path()
 
@@ -727,6 +727,15 @@ class OpenClipSolver:
             self._clear_tmp_file()
 
         print("Temp File: {}".format(self.tmp_file))
+
+    def make(self):
+        self._get_media_info_args()
+
+        if self.create_new_clip:
+            # New openClip
+            self._create_new_open_clip()
+        else:
+            self._update_open_clip()
 
     def _validate_media_script_path(self):
         if not os.path.isfile(self.media_script_path):
@@ -890,15 +899,6 @@ class OpenClipSolver:
         xml_root = xml_data.getroot()
         self._clear_handler(xml_root)
         return ET.tostring(xml_root).decode('utf-8')
-
-    def maintain_clip(self):
-        self._get_media_info_args()
-
-        if self.create_new_clip:
-            # New openClip
-            self._create_new_open_clip()
-        else:
-            self._update_open_clip()
 
     def _write_result_xml_to_file(self, xml_data):
         with open(self.out_file, "w") as f:

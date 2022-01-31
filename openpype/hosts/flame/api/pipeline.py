@@ -4,7 +4,9 @@ Basic avalon integration
 import os
 import contextlib
 from avalon import api as avalon
+from avalon.pipeline import AVALON_CONTAINER_ID
 from pyblish import api as pyblish
+from collections import OrderedDict
 from openpype.api import Logger
 from .lib import (
     set_segment_data_marker,
@@ -68,14 +70,33 @@ def uninstall():
     log.info("OpenPype Flame host uninstalled ...")
 
 
-def containerise(tl_segment,
+def containerise(flame_clip,
                  name,
                  namespace,
                  context,
                  loader=None,
                  data=None):
-    # TODO: containerise
-    pass
+
+    data_imprint = OrderedDict({
+        "schema": "openpype:container-2.0",
+        "id": AVALON_CONTAINER_ID,
+        "name": str(name),
+        "namespace": str(namespace),
+        "loader": str(loader),
+        "representation": str(context["representation"]["_id"]),
+    })
+
+    if data:
+        for k, v in data.items():
+            data_imprint.update({k: v})
+
+    log.debug("_ data_imprint: {}".format(data_imprint))
+
+    segment = flame_clip.versions[-1].tracks[-1].segments[-1]
+
+    set_segment_data_marker(segment, data_imprint)
+
+    return flame_clip
 
 
 def ls():
