@@ -35,9 +35,10 @@ class CollectSceneVersion(pyblish.api.ContextPlugin):
 
     def process(self, context):
         # tests should be close to regular publish as possible
-        if (context.data["hostName"] in self.skip_hosts_headless_publish
-                and os.environ.get("HEADLESS_PUBLISH")
-                and not os.environ.get("IS_TEST")):
+        if (
+            os.environ.get("HEADLESS_PUBLISH")
+            and not os.environ.get("IS_TEST")
+            and context.data["hostName"] in self.skip_hosts_headless_publish):
             self.log.debug("Skipping for headless publishing")
             return
 
