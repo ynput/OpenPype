@@ -2,7 +2,7 @@ import re
 
 
 # Metadata keys for work with studio and project overrides
-M_OVERRIDDEN_KEY = "__overridden_keys__"
+M_OVERRIDDEN_KEY = "__overriden_keys__"
 # Metadata key for storing information about environments
 M_ENVIRONMENT_KEY = "__environment_keys__"
 # Metadata key for storing dynamic created labels
