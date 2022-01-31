@@ -775,6 +775,11 @@ class ProjectModel(QtGui.QStandardItemModel):
         self._default_item = None
         self._items_by_name = {}
 
+        colors = get_objected_colors()
+        font_color = colors["font"].get_qcolor()
+        font_color.setAlpha(67)
+        self._version_font_color = font_color
+
     def flags(self, index):
         if index.column() == 1:
             index = self.index(index.row(), 0, index.parent())
@@ -847,6 +852,8 @@ class ProjectModel(QtGui.QStandardItemModel):
         if index.column() == 1:
             if role == QtCore.Qt.TextAlignmentRole:
                 return QtCore.Qt.AlignRight
+            if role == QtCore.Qt.ForegroundRole:
+                return self._version_font_color
             index = self.index(index.row(), 0, index.parent())
             if role in (QtCore.Qt.DisplayRole, QtCore.Qt.EditRole):
                 role = PROJECT_VERSION_ROLE
