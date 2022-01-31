@@ -51,7 +51,7 @@ class _HBottomLineWidget(QtWidgets.QWidget):
     Corners may have curve set by radius (`set_radius`). Radius should expect
     height of widget.
 
-    Bottom line is drawed at the bottom of widget. If radius is 0 then height
+    Bottom line is drawn at the bottom of widget. If radius is 0 then height
     of widget should be 1px.
 
     It is expected that parent widget will set height and radius.
@@ -94,7 +94,7 @@ class _HTopCornerLineWidget(QtWidgets.QWidget):
           or
     ```┌───────```
 
-    Horizontal line is drawed in the middle of widget.
+    Horizontal line is drawn in the middle of widget.
 
     Widget represents left or right corner. Corner may have curve set by
     radius (`set_radius`). Radius should expect height of widget (maximum half
@@ -225,7 +225,7 @@ class BorderedLabelWidget(QtWidgets.QFrame):
         self._radius = radius
 
         side_width = 1 + radius
-        # Dont't use fixed width/height as that would set also set
+        # Don't use fixed width/height as that would set also set
         #   the other size (When fixed width is set then is also set
         #   fixed height).
         self._left_w.setMinimumWidth(side_width)

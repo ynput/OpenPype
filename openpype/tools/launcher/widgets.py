@@ -171,7 +171,7 @@ class ActionBar(QtWidgets.QWidget):
         self.update()
 
     def _start_animation(self, index):
-        # Offset refresh timout
+        # Offset refresh timeout
         self.project_handler.start_timer()
         action_id = index.data(ACTION_ID_ROLE)
         item = self.model.items_by_id.get(action_id)
@@ -193,7 +193,7 @@ class ActionBar(QtWidgets.QWidget):
             self.action_clicked.emit(action)
             return
 
-        # Offset refresh timout
+        # Offset refresh timeout
         self.project_handler.start_timer()
 
         actions = index.data(ACTION_ROLE)
@@ -212,7 +212,7 @@ class ActionBar(QtWidgets.QWidget):
             by_variant_label = collections.defaultdict(list)
             orders = []
             for action in actions:
-                # Lable variants
+                # Label variants
                 label = getattr(action, "label", None)
                 label_variant = getattr(action, "label_variant", None)
                 if label_variant and not label:
