@@ -743,7 +743,7 @@
                         }
                     ]
                 },
-				{
+                {
                     "type": "dict",
                     "key": "IntegrateFtrackInstance",
                     "label": "IntegrateFtrackInstance",
