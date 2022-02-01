@@ -19,7 +19,6 @@ from .exceptions import (
     SchemaError,
     InvalidKeySymbols
 )
-from openpype.lib import get_openpype_version
 from openpype.settings.constants import (
     SYSTEM_SETTINGS_KEY,
     PROJECT_SETTINGS_KEY,

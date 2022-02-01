@@ -831,8 +831,6 @@ class MongoSettingsHandler(SettingsHandler):
             additional_filters(dict): Additional filters of document. Used
                 for project specific settings.
         """
-        from openpype.lib.openpype_version import is_running_staging
-
         # Trigger check of versions
         self._check_version_order()
 
@@ -927,7 +925,6 @@ class MongoSettingsHandler(SettingsHandler):
         if doc_id is None:
             return None
         return self.collection.find_one({"_id": doc_id})
-
 
     def _find_closest_system_settings(self):
         return self._find_closest_settings(
