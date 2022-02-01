@@ -388,7 +388,7 @@ class InstanceCardView(AbstractInstanceView):
 
     def sizeHint(self):
         """Modify sizeHint based on visibility of scroll bars."""
-        # Calculate width hint by content widget and verticall scroll bar
+        # Calculate width hint by content widget and vertical scroll bar
         scroll_bar = self._scroll_area.verticalScrollBar()
         width = (
             self._content_widget.sizeHint().width()

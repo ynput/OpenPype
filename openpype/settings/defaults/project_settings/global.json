@@ -3,6 +3,24 @@
         "CollectAnatomyInstanceData": {
             "follow_workfile_version": false
         },
+        "CollectSceneVersion": {
+            "hosts": [
+                "aftereffects",
+                "blender",
+                "celaction",
+                "fusion",
+                "harmony",
+                "hiero",
+                "houdini",
+                "maya",
+                "nuke",
+                "photoshop",
+                "resolve",
+                "tvpaint"
+            ],
+            "skip_hosts_headless_publish": [
+            ]
+        },
         "ValidateEditorialAssetName": {
             "enabled": true,
             "optional": false

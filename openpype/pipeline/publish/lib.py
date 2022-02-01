@@ -31,7 +31,7 @@ class DiscoverResult:
 def publish_plugins_discover(paths=None):
     """Find and return available pyblish plug-ins
 
-    Overriden function from `pyblish` module to be able collect crashed files
+    Overridden function from `pyblish` module to be able collect crashed files
     and reason of their crash.
 
     Arguments:

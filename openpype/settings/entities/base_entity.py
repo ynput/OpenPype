@@ -752,7 +752,7 @@ class BaseItemEntity(BaseEntity):
 
     @abstractmethod
     def _add_to_project_override(self, on_change_trigger):
-        """Item's implementation to set values as overriden for project.
+        """Item's implementation to set values as overridden for project.
 
         Mark item and all it's children to be stored as project overrides.
         """
@@ -794,7 +794,7 @@ class BaseItemEntity(BaseEntity):
         """Item's implementation to remove project overrides.
 
         Mark item as does not have project overrides. Must not change
-        `was_overriden` attribute value.
+        `was_overridden` attribute value.
 
         Args:
             on_change_trigger (list): Callbacks of `on_change` should be stored

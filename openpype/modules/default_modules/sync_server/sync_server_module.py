@@ -1073,7 +1073,7 @@ class SyncServerModule(OpenPypeModule, ITrayModule):
         """
             Returns settings for 'studio' and user's local site
 
-            Returns base values from setting, not overriden by Local Settings,
+            Returns base values from setting, not overridden by Local Settings,
             eg. value used to push TO LS not to get actual value for syncing.
         """
         if not project_name:
