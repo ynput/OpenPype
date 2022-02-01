@@ -343,7 +343,7 @@
             "enabled": false,
             "ftrack_custom_attributes": {}
         },
-        "IntegrateFtrackInstance": {
+		"IntegrateFtrackInstance": {
             "family_mapping": {
                 "camera": "cam",
                 "look": "look",
