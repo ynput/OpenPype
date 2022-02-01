@@ -1,5 +1,6 @@
 import os
 import copy
+import uuid
 from Qt import QtWidgets, QtCore, QtGui
 from avalon.vendor import qtawesome
 from avalon.mongodb import (
@@ -12,7 +13,10 @@ from openpype.tools.utils.widgets import ImageButton
 from openpype.tools.utils.lib import paint_image_with_color
 
 from openpype.widgets.nice_checkbox import NiceCheckbox
-from openpype.tools.utils import PlaceholderLineEdit
+from openpype.tools.utils import (
+    PlaceholderLineEdit,
+    DynamicQThread
+)
 from openpype.settings.lib import find_closest_version_for_projects
 from openpype.lib import get_openpype_version
 from .images import (
@@ -765,6 +769,8 @@ class SettingsNiceCheckbox(NiceCheckbox):
 
 
 class ProjectModel(QtGui.QStandardItemModel):
+    _update_versions = QtCore.Signal()
+
     def __init__(self, only_active, *args, **kwargs):
         super(ProjectModel, self).__init__(*args, **kwargs)
 
@@ -775,12 +781,40 @@ class ProjectModel(QtGui.QStandardItemModel):
         self._only_active = only_active
         self._default_item = None
         self._items_by_name = {}
+        self._versions_by_project = {}
 
         colors = get_objected_colors()
         font_color = colors["font"].get_qcolor()
         font_color.setAlpha(67)
         self._version_font_color = font_color
         self._current_version = get_openpype_version()
+
+        self._version_refresh_threads = []
+        self._version_refresh_id = None
+
+        self._update_versions.connect(self._on_update_versions_signal)
+
+    def _on_update_versions_signal(self):
+        for project_name, version in self._versions_by_project.items():
+            if project_name is None:
+                item = self._default_item
+            else:
+                item = self._items_by_name.get(project_name)
+
+            if item and version != self._current_version:
+                item.setData(version, PROJECT_VERSION_ROLE)
+
+    def _fetch_settings_versions(self):
+        """Used versions per project are loaded in thread to not stuck UI."""
+        version_refresh_id = self._version_refresh_id
+        all_project_names = list(self._items_by_name.keys())
+        all_project_names.append(None)
+        closest_by_project_name = find_closest_version_for_projects(
+            all_project_names
+        )
+        if self._version_refresh_id == version_refresh_id:
+            self._versions_by_project = closest_by_project_name
+            self._update_versions.emit()
 
     def flags(self, index):
         if index.column() == 1:
@@ -791,6 +825,9 @@ class ProjectModel(QtGui.QStandardItemModel):
         self.dbcon = dbcon
 
     def refresh(self):
+        # Change id of versions refresh
+        self._version_refresh_id = uuid.uuid4()
+
         new_items = []
         if self._default_item is None:
             item = QtGui.QStandardItem(DEFAULT_PROJECT_LABEL)
@@ -828,20 +865,6 @@ class ProjectModel(QtGui.QStandardItemModel):
                     font.setItalic(True)
                     item.setFont(font)
 
-        # TODO this could be threaded
-        all_project_names = list(project_names)
-        all_project_names.append(None)
-        closes_by_project_name = find_closest_version_for_projects(
-            all_project_names
-        )
-        for project_name, version in closes_by_project_name.items():
-            if project_name is None:
-                item = self._default_item
-            else:
-                item = self._items_by_name.get(project_name)
-
-            if item and version != self._current_version:
-                item.setData(version, PROJECT_VERSION_ROLE)
         root_item = self.invisibleRootItem()
         for project_name in tuple(self._items_by_name.keys()):
             if project_name not in project_names:
@@ -850,6 +873,16 @@ class ProjectModel(QtGui.QStandardItemModel):
 
         if new_items:
             root_item.appendRows(new_items)
+
+        # Fetch versions per project in thread
+        thread = DynamicQThread(self._fetch_settings_versions)
+        self._version_refresh_threads.append(thread)
+        thread.start()
+
+        # Cleanup done threads
+        for thread in tuple(self._version_refresh_threads):
+            if thread.isFinished():
+                self._version_refresh_threads.remove(thread)
 
     def data(self, index, role=QtCore.Qt.DisplayRole):
         if index.column() == 1:

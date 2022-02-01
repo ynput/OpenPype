@@ -10,7 +10,8 @@ from .lib import (
     WrappedCallbackItem,
     paint_image_with_color,
     get_warning_pixmap,
-    set_style_property
+    set_style_property,
+    DynamicQThread,
 )
 
 
@@ -26,4 +27,5 @@ __all__ = (
     "paint_image_with_color",
     "get_warning_pixmap",
     "set_style_property",
+    "DynamicQThread",
 )
