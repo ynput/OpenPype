@@ -26,7 +26,7 @@ openpype_console --use-version=3.0.0-foo+bar
 
 `--validate-version` to validate integrity of given version
 
-For more information [see here](admin_use#run-openpype).
+For more information [see here](admin_use.md#run-openpype).
 
 ## Commands
 

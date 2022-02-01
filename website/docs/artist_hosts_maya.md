@@ -50,12 +50,12 @@ can edit that field to change it to different asset (but that one must already e
 
 `Subset` field is a name you can decide on. It should describe what kind of data you
 have in the model. For example, you can name it `Proxy` to indicate that this is
-low resolution stuff. See [Subset](artist_concepts#subset).
+low resolution stuff. See [Subset](artist_concepts.md#subset).
 
 :::note LOD support
 By changing subset name you can take advantage of _LOD support_ in OpenPype. Your
 asset can contain various resolution defined by different subsets. You can then
-switch between them very easy using [Inventory (Manage)](artist_tools#inventory).
+switch between them very easy using [Inventory (Manage)](artist_tools.md#inventory).
 There LODs are conveniently grouped so they don't clutter Inventory view.
 
 Name your subset like `main_LOD1`. Important part is that `_LOD1`. You can have as many LODs as you need.
@@ -85,7 +85,7 @@ Now let's publish it. Go **OpenPype → Publish...**. You will be presented with
 ![Model publish](assets/maya-model_pre_publish.jpg)
 
 Note that content of this window can differs by your pipeline configuration.
-For more detail see [Publisher](artist_tools#publisher).
+For more detail see [Publisher](artist_tools.md#publisher).
 
 Items in left column are instances you will be publishing. You can disable them
 by clicking on square next to them. Green square indicate they are ready for
@@ -139,7 +139,7 @@ it can take a while. You should end up with everything green and message
 **Finished successfully ...** You can now close publisher window.
 
 To check for yourself that model is published, open
-[Asset Loader](artist_tools#loader) - **OpenPype → Load...**.
+[Asset Loader](artist_tools.md#loader) - **OpenPype → Load...**.
 There you should see your model, named `modelMain`.
 
 ## Look development
@@ -152,7 +152,7 @@ Let se how it works.
 ### Loading model
 
 In this example I have already published model of Buddha. To see how to publish
-model with OpenPype see [Publishing Model](artist_hosts_maya#publishing-models).
+model with OpenPype see [Publishing Model](artist_hosts_maya.md#publishing-models).
 
 First of lets start with empty scene. Now go **OpenPype → Load...**
 
@@ -250,7 +250,7 @@ arm, just made out of simple boxes and I'll publish it.
 
 ![Maya - Simple model for rigging](assets/maya-rig_model_setup.jpg)
 
-For more information about publishing models, see [Publishing models](artist_hosts_maya#publishing-models).
+For more information about publishing models, see [Publishing models](artist_hosts_maya.md#publishing-models).
 
 Now lets start with empty scene. Load your model - **OpenPype → Load...**, right
 click on it and select **Reference (abc)**.
@@ -352,8 +352,8 @@ OpenPype in Maya can be used for submitting renders to render farm and for their
 subsequent publishing. Right now OpenPype support [AWS Thinkbox Deadline](https://www.awsthinkbox.com/deadline)
 and [Virtual Vertex Muster](https://www.vvertex.com/overview/).
 
-* For setting up Muster support see [admin section](admin_config#muster)
-* For setting up Deadline support see [here](admin_config#aws-thinkbox-deadline)
+* For setting up Muster support see [admin section](admin_config.md#muster)
+* For setting up Deadline support see [here](admin_config.md#aws-thinkbox-deadline)
 
 :::note Muster login
 Muster is now configured so every user must log in to get authentication support. If OpenPype founds out this token is missing or expired, it will ask again for credentials.
@@ -546,7 +546,7 @@ Create your model, import it or load from OpenPype. I'll just import model as OB
 file.
 
 After we have our model in, we need to set everything to be able to publish it
-as model - for detail see [Publishing models](artist_hosts_maya#publishing-models).
+as model - for detail see [Publishing models](artist_hosts_maya.md#publishing-models).
 
 To recap - freeze transforms, rename it to `dragon_GEO` and put it into group
 `dragon_GRP`. Then select this group and **OpenPype → Create...** and choose **Model**.
@@ -593,7 +593,7 @@ That will create video file, pass it to another extractor creating burnins in it
 and finally uploading this video to ftrack with your model (or other type) published
 version. All parts of this process - like what burnins, what type of video file,
 settings for Maya playblast - can be customized by your TDs. For more information
-about customizing review process refer to [admin section](admin_presets_plugins).
+about customizing review process refer to [admin section](project_settings/settings_project_global.md/#publish-plugins).
 
 If you don't move `modelMain` into `reviewMain`, review will be generated but it will
 be published as separate entity.
@@ -651,7 +651,7 @@ when you open graph on this Yeti node, all nodes are as they were in publishing 
 Yeti Rigs are working in similar way as caches, but are more complex and they deal with
 other data used by Yeti, like geometry and textures.
 
-Let's start by [loading](artist_hosts_maya#loading-model) into new scene some model.
+Let's start by [loading](artist_hosts_maya.md#loading-model) into new scene some model.
 I've loaded my Buddha model.
 
 Create select model mesh, create Yeti node - **Yeti → Create Yeti Node on Mesh** and
