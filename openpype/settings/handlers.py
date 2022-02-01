@@ -866,12 +866,7 @@ class MongoSettingsHandler(SettingsHandler):
                     return doc["_id"]
                 versioned_settings_by_version[doc["version"]] = doc
 
-        if is_running_staging():
-            versions_key = self._staging_versions_key
-        else:
-            versions_key = self._production_versions_key
-
-        versions_in_doc = versioned_doc.get(versions_key) or []
+        versions_in_doc = versioned_doc.get(self._all_versions_keys) or []
         # Cases when only legacy settings can be used
         if (
             # There are not versioned documents yet
