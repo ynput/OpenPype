@@ -125,7 +125,7 @@ class SceneInventoryWindow(QtWidgets.QDialog):
 
         Override keyPressEvent to do nothing so that Maya's panels won't
         take focus when pressing "SHIFT" whilst mouse is over viewport or
-        outliner. This way users don't accidently perform Maya commands
+        outliner. This way users don't accidentally perform Maya commands
         whilst trying to name an instance.
 
         """

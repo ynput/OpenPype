@@ -1,6 +1,6 @@
 """Single access point to all tools usable in hosts.
 
-It is possible to create `HostToolsHelper` in host implementaion or
+It is possible to create `HostToolsHelper` in host implementation or
 use singleton approach with global functions (using helper anyway).
 """
 
@@ -223,7 +223,7 @@ class HostToolsHelper:
         """Dialog of experimental tools.
 
         For some hosts it is not easy to modify menu of tools. For
-        those cases was addded experimental tools dialog which is Qt based
+        those cases was added experimental tools dialog which is Qt based
         and can dynamically filled by experimental tools so
         host need only single "Experimental tools" button to see them.
 
@@ -347,7 +347,7 @@ class _SingletonPoint:
         return cls.helper.get_tool_by_name(tool_name, parent, *args, **kwargs)
 
 
-# Function callbacks using singleton acces point
+# Function callbacks using singleton access point
 def get_tool_by_name(tool_name, parent=None, *args, **kwargs):
     return _SingletonPoint.get_tool_by_name(tool_name, parent, *args, **kwargs)
 

@@ -121,6 +121,20 @@ class EnumEntity(BaseEnumEntity):
             )
         super(EnumEntity, self).schema_validations()
 
+    def set_override_state(self, *args, **kwargs):
+        super(EnumEntity, self).set_override_state(*args, **kwargs)
+
+        # Make sure current value is valid
+        if self.multiselection:
+            new_value = []
+            for key in self._current_value:
+                if key in self.valid_keys:
+                    new_value.append(key)
+            self._current_value = new_value
+
+        elif self._current_value not in self.valid_keys:
+            self._current_value = self.value_on_not_set
+
 
 class HostsEnumEntity(BaseEnumEntity):
     """Enumeration of host names.

@@ -1,30 +1,37 @@
 # Changelog
 
-## [3.8.1-nightly.1](https://github.com/pypeclub/OpenPype/tree/HEAD)
+## [3.8.1](https://github.com/pypeclub/OpenPype/tree/3.8.1) (2022-02-01)
 
-[Full Changelog](https://github.com/pypeclub/OpenPype/compare/3.8.0...HEAD)
+[Full Changelog](https://github.com/pypeclub/OpenPype/compare/3.8.0...3.8.1)
 
 **🚀 Enhancements**
 
+- Webpublisher: Thumbnail extractor [\#2600](https://github.com/pypeclub/OpenPype/pull/2600)
 - Loader: Allow to toggle default family filters between "include" or "exclude" filtering [\#2541](https://github.com/pypeclub/OpenPype/pull/2541)
 
 **🐛 Bug fixes**
 
+- Release/3.8.0 [\#2619](https://github.com/pypeclub/OpenPype/pull/2619)
+- hotfix: OIIO tool path - add extension on windows [\#2618](https://github.com/pypeclub/OpenPype/pull/2618)
+- Settings: Enum does not store empty string if has single item to select [\#2615](https://github.com/pypeclub/OpenPype/pull/2615)
+- switch distutils to sysconfig for `get\_platform\(\)` [\#2594](https://github.com/pypeclub/OpenPype/pull/2594)
+- Fix poetry index and speedcopy update [\#2589](https://github.com/pypeclub/OpenPype/pull/2589)
 - Webpublisher: Fix - subset names from processed .psd used wrong value for task [\#2586](https://github.com/pypeclub/OpenPype/pull/2586)
 - `vrscene` creator Deadline webservice URL handling [\#2580](https://github.com/pypeclub/OpenPype/pull/2580)
 - global: track name was failing if duplicated root word in name [\#2568](https://github.com/pypeclub/OpenPype/pull/2568)
+- General: Do not validate version if build does not support it [\#2557](https://github.com/pypeclub/OpenPype/pull/2557)
+- Validate Maya Rig produces no cycle errors [\#2484](https://github.com/pypeclub/OpenPype/pull/2484)
 
 **Merged pull requests:**
 
+- Bump pillow from 8.4.0 to 9.0.0 [\#2595](https://github.com/pypeclub/OpenPype/pull/2595)
+- Webpublisher: Skip version collect [\#2591](https://github.com/pypeclub/OpenPype/pull/2591)
+- build\(deps\): bump follow-redirects from 1.14.4 to 1.14.7 in /website [\#2534](https://github.com/pypeclub/OpenPype/pull/2534)
 - build\(deps\): bump pillow from 8.4.0 to 9.0.0 [\#2523](https://github.com/pypeclub/OpenPype/pull/2523)
 
 ## [3.8.0](https://github.com/pypeclub/OpenPype/tree/3.8.0) (2022-01-24)
 
 [Full Changelog](https://github.com/pypeclub/OpenPype/compare/CI/3.8.0-nightly.7...3.8.0)
-
-### 📖 Documentation
-
-- Variable in docs renamed to proper name [\#2546](https://github.com/pypeclub/OpenPype/pull/2546)
 
 **🆕 New features**
 
@@ -42,6 +49,7 @@
 - Settings: PathInput strip passed string [\#2550](https://github.com/pypeclub/OpenPype/pull/2550)
 - Global: Exctract Review anatomy fill data with output name [\#2548](https://github.com/pypeclub/OpenPype/pull/2548)
 - Cosmetics: Clean up some cosmetics / typos [\#2542](https://github.com/pypeclub/OpenPype/pull/2542)
+- Launcher: Added context menu to to skip opening last workfile [\#2536](https://github.com/pypeclub/OpenPype/pull/2536)
 - General: Validate if current process OpenPype version is requested version [\#2529](https://github.com/pypeclub/OpenPype/pull/2529)
 - General: Be able to use anatomy data in ffmpeg output arguments [\#2525](https://github.com/pypeclub/OpenPype/pull/2525)
 - Expose toggle publish plug-in settings for Maya Look Shading Engine Naming [\#2521](https://github.com/pypeclub/OpenPype/pull/2521)
@@ -49,7 +57,6 @@
 - Slack: notifications are sent with Openpype logo and bot name [\#2499](https://github.com/pypeclub/OpenPype/pull/2499)
 - Slack: Add review to notification message [\#2498](https://github.com/pypeclub/OpenPype/pull/2498)
 - Maya: Collect 'fps' animation data only for "review" instances [\#2486](https://github.com/pypeclub/OpenPype/pull/2486)
-- General: Validate third party before build [\#2425](https://github.com/pypeclub/OpenPype/pull/2425)
 
 **🐛 Bug fixes**
 
@@ -57,7 +64,6 @@
 - General: OpenPype version updates [\#2575](https://github.com/pypeclub/OpenPype/pull/2575)
 - Ftrack: Delete action revision [\#2563](https://github.com/pypeclub/OpenPype/pull/2563)
 - Webpublisher: ftrack shows incorrect user names [\#2560](https://github.com/pypeclub/OpenPype/pull/2560)
-- General: Do not validate version if build does not support it [\#2557](https://github.com/pypeclub/OpenPype/pull/2557)
 - Webpublisher: Fixed progress reporting [\#2553](https://github.com/pypeclub/OpenPype/pull/2553)
 - Fix Maya AssProxyLoader version switch [\#2551](https://github.com/pypeclub/OpenPype/pull/2551)
 - General: Fix install thread in igniter [\#2549](https://github.com/pypeclub/OpenPype/pull/2549)
@@ -70,14 +76,17 @@
 - Fix published frame content for sequence starting with 0 [\#2513](https://github.com/pypeclub/OpenPype/pull/2513)
 - Maya: reset empty string attributes correctly to "" instead of "None" [\#2506](https://github.com/pypeclub/OpenPype/pull/2506)
 - Improve FusionPreLaunch hook errors [\#2505](https://github.com/pypeclub/OpenPype/pull/2505)
-- Maya: Validate Shape Zero do not keep fixed geometry vertices selected/active after repair [\#2456](https://github.com/pypeclub/OpenPype/pull/2456)
+- General: Modules import function output fix [\#2492](https://github.com/pypeclub/OpenPype/pull/2492)
+
+### 📖 Documentation
+
+- Variable in docs renamed to proper name [\#2546](https://github.com/pypeclub/OpenPype/pull/2546)
 
 **Merged pull requests:**
 
 - AfterEffects: Move implementation to OpenPype [\#2543](https://github.com/pypeclub/OpenPype/pull/2543)
 - Maya: Remove Maya Look Assigner check on startup [\#2540](https://github.com/pypeclub/OpenPype/pull/2540)
 - build\(deps\): bump shelljs from 0.8.4 to 0.8.5 in /website [\#2538](https://github.com/pypeclub/OpenPype/pull/2538)
-- build\(deps\): bump follow-redirects from 1.14.4 to 1.14.7 in /website [\#2534](https://github.com/pypeclub/OpenPype/pull/2534)
 - Nuke: Merge avalon's implementation into OpenPype [\#2514](https://github.com/pypeclub/OpenPype/pull/2514)
 
 ## [3.7.0](https://github.com/pypeclub/OpenPype/tree/3.7.0) (2022-01-04)
@@ -87,15 +96,10 @@
 **🚀 Enhancements**
 
 - General: Workdir extra folders [\#2462](https://github.com/pypeclub/OpenPype/pull/2462)
-- Photoshop: New style validations for New publisher [\#2429](https://github.com/pypeclub/OpenPype/pull/2429)
 
 **🐛 Bug fixes**
 
-- Short Pyblish plugin path [\#2428](https://github.com/pypeclub/OpenPype/pull/2428)
-
-**Merged pull requests:**
-
-- Forced cx\_freeze to include sqlite3 into build  [\#2432](https://github.com/pypeclub/OpenPype/pull/2432)
+- TVPaint: Create render layer dialog is in front [\#2471](https://github.com/pypeclub/OpenPype/pull/2471)
 
 ## [3.6.4](https://github.com/pypeclub/OpenPype/tree/3.6.4) (2021-11-23)
 

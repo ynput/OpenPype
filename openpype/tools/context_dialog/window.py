@@ -46,7 +46,7 @@ class ContextDialog(QtWidgets.QDialog):
         # UI initialization
         main_splitter = QtWidgets.QSplitter(self)
 
-        # Left side widget containt project combobox and asset widget
+        # Left side widget contains project combobox and asset widget
         left_side_widget = QtWidgets.QWidget(main_splitter)
 
         project_combobox = QtWidgets.QComboBox(left_side_widget)

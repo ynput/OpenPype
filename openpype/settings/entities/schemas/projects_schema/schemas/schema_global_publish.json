@@ -21,6 +21,27 @@
         {
             "type": "dict",
             "collapsible": true,
+            "key": "CollectSceneVersion",
+            "label": "Collect Version from Workfile",
+            "is_group": true,
+            "children": [
+                {
+                    "key": "hosts",
+                    "label": "Host names",
+                    "type": "hosts-enum",
+                    "multiselection": true
+                },
+                {
+                    "key": "skip_hosts_headless_publish",
+                    "label": "Skip for host if headless publish",
+                    "type": "hosts-enum",
+                    "multiselection": true
+                }
+            ]
+        },
+        {
+            "type": "dict",
+            "collapsible": true,
             "checkbox_key": "enabled",
             "key": "ValidateEditorialAssetName",
             "label": "Validate Editorial Asset Name",
