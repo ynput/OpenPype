@@ -27,7 +27,7 @@ module.window = None
 
 # Register callback on task change
 # - callback can't be defined in Window as it is weak reference callback
-#   so `WeakSet` will remove it immidiatelly
+#   so `WeakSet` will remove it immediately
 def on_context_task_change(*args, **kwargs):
     if module.window:
         module.window.on_context_task_change(*args, **kwargs)
@@ -455,7 +455,7 @@ class LoaderWindow(QtWidgets.QDialog):
         shift_pressed = QtCore.Qt.ShiftModifier & modifiers
 
         if shift_pressed:
-            print("Force quitted..")
+            print("Force quit..")
             self.setAttribute(QtCore.Qt.WA_DeleteOnClose)
 
         print("Good bye")

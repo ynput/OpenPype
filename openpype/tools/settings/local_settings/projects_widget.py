@@ -126,7 +126,7 @@ class DynamicInputItem(QtCore.QObject):
                 return "studio"
         else:
             if current_value:
-                return "overriden"
+                return "overridden"
 
             if self.value_item.default_value:
                 return "studio"
@@ -512,7 +512,7 @@ class _SiteCombobox(QtWidgets.QWidget):
                 return "studio"
         else:
             if current_value:
-                return "overriden"
+                return "overridden"
 
             studio_value = self._get_local_settings_item(DEFAULT_PROJECT_KEY)
             if studio_value:

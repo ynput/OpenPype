@@ -152,7 +152,7 @@ class OptionalMenu(QtWidgets.QMenu):
     """A subclass of `QtWidgets.QMenu` to work with `OptionalAction`
 
     This menu has reimplemented `mouseReleaseEvent`, `mouseMoveEvent` and
-    `leaveEvent` to provide better action hightlighting and triggering for
+    `leaveEvent` to provide better action highlighting and triggering for
     actions that were instances of `QtWidgets.QWidgetAction`.
 
     """
