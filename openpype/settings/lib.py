@@ -8,7 +8,7 @@ from .exceptions import (
     SaveWarningExc
 )
 from .constants import (
-    M_OVERRIDEN_KEY,
+    M_OVERRIDDEN_KEY,
     M_ENVIRONMENT_KEY,
 
     METADATA_KEYS,
@@ -546,13 +546,13 @@ def subkey_merge(_dict, value, keys):
 def merge_overrides(source_dict, override_dict):
     """Merge data from override_dict to source_dict."""
 
-    if M_OVERRIDEN_KEY in override_dict:
-        overriden_keys = set(override_dict.pop(M_OVERRIDEN_KEY))
+    if M_OVERRIDDEN_KEY in override_dict:
+        overridden_keys = set(override_dict.pop(M_OVERRIDDEN_KEY))
     else:
-        overriden_keys = set()
+        overridden_keys = set()
 
     for key, value in override_dict.items():
-        if (key in overriden_keys or key not in source_dict):
+        if (key in overridden_keys or key not in source_dict):
             source_dict[key] = value
 
         elif isinstance(value, dict) and isinstance(source_dict[key], dict):
@@ -574,7 +574,7 @@ def apply_local_settings_on_system_settings(system_settings, local_settings):
     """Apply local settings on studio system settings.
 
     ATM local settings can modify only application executables. Executable
-    values are not overriden but prepended.
+    values are not overridden but prepended.
     """
     if not local_settings or "applications" not in local_settings:
         return
@@ -914,7 +914,7 @@ def get_environments():
     """Calculated environment based on defaults and system settings.
 
     Any default environment also found in the system settings will be fully
-    overriden by the one from the system settings.
+    overridden by the one from the system settings.
 
     Returns:
         dict: Output should be ready for `acre` module.

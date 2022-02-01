@@ -29,12 +29,13 @@ class ExtractBlendAnimation(openpype.api.Extractor):
             if isinstance(obj, bpy.types.Object) and obj.type == 'EMPTY':
                 child = obj.children[0]
                 if child and child.type == 'ARMATURE':
-                    if not obj.animation_data:
-                        obj.animation_data_create()
-                    obj.animation_data.action = child.animation_data.action
-                    obj.animation_data_clear()
-                    data_blocks.add(child.animation_data.action)
-                    data_blocks.add(obj)
+                    if child.animation_data and child.animation_data.action:
+                        if not obj.animation_data:
+                            obj.animation_data_create()
+                        obj.animation_data.action = child.animation_data.action
+                        obj.animation_data_clear()
+                        data_blocks.add(child.animation_data.action)
+                        data_blocks.add(obj)
 
         bpy.data.libraries.write(filepath, data_blocks)
 

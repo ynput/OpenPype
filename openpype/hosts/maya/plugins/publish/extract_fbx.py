@@ -1,7 +1,9 @@
+# -*- coding: utf-8 -*-
 import os
 
-from maya import cmds
-import maya.mel as mel
+from maya import cmds  # noqa
+import maya.mel as mel  # noqa
+from openpype.hosts.maya.api.lib import root_parent
 
 import pyblish.api
 import avalon.maya
@@ -192,10 +194,7 @@ class ExtractFBX(openpype.api.Extractor):
             if isinstance(value, bool):
                 value = str(value).lower()
 
-            template = "FBXExport{0} -v {1}"
-            if key == "UpAxis":
-                template = "FBXExport{0} {1}"
-
+            template = "FBXExport{0} {1}" if key == "UpAxis" else "FBXExport{0} -v {1}"  # noqa
             cmd = template.format(key, value)
             self.log.info(cmd)
             mel.eval(cmd)
@@ -205,9 +204,16 @@ class ExtractFBX(openpype.api.Extractor):
         mel.eval("FBXExportGenerateLog -v false")
 
         # Export
-        with avalon.maya.maintained_selection():
-            cmds.select(members, r=1, noExpand=True)
-            mel.eval('FBXExport -f "{}" -s'.format(path))
+        if "unrealStaticMesh" in instance.data["families"]:
+            with avalon.maya.maintained_selection():
+                with root_parent(members):
+                    self.log.info("Un-parenting: {}".format(members))
+                    cmds.select(members, r=1, noExpand=True)
+                    mel.eval('FBXExport -f "{}" -s'.format(path))
+        else:
+            with avalon.maya.maintained_selection():
+                cmds.select(members, r=1, noExpand=True)
+                mel.eval('FBXExport -f "{}" -s'.format(path))
 
         if "representations" not in instance.data:
             instance.data["representations"] = []

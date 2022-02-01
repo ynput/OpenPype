@@ -273,6 +273,8 @@ class ExtractOTIOReview(openpype.api.Extractor):
         src_start = int(avl_start + start)
         avl_durtation = int(avl_range.duration.value)
 
+        self.need_offset = bool(avl_start != 0 and src_start != 0)
+
         # if media start is les then clip requires
         if src_start < avl_start:
             # calculate gap
@@ -408,11 +410,17 @@ class ExtractOTIOReview(openpype.api.Extractor):
         """
 
         padding = "{{:0{}d}}".format(self.padding)
+
+        # create frame offset
+        offset = 0
+        if self.need_offset:
+            offset = 1
+
         if end_offset:
             new_frames = list()
             start_frame = self.used_frames[-1]
-            for index in range((end_offset + 1),
-                               (int(end_offset + duration) + 1)):
+            for index in range((end_offset + offset),
+                               (int(end_offset + duration) + offset)):
                 seq_number = padding.format(start_frame + index)
                 self.log.debug(
                     "index: `{}` | seq_number: `{}`".format(index, seq_number))

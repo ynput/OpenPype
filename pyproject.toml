@@ -1,6 +1,6 @@
 [tool.poetry]
 name = "OpenPype"
-version = "3.8.0-nightly.5" # OpenPype
+version = "3.8.1" # OpenPype
 description = "Open VFX and Animation pipeline with support."
 authors = ["OpenPype Team <info@openpype.io>"]
 license = "MIT License"
@@ -45,7 +45,7 @@ jsonschema = "^3.2.0"
 keyring = "^22.0.1"
 log4mongo = "^1.7"
 pathlib2= "^2.3.5" # deadline submit publish job only (single place, maybe not needed?)
-Pillow = "^8.3" # only used for slates prototype
+Pillow = "^9.0" # used in TVPaint and for slates
 pyblish-base = "^1.8.8"
 pynput = "^1.7.2" # idle manager in tray
 pymongo = "^3.11.2"
@@ -97,6 +97,7 @@ toml = "^0.10.2" # for parsing pyproject.toml
 [[tool.poetry.source]]
 name = "openpype"
 url = "https://distribute.openpype.io/wheels/"
+secondary = true
 
 [build-system]
 requires = ["poetry-core>=1.0.0"]

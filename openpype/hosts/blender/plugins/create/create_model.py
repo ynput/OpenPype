@@ -3,9 +3,8 @@
 import bpy
 
 from avalon import api
-from avalon.blender import lib, ops
-from avalon.blender.pipeline import AVALON_INSTANCES
-from openpype.hosts.blender.api import plugin
+from openpype.hosts.blender.api import plugin, lib, ops
+from openpype.hosts.blender.api.pipeline import AVALON_INSTANCES
 
 
 class CreateModel(plugin.Creator):

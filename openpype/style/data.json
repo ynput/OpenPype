@@ -112,7 +112,7 @@
             "breadcrumbs-btn-bg": "rgba(127, 127, 127, 60)",
             "breadcrumbs-btn-bg-hover": "rgba(127, 127, 127, 90)",
 
-            "content-hightlighted": "rgba(19, 26, 32, 15)",
+            "content-highlighted": "rgba(19, 26, 32, 15)",
             "focus-border": "#839caf",
             "image-btn": "#bfccd6",
             "image-btn-hover": "#189aea",

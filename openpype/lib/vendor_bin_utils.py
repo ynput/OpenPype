@@ -34,11 +34,17 @@ def get_vendor_bin_path(bin_app):
 def get_oiio_tools_path(tool="oiiotool"):
     """Path to vendorized OpenImageIO tool executables.
 
+    On Window it adds .exe extension if missing from tool argument.
+
     Args:
         tool (string): Tool name (oiiotool, maketx, ...).
             Default is "oiiotool".
     """
     oiio_dir = get_vendor_bin_path("oiio")
+    if platform.system().lower() == "windows" and not tool.lower().endswith(
+        ".exe"
+    ):
+        tool = "{}.exe".format(tool)
     return os.path.join(oiio_dir, tool)
 
 

@@ -252,7 +252,7 @@ class ModifiedBurnins(ffmpeg_burnins.Burnins):
         - required IF start frame is not set when using frames or timecode burnins
 
     On initializing class can be set General options through "options_init" arg.
-    General can be overriden when adding burnin
+    General can be overridden when adding burnin
 
     '''
     TOP_CENTERED = ffmpeg_burnins.TOP_CENTERED
@@ -549,7 +549,7 @@ def burnins_from_data(
         codec_data (list): All codec related arguments in list.
         options (dict): Options for burnins.
         burnin_values (dict): Contain positioned values.
-        overwrite (bool): Output will be overriden if already exists,
+        overwrite (bool): Output will be overwritten if already exists,
             True by default.
 
     Presets must be set separately. Should be dict with 2 keys:

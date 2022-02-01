@@ -10,11 +10,12 @@ from .execute import get_openpype_execute_args
 from .local_settings import get_local_site_id
 from .openpype_version import (
     is_running_from_build,
-    get_openpype_version
+    get_openpype_version,
+    get_build_version
 )
 
 
-def get_pype_info():
+def get_openpype_info():
     """Information about currently used Pype process."""
     executable_args = get_openpype_execute_args()
     if is_running_from_build():
@@ -23,6 +24,7 @@ def get_pype_info():
         version_type = "code"
 
     return {
+        "build_verison": get_build_version(),
         "version": get_openpype_version(),
         "version_type": version_type,
         "executable": executable_args[-1],
@@ -51,7 +53,7 @@ def get_workstation_info():
 def get_all_current_info():
     """All information about current process in one dictionary."""
     return {
-        "pype": get_pype_info(),
+        "pype": get_openpype_info(),
         "workstation": get_workstation_info(),
         "env": os.environ.copy(),
         "local_settings": get_local_settings()

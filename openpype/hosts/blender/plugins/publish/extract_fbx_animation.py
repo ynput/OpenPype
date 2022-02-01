@@ -7,7 +7,7 @@ import bpy_extras.anim_utils
 
 from openpype import api
 from openpype.hosts.blender.api import plugin
-from avalon.blender.pipeline import AVALON_PROPERTY
+from openpype.hosts.blender.api.pipeline import AVALON_PROPERTY
 
 
 class ExtractAnimationFBX(api.Extractor):
@@ -37,13 +37,6 @@ class ExtractAnimationFBX(api.Extractor):
         armature = [
             obj for obj in asset_group.children if obj.type == 'ARMATURE'][0]
 
-        asset_group_name = asset_group.name
-        asset_group.name = asset_group.get(AVALON_PROPERTY).get("asset_name")
-
-        armature_name = armature.name
-        original_name = armature_name.split(':')[1]
-        armature.name = original_name
-
         object_action_pairs = []
         original_actions = []
 
@@ -65,6 +58,13 @@ class ExtractAnimationFBX(api.Extractor):
         else:
             self.log.info("Object have no animation.")
             return
+
+        asset_group_name = asset_group.name
+        asset_group.name = asset_group.get(AVALON_PROPERTY).get("asset_name")
+
+        armature_name = armature.name
+        original_name = armature_name.split(':')[1]
+        armature.name = original_name
 
         object_action_pairs.append((armature, copy_action))
         original_actions.append(curr_action)
@@ -123,7 +123,7 @@ class ExtractAnimationFBX(api.Extractor):
         json_path = os.path.join(stagingdir, json_filename)
 
         json_dict = {
-            "instance_name": asset_group.get(AVALON_PROPERTY).get("namespace")
+            "instance_name": asset_group.get(AVALON_PROPERTY).get("objectName")
         }
 
         # collection = instance.data.get("name")

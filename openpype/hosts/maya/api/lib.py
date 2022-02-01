@@ -280,7 +280,7 @@ def shape_from_element(element):
         return node
 
 
-def collect_animation_data():
+def collect_animation_data(fps=False):
     """Get the basic animation data
 
     Returns:
@@ -291,7 +291,6 @@ def collect_animation_data():
     # get scene values as defaults
     start = cmds.playbackOptions(query=True, animationStartTime=True)
     end = cmds.playbackOptions(query=True, animationEndTime=True)
-    fps = mel.eval('currentTimeUnitToFPS()')
 
     # build attributes
     data = OrderedDict()
@@ -299,7 +298,9 @@ def collect_animation_data():
     data["frameEnd"] = end
     data["handles"] = 0
     data["step"] = 1.0
-    data["fps"] = fps
+
+    if fps:
+        data["fps"] = mel.eval('currentTimeUnitToFPS()')
 
     return data
 
@@ -2853,3 +2854,27 @@ def set_colorspace():
     cmds.colorManagementPrefs(e=True, renderingSpaceName=renderSpace)
     viewTransform = root_dict["viewTransform"]
     cmds.colorManagementPrefs(e=True, viewTransformName=viewTransform)
+
+
+@contextlib.contextmanager
+def root_parent(nodes):
+    # type: (list) -> list
+    """Context manager to un-parent provided nodes and return then back."""
+    import pymel.core as pm  # noqa
+
+    node_parents = []
+    for node in nodes:
+        n = pm.PyNode(node)
+        try:
+            root = pm.listRelatives(n, parent=1)[0]
+        except IndexError:
+            root = None
+        node_parents.append((n, root))
+    try:
+        for node in node_parents:
+            node[0].setParent(world=True)
+        yield
+    finally:
+        for node in node_parents:
+            if node[1]:
+                node[0].setParent(node[1])

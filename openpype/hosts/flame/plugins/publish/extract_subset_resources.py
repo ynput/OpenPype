@@ -83,7 +83,7 @@ class ExtractSubsetResources(openpype.api.Extractor):
         staging_dir = self.staging_dir(instance)
 
         # add default preset type for thumbnail and reviewable video
-        # update them with settings and overide in case the same
+        # update them with settings and override in case the same
         # are found in there
         export_presets = deepcopy(self.default_presets)
         export_presets.update(self.export_presets_mapping)
