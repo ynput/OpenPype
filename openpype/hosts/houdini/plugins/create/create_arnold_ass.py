@@ -9,6 +9,9 @@ class CreateArnoldAss(houdini.Creator):
     icon = "magic"
     defaults = ["Main"]
 
+    # Default extension: `.ass` or `.ass.gz`
+    ext = ".ass"
+
     def __init__(self, *args, **kwargs):
         super(CreateArnoldAss, self).__init__(*args, **kwargs)
 
@@ -29,12 +32,13 @@ class CreateArnoldAss(houdini.Creator):
         parm_template_group.hideFolder("Properties", True)
         node.setParmTemplateGroup(parm_template_group)
 
+        filepath = '$HIP/pyblish/`chs("subset")`.$F4{}'.format(self.ext)
         parms = {
             # Render frame range
             "trange": 1,
 
             # Arnold ROP settings
-            "ar_ass_file": '$HIP/pyblish/`chs("subset")`.$F4.ass.gz',
+            "ar_ass_file": filepath,
             "ar_ass_export_enable": 1
         }
         node.setParms(parms)
