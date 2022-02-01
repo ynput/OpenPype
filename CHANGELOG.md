@@ -1,21 +1,26 @@
 # Changelog
 
-## [3.8.1-nightly.1](https://github.com/pypeclub/OpenPype/tree/HEAD)
+## [3.8.1-nightly.2](https://github.com/pypeclub/OpenPype/tree/HEAD)
 
 [Full Changelog](https://github.com/pypeclub/OpenPype/compare/3.8.0...HEAD)
 
 **🚀 Enhancements**
 
+- Webpublisher: Thumbnail extractor [\#2600](https://github.com/pypeclub/OpenPype/pull/2600)
 - Loader: Allow to toggle default family filters between "include" or "exclude" filtering [\#2541](https://github.com/pypeclub/OpenPype/pull/2541)
 
 **🐛 Bug fixes**
 
+- switch distutils to sysconfig for `get\_platform\(\)` [\#2594](https://github.com/pypeclub/OpenPype/pull/2594)
+- Fix poetry index and speedcopy update [\#2589](https://github.com/pypeclub/OpenPype/pull/2589)
 - Webpublisher: Fix - subset names from processed .psd used wrong value for task [\#2586](https://github.com/pypeclub/OpenPype/pull/2586)
 - `vrscene` creator Deadline webservice URL handling [\#2580](https://github.com/pypeclub/OpenPype/pull/2580)
 - global: track name was failing if duplicated root word in name [\#2568](https://github.com/pypeclub/OpenPype/pull/2568)
+- Validate Maya Rig produces no cycle errors [\#2484](https://github.com/pypeclub/OpenPype/pull/2484)
 
 **Merged pull requests:**
 
+- Bump pillow from 8.4.0 to 9.0.0 [\#2595](https://github.com/pypeclub/OpenPype/pull/2595)
 - build\(deps\): bump pillow from 8.4.0 to 9.0.0 [\#2523](https://github.com/pypeclub/OpenPype/pull/2523)
 
 ## [3.8.0](https://github.com/pypeclub/OpenPype/tree/3.8.0) (2022-01-24)
@@ -49,7 +54,6 @@
 - Slack: notifications are sent with Openpype logo and bot name [\#2499](https://github.com/pypeclub/OpenPype/pull/2499)
 - Slack: Add review to notification message [\#2498](https://github.com/pypeclub/OpenPype/pull/2498)
 - Maya: Collect 'fps' animation data only for "review" instances [\#2486](https://github.com/pypeclub/OpenPype/pull/2486)
-- General: Validate third party before build [\#2425](https://github.com/pypeclub/OpenPype/pull/2425)
 
 **🐛 Bug fixes**
 
@@ -87,15 +91,6 @@
 **🚀 Enhancements**
 
 - General: Workdir extra folders [\#2462](https://github.com/pypeclub/OpenPype/pull/2462)
-- Photoshop: New style validations for New publisher [\#2429](https://github.com/pypeclub/OpenPype/pull/2429)
-
-**🐛 Bug fixes**
-
-- Short Pyblish plugin path [\#2428](https://github.com/pypeclub/OpenPype/pull/2428)
-
-**Merged pull requests:**
-
-- Forced cx\_freeze to include sqlite3 into build  [\#2432](https://github.com/pypeclub/OpenPype/pull/2432)
 
 ## [3.6.4](https://github.com/pypeclub/OpenPype/tree/3.6.4) (2021-11-23)
 

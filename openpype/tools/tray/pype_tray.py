@@ -296,7 +296,7 @@ class TrayManager:
 
     @property
     def doubleclick_callback(self):
-        """Doubleclick callback for Tray icon."""
+        """Double-click callback for Tray icon."""
         callback_name = self.modules_manager.doubleclick_callback
         return self.modules_manager.doubleclick_callbacks.get(callback_name)
 
@@ -460,7 +460,7 @@ class TrayManager:
         title = "Settings miss default values"
         msg = (
             "Your OpenPype will not work as expected! \n"
-            "Some default values in settigs are missing. \n\n"
+            "Some default values in settings are missing. \n\n"
             "Please contact OpenPype team."
         )
         msg_box = QtWidgets.QMessageBox(
@@ -492,7 +492,7 @@ class TrayManager:
             message (str): Content of message.
             icon (QSystemTrayIcon.MessageIcon): Message's icon. Default is
                 Information icon, may differ by Qt version.
-            msecs (int): Duration of message visibility in miliseconds.
+            msecs (int): Duration of message visibility in milliseconds.
                 Default is 10000 msecs, may differ by Qt version.
         """
         args = [title, message]

@@ -18,7 +18,7 @@ def preserve_expanded_rows(tree_view,
 
     This function is created to maintain the expand vs collapse status of
     the model items. When refresh is triggered the items which are expanded
-    will stay expanded and vise versa.
+    will stay expanded and vice versa.
 
     Arguments:
         tree_view (QWidgets.QTreeView): the tree view which is
@@ -68,7 +68,7 @@ def preserve_selection(tree_view,
 
     This function is created to maintain the selection status of
     the model items. When refresh is triggered the items which are expanded
-    will stay expanded and vise versa.
+    will stay expanded and vice versa.
 
         tree_view (QWidgets.QTreeView): the tree view nested in the application
         column (int): the column to retrieve the data from
@@ -390,7 +390,7 @@ class AssetWidget(QtWidgets.QWidget):
             assets, (tuple, list)
         ), "Assets must be list or tuple"
 
-        # convert to list - tuple cant be modified
+        # convert to list - tuple can't be modified
         assets = list(assets)
 
         # Clear selection
