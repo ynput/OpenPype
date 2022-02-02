@@ -1,6 +1,6 @@
 from avalon.maya import lib
 from avalon import api
-from openpype.api import config
+from openpype.api import get_project_settings
 import os
 import maya.cmds as cmds
 
@@ -19,7 +19,7 @@ class VRaySceneLoader(api.Loader):
     def load(self, context, name, namespace, data):
 
         from avalon.maya.pipeline import containerise
-        from openpype.hosts.maya.lib import namespaced
+        from openpype.hosts.maya.api.lib import namespaced
 
         try:
             family = context["representation"]["context"]["family"]
@@ -47,8 +47,8 @@ class VRaySceneLoader(api.Loader):
             return
 
         # colour the group node
-        presets = config.get_presets(project=os.environ['AVALON_PROJECT'])
-        colors = presets['plugins']['maya']['load']['colors']
+        settings = get_project_settings(os.environ['AVALON_PROJECT'])
+        colors = settings['maya']['load']['colors']
         c = colors.get(family)
         if c is not None:
             cmds.setAttr("{0}.useOutlinerColor".format(group_node), 1)
