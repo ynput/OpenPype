@@ -173,7 +173,9 @@ def convert_value_by_type_name(value_type, value, logger=None):
         array_type = re_result[0]
         output = []
         for item in value.split(","):
-            output.append(convert_value_by_type_name(array_type, item, logger=logger))
+            output.append(
+                convert_value_by_type_name(array_type, item, logger=logger)
+            )
         return output
 
     logger.info((
@@ -199,7 +201,9 @@ def parse_oiio_xml_output(xml_string, logger=None):
         tag_name = child.tag
         if tag_name == "attrib":
             attrib_def = child.attrib
-            value = convert_value_by_type_name(attrib_def["type"], child.text, logger=logger)
+            value = convert_value_by_type_name(
+                attrib_def["type"], child.text, logger=logger
+            )
 
             attribs[attrib_def["name"]] = value
             continue
