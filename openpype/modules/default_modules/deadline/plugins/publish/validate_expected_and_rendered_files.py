@@ -30,42 +30,54 @@ class ValidateExpectedFiles(pyblish.api.InstancePlugin):
             staging_dir = repre["stagingDir"]
             existing_files = self._get_existing_files(staging_dir)
 
-            expected_non_existent = expected_files.difference(
-                existing_files)
-            if len(expected_non_existent) != 0:
-                self.log.info("Some expected files missing {}".format(
-                    expected_non_existent))
+            if self.allow_user_override:
+                # We always check for user override because the user might have
+                # also overridden the Job frame list to be longer than the
+                # originally submitted frame range
+                # todo: We should first check if Job frame range was overridden
+                #       at all so we don't unnecessarily override anything
+                file_name_template, frame_placeholder = \
+                    self._get_file_name_template_and_placeholder(
+                        expected_files)
 
-                if self.allow_user_override:
-                    file_name_template, frame_placeholder = \
-                        self._get_file_name_template_and_placeholder(
-                            expected_files)
+                if not file_name_template:
+                    raise RuntimeError("Unable to retrieve file_name template"
+                                       "from files: {}".format(expected_files))
 
-                    if not file_name_template:
-                        return
+                job_expected_files = self._get_job_expected_files(
+                    file_name_template,
+                    frame_placeholder,
+                    frame_list)
 
-                    real_expected_rendered = self._get_real_render_expected(
-                        file_name_template,
-                        frame_placeholder,
-                        frame_list)
+                job_files_diff = job_expected_files.difference(expected_files)
+                if job_files_diff:
+                    self.log.debug("Detected difference in expected output "
+                                   "files from Deadline job. Assuming an "
+                                   "updated frame list by the user. "
+                                   "Difference: {}".format(
+                                        sorted(job_files_diff)))
 
-                    real_expected_non_existent = \
-                        real_expected_rendered.difference(existing_files)
-                    if len(real_expected_non_existent) != 0:
-                        raise RuntimeError("Still missing some files {}".
-                                           format(real_expected_non_existent))
-                    self.log.info("Update range from actual job range")
+                    # Update the representation expected files
+                    self.log.info("Update range from actual job range "
+                                  "to frame list: {}".format(frame_list))
                     repre["files"] = sorted(list(real_expected_rendered))
-                else:
-                    raise RuntimeError("Some expected files missing {}".format(
-                        expected_non_existent))
+
+                    # Update the expected files
+                    expected_files = job_expected_files
+
+            # We don't use set.difference because we do allow other existing
+            # files to be in the folder that we might not want to use.
+            missing = expected_files - existing_files
+            if missing:
+                raise RuntimeError("Missing expected files: {}".format(
+                    sorted(missing)))
 
     def _get_frame_list(self, original_job_id):
         """
             Returns list of frame ranges from all render job.
 
-            Render job might be requeried so job_id in metadata.json is invalid
-            GlobalJobPreload injects current ids to RENDER_JOB_IDS.
+            Render job might be re-queried so job_id in metadata.json is
+            invalid GlobalJobPreload injects current ids to RENDER_JOB_IDS.
 
             Args:
                 original_job_id (str)
@@ -87,8 +99,10 @@ class ValidateExpectedFiles(pyblish.api.InstancePlugin):
 
         return all_frame_lists
 
-    def _get_real_render_expected(self, file_name_template, frame_placeholder,
-                                  frame_list):
+    def _get_job_expected_files(self,
+                                file_name_template,
+                                frame_placeholder,
+                                frame_list):
         """
             Calculates list of names of expected rendered files.
 
