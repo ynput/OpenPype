@@ -281,16 +281,6 @@ class CollectMayaRender(pyblish.api.ContextPlugin):
             self.log.info("collecting layer: {}".format(layer_name))
             # Get layer specific settings, might be overrides
 
-            try:
-                aov_separator = self._aov_chars[(
-                    context.data["project_settings"]
-                    ["create"]
-                    ["CreateRender"]
-                    ["aov_separator"]
-                )]
-            except KeyError:
-                aov_separator = "_"
-
             data = {
                 "subset": expected_layer_name,
                 "attachTo": attach_to,
