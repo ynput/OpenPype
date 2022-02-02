@@ -135,22 +135,21 @@ class CollectMayaRender(pyblish.api.ContextPlugin):
                 self.log.warning(msg)
                 continue
 
-            # test if there are sets (subsets) to attach render to
+            # detect if there are sets (subsets) to attach render to
             sets = cmds.sets(layer, query=True) or []
             attach_to = []
-            if sets:
-                for s in sets:
-                    if "family" not in cmds.listAttr(s):
-                        continue
+            for s in sets:
+                if not cmds.attributeQuery("family", node=s, exists=True):
+                    continue
 
-                    attach_to.append(
-                        {
-                            "version": None,  # we need integrator for that
-                            "subset": s,
-                            "family": cmds.getAttr("{}.family".format(s)),
-                        }
-                    )
-                    self.log.info(" -> attach render to: {}".format(s))
+                attach_to.append(
+                    {
+                        "version": None,  # we need integrator for that
+                        "subset": s,
+                        "family": cmds.getAttr("{}.family".format(s)),
+                    }
+                )
+                self.log.info(" -> attach render to: {}".format(s))
 
             layer_name = "rs_{}".format(expected_layer_name)
 
