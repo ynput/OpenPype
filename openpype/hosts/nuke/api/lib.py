@@ -753,11 +753,21 @@ def script_name():
 
 def add_button_write_to_read(node):
     name = "createReadNode"
-    label = "Create Read From Rendered"
+    label = "Read From Rendered"
     value = "import write_to_read;\
         write_to_read.write_to_read(nuke.thisNode(), allow_relative=False)"
     knob = nuke.PyScript_Knob(name, label, value)
     knob.clearFlag(nuke.STARTLINE)
+    node.addKnob(knob)
+
+
+
+def add_button_clear_rendered(node, path):
+    name = "clearRendered"
+    label = "Clear Rendered"
+    value = "import clear_rendered;\
+        clear_rendered.clear_rendered(\"{}\")".format(path)
+    knob = nuke.PyScript_Knob(name, label, value)
     node.addKnob(knob)
 
 
@@ -987,6 +997,9 @@ def create_write_node(name, data, input=None, prenodes=None,
 
     # adding write to read button
     add_button_write_to_read(GN)
+
+    # adding write to read button
+    add_button_clear_rendered(GN, os.path.dirname(fpath))
 
     # Deadline tab.
     add_deadline_tab(GN)
