@@ -71,7 +71,6 @@ class CollectMayaRender(pyblish.api.ContextPlugin):
     def process(self, context):
         """Entry point to collector."""
         render_instance = None
-        deadline_url = None
 
         for instance in context:
             if "rendering" in instance.data["families"]:
@@ -94,16 +93,6 @@ class CollectMayaRender(pyblish.api.ContextPlugin):
         filepath = context.data["currentFile"].replace("\\", "/")
         asset = api.Session["AVALON_ASSET"]
         workspace = context.data["workspaceDir"]
-
-        deadline_settings = (
-            context.data
-            ["system_settings"]
-            ["modules"]
-            ["deadline"]
-        )
-
-        if deadline_settings["enabled"]:
-            deadline_url = render_instance.data.get("deadlineUrl")
 
         # Retrieve render setup layers
         rs = renderSetup.instance()
@@ -348,8 +337,12 @@ class CollectMayaRender(pyblish.api.ContextPlugin):
                 "aovSeparator": aov_separator
             }
 
-            if deadline_url:
-                data["deadlineUrl"] = deadline_url
+            # Collect Deadline url if Deadline module is enabled
+            deadline_settings = (
+                context.data["system_settings"]["modules"]["deadline"]
+            )
+            if deadline_settings["enabled"]:
+                data["deadlineUrl"] = render_instance.data.get("deadlineUrl")
 
             if self.sync_workfile_version:
                 data["version"] = context.data["version"]
