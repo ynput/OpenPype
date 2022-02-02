@@ -6,7 +6,7 @@ import os
 import random
 import zipfile
 import sys
-import importlib
+import filecmp
 import shutil
 import logging
 import contextlib
@@ -20,8 +20,6 @@ from .server import Server
 
 from openpype.tools.tray_app.app import ConsoleTrayApp
 from openpype.tools.utils import host_tools
-from openpype.hosts.harmony.api.toonboom import \
-    setup_startup_scripts, check_libs
 
 self = sys.modules[__name__]
 self.server = None
@@ -78,6 +76,77 @@ def main(*subprocess_args):
     ConsoleTrayApp._instance = instance
 
     sys.exit(app.exec_())
+
+
+def setup_startup_scripts():
+    """Manages installation of avalon's TB_sceneOpened.js for Harmony launch.
+
+    If a studio already has defined "TOONBOOM_GLOBAL_SCRIPT_LOCATION", copies
+    the TB_sceneOpened.js to that location if the file is different.
+    Otherwise, will set the env var to point to the avalon/harmony folder.
+
+    Admins should be aware that this will overwrite TB_sceneOpened in the
+    "TOONBOOM_GLOBAL_SCRIPT_LOCATION", and that if they want to have additional
+    logic, they will need to one of the following:
+        * Create a Harmony package to manage startup logic
+        * Use TB_sceneOpenedUI.js instead to manage startup logic
+        * Add their startup logic to avalon/harmony/TB_sceneOpened.js
+    """
+    avalon_dcc_dir = os.path.dirname(os.path.dirname(__file__))
+    startup_js = "TB_sceneOpened.js"
+
+    if os.getenv("TOONBOOM_GLOBAL_SCRIPT_LOCATION"):
+
+        avalon_harmony_startup = os.path.join(avalon_dcc_dir, startup_js)
+
+        env_harmony_startup = os.path.join(
+            os.getenv("TOONBOOM_GLOBAL_SCRIPT_LOCATION"), startup_js)
+
+        if not filecmp.cmp(avalon_harmony_startup, env_harmony_startup):
+            try:
+                shutil.copy(avalon_harmony_startup, env_harmony_startup)
+            except Exception as e:
+                self.log.error(e)
+                self.log.warning(
+                    "Failed to copy {0} to {1}! "
+                    "Defaulting to Avalon TOONBOOM_GLOBAL_SCRIPT_LOCATION."
+                        .format(avalon_harmony_startup, env_harmony_startup))
+
+                os.environ["TOONBOOM_GLOBAL_SCRIPT_LOCATION"] = avalon_dcc_dir
+    else:
+        os.environ["TOONBOOM_GLOBAL_SCRIPT_LOCATION"] = avalon_dcc_dir
+
+
+def check_libs():
+    """Check if `OpenHarmony`_ is available.
+
+    Avalon expects either path in `LIB_OPENHARMONY_PATH` or `openHarmony.js`
+    present in `TOONBOOM_GLOBAL_SCRIPT_LOCATION`.
+
+    Throws:
+        RuntimeError: If openHarmony is not found.
+
+    .. _OpenHarmony:
+        https://github.com/cfourney/OpenHarmony
+
+    """
+    if not os.getenv("LIB_OPENHARMONY_PATH"):
+
+        if os.getenv("TOONBOOM_GLOBAL_SCRIPT_LOCATION"):
+            if os.path.exists(
+                os.path.join(
+                    os.getenv("TOONBOOM_GLOBAL_SCRIPT_LOCATION"),
+                    "openHarmony.js")):
+
+                os.environ["LIB_OPENHARMONY_PATH"] = \
+                    os.getenv("TOONBOOM_GLOBAL_SCRIPT_LOCATION")
+                return
+
+        else:
+            self.log.error(("Cannot find OpenHarmony library. "
+                            "Please set path to it in LIB_OPENHARMONY_PATH "
+                            "environment variable."))
+            raise RuntimeError("Missing OpenHarmony library.")
 
 
 def launch(application_path, *args):
