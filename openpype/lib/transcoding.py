@@ -328,6 +328,12 @@ def should_convert_for_ffmpeg(src_filepath):
     if review_channels is None:
         return None
 
+    for attr_value in input_info["attribs"].values():
+        if (
+            isinstance(attr_value, str)
+            and len(attr_value) > MAX_FFMPEG_STRING_LEN
+        ):
+            return True
     return False
 
 
@@ -403,6 +409,25 @@ def convert_for_ffmpeg(
     if is_sequence:
         oiio_cmd.append("--frames")
         oiio_cmd.append("{}-{}".format(input_frame_start, input_frame_end))
+
+    ignore_attr_changes_added = False
+    for attr_name, attr_value in input_info["attribs"].items():
+        if not isinstance(attr_value, str):
+            continue
+
+        # Remove attributes that have string value longer than allowed length
+        #   for ffmpeg
+        if len(attr_value) > MAX_FFMPEG_STRING_LEN:
+            if not ignore_attr_changes_added:
+                # Attrite changes won't be added to attributes itself
+                ignore_attr_changes_added = True
+                oiio_cmd.append("--sansattrib")
+            # Set attribute to empty string
+            logger.info((
+                "Removed attribute \"{}\" from metadata"
+                " because has too long value ({} chars)."
+            ).format(attr_name, len(attr_value)))
+            oiio_cmd.extend(["--eraseattrib", attr_name])
 
     # Add last argument - path to output
     base_file_name = os.path.basename(first_input_path)
