@@ -6,10 +6,7 @@ class USDReferenceLoader(api.Loader):
     """Reference USD file in Solaris"""
 
     families = [
-        "colorbleed.usd",
-        "colorbleed.pointcache",
-        "colorbleed.animation",
-        "colorbleed.camera",
+        "usd",
         "usdCamera",
     ]
     label = "Reference USD"
