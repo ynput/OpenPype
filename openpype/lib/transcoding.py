@@ -340,8 +340,8 @@ def should_convert_for_ffmpeg(src_filepath):
 def convert_for_ffmpeg(
     first_input_path,
     output_dir,
-    input_frame_start,
-    input_frame_end,
+    input_frame_start=None,
+    input_frame_end=None,
     logger=None
 ):
     """Contert source file to format supported in ffmpeg.
@@ -384,11 +384,10 @@ def convert_for_ffmpeg(
         compression = "none"
 
     # Prepare subprocess arguments
-    oiio_cmd = [
-        get_oiio_tools_path(),
-        "--compression", compression,
-        first_input_path
-    ]
+    oiio_cmd = [get_oiio_tools_path()]
+    # Add input compression if available
+    if compression:
+        oiio_cmd.extend(["--compression", compression])
 
     # Collect channels to export
     channel_names = input_info["channelnames"]
@@ -399,16 +398,27 @@ def convert_for_ffmpeg(
         )
 
     red, green, blue, alpha = review_channels
+    input_channels = [red, green, blue]
     channels_arg = "R={},G={},B={}".format(red, green, blue)
     if alpha is not None:
         channels_arg += ",A={}".format(alpha)
-    oiio_cmd.append("--ch")
-    oiio_cmd.append(channels_arg)
+        input_channels.append(alpha)
+    input_channels_str = ",".join(input_channels)
+
+    oiio_cmd.extend([
+        # Tell oiiotool which channels should be loaded
+        # - other channels are not loaded to memory so helps to avoid memory
+        #       leak issues
+        "-i:ch={}".format(input_channels_str), first_input_path,
+        # Tell oiiotool which channels should be put to top stack (and output)
+        "--ch", channels_arg
+    ])
 
     # Add frame definitions to arguments
     if is_sequence:
-        oiio_cmd.append("--frames")
-        oiio_cmd.append("{}-{}".format(input_frame_start, input_frame_end))
+        oiio_cmd.extend([
+            "--frames", "{}-{}".format(input_frame_start, input_frame_end)
+        ])
 
     ignore_attr_changes_added = False
     for attr_name, attr_value in input_info["attribs"].items():
@@ -432,8 +442,9 @@ def convert_for_ffmpeg(
     # Add last argument - path to output
     base_file_name = os.path.basename(first_input_path)
     output_path = os.path.join(output_dir, base_file_name)
-    oiio_cmd.append("-o")
-    oiio_cmd.append(output_path)
+    oiio_cmd.extend([
+        "-o", output_path
+    ])
 
     logger.debug("Conversion command: {}".format(" ".join(oiio_cmd)))
     run_subprocess(oiio_cmd, logger=logger)
