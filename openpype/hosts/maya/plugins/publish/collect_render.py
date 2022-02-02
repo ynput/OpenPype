@@ -49,7 +49,8 @@ import maya.app.renderSetup.model.renderSetup as renderSetup
 
 import pyblish.api
 
-from avalon import maya, api
+import avalon.maya
+from avalon import api
 from openpype.hosts.maya.api.lib_renderproducts import get as get_layer_render_products  # noqa: E501
 from openpype.hosts.maya.api import lib
 
@@ -352,16 +353,7 @@ class CollectMayaRender(pyblish.api.ContextPlugin):
                         instance.data["version"] = context.data["version"]
 
             # Apply each user defined attribute as data
-            for attr in cmds.listAttr(layer, userDefined=True) or list():
-                try:
-                    value = cmds.getAttr("{}.{}".format(layer, attr))
-                except Exception:
-                    # Some attributes cannot be read directly,
-                    # such as mesh and color attributes. These
-                    # are considered non-essential to this
-                    # particular publishing pipeline.
-                    value = None
-
+            for attr, value in avalon.maya.read(layer).items():
                 data[attr] = value
 
             # handle standalone renderers
@@ -401,7 +393,7 @@ class CollectMayaRender(pyblish.api.ContextPlugin):
             dict: only overrides with values
 
         """
-        attributes = maya.read(render_globals)
+        attributes = avalon.maya.read(render_globals)
 
         options = {"renderGlobals": {}}
         options["renderGlobals"]["Priority"] = attributes["priority"]
