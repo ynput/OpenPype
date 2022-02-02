@@ -419,9 +419,9 @@ def repack_version(directory):
 @click.option(
     "--dirpath", help="Directory where package is stored", default=None
 )
-def pack_project(project_name, dirpath):
+def pack_project(project, dirpath):
     """Create a package of project with all files and database dump."""
-    PypeCommands().pack_project(project_name, dirpath)
+    PypeCommands().pack_project(project, dirpath)
 
 
 @main.command()
@@ -429,6 +429,6 @@ def pack_project(project_name, dirpath):
 @click.option(
     "--root", help="Replace root which was stored in project", default=None
 )
-def uppack_project(zipfile, root):
+def unpack_project(zipfile, root):
     """Create a package of project with all files and database dump."""
     PypeCommands().unpack_project(zipfile, root)

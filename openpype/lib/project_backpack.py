@@ -53,6 +53,7 @@ def pack_project(project_name, destination_dir=None):
         destination_dir(str): Optinal path where zip will be stored. Project's
             root is used if not passed.
     """
+    print("Creating package of project \"{}\"".format(project_name))
     # Validate existence of project
     dbcon = AvalonMongoDB()
     dbcon.Session["AVALON_PROJECT"] = project_name
@@ -74,7 +75,7 @@ def pack_project(project_name, destination_dir=None):
 
     root_path = source_root[platform.system().lower()]
     print("Using root \"{}\" with path \"{}\"".format(
-        root_name, root_value
+        root_name, root_path
     ))
 
     project_source_path = os.path.join(root_path, project_name)
@@ -85,12 +86,13 @@ def pack_project(project_name, destination_dir=None):
     if not destination_dir:
         destination_dir = root_path
 
+    destination_dir = os.path.normpath(destination_dir)
     if not os.path.exists(destination_dir):
         os.makedirs(destination_dir)
 
     zip_path = os.path.join(destination_dir, project_name + ".zip")
 
-    print("Project will be packaged into {}".format(zip_path))
+    print("Project will be packaged into \"{}\"".format(zip_path))
     # Rename already existing zip
     if os.path.exists(zip_path):
         dst_filepath = add_timestamp(zip_path)
@@ -121,6 +123,7 @@ def pack_project(project_name, destination_dir=None):
     with open(temp_docs_json, "w") as stream:
         stream.write(data)
 
+    print("Packing files into zip")
     # Write all to zip file
     with zipfile.ZipFile(zip_path, "w", zipfile.ZIP_DEFLATED) as zip_stream:
         # Add metadata file
@@ -138,10 +141,12 @@ def pack_project(project_name, destination_dir=None):
                 )
                 zip_stream.write(filepath, archive_name)
 
+    print("Cleaning up")
     # Cleanup
     os.remove(temp_docs_json)
     os.remove(temp_metadata_json)
     dbcon.uninstall()
+    print("*** Packing finished ***")
 
 
 def unpack_project(path_to_zip, new_root=None):
@@ -153,12 +158,13 @@ def unpack_project(path_to_zip, new_root=None):
         new_root(str): Optional way how to set different root path for unpacked
             project.
     """
+    print("Unpacking project from zip {}".format(path_to_zip))
     if not os.path.exists(path_to_zip):
         print("Zip file does not exists: {}".format(path_to_zip))
         return
 
     tmp_dir = tempfile.mkdtemp(prefix="unpack_")
-    print("Zip is extracted to: {}".format(tmp_dir))
+    print("Zip is extracted to temp: {}".format(tmp_dir))
     with zipfile.ZipFile(path_to_zip, "r") as zip_stream:
         zip_stream.extractall(tmp_dir)
 
@@ -183,9 +189,9 @@ def unpack_project(path_to_zip, new_root=None):
         database.drop_collection(project_name)
         print("Removed existing project collection")
 
-    collection = database[project_name]
-    # Create new collection with loaded docs
     print("Creating project documents ({})".format(len(docs)))
+    # Create new collection with loaded docs
+    collection = database[project_name]
     collection.insert_many(docs)
 
     # Skip change of root if is the same as the one stored in metadata
@@ -217,16 +223,23 @@ def unpack_project(path_to_zip, new_root=None):
     src_project_files_dir = os.path.join(
         tmp_dir, PROJECT_FILES_DIR, project_name
     )
-    dst_project_files_dir = os.path.join(root_path, project_name)
+    dst_project_files_dir = os.path.normpath(
+        os.path.join(root_path, project_name)
+    )
     if os.path.exists(dst_project_files_dir):
         new_path = add_timestamp(dst_project_files_dir)
+        print("Project folder already exists. Renamed \"{}\" -> \"{}\"".format(
+            dst_project_files_dir, new_path
+        ))
         os.rename(dst_project_files_dir, new_path)
 
-    print("Moving {} -> {}".format(
+    print("Moving project files from temp \"{}\" -> \"{}\"".format(
         src_project_files_dir, dst_project_files_dir
     ))
     shutil.move(src_project_files_dir, dst_project_files_dir)
 
     # CLeanup
+    print("Cleaning up")
     shutil.rmtree(tmp_dir)
     dbcon.uninstall()
+    print("*** Unpack finished ***")
