@@ -29,7 +29,13 @@ class AfterEffectsSubmitDeadline(abstract_submit_deadline.AbstractSubmitDeadline
     families = ["render.farm"]  # cannot be "render' as that is integrated
     use_published = True
 
+    priority = 50
     chunk_size = 1000000
+    primary_pool = None
+    secondary_pool = None
+    group = None
+    department = None
+    multiprocess = True
 
     def get_job_info(self):
         dln_job_info = DeadlineJobInfo(Plugin="AfterEffects")
@@ -49,6 +55,11 @@ class AfterEffectsSubmitDeadline(abstract_submit_deadline.AbstractSubmitDeadline
                 int(round(self._instance.data["frameEnd"])))
             dln_job_info.Frames = frame_range
 
+        dln_job_info.Priority = self.priority
+        dln_job_info.Pool = self.primary_pool
+        dln_job_info.SecondaryPool = self.secondary_pool
+        dln_job_info.Group = self.group
+        dln_job_info.Department = self.department
         dln_job_info.ChunkSize = self.chunk_size
         dln_job_info.OutputFilename = \
             os.path.basename(self._instance.data["expectedFiles"][0])
@@ -102,9 +113,10 @@ class AfterEffectsSubmitDeadline(abstract_submit_deadline.AbstractSubmitDeadline
                                        '{}.{}.{}'.format(arr[0], hashed,
                                                          arr[2]))
 
-        deadline_plugin_info.MultiProcess = True
         deadline_plugin_info.Comp = self._instance.data["comp_name"]
-        deadline_plugin_info.Version = "17.5"
+        deadline_plugin_info.Version = self._instance.data["app_version"]
+        # must be here because of DL AE plugin
+        deadline_plugin_info.MultiProcess = self.multiprocess
         deadline_plugin_info.SceneFile = self.scene_path
         deadline_plugin_info.Output = render_path.replace("\\", "/")
 
