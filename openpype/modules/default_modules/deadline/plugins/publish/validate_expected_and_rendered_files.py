@@ -51,11 +51,11 @@ class ValidateExpectedFiles(pyblish.api.InstancePlugin):
 
                 job_files_diff = job_expected_files.difference(expected_files)
                 if job_files_diff:
-                    self.log.debug("Detected difference in expected output "
-                                   "files from Deadline job. Assuming an "
-                                   "updated frame list by the user. "
-                                   "Difference: {}".format(
-                                        sorted(job_files_diff)))
+                    self.log.debug(
+                        "Detected difference in expected output files from "
+                        "Deadline job. Assuming an updated frame list by the "
+                        "user. Difference: {}".format(sorted(job_files_diff))
+                    )
 
                     # Update the representation expected files
                     self.log.info("Update range from actual job range "
