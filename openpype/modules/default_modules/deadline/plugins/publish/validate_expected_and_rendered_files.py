@@ -75,8 +75,8 @@ class ValidateExpectedFiles(pyblish.api.InstancePlugin):
     def _get_frame_list(self, original_job_id):
         """Returns list of frame ranges from all render job.
 
-        Render job might be re-queried so job_id in metadata.json is
-        invalid GlobalJobPreload injects current ids to RENDER_JOB_IDS.
+        Render job might be re-submitted so job_id in metadata.json could be
+        invalid. GlobalJobPreload injects current job id to RENDER_JOB_IDS.
 
         Args:
             original_job_id (str)
