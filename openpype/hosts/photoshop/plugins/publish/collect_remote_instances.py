@@ -9,7 +9,7 @@ from openpype.hosts.photoshop import api as photoshop
 
 
 class CollectRemoteInstances(pyblish.api.ContextPlugin):
-    """Gather instances configured color code of a layer.
+    """Creates instances for configured color code of a layer.
 
     Used in remote publishing when artists marks publishable layers by color-
     coding.
@@ -46,6 +46,11 @@ class CollectRemoteInstances(pyblish.api.ContextPlugin):
         stub = photoshop.stub()
         layers = stub.get_layers()
 
+        existing_subset_names = []
+        for instance in context:
+            if instance.data.get('publish'):
+                existing_subset_names.append(instance.data.get('subset'))
+
         asset, task_name, task_type = get_batch_asset_task_info(
             task_data["context"])
 
@@ -70,21 +75,27 @@ class CollectRemoteInstances(pyblish.api.ContextPlugin):
                 self.log.debug("!!! Not a top layer, skip")
                 continue
 
+            fill_pairs = {
+                "variant": variant,
+                "family": resolved_family,
+                "task": task_name,
+                "layer": layer.name
+            }
+
+            subset = resolved_subset_template.format(
+                **prepare_template_data(fill_pairs))
+
+            if subset in existing_subset_names:
+                self.log.info(
+                    "Subset {} already created, skipping.".format(subset))
+                continue
+
             instance = context.create_instance(layer.name)
             instance.append(layer)
             instance.data["family"] = resolved_family
             instance.data["publish"] = layer.visible
             instance.data["asset"] = asset
             instance.data["task"] = task_name
-
-            fill_pairs = {
-                "variant": variant,
-                "family": instance.data["family"],
-                "task": instance.data["task"],
-                "layer": layer.name
-            }
-            subset = resolved_subset_template.format(
-                **prepare_template_data(fill_pairs))
             instance.data["subset"] = subset
 
             instance_names.append(layer.name)
