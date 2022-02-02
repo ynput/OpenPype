@@ -10,13 +10,6 @@
             "skip_timelines_check": [
                 ".*"
             ]
-        },
-        "AfterEffectsSubmitDeadline": {
-            "use_published": true,
-            "priority": 50,
-            "primary_pool": "",
-            "secondary_pool": "",
-            "chunk_size": 1000000
         }
     },
     "workfile_builder": {
