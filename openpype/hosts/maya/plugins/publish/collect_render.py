@@ -104,13 +104,12 @@ class CollectMayaRender(pyblish.api.ContextPlugin):
 
         if deadline_settings["enabled"]:
             deadline_url = render_instance.data.get("deadlineUrl")
-        self._rs = renderSetup.instance()
-        current_layer = self._rs.getVisibleRenderLayer()
-        maya_render_layers = {
-            layer.name(): layer for layer in self._rs.getRenderLayers()
-        }
 
-        self.maya_layers = maya_render_layers
+        # Retrieve render setup layers
+        rs = renderSetup.instance()
+        maya_render_layers = {
+            layer.name(): layer for layer in rs.getRenderLayers()
+        }
 
         for layer in collected_render_layers:
             try:
@@ -472,10 +471,6 @@ class CollectMayaRender(pyblish.api.ContextPlugin):
             pool_b = None
 
         return pool_a, pool_b
-
-    def _get_overrides(self, layer):
-        rset = self.maya_layers[layer].renderSettingsCollectionInstance()
-        return rset.getOverrides()
 
     @staticmethod
     def get_render_attribute(attr, layer):
