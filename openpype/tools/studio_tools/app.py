@@ -4,7 +4,6 @@ import PySide2.QtCore as QtCore
 import PySide2.QtWidgets as QtWidgets
 from pyblish_pype import util
 from openpype.settings import get_project_settings
-from avalon import api
 from openpype.tools.utils import lib as tools_lib
 
 import scriptsmenu
@@ -13,6 +12,7 @@ import logging
 log = logging.getLogger(__name__)
 module = sys.modules[__name__]
 module.window = None
+
 
 class StudioToolsDialog(QtWidgets.QWidget):
     def __init__(self, parent=None):
@@ -43,10 +43,10 @@ class StudioToolsDialog(QtWidgets.QWidget):
             log.info("Attempting to build menu ...")
             object_name = objectName or title.lower()
             menu = scriptsmenu.ScriptsMenu(title=title,
-                                        parent=parent,
-                                        objectName=object_name)
+                                           parent=parent,
+                                           objectName=object_name)
             layout.addWidget(menu)
-            menu.aboutToHide.connect(menu.show) #IF menu try to hide -> Don't
+            menu.aboutToHide.connect(menu.show)  # IF menu try to hide -> Don't
         except Exception as e:
             log.error(e)
             return
@@ -57,6 +57,7 @@ class StudioToolsDialog(QtWidgets.QWidget):
         self.layout = layout
         menu.build_from_configuration(menu, config)
         self.menu = menu
+
 
 def show(debug=False, parent=None):
     """Display Loader GUI
