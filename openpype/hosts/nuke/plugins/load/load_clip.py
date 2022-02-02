@@ -128,7 +128,7 @@ class LoadClip(plugin.NukeLoader):
         with viewer_update_and_undo_stop():
             read_node["file"].setValue(file)
 
-            set_colorspace = self._set_colorspace(
+            used_colorspace = self._set_colorspace(
                 read_node, version_data, repre["data"])
 
             self._set_range_to_node(read_node, first, last, start_at_workfile)
@@ -145,10 +145,9 @@ class LoadClip(plugin.NukeLoader):
                 elif k == 'colorspace':
                     colorspace = repre["data"].get(k)
                     colorspace = colorspace or version_data.get(k)
-                    data_imprint.update({
-                        "db_colorspace": colorspace,
-                        "set_colorspace": set_colorspace
-                    })
+                    data_imprint["db_colorspace"] = colorspace
+                    if used_colorspace:
+                        data_imprint["used_colorspace"] = used_colorspace
                 else:
                     data_imprint.update(
                         {k: context["version"]['data'].get(k, str(None))})
@@ -236,7 +235,7 @@ class LoadClip(plugin.NukeLoader):
         # to avoid multiple undo steps for rest of process
         # we will switch off undo-ing
         with viewer_update_and_undo_stop():
-            set_colorspace = self._set_colorspace(
+            used_colorspace = self._set_colorspace(
                 read_node, version_data, representation["data"],
                 path=file)
 
@@ -248,13 +247,16 @@ class LoadClip(plugin.NukeLoader):
                 "frameEnd": str(last),
                 "version": str(version.get("name")),
                 "db_colorspace": colorspace,
-                "set_colorspace": set_colorspace,
                 "source": version_data.get("source"),
                 "handleStart": str(self.handle_start),
                 "handleEnd": str(self.handle_end),
                 "fps": str(version_data.get("fps")),
                 "author": version_data.get("author")
             }
+
+            # add used colorspace if found any
+            if used_colorspace:
+                updated_dict["used_colorspace"] = used_colorspace
 
             # change color of read_node
             # get all versions in list
