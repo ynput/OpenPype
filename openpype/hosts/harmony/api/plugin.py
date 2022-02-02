@@ -3,4 +3,4 @@ from openpype.api import PypeCreatorMixin
 
 
 class Creator(PypeCreatorMixin, harmony.Creator):
-    pass
+    defaults = ["Main"]

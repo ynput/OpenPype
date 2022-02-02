@@ -76,6 +76,7 @@ def get_reference_node_parents(ref):
 
 
 class Creator(PypeCreatorMixin, avalon.maya.Creator):
+    defaults = ['Main']
     pass
 
 

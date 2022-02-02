@@ -14,6 +14,8 @@ class OpenPypeCreatorError(CreatorError):
 
 
 class Creator(PypeCreatorMixin, houdini.Creator):
+    defaults = ['Main']
+
     def process(self):
         try:
             # re-raise as standard Python exception so
