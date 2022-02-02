@@ -761,7 +761,6 @@ def add_button_write_to_read(node):
     node.addKnob(knob)
 
 
-
 def add_button_clear_rendered(node, path):
     name = "clearRendered"
     label = "Clear Rendered"
