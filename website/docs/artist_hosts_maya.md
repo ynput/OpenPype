@@ -352,8 +352,8 @@ OpenPype in Maya can be used for submitting renders to render farm and for their
 subsequent publishing. Right now OpenPype support [AWS Thinkbox Deadline](https://www.awsthinkbox.com/deadline)
 and [Virtual Vertex Muster](https://www.vvertex.com/overview/).
 
-* For setting up Muster support see [admin section](admin_config.md#muster)
-* For setting up Deadline support see [here](admin_config.md#aws-thinkbox-deadline)
+* For setting up Muster support see [admin section](module_muster.md)
+* For setting up Deadline support see [here](module_deadline.md)
 
 :::note Muster login
 Muster is now configured so every user must log in to get authentication support. If OpenPype founds out this token is missing or expired, it will ask again for credentials.
