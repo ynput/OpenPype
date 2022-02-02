@@ -1,3 +1,8 @@
+from .events import (
+    BaseEvent,
+    BeforeWorkfileSave
+)
+
 from .attribute_definitions import (
     AbtractAttrDef,
     UnknownDef,
@@ -9,6 +14,9 @@ from .attribute_definitions import (
 
 
 __all__ = (
+    "BaseEvent",
+    "BeforeWorkfileSave",
+
     "AbtractAttrDef",
     "UnknownDef",
     "NumberDef",

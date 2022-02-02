@@ -119,7 +119,7 @@ class GDriveHandler(AbstractProvider):
         # {platform} tells that value is multiplatform and only specific OS
         # should be returned
         editable = [
-            # credentials could be overriden on Project or User level
+            # credentials could be overridden on Project or User level
             {
                 "type": "path",
                 "key": "credentials_url",
@@ -127,7 +127,7 @@ class GDriveHandler(AbstractProvider):
                 "multiplatform": True,
                 "placeholder": "Credentials url"
             },
-            # roots could be overriden only on Project leve, User cannot
+            # roots could be overridden only on Project level, User cannot
             {
                 "key": "root",
                 "label": "Roots",
@@ -414,7 +414,7 @@ class GDriveHandler(AbstractProvider):
     def delete_folder(self, path, force=False):
         """
             Deletes folder on GDrive. Checks if folder contains any files or
-            subfolders. In that case raises error, could be overriden by
+            subfolders. In that case raises error, could be overridden by
             'force' argument.
             In that case deletes folder on 'path' and all its children.
 

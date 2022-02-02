@@ -40,7 +40,7 @@ class StaticMeshFBXLoader(api.Loader):
 
         return task
 
-    def load(self, context, name, namespace, data):
+    def load(self, context, name, namespace, options):
         """
         Load and containerise representation into Content Browser.
 
@@ -65,6 +65,8 @@ class StaticMeshFBXLoader(api.Loader):
 
         # Create directory for asset and avalon container
         root = "/Game/Avalon/Assets"
+        if options and options.get("asset_dir"):
+            root = options["asset_dir"]
         asset = context.get('asset').get('name')
         suffix = "_CON"
         if asset:
