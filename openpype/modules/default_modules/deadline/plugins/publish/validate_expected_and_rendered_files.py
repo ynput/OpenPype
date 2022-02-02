@@ -73,16 +73,15 @@ class ValidateExpectedFiles(pyblish.api.InstancePlugin):
                     sorted(missing)))
 
     def _get_frame_list(self, original_job_id):
-        """
-            Returns list of frame ranges from all render job.
+        """Returns list of frame ranges from all render job.
 
-            Render job might be re-queried so job_id in metadata.json is
-            invalid GlobalJobPreload injects current ids to RENDER_JOB_IDS.
+        Render job might be re-queried so job_id in metadata.json is
+        invalid GlobalJobPreload injects current ids to RENDER_JOB_IDS.
 
-            Args:
-                original_job_id (str)
-            Returns:
-                (list)
+        Args:
+            original_job_id (str)
+        Returns:
+            (list)
         """
         all_frame_lists = []
         render_job_ids = os.environ.get("RENDER_JOB_IDS")
@@ -103,11 +102,11 @@ class ValidateExpectedFiles(pyblish.api.InstancePlugin):
                                 file_name_template,
                                 frame_placeholder,
                                 frame_list):
-        """
-            Calculates list of names of expected rendered files.
+        """Calculates list of names of expected rendered files.
 
-            Might be different from job expected files if user explicitly and
-            manually change frame list on Deadline job.
+        Might be different from expected files from submission if user
+        explicitly and manually changed the frame list on the Deadline job.
+
         """
         real_expected_rendered = set()
         src_padding_exp = "%0{}d".format(len(frame_placeholder))
@@ -137,11 +136,11 @@ class ValidateExpectedFiles(pyblish.api.InstancePlugin):
         return file_name_template, frame_placeholder
 
     def _get_job_info(self, job_id):
-        """
-            Calls DL for actual job info for 'job_id'
+        """Calls DL for actual job info for 'job_id'
 
-            Might be different than job info saved in metadata.json if user
-            manually changes job pre/during rendering.
+        Might be different than job info saved in metadata.json if user
+        manually changes job pre/during rendering.
+
         """
         # get default deadline webservice url from deadline module
         deadline_url = self.instance.context.data["defaultDeadline"]
@@ -154,8 +153,8 @@ class ValidateExpectedFiles(pyblish.api.InstancePlugin):
         try:
             response = requests_get(url)
         except requests.exceptions.ConnectionError:
-            print("Deadline is not accessible at {}".format(deadline_url))
-            # self.log("Deadline is not accessible at {}".format(deadline_url))
+            self.log.error("Deadline is not accessible at "
+                           "{}".format(deadline_url))
             return {}
 
         if not response.ok:
@@ -169,29 +168,26 @@ class ValidateExpectedFiles(pyblish.api.InstancePlugin):
             return json_content.pop()
         return {}
 
-    def _parse_metadata_json(self, json_path):
-        if not os.path.exists(json_path):
-            msg = "Metadata file {} doesn't exist".format(json_path)
-            raise RuntimeError(msg)
-
-        with open(json_path) as fp:
-            try:
-                return json.load(fp)
-            except Exception as exc:
-                self.log.error(
-                    "Error loading json: "
-                    "{} - Exception: {}".format(json_path, exc)
-                )
-
-    def _get_existing_files(self, out_dir):
-        """Returns set of existing file names from 'out_dir'"""
+    def _get_existing_files(self, staging_dir):
+        """Returns set of existing file names from 'staging_dir'"""
         existing_files = set()
-        for file_name in os.listdir(out_dir):
+        for file_name in os.listdir(staging_dir):
             existing_files.add(file_name)
         return existing_files
 
     def _get_expected_files(self, repre):
-        """Returns set of file names from metadata.json"""
+        """Returns set of file names in representation['files']
+
+        The representations are collected from `CollectRenderedFiles` using
+        the metadata.json file submitted along with the render job.
+
+        Args:
+            repre (dict): The representation containing 'files'
+
+        Returns:
+            set: Set of expected file_names in the staging directory.
+
+        """
         expected_files = set()
 
         files = repre["files"]
