@@ -66,16 +66,18 @@ def pack_project(project_name, destination_dir=None):
     roots = project_doc["config"]["roots"]
     # Determine root directory of project
     source_root = None
+    source_root_name = None
     for root_name, root_value in roots.items():
         if source_root is not None:
             raise ValueError(
                 "Packaging is supported only for single root projects"
             )
         source_root = root_value
+        source_root_name = root_name
 
     root_path = source_root[platform.system().lower()]
     print("Using root \"{}\" with path \"{}\"".format(
-        root_name, root_path
+        source_root_name, root_path
     ))
 
     project_source_path = os.path.join(root_path, project_name)
