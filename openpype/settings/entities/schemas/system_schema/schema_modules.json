@@ -46,6 +46,60 @@
         },
         {
             "type": "dict",
+            "key": "shotgrid",
+            "label": "Shotgrid",
+            "collapsible": true,
+            "checkbox_key": "enabled",
+            "children": [
+                {
+                    "type": "boolean",
+                    "key": "enabled",
+                    "label": "Enabled"
+                },
+                {
+                    "type": "text",
+                    "key": "leecher_manager_url",
+                    "label": "Shotgrid Leecher Manager URL"
+                },
+                {
+                    "type": "text",
+                    "key": "leecher_backend_url",
+                    "label": "Shotgrid Leecher Backend URL"
+                },
+                {
+                    "type": "boolean",
+                    "key": "filter_projects_by_login",
+                    "label": "Filter projects by SG login"
+                },
+                {
+                    "type": "dict-modifiable",
+                    "key": "shotgrid_settings",
+                    "label": "Shotgrid Servers",
+                    "object_type": {
+                        "type": "dict",
+                        "children": [
+                            {
+                                "key": "shotgrid_url",
+                                "label": "Server URL",
+                                "type": "text"
+                            },
+                            {
+                                "key": "shotgrid_script_name",
+                                "label": "Script Name",
+                                "type": "text"
+                            },
+                            {
+                                "key": "shotgrid_script_key",
+                                "label": "Script api key",
+                                "type": "text"
+                            }
+                        ]
+                    }
+                }
+            ]
+        },
+        {
+            "type": "dict",
             "key": "timers_manager",
             "label": "Timers Manager",
             "collapsible": true,

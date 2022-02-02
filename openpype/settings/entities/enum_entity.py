@@ -530,6 +530,45 @@ class DeadlineUrlEnumEntity(BaseEnumEntity):
                 self._current_value = tuple(self.valid_keys)[0]
 
 
+class ShotgridUrlEnumEntity(BaseEnumEntity):
+    schema_types = ["shotgrid_url-enum"]
+
+    def _item_initialization(self):
+        self.multiselection = False
+
+        self.enum_items = []
+        self.valid_keys = set()
+
+        self.valid_value_types = (STRING_TYPE,)
+        self.value_on_not_set = ""
+
+        # GUI attribute
+        self.placeholder = self.schema_data.get("placeholder")
+
+    def _get_enum_values(self):
+        shotgrid_settings = self.get_entity_from_path(
+            "system_settings/modules/shotgrid/shotgrid_settings"
+        )
+
+        valid_keys = set()
+        enum_items_list = []
+        for server_name, settings in shotgrid_settings.items():
+            enum_items_list.append(
+                {server_name: "{}: {}".format(server_name, settings['shotgrid_url'].value)})
+            valid_keys.add(server_name)
+        return enum_items_list, valid_keys
+
+    def set_override_state(self, *args, **kwargs):
+        super(ShotgridUrlEnumEntity, self).set_override_state(*args, **kwargs)
+
+        self.enum_items, self.valid_keys = self._get_enum_values()
+        if not self.valid_keys:
+            self._current_value = ""
+
+        elif self._current_value not in self.valid_keys:
+            self._current_value = tuple(self.valid_keys)[0]
+
+
 class AnatomyTemplatesEnumEntity(BaseEnumEntity):
     schema_types = ["anatomy-templates-enum"]
 
