@@ -215,6 +215,7 @@ class CollectMayaRender(pyblish.api.ContextPlugin):
                     full_paths.append(full_path)
                     publish_meta_path = os.path.dirname(full_path)
                 aov_dict[aov.keys()[0]] = full_paths
+            full_exp_files.append(aov_dict)
 
             frame_start_render = int(self.get_render_attribute(
                 "startFrame", layer=layer_name))
@@ -237,8 +238,6 @@ class CollectMayaRender(pyblish.api.ContextPlugin):
                 frame_end = frame_end_render
                 frame_start_handle = frame_start_render
                 frame_end_handle = frame_end_render
-
-            full_exp_files.append(aov_dict)
 
             # find common path to store metadata
             # so if image prefix is branching to many directories
