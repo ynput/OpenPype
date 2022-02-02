@@ -28,7 +28,9 @@ from openpype.lib import (
     get_workfile_template_key,
     create_workdir_extra_folders
 )
-
+from openpype.settings import (
+    get_system_settings
+)
 from .model import FilesModel
 from .view import FilesView
 
@@ -92,6 +94,10 @@ class NameWindow(QtWidgets.QDialog):
         if asset_parents:
             parent_name = asset_parents[-1]
 
+        system_settings = get_system_settings()
+        studio_name = system_settings["general"]["studio_name"]
+        studio_code = system_settings["general"]["studio_code"]
+
         self.data = {
             "project": {
                 "name": project_doc["name"],
@@ -107,7 +113,11 @@ class NameWindow(QtWidgets.QDialog):
             "version": 1,
             "user": getpass.getuser(),
             "comment": "",
-            "ext": None
+            "ext": None,
+            "studio": {
+                "name": studio_name,
+                "code": studio_code
+            }
         }
 
         # Store project anatomy

@@ -15,8 +15,10 @@ Provides:
 import os
 import json
 
-from openpype.lib import ApplicationManager
-from avalon import api, lib
+from openpype.settings import (
+    get_system_settings
+)
+from avalon import api
 import pyblish.api
 
 
@@ -44,6 +46,10 @@ class CollectAnatomyContextData(pyblish.api.ContextPlugin):
     label = "Collect Anatomy Context Data"
 
     def process(self, context):
+        system_settings = get_system_settings()
+        studio_name = system_settings["general"]["studio_name"]
+        studio_code = system_settings["general"]["studio_code"]
+
         task_name = api.Session["AVALON_TASK"]
 
         project_entity = context.data["projectEntity"]
@@ -76,7 +82,11 @@ class CollectAnatomyContextData(pyblish.api.ContextPlugin):
                 "short": task_code,
             },
             "username": context.data["user"],
-            "app": context.data["hostName"]
+            "app": context.data["hostName"],
+            "studio": {
+                "name": studio_name,
+                "code": studio_code
+            }
         }
 
         datetime_data = context.data.get("datetimeData") or {}
