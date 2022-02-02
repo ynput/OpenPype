@@ -60,7 +60,7 @@ class ValidateExpectedFiles(pyblish.api.InstancePlugin):
                     # Update the representation expected files
                     self.log.info("Update range from actual job range "
                                   "to frame list: {}".format(frame_list))
-                    repre["files"] = sorted(list(real_expected_rendered))
+                    repre["files"] = sorted(real_expected_rendered)
 
                     # Update the expected files
                     expected_files = job_expected_files
