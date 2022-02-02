@@ -2,7 +2,7 @@ import os
 import sys
 import contextlib
 import traceback
-
+import ast
 from Qt import QtWidgets
 
 import avalon.api
@@ -41,7 +41,8 @@ def main(*subprocess_args):
             "ClosePS",
             os.environ.get("IS_TEST")
         )
-    elif os.environ.get("AVALON_PHOTOSHOP_WORKFILES_ON_LAUNCH", True):
+    elif ast.literal_eval(
+            os.getenv("AVALON_PHOTOSHOP_WORKFILES_ON_LAUNCH", True)):
         save = False
         if os.getenv("WORKFILES_SAVE_AS"):
             save = True
