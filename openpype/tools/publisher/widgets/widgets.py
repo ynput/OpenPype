@@ -749,7 +749,7 @@ class TasksCombobox(QtWidgets.QComboBox):
         self.value_changed.emit()
 
     def set_text(self, text):
-        """Set context shown in combobox without chaning selected items."""
+        """Set context shown in combobox without changing selected items."""
         if text == self._text:
             return
 
@@ -1000,7 +1000,7 @@ class VariantInputWidget(PlaceholderLineEdit):
         self.value_changed.emit()
 
     def reset_to_origin(self):
-        """Set origin value of selected instnaces."""
+        """Set origin value of selected instances."""
         self.set_value(self._origin_value)
 
     def get_value(self):
@@ -1105,7 +1105,7 @@ class GlobalAttrsWidget(QtWidgets.QWidget):
 
     Subset name is or may be affected on context. Gives abiity to modify
     context and subset name of instance. This change is not autopromoted but
-    must be submited.
+    must be submitted.
 
     Warning: Until artist hit `Submit` changes must not be propagated to
     instance data.
@@ -1179,7 +1179,7 @@ class GlobalAttrsWidget(QtWidgets.QWidget):
         self.cancel_btn = cancel_btn
 
     def _on_submit(self):
-        """Commit changes for selected instnaces."""
+        """Commit changes for selected instances."""
         variant_value = None
         asset_name = None
         task_name = None
@@ -1363,7 +1363,7 @@ class CreatorAttrsWidget(QtWidgets.QWidget):
         self._attr_def_id_to_instances = {}
         self._attr_def_id_to_attr_def = {}
 
-        # To store content of scroll area to prevend garbage collection
+        # To store content of scroll area to prevent garbage collection
         self._content_widget = None
 
     def set_instances_valid(self, valid):
@@ -1375,7 +1375,7 @@ class CreatorAttrsWidget(QtWidgets.QWidget):
             self._content_widget.setEnabled(valid)
 
     def set_current_instances(self, instances):
-        """Set current instances for which are attribute definitons shown."""
+        """Set current instances for which are attribute definitions shown."""
         prev_content_widget = self._scroll_area.widget()
         if prev_content_widget:
             self._scroll_area.takeWidget()
@@ -1461,7 +1461,7 @@ class PublishPluginAttrsWidget(QtWidgets.QWidget):
         self._attr_def_id_to_attr_def = {}
         self._attr_def_id_to_plugin_name = {}
 
-        # Store content of scroll area to prevend garbage collection
+        # Store content of scroll area to prevent garbage collection
         self._content_widget = None
 
     def set_instances_valid(self, valid):
@@ -1473,7 +1473,7 @@ class PublishPluginAttrsWidget(QtWidgets.QWidget):
             self._content_widget.setEnabled(valid)
 
     def set_current_instances(self, instances, context_selected):
-        """Set current instances for which are attribute definitons shown."""
+        """Set current instances for which are attribute definitions shown."""
         prev_content_widget = self._scroll_area.widget()
         if prev_content_widget:
             self._scroll_area.takeWidget()

@@ -43,7 +43,7 @@ class ExperimentalTool:
         self._enabled = enabled
 
     def execute(self):
-        """Trigger registerd callback."""
+        """Trigger registered callback."""
         self.callback()
 
 

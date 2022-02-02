@@ -63,6 +63,8 @@ class ReferenceLoader(openpype.hosts.maya.api.plugin.ReferenceLoader):
             if current_namespace != ":":
                 group_name = current_namespace + ":" + group_name
 
+            group_name = "|" + group_name
+
             self[:] = new_nodes
 
             if attach_to_root:

@@ -25,7 +25,7 @@ class SelectInvalidAction(pyblish.api.Action):
                     invalid.extend(invalid_nodes)
                 else:
                     self.log.warning(
-                        "Failed plug-in doens't have any selectable objects."
+                        "Failed plug-in doesn't have any selectable objects."
                     )
 
         bpy.ops.object.select_all(action='DESELECT')

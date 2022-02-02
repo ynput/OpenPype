@@ -44,7 +44,7 @@ class _FlameMenuApp(object):
         self.menu_group_name = menu_group_name
         self.dynamic_menu_data = {}
 
-        # flame module is only avaliable when a
+        # flame module is only available when a
         # flame project is loaded and initialized
         self.flame = None
         try:

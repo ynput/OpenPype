@@ -14,11 +14,11 @@ copy_files = """function copyFile(srcFilename, dstFilename)
 }
 """
 
-import_files = """var PNGTransparencyMode = 1; //Premultiplied wih Black
-var TGATransparencyMode = 0; //Premultiplied wih Black
-var SGITransparencyMode = 0; //Premultiplied wih Black
+import_files = """var PNGTransparencyMode = 1; //Premultiplied with Black
+var TGATransparencyMode = 0; //Premultiplied with Black
+var SGITransparencyMode = 0; //Premultiplied with Black
 var LayeredPSDTransparencyMode = 1; //Straight
-var FlatPSDTransparencyMode = 2; //Premultiplied wih White
+var FlatPSDTransparencyMode = 2; //Premultiplied with White
 
 function getUniqueColumnName( column_prefix )
 {
@@ -141,11 +141,11 @@ function import_files(args)
 import_files
 """
 
-replace_files = """var PNGTransparencyMode = 1; //Premultiplied wih Black
-var TGATransparencyMode = 0; //Premultiplied wih Black
-var SGITransparencyMode = 0; //Premultiplied wih Black
+replace_files = """var PNGTransparencyMode = 1; //Premultiplied with Black
+var TGATransparencyMode = 0; //Premultiplied with Black
+var SGITransparencyMode = 0; //Premultiplied with Black
 var LayeredPSDTransparencyMode = 1; //Straight
-var FlatPSDTransparencyMode = 2; //Premultiplied wih White
+var FlatPSDTransparencyMode = 2; //Premultiplied with White
 
 function replace_files(args)
 {
