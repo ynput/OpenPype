@@ -97,6 +97,12 @@ class LayerMetadata(object):
     # Render Products
     products = attr.ib(init=False, default=attr.Factory(list))
 
+    # The AOV separator token. Note that not all renderers define an explicit
+    # render separator but allow to put the AOV/RenderPass token anywhere in
+    # the file path prefix. For those renderers we'll fall back to whatever
+    # is between the last occurrences of <RenderLayer> and <RenderPass> tokens.
+    aov_separator = attr.ib(default="_")
+
 
 @attr.s
 class RenderProduct(object):
@@ -180,7 +186,6 @@ class ARenderProducts:
         self.layer = layer
         self.render_instance = render_instance
         self.multipart = False
-        self.aov_separator = render_instance.data.get("aovSeparator", "_")
 
         # Initialize
         self.layer_data = self._get_layer_data()
@@ -316,6 +321,31 @@ class ARenderProducts:
             # defaultRenderLayer renders as masterLayer
             layer_name = "masterLayer"
 
+        # AOV separator - default behavior extracts the part between
+        # last occurences of <RenderLayer> and <RenderPass>
+        # todo: This code also triggers for V-Ray which overrides it explicitly
+        #       so this code will invalidly debug log it couldn't extract the
+        #       aov separator even though it does set it in RenderProductsVray
+        layer_tokens = ["<renderlayer>", "<layer>"]
+        aov_tokens = ["<aov>", "<renderpass>"]
+
+        def match_last(tokens, text):
+            """regex match the last occurence from a list of tokens"""
+            pattern = "(?:.*)({})".format("|".join(tokens))
+            return re.search(pattern, text, re.IGNORECASE)
+
+        layer_match = match_last(layer_tokens, file_prefix)
+        aov_match = match_last(aov_tokens, file_prefix)
+        kwargs = {}
+        if layer_match and aov_match:
+            matches = sorted((layer_match, aov_match),
+                             key=lambda match: match.end(1))
+            separator = file_prefix[matches[0].end(1):matches[1].start(1)]
+            kwargs["aov_separator"] = separator
+        else:
+            log.debug("Couldn't extract aov separator from "
+                      "file prefix: {}".format(file_prefix))
+
         # todo: Support Custom Frames sequences 0,5-10,100-120
         #       Deadline allows submitting renders with a custom frame list
         #       to support those cases we might want to allow 'custom frames'
@@ -332,7 +362,8 @@ class ARenderProducts:
             layerName=layer_name,
             renderer=self.renderer,
             defaultExt=self._get_attr("defaultRenderGlobals.imfPluginKey"),
-            filePrefix=file_prefix
+            filePrefix=file_prefix,
+            **kwargs
         )
 
     def _generate_file_sequence(
@@ -677,8 +708,14 @@ class RenderProductsVray(ARenderProducts):
 
         """
         prefix = super(RenderProductsVray, self).get_renderer_prefix()
-        prefix = "{}{}<aov>".format(prefix, self.aov_separator)
+        aov_separator = self._get_aov_separator()
+        prefix = "{}{}<aov>".format(prefix, aov_separator)
         return prefix
+
+    def _get_aov_separator(self):
+        return self._get_attr(
+            "vraySettings.fileNameRenderElementSeparator"
+        )
 
     def _get_layer_data(self):
         # type: () -> LayerMetadata
@@ -690,6 +727,8 @@ class RenderProductsVray(ARenderProducts):
             default_ext = "exr"
         layer_data.defaultExt = default_ext
         layer_data.padding = self._get_attr("vraySettings.fileNamePadding")
+
+        layer_data.aov_separator = self._get_aov_separator()
 
         return layer_data
 
