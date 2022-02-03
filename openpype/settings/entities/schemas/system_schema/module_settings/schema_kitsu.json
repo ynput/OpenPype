@@ -1,0 +1,23 @@
+{
+    "type": "dict",
+    "key": "kitsu",
+    "label": "Kitsu",
+    "collapsible": true,
+    "require_restart": true,
+    "checkbox_key": "enabled",
+    "children": [
+        {
+            "type": "boolean",
+            "key": "enabled",
+            "label": "Enabled"
+        },
+        {
+            "type": "text",
+            "key": "kitsu_server",
+            "label": "Server"
+        },
+        {
+            "type": "splitter"
+        }
+    ]
+}
