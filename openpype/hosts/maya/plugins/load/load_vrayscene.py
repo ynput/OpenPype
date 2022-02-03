@@ -131,6 +131,10 @@ class VRaySceneLoader(api.Loader):
 
         cmds.setAttr("{}.FilePath".format(vray_scene), filename, type="string")
 
+        # Lock the shape nodes so the user cannot delete these
+        cmds.lockNode(mesh, lock=True)
+        cmds.lockNode(vray_scene, lock=True)
+
         # Create important connections
         cmds.connectAttr("time1.outTime",
                          "{0}.inputTime".format(trans))
