@@ -307,21 +307,12 @@ class Window(QtWidgets.QDialog):
         on.setStartValue(0)
         on.setEndValue(1)
 
-        off = QtCore.QPropertyAnimation(info_effect, b"opacity")
-        off.setDuration(0)
-        off.setStartValue(1)
-        off.setEndValue(0)
-
         fade = QtCore.QPropertyAnimation(info_effect, b"opacity")
         fade.setDuration(500)
         fade.setStartValue(1.0)
         fade.setEndValue(0.0)
 
         animation_info_msg = QtCore.QSequentialAnimationGroup()
-        animation_info_msg.addAnimation(on)
-        animation_info_msg.addPause(50)
-        animation_info_msg.addAnimation(off)
-        animation_info_msg.addPause(50)
         animation_info_msg.addAnimation(on)
         animation_info_msg.addPause(2000)
         animation_info_msg.addAnimation(fade)

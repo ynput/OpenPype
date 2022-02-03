@@ -11,7 +11,7 @@ import inspect
 import logging
 import collections
 
-from Qt import QtCore
+from Qt import QtCore, QtWidgets
 
 import pyblish.api
 import pyblish.util
@@ -47,7 +47,7 @@ class MainThreadProcess(QtCore.QObject):
 
     This approach gives ability to update UI meanwhile plugin is in progress.
     """
-    timer_interval = 3
+    timer_interval = 0
 
     def __init__(self):
         super(MainThreadProcess, self).__init__()
@@ -73,6 +73,10 @@ class MainThreadProcess(QtCore.QObject):
 
         item = self._items_to_process.popleft()
         item.process()
+
+        # Process events directly after the item processed. This allows the
+        # to correctly show "highlighted" state for the next item to process
+        QtWidgets.QApplication.instance().processEvents()
 
     def start(self):
         if not self._timer.isActive():
