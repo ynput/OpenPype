@@ -1,11 +1,21 @@
 # Changelog
 
-## [3.8.2-nightly.1](https://github.com/pypeclub/OpenPype/tree/HEAD)
+## [3.8.2-nightly.2](https://github.com/pypeclub/OpenPype/tree/HEAD)
 
 [Full Changelog](https://github.com/pypeclub/OpenPype/compare/3.8.1...HEAD)
 
+### 📖 Documentation
+
+- Cosmetics: Fix common typos in openpype/website [\#2617](https://github.com/pypeclub/OpenPype/pull/2617)
+
+**🚀 Enhancements**
+
+- nuke: adding clear button to write nodes [\#2627](https://github.com/pypeclub/OpenPype/pull/2627)
+- Ftrack: Family to Asset type mapping is in settings [\#2602](https://github.com/pypeclub/OpenPype/pull/2602)
+
 **🐛 Bug fixes**
 
+- Fix pulling of cx\_freeze 6.10 [\#2628](https://github.com/pypeclub/OpenPype/pull/2628)
 - Global: fix broken otio review extractor [\#2590](https://github.com/pypeclub/OpenPype/pull/2590)
 
 **Merged pull requests:**
@@ -20,7 +30,6 @@
 
 - Webpublisher: Thumbnail extractor [\#2600](https://github.com/pypeclub/OpenPype/pull/2600)
 - Loader: Allow to toggle default family filters between "include" or "exclude" filtering [\#2541](https://github.com/pypeclub/OpenPype/pull/2541)
-- Launcher: Added context menu to to skip opening last workfile [\#2536](https://github.com/pypeclub/OpenPype/pull/2536)
 
 **🐛 Bug fixes**
 
@@ -64,10 +73,12 @@
 - Settings: PathInput strip passed string [\#2550](https://github.com/pypeclub/OpenPype/pull/2550)
 - Global: Exctract Review anatomy fill data with output name [\#2548](https://github.com/pypeclub/OpenPype/pull/2548)
 - Cosmetics: Clean up some cosmetics / typos [\#2542](https://github.com/pypeclub/OpenPype/pull/2542)
+- Launcher: Added context menu to to skip opening last workfile [\#2536](https://github.com/pypeclub/OpenPype/pull/2536)
 - General: Validate if current process OpenPype version is requested version [\#2529](https://github.com/pypeclub/OpenPype/pull/2529)
 - General: Be able to use anatomy data in ffmpeg output arguments [\#2525](https://github.com/pypeclub/OpenPype/pull/2525)
 - Expose toggle publish plug-in settings for Maya Look Shading Engine Naming [\#2521](https://github.com/pypeclub/OpenPype/pull/2521)
 - Photoshop: Move implementation to OpenPype [\#2510](https://github.com/pypeclub/OpenPype/pull/2510)
+- TimersManager: Move module one hierarchy higher [\#2501](https://github.com/pypeclub/OpenPype/pull/2501)
 - Slack: notifications are sent with Openpype logo and bot name [\#2499](https://github.com/pypeclub/OpenPype/pull/2499)
 - Slack: Add review to notification message [\#2498](https://github.com/pypeclub/OpenPype/pull/2498)
 - Maya: Collect 'fps' animation data only for "review" instances [\#2486](https://github.com/pypeclub/OpenPype/pull/2486)
@@ -103,10 +114,6 @@
 ## [3.7.0](https://github.com/pypeclub/OpenPype/tree/3.7.0) (2022-01-04)
 
 [Full Changelog](https://github.com/pypeclub/OpenPype/compare/CI/3.7.0-nightly.14...3.7.0)
-
-**🚀 Enhancements**
-
-- General: Workdir extra folders [\#2462](https://github.com/pypeclub/OpenPype/pull/2462)
 
 **🐛 Bug fixes**
 
