@@ -497,7 +497,7 @@ def get_workfile_template_key(
     return default
 
 
-def get_system_general_data():
+def _get_system_general_data():
     system_settings = get_system_settings()
     studio_name = system_settings["general"]["studio_name"]
     studio_code = system_settings["general"]["studio_code"]
@@ -552,7 +552,7 @@ def get_workdir_data(project_doc, asset_doc, task_name, host_name):
         "hierarchy": hierarchy,
     }
 
-    system_general_data = get_system_general_data()
+    system_general_data = _get_system_general_data()
     data.update(system_general_data)
 
     return data
@@ -1537,7 +1537,7 @@ def _get_task_context_data_for_anatomy(
         }
     }
 
-    system_general_data = get_system_general_data()
+    system_general_data = _get_system_general_data()
     data.update(system_general_data)
 
     return data
