@@ -1,0 +1,17 @@
+{
+    "type": "dict",
+    "key": "kitsu",
+    "label": "Kitsu",
+    "collapsible": true,
+    "is_file": true,
+    "children": [
+        {
+            "type": "number",
+            "key": "number",
+            "label": "This is your lucky number:",
+            "minimum": 7,
+            "maximum": 7,
+            "decimals": 0
+        }
+    ]
+}

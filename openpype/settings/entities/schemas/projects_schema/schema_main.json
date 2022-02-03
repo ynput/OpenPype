@@ -64,6 +64,10 @@
                 },
                 {
                     "type": "schema",
+                    "name": "schema_project_kitsu"
+                },
+                {
+                    "type": "schema",
                     "name": "schema_project_deadline"
                 },
                 {
