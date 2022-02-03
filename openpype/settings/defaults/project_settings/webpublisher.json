@@ -2,17 +2,18 @@
     "publish": {
         "CollectPublishedFiles": {
             "task_type_to_family": {
-                "Animation": {
-                    "workfile": {
+                "Animation": [
+                    {
                         "is_sequence": false,
                         "extensions": [
                             "tvp"
                         ],
                         "families": [],
                         "tags": [],
-                        "subset_template_name": ""
+                        "result_family": "workfile",
+                        "subset_template_name": "{family}{Variant}"
                     },
-                    "render": {
+                    {
                         "is_sequence": true,
                         "extensions": [
                             "png",
@@ -26,20 +27,22 @@
                         "tags": [
                             "review"
                         ],
-                        "subset_template_name": ""
+                        "result_family": "render",
+                        "subset_template_name": "{family}{Variant}"
                     }
-                },
-                "Compositing": {
-                    "workfile": {
+                ],
+                "Compositing": [
+                    {
                         "is_sequence": false,
                         "extensions": [
                             "aep"
                         ],
                         "families": [],
                         "tags": [],
-                        "subset_template_name": ""
+                        "result_family": "workfile",
+                        "subset_template_name": "{family}{Variant}"
                     },
-                    "render": {
+                    {
                         "is_sequence": true,
                         "extensions": [
                             "png",
@@ -53,20 +56,22 @@
                         "tags": [
                             "review"
                         ],
-                        "subset_template_name": ""
+                        "result_family": "render",
+                        "subset_template_name": "{family}{Variant}"
                     }
-                },
-                "Layout": {
-                    "workfile": {
+                ],
+                "Layout": [
+                    {
                         "is_sequence": false,
                         "extensions": [
                             "psd"
                         ],
                         "families": [],
                         "tags": [],
-                        "subset_template_name": ""
+                        "result_family": "workfile",
+                        "subset_template_name": "{family}{Variant}"
                     },
-                    "image": {
+                    {
                         "is_sequence": false,
                         "extensions": [
                             "png",
@@ -81,20 +86,23 @@
                         "tags": [
                             "review"
                         ],
-                        "subset_template_name": ""
+                        "result_family": "image",
+                        "subset_template_name": "{family}{Variant}"
                     }
-                },
-                "default_task_type": {
-                    "workfile": {
+                ],
+                "default_task_type": [
+                    {
                         "is_sequence": false,
                         "extensions": [
-                            "tvp"
+                            "tvp",
+                            "psd"
                         ],
                         "families": [],
                         "tags": [],
+                        "result_family": "workfile",
                         "subset_template_name": "{family}{Variant}"
                     },
-                    "render": {
+                    {
                         "is_sequence": true,
                         "extensions": [
                             "png",
@@ -108,9 +116,10 @@
                         "tags": [
                             "review"
                         ],
+                        "result_family": "render",
                         "subset_template_name": "{family}{Variant}"
                     }
-                },
+                ],
                 "__dynamic_keys_labels__": {
                     "default_task_type": "Default task type"
                 }
