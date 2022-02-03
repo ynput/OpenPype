@@ -25,6 +25,8 @@ CLIENT_MATCH = 2
 
 DEFAULT_RENDER_LAYER = "defaultRenderLayer"
 
+log = logging.getLogger(__name__)
+
 
 def get_rendersetup_layer(layer):
     """Return render setup layer name.
