@@ -244,7 +244,7 @@ def get_attr_overrides(node_attr, layer,
             #             fails on some attribute plugs. For example overrides
             #             to the defaultRenderGlobals.endFrame
             #             (Tested in Maya 2020.2)
-            log.debug("Workaround for %s" % _override)
+            log.debug("Workaround for %s" % override)
             from maya.app.renderSetup.common.utils import findPlug
 
             attr = override.attributeName()
