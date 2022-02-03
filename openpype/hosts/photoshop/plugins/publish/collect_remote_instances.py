@@ -60,6 +60,10 @@ class CollectRemoteInstances(pyblish.api.ContextPlugin):
         instance_names = []
         for layer in layers:
             self.log.debug("Layer:: {}".format(layer))
+            if layer.parents:
+                self.log.debug("!!! Not a top layer, skip")
+                continue
+
             resolved_family, resolved_subset_template = self._resolve_mapping(
                 layer
             )
@@ -69,10 +73,6 @@ class CollectRemoteInstances(pyblish.api.ContextPlugin):
 
             if not resolved_subset_template or not resolved_family:
                 self.log.debug("!!! Not found family or template, skip")
-                continue
-
-            if layer.parents:
-                self.log.debug("!!! Not a top layer, skip")
                 continue
 
             fill_pairs = {
