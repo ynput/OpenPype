@@ -25,8 +25,6 @@ class ValidateSubsetUniqueness(pyblish.api.ContextPlugin):
             [item
              for item, count in collections.Counter(subset_names).items()
              if count > 1]
-        msg = (
-            "Instance subset names {} are not unique. " +
-            "Remove duplicates via SubsetManager.".format(non_unique)
-        )
+        msg = ("Instance subset names {} are not unique. ".format(non_unique) +
+               "Remove duplicates via SubsetManager.")
         assert not non_unique, msg
