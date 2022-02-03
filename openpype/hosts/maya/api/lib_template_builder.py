@@ -15,6 +15,15 @@ def get_placeholder_attributes(node):
         for attr in cmds.listAttr(node, userDefined=True)}
 
 
+def delete_placeholder_attributes(node):
+    '''
+    function to delete all extra placeholder attributes
+    '''
+    extra_attributes = get_placeholder_attributes(node)
+    for attribute in extra_attributes:
+        cmds.deleteAttr(node + '.' + attribute)
+
+
 def create_placeholder():
     args = placeholder_window()
 
@@ -56,11 +65,15 @@ def update_placeholder():
     placeholder = placeholder[0]
 
     args = placeholder_window(get_placeholder_attributes(placeholder))
+    #delete placeholder attributes
+    delete_placeholder_attributes(placeholder)
     if not args:
         return  # operation canceled
 
-    options = {str(arg): arg._data.get("items") or arg.read()
-               for arg in args if not type(arg) == qargparse.Separator}
+    options = OrderedDict()
+    for arg in args:
+        if not type(arg) == qargparse.Separator:
+            options[str(arg)] = arg._data.get("items") or arg.read()
     imprint(placeholder, options)
     imprint_enum(placeholder, args)
 
