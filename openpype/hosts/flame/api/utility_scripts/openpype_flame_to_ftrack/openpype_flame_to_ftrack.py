@@ -3,6 +3,11 @@ from __future__ import print_function
 import os
 import sys
 
+try:
+    import six
+except ImportError:
+    raise ImportError("Cannot import this module")
+
 SCRIPT_DIR = os.path.dirname(__file__)
 PACKAGE_DIR = os.path.join(SCRIPT_DIR, "modules")
 sys.path.append(PACKAGE_DIR)
