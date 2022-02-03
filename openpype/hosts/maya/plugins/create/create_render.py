@@ -52,7 +52,14 @@ class RenderSettings(object):
         self._project_settings = project_settings
 
     @staticmethod
-    def apply_defaults(renderer, project_settings=None):
+    def apply_defaults(renderer=None, project_settings=None):
+        if renderer is None:
+            renderer = cmds.getAttr(
+                'defaultRenderGlobals.currentRenderer').lower()
+            # handle various renderman names
+            if renderer.startswith('renderman'):
+                renderer = 'renderman'
+
         if project_settings is None:
             project_settings = get_project_settings(Session["AVALON_PROJECT"])
 
@@ -294,13 +301,7 @@ class CreateRender(plugin.Creator):
                 collection = render_layer.createCollection("defaultCollection")
                 collection.getSelector().setPattern('*')
 
-            renderer = cmds.getAttr(
-                'defaultRenderGlobals.currentRenderer').lower()
-            # handle various renderman names
-            if renderer.startswith('renderman'):
-                renderer = 'renderman'
-
-            RenderSettings.apply_defaults(renderer)
+            RenderSettings.apply_defaults()
         return self.instance
 
     def _deadline_webservice_changed(self):
