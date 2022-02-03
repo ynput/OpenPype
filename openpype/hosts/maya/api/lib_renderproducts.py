@@ -80,6 +80,13 @@ IMAGE_PREFIXES = {
 }
 
 
+def has_tokens(string, tokens):
+    """Return whether any of tokens is in input string (case-insensitive)"""
+    pattern = "({})".format("|".join(re.escape(token) for token in tokens))
+    match = re.search(pattern, string, re.IGNORECASE)
+    return bool(match)
+
+
 @attr.s
 class LayerMetadata(object):
     """Data class for Render Layer metadata."""
@@ -950,7 +957,11 @@ class RenderProductsRedshift(ARenderProducts):
 
         """
         prefix = super(RenderProductsRedshift, self).get_renderer_prefix()
-        prefix = "{}.<aov>".format(prefix)
+
+        # Only append .<aov> if no <renderpass> or <aov> is specified
+        if not has_tokens(prefix, ["<aov>", "<renderpass>"]):
+            prefix = "{}.<aov>".format(prefix)
+
         return prefix
 
     def get_render_products(self):
