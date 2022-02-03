@@ -720,6 +720,8 @@ class RenderProductsVray(ARenderProducts):
         return prefix
 
     def _get_aov_separator(self):
+        # type: () -> str
+        """Return the V-Ray AOV/Render Elements separator"""
         return self._get_attr(
             "vraySettings.fileNameRenderElementSeparator"
         )
