@@ -120,7 +120,7 @@ class VRaySceneLoader(api.Loader):
         mesh_node_name = "VRayScene_{}".format(name)
 
         trans = cmds.createNode(
-            "transform", name="{}".format(mesh_node_name))
+            "transform", name=mesh_node_name)
         mesh = cmds.createNode(
             "mesh", name="{}_Shape".format(mesh_node_name), parent=trans)
         vray_scene = cmds.createNode(
