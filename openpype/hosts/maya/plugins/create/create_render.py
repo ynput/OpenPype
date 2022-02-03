@@ -284,10 +284,10 @@ class CreateRender(plugin.Creator):
             rs = renderSetup.instance()
             layers = rs.getRenderLayers()
             if use_selection:
-                print(">>> processing existing layers")
+                self.log.info("Processing existing layers")
                 sets = []
                 for layer in layers:
-                    print("  - creating set for {}:{}".format(
+                    self.log.info("  - creating set for {}:{}".format(
                         namespace, layer.name()))
                     render_set = cmds.sets(
                         n="{}:{}".format(namespace, layer.name()))
@@ -301,6 +301,7 @@ class CreateRender(plugin.Creator):
                 collection = render_layer.createCollection("defaultCollection")
                 collection.getSelector().setPattern('*')
 
+            self.log.info("Applying default render settings..")
             RenderSettings.apply_defaults()
         return self.instance
 
