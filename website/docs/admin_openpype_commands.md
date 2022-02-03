@@ -100,7 +100,7 @@ pype launch --app python --project my_project --asset my_asset --task my_task
 
 | Argument | Description |
 | --- | --- |
-| `--debug` | print more verbose infomation |
+| `--debug` | print more verbose information |
 
 ```shell
 pype publish <PATH_TO_JSON>

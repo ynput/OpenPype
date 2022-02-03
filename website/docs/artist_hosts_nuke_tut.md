@@ -254,7 +254,7 @@ Gathering all the info and validating usually takes just a few seconds. Creating
 ##### Pyblish Note and Intent
 ![Note and Intent](assets/nuke_tut/nuke_PyblishDialogNukeNoteIntent.png)
 
-Artist can add Note and Intent before firing the publish button. The Note and Intent is ment for easy communication between artist and supervisor. After publish, Note and Intent can be seen in Ftrack notes.
+Artist can add Note and Intent before firing the publish button. The Note and Intent is meant for easy communication between artist and supervisor. After publish, Note and Intent can be seen in Ftrack notes.
 
 ##### Pyblish Checkbox
 
@@ -334,4 +334,4 @@ If your Pyblish dialog fails on Validate Containers, you might have an old asset
 ### Fixing Validate Version
 If your Pyblish dialog fails on Validate Version, you might be trying to publish already published version. Rise your version in the OpenPype WorkFiles SaveAs.
 
-Or maybe you accidentaly copied write node from different shot to your current one. Check the write publishes on the left side of the Pyblish dialog. Typically you publish only one write. Locate and delete the stray write from other shot.
+Or maybe you accidentally copied write node from different shot to your current one. Check the write publishes on the left side of the Pyblish dialog. Typically you publish only one write. Locate and delete the stray write from other shot.

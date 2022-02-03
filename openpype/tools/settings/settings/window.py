@@ -153,7 +153,7 @@ class MainWidget(QtWidgets.QWidget):
     def _on_restart_required(self):
         # Don't show dialog if there are not registered slots for
         #   `trigger_restart` signal.
-        # - For example when settings are runnin as standalone tool
+        # - For example when settings are running as standalone tool
         # - PySide2 and PyQt5 compatible way how to find out
         method_index = self.metaObject().indexOfMethod("trigger_restart()")
         method = self.metaObject().method(method_index)
