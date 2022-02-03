@@ -51,15 +51,16 @@ __all__ = [
     "install",
     "uninstall",
 
-    "Creator",
-    "Loader",
-
     "ls",
+    "containerise",
 
     "lock",
     "unlock",
     "is_locked",
     "lock_ignored",
+
+    "Creator",
+    "Loader",
 
     # Workfiles API
     "open_file",

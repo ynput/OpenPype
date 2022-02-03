@@ -180,7 +180,9 @@ def uninstall():
 
     avalon.api.deregister_plugin_path(avalon.api.Loader, LOAD_PATH)
     avalon.api.deregister_plugin_path(avalon.api.Creator, CREATE_PATH)
-    avalon.api.deregister_plugin_path(avalon.api.InventoryAction, INVENTORY_PATH)
+    avalon.api.deregister_plugin_path(
+        avalon.api.InventoryAction, INVENTORY_PATH
+    )
 
     menu.uninstall()
 

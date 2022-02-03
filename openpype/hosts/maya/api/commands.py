@@ -55,7 +55,6 @@ def edit_shader_definitions():
         window.show()
 
 
-
 def reset_frame_range():
     """Set frame range to current asset"""
     # Set FPS first

@@ -639,7 +639,7 @@ def serialise_shaders(nodes):
                 continue
 
     meshes_by_shader = dict()
-    for id_, mesh in meshes_by_id.items():
+    for mesh in meshes_by_id.values():
         shape = cmds.listRelatives(mesh,
                                    shapes=True,
                                    fullPath=True) or list()

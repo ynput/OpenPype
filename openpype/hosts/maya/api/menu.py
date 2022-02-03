@@ -77,7 +77,9 @@ def install():
 
         cmds.menuItem(
             "Publish...",
-            command=lambda *args: host_tools.show_publish(parent=parent_widget),
+            command=lambda *args: host_tools.show_publish(
+                parent=parent_widget
+            ),
             image=publish.ICON
         )
 
