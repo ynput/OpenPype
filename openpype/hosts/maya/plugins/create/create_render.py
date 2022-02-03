@@ -118,7 +118,7 @@ class RenderSettings(object):
             self._set_global_output_settings()
 
     def _set_vray_settings(self, aov_separator, width, height):
-        # type: (dict) -> None
+        # type: (str, int, int) -> None
         """Sets important settings for Vray."""
         settings = cmds.ls(type="VRaySettingsNode")
         node = settings[0] if settings else cmds.createNode("VRaySettingsNode")
