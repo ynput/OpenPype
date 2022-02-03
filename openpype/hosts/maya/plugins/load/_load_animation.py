@@ -17,7 +17,7 @@ class AbcLoader(openpype.hosts.maya.api.plugin.ReferenceLoader):
     def process_reference(self, context, name, namespace, data):
 
         import maya.cmds as cmds
-        from avalon import maya
+        from openpype.hosts.maya.api.lib import unique_namespace
 
         cmds.loadPlugin("AbcImport.mll", quiet=True)
         # Prevent identical alembic nodes from being shared
@@ -27,9 +27,11 @@ class AbcLoader(openpype.hosts.maya.api.plugin.ReferenceLoader):
         # Assuming name is subset name from the animation, we split the number
         # suffix from the name to ensure the namespace is unique
         name = name.split("_")[0]
-        namespace = maya.unique_namespace("{}_".format(name),
-                                          format="%03d",
-                                          suffix="_abc")
+        namespace = unique_namespace(
+            "{}_".format(name),
+            format="%03d",
+            suffix="_abc"
+        )
 
         # hero_001 (abc)
         # asset_counter{optional}

@@ -2,9 +2,7 @@ import os
 
 from maya import cmds
 
-import avalon.maya
 import openpype.api
-
 from openpype.hosts.maya.api import lib
 
 
@@ -54,7 +52,7 @@ class ExtractCameraAlembic(openpype.api.Extractor):
         path = os.path.join(dir_path, filename)
 
         # Perform alembic extraction
-        with avalon.maya.maintained_selection():
+        with lib.maintained_selection():
             cmds.select(camera, replace=True, noExpand=True)
 
             # Enforce forward slashes for AbcExport because we're
@@ -86,7 +84,7 @@ class ExtractCameraAlembic(openpype.api.Extractor):
                 job_str += " -attr {0}".format(attr)
 
             with lib.evaluation("off"):
-                with avalon.maya.suspended_refresh():
+                with lib.suspended_refresh():
                     cmds.AbcExport(j=job_str, verbose=False)
 
         if "representations" not in instance.data:

@@ -1,4 +1,9 @@
-from avalon import api, io
+import json
+from avalon import api, io, pipeline
+from openpype.hosts.maya.api.lib import (
+    maintained_selection,
+    apply_shaders
+)
 
 
 class ImportModelRender(api.InventoryAction):
@@ -49,10 +54,8 @@ class ImportModelRender(api.InventoryAction):
         Returns:
             None
         """
-        import json
+
         from maya import cmds
-        from avalon import maya, io, pipeline
-        from openpype.hosts.maya.api import lib
 
         # Get representations of shader file and relationships
         look_repr = io.find_one({
@@ -77,7 +80,7 @@ class ImportModelRender(api.InventoryAction):
         json_file = pipeline.get_representation_path_from_context(context)
 
         # Import the look file
-        with maya.maintained_selection():
+        with maintained_selection():
             shader_nodes = cmds.file(maya_file,
                                      i=True,  # import
                                      returnNewNodes=True)
@@ -89,4 +92,4 @@ class ImportModelRender(api.InventoryAction):
             relationships = json.load(f)
 
         # Assign relationships
-        lib.apply_shaders(relationships, shader_nodes, nodes)
+        apply_shaders(relationships, shader_nodes, nodes)
