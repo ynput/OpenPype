@@ -74,8 +74,8 @@ class MainThreadProcess(QtCore.QObject):
         item = self._items_to_process.popleft()
         item.process()
 
-        # Process events directly after the item processed. This allows the
-        # to correctly show "highlighted" state for the next item to process
+        # Process events directly after the item processed. This allows to
+        # correctly show "highlighted" state for the next item to process
         QtWidgets.QApplication.instance().processEvents()
 
     def start(self):
