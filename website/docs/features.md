@@ -18,7 +18,7 @@ Idle manager
 
 Timers manager
 
-Statics server
+Statistics server
 
 ## System Admin
 

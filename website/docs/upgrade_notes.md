@@ -14,7 +14,7 @@ sidebar_label: Update Notes
 
 Due to changes in how tasks are stored in the database (we added task types and possibility of more arbitrary data.), we must take a few precautions when updating.
 1. Make sure that ftrack event server with sync to avalon is NOT running during the update.
-2. Any project that is to be worked on with 2.13 must be synced from ftrack to avalon with the udpated sync to avalon action, or using and updated event server sync to avalon event.
+2. Any project that is to be worked on with 2.13 must be synced from ftrack to avalon with the updated sync to avalon action, or using and updated event server sync to avalon event.
 
 If 2.12 event servers runs when trying to update the project sync with 2.13, it will override any changes.
 

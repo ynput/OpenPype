@@ -111,7 +111,7 @@ module.exports = {
     algolia: {
       apiKey: '5e01ee3bfbb744ca6f25d4b281ce38a9',
       indexName: 'openpype',
-      // Optional: see doc section bellow
+      // Optional: see doc section below
       contextualSearch: true,
       // Optional: Algolia search parameters
       searchParameters: {},
