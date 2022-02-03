@@ -1,18 +1,8 @@
-import os
-import sys
-
 from maya import cmds
-import maya.app.renderSetup.model.renderSetup as renderSetup
 
-from openpype.hosts.maya.api import (
-    lib,
-    plugin
-)
 from openpype.api import (
-    get_system_settings,
     get_project_settings,
     get_asset)
-from openpype.modules import ModulesManager
 
 from avalon.api import Session
 from avalon.api import CreatorError
