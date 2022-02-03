@@ -34,7 +34,7 @@ class CollectPublishedFiles(pyblish.api.ContextPlugin):
     targets = ["filespublish"]
 
     # from Settings
-    task_type_to_family = {}
+    task_type_to_family = []
 
     def process(self, context):
         batch_dir = context.data["batchDir"]
@@ -160,12 +160,21 @@ class CollectPublishedFiles(pyblish.api.ContextPlugin):
         assert task_obj, "No family configuration for '{}'".format(task_type)
 
         found_family = None
-        for family, content in task_obj.items():
-            if is_sequence != content["is_sequence"]:
+        families_config = []
+        # backward compatibility, should be removed pretty soon
+        if isinstance(task_obj, dict):
+            for family, config in task_obj:
+                config["result_family"] = family
+                families_config.append(config)
+        else:
+            families_config = task_obj
+
+        for config in families_config:
+            if is_sequence != config["is_sequence"]:
                 continue
-            if extension in content["extensions"] or \
-                    '' in content["extensions"]:  # all extensions setting
-                found_family = family
+            if (extension in config["extensions"] or
+                    '' in config["extensions"]):  # all extensions setting
+                found_family = config["result_family"]
                 break
 
         msg = "No family found for combination of " +\
@@ -173,10 +182,10 @@ class CollectPublishedFiles(pyblish.api.ContextPlugin):
                   task_type, is_sequence, extension)
         assert found_family, msg
 
-        return found_family, \
-            content["families"], \
-            content["subset_template_name"], \
-            content["tags"]
+        return (found_family,
+                config["families"],
+                config["subset_template_name"],
+                config["tags"])
 
     def _get_last_version(self, asset_name, subset_name):
         """Returns version number or 0 for 'asset' and 'subset'"""
