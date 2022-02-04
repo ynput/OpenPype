@@ -263,7 +263,13 @@ class HostsEnumEntity(BaseEnumEntity):
 
 
 class AppsEnumEntity(BaseEnumEntity):
+    """Enum of applications for project anatomy attributes."""
     schema_types = ["apps-enum"]
+
+    _skip_app_groups = [
+        # DJV make sense to be launched on representation level
+        "djvview"
+    ]
 
     def _item_initialization(self):
         self.multiselection = True
@@ -284,8 +290,7 @@ class AppsEnumEntity(BaseEnumEntity):
             if enabled_entity and not enabled_entity.value:
                 continue
 
-            host_name_entity = app_group.get("host_name")
-            if not host_name_entity or not host_name_entity.value:
+            if app_group.key in self._skip_app_groups:
                 continue
 
             group_label = app_group["label"].value
