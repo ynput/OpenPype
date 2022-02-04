@@ -3,6 +3,7 @@ import sys
 
 from Qt import QtWidgets, QtCore
 
+from avalon import api
 from openpype.tools.utils import host_tools
 
 from openpype.style import load_stylesheet
@@ -44,6 +45,15 @@ class OpenPypeMenu(QtWidgets.QWidget):
         )
         self.render_mode_widget = None
         self.setWindowTitle("OpenPype")
+
+        asset_label = QtWidgets.QLabel("Context", self)
+        asset_label.setStyleSheet("""QLabel {
+            font-size: 14px;
+            font-weight: 600;
+            color: #5f9fb8;
+        }""")
+        asset_label.setAlignment(QtCore.Qt.AlignHCenter)
+
         workfiles_btn = QtWidgets.QPushButton("Work Files", self)
         create_btn = QtWidgets.QPushButton("Create...", self)
         load_btn = QtWidgets.QPushButton("Load...", self)
@@ -61,9 +71,14 @@ class OpenPypeMenu(QtWidgets.QWidget):
         layout = QtWidgets.QVBoxLayout(self)
         layout.setContentsMargins(10, 20, 10, 20)
 
+        layout.addWidget(asset_label)
+
+        layout.addWidget(Spacer(15, self))
+
         layout.addWidget(workfiles_btn)
 
         layout.addWidget(Spacer(15, self))
+
         layout.addWidget(create_btn)
         layout.addWidget(load_btn)
         layout.addWidget(publish_btn)
@@ -84,6 +99,9 @@ class OpenPypeMenu(QtWidgets.QWidget):
 
         self.setLayout(layout)
 
+        # Store reference so we can update the label
+        self.asset_label = asset_label
+
         workfiles_btn.clicked.connect(self.on_workfile_clicked)
         create_btn.clicked.connect(self.on_create_clicked)
         publish_btn.clicked.connect(self.on_publish_clicked)
@@ -94,6 +112,26 @@ class OpenPypeMenu(QtWidgets.QWidget):
         duplicate_with_inputs_btn.clicked.connect(
             self.on_duplicate_with_inputs_clicked)
         reset_resolution_btn.clicked.connect(self.on_reset_resolution_clicked)
+
+        self._callbacks = []
+        self.register_callback("taskChanged", self.on_task_changed)
+        self.on_task_changed()
+
+    def on_task_changed(self):
+        # Update current context label
+        label = api.Session["AVALON_ASSET"]
+        self.asset_label.setText(label)
+
+    def register_callback(self, name, fn):
+
+        # Create a wrapper callback that we only store
+        # for as long as we want it to persist as callback
+        callback = lambda *args: fn()
+        self._callbacks.append(callback)
+        api.on(name, callback)
+
+    def deregister_all_callbacks(self):
+        self._callbacks[:] = []
 
     def on_workfile_clicked(self):
         print("Clicked Workfile")
