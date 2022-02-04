@@ -11,6 +11,7 @@ class FusionSetFrameRangeLoader(api.Loader):
     families = ["animation",
                 "camera",
                 "imagesequence",
+                "render"
                 "yeticache",
                 "pointcache"]
     representations = ["*"]
@@ -44,6 +45,7 @@ class FusionSetFrameRangeWithHandlesLoader(api.Loader):
     families = ["animation",
                 "camera",
                 "imagesequence",
+                "render"
                 "yeticache",
                 "pointcache"]
     representations = ["*"]

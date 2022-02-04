@@ -117,7 +117,9 @@ def loader_shift(loader, frame, relative=True):
 class FusionLoadSequence(api.Loader):
     """Load image sequence into Fusion"""
 
-    families = ["imagesequence", "review"]
+    families = ["imagesequence",
+                "render",
+                "review"]
     representations = ["*"]
 
     label = "Load sequence"
