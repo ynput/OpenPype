@@ -54,13 +54,13 @@ class OpenPypeMenu(QtWidgets.QWidget):
         )
         self.render_mode_widget = None
         self.setWindowTitle("OpenPype")
-        workfiles_btn = QtWidgets.QPushButton("Workfiles ...", self)
-        create_btn = QtWidgets.QPushButton("Create ...", self)
-        publish_btn = QtWidgets.QPushButton("Publish ...", self)
-        load_btn = QtWidgets.QPushButton("Load ...", self)
-        inventory_btn = QtWidgets.QPushButton("Inventory ...", self)
-        libload_btn = QtWidgets.QPushButton("Library ...", self)
-        rendermode_btn = QtWidgets.QPushButton("Set render mode ...", self)
+        workfiles_btn = QtWidgets.QPushButton("Work Files", self)
+        create_btn = QtWidgets.QPushButton("Create...", self)
+        load_btn = QtWidgets.QPushButton("Load...", self)
+        publish_btn = QtWidgets.QPushButton("Publish...", self)
+        inventory_btn = QtWidgets.QPushButton("Manage...", self)
+        libload_btn = QtWidgets.QPushButton("Library...", self)
+        rendermode_btn = QtWidgets.QPushButton("Set render mode...", self)
         duplicate_with_inputs_btn = QtWidgets.QPushButton(
             "Duplicate with input connections", self
         )
@@ -72,9 +72,11 @@ class OpenPypeMenu(QtWidgets.QWidget):
         layout.setContentsMargins(10, 20, 10, 20)
 
         layout.addWidget(workfiles_btn)
+
+        layout.addWidget(Spacer(15, self))
         layout.addWidget(create_btn)
-        layout.addWidget(publish_btn)
         layout.addWidget(load_btn)
+        layout.addWidget(publish_btn)
         layout.addWidget(inventory_btn)
 
         layout.addWidget(Spacer(15, self))
