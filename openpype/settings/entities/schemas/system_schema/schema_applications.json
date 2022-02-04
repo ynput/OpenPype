@@ -87,10 +87,6 @@
     },
     {
       "type": "schema",
-      "name": "schema_shell"
-    },
-    {
-      "type": "schema",
       "name": "schema_djv"
     }
   ]
