@@ -15,7 +15,8 @@ from Qt import QtWidgets, QtCore
 
 log = Logger.get_logger(__name__)
 
-class ConsoleTrayApp:
+
+class StdOutBroker:
     """
     Application showing console in Services tray for non python hosts
     instead of cmd window.
@@ -318,8 +319,8 @@ class ConsoleTrayApp:
     @staticmethod
     def color(message):
         """ Color message with html tags. """
-        message = ConsoleTrayApp._multiple_replace(message,
-                                                   ConsoleTrayApp.sdict)
+        message = StdOutBroker._multiple_replace(message,
+                                                 StdOutBroker.sdict)
 
         return message
 
@@ -358,5 +359,4 @@ class ConsoleDialog(QtWidgets.QDialog):
         while new_text:
             text = new_text.popleft()
             if text:
-                self.plain_text.appendHtml(
-                    ConsoleTrayApp.color(text))
+                self.plain_text.appendHtml(StdOutBroker.color(text))

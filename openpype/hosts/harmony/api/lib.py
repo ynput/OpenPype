@@ -18,7 +18,7 @@ from Qt import QtWidgets
 
 from .server import Server
 
-from openpype.tools.tray_app.app import ConsoleTrayApp
+from openpype.tools.stdout_broker.app import StdOutBroker
 from openpype.tools.utils import host_tools
 
 self = sys.modules[__name__]
@@ -33,8 +33,9 @@ self.port = None
 self.log = logging.getLogger(__name__)
 self.log.setLevel(logging.DEBUG)
 
+
 def execute_in_main_thread(func, *args, **kwargs):
-    ConsoleTrayApp.instance().execute_in_main_thread(func, *args, **kwargs)
+    StdOutBroker.instance().execute_in_main_thread(func, *args, **kwargs)
 
 
 def signature(postfix="func") -> str:
@@ -66,14 +67,14 @@ def main(*subprocess_args):
         # Harmony always connected, not waiting
         return True
 
-    # coloring in ConsoleTrayApp
+    # coloring in StdOutBroker
     os.environ["OPENPYPE_LOG_NO_COLORS"] = "False"
     app = QtWidgets.QApplication([])
     app.setQuitOnLastWindowClosed(False)
 
-    instance = ConsoleTrayApp('harmony', launch,
-                              subprocess_args, is_host_connected)
-    ConsoleTrayApp._instance = instance
+    instance = StdOutBroker('harmony', launch,
+                            subprocess_args, is_host_connected)
+    StdOutBroker._instance = instance
 
     sys.exit(app.exec_())
 
@@ -279,13 +280,13 @@ def launch_zip_file(filepath):
         return
 
     print("Launching {}".format(scene_path))
-    ConsoleTrayApp.instance().websocket_server = self.server
-    ConsoleTrayApp.instance().process = subprocess.Popen(
+    StdOutBroker.instance().websocket_server = self.server
+    StdOutBroker.instance().process = subprocess.Popen(
         [self.application_path, scene_path],
         stdout=subprocess.DEVNULL,
         stderr=subprocess.DEVNULL
     )
-    self.pid = ConsoleTrayApp.instance().process.pid
+    self.pid = StdOutBroker.instance().process.pid
 
 
 def on_file_changed(path, threaded=True):
@@ -350,7 +351,7 @@ def show(module_name):
     if tool_name == "loader":
         kwargs["use_context"] = True
 
-    ConsoleTrayApp.instance().execute_in_main_thread(
+    StdOutBroker.instance().execute_in_main_thread(
         lambda: host_tools.show_tool_by_name(tool_name, **kwargs)
     )
 
