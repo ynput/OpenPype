@@ -397,8 +397,7 @@ class LoadClip(plugin.NukeLoader):
         # Set colorspace defined in version data
         if (
             colorspace is not None
-            and colorspace_exists_on_node(
-                node, str(colorspace)) is not False
+            and colorspace_exists_on_node(node, str(colorspace))
         ):
             node["colorspace"].setValue(str(colorspace))
             output_color = str(colorspace)
