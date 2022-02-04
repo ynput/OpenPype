@@ -179,7 +179,7 @@ class StdOutBroker:
             self.original_stderr_write(text)
         if self.send_to_tray:
             self.log_queue.append(text)
-        
+
     def _process_queue(self):
         """Sends lines and purges queue"""
         if not self.send_to_tray:

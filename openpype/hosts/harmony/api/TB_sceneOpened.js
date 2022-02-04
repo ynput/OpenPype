@@ -8,7 +8,7 @@ This script implements client communication with Avalon server to bridge
 gap between Python and QtScript.
 
 */
-
+/* jshint proto: true */
 var LD_OPENHARMONY_PATH = System.getenv('LIB_OPENHARMONY_PATH');
 LD_OPENHARMONY_PATH = LD_OPENHARMONY_PATH + '/openHarmony.js';
 LD_OPENHARMONY_PATH = LD_OPENHARMONY_PATH.replace(/\\/g, "/");
@@ -356,7 +356,7 @@ function start() {
     app.avalonMenu = null;
 
     for (var i = 0 ; i < actions.length; i++) {
-        label = System.getenv('AVALON_LABEL')
+        label = System.getenv('AVALON_LABEL');
         if (actions[i].text == label) {
             app.avalonMenu = true;
         }

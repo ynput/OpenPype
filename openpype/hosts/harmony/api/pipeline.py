@@ -149,6 +149,7 @@ def application_launch():
     # send scripts to Harmony
     harmony.send({"script": pype_harmony_js})
     harmony.send({"script": script})
+    inject_avalon_js()
 
 
 def export_template(backdrops, nodes, filepath):
@@ -216,16 +217,6 @@ def inject_avalon_js():
     script = avalon_harmony_js.read_text()
     # send AvalonHarmony.js to Harmony
     harmony.send({"script": script})
-
-
-def install():
-    """Install Harmony-specific functionality of avalon-core.
-
-    This function is called automatically on calling `api.install(harmony)`.
-    """
-    print("Installing Avalon Harmony...")
-    pyblish.api.register_host("harmony")
-    avalon.api.on("application.launched", inject_avalon_js)
 
 
 def ls():
@@ -325,7 +316,7 @@ def containerise(name,
                  context,
                  loader=None,
                  suffix=None,
-                 nodes=[]):
+                 nodes=None):
     """Imprint node with metadata.
 
     Containerisation enables a tracking of version, author and origin
@@ -342,6 +333,9 @@ def containerise(name,
     Returns:
         container (str): Path of container assembly.
     """
+    if not nodes:
+        nodes = []
+
     data = {
         "schema": "openpype:container-2.0",
         "id": AVALON_CONTAINER_ID,

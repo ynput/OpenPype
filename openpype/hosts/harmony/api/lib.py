@@ -489,7 +489,7 @@ def send(request):
 
 def select_nodes(nodes):
     """ Selects nodes in Node View """
-    selected_nodes = self.send(
+    _ = self.send(
         {
             "function": "AvalonHarmony.selectNodes",
             "args": nodes
