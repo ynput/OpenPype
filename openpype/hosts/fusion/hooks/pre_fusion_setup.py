@@ -2,6 +2,7 @@ import os
 import importlib
 from openpype.lib import PreLaunchHook, ApplicationLaunchFailed
 from openpype.hosts.fusion.api import utils
+from openpype.hosts.fusion import HOST_DIR
 
 
 class FusionPrelaunch(PreLaunchHook):
@@ -13,28 +14,36 @@ class FusionPrelaunch(PreLaunchHook):
 
     def execute(self):
         # making sure python 3.6 is installed at provided path
-        py36_dir = os.path.normpath(self.launch_context.env.get("PYTHON36", ""))
-        if not os.path.isdir(py36_dir):
-            raise ApplicationLaunchFailed(
-                "Python 3.6 is not installed at the provided path.\n"
-                "Either make sure the 'environments/fusion.json' has "
-                "'PYTHON36' set corectly or make sure Python 3.6 is installed "
-                f"in the given path.\n\nPYTHON36: {py36_dir}"
-            )
-        self.log.info(f"Path to Fusion Python folder: '{py36_dir}'...")
-        self.launch_context.env["PYTHON36"] = py36_dir
+        py36_var = "FUSION16_PYTHON36_HOME"
+        fusion_python36_home = self.launch_context.env.get(py36_var, "")
 
-        # setting utility scripts dir for scripts syncing
-        us_dir = os.path.normpath(
-            self.launch_context.env.get("FUSION_UTILITY_SCRIPTS_DIR", "")
-        )
-        if not os.path.isdir(us_dir):
+        self.log.info(f"Looking for Python 3.6 in: {fusion_python36_home}")
+        for path in fusion_python36_home.split(os.pathsep):
+            # Allow defining multiple paths to allow "fallback" to other
+            # path. But make to set only a single path as final variable.
+            py36_dir = os.path.normpath(path)
+            if os.path.isdir(py36_dir):
+                break
+        else:
             raise ApplicationLaunchFailed(
-                "Fusion utility script dir does not exist. Either make sure "
-                "the 'environments/fusion.json' has "
-                "'FUSION_UTILITY_SCRIPTS_DIR' set correctly or reinstall "
-                f"Fusion.\n\nFUSION_UTILITY_SCRIPTS_DIR: '{us_dir}'"
+                "Python 3.6 is not installed at the provided path: \n"
+                "Either make sure the 'environments/fusion.json' has "
+                "'PYTHON36' set correctly or make sure Python 3.6 is installed "
+                f"in the given path.\n\nPYTHON36: {fusion_python36_home}"
             )
+
+        self.log.info(f"Setting {py36_var}: '{py36_dir}'...")
+        self.launch_context.env[py36_var] = py36_dir
+
+        # Add our Fusion Master Prefs which is the only way to customize
+        # Fusion to define where it can read custom scripts and tools from
+        self.log.info(f"Setting OPENPYPE_FUSION: {HOST_DIR}")
+        self.launch_context.env["OPENPYPE_FUSION"] = HOST_DIR
+
+        pref_var = "FUSION16_MasterPrefs"   # used by both Fu16 and Fu17
+        prefs = os.path.join(HOST_DIR, "deploy", "fusion_shared.prefs")
+        self.log.info(f"Setting {pref_var}: {prefs}")
+        self.launch_context.env[pref_var] = prefs
 
         try:
             __import__("avalon.fusion")
