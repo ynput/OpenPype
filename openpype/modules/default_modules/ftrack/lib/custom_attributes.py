@@ -17,7 +17,7 @@ def default_custom_attributes_definition():
 def app_definitions_from_app_manager(app_manager):
     _app_definitions = []
     for app_name, app in app_manager.applications.items():
-        if app.enabled and app.is_host:
+        if app.enabled:
             _app_definitions.append(
                 (app_name, app.full_label)
             )
