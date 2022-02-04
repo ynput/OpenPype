@@ -75,7 +75,7 @@ class ConsoleTrayApp:
 
         self.original_stdout_write = None
         self.original_stderr_write = None
-        self.new_text = collections.deque()
+        self.log_queue = collections.deque()
 
         start_process_timer = QtCore.QTimer()
         start_process_timer.setInterval(200)
@@ -91,6 +91,7 @@ class ConsoleTrayApp:
         start_process_timer.timeout.connect(self._on_start_process_timer)
         loop_timer.timeout.connect(self._on_loop_timer)
 
+        self._std_available = False
         self.catch_std_outputs()
         date_str = datetime.now().strftime("%d%m%Y%H%M%S")
         self.host_id = "{}_{}".format(self.host, date_str)
@@ -113,13 +114,13 @@ class ConsoleTrayApp:
             return self.process.poll() is None
         return False
 
+    @property
+    def send_to_tray(self):
+        """Checks if connected to tray and have access to logs."""
+        return self.webserver_client and self._std_available
+
     def _on_start_process_timer(self):
         """Called periodically to initialize and run function on main thread"""
-        if not self.webserver_client:
-            self._connect_to_tray()
-
-        self._send_text_queue()
-
         # Start application process
         if self.process is None:
             self._start_process()
@@ -127,15 +128,23 @@ class ConsoleTrayApp:
             return
 
         host_connected = self.is_host_connected()
-        if host_connected is None:  # keep trying
+        if host_connected is None:  # not yetkeep trying
             return
-        elif not host_connected:
+
+        try:
+            self._connect_to_tray()
+        except Exception:
+            log.info("Connection to Tray app failed."
+                     "Log messages won't be pushed through.", exc_info=True)
+
+        if host_connected:
+            self._host_connected()
+        else:  # app cannot connect
             text = "{} process is not alive. Exiting".format(self.host)
             print(text)
-            self._send_lines([text])
+            self.log_queue.append(text)
+            self._process_queue()
             self.exit()
-        elif host_connected:
-            self._host_connected()
 
     def _on_loop_timer(self):
         """Regular processing of queue"""
@@ -148,6 +157,8 @@ class ConsoleTrayApp:
                 pass
         elif self.process.poll() is not None:
             self.exit()
+
+        self._process_queue()
             
     def _start_process(self):
         if self.process is not None:
@@ -196,7 +207,7 @@ class ConsoleTrayApp:
 
     def _host_connected(self):
         """ Send to Tray console that host is ready - icon change. """
-        print("Host {} connected".format(self.host))
+        log.info("Host {} connected".format(self.host))
         self.start_process_timer.stop()
         self.loop_timer.start()
 
@@ -234,55 +245,49 @@ class ConsoleTrayApp:
 
     def catch_std_outputs(self):
         """Redirects standard out and error to own functions"""
-
-        with open("c:/projects/my_log.log", "a") as fp:
-            fp.write("sys.stdout:: {}\n".format(sys.stdout))
-            fp.write("sys.stderr:: {}\n".format(sys.stderr))
-
         if sys.stdout:
             self.original_stdout_write = sys.stdout.write
             sys.stdout.write = self.my_stdout_write
+            self._std_available = True
 
         if sys.stderr:
             self.original_stderr_write = sys.stderr.write
             sys.stderr.write = self.my_stderr_write
+            self._std_available = True
 
     def my_stdout_write(self, text):
         """Appends outputted text to queue, keep writing to original stdout"""
         if self.original_stdout_write is not None:
             self.original_stdout_write(text)
-        self.new_text.append(text)
+        if self.send_to_tray:
+            self.log_queue.append(text)
 
     def my_stderr_write(self, text):
         """Appends outputted text to queue, keep writing to original stderr"""
         if self.original_stderr_write is not None:
             self.original_stderr_write(text)
-        self.new_text.append(text)
+        if self.send_to_tray:
+            self.log_queue.append(text)
         
-    def _send_text_queue(self):
+    def _process_queue(self):
         """Sends lines and purges queue"""
-        lines = tuple(self.new_text)
-        self.new_text.clear()
-
-        if lines:
-            self._send_lines(lines)
-
-    def _send_lines(self, lines):
-        """ Send console content. """
-        if not self.webserver_client:
+        if not self.send_to_tray:
             return
 
-        payload = {
-            "host": self.host_id,
-            "action": host_console_listener.MsgAction.ADD,
-            "text": "\n".join(lines)
-        }
+        lines = tuple(self.log_queue)
+        self.log_queue.clear()
+        if lines:
+            payload = {
+                "host": self.host_id,
+                "action": host_console_listener.MsgAction.ADD,
+                "text": "\n".join(lines)
+            }
 
-        self._send(payload)
+            self._send(payload)
 
     def _send(self, payload):
-        """ Worker method to send to existing websocket connection. """
-        if not self.webserver_client:
+        """ Worker method to send to existing websocket connection."""
+        if not self.send_to_tray:
             return
 
         try:
