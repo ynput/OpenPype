@@ -5,21 +5,11 @@ from Qt import QtWidgets, QtCore
 
 from openpype.tools.utils import host_tools
 
+from openpype.style import load_stylesheet
 from openpype.hosts.fusion.scripts import (
     set_rendermode,
     duplicate_with_inputs
 )
-
-
-def load_stylesheet():
-    path = os.path.join(os.path.dirname(__file__), "menu_style.qss")
-    if not os.path.exists(path):
-        print("Unable to load stylesheet, file not found in resources")
-        return ""
-
-    with open(path, "r") as file_stream:
-        stylesheet = file_stream.read()
-    return stylesheet
 
 
 class Spacer(QtWidgets.QWidget):
