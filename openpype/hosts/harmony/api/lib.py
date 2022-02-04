@@ -15,12 +15,14 @@ import signal
 import time
 from uuid import uuid4
 from Qt import QtWidgets
+import queue
 
 from .server import Server
 
 from openpype.tools.stdout_broker.app import StdOutBroker
 from openpype.tools.utils import host_tools
 
+# TODO refactor
 self = sys.modules[__name__]
 self.server = None
 self.pid = None
@@ -28,14 +30,20 @@ self.application_path = None
 self.callback_queue = None
 self.workfile_path = None
 self.port = None
+self.stdout_broker = None
 
 # Setup logging.
 self.log = logging.getLogger(__name__)
 self.log.setLevel(logging.DEBUG)
 
 
-def execute_in_main_thread(func, *args, **kwargs):
-    StdOutBroker.instance().execute_in_main_thread(func, *args, **kwargs)
+def execute_in_main_thread(func_to_call_from_main_thread):
+    self.callback_queue.put(func_to_call_from_main_thread)
+
+
+def main_thread_listen():
+    callback = self.callback_queue.get()
+    callback()
 
 
 def signature(postfix="func") -> str:
@@ -63,18 +71,14 @@ class _ZipFile(zipfile.ZipFile):
 
 
 def main(*subprocess_args):
-    def is_host_connected():
-        # Harmony always connected, not waiting
-        return True
-
     # coloring in StdOutBroker
     os.environ["OPENPYPE_LOG_NO_COLORS"] = "False"
     app = QtWidgets.QApplication([])
     app.setQuitOnLastWindowClosed(False)
 
-    instance = StdOutBroker('harmony', launch,
-                            subprocess_args, is_host_connected)
-    StdOutBroker._instance = instance
+    self.stdout_broker = StdOutBroker('harmony')
+
+    launch(*subprocess_args)
 
     sys.exit(app.exec_())
 
@@ -191,6 +195,10 @@ def launch(application_path, *args):
 
         launch_zip_file(zip_file)
 
+    self.callback_queue = queue.Queue()
+    while True:
+        main_thread_listen()
+
 
 def get_local_harmony_path(filepath):
     """From the provided path get the equivalent local Harmony path."""
@@ -280,13 +288,14 @@ def launch_zip_file(filepath):
         return
 
     print("Launching {}".format(scene_path))
-    StdOutBroker.instance().websocket_server = self.server
-    StdOutBroker.instance().process = subprocess.Popen(
+
+    process = subprocess.Popen(
         [self.application_path, scene_path],
         stdout=subprocess.DEVNULL,
         stderr=subprocess.DEVNULL
     )
-    self.pid = StdOutBroker.instance().process.pid
+    self.pid = process.pid
+    self.stdout_broker.host_connected()
 
 
 def on_file_changed(path, threaded=True):
@@ -351,7 +360,7 @@ def show(module_name):
     if tool_name == "loader":
         kwargs["use_context"] = True
 
-    StdOutBroker.instance().execute_in_main_thread(
+    execute_in_main_thread(
         lambda: host_tools.show_tool_by_name(tool_name, **kwargs)
     )
 

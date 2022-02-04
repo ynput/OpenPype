@@ -79,7 +79,7 @@ __all__ = [
     "find_node_by_name",
     "signature",
     "select_nodes",
-    "get_scene_data"
+    "get_scene_data",
 
     # Workfiles API
     "open_file",

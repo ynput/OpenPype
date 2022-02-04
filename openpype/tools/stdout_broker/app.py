@@ -2,13 +2,13 @@ import os
 import sys
 import re
 import collections
-import queue
 import websocket
 import json
 from datetime import datetime
 
 from avalon import style
-from openpype_modules.webserver import host_console_listener
+from openpype_modules.webserver.host_console_listener import MsgAction
+
 from openpype.api import Logger
 
 from Qt import QtWidgets, QtCore
@@ -65,43 +65,20 @@ class StdOutBroker:
             '<span style="font-weight: bold;color:#EE5C42"> ERROR </span>'
     }
 
-    def __init__(self, host, launch_method, subprocess_args, is_host_connected,
-                 parent=None):
-        self.host = host
+    def __init__(self, host_name):
+        self.host_name = host_name
         self.websocket_server = None
-        self.launch_method = launch_method
-        self.subprocess_args = subprocess_args
-        self.is_host_connected = is_host_connected
-        self.process = None
 
         self.original_stdout_write = None
         self.original_stderr_write = None
         self.log_queue = collections.deque()
 
-        start_process_timer = QtCore.QTimer()
-        start_process_timer.setInterval(200)
-        start_process_timer.timeout.connect(self._on_start_process_timer)
-        start_process_timer.start()
-
-        self.start_process_timer = start_process_timer
-
-        loop_timer = QtCore.QTimer()
-        loop_timer.setInterval(200)
-        self.loop_timer = loop_timer
-
-        start_process_timer.timeout.connect(self._on_start_process_timer)
-        loop_timer.timeout.connect(self._on_loop_timer)
+        date_str = datetime.now().strftime("%d%m%Y%H%M%S")
+        self.host_id = "{}_{}".format(self.host_name, date_str)
 
         self._std_available = False
-        self.catch_std_outputs()
-        date_str = datetime.now().strftime("%d%m%Y%H%M%S")
-        self.host_id = "{}_{}".format(self.host, date_str)
-
-    @classmethod
-    def instance(cls):
-        if not cls._instance:
-            raise RuntimeError("Not initialized yet")
-        return cls._instance
+        self._catch_std_outputs()
+        self._connect_to_tray()
 
     @property
     def websocket_server_is_running(self):
@@ -110,69 +87,14 @@ class StdOutBroker:
         return False
 
     @property
-    def is_process_running(self):
-        if self.process is not None:
-            return self.process.poll() is None
-        return False
-
-    @property
     def send_to_tray(self):
         """Checks if connected to tray and have access to logs."""
         return self.webserver_client and self._std_available
 
-    def _on_start_process_timer(self):
-        """Called periodically to initialize and run function on main thread"""
-        # Start application process
-        if self.process is None:
-            self._start_process()
-            log.info("Waiting for host to connect")
-            return
-
-        host_connected = self.is_host_connected()
-        if host_connected is None:  # not yetkeep trying
-            return
-
-        try:
-            self._connect_to_tray()
-        except Exception:
-            log.info("Connection to Tray app failed."
-                     "Log messages won't be pushed through.", exc_info=True)
-
-        if host_connected:
-            self._host_connected()
-        else:  # app cannot connect
-            text = "{} process is not alive. Exiting".format(self.host)
-            print(text)
-            self.log_queue.append(text)
-            self._process_queue()
-            self.exit()
-
-    def _on_loop_timer(self):
-        """Regular processing of queue"""
-        if self.callback_queue and \
-                not self.callback_queue.empty():
-            try:
-                callback = self.callback_queue.get(block=False)
-                callback()
-            except queue.Empty:
-                pass
-        elif self.process.poll() is not None:
-            self.exit()
-
-        self._process_queue()
-            
-    def _start_process(self):
-        if self.process is not None:
-            return
-        log.info("Starting host process")
-        try:
-            self.launch_method(*self.subprocess_args)
-        except Exception as exp:
-            log.info("Exception when app started", exc_info=True)
-            self.exit()
-
     def _connect_to_tray(self):
         """ Connect to Tray webserver to pass console output. """
+        if not self._std_available: # not content to log
+            return
         ws = websocket.WebSocket()
         webserver_url = os.environ.get("OPENPYPE_WEBSERVER_URL")
 
@@ -186,46 +108,39 @@ class StdOutBroker:
 
         payload = {
             "host": self.host_id,
-            "action": host_console_listener.MsgAction.CONNECTING,
-            "text": "Integration with {}".format(str.capitalize(self.host))
+            "action": MsgAction.CONNECTING,
+            "text": "Integration with {}".format(
+                str.capitalize(self.host_name))
         }
         self._send(payload)
 
     def _disconnect_from_tray(self):
         """ Send to Tray that host is closing - remove from Services. """
-        print("Host {} closing".format(self.host))
+        print("Host {} closing".format(self.host_name))
         if not self.webserver_client:
             return
 
         payload = {
             "host": self.host_id,
-            "action": host_console_listener.MsgAction.CLOSE,
-            "text": "Integration with {}".format(str.capitalize(self.host))
+            "action": MsgAction.CLOSE,
+            "text": "Integration with {}".format(
+                str.capitalize(self.host_name))
         }
 
         self._send(payload)
         self.webserver_client.close()
 
-    def _host_connected(self):
+    def host_connected(self):
         """ Send to Tray console that host is ready - icon change. """
-        log.info("Host {} connected".format(self.host))
-        self.start_process_timer.stop()
-        self.loop_timer.start()
-
-        self.callback_queue = queue.Queue()
+        log.info("Host {} connected".format(self.host_id))
 
         payload = {
             "host": self.host_id,
-            "action": host_console_listener.MsgAction.INITIALIZED,
-            "text": "Integration with {}".format(str.capitalize(self.host))
+            "action": MsgAction.INITIALIZED,
+            "text": "Integration with {}".format(
+                str.capitalize(self.host_name))
         }
         self._send(payload)
-
-    def execute_in_main_thread(self, func_to_call_from_main_thread):
-        """Put function to the queue to be picked by 'on_timer'"""
-        if not self.callback_queue:
-            self.callback_queue = queue.Queue()
-        self.callback_queue.put(func_to_call_from_main_thread)
 
     def restart_server(self):
         if self.websocket_server:
@@ -237,14 +152,9 @@ class StdOutBroker:
 
         if self.websocket_server:
             self.websocket_server.stop()
-        if self.process:
-            self.process.kill()
-            self.process.wait()
-        if self.loop_timer:
-            self.loop_timer.stop()
         QtCore.QCoreApplication.exit()
 
-    def catch_std_outputs(self):
+    def _catch_std_outputs(self):
         """Redirects standard out and error to own functions"""
         if sys.stdout:
             self.original_stdout_write = sys.stdout.write
@@ -280,7 +190,7 @@ class StdOutBroker:
         if lines:
             payload = {
                 "host": self.host_id,
-                "action": host_console_listener.MsgAction.ADD,
+                "action": MsgAction.ADD,
                 "text": "\n".join(lines)
             }
 
