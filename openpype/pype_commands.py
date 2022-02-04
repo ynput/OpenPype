@@ -251,7 +251,10 @@ class PypeCommands:
 
         data = {
             "last_workfile_path": workfile_path,
-            "start_last_workfile": True
+            "start_last_workfile": True,
+            "project_name": project,
+            "asset_name": asset,
+            "task_name": task_name
         }
 
         launched_app = application_manager.launch(app_name, **data)
