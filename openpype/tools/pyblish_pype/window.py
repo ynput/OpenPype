@@ -143,9 +143,8 @@ class Window(QtWidgets.QDialog):
         # TODO add parent
         overview_page = QtWidgets.QWidget()
 
-        overview_instance_view = view.InstanceView(
-            animated=settings.Animated, parent=overview_page
-        )
+        overview_instance_view = view.InstanceView(parent=overview_page)
+        overview_instance_view.setAnimated(settings.Animated)
         overview_instance_delegate = delegate.InstanceDelegate(
             parent=overview_instance_view
         )
@@ -156,9 +155,8 @@ class Window(QtWidgets.QDialog):
         overview_instance_view.setItemDelegate(overview_instance_delegate)
         overview_instance_view.setModel(instance_sort_proxy)
 
-        overview_plugin_view = view.PluginView(
-            animated=settings.Animated, parent=overview_page
-        )
+        overview_plugin_view = view.PluginView(parent=overview_page)
+        overview_plugin_view.setAnimated(settings.Animated)
         overview_plugin_delegate = delegate.PluginDelegate(
             parent=overview_plugin_view
         )
@@ -1014,9 +1012,11 @@ class Window(QtWidgets.QDialog):
                 {GroupStates.HasFinished: True},
                 Roles.PublishFlagsRole
             )
+            self.overview_plugin_view.setAnimated(False)
             self.overview_plugin_view.collapse(group_index)
 
     def on_was_stopped(self):
+        self.overview_plugin_view.setAnimated(settings.Animated)
         errored = self.controller.errored
         if self.controller.collect_state == 0:
             self.footer_button_play.setEnabled(False)
@@ -1048,6 +1048,7 @@ class Window(QtWidgets.QDialog):
         )
 
     def on_was_finished(self):
+        self.overview_plugin_view.setAnimated(settings.Animated)
         self.footer_button_play.setEnabled(False)
         self.footer_button_validate.setEnabled(False)
         self.footer_button_reset.setEnabled(True)
