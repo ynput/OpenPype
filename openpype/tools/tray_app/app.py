@@ -113,6 +113,42 @@ class ConsoleTrayApp:
             return self.process.poll() is None
         return False
 
+    def _on_start_process_timer(self):
+        """Called periodically to initialize and run function on main thread"""
+        if not self.webserver_client:
+            self._connect_to_tray()
+
+        self._send_text_queue()
+
+        # Start application process
+        if self.process is None:
+            self._start_process()
+            log.info("Waiting for host to connect")
+            return
+
+        host_connected = self.is_host_connected()
+        if host_connected is None:  # keep trying
+            return
+        elif not host_connected:
+            text = "{} process is not alive. Exiting".format(self.host)
+            print(text)
+            self._send_lines([text])
+            self.exit()
+        elif host_connected:
+            self._host_connected()
+
+    def _on_loop_timer(self):
+        """Regular processing of queue"""
+        if self.callback_queue and \
+                not self.callback_queue.empty():
+            try:
+                callback = self.callback_queue.get(block=False)
+                callback()
+            except queue.Empty:
+                pass
+        elif self.process.poll() is not None:
+            self.exit()
+            
     def _start_process(self):
         if self.process is not None:
             return
@@ -120,12 +156,8 @@ class ConsoleTrayApp:
         try:
             self.launch_method(*self.subprocess_args)
         except Exception as exp:
-            log.info("exce", exc_info=True)
+            log.info("Exception when app started", exc_info=True)
             self.exit()
-
-    def set_process(self, proc):
-        if not self.process:
-            self.process = proc
 
     def _connect_to_tray(self):
         """ Connect to Tray webserver to pass console output. """
@@ -177,6 +209,56 @@ class ConsoleTrayApp:
         }
         self._send(payload)
 
+    def execute_in_main_thread(self, func_to_call_from_main_thread):
+        """Put function to the queue to be picked by 'on_timer'"""
+        if not self.callback_queue:
+            self.callback_queue = queue.Queue()
+        self.callback_queue.put(func_to_call_from_main_thread)
+
+    def restart_server(self):
+        if self.websocket_server:
+            self.websocket_server.stop_server(restart=True)
+
+    def exit(self):
+        """ Exit whole application. """
+        self._disconnect_from_tray()
+
+        if self.websocket_server:
+            self.websocket_server.stop()
+        if self.process:
+            self.process.kill()
+            self.process.wait()
+        if self.loop_timer:
+            self.loop_timer.stop()
+        QtCore.QCoreApplication.exit()
+
+    def catch_std_outputs(self):
+        """Redirects standard out and error to own functions"""
+
+        with open("c:/projects/my_log.log", "a") as fp:
+            fp.write("sys.stdout:: {}\n".format(sys.stdout))
+            fp.write("sys.stderr:: {}\n".format(sys.stderr))
+
+        if sys.stdout:
+            self.original_stdout_write = sys.stdout.write
+            sys.stdout.write = self.my_stdout_write
+
+        if sys.stderr:
+            self.original_stderr_write = sys.stderr.write
+            sys.stderr.write = self.my_stderr_write
+
+    def my_stdout_write(self, text):
+        """Appends outputted text to queue, keep writing to original stdout"""
+        if self.original_stdout_write is not None:
+            self.original_stdout_write(text)
+        self.new_text.append(text)
+
+    def my_stderr_write(self, text):
+        """Appends outputted text to queue, keep writing to original stderr"""
+        if self.original_stderr_write is not None:
+            self.original_stderr_write(text)
+        self.new_text.append(text)
+        
     def _send_text_queue(self):
         """Sends lines and purges queue"""
         lines = tuple(self.new_text)
@@ -207,91 +289,6 @@ class ConsoleTrayApp:
             self.webserver_client.send(json.dumps(payload))
         except ConnectionResetError:  # Tray closed
             self._connect_to_tray()
-
-    def _on_start_process_timer(self):
-        """Called periodically to initialize and run function on main thread"""
-        if not self.webserver_client:
-            self._connect_to_tray()
-
-        self._send_text_queue()
-
-        # Start application process
-        if self.process is None:
-            self._start_process()
-            log.info("Waiting for host to connect")
-            return
-
-        host_connected = self.is_host_connected()
-        if host_connected is None:  # keep trying
-            return
-        elif not host_connected:
-            text = "{} process is not alive. Exiting".format(self.host)
-            print(text)
-            self._send_lines([text])
-            self.exit()
-        elif host_connected:
-            self._host_connected()
-
-    def _on_loop_timer(self):
-        """Regular processing of queue"""
-        if self.callback_queue and \
-                not self.callback_queue.empty():
-            try:
-                callback = self.callback_queue.get(block=False)
-                callback()
-            except queue.Empty:
-                pass
-        elif self.process.poll() is not None:
-            self.exit()
-
-    def execute_in_main_thread(self, func_to_call_from_main_thread):
-        """Put function to the queue to be picked by 'on_timer'"""
-        if not self.callback_queue:
-            self.callback_queue = queue.Queue()
-        self.callback_queue.put(func_to_call_from_main_thread)
-
-    def restart_server(self):
-        if self.websocket_server:
-            self.websocket_server.stop_server(restart=True)
-
-    def exit(self):
-        """ Exit whole application. """
-        self._disconnect_from_tray()
-
-        if self.websocket_server:
-            self.websocket_server.stop()
-        if self.process:
-            self.process.kill()
-            self.process.wait()
-        if self.loop_timer:
-            self.loop_timer.stop()
-        QtCore.QCoreApplication.exit()
-
-    def catch_std_outputs(self):
-        """Redirects standard out and error to own functions"""
-        # if not sys.stdout:
-        #     dialog.append_text("Cannot read from stdout!")
-        # else:
-        #     self.original_stdout_write = sys.stdout.write
-        #     sys.stdout.write = self.my_stdout_write
-        #
-        # if not sys.stderr:
-        #     self.dialog.append_text("Cannot read from stderr!")
-        # else:
-        #     self.original_stderr_write = sys.stderr.write
-        #     sys.stderr.write = self.my_stderr_write
-
-    def my_stdout_write(self, text):
-        """Appends outputted text to queue, keep writing to original stdout"""
-        if self.original_stdout_write is not None:
-            self.original_stdout_write(text)
-        self.new_text.append(text)
-
-    def my_stderr_write(self, text):
-        """Appends outputted text to queue, keep writing to original stderr"""
-        if self.original_stderr_write is not None:
-            self.original_stderr_write(text)
-        self.new_text.append(text)
 
     @staticmethod
     def _multiple_replace(text, adict):
