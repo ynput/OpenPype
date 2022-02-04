@@ -2,7 +2,7 @@ import pyblish.api
 import openpype.api
 
 import hou
-from avalon.houdini import lib
+from openpype.hosts.houdini.api import lib
 
 
 class CollectRemotePublishSettings(pyblish.api.ContextPlugin):
