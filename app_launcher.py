@@ -29,16 +29,9 @@ def main(input_json_path):
         data = json.load(stream)
 
     # Change environment variables
-    # - environments that are in current environments and are not data are
-    #   removed
-    if "env" in data:
-        env = data["env"]
-        # Pop environment variable keys that are not in source
-        for key in set(os.environ.keys()) - set(env.keys()):
-            os.environ.pop(key)
-
-        for key, value in env.items():
-            os.environ[key] = value
+    env = data.get("env") or {}
+    for key, value in env.items():
+        os.environ[key] = value
 
     # Prepare launch arguments
     args = data["args"]

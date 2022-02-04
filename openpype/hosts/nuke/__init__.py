@@ -18,13 +18,7 @@ def add_implementation_envs(env, _app):
             new_nuke_paths.append(norm_path)
 
     env["NUKE_PATH"] = os.pathsep.join(new_nuke_paths)
-    # NOTE: Poping of the key is right way. But is commented because there is
-    #   a bug in `app_launcher.py` which only change values and not remove
-    #   existing.
-    # Fixed with https://github.com/pypeclub/OpenPype/pull/2655
-    #   but this fix requires new build
-    # env.pop("QT_AUTO_SCREEN_SCALE_FACTOR", None)
-    env["QT_AUTO_SCREEN_SCALE_FACTOR"] = ""
+    env.pop("QT_AUTO_SCREEN_SCALE_FACTOR", None)
 
     # Try to add QuickTime to PATH
     quick_time_path = "C:/Program Files (x86)/QuickTime/QTSystem"
