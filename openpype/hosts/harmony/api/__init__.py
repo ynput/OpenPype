@@ -3,11 +3,11 @@
 Anything that isn't defined here is INTERNAL and unreliable for external use.
 
 """
+from . import plugin
 
 from .pipeline import (
     ls,
     install,
-    Creator,
     list_instances,
     remove_instance,
     select_instance,
@@ -52,7 +52,6 @@ __all__ = [
     # pipeline
     "ls",
     "install",
-    "Creator",
     "list_instances",
     "remove_instance",
     "select_instance",
