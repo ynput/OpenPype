@@ -44,6 +44,9 @@ _logger = None
 
 PLATFORM_NAMES = {"windows", "linux", "darwin"}
 DEFAULT_ENV_SUBGROUP = "standard"
+CUSTOM_LAUNCH_APP_GROUPS = {
+    "djvview"
+}
 
 
 def parse_environments(env_data, env_group=None, platform_name=None):

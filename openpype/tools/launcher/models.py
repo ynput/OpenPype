@@ -15,8 +15,12 @@ from .constants import (
 from .actions import ApplicationAction
 from Qt import QtCore, QtGui
 from avalon.vendor import qtawesome
-from avalon import style, api
-from openpype.lib import ApplicationManager, JSONSettingRegistry
+from avalon import api
+from openpype.lib import JSONSettingRegistry
+from openpype.lib.applications import (
+    CUSTOM_LAUNCH_APP_GROUPS,
+    ApplicationManager
+)
 
 log = logging.getLogger(__name__)
 
@@ -70,6 +74,9 @@ class ActionModel(QtGui.QStandardItemModel):
             app_name = app_def["name"]
             app = self.application_manager.applications.get(app_name)
             if not app or not app.enabled:
+                continue
+
+            if app.group.name in CUSTOM_LAUNCH_APP_GROUPS:
                 continue
 
             # Get from app definition, if not there from app in project
