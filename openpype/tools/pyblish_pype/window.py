@@ -1305,9 +1305,9 @@ class Window(QtWidgets.QDialog):
         self.animation_info_msg.stop()
         self.animation_info_msg.start()
 
-        # TODO(marcus): Should this be configurable? Do we want
-        # the shell to fill up with these messages?
-        util.u_print(message)
+        if settings.PrintInfo:
+            # Print message to console
+            util.u_print(message)
 
     def warning(self, message):
         """Block processing and print warning until user hits "Continue"
