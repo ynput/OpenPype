@@ -56,7 +56,9 @@ def install():
     avalon.api.on("open", on_open)
     avalon.api.on("new", on_new)
 
-    pyblish.api.register_callback("instanceToggled", on_pyblish_instance_toggled)
+    pyblish.api.register_callback(
+        "instanceToggled", on_pyblish_instance_toggled
+    )
 
     log.info("Setting default family states for loader..")
     avalon.api.data["familiesStateToggled"] = [
@@ -87,7 +89,7 @@ def uninstall():
 
 
 def _register_callbacks():
-    for handler, event in self._events.copy().items():
+    for event in self._events.copy().values():
         if event is None:
             continue
 
