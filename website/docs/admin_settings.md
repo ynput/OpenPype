@@ -35,7 +35,7 @@ availability.
 
 ### Project
 
-Project tab contains most of OpenPype settings and all of them can be configured and overriden on a per-project basis if need be. This includes most of the workflow behaviors 
+Project tab contains most of OpenPype settings and all of them can be configured and overridden on a per-project basis if need be. This includes most of the workflow behaviors 
 like what formats to export, naming conventions, publishing validations, automatic assets loaders and a lot more. 
 
 We recommend to try to keep as many configurations as possible on a studio level and only override selectively, because micromanaging all of the project settings might become cumbersome down the line. Most of the settings can be safely adjusted and locked on a project
@@ -43,7 +43,7 @@ after the production started.
 
 ## Understanding Overrides
 
-Most of the individual settings can be set and overriden on multiple levels. 
+Most of the individual settings can be set and overridden on multiple levels. 
 
 ### OpenPype defaults
 When you first open settings all of the values and categories will be marked with a 
@@ -73,7 +73,7 @@ You can also reset any settings to OpenPype default by doing `right click` and `
 
 ### Project Overrides
 
-Many settings are usefull to be adjusted on a per-project basis. To identify project
+Many settings are useful to be adjusted on a per-project basis. To identify project
 overrides, they are marked with **orange edge** and **orange labels** in the settings GUI.
 
 To set project overrides proceed the same way as with the Studio defaults, but first select 

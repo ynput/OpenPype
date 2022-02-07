@@ -8,7 +8,7 @@ import Tabs from '@theme/Tabs';
 import TabItem from '@theme/TabItem';
 
 ## Subset name templates
-Definition of possibile subset name templates in TVPaint integration.
+Definition of possible subset name templates in TVPaint integration.
 
 ### Render Layer
 Render layer has additional keys for subset name template. It is possible to use **render_layer** and **render_pass**.

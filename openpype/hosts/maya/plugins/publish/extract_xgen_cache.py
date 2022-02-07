@@ -2,8 +2,11 @@ import os
 
 from maya import cmds
 
-import avalon.maya
 import openpype.api
+from openpype.hosts.maya.api.lib import (
+    suspended_refresh,
+    maintained_selection
+)
 
 
 class ExtractXgenCache(openpype.api.Extractor):
@@ -32,8 +35,8 @@ class ExtractXgenCache(openpype.api.Extractor):
         filename = "{name}.abc".format(**instance.data)
         path = os.path.join(parent_dir, filename)
 
-        with avalon.maya.suspended_refresh():
-            with avalon.maya.maintained_selection():
+        with suspended_refresh():
+            with maintained_selection():
                 command = (
                     '-file '
                     + path

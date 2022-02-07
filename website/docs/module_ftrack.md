@@ -212,7 +212,7 @@ This event makes sure statuses Asset Version get synced to it's task. After chan
 
 This event handler allows setting of different status to a first created Asset Version in Ftrack.
 
-This is usefull for example if first version publish doesn't contain any actual reviewable work, but is only used for roundtrip conform check, in which case this version could receive status `pending conform` instead of standard `pending review`
+This is useful for example if first version publish doesn't contain any actual reviewable work, but is only used for roundtrip conform check, in which case this version could receive status `pending conform` instead of standard `pending review`
 
 ### Update status on next task
 Change status on next task by task types order when task status state changed to "Done". All tasks with the same Task mapping of next task status changes From → To. Some status can be ignored. 

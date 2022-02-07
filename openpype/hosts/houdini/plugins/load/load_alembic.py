@@ -1,6 +1,7 @@
+import os
 from avalon import api
 
-from avalon.houdini import pipeline
+from openpype.hosts.houdini.api import pipeline
 
 
 class AbcLoader(api.Loader):
@@ -14,8 +15,6 @@ class AbcLoader(api.Loader):
     color = "orange"
 
     def load(self, context, name=None, namespace=None, data=None):
-
-        import os
         import hou
 
         # Format file name, Houdini only wants forward slashes

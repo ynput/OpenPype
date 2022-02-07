@@ -124,7 +124,7 @@ also called a `Host` and these two terms might be used interchangeably in the do
 Each Host is made of two levels. 
 1. **Application group** - This is the main name of the application and you can define extra environments
 that are applicable to all versions of the given application. For example any extra Maya scripts that are not
-version dependant, can be added to `Maya` environment here.
+version dependent, can be added to `Maya` environment here.
 2. **Application versions** - Here you can define executables (per platform) for each supported version of 
 the DCC and any default arguments (`--nukex` for instance). You can also further extend it's environment. 
 

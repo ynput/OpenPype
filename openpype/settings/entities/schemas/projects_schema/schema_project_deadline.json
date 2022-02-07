@@ -20,6 +20,19 @@
                 {
                     "type": "dict",
                     "collapsible": true,
+                    "key": "CollectDefaultDeadlineServer",
+                    "label": "Default Deadline Webservice",
+                    "children": [
+                        {
+                            "type": "boolean",
+                            "key": "pass_mongo_url",
+                            "label": "Pass Mongo url to job"
+                        }
+                    ]
+                },
+                {
+                    "type": "dict",
+                    "collapsible": true,
                     "key": "ValidateExpectedFiles",
                     "label": "Validate Expected Files",
                     "checkbox_key": "enabled",

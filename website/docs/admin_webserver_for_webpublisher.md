@@ -10,7 +10,7 @@ import TabItem from '@theme/TabItem';
 Running Openpype webserver is needed as a backend part for Web publishing. 
 Any OS supported by Openpype could be used as a host server.
 
-Webpublishing consists of two sides, Front end (FE) and Openpype backend. This documenation is only targeted on OP side.
+Webpublishing consists of two sides, Front end (FE) and Openpype backend. This documentation is only targeted on OP side.
 
 It is expected that FE and OP will live on two separate servers, FE publicly available, OP safely in customer network.
 

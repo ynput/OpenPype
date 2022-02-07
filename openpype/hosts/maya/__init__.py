@@ -5,9 +5,7 @@ def add_implementation_envs(env, _app):
     # Add requirements to PYTHONPATH
     pype_root = os.environ["OPENPYPE_REPOS_ROOT"]
     new_python_paths = [
-        os.path.join(pype_root, "openpype", "hosts", "maya", "startup"),
-        os.path.join(pype_root, "repos", "avalon-core", "setup", "maya"),
-        os.path.join(pype_root, "tools", "mayalookassigner")
+        os.path.join(pype_root, "openpype", "hosts", "maya", "startup")
     ]
     old_python_path = env.get("PYTHONPATH") or ""
     for path in old_python_path.split(os.pathsep):
