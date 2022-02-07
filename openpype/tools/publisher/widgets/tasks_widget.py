@@ -1,62 +1,6 @@
-import re
-import collections
-
 from Qt import QtCore, QtGui
 
-
-class AssetsHierarchyModel(QtGui.QStandardItemModel):
-    """Assets hiearrchy model.
-
-    For selecting asset for which should beinstance created.
-
-    Uses controller to load asset hierarchy. All asset documents are stored by
-    their parents.
-    """
-    def __init__(self, controller):
-        super(AssetsHierarchyModel, self).__init__()
-        self._controller = controller
-
-        self._items_by_name = {}
-
-    def reset(self):
-        self.clear()
-
-        self._items_by_name = {}
-        assets_by_parent_id = self._controller.get_asset_hierarchy()
-
-        items_by_name = {}
-        _queue = collections.deque()
-        _queue.append((self.invisibleRootItem(), None))
-        while _queue:
-            parent_item, parent_id = _queue.popleft()
-            children = assets_by_parent_id.get(parent_id)
-            if not children:
-                continue
-
-            children_by_name = {
-                child["name"]: child
-                for child in children
-            }
-            items = []
-            for name in sorted(children_by_name.keys()):
-                child = children_by_name[name]
-                item = QtGui.QStandardItem(name)
-                items_by_name[name] = item
-                items.append(item)
-                _queue.append((item, child["_id"]))
-
-            parent_item.appendRows(items)
-
-        self._items_by_name = items_by_name
-
-    def name_is_valid(self, item_name):
-        return item_name in self._items_by_name
-
-    def get_index_by_name(self, item_name):
-        item = self._items_by_name.get(item_name)
-        if item:
-            return item.index()
-        return QtCore.QModelIndex()
+from openpype.tools.utils.tasks_widget import TasksWidget, TASK_NAME_ROLE
 
 
 class TasksModel(QtGui.QStandardItemModel):
@@ -75,6 +19,7 @@ class TasksModel(QtGui.QStandardItemModel):
     """
     def __init__(self, controller):
         super(TasksModel, self).__init__()
+
         self._controller = controller
         self._items_by_name = {}
         self._asset_names = []
@@ -141,6 +86,7 @@ class TasksModel(QtGui.QStandardItemModel):
         task_names_by_asset_name = (
             self._controller.get_task_names_by_asset_names(self._asset_names)
         )
+
         self._task_names_by_asset_name = task_names_by_asset_name
 
         new_task_names = self.get_intersection_of_tasks(
@@ -162,40 +108,62 @@ class TasksModel(QtGui.QStandardItemModel):
                 continue
 
             item = QtGui.QStandardItem(task_name)
+            item.setData(task_name, TASK_NAME_ROLE)
             self._items_by_name[task_name] = item
             new_items.append(item)
         root_item.appendRows(new_items)
 
+    def headerData(self, section, orientation, role=None):
+        if role is None:
+            role = QtCore.Qt.EditRole
+        # Show nice labels in the header
+        if section == 0:
+            if (
+                role in (QtCore.Qt.DisplayRole, QtCore.Qt.EditRole)
+                and orientation == QtCore.Qt.Horizontal
+            ):
+                return "Tasks"
 
-class RecursiveSortFilterProxyModel(QtCore.QSortFilterProxyModel):
-    """Recursive proxy model.
+        return super(TasksModel, self).headerData(section, orientation, role)
 
-    Item is not filtered if any children match the filter.
 
-    Use case: Filtering by string - parent won't be filtered if does not match
-        the filter string but first checks if any children does.
-    """
-    def filterAcceptsRow(self, row, parent_index):
-        regex = self.filterRegExp()
-        if not regex.isEmpty():
-            model = self.sourceModel()
-            source_index = model.index(
-                row, self.filterKeyColumn(), parent_index
-            )
-            if source_index.isValid():
-                pattern = regex.pattern()
+class CreateDialogTasksWidget(TasksWidget):
+    def __init__(self, controller, parent):
+        self._controller = controller
+        super(CreateDialogTasksWidget, self).__init__(None, parent)
 
-                # Check current index itself
-                value = model.data(source_index, self.filterRole())
-                if re.search(pattern, value, re.IGNORECASE):
-                    return True
+        self._enabled = None
 
-                rows = model.rowCount(source_index)
-                for idx in range(rows):
-                    if self.filterAcceptsRow(idx, source_index):
-                        return True
-                return False
+    def _create_source_model(self):
+        return TasksModel(self._controller)
 
-        return super(RecursiveSortFilterProxyModel, self).filterAcceptsRow(
-            row, parent_index
-        )
+    def set_asset_name(self, asset_name):
+        current = self.get_selected_task_name()
+        if current:
+            self._last_selected_task_name = current
+
+        self._tasks_model.set_asset_names([asset_name])
+        if self._last_selected_task_name and self._enabled:
+            self.select_task_name(self._last_selected_task_name)
+
+        # Force a task changed emit.
+        self.task_changed.emit()
+
+    def select_task_name(self, task_name):
+        super(CreateDialogTasksWidget, self).select_task_name(task_name)
+        if not self._enabled:
+            current = self.get_selected_task_name()
+            if current:
+                self._last_selected_task_name = current
+            self._clear_selection()
+
+    def set_enabled(self, enabled):
+        self._enabled = enabled
+        if not enabled:
+            last_selected_task_name = self.get_selected_task_name()
+            if last_selected_task_name:
+                self._last_selected_task_name = last_selected_task_name
+            self._clear_selection()
+
+        elif self._last_selected_task_name is not None:
+            self.select_task_name(self._last_selected_task_name)

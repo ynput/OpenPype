@@ -46,7 +46,7 @@ def get_options(action, loader, parent, repre_contexts):
 
         Args:
             action (OptionalAction) - action in menu
-            loader (cls of api.Loader) - not initilized yet
+            loader (cls of api.Loader) - not initialized yet
             parent (Qt element to parent dialog to)
             repre_contexts (list) of dict with full info about selected repres
         Returns:

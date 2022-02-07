@@ -1040,10 +1040,19 @@ class ApplicationLaunchContext:
         # Prepare data that will be passed to midprocess
         # - store arguments to a json and pass path to json as last argument
         # - pass environments to set
+        app_env = self.kwargs.pop("env", {})
         json_data = {
             "args": self.launch_args,
-            "env": self.kwargs.pop("env", {})
+            "env": app_env
         }
+        if app_env:
+            # Filter environments of subprocess
+            self.kwargs["env"] = {
+                key: value
+                for key, value in os.environ.items()
+                if key in app_env
+            }
+
         # Create temp file
         json_temp = tempfile.NamedTemporaryFile(
             mode="w", prefix="op_app_args", suffix=".json", delete=False
@@ -1490,6 +1499,7 @@ def _prepare_last_workfile(data, workdir):
     import avalon.api
 
     log = data["log"]
+
     _workdir_data = data.get("workdir_data")
     if not _workdir_data:
         log.info(
@@ -1503,9 +1513,15 @@ def _prepare_last_workfile(data, workdir):
     project_name = data["project_name"]
     task_name = data["task_name"]
     task_type = data["task_type"]
-    start_last_workfile = should_start_last_workfile(
-        project_name, app.host_name, task_name, task_type
-    )
+
+    start_last_workfile = data.get("start_last_workfile")
+    if start_last_workfile is None:
+        start_last_workfile = should_start_last_workfile(
+            project_name, app.host_name, task_name, task_type
+        )
+    else:
+        log.info("Opening of last workfile was disabled by user")
+
     data["start_last_workfile"] = start_last_workfile
 
     workfile_startup = should_workfile_tool_start(

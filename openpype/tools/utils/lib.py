@@ -132,7 +132,7 @@ def preserve_expanded_rows(tree_view, column=0, role=None):
 
     This function is created to maintain the expand vs collapse status of
     the model items. When refresh is triggered the items which are expanded
-    will stay expanded and vise versa.
+    will stay expanded and vice versa.
 
     Arguments:
         tree_view (QWidgets.QTreeView): the tree view which is
@@ -176,7 +176,7 @@ def preserve_selection(tree_view, column=0, role=None, current_index=True):
 
     This function is created to maintain the selection status of
     the model items. When refresh is triggered the items which are expanded
-    will stay expanded and vise versa.
+    will stay expanded and vice versa.
 
         tree_view (QWidgets.QTreeView): the tree view nested in the application
         column (int): the column to retrieve the data from
@@ -372,7 +372,7 @@ class GroupsConfig:
         group_configs = []
         project_name = self.dbcon.Session.get("AVALON_PROJECT")
         if project_name:
-            # Get pre-defined group name and apperance from project config
+            # Get pre-defined group name and appearance from project config
             project_doc = self.dbcon.find_one(
                 {"type": "project"},
                 projection={"config.groups": True}

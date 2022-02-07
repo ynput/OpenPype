@@ -387,10 +387,16 @@ QHeaderView::section:only-one {
 
 QHeaderView::down-arrow {
     image: url(:/openpype/images/down_arrow.png);
+    padding-right: 4px;
+    subcontrol-origin: padding;
+    subcontrol-position: center right;
 }
 
 QHeaderView::up-arrow {
     image: url(:/openpype/images/up_arrow.png);
+    padding-right: 4px;
+    subcontrol-origin: padding;
+    subcontrol-position: center right;
 }
 
 /* Checkboxes */
@@ -1093,16 +1099,16 @@ QScrollBar::add-page:vertical, QScrollBar::sub-page:vertical {
 #ExpandLabel[state="modified"]:hover, #SettingsLabel[state="modified"]:hover {
     color: {color:settings:modified-light};
 }
-#ExpandLabel[state="overriden-modified"], #SettingsLabel[state="overriden-modified"] {
+#ExpandLabel[state="overridden-modified"], #SettingsLabel[state="overridden-modified"] {
     color: {color:settings:modified-mid};
 }
-#ExpandLabel[state="overriden-modified"]:hover, #SettingsLabel[state="overriden-modified"]:hover {
+#ExpandLabel[state="overridden-modified"]:hover, #SettingsLabel[state="overridden-modified"]:hover {
     color: {color:settings:modified-light};
 }
-#ExpandLabel[state="overriden"], #SettingsLabel[state="overriden"] {
+#ExpandLabel[state="overridden"], #SettingsLabel[state="overridden"] {
     color: {color:settings:project-mid};
 }
-#ExpandLabel[state="overriden"]:hover, #SettingsLabel[state="overriden"]:hover {
+#ExpandLabel[state="overridden"]:hover, #SettingsLabel[state="overridden"]:hover {
     color: {color:settings:project-light};
 }
 #ExpandLabel[state="invalid"], #SettingsLabel[state="invalid"] {
@@ -1116,10 +1122,10 @@ QScrollBar::add-page:vertical, QScrollBar::sub-page:vertical {
 #SettingsMainWidget QWidget[input-state="modified"] {
     border-color: {color:settings:modified-mid};
 }
-#SettingsMainWidget QWidget[input-state="overriden-modified"] {
+#SettingsMainWidget QWidget[input-state="overridden-modified"] {
     border-color: {color:settings:modified-mid};
 }
-#SettingsMainWidget QWidget[input-state="overriden"] {
+#SettingsMainWidget QWidget[input-state="overridden"] {
     border-color: {color:settings:project-mid};
 }
 #SettingsMainWidget QWidget[input-state="invalid"] {
@@ -1145,8 +1151,8 @@ QScrollBar::add-page:vertical, QScrollBar::sub-page:vertical {
 #ContentWidget {
     background-color: transparent;
 }
-#ContentWidget[content_state="hightlighted"] {
-    background-color: {color:settings:content-hightlighted};
+#ContentWidget[content_state="highlighted"] {
+    background-color: {color:settings:content-highlighted};
 }
 
 #SideLineWidget {
@@ -1172,11 +1178,11 @@ QScrollBar::add-page:vertical, QScrollBar::sub-page:vertical {
 #SideLineWidget[state="child-invalid"] {border-color: {color:settings:invalid-dark};}
 #SideLineWidget[state="child-invalid"]:hover {border-color: {color:settings:invalid-light};}
 
-#SideLineWidget[state="child-overriden"] {border-color: {color:settings:project-dark};}
-#SideLineWidget[state="child-overriden"]:hover {border-color: {color:settings:project-mid};}
+#SideLineWidget[state="child-overridden"] {border-color: {color:settings:project-dark};}
+#SideLineWidget[state="child-overridden"]:hover {border-color: {color:settings:project-mid};}
 
-#SideLineWidget[state="child-overriden-modified"] {border-color: {color:settings:modified-dark};}
-#SideLineWidget[state="child-overriden-modified"]:hover {border-color: {color:settings:modified-mid};}
+#SideLineWidget[state="child-overridden-modified"] {border-color: {color:settings:modified-dark};}
+#SideLineWidget[state="child-overridden-modified"]:hover {border-color: {color:settings:modified-mid};}
 
 #DictAsWidgetBody {
     background: transparent;
@@ -1196,6 +1202,10 @@ QScrollBar::add-page:vertical, QScrollBar::sub-page:vertical {
 
 #ShadowWidget {
     font-size: 36pt;
+}
+
+#OverlayFrame {
+    background: rgba(0, 0, 0, 127);
 }
 
 #BreadcrumbsPathInput {

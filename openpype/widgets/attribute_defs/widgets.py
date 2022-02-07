@@ -1,14 +1,19 @@
 import uuid
+
+from Qt import QtWidgets, QtCore
+
 from openpype.pipeline.lib import (
     AbtractAttrDef,
     UnknownDef,
     NumberDef,
     TextDef,
     EnumDef,
-    BoolDef
+    BoolDef,
+    FileDef,
+    UISeparatorDef,
+    UILabelDef
 )
 from openpype.widgets.nice_checkbox import NiceCheckbox
-from Qt import QtWidgets, QtCore
 
 
 def create_widget_for_attr_def(attr_def, parent=None):
@@ -32,12 +37,22 @@ def create_widget_for_attr_def(attr_def, parent=None):
     if isinstance(attr_def, UnknownDef):
         return UnknownAttrWidget(attr_def, parent)
 
+    if isinstance(attr_def, FileDef):
+        return FileAttrWidget(attr_def, parent)
+
+    if isinstance(attr_def, UISeparatorDef):
+        return SeparatorAttrWidget(attr_def, parent)
+
+    if isinstance(attr_def, UILabelDef):
+        return LabelAttrWidget(attr_def, parent)
+
     raise ValueError("Unknown attribute definition \"{}\"".format(
         str(type(attr_def))
     ))
 
 
 class _BaseAttrDefWidget(QtWidgets.QWidget):
+    # Type 'object' may not work with older PySide versions
     value_changed = QtCore.Signal(object, uuid.UUID)
 
     def __init__(self, attr_def, parent):
@@ -68,10 +83,34 @@ class _BaseAttrDefWidget(QtWidgets.QWidget):
 
     def set_value(self, value, multivalue=False):
         raise NotImplementedError(
-            "Method 'current_value' is not implemented. {}".format(
+            "Method 'set_value' is not implemented. {}".format(
                 self.__class__.__name__
             )
         )
+
+
+class SeparatorAttrWidget(_BaseAttrDefWidget):
+    def _ui_init(self):
+        input_widget = QtWidgets.QWidget(self)
+        input_widget.setObjectName("Separator")
+        input_widget.setMinimumHeight(2)
+        input_widget.setMaximumHeight(2)
+
+        self._input_widget = input_widget
+
+        self.main_layout.addWidget(input_widget, 0)
+
+
+class LabelAttrWidget(_BaseAttrDefWidget):
+    def _ui_init(self):
+        input_widget = QtWidgets.QLabel(self)
+        label = self.attr_def.label
+        if label:
+            input_widget.setText(str(label))
+
+        self._input_widget = input_widget
+
+        self.main_layout.addWidget(input_widget, 0)
 
 
 class NumberAttrWidget(_BaseAttrDefWidget):
@@ -82,6 +121,9 @@ class NumberAttrWidget(_BaseAttrDefWidget):
             input_widget.setDecimals(decimals)
         else:
             input_widget = QtWidgets.QSpinBox(self)
+
+        if self.attr_def.tooltip:
+            input_widget.setToolTip(self.attr_def.tooltip)
 
         input_widget.setMinimum(self.attr_def.minimum)
         input_widget.setMaximum(self.attr_def.maximum)
@@ -136,6 +178,9 @@ class TextAttrWidget(_BaseAttrDefWidget):
         ):
             input_widget.setPlaceholderText(self.attr_def.placeholder)
 
+        if self.attr_def.tooltip:
+            input_widget.setToolTip(self.attr_def.tooltip)
+
         if self.attr_def.default:
             if self.multiline:
                 input_widget.setPlainText(self.attr_def.default)
@@ -184,6 +229,9 @@ class BoolAttrWidget(_BaseAttrDefWidget):
         input_widget = NiceCheckbox(parent=self)
         input_widget.setChecked(self.attr_def.default)
 
+        if self.attr_def.tooltip:
+            input_widget.setToolTip(self.attr_def.tooltip)
+
         input_widget.stateChanged.connect(self._on_value_change)
 
         self._input_widget = input_widget
@@ -219,6 +267,9 @@ class EnumAttrWidget(_BaseAttrDefWidget):
         input_widget = QtWidgets.QComboBox(self)
         combo_delegate = QtWidgets.QStyledItemDelegate(input_widget)
         input_widget.setItemDelegate(combo_delegate)
+
+        if self.attr_def.tooltip:
+            input_widget.setToolTip(self.attr_def.tooltip)
 
         items = self.attr_def.items
         for key, label in items.items():
@@ -281,3 +332,40 @@ class UnknownAttrWidget(_BaseAttrDefWidget):
         if str_value != self._value:
             self._value = str_value
             self._input_widget.setText(str_value)
+
+
+class FileAttrWidget(_BaseAttrDefWidget):
+    def _ui_init(self):
+        self.multipath = self.attr_def.multipath
+        if self.multipath:
+            from .files_widget import MultiFilesWidget
+
+            input_widget = MultiFilesWidget(self)
+
+        else:
+            from .files_widget import SingleFileWidget
+
+            input_widget = SingleFileWidget(self)
+
+        if self.attr_def.tooltip:
+            input_widget.setToolTip(self.attr_def.tooltip)
+
+        input_widget.set_filters(
+            self.attr_def.folders, self.attr_def.extensions
+        )
+
+        input_widget.value_changed.connect(self._on_value_change)
+
+        self._input_widget = input_widget
+
+        self.main_layout.addWidget(input_widget, 0)
+
+    def _on_value_change(self):
+        new_value = self.current_value()
+        self.value_changed.emit(new_value, self.attr_def.id)
+
+    def current_value(self):
+        return self._input_widget.current_value()
+
+    def set_value(self, value, multivalue=False):
+        self._input_widget.set_value(value, multivalue)
