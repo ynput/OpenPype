@@ -13,7 +13,7 @@ from .build_template_exceptions import (
     MissingTemplateLoaderClass
 )
 
-_module_path_format = 'openpype.hosts.{host}.api.template_loader'
+_module_path_format = 'openpype.{host}.template_loader'
 
 
 def build_workfile_template(*args):

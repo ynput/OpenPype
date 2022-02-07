@@ -189,6 +189,8 @@ class AbstractTemplateLoader:
             raise KeyError(
                 "Could not solve key '{}' in template path '{}'".format(
                     missing_key, path))
+        finally:
+            solved_path = os.path.normpath(solved_path)
 
         if not os.path.exists(solved_path):
             raise TemplateNotFound(
