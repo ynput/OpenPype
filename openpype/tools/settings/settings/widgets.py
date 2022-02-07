@@ -1051,9 +1051,11 @@ class ProjectListWidget(QtWidgets.QWidget):
         self._entity = entity
 
     def _on_item_right_clicked(self, index):
+        if not index.isValid():
+            return
         project_name = index.data(PROJECT_NAME_ROLE)
         if project_name is None:
-            return
+            project_name = DEFAULT_PROJECT_LABEL
 
         if self.current_project != project_name:
             self.on_item_clicked(index)
@@ -1080,9 +1082,11 @@ class ProjectListWidget(QtWidgets.QWidget):
         menu.exec_(QtGui.QCursor.pos())
 
     def on_item_clicked(self, new_index):
+        if not new_index.isValid():
+            return
         new_project_name = new_index.data(PROJECT_NAME_ROLE)
         if new_project_name is None:
-            return
+            new_project_name = DEFAULT_PROJECT_LABEL
 
         if self.current_project == new_project_name:
             return
