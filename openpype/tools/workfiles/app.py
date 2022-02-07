@@ -21,15 +21,12 @@ from openpype.tools.utils.tasks_widget import TasksWidget
 from openpype.tools.utils.delegates import PrettyTimeDelegate
 from openpype.lib import (
     Anatomy,
-    get_workdir,
     get_workfile_doc,
     create_workfile_doc,
     save_workfile_data_to_doc,
     get_workfile_template_key,
-    create_workdir_extra_folders
-)
-from openpype.settings import (
-    get_system_settings
+    create_workdir_extra_folders,
+    get_system_general_anatomy_data
 )
 from .model import FilesModel
 from .view import FilesView
@@ -94,10 +91,6 @@ class NameWindow(QtWidgets.QDialog):
         if asset_parents:
             parent_name = asset_parents[-1]
 
-        system_settings = get_system_settings()
-        studio_name = system_settings["general"]["studio_name"]
-        studio_code = system_settings["general"]["studio_code"]
-
         self.data = {
             "project": {
                 "name": project_doc["name"],
@@ -113,12 +106,12 @@ class NameWindow(QtWidgets.QDialog):
             "version": 1,
             "user": getpass.getuser(),
             "comment": "",
-            "ext": None,
-            "studio": {
-                "name": studio_name,
-                "code": studio_code
-            }
+            "ext": None
         }
+
+        # add system general settings anatomy data
+        system_general_data = get_system_general_anatomy_data()
+        self.data.update(system_general_data)
 
         # Store project anatomy
         self.anatomy = anatomy

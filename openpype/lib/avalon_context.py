@@ -261,6 +261,18 @@ def get_hierarchy(asset_name=None):
     return "/".join(hierarchy_items)
 
 
+def get_system_general_anatomy_data():
+    system_settings = get_system_settings()
+    studio_name = system_settings["general"]["studio_name"]
+    studio_code = system_settings["general"]["studio_code"]
+    return {
+        "studio": {
+            "name": studio_name,
+            "code": studio_code
+        }
+    }
+
+
 def get_linked_asset_ids(asset_doc):
     """Return linked asset ids for `asset_doc` from DB
 
@@ -497,18 +509,6 @@ def get_workfile_template_key(
     return default
 
 
-def _get_system_general_data():
-    system_settings = get_system_settings()
-    studio_name = system_settings["general"]["studio_name"]
-    studio_code = system_settings["general"]["studio_code"]
-    return {
-        "studio": {
-            "name": studio_name,
-            "code": studio_code
-        }
-    }
-
-
 # TODO rename function as is not just "work" specific
 def get_workdir_data(project_doc, asset_doc, task_name, host_name):
     """Prepare data for workdir template filling from entered information.
@@ -552,7 +552,7 @@ def get_workdir_data(project_doc, asset_doc, task_name, host_name):
         "hierarchy": hierarchy,
     }
 
-    system_general_data = _get_system_general_data()
+    system_general_data = get_system_general_anatomy_data()
     data.update(system_general_data)
 
     return data
@@ -1537,7 +1537,7 @@ def _get_task_context_data_for_anatomy(
         }
     }
 
-    system_general_data = _get_system_general_data()
+    system_general_data = get_system_general_anatomy_data()
     data.update(system_general_data)
 
     return data

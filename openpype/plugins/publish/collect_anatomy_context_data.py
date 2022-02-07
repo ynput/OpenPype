@@ -12,11 +12,13 @@ Provides:
     context -> anatomyData
 """
 
-import os
 import json
 
 from openpype.settings import (
     get_system_settings
+)
+from openpype.lib import (
+    get_system_general_anatomy_data
 )
 from avalon import api
 import pyblish.api
@@ -82,12 +84,12 @@ class CollectAnatomyContextData(pyblish.api.ContextPlugin):
                 "short": task_code,
             },
             "username": context.data["user"],
-            "app": context.data["hostName"],
-            "studio": {
-                "name": studio_name,
-                "code": studio_code
-            }
+            "app": context.data["hostName"]
         }
+
+        # add system general settings anatomy data
+        system_general_data = get_system_general_anatomy_data()
+        context_data.update(system_general_data)
 
         datetime_data = context.data.get("datetimeData") or {}
         context_data.update(datetime_data)
