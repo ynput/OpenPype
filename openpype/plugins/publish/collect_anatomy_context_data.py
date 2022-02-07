@@ -13,10 +13,6 @@ Provides:
 """
 
 import json
-
-from openpype.settings import (
-    get_system_settings
-)
 from openpype.lib import (
     get_system_general_anatomy_data
 )
@@ -48,9 +44,6 @@ class CollectAnatomyContextData(pyblish.api.ContextPlugin):
     label = "Collect Anatomy Context Data"
 
     def process(self, context):
-        system_settings = get_system_settings()
-        studio_name = system_settings["general"]["studio_name"]
-        studio_code = system_settings["general"]["studio_code"]
 
         task_name = api.Session["AVALON_TASK"]
 
