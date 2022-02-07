@@ -1,12 +1,8 @@
 # Changelog
 
-## [3.8.2-nightly.3](https://github.com/pypeclub/OpenPype/tree/HEAD)
+## [3.8.2](https://github.com/pypeclub/OpenPype/tree/3.8.2) (2022-02-07)
 
-[Full Changelog](https://github.com/pypeclub/OpenPype/compare/3.8.1...HEAD)
-
-### 📖 Documentation
-
-- Cosmetics: Fix common typos in openpype/website [\#2617](https://github.com/pypeclub/OpenPype/pull/2617)
+[Full Changelog](https://github.com/pypeclub/OpenPype/compare/3.8.1...3.8.2)
 
 **🚀 Enhancements**
 
@@ -19,13 +15,17 @@
 **🐛 Bug fixes**
 
 - Fix pulling of cx\_freeze 6.10 [\#2628](https://github.com/pypeclub/OpenPype/pull/2628)
-- Global: fix broken otio review extractor [\#2590](https://github.com/pypeclub/OpenPype/pull/2590)
+
+### 📖 Documentation
+
+- Cosmetics: Fix common typos in openpype/website [\#2617](https://github.com/pypeclub/OpenPype/pull/2617)
 
 **Merged pull requests:**
 
 - Docker: enhance dockerfiles with metadata, fix pyenv initialization [\#2647](https://github.com/pypeclub/OpenPype/pull/2647)
 - WebPublisher: fix instance duplicates [\#2641](https://github.com/pypeclub/OpenPype/pull/2641)
 - Fix - safer pulling of task name for webpublishing from PS [\#2613](https://github.com/pypeclub/OpenPype/pull/2613)
+- Webpublisher: Skip version collect [\#2591](https://github.com/pypeclub/OpenPype/pull/2591)
 
 ## [3.8.1](https://github.com/pypeclub/OpenPype/tree/3.8.1) (2022-02-01)
 
@@ -34,6 +34,7 @@
 **🚀 Enhancements**
 
 - Webpublisher: Thumbnail extractor [\#2600](https://github.com/pypeclub/OpenPype/pull/2600)
+- Webpublisher: Added endpoint to reprocess batch through UI [\#2555](https://github.com/pypeclub/OpenPype/pull/2555)
 - Loader: Allow to toggle default family filters between "include" or "exclude" filtering [\#2541](https://github.com/pypeclub/OpenPype/pull/2541)
 - Launcher: Added context menu to to skip opening last workfile [\#2536](https://github.com/pypeclub/OpenPype/pull/2536)
 
@@ -43,6 +44,7 @@
 - hotfix: OIIO tool path - add extension on windows [\#2618](https://github.com/pypeclub/OpenPype/pull/2618)
 - Settings: Enum does not store empty string if has single item to select [\#2615](https://github.com/pypeclub/OpenPype/pull/2615)
 - switch distutils to sysconfig for `get\_platform\(\)` [\#2594](https://github.com/pypeclub/OpenPype/pull/2594)
+- Global: fix broken otio review extractor [\#2590](https://github.com/pypeclub/OpenPype/pull/2590)
 - Fix poetry index and speedcopy update [\#2589](https://github.com/pypeclub/OpenPype/pull/2589)
 - Webpublisher: Fix - subset names from processed .psd used wrong value for task [\#2586](https://github.com/pypeclub/OpenPype/pull/2586)
 - `vrscene` creator Deadline webservice URL handling [\#2580](https://github.com/pypeclub/OpenPype/pull/2580)
@@ -52,16 +54,11 @@
 **Merged pull requests:**
 
 - Bump pillow from 8.4.0 to 9.0.0 [\#2595](https://github.com/pypeclub/OpenPype/pull/2595)
-- Webpublisher: Skip version collect [\#2591](https://github.com/pypeclub/OpenPype/pull/2591)
 - build\(deps\): bump pillow from 8.4.0 to 9.0.0 [\#2523](https://github.com/pypeclub/OpenPype/pull/2523)
 
 ## [3.8.0](https://github.com/pypeclub/OpenPype/tree/3.8.0) (2022-01-24)
 
 [Full Changelog](https://github.com/pypeclub/OpenPype/compare/CI/3.8.0-nightly.7...3.8.0)
-
-### 📖 Documentation
-
-- Variable in docs renamed to proper name [\#2546](https://github.com/pypeclub/OpenPype/pull/2546)
 
 **🆕 New features**
 
@@ -75,7 +72,6 @@
 
 - Webpublisher: Moved error at the beginning of the log [\#2559](https://github.com/pypeclub/OpenPype/pull/2559)
 - Ftrack: Use ApplicationManager to get DJV path [\#2558](https://github.com/pypeclub/OpenPype/pull/2558)
-- Webpublisher: Added endpoint to reprocess batch through UI [\#2555](https://github.com/pypeclub/OpenPype/pull/2555)
 - Settings: PathInput strip passed string [\#2550](https://github.com/pypeclub/OpenPype/pull/2550)
 - Global: Exctract Review anatomy fill data with output name [\#2548](https://github.com/pypeclub/OpenPype/pull/2548)
 - Cosmetics: Clean up some cosmetics / typos [\#2542](https://github.com/pypeclub/OpenPype/pull/2542)
@@ -106,6 +102,10 @@
 - Fix published frame content for sequence starting with 0 [\#2513](https://github.com/pypeclub/OpenPype/pull/2513)
 - Maya: reset empty string attributes correctly to "" instead of "None" [\#2506](https://github.com/pypeclub/OpenPype/pull/2506)
 - Improve FusionPreLaunch hook errors [\#2505](https://github.com/pypeclub/OpenPype/pull/2505)
+
+### 📖 Documentation
+
+- Variable in docs renamed to proper name [\#2546](https://github.com/pypeclub/OpenPype/pull/2546)
 
 **Merged pull requests:**
 
