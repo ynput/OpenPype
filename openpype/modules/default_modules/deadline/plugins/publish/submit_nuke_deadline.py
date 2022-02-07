@@ -250,7 +250,7 @@ class NukeSubmitDeadline(pyblish.api.InstancePlugin):
             "FOUNDRY_LICENSE"
         ]
         # Add mongo url if it's enabled
-        if instance.context.get("deadlinePassMongoUrl"):
+        if instance.context.data.get("deadlinePassMongoUrl"):
             keys.append("OPENPYPE_MONGO")
 
         # add allowed keys from preset if any

@@ -277,7 +277,7 @@ class HarmonySubmitDeadline(
             "OPENPYPE_LOG_NO_COLORS"
         ]
         # Add mongo url if it's enabled
-        if self._instance.context.get("deadlinePassMongoUrl"):
+        if self._instance.context.data.get("deadlinePassMongoUrl"):
             keys.append("OPENPYPE_MONGO")
 
         environment = dict({key: os.environ[key] for key in keys

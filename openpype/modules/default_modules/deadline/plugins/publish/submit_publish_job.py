@@ -228,7 +228,7 @@ class ProcessSubmittedJobOnFarm(pyblish.api.InstancePlugin):
         environment["OPENPYPE_PUBLISH_JOB"] = "1"
         environment["OPENPYPE_RENDER_JOB"] = "0"
         # Add mongo url if it's enabled
-        if instance.context.get("deadlinePassMongoUrl"):
+        if instance.context.data.get("deadlinePassMongoUrl"):
             mongo_url = os.environ.get("OPENPYPE_MONGO")
             if mongo_url:
                 environment["OPENPYPE_MONGO"] = mongo_url

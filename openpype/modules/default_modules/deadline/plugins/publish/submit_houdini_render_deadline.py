@@ -102,7 +102,7 @@ class HoudiniSubmitRenderDeadline(pyblish.api.InstancePlugin):
             "AVALON_TOOLS",
         ]
         # Add mongo url if it's enabled
-        if context.get("deadlinePassMongoUrl"):
+        if context.data.get("deadlinePassMongoUrl"):
             keys.append("OPENPYPE_MONGO")
 
         environment = dict({key: os.environ[key] for key in keys
