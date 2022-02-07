@@ -176,6 +176,7 @@ class CollectFarmRender(openpype.lib.abstract_collect_render.
                 ignoreFrameHandleCheck=True
 
             )
+            render_instance.context = context
             self.log.debug(render_instance)
             instances.append(render_instance)
 
