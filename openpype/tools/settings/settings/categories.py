@@ -93,6 +93,20 @@ class SettingsCategoryWidget(QtWidgets.QWidget):
     restart_required_trigger = QtCore.Signal()
     full_path_requested = QtCore.Signal(str, str)
 
+    require_restart_label_text = (
+        "Your changes require restart of"
+        " all running OpenPype processes to take affect."
+    )
+    outdated_version_label_text = (
+        "Your settings are loaded from an older version."
+    )
+    source_version_tooltip = "Using settings of current OpenPype version"
+    source_version_tooltip_outdated = (
+        "Please check that all settings are still correct (blue colour\n"
+        "indicates potential changes in the new version) and save your\n"
+        "settings to update them to you current running OpenPype version."
+    )
+
     def __init__(self, user_role, parent=None):
         super(SettingsCategoryWidget, self).__init__(parent)
 
@@ -204,6 +218,7 @@ class SettingsCategoryWidget(QtWidgets.QWidget):
         conf_wrapper_widget = QtWidgets.QWidget(self)
         configurations_widget = QtWidgets.QWidget(conf_wrapper_widget)
 
+        # Breadcrumbs/Path widget
         breadcrumbs_widget = QtWidgets.QWidget(self)
         breadcrumbs_label = QtWidgets.QLabel("Path:", breadcrumbs_widget)
         breadcrumbs_bar = BreadcrumbsAddressBar(breadcrumbs_widget)
@@ -219,8 +234,8 @@ class SettingsCategoryWidget(QtWidgets.QWidget):
         breadcrumbs_layout.addWidget(breadcrumbs_bar, 1)
         breadcrumbs_layout.addWidget(refresh_btn, 0)
 
+        # Widgets representing settings entities
         scroll_widget = QtWidgets.QScrollArea(configurations_widget)
-        scroll_widget.setObjectName("GroupWidget")
         content_widget = QtWidgets.QWidget(scroll_widget)
         scroll_widget.setWidgetResizable(True)
         scroll_widget.setWidget(content_widget)
@@ -230,28 +245,46 @@ class SettingsCategoryWidget(QtWidgets.QWidget):
         content_layout.setSpacing(5)
         content_layout.setAlignment(QtCore.Qt.AlignTop)
 
-        footer_widget = QtWidgets.QWidget(configurations_widget)
+        # Footer widget
+        footer_widget = QtWidgets.QWidget(self)
+        footer_widget.setObjectName("SettingsFooter")
 
+        # Info labels
+        # TODO dynamic labels
+        labels_alignment = QtCore.Qt.AlignLeft | QtCore.Qt.AlignVCenter
+        empty_label = QtWidgets.QLabel(footer_widget)
+
+        outdated_version_label = QtWidgets.QLabel(
+            self.outdated_version_label_text, footer_widget
+        )
+        outdated_version_label.setToolTip(self.source_version_tooltip_outdated)
+        outdated_version_label.setAlignment(labels_alignment)
+        outdated_version_label.setVisible(False)
+        outdated_version_label.setObjectName("SettingsOutdatedSourceVersion")
+
+        require_restart_label = QtWidgets.QLabel(
+            self.require_restart_label_text, footer_widget
+        )
+        require_restart_label.setAlignment(labels_alignment)
+        require_restart_label.setVisible(False)
+
+        # Label showing source version of loaded settings
         source_version_label = QtWidgets.QLabel("", footer_widget)
         source_version_label.setObjectName("SourceVersionLabel")
         set_style_property(source_version_label, "state", "")
-        source_version_label.setToolTip(
-            "Version of OpenPype from which are settings loaded."
-            "\nThe 'legacy' are settings that were not stored per version."
-        )
+        source_version_label.setToolTip(self.source_version_tooltip)
 
         save_btn = QtWidgets.QPushButton("Save", footer_widget)
-        require_restart_label = QtWidgets.QLabel(footer_widget)
-        require_restart_label.setAlignment(QtCore.Qt.AlignCenter)
 
         footer_layout = QtWidgets.QHBoxLayout(footer_widget)
         footer_layout.setContentsMargins(5, 5, 5, 5)
-        footer_layout.setSpacing(10)
         if self.user_role == "developer":
             self._add_developer_ui(footer_layout, footer_widget)
 
-        footer_layout.addWidget(source_version_label, 0)
+        footer_layout.addWidget(empty_label, 1)
+        footer_layout.addWidget(outdated_version_label, 1)
         footer_layout.addWidget(require_restart_label, 1)
+        footer_layout.addWidget(source_version_label, 0)
         footer_layout.addWidget(save_btn, 0)
 
         configurations_layout = QtWidgets.QVBoxLayout(configurations_widget)
@@ -259,7 +292,6 @@ class SettingsCategoryWidget(QtWidgets.QWidget):
         configurations_layout.setSpacing(0)
 
         configurations_layout.addWidget(scroll_widget, 1)
-        configurations_layout.addWidget(footer_widget, 0)
 
         conf_wrapper_layout = QtWidgets.QHBoxLayout(conf_wrapper_widget)
         conf_wrapper_layout.setContentsMargins(0, 0, 0, 0)
@@ -271,20 +303,29 @@ class SettingsCategoryWidget(QtWidgets.QWidget):
         main_layout.setSpacing(0)
         main_layout.addWidget(breadcrumbs_widget, 0)
         main_layout.addWidget(conf_wrapper_widget, 1)
+        main_layout.addWidget(footer_widget, 0)
 
         save_btn.clicked.connect(self._save)
         refresh_btn.clicked.connect(self._on_refresh)
         breadcrumbs_bar.path_edited.connect(self._on_path_edit)
 
+        self._require_restart_label = require_restart_label
+        self._outdated_version_label = outdated_version_label
+        self._empty_label = empty_label
+
+        self._is_loaded_version_outdated = False
+
         self.save_btn = save_btn
         self._source_version_label = source_version_label
-        self.refresh_btn = refresh_btn
-        self.require_restart_label = require_restart_label
+
         self.scroll_widget = scroll_widget
         self.content_layout = content_layout
         self.content_widget = content_widget
         self.breadcrumbs_bar = breadcrumbs_bar
+
         self.breadcrumbs_model = None
+        self.refresh_btn = refresh_btn
+
         self.conf_wrapper_layout = conf_wrapper_layout
         self.main_layout = main_layout
 
@@ -448,13 +489,7 @@ class SettingsCategoryWidget(QtWidgets.QWidget):
         return
 
     def _on_require_restart_change(self):
-        value = ""
-        if self.entity.require_restart:
-            value = (
-                "Your changes require restart of"
-                " all running OpenPype processes to take affect."
-            )
-        self.require_restart_label.setText(value)
+        self._update_labels_visibility()
 
     def reset(self):
         self.set_state(CategoryState.Working)
@@ -537,13 +572,22 @@ class SettingsCategoryWidget(QtWidgets.QWidget):
 
         # Update source version label
         state_value = ""
+        tooltip = ""
+        outdated = False
         if source_version:
             if source_version != self._current_version:
                 state_value = "different"
+                tooltip = self.source_version_tooltip_outdated
+                outdated = True
             else:
                 state_value = "same"
+                tooltip = self.source_version_tooltip
+
+        self._is_loaded_version_outdated = outdated
         self._source_version_label.setText(source_version)
+        self._source_version_label.setToolTip(tooltip)
         set_style_property(self._source_version_label, "state", state_value)
+        self._update_labels_visibility()
 
         self.set_state(CategoryState.Idle)
 
@@ -654,7 +698,29 @@ class SettingsCategoryWidget(QtWidgets.QWidget):
 
         if require_restart:
             self.restart_required_trigger.emit()
-        self.require_restart_label.setText("")
+
+    def _update_labels_visibility(self):
+        visible_label = None
+        labels = {
+            self._empty_label,
+            self._outdated_version_label,
+            self._require_restart_label,
+        }
+        if self.entity.require_restart:
+            visible_label = self._require_restart_label
+        elif self._is_loaded_version_outdated:
+            visible_label = self._outdated_version_label
+        else:
+            visible_label = self._empty_label
+
+        if visible_label.isVisible():
+            return
+
+        for label in labels:
+            if label is visible_label:
+                visible_label.setVisible(True)
+            else:
+                label.setVisible(False)
 
     def _on_refresh(self):
         self.reset()

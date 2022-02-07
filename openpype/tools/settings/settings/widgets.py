@@ -1011,7 +1011,10 @@ class ProjectListWidget(QtWidgets.QWidget):
         super(ProjectListWidget, self).__init__(parent)
         self.setObjectName("ProjectListWidget")
 
-        project_list = ProjectView(self)
+        content_frame = QtWidgets.QFrame(self)
+        content_frame.setObjectName("ProjectListContentWidget")
+
+        project_list = ProjectView(content_frame)
         project_model = ProjectModel(only_active)
         project_proxy = ProjectSortFilterProxy()
 
@@ -1019,21 +1022,32 @@ class ProjectListWidget(QtWidgets.QWidget):
         project_proxy.setSourceModel(project_model)
         project_list.setModel(project_proxy)
 
-        layout = QtWidgets.QVBoxLayout(self)
-        layout.setSpacing(3)
-        layout.addWidget(project_list, 1)
+        content_layout = QtWidgets.QVBoxLayout(content_frame)
+        content_layout.setContentsMargins(0, 0, 0, 0)
+        content_layout.setSpacing(0)
+        content_layout.addWidget(project_list, 1)
 
-        if only_active:
-            inactive_chk = None
-        else:
-            inactive_chk = QtWidgets.QCheckBox(" Show Inactive Projects ")
+        inactive_chk = None
+        if not only_active:
+            checkbox_wrapper = QtWidgets.QWidget(content_frame)
+            checkbox_wrapper.setAttribute(QtCore.Qt.WA_TranslucentBackground)
+
+            inactive_chk = QtWidgets.QCheckBox(
+                "Show Inactive Projects", checkbox_wrapper
+            )
             inactive_chk.setChecked(not project_proxy.is_filter_enabled())
 
-            layout.addSpacing(5)
-            layout.addWidget(inactive_chk, 0)
-            layout.addSpacing(5)
+            wrapper_layout = QtWidgets.QHBoxLayout(checkbox_wrapper)
+            wrapper_layout.addWidget(inactive_chk, 1)
+
+            content_layout.addWidget(checkbox_wrapper, 0)
 
             inactive_chk.stateChanged.connect(self.on_inactive_vis_changed)
+
+        layout = QtWidgets.QVBoxLayout(self)
+        # Margins '3' are matching to configurables widget scroll area on right
+        layout.setContentsMargins(5, 3, 3, 3)
+        layout.addWidget(content_frame, 1)
 
         project_list.left_mouse_released_at.connect(self.on_item_clicked)
         project_list.right_mouse_released_at.connect(
