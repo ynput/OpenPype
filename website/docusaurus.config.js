@@ -39,7 +39,7 @@ module.exports = {
     announcementBar: {
       id: 'help_with_docs', // Any value that will identify this message.
       content:
-      'This documentation is work in progress, <b><a href="https://openpype.io">help us make it better.</a></b>. Current working version is 3.0.0-beta.',
+      'Help us make it better., <b><a href="https://github.com/pypeclub/OpenPype/tree/develop/website"></a></b>.',
       backgroundColor: '#fff', // Defaults to `#fff`.
       textColor: '#000', // Defaults to `#000`.
     },

@@ -12,7 +12,7 @@ sidebar_label: Maya
 
 Render Settings Validator is here to make sure artists will submit renders
 we correct settings. Some of these settings are needed by OpenPype but some
-can be defined by TD using [OpenPype Settings UI](admin_settings).
+can be defined by TD using [OpenPype Settings UI](admin_settings.md).
 
 OpenPype enforced settings include:
 
