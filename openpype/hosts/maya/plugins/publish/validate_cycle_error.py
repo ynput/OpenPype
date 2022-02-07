@@ -2,10 +2,9 @@ from maya import cmds
 
 import pyblish.api
 
-from avalon import maya
-
 import openpype.api
 import openpype.hosts.maya.api.action
+from openpype.hosts.maya.api.lib import maintained_selection
 
 
 class ValidateCycleError(pyblish.api.InstancePlugin):
@@ -26,7 +25,7 @@ class ValidateCycleError(pyblish.api.InstancePlugin):
     @classmethod
     def get_invalid(cls, instance):
 
-        with maya.maintained_selection():
+        with maintained_selection():
             cmds.select(instance[:], noExpand=True)
             plugs = cmds.cycleCheck(all=False,  # check selection only
                                     list=True)
