@@ -80,6 +80,11 @@ class StdOutBroker:
         self._catch_std_outputs()
         self._connect_to_tray()
 
+        loop_timer = QtCore.QTimer()
+        loop_timer.setInterval(200)
+        loop_timer.timeout.connect(self._process_queue)
+        self.loop_timer = loop_timer
+
     @property
     def websocket_server_is_running(self):
         if self.websocket_server is not None:
