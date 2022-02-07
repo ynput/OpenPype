@@ -27,12 +27,12 @@ from Qt import QtWidgets, QtCore
 
 from openpype.widgets.nice_checkbox import NiceCheckbox
 
+from openpype.tools.utils import BaseClickableFrame
 from .widgets import (
     AbstractInstanceView,
     ContextWarningLabel,
-    ClickableFrame,
     IconValuePixmapLabel,
-    TransparentPixmapLabel
+    PublishPixmapLabel
 )
 from ..constants import (
     CONTEXT_ID,
@@ -140,7 +140,7 @@ class GroupWidget(QtWidgets.QWidget):
                 widget_idx += 1
 
 
-class CardWidget(ClickableFrame):
+class CardWidget(BaseClickableFrame):
     """Clickable card used as bigger button."""
     selected = QtCore.Signal(str, str)
     # Group identifier of card
@@ -184,7 +184,7 @@ class ContextCardWidget(CardWidget):
         self._id = CONTEXT_ID
         self._group_identifier = ""
 
-        icon_widget = TransparentPixmapLabel(self)
+        icon_widget = PublishPixmapLabel(None, self)
         icon_widget.setObjectName("FamilyIconLabel")
 
         label_widget = QtWidgets.QLabel(CONTEXT_LABEL, self)
