@@ -2,7 +2,8 @@ import time
 from Qt import QtCore, QtWidgets, QtGui
 from .constants import (
     ANIMATION_START_ROLE,
-    ANIMATION_STATE_ROLE
+    ANIMATION_STATE_ROLE,
+    FORCE_NOT_OPEN_WORKFILE_ROLE
 )
 
 
@@ -69,6 +70,16 @@ class ActionDelegate(QtWidgets.QStyledItemDelegate):
             self._draw_animation(painter, option, index)
 
         super(ActionDelegate, self).paint(painter, option, index)
+
+        if index.data(FORCE_NOT_OPEN_WORKFILE_ROLE):
+            rect = QtCore.QRectF(option.rect.x(), option.rect.height(),
+                                 5, 5)
+            painter.setPen(QtCore.Qt.transparent)
+            painter.setBrush(QtGui.QColor(200, 0, 0))
+            painter.drawEllipse(rect)
+
+            painter.setBrush(self.extender_bg_brush)
+
         is_group = False
         for group_role in self.group_roles:
             is_group = index.data(group_role)

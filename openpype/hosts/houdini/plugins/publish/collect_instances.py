@@ -2,7 +2,7 @@ import hou
 
 import pyblish.api
 
-from avalon.houdini import lib
+from openpype.hosts.houdini.api import lib
 
 
 class CollectInstances(pyblish.api.ContextPlugin):
@@ -73,6 +73,9 @@ class CollectInstances(pyblish.api.ContextPlugin):
                 label = "{} {}".format(label, frames)
 
             instance = context.create_instance(label)
+
+            # Include `families` using `family` data
+            instance.data["families"] = [instance.data["family"]]
 
             instance[:] = [node]
             instance.data.update(data)

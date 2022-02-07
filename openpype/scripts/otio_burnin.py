@@ -157,6 +157,16 @@ def _dnxhd_codec_args(stream_data, source_ffmpeg_cmd):
     if pix_fmt:
         output.extend(["-pix_fmt", pix_fmt])
 
+    # Use arguments from source if are available source arguments
+    if source_ffmpeg_cmd:
+        copy_args = (
+            "-b:v", "-vb",
+        )
+        args = source_ffmpeg_cmd.split(" ")
+        for idx, arg in enumerate(args):
+            if arg in copy_args:
+                output.extend([arg, args[idx + 1]])
+
     output.extend(["-g", "1"])
     return output
 
@@ -242,7 +252,7 @@ class ModifiedBurnins(ffmpeg_burnins.Burnins):
         - required IF start frame is not set when using frames or timecode burnins
 
     On initializing class can be set General options through "options_init" arg.
-    General can be overriden when adding burnin
+    General can be overridden when adding burnin
 
     '''
     TOP_CENTERED = ffmpeg_burnins.TOP_CENTERED
@@ -539,7 +549,7 @@ def burnins_from_data(
         codec_data (list): All codec related arguments in list.
         options (dict): Options for burnins.
         burnin_values (dict): Contain positioned values.
-        overwrite (bool): Output will be overriden if already exists,
+        overwrite (bool): Output will be overwritten if already exists,
             True by default.
 
     Presets must be set separately. Should be dict with 2 keys:
@@ -716,6 +726,15 @@ def burnins_from_data(
         ffmpeg_args.extend(
             get_codec_args(burnin.ffprobe_data, source_ffmpeg_cmd)
         )
+        # Use arguments from source if are available source arguments
+        if source_ffmpeg_cmd:
+            copy_args = (
+                "-metadata",
+            )
+            args = source_ffmpeg_cmd.split(" ")
+            for idx, arg in enumerate(args):
+                if arg in copy_args:
+                    ffmpeg_args.extend([arg, args[idx + 1]])
 
     # Use group one (same as `-intra` argument, which is deprecated)
     ffmpeg_args_str = " ".join(ffmpeg_args)

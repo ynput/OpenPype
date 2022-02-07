@@ -125,7 +125,7 @@ class Anatomy:
 
     @staticmethod
     def _prepare_anatomy_data(anatomy_data):
-        """Prepare anatomy data for futher processing.
+        """Prepare anatomy data for further processing.
 
         Method added to replace `{task}` with `{task[name]}` in templates.
         """
@@ -722,7 +722,7 @@ class Templates:
         First is collecting all global keys (keys in top hierarchy where value
         is not dictionary). All global keys are set for all group keys (keys
         in top hierarchy where value is dictionary). Value of a key is not
-        overriden in group if already contain value for the key.
+        overridden in group if already contain value for the key.
 
         In second part all keys with "at" symbol in value are replaced with
         value of the key afterward "at" symbol from the group.
@@ -802,7 +802,7 @@ class Templates:
 
         Result:
             tuple: Contain origin template without missing optional keys and
-                withoud optional keys identificator ("<" and ">"), information
+                without optional keys identificator ("<" and ">"), information
                 about missing optional keys and invalid types of optional keys.
 
         """
@@ -1568,8 +1568,11 @@ class Roots:
             key_items = [self.env_prefix]
             for _key in keys:
                 key_items.append(_key.upper())
+
             key = "_".join(key_items)
-            return {key: roots.value}
+            # Make sure key and value does not contain unicode
+            #   - can happen in Python 2 hosts
+            return {str(key): str(roots.value)}
 
         output = {}
         for _key, _value in roots.items():
@@ -1625,7 +1628,7 @@ class Roots:
         This property returns roots for current project or default root values.
         Warning:
             Default roots value may cause issues when project use different
-            roots settings. That may happend when project use multiroot
+            roots settings. That may happen when project use multiroot
             templates but default roots miss their keys.
         """
         if self.project_name != self.loaded_project:

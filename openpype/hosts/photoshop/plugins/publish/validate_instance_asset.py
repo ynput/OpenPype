@@ -1,7 +1,7 @@
 from avalon import api
 import pyblish.api
 import openpype.api
-from avalon import photoshop
+from openpype.hosts.photoshop import api as photoshop
 
 
 class ValidateInstanceAssetRepair(pyblish.api.Action):

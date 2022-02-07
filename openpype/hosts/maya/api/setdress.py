@@ -9,8 +9,10 @@ import six
 from maya import cmds
 
 from avalon import api, io
-from avalon.maya.lib import unique_namespace
-from openpype.hosts.maya.api.lib import matrix_equals
+from openpype.hosts.maya.api.lib import (
+    matrix_equals,
+    unique_namespace
+)
 
 log = logging.getLogger("PackageLoader")
 
@@ -239,7 +241,7 @@ def get_contained_containers(container):
     """
 
     import avalon.schema
-    from avalon.maya.pipeline import parse_container
+    from .pipeline import parse_container
 
     # Get avalon containers in this package setdress container
     containers = []
@@ -341,7 +343,7 @@ def update_package(set_container, representation):
 def update_scene(set_container, containers, current_data, new_data, new_file):
     """Updates the hierarchy, assets and their matrix
 
-    Updates the following withing the scene:
+    Updates the following within the scene:
         * Setdress hierarchy alembic
         * Matrix
         * Parenting

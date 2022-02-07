@@ -194,6 +194,8 @@ class TasksWidget(QtWidgets.QWidget):
     task_changed = QtCore.Signal()
 
     def __init__(self, dbcon, parent=None):
+        self._dbcon = dbcon
+
         super(TasksWidget, self).__init__(parent)
 
         tasks_view = DeselectableTreeView(self)
@@ -204,9 +206,8 @@ class TasksWidget(QtWidgets.QWidget):
         header_view = tasks_view.header()
         header_view.setSortIndicator(0, QtCore.Qt.AscendingOrder)
 
-        tasks_model = TasksModel(dbcon)
-        tasks_proxy = TasksProxyModel()
-        tasks_proxy.setSourceModel(tasks_model)
+        tasks_model = self._create_source_model()
+        tasks_proxy = self._create_proxy_model(tasks_model)
         tasks_view.setModel(tasks_proxy)
 
         layout = QtWidgets.QVBoxLayout(self)
@@ -221,6 +222,19 @@ class TasksWidget(QtWidgets.QWidget):
         self._tasks_view = tasks_view
 
         self._last_selected_task_name = None
+
+    def _create_source_model(self):
+        """Create source model of tasks widget.
+
+        Model must have available 'refresh' method and 'set_asset_id' to change
+        context of asset.
+        """
+        return TasksModel(self._dbcon)
+
+    def _create_proxy_model(self, source_model):
+        proxy = TasksProxyModel()
+        proxy.setSourceModel(source_model)
+        return proxy
 
     def refresh(self):
         self._tasks_model.refresh()
@@ -240,6 +254,10 @@ class TasksWidget(QtWidgets.QWidget):
 
         # Force a task changed emit.
         self.task_changed.emit()
+
+    def _clear_selection(self):
+        selection_model = self._tasks_view.selectionModel()
+        selection_model.clearSelection()
 
     def select_task_name(self, task_name):
         """Select a task by name.
@@ -270,6 +288,10 @@ class TasksWidget(QtWidgets.QWidget):
                 # Set the currently active index
                 self._tasks_view.setCurrentIndex(index)
                 break
+
+        last_selected_task_name = self.get_selected_task_name()
+        if last_selected_task_name:
+            self._last_selected_task_name = last_selected_task_name
 
     def get_selected_task_name(self):
         """Return name of task at current index (selected)

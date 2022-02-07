@@ -94,6 +94,7 @@ class AttributeValues:
         attr_defs_by_key = {
             attr_def.key: attr_def
             for attr_def in attr_defs
+            if attr_def.is_value_def
         }
         for key, value in values.items():
             if key not in attr_defs_by_key:
@@ -306,8 +307,6 @@ class PublishAttributes:
         self._plugin_names_order = []
         self._missing_plugins = []
         self.attr_plugins = attr_plugins or []
-        if not attr_plugins:
-            return
 
         origin_data = self._origin_data
         data = self._data
@@ -420,7 +419,7 @@ class CreatedInstance:
         # Stored creator specific attribute values
         # {key: value}
         creator_values = copy.deepcopy(orig_creator_attributes)
-        creator_attr_defs = creator.get_attribute_defs()
+        creator_attr_defs = creator.get_instance_attr_defs()
 
         self._data["creator_attributes"] = CreatorAttributeValues(
             self, creator_attr_defs, creator_values, orig_creator_attributes

@@ -222,7 +222,7 @@ class LocalSettingsWindow(QtWidgets.QWidget):
         # Do not create local settings widget in init phase as it's using
         #   settings objects that must be OK to be able create this widget
         #   - we want to show dialog if anything goes wrong
-        #   - without reseting nothing is shown
+        #   - without resetting nothing is shown
         self._settings_widget = None
         self._scroll_widget = scroll_widget
         self.reset_btn = reset_btn

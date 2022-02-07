@@ -2,10 +2,10 @@
 """Redshift Proxy extractor."""
 import os
 
-import avalon.maya
-import openpype.api
-
 from maya import cmds
+
+import openpype.api
+from openpype.hosts.maya.api.lib import maintained_selection
 
 
 class ExtractRedshiftProxy(openpype.api.Extractor):
@@ -54,7 +54,7 @@ class ExtractRedshiftProxy(openpype.api.Extractor):
 
         # Write out rs file
         self.log.info("Writing: '%s'" % file_path)
-        with avalon.maya.maintained_selection():
+        with maintained_selection():
             cmds.select(instance.data["setMembers"], noExpand=True)
             cmds.file(file_path,
                       pr=False,

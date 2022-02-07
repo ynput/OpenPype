@@ -9,7 +9,7 @@ class ValidateRigContents(pyblish.api.InstancePlugin):
 
     Every rig must contain at least two object sets:
         "controls_SET" - Set of all animatable controls
-        "out_SET" - Set of all cachable meshes
+        "out_SET" - Set of all cacheable meshes
 
     """
 

@@ -12,8 +12,7 @@ from collections import OrderedDict
 from maya import cmds  # noqa
 
 import pyblish.api
-import avalon.maya
-from avalon import io, api
+from avalon import io
 
 import openpype.api
 from openpype.hosts.maya.api import lib
@@ -21,6 +20,11 @@ from openpype.hosts.maya.api import lib
 # Modes for transfer
 COPY = 1
 HARDLINK = 2
+
+
+def escape_space(path):
+    """Ensure path is enclosed by quotes to allow paths with spaces"""
+    return '"{}"'.format(path) if " " in path else path
 
 
 def find_paths_by_hash(texture_hash):
@@ -82,7 +86,7 @@ def maketx(source, destination, *args):
     ]
 
     cmd.extend(args)
-    cmd.extend(["-o", destination, source])
+    cmd.extend(["-o", escape_space(destination), escape_space(source)])
 
     cmd = " ".join(cmd)
 
@@ -240,7 +244,7 @@ class ExtractLook(openpype.api.Extractor):
                 # getting incorrectly remapped. (LKD-17, PLN-101)
                 with no_workspace_dir():
                     with lib.attribute_values(remap):
-                        with avalon.maya.maintained_selection():
+                        with lib.maintained_selection():
                             cmds.select(sets, noExpand=True)
                             cmds.file(
                                 maya_path,
@@ -320,7 +324,6 @@ class ExtractLook(openpype.api.Extractor):
         do_maketx = instance.data.get("maketx", False)
 
         # Collect all unique files used in the resources
-        files = set()
         files_metadata = {}
         for resource in resources:
             # Preserve color space values (force value after filepath change)
@@ -331,7 +334,6 @@ class ExtractLook(openpype.api.Extractor):
             for f in resource["files"]:
                 files_metadata[os.path.normpath(f)] = {
                     "color_space": color_space}
-                # files.update(os.path.normpath(f))
 
         # Process the resource files
         transfers = []
@@ -339,7 +341,6 @@ class ExtractLook(openpype.api.Extractor):
         hashes = {}
         force_copy = instance.data.get("forceCopy", False)
 
-        self.log.info(files)
         for filepath in files_metadata:
 
             linearize = False
@@ -498,7 +499,7 @@ class ExtractLook(openpype.api.Extractor):
                 # Include `source-hash` as string metadata
                 "-sattrib",
                 "sourceHash",
-                texture_hash,
+                escape_space(texture_hash),
                 colorconvert,
             )
 

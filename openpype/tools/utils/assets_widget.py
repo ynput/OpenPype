@@ -306,6 +306,8 @@ class AssetModel(QtGui.QStandardItemModel):
         self._items_with_color_by_id = {}
         self._items_by_asset_id = {}
 
+        self._last_project_name = None
+
     @property
     def refreshing(self):
         return self._refreshing
@@ -347,7 +349,7 @@ class AssetModel(QtGui.QStandardItemModel):
 
         return self.get_indexes_by_asset_ids(asset_ids)
 
-    def refresh(self, force=False, clear=False):
+    def refresh(self, force=False):
         """Refresh the data for the model.
 
         Args:
@@ -360,7 +362,13 @@ class AssetModel(QtGui.QStandardItemModel):
                 return
             self.stop_refresh()
 
-        if clear:
+        project_name = self.dbcon.Session.get("AVALON_PROJECT")
+        clear_model = False
+        if project_name != self._last_project_name:
+            clear_model = True
+            self._last_project_name = project_name
+
+        if clear_model:
             self._clear_items()
 
         # Fetch documents from mongo
@@ -401,11 +409,18 @@ class AssetModel(QtGui.QStandardItemModel):
             self._clear_items()
             return
 
+        self._fill_assets(self._doc_payload)
+
+        self.refreshed.emit(bool(self._items_by_asset_id))
+
+        self._stop_fetch_thread()
+
+    def _fill_assets(self, asset_docs):
         # Collect asset documents as needed
         asset_ids = set()
         asset_docs_by_id = {}
         asset_ids_by_parents = collections.defaultdict(set)
-        for asset_doc in self._doc_payload:
+        for asset_doc in asset_docs:
             asset_id = asset_doc["_id"]
             asset_data = asset_doc.get("data") or {}
             parent_id = asset_data.get("visualParent")
@@ -511,10 +526,6 @@ class AssetModel(QtGui.QStandardItemModel):
             except Exception:
                 pass
 
-        self.refreshed.emit(bool(self._items_by_asset_id))
-
-        self._stop_fetch_thread()
-
     def _threaded_fetch(self):
         asset_docs = self._fetch_asset_docs()
         if not self._refreshing:
@@ -582,11 +593,8 @@ class AssetsWidget(QtWidgets.QWidget):
         self.dbcon = dbcon
 
         # Tree View
-        model = AssetModel(dbcon=self.dbcon, parent=self)
-        proxy = RecursiveSortFilterProxyModel()
-        proxy.setSourceModel(model)
-        proxy.setFilterCaseSensitivity(QtCore.Qt.CaseInsensitive)
-        proxy.setSortCaseSensitivity(QtCore.Qt.CaseInsensitive)
+        model = self._create_source_model()
+        proxy = self._create_proxy_model(model)
 
         view = AssetsView(self)
         view.setModel(proxy)
@@ -627,10 +635,10 @@ class AssetsWidget(QtWidgets.QWidget):
         selection_model = view.selectionModel()
         selection_model.selectionChanged.connect(self._on_selection_change)
         refresh_btn.clicked.connect(self.refresh)
-        current_asset_btn.clicked.connect(self.set_current_session_asset)
-        model.refreshed.connect(self._on_model_refresh)
+        current_asset_btn.clicked.connect(self._on_current_asset_click)
         view.doubleClicked.connect(self.double_clicked)
 
+        self._refresh_btn = refresh_btn
         self._current_asset_btn = current_asset_btn
         self._model = model
         self._proxy = proxy
@@ -639,25 +647,51 @@ class AssetsWidget(QtWidgets.QWidget):
 
         self.model_selection = {}
 
+    def _create_source_model(self):
+        model = AssetModel(dbcon=self.dbcon, parent=self)
+        model.refreshed.connect(self._on_model_refresh)
+        return model
+
+    def _create_proxy_model(self, source_model):
+        proxy = RecursiveSortFilterProxyModel()
+        proxy.setSourceModel(source_model)
+        proxy.setFilterCaseSensitivity(QtCore.Qt.CaseInsensitive)
+        proxy.setSortCaseSensitivity(QtCore.Qt.CaseInsensitive)
+        return proxy
+
     @property
     def refreshing(self):
         return self._model.refreshing
 
     def refresh(self):
-        project_name = self.dbcon.Session.get("AVALON_PROJECT")
-        clear_model = False
-        if project_name != self._last_project_name:
-            clear_model = True
-            self._last_project_name = project_name
-        self._refresh_model(clear_model)
+        self._refresh_model()
 
     def stop_refresh(self):
         self._model.stop_refresh()
 
+    def _get_current_session_asset(self):
+        return self.dbcon.Session.get("AVALON_ASSET")
+
+    def _on_current_asset_click(self):
+        """Trigger change of asset to current context asset.
+        This separation gives ability to override this method and use it
+        in differnt way.
+        """
+        self.set_current_session_asset()
+
     def set_current_session_asset(self):
-        asset_name = self.dbcon.Session.get("AVALON_ASSET")
+        asset_name = self._get_current_session_asset()
         if asset_name:
             self.select_asset_by_name(asset_name)
+
+    def set_refresh_btn_visibility(self, visible=None):
+        """Hide set refresh button.
+        Some tools may have their global refresh button or do not support
+        refresh at all.
+        """
+        if visible is None:
+            visible = not self._refresh_btn.isVisible()
+        self._refresh_btn.setVisible(visible)
 
     def set_current_asset_btn_visibility(self, visible=None):
         """Hide set current asset button.
@@ -691,21 +725,31 @@ class AssetsWidget(QtWidgets.QWidget):
         self._proxy.setFilterFixedString(new_text)
 
     def _on_model_refresh(self, has_item):
+        """This method should be triggered on model refresh.
+
+        Default implementation register this callback in '_create_source_model'
+        so if you're modifying model keep in mind that this method should be
+        called when refresh is done.
+        """
         self._proxy.sort(0)
         self._set_loading_state(loading=False, empty=not has_item)
         self.refreshed.emit()
 
-    def _refresh_model(self, clear=False):
+    def _refresh_model(self):
         # Store selection
         self._set_loading_state(loading=True, empty=True)
 
         # Trigger signal before refresh is called
         self.refresh_triggered.emit()
         # Refresh model
-        self._model.refresh(clear=clear)
+        self._model.refresh()
 
     def _set_loading_state(self, loading, empty):
         self._view.set_loading_state(loading, empty)
+
+    def _clear_selection(self):
+        selection_model = self._view.selectionModel()
+        selection_model.clearSelection()
 
     def _select_indexes(self, indexes):
         valid_indexes = [

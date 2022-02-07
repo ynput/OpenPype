@@ -21,19 +21,23 @@
         },
         {
             "type": "label",
-            "label": "Additional Ftrack paths"
+            "label": "Additional Ftrack event handlers paths"
         },
         {
-            "type": "list",
+            "type": "path",
             "key": "ftrack_actions_path",
-            "label": "Action paths",
-            "object_type": "text"
+            "label": "User paths",
+            "use_label_wrap": true,
+            "multipath": true,
+            "multiplatform": true
         },
         {
-            "type": "list",
+            "type": "path",
             "key": "ftrack_events_path",
-            "label": "Event paths",
-            "object_type": "text"
+            "label": "Server paths",
+            "use_label_wrap": true,
+            "multipath": true,
+            "multiplatform": true
         },
         {
             "type": "separator"
