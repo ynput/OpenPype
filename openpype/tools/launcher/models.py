@@ -320,7 +320,7 @@ class ActionModel(QtGui.QStandardItemModel):
             action = action[0]
 
         compare_data = {}
-        if action:
+        if action and action.label:
             compare_data = {
                 "app_label": action.label.lower(),
                 "project_name": self.dbcon.Session["AVALON_PROJECT"],
