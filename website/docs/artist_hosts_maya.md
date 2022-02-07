@@ -94,7 +94,7 @@ or publishing phase. Empty one with gray text is disabled.
 
 See that in this case we are publishing from scene file `model_test_v01.mb` in
 Maya model named `modelMain (ben)` (next item). Publishing of workfile is
-currenly disabled (last item).
+currently disabled (last item).
 
 Right column lists all tasks that are run during collection, validation,
 extraction and integration phase. White items are optional and you can disable
@@ -628,7 +628,7 @@ Yeti cache set and opening *Extra attributes* in Maya **Attribute Editor**.
 Those attributes there are self-explanatory, but:
 
 - `Preroll` is number of frames simulation will run before cache frames are stored.
-This is usefull to "steady" simulation for example.
+This is useful to "steady" simulation for example.
 - `Frame Start` from what frame we start to store cache files
 - `Frame End` to what frame we are storing cache files
 - `Fps` of cache
@@ -715,7 +715,7 @@ For actual publishing of your groom to go **OpenPype → Publish** and then pres
 
 
 :::tip adding more descriptions
-You can add multiple xgen desctiption into the subset you are about to publish, simply by
+You can add multiple xgen description into the subset you are about to publish, simply by
 adding them to the maya set that was created for you. Please make sure that only xgen description nodes are present inside of the set and not the scalp geometry. 
 :::
 
@@ -753,7 +753,7 @@ parameters to it - Redshift will then represent proxy with bounding box.
 
 ## Using VRay Proxies
 
-OpenPype support publishing, loading and using of VRay Proxy in look management. Their underlaying format
+OpenPype support publishing, loading and using of VRay Proxy in look management. Their underlying format
 can be either vrmesh or alembic.
 
 :::warning vrmesh or alembic and look management

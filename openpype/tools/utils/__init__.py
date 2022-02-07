@@ -3,6 +3,8 @@ from .widgets import (
     BaseClickableFrame,
     ClickableFrame,
     ExpandBtn,
+    PixmapLabel,
+    IconButton,
 )
 
 from .error_dialog import ErrorMessageBox
@@ -14,12 +16,17 @@ from .lib import (
     DynamicQThread,
 )
 
+from .models import (
+    RecursiveSortFilterProxyModel,
+)
 
 __all__ = (
     "PlaceholderLineEdit",
     "BaseClickableFrame",
     "ClickableFrame",
     "ExpandBtn",
+    "PixmapLabel",
+    "IconButton",
 
     "ErrorMessageBox",
 
@@ -28,4 +35,6 @@ __all__ = (
     "get_warning_pixmap",
     "set_style_property",
     "DynamicQThread",
+
+    "RecursiveSortFilterProxyModel",
 )
