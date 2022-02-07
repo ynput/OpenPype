@@ -8,10 +8,9 @@ from functools import partial
 import maya.cmds as mc
 import maya.mel as mel
 
-from avalon.maya import pipeline
 from openpype.api import resources
 from openpype.tools.utils import host_tools
-
+from .lib import get_main_window
 
 log = logging.getLogger(__name__)
 
@@ -76,6 +75,7 @@ def override_component_mask_commands():
 def override_toolbox_ui():
     """Add custom buttons in Toolbox as replacement for Maya web help icon."""
     icons = resources.get_resource("icons")
+    parent_widget = get_main_window()
 
     # Ensure the maya web icon on toolbox exists
     web_button = "ToolBox|MainToolboxLayout|mayaWebButton"
@@ -115,7 +115,7 @@ def override_toolbox_ui():
             label="Work Files",
             image=os.path.join(icons, "workfiles.png"),
             command=lambda: host_tools.show_workfiles(
-                parent=pipeline._parent
+                parent=parent_widget
             ),
             width=icon_size,
             height=icon_size,
@@ -130,7 +130,7 @@ def override_toolbox_ui():
             label="Loader",
             image=os.path.join(icons, "loader.png"),
             command=lambda: host_tools.show_loader(
-                parent=pipeline._parent, use_context=True
+                parent=parent_widget, use_context=True
             ),
             width=icon_size,
             height=icon_size,
@@ -145,7 +145,7 @@ def override_toolbox_ui():
             label="Inventory",
             image=os.path.join(icons, "inventory.png"),
             command=lambda: host_tools.show_scene_inventory(
-                parent=pipeline._parent
+                parent=parent_widget
             ),
             width=icon_size,
             height=icon_size,
