@@ -1,10 +1,10 @@
 import os
-
-from maya import cmds
 import contextlib
 
-import avalon.maya
+from maya import cmds
+
 import openpype.api
+from openpype.hosts.maya.api.lib import maintained_selection
 
 
 class ExtractAssProxy(openpype.api.Extractor):
@@ -54,7 +54,7 @@ class ExtractAssProxy(openpype.api.Extractor):
                           noIntermediate=True)
         self.log.info(members)
 
-        with avalon.maya.maintained_selection():
+        with maintained_selection():
             with unparent(members[0]):
                 cmds.select(members, noExpand=True)
                 cmds.file(path,
