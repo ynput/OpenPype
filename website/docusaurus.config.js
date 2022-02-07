@@ -17,9 +17,15 @@ module.exports = {
         },
         theme: {
           customCss: require.resolve('./src/css/custom.css')
-        }
+        },
+        gtag: {
+        trackingID: 'G-DTKXMFENFY',
+        // Optional fields.
+        anonymizeIP: false, // Should IPs be anonymized?
       }
-    ]
+      }
+    ],
+    
   ],
   themeConfig: {
     colorMode: {
@@ -58,14 +64,16 @@ module.exports = {
           position: 'left'
         },
           {
-            href: 'https://pype.club',
-            label: 'pypeclub',
+            to: 'https://pype.club',
+            'aria-label': 'pypeclub',
+            className: 'header-pypeclub-link',
             position: 'right',
           },{
-          href: 'https://github.com/pypeclub',
-          label: 'Github',
+          to: 'https://github.com/pypeclub',
+          'aria-label': 'Github',
+          className: 'header-github-link',
           position: 'right',
-        },
+        }
       ]
     },
     footer: {
@@ -115,12 +123,7 @@ module.exports = {
       contextualSearch: true,
       // Optional: Algolia search parameters
       searchParameters: {},
-    },
-    gtag: {
-      trackingID: 'G-DTKXMFENFY',
-      // Optional fields.
-      anonymizeIP: false, // Should IPs be anonymized?
-    },
+    }
   },
   stylesheets: [
         'https://use.fontawesome.com/releases/v5.7.2/css/all.css'
