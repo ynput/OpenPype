@@ -1,0 +1,21 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<root>
+<error id="main">
+<title>Alembic input</title>
+<description>## Invalid Alembic input
+
+The node connected to the output is incorrect.
+It contains primitive types that are not supported for alembic output.
+
+Problematic primitive is of type {primitive_type}
+
+
+</description>
+<detail>
+
+The connected node cannot be of the following types for Alembic:
+    - VDB
+    - Volume
+</detail>
+</error>
+</root>
