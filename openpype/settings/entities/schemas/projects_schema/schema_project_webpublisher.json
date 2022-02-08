@@ -59,11 +59,6 @@
                                             "type": "text",
                                             "key": "result_family",
                                             "label": "Resulting family"
-                                        },
-                                        {
-                                            "type": "text",
-                                            "key": "subset_template_name",
-                                            "label": "Subset template name"
                                         }
                                     ]
                                 }

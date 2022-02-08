@@ -10,8 +10,7 @@
                         ],
                         "families": [],
                         "tags": [],
-                        "result_family": "workfile",
-                        "subset_template_name": "{family}{Variant}"
+                        "result_family": "workfile"
                     },
                     {
                         "is_sequence": true,
@@ -27,8 +26,7 @@
                         "tags": [
                             "review"
                         ],
-                        "result_family": "render",
-                        "subset_template_name": "{family}{Variant}"
+                        "result_family": "render"
                     }
                 ],
                 "Compositing": [
@@ -39,8 +37,7 @@
                         ],
                         "families": [],
                         "tags": [],
-                        "result_family": "workfile",
-                        "subset_template_name": "{family}{Variant}"
+                        "result_family": "workfile"
                     },
                     {
                         "is_sequence": true,
@@ -56,8 +53,7 @@
                         "tags": [
                             "review"
                         ],
-                        "result_family": "render",
-                        "subset_template_name": "{family}{Variant}"
+                        "result_family": "render"
                     }
                 ],
                 "Layout": [
@@ -68,8 +64,7 @@
                         ],
                         "families": [],
                         "tags": [],
-                        "result_family": "workfile",
-                        "subset_template_name": "{family}{Variant}"
+                        "result_family": "workfile"
                     },
                     {
                         "is_sequence": false,
@@ -86,8 +81,7 @@
                         "tags": [
                             "review"
                         ],
-                        "result_family": "image",
-                        "subset_template_name": "{family}{Variant}"
+                        "result_family": "image"
                     }
                 ],
                 "default_task_type": [
@@ -99,8 +93,7 @@
                         ],
                         "families": [],
                         "tags": [],
-                        "result_family": "workfile",
-                        "subset_template_name": "{family}{Variant}"
+                        "result_family": "workfile"
                     },
                     {
                         "is_sequence": true,
@@ -116,8 +109,7 @@
                         "tags": [
                             "review"
                         ],
-                        "result_family": "render",
-                        "subset_template_name": "{family}{Variant}"
+                        "result_family": "render"
                     }
                 ],
                 "__dynamic_keys_labels__": {
