@@ -187,22 +187,43 @@ def sync_local():
         insert_list = []
 
         bulk_writes = []
-        for zou_asset in all_assets:
-            doc_data = {"zou_id": zou_asset["id"]}
+        for asset in all_assets:
+            asset_data = {"zou_id": asset["id"]}
+
+            # Set tasks
+            asset_tasks = gazu.task.all_tasks_for_asset(asset)
+            asset_data["tasks"] = {
+                t["task_type_name"]: {"type": t["task_type_name"]} for t in asset_tasks
+            }
 
             # Create Asset
-            new_doc = {
-                "name": zou_asset["name"],
+            asset_doc = {
+                "name": asset["name"],
                 "type": "asset",
                 "schema": "openpype:asset-3.0",
-                "data": doc_data,
+                "data": asset_data,
                 "parent": project_doc["_id"],
             }
 
-            if zou_asset["id"] not in asset_docs_zou_ids:  # Item is new
-                insert_list.append(new_doc)
+            if asset["id"] not in asset_docs_zou_ids:  # Item is new
+                insert_list.append(asset_doc)
+            else:
+                asset_doc = project_col.find_one({"data": {"zou_id": asset["id"]}})
 
-            # TODO tasks
+                # TODO update
+            # for task in asset_tasks:
+            #     # print(task)
+            #     task_data = {"zou_id": task["id"]}
+
+            #     # Create Task
+            #     task_doc = {
+            #         "name": task["name"],
+            #         "type": "task",
+            #         "schema": "openpype:asset-3.0",
+            #         "data": task_data,
+            #         "parent": asset_doc["_id"],
+            #     }
+            #     insert_list.append(task_doc)
 
             # elif item.data(REMOVED_ROLE): # TODO removal
             #     if item.data(HIERARCHY_CHANGE_ABLE_ROLE):
