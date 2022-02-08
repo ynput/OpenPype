@@ -1,6 +1,7 @@
 import os
 import re
 
+import hou
 import pyblish.api
 from openpype.hosts.houdini.api import lib
 
