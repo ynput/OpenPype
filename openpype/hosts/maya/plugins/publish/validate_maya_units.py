@@ -37,6 +37,8 @@ class ValidateMayaUnits(pyblish.api.ContextPlugin):
         # fps to two decimal places but Maya 2019+ is reporting those fps
         # with much higher resolution. As we currently cannot fix Ftrack
         # rounding, we have to round those numbers coming from Maya.
+        # NOTE: this must be revisited yet again as it seems that Ftrack is
+        # now flooring the value?
         fps = float_round(context.data['fps'], 2, ceil)
 
         asset_fps = lib.get_asset()["data"]["fps"]
@@ -53,7 +55,8 @@ class ValidateMayaUnits(pyblish.api.ContextPlugin):
             and linearunits
             and linearunits != self.linear_units
         ):
-            self.log.error("Scene linear units must be centimeters")
+            self.log.error("Scene linear units must be {}".format(
+                self.linear_units))
             valid = False
 
         if (
@@ -61,7 +64,8 @@ class ValidateMayaUnits(pyblish.api.ContextPlugin):
             and angularunits
             and angularunits != self.angular_units
         ):
-            self.log.error("Scene angular units must be degrees")
+            self.log.error("Scene angular units must be {}".format(
+                self.angular_units))
             valid = False
 
         if self.validate_fps and fps and fps != asset_fps:
