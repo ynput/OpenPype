@@ -16,8 +16,17 @@ class CollectFrames(pyblish.api.InstancePlugin):
 
         ropnode = instance[0]
 
+        start_frame = instance.data.get("frameStart", None)
+        end_frame = instance.data.get("frameEnd", None)
+
         output_parm = lib.get_output_parameter(ropnode)
-        output = output_parm.eval()
+        if start_frame is not None:
+            # When rendering only a single frame still explicitly
+            # get the name for that particular frame instead of current frame
+            output = output_parm.evalAtFrame(start_frame)
+        else:
+            self.log.warning("Using current frame: {}".format(hou.frame()))
+            output = output_parm.eval()
 
         _, ext = os.path.splitext(output)
         file_name = os.path.basename(output)
@@ -29,9 +38,6 @@ class CollectFrames(pyblish.api.InstancePlugin):
         # is a frame pattern in the name
         pattern = r"\w+\.(\d+)" + re.escape(ext)
         match = re.match(pattern, file_name)
-
-        start_frame = instance.data.get("frameStart", None)
-        end_frame = instance.data.get("frameEnd", None)
 
         if match and start_frame is not None:
 
