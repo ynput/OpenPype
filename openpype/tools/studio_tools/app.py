@@ -1,8 +1,8 @@
 import sys
 import os
-import PySide2.QtCore as QtCore
-import PySide2.QtWidgets as QtWidgets
-from pyblish_pype import util
+from Qt import QtCore
+from Qt import QtWidgets
+from openpype import style
 from openpype.settings import get_project_settings
 from openpype.tools.utils import lib as tools_lib
 
@@ -19,14 +19,7 @@ class StudioToolsDialog(QtWidgets.QWidget):
         super(StudioToolsDialog, self).__init__(parent)
 
         self.resize(400, 300)
-        with open(util.get_asset("app.css")) as f:
-            css = f.read()
-
-        # Make relative paths absolute
-        root = util.get_asset("").replace("\\", "/")
-        css = css.replace("url(\"", "url(\"%s" % root)
-
-        self.setStyleSheet(css)
+        self.setStyleSheet(style.load_stylesheet())
 
         project_settings = get_project_settings(os.getenv("AVALON_PROJECT"))
         host = os.getenv("AVALON_APP")
