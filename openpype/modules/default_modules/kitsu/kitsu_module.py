@@ -6,20 +6,27 @@ in global space here until are required or used.
 - imports of Python 3 packages
     - we still support Python 2 hosts where addon definition should available
 """
-
+import collections
 import os
 import click
 
+from avalon.api import AvalonMongoDB
+import gazu
+from openpype.api import get_project_basic_paths, create_project_folders
+from openpype.lib import create_project
+from openpype.lib.anatomy import Anatomy
 from openpype.modules import (
     JsonFilesSettingsDef,
     OpenPypeModule,
     ModulesManager
 )
+from openpype.tools.project_manager.project_manager.model import AssetItem, ProjectItem, TaskItem
 # Import interface defined by this addon to be able find other addons using it
 from openpype_interfaces import (
     IPluginPaths,
     ITrayAction
 )
+from pymongo import UpdateOne, DeleteOne
 
 
 # Settings definition of this addon using `JsonFilesSettingsDef`
@@ -60,8 +67,26 @@ class KitsuModule(OpenPypeModule, IPluginPaths, ITrayAction):
     def initialize(self, settings):
         """Initialization of addon."""
         module_settings = settings[self.name]
+
         # Enabled by settings
         self.enabled = module_settings.get("enabled", False)
+
+        # Add API URL schema
+        kitsu_url = module_settings["server"].strip()
+        if kitsu_url:
+            # Ensure web url
+            if not kitsu_url.startswith("http"):
+                kitsu_url = "https://" + kitsu_url
+
+            # Check for "/api" url validity
+            if not kitsu_url.endswith("api"):
+                kitsu_url = f"{kitsu_url}{'' if kitsu_url.endswith('/') else '/'}api"
+
+        self.server_url = kitsu_url
+
+        # Set credentials
+        self.script_login = module_settings["script_login"]
+        self.script_pwd = module_settings["script_pwd"]
 
         # Prepare variables that can be used or set afterwards
         self._connected_modules = None
@@ -75,6 +100,14 @@ class KitsuModule(OpenPypeModule, IPluginPaths, ITrayAction):
         """
 
         self._create_dialog()
+
+    def get_global_environments(self):
+        """Kitsu's global environments."""
+        return {
+            "KITSU_SERVER": self.server_url,
+            "KITSU_LOGIN": self.script_login,
+            "KITSU_PWD": self.script_pwd
+        }
 
     def _create_dialog(self):
         # Don't recreate dialog if already exists
@@ -127,10 +160,94 @@ def cli_main():
 
 
 @cli_main.command()
-def nothing():
-    """Does nothing but print a message."""
-    print("You've triggered \"nothing\" command.")
+def sync_local():
+    """Synchronize local database from Zou sever database."""
 
+    # Connect to server
+    gazu.client.set_host(os.environ["KITSU_SERVER"])
+
+    # Authenticate
+    gazu.log_in(os.environ["KITSU_LOGIN"], os.environ["KITSU_PWD"])
+
+    # Iterate projects
+    dbcon = AvalonMongoDB()
+    dbcon.install()
+    all_projects = gazu.project.all_projects()
+    for project in all_projects:
+        # Create project locally
+        # Try to find project document
+        project_name = project["name"]
+        project_code = project_name
+        dbcon.Session["AVALON_PROJECT"] = project_name
+        project_doc = dbcon.find_one({
+            "type": "project"
+        })
+        
+        # Get all assets from zou
+        all_assets = gazu.asset.all_assets_for_project(project)
+
+        # Query all assets of the local project
+        project_col = dbcon.database[project_code]
+        asset_docs_zou_ids = {
+            asset_doc["data"]["zou_id"]
+            for asset_doc in project_col.find({"type": "asset"})
+        }
+
+        # Create project if is not available
+        # - creation is required to be able set project anatomy and attributes
+        if not project_doc:
+            print(f"Creating project '{project_name}'")
+            project_doc = create_project(project_name, project_code, dbcon=dbcon)
+
+        # Create project item
+        insert_list = []
+
+        bulk_writes = []
+        for zou_asset in all_assets:
+            doc_data = {"zou_id": zou_asset["id"]}
+
+            # Create Asset
+            new_doc = {
+                "name": zou_asset["name"],
+                "type": "asset",
+                "schema": "openpype:asset-3.0",
+                "data": doc_data,
+                "parent": project_doc["_id"]
+            }
+
+            if zou_asset["id"] not in asset_docs_zou_ids:  # Item is new
+                insert_list.append(new_doc)
+
+            # TODO tasks
+
+            # elif item.data(REMOVED_ROLE): # TODO removal
+            #     if item.data(HIERARCHY_CHANGE_ABLE_ROLE):
+            #         bulk_writes.append(DeleteOne(
+            #             {"_id": item.asset_id}
+            #         ))
+            #     else:
+            #         bulk_writes.append(UpdateOne(
+            #             {"_id": item.asset_id},
+            #             {"$set": {"type": "archived_asset"}}
+            #         ))
+
+            # else: TODO update data
+            #     update_data = new_item.update_data()
+            #     if update_data:
+            #         bulk_writes.append(UpdateOne(
+            #             {"_id": new_item.asset_id},
+            #             update_data
+            #         ))
+
+        # Insert new docs if created
+        if insert_list:
+            project_col.insert_many(insert_list)
+
+        # Write into DB TODO
+        # if bulk_writes:
+        #     project_col.bulk_write(bulk_writes)
+
+    dbcon.uninstall()
 
 @cli_main.command()
 def show_dialog():
