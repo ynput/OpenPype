@@ -146,6 +146,7 @@ class StdOutBroker:
                 str.capitalize(self.host_name))
         }
         self._send(payload)
+        self.loop_timer.start()
 
     def restart_server(self):
         if self.websocket_server:
