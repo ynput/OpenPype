@@ -233,14 +233,12 @@ class AbstractTemplateLoader:
                     placeholder_representations,
                     dict()).values()
                 for last_representation in placeholder_representations:
-                    if not last_representation:
-                        self.log.warning(placeholder.err_message())
+                    if self.load_data_is_incorrect(
+                            placeholder,
+                            last_representation,
+                            ignored_ids):
                         continue
-                    if (str(last_representation['_id'])
-                       in ignored_ids):
-                        print("Ignoring : ",
-                              last_representation['_id'])
-                        continue
+
                     self.log.info(
                         "Loading {}_{} with loader {}\n"
                         "Loader arguments used : {}".format(
@@ -248,24 +246,50 @@ class AbstractTemplateLoader:
                             last_representation['context']['subset'],
                             placeholder.loader,
                             placeholder.data['loader_args']))
+
+                    self.preload(
+                        placeholder, loaders_by_name, last_representation)
                     try:
-                        container = avalon.api.load(
-                            loaders_by_name[placeholder.loader],
-                            last_representation['_id'],
-                            options=parse_loader_args(
-                                placeholder.data['loader_args']))
+                        container = self.load(
+                            placeholder, loaders_by_name, last_representation)
                     except Exception:
-                        bad_rep = last_representation
-                        self.log.warning(
-                            "Got error trying to load {}:{} with {}\n\n"
-                            "{}".format(
-                                bad_rep['context']['asset'],
-                                bad_rep['context']['subset'],
-                                placeholder.loader,
-                                traceback.format_exc()))
-                    if container:
-                        placeholder.parent_in_hierarchy(container)
-            placeholder.clean()
+                        self.load_failed(placeholder, last_representation)
+                    else:
+                        self.load_succeed(placeholder, container)
+                    finally:
+                        self.postload(placeholder)
+
+    def load_data_is_incorrect(
+            self, placeholder, last_representation, ignored_ids):
+        if not last_representation:
+            self.log.warning(placeholder.err_message())
+            return True
+        if (str(last_representation['_id']) in ignored_ids):
+            print("Ignoring : ", last_representation['_id'])
+            return True
+        return False
+
+    def preload(self, placeholder, loaders_by_name, last_representation):
+        pass
+
+    def load(self, placeholder, loaders_by_name, last_representation):
+        return avalon.api.load(
+            loaders_by_name[placeholder.loader],
+            last_representation['_id'],
+            options=parse_loader_args(placeholder.data['loader_args']))
+
+    def load_succeed(self, placeholder, container):
+        placeholder.parent_in_hierarchy(container)
+
+    def load_failed(self, placeholder, last_representation):
+        self.log.warning("Got error trying to load {}:{} with {}\n\n"
+                         "{}".format(last_representation['context']['asset'],
+                                     last_representation['context']['subset'],
+                                     placeholder.loader,
+                                     traceback.format_exc()))
+
+    def postload(self, placeholder):
+        placeholder.clean()
 
     def update_missing_containers(self):
         loaded_containers_ids = self.get_loaded_containers_by_id()
@@ -343,7 +367,7 @@ class AbstractPlaceholder:
 
     """
 
-    attributes = {'builder_type', 'family', 'representation',
+    attributes = {'builder_type', 'op_family', 'op_representation',
                   'order', 'loader', 'loader_args'}
     optional_attributes = {}
 
@@ -399,7 +423,11 @@ class AbstractPlaceholder:
         Returns:
             Bool: True if every attributes are a key of data
         """
-        return set(self.attributes).issubset(self.data.keys())
+        if set(self.attributes).issubset(self.data.keys()):
+            print("Valid placeholder : {}".format(self.data["node"]))
+            return True
+        print("Placeholder is not valid : {}".format(self.data["node"]))
+        return False
 
     @abstractmethod
     def parent_in_hierarchy(self, containers):
