@@ -48,8 +48,8 @@ class SyncToAvalonEvent(BaseEvent):
     )
 
     entities_query_by_id = (
-        "select id, name, parent_id, link, custom_attributes from TypedContext"
-        " where project_id is \"{}\" and id in ({})"
+        "select id, name, parent_id, link, custom_attributes, description"
+        " from TypedContext where project_id is \"{}\" and id in ({})"
     )
 
     # useful for getting all tasks for asset
@@ -1073,9 +1073,8 @@ class SyncToAvalonEvent(BaseEvent):
             self.create_entity_in_avalon(entity, parent_avalon_ent)
 
             for child in entity["children"]:
-                if child.entity_type.lower() == "task":
-                    continue
-                children_queue.append(child)
+                if child.entity_type.lower() != "task":
+                    children_queue.append(child)
 
         while children_queue:
             entity = children_queue.popleft()
@@ -1145,7 +1144,8 @@ class SyncToAvalonEvent(BaseEvent):
                 "entityType": ftrack_ent.entity_type,
                 "parents": parents,
                 "tasks": {},
-                "visualParent": vis_par
+                "visualParent": vis_par,
+                "description": ftrack_ent["description"]
             }
         }
         cust_attrs = self.get_cust_attr_values(ftrack_ent)
@@ -1822,7 +1822,15 @@ class SyncToAvalonEvent(BaseEvent):
             if ent_cust_attrs is None:
                 ent_cust_attrs = {}
 
-            for key, values in ent_info["changes"].items():
+            ent_changes = ent_info["changes"]
+            if "description" in ent_changes:
+                if "data" not in self.updates[mongo_id]:
+                    self.updates[mongo_id]["data"] = {}
+                self.updates[mongo_id]["data"]["description"] = (
+                    ent_changes["description"]["new"] or ""
+                )
+
+            for key, values in ent_changes.items():
                 if key in hier_attrs_by_key:
                     self.hier_cust_attrs_changes[key].append(ftrack_id)
                     continue
