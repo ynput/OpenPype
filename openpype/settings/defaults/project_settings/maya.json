@@ -488,6 +488,17 @@
                 }
             }
         },
+        "ExtractTurntable": {
+            "templateFile": {
+                "windows": "",
+                "darwin": "",
+                "linux": ""
+            },
+            "frames":2,
+            "cameraShape":"cameraShape",
+            "modelTransform":"Asset_GRP",
+            "lightTransform":"Light_GRP"
+        },
         "ExtractCameraAlembic": {
             "enabled": true,
             "optional": true,
