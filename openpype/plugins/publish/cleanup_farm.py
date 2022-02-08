@@ -42,7 +42,7 @@ class CleanUpFarm(pyblish.api.ContextPlugin):
                 dirpaths_to_remove.add(os.path.normpath(staging_dir))
 
             if "representations" in instance.data:
-                for repre in instance.data["reresentations"]:
+                for repre in instance.data["representations"]:
                     staging_dir = repre.get("stagingDir")
                     if staging_dir:
                         dirpaths_to_remove.add(os.path.normpath(staging_dir))
