@@ -2,7 +2,7 @@ import os
 import re
 from avalon import api
 
-from avalon.houdini import pipeline
+from openpype.hosts.houdini.api import pipeline
 
 
 class VdbLoader(api.Loader):

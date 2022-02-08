@@ -1,5 +1,5 @@
 from avalon import api
-from avalon.houdini import pipeline, lib
+from openpype.hosts.houdini.api import lib, pipeline
 
 
 class USDReferenceLoader(api.Loader):

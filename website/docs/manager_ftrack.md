@@ -12,13 +12,13 @@ Setting project attributes is the key to properly working pipeline.
 ### New Project
 The best practice for creating a new project ready for OpenPype.
 1. First of all you must [create a project](http://ftrack.rtd.ftrack.com/en/stable/using/managing_projects/creating_a_new_project.html) in Ftrack.
-2. All the required attributes need to be populated. The easiest way to do it is by using [Prepare Project](manager_ftrack_actions#prepare-project) action.
+2. All the required attributes need to be populated. The easiest way to do it is by using [Prepare Project](manager_ftrack_actions.md#prepare-project) action.
 
 :::tip
 Do not forget to set up `applications` and `tools`, otherwise users won't be able to launch applications.
 :::
 
-3. Now you can create Project hierarchy with shots, assets, tasks and others, which has [specific rules](#synchronization-rules). [Create Project Structure](manager_ftrack_actions#create-project-structure) action may help you with this step.
+3. Now you can create Project hierarchy with shots, assets, tasks and others, which has [specific rules](#synchronization-rules). [Create Project Structure](manager_ftrack_actions.md#create-project-structure) action may help you with this step.
 4. Last step is to [synchronize](#synchronization-to-avalon-database) project to Avalon database.
 
 :::tip
@@ -29,7 +29,7 @@ Turn on `auto-sync` attribute on your project in ftrack. That way you'll only ne
 This process describes how data from Ftrack will get into Avalon database.
 
 ### How to synchronize
-You can trigger synchronization manually using [Sync To Avalon](manager_ftrack_actions#sync-to-avalon) action.
+You can trigger synchronization manually using [Sync To Avalon](manager_ftrack_actions.md#sync-to-avalon) action.
 
 Synchronization can also be automated with OpenPype's [event server](#event-server) and synchronization events. If your Ftrack is [prepared for OpenPype](#prepare-ftrack-for-openpype), the project should have custom attribute `Avalon auto-sync`. Check the custom attribute to allow auto-updates with event server.
 
@@ -59,4 +59,4 @@ There are certain situations that are very hard, or even impossible to handle au
 
 If you need to move entity or change its name it is possible only in the acse when no-one has worked on it yet. Once work is in progreess, you must archive the old one and create new.
 
-To archive entities you should use [Archive Asset/Subset](manager_ftrack_actions#delete-asset/subset) action. This will remove the selected entity from ftrack and avalon database in mostly non-destructive way, so it can be recovered later. To completely delete all traces of this such entity you'll need to go to OpenPype archive and delete them from there.
+To archive entities you should use [Archive Asset/Subset](manager_ftrack_actions.md#delete-asset/subset) action. This will remove the selected entity from ftrack and avalon database in mostly non-destructive way, so it can be recovered later. To completely delete all traces of this such entity you'll need to go to OpenPype archive and delete them from there.
