@@ -56,11 +56,13 @@ class NonPythonHostHook(PreLaunchHook):
         if platform.system().lower() == "windows":
             # expected behavior - openpype_console opens window with logs
             # openpype_gui has stdout/stderr available for capturing
-            self.launch_context.kwargs.update({
-                "creationflags": subprocess.CREATE_NEW_CONSOLE
-            })
             if "openpype_gui" in os.environ.get("OPENPYPE_EXECUTABLE"):
                 self.launch_context.kwargs.update({
+                    "creationflags": subprocess.CREATE_NO_WINDOW,
                     "stdout": subprocess.DEVNULL,
                     "stderr": subprocess.DEVNULL
+                })
+            else:
+                self.launch_context.kwargs.update({
+                    "creationflags": subprocess.CREATE_NEW_CONSOLE
                 })
