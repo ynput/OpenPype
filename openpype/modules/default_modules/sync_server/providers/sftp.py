@@ -97,7 +97,7 @@ class SFTPHandler(AbstractProvider):
         # {platform} tells that value is multiplatform and only specific OS
         # should be returned
         editable = [
-            # credentials could be overriden on Project or User level
+            # credentials could be overridden on Project or User level
             {
                 'key': "sftp_host",
                 'label': "SFTP host name",
@@ -129,7 +129,7 @@ class SFTPHandler(AbstractProvider):
                 'label': "SFTP user ssh key password",
                 'type': 'text'
             },
-            # roots could be overriden only on Project leve, User cannot
+            # roots could be overridden only on Project level, User cannot
             {
                 "key": "root",
                 "label": "Roots",

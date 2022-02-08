@@ -222,7 +222,7 @@ class DictMutableKeysEntity(EndpointEntity):
         self.required_keys = self.schema_data.get("required_keys") or []
         self.collapsible_key = self.schema_data.get("collapsible_key") or False
         # GUI attributes
-        self.hightlight_content = (
+        self.highlight_content = (
             self.schema_data.get("highlight_content") or False
         )
 

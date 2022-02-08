@@ -15,7 +15,7 @@ provides a bridge between the file-based project inventory and configuration.
 """
 
 import os
-from Qt import QtGui, QtCore
+from Qt import QtGui
 from avalon.vendor import qtawesome
 from openpype.api import resources
 

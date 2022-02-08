@@ -45,9 +45,9 @@ This plugin is set to `true` by default so it will synchronize version of publis
 
 path: `pype-config/presets/plugins/nukestudio/publish.json`
 
-Plugin is responsible for cuting shorter or longer source material for review. Here you can add any aditional tags you wish to be added into extract review process.
+Plugin is responsible for cuting shorter or longer source material for review. Here you can add any additional tags you wish to be added into extract review process.
 
-The plugin generates reedited intermediate video with handless even if it has to add empty black frames. Some productions prefer to use review material without handless so in the example, `no-handles` are added as tags. This allow furter review extractor to publish review without handles, without affecting other outputs.
+The plugin generates reedited intermediate video with handless even if it has to add empty black frames. Some productions prefer to use review material without handless so in the example, `no-handles` are added as tags. This allow further review extractor to publish review without handles, without affecting other outputs.
 
 ```python
 {

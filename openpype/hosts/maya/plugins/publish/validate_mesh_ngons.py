@@ -3,7 +3,6 @@ from maya import cmds
 import pyblish.api
 import openpype.api
 import openpype.hosts.maya.api.action
-from avalon import maya
 from openpype.hosts.maya.api import lib
 
 
