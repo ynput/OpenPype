@@ -12,10 +12,8 @@ import click
 from avalon.api import AvalonMongoDB
 import gazu
 from openpype.lib import create_project
-from openpype.lib.anatomy import Anatomy
 from openpype.modules import JsonFilesSettingsDef, OpenPypeModule, ModulesManager
-
-# Import interface defined by this addon to be able find other addons using it
+from pymongo import DeleteOne, InsertOne, UpdateOne
 from openpype_interfaces import IPluginPaths, ITrayAction
 
 
@@ -183,9 +181,6 @@ def sync_local():
             print(f"Creating project '{project_name}'")
             project_doc = create_project(project_name, project_code, dbcon=dbcon)
 
-        # Create project item
-        insert_list = []
-
         bulk_writes = []
         for asset in all_assets:
             asset_data = {"zou_id": asset["id"]}
@@ -196,34 +191,33 @@ def sync_local():
                 t["task_type_name"]: {"type": t["task_type_name"]} for t in asset_tasks
             }
 
-            # Create Asset
-            asset_doc = {
-                "name": asset["name"],
-                "type": "asset",
-                "schema": "openpype:asset-3.0",
-                "data": asset_data,
-                "parent": project_doc["_id"],
-            }
+            # Update or create asset
+            if asset["id"] in asset_docs_zou_ids:  # Update asset
+                asset_doc = project_col.find_one({"data.zou_id": asset["id"]})
 
-            if asset["id"] not in asset_docs_zou_ids:  # Item is new
-                insert_list.append(asset_doc)
-            else:
-                asset_doc = project_col.find_one({"data": {"zou_id": asset["id"]}})
+                # Override all 'data' TODO filter data to update?
+                diff_data = {
+                    k: asset_data[k]
+                    for k in asset_data.keys()
+                    if asset_doc["data"].get(k) != asset_data[k]
+                }
+                if diff_data:
+                    bulk_writes.append(
+                        UpdateOne(
+                            {"_id": asset_doc["_id"]}, {"$set": {"data": asset_data}}
+                        )
+                    )
+            else:  # Create
+                asset_doc = {
+                    "name": asset["name"],
+                    "type": "asset",
+                    "schema": "openpype:asset-3.0",
+                    "data": asset_data,
+                    "parent": project_doc["_id"],
+                }
 
-                # TODO update
-            # for task in asset_tasks:
-            #     # print(task)
-            #     task_data = {"zou_id": task["id"]}
-
-            #     # Create Task
-            #     task_doc = {
-            #         "name": task["name"],
-            #         "type": "task",
-            #         "schema": "openpype:asset-3.0",
-            #         "data": task_data,
-            #         "parent": asset_doc["_id"],
-            #     }
-            #     insert_list.append(task_doc)
+                # Insert new doc
+                bulk_writes.append(InsertOne(asset_doc))
 
             # elif item.data(REMOVED_ROLE): # TODO removal
             #     if item.data(HIERARCHY_CHANGE_ABLE_ROLE):
@@ -244,13 +238,9 @@ def sync_local():
             #             update_data
             #         ))
 
-        # Insert new docs if created
-        if insert_list:
-            project_col.insert_many(insert_list)
-
-        # Write into DB TODO
-        # if bulk_writes:
-        #     project_col.bulk_write(bulk_writes)
+        # Write into DB
+        if bulk_writes:
+            project_col.bulk_write(bulk_writes)
 
     dbcon.uninstall()
 
