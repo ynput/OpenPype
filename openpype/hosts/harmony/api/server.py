@@ -9,8 +9,8 @@ import functools
 import time
 import struct
 from datetime import datetime
-from . import lib
 import threading
+from . import lib
 
 
 class Server(threading.Thread):
@@ -76,7 +76,7 @@ class Server(threading.Thread):
             kwargs = request.get("kwargs", {})
             partial_method = functools.partial(method, *args, **kwargs)
 
-            lib.execute_in_main_thread(partial_method)
+            lib.ProcessContext.execute_in_main_thread(partial_method)
         except Exception:
             self.log.error(traceback.format_exc())
 

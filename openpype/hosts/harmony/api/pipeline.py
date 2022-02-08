@@ -257,7 +257,7 @@ def list_instances(remove_orphaned=True):
         Returns:
             (list) of dictionaries matching instances format
     """
-    objects = lib.get_scene_data() or {}
+    objects = harmony.get_scene_data() or {}
     instances = []
     for key, data in objects.items():
         # Skip non-tagged objects.
@@ -272,7 +272,7 @@ def list_instances(remove_orphaned=True):
 
         if remove_orphaned:
             node_name = key.split("/")[-1]
-            located_node = lib.find_node_by_name(node_name, 'WRITE')
+            located_node = harmony.find_node_by_name(node_name, 'WRITE')
             if not located_node:
                 print("Removing orphaned instance {}".format(key))
                 harmony.remove(key)

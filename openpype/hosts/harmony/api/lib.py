@@ -14,36 +14,47 @@ import json
 import signal
 import time
 from uuid import uuid4
-from Qt import QtWidgets
+from Qt import QtWidgets, QtCore, QtGui
 import queue
+import collections
+import platform
 
 from .server import Server
 
 from openpype.tools.stdout_broker.app import StdOutBroker
 from openpype.tools.utils import host_tools
+from openpype import style
 
-# TODO refactor
-self = sys.modules[__name__]
-self.server = None
-self.pid = None
-self.application_path = None
-self.callback_queue = None
-self.workfile_path = None
-self.port = None
-self.stdout_broker = None
 
 # Setup logging.
-self.log = logging.getLogger(__name__)
-self.log.setLevel(logging.DEBUG)
+log = logging.getLogger(__name__)
+log.setLevel(logging.DEBUG)
 
 
-def execute_in_main_thread(func_to_call_from_main_thread):
-    self.callback_queue.put(func_to_call_from_main_thread)
+class ProcessContext:
+    server = None
+    pid = None
+    process = None
+    application_path = None
+    callback_queue = collections.deque()
+    workfile_path = None
+    port = None
+    stdout_broker = None
+    workfile_tool = None
 
+    @classmethod
+    def execute_in_main_thread(cls, func_to_call_from_main_thread):
+        cls.callback_queue.append(func_to_call_from_main_thread)
 
-def main_thread_listen():
-    callback = self.callback_queue.get()
-    callback()
+    @classmethod
+    def main_thread_listen(cls):
+        if cls.callback_queue:
+            callback = cls.callback_queue.popleft()
+            callback()
+        if cls.process is not None and cls.process.poll() is not None:
+            log.info("Server is not running, closing")
+            ProcessContext.stdout_broker.exit()
+            sys.exit()
 
 
 def signature(postfix="func") -> str:
@@ -75,10 +86,18 @@ def main(*subprocess_args):
     os.environ["OPENPYPE_LOG_NO_COLORS"] = "False"
     app = QtWidgets.QApplication([])
     app.setQuitOnLastWindowClosed(False)
+    icon = QtGui.QIcon(style.get_app_icon_path())
+    app.setWindowIcon(icon)
 
-    self.stdout_broker = StdOutBroker('harmony')
+    ProcessContext.stdout_broker = StdOutBroker('harmony')
 
     launch(*subprocess_args)
+
+    loop_timer = QtCore.QTimer()
+    loop_timer.setInterval(20)
+
+    loop_timer.timeout.connect(ProcessContext.main_thread_listen)
+    loop_timer.start()
 
     sys.exit(app.exec_())
 
@@ -97,7 +116,8 @@ def setup_startup_scripts():
         * Use TB_sceneOpenedUI.js instead to manage startup logic
         * Add their startup logic to avalon/harmony/TB_sceneOpened.js
     """
-    avalon_dcc_dir = os.path.dirname(os.path.dirname(__file__))
+    avalon_dcc_dir = os.path.join(os.path.dirname(os.path.dirname(__file__)),
+                                  "api")
     startup_js = "TB_sceneOpened.js"
 
     if os.getenv("TOONBOOM_GLOBAL_SCRIPT_LOCATION"):
@@ -111,8 +131,8 @@ def setup_startup_scripts():
             try:
                 shutil.copy(avalon_harmony_startup, env_harmony_startup)
             except Exception as e:
-                self.log.error(e)
-                self.log.warning(
+                log.error(e)
+                log.warning(
                     "Failed to copy {0} to {1}! "
                     "Defaulting to Avalon TOONBOOM_GLOBAL_SCRIPT_LOCATION."
                         .format(avalon_harmony_startup, env_harmony_startup))
@@ -148,7 +168,7 @@ def check_libs():
                 return
 
         else:
-            self.log.error(("Cannot find OpenHarmony library. "
+            log.error(("Cannot find OpenHarmony library. "
                             "Please set path to it in LIB_OPENHARMONY_PATH "
                             "environment variable."))
             raise RuntimeError("Missing OpenHarmony library.")
@@ -170,35 +190,41 @@ def launch(application_path, *args):
 
     api.install(harmony)
 
-    self.port = random.randrange(49152, 65535)
-    os.environ["AVALON_HARMONY_PORT"] = str(self.port)
-    self.application_path = application_path
+    ProcessContext.port = random.randrange(49152, 65535)
+    os.environ["AVALON_HARMONY_PORT"] = str(ProcessContext.port)
+    ProcessContext.application_path = application_path
 
     # Launch Harmony.
     setup_startup_scripts()
     check_libs()
 
-    if os.environ.get("AVALON_HARMONY_WORKFILES_ON_LAUNCH", False):
-        host_tools.show_workfiles(save=False)
+    if not os.environ.get("AVALON_HARMONY_WORKFILES_ON_LAUNCH", False):
+        open_empty_workfile()
+        return
 
-    # No launch through Workfiles happened.
-    if not self.workfile_path:
-        zip_file = os.path.join(os.path.dirname(__file__), "temp.zip")
-        temp_path = get_local_harmony_path(zip_file)
-        if os.path.exists(temp_path):
-            self.log.info(f"removing existing {temp_path}")
-            try:
-                shutil.rmtree(temp_path)
-            except Exception as e:
-                self.log.critical(f"cannot clear {temp_path}")
-                raise Exception(f"cannot clear {temp_path}") from e
+    ProcessContext.workfile_tool = host_tools.get_tool_by_name("workfiles")
+    host_tools.show_workfiles(save=False)
+    ProcessContext.execute_in_main_thread(check_workfiles_tool)
 
-        launch_zip_file(zip_file)
+def check_workfiles_tool():
+    if ProcessContext.workfile_tool.isVisible():
+        ProcessContext.execute_in_main_thread(check_workfiles_tool)
+    elif not ProcessContext.workfile_path:
+        open_empty_workfile()
 
-    self.callback_queue = queue.Queue()
-    while True:
-        main_thread_listen()
 
+def open_empty_workfile():
+    zip_file = os.path.join(os.path.dirname(__file__), "temp.zip")
+    temp_path = get_local_harmony_path(zip_file)
+    if os.path.exists(temp_path):
+        log.info(f"removing existing {temp_path}")
+        try:
+            shutil.rmtree(temp_path)
+        except Exception as e:
+            log.critical(f"cannot clear {temp_path}")
+            raise Exception(f"cannot clear {temp_path}") from e
+
+    launch_zip_file(zip_file)
 
 def get_local_harmony_path(filepath):
     """From the provided path get the equivalent local Harmony path."""
@@ -226,7 +252,7 @@ def launch_zip_file(filepath):
             try:
                 shutil.rmtree(temp_path)
             except Exception as e:
-                self.log.error(e)
+                log.error(e)
                 raise Exception("Cannot delete working folder") from e
             unzip = True
     else:
@@ -237,22 +263,22 @@ def launch_zip_file(filepath):
             zip_ref.extractall(temp_path)
 
     # Close existing scene.
-    if self.pid:
-        os.kill(self.pid, signal.SIGTERM)
+    if ProcessContext.pid:
+        os.kill(ProcessContext.pid, signal.SIGTERM)
 
     # Stop server.
-    if self.server:
-        self.server.stop()
+    if ProcessContext.server:
+        ProcessContext.server.stop()
 
     # Launch Avalon server.
-    self.server = Server(self.port)
-    self.server.start()
+    ProcessContext.server = Server(ProcessContext.port)
+    ProcessContext.server.start()
     # thread = threading.Thread(target=self.server.start)
     # thread.daemon = True
     # thread.start()
 
     # Save workfile path for later.
-    self.workfile_path = filepath
+    ProcessContext.workfile_path = filepath
 
     # find any xstage files is directory, prefer the one with the same name
     # as directory (plus extension)
@@ -264,7 +290,7 @@ def launch_zip_file(filepath):
 
     if not os.path.basename("temp.zip"):
         if not xstage_files:
-            self.server.stop()
+            ProcessContext.server.stop()
             print("no xstage file was found")
             return
 
@@ -284,18 +310,21 @@ def launch_zip_file(filepath):
 
     if not os.path.exists(scene_path):
         print("error: cannot determine scene file")
-        self.server.stop()
+        ProcessContext.server.stop()
         return
 
     print("Launching {}".format(scene_path))
 
+    #kwargs = get_non_python_app_args()
+
+    kwargs = _get_kwargs()
     process = subprocess.Popen(
-        [self.application_path, scene_path],
-        stdout=subprocess.DEVNULL,
-        stderr=subprocess.DEVNULL
+        [ProcessContext.application_path, scene_path],
+        **kwargs
     )
-    self.pid = process.pid
-    self.stdout_broker.host_connected()
+    ProcessContext.pid = process.pid
+    ProcessContext.process = process
+    ProcessContext.stdout_broker.host_connected()
 
 
 def on_file_changed(path, threaded=True):
@@ -303,19 +332,19 @@ def on_file_changed(path, threaded=True):
 
     This method is called when the `.xstage` file is changed.
     """
-    self.log.debug("File changed: " + path)
+    log.debug("File changed: " + path)
 
-    if self.workfile_path is None:
+    if ProcessContext.workfile_path is None:
         return
 
     if threaded:
         thread = threading.Thread(
             target=zip_and_move,
-            args=(os.path.dirname(path), self.workfile_path)
+            args=(os.path.dirname(path), ProcessContext.workfile_path)
         )
         thread.start()
     else:
-        zip_and_move(os.path.dirname(path), self.workfile_path)
+        zip_and_move(os.path.dirname(path), ProcessContext.workfile_path)
 
 
 def zip_and_move(source, destination):
@@ -332,7 +361,7 @@ def zip_and_move(source, destination):
         if zr.testzip() is not None:
             raise Exception("File archive is corrupted.")
     shutil.move(os.path.basename(source) + ".zip", destination)
-    self.log.debug(f"Saved '{source}' to '{destination}'")
+    log.debug(f"Saved '{source}' to '{destination}'")
 
 
 def show(module_name):
@@ -360,7 +389,7 @@ def show(module_name):
     if tool_name == "loader":
         kwargs["use_context"] = True
 
-    execute_in_main_thread(
+    ProcessContext.execute_in_main_thread(
         lambda: host_tools.show_tool_by_name(tool_name, **kwargs)
     )
 
@@ -370,7 +399,7 @@ def show(module_name):
 
 def get_scene_data():
     try:
-        return self.send(
+        return send(
             {
                 "function": "AvalonHarmony.getSceneData"
             })["result"]
@@ -390,7 +419,7 @@ def set_scene_data(data):
 
     """
     # Write scene data.
-    self.send(
+    send(
         {
             "function": "AvalonHarmony.setSceneData",
             "args": data
@@ -427,7 +456,7 @@ def remove(node_id):
 
 def delete_node(node):
     """ Physically delete node from scene. """
-    self.send(
+    send(
         {
             "function": "AvalonHarmony.deleteNode",
             "args": node
@@ -466,7 +495,7 @@ def imprint(node_id, data, remove=False):
 def maintained_selection():
     """Maintain selection during context."""
 
-    selected_nodes = self.send(
+    selected_nodes = send(
         {
             "function": "AvalonHarmony.getSelectedNodes"
         })["result"]
@@ -474,7 +503,7 @@ def maintained_selection():
     try:
         yield selected_nodes
     finally:
-        selected_nodes = self.send(
+        selected_nodes = send(
             {
                 "function": "AvalonHarmony.selectNodes",
                 "args": selected_nodes
@@ -484,12 +513,12 @@ def maintained_selection():
 
 def send(request):
     """Public method for sending requests to Harmony."""
-    return self.server.send(request)
+    return ProcessContext.server.send(request)
 
 
 def select_nodes(nodes):
     """ Selects nodes in Node View """
-    _ = self.send(
+    _ = send(
         {
             "function": "AvalonHarmony.selectNodes",
             "args": nodes
@@ -501,13 +530,13 @@ def select_nodes(nodes):
 def maintained_nodes_state(nodes):
     """Maintain nodes states during context."""
     # Collect current state.
-    states = self.send(
+    states = send(
         {
             "function": "AvalonHarmony.areEnabled", "args": nodes
         })["result"]
 
     # Disable all nodes.
-    self.send(
+    send(
         {
             "function": "AvalonHarmony.disableNodes", "args": nodes
         })
@@ -515,7 +544,7 @@ def maintained_nodes_state(nodes):
     try:
         yield
     finally:
-        self.send(
+        send(
             {
                 "function": "AvalonHarmony.setState",
                 "args": [nodes, states]
@@ -533,21 +562,21 @@ def save_scene():
     """
     # Need to turn off the backgound watcher else the communication with
     # the server gets spammed with two requests at the same time.
-    scene_path = self.send(
+    scene_path = send(
         {"function": "AvalonHarmony.saveScene"})["result"]
 
     # Manually update the remote file.
-    self.on_file_changed(scene_path, threaded=False)
+    on_file_changed(scene_path, threaded=False)
 
     # Re-enable the background watcher.
-    self.send({"function": "AvalonHarmony.enableFileWather"})
+    send({"function": "AvalonHarmony.enableFileWather"})
 
 
 def save_scene_as(filepath):
     """Save Harmony scene as `filepath`."""
     scene_dir = os.path.dirname(filepath)
     destination = os.path.join(
-        os.path.dirname(self.workfile_path),
+        os.path.dirname(ProcessContext.workfile_path),
         os.path.splitext(os.path.basename(filepath))[0] + ".zip"
     )
 
@@ -555,7 +584,7 @@ def save_scene_as(filepath):
         try:
             shutil.rmtree(scene_dir)
         except Exception as e:
-            self.log.error(f"Cannot remove {scene_dir}")
+            log.error(f"Cannot remove {scene_dir}")
             raise Exception(f"Cannot remove {scene_dir}") from e
 
     send(
@@ -564,7 +593,7 @@ def save_scene_as(filepath):
 
     zip_and_move(scene_dir, destination)
 
-    self.workfile_path = destination
+    ProcessContext.workfile_path = destination
 
     send(
         {"function": "AvalonHarmony.addPathToWatcher", "args": filepath}
@@ -594,3 +623,17 @@ def find_node_by_name(name, node_type):
             return node
 
     return None
+
+
+def _get_kwargs():
+    """Explicitly handle openpype_gui no not show console."""
+    kwargs = {}
+    if platform.system().lower() == "windows":
+        if "openpype_gui" in os.environ.get("OPENPYPE_EXECUTABLE"):
+            kwargs.update({
+                "creationflags": subprocess.CREATE_NO_WINDOW,
+                "stdout": subprocess.DEVNULL,
+                "stderr": subprocess.DEVNULL
+            })
+    print("kwargs:: {}".format(kwargs))
+    return kwargs
