@@ -135,7 +135,7 @@ def setup_startup_scripts():
                 log.warning(
                     "Failed to copy {0} to {1}! "
                     "Defaulting to Avalon TOONBOOM_GLOBAL_SCRIPT_LOCATION."
-                        .format(avalon_harmony_startup, env_harmony_startup))
+                    .format(avalon_harmony_startup, env_harmony_startup))
 
                 os.environ["TOONBOOM_GLOBAL_SCRIPT_LOCATION"] = avalon_dcc_dir
     else:
@@ -169,8 +169,8 @@ def check_libs():
 
         else:
             log.error(("Cannot find OpenHarmony library. "
-                            "Please set path to it in LIB_OPENHARMONY_PATH "
-                            "environment variable."))
+                       "Please set path to it in LIB_OPENHARMONY_PATH "
+                       "environment variable."))
             raise RuntimeError("Missing OpenHarmony library.")
 
 
@@ -206,6 +206,7 @@ def launch(application_path, *args):
     host_tools.show_workfiles(save=False)
     ProcessContext.execute_in_main_thread(check_workfiles_tool)
 
+
 def check_workfiles_tool():
     if ProcessContext.workfile_tool.isVisible():
         ProcessContext.execute_in_main_thread(check_workfiles_tool)
@@ -225,6 +226,7 @@ def open_empty_workfile():
             raise Exception(f"cannot clear {temp_path}") from e
 
     launch_zip_file(zip_file)
+
 
 def get_local_harmony_path(filepath):
     """From the provided path get the equivalent local Harmony path."""
@@ -314,9 +316,6 @@ def launch_zip_file(filepath):
         return
 
     print("Launching {}".format(scene_path))
-
-    #kwargs = get_non_python_app_args()
-
     kwargs = _get_kwargs()
     process = subprocess.Popen(
         [ProcessContext.application_path, scene_path],

@@ -43,7 +43,8 @@ class ImportPaletteLoader(api.Loader):
 
         msg = "Updated {}.".format(subset_name)
         msg += " You need to reload the scene to see the changes.\n"
-        msg += "Please save workfile when ready and use Workfiles to reopen it."
+        msg += "Please save workfile when ready and use Workfiles "
+        msg += "to reopen it."
 
         harmony.send(
             {
