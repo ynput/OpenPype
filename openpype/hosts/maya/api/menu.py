@@ -108,17 +108,17 @@ def install():
 
         cmds.menuItem(
             "Reset Frame Range",
-            command=reset_frame_range
+            command=lambda *args: reset_frame_range()
         )
 
         cmds.menuItem(
             "Reset Resolution",
-            command=lib.reset_scene_resolution
+            command=lambda *args: lib.reset_scene_resolution()
         )
 
         cmds.menuItem(
             "Set Colorspace",
-            command=lib.set_colorspace,
+            command=lambda *args: lib.set_colorspace(),
         )
         cmds.menuItem(divider=True, parent=MENU_NAME)
         cmds.menuItem(
