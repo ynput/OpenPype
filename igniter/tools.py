@@ -161,7 +161,7 @@ def get_openpype_global_settings(url: str) -> dict:
     return global_settings.get("data") or {}
 
 
-def get_openpype_path_from_db(settings: dict) -> Union[str, None]:
+def get_openpype_path_from_settings(settings: dict) -> Union[str, None]:
     """Get OpenPype path from global settings.
 
     Args:

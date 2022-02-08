@@ -195,7 +195,7 @@ import igniter  # noqa: E402
 from igniter import BootstrapRepos  # noqa: E402
 from igniter.tools import (
     get_openpype_global_settings,
-    get_openpype_path_from_db,
+    get_openpype_path_from_settings,
     validate_mongo_connection,
     OpenPypeVersionNotFound
 )  # noqa
@@ -929,7 +929,7 @@ def boot():
 
     # Get openpype path from database and set it to environment so openpype can
     # find its versions there and bootstrap them.
-    openpype_path = get_openpype_path_from_db(global_settings)
+    openpype_path = get_openpype_path_from_settings(global_settings)
 
     if getattr(sys, 'frozen', False):
         local_version = bootstrap.get_version(Path(OPENPYPE_ROOT))

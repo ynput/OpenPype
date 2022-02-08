@@ -23,7 +23,8 @@ from .user_settings import (
     OpenPypeSettingsRegistry
 )
 from .tools import (
-    get_openpype_path_from_db,
+    get_openpype_global_settings,
+    get_openpype_path_from_settings,
     get_expected_studio_version_str
 )
 
@@ -1263,7 +1264,8 @@ class BootstrapRepos:
         openpype_path = None
         # try to get OpenPype path from mongo.
         if location.startswith("mongodb"):
-            openpype_path = get_openpype_path_from_db(location)
+            global_settings = get_openpype_global_settings(location)
+            openpype_path = get_openpype_path_from_settings(global_settings)
             if not openpype_path:
                 self._print("cannot find OPENPYPE_PATH in settings.")
                 return None
