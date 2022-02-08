@@ -331,6 +331,18 @@
                     "tasks": [],
                     "add_ftrack_family": true,
                     "advanced_filtering": []
+                },
+                {
+                    "hosts": [
+                        "houdini"
+                    ],
+                    "families": [
+                        "usd"
+                    ],
+                    "task_types": [],
+                    "tasks": [],
+                    "add_ftrack_family": true,
+                    "advanced_filtering": []
                 }
             ]
         },
@@ -374,7 +386,8 @@
                 "layout": "layout",
                 "unrealStaticMesh": "geo",
                 "vrayproxy": "cache",
-                "redshiftproxy": "cache"
+                "redshiftproxy": "cache",
+                "usd": "usd"
             }
         }
     }
