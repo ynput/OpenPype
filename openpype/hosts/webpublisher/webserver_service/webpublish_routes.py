@@ -361,13 +361,12 @@ class ConfiguredExtensionsEndpoint(_RestApiEndpoint):
         collect_conf = sett["webpublisher"]["publish"]["CollectPublishedFiles"]
         configs = collect_conf.get("task_type_to_family", [])
         mappings = []
-        if isinstance(configs, dict):  # backward compatibility, remove soon
-            # mappings = [mapp for mapp in configs.values() if mapp]
-            for _, conf_mappings in configs.items():
-                for conf_mapping in conf_mappings:
-                    mappings.append(conf_mapping)
-        else:
-            mappings = configs
+        for _, conf_mappings in configs.items():
+            if isinstance(conf_mappings, dict):
+                conf_mappings = conf_mappings.values()
+            for conf_mapping in conf_mappings:
+                mappings.append(conf_mapping)
+
         for mapping in mappings:
             if mapping["is_sequence"]:
                 configured["sequence_exts"].update(mapping["extensions"])
