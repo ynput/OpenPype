@@ -15,8 +15,6 @@ class CollectFrames(pyblish.api.InstancePlugin):
 
     def process(self, instance):
 
-        import hou
-
         ropnode = instance[0]
 
         start_frame = instance.data.get("frameStart", None)
