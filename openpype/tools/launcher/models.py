@@ -8,8 +8,8 @@ import time
 import appdirs
 from Qt import QtCore, QtGui
 from avalon.vendor import qtawesome
-from avalon import style, api
-from openpype.lib import ApplicationManager
+from avalon import api
+from openpype.lib import ApplicationManager, JSONSettingRegistry
 from openpype.tools.utils.lib import DynamicQThread
 from openpype.tools.utils.assets_widget import (
     AssetModel,
