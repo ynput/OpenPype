@@ -6,27 +6,17 @@ in global space here until are required or used.
 - imports of Python 3 packages
     - we still support Python 2 hosts where addon definition should available
 """
-import collections
 import os
 import click
 
 from avalon.api import AvalonMongoDB
 import gazu
-from openpype.api import get_project_basic_paths, create_project_folders
 from openpype.lib import create_project
 from openpype.lib.anatomy import Anatomy
-from openpype.modules import (
-    JsonFilesSettingsDef,
-    OpenPypeModule,
-    ModulesManager
-)
-from openpype.tools.project_manager.project_manager.model import AssetItem, ProjectItem, TaskItem
+from openpype.modules import JsonFilesSettingsDef, OpenPypeModule, ModulesManager
+
 # Import interface defined by this addon to be able find other addons using it
-from openpype_interfaces import (
-    IPluginPaths,
-    ITrayAction
-)
-from pymongo import UpdateOne, DeleteOne
+from openpype_interfaces import IPluginPaths, ITrayAction
 
 
 # Settings definition of this addon using `JsonFilesSettingsDef`
@@ -47,10 +37,7 @@ class AddonSettingsDef(JsonFilesSettingsDef):
         Return directory path where json files defying addon settings are
         located.
         """
-        return os.path.join(
-            os.path.dirname(os.path.abspath(__file__)),
-            "settings"
-        )
+        return os.path.join(os.path.dirname(os.path.abspath(__file__)), "settings")
 
 
 class KitsuModule(OpenPypeModule, IPluginPaths, ITrayAction):
@@ -61,6 +48,7 @@ class KitsuModule(OpenPypeModule, IPluginPaths, ITrayAction):
     - `IPluginPaths` to define custom plugin paths
     - `ITrayAction` to be shown in tray tool
     """
+
     label = "Kitsu"
     name = "kitsu"
 
@@ -106,7 +94,7 @@ class KitsuModule(OpenPypeModule, IPluginPaths, ITrayAction):
         return {
             "KITSU_SERVER": self.server_url,
             "KITSU_LOGIN": self.script_login,
-            "KITSU_PWD": self.script_pwd
+            "KITSU_PWD": self.script_pwd,
         }
 
     def _create_dialog(self):
@@ -146,9 +134,7 @@ class KitsuModule(OpenPypeModule, IPluginPaths, ITrayAction):
         """Implementation of abstract method for `IPluginPaths`."""
         current_dir = os.path.dirname(os.path.abspath(__file__))
 
-        return {
-            "publish": [os.path.join(current_dir, "plugins", "publish")]
-        }
+        return {"publish": [os.path.join(current_dir, "plugins", "publish")]}
 
     def cli(self, click_group):
         click_group.add_command(cli_main)
@@ -179,10 +165,8 @@ def sync_local():
         project_name = project["name"]
         project_code = project_name
         dbcon.Session["AVALON_PROJECT"] = project_name
-        project_doc = dbcon.find_one({
-            "type": "project"
-        })
-        
+        project_doc = dbcon.find_one({"type": "project"})
+
         # Get all assets from zou
         all_assets = gazu.asset.all_assets_for_project(project)
 
@@ -212,7 +196,7 @@ def sync_local():
                 "type": "asset",
                 "schema": "openpype:asset-3.0",
                 "data": doc_data,
-                "parent": project_doc["_id"]
+                "parent": project_doc["_id"],
             }
 
             if zou_asset["id"] not in asset_docs_zou_ids:  # Item is new
@@ -248,6 +232,7 @@ def sync_local():
         #     project_col.bulk_write(bulk_writes)
 
     dbcon.uninstall()
+
 
 @cli_main.command()
 def show_dialog():
