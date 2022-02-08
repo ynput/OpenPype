@@ -179,7 +179,7 @@
                 },
                 {
                     "type": "boolean",
-                    "key": "fps",
+                    "key": "validate_fps",
                     "label": "Validate fps"
                 }
             ]

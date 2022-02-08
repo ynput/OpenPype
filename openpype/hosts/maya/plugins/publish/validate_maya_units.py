@@ -19,6 +19,14 @@ class ValidateMayaUnits(pyblish.api.ContextPlugin):
     hosts = ['maya']
     actions = [openpype.api.RepairContextAction]
 
+    validate_linear_units = True
+    linear_units = "cm"
+
+    validate_angular_units = True
+    angular_units = "deg"
+
+    validate_fps = True
+
     def process(self, context):
 
         # Collected units
@@ -37,26 +45,44 @@ class ValidateMayaUnits(pyblish.api.ContextPlugin):
         self.log.info('Units (angular): {0}'.format(angularunits))
         self.log.info('Units (time): {0} FPS'.format(fps))
 
-        # Check if units are correct
-        assert linearunits and linearunits == 'cm', ("Scene linear units must "
-                                                     "be centimeters")
+        valid = True
 
-        assert angularunits and angularunits == 'deg', ("Scene angular units "
-                                                        "must be degrees")
-        assert fps and fps == asset_fps, "Scene must be {} FPS"\
-                                         "(now is {})".format(asset_fps, fps)
+        # Check if units are correct
+        if (
+            self.validate_linear_units
+            and linearunits
+            and linearunits != self.linear_units
+        ):
+            self.log.error("Scene linear units must be centimeters")
+            valid = False
+
+        if (
+            self.validate_angular_units
+            and angularunits
+            and angularunits != self.angular_units
+        ):
+            self.log.error("Scene angular units must be degrees")
+            valid = False
+
+        if self.validate_fps and fps and fps != asset_fps:
+            self.log.error(
+                "Scene must be {} FPS (now is {})".format(asset_fps, fps))
+            valid = False
+
+        if not valid:
+            raise RuntimeError("Invalid units set.")
 
     @classmethod
     def repair(cls, context):
         """Fix the current FPS setting of the scene, set to PAL(25.0 fps)"""
 
-        cls.log.info("Setting angular unit to 'degrees'")
-        cmds.currentUnit(angle="degree")
+        cls.log.info("Setting angular unit to '{}'".format(cls.angular_units))
+        cmds.currentUnit(angle=cls.angular_units)
         current_angle = cmds.currentUnit(query=True, angle=True)
         cls.log.debug(current_angle)
 
-        cls.log.info("Setting linear unit to 'centimeter'")
-        cmds.currentUnit(linear="centimeter")
+        cls.log.info("Setting linear unit to '{}'".format(cls.linear_units))
+        cmds.currentUnit(linear=cls.linear_units)
         current_linear = cmds.currentUnit(query=True, linear=True)
         cls.log.debug(current_linear)
 
