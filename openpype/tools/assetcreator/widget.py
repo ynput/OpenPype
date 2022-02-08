@@ -44,7 +44,7 @@ def preserve_expanded_rows(tree_view,
 
     This function is created to maintain the expand vs collapse status of
     the model items. When refresh is triggered the items which are expanded
-    will stay expanded and vise versa.
+    will stay expanded and vice versa.
 
     Arguments:
         tree_view (QWidgets.QTreeView): the tree view which is
@@ -94,7 +94,7 @@ def preserve_selection(tree_view,
 
     This function is created to maintain the selection status of
     the model items. When refresh is triggered the items which are expanded
-    will stay expanded and vise versa.
+    will stay expanded and vice versa.
 
         tree_view (QWidgets.QTreeView): the tree view nested in the application
         column (int): the column to retrieve the data from
@@ -179,7 +179,7 @@ class AssetModel(TreeModel):
         """
         if silos:
             # WARNING: Silo item "_id" is set to silo value
-            # mainly because GUI issue with perserve selection and expanded row
+            # mainly because GUI issue with preserve selection and expanded row
             # and because of easier hierarchy parenting (in "assets")
             for silo in silos:
                 item = Item({

@@ -1,8 +1,16 @@
 from avalon import api, style, io
 import nuke
-from openpype.hosts.nuke.api import lib as pnlib
-from avalon.nuke import lib as anlib
-from avalon.nuke import containerise, update_container
+from openpype.hosts.nuke.api.lib import (
+    maintained_selection,
+    create_backdrop,
+    get_avalon_knob_data,
+    set_avalon_knob_data
+)
+from openpype.hosts.nuke.api import (
+    containerise,
+    update_container,
+    viewer_update_and_undo_stop
+)
 
 
 class LoadGizmoInputProcess(api.Loader):
@@ -62,7 +70,7 @@ class LoadGizmoInputProcess(api.Loader):
         # just in case we are in group lets jump out of it
         nuke.endGroup()
 
-        with anlib.maintained_selection():
+        with maintained_selection():
             # add group from nk
             nuke.nodePaste(file)
 
@@ -128,16 +136,16 @@ class LoadGizmoInputProcess(api.Loader):
         # just in case we are in group lets jump out of it
         nuke.endGroup()
 
-        with anlib.maintained_selection():
+        with maintained_selection():
             xpos = GN.xpos()
             ypos = GN.ypos()
-            avalon_data = anlib.get_avalon_knob_data(GN)
+            avalon_data = get_avalon_knob_data(GN)
             nuke.delete(GN)
             # add group from nk
             nuke.nodePaste(file)
 
             GN = nuke.selectedNode()
-            anlib.set_avalon_knob_data(GN, avalon_data)
+            set_avalon_knob_data(GN, avalon_data)
             GN.setXYpos(xpos, ypos)
             GN["name"].setValue(object_name)
 
@@ -155,7 +163,7 @@ class LoadGizmoInputProcess(api.Loader):
         else:
             GN["tile_color"].setValue(int(self.node_color, 16))
 
-        self.log.info("udated to version: {}".format(version.get("name")))
+        self.log.info("updated to version: {}".format(version.get("name")))
 
         return update_container(GN, data_imprint)
 
@@ -197,8 +205,12 @@ class LoadGizmoInputProcess(api.Loader):
         viewer["input_process_node"].setValue(group_node_name)
 
         # put backdrop under
-        pnlib.create_backdrop(label="Input Process", layer=2,
-                              nodes=[viewer, group_node], color="0x7c7faaff")
+        create_backdrop(
+            label="Input Process",
+            layer=2,
+            nodes=[viewer, group_node],
+            color="0x7c7faaff"
+        )
 
         return True
 
@@ -210,7 +222,7 @@ class LoadGizmoInputProcess(api.Loader):
     def byteify(self, input):
         """
         Converts unicode strings to strings
-        It goes trought all dictionary
+        It goes through all dictionary
 
         Arguments:
             input (dict/str): input
@@ -234,7 +246,6 @@ class LoadGizmoInputProcess(api.Loader):
         self.update(container, representation)
 
     def remove(self, container):
-        from avalon.nuke import viewer_update_and_undo_stop
         node = nuke.toNode(container['objectName'])
         with viewer_update_and_undo_stop():
             nuke.delete(node)

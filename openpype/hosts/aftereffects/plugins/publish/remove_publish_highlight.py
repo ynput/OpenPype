@@ -1,5 +1,5 @@
 import openpype.api
-from avalon import aftereffects
+from openpype.hosts.aftereffects.api import get_stub
 
 
 class RemovePublishHighlight(openpype.api.Extractor):
@@ -16,7 +16,7 @@ class RemovePublishHighlight(openpype.api.Extractor):
     families = ["render.farm"]
 
     def process(self, instance):
-        stub = aftereffects.stub()
+        stub = get_stub()
         self.log.debug("instance::{}".format(instance.data))
         item = instance.data
         comp_name = item["comp_name"].replace(stub.PUBLISH_ICON, '')

@@ -11,10 +11,14 @@ from avalon.api import AvalonMongoDB
 
 from openpype.lib import OpenPypeMongoConnection
 from openpype_modules.avalon_apps.rest_api import _RestApiEndpoint
-from openpype.lib.remote_publish import get_task_data
 from openpype.settings import get_project_settings
 
 from openpype.lib import PypeLogger
+from openpype.lib.remote_publish import (
+    get_task_data,
+    ERROR_STATUS,
+    REPROCESS_STATUS
+)
 
 log = PypeLogger.get_logger("WebServer")
 
@@ -61,7 +65,7 @@ class OpenPypeRestApiResource(RestApiResource):
         self.dbcon = mongo_client[database_name]["webpublishes"]
 
 
-class WebpublisherProjectsEndpoint(_RestApiEndpoint):
+class ProjectsEndpoint(_RestApiEndpoint):
     """Returns list of dict with project info (id, name)."""
     async def get(self) -> Response:
         output = []
@@ -82,7 +86,7 @@ class WebpublisherProjectsEndpoint(_RestApiEndpoint):
         )
 
 
-class WebpublisherHiearchyEndpoint(_RestApiEndpoint):
+class HiearchyEndpoint(_RestApiEndpoint):
     """Returns dictionary with context tree from assets."""
     async def get(self, project_name) -> Response:
         query_projection = {
@@ -181,7 +185,7 @@ class TaskNode(Node):
         self["attributes"] = {}
 
 
-class WebpublisherBatchPublishEndpoint(_RestApiEndpoint):
+class BatchPublishEndpoint(_RestApiEndpoint):
     """Triggers headless publishing of batch."""
     async def post(self, request) -> Response:
         # Validate existence of openpype executable
@@ -190,7 +194,7 @@ class WebpublisherBatchPublishEndpoint(_RestApiEndpoint):
             msg = "Non existent OpenPype executable {}".format(openpype_app)
             raise RuntimeError(msg)
 
-        log.info("WebpublisherBatchPublishEndpoint called")
+        log.info("BatchPublishEndpoint called")
         content = await request.json()
 
         # Each filter have extensions which are checked on first task item
@@ -286,7 +290,7 @@ class WebpublisherBatchPublishEndpoint(_RestApiEndpoint):
         )
 
 
-class WebpublisherTaskPublishEndpoint(_RestApiEndpoint):
+class TaskPublishEndpoint(_RestApiEndpoint):
     """Prepared endpoint triggered after each task - for future development."""
     async def post(self, request) -> Response:
         return Response(
@@ -301,21 +305,37 @@ class BatchStatusEndpoint(_RestApiEndpoint):
     async def get(self, batch_id) -> Response:
         output = self.dbcon.find_one({"batch_id": batch_id})
 
+        if output:
+            status = 200
+        else:
+            output = {"msg": "Batch id {} not found".format(batch_id),
+                      "status": "queued",
+                      "progress": 0}
+            status = 404
+        body = self.resource.encode(output)
         return Response(
-            status=200,
-            body=self.resource.encode(output),
+            status=status,
+            body=body,
             content_type="application/json"
         )
 
 
-class PublishesStatusEndpoint(_RestApiEndpoint):
+class UserReportEndpoint(_RestApiEndpoint):
     """Returns list of dict with batch info for user (email address)."""
     async def get(self, user) -> Response:
-        output = list(self.dbcon.find({"user": user}))
+        output = list(self.dbcon.find({"user": user},
+                                      projection={"log": False}))
+
+        if output:
+            status = 200
+        else:
+            output = {"msg": "User {} not found".format(user)}
+            status = 404
+        body = self.resource.encode(output)
 
         return Response(
-            status=200,
-            body=self.resource.encode(output),
+            status=status,
+            body=body,
             content_type="application/json"
         )
 
@@ -335,7 +355,7 @@ class ConfiguredExtensionsEndpoint(_RestApiEndpoint):
         configured = {
             "file_exts": set(),
             "sequence_exts": set(),
-            # workfiles that could have "Studio Procesing" hardcoded for now
+            # workfiles that could have "Studio Processing" hardcoded for now
             "studio_exts": set(["psd", "psb", "tvpp", "tvp"])
         }
         collect_conf = sett["webpublisher"]["publish"]["CollectPublishedFiles"]
@@ -349,5 +369,30 @@ class ConfiguredExtensionsEndpoint(_RestApiEndpoint):
         return Response(
             status=200,
             body=self.resource.encode(dict(configured)),
+            content_type="application/json"
+        )
+
+
+class BatchReprocessEndpoint(_RestApiEndpoint):
+    """Marks latest 'batch_id' for reprocessing, returns 404 if not found."""
+    async def post(self, batch_id) -> Response:
+        batches = self.dbcon.find({"batch_id": batch_id,
+                                   "status": ERROR_STATUS}).sort("_id", -1)
+
+        if batches:
+            self.dbcon.update_one(
+                {"_id": batches[0]["_id"]},
+                {"$set": {"status": REPROCESS_STATUS}}
+            )
+            output = [{"msg": "Batch id {} set to reprocess".format(batch_id)}]
+            status = 200
+        else:
+            output = [{"msg": "Batch id {} not found".format(batch_id)}]
+            status = 404
+        body = self.resource.encode(output)
+
+        return Response(
+            status=status,
+            body=body,
             content_type="application/json"
         )

@@ -26,7 +26,7 @@ openpype_console --use-version=3.0.0-foo+bar
 
 `--validate-version` to validate integrity of given version
 
-For more information [see here](admin_use#run-openpype).
+For more information [see here](admin_use.md#run-openpype).
 
 ## Commands
 
@@ -100,7 +100,7 @@ pype launch --app python --project my_project --asset my_asset --task my_task
 
 | Argument | Description |
 | --- | --- |
-| `--debug` | print more verbose infomation |
+| `--debug` | print more verbose information |
 
 ```shell
 pype publish <PATH_TO_JSON>

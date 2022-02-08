@@ -2,7 +2,6 @@ import os
 
 import bpy
 
-# import avalon.blender.workio
 import openpype.api
 
 

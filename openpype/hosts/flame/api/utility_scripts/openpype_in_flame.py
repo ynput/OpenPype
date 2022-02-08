@@ -5,18 +5,15 @@ from pprint import pformat
 import atexit
 import openpype
 import avalon
-import openpype.hosts.flame as opflame
-
-flh = sys.modules[__name__]
-flh._project = None
+import openpype.hosts.flame.api as opfapi
 
 
 def openpype_install():
     """Registering OpenPype in context
     """
     openpype.install()
-    avalon.api.install(opflame)
-    print("Avalon registred hosts: {}".format(
+    avalon.api.install(opfapi)
+    print("Avalon registered hosts: {}".format(
         avalon.api.registered_host()))
 
 
@@ -48,30 +45,34 @@ sys.excepthook = exeption_handler
 def cleanup():
     """Cleaning up Flame framework context
     """
-    if opflame.apps:
-        print('`{}` cleaning up apps:\n {}\n'.format(
-            __file__, pformat(opflame.apps)))
-        while len(opflame.apps):
-            app = opflame.apps.pop()
+    if opfapi.CTX.flame_apps:
+        print('`{}` cleaning up flame_apps:\n {}\n'.format(
+            __file__, pformat(opfapi.CTX.flame_apps)))
+        while len(opfapi.CTX.flame_apps):
+            app = opfapi.CTX.flame_apps.pop()
             print('`{}` removing : {}'.format(__file__, app.name))
             del app
-        opflame.apps = []
+        opfapi.CTX.flame_apps = []
 
-    if opflame.app_framework:
-        print('PYTHON\t: %s cleaning up' % opflame.app_framework.bundle_name)
-        opflame.app_framework.save_prefs()
-        opflame.app_framework = None
+    if opfapi.CTX.app_framework:
+        print('openpype\t: {} cleaning up'.format(
+            opfapi.CTX.app_framework.bundle_name)
+        )
+        opfapi.CTX.app_framework.save_prefs()
+        opfapi.CTX.app_framework = None
 
 
 atexit.register(cleanup)
 
 
 def load_apps():
-    """Load available apps into Flame framework
+    """Load available flame_apps into Flame framework
     """
-    opflame.apps.append(opflame.FlameMenuProjectConnect(opflame.app_framework))
-    opflame.apps.append(opflame.FlameMenuTimeline(opflame.app_framework))
-    opflame.app_framework.log.info("Apps are loaded")
+    opfapi.CTX.flame_apps.append(
+        opfapi.FlameMenuProjectConnect(opfapi.CTX.app_framework))
+    opfapi.CTX.flame_apps.append(
+        opfapi.FlameMenuTimeline(opfapi.CTX.app_framework))
+    opfapi.CTX.app_framework.log.info("Apps are loaded")
 
 
 def project_changed_dict(info):
@@ -89,10 +90,10 @@ def app_initialized(parent=None):
     Args:
         parent (obj, optional): Parent object. Defaults to None.
     """
-    opflame.app_framework = opflame.FlameAppFramework()
+    opfapi.CTX.app_framework = opfapi.FlameAppFramework()
 
     print("{} initializing".format(
-        opflame.app_framework.bundle_name))
+        opfapi.CTX.app_framework.bundle_name))
 
     load_apps()
 
@@ -100,10 +101,10 @@ def app_initialized(parent=None):
 """
 Initialisation of the hook is starting from here
 
-First it needs to test if it can import the flame modul.
+First it needs to test if it can import the flame module.
 This will happen only in case a project has been loaded.
 Then `app_initialized` will load main Framework which will load
-all menu objects as apps.
+all menu objects as flame_apps.
 """
 
 try:
@@ -131,15 +132,15 @@ def _build_app_menu(app_name):
 
     # first find the relative appname
     app = None
-    for _app in opflame.apps:
+    for _app in opfapi.CTX.flame_apps:
         if _app.__class__.__name__ == app_name:
             app = _app
 
     if app:
         menu.append(app.build_menu())
 
-    if opflame.app_framework:
-        menu_auto_refresh = opflame.app_framework.prefs_global.get(
+    if opfapi.CTX.app_framework:
+        menu_auto_refresh = opfapi.CTX.app_framework.prefs_global.get(
             'menu_auto_refresh', {})
         if menu_auto_refresh.get('timeline_menu', True):
             try:
@@ -163,8 +164,8 @@ def project_saved(project_name, save_time, is_auto_save):
         save_time (str): time when it was saved
         is_auto_save (bool): autosave is on or off
     """
-    if opflame.app_framework:
-        opflame.app_framework.save_prefs()
+    if opfapi.CTX.app_framework:
+        opfapi.CTX.app_framework.save_prefs()
 
 
 def get_main_menu_custom_ui_actions():

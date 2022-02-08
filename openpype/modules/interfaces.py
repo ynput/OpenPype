@@ -115,7 +115,7 @@ class ITrayAction(ITrayModule):
     Add action to tray menu which will trigger `on_action_trigger`.
     It is expected to be used for showing tools.
 
-    Methods `tray_start`, `tray_exit` and `connect_with_modules` are overriden
+    Methods `tray_start`, `tray_exit` and `connect_with_modules` are overridden
     as it's not expected that action will use them. But it is possible if
     necessary.
     """

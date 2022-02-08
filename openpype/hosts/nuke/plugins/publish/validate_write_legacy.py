@@ -1,13 +1,12 @@
-import toml
 import os
+import toml
 
 import nuke
 
 from avalon import api
-import re
 import pyblish.api
 import openpype.api
-from avalon.nuke import get_avalon_knob_data
+from openpype.hosts.nuke.api.lib import get_avalon_knob_data
 
 
 class ValidateWriteLegacy(pyblish.api.InstancePlugin):

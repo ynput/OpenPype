@@ -762,7 +762,7 @@ class BootstrapRepos:
 
             destination = self._move_zip_to_data_dir(temp_zip)
 
-        return OpenPypeVersion(version=version, path=destination)
+        return OpenPypeVersion(version=version, path=Path(destination))
 
     def _move_zip_to_data_dir(self, zip_file) -> Union[None, Path]:
         """Move zip with OpenPype version to user data directory.
@@ -911,7 +911,6 @@ class BootstrapRepos:
 
                 processed_path = file
                 self._print(f"- processing {processed_path}")
-
 
                 checksums.append(
                     (
@@ -1544,7 +1543,8 @@ class BootstrapRepos:
 
         Args:
             zip_item (Path): Zip file to test.
-            detected_version (OpenPypeVersion): Pype version detected from name.
+            detected_version (OpenPypeVersion): Pype version detected from
+                name.
 
         Returns:
            True if it is valid OpenPype version, False otherwise.

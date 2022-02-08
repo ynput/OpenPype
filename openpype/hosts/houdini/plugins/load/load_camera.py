@@ -1,5 +1,5 @@
 from avalon import api
-from avalon.houdini import pipeline, lib
+from openpype.hosts.houdini.api import pipeline
 
 
 ARCHIVE_EXPRESSION = ('__import__("_alembic_hom_extensions")'
@@ -97,18 +97,9 @@ class CameraLoader(api.Loader):
         # Get the root node
         obj = hou.node("/obj")
 
-        # Create a unique name
-        counter = 1
-        asset_name = context["asset"]["name"]
-
-        namespace = namespace or asset_name
-        formatted = "{}_{}".format(namespace, name) if namespace else name
-        node_name = "{0}_{1:03d}".format(formatted, counter)
-
-        children = lib.children_as_string(hou.node("/obj"))
-        while node_name in children:
-            counter += 1
-            node_name = "{0}_{1:03d}".format(formatted, counter)
+        # Define node name
+        namespace = namespace if namespace else context["asset"]["name"]
+        node_name = "{}_{}".format(namespace, name) if namespace else name
 
         # Create a archive node
         container = self.create_and_connect(obj, "alembicarchive", node_name)

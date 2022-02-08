@@ -11,6 +11,7 @@ from Qt import QtWidgets, QtCore
 from avalon import io, api, pipeline
 
 from openpype import style
+from openpype.pipeline.lib import BeforeWorkfileSave
 from openpype.tools.utils.lib import (
     qt_app_context
 )
@@ -162,7 +163,7 @@ class NameWindow(QtWidgets.QDialog):
 
         # Build inputs
         inputs_layout = QtWidgets.QFormLayout(inputs_widget)
-        # Add version only if template contain version key
+        # Add version only if template contains version key
         # - since the version can be padded with "{version:0>4}" we only search
         #   for "{version".
         if "{version" in self.template:
@@ -170,7 +171,7 @@ class NameWindow(QtWidgets.QDialog):
         else:
             version_widget.setVisible(False)
 
-        # Add subversion only if template containt `{comment}`
+        # Add subversion only if template contains `{comment}`
         if "{comment}" in self.template:
             inputs_layout.addRow("Subversion:", subversion_input)
         else:
@@ -183,7 +184,7 @@ class NameWindow(QtWidgets.QDialog):
         main_layout.addWidget(inputs_widget)
         main_layout.addWidget(btns_widget)
 
-        # Singal callback registration
+        # Signal callback registration
         version_input.valueChanged.connect(self.on_version_spinbox_changed)
         last_version_check.stateChanged.connect(
             self.on_version_checkbox_changed
@@ -367,7 +368,8 @@ class FilesWidget(QtWidgets.QWidget):
         self.template_key = "work"
 
         # This is not root but workfile directory
-        self.root = None
+        self._workfiles_root = None
+        self._workdir_path = None
         self.host = api.registered_host()
 
         # Whether to automatically select the latest modified
@@ -465,8 +467,9 @@ class FilesWidget(QtWidgets.QWidget):
         # This way we can browse it even before we enter it.
         if self._asset_id and self._task_name and self._task_type:
             session = self._get_session()
-            self.root = self.host.work_root(session)
-            self.files_model.set_root(self.root)
+            self._workdir_path = session["AVALON_WORKDIR"]
+            self._workfiles_root = self.host.work_root(session)
+            self.files_model.set_root(self._workfiles_root)
 
         else:
             self.files_model.set_root(None)
@@ -590,7 +593,7 @@ class FilesWidget(QtWidgets.QWidget):
 
         window = NameWindow(
             parent=self,
-            root=self.root,
+            root=self._workfiles_root,
             anatomy=self.anatomy,
             template_key=self.template_key,
             session=session
@@ -605,7 +608,7 @@ class FilesWidget(QtWidgets.QWidget):
             return
 
         src = self._get_selected_filepath()
-        dst = os.path.join(self.root, work_file)
+        dst = os.path.join(self._workfiles_root, work_file)
         shutil.copy(src, dst)
 
         self.workfile_created.emit(dst)
@@ -638,97 +641,58 @@ class FilesWidget(QtWidgets.QWidget):
             "filter": ext_filter
         }
         if Qt.__binding__ in ("PySide", "PySide2"):
-            kwargs["dir"] = self.root
+            kwargs["dir"] = self._workfiles_root
         else:
-            kwargs["directory"] = self.root
+            kwargs["directory"] = self._workfiles_root
 
         work_file = QtWidgets.QFileDialog.getOpenFileName(**kwargs)[0]
         if work_file:
             self.open_file(work_file)
 
     def on_save_as_pressed(self):
-        work_file = self.get_filename()
-        if not work_file:
+        work_filename = self.get_filename()
+        if not work_filename:
             return
 
-        # Initialize work directory if it has not been initialized before
-        if not os.path.exists(self.root):
-            log.debug("Initializing Work Directory: %s", self.root)
-            self.initialize_work_directory()
-            if not os.path.exists(self.root):
-                # Failed to initialize Work Directory
-                log.error(
-                    "Failed to initialize Work Directory: {}".format(self.root)
-                )
-                return
+        # Trigger before save event
+        BeforeWorkfileSave.emit(work_filename, self._workdir_path)
 
-        file_path = os.path.join(os.path.normpath(self.root), work_file)
-
-        pipeline.emit("before.workfile.save", [file_path])
-
-        self._enter_session()   # Make sure we are in the right session
-        self.host.save_file(file_path)
-
+        # Make sure workfiles root is updated
+        # - this triggers 'workio.work_root(...)' which may change value of
+        #   '_workfiles_root'
         self.set_asset_task(
             self._asset_id, self._task_name, self._task_type
         )
+
+        # Create workfiles root folder
+        if not os.path.exists(self._workfiles_root):
+            log.debug("Initializing Work Directory: %s", self._workfiles_root)
+            os.makedirs(self._workfiles_root)
+
+        # Update session if context has changed
+        self._enter_session()
+        # Prepare full path to workfile and save it
+        filepath = os.path.join(
+            os.path.normpath(self._workfiles_root), work_filename
+        )
+        self.host.save_file(filepath)
+        # Create extra folders
         create_workdir_extra_folders(
-            self.root,
+            self._workdir_path,
             api.Session["AVALON_APP"],
             self._task_type,
             self._task_name,
             api.Session["AVALON_PROJECT"]
         )
-        pipeline.emit("after.workfile.save", [file_path])
+        # Trigger after save events
+        pipeline.emit("after.workfile.save", [filepath])
 
-        self.workfile_created.emit(file_path)
-
+        self.workfile_created.emit(filepath)
+        # Refresh files model
         self.refresh()
 
     def on_file_select(self):
         self.file_selected.emit(self._get_selected_filepath())
-
-    def initialize_work_directory(self):
-        """Initialize Work Directory.
-
-        This is used when the Work Directory does not exist yet.
-
-        This finds the current AVALON_APP_NAME and tries to triggers its
-        `.toml` initialization step. Note that this will only be valid
-        whenever `AVALON_APP_NAME` is actually set in the current session.
-
-        """
-
-        # Inputs (from the switched session and running app)
-        session = api.Session.copy()
-        changes = pipeline.compute_session_changes(
-            session,
-            asset=self._get_asset_doc(),
-            task=self._task_name,
-            template_key=self.template_key
-        )
-        session.update(changes)
-
-        # Prepare documents to get workdir data
-        project_doc = io.find_one({"type": "project"})
-        asset_doc = io.find_one(
-            {
-                "type": "asset",
-                "name": session["AVALON_ASSET"]
-            }
-        )
-        task_name = session["AVALON_TASK"]
-        host_name = session["AVALON_APP"]
-
-        # Get workdir from collected documents
-        workdir = get_workdir(project_doc, asset_doc, task_name, host_name)
-        # Create workdir if does not exist yet
-        if not os.path.exists(workdir):
-            os.makedirs(workdir)
-
-        # Force a full to the asset as opposed to just self.refresh() so
-        # that it will actually check again whether the Work directory exists
-        self.set_asset_task(self._asset_id, self._task_name, self._task_type)
 
     def refresh(self):
         """Refresh listed files for current selection in the interface"""
@@ -833,7 +797,7 @@ class SidePanelWidget(QtWidgets.QWidget):
         self.note_input.setEnabled(enabled)
         self.btn_note_save.setEnabled(enabled)
 
-        # Make sure workfile doc is overriden
+        # Make sure workfile doc is overridden
         self._workfile_doc = workfile_doc
         # Disable inputs and remove texts if any required arguments are missing
         if not enabled:
@@ -978,7 +942,7 @@ class Window(QtWidgets.QMainWindow):
 
         Override keyPressEvent to do nothing so that Maya's panels won't
         take focus when pressing "SHIFT" whilst mouse is over viewport or
-        outliner. This way users don't accidently perform Maya commands
+        outliner. This way users don't accidentally perform Maya commands
         whilst trying to name an instance.
 
         """
@@ -1074,6 +1038,7 @@ class Window(QtWidgets.QMainWindow):
 
         if "task" in context:
             self.tasks_widget.select_task_name(context["task"])
+        self._on_task_changed()
 
     def _on_asset_changed(self):
         asset_id = self.assets_widget.get_selected_asset_id()

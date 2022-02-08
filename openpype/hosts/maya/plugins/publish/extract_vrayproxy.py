@@ -1,9 +1,9 @@
 import os
 
-import avalon.maya
-import openpype.api
-
 from maya import cmds
+
+import openpype.api
+from openpype.hosts.maya.api.lib import maintained_selection
 
 
 class ExtractVRayProxy(openpype.api.Extractor):
@@ -41,7 +41,7 @@ class ExtractVRayProxy(openpype.api.Extractor):
 
         # Write out vrmesh file
         self.log.info("Writing: '%s'" % file_path)
-        with avalon.maya.maintained_selection():
+        with maintained_selection():
             cmds.select(instance.data["setMembers"], noExpand=True)
             cmds.vrayCreateProxy(exportType=1,
                                  dir=staging_dir,

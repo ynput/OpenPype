@@ -3,7 +3,7 @@ import subprocess
 
 from openpype.lib import (
     PreLaunchHook,
-    get_pype_execute_args
+    get_openpype_execute_args
 )
 
 from openpype import PACKAGE_DIR as OPENPYPE_DIR
@@ -35,12 +35,15 @@ class NonPythonHostHook(PreLaunchHook):
             "non_python_host_launch.py"
         )
 
-        new_launch_args = get_pype_execute_args(
+        new_launch_args = get_openpype_execute_args(
             "run", script_path, executable_path
         )
         # Add workfile path if exists
         workfile_path = self.data["last_workfile_path"]
-        if os.path.exists(workfile_path):
+        if (
+                self.data.get("start_last_workfile")
+                and workfile_path
+                and os.path.exists(workfile_path)):
             new_launch_args.append(workfile_path)
 
         # Append as whole list as these areguments should not be separated
@@ -48,4 +51,3 @@ class NonPythonHostHook(PreLaunchHook):
 
         if remainders:
             self.launch_context.launch_args.extend(remainders)
-

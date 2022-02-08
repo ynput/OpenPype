@@ -227,6 +227,11 @@ class ProcessSubmittedJobOnFarm(pyblish.api.InstancePlugin):
         environment["OPENPYPE_USERNAME"] = instance.context.data["user"]
         environment["OPENPYPE_PUBLISH_JOB"] = "1"
         environment["OPENPYPE_RENDER_JOB"] = "0"
+        # Add mongo url if it's enabled
+        if instance.context.data.get("deadlinePassMongoUrl"):
+            mongo_url = os.environ.get("OPENPYPE_MONGO")
+            if mongo_url:
+                environment["OPENPYPE_MONGO"] = mongo_url
 
         args = [
             'publish',
@@ -273,18 +278,18 @@ class ProcessSubmittedJobOnFarm(pyblish.api.InstancePlugin):
         else:
             payload["JobInfo"]["JobDependency0"] = job["_id"]
 
-        i = 0
-        for index, key in enumerate(environment):
+        index = 0
+        for key in environment:
             if key.upper() in self.enviro_filter:
                 payload["JobInfo"].update(
                     {
                         "EnvironmentKeyValue%d"
-                        % i: "{key}={value}".format(
+                        % index: "{key}={value}".format(
                             key=key, value=environment[key]
                         )
                     }
                 )
-                i += 1
+                index += 1
 
         # remove secondary pool
         payload["JobInfo"].pop("SecondaryPool", None)
