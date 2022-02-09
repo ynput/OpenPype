@@ -303,10 +303,10 @@ class FtrackModule(
             # TODO add add permissions check
             # TODO add value validations
             # - value type and list items
-            entity_key = collections.OrderedDict((
+            entity_key = collections.OrderedDict([
                 ("configuration_id", configuration["id"])
                 ("entity_id", project_id)
-            ))
+            ])
 
             session.recorded_operations.push(
                 ftrack_api.operation.UpdateEntityOperation(

@@ -1763,10 +1763,10 @@ class SyncEntitiesFactory:
                 configuration_id = self.entities_dict[ftrack_id][
                     "avalon_attrs_id"][CUST_ATTR_ID_KEY]
 
-                _entity_key = collections.OrderedDict({
-                    "configuration_id": configuration_id,
-                    "entity_id": ftrack_id
-                })
+                _entity_key = collections.OrderedDict([
+                    ("configuration_id", configuration_id),
+                    ("entity_id", ftrack_id)
+                ])
 
                 self.session.recorded_operations.push(
                     ftrack_api.operation.UpdateEntityOperation(

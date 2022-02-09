@@ -332,10 +332,10 @@ class CustomAttributes(BaseAction):
                 cust_attr_query.format(attr_def["id"])
             ).all()
             for value in values:
-                table_values = collections.OrderedDict((
+                table_values = collections.OrderedDict([
                     ("configuration_id", hierarchical_attr["id"]),
                     ("entity_id", value["entity_id"])
-                ))
+                ])
 
                 session.recorded_operations.push(
                     ftrack_api.operation.UpdateEntityOperation(
