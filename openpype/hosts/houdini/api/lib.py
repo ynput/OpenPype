@@ -406,6 +406,7 @@ def imprint(node, data):
 def lsattr(attr, value=None):
     if value is None:
         nodes = list(hou.node("/obj").allNodes())
+        nodes += list(hou.node("/stage").allNodes())
         return [n for n in nodes if n.parm(attr)]
     return lsattrs({attr: value})
 
@@ -428,6 +429,7 @@ def lsattrs(attrs):
 
     matches = set()
     nodes = list(hou.node("/obj").allNodes())  # returns generator object
+    nodes += list(hou.node("/stage").allNodes())
     for node in nodes:
         for attr in attrs:
             if not node.parm(attr):
