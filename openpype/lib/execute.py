@@ -289,19 +289,20 @@ def get_non_python_host_kwargs(kwargs, allow_console=True):
     """
     if kwargs is None:
         kwargs = {}
+
     if platform.system().lower() == "windows":
 
         executable_path = os.environ.get("OPENPYPE_EXECUTABLE")
         executable_filename = ""
         if executable_path:
-            executable_filename = os.path.dirname(executable_path)
+            executable_filename = os.path.basename(executable_path)
         if "openpype_gui" in executable_filename:
             kwargs.update({
                 "creationflags": subprocess.CREATE_NO_WINDOW,
                 "stdout": subprocess.DEVNULL,
                 "stderr": subprocess.DEVNULL
             })
-        else:
+        elif allow_console:
             kwargs.update({
                 "creationflags": subprocess.CREATE_NEW_CONSOLE
             })
