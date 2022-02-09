@@ -141,6 +141,11 @@
                     "key": "enabled",
                     "label": "Enabled"
                 },
+                 {
+                    "type": "boolean",
+                    "key": "optional",
+                    "label": "Optional"
+                },
                 {
                     "type": "boolean",
                     "key": "validate_linear_units",
@@ -156,9 +161,11 @@
                             {"mm": "millimeter"},
                             {"cm": "centimeter"},
                             {"m":  "meter"},
+                            {"km":  "kilometer"},
                             {"in":  "inch"},
                             {"ft": "foot"},
-                            {"yd": "yard"}
+                            {"yd": "yard"},
+                            {"mi": "mile"}
                           ]
                 },
                 {

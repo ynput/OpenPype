@@ -188,17 +188,26 @@
             "whitelist_native_plugins": false,
             "authorized_plugins": []
         },
+        "ValidateMayaUnits": {
+            "enabled": true,
+            "optional": false,
+            "validate_linear_units": true,
+            "linear_units": "cm",
+            "validate_angular_units": true,
+            "angular_units": "deg",
+            "validate_fps": true
+        },
+        "ValidateUnrealStaticMeshName": {
+            "enabled": true,
+            "validate_mesh": false,
+            "validate_collision": true
+        },
         "ValidateCycleError": {
             "enabled": true,
             "optional": false,
             "families": [
                 "rig"
             ]
-        },
-        "ValidateUnrealStaticMeshName": {
-            "enabled": true,
-            "validate_mesh": false,
-            "validate_collision": true
         },
         "ValidateRenderSettings": {
             "arnold_render_attributes": [],
