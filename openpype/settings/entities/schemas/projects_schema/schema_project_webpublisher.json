@@ -24,10 +24,10 @@
                             "label": "Task type to family mapping",
                             "collapsible_key": true,
                             "object_type": {
-                                "type": "dict-modifiable",
-                                "collapsible": false,
+                                "type": "list",
+                                "collapsible": true,
                                 "key": "task_type",
-                                "collapsible_key": false,
+                                "collapsible_key": true,
                                 "object_type": {
                                     "type": "dict",
                                     "children": [
@@ -53,9 +53,12 @@
                                             "name": "schema_representation_tags"
                                         },
                                         {
+                                            "type": "separator"
+                                        },
+                                        {
                                             "type": "text",
-                                            "key": "subset_template_name",
-                                            "label": "Subset template name"
+                                            "key": "result_family",
+                                            "label": "Resulting family"
                                         }
                                     ]
                                 }
