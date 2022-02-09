@@ -158,7 +158,6 @@ class StdOutBroker:
 
         if self.websocket_server:
             self.websocket_server.stop()
-        QtCore.QCoreApplication.exit()
 
     def _catch_std_outputs(self):
         """Redirects standard out and error to own functions"""
