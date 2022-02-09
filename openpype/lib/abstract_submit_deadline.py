@@ -561,7 +561,7 @@ class AbstractSubmitDeadline(pyblish.api.InstancePlugin):
                         replaced_files = []
                         for f in files:
                             replaced_files.append(
-                                f.replace(orig_scene, new_scene)
+                                str(f).replace(orig_scene, new_scene)
                             )
                         new_exp[aov] = replaced_files
                     # [] might be too much here, TODO
