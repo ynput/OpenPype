@@ -304,7 +304,7 @@ class FtrackModule(
             # TODO add value validations
             # - value type and list items
             entity_key = collections.OrderedDict([
-                ("configuration_id", configuration["id"])
+                ("configuration_id", configuration["id"]),
                 ("entity_id", project_id)
             ])
 
