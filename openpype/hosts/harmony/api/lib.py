@@ -23,7 +23,7 @@ from .server import Server
 from openpype.tools.stdout_broker.app import StdOutBroker
 from openpype.tools.utils import host_tools
 from openpype import style
-
+from openpype.lib.execute import get_non_python_host_kwargs
 
 # Setup logging.
 log = logging.getLogger(__name__)
@@ -315,7 +315,7 @@ def launch_zip_file(filepath):
         return
 
     print("Launching {}".format(scene_path))
-    kwargs = _get_kwargs()
+    kwargs = get_non_python_host_kwargs({}, False)
     process = subprocess.Popen(
         [ProcessContext.application_path, scene_path],
         **kwargs
@@ -622,16 +622,3 @@ def find_node_by_name(name, node_type):
 
     return None
 
-
-def _get_kwargs():
-    """Explicitly handle openpype_gui no not show console."""
-    kwargs = {}
-    if platform.system().lower() == "windows":
-        if "openpype_gui" in os.environ.get("OPENPYPE_EXECUTABLE"):
-            kwargs.update({
-                "creationflags": subprocess.CREATE_NO_WINDOW,
-                "stdout": subprocess.DEVNULL,
-                "stderr": subprocess.DEVNULL
-            })
-    print("kwargs:: {}".format(kwargs))
-    return kwargs
