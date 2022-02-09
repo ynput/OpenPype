@@ -170,9 +170,12 @@ def sync_local():
 
         # Query all assets of the local project
         project_col = dbcon.database[project_code]
-        asset_docs_zou_ids = {
-            asset_doc["data"]["zou_id"]
+        asset_doc_ids = {
+            asset_doc["_id"]: asset_doc
             for asset_doc in project_col.find({"type": "asset"})
+        }
+        asset_docs_zou_ids = {
+            asset_doc["data"]["zou_id"] for asset_doc in asset_doc_ids.values()
         }
 
         # Create project if is not available
@@ -182,6 +185,7 @@ def sync_local():
             project_doc = create_project(project_name, project_code, dbcon=dbcon)
 
         bulk_writes = []
+        sync_assets = set()
         for asset in all_assets:
             asset_data = {"zou_id": asset["id"]}
 
@@ -195,13 +199,13 @@ def sync_local():
             if asset["id"] in asset_docs_zou_ids:  # Update asset
                 asset_doc = project_col.find_one({"data.zou_id": asset["id"]})
 
-                # Override all 'data' TODO filter data to update?
-                diff_data = {
+                # Override all 'data'
+                updated_data = {
                     k: asset_data[k]
                     for k in asset_data.keys()
                     if asset_doc["data"].get(k) != asset_data[k]
                 }
-                if diff_data:
+                if updated_data:
                     bulk_writes.append(
                         UpdateOne(
                             {"_id": asset_doc["_id"]}, {"$set": {"data": asset_data}}
@@ -219,24 +223,16 @@ def sync_local():
                 # Insert new doc
                 bulk_writes.append(InsertOne(asset_doc))
 
-            # elif item.data(REMOVED_ROLE): # TODO removal
-            #     if item.data(HIERARCHY_CHANGE_ABLE_ROLE):
-            #         bulk_writes.append(DeleteOne(
-            #             {"_id": item.asset_id}
-            #         ))
-            #     else:
-            #         bulk_writes.append(UpdateOne(
-            #             {"_id": item.asset_id},
-            #             {"$set": {"type": "archived_asset"}}
-            #         ))
+            # Keep synchronized asset for diff
+            sync_assets.add(asset_doc["_id"])
 
-            # else: TODO update data
-            #     update_data = new_item.update_data()
-            #     if update_data:
-            #         bulk_writes.append(UpdateOne(
-            #             {"_id": new_item.asset_id},
-            #             update_data
-            #         ))
+        # Delete from diff of assets in OP and synchronized assets to detect deleted assets
+        diff_assets = set(asset_doc_ids.keys()) - sync_assets
+        if diff_assets:
+            # Delete doc
+            bulk_writes.extend(
+                [DeleteOne(asset_doc_ids[asset_id]) for asset_id in diff_assets]
+            )
 
         # Write into DB
         if bulk_writes:
