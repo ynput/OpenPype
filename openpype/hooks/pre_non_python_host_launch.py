@@ -4,7 +4,7 @@ from openpype.lib import (
     PreLaunchHook,
     get_openpype_execute_args
 )
-from openpype.lib.execute import get_non_python_host_kwargs
+from openpype.lib.applications import get_non_python_host_kwargs
 
 from openpype import PACKAGE_DIR as OPENPYPE_DIR
 

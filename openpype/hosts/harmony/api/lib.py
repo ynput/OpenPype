@@ -16,14 +16,13 @@ import time
 from uuid import uuid4
 from Qt import QtWidgets, QtCore, QtGui
 import collections
-import platform
 
 from .server import Server
 
 from openpype.tools.stdout_broker.app import StdOutBroker
 from openpype.tools.utils import host_tools
 from openpype import style
-from openpype.lib.execute import get_non_python_host_kwargs
+from openpype.lib.applications import get_non_python_host_kwargs
 
 # Setup logging.
 log = logging.getLogger(__name__)
