@@ -934,12 +934,27 @@
             "AVALON_HARMONY_WORKFILES_ON_LAUNCH": "1"
         },
         "variants": {
+            "21": {
+                "enabled": true,
+                "variant_label": "21",
+                "executables": {
+                    "windows": ["c:\\Program Files (x86)\\Toon Boom Animation\\Toon Boom Harmony 21 Premium\\win64\\bin\\HarmonyPremium.exe"],
+                    "darwin": ["/Applications/Toon Boom Harmony 21 Premium/Harmony Premium.app/Contents/MacOS/Harmony Premium"],
+                    "linux": []
+                },
+                "arguments": {
+                    "windows": [],
+                    "darwin": [],
+                    "linux": []
+                },
+                "environment": {}
+            },
             "20": {
                 "enabled": true,
                 "variant_label": "20",
                 "executables": {
-                    "windows": [],
-                    "darwin": [],
+                    "windows": ["c:\\Program Files (x86)\\Toon Boom Animation\\Toon Boom Harmony 20 Premium\\win64\\bin\\HarmonyPremium.exe"],
+                    "darwin": ["/Applications/Toon Boom Harmony 20 Premium/Harmony Premium.app/Contents/MacOS/Harmony Premium"],
                     "linux": []
                 },
                 "arguments": {
@@ -953,7 +968,7 @@
                 "enabled": true,
                 "variant_label": "17",
                 "executables": {
-                    "windows": [],
+                    "windows": ["c:\\Program Files (x86)\\Toon Boom Animation\\Toon Boom Harmony 17 Premium\\win64\\bin\\HarmonyPremium.exe"],
                     "darwin": [
                         "/Applications/Toon Boom Harmony 17 Premium/Harmony Premium.app/Contents/MacOS/Harmony Premium"
                     ],
