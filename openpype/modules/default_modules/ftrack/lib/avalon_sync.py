@@ -1,10 +1,7 @@
-import os
 import re
 import json
 import collections
 import copy
-
-import six
 
 from avalon.api import AvalonMongoDB
 
@@ -18,7 +15,7 @@ from openpype.api import (
 from openpype.lib import ApplicationManager
 
 from .constants import CUST_ATTR_ID_KEY
-from .custom_attributes import get_openpype_attr
+from .custom_attributes import get_openpype_attr, query_custom_attributes
 
 from bson.objectid import ObjectId
 from bson.errors import InvalidId
@@ -235,33 +232,19 @@ def get_hierarchical_attributes_values(
 
     entity_ids = [item["id"] for item in entity["link"]]
 
-    join_ent_ids = join_query_keys(entity_ids)
-    join_attribute_ids = join_query_keys(attr_key_by_id.keys())
-
-    queries = []
-    queries.append({
-        "action": "query",
-        "expression": (
-            "select value, configuration_id, entity_id"
-            " from CustomAttributeValue"
-            " where entity_id in ({}) and configuration_id in ({})"
-        ).format(join_ent_ids, join_attribute_ids)
-    })
-
-    if hasattr(session, "call"):
-        [values] = session.call(queries)
-    else:
-        [values] = session._call(queries)
+    values = query_custom_attributes(
+        session, list(attr_key_by_id.keys()), entity_ids, True
+    )
 
     hier_values = {}
     for key, val in defaults.items():
         hier_values[key] = val
 
-    if not values["data"]:
+    if not values:
         return hier_values
 
     values_by_entity_id = collections.defaultdict(dict)
-    for item in values["data"]:
+    for item in values:
         value = item["value"]
         if value is None:
             continue
@@ -861,33 +844,6 @@ class SyncEntitiesFactory:
 
             self.entities_dict[parent_id]["children"].remove(ftrack_id)
 
-    def _query_custom_attributes(self, session, conf_ids, entity_ids):
-        output = []
-        # Prepare values to query
-        attributes_joined = join_query_keys(conf_ids)
-        attributes_len = len(conf_ids)
-        chunk_size = int(5000 / attributes_len)
-        for idx in range(0, len(entity_ids), chunk_size):
-            entity_ids_joined = join_query_keys(
-                entity_ids[idx:idx + chunk_size]
-            )
-
-            call_expr = [{
-                "action": "query",
-                "expression": (
-                    "select value, entity_id from ContextCustomAttributeValue "
-                    "where entity_id in ({}) and configuration_id in ({})"
-                ).format(entity_ids_joined, attributes_joined)
-            }]
-            if hasattr(session, "call"):
-                [result] = session.call(call_expr)
-            else:
-                [result] = session._call(call_expr)
-
-            for item in result["data"]:
-                output.append(item)
-        return output
-
     def set_cutom_attributes(self):
         self.log.debug("* Preparing custom attributes")
         # Get custom attributes and values
@@ -994,7 +950,7 @@ class SyncEntitiesFactory:
                     copy.deepcopy(prepared_avalon_attr_ca_id)
                 )
 
-        items = self._query_custom_attributes(
+        items = query_custom_attributes(
             self.session,
             list(attribute_key_by_id.keys()),
             sync_ids
@@ -1082,10 +1038,11 @@ class SyncEntitiesFactory:
             for key, val in prepare_dict_avalon.items():
                 entity_dict["avalon_attrs"][key] = val
 
-        items = self._query_custom_attributes(
+        items = query_custom_attributes(
             self.session,
             list(attribute_key_by_id.keys()),
-            sync_ids
+            sync_ids,
+            True
         )
 
         avalon_hier = []
