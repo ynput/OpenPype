@@ -306,8 +306,8 @@ class CustomAttributes(BaseAction):
         }
 
         cust_attr_query = (
-            "select value, entity_id from ContextCustomAttributeValue "
-            "where configuration_id is {}"
+            "select value, entity_id from CustomAttributeValue"
+            " where configuration_id is {}"
         )
         for attr_def in object_type_attrs:
             attr_ent_type = attr_def["entity_type"]
@@ -328,21 +328,14 @@ class CustomAttributes(BaseAction):
             self.log.debug((
                 "Converting Avalon MongoID attr for Entity type \"{}\"."
             ).format(entity_type_label))
-
-            call_expr = [{
-                "action": "query",
-                "expression": cust_attr_query.format(attr_def["id"])
-            }]
-            if hasattr(session, "call"):
-                [values] = session.call(call_expr)
-            else:
-                [values] = session._call(call_expr)
-
-            for value in values["data"]:
-                table_values = collections.OrderedDict({
-                    "configuration_id": hierarchical_attr["id"],
-                    "entity_id": value["entity_id"]
-                })
+            values = session.query(
+                cust_attr_query.format(attr_def["id"])
+            ).all()
+            for value in values:
+                table_values = collections.OrderedDict([
+                    ("configuration_id", hierarchical_attr["id"]),
+                    ("entity_id", value["entity_id"])
+                ])
 
                 session.recorded_operations.push(
                     ftrack_api.operation.UpdateEntityOperation(
