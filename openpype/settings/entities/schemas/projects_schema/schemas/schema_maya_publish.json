@@ -71,7 +71,6 @@
                 }
             ]
         },
-
         {
             "type": "schema_template",
             "name": "template_publish_plugin",
@@ -82,7 +81,6 @@
                 }
             ]
         },
-
         {
             "type": "dict",
             "collapsible": true,
@@ -102,7 +100,6 @@
                 }
             ]
         },
-
         {
             "type": "dict",
             "collapsible": true,
@@ -128,7 +125,6 @@
                 }
             ]
         },
-
         {
             "type": "dict",
             "collapsible": true,
@@ -141,7 +137,7 @@
                     "key": "enabled",
                     "label": "Enabled"
                 },
-                 {
+                {
                     "type": "boolean",
                     "key": "optional",
                     "label": "Optional"
@@ -152,21 +148,21 @@
                     "label": "Validate linear units"
                 },
                 {
-                          "key": "linear_units",
-                          "label": "Linear units",
-                          "type": "enum",
-                          "multiselection": false,
-                          "defaults": "cm",
-                          "enum_items": [
-                            {"mm": "millimeter"},
-                            {"cm": "centimeter"},
-                            {"m": "meter"},
-                            {"km": "kilometer"},
-                            {"in": "inch"},
-                            {"ft": "foot"},
-                            {"yd": "yard"},
-                            {"mi": "mile"}
-                          ]
+                    "key": "linear_units",
+                    "label": "Linear units",
+                    "type": "enum",
+                    "multiselection": false,
+                    "defaults": "cm",
+                    "enum_items": [
+                        {"mm": "millimeter"},
+                        {"cm": "centimeter"},
+                        {"m": "meter"},
+                        {"km": "kilometer"},
+                        {"in": "inch"},
+                        {"ft": "foot"},
+                        {"yd": "yard"},
+                        {"mi": "mile"}
+                    ]
                 },
                 {
                     "type": "boolean",
@@ -174,15 +170,15 @@
                     "label": "Validate angular units"
                 },
                 {
-                          "key": "angular_units",
-                          "label": "Angular units",
-                          "type": "enum",
-                          "multiselection": false,
-                          "defaults": "cm",
-                          "enum_items": [
-                            {"deg": "degree"},
-                            {"rad": "radian"}
-                          ]
+                    "key": "angular_units",
+                    "label": "Angular units",
+                    "type": "enum",
+                    "multiselection": false,
+                    "defaults": "cm",
+                    "enum_items": [
+                        {"deg": "degree"},
+                        {"rad": "radian"}
+                    ]
                 },
                 {
                     "type": "boolean",
@@ -191,7 +187,6 @@
                 }
             ]
         },
-
         {
             "type": "dict",
             "collapsible": true,
@@ -216,7 +211,6 @@
                 }
             ]
         },
-
         {
             "type": "dict",
             "collapsible": true,
@@ -243,7 +237,6 @@
                 }
             ]
         },
-
         {
             "type": "dict",
             "collapsible": true,
@@ -347,7 +340,7 @@
                     "label": "Validate Model Content",
                     "checkbox_key": "enabled",
                     "children": [
-                         {
+                        {
                             "type": "boolean",
                             "key": "enabled",
                             "label": "Enabled"
