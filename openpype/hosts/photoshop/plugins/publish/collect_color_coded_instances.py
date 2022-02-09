@@ -8,7 +8,7 @@ from openpype.lib.plugin_tools import parse_json, get_batch_asset_task_info
 from openpype.hosts.photoshop import api as photoshop
 
 
-class CollectRemoteInstances(pyblish.api.ContextPlugin):
+class CollectColorCodedInstances(pyblish.api.ContextPlugin):
     """Creates instances for configured color code of a layer.
 
     Used in remote publishing when artists marks publishable layers by color-
@@ -37,7 +37,7 @@ class CollectRemoteInstances(pyblish.api.ContextPlugin):
     flatten_subset_template = ""
 
     def process(self, context):
-        self.log.info("CollectRemoteInstances")
+        self.log.info("CollectColorCodedInstances")
         self.log.debug("mapping:: {}".format(self.color_code_mapping))
 
         existing_subset_names = self._get_existing_subset_names(context)
@@ -48,7 +48,6 @@ class CollectRemoteInstances(pyblish.api.ContextPlugin):
 
         publishable_layers = []
         created_instances = []
-        contains_background = False
         for layer in layers:
             self.log.debug("Layer:: {}".format(layer))
             if layer.parents:
@@ -82,12 +81,8 @@ class CollectRemoteInstances(pyblish.api.ContextPlugin):
                     "Subset {} already created, skipping.".format(subset))
                 continue
 
-            if layer.id == "1":
-                contains_background = True
-
             instance = self._create_instance(context, layer, resolved_family,
                                              asset_name, subset, task_name)
-
             existing_subset_names.append(subset)
             publishable_layers.append(layer)
             created_instances.append(instance)
@@ -98,19 +93,17 @@ class CollectRemoteInstances(pyblish.api.ContextPlugin):
                 self.log.warning("No template for flatten image")
                 return
 
-            if contains_background:
-                raise ValueError("It is not possible to create flatten image "
-                                 "with background layer. Please remove it.")
-
             fill_pairs.pop("layer")
             subset = self.flatten_subset_template.format(
                 **prepare_template_data(fill_pairs))
 
-            stub.select_layers(publishable_layers)
-            new_layer = stub.group_selected_layers(subset)
-            instance = self._create_instance(context, new_layer,
-                                             resolved_family,
+            first_layer = publishable_layers[0]  # dummy layer
+            first_layer.name = subset
+            family = created_instances[0].data["family"]  # inherit family
+            instance = self._create_instance(context, first_layer,
+                                             family,
                                              asset_name, subset, task_name)
+            instance.data["ids"] = [layer.id for layer in publishable_layers]
             created_instances.append(instance)
 
         for instance in created_instances:
@@ -155,12 +148,12 @@ class CollectRemoteInstances(pyblish.api.ContextPlugin):
     def _create_instance(self, context, layer, family,
                          asset, subset, task_name):
         instance = context.create_instance(layer.name)
-        instance.append(layer)
         instance.data["family"] = family
         instance.data["publish"] = True
         instance.data["asset"] = asset
         instance.data["task"] = task_name
         instance.data["subset"] = subset
+        instance.data["layer"] = layer
 
         return instance
 
