@@ -111,7 +111,7 @@ class ExtractReview(openpype.api.Extractor):
     def _get_image_path_from_instances(self, instance):
         img_list = []
 
-        for instance in instance.context:
+        for instance in sorted(instance.context):
             if instance.data["family"] != "image":
                 continue
 
