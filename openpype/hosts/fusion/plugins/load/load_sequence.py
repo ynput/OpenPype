@@ -212,8 +212,8 @@ class FusionLoadSequence(api.Loader):
         assert tool.ID == "Loader", "Must be Loader"
         comp = tool.Comp()
 
-        root = api.get_representation_path(representation)
-        path = self._get_first_image(root)
+        filename = api.get_representation_path(representation)
+        path = self._get_first_image(os.path.dirname(filename))
 
         # Get start frame from version data
         version = io.find_one({"type": "version",
