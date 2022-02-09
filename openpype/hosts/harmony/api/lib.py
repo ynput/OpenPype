@@ -15,7 +15,6 @@ import signal
 import time
 from uuid import uuid4
 from Qt import QtWidgets, QtCore, QtGui
-import queue
 import collections
 import platform
 

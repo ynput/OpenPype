@@ -97,8 +97,8 @@ class StdOutBroker:
         return self.webserver_client and self._std_available
 
     def _connect_to_tray(self):
-        """ Connect to Tray webserver to pass console output. """
-        if not self._std_available: # not content to log
+        """Connect to Tray webserver to pass console output. """
+        if not self._std_available:  # not content to log
             return
         ws = websocket.WebSocket()
         webserver_url = os.environ.get("OPENPYPE_WEBSERVER_URL")
@@ -120,7 +120,7 @@ class StdOutBroker:
         self._send(payload)
 
     def _disconnect_from_tray(self):
-        """ Send to Tray that host is closing - remove from Services. """
+        """Send to Tray that host is closing - remove from Services. """
         print("Host {} closing".format(self.host_name))
         if not self.webserver_client:
             return
@@ -136,7 +136,7 @@ class StdOutBroker:
         self.webserver_client.close()
 
     def host_connected(self):
-        """ Send to Tray console that host is ready - icon change. """
+        """Send to Tray console that host is ready - icon change. """
         log.info("Host {} connected".format(self.host_id))
 
         payload = {
@@ -153,7 +153,7 @@ class StdOutBroker:
             self.websocket_server.stop_server(restart=True)
 
     def exit(self):
-        """ Exit whole application. """
+        """Exit whole application. """
         self._disconnect_from_tray()
 
         if self.websocket_server:
@@ -203,7 +203,7 @@ class StdOutBroker:
             self._send(payload)
 
     def _send(self, payload):
-        """ Worker method to send to existing websocket connection."""
+        """Worker method to send to existing websocket connection."""
         if not self.send_to_tray:
             return
 
@@ -234,7 +234,7 @@ class StdOutBroker:
 
     @staticmethod
     def color(message):
-        """ Color message with html tags. """
+        """Color message with html tags. """
         message = StdOutBroker._multiple_replace(message,
                                                  StdOutBroker.sdict)
 

@@ -3,8 +3,6 @@
 Anything that isn't defined here is INTERNAL and unreliable for external use.
 
 """
-from . import plugin
-
 from .pipeline import (
     ls,
     install,

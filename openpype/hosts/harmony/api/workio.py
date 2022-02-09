@@ -3,7 +3,7 @@ import os
 import shutil
 
 from .lib import (
-    ProcessContext, 
+    ProcessContext,
     get_local_harmony_path,
     zip_and_move,
     launch_zip_file
@@ -20,7 +20,8 @@ def file_extensions():
 
 def has_unsaved_changes():
     if ProcessContext.server:
-        return ProcessContext.server.send({"function": "scene.isDirty"})["result"]
+        return ProcessContext.server.send(
+            {"function": "scene.isDirty"})["result"]
 
     return False
 
