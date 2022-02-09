@@ -14,6 +14,9 @@ class CollectRemoteInstances(pyblish.api.ContextPlugin):
     Used in remote publishing when artists marks publishable layers by color-
     coding.
 
+    Can add group for all publishable layers to allow creation of flattened
+    image. (Cannot contain special background layer as it cannot be grouped!)
+
     Identifier:
         id (str): "pyblish.avalon.instance"
     """
@@ -26,50 +29,39 @@ class CollectRemoteInstances(pyblish.api.ContextPlugin):
 
     # configurable by Settings
     color_code_mapping = []
+    # TODO check if could be set globally, probably doesn't make sense when
+    # flattened template cannot
+    subset_template_name = ""
+    create_flatten_image = False
+    # probably not possible to configure this globally
+    flatten_subset_template = ""
 
     def process(self, context):
         self.log.info("CollectRemoteInstances")
         self.log.debug("mapping:: {}".format(self.color_code_mapping))
 
-        # parse variant if used in webpublishing, comes from webpublisher batch
-        batch_dir = os.environ.get("OPENPYPE_PUBLISH_DATA")
-        task_data = None
-        if batch_dir and os.path.exists(batch_dir):
-            # TODO check if batch manifest is same as tasks manifests
-            task_data = parse_json(os.path.join(batch_dir,
-                                                "manifest.json"))
-        if not task_data:
-            raise ValueError(
-                "Cannot parse batch meta in {} folder".format(batch_dir))
-        variant = task_data["variant"]
+        existing_subset_names = self._get_existing_subset_names(context)
+        asset_name, task_name, variant = self._parse_batch()
 
         stub = photoshop.stub()
         layers = stub.get_layers()
 
-        existing_subset_names = []
-        for instance in context:
-            if instance.data.get('publish'):
-                existing_subset_names.append(instance.data.get('subset'))
-
-        asset, task_name, task_type = get_batch_asset_task_info(
-            task_data["context"])
-
-        if not task_name:
-            task_name = task_type
-
-        instance_names = []
+        publishable_layers = []
+        created_instances = []
+        contains_background = False
         for layer in layers:
             self.log.debug("Layer:: {}".format(layer))
             if layer.parents:
                 self.log.debug("!!! Not a top layer, skip")
                 continue
 
+            if not layer.visible:
+                self.log.debug("Not visible, skip")
+                continue
+
             resolved_family, resolved_subset_template = self._resolve_mapping(
                 layer
             )
-            self.log.info("resolved_family {}".format(resolved_family))
-            self.log.info("resolved_subset_template {}".format(
-                resolved_subset_template))
 
             if not resolved_subset_template or not resolved_family:
                 self.log.debug("!!! Not found family or template, skip")
@@ -90,24 +82,87 @@ class CollectRemoteInstances(pyblish.api.ContextPlugin):
                     "Subset {} already created, skipping.".format(subset))
                 continue
 
-            instance = context.create_instance(layer.name)
-            instance.append(layer)
-            instance.data["family"] = resolved_family
-            instance.data["publish"] = layer.visible
-            instance.data["asset"] = asset
-            instance.data["task"] = task_name
-            instance.data["subset"] = subset
+            if layer.id == "1":
+                contains_background = True
 
-            instance_names.append(layer.name)
+            instance = self._create_instance(context, layer, resolved_family,
+                                             asset_name, subset, task_name)
 
+            existing_subset_names.append(subset)
+            publishable_layers.append(layer)
+            created_instances.append(instance)
+
+        if self.create_flatten_image and publishable_layers:
+            self.log.debug("create_flatten_image")
+            if not self.flatten_subset_template:
+                self.log.warning("No template for flatten image")
+                return
+
+            if contains_background:
+                raise ValueError("It is not possible to create flatten image "
+                                 "with background layer. Please remove it.")
+
+            fill_pairs.pop("layer")
+            subset = self.flatten_subset_template.format(
+                **prepare_template_data(fill_pairs))
+
+            stub.select_layers(publishable_layers)
+            new_layer = stub.group_selected_layers(subset)
+            instance = self._create_instance(context, new_layer,
+                                             resolved_family,
+                                             asset_name, subset, task_name)
+            created_instances.append(instance)
+
+        for instance in created_instances:
             # Produce diagnostic message for any graphical
             # user interface interested in visualising it.
             self.log.info("Found: \"%s\" " % instance.data["name"])
             self.log.info("instance: {} ".format(instance.data))
 
-        if len(instance_names) != len(set(instance_names)):
-            self.log.warning("Duplicate instances found. " +
-                             "Remove unwanted via SubsetManager")
+    def _get_existing_subset_names(self, context):
+        """Collect manually created instances from workfile.
+
+        Shouldn't be any as Webpublisher bypass publishing via Openpype, but
+        might be some if workfile published through OP is reused.
+        """
+        existing_subset_names = []
+        for instance in context:
+            if instance.data.get('publish'):
+                existing_subset_names.append(instance.data.get('subset'))
+
+        return existing_subset_names
+
+    def _parse_batch(self):
+        """Parses asset_name, task_name, variant from batch manifest."""
+        batch_dir = os.environ.get("OPENPYPE_PUBLISH_DATA")
+        task_data = None
+        if batch_dir and os.path.exists(batch_dir):
+            task_data = parse_json(os.path.join(batch_dir,
+                                                "manifest.json"))
+        if not task_data:
+            raise ValueError(
+                "Cannot parse batch meta in {} folder".format(batch_dir))
+        variant = task_data["variant"]
+
+        asset, task_name, task_type = get_batch_asset_task_info(
+            task_data["context"])
+
+        if not task_name:
+            task_name = task_type
+
+        return asset, task_name, variant
+
+    def _create_instance(self, context, layer, family,
+                         asset, subset, task_name):
+        instance = context.create_instance(layer.name)
+        instance.append(layer)
+        instance.data["family"] = family
+        instance.data["publish"] = True
+        instance.data["asset"] = asset
+        instance.data["task"] = task_name
+        instance.data["subset"] = subset
+
+        return instance
 
     def _resolve_mapping(self, layer):
         """Matches 'layer' color code and name to mapping.
@@ -147,4 +202,7 @@ class CollectRemoteInstances(pyblish.api.ContextPlugin):
         if family_list:
             family = family_list.pop()
 
+        self.log.debug("resolved_family {}".format(family))
+        self.log.debug("resolved_subset_template {}".format(
+            resolved_subset_template))
         return family, resolved_subset_template
