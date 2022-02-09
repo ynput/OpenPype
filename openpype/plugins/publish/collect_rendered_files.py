@@ -21,7 +21,8 @@ class CollectRenderedFiles(pyblish.api.ContextPlugin):
 
     """
     order = pyblish.api.CollectorOrder - 0.2
-    targets = ["filesequence"]
+    # Keep "filesequence" for backwards compatibility of older jobs
+    targets = ["filesequence", "farm"]
     label = "Collect rendered frames"
 
     _context = None

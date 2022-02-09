@@ -80,7 +80,7 @@ class BaseCreator:
         self.create_context.creator_removed_instance(instance)
 
     @abstractmethod
-    def create(self, options=None):
+    def create(self):
         """Create new instance.
 
         Replacement of `process` method from avalon implementation.
@@ -163,7 +163,7 @@ class BaseCreator:
             dynamic_data=dynamic_data
         )
 
-    def get_attribute_defs(self):
+    def get_instance_attr_defs(self):
         """Plugin attribute definitions.
 
         Attribute definitions of plugin that hold data about created instance
@@ -199,15 +199,22 @@ class Creator(BaseCreator):
     # - may not be used if `get_detail_description` is overriden
     detailed_description = None
 
+    # It does make sense to change context on creation
+    # - in some cases it may confuse artists because it would not be used
+    #      e.g. for buld creators
+    create_allow_context_change = True
+
     @abstractmethod
-    def create(self, subset_name, instance_data, options=None):
+    def create(self, subset_name, instance_data, pre_create_data):
         """Create new instance and store it.
 
         Ideally should be stored to workfile using host implementation.
 
         Args:
             subset_name(str): Subset name of created instance.
-            instance_data(dict):
+            instance_data(dict): Base data for instance.
+            pre_create_data(dict): Data based on pre creation attributes.
+                Those may affect how creator works.
         """
 
         # instance = CreatedInstance(
@@ -257,6 +264,19 @@ class Creator(BaseCreator):
         """
 
         return None
+
+    def get_pre_create_attr_defs(self):
+        """Plugin attribute definitions needed for creation.
+        Attribute definitions of plugin that define how creation will work.
+        Values of these definitions are passed to `create` method.
+        NOTE:
+        Convert method should be implemented which should care about updating
+        keys/values when plugin attributes change.
+        Returns:
+            list<AbtractAttrDef>: Attribute definitions that can be tweaked for
+                created instance.
+        """
+        return []
 
 
 class AutoCreator(BaseCreator):
