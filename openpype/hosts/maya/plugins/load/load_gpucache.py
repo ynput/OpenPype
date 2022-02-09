@@ -2,6 +2,7 @@ import os
 from avalon import api
 from openpype.api import get_project_settings
 
+
 class GpuCacheLoader(api.Loader):
     """Load model Alembic as gpuCache"""
 
@@ -16,11 +17,11 @@ class GpuCacheLoader(api.Loader):
     def load(self, context, name, namespace, data):
 
         import maya.cmds as cmds
-        import avalon.maya.lib as lib
-        from avalon.maya.pipeline import containerise
+        from openpype.hosts.maya.api.pipeline import containerise
+        from openpype.hosts.maya.api.lib import unique_namespace
 
         asset = context['asset']['name']
-        namespace = namespace or lib.unique_namespace(
+        namespace = namespace or unique_namespace(
             asset + "_",
             prefix="_" if asset[0].isdigit() else "",
             suffix="_",

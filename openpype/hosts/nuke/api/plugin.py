@@ -248,7 +248,7 @@ class ExporterReview(object):
         nuke_imageio = opnlib.get_nuke_imageio_settings()
 
         # TODO: this is only securing backward compatibility lets remove
-        # this once all projects's anotomy are upated to newer config
+        # this once all projects's anotomy are updated to newer config
         if "baking" in nuke_imageio.keys():
             return nuke_imageio["baking"]["viewerProcess"]
         else:
@@ -516,7 +516,7 @@ class ExporterReviewMov(ExporterReview):
         write_node["file_type"].setValue(str(self.ext))
 
         # Knobs `meta_codec` and `mov64_codec` are not available on centos.
-        # TODO should't this come from settings on outputs?
+        # TODO shouldn't this come from settings on outputs?
         try:
             write_node["meta_codec"].setValue("ap4h")
         except Exception:

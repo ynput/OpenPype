@@ -195,3 +195,32 @@ def is_current_version_studio_latest():
     expected_version = get_expected_version()
     # Check if current version is expected version
     return current_version == expected_version
+
+
+def is_current_version_higher_than_expected():
+    """Is current OpenPype version higher than version defined by studio.
+
+    Returns:
+        None: Can't determine. e.g. when running from code or the build is
+            too old.
+        bool: True when is higher than studio version.
+    """
+    output = None
+    # Skip if is not running from build or build does not support version
+    #   control or path to folder with zip files is not accessible
+    if (
+        not is_running_from_build()
+        or not op_version_control_available()
+        or not openpype_path_is_accessible()
+    ):
+        return output
+
+    # Get OpenPypeVersion class
+    OpenPypeVersion = get_OpenPypeVersion()
+    # Convert current version to OpenPypeVersion object
+    current_version = OpenPypeVersion(version=get_openpype_version())
+
+    # Get expected version (from settings)
+    expected_version = get_expected_version()
+    # Check if current version is expected version
+    return current_version > expected_version

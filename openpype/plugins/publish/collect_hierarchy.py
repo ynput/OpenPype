@@ -13,7 +13,7 @@ class CollectHierarchy(pyblish.api.ContextPlugin):
     """
 
     label = "Collect Hierarchy"
-    order = pyblish.api.CollectorOrder - 0.47
+    order = pyblish.api.CollectorOrder - 0.076
     families = ["shot"]
     hosts = ["resolve", "hiero", "flame"]
 

@@ -1,9 +1,9 @@
 import os
 
-import avalon.maya
 import openpype.api
 
 from maya import cmds
+from openpype.hosts.maya.api.lib import maintained_selection
 
 
 class ExtractAssStandin(openpype.api.Extractor):
@@ -30,7 +30,7 @@ class ExtractAssStandin(openpype.api.Extractor):
 
         # Write out .ass file
         self.log.info("Writing: '%s'" % file_path)
-        with avalon.maya.maintained_selection():
+        with maintained_selection():
             self.log.info("Writing: {}".format(instance.data["setMembers"]))
             cmds.select(instance.data["setMembers"], noExpand=True)
 

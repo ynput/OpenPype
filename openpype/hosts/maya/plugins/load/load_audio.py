@@ -1,17 +1,17 @@
-from avalon import api, io
-from avalon.maya.pipeline import containerise
-from avalon.maya import lib
 from maya import cmds, mel
+from avalon import api, io
+from openpype.hosts.maya.api.pipeline import containerise
+from openpype.hosts.maya.api.lib import unique_namespace
+
 
 class AudioLoader(api.Loader):
     """Specific loader of audio."""
 
     families = ["audio"]
-    label = "Import audio."
+    label = "Import audio"
     representations = ["wav"]
     icon = "volume-up"
     color = "orange"
-
 
     def load(self, context, name, namespace, data):
 
@@ -27,7 +27,7 @@ class AudioLoader(api.Loader):
         )
 
         asset = context["asset"]["name"]
-        namespace = namespace or lib.unique_namespace(
+        namespace = namespace or unique_namespace(
             asset + "_",
             prefix="_" if asset[0].isdigit() else "",
             suffix="_",

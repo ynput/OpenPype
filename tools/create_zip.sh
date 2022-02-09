@@ -130,8 +130,8 @@ main () {
   fi
 
   echo -e "${BIGreen}>>>${RST} Generating zip from current sources ..."
-  PYTHONPATH="$openpype_root:$PYTHONPATH"
-  OPENPYPE_ROOT="$openpype_root"
+  export PYTHONPATH="$openpype_root:$PYTHONPATH"
+  export OPENPYPE_ROOT="$openpype_root"
   "$POETRY_HOME/bin/poetry" run python3 "$openpype_root/tools/create_zip.py" "$@"
 }
 

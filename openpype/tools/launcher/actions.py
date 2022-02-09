@@ -62,6 +62,7 @@ class ApplicationAction(api.Action):
     icon = None
     color = None
     order = 0
+    data = {}
 
     _log = None
     required_session_keys = (
@@ -103,7 +104,8 @@ class ApplicationAction(api.Action):
             self.application.launch(
                 project_name=project_name,
                 asset_name=asset_name,
-                task_name=task_name
+                task_name=task_name,
+                **self.data
             )
 
         except ApplictionExecutableNotFound as exc:

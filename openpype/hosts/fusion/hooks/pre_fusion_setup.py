@@ -12,7 +12,7 @@ class FusionPrelaunch(PreLaunchHook):
     app_groups = ["fusion"]
 
     def execute(self):
-        # making sure pyton 3.6 is installed at provided path
+        # making sure python 3.6 is installed at provided path
         py36_dir = os.path.normpath(self.launch_context.env.get("PYTHON36", ""))
         if not os.path.isdir(py36_dir):
             raise ApplicationLaunchFailed(

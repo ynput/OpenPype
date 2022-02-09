@@ -7,10 +7,12 @@ from typing import Dict, List, Optional
 import bpy
 
 from avalon import api
-from avalon.blender.pipeline import AVALON_CONTAINERS
-from avalon.blender.pipeline import AVALON_CONTAINER_ID
-from avalon.blender.pipeline import AVALON_PROPERTY
 from openpype.hosts.blender.api import plugin
+from openpype.hosts.blender.api.pipeline import (
+    AVALON_CONTAINERS,
+    AVALON_PROPERTY,
+    AVALON_CONTAINER_ID
+)
 
 
 class BlendModelLoader(plugin.AssetLoader):
@@ -81,7 +83,8 @@ class BlendModelLoader(plugin.AssetLoader):
                 plugin.prepare_data(local_obj.data, group_name)
 
                 for material_slot in local_obj.material_slots:
-                    plugin.prepare_data(material_slot.material, group_name)
+                    if material_slot.material:
+                        plugin.prepare_data(material_slot.material, group_name)
 
             if not local_obj.get(AVALON_PROPERTY):
                 local_obj[AVALON_PROPERTY] = dict()
@@ -245,7 +248,8 @@ class BlendModelLoader(plugin.AssetLoader):
         # If it is the last object to use that library, remove it
         if count == 1:
             library = bpy.data.libraries.get(bpy.path.basename(group_libpath))
-            bpy.data.libraries.remove(library)
+            if library:
+                bpy.data.libraries.remove(library)
 
         self._process(str(libpath), asset_group, object_name)
 
@@ -253,6 +257,7 @@ class BlendModelLoader(plugin.AssetLoader):
 
         metadata["libpath"] = str(libpath)
         metadata["representation"] = str(representation["_id"])
+        metadata["parent"] = str(representation["parent"])
 
     def exec_remove(self, container: Dict) -> bool:
         """Remove an existing container from a Blender scene.

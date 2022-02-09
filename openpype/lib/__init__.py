@@ -84,6 +84,7 @@ from .avalon_context import (
     get_hierarchy,
     get_linked_assets,
     get_latest_version,
+    get_system_general_anatomy_data,
 
     get_workfile_template_key,
     get_workfile_template_key_from_context,
@@ -175,7 +176,8 @@ from .openpype_version import (
     get_expected_version,
     is_running_from_build,
     is_running_staging,
-    is_current_version_studio_latest
+    is_current_version_studio_latest,
+    is_current_version_higher_than_expected
 )
 
 terminal = Terminal
@@ -221,6 +223,7 @@ __all__ = [
     "get_hierarchy",
     "get_linked_assets",
     "get_latest_version",
+    "get_system_general_anatomy_data",
 
     "get_workfile_template_key",
     "get_workfile_template_key_from_context",

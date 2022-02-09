@@ -558,7 +558,7 @@ class SwitchAssetDialog(QtWidgets.QDialog):
 
         repre_docs = io.find(
             {
-                "type": "rerpesentation",
+                "type": "representation",
                 "parent": subset_doc["_id"],
                 "name": {"$in": list(repre_names)}
             },

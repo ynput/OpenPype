@@ -68,7 +68,7 @@ class AssetModel(TreeModel):
         """
         if silos:
             # WARNING: Silo item "_id" is set to silo value
-            # mainly because GUI issue with perserve selection and expanded row
+            # mainly because GUI issue with preserve selection and expanded row
             # and because of easier hierarchy parenting (in "assets")
             for silo in silos:
                 node = Node({

@@ -14,11 +14,11 @@ For [AWS Thinkbox Deadline](https://www.awsthinkbox.com/deadline) support you ne
 
 1. Deploy OpenPype executable to all nodes of Deadline farm. See [Install & Run](admin_use)
 
-2. Enable Deadline module it in the [settings](admin_settings_system#deadline)
+2. Enable Deadline module it in the [settings](admin_settings_system.md#deadline)
 
 3. Set up *Deadline Web API service*. For more details on how to do it, see [here](https://docs.thinkboxsoftware.com/products/deadline/10.0/1_User%20Manual/manual/web-service.html).
 
-4. Point OpenPype to your deadline webservice URL in the [settings](admin_settings_system#deadline)
+4. Point OpenPype to your deadline webservice URL in the [settings](admin_settings_system.md#deadline)
 
 5. Install our custom plugin, event plugin and scripts to your deadline repository. It should be as simple as copying content of `openPype/vendor/deadline/custom` to `path/to/your/deadline/repository/custom`
 

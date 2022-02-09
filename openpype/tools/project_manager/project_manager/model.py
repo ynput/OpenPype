@@ -124,12 +124,12 @@ class HierarchyModel(QtCore.QAbstractItemModel):
     Main part of ProjectManager.
 
     Model should be able to load existing entities, create new, handle their
-    validations like name duplication and validate if is possible to save it's
+    validations like name duplication and validate if is possible to save its
     data.
 
     Args:
         dbcon (AvalonMongoDB): Connection to MongoDB with set AVALON_PROJECT in
-            it's Session to current project.
+            its Session to current project.
     """
 
     # Definition of all possible columns with their labels in default order
@@ -799,7 +799,7 @@ class HierarchyModel(QtCore.QAbstractItemModel):
                 for row in range(parent_item.rowCount()):
                     child_item = parent_item.child(row)
                     child_id = child_item.id
-                    # Not sure if this can happend
+                    # Not sure if this can happen
                     # TODO validate this line it seems dangerous as start/end
                     #   row is not changed
                     if child_id not in children:
@@ -1902,7 +1902,7 @@ class AssetItem(BaseItem):
         return self._data["name"]
 
     def child_parents(self):
-        """Chilren AssetItem can use this method to get it's parent names.
+        """Children AssetItem can use this method to get it's parent names.
 
         This is used for `data.parents` key on document.
         """
@@ -2006,7 +2006,7 @@ class AssetItem(BaseItem):
     @classmethod
     def data_from_doc(cls, asset_doc):
         """Convert asset document from Mongo to item data."""
-        # Minimum required data for cases that it is new AssetItem withoud doc
+        # Minimum required data for cases that it is new AssetItem without doc
         data = {
             "name": None,
             "type": "asset"
@@ -2253,7 +2253,7 @@ class TaskItem(BaseItem):
     """Item representing Task item on Asset document.
 
     Always should be AssetItem children and never should have any other
-    childrens.
+    children.
 
     It's name value should be validated with it's parent which only knows if
     has same name as other sibling under same parent.

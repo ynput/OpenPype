@@ -304,7 +304,7 @@ class SyncEntitiesFactory:
         " from Project where full_name is \"{}\""
     )
     entities_query = (
-        "select id, name, type_id, parent_id, link"
+        "select id, name, type_id, parent_id, link, description"
         " from TypedContext where project_id is \"{}\""
     )
     ignore_custom_attr_key = "avalon_ignore_sync"
@@ -1231,6 +1231,8 @@ class SyncEntitiesFactory:
                 data[key] = val
 
             if ftrack_id != self.ft_project_id:
+                data["description"] = entity["description"]
+
                 ent_path_items = [ent["name"] for ent in entity["link"]]
                 parents = ent_path_items[1:len(ent_path_items) - 1:]
 
