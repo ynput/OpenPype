@@ -14,14 +14,14 @@ host_tools.show_creator(parent)
 ]]></scriptCode>
             </scriptItem>
 
-            <scriptItem id="avalon_load">
-                <label>Load ...</label>
+            <scriptItem id="publish">
+                <label>Publish ...</label>
                 <scriptCode><![CDATA[
-import hou
-from openpype.tools.utils import host_tools
-parent = hou.qt.mainWindow()
-host_tools.show_loader(parent=parent, use_context=True)
-]]></scriptCode>
+            import hou
+            from openpype.tools.utils import host_tools
+            parent = hou.qt.mainWindow()
+            host_tools.show_publish(parent)
+                            ]]>    </scriptCode>
             </scriptItem>
 
             <scriptItem id="avalon_manage">
@@ -34,14 +34,14 @@ host_tools.show_scene_inventory(parent)
 ]]></scriptCode>
             </scriptItem>
 
-            <scriptItem id="publish">
-                <label>Publish ...</label>
+            <scriptItem id="library_load">
+                <label>Library ...</label>
                 <scriptCode><![CDATA[
 import hou
 from openpype.tools.utils import host_tools
 parent = hou.qt.mainWindow()
-host_tools.show_publish(parent)
-                ]]></scriptCode>
+host_tools.show_library_loader(parent=parent)
+]]>                </scriptCode>
             </scriptItem>
 
             <separatorItem/>
