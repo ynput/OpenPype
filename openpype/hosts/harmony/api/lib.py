@@ -51,8 +51,8 @@ class ProcessContext:
             callback()
         if cls.process is not None and cls.process.poll() is not None:
             log.info("Server is not running, closing")
-            ProcessContext.stdout_broker.exit()
-            sys.exit()
+            ProcessContext.stdout_broker.stop()
+            QtWidgets.QApplication.quit()
 
 
 def signature(postfix="func") -> str:
@@ -88,7 +88,7 @@ def main(*subprocess_args):
     app.setWindowIcon(icon)
 
     ProcessContext.stdout_broker = StdOutBroker('harmony')
-
+    ProcessContext.stdout_broker.start()
     launch(*subprocess_args)
 
     loop_timer = QtCore.QTimer()
@@ -620,4 +620,3 @@ def find_node_by_name(name, node_type):
             return node
 
     return None
-
