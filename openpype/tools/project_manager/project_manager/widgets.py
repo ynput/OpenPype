@@ -429,3 +429,29 @@ class ConfirmProjectDeletion(QtWidgets.QDialog):
     def _on_confirm_text_change(self):
         enabled = self._confirm_input.text() == self._project_name
         self._confirm_btn.setEnabled(enabled)
+
+
+class SpinBoxScrollFixed(QtWidgets.QSpinBox):
+    """QSpinBox which only allow edits change with scroll wheel when active"""
+    def __init__(self, *args, **kwargs):
+        super(SpinBoxScrollFixed, self).__init__(*args, **kwargs)
+        self.setFocusPolicy(QtCore.Qt.StrongFocus)
+
+    def wheelEvent(self, event):
+        if not self.hasFocus():
+            event.ignore()
+        else:
+            super(SpinBoxScrollFixed, self).wheelEvent(event)
+
+
+class DoubleSpinBoxScrollFixed(QtWidgets.QDoubleSpinBox):
+    """QDoubleSpinBox which only allow edits with scroll wheel when active"""
+    def __init__(self, *args, **kwargs):
+        super(DoubleSpinBoxScrollFixed, self).__init__(*args, **kwargs)
+        self.setFocusPolicy(QtCore.Qt.StrongFocus)
+
+    def wheelEvent(self, event):
+        if not self.hasFocus():
+            event.ignore()
+        else:
+            super(DoubleSpinBoxScrollFixed, self).wheelEvent(event)

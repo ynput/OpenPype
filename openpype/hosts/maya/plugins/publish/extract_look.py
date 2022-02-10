@@ -11,8 +11,7 @@ from collections import OrderedDict
 from maya import cmds  # noqa
 
 import pyblish.api
-import avalon.maya
-from avalon import io, api
+from avalon import io
 
 import openpype.api
 from openpype.hosts.maya.api import lib
@@ -239,7 +238,7 @@ class ExtractLook(openpype.api.Extractor):
                 # getting incorrectly remapped. (LKD-17, PLN-101)
                 with no_workspace_dir():
                     with lib.attribute_values(remap):
-                        with avalon.maya.maintained_selection():
+                        with lib.maintained_selection():
                             cmds.select(sets, noExpand=True)
                             cmds.file(
                                 maya_path,

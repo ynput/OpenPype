@@ -1081,10 +1081,19 @@ class ApplicationLaunchContext:
         # Prepare data that will be passed to midprocess
         # - store arguments to a json and pass path to json as last argument
         # - pass environments to set
+        app_env = self.kwargs.pop("env", {})
         json_data = {
             "args": self.launch_args,
-            "env": self.kwargs.pop("env", {})
+            "env": app_env
         }
+        if app_env:
+            # Filter environments of subprocess
+            self.kwargs["env"] = {
+                key: value
+                for key, value in os.environ.items()
+                if key in app_env
+            }
+
         # Create temp file
         json_temp = tempfile.NamedTemporaryFile(
             mode="w", prefix="op_app_args", suffix=".json", delete=False
