@@ -4,7 +4,6 @@ import shutil
 import sys
 from avalon.vendor import qargparse
 from xml.etree import ElementTree as ET
-import shutil
 import six
 from Qt import QtWidgets, QtCore
 import openpype.api as openpype
@@ -680,16 +679,6 @@ class ClipLoader(avalon.Loader):
     ):
         pass
 
-    def update(self, container, representation):
-        """Update an existing `container`
-        """
-        pass
-
-    def remove(self, container):
-        """Remove an existing `container`
-        """
-        pass
-
 
 class OpenClipSolver:
     media_script_path = "/opt/Autodesk/mio/current/dl_get_media_info"
@@ -734,7 +723,7 @@ class OpenClipSolver:
         self.log.info("Temp File: {}".format(self.tmp_file))
 
     def make(self):
-        self._get_media_info_args()
+        self._generate_media_info_file()
 
         if self.create_new_clip:
             # New openClip
@@ -747,7 +736,7 @@ class OpenClipSolver:
             raise IOError("Media Scirpt does not exist: `{}`".format(
                 self.media_script_path))
 
-    def _get_media_info_args(self):
+    def _generate_media_info_file(self):
         # Create cmd arguments for gettig xml file info file
         cmd_args = [
             self.media_script_path,

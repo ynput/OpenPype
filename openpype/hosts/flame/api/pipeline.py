@@ -6,7 +6,6 @@ import contextlib
 from avalon import api as avalon
 from avalon.pipeline import AVALON_CONTAINER_ID
 from pyblish import api as pyblish
-from collections import OrderedDict
 from openpype.api import Logger
 from .lib import (
     set_segment_data_marker,
@@ -77,18 +76,18 @@ def containerise(flame_clip,
                  loader=None,
                  data=None):
 
-    data_imprint = OrderedDict({
+    data_imprint = {
         "schema": "openpype:container-2.0",
         "id": AVALON_CONTAINER_ID,
         "name": str(name),
         "namespace": str(namespace),
         "loader": str(loader),
         "representation": str(context["representation"]["_id"]),
-    })
+    }
 
     if data:
         for k, v in data.items():
-            data_imprint.update({k: v})
+            data_imprint[k] = v
 
     log.debug("_ data_imprint: {}".format(data_imprint))
 

@@ -4,9 +4,9 @@ import os
 import sys
 
 try:
-    import six
-except ImportError:
-    raise ImportError("Cannot import this module")
+    import six  # noqa
+except ImportError as msg:
+    raise ImportError("Cannot import this module: {}".format(msg)) from msg
 
 SCRIPT_DIR = os.path.dirname(__file__)
 PACKAGE_DIR = os.path.join(SCRIPT_DIR, "modules")
