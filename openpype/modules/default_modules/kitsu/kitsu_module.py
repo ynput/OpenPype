@@ -7,13 +7,15 @@ in global space here until are required or used.
     - we still support Python 2 hosts where addon definition should available
 """
 import os
+from typing import Dict, List, Set
 import click
 
 from avalon.api import AvalonMongoDB
 import gazu
 from openpype.lib import create_project
 from openpype.modules import JsonFilesSettingsDef, OpenPypeModule, ModulesManager
-from pymongo import DeleteOne, InsertOne, UpdateOne
+from pymongo import DeleteOne, UpdateOne
+from pymongo.collection import Collection
 from openpype_interfaces import IPluginPaths, ITrayAction
 
 
@@ -144,8 +146,8 @@ def cli_main():
 
 
 @cli_main.command()
-def sync_local():
-    """Synchronize local database from Zou sever database."""
+def sync_openpype():
+    """Synchronize openpype database from Zou sever database."""
 
     # Connect to server
     gazu.client.set_host(os.environ["KITSU_SERVER"])
@@ -167,69 +169,61 @@ def sync_local():
 
         # Get all assets from zou
         all_assets = gazu.asset.all_assets_for_project(project)
-
-        # Query all assets of the local project
-        project_col = dbcon.database[project_code]
-        asset_doc_ids = {
-            asset_doc["_id"]: asset_doc
-            for asset_doc in project_col.find({"type": "asset"})
-        }
-        asset_docs_zou_ids = {
-            asset_doc["data"]["zou_id"] for asset_doc in asset_doc_ids.values()
-        }
+        all_episodes = gazu.shot.all_episodes_for_project(project)
+        all_seqs = gazu.shot.all_sequences_for_project(project)
+        all_shots = gazu.shot.all_shots_for_project(project)
 
         # Create project if is not available
         # - creation is required to be able set project anatomy and attributes
+        to_insert = []
         if not project_doc:
             print(f"Creating project '{project_name}'")
             project_doc = create_project(project_name, project_code, dbcon=dbcon)
 
-        bulk_writes = []
-        sync_assets = set()
-        for asset in all_assets:
-            asset_data = {"zou_id": asset["id"]}
+        # Query all assets of the local project
+        project_col = dbcon.database[project_code]
+        asset_doc_ids = {
+            asset_doc["data"]["zou_id"]: asset_doc
+            for asset_doc in project_col.find({"type": "asset"})
+            if asset_doc["data"].get("zou_id")
+        }
+        asset_doc_ids[project["id"]] = project_doc
 
-            # Set tasks
-            asset_tasks = gazu.task.all_tasks_for_asset(asset)
-            asset_data["tasks"] = {
-                t["task_type_name"]: {"type": t["task_type_name"]} for t in asset_tasks
-            }
-
-            # Update or create asset
-            if asset["id"] in asset_docs_zou_ids:  # Update asset
-                asset_doc = project_col.find_one({"data.zou_id": asset["id"]})
-
-                # Override all 'data'
-                updated_data = {
-                    k: asset_data[k]
-                    for k in asset_data.keys()
-                    if asset_doc["data"].get(k) != asset_data[k]
-                }
-                if updated_data:
-                    bulk_writes.append(
-                        UpdateOne(
-                            {"_id": asset_doc["_id"]}, {"$set": {"data": asset_data}}
-                        )
-                    )
-            else:  # Create
-                asset_doc = {
-                    "name": asset["name"],
+        # Create
+        to_insert.extend(
+            [
+                {
+                    "name": item["name"],
                     "type": "asset",
                     "schema": "openpype:asset-3.0",
-                    "data": asset_data,
-                    "parent": project_doc["_id"],
+                    "data": {"zou_id": item["id"], "tasks": {}},
                 }
+                for item in all_episodes + all_assets + all_seqs + all_shots
+                if item["id"] not in asset_doc_ids.keys()
+            ]
+        )
+        if to_insert:
+            # Insert in doc
+            project_col.insert_many(to_insert)
 
-                # Insert new doc
-                bulk_writes.append(InsertOne(asset_doc))
+            # Update existing docs
+            asset_doc_ids.update(
+                {
+                    asset_doc["data"]["zou_id"]: asset_doc
+                    for asset_doc in project_col.find({"type": "asset"})
+                    if asset_doc["data"].get("zou_id")
+                }
+            )
 
-            # Keep synchronized asset for diff
-            sync_assets.add(asset_doc["_id"])
+        # Update
+        all_entities = all_assets + all_episodes + all_seqs + all_shots
+        bulk_writes = update_op_assets(project_col, all_entities, asset_doc_ids)
 
-        # Delete from diff of assets in OP and synchronized assets to detect deleted assets
-        diff_assets = set(asset_doc_ids.keys()) - sync_assets
+        # Delete
+        diff_assets = set(asset_doc_ids.keys()) - {
+            e["id"] for e in all_entities + [project]
+        }
         if diff_assets:
-            # Delete doc
             bulk_writes.extend(
                 [DeleteOne(asset_doc_ids[asset_id]) for asset_id in diff_assets]
             )
@@ -239,6 +233,75 @@ def sync_local():
             project_col.bulk_write(bulk_writes)
 
     dbcon.uninstall()
+
+
+def update_op_assets(
+    project_col: Collection, items_list: List[dict], asset_doc_ids: Dict[str, dict]
+) -> List[UpdateOne]:
+    """Update OpenPype assets.
+    Set 'data' and 'parent' fields.
+
+    :param project_col: Project collection to query data from
+    :param items_list: List of zou items to update
+    :param asset_doc_ids: Dicts of [{zou_id: asset_doc}, ...]
+    :return: List of UpdateOne objects
+    """
+    bulk_writes = []
+    for item in items_list:
+        # Update asset
+        item_doc = project_col.find_one({"data.zou_id": item["id"]})
+        item_data = item_doc["data"].copy()
+
+        # Tasks
+        tasks_list = None
+        if item["type"] == "Asset":
+            tasks_list = gazu.task.all_tasks_for_asset(item)
+        elif item["type"] == "Shot":
+            tasks_list = gazu.task.all_tasks_for_shot(item)
+        if tasks_list:
+            item_data["tasks"] = {
+                t["task_type_name"]: {"type": t["task_type_name"]} for t in tasks_list
+            }
+
+        # Visual parent for hierarchy
+        direct_parent_id = item["parent_id"] or item["source_id"]
+        if direct_parent_id:
+            visual_parent_doc = asset_doc_ids[direct_parent_id]
+            item_data["visualParent"] = visual_parent_doc["_id"]
+
+        # Add parents for hierarchy
+        parent_zou_id = item["parent_id"]
+        item_data["parents"] = []
+        while parent_zou_id is not None:
+            parent_doc = asset_doc_ids[parent_zou_id]
+            item_data["parents"].insert(0, parent_doc["name"])
+
+            parent_zou_id = next(
+                i for i in items_list if i["id"] == parent_doc["data"]["zou_id"]
+            )["parent_id"]
+
+        # TODO create missing tasks before
+
+        # Update 'data' different in zou DB
+        updated_data = {
+            k: item_data[k]
+            for k in item_data.keys()
+            if item_doc["data"].get(k) != item_data[k]
+        }
+        if updated_data or not item_doc.get("parent"):
+            bulk_writes.append(
+                UpdateOne(
+                    {"_id": item_doc["_id"]},
+                    {
+                        "$set": {
+                            "data": item_data,
+                            "parent": asset_doc_ids[item["project_id"]]["_id"],
+                        }
+                    },
+                )
+            )
+
+    return bulk_writes
 
 
 @cli_main.command()
