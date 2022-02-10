@@ -172,8 +172,8 @@ class ValidateRenderSettings(pyblish.api.InstancePlugin):
                     cls.log.error(("AOV ({}) image prefix is not set "
                                    "correctly {} != {}").format(
                         cmds.getAttr("{}.name".format(aov)),
-                        cmds.getAttr("{}.filePrefix".format(aov)),
-                        aov_prefix
+                        aov_prefix,
+                        redshift_AOV_prefix
                     ))
                     invalid = True
                 # get aov format
