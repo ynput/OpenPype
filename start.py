@@ -196,7 +196,8 @@ from igniter import BootstrapRepos  # noqa: E402
 from igniter.tools import (
     get_openpype_global_settings,
     get_openpype_path_from_db,
-    validate_mongo_connection
+    validate_mongo_connection,
+    parse_set_url
 )  # noqa
 from igniter.bootstrap_repos import OpenPypeVersion  # noqa: E402
 
@@ -550,9 +551,9 @@ def _determine_mongodb() -> str:
 
     """
     # special case when OPENPYPE_MONGO is being set into keyring
-    if "setvalue" in sys.argv:
-        key, value = sys.argv[-1].split("=")
-        if "OPENPYPE_MONGO" in key:
+    if "setsecurevalue" in sys.argv:
+        _, _, key, value = parse_set_url(sys.argv[-1])
+        if "OPENPYPE_MONGO" == key:
             os.environ["OPENPYPE_MONGO"] = value
 
     openpype_mongo = os.getenv("OPENPYPE_MONGO", None)
