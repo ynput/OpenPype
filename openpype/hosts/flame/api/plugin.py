@@ -670,15 +670,6 @@ class ClipLoader(avalon.Loader):
         )
     ]
 
-    def load(
-        self,
-        context,
-        name=None,
-        namespace=None,
-        options=None
-    ):
-        pass
-
 
 class OpenClipSolver:
     media_script_path = "/opt/Autodesk/mio/current/dl_get_media_info"
