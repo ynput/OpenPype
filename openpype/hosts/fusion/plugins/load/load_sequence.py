@@ -185,22 +185,22 @@ class FusionLoadSequence(api.Loader):
               - We do the same like Fusion - allow fusion to take control.
 
             - HoldFirstFrame: Fusion resets this to 0
-              - We preverse the value.
+              - We preserve the value.
 
             - HoldLastFrame: Fusion resets this to 0
-              - We preverse the value.
+              - We preserve the value.
 
             - Reverse: Fusion resets to disabled if "Loop" is not enabled.
               - We preserve the value.
 
             - Depth: Fusion resets to "Format"
-              - We preverse the value.
+              - We preserve the value.
 
             - KeyCode: Fusion resets to ""
-              - We preverse the value.
+              - We preserve the value.
 
             - TimeCodeOffset: Fusion resets to 0
-              - We preverse the value.
+              - We preserve the value.
 
         """
 

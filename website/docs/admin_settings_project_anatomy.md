@@ -64,7 +64,7 @@ We have a few required anatomy templates for OpenPype to work properly, however 
 | `version` | Version number |
 | `subset` | Subset name |
 | `family` | Main family name |
-| `ext` | File extention |
+| `ext` | File extension |
 | `representation` | Representation name |
 | `frame` | Frame number for sequence files. |
 | `output` |  |

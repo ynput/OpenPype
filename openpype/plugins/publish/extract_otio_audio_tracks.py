@@ -19,7 +19,7 @@ class ExtractOtioAudioTracks(pyblish.api.ContextPlugin):
 
     order = pyblish.api.ExtractorOrder - 0.44
     label = "Extract OTIO Audio Tracks"
-    hosts = ["hiero", "resolve"]
+    hosts = ["hiero", "resolve", "flame"]
 
     # FFmpeg tools paths
     ffmpeg_path = get_ffmpeg_tool_path("ffmpeg")

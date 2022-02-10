@@ -41,12 +41,15 @@ class MainThreadProcess(QtCore.QObject):
 
     This approach gives ability to update UI meanwhile plugin is in progress.
     """
+
+    timer_interval = 3
+
     def __init__(self):
         super(MainThreadProcess, self).__init__()
         self._items_to_process = collections.deque()
 
         timer = QtCore.QTimer()
-        timer.setInterval(50)
+        timer.setInterval(self.timer_interval)
 
         timer.timeout.connect(self._execute)
 
@@ -552,7 +555,7 @@ class PublisherController:
         self.create_context.reset_avalon_context()
 
         self._reset_plugins()
-        # Publish part must be resetted after plugins
+        # Publish part must be reset after plugins
         self._reset_publish()
         self._reset_instances()
 
@@ -602,7 +605,9 @@ class PublisherController:
                         found_idx = idx
                         break
 
-                value = instance.creator_attributes[attr_def.key]
+                value = None
+                if attr_def.is_value_def:
+                    value = instance.creator_attributes[attr_def.key]
                 if found_idx is None:
                     idx = len(output)
                     output.append((attr_def, [instance], [value]))
@@ -687,7 +692,7 @@ class PublisherController:
 
     def remove_instances(self, instances):
         """"""
-        # QUESTION Expect that instaces are really removed? In that case save
+        # QUESTION Expect that instances are really removed? In that case save
         #   reset is not required and save changes too.
         self.save_changes()
 

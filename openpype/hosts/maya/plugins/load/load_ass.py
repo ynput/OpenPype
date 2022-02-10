@@ -1,8 +1,15 @@
-from avalon import api
-import openpype.hosts.maya.api.plugin
 import os
-from openpype.api import get_project_settings
 import clique
+
+from avalon import api
+from openpype.api import get_project_settings
+import openpype.hosts.maya.api.plugin
+from openpype.hosts.maya.api.plugin import get_reference_node
+from openpype.hosts.maya.api.lib import (
+    maintained_selection,
+    unique_namespace
+)
+from openpype.hosts.maya.api.pipeline import containerise
 
 
 class AssProxyLoader(openpype.hosts.maya.api.plugin.ReferenceLoader):
@@ -19,7 +26,6 @@ class AssProxyLoader(openpype.hosts.maya.api.plugin.ReferenceLoader):
     def process_reference(self, context, name, namespace, options):
 
         import maya.cmds as cmds
-        from avalon import maya
         import pymel.core as pm
 
         version = context['version']
@@ -34,7 +40,7 @@ class AssProxyLoader(openpype.hosts.maya.api.plugin.ReferenceLoader):
         except ValueError:
             family = "ass"
 
-        with maya.maintained_selection():
+        with maintained_selection():
 
             groupName = "{}:{}".format(namespace, name)
             path = self.fname
@@ -94,8 +100,6 @@ class AssProxyLoader(openpype.hosts.maya.api.plugin.ReferenceLoader):
         self.update(container, representation)
 
     def update(self, container, representation):
-
-        import os
         from maya import cmds
         import pymel.core as pm
 
@@ -111,7 +115,7 @@ class AssProxyLoader(openpype.hosts.maya.api.plugin.ReferenceLoader):
 
         # Get reference node from container members
         members = cmds.sets(node, query=True, nodesOnly=True)
-        reference_node = self._get_reference_node(members)
+        reference_node = get_reference_node(members)
 
         assert os.path.exists(proxyPath), "%s does not exist." % proxyPath
 
@@ -174,8 +178,6 @@ class AssStandinLoader(api.Loader):
     def load(self, context, name, namespace, options):
 
         import maya.cmds as cmds
-        import avalon.maya.lib as lib
-        from avalon.maya.pipeline import containerise
         import mtoa.ui.arnoldmenu
         import pymel.core as pm
 
@@ -187,7 +189,7 @@ class AssStandinLoader(api.Loader):
         frameStart = version_data.get("frameStart", None)
 
         asset = context['asset']['name']
-        namespace = namespace or lib.unique_namespace(
+        namespace = namespace or unique_namespace(
             asset + "_",
             prefix="_" if asset[0].isdigit() else "",
             suffix="_",

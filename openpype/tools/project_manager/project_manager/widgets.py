@@ -4,6 +4,7 @@ from .constants import (
     NAME_ALLOWED_SYMBOLS,
     NAME_REGEX
 )
+from .style import ResourceCache
 from openpype.lib import (
     create_project,
     PROJECT_NAME_ALLOWED_SYMBOLS,
@@ -13,7 +14,7 @@ from openpype.style import load_stylesheet
 from openpype.tools.utils import PlaceholderLineEdit
 from avalon.api import AvalonMongoDB
 
-from Qt import QtWidgets, QtCore
+from Qt import QtWidgets, QtCore, QtGui
 
 
 class NameTextEdit(QtWidgets.QLineEdit):
@@ -291,42 +292,41 @@ class CreateProjectDialog(QtWidgets.QDialog):
         return project_names, project_codes
 
 
-class _SameSizeBtns(QtWidgets.QPushButton):
-    """Button that keep width of all button added as related.
+# TODO PixmapLabel should be moved to 'utils' in other future PR so should be
+#   imported from there
+class PixmapLabel(QtWidgets.QLabel):
+    """Label resizing image to height of font."""
+    def __init__(self, pixmap, parent):
+        super(PixmapLabel, self).__init__(parent)
+        self._empty_pixmap = QtGui.QPixmap(0, 0)
+        self._source_pixmap = pixmap
 
-    This happens without changing min/max/fix size of button. Which is
-    welcomed for multidisplay desktops with different resolution.
-    """
-    def __init__(self, *args, **kwargs):
-        super(_SameSizeBtns, self).__init__(*args, **kwargs)
-        self._related_btns = []
+    def set_source_pixmap(self, pixmap):
+        """Change source image."""
+        self._source_pixmap = pixmap
+        self._set_resized_pix()
 
-    def add_related_btn(self, btn):
-        """Add related button which should be checked for width.
+    def _get_pix_size(self):
+        size = self.fontMetrics().height() * 4
+        return size, size
 
-        Args:
-            btn (_SameSizeBtns): Other object of _SameSizeBtns.
-        """
-        self._related_btns.append(btn)
+    def _set_resized_pix(self):
+        if self._source_pixmap is None:
+            self.setPixmap(self._empty_pixmap)
+            return
+        width, height = self._get_pix_size()
+        self.setPixmap(
+            self._source_pixmap.scaled(
+                width,
+                height,
+                QtCore.Qt.KeepAspectRatio,
+                QtCore.Qt.SmoothTransformation
+            )
+        )
 
-    def hint_width(self):
-        """Get size hint of button not related to others."""
-        return super(_SameSizeBtns, self).sizeHint().width()
-
-    def sizeHint(self):
-        """Calculate size hint based on size hint of this button and related.
-
-        If width is lower than any other button it is changed to higher.
-        """
-        result = super(_SameSizeBtns, self).sizeHint()
-        width = result.width()
-        for btn in self._related_btns:
-            btn_width = btn.hint_width()
-            if btn_width > width:
-                width = btn_width
-
-        result.setWidth(width)
-        return result
+    def resizeEvent(self, event):
+        self._set_resized_pix()
+        super(PixmapLabel, self).resizeEvent(event)
 
 
 class ConfirmProjectDeletion(QtWidgets.QDialog):
@@ -336,27 +336,42 @@ class ConfirmProjectDeletion(QtWidgets.QDialog):
 
         self.setWindowTitle("Delete project?")
 
-        message = (
-            "Project <b>\"{}\"</b> with all related data will be"
-            " permanently removed from the database (This actions won't remove"
-            " any files on disk)."
-        ).format(project_name)
-        message_label = QtWidgets.QLabel(message, self)
+        top_widget = QtWidgets.QWidget(self)
+
+        warning_pixmap = ResourceCache.get_warning_pixmap()
+        warning_icon_label = PixmapLabel(warning_pixmap, top_widget)
+
+        message_label = QtWidgets.QLabel(top_widget)
         message_label.setWordWrap(True)
+        message_label.setTextInteractionFlags(QtCore.Qt.TextBrowserInteraction)
+        message_label.setText((
+            "<b>WARNING: This cannot be undone.</b><br/><br/>"
+            "Project <b>\"{}\"</b> with all related data will be"
+            " permanently removed from the database. (This action won't remove"
+            " any files on disk.)"
+        ).format(project_name))
+
+        top_layout = QtWidgets.QHBoxLayout(top_widget)
+        top_layout.setContentsMargins(0, 0, 0, 0)
+        top_layout.addWidget(
+            warning_icon_label, 0,
+            QtCore.Qt.AlignTop | QtCore.Qt.AlignHCenter
+        )
+        top_layout.addWidget(message_label, 1)
 
         question_label = QtWidgets.QLabel("<b>Are you sure?</b>", self)
 
         confirm_input = PlaceholderLineEdit(self)
-        confirm_input.setPlaceholderText("Type \"Delete\" to confirm...")
+        confirm_input.setPlaceholderText(
+            "Type \"{}\" to confirm...".format(project_name)
+        )
 
-        cancel_btn = _SameSizeBtns("Cancel", self)
+        cancel_btn = QtWidgets.QPushButton("Cancel", self)
         cancel_btn.setToolTip("Cancel deletion of the project")
-        confirm_btn = _SameSizeBtns("Delete", self)
+        confirm_btn = QtWidgets.QPushButton("Permanently Delete Project", self)
+        confirm_btn.setObjectName("DeleteButton")
         confirm_btn.setEnabled(False)
         confirm_btn.setToolTip("Confirm deletion")
-
-        cancel_btn.add_related_btn(confirm_btn)
-        confirm_btn.add_related_btn(cancel_btn)
 
         btns_layout = QtWidgets.QHBoxLayout()
         btns_layout.addStretch(1)
@@ -364,7 +379,7 @@ class ConfirmProjectDeletion(QtWidgets.QDialog):
         btns_layout.addWidget(confirm_btn, 0)
 
         layout = QtWidgets.QVBoxLayout(self)
-        layout.addWidget(message_label, 0)
+        layout.addWidget(top_widget, 0)
         layout.addStretch(1)
         layout.addWidget(question_label, 0)
         layout.addWidget(confirm_input, 0)
@@ -379,6 +394,7 @@ class ConfirmProjectDeletion(QtWidgets.QDialog):
         self._confirm_btn = confirm_btn
         self._confirm_input = confirm_input
         self._result = 0
+        self._project_name = project_name
 
         self.setMinimumWidth(480)
         self.setMaximumWidth(650)
@@ -411,5 +427,5 @@ class ConfirmProjectDeletion(QtWidgets.QDialog):
             self._on_confirm_click()
 
     def _on_confirm_text_change(self):
-        enabled = self._confirm_input.text().lower() == "delete"
+        enabled = self._confirm_input.text() == self._project_name
         self._confirm_btn.setEnabled(enabled)

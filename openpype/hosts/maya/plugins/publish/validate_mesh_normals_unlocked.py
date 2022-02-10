@@ -1,4 +1,5 @@
 from maya import cmds
+import maya.api.OpenMaya as om2
 
 import pyblish.api
 import openpype.api
@@ -25,10 +26,16 @@ class ValidateMeshNormalsUnlocked(pyblish.api.Validator):
 
     @staticmethod
     def has_locked_normals(mesh):
-        """Return whether a mesh node has locked normals"""
-        return any(cmds.polyNormalPerVertex("{}.vtxFace[*][*]".format(mesh),
-                                            query=True,
-                                            freezeNormal=True))
+        """Return whether mesh has at least one locked normal"""
+
+        sel = om2.MGlobal.getSelectionListByName(mesh)
+        node = sel.getDependNode(0)
+        fn_mesh = om2.MFnMesh(node)
+        _, normal_ids = fn_mesh.getNormalIds()
+        for normal_id in normal_ids:
+            if fn_mesh.isNormalLocked(normal_id):
+                return True
+        return False
 
     @classmethod
     def get_invalid(cls, instance):

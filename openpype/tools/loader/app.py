@@ -27,7 +27,7 @@ module.window = None
 
 # Register callback on task change
 # - callback can't be defined in Window as it is weak reference callback
-#   so `WeakSet` will remove it immidiatelly
+#   so `WeakSet` will remove it immediately
 def on_context_task_change(*args, **kwargs):
     if module.window:
         module.window.on_context_task_change(*args, **kwargs)
@@ -363,7 +363,6 @@ class LoaderWindow(QtWidgets.QDialog):
 
         # Active must be in the selected rows otherwise we
         # assume it's not actually an "active" current index.
-        version_docs = None
         version_doc = None
         active = selection.currentIndex()
         rows = selection.selectedRows(column=active.column())
@@ -375,9 +374,10 @@ class LoaderWindow(QtWidgets.QDialog):
                     not (item.get("isGroup") or item.get("isMerged"))
                 ):
                     version_doc = item["version_document"]
+        self._version_info_widget.set_version(version_doc)
 
+        version_docs = []
         if rows:
-            version_docs = []
             for index in rows:
                 if not index or not index.isValid():
                     continue
@@ -390,8 +390,6 @@ class LoaderWindow(QtWidgets.QDialog):
                 else:
                     version_docs.append(item["version_document"])
 
-        self._version_info_widget.set_version(version_doc)
-
         thumbnail_src_ids = [
             version_doc["_id"]
             for version_doc in version_docs
@@ -402,7 +400,7 @@ class LoaderWindow(QtWidgets.QDialog):
         self._thumbnail_widget.set_thumbnail(thumbnail_src_ids)
 
         if self._repres_widget is not None:
-            version_ids = [doc["_id"] for doc in version_docs or []]
+            version_ids = [doc["_id"] for doc in version_docs]
             self._repres_widget.set_version_ids(version_ids)
 
             # self._repres_widget.change_visibility("subset", len(rows) > 1)
@@ -457,7 +455,7 @@ class LoaderWindow(QtWidgets.QDialog):
         shift_pressed = QtCore.Qt.ShiftModifier & modifiers
 
         if shift_pressed:
-            print("Force quitted..")
+            print("Force quit..")
             self.setAttribute(QtCore.Qt.WA_DeleteOnClose)
 
         print("Good bye")

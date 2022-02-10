@@ -1,5 +1,5 @@
-import pyblish.api
 import os
+import pyblish.api
 
 
 class CollectWorkfile(pyblish.api.ContextPlugin):

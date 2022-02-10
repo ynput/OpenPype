@@ -1,11 +1,12 @@
 from collections import OrderedDict
-from openpype.hosts.nuke.api import (
-    plugin,
-    lib)
+
 import nuke
 
+from openpype.hosts.nuke.api import plugin
+from openpype.hosts.nuke.api.lib import create_write_node
 
-class CreateWriteStill(plugin.PypeCreator):
+
+class CreateWriteStill(plugin.OpenPypeCreator):
     # change this to template preset
     name = "WriteStillFrame"
     label = "Create Write Still Image"
@@ -108,7 +109,7 @@ class CreateWriteStill(plugin.PypeCreator):
             }
         ]
 
-        write_node = lib.create_write_node(
+        write_node = create_write_node(
             self.name,
             write_data,
             input=selected_node,

@@ -34,7 +34,7 @@ class PreCollectClipEffects(pyblish.api.InstancePlugin):
         if clip_effect_items:
             tracks_effect_items[track_index] = clip_effect_items
 
-        # process all effects and devide them to instance
+        # process all effects and divide them to instance
         for _track_index, sub_track_items in tracks_effect_items.items():
             # skip if track index is the same as review track index
             if review and review_track_index == _track_index:
@@ -156,7 +156,7 @@ class PreCollectClipEffects(pyblish.api.InstancePlugin):
                           'postage_stamp_frame', 'maskChannel', 'export_cc',
                           'select_cccid', 'mix', 'version', 'matrix']
 
-        # loop trough all knobs and collect not ignored
+        # loop through all knobs and collect not ignored
         # and any with any value
         for knob in node.knobs().keys():
             # skip nodes in ignore keys

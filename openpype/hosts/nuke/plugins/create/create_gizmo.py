@@ -1,9 +1,14 @@
-from avalon.nuke import lib as anlib
-from openpype.hosts.nuke.api import plugin
 import nuke
 
+from openpype.hosts.nuke.api import plugin
+from openpype.hosts.nuke.api.lib import (
+    maintained_selection,
+    select_nodes,
+    set_avalon_knob_data
+)
 
-class CreateGizmo(plugin.PypeCreator):
+
+class CreateGizmo(plugin.OpenPypeCreator):
     """Add Publishable "gizmo" group
 
     The name is symbolically gizmo as presumably
@@ -28,13 +33,13 @@ class CreateGizmo(plugin.PypeCreator):
             nodes = self.nodes
             self.log.info(len(nodes))
             if len(nodes) == 1:
-                anlib.select_nodes(nodes)
+                select_nodes(nodes)
                 node = nodes[-1]
                 # check if Group node
                 if node.Class() in "Group":
                     node["name"].setValue("{}_GZM".format(self.name))
                     node["tile_color"].setValue(int(self.node_color, 16))
-                    return anlib.set_avalon_knob_data(node, self.data)
+                    return set_avalon_knob_data(node, self.data)
                 else:
                     msg = ("Please select a group node "
                           "you wish to publish as the gizmo")
@@ -42,13 +47,13 @@ class CreateGizmo(plugin.PypeCreator):
                     nuke.message(msg)
 
             if len(nodes) >= 2:
-                anlib.select_nodes(nodes)
+                select_nodes(nodes)
                 nuke.makeGroup()
                 gizmo_node = nuke.selectedNode()
                 gizmo_node["name"].setValue("{}_GZM".format(self.name))
                 gizmo_node["tile_color"].setValue(int(self.node_color, 16))
 
-                # add sticky node wit guide
+                # add sticky node with guide
                 with gizmo_node:
                     sticky = nuke.createNode("StickyNote")
                     sticky["label"].setValue(
@@ -57,21 +62,20 @@ class CreateGizmo(plugin.PypeCreator):
                         "- create User knobs on the group")
 
                 # add avalon knobs
-                return anlib.set_avalon_knob_data(gizmo_node, self.data)
+                return set_avalon_knob_data(gizmo_node, self.data)
 
             else:
-                msg = ("Please select nodes you "
-                      "wish to add to the gizmo")
+                msg = "Please select nodes you wish to add to the gizmo"
                 self.log.error(msg)
                 nuke.message(msg)
                 return
         else:
-            with anlib.maintained_selection():
+            with maintained_selection():
                 gizmo_node = nuke.createNode("Group")
                 gizmo_node["name"].setValue("{}_GZM".format(self.name))
                 gizmo_node["tile_color"].setValue(int(self.node_color, 16))
 
-                # add sticky node wit guide
+                # add sticky node with guide
                 with gizmo_node:
                     sticky = nuke.createNode("StickyNote")
                     sticky["label"].setValue(
@@ -80,4 +84,4 @@ class CreateGizmo(plugin.PypeCreator):
                         "- create User knobs on the group")
 
                 # add avalon knobs
-                return anlib.set_avalon_knob_data(gizmo_node, self.data)
+                return set_avalon_knob_data(gizmo_node, self.data)

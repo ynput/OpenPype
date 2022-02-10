@@ -28,11 +28,11 @@ def env_value_to_bool(env_key=None, value=None, default=False):
 
 
 def get_paths_from_environ(env_key=None, env_value=None, return_first=False):
-    """Return existing paths from specific envirnment variable.
+    """Return existing paths from specific environment variable.
 
     Args:
         env_key (str): Environment key where should look for paths.
-        env_value (str): Value of environemnt variable. Argument `env_key` is
+        env_value (str): Value of environment variable. Argument `env_key` is
             skipped if this argument is entered.
         return_first (bool): Return first found value or return list of found
             paths. `None` or empty list returned if nothing found.

@@ -3,23 +3,7 @@ from maya import cmds
 import pyblish.api
 import openpype.api
 import openpype.hosts.maya.api.action
-from avalon import maya
 from openpype.hosts.maya.api import lib
-
-
-def polyConstraint(objects, *args, **kwargs):
-    kwargs.pop('mode', None)
-
-    with lib.no_undo(flush=False):
-        with maya.maintained_selection():
-            with lib.reset_polySelectConstraint():
-                cmds.select(objects, r=1, noExpand=True)
-                # Acting as 'polyCleanupArgList' for n-sided polygon selection
-                cmds.polySelectConstraint(*args, mode=3, **kwargs)
-                result = cmds.ls(selection=True)
-                cmds.select(clear=True)
-
-    return result
 
 
 class ValidateMeshNgons(pyblish.api.Validator):
@@ -41,8 +25,17 @@ class ValidateMeshNgons(pyblish.api.Validator):
     @staticmethod
     def get_invalid(instance):
 
-        meshes = cmds.ls(instance, type='mesh')
-        return polyConstraint(meshes, type=8, size=3)
+        meshes = cmds.ls(instance, type='mesh', long=True)
+
+        # Get all faces
+        faces = ['{0}.f[*]'.format(node) for node in meshes]
+
+        # Filter to n-sided polygon faces (ngons)
+        invalid = lib.polyConstraint(faces,
+                                     t=0x0008,  # type=face
+                                     size=3)    # size=nsided
+
+        return invalid
 
     def process(self, instance):
         """Process all the nodes in the instance "objectSet"""

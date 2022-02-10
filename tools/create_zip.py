@@ -31,7 +31,9 @@ def main(path):
     bs = bootstrap_repos.BootstrapRepos(progress_callback=progress)
     if path:
         out_path = Path(path)
-        bs.data_dir = out_path.parent
+        bs.data_dir = out_path
+        if out_path.is_file():
+            bs.data_dir = out_path.parent
 
     _print(f"Creating zip in {bs.data_dir} ...")
     repo_file = bs.create_version_from_live_code()

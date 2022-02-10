@@ -13,7 +13,7 @@ from .constants import (
     PROJECT_SETTINGS_KEY,
     PROJECT_ANATOMY_KEY,
     LOCAL_SETTING_KEY,
-    M_OVERRIDEN_KEY
+    M_OVERRIDDEN_KEY
 )
 from .lib import load_json_file
 
@@ -168,7 +168,13 @@ class CacheValues:
 
 class MongoSettingsHandler(SettingsHandler):
     """Settings handler that use mongo for storing and loading of settings."""
-    global_general_keys = ("openpype_path", "admin_password", "disk_mapping")
+    global_general_keys = (
+        "openpype_path",
+        "admin_password",
+        "disk_mapping",
+        "production_version",
+        "staging_version"
+    )
 
     def __init__(self):
         # Get mongo connection
@@ -248,12 +254,12 @@ class MongoSettingsHandler(SettingsHandler):
                 continue
             # Pop key from values
             output[key] = general_data.pop(key)
-            # Pop key from overriden metadata
+            # Pop key from overridden metadata
             if (
-                M_OVERRIDEN_KEY in general_data
-                and key in general_data[M_OVERRIDEN_KEY]
+                M_OVERRIDDEN_KEY in general_data
+                and key in general_data[M_OVERRIDDEN_KEY]
             ):
-                general_data[M_OVERRIDEN_KEY].remove(key)
+                general_data[M_OVERRIDDEN_KEY].remove(key)
         return output
 
     def _apply_global_settings(
@@ -313,17 +319,17 @@ class MongoSettingsHandler(SettingsHandler):
             system_general = {}
             system_settings_data["general"] = system_general
 
-        overriden_keys = system_general.get(M_OVERRIDEN_KEY) or []
+        overridden_keys = system_general.get(M_OVERRIDDEN_KEY) or []
         for key in self.global_general_keys:
             if key not in globals_data:
                 continue
 
             system_general[key] = globals_data[key]
-            if key not in overriden_keys:
-                overriden_keys.append(key)
+            if key not in overridden_keys:
+                overridden_keys.append(key)
 
-        if overriden_keys:
-            system_general[M_OVERRIDEN_KEY] = overriden_keys
+        if overridden_keys:
+            system_general[M_OVERRIDDEN_KEY] = overridden_keys
 
         return system_settings_document
 

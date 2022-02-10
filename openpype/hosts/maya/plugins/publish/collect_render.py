@@ -49,7 +49,7 @@ import maya.app.renderSetup.model.renderSetup as renderSetup
 
 import pyblish.api
 
-from avalon import maya, api
+from avalon import api
 from openpype.hosts.maya.api.lib_renderproducts import get as get_layer_render_products  # noqa: E501
 from openpype.hosts.maya.api import lib
 
@@ -126,7 +126,7 @@ class CollectMayaRender(pyblish.api.ContextPlugin):
                         r"^.+:(.*)", layer).group(1)
             except IndexError:
                 msg = "Invalid layer name in set [ {} ]".format(layer)
-                self.log.warnig(msg)
+                self.log.warning(msg)
                 continue
 
             self.log.info("processing %s" % layer)
@@ -409,7 +409,7 @@ class CollectMayaRender(pyblish.api.ContextPlugin):
             dict: only overrides with values
 
         """
-        attributes = maya.read(render_globals)
+        attributes = lib.read(render_globals)
 
         options = {"renderGlobals": {}}
         options["renderGlobals"]["Priority"] = attributes["priority"]

@@ -95,7 +95,7 @@ class DropboxHandler(AbstractProvider):
                 "key": "acting_as_member",
                 "label": "Acting As Member"
             },
-            # roots could be overriden only on Project level, User cannot
+            # roots could be overridden only on Project level, User cannot
             {
                 "key": "root",
                 "label": "Roots",

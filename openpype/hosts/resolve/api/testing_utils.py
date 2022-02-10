@@ -25,12 +25,12 @@ class TestGUI:
                         ui.Button(
                             {
                                 "ID": "inputTestSourcesFolder",
-                                "Text": "Select folder with testing medias",
+                                "Text": "Select folder with testing media",
                                 "Weight": 1.25,
                                 "ToolTip": (
                                     "Chose folder with videos, sequences, "
                                     "single images, nested folders with "
-                                    "medias"
+                                    "media"
                                 ),
                                 "Flat": False
                             }
