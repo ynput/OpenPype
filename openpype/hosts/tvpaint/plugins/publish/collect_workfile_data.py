@@ -4,7 +4,7 @@ import tempfile
 
 import pyblish.api
 import avalon.api
-from avalon.tvpaint import pipeline, lib
+from openpype.hosts.tvpaint.api import pipeline, lib
 
 
 class ResetTVPaintWorkfileMetadata(pyblish.api.Action):

@@ -27,112 +27,32 @@
                     "label": "Loop Delay"
                 },
                 {
+                    "type": "list",
+                    "key": "always_accessible_on",
+                    "label": "Always accessible on sites",
+                    "object_type": "text"
+                },
+                {
+                    "type": "splitter"
+                },
+                {
                     "type": "text",
                     "key": "active_site",
-                    "label": "Active Site"
+                    "label": "User Default Active Site"
                 },
                 {
                     "type": "text",
                     "key": "remote_site",
-                    "label": "Remote Site"
+                    "label": "User Default Remote Site"
                 }
             ]
         },
         {
-            "type": "dict-modifiable",
+            "type": "sync-server-sites",
             "collapsible": true,
             "key": "sites",
             "label": "Sites",
-            "collapsible_key": false,
-            "object_type": {
-                "type": "dict",
-                "children": [
-                    {
-                        "type": "dict",
-                        "key": "gdrive",
-                        "label": "Google Drive",
-                        "collapsible": true,
-                        "children": [
-                            {
-                              "type": "path",
-                              "key": "credentials_url",
-                              "label": "Credentials url",
-                              "multiplatform": true
-                            }
-                        ]
-                    },
-                    {
-                        "type": "dict",
-                        "key": "dropbox",
-                        "label": "Dropbox",
-                        "collapsible": true,
-                        "children": [
-                            {
-                              "type": "text",
-                              "key": "token",
-                              "label": "Access Token"
-                            },
-                            {
-                              "type": "text",
-                              "key": "team_folder_name",
-                              "label": "Team Folder Name"
-                            },
-                            {
-                              "type": "text",
-                              "key": "acting_as_member",
-                              "label": "Acting As Member"
-                            }
-                        ]
-                    },
-                    {
-                        "type": "dict",
-                        "key": "sftp",
-                        "label": "SFTP",
-                        "collapsible": true,
-                        "children": [
-                            {
-                                "type": "text",
-                                "key": "sftp_host",
-                                "label": "SFTP host"
-                            },
-                            {
-                                "type": "number",
-                                "key": "sftp_port",
-                                "label": "SFTP port"
-                            },
-                            {
-                                "type": "text",
-                                "key": "sftp_user",
-                                "label": "SFTP user"
-                            },
-                            {
-                                "type": "text",
-                                "key": "sftp_pass",
-                                "label": "SFTP pass"
-                            },
-                                                    {
-                                "type": "path",
-                                "key": "sftp_key",
-                                "label": "SFTP user ssh key",
-                                "multiplatform": true
-                            },
-                            {
-                                "type": "text",
-                                "key": "sftp_key_pass",
-                                "label": "SFTP user ssh key password"
-                            }
-                        ]
-                    },
-                    {
-                        "type": "dict-modifiable",
-                        "key": "root",
-                        "label": "Roots",
-                        "collapsable": false,
-                        "collapsable_key": false,
-                        "object_type": "text"
-                    }
-                ]
-            }
+            "collapsible_key": false
         }
     ]
 }

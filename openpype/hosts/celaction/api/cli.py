@@ -4,7 +4,6 @@ import copy
 import argparse
 
 from avalon import io
-from avalon.tools import publish
 
 import pyblish.api
 import pyblish.util
@@ -13,6 +12,7 @@ from openpype.api import Logger
 import openpype
 import openpype.hosts.celaction
 from openpype.hosts.celaction import api as celaction
+from openpype.tools.utils import host_tools
 
 log = Logger().get_logger("Celaction_cli_publisher")
 
@@ -82,7 +82,7 @@ def main():
 
     pyblish.api.register_host(publish_host)
 
-    return publish.show()
+    return host_tools.show_publish()
 
 
 if __name__ == "__main__":

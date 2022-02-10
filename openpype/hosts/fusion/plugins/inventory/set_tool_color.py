@@ -1,5 +1,5 @@
 from avalon import api, style
-from avalon.vendor.Qt import QtGui, QtWidgets
+from Qt import QtGui, QtWidgets
 
 import avalon.fusion
 

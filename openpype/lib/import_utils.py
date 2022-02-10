@@ -14,7 +14,7 @@ def discover_host_vendor_module(module_name):
         pype_root, "hosts", host, "vendor", main_module)
 
     log.debug(
-        "Importing moduel from host vendor path: `{}`".format(module_path))
+        "Importing module from host vendor path: `{}`".format(module_path))
 
     if not os.path.exists(module_path):
         log.warning(

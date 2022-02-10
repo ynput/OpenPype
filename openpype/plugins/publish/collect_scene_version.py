@@ -10,7 +10,8 @@ class CollectSceneVersion(pyblish.api.ContextPlugin):
     """
 
     order = pyblish.api.CollectorOrder
-    label = 'Collect Version'
+    label = 'Collect Scene Version'
+    # configurable in Settings
     hosts = [
         "aftereffects",
         "blender",
@@ -26,7 +27,19 @@ class CollectSceneVersion(pyblish.api.ContextPlugin):
         "tvpaint"
     ]
 
+    # in some cases of headless publishing (for example webpublisher using PS)
+    # you want to ignore version from name and let integrate use next version
+    skip_hosts_headless_publish = []
+
     def process(self, context):
+        # tests should be close to regular publish as possible
+        if (
+            os.environ.get("HEADLESS_PUBLISH")
+            and not os.environ.get("IS_TEST")
+            and context.data["hostName"] in self.skip_hosts_headless_publish):
+            self.log.debug("Skipping for headless publishing")
+            return
+
         assert context.data.get('currentFile'), "Cannot get current file"
         filename = os.path.basename(context.data.get('currentFile'))
 

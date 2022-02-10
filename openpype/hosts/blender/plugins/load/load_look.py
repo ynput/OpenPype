@@ -8,8 +8,12 @@ import os
 import json
 import bpy
 
-from avalon import api, blender
-import openpype.hosts.blender.api.plugin as plugin
+from avalon import api
+from openpype.hosts.blender.api import plugin
+from openpype.hosts.blender.api.pipeline import (
+    containerise_existing,
+    AVALON_PROPERTY
+)
 
 
 class BlendLookLoader(plugin.AssetLoader):
@@ -105,7 +109,7 @@ class BlendLookLoader(plugin.AssetLoader):
 
         container = bpy.data.collections.new(lib_container)
         container.name = container_name
-        blender.pipeline.containerise_existing(
+        containerise_existing(
             container,
             name,
             namespace,
@@ -113,7 +117,7 @@ class BlendLookLoader(plugin.AssetLoader):
             self.__class__.__name__,
         )
 
-        metadata = container.get(blender.pipeline.AVALON_PROPERTY)
+        metadata = container.get(AVALON_PROPERTY)
 
         metadata["libpath"] = libpath
         metadata["lib_container"] = lib_container
@@ -161,7 +165,7 @@ class BlendLookLoader(plugin.AssetLoader):
             f"Unsupported file: {libpath}"
         )
 
-        collection_metadata = collection.get(blender.pipeline.AVALON_PROPERTY)
+        collection_metadata = collection.get(AVALON_PROPERTY)
         collection_libpath = collection_metadata["libpath"]
 
         normalized_collection_libpath = (
@@ -204,7 +208,7 @@ class BlendLookLoader(plugin.AssetLoader):
         if not collection:
             return False
 
-        collection_metadata = collection.get(blender.pipeline.AVALON_PROPERTY)
+        collection_metadata = collection.get(AVALON_PROPERTY)
 
         for obj in collection_metadata['objects']:
             for child in self.get_all_children(obj):

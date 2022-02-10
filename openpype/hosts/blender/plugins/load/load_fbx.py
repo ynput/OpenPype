@@ -7,11 +7,12 @@ from typing import Dict, List, Optional
 import bpy
 
 from avalon import api
-from avalon.blender import lib
-from avalon.blender.pipeline import AVALON_CONTAINERS
-from avalon.blender.pipeline import AVALON_CONTAINER_ID
-from avalon.blender.pipeline import AVALON_PROPERTY
-from openpype.hosts.blender.api import plugin
+from openpype.hosts.blender.api import plugin, lib
+from openpype.hosts.blender.api.pipeline import (
+    AVALON_CONTAINERS,
+    AVALON_PROPERTY,
+    AVALON_CONTAINER_ID
+)
 
 
 class FbxModelLoader(plugin.AssetLoader):
@@ -46,7 +47,7 @@ class FbxModelLoader(plugin.AssetLoader):
                 bpy.data.objects.remove(obj)
 
     def _process(self, libpath, asset_group, group_name, action):
-        bpy.ops.object.select_all(action='DESELECT')
+        plugin.deselect_all()
 
         collection = bpy.context.view_layer.active_layer_collection.collection
 
@@ -112,7 +113,7 @@ class FbxModelLoader(plugin.AssetLoader):
             avalon_info = obj[AVALON_PROPERTY]
             avalon_info.update({"container_name": group_name})
 
-        bpy.ops.object.select_all(action='DESELECT')
+        plugin.deselect_all()
 
         return objects
 

@@ -1,13 +1,14 @@
 import os
 import nuke
-from avalon.nuke import lib as anlib
+
 from openpype.api import resources
+from .lib import maintained_selection
 
 
 def set_context_favorites(favorites=None):
-    """ Addig favorite folders to nuke's browser
+    """ Adding favorite folders to nuke's browser
 
-    Argumets:
+    Arguments:
         favorites (dict): couples of {name:path}
     """
     favorites = favorites or {}
@@ -48,14 +49,16 @@ def gizmo_is_nuke_default(gizmo):
     return gizmo.filename().startswith(plug_dir)
 
 
-def bake_gizmos_recursively(in_group=nuke.Root()):
+def bake_gizmos_recursively(in_group=None):
     """Converting a gizmo to group
 
-    Argumets:
+    Arguments:
         is_group (nuke.Node)[optonal]: group node or all nodes
     """
+    if in_group is None:
+        in_group = nuke.Root()
     # preserve selection after all is done
-    with anlib.maintained_selection():
+    with maintained_selection():
         # jump to the group
         with in_group:
             for node in nuke.allNodes():
@@ -79,3 +82,50 @@ def bake_gizmos_recursively(in_group=nuke.Root()):
 
                 if node.Class() == "Group":
                     bake_gizmos_recursively(node)
+
+
+def colorspace_exists_on_node(node, colorspace_name):
+    """ Check if colorspace exists on node
+
+    Look through all options in the colorpsace knob, and see if we have an
+    exact match to one of the items.
+
+    Args:
+        node (nuke.Node): nuke node object
+        colorspace_name (str): color profile name
+
+    Returns:
+        bool: True if exists
+    """
+    try:
+        colorspace_knob = node['colorspace']
+    except ValueError:
+        # knob is not available on input node
+        return False
+    all_clrs = get_colorspace_list(colorspace_knob)
+
+    return colorspace_name in all_clrs
+
+
+def get_colorspace_list(colorspace_knob):
+    """Get available colorspace profile names
+
+    Args:
+        colorspace_knob (nuke.Knob): nuke knob object
+
+    Returns:
+        list: list of strings names of profiles
+    """
+
+    all_clrs = list(colorspace_knob.values())
+    reduced_clrs = []
+
+    if not colorspace_knob.getFlag(nuke.STRIP_CASCADE_PREFIX):
+        return all_clrs
+
+    # strip colorspace with nested path
+    for clrs in all_clrs:
+        clrs = clrs.split('/')[-1]
+        reduced_clrs.append(clrs)
+
+    return reduced_clrs

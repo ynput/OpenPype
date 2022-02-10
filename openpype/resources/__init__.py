@@ -1,5 +1,5 @@
 import os
-from openpype.lib.pype_info import is_running_staging
+from openpype.lib.openpype_version import is_running_staging
 
 RESOURCES_DIR = os.path.dirname(os.path.abspath(__file__))
 
@@ -50,3 +50,11 @@ def get_openpype_splash_filepath(staging=None):
     else:
         splash_file_name = "openpype_splash.png"
     return get_resource("icons", splash_file_name)
+
+
+def pype_icon_filepath(staging=None):
+    return get_openpype_icon_filepath(staging)
+
+
+def pype_splash_filepath(staging=None):
+    return get_openpype_splash_filepath(staging)

@@ -4,7 +4,7 @@ import copy
 import pyblish.api
 from avalon import io
 
-from openpype.lib import get_subset_name
+from openpype.lib import get_subset_name_with_asset_doc
 
 
 class CollectInstances(pyblish.api.ContextPlugin):
@@ -70,29 +70,23 @@ class CollectInstances(pyblish.api.ContextPlugin):
                 # - not sure if it's good idea to require asset id in
                 #   get_subset_name?
                 asset_name = context.data["workfile_context"]["asset"]
-                asset_doc = io.find_one(
-                    {
-                        "type": "asset",
-                        "name": asset_name
-                    },
-                    {"_id": 1}
-                )
-                asset_id = None
-                if asset_doc:
-                    asset_id = asset_doc["_id"]
+                asset_doc = io.find_one({
+                    "type": "asset",
+                    "name": asset_name
+                })
 
                 # Project name from workfile context
                 project_name = context.data["workfile_context"]["project"]
-                # Host name from environemnt variable
+                # Host name from environment variable
                 host_name = os.environ["AVALON_APP"]
                 # Use empty variant value
                 variant = ""
                 task_name = io.Session["AVALON_TASK"]
-                new_subset_name = get_subset_name(
+                new_subset_name = get_subset_name_with_asset_doc(
                     family,
                     variant,
                     task_name,
-                    asset_id,
+                    asset_doc,
                     project_name,
                     host_name
                 )
@@ -224,7 +218,7 @@ class CollectInstances(pyblish.api.ContextPlugin):
             # - not 100% working as it was found out that layer ids can't be
             #   used as unified identifier across multiple workstations
             layers_by_id = {
-                layer["id"]: layer
+                layer["layer_id"]: layer
                 for layer in layers_data
             }
             layer_ids = instance_data["layer_ids"]

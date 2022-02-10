@@ -3,19 +3,7 @@ import sys
 
 from Qt import QtWidgets, QtCore
 
-from .pipeline import (
-    publish,
-    launch_workfiles_app
-)
-
-from avalon.tools import (
-    creator,
-    sceneinventory,
-)
-from openpype.tools import (
-    loader,
-    libraryloader
-)
+from openpype.tools.utils import host_tools
 
 from openpype.hosts.fusion.scripts import (
     set_rendermode,
@@ -36,7 +24,7 @@ def load_stylesheet():
 
 class Spacer(QtWidgets.QWidget):
     def __init__(self, height, *args, **kwargs):
-        super(self.__class__, self).__init__(*args, **kwargs)
+        super(Spacer, self).__init__(*args, **kwargs)
 
         self.setFixedHeight(height)
 
@@ -53,7 +41,7 @@ class Spacer(QtWidgets.QWidget):
 
 class OpenPypeMenu(QtWidgets.QWidget):
     def __init__(self, *args, **kwargs):
-        super(self.__class__, self).__init__(*args, **kwargs)
+        super(OpenPypeMenu, self).__init__(*args, **kwargs)
 
         self.setObjectName("OpenPypeMenu")
 
@@ -117,27 +105,27 @@ class OpenPypeMenu(QtWidgets.QWidget):
 
     def on_workfile_clicked(self):
         print("Clicked Workfile")
-        launch_workfiles_app()
+        host_tools.show_workfiles()
 
     def on_create_clicked(self):
         print("Clicked Create")
-        creator.show()
+        host_tools.show_creator()
 
     def on_publish_clicked(self):
         print("Clicked Publish")
-        publish(None)
+        host_tools.show_publish()
 
     def on_load_clicked(self):
         print("Clicked Load")
-        loader.show(use_context=True)
+        host_tools.show_loader(use_context=True)
 
     def on_inventory_clicked(self):
         print("Clicked Inventory")
-        sceneinventory.show()
+        host_tools.show_scene_inventory()
 
     def on_libload_clicked(self):
         print("Clicked Library")
-        libraryloader.show()
+        host_tools.show_library_loader()
 
     def on_rendernode_clicked(self):
         from avalon import style

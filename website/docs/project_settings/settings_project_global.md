@@ -7,7 +7,7 @@ sidebar_label: Global
 import Tabs from '@theme/Tabs';
 import TabItem from '@theme/TabItem';
 
-Project settings can have project specific values. Each new project is using studio values defined in **default** project but these values can be modified or overriden per project.
+Project settings can have project specific values. Each new project is using studio values defined in **default** project but these values can be modified or overridden per project.
 
 :::warning Default studio values
 Projects always use default project values unless they have [project override](../admin_settings#project-overrides) (orage colour). Any changes in default project may affect all existing projects.
@@ -77,7 +77,7 @@ Profile may generate multiple outputs from a single input. Each output must defi
     - All values that cause output resolution smaller than 1 pixel are invalid.
 
     - Value without sign (+/-) in is always explicit and value with sign is
-    relative. Output size for values "200px" and "+200px" are not the same "+200px" will add 200 pixels to source and "200px" will keep only 200px from source. Value of "0", "0px" or "0%" are automatically converted to "+0px" as 0px is invalid ouput.
+    relative. Output size for values "200px" and "+200px" are not the same "+200px" will add 200 pixels to source and "200px" will keep only 200px from source. Value of "0", "0px" or "0%" are automatically converted to "+0px" as 0px is invalid output.
 
     - Cropped value is related to center. It is better to avoid odd numbers if
     possible.
@@ -88,7 +88,7 @@ Profile may generate multiple outputs from a single input. Each output must defi
     |---|---|---|
     | ` `      | 2200px | Empty string keep resolution unchanged. |
     | `50%`    | 1100px | Crop 25% of input width on left and right side. |
-    | `300px`  | 300px | Keep 300px in center of input and crop rest on left adn right. |
+    | `300px`  | 300px | Keep 300px in center of input and crop rest on left and right. |
     | `300`    | 300px | Values without units are used as pixels (`px`). |
     | `+0px`   | 2200px | Keep resolution unchanged. |
     | `0px`   | 2200px | Same as `+0px`. |

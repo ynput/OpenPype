@@ -5,11 +5,14 @@ import os
 import contextlib
 import copy
 
+import six
 from maya import cmds
 
 from avalon import api, io
-from avalon.maya.lib import unique_namespace
-from openpype.hosts.maya.api.lib import matrix_equals
+from openpype.hosts.maya.api.lib import (
+    matrix_equals,
+    unique_namespace
+)
 
 log = logging.getLogger("PackageLoader")
 
@@ -69,7 +72,8 @@ def unlocked(nodes):
         yield
     finally:
         # Reapply original states
-        for uuid, state in states.iteritems():
+        _iteritems = getattr(states, "iteritems", states.items)
+        for uuid, state in _iteritems():
             nodes_from_id = cmds.ls(uuid, long=True)
             if nodes_from_id:
                 node = nodes_from_id[0]
@@ -94,7 +98,7 @@ def load_package(filepath, name, namespace=None):
         # Define a unique namespace for the package
         namespace = os.path.basename(filepath).split(".")[0]
         unique_namespace(namespace)
-    assert isinstance(namespace, basestring)
+    assert isinstance(namespace, six.string_types)
 
     # Load the setdress package data
     with open(filepath, "r") as fp:
@@ -237,7 +241,7 @@ def get_contained_containers(container):
     """
 
     import avalon.schema
-    from avalon.maya.pipeline import parse_container
+    from .pipeline import parse_container
 
     # Get avalon containers in this package setdress container
     containers = []
@@ -339,7 +343,7 @@ def update_package(set_container, representation):
 def update_scene(set_container, containers, current_data, new_data, new_file):
     """Updates the hierarchy, assets and their matrix
 
-    Updates the following withing the scene:
+    Updates the following within the scene:
         * Setdress hierarchy alembic
         * Matrix
         * Parenting

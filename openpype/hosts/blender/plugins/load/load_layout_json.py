@@ -1,17 +1,20 @@
 """Load a layout in Blender."""
 
+import json
 from pathlib import Path
 from pprint import pformat
 from typing import Dict, Optional
 
 import bpy
-import json
 
 from avalon import api
-from avalon.blender.pipeline import AVALON_CONTAINERS
-from avalon.blender.pipeline import AVALON_CONTAINER_ID
-from avalon.blender.pipeline import AVALON_PROPERTY
-from avalon.blender.pipeline import AVALON_INSTANCES
+from openpype import lib
+from openpype.hosts.blender.api.pipeline import (
+    AVALON_INSTANCES,
+    AVALON_CONTAINERS,
+    AVALON_PROPERTY,
+    AVALON_CONTAINER_ID
+)
 from openpype.hosts.blender.api import plugin
 
 
@@ -59,7 +62,7 @@ class JsonLayoutLoader(plugin.AssetLoader):
         return None
 
     def _process(self, libpath, asset, asset_group, actions):
-        bpy.ops.object.select_all(action='DESELECT')
+        plugin.deselect_all()
 
         with open(libpath, "r") as fp:
             data = json.load(fp)
@@ -91,6 +94,10 @@ class JsonLayoutLoader(plugin.AssetLoader):
                 'animation_asset': asset
             }
 
+            if element.get('animation'):
+                options['animation_file'] = str(Path(libpath).with_suffix(
+                    '')) + "." + element.get('animation')
+
             # This should return the loaded asset, but the load call will be
             # added to the queue to run in the Blender main thread, so
             # at this time it will not return anything. The assets will be
@@ -102,6 +109,23 @@ class JsonLayoutLoader(plugin.AssetLoader):
                 namespace=instance_name,
                 options=options
             )
+
+        # Camera creation when loading a layout is not necessary for now,
+        # but the code is worth keeping in case we need it in the future.
+        # # Create the camera asset and the camera instance
+        # creator_plugin = lib.get_creator_by_name("CreateCamera")
+        # if not creator_plugin:
+        #     raise ValueError("Creator plugin \"CreateCamera\" was "
+        #                      "not found.")
+
+        # api.create(
+        #     creator_plugin,
+        #     name="camera",
+        #     # name=f"{unique_number}_{subset}_animation",
+        #     asset=asset,
+        #     options={"useSelection": False}
+        #     # data={"dependencies": str(context["representation"]["_id"])}
+        # )
 
     def process_asset(self,
                       context: dict,

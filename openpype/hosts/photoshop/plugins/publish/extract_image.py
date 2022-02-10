@@ -1,7 +1,7 @@
 import os
 
 import openpype.api
-from avalon import photoshop
+from openpype.hosts.photoshop import api as photoshop
 
 
 class ExtractImage(openpype.api.Extractor):
@@ -12,7 +12,7 @@ class ExtractImage(openpype.api.Extractor):
 
     label = "Extract Image"
     hosts = ["photoshop"]
-    families = ["image"]
+    families = ["image", "background"]
     formats = ["png", "jpg"]
 
     def process(self, instance):

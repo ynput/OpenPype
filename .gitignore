@@ -39,6 +39,7 @@ Temporary Items
 /dist/
 
 /vendor/bin/*
+/vendor/python/*
 /.venv
 /venv/
 

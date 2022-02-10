@@ -1,13 +1,14 @@
 import os
 import json
 import getpass
-import appdirs
 import platform
+
+import appdirs
+import requests
 
 from maya import cmds
 
 from avalon import api
-from avalon.vendor import requests
 
 import pyblish.api
 from openpype.hosts.maya.api import lib
@@ -330,7 +331,7 @@ class MayaSubmitMuster(pyblish.api.InstancePlugin):
         # but dispatcher (Server) and not render clients. Render clients
         # inherit environment from publisher including PATH, so there's
         # no problem finding PYPE, but there is now way (as far as I know)
-        # to set environment dynamically for dispatcher. Therefor this hack.
+        # to set environment dynamically for dispatcher. Therefore this hack.
         args = [muster_python,
                 _get_script().replace('\\', '\\\\'),
                 "--paths",
@@ -383,7 +384,7 @@ class MayaSubmitMuster(pyblish.api.InstancePlugin):
                     "attributes": {
                         "environmental_variables": {
                             "value": ", ".join("{!s}={!r}".format(k, v)
-                                               for (k, v) in env.iteritems()),
+                                               for (k, v) in env.items()),
 
                             "state": True,
                             "subst": False
@@ -477,7 +478,7 @@ class MayaSubmitMuster(pyblish.api.InstancePlugin):
             # such that proper initialisation happens the same
             # way as it does on a local machine.
             # TODO(marcus): This won't work if the slaves don't
-            # have accesss to these paths, such as if slaves are
+            # have access to these paths, such as if slaves are
             # running Linux and the submitter is on Windows.
             "PYTHONPATH",
             "PATH",

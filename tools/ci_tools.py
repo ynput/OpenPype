@@ -27,7 +27,7 @@ def get_release_type_github(Log, github_token):
         return "minor"
 
     if any(label in labels for label in patch_labels):
-        return "path"
+        return "patch"
             
     return None
     

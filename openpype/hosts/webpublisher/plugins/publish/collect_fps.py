@@ -20,9 +20,8 @@ class CollectFPS(pyblish.api.InstancePlugin):
     hosts = ["webpublisher"]
 
     def process(self, instance):
-        fps = instance.context.data["fps"]
+        instance_fps = instance.data.get("fps")
+        if instance_fps is None:
+            instance.data["fps"] = instance.context.data["fps"]
 
-        instance.data.update({
-            "fps": fps
-        })
         self.log.debug(f"instance.data: {pformat(instance.data)}")

@@ -1,10 +1,10 @@
 import os
 
+import bpy
+
 from openpype import api
 from openpype.hosts.blender.api import plugin
-from avalon.blender.pipeline import AVALON_PROPERTY
-
-import bpy
+from openpype.hosts.blender.api.pipeline import AVALON_PROPERTY
 
 
 class ExtractFBX(api.Extractor):
@@ -24,7 +24,7 @@ class ExtractFBX(api.Extractor):
         # Perform extraction
         self.log.info("Performing extraction..")
 
-        bpy.ops.object.select_all(action='DESELECT')
+        plugin.deselect_all()
 
         selected = []
         asset_group = None
@@ -50,6 +50,9 @@ class ExtractFBX(api.Extractor):
                 new_materials.append(mat)
                 new_materials_objs.append(obj)
 
+        scale_length = bpy.context.scene.unit_settings.scale_length
+        bpy.context.scene.unit_settings.scale_length = 0.01
+
         # We export the fbx
         bpy.ops.export_scene.fbx(
             context,
@@ -60,7 +63,9 @@ class ExtractFBX(api.Extractor):
             add_leaf_bones=False
         )
 
-        bpy.ops.object.select_all(action='DESELECT')
+        bpy.context.scene.unit_settings.scale_length = scale_length
+
+        plugin.deselect_all()
 
         for mat in new_materials:
             bpy.data.materials.remove(mat)

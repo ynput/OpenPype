@@ -28,7 +28,7 @@ class ListStrictWidget(BaseWidget):
                 break
 
         self._any_children_has_label = any_children_has_label
-        # Change column stretch factor for verticall alignment
+        # Change column stretch factor for vertical alignment
         if not self.entity.is_horizontal:
             col_index = 2 if any_children_has_label else 1
             content_layout.setColumnStretch(col_index, 1)

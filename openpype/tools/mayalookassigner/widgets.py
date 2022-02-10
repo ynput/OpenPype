@@ -1,13 +1,16 @@
 import logging
 from collections import defaultdict
 
-from avalon.vendor.Qt import QtWidgets, QtCore
+from Qt import QtWidgets, QtCore
 
 # TODO: expose this better in avalon core
 from avalon.tools import lib
 from avalon.tools.models import TreeModel
 
-from . import models
+from .models import (
+    AssetModel,
+    LookModel
+)
 from . import commands
 from . import views
 
@@ -17,7 +20,6 @@ MODELINDEX = QtCore.QModelIndex()
 
 
 class AssetOutliner(QtWidgets.QWidget):
-
     refreshed = QtCore.Signal()
     selection_changed = QtCore.Signal()
 
@@ -30,7 +32,7 @@ class AssetOutliner(QtWidgets.QWidget):
         title.setAlignment(QtCore.Qt.AlignCenter)
         title.setStyleSheet("font-weight: bold; font-size: 12px")
 
-        model = models.AssetModel()
+        model = AssetModel()
         view = views.View()
         view.setModel(model)
         view.customContextMenuRequested.connect(self.right_mouse_menu)
@@ -81,14 +83,13 @@ class AssetOutliner(QtWidgets.QWidget):
         """
 
         selection_model = self.view.selectionModel()
-        items = [row.data(TreeModel.ItemRole) for row in
-                 selection_model.selectedRows(0)]
-
-        return items
+        return [row.data(TreeModel.ItemRole)
+                for row in selection_model.selectedRows(0)]
 
     def get_all_assets(self):
         """Add all items from the current scene"""
 
+        items = []
         with lib.preserve_expanded_rows(self.view):
             with lib.preserve_selection(self.view):
                 self.clear()
@@ -115,7 +116,7 @@ class AssetOutliner(QtWidgets.QWidget):
 
         # Collect all nodes by hash (optimization)
         if not selection:
-            nodes = cmds.ls(dag=True,  long=True)
+            nodes = cmds.ls(dag=True, long=True)
         else:
             nodes = commands.get_selected_nodes()
         id_nodes = commands.create_asset_id_hash(nodes)
@@ -184,7 +185,6 @@ class AssetOutliner(QtWidgets.QWidget):
 
 
 class LookOutliner(QtWidgets.QWidget):
-
     menu_apply_action = QtCore.Signal()
 
     def __init__(self, parent=None):
@@ -201,7 +201,7 @@ class LookOutliner(QtWidgets.QWidget):
         title.setStyleSheet("font-weight: bold; font-size: 12px")
         title.setAlignment(QtCore.Qt.AlignCenter)
 
-        model = models.LookModel()
+        model = LookModel()
 
         # Proxy for dynamic sorting
         proxy = QtCore.QSortFilterProxyModel()
@@ -233,10 +233,8 @@ class LookOutliner(QtWidgets.QWidget):
             list: list of dictionaries
         """
 
-        datas = [i.data(TreeModel.ItemRole) for i in self.view.get_indices()]
-        items = [d for d in datas if d is not None]  # filter Nones
-
-        return items
+        items = [i.data(TreeModel.ItemRole) for i in self.view.get_indices()]
+        return [item for item in items if item is not None]
 
     def right_mouse_menu(self, pos):
         """Build RMB menu for look view"""
@@ -257,5 +255,3 @@ class LookOutliner(QtWidgets.QWidget):
         menu.addAction(apply_action)
 
         menu.exec_(globalpos)
-
-

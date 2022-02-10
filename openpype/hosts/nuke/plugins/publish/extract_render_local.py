@@ -42,10 +42,14 @@ class NukeRenderLocal(openpype.api.Extractor):
         self.log.info("Start frame: {}".format(first_frame))
         self.log.info("End frame: {}".format(last_frame))
 
+        # write node url might contain nuke's ctl expressin
+        # as [python ...]/path...
+        path = node["file"].evaluate()
+
         # Ensure output directory exists.
-        directory = os.path.dirname(node["file"].value())
-        if not os.path.exists(directory):
-            os.makedirs(directory)
+        out_dir = os.path.dirname(path)
+        if not os.path.exists(out_dir):
+            os.makedirs(out_dir)
 
         # Render frames
         nuke.execute(
@@ -58,15 +62,12 @@ class NukeRenderLocal(openpype.api.Extractor):
         if "slate" in families:
             first_frame += 1
 
-        path = node['file'].value()
-        out_dir = os.path.dirname(path)
         ext = node["file_type"].value()
 
         if "representations" not in instance.data:
             instance.data["representations"] = []
 
         collected_frames = os.listdir(out_dir)
-
         if len(collected_frames) == 1:
             repre = {
                 'name': ext,

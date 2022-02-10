@@ -32,7 +32,10 @@ class ValidateNodeNoGhosting(pyblish.api.InstancePlugin):
         nodes = cmds.ls(instance, long=True, type=['transform', 'shape'])
         invalid = []
         for node in nodes:
-            for attr, required_value in cls._attributes.iteritems():
+            _iteritems = getattr(
+                cls._attributes, "iteritems", cls._attributes.items
+            )
+            for attr, required_value in _iteritems():
                 if cmds.attributeQuery(attr, node=node, exists=True):
 
                     value = cmds.getAttr('{0}.{1}'.format(node, attr))

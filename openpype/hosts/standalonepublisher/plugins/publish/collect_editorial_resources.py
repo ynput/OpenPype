@@ -31,7 +31,7 @@ class CollectInstanceResources(pyblish.api.InstancePlugin):
         editorial_source_root = instance.data["editorialSourceRoot"]
         editorial_source_path = instance.data["editorialSourcePath"]
 
-        # if `editorial_source_path` then loop trough
+        # if `editorial_source_path` then loop through
         if editorial_source_path:
             # add family if mov or mp4 found which is longer for
             # cutting `trimming` to enable `ExtractTrimmingVideoAudio` plugin
@@ -42,7 +42,7 @@ class CollectInstanceResources(pyblish.api.InstancePlugin):
             instance.data["families"] += ["trimming"]
             return
 
-        # if template patern in path then fill it with `anatomy_data`
+        # if template pattern in path then fill it with `anatomy_data`
         if "{" in editorial_source_root:
             editorial_source_root = editorial_source_root.format(
                 **anatomy_data)
@@ -86,7 +86,7 @@ class CollectInstanceResources(pyblish.api.InstancePlugin):
                 subset_files.update({clip_dir_path: subset_files_items})
 
             # break the loop if correct_clip_dir was captured
-            # no need to cary on if corect folder was found
+            # no need to cary on if correct folder was found
             if correct_clip_dir:
                 break
 
@@ -113,10 +113,10 @@ class CollectInstanceResources(pyblish.api.InstancePlugin):
             unique_subset_names = list()
             root_dir = list(subset_files.keys()).pop()
             files_list = subset_files[root_dir]
-            search_patern = f"({subset}[A-Za-z0-9]+)(?=[\\._\\s])"
+            search_pattern = f"({subset}[A-Za-z0-9]+)(?=[\\._\\s])"
             for _file in files_list:
-                patern = re.compile(search_patern)
-                match = patern.findall(_file)
+                pattern = re.compile(search_pattern)
+                match = pattern.findall(_file)
                 if not match:
                     continue
                 match_subset = match.pop()
@@ -175,7 +175,7 @@ class CollectInstanceResources(pyblish.api.InstancePlugin):
         instance_data["representations"] = list()
 
         collection_head_name = None
-        # loop trough collections and create representations
+        # loop through collections and create representations
         for _collection in collections:
             ext = _collection.tail[1:]
             collection_head_name = _collection.head
@@ -210,7 +210,7 @@ class CollectInstanceResources(pyblish.api.InstancePlugin):
             frames.append(frame_start)
             frames.append(frame_end)
 
-        # loop trough reminders and create representations
+        # loop through reminders and create representations
         for _reminding_file in remainder:
             ext = os.path.splitext(_reminding_file)[-1][1:]
             if ext not in instance_data["extensions"]:
@@ -238,7 +238,7 @@ class CollectInstanceResources(pyblish.api.InstancePlugin):
                 })
 
             # exception for mp4 preview
-            if ".mp4" in _reminding_file:
+            if ext in ["mp4", "mov"]:
                 frame_start = 0
                 frame_end = (
                     (instance_data["frameEnd"] - instance_data["frameStart"])
@@ -255,6 +255,7 @@ class CollectInstanceResources(pyblish.api.InstancePlugin):
                     "step": 1,
                     "fps": self.context.data.get("fps"),
                     "name": "review",
+                    "thumbnail": True,
                     "tags": ["review", "ftrackreview", "delete"],
                 })
 

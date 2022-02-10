@@ -52,7 +52,8 @@ class ValidateNodeIdsUnique(pyblish.api.InstancePlugin):
 
         # Take only the ids with more than one member
         invalid = list()
-        for _ids, members in ids.iteritems():
+        _iteritems = getattr(ids, "iteritems", ids.items)
+        for _ids, members in _iteritems():
             if len(members) > 1:
                 cls.log.error("ID found on multiple nodes: '%s'" % members)
                 invalid.extend(members)

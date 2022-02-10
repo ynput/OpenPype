@@ -1,13 +1,18 @@
 import re
 
-from avalon import api, aftereffects
+import avalon.api
 
-from openpype.lib import get_background_layers, get_unique_layer_name
+from openpype.lib import (
+    get_background_layers,
+    get_unique_layer_name
+)
+from openpype.hosts.aftereffects.api import (
+    AfterEffectsLoader,
+    containerise
+)
 
-stub = aftereffects.stub()
 
-
-class BackgroundLoader(api.Loader):
+class BackgroundLoader(AfterEffectsLoader):
     """
         Load images from Background family
         Creates for each background separate folder with all imported images
@@ -21,27 +26,30 @@ class BackgroundLoader(api.Loader):
     representations = ["json"]
 
     def load(self, context, name=None, namespace=None, data=None):
+        stub = self.get_stub()
         items = stub.get_items(comps=True)
-        existing_items = [layer.name for layer in items]
+        existing_items = [layer.name.replace(stub.LOADED_ICON, '')
+                          for layer in items]
 
         comp_name = get_unique_layer_name(
             existing_items,
             "{}_{}".format(context["asset"]["name"], name))
 
         layers = get_background_layers(self.fname)
+        if not layers:
+            raise ValueError("No layers found in {}".format(self.fname))
+
         comp = stub.import_background(None, stub.LOADED_ICON + comp_name,
                                       layers)
 
         if not comp:
-            self.log.warning(
-                "Import background failed.")
-            self.log.warning("Check host app for alert error.")
-            return
+            raise ValueError("Import background failed. "
+                             "Please contact support")
 
         self[:] = [comp]
         namespace = namespace or comp_name
 
-        return aftereffects.containerise(
+        return containerise(
             name,
             namespace,
             comp,
@@ -51,6 +59,7 @@ class BackgroundLoader(api.Loader):
 
     def update(self, container, representation):
         """ Switch asset or change version """
+        stub = self.get_stub()
         context = representation.get("context", {})
         _ = container.pop("layer")
 
@@ -69,7 +78,7 @@ class BackgroundLoader(api.Loader):
         else:  # switching version - keep same name
             comp_name = container["namespace"]
 
-        path = api.get_representation_path(representation)
+        path = avalon.api.get_representation_path(representation)
 
         layers = get_background_layers(path)
         comp = stub.reload_background(container["members"][1],
@@ -92,6 +101,7 @@ class BackgroundLoader(api.Loader):
             container (dict): container to be removed - used to get layer_id
         """
         print("!!!! container:: {}".format(container))
+        stub = self.get_stub()
         layer = container.pop("layer")
         stub.imprint(layer, {})
         stub.delete_item(layer.id)

@@ -5,11 +5,8 @@ import inspect
 import logging
 import re
 import json
-import tempfile
 
-from .execute import run_subprocess
 from .profiles_filtering import filter_profiles
-from .vendor_bin_utils import get_oiio_tools_path
 
 from openpype.settings import get_project_settings
 
@@ -27,17 +24,44 @@ class TaskNotSetError(KeyError):
         super(TaskNotSetError, self).__init__(msg)
 
 
-def get_subset_name(
+def get_subset_name_with_asset_doc(
     family,
     variant,
     task_name,
-    asset_id,
+    asset_doc,
     project_name=None,
     host_name=None,
     default_template=None,
-    dynamic_data=None,
-    dbcon=None
+    dynamic_data=None
 ):
+    """Calculate subset name based on passed context and OpenPype settings.
+
+    Subst name templates are defined in `project_settings/global/tools/creator
+    /subset_name_profiles` where are profiles with host name, family, task name
+    and task type filters. If context does not match any profile then
+    `DEFAULT_SUBSET_TEMPLATE` is used as default template.
+
+    That's main reason why so many arguments are required to calculate subset
+    name.
+
+    Args:
+        family (str): Instance family.
+        variant (str): In most of cases it is user input during creation.
+        task_name (str): Task name on which context is instance created.
+        asset_doc (dict): Queried asset document with it's tasks in data.
+            Used to get task type.
+        project_name (str): Name of project on which is instance created.
+            Important for project settings that are loaded.
+        host_name (str): One of filtering criteria for template profile
+            filters.
+        default_template (str): Default template if any profile does not match
+            passed context. Constant 'DEFAULT_SUBSET_TEMPLATE' is used if
+            is not passed.
+        dynamic_data (dict): Dynamic data specific for a creator which creates
+            instance.
+        dbcon (AvalonMongoDB): Mongo connection to be able query asset document
+            if 'asset_doc' is not passed.
+    """
     if not family:
         return ""
 
@@ -52,25 +76,6 @@ def get_subset_name(
 
         project_name = avalon.api.Session["AVALON_PROJECT"]
 
-    # Function should expect asset document instead of asset id
-    # - that way `dbcon` is not needed
-    if dbcon is None:
-        from avalon.api import AvalonMongoDB
-
-        dbcon = AvalonMongoDB()
-        dbcon.Session["AVALON_PROJECT"] = project_name
-
-    dbcon.install()
-
-    asset_doc = dbcon.find_one(
-        {
-            "type": "asset",
-            "_id": asset_id
-        },
-        {
-            "data.tasks": True
-        }
-    )
     asset_tasks = asset_doc.get("data", {}).get("tasks") or {}
     task_info = asset_tasks.get(task_name) or {}
     task_type = task_info.get("type")
@@ -112,11 +117,54 @@ def get_subset_name(
     return template.format(**prepare_template_data(fill_pairs))
 
 
+def get_subset_name(
+    family,
+    variant,
+    task_name,
+    asset_id,
+    project_name=None,
+    host_name=None,
+    default_template=None,
+    dynamic_data=None,
+    dbcon=None
+):
+    """Calculate subset name using OpenPype settings.
+
+    This variant of function expects asset id as argument.
+
+    This is legacy function should be replaced with
+    `get_subset_name_with_asset_doc` where asset document is expected.
+    """
+    if dbcon is None:
+        from avalon.api import AvalonMongoDB
+
+        dbcon = AvalonMongoDB()
+        dbcon.Session["AVALON_PROJECT"] = project_name
+
+    dbcon.install()
+
+    asset_doc = dbcon.find_one(
+        {"_id": asset_id},
+        {"data.tasks": True}
+    ) or {}
+
+    return get_subset_name_with_asset_doc(
+        family,
+        variant,
+        task_name,
+        asset_doc,
+        project_name,
+        host_name,
+        default_template,
+        dynamic_data
+    )
+
+
 def prepare_template_data(fill_pairs):
     """
         Prepares formatted data for filling template.
 
-        It produces mutliple variants of keys (key, Key, KEY) to control
+        It produces multiple variants of keys (key, Key, KEY) to control
         format of filled template.
 
         Args:
@@ -179,20 +227,27 @@ def filter_pyblish_plugins(plugins):
     # iterate over plugins
     for plugin in plugins[:]:
 
-        file = os.path.normpath(inspect.getsourcefile(plugin))
-        file = os.path.normpath(file)
-
-        # host determined from path
-        host_from_file = file.split(os.path.sep)[-4:-3][0]
-        plugin_kind = file.split(os.path.sep)[-2:-1][0]
-
-        # TODO: change after all plugins are moved one level up
-        if host_from_file == "openpype":
-            host_from_file = "global"
-
         try:
             config_data = presets[host]["publish"][plugin.__name__]
         except KeyError:
+            # host determined from path
+            file = os.path.normpath(inspect.getsourcefile(plugin))
+            file = os.path.normpath(file)
+
+            split_path = file.split(os.path.sep)
+            if len(split_path) < 4:
+                log.warning(
+                    'plugin path too short to extract host {}'.format(file)
+                )
+                continue
+
+            host_from_file = split_path[-4]
+            plugin_kind = split_path[-2]
+
+            # TODO: change after all plugins are moved one level up
+            if host_from_file == "openpype":
+                host_from_file = "global"
+
             try:
                 config_data = presets[host_from_file][plugin_kind][plugin.__name__]  # noqa: E501
             except KeyError:
@@ -233,7 +288,7 @@ def set_plugin_attributes_from_settings(
     if project_name is None:
         project_name = os.environ.get("AVALON_PROJECT")
 
-    # map plugin superclass to preset json. Currenly suppoted is load and
+    # map plugin superclass to preset json. Currently supported is load and
     # create (avalon.api.Loader and avalon.api.Creator)
     plugin_type = None
     if superclass.__name__.split(".")[-1] in ("Loader", "SubsetLoader"):
@@ -373,113 +428,46 @@ def get_background_layers(file_url):
     return layers
 
 
-def oiio_supported():
-    """
-        Checks if oiiotool is configured for this platform.
+def parse_json(path):
+    """Parses json file at 'path' location
 
-        Expects full path to executable.
-
-        'should_decompress' will throw exception if configured,
-        but not present or not working.
         Returns:
-            (bool)
+            (dict) or None if unparsable
+        Raises:
+            AsssertionError if 'path' doesn't exist
     """
-    oiio_path = get_oiio_tools_path()
-    if not oiio_path or not os.path.exists(oiio_path):
-        log.debug("OIIOTool is not configured or not present at {}".
-                  format(oiio_path))
-        return False
-
-    return True
-
-
-def decompress(target_dir, file_url,
-               input_frame_start=None, input_frame_end=None, log=None):
-    """
-        Decompresses DWAA 'file_url' .exr to 'target_dir'.
-
-        Creates uncompressed files in 'target_dir', they need to be cleaned.
-
-        File url could be for single file or for a sequence, in that case
-        %0Xd will be as a placeholder for frame number AND input_frame* will
-        be filled.
-        In that case single oiio command with '--frames' will be triggered for
-        all frames, this should be faster then looping and running sequentially
-
-        Args:
-            target_dir (str): extended from stagingDir
-            file_url (str): full urls to source file (with or without %0Xd)
-            input_frame_start (int) (optional): first frame
-            input_frame_end (int) (optional): last frame
-            log (Logger) (optional): pype logger
-    """
-    is_sequence = input_frame_start is not None and \
-        input_frame_end is not None and \
-        (int(input_frame_end) > int(input_frame_start))
-
-    oiio_cmd = []
-    oiio_cmd.append(get_oiio_tools_path())
-
-    oiio_cmd.append("--compression none")
-
-    base_file_name = os.path.basename(file_url)
-    oiio_cmd.append(file_url)
-
-    if is_sequence:
-        oiio_cmd.append("--frames {}-{}".format(input_frame_start,
-                                                input_frame_end))
-
-    oiio_cmd.append("-o")
-    oiio_cmd.append(os.path.join(target_dir, base_file_name))
-
-    subprocess_exr = " ".join(oiio_cmd)
-
-    if not log:
-        log = logging.getLogger(__name__)
-
-    log.debug("Decompressing {}".format(subprocess_exr))
-    run_subprocess(
-        subprocess_exr, shell=True, logger=log
+    path = path.strip('\"')
+    assert os.path.isfile(path), (
+        "Path to json file doesn't exist. \"{}\"".format(path)
     )
+    data = None
+    with open(path, "r") as json_file:
+        try:
+            data = json.load(json_file)
+        except Exception as exc:
+            log.error(
+                "Error loading json: "
+                "{} - Exception: {}".format(path, exc)
+            )
+    return data
 
 
-def get_decompress_dir():
-    """
-        Creates temporary folder for decompressing.
-        Its local, in case of farm it is 'local' to the farm machine.
+def get_batch_asset_task_info(ctx):
+    """Parses context data from webpublisher's batch metadata
 
-        Should be much faster, needs to be cleaned up later.
-    """
-    return os.path.normpath(
-        tempfile.mkdtemp(prefix="pyblish_tmp_")
-    )
-
-
-def should_decompress(file_url):
-    """
-        Tests that 'file_url' is compressed with DWAA.
-
-        Uses 'oiio_supported' to check that OIIO tool is available for this
-        platform.
-
-        Shouldn't throw exception as oiiotool is guarded by check function.
-        Currently implemented this way as there is no support for Mac and Linux
-        In the future, it should be more strict and throws exception on
-        misconfiguration.
-
-        Args:
-            file_url (str): path to rendered file (in sequence it would be
-                first file, if that compressed it is expected that whole seq
-                will be too)
         Returns:
-            (bool): 'file_url' is DWAA compressed and should be decompressed
-                and we can decompress (oiiotool supported)
+            (tuple): asset, task_name (Optional), task_type
     """
-    if oiio_supported():
-        output = run_subprocess([
-            get_oiio_tools_path(),
-            "--info", "-v", file_url])
-        return "compression: \"dwaa\"" in output or \
-            "compression: \"dwab\"" in output
+    task_type = "default_task_type"
+    task_name = None
+    asset = None
 
-    return False
+    if ctx["type"] == "task":
+        items = ctx["path"].split('/')
+        asset = items[-2]
+        task_name = ctx["name"]
+        task_type = ctx["attributes"]["type"]
+    else:
+        asset = ctx["name"]
+
+    return asset, task_name, task_type

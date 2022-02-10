@@ -60,12 +60,13 @@ def path_from_representation(representation, anatomy):
         path = pipeline.format_template_with_optional_keys(
             context, template
         )
+        path = os.path.normpath(path.replace("/", "\\"))
 
     except KeyError:
         # Template references unavailable data
         return None
 
-    return os.path.normpath(path)
+    return path
 
 
 def copy_file(src_path, dst_path):
@@ -179,9 +180,11 @@ def process_single_file(
         Returns:
             (collections.defaultdict , int)
     """
+    # Make sure path is valid for all platforms
+    src_path = os.path.normpath(src_path.replace("\\", "/"))
+
     if not os.path.exists(src_path):
-        msg = "{} doesn't exist for {}".format(src_path,
-                                               repre["_id"])
+        msg = "{} doesn't exist for {}".format(src_path, repre["_id"])
         report_items["Source file was not found"].append(msg)
         return report_items, 0
 
@@ -192,8 +195,10 @@ def process_single_file(
     else:
         delivery_path = anatomy_filled["delivery"][template_name]
 
-    # context.representation could be .psd
+    # Backwards compatibility when extension contained `.`
     delivery_path = delivery_path.replace("..", ".")
+    # Make sure path is valid for all platforms
+    delivery_path = os.path.normpath(delivery_path.replace("\\", "/"))
 
     delivery_folder = os.path.dirname(delivery_path)
     if not os.path.exists(delivery_folder):
@@ -230,19 +235,40 @@ def process_sequence(
         Returns:
             (collections.defaultdict , int)
     """
+    src_path = os.path.normpath(src_path.replace("\\", "/"))
 
     def hash_path_exist(myPath):
         res = myPath.replace('#', '*')
         glob_search_results = glob.glob(res)
         if len(glob_search_results) > 0:
             return True
-        else:
-            return False
+        return False
 
     if not hash_path_exist(src_path):
         msg = "{} doesn't exist for {}".format(src_path,
                                                repre["_id"])
         report_items["Source file was not found"].append(msg)
+        return report_items, 0
+
+    delivery_templates = anatomy.templates.get("delivery") or {}
+    delivery_template = delivery_templates.get(template_name)
+    if delivery_template is None:
+        msg = (
+            "Delivery template \"{}\" in anatomy of project \"{}\""
+            " was not found"
+        ).format(template_name, anatomy.project_name)
+        report_items[""].append(msg)
+        return report_items, 0
+
+    # Check if 'frame' key is available in template which is required
+    #   for sequence delivery
+    if "{frame" not in delivery_template:
+        msg = (
+            "Delivery template \"{}\" in anatomy of project \"{}\""
+            "does not contain '{{frame}}' key to fill. Delivery of sequence"
+            " can't be processed."
+        ).format(template_name, anatomy.project_name)
+        report_items[""].append(msg)
         return report_items, 0
 
     dir_path, file_name = os.path.split(str(src_path))
@@ -286,6 +312,7 @@ def process_sequence(
     else:
         delivery_path = anatomy_filled["delivery"][template_name]
 
+    delivery_path = os.path.normpath(delivery_path.replace("\\", "/"))
     delivery_folder = os.path.dirname(delivery_path)
     dst_head, dst_tail = delivery_path.split(frame_indicator)
     dst_padding = src_collection.padding

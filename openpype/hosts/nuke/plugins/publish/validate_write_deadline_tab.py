@@ -23,7 +23,7 @@ class RepairNukeWriteDeadlineTab(pyblish.api.Action):
         for instance in instances:
             group_node = [x for x in instance if x.Class() == "Group"][0]
 
-            # Remove exising knobs.
+            # Remove existing knobs.
             knob_names = openpype.hosts.nuke.lib.get_deadline_knob_names()
             for name, knob in group_node.knobs().iteritems():
                 if name in knob_names:

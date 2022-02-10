@@ -201,5 +201,9 @@ class AbstractProvider:
                 msg = "Error in resolving local root from anatomy"
                 log.error(msg)
                 raise ValueError(msg)
+        except IndexError:
+            msg = "Path {} contains unfillable placeholder"
+            log.error(msg)
+            raise ValueError(msg)
 
         return path

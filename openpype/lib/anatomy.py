@@ -89,8 +89,10 @@ class Anatomy:
 
         self.project_name = project_name
 
-        self._data = get_anatomy_settings(project_name, site_name)
-
+        self._data = self._prepare_anatomy_data(
+            get_anatomy_settings(project_name, site_name)
+        )
+        self._site_name = site_name
         self._templates_obj = Templates(self)
         self._roots_obj = Roots(self)
 
@@ -121,9 +123,36 @@ class Anatomy:
         """
         return get_default_anatomy_settings(clear_metadata=False)
 
+    @staticmethod
+    def _prepare_anatomy_data(anatomy_data):
+        """Prepare anatomy data for further processing.
+
+        Method added to replace `{task}` with `{task[name]}` in templates.
+        """
+        templates_data = anatomy_data.get("templates")
+        if templates_data:
+            # Replace `{task}` with `{task[name]}` in templates
+            value_queue = collections.deque()
+            value_queue.append(templates_data)
+            while value_queue:
+                item = value_queue.popleft()
+                if not isinstance(item, dict):
+                    continue
+
+                for key in tuple(item.keys()):
+                    value = item[key]
+                    if isinstance(value, dict):
+                        value_queue.append(value)
+
+                    elif isinstance(value, StringType):
+                        item[key] = value.replace("{task}", "{task[name]}")
+        return anatomy_data
+
     def reset(self):
         """Reset values of cached data in templates and roots objects."""
-        self._data = get_anatomy_settings(self.project_name)
+        self._data = self._prepare_anatomy_data(
+            get_anatomy_settings(self.project_name, self._site_name)
+        )
         self.templates_obj.reset()
         self.roots_obj.reset()
 
@@ -693,7 +722,7 @@ class Templates:
         First is collecting all global keys (keys in top hierarchy where value
         is not dictionary). All global keys are set for all group keys (keys
         in top hierarchy where value is dictionary). Value of a key is not
-        overriden in group if already contain value for the key.
+        overridden in group if already contain value for the key.
 
         In second part all keys with "at" symbol in value are replaced with
         value of the key afterward "at" symbol from the group.
@@ -773,7 +802,7 @@ class Templates:
 
         Result:
             tuple: Contain origin template without missing optional keys and
-                withoud optional keys identificator ("<" and ">"), information
+                without optional keys identificator ("<" and ">"), information
                 about missing optional keys and invalid types of optional keys.
 
         """
@@ -981,6 +1010,14 @@ class Templates:
             TemplateResult: Filled or partially filled template containing all
                 data needed or missing for filling template.
         """
+        task_data = data.get("task")
+        if (
+            isinstance(task_data, StringType)
+            and "{task[name]}" in orig_template
+        ):
+            # Change task to dictionary if template expect dictionary
+            data["task"] = {"name": task_data}
+
         template, missing_optional, invalid_optional = (
             self._filter_optional(orig_template, data)
         )
@@ -989,6 +1026,7 @@ class Templates:
         invalid_required = []
         missing_required = []
         replace_keys = []
+
         for group in self.key_pattern.findall(template):
             orig_key = group[1:-1]
             key = str(orig_key)
@@ -1074,6 +1112,10 @@ class Templates:
         output = collections.defaultdict(dict)
         for key, orig_value in templates.items():
             if isinstance(orig_value, StringType):
+                # Replace {task} by '{task[name]}' for backward compatibility
+                if '{task}' in orig_value:
+                    orig_value = orig_value.replace('{task}', '{task[name]}')
+
                 output[key] = self._format(orig_value, data)
                 continue
 
@@ -1526,8 +1568,11 @@ class Roots:
             key_items = [self.env_prefix]
             for _key in keys:
                 key_items.append(_key.upper())
+
             key = "_".join(key_items)
-            return {key: roots.value}
+            # Make sure key and value does not contain unicode
+            #   - can happen in Python 2 hosts
+            return {str(key): str(roots.value)}
 
         output = {}
         for _key, _value in roots.items():
@@ -1583,7 +1628,7 @@ class Roots:
         This property returns roots for current project or default root values.
         Warning:
             Default roots value may cause issues when project use different
-            roots settings. That may happend when project use multiroot
+            roots settings. That may happen when project use multiroot
             templates but default roots miss their keys.
         """
         if self.project_name != self.loaded_project:

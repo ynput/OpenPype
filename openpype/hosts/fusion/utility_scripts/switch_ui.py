@@ -2,12 +2,13 @@ import os
 import glob
 import logging
 
+from Qt import QtWidgets, QtCore
+
 import avalon.io as io
 import avalon.api as api
 import avalon.pipeline as pipeline
 import avalon.fusion
 import avalon.style as style
-from avalon.vendor.Qt import QtWidgets, QtCore
 from avalon.vendor import qtawesome as qta
 
 

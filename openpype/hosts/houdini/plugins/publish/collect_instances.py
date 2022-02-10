@@ -2,7 +2,7 @@ import hou
 
 import pyblish.api
 
-from avalon.houdini import lib
+from openpype.hosts.houdini.api import lib
 
 
 class CollectInstances(pyblish.api.ContextPlugin):
@@ -31,6 +31,7 @@ class CollectInstances(pyblish.api.ContextPlugin):
     def process(self, context):
 
         nodes = hou.node("/out").children()
+        nodes += hou.node("/obj").children()
 
         # Include instances in USD stage only when it exists so it
         # remains backwards compatible with version before houdini 18
@@ -49,9 +50,12 @@ class CollectInstances(pyblish.api.ContextPlugin):
             has_family = node.evalParm("family")
             assert has_family, "'%s' is missing 'family'" % node.name()
 
+            self.log.info("processing {}".format(node))
+
             data = lib.read(node)
             # Check bypass state and reverse
-            data.update({"active": not node.isBypassed()})
+            if hasattr(node, "isBypassed"):
+                data.update({"active": not node.isBypassed()})
 
             # temporarily translation of `active` to `publish` till issue has
             # been resolved, https://github.com/pyblish/pyblish-base/issues/307
@@ -69,6 +73,9 @@ class CollectInstances(pyblish.api.ContextPlugin):
                 label = "{} {}".format(label, frames)
 
             instance = context.create_instance(label)
+
+            # Include `families` using `family` data
+            instance.data["families"] = [instance.data["family"]]
 
             instance[:] = [node]
             instance.data.update(data)

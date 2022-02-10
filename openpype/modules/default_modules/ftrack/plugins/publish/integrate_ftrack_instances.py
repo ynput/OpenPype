@@ -1,208 +1,266 @@
-import pyblish.api
-import json
 import os
+import json
+import copy
+import pyblish.api
 
 
 class IntegrateFtrackInstance(pyblish.api.InstancePlugin):
-    """Collect ftrack component data
+    """Collect ftrack component data (not integrate yet).
 
     Add ftrack component list to instance.
-
-
     """
 
     order = pyblish.api.IntegratorOrder + 0.48
-    label = 'Integrate Ftrack Component'
+    label = "Integrate Ftrack Component"
     families = ["ftrack"]
 
-    family_mapping = {'camera': 'cam',
-                      'look': 'look',
-                      'mayaascii': 'scene',
-                      'model': 'geo',
-                      'rig': 'rig',
-                      'setdress': 'setdress',
-                      'pointcache': 'cache',
-                      'render': 'render',
-                      'render2d': 'render',
-                      'nukescript': 'comp',
-                      'write': 'render',
-                      'review': 'mov',
-                      'plate': 'img',
-                      'audio': 'audio',
-                      'workfile': 'scene',
-                      'animation': 'cache',
-                      'image': 'img',
-                      'reference': 'reference'
-                      }
+    family_mapping = {
+        "camera": "cam",
+        "look": "look",
+        "mayaascii": "scene",
+        "model": "geo",
+        "rig": "rig",
+        "setdress": "setdress",
+        "pointcache": "cache",
+        "render": "render",
+        "render2d": "render",
+        "nukescript": "comp",
+        "write": "render",
+        "review": "mov",
+        "plate": "img",
+        "audio": "audio",
+        "workfile": "scene",
+        "animation": "cache",
+        "image": "img",
+        "reference": "reference"
+    }
 
     def process(self, instance):
-        self.ftrack_locations = {}
-        self.log.debug('instance {}'.format(instance))
+        self.log.debug("instance {}".format(instance))
 
-        if instance.data.get('version'):
-            version_number = int(instance.data.get('version'))
-        else:
+        instance_version = instance.data.get("version")
+        if instance_version is None:
             raise ValueError("Instance version not set")
 
-        family = instance.data['family'].lower()
+        version_number = int(instance_version)
+
+        family = instance.data["family"]
+        family_low = instance.data["family"].lower()
 
         asset_type = instance.data.get("ftrackFamily")
-        if not asset_type and family in self.family_mapping:
-            asset_type = self.family_mapping[family]
+        if not asset_type and family_low in self.family_mapping:
+            asset_type = self.family_mapping[family_low]
 
         # Ignore this instance if neither "ftrackFamily" or a family mapping is
         # found.
         if not asset_type:
+            self.log.info((
+                "Family \"{}\" does not match any asset type mapping"
+            ).format(family))
             return
 
-        componentList = []
+        instance_repres = instance.data.get("representations")
+        if not instance_repres:
+            self.log.info((
+                "Skipping instance. Does not have any representations {}"
+            ).format(str(instance)))
+            return
+
+        # Prepare FPS
+        instance_fps = instance.data.get("fps")
+        if instance_fps is None:
+            instance_fps = instance.context.data["fps"]
+
+        # Base of component item data
+        # - create a copy of this object when want to use it
+        base_component_item = {
+            "assettype_data": {
+                "short": asset_type,
+            },
+            "asset_data": {
+                "name": instance.data["subset"],
+            },
+            "assetversion_data": {
+                "version": version_number,
+                "comment": instance.context.data.get("comment") or ""
+            },
+            "component_overwrite": False,
+            # This can be change optionally
+            "thumbnail": False,
+            # These must be changed for each component
+            "component_data": None,
+            "component_path": None,
+            "component_location": None
+        }
+
         ft_session = instance.context.data["ftrackSession"]
 
-        for comp in instance.data['representations']:
-            self.log.debug('component {}'.format(comp))
+        # Filter types of representations
+        review_representations = []
+        thumbnail_representations = []
+        other_representations = []
+        for repre in instance_repres:
+            self.log.debug("Representation {}".format(repre))
+            repre_tags = repre.get("tags") or []
+            if repre.get("thumbnail") or "thumbnail" in repre_tags:
+                thumbnail_representations.append(repre)
 
-            if comp.get('thumbnail') or ("thumbnail" in comp.get('tags', [])):
-                location = self.get_ftrack_location(
-                    'ftrack.server', ft_session
-                )
-                component_data = {
-                    "name": "thumbnail"  # Default component name is "main".
-                }
-                comp['thumbnail'] = True
-                comp_files = comp["files"]
+            elif "ftrackreview" in repre_tags:
+                review_representations.append(repre)
+
+            else:
+                other_representations.append(repre)
+
+        # Prepare ftrack locations
+        unmanaged_location = ft_session.query(
+            "Location where name is \"ftrack.unmanaged\""
+        ).one()
+        ftrack_server_location = ft_session.query(
+            "Location where name is \"ftrack.server\""
+        ).one()
+
+        # Components data
+        component_list = []
+        # Components that will be duplicated to unmanaged location
+        src_components_to_add = []
+
+        # Create thumbnail components
+        # TODO what if there is multiple thumbnails?
+        first_thumbnail_component = None
+        for repre in thumbnail_representations:
+            published_path = repre.get("published_path")
+            if not published_path:
+                comp_files = repre["files"]
                 if isinstance(comp_files, (tuple, list, set)):
                     filename = comp_files[0]
                 else:
                     filename = comp_files
 
-                comp['published_path'] = os.path.join(
-                    comp['stagingDir'], filename
-                    )
-
-            elif comp.get('ftrackreview') or ("ftrackreview" in comp.get('tags', [])):
-                '''
-                Ftrack bug requirement:
-                    - Start frame must be 0
-                    - End frame must be {duration}
-                EXAMPLE: When mov has 55 frames:
-                    - Start frame should be 0
-                    - End frame should be 55 (do not ask why please!)
-                '''
-                start_frame = 0
-                end_frame = 1
-                if 'frameEndFtrack' in comp and 'frameStartFtrack' in comp:
-                    end_frame += (
-                        comp['frameEndFtrack'] - comp['frameStartFtrack']
-                    )
-                else:
-                    end_frame += (
-                        instance.data["frameEnd"] - instance.data["frameStart"]
-                    )
-
-                fps = comp.get('fps')
-                if fps is None:
-                    fps = instance.data.get(
-                        "fps", instance.context.data['fps']
-                    )
-
-                comp['fps'] = fps
-
-                location = self.get_ftrack_location(
-                    'ftrack.server', ft_session
+                published_path = os.path.join(
+                    repre["stagingDir"], filename
                 )
-                component_data = {
-                    # Default component name is "main".
-                    "name": "ftrackreview-mp4",
-                    "metadata": {'ftr_meta': json.dumps({
-                                 'frameIn': int(start_frame),
-                                 'frameOut': int(end_frame),
-                                 'frameRate': float(comp['fps'])})}
-                }
-                comp['thumbnail'] = False
-            else:
-                component_data = {
-                    "name": comp['name']
-                }
-                location = self.get_ftrack_location(
-                    'ftrack.unmanaged', ft_session
-                )
-                comp['thumbnail'] = False
+                if not os.path.exists(published_path):
+                    continue
+                repre["published_path"] = published_path
 
-            self.log.debug('location {}'.format(location))
-
-            component_item = {
-                "assettype_data": {
-                    "short": asset_type,
-                },
-                "asset_data": {
-                    "name": instance.data["subset"],
-                },
-                "assetversion_data": {
-                    "version": version_number,
-                    "comment": instance.context.data.get("comment", "")
-                },
-                "component_data": component_data,
-                "component_path": comp['published_path'],
-                'component_location': location,
-                "component_overwrite": False,
-                "thumbnail": comp['thumbnail']
+            # Create copy of base comp item and append it
+            thumbnail_item = copy.deepcopy(base_component_item)
+            thumbnail_item["component_path"] = repre["published_path"]
+            thumbnail_item["component_data"] = {
+                "name": "thumbnail"
             }
+            thumbnail_item["thumbnail"] = True
+            # Create copy of item before setting location
+            src_components_to_add.append(copy.deepcopy(thumbnail_item))
+            # Create copy of first thumbnail
+            if first_thumbnail_component is None:
+                first_thumbnail_component = copy.deepcopy(thumbnail_item)
+            # Set location
+            thumbnail_item["component_location"] = ftrack_server_location
+            # Add item to component list
+            component_list.append(thumbnail_item)
 
-            # Add custom attributes for AssetVersion
-            assetversion_cust_attrs = {}
-            intent_val = instance.context.data.get("intent")
-            if intent_val and isinstance(intent_val, dict):
-                intent_val = intent_val.get("value")
+        # Create review components
+        # Change asset name of each new component for review
+        is_first_review_repre = True
+        not_first_components = []
+        for repre in review_representations:
+            frame_start = repre.get("frameStartFtrack")
+            frame_end = repre.get("frameEndFtrack")
+            if frame_start is None or frame_end is None:
+                frame_start = instance.data["frameStart"]
+                frame_end = instance.data["frameEnd"]
 
-            if intent_val:
-                assetversion_cust_attrs["intent"] = intent_val
+            # Frame end of uploaded video file should be duration in frames
+            # - frame start is always 0
+            # - frame end is duration in frames
+            duration = frame_end - frame_start + 1
 
-            component_item["assetversion_data"]["custom_attributes"] = (
-                assetversion_cust_attrs
-            )
+            fps = repre.get("fps")
+            if fps is None:
+                fps = instance_fps
 
-            componentList.append(component_item)
-            # Create copy with ftrack.unmanaged location if thumb or prev
-            if comp.get('thumbnail') or comp.get('preview') \
-                    or ("preview" in comp.get('tags', [])) \
-                    or ("review" in comp.get('tags', [])) \
-                    or ("thumbnail" in comp.get('tags', [])):
-                unmanaged_loc = self.get_ftrack_location(
-                    'ftrack.unmanaged', ft_session
-                )
-
-                component_data_src = component_data.copy()
-                name = component_data['name'] + '_src'
-                component_data_src['name'] = name
-
-                component_item_src = {
-                    "assettype_data": {
-                        "short": asset_type,
-                    },
-                    "asset_data": {
-                        "name": instance.data["subset"],
-                    },
-                    "assetversion_data": {
-                        "version": version_number,
-                    },
-                    "component_data": component_data_src,
-                    "component_path": comp['published_path'],
-                    'component_location': unmanaged_loc,
-                    "component_overwrite": False,
-                    "thumbnail": False
+            # Create copy of base comp item and append it
+            review_item = copy.deepcopy(base_component_item)
+            # Change location
+            review_item["component_path"] = repre["published_path"]
+            # Change component data
+            review_item["component_data"] = {
+                # Default component name is "main".
+                "name": "ftrackreview-mp4",
+                "metadata": {
+                    "ftr_meta": json.dumps({
+                        "frameIn": 0,
+                        "frameOut": int(duration),
+                        "frameRate": float(fps)
+                    })
                 }
+            }
+            # Create copy of item before setting location or changing asset
+            src_components_to_add.append(copy.deepcopy(review_item))
+            if is_first_review_repre:
+                is_first_review_repre = False
+            else:
+                # Add representation name to asset name of "not first" review
+                asset_name = review_item["asset_data"]["name"]
+                review_item["asset_data"]["name"] = "_".join(
+                    (asset_name, repre["name"])
+                )
+                not_first_components.append(review_item)
 
-                componentList.append(component_item_src)
+            # Set location
+            review_item["component_location"] = ftrack_server_location
+            # Add item to component list
+            component_list.append(review_item)
 
-        self.log.debug('componentsList: {}'.format(str(componentList)))
-        instance.data["ftrackComponentsList"] = componentList
+        # Duplicate thumbnail component for all not first reviews
+        if first_thumbnail_component is not None:
+            for component_item in not_first_components:
+                asset_name = component_item["asset_data"]["name"]
+                new_thumbnail_component = copy.deepcopy(
+                    first_thumbnail_component
+                )
+                new_thumbnail_component["asset_data"]["name"] = asset_name
+                new_thumbnail_component["component_location"] = (
+                    ftrack_server_location
+                )
+                component_list.append(new_thumbnail_component)
 
-    def get_ftrack_location(self, name, session):
-        if name in self.ftrack_locations:
-            return self.ftrack_locations[name]
+        # Add source components for review and thubmnail components
+        for copy_src_item in src_components_to_add:
+            # Make sure thumbnail is disabled
+            copy_src_item["thumbnail"] = False
+            # Set location
+            copy_src_item["component_location"] = unmanaged_location
+            # Modify name of component to have suffix "_src"
+            component_data = copy_src_item["component_data"]
+            component_name = component_data["name"]
+            component_data["name"] = component_name + "_src"
+            component_list.append(copy_src_item)
 
-        location = session.query(
-            'Location where name is "{}"'.format(name)
-        ).one()
-        self.ftrack_locations[name] = location
-        return location
+        # Add others representations as component
+        for repre in other_representations:
+            published_path = repre.get("published_path")
+            if not published_path:
+                continue
+            # Create copy of base comp item and append it
+            other_item = copy.deepcopy(base_component_item)
+            other_item["component_data"] = {
+                "name": repre["name"]
+            }
+            other_item["component_location"] = unmanaged_location
+            other_item["component_path"] = published_path
+            component_list.append(other_item)
+
+        def json_obj_parser(obj):
+            return str(obj)
+
+        self.log.debug("Components list: {}".format(
+            json.dumps(
+                component_list,
+                sort_keys=True,
+                indent=4,
+                default=json_obj_parser
+            )
+        ))
+        instance.data["ftrackComponentsList"] = component_list

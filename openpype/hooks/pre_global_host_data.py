@@ -43,12 +43,13 @@ class GlobalHostDataHook(PreLaunchHook):
 
             "env": self.launch_context.env,
 
+            "start_last_workfile": self.data.get("start_last_workfile"),
             "last_workfile_path": self.data.get("last_workfile_path"),
 
             "log": self.log
         })
 
-        prepare_host_environments(temp_data)
+        prepare_host_environments(temp_data, self.launch_context.env_group)
         prepare_context_environments(temp_data)
 
         temp_data.pop("log")

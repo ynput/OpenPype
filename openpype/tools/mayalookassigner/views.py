@@ -1,4 +1,4 @@
-from avalon.vendor.Qt import QtWidgets, QtCore
+from Qt import QtWidgets, QtCore
 
 
 DEFAULT_COLOR = "#fb9c15"

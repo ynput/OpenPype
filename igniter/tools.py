@@ -2,11 +2,10 @@
 """Tools used in **Igniter** GUI."""
 import os
 import sys
-from typing import Union
+from typing import Union, Optional, Iterable
 from urllib.parse import urlparse, parse_qs
 from pathlib import Path
 import platform
-from typing import Optional, Iterable
 
 import certifi
 from pymongo import MongoClient
@@ -317,6 +316,11 @@ class DropboxClient(Client):
         raise ValueError("We should not be uploading anything.")
 
 
+class OpenPypeVersionNotFound(Exception):
+    """OpenPype version was not found in remote and local repository."""
+    pass
+
+
 def should_add_certificate_path_to_mongo_url(mongo_url):
     """Check if should add ca certificate to mongo url.
 
@@ -360,7 +364,7 @@ def validate_mongo_connection(cnx: str) -> (bool, str):
         return False, "Not mongodb schema"
 
     kwargs = {
-        "serverSelectionTimeoutMS": 2000
+        "serverSelectionTimeoutMS": os.environ.get("AVALON_TIMEOUT", 2000)
     }
     # Add certificate path if should be required
     if should_add_certificate_path_to_mongo_url(cnx):
@@ -516,33 +520,29 @@ def get_openpype_path_from_db(url: str) -> Union[str, None]:
     for path in paths:
         if AnyPath(path).exists():
             return path
-
-    # If no paths exist then the user might be using an outdated version, so
-    # we need to inform them.
-    if paths:
-        if os.getenv("OPENPYPE_HEADLESS_MODE"):
-            print(
-                "Could not find any paths that in exsits in: {}".format(paths)
-            )
-            sys.exit(1)
-
-        from Qt import QtWidgets
-
-        app = QtWidgets.QApplication(sys.argv)
-        message_box = QtWidgets.QMessageBox()
-        message_box.setText(
-            "Could not fetch updates from {}.\nFalling back to local version."
-            "\nPlease contact support.".format(paths)
-        )
-        message_box.setStandardButtons(QtWidgets.QMessageBox.Ok)
-        message_box.setDefaultButton(QtWidgets.QMessageBox.Ok)
-        message_box.setIcon(message_box.Icon.Critical)
-        message_box.setWindowTitle("Error!")
-        message_box.setStyleSheet(load_stylesheet())
-        message_box.show()
-        app.exec_()
-
     return None
+
+
+def get_expected_studio_version_str(
+    staging=False, global_settings=None
+) -> str:
+    """Version that should be currently used in studio.
+
+    Args:
+        staging (bool): Get current version for staging.
+        global_settings (dict): Optional precached global settings.
+
+    Returns:
+        str: OpenPype version which should be used. Empty string means latest.
+    """
+    mongo_url = os.environ.get("OPENPYPE_MONGO")
+    if global_settings is None:
+        global_settings = get_openpype_global_settings(mongo_url)
+    if staging:
+        key = "staging_version"
+    else:
+        key = "production_version"
+    return global_settings.get(key) or ""
 
 
 def load_stylesheet() -> str:
@@ -563,3 +563,11 @@ def get_user_data_dir():
     vendor = "pypeclub"
     app = "openpype"
     return AnyPath(user_data_dir(app, vendor))
+
+
+def get_openpype_icon_path() -> str:
+    """Path to OpenPype icon png file."""
+    return os.path.join(
+        os.path.dirname(os.path.abspath(__file__)),
+        "openpype_icon.png"
+    )

@@ -2,6 +2,8 @@ import pyblish.api
 import openpype.api
 import string
 
+import six
+
 # Allow only characters, numbers and underscore
 allowed = set(string.ascii_lowercase +
               string.ascii_uppercase +
@@ -29,7 +31,7 @@ class ValidateSubsetName(pyblish.api.InstancePlugin):
             raise RuntimeError("Instance is missing subset "
                                "name: {0}".format(subset))
 
-        if not isinstance(subset, basestring):
+        if not isinstance(subset, six.string_types):
             raise TypeError("Instance subset name must be string, "
                             "got: {0} ({1})".format(subset, type(subset)))
 

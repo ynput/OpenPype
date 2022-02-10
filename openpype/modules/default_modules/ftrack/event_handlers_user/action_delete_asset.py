@@ -1,7 +1,6 @@
 import collections
 import uuid
 from datetime import datetime
-from queue import Queue
 
 from bson.objectid import ObjectId
 from openpype_modules.ftrack.lib import BaseAction, statics_icon
@@ -164,24 +163,27 @@ class DeleteAssetSubset(BaseAction):
 
         if not selected_av_entities:
             return {
-                "success": False,
-                "message": "Didn't found entities in avalon"
+                "success": True,
+                "message": (
+                    "Didn't found entities in avalon."
+                    " You can use Ftrack's Delete button for the selection."
+                )
             }
 
         # Remove cached action older than 2 minutes
         old_action_ids = []
-        for id, data in self.action_data_by_id.items():
+        for action_id, data in self.action_data_by_id.items():
             created_at = data.get("created_at")
             if not created_at:
-                old_action_ids.append(id)
+                old_action_ids.append(action_id)
                 continue
             cur_time = datetime.now()
             existing_in_sec = (created_at - cur_time).total_seconds()
             if existing_in_sec > 60 * 2:
-                old_action_ids.append(id)
+                old_action_ids.append(action_id)
 
-        for id in old_action_ids:
-            self.action_data_by_id.pop(id, None)
+        for action_id in old_action_ids:
+            self.action_data_by_id.pop(action_id, None)
 
         # Store data for action id
         action_id = str(uuid.uuid1())
@@ -440,7 +442,11 @@ class DeleteAssetSubset(BaseAction):
         subsets_to_delete = to_delete.get("subsets") or []
 
         # Convert asset ids to ObjectId obj
-        assets_to_delete = [ObjectId(id) for id in assets_to_delete if id]
+        assets_to_delete = [
+            ObjectId(asset_id)
+            for asset_id in assets_to_delete
+            if asset_id
+        ]
 
         subset_ids_by_parent = spec_data["subset_ids_by_parent"]
         subset_ids_by_name = spec_data["subset_ids_by_name"]
@@ -469,16 +475,15 @@ class DeleteAssetSubset(BaseAction):
                     if not ftrack_id:
                         ftrack_id = asset["data"].get("ftrackId")
 
-                    if not ftrack_id:
-                        continue
-                    ftrack_ids_to_delete.append(ftrack_id)
+                    if ftrack_id:
+                        ftrack_ids_to_delete.append(ftrack_id)
 
-            children_queue = Queue()
+            children_queue = collections.deque()
             for mongo_id in assets_to_delete:
-                children_queue.put(mongo_id)
+                children_queue.append(mongo_id)
 
-            while not children_queue.empty():
-                mongo_id = children_queue.get()
+            while children_queue:
+                mongo_id = children_queue.popleft()
                 if mongo_id in asset_ids_to_archive:
                     continue
 
@@ -494,7 +499,7 @@ class DeleteAssetSubset(BaseAction):
                 for child in children:
                     child_id = child["_id"]
                     if child_id not in asset_ids_to_archive:
-                        children_queue.put(child_id)
+                        children_queue.append(child_id)
 
         # Prepare names of assets in ftrack and ids of subsets in mongo
         asset_names_to_delete = []
@@ -570,12 +575,12 @@ class DeleteAssetSubset(BaseAction):
                         exc_info=True
                     )
 
-        if not_deleted_entities_id:
-            joined_not_deleted = ", ".join([
+        if not_deleted_entities_id and asset_names_to_delete:
+            joined_not_deleted = ",".join([
                 "\"{}\"".format(ftrack_id)
                 for ftrack_id in not_deleted_entities_id
             ])
-            joined_asset_names = ", ".join([
+            joined_asset_names = ",".join([
                 "\"{}\"".format(name)
                 for name in asset_names_to_delete
             ])
@@ -614,6 +619,25 @@ class DeleteAssetSubset(BaseAction):
                 joined_ids_to_delete
             )
         ).all()
+        # Find all children entities and add them to list
+        # - Delete tasks first then their parents and continue
+        parent_ids_to_delete = [
+            entity["id"]
+            for entity in to_delete_entities
+        ]
+        while parent_ids_to_delete:
+            joined_parent_ids_to_delete = ",".join([
+                "\"{}\"".format(ftrack_id)
+                for ftrack_id in parent_ids_to_delete
+            ])
+            _to_delete = session.query((
+                "select id, link from TypedContext where parent_id in ({})"
+            ).format(joined_parent_ids_to_delete)).all()
+            parent_ids_to_delete = []
+            for entity in _to_delete:
+                parent_ids_to_delete.append(entity["id"])
+                to_delete_entities.append(entity)
+
         entities_by_link_len = collections.defaultdict(list)
         for entity in to_delete_entities:
             entities_by_link_len[len(entity["link"])].append(entity)

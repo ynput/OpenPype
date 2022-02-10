@@ -118,6 +118,9 @@ class InputEntity(EndpointEntity):
             return self.value == other.value
         return self.value == other
 
+    def has_child_with_key(self, key):
+        return False
+
     def get_child_path(self, child_obj):
         raise TypeError("{} can't have children".format(
             self.__class__.__name__
@@ -362,7 +365,7 @@ class NumberEntity(InputEntity):
     float_number_regex = re.compile(r"^\d+\.\d+$")
     int_number_regex = re.compile(r"^\d+$")
 
-    def _item_initalization(self):
+    def _item_initialization(self):
         self.minimum = self.schema_data.get("minimum", -99999)
         self.maximum = self.schema_data.get("maximum", 99999)
         self.decimal = self.schema_data.get("decimal", 0)
@@ -420,7 +423,7 @@ class NumberEntity(InputEntity):
 class BoolEntity(InputEntity):
     schema_types = ["boolean"]
 
-    def _item_initalization(self):
+    def _item_initialization(self):
         self.valid_value_types = (bool, )
         value_on_not_set = self.convert_to_valid_type(
             self.schema_data.get("default", True)
@@ -431,13 +434,23 @@ class BoolEntity(InputEntity):
 class TextEntity(InputEntity):
     schema_types = ["text"]
 
-    def _item_initalization(self):
+    def _item_initialization(self):
         self.valid_value_types = (STRING_TYPE, )
         self.value_on_not_set = ""
 
         # GUI attributes
         self.multiline = self.schema_data.get("multiline", False)
         self.placeholder_text = self.schema_data.get("placeholder")
+        self.value_hints = self.schema_data.get("value_hints") or []
+
+    def schema_validations(self):
+        if self.multiline and self.value_hints:
+            reason = (
+                "TextEntity entity can't use value hints"
+                " for multiline input (yet)."
+            )
+            raise EntitySchemaError(self, reason)
+        super(TextEntity, self).schema_validations()
 
     def _convert_to_valid_type(self, value):
         # Allow numbers converted to string
@@ -449,18 +462,29 @@ class TextEntity(InputEntity):
 class PathInput(InputEntity):
     schema_types = ["path-input"]
 
-    def _item_initalization(self):
+    def _item_initialization(self):
         self.valid_value_types = (STRING_TYPE, )
         self.value_on_not_set = ""
 
         # GUI attributes
         self.placeholder_text = self.schema_data.get("placeholder")
 
+    def set(self, value):
+        # Strip value
+        super(PathInput, self).set(value.strip())
+
+    def set_override_state(self, state, ignore_missing_defaults):
+        super(PathInput, self).set_override_state(
+            state, ignore_missing_defaults
+        )
+        # Strip current value
+        self._current_value = self._current_value.strip()
+
 
 class RawJsonEntity(InputEntity):
     schema_types = ["raw-json"]
 
-    def _item_initalization(self):
+    def _item_initialization(self):
         # Schema must define if valid value is dict or list
         store_as_string = self.schema_data.get("store_as_string", False)
         is_list = self.schema_data.get("is_list", False)

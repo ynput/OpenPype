@@ -19,6 +19,7 @@ We use [CX_Freeze](https://cx-freeze.readthedocs.io/en/latest) to freeze the cod
 
 This is outline of build steps. Most of them are done automatically via scripts:
 - Virtual environment is created using **Poetry** in `.venv`
+- Necessary python modules outside of `.venv` are stored to `./vendor/python` (like `PySide2`)
 - Necessary third-party tools (like [ffmpeg](https://www.ffmpeg.org/), [OpenImageIO](https://github.com/OpenImageIO/oiio)
   and [usd libraries](https://developer.nvidia.com/usd)) are downloaded to `./vendor/bin`
 - OpenPype code is frozen with **cx_freeze** to `./build`
@@ -55,14 +56,14 @@ For development purposes it is possible to run OpenPype directly from the source
 To start OpenPype from source you need to 
 
 1. Run `.\tools\create_env.ps1` to create virtual environment in `.venv`
-2. Run `.\tools\fetch_thirdparty_libs.ps1` to get **ffmpeg**, **oiio** and other tools needed.
+2. Run `.\tools\fetch_thirdparty_libs.ps1` to get **PySide2**, **ffmpeg**, **oiio** and other tools needed.
 3. Run `.\tools\run_tray.ps1` if you have all required dependencies on your machine you should be greeted with OpenPype igniter window and once you give it your Mongo URL, with OpenPype icon in the system tray.
 
 Step 1 and 2 needs to be run only once (or when something was changed).
 
 #### To build OpenPype:
 1. Run `.\tools\create_env.ps1` to create virtual environment in `.venv`
-2. Run `.\tools\fetch_thirdparty_libs.ps1` to get **ffmpeg**, **oiio** and other tools needed.
+2. Run `.\tools\fetch_thirdparty_libs.ps1` to get **PySide2**, **ffmpeg**, **oiio** and other tools needed.
 3. `.\tools\build.ps1` to build OpenPype to `.\build`
 
 
@@ -84,6 +85,13 @@ You can use Docker to build OpenPype. Just run:
 ```shell
 $ sudo ./tools/docker_build.sh
 ```
+
+This will by default use Debian as base image. If you need to make Centos 7 compatible build, please run:
+
+```sh
+sudo ./tools/docker_build.sh centos7
+```
+
 and you should have built OpenPype in `build` directory. It is using **Centos 7**
 as a base image.
 
@@ -130,7 +138,7 @@ $ exec $SHELL
 
 # install Python 3.7.10
 # python will be downloaded and build so please make sure
-# you have all necessary requirements installed (see bellow).
+# you have all necessary requirements installed (see below).
 $ pyenv install -v 3.7.10
 
 # change path to pype 3
@@ -178,14 +186,14 @@ For more information about setting your build environment please refer to [pyenv
 
 #### To build Pype:
 1. Run `./tools/create_env.sh` to create virtual environment in `./venv`
-2. Run `./tools/fetch_thirdparty_libs.sh` to get **ffmpeg**, **oiio** and other tools needed.
+2. Run `./tools/fetch_thirdparty_libs.sh` to get **PySide2**, **ffmpeg**, **oiio** and other tools needed.
 3. Run `./tools/build.sh` to build pype executables in `.\build\`
 
 </TabItem>
 <TabItem value="mac">
 
 ### MacOS
-To build pype on MacOS you wil need:
+To build pype on MacOS you will need:
 
 - **[Homebrew](https://brew.sh)** - easy way of installing everything necessary.
 - **[CMake](https://cmake.org/)** to build some external OpenPype dependencies.
@@ -266,6 +274,19 @@ pywin32 = { version = "300", markers = "sys_platform == 'win32'" }
 
 For more information see [Poetry documentation](https://python-poetry.org/docs/dependency-specification/).
 
+### Python modules as thirdparty
+There are some python modules that can be available only in OpenPype and should not be propagated to any subprocess.
+Best example is **PySide2** which is required to run OpenPype but can be used only in OpenPype and should not be in PYTHONPATH for most of host applications.
+We've decided to separate these breaking dependencies to be able run OpenPype from code and from build the same way.
+
+:::warning
+**PySide2** has handled special cases related to it's build process.
+### Linux
+- We're fixing rpath of shared objects on linux which is modified during cx freeze processing.
+### MacOS
+- **QtSql** libraries are removed on MacOS because their dependencies are not available and would require to modify rpath of Postgre library.
+:::
+
 ### Binary dependencies
 To add some binary tool or something that doesn't fit standard Python distribution methods, you
 can use [fetch_thirdparty_libs](#fetch_thirdparty_libs) script. It will take things defined in
@@ -317,20 +338,24 @@ to update packages version, just run `poetry update` or delete lock file.
 
 ### create_zip
 Script to create packaged OpenPype version from current sources. This will strip developer stuff and
-package it into zip that can be used for [auto-updates for studio wide distributions](admin_distribute#automatic-updates), etc.
+package it into zip that can be used for [auto-updates for studio wide distributions](admin_distribute.md#automatic-updates), etc.
 Same as:
 ```shell
 poetry run python ./tools/create_zip.py
 ```
 
-### docker_build.sh
+### docker_build.sh *[variant]*
 Script to build OpenPype on [Docker](https://www.docker.com/) enabled systems - usually Linux and Windows
 with [Docker Desktop](https://docs.docker.com/docker-for-windows/install/)
 and [Windows Subsystem for Linux](https://docs.microsoft.com/en-us/windows/wsl/about) (WSL) installed.
 
 It must be run with administrative privileges - `sudo ./docker_build.sh`.
 
-It will use **Centos 7** base image to build OpenPype. You'll see your build in `./build` folder.
+It will use latest **Debian** base image to build OpenPype. If you need to build OpenPype for
+older systems like Centos 7, use `centos7` as argument. This will use another Dockerfile to build
+OpenPype with **Centos 7** as base image.
+
+You'll see your build in `./build` folder.
 
 ### fetch_thirdparty_libs
 This script will download necessary tools for OpenPype defined in `pyproject.toml` like FFMpeg,

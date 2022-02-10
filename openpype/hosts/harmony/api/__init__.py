@@ -3,17 +3,14 @@
 import os
 from pathlib import Path
 import logging
-import re
 
 from openpype import lib
-from openpype.api import (get_current_project_settings)
 import openpype.hosts.harmony
 
 import pyblish.api
 
 from avalon import io, harmony
 import avalon.api
-import avalon.tools.sceneinventory
 
 
 log = logging.getLogger("openpype.hosts.harmony")

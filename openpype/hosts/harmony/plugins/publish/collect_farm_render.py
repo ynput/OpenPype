@@ -126,7 +126,8 @@ class CollectFarmRender(openpype.lib.abstract_collect_render.
             # because of using 'renderFarm' as a family, replace 'Farm' with
             # capitalized task name - issue of avalon-core Creator app
             subset_name = node.split("/")[1]
-            task_name = context.data["anatomyData"]["task"].capitalize()
+            task_name = context.data["anatomyData"]["task"][
+                "name"].capitalize()
             replace_str = ""
             if task_name.lower() not in subset_name.lower():
                 replace_str = task_name
@@ -175,6 +176,7 @@ class CollectFarmRender(openpype.lib.abstract_collect_render.
                 ignoreFrameHandleCheck=True
 
             )
+            render_instance.context = context
             self.log.debug(render_instance)
             instances.append(render_instance)
 

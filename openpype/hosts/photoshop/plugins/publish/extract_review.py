@@ -2,7 +2,7 @@ import os
 
 import openpype.api
 import openpype.lib
-from avalon import photoshop
+from openpype.hosts.photoshop import api as photoshop
 
 
 class ExtractReview(openpype.api.Extractor):
@@ -16,6 +16,10 @@ class ExtractReview(openpype.api.Extractor):
     label = "Extract Review"
     hosts = ["photoshop"]
     families = ["review"]
+
+    # Extract Options
+    jpg_options = None
+    mov_options = None
 
     def process(self, instance):
         staging_dir = self.staging_dir(instance)
@@ -53,7 +57,8 @@ class ExtractReview(openpype.api.Extractor):
             "name": "jpg",
             "ext": "jpg",
             "files": output_image,
-            "stagingDir": staging_dir
+            "stagingDir": staging_dir,
+            "tags": self.jpg_options['tags']
         })
         instance.data["stagingDir"] = staging_dir
 
@@ -97,7 +102,7 @@ class ExtractReview(openpype.api.Extractor):
             "frameEnd": 1,
             "fps": 25,
             "preview": True,
-            "tags": ["review", "ftrackreview"]
+            "tags": self.mov_options['tags']
         })
 
         # Required for extract_review plugin (L222 onwards).

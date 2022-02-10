@@ -180,6 +180,7 @@ class ARenderProducts:
         self.layer = layer
         self.render_instance = render_instance
         self.multipart = False
+        self.aov_separator = render_instance.data.get("aovSeparator", "_")
 
         # Initialize
         self.layer_data = self._get_layer_data()
@@ -676,7 +677,7 @@ class RenderProductsVray(ARenderProducts):
 
         """
         prefix = super(RenderProductsVray, self).get_renderer_prefix()
-        prefix = "{}.<aov>".format(prefix)
+        prefix = "{}{}<aov>".format(prefix, self.aov_separator)
         return prefix
 
     def _get_layer_data(self):

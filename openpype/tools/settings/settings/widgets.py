@@ -1,4 +1,5 @@
 import os
+import copy
 from Qt import QtWidgets, QtCore, QtGui
 from avalon.vendor import qtawesome
 from avalon.mongodb import (
@@ -6,7 +7,17 @@ from avalon.mongodb import (
     AvalonMongoDB
 )
 
+from openpype.style import get_objected_colors
+from openpype.tools.utils.widgets import ImageButton
+from openpype.tools.utils.lib import paint_image_with_color
+
+from openpype.widgets.nice_checkbox import NiceCheckbox
+from openpype.tools.utils import PlaceholderLineEdit
 from openpype.settings.lib import get_system_settings
+from .images import (
+    get_pixmap,
+    get_image
+)
 from .constants import (
     DEFAULT_PROJECT_LABEL,
     PROJECT_NAME_ROLE,
@@ -15,12 +26,234 @@ from .constants import (
 )
 
 
-class SettingsLineEdit(QtWidgets.QLineEdit):
+class CompleterFilter(QtCore.QSortFilterProxyModel):
+    def __init__(self, *args, **kwargs):
+        super(CompleterFilter, self).__init__(*args, **kwargs)
+
+        self.setFilterCaseSensitivity(QtCore.Qt.CaseInsensitive)
+
+        self._text_filter = ""
+
+    def set_text_filter(self, text):
+        if self._text_filter == text:
+            return
+        self._text_filter = text
+        self.invalidateFilter()
+
+    def filterAcceptsRow(self, row, parent_index):
+        if not self._text_filter:
+            return True
+        model = self.sourceModel()
+        index = model.index(row, self.filterKeyColumn(), parent_index)
+        value = index.data(QtCore.Qt.DisplayRole)
+        if self._text_filter in value:
+            if self._text_filter == value:
+                return False
+            return True
+        return False
+
+
+class CompleterView(QtWidgets.QListView):
+    row_activated = QtCore.Signal(str)
+
+    def __init__(self, parent):
+        super(CompleterView, self).__init__(parent)
+
+        self.setWindowFlags(
+            QtCore.Qt.FramelessWindowHint
+            | QtCore.Qt.Tool
+        )
+        delegate = QtWidgets.QStyledItemDelegate()
+        self.setItemDelegate(delegate)
+
+        model = QtGui.QStandardItemModel()
+        filter_model = CompleterFilter()
+        filter_model.setSourceModel(model)
+        self.setModel(filter_model)
+
+        # self.installEventFilter(parent)
+
+        self.clicked.connect(self._on_activated)
+
+        self._last_loaded_values = None
+        self._model = model
+        self._filter_model = filter_model
+        self._delegate = delegate
+
+    def _on_activated(self, index):
+        if index.isValid():
+            value = index.data(QtCore.Qt.DisplayRole)
+            self.row_activated.emit(value)
+
+    def set_text_filter(self, text):
+        self._filter_model.set_text_filter(text)
+        self._update_geo()
+
+    def sizeHint(self):
+        result = super(CompleterView, self).sizeHint()
+        if self._filter_model.rowCount() == 0:
+            result.setHeight(0)
+
+        return result
+
+    def showEvent(self, event):
+        super(CompleterView, self).showEvent(event)
+        self._update_geo()
+
+    def _update_geo(self):
+        size_hint = self.sizeHint()
+        self.resize(size_hint.width(), size_hint.height())
+
+    def update_values(self, values):
+        if not values:
+            values = []
+
+        if self._last_loaded_values == values:
+            return
+        self._last_loaded_values = copy.deepcopy(values)
+
+        root_item = self._model.invisibleRootItem()
+        existing_values = {}
+        for row in reversed(range(root_item.rowCount())):
+            child = root_item.child(row)
+            value = child.data(QtCore.Qt.DisplayRole)
+            if value not in values:
+                root_item.removeRows(child.row())
+            else:
+                existing_values[value] = child
+
+        for row, value in enumerate(values):
+            if value in existing_values:
+                item = existing_values[value]
+                if item.row() == row:
+                    continue
+            else:
+                item = QtGui.QStandardItem(value)
+                item.setEditable(False)
+
+            root_item.setChild(row, item)
+
+        self._update_geo()
+
+    def _get_selected_row(self):
+        indexes = self.selectionModel().selectedIndexes()
+        if not indexes:
+            return -1
+        return indexes[0].row()
+
+    def _select_row(self, row):
+        index = self._filter_model.index(row, 0)
+        self.setCurrentIndex(index)
+
+    def move_up(self):
+        rows = self._filter_model.rowCount()
+        if rows == 0:
+            return
+
+        selected_row = self._get_selected_row()
+        if selected_row < 0:
+            new_row = rows - 1
+        else:
+            new_row = selected_row - 1
+            if new_row < 0:
+                new_row = rows - 1
+
+        if new_row != selected_row:
+            self._select_row(new_row)
+
+    def move_down(self):
+        rows = self._filter_model.rowCount()
+        if rows == 0:
+            return
+
+        selected_row = self._get_selected_row()
+        if selected_row < 0:
+            new_row = 0
+        else:
+            new_row = selected_row + 1
+            if new_row >= rows:
+                new_row = 0
+
+        if new_row != selected_row:
+            self._select_row(new_row)
+
+    def enter_pressed(self):
+        selected_row = self._get_selected_row()
+        if selected_row < 0:
+            return
+        index = self._filter_model.index(selected_row, 0)
+        self._on_activated(index)
+
+
+class SettingsLineEdit(PlaceholderLineEdit):
     focused_in = QtCore.Signal()
+
+    def __init__(self, *args, **kwargs):
+        super(SettingsLineEdit, self).__init__(*args, **kwargs)
+
+        self._completer = None
+
+        self.textChanged.connect(self._on_text_change)
+
+    def _on_text_change(self, text):
+        if self._completer is not None:
+            self._completer.set_text_filter(text)
+
+    def _update_completer(self):
+        if self._completer is None or not self._completer.isVisible():
+            return
+        point = self.frameGeometry().bottomLeft()
+        new_point = self.mapToGlobal(point)
+        self._completer.move(new_point)
 
     def focusInEvent(self, event):
         super(SettingsLineEdit, self).focusInEvent(event)
         self.focused_in.emit()
+
+        if self._completer is None:
+            return
+        self._completer.show()
+        self._update_completer()
+
+    def focusOutEvent(self, event):
+        super(SettingsLineEdit, self).focusOutEvent(event)
+        if self._completer is not None:
+            self._completer.hide()
+
+    def paintEvent(self, event):
+        super(SettingsLineEdit, self).paintEvent(event)
+        self._update_completer()
+
+    def update_completer_values(self, values):
+        if not values and self._completer is None:
+            return
+
+        self._create_completer()
+
+        self._completer.update_values(values)
+
+    def _create_completer(self):
+        if self._completer is None:
+            self._completer = CompleterView(self)
+            self._completer.row_activated.connect(self._completer_activated)
+
+    def _completer_activated(self, text):
+        self.setText(text)
+
+    def keyPressEvent(self, event):
+        if self._completer is None:
+            super(SettingsLineEdit, self).keyPressEvent(event)
+            return
+
+        key = event.key()
+        if key == QtCore.Qt.Key_Up:
+            self._completer.move_up()
+        elif key == QtCore.Qt.Key_Down:
+            self._completer.move_down()
+        elif key in (QtCore.Qt.Key_Enter, QtCore.Qt.Key_Return):
+            self._completer.enter_pressed()
+        else:
+            super(SettingsLineEdit, self).keyPressEvent(event)
 
 
 class SettingsPlainTextEdit(QtWidgets.QPlainTextEdit):
@@ -29,6 +262,78 @@ class SettingsPlainTextEdit(QtWidgets.QPlainTextEdit):
     def focusInEvent(self, event):
         super(SettingsPlainTextEdit, self).focusInEvent(event)
         self.focused_in.emit()
+
+
+class SettingsToolBtn(ImageButton):
+    _mask_pixmap = None
+    _cached_icons = {}
+
+    def __init__(self, btn_type, parent):
+        super(SettingsToolBtn, self).__init__(parent)
+
+        icon, hover_icon = self._get_icon_type(btn_type)
+
+        self.setIcon(icon)
+
+        self._icon = icon
+        self._hover_icon = hover_icon
+
+    @classmethod
+    def _get_icon_type(cls, btn_type):
+        if btn_type not in cls._cached_icons:
+            settings_colors = get_objected_colors()["settings"]
+            normal_color = settings_colors["image-btn"].get_qcolor()
+            hover_color = settings_colors["image-btn-hover"].get_qcolor()
+            disabled_color = settings_colors["image-btn-disabled"].get_qcolor()
+
+            image = get_image("{}.png".format(btn_type))
+
+            pixmap = paint_image_with_color(image, normal_color)
+            hover_pixmap = paint_image_with_color(image, hover_color)
+            disabled_pixmap = paint_image_with_color(image, disabled_color)
+
+            icon = QtGui.QIcon(pixmap)
+            hover_icon = QtGui.QIcon(hover_pixmap)
+            icon.addPixmap(
+                disabled_pixmap, QtGui.QIcon.Disabled, QtGui.QIcon.On
+            )
+            icon.addPixmap(
+                disabled_pixmap, QtGui.QIcon.Disabled, QtGui.QIcon.Off
+            )
+            hover_icon.addPixmap(
+                disabled_pixmap, QtGui.QIcon.Disabled, QtGui.QIcon.On
+            )
+            hover_icon.addPixmap(
+                disabled_pixmap, QtGui.QIcon.Disabled, QtGui.QIcon.Off
+            )
+            cls._cached_icons[btn_type] = icon, hover_icon
+        return cls._cached_icons[btn_type]
+
+    def enterEvent(self, event):
+        self.setIcon(self._hover_icon)
+        super(SettingsToolBtn, self).enterEvent(event)
+
+    def leaveEvent(self, event):
+        self.setIcon(self._icon)
+        super(SettingsToolBtn, self).leaveEvent(event)
+
+    @classmethod
+    def _get_mask_pixmap(cls):
+        if cls._mask_pixmap is None:
+            mask_pixmap = get_pixmap("mask.png")
+            cls._mask_pixmap = mask_pixmap
+        return cls._mask_pixmap
+
+    def _change_size(self):
+        super(SettingsToolBtn, self)._change_size()
+        size = self.iconSize()
+        scaled = self._get_mask_pixmap().scaled(
+            size.width(),
+            size.height(),
+            QtCore.Qt.IgnoreAspectRatio,
+            QtCore.Qt.SmoothTransformation
+        )
+        self.setMask(scaled.mask())
 
 
 class ShadowWidget(QtWidgets.QWidget):
@@ -132,8 +437,13 @@ class SettingsComboBox(QtWidgets.QComboBox):
     def __init__(self, *args, **kwargs):
         super(SettingsComboBox, self).__init__(*args, **kwargs)
 
+        delegate = QtWidgets.QStyledItemDelegate()
+        self.setItemDelegate(delegate)
+
         self.currentIndexChanged.connect(self._on_change)
         self.setFocusPolicy(QtCore.Qt.StrongFocus)
+
+        self._delegate = delegate
 
     def wheelEvent(self, event):
         if self.hasFocus():
@@ -180,14 +490,14 @@ class ExpandingWidget(QtWidgets.QWidget):
 
         button_size = QtCore.QSize(5, 5)
         button_toggle = QtWidgets.QToolButton(parent=side_line_widget)
-        button_toggle.setProperty("btn-type", "expand-toggle")
+        button_toggle.setObjectName("ExpandToggleBtn")
         button_toggle.setIconSize(button_size)
         button_toggle.setArrowType(QtCore.Qt.RightArrow)
         button_toggle.setCheckable(True)
         button_toggle.setChecked(False)
 
         label_widget = QtWidgets.QLabel(label, parent=side_line_widget)
-        label_widget.setObjectName("DictLabel")
+        label_widget.setObjectName("ExpandLabel")
 
         before_label_widget = QtWidgets.QWidget(side_line_widget)
         before_label_layout = QtWidgets.QHBoxLayout(before_label_widget)
@@ -381,6 +691,7 @@ class GridLabelWidget(QtWidgets.QWidget):
         self.properties = {}
 
         label_widget = QtWidgets.QLabel(label, self)
+        label_widget.setObjectName("SettingsLabel")
 
         label_proxy_layout = QtWidgets.QHBoxLayout()
         label_proxy_layout.setContentsMargins(0, 0, 0, 0)
@@ -415,197 +726,12 @@ class GridLabelWidget(QtWidgets.QWidget):
         return super(GridLabelWidget, self).mouseReleaseEvent(event)
 
 
-class NiceCheckboxMoveWidget(QtWidgets.QFrame):
-    def __init__(self, height, border_width, parent):
-        super(NiceCheckboxMoveWidget, self).__init__(parent=parent)
-
-        self.checkstate = False
-
-        self.half_size = int(height / 2)
-        self.full_size = self.half_size * 2
-        self.border_width = border_width
-        self.setFixedHeight(self.full_size)
-        self.setFixedWidth(self.full_size)
-
-        self.setStyleSheet((
-            "background: #444444;border-style: none;"
-            "border-radius: {};border-width:{}px;"
-        ).format(self.half_size, self.border_width))
-
-    def update_position(self):
-        parent_rect = self.parent().rect()
-        if self.checkstate is True:
-            pos_x = (
-                parent_rect.x()
-                + parent_rect.width()
-                - self.full_size
-                - self.border_width
-            )
-        else:
-            pos_x = parent_rect.x() + self.border_width
-
-        pos_y = parent_rect.y() + int(
-            parent_rect.height() / 2 - self.half_size
-        )
-        self.setGeometry(pos_x, pos_y, self.width(), self.height())
-
-    def state_offset(self):
-        diff_x = (
-            self.parent().rect().width()
-            - self.full_size
-            - (2 * self.border_width)
-        )
-        return QtCore.QPoint(diff_x, 0)
-
-    def change_position(self, checkstate):
-        self.checkstate = checkstate
-
-        self.update_position()
-
-    def resizeEvent(self, event):
-        super().resizeEvent(event)
-        self.update_position()
-
-
-class NiceCheckbox(QtWidgets.QFrame):
-    stateChanged = QtCore.Signal(int)
-    checked_bg_color = QtGui.QColor(69, 128, 86)
-    unchecked_bg_color = QtGui.QColor(170, 80, 80)
+class SettingsNiceCheckbox(NiceCheckbox):
     focused_in = QtCore.Signal()
-
-    def set_bg_color(self, color):
-        self._bg_color = color
-        self.setStyleSheet(self._stylesheet_template.format(
-            color.red(), color.green(), color.blue()
-        ))
-
-    def bg_color(self):
-        return self._bg_color
-
-    bgcolor = QtCore.Property(QtGui.QColor, bg_color, set_bg_color)
-
-    def __init__(self, checked=True, height=30, *args, **kwargs):
-        super(NiceCheckbox, self).__init__(*args, **kwargs)
-
-        self._checkstate = checked
-        if checked:
-            bg_color = self.checked_bg_color
-        else:
-            bg_color = self.unchecked_bg_color
-
-        self.half_height = int(height / 2)
-        height = self.half_height * 2
-        tenth_height = int(height / 10)
-
-        self.setFixedHeight(height)
-        self.setFixedWidth((height - tenth_height) * 2)
-
-        move_item_size = height - (2 * tenth_height)
-
-        self.move_item = NiceCheckboxMoveWidget(
-            move_item_size, tenth_height, self
-        )
-        self.move_item.change_position(self._checkstate)
-
-        self._stylesheet_template = (
-            "border-radius: {}px;"
-            "border-width: {}px;"
-            "background: #333333;"
-            "border-style: solid;"
-            "border-color: #555555;"
-        ).format(self.half_height, tenth_height)
-        self._stylesheet_template += "background: rgb({},{},{});"
-
-        self.set_bg_color(bg_color)
-
-    def resizeEvent(self, event):
-        super(NiceCheckbox, self).resizeEvent(event)
-        self.move_item.update_position()
-
-    def show(self, *args, **kwargs):
-        super(NiceCheckbox, self).show(*args, **kwargs)
-        self.move_item.update_position()
-
-    def checkState(self):
-        if self._checkstate:
-            return QtCore.Qt.Checked
-        else:
-            return QtCore.Qt.Unchecked
-
-    def _on_checkstate_change(self):
-        self.stateChanged.emit(self.checkState())
-
-        move_start_value = self.move_item.pos()
-        offset = self.move_item.state_offset()
-        if self._checkstate is True:
-            move_end_value = move_start_value + offset
-        else:
-            move_end_value = move_start_value - offset
-        move_animation = QtCore.QPropertyAnimation(
-            self.move_item, b"pos", self
-        )
-        move_animation.setDuration(150)
-        move_animation.setEasingCurve(QtCore.QEasingCurve.OutQuad)
-        move_animation.setStartValue(move_start_value)
-        move_animation.setEndValue(move_end_value)
-
-        color_animation = QtCore.QPropertyAnimation(
-            self, b"bgcolor"
-        )
-        color_animation.setDuration(150)
-        if self._checkstate is True:
-            color_animation.setStartValue(self.unchecked_bg_color)
-            color_animation.setEndValue(self.checked_bg_color)
-        else:
-            color_animation.setStartValue(self.checked_bg_color)
-            color_animation.setEndValue(self.unchecked_bg_color)
-
-        anim_group = QtCore.QParallelAnimationGroup(self)
-        anim_group.addAnimation(move_animation)
-        anim_group.addAnimation(color_animation)
-
-        def _finished():
-            self.move_item.change_position(self._checkstate)
-
-        anim_group.finished.connect(_finished)
-        anim_group.start()
-
-    def isChecked(self):
-        return self._checkstate
-
-    def setChecked(self, checked):
-        if checked == self._checkstate:
-            return
-        self._checkstate = checked
-        self._on_checkstate_change()
-
-    def setCheckState(self, state=None):
-        if state is None:
-            checkstate = not self._checkstate
-        elif state == QtCore.Qt.Checked:
-            checkstate = True
-        elif state == QtCore.Qt.Unchecked:
-            checkstate = False
-        else:
-            return
-
-        if checkstate == self._checkstate:
-            return
-
-        self._checkstate = checkstate
-
-        self._on_checkstate_change()
 
     def mousePressEvent(self, event):
         self.focused_in.emit()
-        super(NiceCheckbox, self).mousePressEvent(event)
-
-    def mouseReleaseEvent(self, event):
-        if event.button() == QtCore.Qt.LeftButton:
-            self.setCheckState()
-            event.accept()
-            return
-        return super(NiceCheckbox, self).mouseReleaseEvent(event)
+        super(SettingsNiceCheckbox, self).mousePressEvent(event)
 
 
 class ProjectModel(QtGui.QStandardItemModel):
@@ -843,6 +969,13 @@ class ProjectListWidget(QtWidgets.QWidget):
         self.project_list.selectionModel().setCurrentIndex(
             index, QtCore.QItemSelectionModel.SelectionFlag.SelectCurrent
         )
+
+    def get_project_names(self):
+        output = []
+        for row in range(self.project_proxy.rowCount()):
+            index = self.project_proxy.index(row, 0)
+            output.append(index.data(PROJECT_NAME_ROLE))
+        return output
 
     def refresh(self):
         selected_project = None

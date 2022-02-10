@@ -99,7 +99,7 @@ class Window(QtWidgets.QDialog):
         return self._db
 
     def on_start(self):
-        ''' Things must be done when initilized.
+        ''' Things must be done when initialized.
         '''
         # Refresh asset input in Family widget
         self.on_asset_changed()

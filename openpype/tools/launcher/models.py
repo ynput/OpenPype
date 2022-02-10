@@ -2,117 +2,23 @@ import uuid
 import copy
 import logging
 import collections
+import appdirs
 
 from . import lib
 from .constants import (
     ACTION_ROLE,
     GROUP_ROLE,
     VARIANT_GROUP_ROLE,
-    ACTION_ID_ROLE
+    ACTION_ID_ROLE,
+    FORCE_NOT_OPEN_WORKFILE_ROLE
 )
 from .actions import ApplicationAction
 from Qt import QtCore, QtGui
 from avalon.vendor import qtawesome
 from avalon import style, api
-from openpype.lib import ApplicationManager
+from openpype.lib import ApplicationManager, JSONSettingRegistry
 
 log = logging.getLogger(__name__)
-
-
-class TaskModel(QtGui.QStandardItemModel):
-    """A model listing the tasks combined for a list of assets"""
-
-    def __init__(self, dbcon, parent=None):
-        super(TaskModel, self).__init__(parent=parent)
-        self.dbcon = dbcon
-
-        self._num_assets = 0
-
-        self.default_icon = qtawesome.icon(
-            "fa.male", color=style.colors.default
-        )
-        self.no_task_icon = qtawesome.icon(
-            "fa.exclamation-circle", color=style.colors.mid
-        )
-
-        self._icons = {}
-
-        self._get_task_icons()
-
-    def _get_task_icons(self):
-        if not self.dbcon.Session.get("AVALON_PROJECT"):
-            return
-
-        # Get the project configured icons from database
-        project = self.dbcon.find_one({"type": "project"})
-        for task in project["config"].get("tasks") or []:
-            icon_name = task.get("icon")
-            if icon_name:
-                self._icons[task["name"]] = qtawesome.icon(
-                    "fa.{}".format(icon_name), color=style.colors.default
-                )
-
-    def set_assets(self, asset_ids=None, asset_docs=None):
-        """Set assets to track by their database id
-
-        Arguments:
-            asset_ids (list): List of asset ids.
-            asset_docs (list): List of asset entities from MongoDB.
-
-        """
-
-        if asset_docs is None and asset_ids is not None:
-            # find assets in db by query
-            asset_docs = list(self.dbcon.find({
-                "type": "asset",
-                "_id": {"$in": asset_ids}
-            }))
-            db_assets_ids = tuple(asset_doc["_id"] for asset_doc in asset_docs)
-
-            # check if all assets were found
-            not_found = tuple(
-                str(asset_id)
-                for asset_id in asset_ids
-                if asset_id not in db_assets_ids
-            )
-
-            assert not not_found, "Assets not found by id: {0}".format(
-                ", ".join(not_found)
-            )
-
-        self.clear()
-
-        if not asset_docs:
-            return
-
-        task_names = set()
-        for asset_doc in asset_docs:
-            asset_tasks = asset_doc.get("data", {}).get("tasks") or set()
-            task_names.update(asset_tasks)
-
-        self.beginResetModel()
-
-        if not task_names:
-            item = QtGui.QStandardItem(self.no_task_icon, "No task")
-            item.setEnabled(False)
-            self.appendRow(item)
-
-        else:
-            for task_name in sorted(task_names):
-                icon = self._icons.get(task_name, self.default_icon)
-                item = QtGui.QStandardItem(icon, task_name)
-                self.appendRow(item)
-
-        self.endResetModel()
-
-    def headerData(self, section, orientation, role):
-        if (
-            role == QtCore.Qt.DisplayRole
-            and orientation == QtCore.Qt.Horizontal
-            and section == 0
-        ):
-            return "Tasks"
-        return super(TaskModel, self).headerData(section, orientation, role)
 
 
 class ActionModel(QtGui.QStandardItemModel):
@@ -126,6 +32,13 @@ class ActionModel(QtGui.QStandardItemModel):
         # Cache of available actions
         self._registered_actions = list()
         self.items_by_id = {}
+        path = appdirs.user_data_dir("openpype", "pypeclub")
+        self.launcher_registry = JSONSettingRegistry("launcher", path)
+
+        try:
+            _ = self.launcher_registry.get_item("force_not_open_workfile")
+        except ValueError:
+            self.launcher_registry.set_item("force_not_open_workfile", [])
 
     def discover(self):
         """Set up Actions cache. Run this for each new project."""
@@ -171,7 +84,8 @@ class ActionModel(QtGui.QStandardItemModel):
                     "group": None,
                     "icon": app.icon,
                     "color": getattr(app, "color", None),
-                    "order": getattr(app, "order", None) or 0
+                    "order": getattr(app, "order", None) or 0,
+                    "data": {}
                 }
             )
 
@@ -198,7 +112,7 @@ class ActionModel(QtGui.QStandardItemModel):
             # Groups
             group_name = getattr(action, "group", None)
 
-            # Lable variants
+            # Label variants
             label = getattr(action, "label", None)
             label_variant = getattr(action, "label_variant", None)
             if label_variant and not label:
@@ -275,11 +189,17 @@ class ActionModel(QtGui.QStandardItemModel):
 
         self.beginResetModel()
 
+        stored = self.launcher_registry.get_item("force_not_open_workfile")
         items = []
         for order in sorted(items_by_order.keys()):
             for item in items_by_order[order]:
                 item_id = str(uuid.uuid4())
                 item.setData(item_id, ACTION_ID_ROLE)
+
+                if self.is_force_not_open_workfile(item,
+                                                   stored):
+                    self.change_action_item(item, True)
+
                 self.items_by_id[item_id] = item
                 items.append(item)
 
@@ -317,6 +237,90 @@ class ActionModel(QtGui.QStandardItemModel):
             compatible,
             key=lambda action: (action.order, action.name)
         )
+
+    def update_force_not_open_workfile_settings(self, is_checked, action_id):
+        """Store/remove config for forcing to skip opening last workfile.
+
+        Args:
+            is_checked (bool): True to add, False to remove
+            action_id (str)
+        """
+        action_item = self.items_by_id.get(action_id)
+        if not action_item:
+            return
+
+        action = action_item.data(ACTION_ROLE)
+        actual_data = self._prepare_compare_data(action)
+
+        stored = self.launcher_registry.get_item("force_not_open_workfile")
+        if is_checked:
+            stored.append(actual_data)
+        else:
+            final_values = []
+            for config in stored:
+                if config != actual_data:
+                    final_values.append(config)
+            stored = final_values
+
+        self.launcher_registry.set_item("force_not_open_workfile", stored)
+        self.launcher_registry._get_item.cache_clear()
+        self.change_action_item(action_item, is_checked)
+
+    def change_action_item(self, item, checked):
+        """Modifies tooltip and sets if opening of last workfile forbidden"""
+        tooltip = item.data(QtCore.Qt.ToolTipRole)
+        if checked:
+            tooltip += " (Not opening last workfile)"
+
+        item.setData(tooltip, QtCore.Qt.ToolTipRole)
+        item.setData(checked, FORCE_NOT_OPEN_WORKFILE_ROLE)
+
+    def is_application_action(self, action):
+        """Checks if item is of a ApplicationAction type
+
+        Args:
+            action (action)
+        """
+        if isinstance(action, list) and action:
+            action = action[0]
+
+        return ApplicationAction in action.__bases__
+
+    def is_force_not_open_workfile(self, item, stored):
+        """Checks if application for task is marked to not open workfile
+
+        There might be specific tasks where is unwanted to open workfile right
+        always (broken file, low performance). This allows artist to mark to
+        skip opening for combination (project, asset, task_name, app)
+
+        Args:
+            item (QStandardItem)
+            stored (list) of dict
+        """
+        action = item.data(ACTION_ROLE)
+        if not self.is_application_action(action):
+            return False
+
+        actual_data = self._prepare_compare_data(action)
+        for config in stored:
+            if config == actual_data:
+                return True
+
+        return False
+
+    def _prepare_compare_data(self, action):
+        if isinstance(action, list) and action:
+            action = action[0]
+
+        compare_data = {}
+        if action:
+            compare_data = {
+                "app_label": action.label.lower(),
+                "project_name": self.dbcon.Session["AVALON_PROJECT"],
+                "asset": self.dbcon.Session["AVALON_ASSET"],
+                "task_name": self.dbcon.Session["AVALON_TASK"]
+            }
+        return compare_data
 
 
 class ProjectModel(QtGui.QStandardItemModel):

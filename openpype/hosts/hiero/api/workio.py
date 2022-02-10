@@ -65,13 +65,9 @@ def open_file(filepath):
 
 def current_file():
     current_file = hiero.core.projects()[-1].path()
-    normalised = os.path.normpath(current_file)
-
-    # Unsaved current file
-    if normalised == "":
+    if not current_file:
         return None
-
-    return normalised
+    return os.path.normpath(current_file)
 
 
 def work_root(session):

@@ -1,7 +1,7 @@
 from pyblish import api
 import hiero
 import math
-from openpype.hosts.hiero.otio.hiero_export import create_otio_time_range
+from openpype.hosts.hiero.api.otio.hiero_export import create_otio_time_range
 
 class PrecollectRetime(api.InstancePlugin):
     """Calculate Retiming of selected track items."""
@@ -52,7 +52,7 @@ class PrecollectRetime(api.InstancePlugin):
                 handle_end
         ))
 
-        # loop withing subtrack items
+        # loop within subtrack items
         time_warp_nodes = []
         source_in_change = 0
         source_out_change = 0
@@ -76,7 +76,7 @@ class PrecollectRetime(api.InstancePlugin):
                                 (timeline_in - handle_start),
                                 (timeline_out + handle_end) + 1)
                         ]
-                        # calculate differnce
+                        # calculate difference
                         diff_in = (node["lookup"].getValueAt(
                             timeline_in)) - timeline_in
                         diff_out = (node["lookup"].getValueAt(

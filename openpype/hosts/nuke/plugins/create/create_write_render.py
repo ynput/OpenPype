@@ -1,11 +1,12 @@
 from collections import OrderedDict
-from openpype.hosts.nuke.api import (
-    plugin,
-    lib)
+
 import nuke
 
+from openpype.hosts.nuke.api import plugin
+from openpype.hosts.nuke.api.lib import create_write_node
 
-class CreateWriteRender(plugin.PypeCreator):
+
+class CreateWriteRender(plugin.OpenPypeCreator):
     # change this to template preset
     name = "WriteRender"
     label = "Create Write Render"
@@ -99,7 +100,7 @@ class CreateWriteRender(plugin.PypeCreator):
                 "fpath_template": ("{work}/renders/nuke/{subset}"
                                    "/{subset}.{frame}.{ext}")})
 
-        # add crop node to cut off all outside of format bounding box
+        # add reformat node to cut off all outside of format bounding box
         # get width and height
         try:
             width, height = (selected_node.width(), selected_node.height())
@@ -109,21 +110,17 @@ class CreateWriteRender(plugin.PypeCreator):
 
         _prenodes = [
             {
-                "name": "Crop01",
-                "class": "Crop",
+                "name": "Reformat01",
+                "class": "Reformat",
                 "knobs": [
-                    ("box", [
-                        0.0,
-                        0.0,
-                        width,
-                        height
-                    ])
+                    ("resize", 0),
+                    ("black_outside", 1),
                 ],
                 "dependent": None
             }
         ]
 
-        write_node = lib.create_write_node(
+        write_node = create_write_node(
             self.data["subset"],
             write_data,
             input=selected_node,

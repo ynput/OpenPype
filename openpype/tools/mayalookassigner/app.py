@@ -2,21 +2,27 @@ import sys
 import time
 import logging
 
+from Qt import QtWidgets, QtCore
+
 from openpype.hosts.maya.api.lib import assign_look_by_version
 
 from avalon import style, io
-from avalon.tools import lib
-from avalon.vendor.Qt import QtWidgets, QtCore
+from openpype.tools.utils.lib import qt_app_context
 
 from maya import cmds
 # old api for MFileIO
 import maya.OpenMaya
 import maya.api.OpenMaya as om
 
-from . import widgets
-from . import commands
-from . vray_proxies import vrayproxy_assign_look
-
+from .widgets import (
+    AssetOutliner,
+    LookOutliner
+)
+from .commands import (
+    get_workfile,
+    remove_unused_looks
+)
+from .vray_proxies import vrayproxy_assign_look
 
 module = sys.modules[__name__]
 module.window = None
@@ -31,24 +37,18 @@ class App(QtWidgets.QWidget):
 
         # Store callback references
         self._callbacks = []
+        self._connections_set_up = False
 
-        filename = commands.get_workfile()
+        filename = get_workfile()
 
         self.setObjectName("lookManager")
         self.setWindowTitle("Look Manager 1.3.0 - [{}]".format(filename))
         self.setWindowFlags(QtCore.Qt.Window)
         self.setParent(parent)
 
-        # Force to delete the window on close so it triggers
-        # closeEvent only once. Otherwise it's retriggered when
-        # the widget gets garbage collected.
-        self.setAttribute(QtCore.Qt.WA_DeleteOnClose)
-
         self.resize(750, 500)
 
         self.setup_ui()
-
-        self.setup_connections()
 
         # Force refresh check on initialization
         self._on_renderlayer_switch()
@@ -57,13 +57,13 @@ class App(QtWidgets.QWidget):
         """Build the UI"""
 
         # Assets (left)
-        asset_outliner = widgets.AssetOutliner()
+        asset_outliner = AssetOutliner()
 
         # Looks (right)
         looks_widget = QtWidgets.QWidget()
         looks_layout = QtWidgets.QVBoxLayout(looks_widget)
 
-        look_outliner = widgets.LookOutliner()  # Database look overview
+        look_outliner = LookOutliner()  # Database look overview
 
         assign_selected = QtWidgets.QCheckBox("Assign to selected only")
         assign_selected.setToolTip("Whether to assign only to selected nodes "
@@ -104,6 +104,16 @@ class App(QtWidgets.QWidget):
         asset_outliner.view.setColumnWidth(0, 200)
         look_outliner.view.setColumnWidth(0, 150)
 
+        asset_outliner.selection_changed.connect(
+            self.on_asset_selection_changed)
+
+        asset_outliner.refreshed.connect(
+            lambda: self.echo("Loaded assets..")
+        )
+
+        look_outliner.menu_apply_action.connect(self.on_process_selected)
+        remove_unused_btn.clicked.connect(remove_unused_looks)
+
         # Open widgets
         self.asset_outliner = asset_outliner
         self.look_outliner = look_outliner
@@ -116,15 +126,8 @@ class App(QtWidgets.QWidget):
 
     def setup_connections(self):
         """Connect interactive widgets with actions"""
-
-        self.asset_outliner.selection_changed.connect(
-            self.on_asset_selection_changed)
-
-        self.asset_outliner.refreshed.connect(
-            lambda: self.echo("Loaded assets.."))
-
-        self.look_outliner.menu_apply_action.connect(self.on_process_selected)
-        self.remove_unused.clicked.connect(commands.remove_unused_looks)
+        if self._connections_set_up:
+            return
 
         # Maya renderlayer switch callback
         callback = om.MEventMessage.addEventCallback(
@@ -132,14 +135,23 @@ class App(QtWidgets.QWidget):
             self._on_renderlayer_switch
         )
         self._callbacks.append(callback)
+        self._connections_set_up = True
 
-    def closeEvent(self, event):
-
+    def remove_connection(self):
         # Delete callbacks
         for callback in self._callbacks:
             om.MMessage.removeCallback(callback)
 
-        return super(App, self).closeEvent(event)
+        self._callbacks = []
+        self._connections_set_up = False
+
+    def showEvent(self, event):
+        self.setup_connections()
+        super(App, self).showEvent(event)
+
+    def closeEvent(self, event):
+        self.remove_connection()
+        super(App, self).closeEvent(event)
 
     def _on_renderlayer_switch(self, *args):
         """Callback that updates on Maya renderlayer switch"""
@@ -197,7 +209,7 @@ class App(QtWidgets.QWidget):
             # Assign the first matching look relevant for this asset
             # (since assigning multiple to the same nodes makes no sense)
             assign_look = next((subset for subset in item["looks"]
-                               if subset["name"] in looks), None)
+                                if subset["name"] in looks), None)
             if not assign_look:
                 self.echo("{} No matching selected "
                           "look for {}".format(prefix, asset))
@@ -216,11 +228,14 @@ class App(QtWidgets.QWidget):
 
             if cmds.pluginInfo('vrayformaya', query=True, loaded=True):
                 self.echo("Getting vray proxy nodes ...")
-                vray_proxies = set(cmds.ls(type="VRayProxy"))
-                nodes = list(set(item["nodes"]).difference(vray_proxies))
+                vray_proxies = set(cmds.ls(type="VRayProxy", long=True))
+
                 if vray_proxies:
                     for vp in vray_proxies:
-                        vrayproxy_assign_look(vp, subset_name)
+                        if vp in nodes:
+                            vrayproxy_assign_look(vp, subset_name)
+
+                    nodes = list(set(item["nodes"]).difference(vray_proxies))
 
                 # Assign look
             if nodes:
@@ -251,7 +266,7 @@ def show():
     mainwindow = next(widget for widget in top_level_widgets
                       if widget.objectName() == "MayaWindow")
 
-    with lib.application():
+    with qt_app_context():
         window = App(parent=mainwindow)
         window.setStyleSheet(style.load_stylesheet())
         window.show()

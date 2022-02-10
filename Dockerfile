@@ -1,82 +1,82 @@
 # Build Pype docker image
-FROM centos:7 AS builder
-ARG OPENPYPE_PYTHON_VERSION=3.7.10
+FROM ubuntu:focal AS builder
+ARG OPENPYPE_PYTHON_VERSION=3.7.12
+ARG BUILD_DATE
+ARG VERSION
 
+LABEL maintainer="info@openpype.io"
+LABEL description="Docker Image to build and run OpenPype under Ubuntu 20.04"
 LABEL org.opencontainers.image.name="pypeclub/openpype"
 LABEL org.opencontainers.image.title="OpenPype Docker Image"
 LABEL org.opencontainers.image.url="https://openpype.io/"
-LABEL org.opencontainers.image.source="https://github.com/pypeclub/pype"
+LABEL org.opencontainers.image.source="https://github.com/pypeclub/OpenPype"
+LABEL org.opencontainers.image.documentation="https://openpype.io/docs/system_introduction"
+LABEL org.opencontainers.image.created=$BUILD_DATE
+LABEL org.opencontainers.image.version=$VERSION
 
 USER root
 
-# update base
-RUN yum -y install deltarpm \
-    && yum -y update \
-    && yum clean all
+ARG DEBIAN_FRONTEND=noninteractive
 
-# add tools we need
-RUN yum -y install https://dl.fedoraproject.org/pub/epel/epel-release-latest-7.noarch.rpm \
-    && yum -y install centos-release-scl \
-    && yum -y install \
+# update base
+RUN apt-get update \
+    && apt-get install -y --no-install-recommends \
+        ca-certificates \
         bash \
-        which \
         git \
-        devtoolset-7-gcc* \
-        make \
         cmake \
+        make \
         curl \
         wget \
-        gcc \
-        zlib-devel \
-        bzip2 \
-        bzip2-devel \
-        readline-devel \
-        sqlite sqlite-devel \
-        openssl-devel \
-        tk-devel libffi-devel \
-        qt5-qtbase-devel \
-        patchelf \
-    && yum clean all
+        build-essential \
+        checkinstall \
+        libssl-dev \
+        zlib1g-dev \
+        libbz2-dev \
+        libreadline-dev \
+        libsqlite3-dev \
+        llvm \
+        libncursesw5-dev \
+        xz-utils \
+        tk-dev \
+        libxml2-dev \
+        libxmlsec1-dev \
+        libffi-dev \
+        liblzma-dev \
+        patchelf
+
+SHELL ["/bin/bash", "-c"]
+
 
 RUN mkdir /opt/openpype
-# RUN useradd -m pype
-# RUN chown pype /opt/openpype
-# USER pype
 
-RUN curl https://pyenv.run | bash
-ENV PYTHON_CONFIGURE_OPTS --enable-shared
+# download and install pyenv
+RUN curl https://pyenv.run | bash \
+    && echo 'export PATH="$HOME/.pyenv/bin:$PATH"'>> $HOME/init_pyenv.sh \
+    && echo 'eval "$(pyenv init -)"' >> $HOME/init_pyenv.sh \
+    && echo 'eval "$(pyenv virtualenv-init -)"' >> $HOME/init_pyenv.sh \
+    && echo 'eval "$(pyenv init --path)"' >> $HOME/init_pyenv.sh
 
-RUN echo 'export PATH="$HOME/.pyenv/bin:$PATH"'>> $HOME/.bashrc \
-    && echo 'eval "$(pyenv init -)"' >> $HOME/.bashrc \
-    && echo 'eval "$(pyenv virtualenv-init -)"' >> $HOME/.bashrc \
-    && echo 'eval "$(pyenv init --path)"' >> $HOME/.bashrc
-RUN source $HOME/.bashrc && pyenv install ${OPENPYPE_PYTHON_VERSION}
+# install python with pyenv
+RUN source $HOME/init_pyenv.sh \
+    && pyenv install ${OPENPYPE_PYTHON_VERSION}
 
 COPY . /opt/openpype/
-RUN rm -rf /openpype/.poetry || echo "No Poetry installed yet."
-# USER root
-# RUN chown -R pype /opt/openpype
-RUN chmod +x /opt/openpype/tools/create_env.sh && chmod +x /opt/openpype/tools/build.sh
 
-# USER pype
+RUN chmod +x /opt/openpype/tools/create_env.sh && chmod +x /opt/openpype/tools/build.sh
 
 WORKDIR /opt/openpype
 
+# set local python version
 RUN cd /opt/openpype \
-    && source $HOME/.bashrc \
+    && source $HOME/init_pyenv.sh \
     && pyenv local ${OPENPYPE_PYTHON_VERSION}
 
-RUN source $HOME/.bashrc \
-    && ./tools/create_env.sh
-
-RUN source $HOME/.bashrc \
+# fetch third party tools/libraries
+RUN source $HOME/init_pyenv.sh \
+    && ./tools/create_env.sh \
     && ./tools/fetch_thirdparty_libs.sh
 
-RUN source $HOME/.bashrc \
-    && bash ./tools/build.sh \
-    && cp /usr/lib64/libffi* ./build/exe.linux-x86_64-3.7/lib \
-    && cp /usr/lib64/libssl* ./build/exe.linux-x86_64-3.7/lib \
-    && cp /usr/lib64/libcrypto* ./build/exe.linux-x86_64-3.7/lib
-
-RUN cd /opt/openpype \
-    rm -rf ./vendor/bin
+# build openpype
+RUN source $HOME/init_pyenv.sh \
+    && bash ./tools/build.sh

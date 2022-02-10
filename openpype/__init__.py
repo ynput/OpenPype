@@ -69,6 +69,7 @@ def install():
     """Install Pype to Avalon."""
     from pyblish.lib import MessageHandler
     from openpype.modules import load_modules
+    from avalon import pipeline
 
     # Make sure modules are loaded
     load_modules()
@@ -117,7 +118,9 @@ def install():
 
     # apply monkey patched discover to original one
     log.info("Patching discovery")
+
     avalon.discover = patched_discover
+    pipeline.discover = patched_discover
 
     avalon.on("taskChanged", _on_task_change)
 

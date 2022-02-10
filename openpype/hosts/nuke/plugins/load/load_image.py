@@ -7,12 +7,25 @@ from avalon import api, io
 from openpype.hosts.nuke.api.lib import (
     get_imageio_input_colorspace
 )
+from openpype.hosts.nuke.api import (
+    containerise,
+    update_container,
+    viewer_update_and_undo_stop
+)
 
 
 class LoadImage(api.Loader):
     """Load still image into Nuke"""
 
-    families = ["render", "source", "plate", "review", "image"]
+    families = [
+        "render2d",
+        "source",
+        "plate",
+        "render",
+        "prerender",
+        "review",
+        "image"
+    ]
     representations = ["exr", "dpx", "jpg", "jpeg", "png", "psd", "tiff"]
 
     label = "Load Image"
@@ -33,11 +46,11 @@ class LoadImage(api.Loader):
         )
     ]
 
+    @classmethod
+    def get_representations(cls):
+        return cls.representations + cls._representations
+
     def load(self, context, name, namespace, options):
-        from avalon.nuke import (
-            containerise,
-            viewer_update_and_undo_stop
-        )
         self.log.info("__ options: `{}`".format(options))
         frame_number = options.get("frame_number", 1)
 
@@ -142,11 +155,6 @@ class LoadImage(api.Loader):
         inputs:
 
         """
-
-        from avalon.nuke import (
-            update_container
-        )
-
         node = nuke.toNode(container["objectName"])
         frame_number = node["first"].value()
 
@@ -205,8 +213,7 @@ class LoadImage(api.Loader):
             "colorspace": version_data.get("colorspace"),
             "source": version_data.get("source"),
             "fps": str(version_data.get("fps")),
-            "author": version_data.get("author"),
-            "outputDir": version_data.get("outputDir"),
+            "author": version_data.get("author")
         })
 
         # change color of node
@@ -220,12 +227,9 @@ class LoadImage(api.Loader):
             node,
             updated_dict
         )
-        self.log.info("udated to version: {}".format(version.get("name")))
+        self.log.info("updated to version: {}".format(version.get("name")))
 
     def remove(self, container):
-
-        from avalon.nuke import viewer_update_and_undo_stop
-
         node = nuke.toNode(container['objectName'])
         assert node.Class() == "Read", "Must be Read"
 

@@ -1,4 +1,5 @@
 from avalon import api
+from openpype.hosts.nuke.api.commands import viewer_update_and_undo_stop
 
 
 class SelectContainers(api.InventoryAction):
@@ -8,12 +9,11 @@ class SelectContainers(api.InventoryAction):
     color = "#d8d8d8"
 
     def process(self, containers):
+        import nuke
 
-        import avalon.nuke
+        nodes = [nuke.toNode(i["objectName"]) for i in containers]
 
-        nodes = [i["_node"] for i in containers]
-
-        with avalon.nuke.viewer_update_and_undo_stop():
+        with viewer_update_and_undo_stop():
             # clear previous_selection
             [n['selected'].setValue(False) for n in nodes]
             # Select tool

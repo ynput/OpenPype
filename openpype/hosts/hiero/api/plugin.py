@@ -6,6 +6,7 @@ from avalon.vendor import qargparse
 import avalon.api as avalon
 import openpype.api as openpype
 from . import lib
+from copy import deepcopy
 
 log = openpype.Logger().get_logger(__name__)
 
@@ -145,7 +146,7 @@ class CreatorWidget(QtWidgets.QDialog):
         # convert label text to normal capitalized text with spaces
         label_text = self.camel_case_split(text)
 
-        # assign the new text to lable widget
+        # assign the new text to label widget
         label = QtWidgets.QLabel(label_text)
         label.setObjectName("LineLabel")
 
@@ -190,7 +191,7 @@ class CreatorWidget(QtWidgets.QDialog):
 
         content_layout = content_layout or self.content_layout[-1]
         # fix order of process by defined order value
-        ordered_keys = data.keys()
+        ordered_keys = list(data.keys())
         for k, v in data.items():
             try:
                 # try removing a key from index which should
@@ -336,7 +337,7 @@ class SequenceLoader(avalon.Loader):
                 "Sequentially in order"
             ],
             default="Original timing",
-            help="Would you like to place it at orignal timing?"
+            help="Would you like to place it at original timing?"
         )
     ]
 
@@ -474,7 +475,7 @@ class ClipLoader:
     def _get_asset_data(self):
         """ Get all available asset data
 
-        joint `data` key with asset.data dict into the representaion
+        joint `data` key with asset.data dict into the representation
 
         """
         asset_name = self.context["representation"]["context"]["asset"]
@@ -549,7 +550,7 @@ class ClipLoader:
                 (self.timeline_out - self.timeline_in + 1)
                 + self.handle_start + self.handle_end) < self.media_duration)
 
-        # if slate is on then remove the slate frame from begining
+        # if slate is on then remove the slate frame from beginning
         if slate_on:
             self.media_duration -= 1
             self.handle_start += 1
@@ -633,8 +634,8 @@ class PublishClip:
         "track": "sequence",
     }
 
-    # parents search patern
-    parents_search_patern = r"\{([a-z]*?)\}"
+    # parents search pattern
+    parents_search_pattern = r"\{([a-z]*?)\}"
 
     # default templates for non-ui use
     rename_default = False
@@ -718,7 +719,7 @@ class PublishClip:
         return self.track_item
 
     def _populate_track_item_default_data(self):
-        """ Populate default formating data from track item. """
+        """ Populate default formatting data from track item. """
 
         self.track_item_default_data = {
             "_folder_": "shots",
@@ -799,7 +800,8 @@ class PublishClip:
         # increasing steps by index of rename iteration
         self.count_steps *= self.rename_index
 
-        hierarchy_formating_data = dict()
+        hierarchy_formating_data = {}
+        hierarchy_data = deepcopy(self.hierarchy_data)
         _data = self.track_item_default_data.copy()
         if self.ui_inputs:
             # adding tag metadata from ui
@@ -812,7 +814,7 @@ class PublishClip:
                 # mark review layer
                 if self.review_track and (
                         self.review_track not in self.review_track_default):
-                    # if review layer is defined and not the same as defalut
+                    # if review layer is defined and not the same as default
                     self.review_layer = self.review_track
                 # shot num calculate
                 if self.rename_index == 0:
@@ -824,19 +826,19 @@ class PublishClip:
             _data.update({"shot": self.shot_num})
 
             # solve # in test to pythonic expression
-            for _k, _v in self.hierarchy_data.items():
+            for _k, _v in hierarchy_data.items():
                 if "#" not in _v["value"]:
                     continue
-                self.hierarchy_data[
+                hierarchy_data[
                     _k]["value"] = self._replace_hash_to_expression(
                         _k, _v["value"])
 
             # fill up pythonic expresisons in hierarchy data
-            for k, _v in self.hierarchy_data.items():
+            for k, _v in hierarchy_data.items():
                 hierarchy_formating_data[k] = _v["value"].format(**_data)
         else:
             # if no gui mode then just pass default data
-            hierarchy_formating_data = self.hierarchy_data
+            hierarchy_formating_data = hierarchy_data
 
         tag_hierarchy_data = self._solve_tag_hierarchy_data(
             hierarchy_formating_data
@@ -861,7 +863,7 @@ class PublishClip:
                     # in case track name and subset name is the same then add
                     if self.subset_name == self.track_name:
                         hero_data["subset"] = self.subset
-                    # assing data to return hierarchy data to tag
+                    # assign data to return hierarchy data to tag
                     tag_hierarchy_data = hero_data
 
         # add data to return data dict
@@ -886,30 +888,38 @@ class PublishClip:
             "families": [self.data["family"]]
         }
 
-    def _convert_to_entity(self, key):
+    def _convert_to_entity(self, type, template):
         """ Converting input key to key with type. """
         # convert to entity type
-        entity_type = self.types.get(key, None)
+        entity_type = self.types.get(type, None)
 
         assert entity_type, "Missing entity type for `{}`".format(
-            key
+            type
         )
+
+        # first collect formatting data to use for formatting template
+        formating_data = {}
+        for _k, _v in self.hierarchy_data.items():
+            value = _v["value"].format(
+                **self.track_item_default_data)
+            formating_data[_k] = value
 
         return {
             "entity_type": entity_type,
-            "entity_name": self.hierarchy_data[key]["value"].format(
-                **self.track_item_default_data
+            "entity_name": template.format(
+                **formating_data
             )
         }
 
     def _create_parents(self):
         """ Create parents and return it in list. """
-        self.parents = list()
+        self.parents = []
 
-        patern = re.compile(self.parents_search_patern)
-        par_split = [patern.findall(t).pop()
+        pattern = re.compile(self.parents_search_pattern)
+
+        par_split = [(pattern.findall(t).pop(), t)
                      for t in self.hierarchy.split("/")]
 
-        for key in par_split:
-            parent = self._convert_to_entity(key)
+        for type, template in par_split:
+            parent = self._convert_to_entity(type, template)
             self.parents.append(parent)

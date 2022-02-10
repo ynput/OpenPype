@@ -20,26 +20,21 @@
             "type": "raw-json"
         },
         {
-            "type": "dict",
+            "type": "dict-modifiable",
             "key": "variants",
-            "children": [
-                {
-                    "type": "schema_template",
-                    "name": "template_host_variant",
-                    "template_data": [
-                        {
-                            "app_variant_label": "2020",
-                            "app_variant": "2020",
-                            "variant_skip_paths": ["use_python_2"]
-                        },
-                        {
-                            "app_variant_label": "2021",
-                            "app_variant": "2021",
-                            "variant_skip_paths": ["use_python_2"]
-                        }
-                    ]
-                }
-            ]
+            "collapsible_key": true,
+            "use_label_wrap": false,
+            "object_type": {
+                "type": "dict",
+                "collapsible": true,
+                "children": [
+                    {
+                        "type": "schema_template",
+                        "name": "template_host_variant_items",
+                        "skip_paths": ["use_python_2"]
+                    }
+                ]
+            }
         }
     ]
 }
