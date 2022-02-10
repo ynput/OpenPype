@@ -929,7 +929,9 @@ class ApplicationLaunchContext:
         # --- START: Backwards compatibility ---
         hooks_dir = os.path.join(pype_dir, "hooks")
 
-        subfolder_names = ["global", self.host_name]
+        subfolder_names = ["global"]
+        if self.host_name:
+            subfolder_names.append(self.host_name)
         for subfolder_name in subfolder_names:
             path = os.path.join(hooks_dir, subfolder_name)
             if (
@@ -940,10 +942,12 @@ class ApplicationLaunchContext:
                 paths.append(path)
         # --- END: Backwards compatibility ---
 
-        subfolders_list = (
-            ["hooks"],
-            ("hosts", self.host_name, "hooks")
-        )
+        subfolders_list = [
+            ["hooks"]
+        ]
+        if self.host_name:
+            subfolders_list.append(["hosts", self.host_name, "hooks"])
+
         for subfolders in subfolders_list:
             path = os.path.join(pype_dir, *subfolders)
             if (
