@@ -97,8 +97,10 @@ class LoadClip(opfapi.ClipLoader):
             "objectName": clip_name
         })
 
+        opc_segment = opfapi.get_clip_segment(opc)
+
         return opfapi.containerise(
-            opc,
+            opc_segment,
             name, namespace, context,
             self.__class__.__name__,
             data_imprint)

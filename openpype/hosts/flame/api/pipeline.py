@@ -69,7 +69,7 @@ def uninstall():
     log.info("OpenPype Flame host uninstalled ...")
 
 
-def containerise(flame_clip,
+def containerise(flame_clip_segment,
                  name,
                  namespace,
                  context,
@@ -91,11 +91,9 @@ def containerise(flame_clip,
 
     log.debug("_ data_imprint: {}".format(data_imprint))
 
-    segment = flame_clip.versions[-1].tracks[-1].segments[-1]
+    set_segment_data_marker(flame_clip_segment, data_imprint)
 
-    set_segment_data_marker(segment, data_imprint)
-
-    return flame_clip
+    return True
 
 
 def ls():
