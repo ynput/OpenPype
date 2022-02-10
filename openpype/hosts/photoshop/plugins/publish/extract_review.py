@@ -27,25 +27,39 @@ class ExtractReview(openpype.api.Extractor):
         staging_dir = self.staging_dir(instance)
         self.log.info("Outputting image to {}".format(staging_dir))
 
+        fps = instance.data.get("fps", 25)
         stub = photoshop.stub()
         self.output_seq_filename = os.path.splitext(
             stub.get_active_document_name())[0] + ".%04d.jpg"
 
-        new_img_list = src_img_list = []
-        if self.make_image_sequence:
-            src_img_list = self._get_image_path_from_instances(instance)
-        if self.make_image_sequence and src_img_list:
-            new_img_list = self._copy_image_to_staging_dir(
-                staging_dir,
-                src_img_list
-            )
-        else:
-            layers = self._get_layers_from_instance(instance)
-            new_img_list = self._saves_flattened_layers(staging_dir, layers)
+
+        layers = self._get_layers_from_image_instances(instance)
+        self.log.info("Layers image instance found: {}".format(layers))
+
+        img_list = []
+        if self.make_image_sequence and layers:
+            self.log.info("Extract layers to image sequence.")
+            img_list = self._saves_sequences_layers(staging_dir, layers)
+
             instance.data["representations"].append({
                 "name": "jpg",
                 "ext": "jpg",
-                "files": new_img_list,
+                "files": img_list,
+                "frameStart": 0,
+                "frameEnd": len(img_list),
+                "fps": fps,
+                "stagingDir": staging_dir,
+                "tags": self.jpg_options['tags'], #"review"
+            })
+
+        else:
+            self.log.info("Extract layers to flatten image.")
+            img_list = self._saves_flattened_layers(staging_dir, layers)
+
+            instance.data["representations"].append({
+                "name": "jpg",
+                "ext": "jpg",
+                "files": img_list,
                 "stagingDir": staging_dir,
                 "tags": self.jpg_options['tags']
             })
@@ -78,7 +92,7 @@ class ExtractReview(openpype.api.Extractor):
         # Generate mov.
         mov_path = os.path.join(staging_dir, "review.mov")
         self.log.info(f"Generate mov review: {mov_path}")
-        img_number = len(new_img_list)
+        img_number = len(img_list)
         args = [
             ffmpeg_path,
             "-y",
@@ -96,7 +110,7 @@ class ExtractReview(openpype.api.Extractor):
             "stagingDir": staging_dir,
             "frameStart": 1,
             "frameEnd": img_number,
-            "fps": 25,
+            "fps": fps,
             "preview": True,
             "tags": self.mov_options['tags']
         })
@@ -138,14 +152,14 @@ class ExtractReview(openpype.api.Extractor):
 
         return copy_files
 
-    def _get_layers_from_instance(self, instance):
+    def _get_layers_from_image_instances(self, instance):
         layers = []
         for image_instance in instance.context:
             if image_instance.data["family"] != "image":
                 continue
             layers.append(image_instance[0])
 
-        return layers
+        return sorted(layers)
 
     def _saves_flattened_layers(self, staging_dir, layers):
         img_filename = self.output_seq_filename % 0
@@ -153,16 +167,28 @@ class ExtractReview(openpype.api.Extractor):
         stub = photoshop.stub()
 
         with photoshop.maintained_visibility():
+            self.log.info("Extracting {}".format(layers))
             if layers:
-                # Hide all other layers.
-                extract_ids = set([ll.id for ll in stub.
-                                   get_layers_in_layers(layers)])
-                self.log.debug("extract_ids {}".format(extract_ids))
-                for layer in stub.get_layers():
-                    # limit unnecessary calls to client
-                    if layer.visible and layer.id not in extract_ids:
-                        stub.set_visible(layer.id, False)
+                stub.hide_all_others_layers(layers)
 
             stub.saveAs(output_image_path, 'jpg', True)
 
         return img_filename
+
+    def _saves_sequences_layers(self, staging_dir, layers):
+        stub = photoshop.stub()
+
+        list_img_filename = []
+        with photoshop.maintained_visibility():
+            for i, layer in enumerate(layers):
+                self.log.info("Extracting {}".format(layer))
+
+                img_filename = self.output_seq_filename % i
+                output_image_path = os.path.join(staging_dir, img_filename)
+                list_img_filename.append(img_filename)
+
+                with photoshop.maintained_visibility():
+                    stub.hide_all_others_layers([layer])
+                    stub.saveAs(output_image_path, 'jpg', True)
+
+        return list_img_filename

@@ -26,14 +26,7 @@ class ExtractImage(openpype.api.Extractor):
         with photoshop.maintained_selection():
             self.log.info("Extracting %s" % str(list(instance)))
             with photoshop.maintained_visibility():
-                # Hide all other layers.
-                extract_ids = set([ll.id for ll in stub.
-                                   get_layers_in_layers([instance[0]])])
-
-                for layer in stub.get_layers():
-                    # limit unnecessary calls to client
-                    if layer.visible and layer.id not in extract_ids:
-                        stub.set_visible(layer.id, False)
+                stub.hide_all_others_layers([instance[0]])
 
                 file_basename = os.path.splitext(
                     stub.get_active_document_name()
