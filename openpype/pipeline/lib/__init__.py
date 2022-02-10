@@ -5,11 +5,17 @@ from .events import (
 
 from .attribute_definitions import (
     AbtractAttrDef,
+
+    UIDef,
+    UISeparatorDef,
+    UILabelDef,
+
     UnknownDef,
     NumberDef,
     TextDef,
     EnumDef,
-    BoolDef
+    BoolDef,
+    FileDef,
 )
 
 
@@ -18,9 +24,15 @@ __all__ = (
     "BeforeWorkfileSave",
 
     "AbtractAttrDef",
+
+    "UIDef",
+    "UISeparatorDef",
+    "UILabelDef",
+
     "UnknownDef",
     "NumberDef",
     "TextDef",
     "EnumDef",
-    "BoolDef"
+    "BoolDef",
+    "FileDef",
 )

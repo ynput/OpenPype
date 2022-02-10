@@ -1,9 +1,10 @@
-from avalon import api
-import openpype.hosts.maya.api.plugin
-from openpype.hosts.maya.api.plugin import get_reference_node
 import os
-from openpype.api import get_project_settings
 import clique
+
+from avalon import api
+from openpype.api import get_project_settings
+from openpype.hosts.maya.api.lib import unique_namespace
+from openpype.hosts.maya.api.pipeline import containerise
 
 
 class AssStandinLoader(api.Loader):
@@ -20,8 +21,6 @@ class AssStandinLoader(api.Loader):
     def load(self, context, name, namespace, options):
 
         import maya.cmds as cmds
-        import avalon.maya.lib as lib
-        from avalon.maya.pipeline import containerise
         import mtoa.ui.arnoldmenu
         import pymel.core as pm
 
@@ -33,13 +32,13 @@ class AssStandinLoader(api.Loader):
         frameStart = version_data.get("frameStart", None)
 
         asset = context['asset']['name']
-        namespace = namespace or lib.unique_namespace(
+        namespace = namespace or unique_namespace(
             asset + "_",
             prefix="_" if asset[0].isdigit() else "",
             suffix="_",
         )
 
-        # cmds.loadPlugin("gpuCache", quiet=True)
+        cmds.loadPlugin("mtoa", quiet=True)
 
         # Root group
         label = "{}:{}".format(namespace, name)

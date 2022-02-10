@@ -1,9 +1,10 @@
-from avalon import api, houdini
+import avalon.api
+from openpype.hosts.houdini import api
 
 
 def main():
     print("Installing OpenPype ...")
-    api.install(houdini)
+    avalon.api.install(api)
 
 
 main()

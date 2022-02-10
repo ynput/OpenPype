@@ -6,6 +6,7 @@ from avalon.vendor import qtawesome
 
 from .delegates import ActionDelegate
 from . import lib
+from .actions import ApplicationAction
 from .models import ActionModel
 from openpype.tools.flickcharm import FlickCharm
 from .constants import (
@@ -239,9 +240,8 @@ class ActionBar(QtWidgets.QWidget):
         is_variant_group = index.data(VARIANT_GROUP_ROLE)
         if not is_group and not is_variant_group:
             action = index.data(ACTION_ROLE)
-            if hasattr(action, "data"):
-                # Only Applications have `data` attribute. Actions do not.
-                # So we make sure we only consider the data if it exists.
+            # Change data of application action
+            if issubclass(action, ApplicationAction):
                 if index.data(FORCE_NOT_OPEN_WORKFILE_ROLE):
                     action.data["start_last_workfile"] = False
                 else:

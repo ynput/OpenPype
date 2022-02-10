@@ -1,12 +1,14 @@
 # -*- coding: utf-8 -*-
 """Look loader."""
-from avalon import api, io
 import json
-import openpype.hosts.maya.api.plugin
-import openpype.hosts.maya.api.lib
 from collections import defaultdict
-from openpype.widgets.message_window import ScrollMessageBox
+
 from Qt import QtWidgets
+
+from avalon import api, io
+import openpype.hosts.maya.api.plugin
+from openpype.hosts.maya.api import lib
+from openpype.widgets.message_window import ScrollMessageBox
 
 
 class LookLoader(openpype.hosts.maya.api.plugin.ReferenceLoader):
@@ -22,9 +24,8 @@ class LookLoader(openpype.hosts.maya.api.plugin.ReferenceLoader):
 
     def process_reference(self, context, name, namespace, options):
         import maya.cmds as cmds
-        from avalon import maya
 
-        with maya.maintained_selection():
+        with lib.maintained_selection():
             nodes = cmds.file(self.fname,
                               namespace=namespace,
                               reference=True,
@@ -90,9 +91,7 @@ class LookLoader(openpype.hosts.maya.api.plugin.ReferenceLoader):
             cmds.file(cr=reference_node)  # cleanReference
 
             # reapply shading groups from json representation on orig nodes
-            openpype.hosts.maya.api.lib.apply_shaders(json_data,
-                                                      shader_nodes,
-                                                      orig_nodes)
+            lib.apply_shaders(json_data, shader_nodes, orig_nodes)
 
             msg = ["During reference update some edits failed.",
                    "All successful edits were kept intact.\n",
@@ -109,8 +108,8 @@ class LookLoader(openpype.hosts.maya.api.plugin.ReferenceLoader):
         # region compute lookup
         nodes_by_id = defaultdict(list)
         for n in nodes:
-            nodes_by_id[openpype.hosts.maya.api.lib.get_id(n)].append(n)
-        openpype.hosts.maya.api.lib.apply_attributes(attributes, nodes_by_id)
+            nodes_by_id[lib.get_id(n)].append(n)
+        lib.apply_attributes(attributes, nodes_by_id)
 
     def _get_nodes_with_shader(self, shader_nodes):
         """

@@ -5,7 +5,6 @@ import itertools
 
 from maya import cmds
 
-import avalon.maya
 import openpype.api
 from openpype.hosts.maya.api import lib
 
@@ -158,9 +157,9 @@ class ExtractCameraMayaScene(openpype.api.Extractor):
         path = os.path.join(dir_path, filename)
 
         # Perform extraction
-        with avalon.maya.maintained_selection():
+        with lib.maintained_selection():
             with lib.evaluation("off"):
-                with avalon.maya.suspended_refresh():
+                with lib.suspended_refresh():
                     if bake_to_worldspace:
                         self.log.info(
                             "Performing camera bakes: {}".format(transform))

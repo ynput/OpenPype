@@ -1,7 +1,8 @@
-from avalon import api, io
-from avalon.maya.pipeline import containerise
-from avalon.maya import lib
 from Qt import QtWidgets, QtCore
+
+from avalon import api, io
+from openpype.hosts.maya.api.pipeline import containerise
+from openpype.hosts.maya.api.lib import unique_namespace
 
 from maya import cmds
 
@@ -88,7 +89,7 @@ class ImagePlaneLoader(api.Loader):
         new_nodes = []
         image_plane_depth = 1000
         asset = context['asset']['name']
-        namespace = namespace or lib.unique_namespace(
+        namespace = namespace or unique_namespace(
             asset + "_",
             prefix="_" if asset[0].isdigit() else "",
             suffix="_",

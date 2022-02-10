@@ -1,9 +1,10 @@
-import openpype.hosts.maya.api.plugin
-from avalon import api, maya
-from maya import cmds
 import os
+from maya import cmds
+from avalon import api
 from openpype.api import get_project_settings
 from openpype.lib import get_creator_by_name
+import openpype.hosts.maya.api.plugin
+from openpype.hosts.maya.api.lib import maintained_selection
 
 
 class ReferenceLoader(openpype.hosts.maya.api.plugin.ReferenceLoader):
@@ -32,7 +33,6 @@ class ReferenceLoader(openpype.hosts.maya.api.plugin.ReferenceLoader):
 
     def process_reference(self, context, name, namespace, options):
         import maya.cmds as cmds
-        from avalon import maya
         import pymel.core as pm
 
         try:
@@ -44,7 +44,7 @@ class ReferenceLoader(openpype.hosts.maya.api.plugin.ReferenceLoader):
         # True by default to keep legacy behaviours
         attach_to_root = options.get("attach_to_root", True)
 
-        with maya.maintained_selection():
+        with maintained_selection():
             cmds.loadPlugin("AbcImport.mll", quiet=True)
             nodes = cmds.file(self.fname,
                               namespace=namespace,
@@ -149,7 +149,7 @@ class ReferenceLoader(openpype.hosts.maya.api.plugin.ReferenceLoader):
 
         # Create the animation instance
         creator_plugin = get_creator_by_name(self.animation_creator_name)
-        with maya.maintained_selection():
+        with maintained_selection():
             cmds.select([output, controls] + roots, noExpand=True)
             api.create(
                 creator_plugin,

@@ -15,7 +15,7 @@ from .constants import (
 from .actions import ApplicationAction
 from Qt import QtCore, QtGui
 from avalon.vendor import qtawesome
-from avalon import style, api
+from avalon import api
 from openpype.lib import ApplicationManager, JSONSettingRegistry
 
 log = logging.getLogger(__name__)

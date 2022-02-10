@@ -42,7 +42,8 @@ RUN yum -y install https://dl.fedoraproject.org/pub/epel/epel-release-latest-7.n
         patchelf \
         automake \
         autoconf \
-	    ncurses \
+        patch \
+        ncurses \
 	    ncurses-devel \
         qt5-qtbase-devel \
         xcb-util-wm \
