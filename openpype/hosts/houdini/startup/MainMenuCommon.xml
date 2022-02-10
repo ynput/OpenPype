@@ -5,7 +5,7 @@
             <label>OpenPype</label>
 
             <scriptItem id="avalon_create">
-                <label>Create ...</label>
+                <label>Create...</label>
                 <scriptCode><![CDATA[
 import hou
 from openpype.tools.utils import host_tools
@@ -15,7 +15,7 @@ host_tools.show_creator(parent)
             </scriptItem>
 
             <scriptItem id="publish">
-                <label>Publish ...</label>
+                <label>Publish...</label>
                 <scriptCode><![CDATA[
             import hou
             from openpype.tools.utils import host_tools
@@ -25,7 +25,7 @@ host_tools.show_creator(parent)
             </scriptItem>
 
             <scriptItem id="avalon_manage">
-                <label>Manage ...</label>
+                <label>Manage...</label>
                 <scriptCode><![CDATA[
 import hou
 from openpype.tools.utils import host_tools
@@ -35,7 +35,7 @@ host_tools.show_scene_inventory(parent)
             </scriptItem>
 
             <scriptItem id="library_load">
-                <label>Library ...</label>
+                <label>Library...</label>
                 <scriptCode><![CDATA[
 import hou
 from openpype.tools.utils import host_tools
@@ -47,7 +47,7 @@ host_tools.show_library_loader(parent=parent)
             <separatorItem/>
 
             <scriptItem id="workfiles">
-                <label>Work Files ...</label>
+                <label>Work Files...</label>
                 <scriptCode><![CDATA[
 import hou
 from openpype.tools.utils import host_tools
