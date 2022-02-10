@@ -328,7 +328,7 @@ class PhotoshopServerStub:
         )
 
     def hide_all_others_layers(self, layers):
-        """hides all layers that are not part of the list or that are not 
+        """hides all layers that are not part of the list or that are not
         children of this list
 
         Args:
