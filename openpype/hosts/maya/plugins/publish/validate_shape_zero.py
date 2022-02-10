@@ -5,8 +5,6 @@ import openpype.api
 import openpype.hosts.maya.api.action
 from openpype.hosts.maya.api import lib
 
-from avalon.maya import maintained_selection
-
 
 class ValidateShapeZero(pyblish.api.Validator):
     """Shape components may not have any "tweak" values
@@ -51,7 +49,7 @@ class ValidateShapeZero(pyblish.api.Validator):
         if not invalid_shapes:
             return
 
-        with maintained_selection():
+        with lib.maintained_selection():
             with lib.tool("selectSuperContext"):
                 for shape in invalid_shapes:
                     cmds.polyCollapseTweaks(shape)

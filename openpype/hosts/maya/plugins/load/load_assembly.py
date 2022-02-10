@@ -13,11 +13,11 @@ class AssemblyLoader(api.Loader):
 
     def load(self, context, name, namespace, data):
 
-        from avalon.maya.pipeline import containerise
-        from avalon.maya import lib
+        from openpype.hosts.maya.api.pipeline import containerise
+        from openpype.hosts.maya.api.lib import unique_namespace
 
         asset = context['asset']['name']
-        namespace = namespace or lib.unique_namespace(
+        namespace = namespace or unique_namespace(
             asset + "_",
             prefix="_" if asset[0].isdigit() else "",
             suffix="_",
@@ -25,9 +25,11 @@ class AssemblyLoader(api.Loader):
 
         from openpype.hosts.maya.api import setdress
 
-        containers = setdress.load_package(filepath=self.fname,
-                                               name=name,
-                                               namespace=namespace)
+        containers = setdress.load_package(
+            filepath=self.fname,
+            name=name,
+            namespace=namespace
+        )
 
         self[:] = containers
 
