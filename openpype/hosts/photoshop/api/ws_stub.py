@@ -327,6 +327,19 @@ class PhotoshopServerStub:
             )
         )
 
+    def hide_all_others_layers(self, layers):
+        """hides all layers that are not part of the list or that are not 
+        children of this list
+
+        Args:
+            layers (list): list of PSItem
+        """
+        extract_ids = set([ll.id for ll in self.get_layers_in_layers(layers)])
+
+        for layer in self.get_layers():
+            if layer.visible and layer.id not in extract_ids:
+                self.set_visible(layer.id, False)
+
     def get_layers_metadata(self):
         """Reads layers metadata from Headline from active document in PS.
         (Headline accessible by File > File Info)
