@@ -160,6 +160,8 @@ def sync_openpype():
     dbcon.install()
     all_projects = gazu.project.all_projects()
     for project in all_projects:
+        bulk_writes = []
+
         # Create project locally
         # Try to find project document
         project_name = project["name"]
@@ -179,6 +181,23 @@ def sync_openpype():
         if not project_doc:
             print(f"Creating project '{project_name}'")
             project_doc = create_project(project_name, project_code, dbcon=dbcon)
+
+            # Project tasks
+            bulk_writes.append(
+                UpdateOne(
+                    {"_id": project_doc["_id"]},
+                    {
+                        "$set": {
+                            "config.tasks": {
+                                t["name"]: {
+                                    "short_name": t.get("short_name", t["name"])
+                                }
+                                for t in gazu.task.all_task_types_for_project(project)
+                            }
+                        }
+                    },
+                )
+            )
 
         # Query all assets of the local project
         project_col = dbcon.database[project_code]
@@ -217,7 +236,7 @@ def sync_openpype():
 
         # Update
         all_entities = all_assets + all_episodes + all_seqs + all_shots
-        bulk_writes = update_op_assets(project_col, all_entities, asset_doc_ids)
+        bulk_writes.extend(update_op_assets(project_col, all_entities, asset_doc_ids))
 
         # Delete
         diff_assets = set(asset_doc_ids.keys()) - {
@@ -228,7 +247,7 @@ def sync_openpype():
                 [DeleteOne(asset_doc_ids[asset_id]) for asset_id in diff_assets]
             )
 
-        # Write into DB
+        # Write into DB # TODO make it common for all projects
         if bulk_writes:
             project_col.bulk_write(bulk_writes)
 
