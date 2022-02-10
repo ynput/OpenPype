@@ -570,7 +570,7 @@ class AbstractSubmitDeadline(pyblish.api.InstancePlugin):
                     new_exp = []
                     for f in exp:
                         new_exp.append(
-                            f.replace(orig_scene, new_scene)
+                            str(f).replace(orig_scene, new_scene)
                         )
                     self._instance.data["expectedFiles"] = new_exp
 
