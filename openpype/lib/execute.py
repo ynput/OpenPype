@@ -1,7 +1,6 @@
 import os
 import subprocess
 import distutils.spawn
-import platform
 
 from .log import PypeLogger as Logger
 
@@ -273,4 +272,3 @@ def get_linux_launcher_args(*args):
         launch_args.extend(args)
 
     return launch_args
-
