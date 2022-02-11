@@ -2,9 +2,9 @@ from collections import defaultdict
 
 from Qt import QtCore
 
-from avalon.tools import models
 from avalon.vendor import qtawesome
 from avalon.style import colors
+from openpype.tools.utils import models
 
 
 class AssetModel(models.TreeModel):
