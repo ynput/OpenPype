@@ -15,7 +15,6 @@ import gazu
 from openpype.lib import create_project
 from openpype.modules import JsonFilesSettingsDef, OpenPypeModule, ModulesManager
 from pymongo import DeleteOne, UpdateOne
-from pymongo.collection import Collection
 from openpype_interfaces import IPluginPaths, ITrayAction
 
 
