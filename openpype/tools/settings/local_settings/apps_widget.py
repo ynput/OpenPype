@@ -180,7 +180,16 @@ class LocalApplicationsWidgets(QtWidgets.QWidget):
             self.content_layout.removeItem(item)
         self.widgets_by_group_name.clear()
 
+        app_items = {}
         for key, entity in self.system_settings_entity["applications"].items():
+            if key != "additional_apps":
+                app_items[key] = entity
+                continue
+
+            for _key, _entity in entity.items():
+                app_items[_key] = _entity
+
+        for key, entity in app_items.items():
             # Filter not enabled app groups
             if not entity["enabled"].value:
                 continue
