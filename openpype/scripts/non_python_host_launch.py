@@ -85,7 +85,7 @@ def main(argv):
     elif host_name == "aftereffects":
         from openpype.hosts.aftereffects.api.lib import main
     elif host_name == "harmony":
-        from avalon.harmony.lib import main
+        from openpype.hosts.harmony.api.lib import main
     else:
         title = "Unknown host name"
         message = (
