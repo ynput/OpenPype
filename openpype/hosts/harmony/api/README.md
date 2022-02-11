@@ -5,7 +5,7 @@
 The easiest way to setup for using Toon Boom Harmony is to use the built-in launch:
 
 ```
-python -c "import avalon.harmony;avalon.harmony.launch("path/to/harmony/executable")"
+python -c "import openpype.hosts.harmony.api as harmony;harmony.launch("path/to/harmony/executable")"
 ```
 
 Communication with Harmony happens with a server/client relationship where the server is in the Python process and the client is in the Harmony process. Messages between Python and Harmony are required to be dictionaries, which are serialized to strings:
@@ -42,7 +42,7 @@ First two bytes are *magic* bytes stands for **A**valon **H**armony. Next four b
 
 ## Usage
 
-The integration creates an `Avalon` menu entry where all Avalon related tools are located.
+The integration creates an `Openpype` menu entry where all related tools are located.
 
 **NOTE: Menu creation can be temperamental. The best way is to launch Harmony and do nothing else until Harmony is fully launched.**
 
@@ -59,7 +59,7 @@ You can show the Workfiles app when Harmony launches by setting environment vari
 ### Low level messaging
 To send from Python to Harmony you can use the exposed method:
 ```python
-from avalon import harmony
+import openpype.hosts.harmony.api as harmony
 from uuid import uuid4
 
 
@@ -75,7 +75,7 @@ print(harmony.send({"function": func, "args": ["Python"]})["result"])
 
 To send a function with multiple arguments its best to declare the arguments within the function:
 ```python
-from avalon import harmony
+import openpype.hosts.harmony.api as harmony
 from uuid import uuid4
 
 signature = str(uuid4()).replace("-", "_")
@@ -94,29 +94,29 @@ print(harmony.send({"function": func, "args": ["Hello", "Python"]})["result"])
 
 When naming your functions be aware that they are executed in global scope. They can potentially clash with Harmony own function and object names.
 For example `func` is already existing Harmony object. When you call your function `func` it will overwrite in global scope the one from Harmony, causing
-erratic behavior of Harmony. Avalon is prefixing those function names with [UUID4](https://docs.python.org/3/library/uuid.html) making chance of such clash minimal.
+erratic behavior of Harmony. Openpype is prefixing those function names with [UUID4](https://docs.python.org/3/library/uuid.html) making chance of such clash minimal.
 See above examples how that works. This will result in function named `38dfcef0_a6d7_4064_8069_51fe99ab276e_hello()`.
 You can find list of Harmony object and function in Harmony documentation.
 
 ### Higher level (recommended)
 
-Instead of sending functions directly to Harmony, it is more efficient and safe to just add your code to `js/AvalonHarmony.js` or utilize `{"script": "..."}` method.
+Instead of sending functions directly to Harmony, it is more efficient and safe to just add your code to `js/PypeHarmony.js` or utilize `{"script": "..."}` method.
 
-#### Extending AvalonHarmony.js
+#### Extending PypeHarmony.js
 
-Add your function to `AvalonHarmony.js`. For example:
+Add your function to `PypeHarmony.js`. For example:
 
 ```javascript
-AvalonHarmony.myAwesomeFunction = function() {
+PypeHarmony.myAwesomeFunction = function() {
   someCoolStuff();
 };
 ```
 Then you can call that javascript code from your Python like:
 
 ```Python
-from avalon import harmony
+import openpype.hosts.harmony.api as harmony
 
-harmony.send({"function": "AvalonHarmony.myAwesomeFunction"});
+harmony.send({"function": "PypeHarmony.myAwesomeFunction"});
 
 ```
 
@@ -159,7 +159,7 @@ Now in python, just read all those files and send them to Harmony.
 
 ```python
 from pathlib import Path
-from avalon import harmony
+import openpype.hosts.harmony.api as harmony
 
 path_to_js = Path('/path/to/my/js')
 script_to_send = ""
@@ -178,14 +178,14 @@ harmony.send({"function": "Master.Boo.B"})
 ### Scene Save
 Instead of sending a request to Harmony with `scene.saveAll` please use:
 ```python
-from avalon import harmony
+import openpype.hosts.harmony.api as harmony
 harmony.save_scene()
 ```
 
 <details>
   <summary>Click to expand for details on scene save.</summary>
 
-  Because Avalon tools does not deal well with folders for a single entity like a Harmony scene, this integration has implemented to use zip files to encapsulate the Harmony scene folders. Saving scene in Harmony via menu or CTRL+S will not result in producing zip file, only saving it from Workfiles will. This is because
+  Because Openpype tools does not deal well with folders for a single entity like a Harmony scene, this integration has implemented to use zip files to encapsulate the Harmony scene folders. Saving scene in Harmony via menu or CTRL+S will not result in producing zip file, only saving it from Workfiles will. This is because
   zipping process can take some time in which we cannot block user from saving again. If xstage file is changed during zipping process it will produce corrupted zip
   archive.
 </details>
@@ -195,7 +195,7 @@ These plugins were made with the [polly config](https://github.com/mindbender-st
 
 #### Creator Plugin
 ```python
-from avalon import harmony
+import openpype.hosts.harmony.api as harmony
 from uuid import uuid4
 
 
@@ -212,7 +212,7 @@ class CreateComposite(harmony.Creator):
 
 The creator plugin can be configured to use other node types. For example here is a write node creator:
 ```python
-from avalon import harmony
+import openpype.hosts.harmony.api as harmony
 
 
 class CreateRender(harmony.Creator):
@@ -242,7 +242,7 @@ class CreateRender(harmony.Creator):
 #### Collector Plugin
 ```python
 import pyblish.api
-from avalon import harmony
+import openpype.hosts.harmony.api as harmony
 
 
 class CollectInstances(pyblish.api.ContextPlugin):
@@ -289,7 +289,7 @@ class CollectInstances(pyblish.api.ContextPlugin):
 import os
 
 import pyblish.api
-from avalon import harmony
+import openpype.hosts.harmony.api as harmony
 
 import clique
 
@@ -419,7 +419,8 @@ class ExtractImage(pyblish.api.InstancePlugin):
 ```python
 import os
 
-from avalon import api, harmony, io
+from avalon import api, io
+import openpype.hosts.harmony.api as harmony
 
 signature = str(uuid4()).replace("-", "_")
 copy_files = """function copyFile(srcFilename, dstFilename)
