@@ -1,7 +1,6 @@
 import os
 import subprocess
 import distutils.spawn
-import platform
 
 from .log import PypeLogger as Logger
 
