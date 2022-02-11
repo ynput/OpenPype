@@ -126,43 +126,14 @@
                             }
                         },
                         {
-                            "type": "dict",
+                            "type": "dict-modifiable",
+                            "docstring": "Regular expression to filter for which subset review should be created in publish job.",
                             "key": "aov_filter",
                             "label": "Reviewable subsets filter",
-                            "children": [
-                                {
-                                    "type": "list",
-                                    "key": "maya",
-                                    "label": "Maya",
-                                    "object_type": {
-                                        "type": "text"
-                                    }
-                                },
-                                {
-                                    "type": "list",
-                                    "key": "nuke",
-                                    "label": "Nuke",
-                                    "object_type": {
-                                        "type": "text"
-                                    }
-                                },
-                                {
-                                    "type": "list",
-                                    "key": "aftereffects",
-                                    "label": "After Effects",
-                                    "object_type": {
-                                        "type": "text"
-                                    }
-                                },
-                                {
-                                    "type": "list",
-                                    "key": "celaction",
-                                    "label": "Celaction",
-                                    "object_type": {
-                                        "type": "text"
-                                    }
-                                }
-                            ]
+                            "object_type": {
+                                "type": "list",
+                                "object_type": "text"
+                            }
                         }
                     ]
                 },
