@@ -98,7 +98,7 @@ For this set environment variable `OPENPYPE_SECRET` instead. This value is used 
 
 Then as a first set `OPENPYPE_MONGO` into a keyring:
 ```shell
-openpype_console setvalue keyring://file/environment/OPENPYPE_MONGO=YOUR_MONGO_URL
+openpype_console setsecurevalue keyring://file/environment/OPENPYPE_MONGO=YOUR_MONGO_URL
 ```
 
 #### Check for OpenPype version path
