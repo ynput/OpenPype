@@ -49,6 +49,16 @@
             ]
         },
         {
+            "type": "schema_template",
+            "name": "template_publish_plugin",
+            "template_data": [
+                {
+                    "key": "ValidateFrameRange",
+                    "label": "Validate Frame Range"
+                }
+            ]
+        },
+        {
             "type": "dict",
             "collapsible": true,
             "key": "ValidateShaderName",

@@ -14,6 +14,8 @@ from openpype.api import (
     Logger
 )
 from openpype.lib import filter_profiles
+from openpype.style import get_objected_colors
+from openpype.resources import get_image_path
 
 
 def center_window(window):
@@ -26,6 +28,18 @@ def center_window(window):
     if geo.y() < screen_geo.y():
         geo.setY(screen_geo.y())
     window.move(geo.topLeft())
+
+
+def set_style_property(widget, property_name, property_value):
+    """Set widget's property that may affect style.
+
+    If current property value is different then style of widget is polished.
+    """
+    cur_value = widget.property(property_name)
+    if cur_value == property_value:
+        return
+    widget.setProperty(property_name, property_value)
+    widget.style().polish(widget)
 
 
 def paint_image_with_color(image, color):
@@ -670,3 +684,19 @@ class WrappedCallbackItem:
 
         finally:
             self._done = True
+
+
+def get_warning_pixmap(color=None):
+    """Warning icon as QPixmap.
+
+    Args:
+        color(QtGui.QColor): Color that will be used to paint warning icon.
+    """
+    src_image_path = get_image_path("warning.png")
+    src_image = QtGui.QImage(src_image_path)
+    if color is None:
+        colors = get_objected_colors()
+        color_value = colors["delete-btn-bg"]
+        color = color_value.get_qcolor()
+
+    return paint_image_with_color(src_image, color)

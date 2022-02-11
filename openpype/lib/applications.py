@@ -14,8 +14,7 @@ import six
 
 from openpype.settings import (
     get_system_settings,
-    get_project_settings,
-    get_environments
+    get_project_settings
 )
 from openpype.settings.constants import (
     METADATA_KEYS,
@@ -29,8 +28,7 @@ from .profiles_filtering import filter_profiles
 from .local_settings import get_openpype_username
 from .avalon_context import (
     get_workdir_data,
-    get_workdir_with_workdir_data,
-    get_workfile_template_key
+    get_workdir_with_workdir_data
 )
 
 from .python_module_tools import (
@@ -44,6 +42,9 @@ _logger = None
 
 PLATFORM_NAMES = {"windows", "linux", "darwin"}
 DEFAULT_ENV_SUBGROUP = "standard"
+CUSTOM_LAUNCH_APP_GROUPS = {
+    "djvview"
+}
 
 
 def parse_environments(env_data, env_group=None, platform_name=None):
@@ -405,8 +406,44 @@ class ApplicationManager:
                 clear_metadata=False, exclude_locals=False
             )
 
+        all_app_defs = {}
+        # Prepare known applications
         app_defs = settings["applications"]
+        additional_apps = {}
         for group_name, variant_defs in app_defs.items():
+            if group_name in METADATA_KEYS:
+                continue
+
+            if group_name == "additional_apps":
+                additional_apps = variant_defs
+            else:
+                all_app_defs[group_name] = variant_defs
+
+        # Prepare additional applications
+        # - First find dynamic keys that can be used as labels of group
+        dynamic_keys = {}
+        for group_name, variant_defs in additional_apps.items():
+            if group_name == M_DYNAMIC_KEY_LABEL:
+                dynamic_keys = variant_defs
+                break
+
+        # Add additional apps to known applications
+        for group_name, variant_defs in additional_apps.items():
+            if group_name in METADATA_KEYS:
+                continue
+
+            # Determine group label
+            label = variant_defs.get("label")
+            if not label:
+                # Look for label set in dynamic labels
+                label = dynamic_keys.get(group_name)
+                if not label:
+                    label = group_name
+                variant_defs["label"] = label
+
+            all_app_defs[group_name] = variant_defs
+
+        for group_name, variant_defs in all_app_defs.items():
             if group_name in METADATA_KEYS:
                 continue
 
@@ -892,7 +929,9 @@ class ApplicationLaunchContext:
         # --- START: Backwards compatibility ---
         hooks_dir = os.path.join(pype_dir, "hooks")
 
-        subfolder_names = ["global", self.host_name]
+        subfolder_names = ["global"]
+        if self.host_name:
+            subfolder_names.append(self.host_name)
         for subfolder_name in subfolder_names:
             path = os.path.join(hooks_dir, subfolder_name)
             if (
@@ -903,10 +942,12 @@ class ApplicationLaunchContext:
                 paths.append(path)
         # --- END: Backwards compatibility ---
 
-        subfolders_list = (
-            ["hooks"],
-            ("hosts", self.host_name, "hooks")
-        )
+        subfolders_list = [
+            ["hooks"]
+        ]
+        if self.host_name:
+            subfolders_list.append(["hosts", self.host_name, "hooks"])
+
         for subfolders in subfolders_list:
             path = os.path.join(pype_dir, *subfolders)
             if (

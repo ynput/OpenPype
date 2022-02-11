@@ -17,11 +17,6 @@ class PushFrameValuesToTaskEvent(BaseEvent):
         " (object_type_id in ({}) or is_hierarchical is true)"
     )
 
-    cust_attr_query = (
-        "select value, entity_id from ContextCustomAttributeValue "
-        "where entity_id in ({}) and configuration_id in ({})"
-    )
-
     _cached_task_object_id = None
     _cached_interest_object_ids = None
     _cached_user_id = None
@@ -273,16 +268,23 @@ class PushFrameValuesToTaskEvent(BaseEvent):
             hier_attr_ids.append(attr_id)
 
         conf_ids = list(hier_attr_ids)
+        task_conf_ids = []
         for key, attr_id in task_attrs.items():
             attr_key_by_id[attr_id] = key
             nonhier_id_by_key[key] = attr_id
             conf_ids.append(attr_id)
+            task_conf_ids.append(attr_id)
 
         # Query custom attribute values
         # - result does not contain values for all entities only result of
         #   query callback to ftrack server
         result = query_custom_attributes(
-            session, conf_ids, whole_hierarchy_ids
+            session, list(hier_attr_ids), whole_hierarchy_ids, True
+        )
+        result.extend(
+            query_custom_attributes(
+                session, task_conf_ids, whole_hierarchy_ids, False
+            )
         )
 
         # Prepare variables where result will be stored
@@ -547,7 +549,7 @@ class PushFrameValuesToTaskEvent(BaseEvent):
         )
         attr_ids = set(attr_id_to_key.keys())
 
-        current_values_by_id = self.current_values(
+        current_values_by_id = self.get_current_values(
             session, attr_ids, entity_ids, task_entity_ids, hier_attrs
         )
 
@@ -642,27 +644,17 @@ class PushFrameValuesToTaskEvent(BaseEvent):
 
         return interesting_data, changed_keys_by_object_id
 
-    def current_values(
+    def get_current_values(
         self, session, attr_ids, entity_ids, task_entity_ids, hier_attrs
     ):
         current_values_by_id = {}
         if not attr_ids or not entity_ids:
             return current_values_by_id
-        joined_conf_ids = self.join_query_keys(attr_ids)
-        joined_entity_ids = self.join_query_keys(entity_ids)
 
-        call_expr = [{
-            "action": "query",
-            "expression": self.cust_attr_query.format(
-                joined_entity_ids, joined_conf_ids
-            )
-        }]
-        if hasattr(session, "call"):
-            [values] = session.call(call_expr)
-        else:
-            [values] = session._call(call_expr)
-
-        for item in values["data"]:
+        values = query_custom_attributes(
+            session, attr_ids, entity_ids, True
+        )
+        for item in values:
             entity_id = item["entity_id"]
             attr_id = item["configuration_id"]
             if entity_id in task_entity_ids and attr_id in hier_attrs:

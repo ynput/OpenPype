@@ -13,8 +13,10 @@ import tempfile
 from avalon import io
 import pyblish.api
 from openpype.lib import prepare_template_data
-from openpype.lib.plugin_tools import parse_json
-
+from openpype.lib.plugin_tools import (
+    parse_json,
+    get_subset_name_with_asset_doc
+)
 
 class CollectPublishedFiles(pyblish.api.ContextPlugin):
     """
@@ -34,7 +36,7 @@ class CollectPublishedFiles(pyblish.api.ContextPlugin):
     targets = ["filespublish"]
 
     # from Settings
-    task_type_to_family = {}
+    task_type_to_family = []
 
     def process(self, context):
         batch_dir = context.data["batchDir"]
@@ -47,8 +49,13 @@ class CollectPublishedFiles(pyblish.api.ContextPlugin):
         self.log.info("task_sub:: {}".format(task_subfolders))
 
         asset_name = context.data["asset"]
+        asset_doc = io.find_one({
+            "type": "asset",
+            "name": asset_name
+        })
         task_name = context.data["task"]
         task_type = context.data["taskType"]
+        project_name = context.data["project_name"]
         for task_dir in task_subfolders:
             task_data = parse_json(os.path.join(task_dir,
                                                 "manifest.json"))
@@ -57,20 +64,21 @@ class CollectPublishedFiles(pyblish.api.ContextPlugin):
             is_sequence = len(task_data["files"]) > 1
 
             _, extension = os.path.splitext(task_data["files"][0])
-            family, families, subset_template, tags = self._get_family(
+            family, families, tags = self._get_family(
                 self.task_type_to_family,
                 task_type,
                 is_sequence,
                 extension.replace(".", ''))
 
-            subset = self._get_subset_name(
-                family, subset_template, task_name, task_data["variant"]
+            subset_name = get_subset_name_with_asset_doc(
+                family, task_data["variant"], task_name, asset_doc,
+                project_name=project_name, host_name="webpublisher"
             )
-            version = self._get_last_version(asset_name, subset) + 1
+            version = self._get_last_version(asset_name, subset_name) + 1
 
-            instance = context.create_instance(subset)
+            instance = context.create_instance(subset_name)
             instance.data["asset"] = asset_name
-            instance.data["subset"] = subset
+            instance.data["subset"] = subset_name
             instance.data["family"] = family
             instance.data["families"] = families
             instance.data["version"] = version
@@ -149,7 +157,7 @@ class CollectPublishedFiles(pyblish.api.ContextPlugin):
                 extension (str): without '.'
 
             Returns:
-                (family, [families], subset_template_name, tags) tuple
+                (family, [families], tags) tuple
                 AssertionError if not matching family found
         """
         task_type = task_type.lower()
@@ -160,12 +168,21 @@ class CollectPublishedFiles(pyblish.api.ContextPlugin):
         assert task_obj, "No family configuration for '{}'".format(task_type)
 
         found_family = None
-        for family, content in task_obj.items():
-            if is_sequence != content["is_sequence"]:
+        families_config = []
+        # backward compatibility, should be removed pretty soon
+        if isinstance(task_obj, dict):
+            for family, config in task_obj:
+                config["result_family"] = family
+                families_config.append(config)
+        else:
+            families_config = task_obj
+
+        for config in families_config:
+            if is_sequence != config["is_sequence"]:
                 continue
-            if extension in content["extensions"] or \
-                    '' in content["extensions"]:  # all extensions setting
-                found_family = family
+            if (extension in config["extensions"] or
+                    '' in config["extensions"]):  # all extensions setting
+                found_family = config["result_family"]
                 break
 
         msg = "No family found for combination of " +\
@@ -173,10 +190,9 @@ class CollectPublishedFiles(pyblish.api.ContextPlugin):
                   task_type, is_sequence, extension)
         assert found_family, msg
 
-        return found_family, \
-            content["families"], \
-            content["subset_template_name"], \
-            content["tags"]
+        return (found_family,
+                config["families"],
+                config["tags"])
 
     def _get_last_version(self, asset_name, subset_name):
         """Returns version number or 0 for 'asset' and 'subset'"""
