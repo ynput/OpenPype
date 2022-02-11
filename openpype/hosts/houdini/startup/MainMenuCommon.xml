@@ -17,11 +17,11 @@ host_tools.show_creator(parent)
             <scriptItem id="publish">
                 <label>Publish...</label>
                 <scriptCode><![CDATA[
-            import hou
-            from openpype.tools.utils import host_tools
-            parent = hou.qt.mainWindow()
-            host_tools.show_publish(parent)
-                            ]]>    </scriptCode>
+import hou
+from openpype.tools.utils import host_tools
+parent = hou.qt.mainWindow()
+host_tools.show_publish(parent)
+]]></scriptCode>
             </scriptItem>
 
             <scriptItem id="avalon_manage">
