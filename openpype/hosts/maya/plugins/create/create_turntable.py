@@ -1,7 +1,7 @@
 from openpype.hosts.maya.api import plugin
 from openpype.api import get_project_settings
 from openpype.lib import get_creator_by_name
-from avalon.api import Session, create
+import avalon.api
 
 import os
 import platform
@@ -55,7 +55,7 @@ class CreateTurnTable(plugin.Creator):
 
         cmds.delete(instance)
         Creator = get_creator_by_name("CreateRender")
-        asset = Session["AVALON_ASSET"]
-        container = create(Creator,
+        asset = avalon.api.Session["AVALON_ASSET"]
+        container = avalon.api.create(Creator,
                     name="renderingTurnTableMain",
                     asset=asset)
