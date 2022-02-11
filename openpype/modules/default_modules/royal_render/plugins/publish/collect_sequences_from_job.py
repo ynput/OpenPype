@@ -77,6 +77,7 @@ class CollectSequencesFromJob(pyblish.api.ContextPlugin):
     order = pyblish.api.CollectorOrder
     targets = ["rr_control"]
     label = "Collect Rendered Frames"
+    review = True
 
     def process(self, context):
         if os.environ.get("OPENPYPE_PUBLISH_DATA"):
@@ -150,7 +151,7 @@ class CollectSequencesFromJob(pyblish.api.ContextPlugin):
                 families.append("render")
             if "ftrack" not in families:
                 families.append("ftrack")
-            if "review" not in families:
+            if "review" not in families and self.review:
                 families.append("review")
 
             for collection in collections:

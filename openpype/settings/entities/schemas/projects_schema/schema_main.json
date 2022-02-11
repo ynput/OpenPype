@@ -68,6 +68,10 @@
                 },
                 {
                     "type": "schema",
+                    "name": "schema_project_royalrender"
+                },
+                {
+                    "type": "schema",
                     "name": "schema_project_slack"
                 },
                 {
