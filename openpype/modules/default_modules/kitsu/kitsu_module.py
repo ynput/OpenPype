@@ -159,9 +159,8 @@ def sync_openpype():
     dbcon = AvalonMongoDB()
     dbcon.install()
     all_projects = gazu.project.all_projects()
+    bulk_writes = []
     for project in all_projects:
-        bulk_writes = []
-
         # Create project locally
         # Try to find project document
         project_name = project["name"]
@@ -236,7 +235,7 @@ def sync_openpype():
 
         # Update
         all_entities = all_assets + all_episodes + all_seqs + all_shots
-        bulk_writes.extend(update_op_assets(project_col, all_entities, asset_doc_ids))
+        bulk_writes.extend(update_op_assets(all_entities, asset_doc_ids))
 
         # Delete
         diff_assets = set(asset_doc_ids.keys()) - {
@@ -247,20 +246,19 @@ def sync_openpype():
                 [DeleteOne(asset_doc_ids[asset_id]) for asset_id in diff_assets]
             )
 
-        # Write into DB # TODO make it common for all projects
-        if bulk_writes:
-            project_col.bulk_write(bulk_writes)
+    # Write into DB
+    if bulk_writes:
+        project_col.bulk_write(bulk_writes)
 
     dbcon.uninstall()
 
 
 def update_op_assets(
-    project_col: Collection, items_list: List[dict], asset_doc_ids: Dict[str, dict]
+    items_list: List[dict], asset_doc_ids: Dict[str, dict]
 ) -> List[UpdateOne]:
     """Update OpenPype assets.
     Set 'data' and 'parent' fields.
 
-    :param project_col: Project collection to query data from
     :param items_list: List of zou items to update
     :param asset_doc_ids: Dicts of [{zou_id: asset_doc}, ...]
     :return: List of UpdateOne objects
@@ -268,7 +266,7 @@ def update_op_assets(
     bulk_writes = []
     for item in items_list:
         # Update asset
-        item_doc = project_col.find_one({"data.zou_id": item["id"]})
+        item_doc = asset_doc_ids[item["id"]]
         item_data = item_doc["data"].copy()
 
         # Tasks
@@ -298,8 +296,6 @@ def update_op_assets(
             parent_zou_id = next(
                 i for i in items_list if i["id"] == parent_doc["data"]["zou_id"]
             )["parent_id"]
-
-        # TODO create missing tasks before
 
         # Update 'data' different in zou DB
         updated_data = {
