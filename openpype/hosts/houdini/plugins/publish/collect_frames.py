@@ -6,12 +6,21 @@ import pyblish.api
 from openpype.hosts.houdini.api import lib
 
 
+def splitext(name, allowed_multidot_extensions):
+
+    for ext in allowed_multidot_extensions:
+        if name.endswith(ext):
+            return name[:-len(ext)], ext
+
+    return os.path.splitext(name)
+
+
 class CollectFrames(pyblish.api.InstancePlugin):
     """Collect all frames which would be saved from the ROP nodes"""
 
     order = pyblish.api.CollectorOrder
     label = "Collect Frames"
-    families = ["vdbcache", "imagesequence"]
+    families = ["vdbcache", "imagesequence", "ass"]
 
     def process(self, instance):
 
@@ -29,7 +38,8 @@ class CollectFrames(pyblish.api.InstancePlugin):
             self.log.warning("Using current frame: {}".format(hou.frame()))
             output = output_parm.eval()
 
-        _, ext = os.path.splitext(output)
+        _, ext = splitext(output,
+                          allowed_multidot_extensions=[".ass.gz"])
         file_name = os.path.basename(output)
         result = file_name
 
