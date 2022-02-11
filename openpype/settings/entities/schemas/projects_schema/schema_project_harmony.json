@@ -18,6 +18,10 @@
                     "label": "Collect Palettes",
                     "children": [
                         {
+                            "type": "label",
+                            "label": "Set regular expressions to filter triggering on specific task names. '.*' means on all."
+                        },
+                        {
                             "type": "list",
                             "key": "allowed_tasks",
                             "label": "Allowed tasks",
@@ -30,6 +34,18 @@
                     "name": "template_publish_plugin",
                     "template_data": [
                         {
+                            "docstring": "Check if scene contains audio track.",
+                            "key": "ValidateAudio",
+                            "label": "ValidateAudio"
+                        }
+                    ]
+                },
+                {
+                    "type": "schema_template",
+                    "name": "template_publish_plugin",
+                    "template_data": [
+                        {
+                            "docstring": "Check if loaded container is scene are latest versions.",
                             "key": "ValidateContainers",
                             "label": "ValidateContainers"
                         }
@@ -59,7 +75,7 @@
                         },
                         {
                             "type": "label",
-                            "label": "Validate if FrameStart, FrameEnd and Resolution match shot data"
+                            "label": "Validate if FrameStart, FrameEnd and Resolution match shot data in DB.\n Use regular expressions to limit validations only on particular asset or task names."
                         },
                         {
                             "type": "list",
@@ -77,40 +93,7 @@
                             "type": "list",
                             "key": "skip_timelines_check",
                             "object_type": "text",
-                            "label": "Skip Timeline Check  for Tasks"
-                        }
-                    ]
-                },
-                {
-                    "type": "dict",
-                    "collapsible": true,
-                    "key": "HarmonySubmitDeadline",
-                    "label": "Harmony Submit to Deadline",
-                    "children": [
-                        {
-                            "type": "boolean",
-                            "key": "use_published",
-                            "label": "Use Published scene"
-                        },
-                        {
-                            "type": "number",
-                            "key": "priority",
-                            "label": "Priority"
-                        },
-                        {
-                            "type": "text",
-                            "key": "primary_pool",
-                            "label": "Primary Pool"
-                        },
-                        {
-                            "type": "text",
-                            "key": "secondary_pool",
-                            "label": "Secondary Pool"
-                        },
-                        {
-                            "type": "number",
-                            "key": "chunk_size",
-                            "label": "Frames Per Task"
+                            "label": "Skip Timeline Check for Tasks"
                         }
                     ]
                 }
