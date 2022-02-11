@@ -273,4 +273,3 @@ def get_linux_launcher_args(*args):
         launch_args.extend(args)
 
     return launch_args
-
