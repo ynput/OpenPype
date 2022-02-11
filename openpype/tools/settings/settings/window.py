@@ -164,3 +164,28 @@ class MainWidget(QtWidgets.QWidget):
         result = dialog.exec_()
         if result == 1:
             self.trigger_restart.emit()
+
+    def keyPressEvent(self, event):
+
+        # todo: This might not be the cleanest place but works for prototype
+        if event.matches(QtGui.QKeySequence.Find):
+            print("Search!")
+
+            # todo: search in all widgets (or in active)?
+            widget = self._header_tab_widget.currentWidget()
+            root_entity = widget.entity
+
+            from .search import SearchEntitiesDialog
+            search = SearchEntitiesDialog(root_entity, parent=self)
+            search.resize(700, 500)
+            search.setWindowTitle("Search")
+            search.show()
+
+            def on_path(path):
+                widget.breadcrumbs_widget.change_path(path)
+
+            search.path_clicked.connect(on_path)
+            event.accept()
+            return
+
+        return super(MainWidget, self).keyPressEvent(event)
