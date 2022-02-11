@@ -14,6 +14,16 @@ host_tools.show_creator(parent)
 ]]></scriptCode>
             </scriptItem>
 
+            <scriptItem id="avalon_load">
+                <label>Load...</label>
+                <scriptCode><![CDATA[
+import hou
+from openpype.tools.utils import host_tools
+parent = hou.qt.mainWindow()
+host_tools.show_loader(parent=parent, use_context=True)
+]]> </scriptCode>
+            </scriptItem>
+
             <scriptItem id="publish">
                 <label>Publish...</label>
                 <scriptCode><![CDATA[
@@ -41,7 +51,7 @@ import hou
 from openpype.tools.utils import host_tools
 parent = hou.qt.mainWindow()
 host_tools.show_library_loader(parent=parent)
-]]>                </scriptCode>
+]]></scriptCode>
             </scriptItem>
 
             <separatorItem/>
@@ -53,7 +63,7 @@ import hou
 from openpype.tools.utils import host_tools
 parent = hou.qt.mainWindow()
 host_tools.show_workfiles(parent)
-                ]]></scriptCode>
+]]></scriptCode>
             </scriptItem>
 
             <separatorItem/>
@@ -63,7 +73,8 @@ host_tools.show_workfiles(parent)
 import hou
 from openpype.tools.utils import host_tools
 parent = hou.qt.mainWindow()
-host_tools.show_experimental_tools_dialog(parent)]]></scriptCode>
+host_tools.show_experimental_tools_dialog(parent)
+]]></scriptCode>
             </scriptItem>
         </subMenu>
     </menuBar>
