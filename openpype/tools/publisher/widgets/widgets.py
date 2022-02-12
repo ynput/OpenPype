@@ -8,14 +8,17 @@ from Qt import QtWidgets, QtCore, QtGui
 from avalon.vendor import qtawesome
 
 from openpype.widgets.attribute_defs import create_widget_for_attr_def
+from openpype.tools import resources
 from openpype.tools.flickcharm import FlickCharm
-from openpype.tools.utils import PlaceholderLineEdit
-from openpype.pipeline.create import SUBSET_NAME_ALLOWED_SYMBOLS
-from .models import (
-    AssetsHierarchyModel,
-    TasksModel,
-    RecursiveSortFilterProxyModel,
+from openpype.tools.utils import (
+    PlaceholderLineEdit,
+    IconButton,
+    PixmapLabel,
+    BaseClickableFrame
 )
+from openpype.pipeline.create import SUBSET_NAME_ALLOWED_SYMBOLS
+from .assets_widget import AssetsDialog
+from .tasks_widget import TasksModel
 from .icons import (
     get_pixmap,
     get_icon_path
@@ -26,49 +29,14 @@ from ..constants import (
 )
 
 
-class PixmapLabel(QtWidgets.QLabel):
-    """Label resizing image to height of font."""
-    def __init__(self, pixmap, parent):
-        super(PixmapLabel, self).__init__(parent)
-        self._source_pixmap = pixmap
-
-    def set_source_pixmap(self, pixmap):
-        """Change source image."""
-        self._source_pixmap = pixmap
-        self._set_resized_pix()
-
-    def _set_resized_pix(self):
+class PublishPixmapLabel(PixmapLabel):
+    def _get_pix_size(self):
         size = self.fontMetrics().height()
         size += size % 2
-        self.setPixmap(
-            self._source_pixmap.scaled(
-                size,
-                size,
-                QtCore.Qt.KeepAspectRatio,
-                QtCore.Qt.SmoothTransformation
-            )
-        )
-
-    def resizeEvent(self, event):
-        self._set_resized_pix()
-        super(PixmapLabel, self).resizeEvent(event)
+        return size, size
 
 
-class TransparentPixmapLabel(QtWidgets.QLabel):
-    """Transparent label resizing to width and height of font."""
-    def __init__(self, *args, **kwargs):
-        super(TransparentPixmapLabel, self).__init__(*args, **kwargs)
-
-    def resizeEvent(self, event):
-        size = self.fontMetrics().height()
-        size += size % 2
-        pix = QtGui.QPixmap(size, size)
-        pix.fill(QtCore.Qt.transparent)
-        self.setPixmap(pix)
-        super(TransparentPixmapLabel, self).resizeEvent(event)
-
-
-class IconValuePixmapLabel(PixmapLabel):
+class IconValuePixmapLabel(PublishPixmapLabel):
     """Label resizing to width and height of font.
 
     Handle icon parsing from creators/instances. Using of QAwesome module
@@ -125,7 +93,7 @@ class IconValuePixmapLabel(PixmapLabel):
         return self._default_pixmap()
 
 
-class ContextWarningLabel(PixmapLabel):
+class ContextWarningLabel(PublishPixmapLabel):
     """Pixmap label with warning icon."""
     def __init__(self, parent):
         pix = get_pixmap("warning")
@@ -136,29 +104,6 @@ class ContextWarningLabel(PixmapLabel):
             "Contain invalid context. Please check details."
         )
         self.setObjectName("FamilyIconLabel")
-
-
-class IconButton(QtWidgets.QPushButton):
-    """PushButton with icon and size of font.
-
-    Using font metrics height as icon size reference.
-    """
-
-    def __init__(self, *args, **kwargs):
-        super(IconButton, self).__init__(*args, **kwargs)
-        self.setObjectName("IconButton")
-
-    def sizeHint(self):
-        result = super(IconButton, self).sizeHint()
-        icon_h = self.iconSize().height()
-        font_height = self.fontMetrics().height()
-        text_set = bool(self.text())
-        if not text_set and icon_h < font_height:
-            new_size = result.height() - icon_h + font_height
-            result.setHeight(new_size)
-            result.setWidth(new_size)
-
-        return result
 
 
 class PublishIconBtn(IconButton):
@@ -314,7 +259,7 @@ class ShowPublishReportBtn(PublishIconBtn):
 class RemoveInstanceBtn(PublishIconBtn):
     """Create remove button."""
     def __init__(self, parent=None):
-        icon_path = get_icon_path("delete")
+        icon_path = resources.get_icon_path("delete")
         super(RemoveInstanceBtn, self).__init__(icon_path, parent)
         self.setToolTip("Remove selected instances")
 
@@ -359,170 +304,6 @@ class AbstractInstanceView(QtWidgets.QWidget):
         ).format(self.__class__.__name__))
 
 
-class ClickableFrame(QtWidgets.QFrame):
-    """Widget that catch left mouse click and can trigger a callback.
-
-    Callback is defined by overriding `_mouse_release_callback`.
-    """
-    def __init__(self, parent):
-        super(ClickableFrame, self).__init__(parent)
-
-        self._mouse_pressed = False
-
-    def _mouse_release_callback(self):
-        pass
-
-    def mousePressEvent(self, event):
-        if event.button() == QtCore.Qt.LeftButton:
-            self._mouse_pressed = True
-        super(ClickableFrame, self).mousePressEvent(event)
-
-    def mouseReleaseEvent(self, event):
-        if self._mouse_pressed:
-            self._mouse_pressed = False
-            if self.rect().contains(event.pos()):
-                self._mouse_release_callback()
-
-        super(ClickableFrame, self).mouseReleaseEvent(event)
-
-
-class AssetsDialog(QtWidgets.QDialog):
-    """Dialog to select asset for a context of instance."""
-    def __init__(self, controller, parent):
-        super(AssetsDialog, self).__init__(parent)
-        self.setWindowTitle("Select asset")
-
-        model = AssetsHierarchyModel(controller)
-        proxy_model = RecursiveSortFilterProxyModel()
-        proxy_model.setSourceModel(model)
-        proxy_model.setFilterCaseSensitivity(QtCore.Qt.CaseInsensitive)
-
-        filter_input = PlaceholderLineEdit(self)
-        filter_input.setPlaceholderText("Filter assets..")
-
-        asset_view = QtWidgets.QTreeView(self)
-        asset_view.setModel(proxy_model)
-        asset_view.setHeaderHidden(True)
-        asset_view.setFrameShape(QtWidgets.QFrame.NoFrame)
-        asset_view.setEditTriggers(QtWidgets.QTreeView.NoEditTriggers)
-        asset_view.setAlternatingRowColors(True)
-        asset_view.setSelectionBehavior(QtWidgets.QTreeView.SelectRows)
-        asset_view.setAllColumnsShowFocus(True)
-
-        ok_btn = QtWidgets.QPushButton("OK", self)
-        cancel_btn = QtWidgets.QPushButton("Cancel", self)
-
-        btns_layout = QtWidgets.QHBoxLayout()
-        btns_layout.addStretch(1)
-        btns_layout.addWidget(ok_btn)
-        btns_layout.addWidget(cancel_btn)
-
-        layout = QtWidgets.QVBoxLayout(self)
-        layout.addWidget(filter_input, 0)
-        layout.addWidget(asset_view, 1)
-        layout.addLayout(btns_layout, 0)
-
-        filter_input.textChanged.connect(self._on_filter_change)
-        ok_btn.clicked.connect(self._on_ok_clicked)
-        cancel_btn.clicked.connect(self._on_cancel_clicked)
-
-        self._filter_input = filter_input
-        self._ok_btn = ok_btn
-        self._cancel_btn = cancel_btn
-
-        self._model = model
-        self._proxy_model = proxy_model
-
-        self._asset_view = asset_view
-
-        self._selected_asset = None
-        # Soft refresh is enabled
-        # - reset will happen at all cost if soft reset is enabled
-        # - adds ability to call reset on multiple places without repeating
-        self._soft_reset_enabled = True
-
-    def showEvent(self, event):
-        """Refresh asset model on show."""
-        super(AssetsDialog, self).showEvent(event)
-        # Refresh on show
-        self.reset(False)
-
-    def reset(self, force=True):
-        """Reset asset model."""
-        if not force and not self._soft_reset_enabled:
-            return
-
-        if self._soft_reset_enabled:
-            self._soft_reset_enabled = False
-
-        self._model.reset()
-
-    def name_is_valid(self, name):
-        """Is asset name valid.
-
-        Args:
-            name(str): Asset name that should be checked.
-        """
-        # Make sure we're reset
-        self.reset(False)
-        # Valid the name by model
-        return self._model.name_is_valid(name)
-
-    def _on_filter_change(self, text):
-        """Trigger change of filter of assets."""
-        self._proxy_model.setFilterFixedString(text)
-
-    def _on_cancel_clicked(self):
-        self.done(0)
-
-    def _on_ok_clicked(self):
-        index = self._asset_view.currentIndex()
-        asset_name = None
-        if index.isValid():
-            asset_name = index.data(QtCore.Qt.DisplayRole)
-        self._selected_asset = asset_name
-        self.done(1)
-
-    def set_selected_assets(self, asset_names):
-        """Change preselected asset before showing the dialog.
-
-        This also resets model and clean filter.
-        """
-        self.reset(False)
-        self._asset_view.collapseAll()
-        self._filter_input.setText("")
-
-        indexes = []
-        for asset_name in asset_names:
-            index = self._model.get_index_by_name(asset_name)
-            if index.isValid():
-                indexes.append(index)
-
-        if not indexes:
-            return
-
-        index_deque = collections.deque()
-        for index in indexes:
-            index_deque.append(index)
-
-        all_indexes = []
-        while index_deque:
-            index = index_deque.popleft()
-            all_indexes.append(index)
-
-            parent_index = index.parent()
-            if parent_index.isValid():
-                index_deque.append(parent_index)
-
-        for index in all_indexes:
-            proxy_index = self._proxy_model.mapFromSource(index)
-            self._asset_view.expand(proxy_index)
-
-    def get_selected_asset(self):
-        """Get selected asset name."""
-        return self._selected_asset
-
-
 class ClickableLineEdit(QtWidgets.QLineEdit):
     """QLineEdit capturing left mouse click.
 
@@ -554,7 +335,7 @@ class ClickableLineEdit(QtWidgets.QLineEdit):
         event.accept()
 
 
-class AssetsField(ClickableFrame):
+class AssetsField(BaseClickableFrame):
     """Field where asset name of selected instance/s is showed.
 
     Click on the field will trigger `AssetsDialog`.
@@ -1394,12 +1175,13 @@ class CreatorAttrsWidget(QtWidgets.QWidget):
         content_layout = QtWidgets.QFormLayout(content_widget)
         for attr_def, attr_instances, values in result:
             widget = create_widget_for_attr_def(attr_def, content_widget)
-            if len(values) == 1:
-                value = values[0]
-                if value is not None:
-                    widget.set_value(values[0])
-            else:
-                widget.set_value(values, True)
+            if attr_def.is_value_def:
+                if len(values) == 1:
+                    value = values[0]
+                    if value is not None:
+                        widget.set_value(values[0])
+                else:
+                    widget.set_value(values, True)
 
             label = attr_def.label or attr_def.key
             content_layout.addRow(label, widget)

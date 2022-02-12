@@ -1,6 +1,9 @@
 {
     "deadline_servers": [],
     "publish": {
+        "CollectDefaultDeadlineServer": {
+            "pass_mongo_url": false
+        },
         "ValidateExpectedFiles": {
             "enabled": true,
             "active": true,
@@ -32,6 +35,9 @@
                     ".*"
                 ],
                 "celaction": [
+                    ".*"
+                ],
+                "harmony": [
                     ".*"
                 ]
             }

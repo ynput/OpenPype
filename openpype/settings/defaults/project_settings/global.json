@@ -18,8 +18,7 @@
                 "resolve",
                 "tvpaint"
             ],
-            "skip_hosts_headless_publish": [
-            ]
+            "skip_hosts_headless_publish": []
         },
         "ValidateEditorialAssetName": {
             "enabled": true,
@@ -208,6 +207,9 @@
         "CleanUp": {
             "paterns": [],
             "remove_temp_renders": false
+        },
+        "CleanUpFarm": {
+            "enabled": false
         }
     },
     "tools": {
@@ -326,8 +328,8 @@
             "family_filter_profiles": [
                 {
                     "hosts": [],
-                    "is_include": true,
                     "task_types": [],
+                    "is_include": true,
                     "filter_families": []
                 }
             ]

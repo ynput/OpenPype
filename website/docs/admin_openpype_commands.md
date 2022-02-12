@@ -26,7 +26,7 @@ openpype_console --use-version=3.0.0-foo+bar
 
 `--validate-version` to validate integrity of given version
 
-For more information [see here](admin_use#run-openpype).
+For more information [see here](admin_use.md#run-openpype).
 
 ## Commands
 
@@ -85,8 +85,8 @@ openpype_console eventserver --ftrack-url=<url> --ftrack-user=<user> --ftrack-ap
 | `--asset` | Asset name (default taken from `AVALON_ASSET` if set) |
 | `--task` | Task name (default taken from `AVALON_TASK` is set) |
 | `--tools` | *Optional: Additional tools to add* |
-| `--user` | *Optional: User on behalf to run* | 
-| `--ftrack-server` / `-fs` | *Optional: Ftrack server URL* | 
+| `--user` | *Optional: User on behalf to run* |
+| `--ftrack-server` / `-fs` | *Optional: Ftrack server URL* |
 | `--ftrack-user` / `-fu` | *Optional: Ftrack user* |
 | `--ftrack-key` / `-fk` | *Optional: Ftrack API key* |
 
@@ -100,7 +100,7 @@ pype launch --app python --project my_project --asset my_asset --task my_task
 
 | Argument | Description |
 | --- | --- |
-| `--debug` | print more verbose infomation |
+| `--debug` | print more verbose information |
 
 ```shell
 pype publish <PATH_TO_JSON>
@@ -166,3 +166,6 @@ Takes path to unzipped and possibly modified OpenPype version. Files will be
 zipped, checksums recalculated and version will be determined by folder name
 (and written to `version.py`).
 
+```shell
+./openpype_console repack-version /path/to/some/modified/unzipped/version/openpype-v3.8.3-modified
+```

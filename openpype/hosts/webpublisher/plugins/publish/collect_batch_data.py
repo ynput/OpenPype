@@ -59,6 +59,7 @@ class CollectBatchData(pyblish.api.ContextPlugin):
         context.data["asset"] = asset_name
         context.data["task"] = task_name
         context.data["taskType"] = task_type
+        context.data["project_name"] = project_name
 
         self._set_ctx_path(batch_data)
 

@@ -3,9 +3,10 @@
 from pathlib import Path
 
 import attr
-from avalon import harmony, api
+from avalon import api
 
 import openpype.lib.abstract_collect_render
+import openpype.hosts.harmony.api as harmony
 from openpype.lib.abstract_collect_render import RenderInstance
 import openpype.lib
 
@@ -176,6 +177,7 @@ class CollectFarmRender(openpype.lib.abstract_collect_render.
                 ignoreFrameHandleCheck=True
 
             )
+            render_instance.context = context
             self.log.debug(render_instance)
             instances.append(render_instance)
 

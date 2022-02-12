@@ -118,6 +118,7 @@ class CollectAERender(abstract_collect_render.AbstractCollectRender):
                 instance.anatomyData = context.data["anatomyData"]
 
                 instance.outputDir = self._get_output_dir(instance)
+                instance.context = context
 
                 settings = get_project_settings(os.getenv("AVALON_PROJECT"))
                 reviewable_subset_filter = \
@@ -142,7 +143,6 @@ class CollectAERender(abstract_collect_render.AbstractCollectRender):
                                 break
 
                 self.log.info("New instance:: {}".format(instance))
-
                 instances.append(instance)
 
         return instances
