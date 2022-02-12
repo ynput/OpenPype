@@ -1283,15 +1283,6 @@ def extract_alembic(file,
     return file
 
 
-def maya_temp_folder():
-    scene_dir = os.path.dirname(cmds.file(query=True, sceneName=True))
-    tmp_dir = os.path.abspath(os.path.join(scene_dir, "..", "tmp"))
-    if not os.path.isdir(tmp_dir):
-        os.makedirs(tmp_dir)
-
-    return tmp_dir
-
-
 # region ID
 def get_id_required_nodes(referenced_nodes=False, nodes=None):
     """Filter out any node which are locked (reference) or readOnly
