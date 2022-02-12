@@ -54,11 +54,11 @@ class OpenPypeMenu(QtWidgets.QWidget):
         }""")
         asset_label.setAlignment(QtCore.Qt.AlignHCenter)
 
-        workfiles_btn = QtWidgets.QPushButton("Work Files", self)
+       workfiles_btn = QtWidgets.QPushButton("Workfiles...", self)
         create_btn = QtWidgets.QPushButton("Create...", self)
-        load_btn = QtWidgets.QPushButton("Load...", self)
         publish_btn = QtWidgets.QPushButton("Publish...", self)
-        inventory_btn = QtWidgets.QPushButton("Manage...", self)
+        load_btn = QtWidgets.QPushButton("Load...", self)
+        inventory_btn = QtWidgets.QPushButton("Inventory...", self)
         libload_btn = QtWidgets.QPushButton("Library...", self)
         rendermode_btn = QtWidgets.QPushButton("Set render mode...", self)
         duplicate_with_inputs_btn = QtWidgets.QPushButton(
