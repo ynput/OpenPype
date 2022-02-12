@@ -2582,7 +2582,7 @@ def get_attr_in_layer(attr, layer):
 
 
 def fix_incompatible_containers():
-    """Return whether the current scene has any outdated content"""
+    """Backwards compatibility: old containers to use new ReferenceLoader"""
 
     host = api.registered_host()
     for container in host.ls():
