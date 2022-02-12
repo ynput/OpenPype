@@ -2124,6 +2124,7 @@ def reset_scene_resolution():
 
     set_scene_resolution(width, height, pixelAspect)
 
+
 def set_context_settings():
     """Apply the project settings from the project definition
 
@@ -2598,10 +2599,6 @@ def fix_incompatible_containers():
                       "FBXLoader"]:
             cmds.setAttr(container["objectName"] + ".loader",
                          "ReferenceLoader", type="string")
-
-
-def _null(*args):
-    pass
 
 
 class shelf():
