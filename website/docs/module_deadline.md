@@ -69,8 +69,38 @@ Each publishing from OpenPype consists of 2 jobs, first one is rendering, second
 
     Check if OpenPype is installed on a node handling this job, plugin and events are properly [configured](#configuration) 
 
+
 - Publishing job is failing with `ffmpeg not installed` error
  
     OpenPype executable has to have access to `ffmpeg` executable, check OpenPype `Setting > General`
 
-![FFmpeg setting](assets/ffmpeg_path.png)
+    ![FFmpeg setting](assets/ffmpeg_path.png)
+
+- Both jobs finished successfully, but there is no review on Ftrack
+
+    Make sure that you correctly set published family to be send to Ftrack. 
+
+    ![Ftrack Family](assets/ftrack/ftrack-collect-main.png)
+
+    Example: I want send to Ftrack review of rendered images from Harmony :
+        - `Host names`: "harmony"
+        - `Families`: "render" 
+        - `Add Ftrack Family` to "Enabled"
+  
+    Make sure that you actually configured to create review for published subset in `project_settings/ftrack/publish/CollectFtrackFamily`
+
+    ![Ftrack Family](assets/deadline_review.png)
+
+    Example: I want to create review for all reviewable subsets in Harmony : 
+      - Add "harmony" as a new key an ".*" as a value.
+
+
+- Rendering jobs are stuck in 'Queued' state or failing
+
+    Make sure that your Deadline is not limiting specific jobs to be run only on specific machines. (Eg. only some machines have installed particular application.)
+    
+    Check `project_settings/deadline`
+  
+    ![Deadline group](assets/deadline_group.png)
+
+    Example: I have separated machines with "Harmony" installed into "harmony" group on Deadline. I want rendering jobs published from Harmony to run only on those machines.

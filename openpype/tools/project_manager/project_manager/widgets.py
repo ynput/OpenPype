@@ -4,14 +4,16 @@ from .constants import (
     NAME_ALLOWED_SYMBOLS,
     NAME_REGEX
 )
-from .style import ResourceCache
 from openpype.lib import (
     create_project,
     PROJECT_NAME_ALLOWED_SYMBOLS,
     PROJECT_NAME_REGEX
 )
 from openpype.style import load_stylesheet
-from openpype.tools.utils import PlaceholderLineEdit
+from openpype.tools.utils import (
+    PlaceholderLineEdit,
+    get_warning_pixmap
+)
 from avalon.api import AvalonMongoDB
 
 from Qt import QtWidgets, QtCore, QtGui
@@ -338,7 +340,7 @@ class ConfirmProjectDeletion(QtWidgets.QDialog):
 
         top_widget = QtWidgets.QWidget(self)
 
-        warning_pixmap = ResourceCache.get_warning_pixmap()
+        warning_pixmap = get_warning_pixmap()
         warning_icon_label = PixmapLabel(warning_pixmap, top_widget)
 
         message_label = QtWidgets.QLabel(top_widget)

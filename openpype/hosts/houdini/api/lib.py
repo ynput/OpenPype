@@ -182,8 +182,11 @@ def get_output_parameter(node):
         return node.parm("filename")
     elif node_type == "comp":
         return node.parm("copoutput")
-    else:
-        raise TypeError("Node type '%s' not supported" % node_type)
+    elif node_type == "arnold":
+        if node.evalParm("ar_ass_export_enable"):
+            return node.parm("ar_ass_file")
+
+    raise TypeError("Node type '%s' not supported" % node_type)
 
 
 @contextmanager

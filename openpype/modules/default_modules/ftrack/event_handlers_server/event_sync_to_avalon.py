@@ -17,6 +17,7 @@ from avalon.api import AvalonMongoDB
 
 from openpype_modules.ftrack.lib import (
     get_openpype_attr,
+    query_custom_attributes,
     CUST_ATTR_ID_KEY,
     CUST_ATTR_AUTO_SYNC,
 
@@ -2130,22 +2131,12 @@ class SyncToAvalonEvent(BaseEvent):
         for key in hier_cust_attrs_keys:
             configuration_ids.add(hier_attr_id_by_key[key])
 
-        entity_ids_joined = self.join_query_keys(cust_attrs_ftrack_ids)
-        attributes_joined = self.join_query_keys(configuration_ids)
-
-        queries = [{
-            "action": "query",
-            "expression": (
-                "select value, entity_id, configuration_id"
-                " from CustomAttributeValue "
-                "where entity_id in ({}) and configuration_id in ({})"
-            ).format(entity_ids_joined, attributes_joined)
-        }]
-
-        if hasattr(self.process_session, "call"):
-            [values] = self.process_session.call(queries)
-        else:
-            [values] = self.process_session._call(queries)
+        values = query_custom_attributes(
+            self.process_session,
+            configuration_ids,
+            cust_attrs_ftrack_ids,
+            True
+        )
 
         ftrack_project_id = self.cur_project["id"]
 
@@ -2170,7 +2161,7 @@ class SyncToAvalonEvent(BaseEvent):
 
         # PREPARE DATA BEFORE THIS
         avalon_hier = []
-        for item in values["data"]:
+        for item in values:
             value = item["value"]
             if value is None:
                 continue

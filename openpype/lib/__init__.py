@@ -84,6 +84,7 @@ from .avalon_context import (
     get_hierarchy,
     get_linked_assets,
     get_latest_version,
+    get_system_general_anatomy_data,
 
     get_workfile_template_key,
     get_workfile_template_key_from_context,
@@ -222,6 +223,7 @@ __all__ = [
     "get_hierarchy",
     "get_linked_assets",
     "get_latest_version",
+    "get_system_general_anatomy_data",
 
     "get_workfile_template_key",
     "get_workfile_template_key_from_context",
