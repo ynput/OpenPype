@@ -17,11 +17,11 @@ class GpuCacheLoader(api.Loader):
     def load(self, context, name, namespace, data):
 
         import maya.cmds as cmds
-        import avalon.maya.lib as lib
-        from avalon.maya.pipeline import containerise
+        from openpype.hosts.maya.api.pipeline import containerise
+        from openpype.hosts.maya.api.lib import unique_namespace
 
         asset = context['asset']['name']
-        namespace = namespace or lib.unique_namespace(
+        namespace = namespace or unique_namespace(
             asset + "_",
             prefix="_" if asset[0].isdigit() else "",
             suffix="_",

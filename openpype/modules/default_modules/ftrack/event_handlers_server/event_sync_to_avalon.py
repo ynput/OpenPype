@@ -17,6 +17,7 @@ from avalon.api import AvalonMongoDB
 
 from openpype_modules.ftrack.lib import (
     get_openpype_attr,
+    query_custom_attributes,
     CUST_ATTR_ID_KEY,
     CUST_ATTR_AUTO_SYNC,
 
@@ -48,8 +49,8 @@ class SyncToAvalonEvent(BaseEvent):
     )
 
     entities_query_by_id = (
-        "select id, name, parent_id, link, custom_attributes from TypedContext"
-        " where project_id is \"{}\" and id in ({})"
+        "select id, name, parent_id, link, custom_attributes, description"
+        " from TypedContext where project_id is \"{}\" and id in ({})"
     )
 
     # useful for getting all tasks for asset
@@ -1073,9 +1074,8 @@ class SyncToAvalonEvent(BaseEvent):
             self.create_entity_in_avalon(entity, parent_avalon_ent)
 
             for child in entity["children"]:
-                if child.entity_type.lower() == "task":
-                    continue
-                children_queue.append(child)
+                if child.entity_type.lower() != "task":
+                    children_queue.append(child)
 
         while children_queue:
             entity = children_queue.popleft()
@@ -1145,7 +1145,8 @@ class SyncToAvalonEvent(BaseEvent):
                 "entityType": ftrack_ent.entity_type,
                 "parents": parents,
                 "tasks": {},
-                "visualParent": vis_par
+                "visualParent": vis_par,
+                "description": ftrack_ent["description"]
             }
         }
         cust_attrs = self.get_cust_attr_values(ftrack_ent)
@@ -1822,7 +1823,15 @@ class SyncToAvalonEvent(BaseEvent):
             if ent_cust_attrs is None:
                 ent_cust_attrs = {}
 
-            for key, values in ent_info["changes"].items():
+            ent_changes = ent_info["changes"]
+            if "description" in ent_changes:
+                if "data" not in self.updates[mongo_id]:
+                    self.updates[mongo_id]["data"] = {}
+                self.updates[mongo_id]["data"]["description"] = (
+                    ent_changes["description"]["new"] or ""
+                )
+
+            for key, values in ent_changes.items():
                 if key in hier_attrs_by_key:
                     self.hier_cust_attrs_changes[key].append(ftrack_id)
                     continue
@@ -2122,22 +2131,12 @@ class SyncToAvalonEvent(BaseEvent):
         for key in hier_cust_attrs_keys:
             configuration_ids.add(hier_attr_id_by_key[key])
 
-        entity_ids_joined = self.join_query_keys(cust_attrs_ftrack_ids)
-        attributes_joined = self.join_query_keys(configuration_ids)
-
-        queries = [{
-            "action": "query",
-            "expression": (
-                "select value, entity_id, configuration_id"
-                " from CustomAttributeValue "
-                "where entity_id in ({}) and configuration_id in ({})"
-            ).format(entity_ids_joined, attributes_joined)
-        }]
-
-        if hasattr(self.process_session, "call"):
-            [values] = self.process_session.call(queries)
-        else:
-            [values] = self.process_session._call(queries)
+        values = query_custom_attributes(
+            self.process_session,
+            configuration_ids,
+            cust_attrs_ftrack_ids,
+            True
+        )
 
         ftrack_project_id = self.cur_project["id"]
 
@@ -2162,7 +2161,7 @@ class SyncToAvalonEvent(BaseEvent):
 
         # PREPARE DATA BEFORE THIS
         avalon_hier = []
-        for item in values["data"]:
+        for item in values:
             value = item["value"]
             if value is None:
                 continue

@@ -911,7 +911,7 @@ class RenderProductsRedshift(ARenderProducts):
 
         """
         prefix = super(RenderProductsRedshift, self).get_renderer_prefix()
-        prefix = "{}.<aov>".format(prefix)
+        prefix = "{}{}<aov>".format(prefix, self.aov_separator)
         return prefix
 
     def get_render_products(self):

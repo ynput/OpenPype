@@ -14,6 +14,8 @@ from openpype.api import (
     Logger
 )
 from openpype.lib import filter_profiles
+from openpype.style import get_objected_colors
+from openpype.resources import get_image_path
 
 
 def center_window(window):
@@ -26,6 +28,18 @@ def center_window(window):
     if geo.y() < screen_geo.y():
         geo.setY(screen_geo.y())
     window.move(geo.topLeft())
+
+
+def set_style_property(widget, property_name, property_value):
+    """Set widget's property that may affect style.
+
+    If current property value is different then style of widget is polished.
+    """
+    cur_value = widget.property(property_name)
+    if cur_value == property_value:
+        return
+    widget.setProperty(property_name, property_value)
+    widget.style().polish(widget)
 
 
 def paint_image_with_color(image, color):
@@ -132,7 +146,7 @@ def preserve_expanded_rows(tree_view, column=0, role=None):
 
     This function is created to maintain the expand vs collapse status of
     the model items. When refresh is triggered the items which are expanded
-    will stay expanded and vise versa.
+    will stay expanded and vice versa.
 
     Arguments:
         tree_view (QWidgets.QTreeView): the tree view which is
@@ -176,7 +190,7 @@ def preserve_selection(tree_view, column=0, role=None, current_index=True):
 
     This function is created to maintain the selection status of
     the model items. When refresh is triggered the items which are expanded
-    will stay expanded and vise versa.
+    will stay expanded and vice versa.
 
         tree_view (QWidgets.QTreeView): the tree view nested in the application
         column (int): the column to retrieve the data from
@@ -372,7 +386,7 @@ class GroupsConfig:
         group_configs = []
         project_name = self.dbcon.Session.get("AVALON_PROJECT")
         if project_name:
-            # Get pre-defined group name and apperance from project config
+            # Get pre-defined group name and appearance from project config
             project_doc = self.dbcon.find_one(
                 {"type": "project"},
                 projection={"config.groups": True}
@@ -670,3 +684,19 @@ class WrappedCallbackItem:
 
         finally:
             self._done = True
+
+
+def get_warning_pixmap(color=None):
+    """Warning icon as QPixmap.
+
+    Args:
+        color(QtGui.QColor): Color that will be used to paint warning icon.
+    """
+    src_image_path = get_image_path("warning.png")
+    src_image = QtGui.QImage(src_image_path)
+    if color is None:
+        colors = get_objected_colors()
+        color_value = colors["delete-btn-bg"]
+        color = color_value.get_qcolor()
+
+    return paint_image_with_color(src_image, color)

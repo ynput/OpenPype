@@ -1,7 +1,8 @@
 """Standalone helper functions"""
 
-import re
 import os
+import sys
+import re
 import platform
 import uuid
 import math
@@ -18,16 +19,19 @@ import bson
 from maya import cmds, mel
 import maya.api.OpenMaya as om
 
-from avalon import api, maya, io, pipeline
-import avalon.maya.lib
-import avalon.maya.interactive
+from avalon import api, io, pipeline
 
 from openpype import lib
 from openpype.api import get_anatomy_settings
+from .commands import reset_frame_range
 
+
+self = sys.modules[__name__]
+self._parent = None
 
 log = logging.getLogger(__name__)
 
+IS_HEADLESS = not hasattr(cmds, "about") or cmds.about(batch=True)
 ATTRIBUTE_DICT = {"int": {"attributeType": "long"},
                   "str": {"dataType": "string"},
                   "unicode": {"dataType": "string"},
@@ -98,6 +102,155 @@ INT_FPS = {15, 24, 25, 30, 48, 50, 60, 44100, 48000}
 FLOAT_FPS = {23.98, 23.976, 29.97, 47.952, 59.94}
 
 RENDERLIKE_INSTANCE_FAMILIES = ["rendering", "vrayscene"]
+
+
+def get_main_window():
+    """Acquire Maya's main window"""
+    from Qt import QtWidgets
+
+    if self._parent is None:
+        self._parent = {
+            widget.objectName(): widget
+            for widget in QtWidgets.QApplication.topLevelWidgets()
+        }["MayaWindow"]
+    return self._parent
+
+
+@contextlib.contextmanager
+def suspended_refresh():
+    """Suspend viewport refreshes"""
+
+    try:
+        cmds.refresh(suspend=True)
+        yield
+    finally:
+        cmds.refresh(suspend=False)
+
+
+@contextlib.contextmanager
+def maintained_selection():
+    """Maintain selection during context
+
+    Example:
+        >>> scene = cmds.file(new=True, force=True)
+        >>> node = cmds.createNode("transform", name="Test")
+        >>> cmds.select("persp")
+        >>> with maintained_selection():
+        ...     cmds.select("Test", replace=True)
+        >>> "Test" in cmds.ls(selection=True)
+        False
+
+    """
+
+    previous_selection = cmds.ls(selection=True)
+    try:
+        yield
+    finally:
+        if previous_selection:
+            cmds.select(previous_selection,
+                        replace=True,
+                        noExpand=True)
+        else:
+            cmds.select(clear=True)
+
+
+def unique_name(name, format="%02d", namespace="", prefix="", suffix=""):
+    """Return unique `name`
+
+    The function takes into consideration an optional `namespace`
+    and `suffix`. The suffix is included in evaluating whether a
+    name exists - such as `name` + "_GRP" - but isn't included
+    in the returned value.
+
+    If a namespace is provided, only names within that namespace
+    are considered when evaluating whether the name is unique.
+
+    Arguments:
+        format (str, optional): The `name` is given a number, this determines
+            how this number is formatted. Defaults to a padding of 2.
+            E.g. my_name01, my_name02.
+        namespace (str, optional): Only consider names within this namespace.
+        suffix (str, optional): Only consider names with this suffix.
+
+    Example:
+        >>> name = cmds.createNode("transform", name="MyName")
+        >>> cmds.objExists(name)
+        True
+        >>> unique = unique_name(name)
+        >>> cmds.objExists(unique)
+        False
+
+    """
+
+    iteration = 1
+    unique = prefix + (name + format % iteration) + suffix
+
+    while cmds.objExists(namespace + ":" + unique):
+        iteration += 1
+        unique = prefix + (name + format % iteration) + suffix
+
+    if suffix:
+        return unique[:-len(suffix)]
+
+    return unique
+
+
+def unique_namespace(namespace, format="%02d", prefix="", suffix=""):
+    """Return unique namespace
+
+    Similar to :func:`unique_name` but evaluating namespaces
+    as opposed to object names.
+
+    Arguments:
+        namespace (str): Name of namespace to consider
+        format (str, optional): Formatting of the given iteration number
+        suffix (str, optional): Only consider namespaces with this suffix.
+
+    """
+
+    iteration = 1
+    unique = prefix + (namespace + format % iteration) + suffix
+
+    # The `existing` set does not just contain the namespaces but *all* nodes
+    # within "current namespace". We need all because the namespace could
+    # also clash with a node name. To be truly unique and valid one needs to
+    # check against all.
+    existing = set(cmds.namespaceInfo(listNamespace=True))
+    while unique in existing:
+        iteration += 1
+        unique = prefix + (namespace + format % iteration) + suffix
+
+    return unique
+
+
+def read(node):
+    """Return user-defined attributes from `node`"""
+
+    data = dict()
+
+    for attr in cmds.listAttr(node, userDefined=True) or list():
+        try:
+            value = cmds.getAttr(node + "." + attr, asString=True)
+
+        except RuntimeError:
+            # For Message type attribute or others that have connections,
+            # take source node name as value.
+            source = cmds.listConnections(node + "." + attr,
+                                          source=True,
+                                          destination=False)
+            source = cmds.ls(source, long=True) or [None]
+            value = source[0]
+
+        except ValueError:
+            # Some attributes cannot be read directly,
+            # such as mesh and color attributes. These
+            # are considered non-essential to this
+            # particular publishing pipeline.
+            value = None
+
+        data[attr] = value
+
+    return data
 
 
 def _get_mel_global(name):
@@ -280,6 +433,73 @@ def shape_from_element(element):
         return node
 
 
+def export_alembic(nodes,
+                   file,
+                   frame_range=None,
+                   write_uv=True,
+                   write_visibility=True,
+                   attribute_prefix=None):
+    """Wrap native MEL command with limited set of arguments
+
+    Arguments:
+        nodes (list): Long names of nodes to cache
+
+        file (str): Absolute path to output destination
+
+        frame_range (tuple, optional): Start- and end-frame of cache,
+            default to current animation range.
+
+        write_uv (bool, optional): Whether or not to include UVs,
+            default to True
+
+        write_visibility (bool, optional): Turn on to store the visibility
+        state of objects in the Alembic file. Otherwise, all objects are
+        considered visible, default to True
+
+        attribute_prefix (str, optional): Include all user-defined
+            attributes with this prefix.
+
+    """
+
+    if frame_range is None:
+        frame_range = (
+            cmds.playbackOptions(query=True, ast=True),
+            cmds.playbackOptions(query=True, aet=True)
+        )
+
+    options = [
+        ("file", file),
+        ("frameRange", "%s %s" % frame_range),
+    ] + [("root", mesh) for mesh in nodes]
+
+    if isinstance(attribute_prefix, string_types):
+        # Include all attributes prefixed with "mb"
+        # TODO(marcus): This would be a good candidate for
+        #   external registration, so that the developer
+        #   doesn't have to edit this function to modify
+        #   the behavior of Alembic export.
+        options.append(("attrPrefix", str(attribute_prefix)))
+
+    if write_uv:
+        options.append(("uvWrite", ""))
+
+    if write_visibility:
+        options.append(("writeVisibility", ""))
+
+    # Generate MEL command
+    mel_args = list()
+    for key, value in options:
+        mel_args.append("-{0} {1}".format(key, value))
+
+    mel_args_string = " ".join(mel_args)
+    mel_cmd = "AbcExport -j \"{0}\"".format(mel_args_string)
+
+    # For debuggability, put the string passed to MEL in the Script editor.
+    print("mel.eval('%s')" % mel_cmd)
+
+    return mel.eval(mel_cmd)
+
+
 def collect_animation_data(fps=False):
     """Get the basic animation data
 
@@ -303,6 +523,256 @@ def collect_animation_data(fps=False):
         data["fps"] = mel.eval('currentTimeUnitToFPS()')
 
     return data
+
+
+def imprint(node, data):
+    """Write `data` to `node` as userDefined attributes
+
+    Arguments:
+        node (str): Long name of node
+        data (dict): Dictionary of key/value pairs
+
+    Example:
+        >>> from maya import cmds
+        >>> def compute():
+        ...   return 6
+        ...
+        >>> cube, generator = cmds.polyCube()
+        >>> imprint(cube, {
+        ...   "regularString": "myFamily",
+        ...   "computedValue": lambda: compute()
+        ... })
+        ...
+        >>> cmds.getAttr(cube + ".computedValue")
+        6
+
+    """
+
+    for key, value in data.items():
+
+        if callable(value):
+            # Support values evaluated at imprint
+            value = value()
+
+        if isinstance(value, bool):
+            add_type = {"attributeType": "bool"}
+            set_type = {"keyable": False, "channelBox": True}
+        elif isinstance(value, string_types):
+            add_type = {"dataType": "string"}
+            set_type = {"type": "string"}
+        elif isinstance(value, int):
+            add_type = {"attributeType": "long"}
+            set_type = {"keyable": False, "channelBox": True}
+        elif isinstance(value, float):
+            add_type = {"attributeType": "double"}
+            set_type = {"keyable": False, "channelBox": True}
+        elif isinstance(value, (list, tuple)):
+            add_type = {"attributeType": "enum", "enumName": ":".join(value)}
+            set_type = {"keyable": False, "channelBox": True}
+            value = 0  # enum default
+        else:
+            raise TypeError("Unsupported type: %r" % type(value))
+
+        cmds.addAttr(node, longName=key, **add_type)
+        cmds.setAttr(node + "." + key, value, **set_type)
+
+
+def serialise_shaders(nodes):
+    """Generate a shader set dictionary
+
+    Arguments:
+        nodes (list): Absolute paths to nodes
+
+    Returns:
+        dictionary of (shader: id) pairs
+
+    Schema:
+        {
+            "shader1": ["id1", "id2"],
+            "shader2": ["id3", "id1"]
+        }
+
+    Example:
+        {
+            "Bazooka_Brothers01_:blinn4SG": [
+                "f9520572-ac1d-11e6-b39e-3085a99791c9.f[4922:5001]",
+                "f9520572-ac1d-11e6-b39e-3085a99791c9.f[4587:4634]",
+                "f9520572-ac1d-11e6-b39e-3085a99791c9.f[1120:1567]",
+                "f9520572-ac1d-11e6-b39e-3085a99791c9.f[4251:4362]"
+            ],
+            "lambert2SG": [
+                "f9520571-ac1d-11e6-9dbb-3085a99791c9"
+            ]
+        }
+
+    """
+
+    valid_nodes = cmds.ls(
+        nodes,
+        long=True,
+        recursive=True,
+        showType=True,
+        objectsOnly=True,
+        type="transform"
+    )
+
+    meshes_by_id = {}
+    for mesh in valid_nodes:
+        shapes = cmds.listRelatives(valid_nodes[0],
+                                    shapes=True,
+                                    fullPath=True) or list()
+
+        if shapes:
+            shape = shapes[0]
+            if not cmds.nodeType(shape):
+                continue
+
+            try:
+                id_ = cmds.getAttr(mesh + ".mbID")
+
+                if id_ not in meshes_by_id:
+                    meshes_by_id[id_] = list()
+
+                meshes_by_id[id_].append(mesh)
+
+            except ValueError:
+                continue
+
+    meshes_by_shader = dict()
+    for mesh in meshes_by_id.values():
+        shape = cmds.listRelatives(mesh,
+                                   shapes=True,
+                                   fullPath=True) or list()
+
+        for shader in cmds.listConnections(shape,
+                                           type="shadingEngine") or list():
+
+            # Objects in this group are those that haven't got
+            # any shaders. These are expected to be managed
+            # elsewhere, such as by the default model loader.
+            if shader == "initialShadingGroup":
+                continue
+
+            if shader not in meshes_by_shader:
+                meshes_by_shader[shader] = list()
+
+            shaded = cmds.sets(shader, query=True) or list()
+            meshes_by_shader[shader].extend(shaded)
+
+    shader_by_id = {}
+    for shader, shaded in meshes_by_shader.items():
+
+        if shader not in shader_by_id:
+            shader_by_id[shader] = list()
+
+        for mesh in shaded:
+
+            # Enable shader assignment to faces.
+            name = mesh.split(".f[")[0]
+
+            transform = name
+            if cmds.objectType(transform) == "mesh":
+                transform = cmds.listRelatives(name, parent=True)[0]
+
+            try:
+                id_ = cmds.getAttr(transform + ".mbID")
+                shader_by_id[shader].append(mesh.replace(name, id_))
+            except KeyError:
+                continue
+
+        # Remove duplicates
+        shader_by_id[shader] = list(set(shader_by_id[shader]))
+
+    return shader_by_id
+
+
+def lsattr(attr, value=None):
+    """Return nodes matching `key` and `value`
+
+    Arguments:
+        attr (str): Name of Maya attribute
+        value (object, optional): Value of attribute. If none
+            is provided, return all nodes with this attribute.
+
+    Example:
+        >> lsattr("id", "myId")
+        ["myNode"]
+        >> lsattr("id")
+        ["myNode", "myOtherNode"]
+
+    """
+
+    if value is None:
+        return cmds.ls("*.%s" % attr,
+                       recursive=True,
+                       objectsOnly=True,
+                       long=True)
+    return lsattrs({attr: value})
+
+
+def lsattrs(attrs):
+    """Return nodes with the given attribute(s).
+
+    Arguments:
+        attrs (dict): Name and value pairs of expected matches
+
+    Example:
+        >> # Return nodes with an `age` of five.
+        >> lsattr({"age": "five"})
+        >> # Return nodes with both `age` and `color` of five and blue.
+        >> lsattr({"age": "five", "color": "blue"})
+
+    Return:
+         list: matching nodes.
+
+    """
+
+    dep_fn = om.MFnDependencyNode()
+    dag_fn = om.MFnDagNode()
+    selection_list = om.MSelectionList()
+
+    first_attr = next(iter(attrs))
+
+    try:
+        selection_list.add("*.{0}".format(first_attr),
+                           searchChildNamespaces=True)
+    except RuntimeError as exc:
+        if str(exc).endswith("Object does not exist"):
+            return []
+
+    matches = set()
+    for i in range(selection_list.length()):
+        node = selection_list.getDependNode(i)
+        if node.hasFn(om.MFn.kDagNode):
+            fn_node = dag_fn.setObject(node)
+            full_path_names = [path.fullPathName()
+                               for path in fn_node.getAllPaths()]
+        else:
+            fn_node = dep_fn.setObject(node)
+            full_path_names = [fn_node.name()]
+
+        for attr in attrs:
+            try:
+                plug = fn_node.findPlug(attr, True)
+                if plug.asString() != attrs[attr]:
+                    break
+            except RuntimeError:
+                break
+        else:
+            matches.update(full_path_names)
+
+    return list(matches)
+
+
+@contextlib.contextmanager
+def without_extension():
+    """Use cmds.file with defaultExtensions=False"""
+    previous_setting = cmds.file(defaultExtensions=True, query=True)
+    try:
+        cmds.file(defaultExtensions=False)
+        yield
+    finally:
+        cmds.file(defaultExtensions=previous_setting)
 
 
 @contextlib.contextmanager
@@ -736,7 +1206,7 @@ def namespaced(namespace, new=True):
     """
     original = cmds.namespaceInfo(cur=True, absoluteName=True)
     if new:
-        namespace = avalon.maya.lib.unique_namespace(namespace)
+        namespace = unique_namespace(namespace)
         cmds.namespace(add=namespace)
 
     try:
@@ -1442,7 +1912,7 @@ def assign_look_by_version(nodes, version_id):
             raise RuntimeError("Could not find LookLoader, this is a bug")
 
         # Reference the look file
-        with maya.maintained_selection():
+        with maintained_selection():
             container_node = pipeline.load(Loader, look_representation)
 
     # Get container members
@@ -1981,7 +2451,7 @@ def set_context_settings():
     reset_scene_resolution()
 
     # Set frame range.
-    avalon.maya.interactive.reset_frame_range()
+    reset_frame_range()
 
     # Set colorspace
     set_colorspace()
@@ -2004,34 +2474,27 @@ def validate_fps():
     # rounding, we have to round those numbers coming from Maya.
     current_fps = float_round(mel.eval('currentTimeUnitToFPS()'), 2)
 
-    if current_fps != fps:
+    fps_match = current_fps == fps
+    if not fps_match and not IS_HEADLESS:
+        from openpype.widgets import popup
 
-        from Qt import QtWidgets
-        from ...widgets import popup
+        parent = get_main_window()
 
-        # Find maya main window
-        top_level_widgets = {w.objectName(): w for w in
-                             QtWidgets.QApplication.topLevelWidgets()}
+        dialog = popup.Popup2(parent=parent)
+        dialog.setModal(True)
+        dialog.setWindowTitle("Maya scene not in line with project")
+        dialog.setMessage("The FPS is out of sync, please fix")
 
-        parent = top_level_widgets.get("MayaWindow", None)
-        if parent is None:
-            pass
-        else:
-            dialog = popup.Popup2(parent=parent)
-            dialog.setModal(True)
-            dialog.setWindowTitle("Maya scene not in line with project")
-            dialog.setMessage("The FPS is out of sync, please fix")
+        # Set new text for button (add optional argument for the popup?)
+        toggle = dialog.widgets["toggle"]
+        update = toggle.isChecked()
+        dialog.on_show.connect(lambda: set_scene_fps(fps, update))
 
-            # Set new text for button (add optional argument for the popup?)
-            toggle = dialog.widgets["toggle"]
-            update = toggle.isChecked()
-            dialog.on_show.connect(lambda: set_scene_fps(fps, update))
+        dialog.show()
 
-            dialog.show()
+        return False
 
-            return False
-
-    return True
+    return fps_match
 
 
 def bake(nodes,
@@ -2420,7 +2883,7 @@ def get_attr_in_layer(attr, layer):
 def fix_incompatible_containers():
     """Return whether the current scene has any outdated content"""
 
-    host = avalon.api.registered_host()
+    host = api.registered_host()
     for container in host.ls():
         loader = container['loader']
 

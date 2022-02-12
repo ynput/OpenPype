@@ -98,7 +98,7 @@ This preset tells the creator tools what family should be pre-selected in differ
 
 path: `pype-config/presets/tools/project_folder_structure.json`
 
-Defines the base folder structure for a project. This is supposed to act as a starting point to quickly creat the base of the project. You can add `[ftrack.entityType]` after any of the folders here and they will automatically be also created in ftrack project.
+Defines the base folder structure for a project. This is supposed to act as a starting point to quickly create the base of the project. You can add `[ftrack.entityType]` after any of the folders here and they will automatically be also created in ftrack project.
 
 ### `__project_root__` [dict]
 
@@ -175,7 +175,7 @@ Keys are renderer names and values are templates IDs.
 "arnold": 46,
 "arnold_sf": 57,
 "gelato": 30,
-"harware": 3,
+"hardware": 3,
 "krakatoa": 51,
 "file_layers": 7,
 "mentalray": 2,

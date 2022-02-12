@@ -16,8 +16,6 @@ from . import views
 
 from maya import cmds
 
-MODELINDEX = QtCore.QModelIndex()
-
 
 class AssetOutliner(QtWidgets.QWidget):
     refreshed = QtCore.Signal()
@@ -233,8 +231,8 @@ class LookOutliner(QtWidgets.QWidget):
             list: list of dictionaries
         """
 
-        datas = [i.data(TreeModel.ItemRole) for i in self.view.get_indices()]
-        return [d for d in datas if d is not None]
+        items = [i.data(TreeModel.ItemRole) for i in self.view.get_indices()]
+        return [item for item in items if item is not None]
 
     def right_mouse_menu(self, pos):
         """Build RMB menu for look view"""
