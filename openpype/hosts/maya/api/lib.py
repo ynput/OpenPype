@@ -2818,7 +2818,7 @@ class RenderSetupListObserver:
                 cmds.delete(render_layer_set_name)
 
 
-class RenderSetupItemObserver():
+class RenderSetupItemObserver:
     """Handle changes in render setup items."""
 
     def __init__(self, item):
@@ -3054,7 +3054,7 @@ def set_colorspace():
 @contextlib.contextmanager
 def root_parent(nodes):
     # type: (list) -> list
-    """Context manager to un-parent provided nodes and return then back."""
+    """Context manager to un-parent provided nodes and return them back."""
     import pymel.core as pm  # noqa
 
     node_parents = []
