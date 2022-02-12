@@ -30,6 +30,7 @@ def install():
     See the Maya equivalent for inspiration on how to implement this.
 
     """
+
     log.info("openpype.hosts.fusion installed")
 
     pyblish.register_host("fusion")
@@ -39,8 +40,6 @@ def install():
     avalon.register_plugin_path(avalon.Loader, LOAD_PATH)
     avalon.register_plugin_path(avalon.Creator, CREATE_PATH)
     avalon.register_plugin_path(avalon.InventoryAction, INVENTORY_PATH)
-
-    print(LOAD_PATH)
 
     pyblish.register_callback("instanceToggled", on_pyblish_instance_toggled)
 
