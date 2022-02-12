@@ -12,7 +12,7 @@ from maya import cmds
 
 from avalon import io, api
 
-import openpype.hosts.maya.api.lib as lib
+from openpype.hosts.maya.api import lib
 
 
 log = logging.getLogger(__name__)
