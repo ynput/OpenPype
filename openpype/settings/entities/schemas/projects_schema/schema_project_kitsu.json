@@ -6,12 +6,26 @@
     "is_file": true,
     "children": [
         {
-            "type": "number",
-            "key": "number",
-            "label": "This is your lucky number:",
-            "minimum": 7,
-            "maximum": 7,
-            "decimals": 0
+            "type": "dict",
+            "key": "entities_naming_pattern",
+            "label": "Entities naming pattern",
+            "children": [
+                {
+                    "type": "text",
+                    "key": "episode",
+                    "label": "Episode:"
+                },
+                {
+                    "type": "text",
+                    "key": "sequence",
+                    "label": "Sequence:"
+                },
+                {
+                    "type": "text",
+                    "key": "shot",
+                    "label": "Shot:"
+                }
+            ]
         }
     ]
 }

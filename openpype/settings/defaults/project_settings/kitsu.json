@@ -1,3 +1,7 @@
 {
-    "number": 0
+    "entities_naming_pattern": {
+        "episode": "E##",
+        "sequence": "SQ##",
+        "shot": "SH##"
+    }
 }
