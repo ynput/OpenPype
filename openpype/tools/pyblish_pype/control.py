@@ -47,18 +47,22 @@ class MainThreadProcess(QtCore.QObject):
 
     This approach gives ability to update UI meanwhile plugin is in progress.
     """
-    timer_interval = 3
+    # How many times let pass QtApplication to process events
+    # - use 2 as resize event can trigger repaint event but not process in
+    #   same loop
+    count_timeout = 2
 
     def __init__(self):
         super(MainThreadProcess, self).__init__()
         self._items_to_process = collections.deque()
 
         timer = QtCore.QTimer()
-        timer.setInterval(self.timer_interval)
+        timer.setInterval(0)
 
         timer.timeout.connect(self._execute)
 
         self._timer = timer
+        self._switch_counter = self.count_timeout
 
     def process(self, func, *args, **kwargs):
         item = MainThreadItem(func, *args, **kwargs)
@@ -71,12 +75,14 @@ class MainThreadProcess(QtCore.QObject):
         if not self._items_to_process:
             return
 
+        if self._switch_counter > 0:
+            self._switch_counter -= 1
+            return
+
+        self._switch_counter = self.count_timeout
+
         item = self._items_to_process.popleft()
         item.process()
-
-        # Process events directly after the item processed. This allows to
-        # correctly show "highlighted" state for the next item to process
-        QtWidgets.QApplication.instance().processEvents()
 
     def start(self):
         if not self._timer.isActive():
