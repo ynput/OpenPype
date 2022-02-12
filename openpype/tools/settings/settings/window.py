@@ -5,6 +5,7 @@ from .categories import (
     ProjectWidget
 )
 from .widgets import ShadowWidget, RestartDialog
+from .search_dialog import SearchEntitiesDialog
 from openpype import style
 
 from openpype.lib import is_admin_password_required
@@ -175,7 +176,6 @@ class MainWidget(QtWidgets.QWidget):
             widget = self._header_tab_widget.currentWidget()
             root_entity = widget.entity
 
-            from .search import SearchEntitiesDialog
             search = SearchEntitiesDialog(root_entity, parent=self)
             search.resize(700, 500)
             search.setWindowTitle("Search")
