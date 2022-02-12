@@ -60,12 +60,6 @@ def install():
         "instanceToggled", on_pyblish_instance_toggled
     )
 
-    log.info("Setting default family states for loader..")
-    avalon.api.data["familiesStateToggled"] = [
-        "imagesequence",
-        "review"
-    ]
-
     self._has_been_setup = True
     # add houdini vendor packages
     hou_pythonpath = os.path.join(os.path.dirname(HOST_DIR), "vendor")
