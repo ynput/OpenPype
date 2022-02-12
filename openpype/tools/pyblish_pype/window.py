@@ -296,10 +296,6 @@ class Window(QtWidgets.QDialog):
         self.main_layout.setSpacing(0)
         self.main_layout.addWidget(main_widget)
 
-        # Display info
-        info_effect = QtWidgets.QGraphicsOpacityEffect(footer_info)
-        footer_info.setGraphicsEffect(info_effect)
-
         """Setup
 
         Widgets are referred to in CSS via their object-name. We
