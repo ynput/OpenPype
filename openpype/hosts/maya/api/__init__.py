@@ -10,12 +10,6 @@ from .pipeline import (
 
     ls,
     containerise,
-
-    lock,
-    unlock,
-    is_locked,
-    lock_ignored,
-
 )
 from .plugin import (
     Creator,
@@ -53,11 +47,6 @@ __all__ = [
 
     "ls",
     "containerise",
-
-    "lock",
-    "unlock",
-    "is_locked",
-    "lock_ignored",
 
     "Creator",
     "Loader",
