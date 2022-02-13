@@ -2601,6 +2601,10 @@ def fix_incompatible_containers():
                          "ReferenceLoader", type="string")
 
 
+def _null(*args):
+    pass
+
+
 class shelf():
     '''A simple class to build shelves in maya. Since the build method is empty,
     it should be extended by the derived class to build the necessary shelf
