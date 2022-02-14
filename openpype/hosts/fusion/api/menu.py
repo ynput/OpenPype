@@ -3,6 +3,7 @@ import sys
 
 from Qt import QtWidgets, QtCore
 
+from openpype import style
 from openpype.tools.utils import host_tools
 
 from openpype.hosts.fusion.scripts import (
@@ -128,7 +129,6 @@ class OpenPypeMenu(QtWidgets.QWidget):
         host_tools.show_library_loader()
 
     def on_rendernode_clicked(self):
-        from avalon import style
         print("Clicked Set Render Mode")
         if self.render_mode_widget is None:
             window = set_rendermode.SetRenderMode()

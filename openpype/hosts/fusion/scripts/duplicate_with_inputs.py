@@ -1,4 +1,7 @@
-from avalon import fusion
+from openpype.hosts.fusion.api import (
+    comp_lock_and_undo_chunk,
+    get_current_comp
+)
 
 
 def is_connected(input):
@@ -9,12 +12,12 @@ def is_connected(input):
 def duplicate_with_input_connections():
     """Duplicate selected tools with incoming connections."""
 
-    comp = fusion.get_current_comp()
+    comp = get_current_comp()
     original_tools = comp.GetToolList(True).values()
     if not original_tools:
         return  # nothing selected
 
-    with fusion.comp_lock_and_undo_chunk(
+    with comp_lock_and_undo_chunk(
             comp, "Duplicate With Input Connections"):
 
         # Generate duplicates
