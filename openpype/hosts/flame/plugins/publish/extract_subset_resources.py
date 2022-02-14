@@ -249,10 +249,10 @@ class ExtractSubsetResources(openpype.api.Extractor):
                     if not new_stage_dir:
                         new_stage_dir = root
 
-        if new_stage_dir:
-            return new_stage_dir, new_files_list
-        else:
-            raise IOError(
+        if not new_stage_dir:
+            raise AssertionError(
                 "Files in `{}` are not correct! Check `{}`".format(
                     files_list, stage_dir)
             )
+
+        return new_stage_dir, new_files_list
