@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 from avalon import api
 
-from avalon.houdini import pipeline
+from openpype.hosts.houdini.api import pipeline
 
 
 class HdaLoader(api.Loader):

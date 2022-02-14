@@ -1117,6 +1117,20 @@ QScrollBar::add-page:vertical, QScrollBar::sub-page:vertical {
 #ExpandLabel[state="invalid"]:hover, #SettingsLabel[state="invalid"]:hover {
     color: {color:settings:invalid-dark};
 }
+#SettingsOutdatedSourceVersion {
+    color: {color:settings:source-version-outdated};
+}
+#SourceVersionLabel {
+    padding-left: 3px;
+    padding-right: 3px;
+}
+
+#SourceVersionLabel[state="same"] {
+    color: {color:settings:source-version};
+}
+#SourceVersionLabel[state="different"] {
+    color: {color:settings:source-version-outdated};
+}
 
 /* TODO Replace these with explicit widget types if possible */
 #SettingsMainWidget QWidget[input-state="modified"] {
@@ -1132,13 +1146,17 @@ QScrollBar::add-page:vertical, QScrollBar::sub-page:vertical {
     border-color: {color:settings:invalid-dark};
 }
 
-#GroupWidget {
-    border-bottom: 1px solid #21252B;
+#SettingsFooter {
+    border-top: 1px solid #21252B;
 }
 
 #ProjectListWidget QLabel {
     background: transparent;
     font-weight: bold;
+}
+
+#ProjectListContentWidget {
+    background: {color:bg-view};
 }
 
 #MultiSelectionComboBox {

@@ -4,6 +4,41 @@
     "key": "create",
     "label": "Creator plugins",
     "children": [
+        {
+            "type": "dict",
+            "collapsible": true,
+            "key": "CreateArnoldAss",
+            "label": "Create Arnold Ass",
+            "checkbox_key": "enabled",
+            "children": [
+                {
+                    "type": "boolean",
+                    "key": "enabled",
+                    "label": "Enabled"
+                },
+                {
+                    "type": "list",
+                    "key": "defaults",
+                    "label": "Default Subsets",
+                    "object_type": "text"
+                },
+                {
+                    "type": "enum",
+                    "key": "ext",
+                    "label": "Default Output Format (extension)",
+                    "multiselection": false,
+                    "enum_items": [
+                        {
+                            ".ass": ".ass"
+                        },
+                        {
+                            ".ass.gz": ".ass.gz (gzipped)"
+                        }
+                    ]
+                }
+            ]
+
+        },
       {
         "type": "schema_template",
         "name": "template_create_plugin",

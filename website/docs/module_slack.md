@@ -80,7 +80,7 @@ You might try to add `{review_filepath}` to message content. This link might hel
 (It won't show a playable preview though!)
 
 #### Message
-Message content can use Templating (see [Available template keys](admin_settings_project_anatomy#available-template-keys)).
+Message content can use Templating (see [Available template keys](admin_settings_project_anatomy.md#available-template-keys)).
 
 Few keys also have Capitalized and UPPERCASE format. Values will be modified accordingly ({Asset} >> "Asset", {FAMILY} >> "RENDER").
 
