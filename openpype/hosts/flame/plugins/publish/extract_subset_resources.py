@@ -49,10 +49,9 @@ class ExtractSubsetResources(openpype.api.Extractor):
     def process(self, instance):
         try:
             self._process(instance)
-            # bring ui back
-            self.hide_ui_on_process = False
         except Exception as msg:
             self.log.error(msg)
+        finally:
             # bring ui back
             self.hide_ui_on_process = False
 
