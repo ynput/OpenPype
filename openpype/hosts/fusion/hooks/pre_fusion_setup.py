@@ -14,27 +14,40 @@ class FusionPrelaunch(PreLaunchHook):
 
     def execute(self):
         # making sure python 3.6 is installed at provided path
-        py36_dir = os.path.normpath(self.launch_context.env.get("PYTHON36", ""))
+        py36_dir = self.launch_context.env.get("PYTHON36")
+        if not py36_dir:
+            raise ApplicationLaunchFailed(
+                "Required environment variable \"PYTHON36\" is not set."
+                "\n\nFusion implementation requires to have"
+                " installed Python 3.6"
+            )
+
+        py36_dir = os.path.normpath(py36_dir)
         if not os.path.isdir(py36_dir):
             raise ApplicationLaunchFailed(
                 "Python 3.6 is not installed at the provided path.\n"
-                "Either make sure the 'environments/fusion.json' has "
-                "'PYTHON36' set corectly or make sure Python 3.6 is installed "
-                f"in the given path.\n\nPYTHON36: {py36_dir}"
+                "Either make sure the environments in fusion settings has"
+                " 'PYTHON36' set corectly or make sure Python 3.6 is installed"
+                f" in the given path.\n\nPYTHON36: {py36_dir}"
             )
         self.log.info(f"Path to Fusion Python folder: '{py36_dir}'...")
         self.launch_context.env["PYTHON36"] = py36_dir
 
+        utility_dir = self.launch_context.env.get("FUSION_UTILITY_SCRIPTS_DIR")
+        if not utility_dir:
+            raise ApplicationLaunchFailed(
+                "Required Fusion utility script dir environment variable"
+                " \"FUSION_UTILITY_SCRIPTS_DIR\" is not set."
+            )
+
         # setting utility scripts dir for scripts syncing
-        us_dir = os.path.normpath(
-            self.launch_context.env.get("FUSION_UTILITY_SCRIPTS_DIR", "")
-        )
-        if not os.path.isdir(us_dir):
+        utility_dir = os.path.normpath(utility_dir)
+        if not os.path.isdir(utility_dir):
             raise ApplicationLaunchFailed(
                 "Fusion utility script dir does not exist. Either make sure "
-                "the 'environments/fusion.json' has "
-                "'FUSION_UTILITY_SCRIPTS_DIR' set correctly or reinstall "
-                f"Fusion.\n\nFUSION_UTILITY_SCRIPTS_DIR: '{us_dir}'"
+                "the environments in fusion settings has"
+                " 'FUSION_UTILITY_SCRIPTS_DIR' set correctly or reinstall "
+                f"Fusion.\n\nFUSION_UTILITY_SCRIPTS_DIR: '{utility_dir}'"
             )
 
         self._sync_utility_scripts(self.launch_context.env)
