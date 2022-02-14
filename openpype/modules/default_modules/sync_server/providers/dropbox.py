@@ -257,7 +257,37 @@ class DropboxHandler(AbstractProvider):
             mode = dropbox.files.WriteMode.overwrite
 
         with open(source_path, "rb") as f:
-            self.dbx.files_upload(f.read(), path, mode=mode)
+
+            file_size = os.path.getsize(source_path)
+
+            CHUNK_SIZE = 50 * 1024 * 1024
+
+            if file_size <= CHUNK_SIZE:
+                
+                self.dbx.files_upload(f.read(), path, mode=mode)
+
+            else:
+
+                upload_session_start_result = self.dbx.files_upload_session_start(
+                                                f.read(CHUNK_SIZE))
+
+                cursor = dropbox.files.UploadSessionCursor(
+                    session_id=upload_session_start_result.session_id,
+                    offset=f.tell())
+
+                commit = dropbox.files.CommitInfo(path=path, mode=mode)
+
+                while f.tell() < file_size:
+
+                    if ((file_size - f.tell()) <= CHUNK_SIZE):
+                        self.dbx.files_upload_session_finish(f.read(CHUNK_SIZE),
+                                                        cursor,
+                                                        commit)
+                    else:
+                        self.dbx.files_upload_session_append(f.read(CHUNK_SIZE),
+                                                        cursor.session_id,
+                                                        cursor.offset)
+                        cursor.offset = f.tell()
 
         server.update_db(
             collection=collection,
