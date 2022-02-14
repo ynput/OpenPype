@@ -120,7 +120,7 @@ def loader_shift(loader, frame, relative=True):
 class FusionLoadSequence(api.Loader):
     """Load image sequence into Fusion"""
 
-    families = ["imagesequence", "review"]
+    families = ["imagesequence", "review", "render"]
     representations = ["*"]
 
     label = "Load sequence"
@@ -204,7 +204,7 @@ class FusionLoadSequence(api.Loader):
         assert tool.ID == "Loader", "Must be Loader"
         comp = tool.Comp()
 
-        root = api.get_representation_path(representation)
+        root = os.path.dirname(api.get_representation_path(representation))
         path = self._get_first_image(root)
 
         # Get start frame from version data
