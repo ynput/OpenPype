@@ -740,7 +740,7 @@ class OpenClipSolver:
         try:
             openpype.run_subprocess(cmd_args)
         except TypeError:
-            self.log.error("Error createing self.tmp_file")
+            self.log.error("Error creating self.tmp_file")
             six.reraise(*sys.exc_info())
 
     def _clear_tmp_file(self):
