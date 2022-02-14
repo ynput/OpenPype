@@ -25,8 +25,12 @@ For [AWS Thinkbox Deadline](https://www.awsthinkbox.com/deadline) support you ne
 
 ## Configuration
 
-OpenPype integration with Deadline consists of two parts, an `OpenPype` Deadline Plug-in a `GlobalJobPreLoad` script that gets triggered for each job and
- handles populating render and publish jobs with proper environment variables.
+OpenPype integration for Deadline consists of two parts:
+
+- The `OpenPype` Deadline Plug-in
+- A `GlobalJobPreLoad` Deadline Script (this gets triggered for each deadline job) 
+
+The `GlobalJobPreLoad` handles populating render and publish jobs with proper environment variables using settings from the `OpenPype` Deadline Plug-in.
 
 The `OpenPype` Deadline Plug-in must be configured to point to a valid OpenPype executable location. The executable need to be installed to 
 destinations accessible by DL process. Check permissions (must be executable and accessible by Deadline process)
@@ -36,7 +40,7 @@ destinations accessible by DL process. Check permissions (must be executable and
 - Go to `Tools > Configure Plugins...`, find `OpenPype` in the list on the left side, find location of OpenPype 
 executable. It is recommended to use the `openpype_console` executable as it provides a bit more logging.
 
-- In case of multi OS farms, provide multiple locations, each node goes through a list and tries to find the first accessible
+- In case of multi OS farms, provide multiple locations, each Deadline Worker goes through the list and tries to find the first accessible
  location for itself.
 
 ![Configure plugin](assets/deadline_configure_plugin.png)
