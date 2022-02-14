@@ -316,6 +316,7 @@ class LaunchLibrary(LaunchQtApp):
     def before_window_show(self):
         self._window.refresh()
 
+
 class LaunchWorkFiles(LaunchQtApp):
     """Launch Avalon Work Files."""
 
