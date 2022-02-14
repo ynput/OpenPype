@@ -2,6 +2,7 @@ import os
 from Qt import QtCore, QtGui
 
 from avalon.vendor import qtawesome
+from openpype.tools.utils import paint_image_with_color
 
 
 class ResourceCache:
@@ -98,27 +99,3 @@ def get_remove_image():
         "bin.png"
     )
     return QtGui.QImage(image_path)
-
-
-def paint_image_with_color(image, color):
-    """TODO: This function should be imported from utils.
-
-    At the moment of creation is not available yet.
-    """
-    width = image.width()
-    height = image.height()
-
-    alpha_mask = image.createAlphaMask()
-    alpha_region = QtGui.QRegion(QtGui.QBitmap.fromImage(alpha_mask))
-
-    pixmap = QtGui.QPixmap(width, height)
-    pixmap.fill(QtCore.Qt.transparent)
-
-    painter = QtGui.QPainter(pixmap)
-    painter.setClipRegion(alpha_region)
-    painter.setPen(QtCore.Qt.NoPen)
-    painter.setBrush(color)
-    painter.drawRect(QtCore.QRect(0, 0, width, height))
-    painter.end()
-
-    return pixmap

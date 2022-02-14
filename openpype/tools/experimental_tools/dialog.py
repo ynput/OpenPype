@@ -107,7 +107,7 @@ class ExperimentalToolsDialog(QtWidgets.QDialog):
 
         # Is dialog first shown
         self._first_show = True
-        # Trigger refresh when window get's activity
+        # Trigger refresh when window gets activity
         self._refresh_on_active = True
         # Is window active
         self._window_is_active = False

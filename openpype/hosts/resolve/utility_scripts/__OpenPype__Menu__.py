@@ -16,7 +16,7 @@ def main(env):
     # activate resolve from openpype
     avalon.install(bmdvr)
 
-    log.info(f"Avalon registred hosts: {avalon.registered_host()}")
+    log.info(f"Avalon registered hosts: {avalon.registered_host()}")
 
     bmdvr.launch_pype_menu()
 

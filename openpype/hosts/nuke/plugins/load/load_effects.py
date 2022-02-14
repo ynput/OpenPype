@@ -1,7 +1,12 @@
-from avalon import api, style, io
-import nuke
 import json
 from collections import OrderedDict
+import nuke
+from avalon import api, style, io
+from openpype.hosts.nuke.api import (
+    containerise,
+    update_container,
+    viewer_update_and_undo_stop
+)
 
 
 class LoadEffects(api.Loader):
@@ -30,9 +35,6 @@ class LoadEffects(api.Loader):
         Returns:
             nuke node: containerised nuke node object
         """
-        # import dependencies
-        from avalon.nuke import containerise
-
         # get main variables
         version = context['version']
         version_data = version.get("data", {})
@@ -138,10 +140,6 @@ class LoadEffects(api.Loader):
         inputs:
 
         """
-
-        from avalon.nuke import (
-            update_container
-        )
         # get main variables
         # Get version from io
         version = io.find_one({
@@ -253,7 +251,7 @@ class LoadEffects(api.Loader):
         else:
             GN["tile_color"].setValue(int("0x3469ffff", 16))
 
-        self.log.info("udated to version: {}".format(version.get("name")))
+        self.log.info("updated to version: {}".format(version.get("name")))
 
     def connect_read_node(self, group_node, asset, subset):
         """
@@ -314,7 +312,7 @@ class LoadEffects(api.Loader):
     def byteify(self, input):
         """
         Converts unicode strings to strings
-        It goes trought all dictionary
+        It goes through all dictionary
 
         Arguments:
             input (dict/str): input
@@ -338,7 +336,6 @@ class LoadEffects(api.Loader):
         self.update(container, representation)
 
     def remove(self, container):
-        from avalon.nuke import viewer_update_and_undo_stop
         node = nuke.toNode(container['objectName'])
         with viewer_update_and_undo_stop():
             nuke.delete(node)

@@ -53,8 +53,8 @@ class CreateRender(plugin.Creator):
             renderer.
         ass (bool): Submit as ``ass`` file for standalone Arnold renderer.
         tileRendering (bool): Instance is set to tile rendering mode. We
-            won't submit actuall render, but we'll make publish job to wait
-            for Tile Assemly job done and then publish.
+            won't submit actual render, but we'll make publish job to wait
+            for Tile Assembly job done and then publish.
 
     See Also:
         https://pype.club/docs/artist_hosts_maya#creating-basic-render-setup
@@ -86,7 +86,7 @@ class CreateRender(plugin.Creator):
         'vray': 'maya/<scene>/<Layer>/<Layer>',
         'arnold': 'maya/<Scene>/<RenderLayer>/<RenderLayer>{aov_separator}<RenderPass>',  # noqa
         'renderman': 'maya/<Scene>/<layer>/<layer>{aov_separator}<aov>',
-        'redshift': 'maya/<Scene>/<RenderLayer>/<RenderLayer>{aov_separator}<RenderPass>'  # noqa
+        'redshift': 'maya/<Scene>/<RenderLayer>/<RenderLayer>'  # noqa
     }
 
     _aov_chars = {
@@ -455,9 +455,7 @@ class CreateRender(plugin.Creator):
         if renderer == "vray":
             self._set_vray_settings(asset)
         if renderer == "redshift":
-            _ = self._set_renderer_option(
-                "RedshiftOptions", "{}.imageFormat", 1
-            )
+            cmds.setAttr("redshiftOptions.imageFormat", 1)
 
             # resolution
             cmds.setAttr(

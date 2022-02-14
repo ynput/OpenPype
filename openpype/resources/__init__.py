@@ -1,5 +1,5 @@
 import os
-from openpype.lib.pype_info import is_running_staging
+from openpype.lib.openpype_version import is_running_staging
 
 RESOURCES_DIR = os.path.dirname(os.path.abspath(__file__))
 
@@ -12,6 +12,15 @@ def get_resource(*args):
     :type *args: list
     """
     return os.path.normpath(os.path.join(RESOURCES_DIR, *args))
+
+
+def get_image_path(*args):
+    """Helper function to get images.
+
+    Args:
+        *<str>: Filepath part items.
+    """
+    return get_resource("images", *args)
 
 
 def get_liberation_font_path(bold=False, italic=False):

@@ -41,7 +41,7 @@ class ExtractOTIOReview(openpype.api.Extractor):
     order = api.ExtractorOrder - 0.45
     label = "Extract OTIO review"
     families = ["review"]
-    hosts = ["resolve", "hiero"]
+    hosts = ["resolve", "hiero", "flame"]
 
     # plugin default attributes
     temp_file_head = "tempFile."
@@ -84,6 +84,28 @@ class ExtractOTIOReview(openpype.api.Extractor):
         # loop available clips in otio track
         for index, r_otio_cl in enumerate(otio_review_clips):
             # QUESTION: what if transition on clip?
+
+            # check if resolution is the same
+            width = self.to_width
+            height = self.to_height
+            otio_media = r_otio_cl.media_reference
+            media_metadata = otio_media.metadata
+
+            # get from media reference metadata source
+            if media_metadata.get("openpype.source.width"):
+                width = int(media_metadata.get("openpype.source.width"))
+            if media_metadata.get("openpype.source.height"):
+                height = int(media_metadata.get("openpype.source.height"))
+
+            # compare and reset
+            if width != self.to_width:
+                self.to_width = width
+            if height != self.to_height:
+                self.to_height = height
+
+            self.log.debug("> self.to_width x self.to_height: {} x {}".format(
+                self.to_width, self.to_height
+            ))
 
             # get frame range values
             src_range = r_otio_cl.source_range
@@ -251,6 +273,8 @@ class ExtractOTIOReview(openpype.api.Extractor):
         src_start = int(avl_start + start)
         avl_durtation = int(avl_range.duration.value)
 
+        self.need_offset = bool(avl_start != 0 and src_start != 0)
+
         # if media start is les then clip requires
         if src_start < avl_start:
             # calculate gap
@@ -386,11 +410,17 @@ class ExtractOTIOReview(openpype.api.Extractor):
         """
 
         padding = "{{:0{}d}}".format(self.padding)
+
+        # create frame offset
+        offset = 0
+        if self.need_offset:
+            offset = 1
+
         if end_offset:
             new_frames = list()
             start_frame = self.used_frames[-1]
-            for index in range((end_offset + 1),
-                               (int(end_offset + duration) + 1)):
+            for index in range((end_offset + offset),
+                               (int(end_offset + duration) + offset)):
                 seq_number = padding.format(start_frame + index)
                 self.log.debug(
                     "index: `{}` | seq_number: `{}`".format(index, seq_number))

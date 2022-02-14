@@ -2,7 +2,10 @@ import os
 import re
 import pyblish.api
 
-from avalon import aftereffects
+from openpype.hosts.aftereffects.api import (
+    get_stub,
+    get_extension_manifest_path
+)
 
 
 class CollectExtensionVersion(pyblish.api.ContextPlugin):
@@ -27,13 +30,12 @@ class CollectExtensionVersion(pyblish.api.ContextPlugin):
     active = True
 
     def process(self, context):
-        installed_version = aftereffects.stub().get_extension_version()
+        installed_version = get_stub().get_extension_version()
 
         if not installed_version:
             raise ValueError("Unknown version, probably old extension")
 
-        manifest_url = os.path.join(os.path.dirname(aftereffects.__file__),
-                                    "extension", "CSXS", "manifest.xml")
+        manifest_url = get_extension_manifest_path()
 
         if not os.path.exists(manifest_url):
             self.log.debug("Unable to locate extension manifest, not checking")

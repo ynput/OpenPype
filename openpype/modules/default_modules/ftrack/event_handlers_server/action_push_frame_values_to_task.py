@@ -2,7 +2,10 @@ import sys
 import json
 import collections
 import ftrack_api
-from openpype_modules.ftrack.lib import ServerAction
+from openpype_modules.ftrack.lib import (
+    ServerAction,
+    query_custom_attributes
+)
 
 
 class PushHierValuesToNonHier(ServerAction):
@@ -50,10 +53,6 @@ class PushHierValuesToNonHier(ServerAction):
         "select id, key, object_type_id, is_hierarchical, default"
         " from CustomAttributeConfiguration"
         " where key in ({})"
-    )
-    cust_attr_value_query = (
-        "select value, entity_id from CustomAttributeValue"
-        " where entity_id in ({}) and configuration_id in ({})"
     )
 
     # configurable
@@ -344,25 +343,11 @@ class PushHierValuesToNonHier(ServerAction):
                 all_ids_with_parents.add(parent_id)
                 _entity_id = parent_id
 
-        joined_entity_ids = self.join_query_keys(all_ids_with_parents)
-
-        hier_attr_ids = self.join_query_keys(
-            tuple(hier_attr["id"] for hier_attr in hier_attrs)
-        )
+        hier_attr_ids = tuple(hier_attr["id"] for hier_attr in hier_attrs)
         hier_attrs_key_by_id = {
             hier_attr["id"]: hier_attr["key"]
             for hier_attr in hier_attrs
         }
-        call_expr = [{
-            "action": "query",
-            "expression": self.cust_attr_value_query.format(
-                joined_entity_ids, hier_attr_ids
-            )
-        }]
-        if hasattr(session, "call"):
-            [values] = session.call(call_expr)
-        else:
-            [values] = session._call(call_expr)
 
         values_per_entity_id = {}
         for entity_id in all_ids_with_parents:
@@ -370,7 +355,10 @@ class PushHierValuesToNonHier(ServerAction):
             for key in hier_attrs_key_by_id.values():
                 values_per_entity_id[entity_id][key] = None
 
-        for item in values["data"]:
+        values = query_custom_attributes(
+            session, all_ids_with_parents, hier_attr_ids, True
+        )
+        for item in values:
             entity_id = item["entity_id"]
             key = hier_attrs_key_by_id[item["configuration_id"]]
 

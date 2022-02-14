@@ -485,7 +485,7 @@ class AbstractSubmitDeadline(pyblish.api.InstancePlugin):
     def get_aux_files(self):
         """Return list of auxiliary files for Deadline job.
 
-        If needed this should be overriden, otherwise return empty list as
+        If needed this should be overridden, otherwise return empty list as
         that field even empty must be present on Deadline submission.
 
         Returns:
@@ -561,7 +561,7 @@ class AbstractSubmitDeadline(pyblish.api.InstancePlugin):
                         replaced_files = []
                         for f in files:
                             replaced_files.append(
-                                f.replace(orig_scene, new_scene)
+                                str(f).replace(orig_scene, new_scene)
                             )
                         new_exp[aov] = replaced_files
                     # [] might be too much here, TODO
@@ -570,7 +570,7 @@ class AbstractSubmitDeadline(pyblish.api.InstancePlugin):
                     new_exp = []
                     for f in exp:
                         new_exp.append(
-                            f.replace(orig_scene, new_scene)
+                            str(f).replace(orig_scene, new_scene)
                         )
                     self._instance.data["expectedFiles"] = new_exp
 

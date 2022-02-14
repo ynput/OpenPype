@@ -47,18 +47,22 @@ class MainThreadProcess(QtCore.QObject):
 
     This approach gives ability to update UI meanwhile plugin is in progress.
     """
-    timer_interval = 3
+    # How many times let pass QtApplication to process events
+    # - use 2 as resize event can trigger repaint event but not process in
+    #   same loop
+    count_timeout = 2
 
     def __init__(self):
         super(MainThreadProcess, self).__init__()
         self._items_to_process = collections.deque()
 
         timer = QtCore.QTimer()
-        timer.setInterval(self.timer_interval)
+        timer.setInterval(0)
 
         timer.timeout.connect(self._execute)
 
         self._timer = timer
+        self._switch_counter = self.count_timeout
 
     def process(self, func, *args, **kwargs):
         item = MainThreadItem(func, *args, **kwargs)
@@ -70,6 +74,12 @@ class MainThreadProcess(QtCore.QObject):
     def _execute(self):
         if not self._items_to_process:
             return
+
+        if self._switch_counter > 0:
+            self._switch_counter -= 1
+            return
+
+        self._switch_counter = self.count_timeout
 
         item = self._items_to_process.popleft()
         item.process()
@@ -106,14 +116,14 @@ class Controller(QtCore.QObject):
     # ??? Emitted for each process
     was_processed = QtCore.Signal(dict)
 
-    # Emmited when reset
+    # Emitted when reset
     # - all data are reset (plugins, processing, pari yielder, etc.)
     was_reset = QtCore.Signal()
 
-    # Emmited when previous group changed
+    # Emitted when previous group changed
     passed_group = QtCore.Signal(object)
 
-    # Emmited when want to change state of instances
+    # Emitted when want to change state of instances
     switch_toggleability = QtCore.Signal(bool)
 
     # On action finished
@@ -322,7 +332,7 @@ class Controller(QtCore.QObject):
         try:
             result = pyblish.plugin.process(plugin, self.context, instance)
             # Make note of the order at which the
-            # potential error error occured.
+            # potential error error occurred.
             if result["error"] is not None:
                 self.processing["ordersWithError"].add(plugin.order)
 
@@ -564,7 +574,7 @@ class Controller(QtCore.QObject):
         case must be taken to ensure there are no memory leaks.
         Explicitly deleting objects shines a light on where objects
         may still be referenced in the form of an error. No errors
-        means this was uneccesary, but that's ok.
+        means this was unnecessary, but that's ok.
         """
 
         for instance in self.context:

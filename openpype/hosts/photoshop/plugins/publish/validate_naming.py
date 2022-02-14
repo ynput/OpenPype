@@ -2,7 +2,7 @@ import re
 
 import pyblish.api
 import openpype.api
-from avalon import photoshop
+from openpype.hosts.photoshop import api as photoshop
 
 
 class ValidateNamingRepair(pyblish.api.Action):

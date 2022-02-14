@@ -351,7 +351,7 @@ class QtTVPaintRpc(BaseTVPaintRpc):
     async def scene_inventory_tool(self):
         """Open Scene Inventory tool.
 
-        Funciton can't confirm if tool was opened becauise one part of
+        Function can't confirm if tool was opened becauise one part of
         SceneInventory initialization is calling websocket request to host but
         host can't response because is waiting for response from this call.
         """
@@ -578,7 +578,7 @@ class BaseCommunicator:
         # Folder for right windows plugin files
         source_plugins_dir = os.path.join(plugin_files_path, subfolder)
 
-        # Path to libraies (.dll) required for plugin library
+        # Path to libraries (.dll) required for plugin library
         # - additional libraries can be copied to TVPaint installation folder
         #   (next to executable) or added to PATH environment variable
         additional_libs_folder = os.path.join(
@@ -586,7 +586,10 @@ class BaseCommunicator:
             "additional_libraries"
         )
         additional_libs_folder = additional_libs_folder.replace("\\", "/")
-        if additional_libs_folder not in os.environ["PATH"]:
+        if (
+            os.path.exists(additional_libs_folder)
+            and additional_libs_folder not in os.environ["PATH"]
+        ):
             os.environ["PATH"] += (os.pathsep + additional_libs_folder)
 
         # Path to TVPaint's plugins folder (where we want to add our plugin)

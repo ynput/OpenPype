@@ -2,7 +2,7 @@ import os
 
 import pyblish.api
 
-from avalon import harmony
+import openpype.hosts.harmony.api as harmony
 
 
 class ValidateAudio(pyblish.api.InstancePlugin):

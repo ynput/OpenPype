@@ -146,7 +146,7 @@ class CreatorWidget(QtWidgets.QDialog):
         # convert label text to normal capitalized text with spaces
         label_text = self.camel_case_split(text)
 
-        # assign the new text to lable widget
+        # assign the new text to label widget
         label = QtWidgets.QLabel(label_text)
         label.setObjectName("LineLabel")
 
@@ -337,7 +337,7 @@ class SequenceLoader(avalon.Loader):
                 "Sequentially in order"
             ],
             default="Original timing",
-            help="Would you like to place it at orignal timing?"
+            help="Would you like to place it at original timing?"
         )
     ]
 
@@ -475,7 +475,7 @@ class ClipLoader:
     def _get_asset_data(self):
         """ Get all available asset data
 
-        joint `data` key with asset.data dict into the representaion
+        joint `data` key with asset.data dict into the representation
 
         """
         asset_name = self.context["representation"]["context"]["asset"]
@@ -550,7 +550,7 @@ class ClipLoader:
                 (self.timeline_out - self.timeline_in + 1)
                 + self.handle_start + self.handle_end) < self.media_duration)
 
-        # if slate is on then remove the slate frame from begining
+        # if slate is on then remove the slate frame from beginning
         if slate_on:
             self.media_duration -= 1
             self.handle_start += 1
@@ -634,8 +634,8 @@ class PublishClip:
         "track": "sequence",
     }
 
-    # parents search patern
-    parents_search_patern = r"\{([a-z]*?)\}"
+    # parents search pattern
+    parents_search_pattern = r"\{([a-z]*?)\}"
 
     # default templates for non-ui use
     rename_default = False
@@ -719,7 +719,7 @@ class PublishClip:
         return self.track_item
 
     def _populate_track_item_default_data(self):
-        """ Populate default formating data from track item. """
+        """ Populate default formatting data from track item. """
 
         self.track_item_default_data = {
             "_folder_": "shots",
@@ -814,7 +814,7 @@ class PublishClip:
                 # mark review layer
                 if self.review_track and (
                         self.review_track not in self.review_track_default):
-                    # if review layer is defined and not the same as defalut
+                    # if review layer is defined and not the same as default
                     self.review_layer = self.review_track
                 # shot num calculate
                 if self.rename_index == 0:
@@ -863,7 +863,7 @@ class PublishClip:
                     # in case track name and subset name is the same then add
                     if self.subset_name == self.track_name:
                         hero_data["subset"] = self.subset
-                    # assing data to return hierarchy data to tag
+                    # assign data to return hierarchy data to tag
                     tag_hierarchy_data = hero_data
 
         # add data to return data dict
@@ -897,7 +897,7 @@ class PublishClip:
             type
         )
 
-        # first collect formating data to use for formating template
+        # first collect formatting data to use for formatting template
         formating_data = {}
         for _k, _v in self.hierarchy_data.items():
             value = _v["value"].format(
@@ -915,9 +915,9 @@ class PublishClip:
         """ Create parents and return it in list. """
         self.parents = []
 
-        patern = re.compile(self.parents_search_patern)
+        pattern = re.compile(self.parents_search_pattern)
 
-        par_split = [(patern.findall(t).pop(), t)
+        par_split = [(pattern.findall(t).pop(), t)
                      for t in self.hierarchy.split("/")]
 
         for type, template in par_split:

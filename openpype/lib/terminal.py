@@ -130,7 +130,7 @@ class Terminal:
     def _multiple_replace(text, adict):
         """Replace multiple tokens defined in dict.
 
-        Find and replace all occurances of strings defined in dict is
+        Find and replace all occurrences of strings defined in dict is
         supplied string.
 
         Args:

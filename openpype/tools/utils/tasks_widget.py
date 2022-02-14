@@ -255,6 +255,10 @@ class TasksWidget(QtWidgets.QWidget):
         # Force a task changed emit.
         self.task_changed.emit()
 
+    def _clear_selection(self):
+        selection_model = self._tasks_view.selectionModel()
+        selection_model.clearSelection()
+
     def select_task_name(self, task_name):
         """Select a task by name.
 
@@ -284,6 +288,10 @@ class TasksWidget(QtWidgets.QWidget):
                 # Set the currently active index
                 self._tasks_view.setCurrentIndex(index)
                 break
+
+        last_selected_task_name = self.get_selected_task_name()
+        if last_selected_task_name:
+            self._last_selected_task_name = last_selected_task_name
 
     def get_selected_task_name(self):
         """Return name of task at current index (selected)

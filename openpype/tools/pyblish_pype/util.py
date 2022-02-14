@@ -218,7 +218,7 @@ class OrderGroups:
     def sort_groups(_groups_dict):
         sorted_dict = collections.OrderedDict()
 
-        # make sure wont affect any dictionary as pointer
+        # make sure won't affect any dictionary as pointer
         groups_dict = copy.deepcopy(_groups_dict)
         last_order = None
         if None in groups_dict:
