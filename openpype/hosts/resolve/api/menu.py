@@ -54,15 +54,15 @@ class OpenPypeMenu(QtWidgets.QWidget):
         )
 
         self.setWindowTitle("OpenPype")
-        workfiles_btn = QtWidgets.QPushButton("Workfiles ...", self)
-        create_btn = QtWidgets.QPushButton("Create ...", self)
-        publish_btn = QtWidgets.QPushButton("Publish ...", self)
-        load_btn = QtWidgets.QPushButton("Load ...", self)
-        inventory_btn = QtWidgets.QPushButton("Inventory ...", self)
-        subsetm_btn = QtWidgets.QPushButton("Subset Manager ...", self)
-        libload_btn = QtWidgets.QPushButton("Library ...", self)
+        workfiles_btn = QtWidgets.QPushButton("Workfiles...", self)
+        create_btn = QtWidgets.QPushButton("Create...", self)
+        publish_btn = QtWidgets.QPushButton("Publish...", self)
+        load_btn = QtWidgets.QPushButton("Load...", self)
+        inventory_btn = QtWidgets.QPushButton("Inventory...", self)
+        subsetm_btn = QtWidgets.QPushButton("Subset Manager...", self)
+        libload_btn = QtWidgets.QPushButton("Library...", self)
         experimental_btn = QtWidgets.QPushButton(
-            "Experimental tools ...", self
+            "Experimental tools...", self
         )
         # rename_btn = QtWidgets.QPushButton("Rename", self)
         # set_colorspace_btn = QtWidgets.QPushButton(
