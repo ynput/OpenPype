@@ -3,11 +3,6 @@ from .pipeline import (
     uninstall
 )
 
-from .utils import (
-    setup
-)
-
-
 from .lib import (
     get_additional_data,
     update_frame_range
@@ -21,8 +16,6 @@ __all__ = [
     "install",
     "uninstall",
 
-    # utils
-    "setup",
 
     # lib
     "get_additional_data",
