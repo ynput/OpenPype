@@ -95,9 +95,13 @@ def uninstall():
 
     avalon.api.deregister_plugin_path(avalon.api.Loader, LOAD_PATH)
     avalon.api.deregister_plugin_path(avalon.api.Creator, CREATE_PATH)
-    avalon.api.deregister_plugin_path(avalon.api.InventoryAction, INVENTORY_PATH)
+    avalon.api.deregister_plugin_path(
+        avalon.api.InventoryAction, INVENTORY_PATH
+    )
 
-    pyblish.api.deregister_callback("instanceToggled", on_pyblish_instance_toggled)
+    pyblish.api.deregister_callback(
+        "instanceToggled", on_pyblish_instance_toggled
+    )
 
 
 def on_pyblish_instance_toggled(instance, new_value, old_value):
