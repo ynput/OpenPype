@@ -3,7 +3,6 @@ import flame
 from pprint import pformat
 import openpype.hosts.flame.api as opfapi
 
-
 class LoadClip(opfapi.ClipLoader):
     """Load a subset to timeline as clip
 
@@ -97,13 +96,16 @@ class LoadClip(opfapi.ClipLoader):
             "objectName": clip_name
         })
 
-        opc_segment = opfapi.get_clip_segment(opc)
+        # TODO: finish the containerisation
+        # opc_segment = opfapi.get_clip_segment(opc)
 
-        return opfapi.containerise(
-            opc_segment,
-            name, namespace, context,
-            self.__class__.__name__,
-            data_imprint)
+        # return opfapi.containerise(
+        #     opc_segment,
+        #     name, namespace, context,
+        #     self.__class__.__name__,
+        #     data_imprint)
+
+        return opc
 
     def _get_clip(self, name, clip_path):
         reel = self._get_reel()
