@@ -183,7 +183,12 @@ def _install_menu():
         "Manage...",
         lambda: host_tools.show_scene_inventory(parent=main_window)
     )
-
+    menu.addCommand(
+        "Library...",
+        lambda: host_tools.show_library_loader(
+            parent=main_window
+        )
+    )
     menu.addSeparator()
     menu.addCommand(
         "Set Resolution",
