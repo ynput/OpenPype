@@ -43,5 +43,5 @@ class CreateModel(plugin.Creator):
             selected = lib.get_selection()
             for obj in selected:
                 instance.objects.link(obj)
-
+                bpy.context.scene.collection.objects.unlink(obj)
         return instance
