@@ -1,3 +1,5 @@
+import os
+
 import pyblish.api
 
 from openpype.hosts.photoshop import api as photoshop
@@ -25,6 +27,11 @@ class CollectInstances(pyblish.api.ContextPlugin):
         layers = stub.get_layers()
         layers_meta = stub.get_layers_metadata()
         instance_names = []
+
+        families_whitelist = os.getenv("PYBLISH_FAMILY_WHITELIST")
+        if families_whitelist:
+            families_whitelist = families_whitelist.split(',')
+
         for layer in layers:
             layer_data = stub.read(layer, layers_meta)
 
@@ -35,6 +42,12 @@ class CollectInstances(pyblish.api.ContextPlugin):
             # Skip containers.
             if "container" in layer_data["id"]:
                 continue
+
+            if families_whitelist:
+                if layer_data["family"] not in families_whitelist:
+                    self.log.info("Skipped instance with not whitelisted "
+                                  "family: {}".format(layer_data["family"]))
+                    continue
 
             # child_layers = [*layer.Layers]
             # self.log.debug("child_layers {}".format(child_layers))

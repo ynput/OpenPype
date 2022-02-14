@@ -12,6 +12,16 @@ class CollectReview(pyblish.api.ContextPlugin):
 
     def process(self, context):
         family = "review"
+
+        families_whitelist = os.getenv("PYBLISH_FAMILY_WHITELIST")
+        if families_whitelist:
+            families_whitelist = families_whitelist.split(',')
+        if families_whitelist:
+            if family not in families_whitelist:
+                self.log.info("Skipped instance with not whitelisted "
+                              "family: {}".format(family))
+                return
+
         task = os.getenv("AVALON_TASK", None)
         subset = family + task.capitalize()
 

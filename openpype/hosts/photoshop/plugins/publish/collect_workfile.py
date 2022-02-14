@@ -18,6 +18,15 @@ class CollectWorkfile(pyblish.api.ContextPlugin):
         staging_dir = os.path.dirname(file_path)
         base_name = os.path.basename(file_path)
 
+        families_whitelist = os.getenv("PYBLISH_FAMILY_WHITELIST")
+        if families_whitelist:
+            families_whitelist = families_whitelist.split(',')
+        if families_whitelist:
+            if 'workfile' not in families_whitelist:
+                self.log.info("Skipped instance with not whitelisted "
+                              "family: {}".format('workfile'))
+                return
+
         # Create instance
         instance = context.create_instance(subset)
         instance.data.update({
