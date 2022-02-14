@@ -33,6 +33,7 @@ class CreateUnrealStaticMesh(plugin.Creator):
 
     def process(self):
         with lib.undo_chunk():
+            self.name = "{}_{}".format(self.family, self.name)
             instance = super(CreateUnrealStaticMesh, self).process()
             content = cmds.sets(instance, query=True)
 

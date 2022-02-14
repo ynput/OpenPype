@@ -71,6 +71,13 @@ class ValidateUnrealStaticMeshName(pyblish.api.InstancePlugin):
             ["CreateUnrealStaticMesh"]
             ["collision_prefixes"]
         )
+        static_mesh_prefix = (
+            project_settings
+            ["maya"]
+            ["create"]
+            ["CreateUnrealStaticMesh"]
+            ["static_mesh_prefix"]
+        )
 
         combined_geometry_name = instance.data.get(
             "staticMeshCombinedName", None)
@@ -107,7 +114,7 @@ class ValidateUnrealStaticMeshName(pyblish.api.InstancePlugin):
                 else:
                     expected_collision = "{}_{}".format(
                         cl_m.group("prefix"),
-                        combined_geometry_name
+                        combined_geometry_name[len(static_mesh_prefix)+1:]
                     )
 
                     if not obj.startswith(expected_collision):
