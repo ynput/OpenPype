@@ -6,8 +6,6 @@ in global space here until are required or used.
 - imports of Python 3 packages
     - we still support Python 2 hosts where addon definition should available
 """
-from asyncio import all_tasks
-from turtle import update
 import click
 import os
 import re
