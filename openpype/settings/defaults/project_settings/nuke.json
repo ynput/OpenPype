@@ -32,7 +32,8 @@
                 "Fg01",
                 "Branch01",
                 "Part01"
-            ]
+            ],
+            "reviewable": false
         }
     },
     "publish": {
