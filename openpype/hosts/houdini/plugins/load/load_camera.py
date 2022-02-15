@@ -1,5 +1,5 @@
 from avalon import api
-from avalon.houdini import pipeline
+from openpype.hosts.houdini.api import pipeline
 
 
 ARCHIVE_EXPRESSION = ('__import__("_alembic_hom_extensions")'

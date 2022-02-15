@@ -21,14 +21,13 @@ from openpype.tools.utils.tasks_widget import TasksWidget
 from openpype.tools.utils.delegates import PrettyTimeDelegate
 from openpype.lib import (
     Anatomy,
-    get_workdir,
     get_workfile_doc,
     create_workfile_doc,
     save_workfile_data_to_doc,
     get_workfile_template_key,
-    create_workdir_extra_folders
+    create_workdir_extra_folders,
+    get_system_general_anatomy_data
 )
-
 from .model import FilesModel
 from .view import FilesView
 
@@ -109,6 +108,10 @@ class NameWindow(QtWidgets.QDialog):
             "comment": "",
             "ext": None
         }
+
+        # add system general settings anatomy data
+        system_general_data = get_system_general_anatomy_data()
+        self.data.update(system_general_data)
 
         # Store project anatomy
         self.anatomy = anatomy
