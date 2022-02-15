@@ -52,7 +52,7 @@
                 "",
                 "_Main"
             ],
-            "static_mesh_prefix": "S_",
+            "static_mesh_prefix": "S",
             "collision_prefixes": [
                 "UBX",
                 "UCP",
