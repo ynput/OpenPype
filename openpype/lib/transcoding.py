@@ -31,8 +31,7 @@ INT_TAGS = {
     "subimages",
 }
 
-CHAR_REF_REGEX_DECIMAL = re.compile(r"&#[0-9]+;")
-CHAR_REF_REGEX_HEX = re.compile(r"&#x[0-9a-zA-Z]+;")
+XML_CHAR_REF_REGEX_HEX = re.compile(r"&#x?[0-9a-fA-F]+;")
 
 # Regex to parse array attributes
 ARRAY_TYPE_REGEX = re.compile(r"^(int|float|string)\[\d+\]$")
@@ -196,12 +195,9 @@ def parse_oiio_xml_output(xml_string, logger=None):
         return output
 
     # Fix values with ampresand (lazy fix)
-    # - ElementTree can't handle all escaped values with ampresand
+    # - oiiotool exports invalid xml which ElementTree can't handle
     #   e.g. "&#01;"
-    matches = (
-        set(CHAR_REF_REGEX_HEX.findall(xml_string))
-        | set(CHAR_REF_REGEX_DECIMAL.findall(xml_string))
-    )
+    matches = XML_CHAR_REF_REGEX_HEX.findall(xml_string)
     for match in matches:
         new_value = match.replace("&", "&amp;")
         xml_string = xml_string.replace(match, new_value)
