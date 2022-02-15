@@ -25,6 +25,5 @@ def test_fix_ffmpeg_full_args_filters():
                                   [output_arg, "-af adeclick"])
     assert len(ret) == 4, "Parsed wrong"
     assert ret[-1] == output_arg
-    assert ret[-2] == '"adeclick,addeclick"' # TODO fix this duplication
+    assert ret[-2] == '"adeclick,adeclick"'  # TODO fix this duplication
     assert ret[-3] == "-filter:a"
-
