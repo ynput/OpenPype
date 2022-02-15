@@ -6,6 +6,8 @@ in global space here until are required or used.
 - imports of Python 3 packages
     - we still support Python 2 hosts where addon definition should available
 """
+from asyncio import all_tasks
+from turtle import update
 import click
 import os
 import re
@@ -170,6 +172,7 @@ def sync_zou():
         dbcon.Session["AVALON_PROJECT"] = project_name
 
         # Get all entities from zou
+        print(f"Synchronizing {project_name}...")
         zou_project = gazu.project.get_project_by_name(project_name)
 
         # Create project
@@ -194,11 +197,11 @@ def sync_zou():
         all_episodes = gazu.shot.all_episodes_for_project(zou_project)
         all_seqs = gazu.shot.all_sequences_for_project(zou_project)
         all_shots = gazu.shot.all_shots_for_project(zou_project)
-        print(zou_project["name"])
         all_entities_ids = {
             e["id"] for e in all_episodes + all_seqs + all_shots + all_assets
         }
 
+        # Query all assets of the local project
         project_module_settings = get_project_settings(project_name)["kitsu"]
         project_col = dbcon.database[project_name]
         asset_docs = {
@@ -207,7 +210,6 @@ def sync_zou():
         }
 
         # Create new assets
-        # Query all assets of the local project
         new_assets_docs = [
             doc
             for doc in asset_docs.values()
@@ -225,6 +227,7 @@ def sync_zou():
         for doc in new_assets_docs:
             visual_parent_id = doc["data"]["visualParent"]
 
+            # Match asset type by it's name
             match = regex_ep.match(doc["name"])
             if not match:  # Asset
                 new_entity = gazu.asset.new_asset(
@@ -269,6 +272,7 @@ def sync_zou():
                                 "parents": parent_doc["data"]["parents"]
                                 + [parent_doc["name"]],
                                 "visualParent": parent_doc["_id"],
+                                "zou": new_sequence,
                             },
                             "parent": parent_doc["_id"],
                         }
@@ -309,104 +313,60 @@ def sync_zou():
                 )
             )
 
-        # TODO update / tasks
+        # Update assets
+        all_tasks_types = {t["name"]: t for t in gazu.task.all_task_types()}
+        assets_docs_to_update = [
+            doc
+            for doc in asset_docs.values()
+            if doc["data"].get("zou_id") in all_entities_ids
+        ]
+        for doc in assets_docs_to_update:
+            zou_id = doc["data"].get("zou", {}).get("id")
+            if zou_id:
+                # Data
+                entity_data = {}
+                frame_in = doc["data"].get("frameStart")
+                frame_out = doc["data"].get("frameEnd")
+                if frame_in or frame_out:
+                    entity_data.update(
+                        {
+                            "data": {"frame_in": frame_in, "frame_out": frame_out},
+                            "nb_frames": frame_out - frame_in,
+                        }
+                    )
+                entity = gazu.raw.update("entities", zou_id, entity_data)
 
-        # Delete TODO
-        # if gazu.
+                # Tasks
+                all_tasks_func = getattr(
+                    gazu.task, f"all_tasks_for_{entity['type'].lower()}"
+                )
+                entity_tasks = {t["name"] for t in all_tasks_func(entity)}
+                for task_name in doc["data"]["tasks"].keys():
+                    # Create only if new
+                    if task_name not in entity_tasks:
+                        task_type = all_tasks_types.get(task_name)
+
+                        # Create non existing task
+                        if not task_type:
+                            task_type = gazu.task.new_task_type(task_name)
+                            all_tasks_types[task_name] = task_type
+
+                        # New task for entity
+                        gazu.task.new_task(entity, task_type)
+
+        # Delete
+        deleted_entities = all_entities_ids - {
+            asset_doc["data"].get("zou", {}).get("id")
+            for asset_doc in asset_docs.values()
+        }
+        for entity_id in deleted_entities:
+            gazu.raw.delete(f"data/entities/{entity_id}")
 
         # Write into DB
         if bulk_writes:
             project_col.bulk_write(bulk_writes)
 
     dbcon.uninstall()
-
-    return
-
-    for project in all_projects:
-        # Create project locally
-        # Try to find project document
-        project_name = project["name"]
-        project_code = project_name
-        dbcon.Session["AVALON_PROJECT"] = project_name
-        project_doc = dbcon.find_one({"type": "project"})
-
-        # Get all assets from zou
-        all_assets = gazu.asset.all_assets_for_project(project)
-        all_episodes = gazu.shot.all_episodes_for_project(project)
-        all_seqs = gazu.shot.all_sequences_for_project(project)
-        all_shots = gazu.shot.all_shots_for_project(project)
-
-        # Create project if is not available
-        # - creation is required to be able set project anatomy and attributes
-        to_insert = []
-        if not project_doc:
-            print(f"Creating project '{project_name}'")
-            project_doc = create_project(project_name, project_code, dbcon=dbcon)
-
-            # Project tasks
-            bulk_writes.append(
-                UpdateOne(
-                    {"_id": project_doc["_id"]},
-                    {
-                        "$set": {
-                            "config.tasks": {
-                                t["name"]: {
-                                    "short_name": t.get("short_name", t["name"])
-                                }
-                                for t in gazu.task.all_task_types_for_project(project)
-                            }
-                        }
-                    },
-                )
-            )
-
-        # Query all assets of the local project
-        project_col = dbcon.database[project_code]
-        asset_doc_ids = {
-            asset_doc["data"]["zou_id"]: asset_doc
-            for asset_doc in project_col.find({"type": "asset"})
-            if asset_doc["data"].get("zou_id")
-        }
-        asset_doc_ids[project["id"]] = project_doc
-
-        # Create
-        to_insert.extend(
-            [
-                {
-                    "name": item["name"],
-                    "type": "asset",
-                    "schema": "openpype:asset-3.0",
-                    "data": {"zou_id": item["id"], "tasks": {}},
-                }
-                for item in all_episodes + all_assets + all_seqs + all_shots
-                if item["id"] not in asset_doc_ids.keys()
-            ]
-        )
-        if to_insert:
-            # Insert in doc
-            project_col.insert_many(to_insert)
-
-            # Update existing docs
-            asset_doc_ids.update(
-                {
-                    asset_doc["data"]["zou_id"]: asset_doc
-                    for asset_doc in project_col.find({"type": "asset"})
-                    if asset_doc["data"].get("zou_id")
-                }
-            )
-
-        # Update
-        all_entities = all_assets + all_episodes + all_seqs + all_shots
-        bulk_writes.extend(update_op_assets(all_entities, asset_doc_ids))
-
-        # Delete
-        diff_assets = set(asset_doc_ids.keys()) - {
-            e["id"] for e in all_entities + [project]
-        }
-        if diff_assets:
-            bulk_writes.extend(
-                [DeleteOne(asset_doc_ids[asset_id]) for asset_id in diff_assets]
-            )
 
 
 @cli_main.command()
