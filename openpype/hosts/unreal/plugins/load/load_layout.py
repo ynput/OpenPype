@@ -5,6 +5,7 @@ from pathlib import Path
 import unreal
 from unreal import EditorAssetLibrary
 from unreal import EditorLevelLibrary
+from unreal import EditorLevelUtils
 from unreal import AssetToolsHelpers
 from unreal import FBXImportType
 from unreal import MathLibrary as umath
@@ -74,12 +75,6 @@ class LayoutLoader(api.Loader):
 
         return None
 
-    def _add_sub_sequence(self, master, sub):
-        track = master.add_master_track(unreal.MovieSceneCinematicShotTrack)
-        section = track.add_section()
-        section.set_editor_property('sub_sequence', sub)
-        return section
-
     def _get_data(self, asset_name):
         asset_doc = io.find_one({
             "type": "asset",
@@ -87,6 +82,78 @@ class LayoutLoader(api.Loader):
         })
 
         return asset_doc.get("data")
+
+    def _set_sequence_hierarchy(self, seq_i, seq_j, data_i, data_j, map_paths):
+        # Set data for the parent sequence
+        if data_i:
+            seq_i.set_display_rate(unreal.FrameRate(data_i.get("fps"), 1.0))
+            seq_i.set_playback_start(data_i.get("frameStart"))
+            seq_i.set_playback_end(data_i.get("frameEnd") + 1)
+
+        # Get existing sequencer tracks or create them if they don't exist
+        tracks = seq_i.get_master_tracks()
+        subscene_track = None
+        visibility_track = None
+        for t in tracks:
+            if t.get_class() == unreal.MovieSceneSubTrack.static_class():
+                subscene_track = t
+            if t.get_class() == unreal.MovieSceneLevelVisibilityTrack.static_class():
+                visibility_track = t
+        if not subscene_track:
+            subscene_track = seq_i.add_master_track(unreal.MovieSceneSubTrack)
+        if not visibility_track:
+            visibility_track = seq_i.add_master_track(unreal.MovieSceneLevelVisibilityTrack)
+
+        # Create the sub-scene section
+        subscenes = subscene_track.get_sections()
+        subscene = None
+        for s in subscenes:
+            if s.get_editor_property('sub_sequence') == seq_j:
+                subscene = s
+                break
+        if not subscene:
+            subscene = subscene_track.add_section()
+            subscene.set_row_index(len(subscene_track.get_sections()))
+            subscene.set_editor_property('sub_sequence', seq_j)
+            subscene.set_range(
+                data_j.get("frameStart"),
+                data_j.get("frameEnd") + 1)
+
+        # Create the visibility section
+        ar = unreal.AssetRegistryHelpers.get_asset_registry()
+        maps = []
+        for m in map_paths:
+            # Unreal requires to load the level to get the map name
+            EditorLevelLibrary.save_all_dirty_levels()
+            EditorLevelLibrary.load_level(m)
+            maps.append(str(ar.get_asset_by_object_path(m).asset_name))
+
+        vis_section = visibility_track.add_section()
+        index = len(visibility_track.get_sections())
+
+        vis_section.set_range(
+            data_j.get("frameStart"),
+            data_j.get("frameEnd") + 1)
+        vis_section.set_visibility(unreal.LevelVisibility.VISIBLE)
+        vis_section.set_row_index(index)
+        vis_section.set_level_names(maps)
+
+        if data_j.get("frameStart") > 1:
+            hid_section = visibility_track.add_section()
+            hid_section.set_range(
+                1,
+                data_j.get("frameStart"))
+            hid_section.set_visibility(unreal.LevelVisibility.HIDDEN)
+            hid_section.set_row_index(index)
+            hid_section.set_level_names(maps)
+        if data_j.get("frameEnd") < data_i.get("frameEnd"):
+            hid_section = visibility_track.add_section()
+            hid_section.set_range(
+                data_j.get("frameEnd") + 1,
+                data_i.get("frameEnd") + 1)
+            hid_section.set_visibility(unreal.LevelVisibility.HIDDEN)
+            hid_section.set_row_index(index)
+            hid_section.set_level_names(maps)
 
     def _process_family(
         self, assets, classname, transform, sequence, inst_name=None):
@@ -420,6 +487,37 @@ class LayoutLoader(api.Loader):
 
         EditorAssetLibrary.make_directory(asset_dir)
 
+        # Create map for the shot, and create hierarchy of map. If the maps
+        # already exist, we will use them.
+        maps = []
+        for h in hierarchy_list:
+            a = h.split('/')[-1]
+            map = f"{h}/{a}_map.{a}_map"
+            new = False
+
+            if not EditorAssetLibrary.does_asset_exist(map):
+                EditorLevelLibrary.new_level(f"{h}/{a}_map")
+                new = True
+
+            maps.append({"map": map, "new": new})
+
+        EditorLevelLibrary.new_level(f"{asset_dir}/{asset}_map")
+        maps.append(
+            {"map":f"{asset_dir}/{asset}_map.{asset}_map", "new": True})
+
+        for i in range(0, len(maps) - 1):
+            for j in range(i + 1, len(maps)):
+                if maps[j].get('new'):
+                    EditorLevelLibrary.load_level(maps[i].get('map'))
+                    EditorLevelUtils.add_level_to_world(
+                        EditorLevelLibrary.get_editor_world(),
+                        maps[j].get('map'),
+                        unreal.LevelStreamingDynamic
+                    )
+                    EditorLevelLibrary.save_all_dirty_levels()
+
+        EditorLevelLibrary.load_level(maps[-1].get('map'))
+
         # Get all the sequences in the hierarchy. It will create them, if 
         # they don't exist.
         sequences = []
@@ -456,8 +554,6 @@ class LayoutLoader(api.Loader):
 
             i += 1
 
-        # TODO: check if shot already exists
-
         shot = tools.create_asset(
             asset_name=asset,
             package_path=asset_dir,
@@ -465,35 +561,38 @@ class LayoutLoader(api.Loader):
             factory=unreal.LevelSequenceFactoryNew()
         )
 
-        sequences.append(shot)
-
         # Add sequences data to hierarchy
         data_i = self._get_data(sequences[0].get_name())
 
         for i in range(0, len(sequences) - 1):
-            section = self._add_sub_sequence(sequences[i], sequences[i + 1])
+            maps_to_add = []
+            for j in range(i + 1, len(maps)):
+                maps_to_add.append(maps[j].get('map'))
 
             data_j = self._get_data(sequences[i + 1].get_name())
 
-            if data_i:
-                sequences[i].set_display_rate(unreal.FrameRate(data_i.get("fps"), 1.0))
-                sequences[i].set_playback_start(data_i.get("frameStart"))
-                sequences[i].set_playback_end(data_i.get("frameEnd"))
-            if data_j:
-                section.set_range(
-                    data_j.get("frameStart"),
-                    data_j.get("frameEnd"))
+            self._set_sequence_hierarchy(
+                sequences[i], sequences[i + 1],
+                data_i, data_j,
+                maps_to_add)
 
             data_i = data_j
 
+        parent_data = self._get_data(sequences[-1].get_name())
         data = self._get_data(asset)
+        self._set_sequence_hierarchy(
+                sequences[-1], shot,
+                parent_data, data,
+                [maps[-1].get('map')])
 
-        if data:
-            shot.set_display_rate(unreal.FrameRate(data.get("fps"), 1.0))
-            shot.set_playback_start(data.get("frameStart"))
-            shot.set_playback_end(data.get("frameEnd"))
+        EditorLevelLibrary.load_level(maps[-1].get('map'))
 
         self._process(self.fname, asset_dir, shot)
+
+        for s in sequences:
+            EditorAssetLibrary.save_asset(s.get_full_name())
+
+        EditorLevelLibrary.save_current_level()
 
         # Create Asset Container
         lib.create_avalon_container(
@@ -519,6 +618,8 @@ class LayoutLoader(api.Loader):
 
         for a in asset_content:
             EditorAssetLibrary.save_asset(a)
+
+        EditorLevelLibrary.load_level(maps[0].get('map'))
 
         return asset_content
 

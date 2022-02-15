@@ -15,12 +15,6 @@ class CameraLoader(api.Loader):
     icon = "cube"
     color = "orange"
 
-    def _add_sub_sequence(self, master, sub):
-        track = master.add_master_track(unreal.MovieSceneCinematicShotTrack)
-        section = track.add_section()
-        section.set_editor_property('sub_sequence', sub)
-        return section
-
     def _get_data(self, asset_name):
         asset_doc = io.find_one({
             "type": "asset",
@@ -28,6 +22,35 @@ class CameraLoader(api.Loader):
         })
 
         return asset_doc.get("data")
+
+    def _set_sequence_hierarchy(self, seq_i, seq_j, data_i, data_j):
+        if data_i:
+            seq_i.set_display_rate(unreal.FrameRate(data_i.get("fps"), 1.0))
+            seq_i.set_playback_start(data_i.get("frameStart"))
+            seq_i.set_playback_end(data_i.get("frameEnd") + 1)
+
+        tracks = seq_i.get_master_tracks()
+        track = None
+        for t in tracks:
+            if t.get_class() == unreal.MovieSceneSubTrack.static_class():
+                track = t
+                break
+        if not track:
+            track = seq_i.add_master_track(unreal.MovieSceneSubTrack)
+
+        subscenes = track.get_sections()
+        subscene = None
+        for s in subscenes:
+            if s.get_editor_property('sub_sequence') == seq_j:
+                subscene = s
+                break
+        if not subscene:
+            subscene = track.add_section()
+            subscene.set_row_index(len(track.get_sections()))
+            subscene.set_editor_property('sub_sequence', seq_j)
+            subscene.set_range(
+                data_j.get("frameStart"),
+                data_j.get("frameEnd") + 1)
 
     def load(self, context, name, namespace, data):
         """
@@ -95,30 +118,6 @@ class CameraLoader(api.Loader):
 
         container_name += suffix
 
-        # sequence = None
-
-        # ar = unreal.AssetRegistryHelpers.get_asset_registry()
-
-        # if not unreal.EditorAssetLibrary.does_directory_exist(asset_dir):
-        #     unreal.EditorAssetLibrary.make_directory(asset_dir)
-
-        #     sequence = tools.create_asset(
-        #         asset_name=asset_name,
-        #         package_path=asset_dir,
-        #         asset_class=unreal.LevelSequence,
-        #         factory=unreal.LevelSequenceFactoryNew()
-        #     )
-        # else:
-        #     asset_content = unreal.EditorAssetLibrary.list_assets(
-        #         asset_dir, recursive=False)
-        #     for a in asset_content:
-        #         obj = ar.get_asset_by_object_path(a)
-        #         if obj.get_asset().get_class().get_name() == 'LevelSequence':
-        #             sequence = obj.get_asset()
-        #             break
-
-        # assert sequence, "Sequence not found"
-
         # Get all the sequences in the hierarchy. It will create them, if 
         # they don't exist.
         sequences = []
@@ -133,13 +132,6 @@ class CameraLoader(api.Loader):
                 if unreal.EditorAssetLibrary.find_asset_data(
                     asset).get_class().get_name() == 'LevelSequence'
             ]
-
-            # for asset in root_content:
-            #     asset_data = EditorAssetLibrary.find_asset_data(asset)
-            #     # imported_asset = unreal.AssetRegistryHelpers.get_asset(
-            #     #     imported_asset_data)
-            #     if asset_data.get_class().get_name() == 'LevelSequence':
-            #         break
 
             if not existing_sequences:
                 scene = tools.create_asset(
@@ -158,42 +150,27 @@ class CameraLoader(api.Loader):
         unreal.EditorAssetLibrary.make_directory(asset_dir)
 
         cam_seq = tools.create_asset(
-            asset_name=asset,
+            asset_name=f"{asset}_camera",
             package_path=asset_dir,
             asset_class=unreal.LevelSequence,
             factory=unreal.LevelSequenceFactoryNew()
         )
 
-        sequences.append(cam_seq)
-
         # Add sequences data to hierarchy
         data_i = self._get_data(sequences[0].get_name())
 
         for i in range(0, len(sequences) - 1):
-            section = self._add_sub_sequence(sequences[i], sequences[i + 1])
-
-            print(sequences[i])
-            print(sequences[i + 1])
-
             data_j = self._get_data(sequences[i + 1].get_name())
 
-            if data_i:
-                sequences[i].set_display_rate(unreal.FrameRate(data_i.get("fps"), 1.0))
-                sequences[i].set_playback_start(data_i.get("frameStart"))
-                sequences[i].set_playback_end(data_i.get("frameEnd"))
-            if data_j:
-                section.set_range(
-                    data_j.get("frameStart"),
-                    data_j.get("frameEnd"))
+            self._set_sequence_hierarchy(
+                sequences[i], sequences[i + 1], data_i, data_j)
 
             data_i = data_j
 
+        parent_data = self._get_data(sequences[-1].get_name())
         data = self._get_data(asset)
-
-        if data:
-            cam_seq.set_display_rate(unreal.FrameRate(data.get("fps"), 1.0))
-            cam_seq.set_playback_start(data.get("frameStart"))
-            cam_seq.set_playback_end(data.get("frameEnd"))
+        self._set_sequence_hierarchy(
+                sequences[-1], cam_seq, parent_data, data)
 
         settings = unreal.MovieSceneUserImportFBXSettings()
         settings.set_editor_property('reduce_keys', False)
