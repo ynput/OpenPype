@@ -1,4 +1,5 @@
 import sys
+import collections
 
 from Qt import QtWidgets, QtCore
 from avalon import api, io, pipeline
@@ -378,15 +379,19 @@ class LoaderWindow(QtWidgets.QDialog):
 
         version_docs = []
         if rows:
+            items = collections.deque()
             for index in rows:
                 if not index or not index.isValid():
                     continue
                 item = index.data(subsets.model.ItemRole)
-                if item is None:
-                    continue
+                if item is not None:
+                    items.append(item)
+
+            while items:
+                item = items.popleft()
                 if item.get("isGroup") or item.get("isMerged"):
                     for child in item.children():
-                        version_docs.append(child["version_document"])
+                        items.append(child)
                 else:
                     version_docs.append(item["version_document"])
 
