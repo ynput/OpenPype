@@ -19,8 +19,8 @@ class CleanHierarchicalAttrsAction(BaseAction):
         " from TypedContext where project_id is \"{}\""
     )
     cust_attr_query = (
-        "select value, entity_id from CustomAttributeValue "
-        "where entity_id in ({}) and configuration_id is \"{}\""
+        "select value, entity_id from CustomAttributeValue"
+        " where entity_id in ({}) and configuration_id is \"{}\""
     )
     settings_key = "clean_hierarchical_attr"
 
@@ -65,17 +65,14 @@ class CleanHierarchicalAttrsAction(BaseAction):
                 )
             )
             configuration_id = attr["id"]
-            call_expr = [{
-                "action": "query",
-                "expression": self.cust_attr_query.format(
+            values = session.query(
+                self.cust_attr_query.format(
                     entity_ids_joined, configuration_id
                 )
-            }]
-
-            [values] = self.session.call(call_expr)
+            ).all()
 
             data = {}
-            for item in values["data"]:
+            for item in values:
                 value = item["value"]
                 if value is None:
                     data[item["entity_id"]] = value
@@ -90,10 +87,10 @@ class CleanHierarchicalAttrsAction(BaseAction):
                 len(data), configuration_key
             ))
             for entity_id, value in data.items():
-                entity_key = collections.OrderedDict({
-                    "configuration_id": configuration_id,
-                    "entity_id": entity_id
-                })
+                entity_key = collections.OrderedDict((
+                    ("configuration_id", configuration_id),
+                    ("entity_id", entity_id)
+                ))
                 session.recorded_operations.push(
                     ftrack_api.operation.DeleteEntityOperation(
                         "CustomAttributeValue",

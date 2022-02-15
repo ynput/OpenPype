@@ -31,7 +31,7 @@ class ExtractReview(openpype.api.Extractor):
         for image_instance in instance.context:
             if image_instance.data["family"] != "image":
                 continue
-            layers.append(image_instance[0])
+            layers.append(image_instance.data.get("layer"))
 
         # Perform extraction
         output_image = "{}.jpg".format(

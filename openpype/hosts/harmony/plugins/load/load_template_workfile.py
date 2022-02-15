@@ -3,7 +3,8 @@ import zipfile
 import os
 import shutil
 
-from avalon import api, harmony
+from avalon import api
+import openpype.hosts.harmony.api as harmony
 
 
 class ImportTemplateLoader(api.Loader):

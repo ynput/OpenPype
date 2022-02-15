@@ -2440,34 +2440,27 @@ def validate_fps():
     # rounding, we have to round those numbers coming from Maya.
     current_fps = float_round(mel.eval('currentTimeUnitToFPS()'), 2)
 
-    if current_fps != fps:
+    fps_match = current_fps == fps
+    if not fps_match and not IS_HEADLESS:
+        from openpype.widgets import popup
 
-        from Qt import QtWidgets
-        from ...widgets import popup
+        parent = get_main_window()
 
-        # Find maya main window
-        top_level_widgets = {w.objectName(): w for w in
-                             QtWidgets.QApplication.topLevelWidgets()}
+        dialog = popup.Popup2(parent=parent)
+        dialog.setModal(True)
+        dialog.setWindowTitle("Maya scene not in line with project")
+        dialog.setMessage("The FPS is out of sync, please fix")
 
-        parent = top_level_widgets.get("MayaWindow", None)
-        if parent is None:
-            pass
-        else:
-            dialog = popup.Popup2(parent=parent)
-            dialog.setModal(True)
-            dialog.setWindowTitle("Maya scene not in line with project")
-            dialog.setMessage("The FPS is out of sync, please fix")
+        # Set new text for button (add optional argument for the popup?)
+        toggle = dialog.widgets["toggle"]
+        update = toggle.isChecked()
+        dialog.on_show.connect(lambda: set_scene_fps(fps, update))
 
-            # Set new text for button (add optional argument for the popup?)
-            toggle = dialog.widgets["toggle"]
-            update = toggle.isChecked()
-            dialog.on_show.connect(lambda: set_scene_fps(fps, update))
+        dialog.show()
 
-            dialog.show()
+        return False
 
-            return False
-
-    return True
+    return fps_match
 
 
 def bake(nodes,

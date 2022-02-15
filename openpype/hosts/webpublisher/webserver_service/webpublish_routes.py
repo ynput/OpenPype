@@ -359,12 +359,19 @@ class ConfiguredExtensionsEndpoint(_RestApiEndpoint):
             "studio_exts": set(["psd", "psb", "tvpp", "tvp"])
         }
         collect_conf = sett["webpublisher"]["publish"]["CollectPublishedFiles"]
-        for _, mapping in collect_conf.get("task_type_to_family", {}).items():
-            for _family, config in mapping.items():
-                if config["is_sequence"]:
-                    configured["sequence_exts"].update(config["extensions"])
-                else:
-                    configured["file_exts"].update(config["extensions"])
+        configs = collect_conf.get("task_type_to_family", [])
+        mappings = []
+        for _, conf_mappings in configs.items():
+            if isinstance(conf_mappings, dict):
+                conf_mappings = conf_mappings.values()
+            for conf_mapping in conf_mappings:
+                mappings.append(conf_mapping)
+
+        for mapping in mappings:
+            if mapping["is_sequence"]:
+                configured["sequence_exts"].update(mapping["extensions"])
+            else:
+                configured["file_exts"].update(mapping["extensions"])
 
         return Response(
             status=200,
