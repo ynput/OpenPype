@@ -237,17 +237,15 @@ class HarmonySubmitDeadline(
     order = pyblish.api.IntegratorOrder + 0.1
     hosts = ["harmony"]
     families = ["render.farm"]
-    if not os.environ.get("DEADLINE_REST_URL"):
-        optional = False
-        active = False
-    else:
-        optional = True
 
+    optional = True
     use_published = False
     primary_pool = ""
     secondary_pool = ""
     priority = 50
     chunk_size = 1000000
+    group = "none"
+    department = ""
 
     def get_job_info(self):
         job_info = DeadlineJobInfo("Harmony")
@@ -264,6 +262,8 @@ class HarmonySubmitDeadline(
         job_info.SecondaryPool = self.secondary_pool
         job_info.ChunkSize = self.chunk_size
         job_info.BatchName = os.path.basename(self._instance.data["source"])
+        job_info.Department = self.department
+        job_info.Group = self.group
 
         keys = [
             "FTRACK_API_KEY",

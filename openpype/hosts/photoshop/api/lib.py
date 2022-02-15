@@ -27,7 +27,7 @@ def main(*subprocess_args):
     avalon.api.install(api)
     sys.excepthook = safe_excepthook
 
-    # coloring in ConsoleTrayApp
+    # coloring in StdOutBroker
     os.environ["OPENPYPE_LOG_NO_COLORS"] = "False"
     app = QtWidgets.QApplication([])
     app.setQuitOnLastWindowClosed(False)

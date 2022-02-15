@@ -995,7 +995,7 @@ class MongoSettingsHandler(SettingsHandler):
         # QUESTION cache?
         if version == LEGACY_SETTINGS_VERSION:
             return self.collection.find_one({
-                "type": PROJECT_SETTINGS_KEY,
+                "type": PROJECT_ANATOMY_KEY,
                 "is_default": True
             })
 
@@ -1003,7 +1003,7 @@ class MongoSettingsHandler(SettingsHandler):
             version = self._current_version
 
         return self.collection.find_one({
-            "type": self._project_settings_key,
+            "type": self._project_anatomy_key,
             "is_default": True,
             "version": version
         })

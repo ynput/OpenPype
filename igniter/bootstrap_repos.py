@@ -23,7 +23,8 @@ from .user_settings import (
     OpenPypeSettingsRegistry
 )
 from .tools import (
-    get_openpype_path_from_db,
+    get_openpype_global_settings,
+    get_openpype_path_from_settings,
     get_expected_studio_version_str
 )
 
@@ -973,9 +974,19 @@ class BootstrapRepos:
                 for line in checksums_data.split("\n") if line
             ]
 
+            # get list of files in zip minus `checksums` file itself
+            # and turn in to set to compare against list of files
+            # from checksum file. If difference exists, something is
+            # wrong
+            files_in_zip = set(zip_file.namelist())
+            files_in_zip.remove("checksums")
+            files_in_checksum = {file[1] for file in checksums}
+            diff = files_in_zip.difference(files_in_checksum)
+            if diff:
+                return False, f"Missing files {diff}"
+
             # calculate and compare checksums in the zip file
-            for file in checksums:
-                file_name = file[1]
+            for file_checksum, file_name in checksums:
                 if platform.system().lower() == "windows":
                     file_name = file_name.replace("/", "\\")
                 h = hashlib.sha256()
@@ -983,20 +994,8 @@ class BootstrapRepos:
                     h.update(zip_file.read(file_name))
                 except FileNotFoundError:
                     return False, f"Missing file [ {file_name} ]"
-                if h.hexdigest() != file[0]:
+                if h.hexdigest() != file_checksum:
                     return False, f"Invalid checksum on {file_name}"
-
-            # get list of files in zip minus `checksums` file itself
-            # and turn in to set to compare against list of files
-            # from checksum file. If difference exists, something is
-            # wrong
-            files_in_zip = zip_file.namelist()
-            files_in_zip.remove("checksums")
-            files_in_zip = set(files_in_zip)
-        files_in_checksum = {file[1] for file in checksums}
-        diff = files_in_zip.difference(files_in_checksum)
-        if diff:
-            return False, f"Missing files {diff}"
 
         return True, "All ok"
 
@@ -1011,16 +1010,22 @@ class BootstrapRepos:
             tuple(line.split(":"))
             for line in checksums_data.split("\n") if line
         ]
-        files_in_dir = [
+
+        # compare file list against list of files from checksum file.
+        # If difference exists, something is wrong and we invalidate directly
+        files_in_dir = set(
             file.relative_to(path).as_posix()
             for file in path.iterdir() if file.is_file()
-        ]
+        )
         files_in_dir.remove("checksums")
-        files_in_dir = set(files_in_dir)
         files_in_checksum = {file[1] for file in checksums}
 
-        for file in checksums:
-            file_name = file[1]
+        diff = files_in_dir.difference(files_in_checksum)
+        if diff:
+            return False, f"Missing files {diff}"
+
+        # calculate and compare checksums
+        for file_checksum, file_name in checksums:
             if platform.system().lower() == "windows":
                 file_name = file_name.replace("/", "\\")
             try:
@@ -1028,11 +1033,8 @@ class BootstrapRepos:
             except FileNotFoundError:
                 return False, f"Missing file [ {file_name} ]"
 
-            if file[0] != current:
+            if file_checksum != current:
                 return False, f"Invalid checksum on {file_name}"
-        diff = files_in_dir.difference(files_in_checksum)
-        if diff:
-            return False, f"Missing files {diff}"
 
         return True, "All ok"
 
@@ -1262,7 +1264,8 @@ class BootstrapRepos:
         openpype_path = None
         # try to get OpenPype path from mongo.
         if location.startswith("mongodb"):
-            openpype_path = get_openpype_path_from_db(location)
+            global_settings = get_openpype_global_settings(location)
+            openpype_path = get_openpype_path_from_settings(global_settings)
             if not openpype_path:
                 self._print("cannot find OPENPYPE_PATH in settings.")
                 return None

@@ -2,7 +2,7 @@ import os
 
 import pyblish.api
 import openpype.api
-from avalon import harmony
+import openpype.hosts.harmony.api as harmony
 
 
 class ValidateInstanceRepair(pyblish.api.Action):

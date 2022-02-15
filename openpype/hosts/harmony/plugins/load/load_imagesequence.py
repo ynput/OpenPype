@@ -6,7 +6,8 @@ from pathlib import Path
 
 import clique
 
-from avalon import api, harmony
+from avalon import api
+import openpype.hosts.harmony.api as harmony
 import openpype.lib
 
 

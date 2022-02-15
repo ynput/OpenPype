@@ -1717,3 +1717,38 @@ def should_workfile_tool_start(
     if output is None:
         return default_output
     return output
+
+
+def get_non_python_host_kwargs(kwargs, allow_console=True):
+    """Explicit setting of kwargs for Popen for AE/PS/Harmony.
+
+    Expected behavior
+    - openpype_console opens window with logs
+    - openpype_gui has stdout/stderr available for capturing
+
+    Args:
+        kwargs (dict) or None
+        allow_console (bool): use False for inner Popen opening app itself or
+           it will open additional console (at least for Harmony)
+    """
+    if kwargs is None:
+        kwargs = {}
+
+    if platform.system().lower() != "windows":
+        return kwargs
+
+    executable_path = os.environ.get("OPENPYPE_EXECUTABLE")
+    executable_filename = ""
+    if executable_path:
+        executable_filename = os.path.basename(executable_path)
+    if "openpype_gui" in executable_filename:
+        kwargs.update({
+            "creationflags": subprocess.CREATE_NO_WINDOW,
+            "stdout": subprocess.DEVNULL,
+            "stderr": subprocess.DEVNULL
+        })
+    elif allow_console:
+        kwargs.update({
+            "creationflags": subprocess.CREATE_NEW_CONSOLE
+        })
+    return kwargs
