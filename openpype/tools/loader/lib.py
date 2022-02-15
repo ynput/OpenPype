@@ -1,4 +1,5 @@
 import inspect
+import collections
 from Qt import QtGui
 
 from avalon.vendor import qtawesome
@@ -19,23 +20,21 @@ def change_visibility(model, view, column_name, visible):
 
 
 def get_selected_items(rows, item_role):
-    items = []
+    output = []
+    items = collections.deque()
     for row_index in rows:
         item = row_index.data(item_role)
-        if item.get("isGroup"):
-            continue
+        items.append(item)
 
-        elif item.get("isMerged"):
-            for idx in range(row_index.model().rowCount(row_index)):
-                child_index = row_index.child(idx, 0)
-                item = child_index.data(item_role)
-                if item not in items:
-                    items.append(item)
-
+    while items:
+        item = items.popleft()
+        if item.get("isGroup") or item.get("isMerged"):
+            for child in item.children():
+                items.append(child)
         else:
-            if item not in items:
-                items.append(item)
-    return items
+            if item not in output:
+                output.append(item)
+    return output
 
 
 def get_options(action, loader, parent, repre_contexts):
