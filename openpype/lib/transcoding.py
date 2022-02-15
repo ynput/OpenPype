@@ -30,6 +30,38 @@ INT_TAGS = {
     "deep",
     "subimages",
 }
+
+XML_UNUSED_CHARS = {
+    "&#00;",
+    "&#01;",
+    "&#02;",
+    "&#03;",
+    "&#04;",
+    "&#05;",
+    "&#06;",
+    "&#07;",
+    "&#08;",
+    "&#11;",
+    "&#12;",
+    "&#14;",
+    "&#15;",
+    "&#16;",
+    "&#17;",
+    "&#18;",
+    "&#19;",
+    "&#20;",
+    "&#21;",
+    "&#22;",
+    "&#23;",
+    "&#24;",
+    "&#25;",
+    "&#26;",
+    "&#27;",
+    "&#28;",
+    "&#29;",
+    "&#30;",
+    "&#31;"
+}
 # Regex to parse array attributes
 ARRAY_TYPE_REGEX = re.compile(r"^(int|float|string)\[\d+\]$")
 
@@ -190,6 +222,14 @@ def parse_oiio_xml_output(xml_string, logger=None):
     output = {}
     if not xml_string:
         return output
+
+    # Fix values with ampresand (lazy fix)
+    # - ElementTree can't handle all escaped values with ampresand
+    #   e.g. "&#01;"
+    for unused_char in XML_UNUSED_CHARS:
+        if unused_char in xml_string:
+            new_char = unused_char.replace("&", "&amp;")
+            xml_string = xml_string.replace(unused_char, new_char)
 
     if logger is None:
         logger = logging.getLogger("OIIO-xml-parse")
