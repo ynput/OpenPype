@@ -225,6 +225,7 @@ class ValidateRenderSettings(pyblish.api.InstancePlugin):
             cls.log.warning("warning: prefix differs from "
                             "recommended {}".format(
                                 default_prefix))
+            invalid = True
 
         if padding != cls.DEFAULT_PADDING:
             invalid = True
