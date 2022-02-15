@@ -108,7 +108,9 @@ class ProjectManagerWindow(QtWidgets.QWidget):
             helper_btns_widget
         )
         add_asset_btn.setObjectName("IconBtn")
+        add_asset_btn.setEnabled(False)
         add_task_btn.setObjectName("IconBtn")
+        add_task_btn.setEnabled(False)
 
         helper_btns_layout = QtWidgets.QHBoxLayout(helper_btns_widget)
         helper_btns_layout.setContentsMargins(0, 0, 0, 0)
@@ -138,6 +140,7 @@ class ProjectManagerWindow(QtWidgets.QWidget):
 
         message_label = QtWidgets.QLabel(buttons_widget)
         save_btn = QtWidgets.QPushButton("Save", buttons_widget)
+        save_btn.setEnabled(False)
 
         buttons_layout = QtWidgets.QHBoxLayout(buttons_widget)
         buttons_layout.setContentsMargins(0, 0, 0, 0)
@@ -173,6 +176,7 @@ class ProjectManagerWindow(QtWidgets.QWidget):
         self._create_project_btn = create_project_btn
         self._create_folders_btn = create_folders_btn
         self._remove_projects_btn = remove_projects_btn
+        self._save_btn = save_btn
 
         self._add_asset_btn = add_asset_btn
         self._add_task_btn = add_task_btn
@@ -183,6 +187,9 @@ class ProjectManagerWindow(QtWidgets.QWidget):
     def _set_project(self, project_name=None):
         self._create_folders_btn.setEnabled(project_name is not None)
         self._remove_projects_btn.setEnabled(project_name is not None)
+        self._add_asset_btn.setEnabled(project_name is not None)
+        self._add_task_btn.setEnabled(project_name is not None)
+        self._save_btn.setEnabled(project_name is not None)
         self._project_proxy_model.set_filter_default(project_name is not None)
         self.hierarchy_view.set_project(project_name)
 
