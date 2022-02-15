@@ -42,5 +42,3 @@ class ExtractUnrealStaticMesh(openpype.api.Extractor):
 
         instance.data["setMembers"] = [static_mesh_name]
         instance.data["setMembers"] += instance.data["collisionMembers"]
-
-        self.log.debug(instance.data["setMembers"])
