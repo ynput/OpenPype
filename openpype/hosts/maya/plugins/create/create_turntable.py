@@ -65,4 +65,9 @@ class CreateTurnTable(plugin.Creator):
             container = create(Creator,
                         name=self.name,
                         asset=asset,
-                        options= {"useSelection":True})
+                        options= {"useSelection":True},
+                        data={
+                            "frameStart": 1001,
+                            "frameEnd": int(frames)+1001,
+                        }
+                        )
