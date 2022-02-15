@@ -494,7 +494,7 @@
                 "darwin": "",
                 "linux": ""
             },
-            "frames":2,
+            "frames":72,
             "cameraShape":"cameraShape",
             "modelTransform":"Asset_GRP",
             "lightTransform":"Light_GRP"

@@ -33,33 +33,36 @@ class CreateTurnTable(plugin.Creator):
         cameraShape = ExtractTurntable_setting["cameraShape"]
 
         namespace="turntable"
-        # reference template file
-        cmds.file(path,
-                reference=True,
-                groupReference=True,
-                namespace=namespace,
-                groupName="_GRP",
-        )
+        if path :
+            # reference template file
+            cmds.file(path,
+                    reference=True,
+                    groupReference=True,
+                    namespace=namespace,
+                    groupName="_GRP",
+            )
 
-        # # get animation time and set key frames
-        cmds.setKeyframe(instance, t=1001, v=0.0, at="ry", itt="linear", ott="linear")
-        cmds.setKeyframe(instance, t=int(int(frames)/2)+1001, v=360.0 , at="ry", itt="linear", ott="linear")
-        cmds.setKeyframe(namespace +":"+ modelTransform, t=1001, v=0.0, at="ry", itt="linear", ott="linear")
-        cmds.setKeyframe(namespace +":"+ modelTransform, t=int(int(frames)/2)+1001, v=360.0 , at="ry", itt="linear", ott="linear")
+            # # get animation time and set key frames
+            cmds.setKeyframe(instance, t=1001, v=0.0, at="ry", itt="linear", ott="linear")
+            cmds.setKeyframe(instance, t=int(int(frames)/2)+1001, v=360.0 , at="ry", itt="linear", ott="linear")
+            cmds.setKeyframe(namespace +":"+ modelTransform, t=1001, v=0.0, at="ry", itt="linear", ott="linear")
+            cmds.setKeyframe(namespace +":"+ modelTransform, t=int(int(frames)/2)+1001, v=360.0 , at="ry", itt="linear", ott="linear")
 
-        ## second turn
-        cmds.setKeyframe(namespace +":"+ lightTransform, t=int(int(frames)/2)+1001, v=0.0, at="ry", itt="linear", ott="linear")
-        cmds.setKeyframe(namespace +":"+ lightTransform, t=int(frames)+1001, v=360.0 , at="ry", itt="linear", ott="linear")
+            ## second turn
+            cmds.setKeyframe(namespace +":"+ lightTransform, t=int(int(frames)/2)+1001, v=0.0, at="ry", itt="linear", ott="linear")
+            cmds.setKeyframe(namespace +":"+ lightTransform, t=int(frames)+1001, v=360.0 , at="ry", itt="linear", ott="linear")
 
-        ## fit camera to object
-        fit_factor=0.5
-        cmds.viewFit( namespace +":"+ cameraShape, f=fit_factor)
+            ## fit camera to content
+            content = cmds.sets(instance, query=True)
+            cmds.select(content, r=1)
+            fit_factor=0.5
+            cmds.viewFit( namespace +":"+ cameraShape, f=fit_factor)
 
-        cmds.delete(instance)
+            cmds.delete(instance)
 
-        Creator = get_creator_by_name("CreateRender")
+            Creator = get_creator_by_name("CreateRender")
 
-        container = create(Creator,
-                    name=self.name,
-                    asset=asset,
-                    options= {"useSelection":True})
+            container = create(Creator,
+                        name=self.name,
+                        asset=asset,
+                        options= {"useSelection":True})
