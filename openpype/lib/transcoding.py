@@ -197,6 +197,8 @@ def parse_oiio_xml_output(xml_string, logger=None):
     # Fix values with ampresand (lazy fix)
     # - oiiotool exports invalid xml which ElementTree can't handle
     #   e.g. "&#01;"
+    # WARNING: this will affect even valid character entities. If you need those values correctly, this must
+    # take care of valid character ranges. See https://github.com/pypeclub/OpenPype/pull/2729
     matches = XML_CHAR_REF_REGEX_HEX.findall(xml_string)
     for match in matches:
         new_value = match.replace("&", "&amp;")
