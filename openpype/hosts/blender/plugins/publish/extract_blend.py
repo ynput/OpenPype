@@ -24,8 +24,9 @@ class ExtractBlend(openpype.api.Extractor):
         self.log.info("Performing extraction..")
 
         data_blocks = set()
-
-        for obj in instance:
+        collection = bpy.data.collections[instance.name]
+        data_blocks.add(collection)
+        for obj in collection.objects:
             data_blocks.add(obj)
             # Pack used images in the blend files.
             if obj.type == 'MESH':

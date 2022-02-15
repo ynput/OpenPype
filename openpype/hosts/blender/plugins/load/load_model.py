@@ -45,17 +45,17 @@ class BlendModelLoader(plugin.AssetLoader):
         with bpy.data.libraries.load(
             libpath, link=True, relative=False
         ) as (data_from, data_to):
-            data_to.objects = data_from.objects
+            data_to.collections = data_from.collections
 
         parent = bpy.context.scene.collection
 
-        empties = [obj for obj in data_to.objects if obj.type == 'EMPTY']
+       # empties = [obj for obj in data_to.collections if obj.type == 'EMPTY']
 
         container = None
 
-        for empty in empties:
-            if empty.get(AVALON_PROPERTY):
-                container = empty
+        for collection in data_to.collections:
+            if collection.get(AVALON_PROPERTY):
+                container = collection
                 break
 
         assert container, "No asset group found"
@@ -120,14 +120,14 @@ class BlendModelLoader(plugin.AssetLoader):
         group_name = plugin.asset_name(asset, subset, unique_number)
         namespace = namespace or f"{asset}_{unique_number}"
 
-        avalon_container = bpy.data.collections.get(AVALON_CONTAINERS)
+        avalon_container = bpy.data.collections.get(asset_name)
         if not avalon_container:
-            avalon_container = bpy.data.collections.new(name=AVALON_CONTAINERS)
+            avalon_container = bpy.data.collections.new(name=asset_name)
             bpy.context.scene.collection.children.link(avalon_container)
 
-        asset_group = bpy.data.objects.new(group_name, object_data=None)
-        asset_group.empty_display_type = 'SINGLE_ARROW'
-        avalon_container.objects.link(asset_group)
+        #asset_group = bpy.data.objects.new(group_name, object_data=None)
+        #asset_group.empty_display_type = 'SINGLE_ARROW'
+        #avalon_container.objects.link(asset_group)
 
         plugin.deselect_all()
 
@@ -140,34 +140,34 @@ class BlendModelLoader(plugin.AssetLoader):
                 rotation = transform.get('rotation')
                 scale = transform.get('scale')
 
-                asset_group.location = (
+                avalon_container.location = (
                     location.get('x'),
                     location.get('y'),
                     location.get('z')
                 )
-                asset_group.rotation_euler = (
+                avalon_container.rotation_euler = (
                     rotation.get('x'),
                     rotation.get('y'),
                     rotation.get('z')
                 )
-                asset_group.scale = (
+                avalon_container.scale = (
                     scale.get('x'),
                     scale.get('y'),
                     scale.get('z')
                 )
 
                 bpy.context.view_layer.objects.active = parent
-                asset_group.select_set(True)
+                avalon_container.select_set(True)
 
                 bpy.ops.object.parent_set(keep_transform=True)
 
                 plugin.deselect_all()
 
-        objects = self._process(libpath, asset_group, group_name)
+        objects = self._process(libpath, avalon_container, group_name)
 
-        bpy.context.scene.collection.objects.link(asset_group)
+        bpy.context.scene.collection.objects.link(avalon_container)
 
-        asset_group[AVALON_PROPERTY] = {
+        avalon_container[AVALON_PROPERTY] = {
             "schema": "openpype:container-2.0",
             "id": AVALON_CONTAINER_ID,
             "name": name,

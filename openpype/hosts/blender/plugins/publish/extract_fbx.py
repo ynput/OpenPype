@@ -36,11 +36,12 @@ class ExtractFBX(api.Extractor):
                 asset_group = obj
 
         context = plugin.create_blender_context(
-            active=asset_group, selected=selected)
+            active=instance, selected=selected)
 
         new_materials = []
         new_materials_objs = []
-        objects = list(asset_group.children)
+
+        objects = list(bpy.data.collections[instance.name].objects)
 
         for obj in objects:
             objects.extend(obj.children)

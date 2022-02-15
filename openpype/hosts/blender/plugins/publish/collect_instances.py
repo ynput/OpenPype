@@ -18,6 +18,7 @@ class CollectInstances(pyblish.api.ContextPlugin):
     label = "Collect Instances"
     order = pyblish.api.CollectorOrder
     data = dict()
+
     @staticmethod
     def get_asset_groups(name) -> Generator:
         """Return all 'model' collections.
@@ -41,10 +42,8 @@ class CollectInstances(pyblish.api.ContextPlugin):
         representation set. If the representation is set, it is a loaded model
         and we don't want to publish it.
         """
-
-
         for collection in bpy.data.collections:
-            avalon_prop = collection.get(name) or dict()
+            avalon_prop = collection.get('avalon') or dict()
             if avalon_prop.get('id') == 'pyblish.avalon.instance':
                 yield collection
 
@@ -58,10 +57,11 @@ class CollectInstances(pyblish.api.ContextPlugin):
         asset = self.data["asset"]
         subset = self.data["subset"]
         name = plugin.asset_name(asset, subset)
-        asset_groups = self.get_asset_groups(name)
-        collections = self.get_collections(name)
 
-        for group in asset_groups:
+        collections = self.get_collections(name)
+        print("asset_groups--------------------------------------")
+        for group in collections:
+            print(group.name)
             avalon_prop = group[AVALON_PROPERTY]
             asset = avalon_prop['asset']
             family = avalon_prop['family']
@@ -81,7 +81,7 @@ class CollectInstances(pyblish.api.ContextPlugin):
             for obj in objects:
                 objects.extend(list(obj.children))
                 members.add(obj)
-            members.add(group)
+            #members.add(group)
             instance[:] = list(members)
             self.log.debug(json.dumps(instance.data, indent=4))
             for obj in instance:
@@ -109,7 +109,7 @@ class CollectInstances(pyblish.api.ContextPlugin):
                         for child in obj.children:
                             if child.type == 'ARMATURE':
                                 members.append(child)
-            members.append(collection)
+            #members.append(collection)
             instance[:] = members
             self.log.debug(json.dumps(instance.data, indent=4))
             for obj in instance:
