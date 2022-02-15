@@ -233,16 +233,7 @@ def sync_zou():
                 new_entity = gazu.asset.new_asset(
                     zou_project, all_asset_types[0], doc["name"]
                 )
-
-            elif match.group(1):  # Episode
-                new_entity = gazu.shot.new_episode(zou_project, doc["name"])
-
-            elif match.group(2):  # Sequence
-                parent_doc = asset_docs[visual_parent_id]
-                new_entity = gazu.shot.new_sequence(
-                    zou_project, doc["name"], episode=parent_doc["data"]["zou_id"]
-                )
-
+            # Match case in shot<sequence<episode order to support composed names like 'ep01_sq01_sh01'
             elif match.group(3):  # Shot
                 # Match and check parent doc
                 parent_doc = asset_docs[visual_parent_id]
@@ -291,6 +282,15 @@ def sync_zou():
                     frame_out=doc["data"]["frameEnd"],
                     nb_frames=doc["data"]["frameEnd"] - doc["data"]["frameStart"],
                 )
+
+            elif match.group(2):  # Sequence
+                parent_doc = asset_docs[visual_parent_id]
+                new_entity = gazu.shot.new_sequence(
+                    zou_project, doc["name"], episode=parent_doc["data"]["zou_id"]
+                )
+
+            elif match.group(1):  # Episode
+                new_entity = gazu.shot.new_episode(zou_project, doc["name"])
 
             # Update doc with zou id
             doc["data"].update(
