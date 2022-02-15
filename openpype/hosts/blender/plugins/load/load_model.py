@@ -42,10 +42,13 @@ class BlendModelLoader(plugin.AssetLoader):
                 bpy.data.objects.remove(obj)
 
     def _process(self, libpath, asset_group, group_name):
+
         with bpy.data.libraries.load(
             libpath, link=True, relative=False
         ) as (data_from, data_to):
             data_to.collections = data_from.collections
+
+
 
         parent = bpy.context.scene.collection
 
@@ -53,7 +56,7 @@ class BlendModelLoader(plugin.AssetLoader):
 
         container = None
 
-        for collection in data_to.collections:
+        for collection in bpy.data.collections:
             if collection.get(AVALON_PROPERTY):
                 container = collection
                 break
@@ -62,37 +65,39 @@ class BlendModelLoader(plugin.AssetLoader):
 
         # Children must be linked before parents,
         # otherwise the hierarchy will break
-        objects = []
-        nodes = list(container.children)
+        # objects = []
+        # nodes = list(container.objects)
+        # container.make_local()
+        # for obj in nodes:
+        #     #obj.parent = asset_group
+        #     container.objects.link(obj)
+        #     bpy.context.scene.collection.objects.unlink(obj)
 
-        for obj in nodes:
-            obj.parent = asset_group
-
-        for obj in nodes:
-            objects.append(obj)
-            nodes.extend(list(obj.children))
-
-        objects.reverse()
-
-        for obj in objects:
-            parent.objects.link(obj)
-
-        for obj in objects:
-            local_obj = plugin.prepare_data(obj, group_name)
-            if local_obj.type != 'EMPTY':
-                plugin.prepare_data(local_obj.data, group_name)
-
-                for material_slot in local_obj.material_slots:
-                    if material_slot.material:
-                        plugin.prepare_data(material_slot.material, group_name)
-
-            if not local_obj.get(AVALON_PROPERTY):
-                local_obj[AVALON_PROPERTY] = dict()
-
-            avalon_info = local_obj[AVALON_PROPERTY]
-            avalon_info.update({"container_name": group_name})
-
-        objects.reverse()
+        # for obj in nodes:
+        #     objects.append(obj)
+        #     nodes.extend(list(obj.children))
+        #
+        # objects.reverse()
+        #
+        # for obj in objects:
+        #     parent.objects.link(obj)
+        #
+        # for obj in objects:
+        #     local_obj = plugin.prepare_data(obj, group_name)
+        #     if local_obj.type != 'EMPTY':
+        #         plugin.prepare_data(local_obj.data, group_name)
+        #
+        #         for material_slot in local_obj.material_slots:
+        #             if material_slot.material:
+        #                 plugin.prepare_data(material_slot.material, group_name)
+        #
+        #     if not local_obj.get(AVALON_PROPERTY):
+        #         local_obj[AVALON_PROPERTY] = dict()
+        #
+        #     avalon_info = local_obj[AVALON_PROPERTY]
+        #     avalon_info.update({"container_name": group_name})
+        #
+        # objects.reverse()
 
         bpy.data.orphans_purge(do_local_ids=False)
 
@@ -165,7 +170,7 @@ class BlendModelLoader(plugin.AssetLoader):
 
         objects = self._process(libpath, avalon_container, group_name)
 
-        bpy.context.scene.collection.objects.link(avalon_container)
+        #bpy.context.scene.collection.children.link(avalon_container)
 
         avalon_container[AVALON_PROPERTY] = {
             "schema": "openpype:container-2.0",

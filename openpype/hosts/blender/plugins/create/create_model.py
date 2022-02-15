@@ -29,19 +29,26 @@ class CreateModel(plugin.Creator):
         name = plugin.asset_name(asset, subset)
 
         # Get Instance Container or create it if it does not exist
-        instance = bpy.data.collections.get(name)
-        if not instance:
-            instance = bpy.data.collections.new(name=name)
-            bpy.context.scene.collection.children.link(instance)
 
+        #asset_group = bpy.data.objects.new(name=name, object_data=None)
+        #asset_group.empty_display_type = 'SINGLE_ARROW'
+
+        #instance = bpy.data.collections.get(name)
+        instance = bpy.data.objects.get(name)
+        if not instance:
+            instance = bpy.data.objects.new(name=name, object_data=None)
+            instance.empty_display_type = 'SINGLE_ARROW'
+        bpy.context.scene.collection.objects.link(instance)
 
         self.data['task'] = api.Session.get('AVALON_TASK')
         lib.imprint(instance, self.data)
 
         # Add selected objects to instance
         if (self.options or {}).get("useSelection"):
+            bpy.context.view_layer.objects.active = instance
             selected = lib.get_selection()
             for obj in selected:
-                instance.objects.link(obj)
-                bpy.context.scene.collection.objects.unlink(obj)
+                obj.select_set(True)
+            selected.append(instance)
+            bpy.ops.object.parent_set(keep_transform=True)
         return instance
