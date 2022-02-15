@@ -67,7 +67,10 @@ class CreateTurnTable(plugin.Creator):
                         asset=asset,
                         options= {"useSelection":True},
                         data={
-                            "frameStart": 1001,
-                            "frameEnd": int(frames)+1001,
+                            "frameStartHandle": 1001,
+                            "frameEndHandle": int(frames)+1001,
                         }
                         )
+
+            cmds.setAttr("defaultRenderGlobals.startFrame", 1001)
+            cmds.setAttr("defaultRenderGlobals.endFrame", int(frames)+1001)
