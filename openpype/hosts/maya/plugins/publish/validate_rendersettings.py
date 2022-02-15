@@ -332,12 +332,25 @@ class ValidateRenderSettings(pyblish.api.InstancePlugin):
                 else:
                     node = vray_settings[0]
 
-                cmds.optionMenuGrp("vrayRenderElementSeparator",
-                                   v=instance.data.get("aovSeparator", "_"))
+                aov_separator = instance.data.get("aovSeparator", "_")
+
+                # set it in vray menu (like in CreateRender)
+                menu_grp = "vrayRenderElementSeparator"
+                if cmds.optionMenuGrp(menu_grp, query=True, exists=True):
+                    items = cmds.optionMenuGrp(menu_grp, ill=True, query=True)
+                    separators = [cmds.menuItem(i, label=True, query=True) for
+                                  i in items]
+                    try:
+                        sep_idx = separators.index(aov_separator)
+                    except ValueError:
+                        raise ValueError(
+                            "AOV character {} not in {}".format(
+                                aov_separator, separators))
+                    cmds.optionMenuGrp(menu_grp, edit=True, sl=sep_idx + 1)
+
                 cmds.setAttr(
-                    "{}.fileNameRenderElementSeparator".format(
-                        node),
-                    instance.data.get("aovSeparator", "_"),
+                    "{}.fileNameRenderElementSeparator".format(node),
+                    aov_separator,
                     type="string"
                 )
 
