@@ -58,9 +58,8 @@ class CreateTurnTable(plugin.Creator):
         cmds.delete(instance)
 
         Creator = get_creator_by_name("CreateRender")
-        self.log.info("creator is .. " + str(Creator))
 
         container = create(Creator,
-                    name="renderingTurnTabless",
+                    name=self.name,
                     asset=asset,
                     options= {"useSelection":True})
