@@ -288,9 +288,7 @@ class LoaderWindow(QtWidgets.QDialog):
         on selection change so they match current selection.
         """
         # TODO do not touch inner attributes of asset widget
-        last_asset_ids = self.data["state"]["assetIds"]
-        if last_asset_ids:
-            self._assets_widget.clear_underlines()
+        self._assets_widget.clear_underlines()
 
     def _assetschanged(self):
         """Selected assets have changed"""
@@ -329,6 +327,7 @@ class LoaderWindow(QtWidgets.QDialog):
         asset_ids = self.data["state"]["assetIds"]
         # Skip setting colors if not asset multiselection
         if not asset_ids or len(asset_ids) < 2:
+            self.clear_assets_underlines()
             self._versionschanged()
             return
 

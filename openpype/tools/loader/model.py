@@ -524,9 +524,13 @@ class SubsetsModel(TreeModel, BaseRepresentationModel):
             return
 
         self._fill_subset_items(
-            asset_docs_by_id, subset_docs_by_id, last_versions_by_subset_id,
+            asset_docs_by_id,
+            subset_docs_by_id,
+            last_versions_by_subset_id,
             repre_info_by_version_id
         )
+        self.endResetModel()
+        self.refreshed.emit(True)
 
     def create_multiasset_group(
         self, subset_name, asset_ids, subset_counter, parent_item=None
@@ -538,7 +542,6 @@ class SubsetsModel(TreeModel, BaseRepresentationModel):
         merge_group.update({
             "subset": "{} ({})".format(subset_name, len(asset_ids)),
             "isMerged": True,
-            "childRow": 0,
             "subsetColor": subset_color,
             "assetIds": list(asset_ids),
             "icon": qtawesome.icon(
@@ -547,7 +550,6 @@ class SubsetsModel(TreeModel, BaseRepresentationModel):
             )
         })
 
-        subset_counter += 1
         self.add_child(merge_group, parent_item)
 
         return merge_group
@@ -567,8 +569,7 @@ class SubsetsModel(TreeModel, BaseRepresentationModel):
             group_item = Item()
             group_item.update({
                 "subset": group_name,
-                "isGroup": True,
-                "childRow": 0
+                "isGroup": True
             })
             group_item.update(group_data)
 
@@ -665,9 +666,6 @@ class SubsetsModel(TreeModel, BaseRepresentationModel):
 
                 index = self.index(item.row(), 0, parent_index)
                 self.set_version(index, last_version)
-
-        self.endResetModel()
-        self.refreshed.emit(True)
 
     def data(self, index, role):
         if not index.isValid():
@@ -1139,7 +1137,6 @@ class RepresentationModel(TreeModel, BaseRepresentationModel):
                         "_id": doc["_id"],
                         "name": doc["name"],
                         "isMerged": True,
-                        "childRow": 0,
                         "active_site_name": self.active_site,
                         "remote_site_name": self.remote_site,
                         "icon": qtawesome.icon(
