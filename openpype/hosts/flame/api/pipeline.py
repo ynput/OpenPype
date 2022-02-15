@@ -28,18 +28,6 @@ log = Logger.get_logger(__name__)
 
 
 def install():
-    # Disable all families except for the ones we explicitly want to see
-    family_states = [
-        "imagesequence",
-        "render2d",
-        "plate",
-        "render",
-        "mov",
-        "clip"
-    ]
-    avalon.data["familiesStateDefault"] = False
-    avalon.data["familiesStateToggled"] = family_states
-
 
     pyblish.register_host("flame")
     pyblish.register_plugin_path(PUBLISH_PATH)

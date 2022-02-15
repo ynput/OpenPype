@@ -108,17 +108,6 @@ def install():
     pyblish.api.register_callback(
         "instanceToggled", on_pyblish_instance_toggled)
     workfile_settings = WorkfileSettings()
-    # Disable all families except for the ones we explicitly want to see
-    family_states = [
-        "write",
-        "review",
-        "nukenodes",
-        "model",
-        "gizmo"
-    ]
-
-    avalon.api.data["familiesStateDefault"] = False
-    avalon.api.data["familiesStateToggled"] = family_states
 
     # Set context settings.
     nuke.addOnCreate(workfile_settings.set_context_settings, nodeClass="Root")

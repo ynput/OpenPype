@@ -56,13 +56,6 @@ def install():
     logger.addHandler(handler)
     logger.setLevel(logging.DEBUG)
 
-    # Disable all families except for the ones we explicitly want to see
-    family_states = ["imagesequence",
-                     "camera",
-                     "pointcache"]
-    avalon.api.data["familiesStateDefault"] = False
-    avalon.api.data["familiesStateToggled"] = family_states
-
     log.info("openpype.hosts.fusion installed")
 
     pyblish.api.register_host("fusion")
