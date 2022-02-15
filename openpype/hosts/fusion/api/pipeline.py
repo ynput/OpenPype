@@ -31,13 +31,6 @@ def install():
 
     """
 
-    # Disable all families except for the ones we explicitly want to see
-    family_states = ["imagesequence",
-                     "camera",
-                     "pointcache"]
-    avalon.data["familiesStateDefault"] = False
-    avalon.data["familiesStateToggled"] = family_states
-
     log.info("openpype.hosts.fusion installed")
 
     pyblish.register_host("fusion")
