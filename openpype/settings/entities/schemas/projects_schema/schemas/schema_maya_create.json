@@ -163,6 +163,65 @@
                     "label": "Create Yeti Rig"
                 }
             ]
+        },
+        {
+            "type": "dict",
+            "collapsible": true,
+            "key": "CreateTurntable",
+            "label": "Create Turntable Render",
+            "checkbox_key": "enabled",
+            "children": [
+                {
+                    "type": "boolean",
+                    "key": "enabled",
+                    "label": "Enabled"
+                },
+                {
+                    "type": "list",
+                    "key": "defaults",
+                    "label": "Default Subsets",
+                    "object_type": "text"
+                },
+                {
+                    "type": "path",
+                    "key": "templateFile",
+                    "label": "Template Maya Scene File",
+                    "multiplatform": true,
+                    "multipath": false
+                },
+                {
+                    "type": "number",
+                    "key": "frames",
+                    "label": "Frames",
+                    "decimal": 0,
+                    "steps": 2,
+                    "minimum": 2
+                },
+                {
+                    "type": "number",
+                    "key": "fitFactor",
+                    "label": "Fit Factor",
+                    "decimal": 2,
+                    "steps": 0.1,
+                    "minimum": 0.01,
+                    "maximum": 1.00
+                },
+                {
+                    "type": "text",
+                    "key": "cameraShape",
+                    "label": "Camera Shape Name"
+                },
+                {
+                    "type": "text",
+                    "key": "modelTransform",
+                    "label": "Model Transform Group Name"
+                },
+                {
+                    "type": "text",
+                    "key": "lightTransform",
+                    "label": "Light Transform Group Name"
+                }
+            ]
         }
     ]
 }

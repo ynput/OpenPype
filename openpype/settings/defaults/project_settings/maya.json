@@ -154,6 +154,22 @@
             "defaults": [
                 "Main"
             ]
+        },
+        "CreateTurntable": {
+            "enabled": true,
+            "defaults": [
+                "Main"
+            ],
+            "templateFile": {
+                "windows": "",
+                "darwin": "",
+                "linux": ""
+            },
+            "frames":72,
+            "fitFactor":0.5,
+            "cameraShape":"cameraShape",
+            "modelTransform":"Asset_GRP",
+            "lightTransform":"Light_GRP"
         }
     },
     "publish": {
@@ -487,17 +503,6 @@
                     "overscan": 1.0
                 }
             }
-        },
-        "ExtractTurntable": {
-            "templateFile": {
-                "windows": "",
-                "darwin": "",
-                "linux": ""
-            },
-            "frames":72,
-            "cameraShape":"cameraShape",
-            "modelTransform":"Asset_GRP",
-            "lightTransform":"Light_GRP"
         },
         "ExtractCameraAlembic": {
             "enabled": true,

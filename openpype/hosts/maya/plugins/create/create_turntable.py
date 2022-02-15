@@ -24,13 +24,14 @@ class CreateTurnTable(plugin.Creator):
         instance = super(CreateTurnTable, self).process()
 
         settings = get_project_settings(os.environ['AVALON_PROJECT'])
-        ExtractTurntable_setting = settings['maya']['publish']['ExtractTurntable']
+        CreateTurntable_setting = settings['maya']['create']['CreateTurntable']
 
-        path = ExtractTurntable_setting ['templateFile'].get(platform.system().lower())
-        frames = ExtractTurntable_setting ['frames']
-        modelTransform = ExtractTurntable_setting["modelTransform"]
-        lightTransform = ExtractTurntable_setting["lightTransform"]
-        cameraShape = ExtractTurntable_setting["cameraShape"]
+        path = CreateTurntable_setting ['templateFile'].get(platform.system().lower())
+        frames = CreateTurntable_setting ['frames']
+        modelTransform = CreateTurntable_setting["modelTransform"]
+        lightTransform = CreateTurntable_setting["lightTransform"]
+        cameraShape = CreateTurntable_setting["cameraShape"]
+        fit_factor = CreateTurntable_setting["fitFactor"]
 
         namespace="turntable"
         if path :
@@ -55,7 +56,6 @@ class CreateTurnTable(plugin.Creator):
             ## fit camera to content
             content = cmds.sets(instance, query=True)
             cmds.select(content, r=1)
-            fit_factor=0.5
             cmds.viewFit( namespace +":"+ cameraShape, f=fit_factor)
 
             cmds.delete(instance)

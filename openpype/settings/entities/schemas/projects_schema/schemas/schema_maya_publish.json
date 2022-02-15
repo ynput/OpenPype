@@ -484,44 +484,6 @@
         {
             "type": "dict",
             "collapsible": true,
-            "key": "ExtractTurntable",
-            "label": "Extract Turntable Review",
-            "children": [
-                {
-                    "type": "path",
-                    "key": "templateFile",
-                    "label": "Template Maya Scene File",
-                    "multiplatform": true,
-                    "multipath": false
-                },
-                {
-                    "type": "number",
-                    "key": "frames",
-                    "label": "Frames",
-                    "decimal": 0,
-                    "steps": 2,
-                    "minimum": 2
-                },
-                {
-                    "type": "text",
-                    "key": "cameraShape",
-                    "label": "camera Shape"
-                },
-                {
-                    "type": "text",
-                    "key": "modelTransform",
-                    "label": "Model Transform"
-                },
-                {
-                    "type": "text",
-                    "key": "lightTransform",
-                    "label": "Light Transform"
-                }
-            ]
-        },
-        {
-            "type": "dict",
-            "collapsible": true,
             "key": "ExtractCameraAlembic",
             "label": "Extract camera to Alembic",
             "checkbox_key": "enabled",
