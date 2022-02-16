@@ -6,7 +6,7 @@ class SaveCurrentScene(pyblish.api.InstancePlugin):
     """Save current scene"""
 
     label = "Save current file"
-    order = pyblish.api.IntegratorOrder - 0.49
+    order = pyblish.api.ExtractorOrder - 0.49
     hosts = ["houdini"]
     families = ["usdrender",
                 "redshift_rop"]
