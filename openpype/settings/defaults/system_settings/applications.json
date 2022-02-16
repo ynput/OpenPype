@@ -121,7 +121,7 @@
                         "/opt/Autodesk/flame_2021/bin/flame.app/Contents/MacOS/startApp"
                     ],
                     "linux": [
-                        "/opt/Autodesk/flame_2021/bin/flame"
+                        "/opt/Autodesk/flame_2021/bin/startApplication"
                     ]
                 },
                 "arguments": {
@@ -136,7 +136,7 @@
                 }
             },
             "__dynamic_keys_labels__": {
-                "2021": "2021 (Testing Only)"
+                "2021": "2021"
             }
         }
     },
