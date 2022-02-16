@@ -1,10 +1,14 @@
 import os
 import json
 
+import unreal
+from unreal import EditorAssetLibrary
+from unreal import MovieSceneSkeletalAnimationTrack
+from unreal import MovieSceneSkeletalAnimationSection
+
 from avalon import api, pipeline
 from avalon.unreal import lib
 from avalon.unreal import pipeline as unreal_pipeline
-import unreal
 
 
 class AnimationFBXLoader(api.Loader):
@@ -16,58 +20,12 @@ class AnimationFBXLoader(api.Loader):
     icon = "cube"
     color = "orange"
 
-    def load(self, context, name, namespace, options=None):
-        """
-        Load and containerise representation into Content Browser.
-
-        This is two step process. First, import FBX to temporary path and
-        then call `containerise()` on it - this moves all content to new
-        directory and then it will create AssetContainer there and imprint it
-        with metadata. This will mark this path as container.
-
-        Args:
-            context (dict): application context
-            name (str): subset name
-            namespace (str): in Unreal this is basically path to container.
-                             This is not passed here, so namespace is set
-                             by `containerise()` because only then we know
-                             real path.
-            data (dict): Those would be data to be imprinted. This is not used
-                         now, data are imprinted by `containerise()`.
-
-        Returns:
-            list(str): list of container content
-        """
-
-        # Create directory for asset and avalon container
-        root = "/Game/Avalon/Assets"
-        asset = context.get('asset').get('name')
-        suffix = "_CON"
-        if asset:
-            asset_name = "{}_{}".format(asset, name)
-        else:
-            asset_name = "{}".format(name)
-
-        tools = unreal.AssetToolsHelpers().get_asset_tools()
-        asset_dir, container_name = tools.create_unique_asset_name(
-            "{}/{}/{}".format(root, asset, name), suffix="")
-
-        container_name += suffix
-
-        unreal.EditorAssetLibrary.make_directory(asset_dir)
-
+    def _process(self, asset_dir, asset_name, instance_name):
         automated = False
         actor = None
 
         task = unreal.AssetImportTask()
         task.options = unreal.FbxImportUI()
-
-        libpath = self.fname.replace("fbx", "json")
-
-        with open(libpath, "r") as fp:
-            data = json.load(fp)
-
-        instance_name = data.get("instance_name")
 
         if instance_name:
             automated = True
@@ -126,6 +84,116 @@ class AnimationFBXLoader(api.Loader):
 
         unreal.AssetToolsHelpers.get_asset_tools().import_asset_tasks([task])
 
+        asset_content = unreal.EditorAssetLibrary.list_assets(
+            asset_dir, recursive=True, include_folder=True
+        )
+
+        animation = None
+
+        for a in asset_content:
+            imported_asset_data = unreal.EditorAssetLibrary.find_asset_data(a)
+            imported_asset = unreal.AssetRegistryHelpers.get_asset(
+                imported_asset_data)
+            if imported_asset.__class__ == unreal.AnimSequence:
+                animation = imported_asset
+                break
+
+        if animation:
+            animation.set_editor_property('enable_root_motion', True)
+            actor.skeletal_mesh_component.set_editor_property(
+                'animation_mode', unreal.AnimationMode.ANIMATION_SINGLE_NODE)
+            actor.skeletal_mesh_component.animation_data.set_editor_property(
+                'anim_to_play', animation)
+
+        return animation
+
+    def load(self, context, name, namespace, options=None):
+        """
+        Load and containerise representation into Content Browser.
+
+        This is two step process. First, import FBX to temporary path and
+        then call `containerise()` on it - this moves all content to new
+        directory and then it will create AssetContainer there and imprint it
+        with metadata. This will mark this path as container.
+
+        Args:
+            context (dict): application context
+            name (str): subset name
+            namespace (str): in Unreal this is basically path to container.
+                             This is not passed here, so namespace is set
+                             by `containerise()` because only then we know
+                             real path.
+            data (dict): Those would be data to be imprinted. This is not used
+                         now, data are imprinted by `containerise()`.
+
+        Returns:
+            list(str): list of container content
+        """
+
+        # Create directory for asset and avalon container
+        hierarchy = context.get('asset').get('data').get('parents')
+        root = "/Game/Avalon"
+        asset = context.get('asset').get('name')
+        suffix = "_CON"
+        if asset:
+            asset_name = "{}_{}".format(asset, name)
+        else:
+            asset_name = "{}".format(name)
+
+        tools = unreal.AssetToolsHelpers().get_asset_tools()
+        asset_dir, container_name = tools.create_unique_asset_name(
+            f"{root}/Assets/{asset}/{name}", suffix="")
+
+        hierarchy_dir = root
+        for h in hierarchy:
+            hierarchy_dir = f"{hierarchy_dir}/{h}"
+        hierarchy_dir = f"{hierarchy_dir}/{asset}"
+
+        container_name += suffix
+
+        unreal.EditorAssetLibrary.make_directory(asset_dir)
+
+        libpath = self.fname.replace("fbx", "json")
+
+        with open(libpath, "r") as fp:
+            data = json.load(fp)
+
+        instance_name = data.get("instance_name")
+
+        animation = self._process(asset_dir, container_name, instance_name)
+
+        asset_content = unreal.EditorAssetLibrary.list_assets(
+            hierarchy_dir, recursive=True, include_folder=False)
+
+        # Get the sequence for the layout, excluding the camera one.
+        sequences = [a for a in asset_content
+                     if (EditorAssetLibrary.find_asset_data(a).get_class() ==
+                         unreal.LevelSequence.static_class() and
+                         "_camera" not in a.split("/")[-1])]
+
+        ar = unreal.AssetRegistryHelpers.get_asset_registry()
+
+        for s in sequences:
+            sequence = ar.get_asset_by_object_path(s).get_asset()
+            possessables = [
+                p for p in sequence.get_possessables()
+                if p.get_display_name() == instance_name]
+
+            for p in possessables:
+                tracks = [
+                    t for t in p.get_tracks()
+                    if (t.get_class() ==
+                        MovieSceneSkeletalAnimationTrack.static_class())]
+
+                for t in tracks:
+                    sections = [
+                        s for s in t.get_sections()
+                        if (s.get_class() ==
+                            MovieSceneSkeletalAnimationSection.static_class())]
+
+                    for s in sections:
+                        s.params.set_editor_property('animation', animation)
+
         # Create Asset Container
         lib.create_avalon_container(
             container=container_name, path=asset_dir)
@@ -145,29 +213,11 @@ class AnimationFBXLoader(api.Loader):
         unreal_pipeline.imprint(
             "{}/{}".format(asset_dir, container_name), data)
 
-        asset_content = unreal.EditorAssetLibrary.list_assets(
-            asset_dir, recursive=True, include_folder=True
-        )
+        imported_content = unreal.EditorAssetLibrary.list_assets(
+            asset_dir, recursive=True, include_folder=False)
 
-        animation = None
-
-        for a in asset_content:
+        for a in imported_content:
             unreal.EditorAssetLibrary.save_asset(a)
-            imported_asset_data = unreal.EditorAssetLibrary.find_asset_data(a)
-            imported_asset = unreal.AssetRegistryHelpers.get_asset(
-                imported_asset_data)
-            if imported_asset.__class__ == unreal.AnimSequence:
-                animation = imported_asset
-                break
-
-        if animation:
-            animation.set_editor_property('enable_root_motion', True)
-            actor.skeletal_mesh_component.set_editor_property(
-                'animation_mode', unreal.AnimationMode.ANIMATION_SINGLE_NODE)
-            actor.skeletal_mesh_component.animation_data.set_editor_property(
-                'anim_to_play', animation)
-
-        return asset_content
 
     def update(self, container, representation):
         name = container["asset_name"]
