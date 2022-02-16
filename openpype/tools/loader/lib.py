@@ -19,24 +19,6 @@ def change_visibility(model, view, column_name, visible):
     view.setColumnHidden(index, not visible)
 
 
-def get_selected_items(rows, item_role):
-    output = []
-    items = collections.deque()
-    for row_index in rows:
-        item = row_index.data(item_role)
-        items.append(item)
-
-    while items:
-        item = items.popleft()
-        if item.get("isGroup") or item.get("isMerged"):
-            for child in item.children():
-                items.append(child)
-        else:
-            if item not in output:
-                output.append(item)
-    return output
-
-
 def get_options(action, loader, parent, repre_contexts):
     """Provides dialog to select value from loader provided options.
 
