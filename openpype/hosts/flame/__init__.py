@@ -8,10 +8,9 @@ HOST_DIR = os.path.dirname(
 def add_implementation_envs(env, _app):
     # Add requirements to DL_PYTHON_HOOK_PATH
     pype_root = os.environ["OPENPYPE_REPOS_ROOT"]
-    new_flame_paths = os.path.join(
-        pype_root, "openpype", "hosts", "flame", "startup")
 
-    env["DL_PYTHON_HOOK_PATH"] = os.pathsep.join(new_flame_paths)
+    env["DL_PYTHON_HOOK_PATH"] = os.path.join(
+        pype_root, "openpype", "hosts", "flame", "startup")
     env.pop("QT_AUTO_SCREEN_SCALE_FACTOR", None)
 
     # Set default values if are not already set via settings
