@@ -17,5 +17,11 @@ class SaveCurrentScene(pyblish.api.ContextPlugin):
         current = cmds.file(query=True, sceneName=True)
         assert context.data['currentFile'] == current
 
+        # If file has no modifications, skip forcing a file save
+        if not cmds.file(query=True, modified=True):
+            self.log.debug("Skipping file save as there "
+                           "are no modifications..")
+            return
+
         self.log.info("Saving current file..")
         cmds.file(save=True, force=True)
