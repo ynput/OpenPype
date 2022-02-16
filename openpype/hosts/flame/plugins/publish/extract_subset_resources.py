@@ -47,16 +47,6 @@ class ExtractSubsetResources(openpype.api.Extractor):
     export_presets_mapping = {}
 
     def process(self, instance):
-        try:
-            self._process(instance)
-        except Exception as msg:
-            self.log.error(msg)
-        finally:
-            # bring ui back
-            self.hide_ui_on_process = False
-
-    def _process(self, instance):
-
         if (
             self.keep_original_representation
             and "representations" not in instance.data
