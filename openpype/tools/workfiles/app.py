@@ -38,6 +38,109 @@ module = sys.modules[__name__]
 module.window = None
 
 
+def build_workfile_data(session):
+    """Get the data required for workfile formatting from avalon `session`"""
+
+    # Set work file data for template formatting
+    asset_name = session["AVALON_ASSET"]
+    task_name = session["AVALON_TASK"]
+    project_doc = io.find_one(
+        {"type": "project"},
+        {
+            "name": True,
+            "data.code": True,
+            "config.tasks": True,
+        }
+    )
+
+    asset_doc = io.find_one(
+        {
+            "type": "asset",
+            "name": asset_name
+        },
+        {
+            "data.tasks": True,
+            "data.parents": True
+        }
+    )
+
+    task_type = asset_doc["data"]["tasks"].get(task_name, {}).get("type")
+
+    project_task_types = project_doc["config"]["tasks"]
+    task_short = project_task_types.get(task_type, {}).get("short_name")
+
+    asset_parents = asset_doc["data"]["parents"]
+    parent_name = project_doc["name"]
+    if asset_parents:
+        parent_name = asset_parents[-1]
+
+    data = {
+        "project": {
+            "name": project_doc["name"],
+            "code": project_doc["data"].get("code")
+        },
+        "asset": asset_name,
+        "task": {
+            "name": task_name,
+            "type": task_type,
+            "short": task_short,
+        },
+        "parent": parent_name,
+        "version": 1,
+        "user": getpass.getuser(),
+        "comment": "",
+        "ext": None
+    }
+
+    # add system general settings anatomy data
+    system_general_data = get_system_general_anatomy_data()
+    data.update(system_general_data)
+
+    return data
+
+
+class CommentMatcher(object):
+    """Use anatomy and work file data to parse comments from filenames"""
+    def __init__(self, anatomy, template_key, data):
+
+        self.anatomy = anatomy
+        self.template_key = template_key
+        self.template = self.anatomy.templates[template_key]["file"]
+        self.data = data
+
+    def parse_comment(self, filepath):
+        """Parse the {comment} part from a filename"""
+
+        if "{comment}" not in self.template:
+            # Don't look for comment if template doesn't allow it
+            return
+
+        # Get current extension without the dot (.)
+        ext = os.path.splitext(filepath)[1][1:]
+        current_fname = os.path.basename(filepath)
+        temp_data = copy.deepcopy(self.data)
+        temp_data["ext"] = ext
+
+        # Use placeholders that we can safely escape with regex
+        temp_data["comment"] = "<<comment>>"
+        temp_data["version"] = "<<version>>"
+
+        formatted = self.anatomy.format(temp_data)
+        fname_pattern = formatted[self.template_key]["file"]
+        fname_pattern = re.escape(fname_pattern)
+
+        # Replace comment and version with something we can match with
+        # regex
+        fname_pattern = fname_pattern.replace("<<comment>>", "(.+)")
+        fname_pattern = fname_pattern.replace("<<version>>", "[0-9]+")
+
+        # Match from beginning to end of string to be safe
+        fname_pattern = "^{}$".format(fname_pattern)
+        match = re.match(fname_pattern, current_fname)
+        if match:
+            return match.group(1)
+
+
 class NameWindow(QtWidgets.QDialog):
     """Name Window to define a unique filename inside a root folder
 
@@ -59,60 +162,7 @@ class NameWindow(QtWidgets.QDialog):
             # Fallback to active session
             session = api.Session
 
-        # Set work file data for template formatting
-        asset_name = session["AVALON_ASSET"]
-        task_name = session["AVALON_TASK"]
-        project_doc = io.find_one(
-            {"type": "project"},
-            {
-                "name": True,
-                "data.code": True,
-                "config.tasks": True,
-            }
-        )
-
-        asset_doc = io.find_one(
-            {
-                "type": "asset",
-                "name": asset_name
-            },
-            {
-                "data.tasks": True,
-                "data.parents": True
-            }
-        )
-
-        task_type = asset_doc["data"]["tasks"].get(task_name, {}).get("type")
-
-        project_task_types = project_doc["config"]["tasks"]
-        task_short = project_task_types.get(task_type, {}).get("short_name")
-
-        asset_parents = asset_doc["data"]["parents"]
-        parent_name = project_doc["name"]
-        if asset_parents:
-            parent_name = asset_parents[-1]
-
-        self.data = {
-            "project": {
-                "name": project_doc["name"],
-                "code": project_doc["data"].get("code")
-            },
-            "asset": asset_name,
-            "task": {
-                "name": task_name,
-                "type": task_type,
-                "short": task_short,
-            },
-            "parent": parent_name,
-            "version": 1,
-            "user": getpass.getuser(),
-            "comment": "",
-            "ext": None
-        }
-
-        # add system general settings anatomy data
-        system_general_data = get_system_general_anatomy_data()
-        self.data.update(system_general_data)
+        self.data = build_workfile_data(session)
 
         # Store project anatomy
         self.anatomy = anatomy
@@ -183,32 +233,12 @@ class NameWindow(QtWidgets.QDialog):
             # preserve it by default and set it in the comment/subversion field
             current_filepath = self.host.current_file()
             if current_filepath:
-
-                # Get current extension without the dot (.)
-                ext = os.path.splitext(current_filepath)[1][1:]
-                current_fname = os.path.basename(current_filepath)
-                temp_data = copy.deepcopy(self.data)
-                temp_data["ext"] = ext
-
-                # Use placeholders that we can safely escape with regex
-                temp_data["comment"] = "<<comment>>"
-                temp_data["version"] = "<<version>>"
-
-                formatted = self.anatomy.format(temp_data)
-                fname_pattern = formatted[template_key]["file"]
-                fname_pattern = re.escape(fname_pattern)
-
-                # Replace comment and version with something we can match with
-                # regex
-                fname_pattern = fname_pattern.replace("<<comment>>", "(.+)")
-                fname_pattern = fname_pattern.replace("<<version>>", "[0-9]+")
-
-                # Match from beginning to end of string to be safe
-                fname_pattern = "^{}$".format(fname_pattern)
-                match = re.match(fname_pattern, current_fname)
-
-                if match:
-                    comment = match.group(1)
+                # We match the current filename against the current session
+                # instead of the session where the user is saving to.
+                current_data = build_workfile_data(api.Session)
+                matcher = CommentMatcher(anatomy, template_key, current_data)
+                comment = matcher.parse_comment(current_filepath)
+                if comment:
                     log.info("Detected subversion comment: {}".format(comment))
                     self.data["comment"] = comment
                     subversion_input.setText(comment)
