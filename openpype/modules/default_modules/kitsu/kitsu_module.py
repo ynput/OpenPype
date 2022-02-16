@@ -13,6 +13,24 @@ from typing import Dict, List
 
 from avalon.api import AvalonMongoDB
 import gazu
+from gazu.asset import all_assets_for_project, all_asset_types, new_asset
+from gazu.shot import (
+    all_episodes_for_project,
+    all_sequences_for_project,
+    all_shots_for_project,
+    new_episode,
+    new_sequence,
+    new_shot,
+    update_sequence,
+)
+from gazu.task import (
+    all_tasks_for_asset,
+    all_tasks_for_shot,
+    all_task_types,
+    all_task_types_for_project,
+    new_task,
+    new_task_type,
+)
 from openpype.api import get_project_settings
 from openpype.lib import create_project
 from openpype.modules import JsonFilesSettingsDef, OpenPypeModule, ModulesManager
@@ -176,7 +194,7 @@ def sync_zou():
         # Create project
         if zou_project is None:
             raise RuntimeError(
-                f"Project '{project_name}' doesn't exist in Zou database, please create it in Kitsu and add logged user to it before running synchronization."
+                f"Project '{project_name}' doesn't exist in Zou database, please create it in Kitsu and add OpenPype user to it before running synchronization."
             )
 
         # Update project settings and data
@@ -190,11 +208,11 @@ def sync_zou():
         gazu.project.update_project(zou_project)
         gazu.project.update_project_data(zou_project, data=op_project["data"])
 
-        all_asset_types = gazu.asset.all_asset_types()
-        all_assets = gazu.asset.all_assets_for_project(zou_project)
-        all_episodes = gazu.shot.all_episodes_for_project(zou_project)
-        all_seqs = gazu.shot.all_sequences_for_project(zou_project)
-        all_shots = gazu.shot.all_shots_for_project(zou_project)
+        asset_types = all_asset_types()
+        all_assets = all_assets_for_project(zou_project)
+        all_episodes = all_episodes_for_project(zou_project)
+        all_seqs = all_sequences_for_project(zou_project)
+        all_shots = all_shots_for_project(zou_project)
         all_entities_ids = {
             e["id"] for e in all_episodes + all_seqs + all_shots + all_assets
         }
@@ -211,14 +229,14 @@ def sync_zou():
         new_assets_docs = [
             doc
             for doc in asset_docs.values()
-            if doc["data"].get("zou_id") not in all_entities_ids
+            if doc["data"].get("zou", {}).get("id") not in all_entities_ids
         ]
         naming_pattern = project_module_settings["entities_naming_pattern"]
         regex_ep = re.compile(
-            r"({})|({})|({})".format(
-                naming_pattern["episode"].replace("#", "\d"),
-                naming_pattern["sequence"].replace("#", "\d"),
-                naming_pattern["shot"].replace("#", "\d"),
+            r"(.*{}.*)|(.*{}.*)|(.*{}.*)".format(
+                naming_pattern["shot"].replace("#", ""),
+                naming_pattern["sequence"].replace("#", ""),
+                naming_pattern["episode"].replace("#", ""),
             ),
             re.IGNORECASE,
         )
@@ -228,51 +246,38 @@ def sync_zou():
             # Match asset type by it's name
             match = regex_ep.match(doc["name"])
             if not match:  # Asset
-                new_entity = gazu.asset.new_asset(
-                    zou_project, all_asset_types[0], doc["name"]
-                )
+                new_entity = new_asset(zou_project, asset_types[0], doc["name"])
             # Match case in shot<sequence<episode order to support composed names like 'ep01_sq01_sh01'
-            elif match.group(3):  # Shot
+            elif match.group(1):  # Shot
                 # Match and check parent doc
                 parent_doc = asset_docs[visual_parent_id]
-                zou_parent_id = parent_doc["data"]["zou_id"]
+                zou_parent_id = parent_doc["data"]["zou"]["id"]
                 if parent_doc["data"].get("zou", {}).get("type") != "Sequence":
+                    # Substitute name
+                    digits_padding = naming_pattern["sequence"].count("#")
+                    substitute_sequence_name = (
+                        f'{naming_pattern["episode"].replace("#" * digits_padding, "1".zfill(digits_padding))}_'  # Episode
+                        f'{naming_pattern["sequence"].replace("#" * digits_padding, "1".zfill(digits_padding))}'  # Sequence
+                    )
+
                     # Warn
                     print(
-                        f"Shot {doc['name']} must be parented to a Sequence in Kitsu. Creating automatically one substitute sequence..."
+                        f"Shot {doc['name']} must be parented to a Sequence in Kitsu. "
+                        f"Creating automatically one substitute sequence called {substitute_sequence_name} in Kitsu..."
                     )
 
-                    # Create new sequence
-                    digits_padding = naming_pattern["sequence"].count("#")
-                    substitute_sequence_name = f'{naming_pattern["sequence"].replace("#" * digits_padding, "1".zfill(digits_padding))}'
-                    new_sequence = gazu.shot.new_sequence(
+                    # Create new sequence and set it as substitute
+                    created_sequence = new_sequence(
                         zou_project, substitute_sequence_name, episode=zou_parent_id
                     )
-
-                    # Insert doc
-                    inserted = project_col.insert_one(
-                        {
-                            "name": substitute_sequence_name,
-                            "type": "asset",
-                            "schema": "openpype:asset-3.0",
-                            "data": {
-                                "zou_id": new_sequence["id"],
-                                "tasks": {},
-                                "parents": parent_doc["data"]["parents"]
-                                + [parent_doc["name"]],
-                                "visualParent": parent_doc["_id"],
-                                "zou": new_sequence,
-                            },
-                            "parent": parent_doc["_id"],
-                        }
-                    )
-                    visual_parent_id = inserted.inserted_id
+                    created_sequence["is_substitute"] = True
+                    update_sequence(created_sequence)
 
                     # Update parent ID
-                    zou_parent_id = new_sequence["id"]
+                    zou_parent_id = created_sequence["id"]
 
                 # Create shot
-                new_entity = gazu.shot.new_shot(
+                new_entity = new_shot(
                     zou_project,
                     zou_parent_id,
                     doc["name"],
@@ -283,17 +288,16 @@ def sync_zou():
 
             elif match.group(2):  # Sequence
                 parent_doc = asset_docs[visual_parent_id]
-                new_entity = gazu.shot.new_sequence(
-                    zou_project, doc["name"], episode=parent_doc["data"]["zou_id"]
+                new_entity = new_sequence(
+                    zou_project, doc["name"], episode=parent_doc["data"]["zou"]["id"]
                 )
 
-            elif match.group(1):  # Episode
-                new_entity = gazu.shot.new_episode(zou_project, doc["name"])
+            elif match.group(3):  # Episode
+                new_entity = new_episode(zou_project, doc["name"])
 
             # Update doc with zou id
             doc["data"].update(
                 {
-                    "zou_id": new_entity["id"],
                     "visualParent": visual_parent_id,
                     "zou": new_entity,
                 }
@@ -303,7 +307,6 @@ def sync_zou():
                     {"_id": doc["_id"]},
                     {
                         "$set": {
-                            "data.zou_id": new_entity["id"],
                             "data.visualParent": visual_parent_id,
                             "data.zou": new_entity,
                         }
@@ -312,14 +315,14 @@ def sync_zou():
             )
 
         # Update assets
-        all_tasks_types = {t["name"]: t for t in gazu.task.all_task_types()}
+        all_tasks_types = {t["name"]: t for t in all_task_types()}
         assets_docs_to_update = [
             doc
             for doc in asset_docs.values()
-            if doc["data"].get("zou_id") in all_entities_ids
+            if doc["data"].get("zou", {}).get("id") in all_entities_ids
         ]
         for doc in assets_docs_to_update:
-            zou_id = doc["data"].get("zou", {}).get("id")
+            zou_id = doc["data"]["zou"]["id"]
             if zou_id:
                 # Data
                 entity_data = {}
@@ -346,11 +349,11 @@ def sync_zou():
 
                         # Create non existing task
                         if not task_type:
-                            task_type = gazu.task.new_task_type(task_name)
+                            task_type = new_task_type(task_name)
                             all_tasks_types[task_name] = task_type
 
                         # New task for entity
-                        gazu.task.new_task(entity, task_type)
+                        new_task(entity, task_type)
 
         # Delete
         deleted_entities = all_entities_ids - {
@@ -363,6 +366,8 @@ def sync_zou():
         # Write into DB
         if bulk_writes:
             project_col.bulk_write(bulk_writes)
+
+    # TODO Create events daemons
 
     dbcon.uninstall()
 
@@ -391,10 +396,10 @@ def sync_openpype():
         project_doc = dbcon.find_one({"type": "project"})
 
         # Get all assets from zou
-        all_assets = gazu.asset.all_assets_for_project(project)
-        all_episodes = gazu.shot.all_episodes_for_project(project)
-        all_seqs = gazu.shot.all_sequences_for_project(project)
-        all_shots = gazu.shot.all_shots_for_project(project)
+        all_assets = all_assets_for_project(project)
+        all_episodes = all_episodes_for_project(project)
+        all_seqs = all_sequences_for_project(project)
+        all_shots = all_shots_for_project(project)
 
         # Create project if is not available
         # - creation is required to be able set project anatomy and attributes
@@ -411,7 +416,7 @@ def sync_openpype():
                     "$set": {
                         "config.tasks": {
                             t["name"]: {"short_name": t.get("short_name", t["name"])}
-                            for t in gazu.task.all_task_types_for_project(project)
+                            for t in all_task_types_for_project(project)
                         },
                         "data": project["data"].update(
                             {
@@ -429,9 +434,9 @@ def sync_openpype():
         # Query all assets of the local project
         project_col = dbcon.database[project_code]
         asset_doc_ids = {
-            asset_doc["data"]["zou_id"]: asset_doc
+            asset_doc["data"]["zou"]["id"]: asset_doc
             for asset_doc in project_col.find({"type": "asset"})
-            if asset_doc["data"].get("zou_id")
+            if asset_doc["data"].get("zou", {}).get("id")
         }
         asset_doc_ids[project["id"]] = project_doc
 
@@ -442,10 +447,11 @@ def sync_openpype():
                     "name": item["name"],
                     "type": "asset",
                     "schema": "openpype:asset-3.0",
-                    "data": {"zou_id": item["id"], "tasks": {}},
+                    "data": {"zou": item, "tasks": {}},
                 }
                 for item in all_episodes + all_assets + all_seqs + all_shots
                 if item["id"] not in asset_doc_ids.keys()
+                and not item.get("is_substitute")
             ]
         )
         if to_insert:
@@ -455,9 +461,9 @@ def sync_openpype():
             # Update existing docs
             asset_doc_ids.update(
                 {
-                    asset_doc["data"]["zou_id"]: asset_doc
+                    asset_doc["data"]["zou"]["id"]: asset_doc
                     for asset_doc in project_col.find({"type": "asset"})
-                    if asset_doc["data"].get("zou_id")
+                    if asset_doc["data"].get("zou")
                 }
             )
 
@@ -501,9 +507,9 @@ def update_op_assets(
         # Tasks
         tasks_list = None
         if item["type"] == "Asset":
-            tasks_list = gazu.task.all_tasks_for_asset(item)
+            tasks_list = all_tasks_for_asset(item)
         elif item["type"] == "Shot":
-            tasks_list = gazu.task.all_tasks_for_shot(item)
+            tasks_list = all_tasks_for_shot(item)
             # TODO frame in and out
         if tasks_list:
             item_data["tasks"] = {
@@ -524,7 +530,7 @@ def update_op_assets(
             item_data["parents"].insert(0, parent_doc["name"])
 
             parent_zou_id = next(
-                i for i in items_list if i["id"] == parent_doc["data"]["zou_id"]
+                i for i in items_list if i["id"] == parent_doc["data"]["zou"]["id"]
             )["parent_id"]
 
         # Update 'data' different in zou DB
