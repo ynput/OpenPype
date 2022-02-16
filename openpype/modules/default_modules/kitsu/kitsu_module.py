@@ -184,7 +184,6 @@ def sync_zou():
         # Create project locally
         # Try to find project document
         project_name = op_project["name"]
-        project_code = op_project["data"]["code"]
         dbcon.Session["AVALON_PROJECT"] = project_name
 
         # Get all entities from zou
@@ -198,15 +197,16 @@ def sync_zou():
             )
 
         # Update project settings and data
-        zou_project.update(
-            {
-                "code": op_project["data"]["code"],
-                "fps": op_project["data"]["fps"],
-                "resolution": f"{op_project['data']['resolutionWidth']}x{op_project['data']['resolutionHeight']}",
-            }
-        )
+        if op_project["data"]:
+            zou_project.update(
+                {
+                    "code": op_project["data"]["code"],
+                    "fps": op_project["data"]["fps"],
+                    "resolution": f"{op_project['data']['resolutionWidth']}x{op_project['data']['resolutionHeight']}",
+                }
+            )
+            gazu.project.update_project_data(zou_project, data=op_project["data"])
         gazu.project.update_project(zou_project)
-        gazu.project.update_project_data(zou_project, data=op_project["data"])
 
         asset_types = all_asset_types()
         all_assets = all_assets_for_project(zou_project)
@@ -270,8 +270,9 @@ def sync_zou():
                     created_sequence = new_sequence(
                         zou_project, substitute_sequence_name, episode=zou_parent_id
                     )
-                    created_sequence["is_substitute"] = True
-                    update_sequence(created_sequence)
+                    gazu.shot.update_sequence_data(
+                        created_sequence, {"is_substitute": True}
+                    )
 
                     # Update parent ID
                     zou_parent_id = created_sequence["id"]
@@ -395,11 +396,18 @@ def sync_openpype():
         dbcon.Session["AVALON_PROJECT"] = project_name
         project_doc = dbcon.find_one({"type": "project"})
 
+        print(f"Synchronizing {project_name}...")
+
         # Get all assets from zou
         all_assets = all_assets_for_project(project)
         all_episodes = all_episodes_for_project(project)
         all_seqs = all_sequences_for_project(project)
         all_shots = all_shots_for_project(project)
+        all_entities = [
+            e
+            for e in all_assets + all_episodes + all_seqs + all_shots
+            if not e["data"].get("is_substitute")
+        ]
 
         # Create project if is not available
         # - creation is required to be able set project anatomy and attributes
@@ -421,7 +429,7 @@ def sync_openpype():
                         "data": project["data"].update(
                             {
                                 "code": project["code"],
-                                "fps": project_code["fps"],
+                                "fps": project["fps"],
                                 "resolutionWidth": project["resolution"].split("x")[0],
                                 "resolutionHeight": project["resolution"].split("x")[1],
                             }
@@ -449,9 +457,8 @@ def sync_openpype():
                     "schema": "openpype:asset-3.0",
                     "data": {"zou": item, "tasks": {}},
                 }
-                for item in all_episodes + all_assets + all_seqs + all_shots
+                for item in all_entities
                 if item["id"] not in asset_doc_ids.keys()
-                and not item.get("is_substitute")
             ]
         )
         if to_insert:
@@ -468,7 +475,6 @@ def sync_openpype():
             )
 
         # Update
-        all_entities = all_assets + all_episodes + all_seqs + all_shots
         bulk_writes.extend(update_op_assets(all_entities, asset_doc_ids))
 
         # Delete
