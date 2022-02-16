@@ -10,6 +10,7 @@ class CreateOpenEXRSaver(openpype.api.Creator):
     label = "Create OpenEXR Saver"
     hosts = ["fusion"]
     family = "render"
+    defaults = ["Main"]
 
     def process(self):
 
