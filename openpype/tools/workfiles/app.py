@@ -1,5 +1,6 @@
 import sys
 import os
+import re
 import copy
 import getpass
 import shutil
@@ -177,6 +178,40 @@ class NameWindow(QtWidgets.QDialog):
         # Add subversion only if template contains `{comment}`
         if "{comment}" in self.template:
             inputs_layout.addRow("Subversion:", subversion_input)
+
+            # Detect whether a {comment} is in the current filename - if so,
+            # preserve it by default and set it in the comment/subversion field
+            current_filepath = self.host.current_file()
+            if current_filepath:
+
+                # Get current extension without the dot (.)
+                ext = os.path.splitext(current_filepath)[1][1:]
+                current_fname = os.path.basename(current_filepath)
+                temp_data = copy.deepcopy(self.data)
+                temp_data["ext"] = ext
+
+                # Use placeholders that we can safely escape with regex
+                temp_data["comment"] = "<<comment>>"
+                temp_data["version"] = "<<version>>"
+
+                fname_pattern = self.anatomy.format(temp_data)["work"]["file"]
+                fname_pattern = re.escape(fname_pattern)
+
+                # Replace comment and version with something we can match with
+                # regex
+                fname_pattern = fname_pattern.replace("<<comment>>", "(.+)")
+                fname_pattern = fname_pattern.replace("<<version>>", "[0-9]+")
+
+                # Match from beginning to end of string to be safe
+                fname_pattern = "^{}$".format(fname_pattern)
+                match = re.match(fname_pattern, current_fname)
+
+                if match:
+                    comment = match.group(1)
+                    log.info("Detected subversion comment: {}".format(comment))
+                    self.data["comment"] = comment
+                    subversion_input.setText(comment)
+
         else:
             subversion_input.setVisible(False)
         inputs_layout.addRow("Extension:", ext_combo)
