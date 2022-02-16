@@ -86,8 +86,8 @@ class SettingsCategoryWidget(QtWidgets.QWidget):
     state_changed = QtCore.Signal()
     saved = QtCore.Signal(QtWidgets.QWidget)
     restart_required_trigger = QtCore.Signal()
-    restart_started = QtCore.Signal()
-    restart_finished = QtCore.Signal()
+    reset_started = QtCore.Signal()
+    reset_finished = QtCore.Signal()
     full_path_requested = QtCore.Signal(str, str)
 
     def __init__(self, user_role, parent=None):
@@ -436,7 +436,7 @@ class SettingsCategoryWidget(QtWidgets.QWidget):
         self.require_restart_label.setText(value)
 
     def reset(self):
-        self.restart_started.emit()
+        self.reset_started.emit()
         self.set_state(CategoryState.Working)
 
         self._on_reset_start()
@@ -517,7 +517,7 @@ class SettingsCategoryWidget(QtWidgets.QWidget):
             self._on_reset_crash()
         else:
             self._on_reset_success()
-        self.restart_finished.emit()
+        self.reset_finished.emit()
 
     def _on_reset_crash(self):
         self.save_btn.setEnabled(False)

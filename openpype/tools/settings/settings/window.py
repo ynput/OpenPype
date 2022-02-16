@@ -69,8 +69,8 @@ class MainWidget(QtWidgets.QWidget):
             tab_widget.restart_required_trigger.connect(
                 self._on_restart_required
             )
-            tab_widget.restart_started.connect(self._on_restart_started)
-            tab_widget.restart_finished.connect(self._on_restart_finished)
+            tab_widget.reset_started.connect(self._on_reset_started)
+            tab_widget.reset_started.connect(self._on_reset_finished)
             tab_widget.full_path_requested.connect(self._on_full_path_request)
 
         self._header_tab_widget = header_tab_widget
@@ -189,13 +189,13 @@ class MainWidget(QtWidgets.QWidget):
         if result == 1:
             self.trigger_restart.emit()
 
-    def _on_restart_started(self):
+    def _on_reset_started(self):
         widget = self.sender()
         current_widget = self._header_tab_widget.currentWidget()
         if current_widget is widget:
             self._update_search_dialog(True)
 
-    def _on_restart_finished(self):
+    def _on_reset_finished(self):
         widget = self.sender()
         current_widget = self._header_tab_widget.currentWidget()
         if current_widget is widget:
