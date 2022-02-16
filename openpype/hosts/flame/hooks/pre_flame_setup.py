@@ -44,6 +44,8 @@ class FlamePrelaunch(PreLaunchHook):
 
         # get user name and host name
         user_name = get_openpype_username()
+        user_name = user_name.replace(".", "_")
+
         hostname = socket.gethostname()  # not returning wiretap host name
 
         self.log.debug("Collected user \"{}\"".format(user_name))
