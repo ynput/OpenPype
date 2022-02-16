@@ -194,7 +194,8 @@ class NameWindow(QtWidgets.QDialog):
                 temp_data["comment"] = "<<comment>>"
                 temp_data["version"] = "<<version>>"
 
-                fname_pattern = self.anatomy.format(temp_data)["work"]["file"]
+                formatted = self.anatomy.format(temp_data)
+                fname_pattern = formatted[template_key]["file"]
                 fname_pattern = re.escape(fname_pattern)
 
                 # Replace comment and version with something we can match with
