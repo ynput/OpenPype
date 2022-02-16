@@ -189,7 +189,9 @@
     },
     "flame": {
         "project": {
-            "colourPolicy": "ACES 1.1"
+            "colourPolicy": "ACES 1.1",
+            "frameDepth": "16-bit fp",
+            "fieldDominance": "PROGRESSIVE"
         },
         "profilesMapping": {
             "inputs": [

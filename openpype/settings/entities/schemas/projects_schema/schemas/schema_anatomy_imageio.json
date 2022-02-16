@@ -422,6 +422,16 @@
                                     "type": "text",
                                     "key": "colourPolicy",
                                     "label": "Colour Policy"
+                                },
+                                {
+                                    "type": "text",
+                                    "key": "frameDepth",
+                                    "label": "Image Depth"
+                                },
+                                {
+                                    "type": "text",
+                                    "key": "fieldDominance",
+                                    "label": "Field Dominance"
                                 }
                             ]
                         }
