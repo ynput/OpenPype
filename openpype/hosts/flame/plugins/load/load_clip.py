@@ -3,6 +3,7 @@ import flame
 from pprint import pformat
 import openpype.hosts.flame.api as opfapi
 
+
 class LoadClip(opfapi.ClipLoader):
     """Load a subset to timeline as clip
 
