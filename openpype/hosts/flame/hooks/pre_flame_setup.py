@@ -4,7 +4,9 @@ import tempfile
 import contextlib
 import socket
 from openpype.lib import (
-    PreLaunchHook, get_openpype_username)
+    PreLaunchHook,
+    get_openpype_username
+)
 from openpype.hosts import flame as opflame
 import openpype.hosts.flame.api as opfapi
 import openpype
