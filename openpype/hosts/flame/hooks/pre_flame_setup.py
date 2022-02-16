@@ -89,7 +89,7 @@ class FlamePrelaunch(PreLaunchHook):
 
         app_arguments = self._get_launch_arguments(data_to_script)
 
-        opfapi.setup(self.launch_context.env)
+        # opfapi.setup(self.launch_context.env)
 
         self.launch_context.launch_args.extend(app_arguments)
 
