@@ -49,25 +49,17 @@ class CollectInstances(pyblish.api.ContextPlugin):
 
     def process(self, context):
         """Collect the models from the current Blender scene."""
-        #asset_groups = self.get_asset_groups()
-        for collection in bpy.data.collections:
-            self.data["asset"] = collection["avalon"]["asset"]
-            self.data["subset"] = collection["avalon"]["subset"]
 
-        asset = self.data["asset"]
-        subset = self.data["subset"]
-        name = plugin.asset_name(asset, subset)
-
-        collections = self.get_collections(name)
+        collections = plugin.get_instance_list()
         print("asset_groups--------------------------------------")
-        for group in collections:
-            print(group.name)
-            avalon_prop = group[AVALON_PROPERTY]
+        for collection in collections:
+            print(collection.name)
+            avalon_prop = collection[AVALON_PROPERTY]
             asset = avalon_prop['asset']
             family = avalon_prop['family']
             subset = avalon_prop['subset']
             task = avalon_prop['task']
-            name = f"{asset}_{subset}"
+            name = collection.name
             instance = context.create_instance(
                 name=name,
                 family=family,
@@ -76,12 +68,12 @@ class CollectInstances(pyblish.api.ContextPlugin):
                 asset=asset,
                 task=task,
             )
-            objects = list(group.children)
+            objects = list(collection.children)
             members = set()
             for obj in objects:
                 objects.extend(list(obj.children))
                 members.add(obj)
-            #members.add(group)
+
             instance[:] = list(members)
             self.log.debug(json.dumps(instance.data, indent=4))
             for obj in instance:
@@ -93,7 +85,7 @@ class CollectInstances(pyblish.api.ContextPlugin):
             family = avalon_prop['family']
             subset = avalon_prop['subset']
             task = avalon_prop['task']
-            name = f"{asset}_{subset}"
+            name = collection.name
             instance = context.create_instance(
                 name=name,
                 family=family,
@@ -109,7 +101,7 @@ class CollectInstances(pyblish.api.ContextPlugin):
                         for child in obj.children:
                             if child.type == 'ARMATURE':
                                 members.append(child)
-            #members.append(collection)
+
             instance[:] = members
             self.log.debug(json.dumps(instance.data, indent=4))
             for obj in instance:

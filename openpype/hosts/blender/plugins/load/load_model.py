@@ -41,67 +41,60 @@ class BlendModelLoader(plugin.AssetLoader):
                 objects.extend(obj.children)
                 bpy.data.objects.remove(obj)
 
-    def _process(self, libpath, asset_group, group_name):
 
+
+    def _process(self, libpath, asset_group, group_name):
+        """Load the blend library file"""
         with bpy.data.libraries.load(
-            libpath, link=True, relative=False
+            libpath , link=True, relative=False
         ) as (data_from, data_to):
             data_to.collections = data_from.collections
 
+        master_collection = bpy.context.scene.collection
 
-
-        parent = bpy.context.scene.collection
-
-       # empties = [obj for obj in data_to.collections if obj.type == 'EMPTY']
-
+        #Find the loaded collection and call it container
         container = None
+        instances = plugin.get_instance_list()
+        for collection in instances:
+            if master_collection.children.get(collection.name) == None:
+                    container = collection
+                    break
+        container.name = group_name
+        #Link the container to the scene collection
+        master_collection.children.link(container)
 
-        for collection in bpy.data.collections:
-            if collection.get(AVALON_PROPERTY):
-                container = collection
-                break
+        #Get all the object of the container
+        objects = []
+        nodes = list(container.objects)
 
-        assert container, "No asset group found"
+        for obj in nodes:
+            objects.append(obj)
+            nodes.extend(list(obj.children))
 
-        # Children must be linked before parents,
-        # otherwise the hierarchy will break
-        # objects = []
-        # nodes = list(container.objects)
-        # container.make_local()
-        # for obj in nodes:
-        #     #obj.parent = asset_group
-        #     container.objects.link(obj)
-        #     bpy.context.scene.collection.objects.unlink(obj)
+        objects.reverse()
 
-        # for obj in nodes:
-        #     objects.append(obj)
-        #     nodes.extend(list(obj.children))
-        #
-        # objects.reverse()
-        #
-        # for obj in objects:
-        #     parent.objects.link(obj)
-        #
-        # for obj in objects:
-        #     local_obj = plugin.prepare_data(obj, group_name)
-        #     if local_obj.type != 'EMPTY':
-        #         plugin.prepare_data(local_obj.data, group_name)
-        #
-        #         for material_slot in local_obj.material_slots:
-        #             if material_slot.material:
-        #                 plugin.prepare_data(material_slot.material, group_name)
-        #
-        #     if not local_obj.get(AVALON_PROPERTY):
-        #         local_obj[AVALON_PROPERTY] = dict()
-        #
-        #     avalon_info = local_obj[AVALON_PROPERTY]
-        #     avalon_info.update({"container_name": group_name})
-        #
-        # objects.reverse()
+        #Rename the object in the container
+        for obj in objects:
 
+            local_obj = plugin.prepare_data(obj, group_name)
+            if local_obj.type != 'EMPTY':
+                plugin.prepare_data(local_obj.data, group_name)
+                for material_slot in local_obj.material_slots:
+                    if material_slot.material:
+                        plugin.prepare_data(material_slot.material, group_name)
+
+            if not local_obj.get(AVALON_PROPERTY):
+                local_obj[AVALON_PROPERTY] = dict()
+            avalon_info = local_obj[AVALON_PROPERTY]
+            avalon_info.update({"container_name": group_name})
+
+        #Clean
         bpy.data.orphans_purge(do_local_ids=False)
-
         plugin.deselect_all()
+        #Set the container and the object overrided
+        container.override_create(remap_local_usages=True)
+        for obj in objects:
+            obj.override_create(remap_local_usages=True)
 
         return objects
 
@@ -116,62 +109,21 @@ class BlendModelLoader(plugin.AssetLoader):
             context: Full parenthood of representation to load
             options: Additional settings dictionary
         """
+
+        #setup variable to construct names
         libpath = self.fname
         asset = context["asset"]["name"]
         subset = context["subset"]["name"]
-
         asset_name = plugin.asset_name(asset, subset)
         unique_number = plugin.get_unique_number(asset, subset)
         group_name = plugin.asset_name(asset, subset, unique_number)
         namespace = namespace or f"{asset}_{unique_number}"
 
-        avalon_container = bpy.data.collections.get(asset_name)
-        if not avalon_container:
-            avalon_container = bpy.data.collections.new(name=asset_name)
-            bpy.context.scene.collection.children.link(avalon_container)
 
-        #asset_group = bpy.data.objects.new(group_name, object_data=None)
-        #asset_group.empty_display_type = 'SINGLE_ARROW'
-        #avalon_container.objects.link(asset_group)
-
-        plugin.deselect_all()
-
-        if options is not None:
-            parent = options.get('parent')
-            transform = options.get('transform')
-
-            if parent and transform:
-                location = transform.get('translation')
-                rotation = transform.get('rotation')
-                scale = transform.get('scale')
-
-                avalon_container.location = (
-                    location.get('x'),
-                    location.get('y'),
-                    location.get('z')
-                )
-                avalon_container.rotation_euler = (
-                    rotation.get('x'),
-                    rotation.get('y'),
-                    rotation.get('z')
-                )
-                avalon_container.scale = (
-                    scale.get('x'),
-                    scale.get('y'),
-                    scale.get('z')
-                )
-
-                bpy.context.view_layer.objects.active = parent
-                avalon_container.select_set(True)
-
-                bpy.ops.object.parent_set(keep_transform=True)
-
-                plugin.deselect_all()
-
+        avalon_container  = None
         objects = self._process(libpath, avalon_container, group_name)
 
-        #bpy.context.scene.collection.children.link(avalon_container)
-
+        avalon_container = bpy.data.collections.get(group_name)
         avalon_container[AVALON_PROPERTY] = {
             "schema": "openpype:container-2.0",
             "id": AVALON_CONTAINER_ID,
