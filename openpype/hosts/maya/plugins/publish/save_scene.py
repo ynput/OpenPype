@@ -7,7 +7,7 @@ class SaveCurrentScene(pyblish.api.ContextPlugin):
     """
 
     label = "Save current file"
-    order = pyblish.api.IntegratorOrder - 0.49
+    order = pyblish.api.ExtractorOrder - 0.49
     hosts = ["maya"]
     families = ["renderlayer", "workfile"]
 
