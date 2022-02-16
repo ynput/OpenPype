@@ -54,7 +54,7 @@ class OpenPypeMenu(QtWidgets.QWidget):
         }""")
         asset_label.setAlignment(QtCore.Qt.AlignHCenter)
 
-       workfiles_btn = QtWidgets.QPushButton("Workfiles...", self)
+        workfiles_btn = QtWidgets.QPushButton("Workfiles...", self)
         create_btn = QtWidgets.QPushButton("Create...", self)
         publish_btn = QtWidgets.QPushButton("Publish...", self)
         load_btn = QtWidgets.QPushButton("Load...", self)
