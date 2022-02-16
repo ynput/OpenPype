@@ -1,5 +1,4 @@
 import sys
-import collections
 
 from Qt import QtWidgets, QtCore
 from avalon import api, io, pipeline

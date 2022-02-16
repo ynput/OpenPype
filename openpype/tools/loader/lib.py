@@ -1,5 +1,4 @@
 import inspect
-import collections
 from Qt import QtGui
 
 from avalon.vendor import qtawesome
