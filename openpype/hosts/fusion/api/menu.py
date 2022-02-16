@@ -54,13 +54,13 @@ class OpenPypeMenu(QtWidgets.QWidget):
         )
         self.render_mode_widget = None
         self.setWindowTitle("OpenPype")
-        workfiles_btn = QtWidgets.QPushButton("Workfiles ...", self)
-        create_btn = QtWidgets.QPushButton("Create ...", self)
-        publish_btn = QtWidgets.QPushButton("Publish ...", self)
-        load_btn = QtWidgets.QPushButton("Load ...", self)
-        inventory_btn = QtWidgets.QPushButton("Inventory ...", self)
-        libload_btn = QtWidgets.QPushButton("Library ...", self)
-        rendermode_btn = QtWidgets.QPushButton("Set render mode ...", self)
+        workfiles_btn = QtWidgets.QPushButton("Workfiles...", self)
+        create_btn = QtWidgets.QPushButton("Create...", self)
+        publish_btn = QtWidgets.QPushButton("Publish...", self)
+        load_btn = QtWidgets.QPushButton("Load...", self)
+        inventory_btn = QtWidgets.QPushButton("Inventory...", self)
+        libload_btn = QtWidgets.QPushButton("Library...", self)
+        rendermode_btn = QtWidgets.QPushButton("Set render mode...", self)
         duplicate_with_inputs_btn = QtWidgets.QPushButton(
             "Duplicate with input connections", self
         )
