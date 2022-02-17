@@ -61,11 +61,14 @@ class ValidateEditorialAssetName(pyblish.api.ContextPlugin):
             self.log.debug(
                 ">> assets_missing_name: {}".format(assets_missing_name))
 
+            # This will create set asset names
+            asset_names = {
+                a.lower().replace("_", "") for a in asset_db_docs
+            }
+
             for asset in assets_missing_name:
                 _asset = asset.lower().replace("_", "")
-                if _asset in [
-                    a.lower().replace("_", "") for a in asset_db_docs
-                ]:
+                if _asset in asset_names:
                     wrong_names.update(
                         {
                             "required_name": asset,
