@@ -24,10 +24,10 @@ class BlendModelLoader(plugin.AssetLoader):
 
     families = ["model"]
     representations = ["blend"]
-
     label = "Link Model"
     icon = "code-fork"
     color = "orange"
+    namespace = ""
 
     def _remove(self, asset_group):
         objects = list(asset_group.children)
@@ -41,31 +41,40 @@ class BlendModelLoader(plugin.AssetLoader):
                 objects.extend(obj.children)
                 bpy.data.objects.remove(obj)
 
-
-
-    def _process(self, libpath, asset_group, group_name):
+    def _process(self, libpath):
         """Load the blend library file"""
         with bpy.data.libraries.load(
-            libpath , link=True, relative=False
+                libpath, link=True, relative=False
         ) as (data_from, data_to):
             data_to.collections = data_from.collections
 
-        master_collection = bpy.context.scene.collection
+        scene_collection = bpy.context.scene.collection
 
-        #Find the loaded collection and call it container
+        # Find the loaded collection and call it container
         container = None
         instances = plugin.get_instance_list()
         for collection in instances:
-            if master_collection.children.get(collection.name) == None:
-                    container = collection
-                    break
-        container.name = group_name
-        #Link the container to the scene collection
-        master_collection.children.link(container)
+            if scene_collection.children.get(collection.name) == None:
+                container = collection
+                break
 
-        #Get all the object of the container
+        # get namespace (container name + unique_number)
+        unique_number = plugin.get_model_unique_number(container.name)
+        self.namespace = plugin.model_asset_name(container.name, unique_number)
+        container.name = self.namespace
+
+        # Link the container to the scene collection
+        scene_collection.children.link(container)
+
+        # Get all the object of the container. The farest parents in first for override them first
         objects = []
         nodes = list(container.objects)
+        children_of_the_collection = []
+
+        for obj in nodes:
+            if obj.parent is None:
+                children_of_the_collection.append(obj)
+        nodes = children_of_the_collection
 
         for obj in nodes:
             objects.append(obj)
@@ -73,34 +82,36 @@ class BlendModelLoader(plugin.AssetLoader):
 
         objects.reverse()
 
-        #Rename the object in the container
+        # Rename the object in the container
         for obj in objects:
-
-            local_obj = plugin.prepare_data(obj, group_name)
+            local_obj = plugin.prepare_data(obj, self.namespace)
             if local_obj.type != 'EMPTY':
-                plugin.prepare_data(local_obj.data, group_name)
+                plugin.prepare_data(local_obj.data, self.namespace)
                 for material_slot in local_obj.material_slots:
                     if material_slot.material:
-                        plugin.prepare_data(material_slot.material, group_name)
+                        plugin.prepare_data(material_slot.material, self.namespace)
 
-            if not local_obj.get(AVALON_PROPERTY):
-                local_obj[AVALON_PROPERTY] = dict()
-            avalon_info = local_obj[AVALON_PROPERTY]
-            avalon_info.update({"container_name": group_name})
+            if not obj.get(AVALON_PROPERTY):
+                obj[AVALON_PROPERTY] = dict()
+            avalon_info = obj[AVALON_PROPERTY]
+            avalon_info.update({"container_name": container.name})
 
-        #Clean
+        # Clean
         bpy.data.orphans_purge(do_local_ids=False)
         plugin.deselect_all()
-        #Set the container and the object overrided
+
+        # override the container and the objects
         container.override_create(remap_local_usages=True)
         for obj in objects:
             obj.override_create(remap_local_usages=True)
 
-        return objects
+        return container
 
     def process_asset(
-        self, context: dict, name: str, namespace: Optional[str] = None,
-        options: Optional[Dict] = None
+            self, context: dict,
+            name: str,
+            namespace: Optional[str] = None,
+            options: Optional[Dict] = None
     ) -> Optional[List]:
         """
         Arguments:
@@ -110,34 +121,30 @@ class BlendModelLoader(plugin.AssetLoader):
             options: Additional settings dictionary
         """
 
-        #setup variable to construct names
+        # setup variable to construct names
         libpath = self.fname
         asset = context["asset"]["name"]
         subset = context["subset"]["name"]
         asset_name = plugin.asset_name(asset, subset)
-        unique_number = plugin.get_unique_number(asset, subset)
-        group_name = plugin.asset_name(asset, subset, unique_number)
-        namespace = namespace or f"{asset}_{unique_number}"
+
+        # Process the load of the model
+        avalon_container = self._process(libpath)
 
 
-        avalon_container  = None
-        objects = self._process(libpath, avalon_container, group_name)
-
-        avalon_container = bpy.data.collections.get(group_name)
-        avalon_container[AVALON_PROPERTY] = {
+        avalon_container[AVALON_PROPERTY]= {
             "schema": "openpype:container-2.0",
             "id": AVALON_CONTAINER_ID,
-            "name": name,
-            "namespace": namespace or '',
+            "name": asset_name,
+            "namespace": self.namespace or '',
             "loader": str(self.__class__.__name__),
             "representation": str(context["representation"]["_id"]),
             "libpath": libpath,
             "asset_name": asset_name,
             "parent": str(context["representation"]["parent"]),
             "family": context["representation"]["context"]["family"],
-            "objectName": group_name
+            "objectName": self.namespace
         }
-
+        objects = avalon_container.objects
         self[:] = objects
         return objects
 

@@ -4,10 +4,8 @@ from typing import Generator
 import bpy
 
 import pyblish.api
-from openpype.hosts.blender.api import plugin
 from openpype.hosts.blender.api.pipeline import (
-    AVALON_INSTANCES,
-    AVALON_PROPERTY,
+    AVALON_PROPERTY
 )
 
 
@@ -20,22 +18,7 @@ class CollectInstances(pyblish.api.ContextPlugin):
     data = dict()
 
     @staticmethod
-    def get_asset_groups(name) -> Generator:
-        """Return all 'model' collections.
-
-        Check if the family is 'model' and if it doesn't have the
-        representation set. If the representation is set, it is a loaded model
-        and we don't want to publish it.
-        """
-
-        instances = bpy.data.collections.get(name)
-        for obj in instances.objects:
-            avalon_prop = obj.get(AVALON_PROPERTY) or dict()
-            if avalon_prop.get('id') == 'pyblish.avalon.instance':
-                yield obj
-
-    @staticmethod
-    def get_collections(name) -> Generator:
+    def get_collections() -> Generator:
         """Return all 'model' collections.
 
         Check if the family is 'model' and if it doesn't have the
@@ -43,17 +26,15 @@ class CollectInstances(pyblish.api.ContextPlugin):
         and we don't want to publish it.
         """
         for collection in bpy.data.collections:
-            avalon_prop = collection.get('avalon') or dict()
-            if avalon_prop.get('id') == 'pyblish.avalon.instance':
+            if collection.get(AVALON_PROPERTY):
                 yield collection
 
     def process(self, context):
         """Collect the models from the current Blender scene."""
+        #get list of the collections with avalon properties in the scenes
+        collections = self.get_collections()
 
-        collections = plugin.get_instance_list()
-        print("asset_groups--------------------------------------")
         for collection in collections:
-            print(collection.name)
             avalon_prop = collection[AVALON_PROPERTY]
             asset = avalon_prop['asset']
             family = avalon_prop['family']
@@ -74,33 +55,18 @@ class CollectInstances(pyblish.api.ContextPlugin):
                 objects.extend(list(obj.children))
                 members.add(obj)
 
-            instance[:] = list(members)
-            self.log.debug(json.dumps(instance.data, indent=4))
-            for obj in instance:
-                self.log.debug(obj)
-
-        for collection in collections:
-            avalon_prop = collection[AVALON_PROPERTY]
-            asset = avalon_prop['asset']
-            family = avalon_prop['family']
-            subset = avalon_prop['subset']
-            task = avalon_prop['task']
-            name = collection.name
-            instance = context.create_instance(
-                name=name,
-                family=family,
-                families=[family],
-                subset=subset,
-                asset=asset,
-                task=task,
-            )
-            members = list(collection.objects)
-            if family == "animation":
-                for obj in collection.objects:
-                    if obj.type == 'EMPTY' and obj.get(AVALON_PROPERTY):
-                        for child in obj.children:
-                            if child.type == 'ARMATURE':
-                                members.append(child)
+            # instance[:] = list(members)
+            # self.log.debug(json.dumps(instance.data, indent=4))
+            # for obj in instance:
+            #     self.log.debug(obj)
+            #
+            # members = list(collection.objects)
+            # if family == "animation":
+            #     for obj in collection.objects:
+            #         if obj.type == 'EMPTY' and obj.get(AVALON_PROPERTY):
+            #             for child in obj.children:
+            #                 if child.type == 'ARMATURE':
+            #                     members.append(child)
 
             instance[:] = members
             self.log.debug(json.dumps(instance.data, indent=4))

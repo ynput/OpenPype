@@ -21,7 +21,7 @@ VALID_EXTENSIONS = [".blend", ".json", ".abc", ".fbx"]
 
 
 def asset_name(
-    asset: str, subset: str, namespace: Optional[str] = None
+        asset: str, subset: str, namespace: Optional[str] = None
 ) -> str:
     """Return a consistent name for an asset."""
     name = f"{asset}"
@@ -31,13 +31,23 @@ def asset_name(
     return name
 
 
+def model_asset_name(
+        model_name: str,  namespace: Optional[str] = None
+) -> str:
+    """Return a consistent name for an asset."""
+    name = f"{model_name}"
+    if namespace:
+        name = f"{name}_{namespace}"
+    return name
+
+
 def get_unique_number(
-    asset: str, subset: str
+        asset: str, subset: str
 ) -> str:
     """Return a unique number based on the asset name."""
     data_collections = bpy.data.collections
     container_names = [c.name for c in data_collections if c.get(AVALON_PROPERTY)]
-    if container_names == [] :
+    if container_names == []:
         return "01"
     count = 1
     name = f"{asset}_{count:0>2}_{subset}"
@@ -47,10 +57,23 @@ def get_unique_number(
     return f"{count:0>2}"
 
 
+def get_model_unique_number(name:str) -> str:
+    """Return a unique number based on the asset name."""
+    data_collections = bpy.data.collections
+    container_names = [c.name for c in data_collections if c.get(AVALON_PROPERTY)]
+    if container_names == []:
+        return "01"
+    count = 1
+    name = f"{name}_{count:0>2}"
+    while name in container_names:
+        count += 1
+        name = f"{name}_{count:0>2}"
+    return f"{count:0>2}"
+
+
 def prepare_data(data, container_name=None):
     name = data.name
     local_data = data.make_local()
-
     if container_name:
         local_data.name = f"{container_name}:{name}"
     else:
@@ -59,7 +82,7 @@ def prepare_data(data, container_name=None):
 
 
 def create_blender_context(active: Optional[bpy.types.Object] = None,
-                           selected: Optional[bpy.types.Object] = None,):
+                           selected: Optional[bpy.types.Object] = None, ):
     """Create a new Blender context. If an object is passed as
     parameter, it is set as selected and active.
     """
@@ -83,6 +106,7 @@ def create_blender_context(active: Optional[bpy.types.Object] = None,
                         override_context['selected_objects'] = selected
                         return override_context
     raise Exception("Could not create a custom Blender context.")
+
 
 def get_instance_list():
     """Get the parent of the input collection"""
@@ -138,6 +162,7 @@ def deselect_all():
 
 class Creator(PypeCreatorMixin, avalon.api.Creator):
     """Base class for Creator plug-ins."""
+
     def process(self):
         collection = bpy.data.collections.new(name=self.data["subset"])
         bpy.context.scene.collection.children.link(collection)
@@ -232,7 +257,7 @@ class AssetLoader(avalon.api.Loader):
               name: Optional[str] = None,
               namespace: Optional[str] = None,
               options: Optional[Dict] = None
-    ) -> Optional[bpy.types.Collection]:
+              ) -> Optional[bpy.types.Collection]:
         """Load asset via database
 
         Arguments:
