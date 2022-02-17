@@ -10,7 +10,6 @@ from openpype.lib import (
 from openpype.lib.applications import (
     ApplicationLaunchFailed
 )
-from openpype.api import get_anatomy_settings
 from openpype.hosts import flame as opflame
 import openpype
 from pprint import pformat
