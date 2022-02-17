@@ -15,7 +15,7 @@ class FusionPrelaunch(PreLaunchHook):
 
     def execute(self):
         # making sure python 3.6 is installed at provided path
-        py36_var = "FUSION16_PYTHON36_HOME"
+        py36_var = "PYTHON36"
         fusion_python36_home = self.launch_context.env.get(py36_var, "")
 
         self.log.info(f"Looking for Python 3.6 in: {fusion_python36_home}")
@@ -46,6 +46,5 @@ class FusionPrelaunch(PreLaunchHook):
         self.log.info(f"Setting {pref_var}: {prefs}")
         self.launch_context.env[pref_var] = prefs
 
-        try:
-            __import__("avalon.fusion")
-            __import__("pyblish")
+        __import__("avalon.fusion")
+        __import__("pyblish")
