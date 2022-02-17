@@ -78,10 +78,7 @@ class CameraLoader(api.Loader):
         for h in hierarchy:
             hierarchy_dir = f"{hierarchy_dir}/{h}"
             hierarchy_list.append(hierarchy_dir)
-            print(h)
-            print(hierarchy_dir)
         asset = context.get('asset').get('name')
-        print(asset)
         suffix = "_CON"
         if asset:
             asset_name = "{}_{}".format(asset, name)
@@ -118,10 +115,6 @@ class CameraLoader(api.Loader):
 
         current_level = unreal.EditorLevelLibrary.get_editor_world().get_full_name()
         unreal.EditorLevelLibrary.save_all_dirty_levels()
-
-        # asset_content = unreal.EditorAssetLibrary.list_assets(
-        #     f"{hierarchy_dir}/{asset}/", recursive=True, include_folder=False
-        # )
 
         ar = unreal.AssetRegistryHelpers.get_asset_registry()
         filter = unreal.ARFilter(
