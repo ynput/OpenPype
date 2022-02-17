@@ -11,7 +11,7 @@ class ValidateUnrealUpAxis(pyblish.api.ContextPlugin):
     optional = True
     order = openpype.api.ValidateContentsOrder
     hosts = ["maya"]
-    families = ["unrealStaticMesh"]
+    families = ["staticMesh"]
     label = "Unreal Up-Axis check"
     actions = [openpype.api.RepairAction]
 

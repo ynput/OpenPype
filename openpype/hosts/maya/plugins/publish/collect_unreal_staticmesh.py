@@ -15,7 +15,7 @@ class CollectUnrealStaticMesh(pyblish.api.InstancePlugin):
 
     order = pyblish.api.CollectorOrder + 0.2
     label = "Collect Unreal Static Meshes"
-    families = ["unrealStaticMesh"]
+    families = ["staticMesh"]
 
     def process(self, instance):
         project_settings = get_project_settings(Session["AVALON_PROJECT"])
@@ -28,7 +28,7 @@ class CollectUnrealStaticMesh(pyblish.api.InstancePlugin):
         )
         # add fbx family to trigger fbx extractor
         instance.data["families"].append("fbx")
-        # take the name from instance (without the `unrealStaticMesh_` prefix)
+        # take the name from instance (without the `staticMesh_` prefix)
         instance.data["staticMeshCombinedName"] = "{}_{}".format(
             sm_prefix,
             instance.name[len(instance.data.get("family"))+3:]

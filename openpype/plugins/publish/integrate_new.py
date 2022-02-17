@@ -100,7 +100,8 @@ class IntegrateAssetNew(pyblish.api.InstancePlugin):
                 "redshiftproxy",
                 "effect",
                 "xgen",
-                "hda"
+                "hda",
+                "staticMesh"
                 ]
     exclude_families = ["clip"]
     db_representation_context_keys = [

@@ -52,7 +52,7 @@ class ValidateUnrealStaticMeshName(pyblish.api.InstancePlugin):
     optional = True
     order = openpype.api.ValidateContentsOrder
     hosts = ["maya"]
-    families = ["unrealStaticMesh"]
+    families = ["staticMesh"]
     label = "Unreal StaticMesh Name"
     actions = [openpype.hosts.maya.api.action.SelectInvalidAction]
     regex_mesh = r"(?P<renderName>.*))"

@@ -10,7 +10,7 @@ class ExtractUnrealStaticMesh(openpype.api.Extractor):
 
     order = pyblish.api.ExtractorOrder - 0.1
     label = "Extract Unreal Static Mesh"
-    families = ["unrealStaticMesh"]
+    families = ["staticMesh"]
 
     def process(self, instance):
         to_combine = instance.data.get("membersToCombine")
