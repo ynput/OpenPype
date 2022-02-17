@@ -50,7 +50,6 @@ module.exports = {
                 "dev_build",
                 "admin_distribute",
                 "admin_use",
-                "dev_contribute",
                 "admin_openpype_commands",
             ],
         },
@@ -133,4 +132,17 @@ module.exports = {
             ],
         },
     ],
+     Dev: [
+        "dev_introduction",
+        {
+            type: "category",
+            label: "Dev documentation",
+            items: [
+                "dev_requirements",
+                "dev_build",
+                "dev_testing",
+                "dev_contribute",
+            ],
+        }
+     ]
 };
