@@ -242,6 +242,7 @@ def sync_zou():
         )
         for doc in new_assets_docs:
             visual_parent_id = doc["data"]["visualParent"]
+            parent_substitutes = []
 
             # Match asset type by it's name
             match = regex_ep.match(doc["name"])
@@ -273,6 +274,7 @@ def sync_zou():
                     gazu.shot.update_sequence_data(
                         created_sequence, {"is_substitute": True}
                     )
+                    parent_substitutes.append(created_sequence)
 
                     # Update parent ID
                     zou_parent_id = created_sequence["id"]
@@ -310,6 +312,7 @@ def sync_zou():
                         "$set": {
                             "data.visualParent": visual_parent_id,
                             "data.zou": new_entity,
+                            "data.parent_substitutes": parent_substitutes,
                         }
                     },
                 )
@@ -494,17 +497,17 @@ def sync_openpype():
 
 
 def update_op_assets(
-    items_list: List[dict], asset_doc_ids: Dict[str, dict]
+    entities_list: List[dict], asset_doc_ids: Dict[str, dict]
 ) -> List[UpdateOne]:
     """Update OpenPype assets.
     Set 'data' and 'parent' fields.
 
-    :param items_list: List of zou items to update
+    :param entities_list: List of zou entities to update
     :param asset_doc_ids: Dicts of [{zou_id: asset_doc}, ...]
     :return: List of UpdateOne objects
     """
     bulk_writes = []
-    for item in items_list:
+    for item in entities_list:
         # Update asset
         item_doc = asset_doc_ids[item["id"]]
         item_data = item_doc["data"].copy()
@@ -523,20 +526,28 @@ def update_op_assets(
             }
 
         # Visual parent for hierarchy
-        direct_parent_id = item["parent_id"] or item["source_id"]
-        if direct_parent_id:
-            visual_parent_doc = asset_doc_ids[direct_parent_id]
+        substitute_parent_item = (
+            item_data["parent_substitutes"][0]
+            if item_data.get("parent_substitutes")
+            else None
+        )
+        parent_zou_id = item["parent_id"] or item["source_id"]
+        if substitute_parent_item:
+            parent_zou_id = (
+                substitute_parent_item["parent_id"]
+                or substitute_parent_item["source_id"]
+            )
+            visual_parent_doc = asset_doc_ids[parent_zou_id]
             item_data["visualParent"] = visual_parent_doc["_id"]
 
         # Add parents for hierarchy
-        parent_zou_id = item["parent_id"]
         item_data["parents"] = []
         while parent_zou_id is not None:
             parent_doc = asset_doc_ids[parent_zou_id]
             item_data["parents"].insert(0, parent_doc["name"])
 
             parent_zou_id = next(
-                i for i in items_list if i["id"] == parent_doc["data"]["zou"]["id"]
+                i for i in entities_list if i["id"] == parent_doc["data"]["zou"]["id"]
             )["parent_id"]
 
         # Update 'data' different in zou DB
