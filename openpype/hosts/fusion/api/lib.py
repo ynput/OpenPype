@@ -8,12 +8,14 @@ from Qt import QtGui
 import avalon.api
 from avalon import io
 from .pipeline import get_current_comp, comp_lock_and_undo_chunk
-
+from openpype.api import (
+    get_asset
+)
 self = sys.modules[__name__]
 self._project = None
 
 
-def update_frame_range(start, end, comp=None, set_render_range=True):
+def update_frame_range(start, end, comp=None, set_render_range=True, **kwargs):
     """Set Fusion comp's start and end frame range
 
     Args:
@@ -22,6 +24,7 @@ def update_frame_range(start, end, comp=None, set_render_range=True):
         comp (object, Optional): comp object from fusion
         set_render_range (bool, Optional): When True this will also set the
             composition's render start and end frame.
+        kwargs (dict): additional kwargs
 
     Returns:
         None
@@ -36,6 +39,16 @@ def update_frame_range(start, end, comp=None, set_render_range=True):
         "COMPN_GlobalEnd": end
     }
 
+    # exclude handles if any found in kwargs
+    if kwargs.get("handle_start"):
+        handle_start = kwargs.get("handle_start")
+        attrs["COMPN_GlobalStart"] = int(start - handle_start)
+
+    if kwargs.get("handle_end"):
+        handle_end = kwargs.get("handle_end")
+        attrs["COMPN_GlobalEnd"] = int(end + handle_end)
+
+    # set frame range
     if set_render_range:
         attrs.update({
             "COMPN_RenderStart": start,
@@ -44,6 +57,18 @@ def update_frame_range(start, end, comp=None, set_render_range=True):
 
     with comp_lock_and_undo_chunk(comp):
         comp.SetAttrs(attrs)
+
+
+def set_framerange():
+    asset_doc = get_asset()
+    start = asset_doc["data"]["frameStart"]
+    end = asset_doc["data"]["frameEnd"]
+
+    data = {
+        "handle_start": asset_doc["data"]["handleStart"],
+        "handle_end": asset_doc["data"]["handleEnd"]
+    }
+    update_frame_range(start, end, set_render_range=True, **data)
 
 
 def get_additional_data(container):

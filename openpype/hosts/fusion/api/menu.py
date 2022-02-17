@@ -1,4 +1,3 @@
-import os
 import sys
 
 from Qt import QtWidgets, QtCore
@@ -11,7 +10,9 @@ from openpype.hosts.fusion.scripts import (
     set_rendermode,
     duplicate_with_inputs
 )
-
+from openpype.hosts.fusion.api import (
+    set_framerange
+)
 
 class Spacer(QtWidgets.QWidget):
     def __init__(self, height, *args, **kwargs):
@@ -61,11 +62,10 @@ class OpenPypeMenu(QtWidgets.QWidget):
         manager_btn = QtWidgets.QPushButton("Manage...", self)
         libload_btn = QtWidgets.QPushButton("Library...", self)
         rendermode_btn = QtWidgets.QPushButton("Set render mode...", self)
+        set_framerange_btn = QtWidgets.QPushButton("Set Frame Range", self)
+        set_resolution_btn = QtWidgets.QPushButton("Set Resolution", self)
         duplicate_with_inputs_btn = QtWidgets.QPushButton(
             "Duplicate with input connections", self
-        )
-        reset_resolution_btn = QtWidgets.QPushButton(
-            "Reset Resolution from project", self
         )
 
         layout = QtWidgets.QVBoxLayout(self)
@@ -90,12 +90,13 @@ class OpenPypeMenu(QtWidgets.QWidget):
 
         layout.addWidget(Spacer(15, self))
 
+        layout.addWidget(set_framerange_btn)
+        layout.addWidget(set_resolution_btn)
         layout.addWidget(rendermode_btn)
 
         layout.addWidget(Spacer(15, self))
 
         layout.addWidget(duplicate_with_inputs_btn)
-        layout.addWidget(reset_resolution_btn)
 
         self.setLayout(layout)
 
@@ -111,7 +112,8 @@ class OpenPypeMenu(QtWidgets.QWidget):
         rendermode_btn.clicked.connect(self.on_rendernode_clicked)
         duplicate_with_inputs_btn.clicked.connect(
             self.on_duplicate_with_inputs_clicked)
-        reset_resolution_btn.clicked.connect(self.on_reset_resolution_clicked)
+        set_resolution_btn.clicked.connect(self.on_set_resolution_clicked)
+        set_framerange_btn.clicked.connect(self.on_set_framerange_clicked)
 
         self._callbacks = []
         self.register_callback("taskChanged", self.on_task_changed)
@@ -171,8 +173,13 @@ class OpenPypeMenu(QtWidgets.QWidget):
         duplicate_with_inputs.duplicate_with_input_connections()
         print("Clicked Set Colorspace")
 
-    def on_reset_resolution_clicked(self):
+    def on_set_resolution_clicked(self):
         print("Clicked Reset Resolution")
+
+    def on_set_framerange_clicked(self):
+        print("Clicked Reset Framerange")
+        set_framerange()
+
 
 
 def launch_openpype_menu():
