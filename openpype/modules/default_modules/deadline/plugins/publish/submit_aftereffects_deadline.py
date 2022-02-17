@@ -1,10 +1,13 @@
-from openpype.lib import abstract_submit_deadline
-from openpype.lib.abstract_submit_deadline import DeadlineJobInfo
-import pyblish.api
 import os
 import attr
 import getpass
+import pyblish.api
+
 from avalon import api
+
+from openpype.lib import abstract_submit_deadline
+from openpype.lib.abstract_submit_deadline import DeadlineJobInfo
+from openpype.lib import env_value_to_bool
 
 
 @attr.s
@@ -116,7 +119,10 @@ class AfterEffectsSubmitDeadline(abstract_submit_deadline.AbstractSubmitDeadline
         deadline_plugin_info.Comp = self._instance.data["comp_name"]
         deadline_plugin_info.Version = self._instance.data["app_version"]
         # must be here because of DL AE plugin
-        deadline_plugin_info.MultiProcess = self.multiprocess
+        # added override of multiprocess by env var, if shouldn't be used for
+        # some app variant use MULTIPROCESS:false in Settings, default is True
+        env_multi = env_value_to_bool("MULTIPROCESS", default=True)
+        deadline_plugin_info.MultiProcess = env_multi and self.multiprocess
         deadline_plugin_info.SceneFile = self.scene_path
         deadline_plugin_info.Output = render_path.replace("\\", "/")
 

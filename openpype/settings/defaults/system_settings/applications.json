@@ -1127,7 +1127,9 @@
                     "darwin": [],
                     "linux": []
                 },
-                "environment": {}
+                "environment": {
+                    "MULTIPROCESS": "No"
+                }
             }
         }
     },
