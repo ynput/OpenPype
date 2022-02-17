@@ -41,7 +41,7 @@ class FlamePrelaunch(PreLaunchHook):
         project_name = project_doc["name"]
 
         # get image io
-        project_anatomy = get_anatomy_settings(project_name)
+        project_anatomy = self.data["anatomy"]
 
         # make sure anatomy settings are having flame key
         if not project_anatomy["imageio"].get("flame"):
