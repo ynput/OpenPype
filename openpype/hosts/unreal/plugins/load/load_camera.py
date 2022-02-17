@@ -24,11 +24,6 @@ class CameraLoader(api.Loader):
         return asset_doc.get("data")
 
     def _set_sequence_hierarchy(self, seq_i, seq_j, data_i, data_j):
-        if data_i:
-            seq_i.set_display_rate(unreal.FrameRate(data_i.get("fps"), 1.0))
-            seq_i.set_playback_start(data_i.get("frameStart"))
-            seq_i.set_playback_end(data_i.get("frameEnd") + 1)
-
         tracks = seq_i.get_master_tracks()
         track = None
         for t in tracks:
@@ -140,6 +135,33 @@ class CameraLoader(api.Loader):
                     asset_class=unreal.LevelSequence,
                     factory=unreal.LevelSequenceFactoryNew()
                 )
+
+                asset_data = io.find_one({
+                    "type": "asset",
+                    "name": h.split('/')[-1]
+                })
+
+                id = asset_data.get('_id')
+
+                start_frames = []
+                end_frames = []
+
+                elements = list(
+                    io.find({"type": "asset", "data.visualParent": id}))
+                for e in elements:
+                    start_frames.append(e.get('data').get('clipIn'))
+                    end_frames.append(e.get('data').get('clipOut'))
+
+                    elements.extend(io.find({
+                        "type": "asset",
+                        "data.visualParent": e.get('_id')
+                    }))
+
+                scene.set_display_rate(
+                    unreal.FrameRate(asset_data.get('data').get("fps"), 1.0))
+                scene.set_playback_start(min(start_frames))
+                scene.set_playback_end(max(end_frames))
+
                 sequences.append(scene)
             else:
                 for e in existing_sequences:
