@@ -320,8 +320,6 @@ class HarmonySubmitDeadline(
             / published_scene.stem
             / f"{published_scene.stem}.xstage"
         )
-        self.log.info("published_scene:: {}".format(published_scene))
-        self.log.info("xstage_path:: {}".format(xstage_path))
         unzip_dir = (published_scene.parent / published_scene.stem)
         with _ZipFile(published_scene, "r") as zip_ref:
             zip_ref.extractall(unzip_dir.as_posix())
@@ -352,12 +350,9 @@ class HarmonySubmitDeadline(
         # use that one.
         if not ideal_scene:
             xstage_path = xstage_files[0]
-        self.log.info("xstage_path:: {}".format(xstage_path))
         return xstage_path
 
     def get_plugin_info(self):
-        work_scene = Path(self._instance.data["source"])
-        self.log.info("work scene:: {}".format(work_scene))
         # this is path to published scene workfile _ZIP_. Before
         # rendering, we need to unzip it.
         published_scene = Path(
