@@ -55,7 +55,7 @@ def install():
 
     print(LOAD_PATH)
 
-    pyblish.register_callback("instanceToggled", on_pyblish_instance_toggled)
+    pyblish.api.register_callback("instanceToggled", on_pyblish_instance_toggled)
 
 
 def uninstall():
