@@ -257,7 +257,14 @@ class ProcessSubmittedJobOnFarm(pyblish.api.InstancePlugin):
                 "Pool": self.deadline_pool,
                 "SecondaryPool": self.deadline_pool_secondary,
 
-                "OutputDirectory0": output_dir
+                "OutputDirectory0": output_dir,
+
+                # Error out early on this job since it's unlikely
+                # a subsequent publish will suddenly succeed and
+                # this avoids trying to create tons of publishes
+                # todo(roy): Expose this in settings
+                "OverrideJobFailureDetection": True,
+                "FailureDetectionJobErrors": 3
             },
             "PluginInfo": {
                 "Version": self.plugin_pype_version,
@@ -316,8 +323,8 @@ class ProcessSubmittedJobOnFarm(pyblish.api.InstancePlugin):
         import speedcopy
 
         self.log.info("Preparing to copy ...")
-        start = instance.data.get("startFrame")
-        end = instance.data.get("endFrame")
+        start = instance.data.get("frameStart")
+        end = instance.data.get("frameEnd")
 
         # get latest version of subset
         # this will stop if subset wasn't published yet

@@ -43,19 +43,6 @@ def install():
     See the Maya equivalent for inspiration on how to implement this.
 
     """
-    # Remove all handlers associated with the root logger object, because
-    # that one sometimes logs as "warnings" incorrectly.
-    for handler in logging.root.handlers[:]:
-        logging.root.removeHandler(handler)
-
-    # Attach default logging handler that prints to active comp
-    logger = logging.getLogger()
-    formatter = logging.Formatter(fmt="%(message)s\n")
-    handler = CompLogHandler()
-    handler.setFormatter(formatter)
-    logger.addHandler(handler)
-    logger.setLevel(logging.DEBUG)
-
     log.info("openpype.hosts.fusion installed")
 
     pyblish.api.register_host("fusion")
@@ -66,9 +53,9 @@ def install():
     avalon.api.register_plugin_path(avalon.api.Creator, CREATE_PATH)
     avalon.api.register_plugin_path(avalon.api.InventoryAction, INVENTORY_PATH)
 
-    pyblish.api.register_callback(
-        "instanceToggled", on_pyblish_instance_toggled
-    )
+    print(LOAD_PATH)
+
+    pyblish.register_callback("instanceToggled", on_pyblish_instance_toggled)
 
 
 def uninstall():

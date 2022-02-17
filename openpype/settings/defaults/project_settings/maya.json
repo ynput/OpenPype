@@ -507,6 +507,11 @@
             "optional": true,
             "active": true,
             "bake_attributes": []
+        },
+        "ExtractModel": {
+            "enabled": true,
+            "optional": true,
+            "active": true
         }
     },
     "load": {

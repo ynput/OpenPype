@@ -9,7 +9,6 @@ import math
 
 import json
 import logging
-import itertools
 import contextlib
 from collections import OrderedDict, defaultdict
 from math import ceil
@@ -282,8 +281,10 @@ def float_round(num, places=0, direction=ceil):
 
 def pairwise(iterable):
     """s -> (s0,s1), (s2,s3), (s4, s5), ..."""
+    from six.moves import zip
+
     a = iter(iterable)
-    return itertools.izip(a, a)
+    return zip(a, a)
 
 
 def unique(name):
@@ -1820,6 +1821,40 @@ def apply_attributes(attributes, nodes_by_id):
                 set_attribute(attr, value, node)
 
 
+def get_container_members(container):
+    """Returns the members of a container.
+    This includes the nodes from any loaded references in the container.
+    """
+    if isinstance(container, dict):
+        # Assume it's a container dictionary
+        container = container["objectName"]
+
+    members = cmds.sets(container, query=True) or []
+    members = cmds.ls(members, long=True, objectsOnly=True) or []
+    members = set(members)
+
+    # Include any referenced nodes from any reference in the container
+    # This is required since we've removed adding ALL nodes of a reference
+    # into the container set and only add the reference node now.
+    for ref in cmds.ls(members, exactType="reference", objectsOnly=True):
+
+        # Ignore any `:sharedReferenceNode`
+        if ref.rsplit(":", 1)[-1].startswith("sharedReferenceNode"):
+            continue
+
+        # Ignore _UNKNOWN_REF_NODE_ (PLN-160)
+        if ref.rsplit(":", 1)[-1].startswith("_UNKNOWN_REF_NODE_"):
+            continue
+
+        reference_members = cmds.referenceQuery(ref, nodes=True)
+        reference_members = cmds.ls(reference_members,
+                                    long=True,
+                                    objectsOnly=True)
+        members.update(reference_members)
+
+    return list(members)
+
+
 # region LOOKDEV
 def list_looks(asset_id):
     """Return all look subsets for the given asset
@@ -1882,7 +1917,7 @@ def assign_look_by_version(nodes, version_id):
             container_node = pipeline.load(Loader, look_representation)
 
     # Get container members
-    shader_nodes = cmds.sets(container_node, query=True)
+    shader_nodes = get_container_members(container_node)
 
     # Load relationships
     shader_relation = api.get_representation_path(json_representation)
@@ -2108,7 +2143,7 @@ def get_container_transforms(container, members=None, root=False):
     """
 
     if not members:
-        members = cmds.sets(container["objectName"], query=True)
+        members = get_container_members(container)
 
     results = cmds.ls(members, type="transform", long=True)
     if root:
@@ -3311,6 +3346,11 @@ def set_colorspace():
         else:
             cmds.colorManagementPrefs(e=True, cmConfigFileEnabled=False)
             cmds.colorManagementPrefs(e=True, configFilePath="" )
+
+    if int(cmds.about(version=True)) >= 2022:
+        log.warning("Skipping setting of color management preferences due to"
+                    " the settings not being compatible with Maya 2022+")
+        return
 
     # third set rendering space and view transform
     renderSpace = root_dict["renderSpace"]
