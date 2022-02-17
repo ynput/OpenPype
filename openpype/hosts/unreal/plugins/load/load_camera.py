@@ -78,7 +78,10 @@ class CameraLoader(api.Loader):
         for h in hierarchy:
             hierarchy_dir = f"{hierarchy_dir}/{h}"
             hierarchy_list.append(hierarchy_dir)
+            print(h)
+            print(hierarchy_dir)
         asset = context.get('asset').get('name')
+        print(asset)
         suffix = "_CON"
         if asset:
             asset_name = "{}_{}".format(asset, name)
@@ -112,6 +115,23 @@ class CameraLoader(api.Loader):
             f"{hierarchy_dir}/{asset}/{name}_{unique_number:02d}", suffix="")
 
         container_name += suffix
+
+        current_level = unreal.EditorLevelLibrary.get_editor_world().get_full_name()
+        unreal.EditorLevelLibrary.save_all_dirty_levels()
+
+        # asset_content = unreal.EditorAssetLibrary.list_assets(
+        #     f"{hierarchy_dir}/{asset}/", recursive=True, include_folder=False
+        # )
+
+        ar = unreal.AssetRegistryHelpers.get_asset_registry()
+        filter = unreal.ARFilter(
+            class_names = ["World"], 
+            package_paths = [f"{hierarchy_dir}/{asset}/"], 
+            recursive_paths = True)
+        maps = ar.get_assets(filter)
+
+        # There should be only one map in the list
+        unreal.EditorLevelLibrary.load_level(maps[0].get_full_name())
 
         # Get all the sequences in the hierarchy. It will create them, if 
         # they don't exist.
@@ -223,6 +243,9 @@ class CameraLoader(api.Loader):
         }
         unreal_pipeline.imprint(
             "{}/{}".format(asset_dir, container_name), data)
+
+        unreal.EditorLevelLibrary.save_all_dirty_levels()
+        unreal.EditorLevelLibrary.load_level(current_level)
 
         asset_content = unreal.EditorAssetLibrary.list_assets(
             asset_dir, recursive=True, include_folder=True
