@@ -26,8 +26,6 @@ class CollectUnrealStaticMesh(pyblish.api.InstancePlugin):
             ["CreateUnrealStaticMesh"]
             ["static_mesh_prefix"]
         )
-        # add fbx family to trigger fbx extractor
-        instance.data["families"].append("fbx")
         # take the name from instance (without the `staticMesh_` prefix)
         instance.data["staticMeshCombinedName"] = "{}_{}".format(
             sm_prefix,
