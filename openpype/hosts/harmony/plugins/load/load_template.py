@@ -6,7 +6,8 @@ import os
 import shutil
 import uuid
 
-from avalon import api, harmony
+from avalon import api
+import openpype.hosts.harmony.api as harmony
 import openpype.lib
 
 

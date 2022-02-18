@@ -138,7 +138,10 @@ def webpublisherwebserver(debug, executable, upload_dir, host=None, port=None):
 @click.option("--asset", help="Asset name", default=None)
 @click.option("--task", help="Task name", default=None)
 @click.option("--app", help="Application name", default=None)
-def extractenvironments(output_json_path, project, asset, task, app):
+@click.option(
+    "--envgroup", help="Environment group (e.g. \"farm\")", default=None
+)
+def extractenvironments(output_json_path, project, asset, task, app, envgroup):
     """Extract environment variables for entered context to a json file.
 
     Entered output filepath will be created if does not exists.
@@ -149,7 +152,7 @@ def extractenvironments(output_json_path, project, asset, task, app):
     Context options are "project", "asset", "task", "app"
     """
     PypeCommands.extractenvironments(
-        output_json_path, project, asset, task, app
+        output_json_path, project, asset, task, app, envgroup
     )
 
 
@@ -356,9 +359,22 @@ def run(script):
               "--pyargs",
               help="Run tests from package",
               default=None)
-def runtests(folder, mark, pyargs):
+@click.option("-t",
+              "--test_data_folder",
+              help="Unzipped directory path of test file",
+              default=None)
+@click.option("-s",
+              "--persist",
+              help="Persist test DB and published files after test end",
+              default=None)
+@click.option("-a",
+              "--app_variant",
+              help="Provide specific app variant for test, empty for latest",
+              default=None)
+def runtests(folder, mark, pyargs, test_data_folder, persist, app_variant):
     """Run all automatic tests after proper initialization via start.py"""
-    PypeCommands().run_tests(folder, mark, pyargs)
+    PypeCommands().run_tests(folder, mark, pyargs, test_data_folder,
+                             persist, app_variant)
 
 
 @main.command()
@@ -384,3 +400,35 @@ def syncserver(debug, active_site):
     if debug:
         os.environ['OPENPYPE_DEBUG'] = '3'
     PypeCommands().syncserver(active_site)
+
+
+@main.command()
+@click.argument("directory")
+def repack_version(directory):
+    """Repack OpenPype version from directory.
+
+    This command will re-create zip file from specified directory,
+    recalculating file checksums. It will try to use version detected in
+    directory name.
+    """
+    PypeCommands().repack_version(directory)
+
+
+@main.command()
+@click.option("--project", help="Project name")
+@click.option(
+    "--dirpath", help="Directory where package is stored", default=None
+)
+def pack_project(project, dirpath):
+    """Create a package of project with all files and database dump."""
+    PypeCommands().pack_project(project, dirpath)
+
+
+@main.command()
+@click.option("--zipfile", help="Path to zip file")
+@click.option(
+    "--root", help="Replace root which was stored in project", default=None
+)
+def unpack_project(zipfile, root):
+    """Create a package of project with all files and database dump."""
+    PypeCommands().unpack_project(zipfile, root)

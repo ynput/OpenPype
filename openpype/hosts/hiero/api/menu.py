@@ -37,12 +37,16 @@ def menu_install():
     Installing menu into Hiero
 
     """
+    from Qt import QtGui
     from . import (
         publish, launch_workfiles_app, reload_config,
         apply_colorspace_project, apply_colorspace_clips
     )
+    from .lib import get_main_window
+
+    main_window = get_main_window()
+
     # here is the best place to add menu
-    from avalon.vendor.Qt import QtGui
 
     menu_name = os.environ['AVALON_LABEL']
 
@@ -86,18 +90,24 @@ def menu_install():
 
     creator_action = menu.addAction("Create ...")
     creator_action.setIcon(QtGui.QIcon("icons:CopyRectangle.png"))
-    creator_action.triggered.connect(host_tools.show_creator)
+    creator_action.triggered.connect(
+        lambda: host_tools.show_creator(parent=main_window)
+    )
 
     loader_action = menu.addAction("Load ...")
     loader_action.setIcon(QtGui.QIcon("icons:CopyRectangle.png"))
-    loader_action.triggered.connect(host_tools.show_loader)
+    loader_action.triggered.connect(
+        lambda: host_tools.show_loader(parent=main_window)
+    )
 
     sceneinventory_action = menu.addAction("Manage ...")
     sceneinventory_action.setIcon(QtGui.QIcon("icons:CopyRectangle.png"))
-    sceneinventory_action.triggered.connect(host_tools.show_scene_inventory)
-    menu.addSeparator()
+    sceneinventory_action.triggered.connect(
+        lambda: host_tools.show_scene_inventory(parent=main_window)
+    )
 
     if os.getenv("OPENPYPE_DEVELOP"):
+        menu.addSeparator()
         reload_action = menu.addAction("Reload pipeline")
         reload_action.setIcon(QtGui.QIcon("icons:ColorAdd.png"))
         reload_action.triggered.connect(reload_config)
@@ -110,3 +120,10 @@ def menu_install():
     apply_colorspace_c_action = menu.addAction("Apply Colorspace Clips")
     apply_colorspace_c_action.setIcon(QtGui.QIcon("icons:ColorAdd.png"))
     apply_colorspace_c_action.triggered.connect(apply_colorspace_clips)
+
+    menu.addSeparator()
+
+    exeprimental_action = menu.addAction("Experimental tools...")
+    exeprimental_action.triggered.connect(
+        lambda: host_tools.show_experimental_tools_dialog(parent=main_window)
+    )

@@ -42,6 +42,22 @@
             "enabled": true,
             "defaults": [
                 "Main"
+            ],
+            "aov_separator": "underscore",
+            "default_render_image_folder": "renders"
+        },
+        "CreateUnrealStaticMesh": {
+            "enabled": true,
+            "defaults": [
+                "",
+                "_Main"
+            ],
+            "static_mesh_prefix": "S_",
+            "collision_prefixes": [
+                "UBX",
+                "UCP",
+                "USP",
+                "UCX"
             ]
         },
         "CreateAnimlib": {
@@ -132,12 +148,6 @@
                 "Anim"
             ]
         },
-        "CreateUnrealStaticMesh": {
-            "enabled": true,
-            "defaults": [
-                "Main"
-            ]
-        },
         "CreateVrayProxy": {
             "enabled": true,
             "defaults": [
@@ -171,9 +181,19 @@
             "optional": true,
             "active": true
         },
+        "ValidateFrameRange": {
+            "enabled": true,
+            "optional": true,
+            "active": true
+        },
         "ValidateShaderName": {
             "enabled": false,
             "regex": "(?P<asset>.*)_(.*)_SHD"
+        },
+        "ValidateShadingEngine": {
+            "enabled": true,
+            "optional": true,
+            "active": true
         },
         "ValidateAttributes": {
             "enabled": false,
@@ -183,6 +203,27 @@
             "enabled": false,
             "whitelist_native_plugins": false,
             "authorized_plugins": []
+        },
+        "ValidateMayaUnits": {
+            "enabled": true,
+            "optional": false,
+            "validate_linear_units": true,
+            "linear_units": "cm",
+            "validate_angular_units": true,
+            "angular_units": "deg",
+            "validate_fps": true
+        },
+        "ValidateUnrealStaticMeshName": {
+            "enabled": true,
+            "validate_mesh": false,
+            "validate_collision": true
+        },
+        "ValidateCycleError": {
+            "enabled": true,
+            "optional": false,
+            "families": [
+                "rig"
+            ]
         },
         "ValidateRenderSettings": {
             "arnold_render_attributes": [],
@@ -200,6 +241,11 @@
             },
             "regex": "(.*)_(\\d)*_(?P<shader>.*)_(GEO)",
             "top_level_regex": ".*_GRP"
+        },
+        "ValidateModelContent": {
+            "enabled": true,
+            "optional": false,
+            "validate_top_group": true
         },
         "ValidateTransformNamingSuffix": {
             "enabled": true,

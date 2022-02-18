@@ -6,7 +6,8 @@ from avalon.vendor import qtawesome
 
 from .delegates import ActionDelegate
 from . import lib
-from .models import TaskModel, ActionModel
+from .actions import ApplicationAction
+from .models import ActionModel
 from openpype.tools.flickcharm import FlickCharm
 from .constants import (
     ACTION_ROLE,
@@ -15,7 +16,8 @@ from .constants import (
     ACTION_ID_ROLE,
     ANIMATION_START_ROLE,
     ANIMATION_STATE_ROLE,
-    ANIMATION_LEN
+    ANIMATION_LEN,
+    FORCE_NOT_OPEN_WORKFILE_ROLE
 )
 
 
@@ -90,15 +92,13 @@ class ActionBar(QtWidgets.QWidget):
         self.project_handler = project_handler
         self.dbcon = dbcon
 
-        layout = QtWidgets.QHBoxLayout(self)
-        layout.setContentsMargins(8, 0, 8, 0)
-
         view = QtWidgets.QListView(self)
         view.setProperty("mode", "icon")
         view.setObjectName("IconView")
         view.setViewMode(QtWidgets.QListView.IconMode)
         view.setResizeMode(QtWidgets.QListView.Adjust)
         view.setSelectionMode(QtWidgets.QListView.NoSelection)
+        view.setContextMenuPolicy(QtCore.Qt.CustomContextMenu)
         view.setEditTriggers(QtWidgets.QListView.NoEditTriggers)
         view.setWrapping(True)
         view.setGridSize(QtCore.QSize(70, 75))
@@ -116,6 +116,8 @@ class ActionBar(QtWidgets.QWidget):
         )
         view.setItemDelegate(delegate)
 
+        layout = QtWidgets.QHBoxLayout(self)
+        layout.setContentsMargins(0, 0, 0, 0)
         layout.addWidget(view)
 
         self.model = model
@@ -136,8 +138,16 @@ class ActionBar(QtWidgets.QWidget):
 
         project_handler.projects_refreshed.connect(self._on_projects_refresh)
         view.clicked.connect(self.on_clicked)
+        view.customContextMenuRequested.connect(self.on_context_menu)
+
+        self._context_menu = None
+        self._discover_on_menu = False
 
     def discover_actions(self):
+        if self._context_menu is not None:
+            self._discover_on_menu = True
+            return
+
         if self._animation_timer.isActive():
             self._animation_timer.stop()
         self.model.discover()
@@ -172,7 +182,7 @@ class ActionBar(QtWidgets.QWidget):
         self.update()
 
     def _start_animation(self, index):
-        # Offset refresh timout
+        # Offset refresh timeout
         self.project_handler.start_timer()
         action_id = index.data(ACTION_ID_ROLE)
         item = self.model.items_by_id.get(action_id)
@@ -182,6 +192,46 @@ class ActionBar(QtWidgets.QWidget):
             self._animated_items.add(action_id)
             self._animation_timer.start()
 
+    def on_context_menu(self, point):
+        """Creates menu to force skip opening last workfile."""
+        index = self.view.indexAt(point)
+        if not index.isValid():
+            return
+
+        action_item = index.data(ACTION_ROLE)
+        if not self.model.is_application_action(action_item):
+            return
+
+        menu = QtWidgets.QMenu(self.view)
+        checkbox = QtWidgets.QCheckBox("Skip opening last workfile.",
+                                       menu)
+        if index.data(FORCE_NOT_OPEN_WORKFILE_ROLE):
+            checkbox.setChecked(True)
+
+        action_id = index.data(ACTION_ID_ROLE)
+        checkbox.stateChanged.connect(
+            lambda: self.on_checkbox_changed(checkbox.isChecked(),
+                                             action_id))
+        action = QtWidgets.QWidgetAction(menu)
+        action.setDefaultWidget(checkbox)
+
+        menu.addAction(action)
+
+        self._context_menu = menu
+        global_point = self.mapToGlobal(point)
+        menu.exec_(global_point)
+        self._context_menu = None
+        if self._discover_on_menu:
+            self._discover_on_menu = False
+            self.discover_actions()
+
+    def on_checkbox_changed(self, is_checked, action_id):
+        self.model.update_force_not_open_workfile_settings(is_checked,
+                                                           action_id)
+        self.view.update()
+        if self._context_menu is not None:
+            self._context_menu.close()
+
     def on_clicked(self, index):
         if not index or not index.isValid():
             return
@@ -190,11 +240,17 @@ class ActionBar(QtWidgets.QWidget):
         is_variant_group = index.data(VARIANT_GROUP_ROLE)
         if not is_group and not is_variant_group:
             action = index.data(ACTION_ROLE)
+            # Change data of application action
+            if issubclass(action, ApplicationAction):
+                if index.data(FORCE_NOT_OPEN_WORKFILE_ROLE):
+                    action.data["start_last_workfile"] = False
+                else:
+                    action.data.pop("start_last_workfile", None)
             self._start_animation(index)
             self.action_clicked.emit(action)
             return
 
-        # Offset refresh timout
+        # Offset refresh timeout
         self.project_handler.start_timer()
 
         actions = index.data(ACTION_ROLE)
@@ -213,7 +269,7 @@ class ActionBar(QtWidgets.QWidget):
             by_variant_label = collections.defaultdict(list)
             orders = []
             for action in actions:
-                # Lable variants
+                # Label variants
                 label = getattr(action, "label", None)
                 label_variant = getattr(action, "label_variant", None)
                 if label_variant and not label:
@@ -259,92 +315,6 @@ class ActionBar(QtWidgets.QWidget):
             action = actions_mapping[result]
             self._start_animation(index)
             self.action_clicked.emit(action)
-
-
-class TasksWidget(QtWidgets.QWidget):
-    """Widget showing active Tasks"""
-
-    task_changed = QtCore.Signal()
-    selection_mode = (
-        QtCore.QItemSelectionModel.Select | QtCore.QItemSelectionModel.Rows
-    )
-
-    def __init__(self, dbcon, parent=None):
-        super(TasksWidget, self).__init__(parent)
-
-        self.dbcon = dbcon
-
-        view = QtWidgets.QTreeView(self)
-        view.setIndentation(0)
-        view.setEditTriggers(QtWidgets.QTreeView.NoEditTriggers)
-        model = TaskModel(self.dbcon)
-        view.setModel(model)
-
-        layout = QtWidgets.QVBoxLayout(self)
-        layout.addWidget(view)
-
-        view.selectionModel().selectionChanged.connect(self.task_changed)
-
-        self.model = model
-        self.view = view
-
-        self._last_selected_task = None
-
-    def set_asset(self, asset_id):
-        if asset_id is None:
-            # Asset deselected
-            self.model.set_assets()
-            return
-
-        # Try and preserve the last selected task and reselect it
-        # after switching assets. If there's no currently selected
-        # asset keep whatever the "last selected" was prior to it.
-        current = self.get_current_task()
-        if current:
-            self._last_selected_task = current
-
-        self.model.set_assets([asset_id])
-
-        if self._last_selected_task:
-            self.select_task(self._last_selected_task)
-
-        # Force a task changed emit.
-        self.task_changed.emit()
-
-    def select_task(self, task_name):
-        """Select a task by name.
-
-        If the task does not exist in the current model then selection is only
-        cleared.
-
-        Args:
-            task (str): Name of the task to select.
-
-        """
-
-        # Clear selection
-        self.view.selectionModel().clearSelection()
-
-        # Select the task
-        for row in range(self.model.rowCount()):
-            index = self.model.index(row, 0)
-            _task_name = index.data(QtCore.Qt.DisplayRole)
-            if _task_name == task_name:
-                self.view.selectionModel().select(index, self.selection_mode)
-                # Set the currently active index
-                self.view.setCurrentIndex(index)
-                break
-
-    def get_current_task(self):
-        """Return name of task at current index (selected)
-
-        Returns:
-            str: Name of the current task.
-
-        """
-        index = self.view.currentIndex()
-        if self.view.selectionModel().isSelected(index):
-            return index.data(QtCore.Qt.DisplayRole)
 
 
 class ActionHistory(QtWidgets.QPushButton):

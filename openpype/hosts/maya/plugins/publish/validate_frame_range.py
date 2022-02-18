@@ -5,15 +5,16 @@ from maya import cmds
 
 
 class ValidateFrameRange(pyblish.api.InstancePlugin):
-    """Valides the frame ranges.
+    """Validates the frame ranges.
 
-    This is optional validator checking if the frame range on instance
-    matches the one of asset. It also validate render frame range of render
-    layers
+    This is an optional validator checking if the frame range on instance
+    matches the frame range specified for the asset.
 
-    Repair action will change everything to match asset.
+    It also validates render frame ranges of render layers.
 
-    This can be turned off by artist to allow custom ranges.
+    Repair action will change everything to match the asset frame range.
+
+    This can be turned off by the artist to allow custom ranges.
     """
 
     label = "Validate Frame Range"

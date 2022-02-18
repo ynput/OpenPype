@@ -7,20 +7,19 @@
         }
     },
     "publish": {
+        "CollectColorCodedInstances": {
+            "create_flatten_image": false,
+            "flatten_subset_template": "",
+            "color_code_mapping": []
+        },
         "ValidateContainers": {
             "enabled": true,
             "optional": true,
             "active": true
         },
-        "CollectRemoteInstances": {
-            "color_code_mapping": [
-                {
-                    "color_code": [],
-                    "layer_name_regex": [],
-                    "family": "",
-                    "subset_template_name": ""
-                }
-            ]
+        "ValidateNaming": {
+            "invalid_chars": "[ \\\\/+\\*\\?\\(\\)\\[\\]\\{\\}:,]",
+            "replace_char": "_"
         },
         "ExtractImage": {
             "formats": [

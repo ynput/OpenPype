@@ -25,6 +25,9 @@
                             "nukenodes": "nukenodes"
                         },
                         {
+                            "model": "model"
+                        },
+                        {
                             "camera": "camera"
                         },
                         {
@@ -167,7 +170,67 @@
                     "type": "boolean",
                     "key": "viewer_lut_raw",
                     "label": "Viewer LUT raw"
+                },
+                {
+                    "key": "outputs",
+                    "label": "Output Definitions",
+                    "type": "dict-modifiable",
+                    "highlight_content": true,
+                    "object_type": {
+                        "type": "dict",
+                        "children": [
+                            {
+                                "type": "dict",
+                                "collapsible": false,
+                                "key": "filter",
+                                "label": "Filtering",
+                                "children": [
+                                    {
+                                        "key": "task_types",
+                                        "label": "Task types",
+                                        "type": "task-types-enum"
+                                    },
+                                    {
+                                        "key": "families",
+                                        "label": "Families",
+                                        "type": "list",
+                                        "object_type": "text"
+                                    }
+                                ]
+                            },
+                            {
+                                "type": "separator"
+                            },
+                            {
+                                "type": "text",
+                                "key": "extension",
+                                "label": "File extension"
+                            },
+                            {
+                                "type": "text",
+                                "key": "viewer_process_override",
+                                "label": "Viewer Process colorspace profile override"
+                            },
+                            {
+                                "type": "boolean",
+                                "key": "bake_viewer_process",
+                                "label": "Bake Viewer Process"
+                            },
+                            {
+                                "type": "boolean",
+                                "key": "bake_viewer_input_process",
+                                "label": "Bake Viewer Input Process (LUTs)"
+                            },
+                            {
+                                "key": "add_tags",
+                                "label": "Add additional tags to representations",
+                                "type": "list",
+                                "object_type": "text"
+                            }
+                        ]
+                    }
                 }
+
             ]
         },
         {

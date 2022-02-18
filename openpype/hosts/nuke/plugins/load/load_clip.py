@@ -3,13 +3,14 @@ from avalon.vendor import qargparse
 from avalon import api, io
 
 from openpype.hosts.nuke.api.lib import (
-    get_imageio_input_colorspace
+    get_imageio_input_colorspace,
+    maintained_selection
 )
-from avalon.nuke import (
+from openpype.hosts.nuke.api import (
     containerise,
     update_container,
     viewer_update_and_undo_stop,
-    maintained_selection
+    colorspace_exists_on_node
 )
 from openpype.hosts.nuke.api import plugin
 
@@ -66,8 +67,11 @@ class LoadClip(plugin.NukeLoader):
         )
 
     def load(self, context, name, namespace, options):
+        repre = context["representation"]
+        # reste container id so it is always unique for each instance
+        self.reset_container_id()
 
-        is_sequence = len(context["representation"]["files"]) > 1
+        is_sequence = len(repre["files"]) > 1
 
         file = self.fname.replace("\\", "/")
 
@@ -76,14 +80,13 @@ class LoadClip(plugin.NukeLoader):
 
         version = context['version']
         version_data = version.get("data", {})
-        repr_id = context["representation"]["_id"]
-        colorspace = version_data.get("colorspace")
-        iio_colorspace = get_imageio_input_colorspace(file)
-        repr_cont = context["representation"]["context"]
+        repre_id = repre["_id"]
+
+        repre_cont = repre["context"]
 
         self.log.info("version_data: {}\n".format(version_data))
         self.log.debug(
-            "Representation id `{}` ".format(repr_id))
+            "Representation id `{}` ".format(repre_id))
 
         self.handle_start = version_data.get("handleStart", 0)
         self.handle_end = version_data.get("handleEnd", 0)
@@ -98,7 +101,7 @@ class LoadClip(plugin.NukeLoader):
             first = 1
             last = first + duration
         elif "#" not in file:
-            frame = repr_cont.get("frame")
+            frame = repre_cont.get("frame")
             assert frame, "Representation is not sequence"
 
             padding = len(frame)
@@ -110,19 +113,10 @@ class LoadClip(plugin.NukeLoader):
 
         if not file:
             self.log.warning(
-                "Representation id `{}` is failing to load".format(repr_id))
+                "Representation id `{}` is failing to load".format(repre_id))
             return
 
-        name_data = {
-            "asset": repr_cont["asset"],
-            "subset": repr_cont["subset"],
-            "representation": context["representation"]["name"],
-            "ext": repr_cont["representation"],
-            "id": context["representation"]["_id"],
-            "class_name": self.__class__.__name__
-        }
-
-        read_name = self.node_name_template.format(**name_data)
+        read_name = self._get_node_name(repre)
 
         # Create the Loader with the filename path set
         read_node = nuke.createNode(
@@ -134,13 +128,10 @@ class LoadClip(plugin.NukeLoader):
         with viewer_update_and_undo_stop():
             read_node["file"].setValue(file)
 
-            # Set colorspace defined in version data
-            if colorspace:
-                read_node["colorspace"].setValue(str(colorspace))
-            elif iio_colorspace is not None:
-                read_node["colorspace"].setValue(iio_colorspace)
+            used_colorspace = self._set_colorspace(
+                read_node, version_data, repre["data"])
 
-            self.set_range_to_node(read_node, first, last, start_at_workfile)
+            self._set_range_to_node(read_node, first, last, start_at_workfile)
 
             # add additional metadata from the version to imprint Avalon knob
             add_keys = ["frameStart", "frameEnd",
@@ -151,6 +142,12 @@ class LoadClip(plugin.NukeLoader):
             for k in add_keys:
                 if k == 'version':
                     data_imprint.update({k: context["version"]['name']})
+                elif k == 'colorspace':
+                    colorspace = repre["data"].get(k)
+                    colorspace = colorspace or version_data.get(k)
+                    data_imprint["db_colorspace"] = colorspace
+                    if used_colorspace:
+                        data_imprint["used_colorspace"] = used_colorspace
                 else:
                     data_imprint.update(
                         {k: context["version"]['data'].get(k, str(None))})
@@ -168,7 +165,7 @@ class LoadClip(plugin.NukeLoader):
                 data=data_imprint)
 
         if version_data.get("retime", None):
-            self.make_retimes(read_node, version_data)
+            self._make_retimes(read_node, version_data)
 
         self.set_as_member(read_node)
 
@@ -198,10 +195,13 @@ class LoadClip(plugin.NukeLoader):
             "_id": representation["parent"]
         })
         version_data = version.get("data", {})
-        repr_id = representation["_id"]
-        colorspace = version_data.get("colorspace")
-        iio_colorspace = get_imageio_input_colorspace(file)
-        repr_cont = representation["context"]
+        repre_id = representation["_id"]
+
+        repre_cont = representation["context"]
+
+        # colorspace profile
+        colorspace = representation["data"].get("colorspace")
+        colorspace = colorspace or version_data.get("colorspace")
 
         self.handle_start = version_data.get("handleStart", 0)
         self.handle_end = version_data.get("handleEnd", 0)
@@ -216,7 +216,7 @@ class LoadClip(plugin.NukeLoader):
             first = 1
             last = first + duration
         elif "#" not in file:
-            frame = repr_cont.get("frame")
+            frame = repre_cont.get("frame")
             assert frame, "Representation is not sequence"
 
             padding = len(frame)
@@ -224,36 +224,39 @@ class LoadClip(plugin.NukeLoader):
 
         if not file:
             self.log.warning(
-                "Representation id `{}` is failing to load".format(repr_id))
+                "Representation id `{}` is failing to load".format(repre_id))
             return
 
+        read_name = self._get_node_name(representation)
+
+        read_node["name"].setValue(read_name)
         read_node["file"].setValue(file)
 
         # to avoid multiple undo steps for rest of process
         # we will switch off undo-ing
         with viewer_update_and_undo_stop():
+            used_colorspace = self._set_colorspace(
+                read_node, version_data, representation["data"],
+                path=file)
 
-            # Set colorspace defined in version data
-            if colorspace:
-                read_node["colorspace"].setValue(str(colorspace))
-            elif iio_colorspace is not None:
-                read_node["colorspace"].setValue(iio_colorspace)
-
-            self.set_range_to_node(read_node, first, last, start_at_workfile)
+            self._set_range_to_node(read_node, first, last, start_at_workfile)
 
             updated_dict = {
                 "representation": str(representation["_id"]),
                 "frameStart": str(first),
                 "frameEnd": str(last),
                 "version": str(version.get("name")),
-                "colorspace": colorspace,
+                "db_colorspace": colorspace,
                 "source": version_data.get("source"),
                 "handleStart": str(self.handle_start),
                 "handleEnd": str(self.handle_end),
                 "fps": str(version_data.get("fps")),
-                "author": version_data.get("author"),
-                "outputDir": version_data.get("outputDir"),
+                "author": version_data.get("author")
             }
+
+            # add used colorspace if found any
+            if used_colorspace:
+                updated_dict["used_colorspace"] = used_colorspace
 
             # change color of read_node
             # get all versions in list
@@ -274,28 +277,16 @@ class LoadClip(plugin.NukeLoader):
                 read_node,
                 updated_dict
             )
-            self.log.info("udated to version: {}".format(version.get("name")))
+            self.log.info("updated to version: {}".format(version.get("name")))
 
         if version_data.get("retime", None):
-            self.make_retimes(read_node, version_data)
+            self._make_retimes(read_node, version_data)
         else:
             self.clear_members(read_node)
 
         self.set_as_member(read_node)
 
-    def set_range_to_node(self, read_node, first, last, start_at_workfile):
-        read_node['origfirst'].setValue(int(first))
-        read_node['first'].setValue(int(first))
-        read_node['origlast'].setValue(int(last))
-        read_node['last'].setValue(int(last))
-
-        # set start frame depending on workfile or version
-        self.loader_shift(read_node, start_at_workfile)
-
     def remove(self, container):
-
-        from avalon.nuke import viewer_update_and_undo_stop
-
         read_node = nuke.toNode(container['objectName'])
         assert read_node.Class() == "Read", "Must be Read"
 
@@ -305,8 +296,17 @@ class LoadClip(plugin.NukeLoader):
             for member in members:
                 nuke.delete(member)
 
-    def make_retimes(self, parent_node, version_data):
-        ''' Create all retime and timewarping nodes with coppied animation '''
+    def _set_range_to_node(self, read_node, first, last, start_at_workfile):
+        read_node['origfirst'].setValue(int(first))
+        read_node['first'].setValue(int(first))
+        read_node['origlast'].setValue(int(last))
+        read_node['last'].setValue(int(last))
+
+        # set start frame depending on workfile or version
+        self._loader_shift(read_node, start_at_workfile)
+
+    def _make_retimes(self, parent_node, version_data):
+        ''' Create all retime and timewarping nodes with copied animation '''
         speed = version_data.get('speed', 1)
         time_warp_nodes = version_data.get('timewarps', [])
         last_node = None
@@ -358,7 +358,7 @@ class LoadClip(plugin.NukeLoader):
                 for i, n in enumerate(dependent_nodes):
                     last_node.setInput(i, n)
 
-    def loader_shift(self, read_node, workfile_start=False):
+    def _loader_shift(self, read_node, workfile_start=False):
         """ Set start frame of read node to a workfile start
 
         Args:
@@ -369,3 +369,40 @@ class LoadClip(plugin.NukeLoader):
         if workfile_start:
             read_node['frame_mode'].setValue("start at")
             read_node['frame'].setValue(str(self.script_start))
+
+    def _get_node_name(self, representation):
+
+        repre_cont = representation["context"]
+        name_data = {
+            "asset": repre_cont["asset"],
+            "subset": repre_cont["subset"],
+            "representation": representation["name"],
+            "ext": repre_cont["representation"],
+            "id": representation["_id"],
+            "class_name": self.__class__.__name__
+        }
+
+        return self.node_name_template.format(**name_data)
+
+    def _set_colorspace(self, node, version_data, repre_data, path=None):
+        output_color = None
+        path = path or self.fname.replace("\\", "/")
+        # get colorspace
+        colorspace = repre_data.get("colorspace")
+        colorspace = colorspace or version_data.get("colorspace")
+
+        # colorspace from `project_anatomy/imageio/nuke/regexInputs`
+        iio_colorspace = get_imageio_input_colorspace(path)
+
+        # Set colorspace defined in version data
+        if (
+            colorspace is not None
+            and colorspace_exists_on_node(node, str(colorspace))
+        ):
+            node["colorspace"].setValue(str(colorspace))
+            output_color = str(colorspace)
+        elif iio_colorspace is not None:
+            node["colorspace"].setValue(iio_colorspace)
+            output_color = iio_colorspace
+
+        return output_color

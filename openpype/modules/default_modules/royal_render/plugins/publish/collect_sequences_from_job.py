@@ -17,7 +17,7 @@ def collect(root,
             frame_end=None):
     """Collect sequence collections in root"""
 
-    from avalon.vendor import clique
+    import clique
 
     files = []
     for filename in os.listdir(root):
@@ -168,9 +168,6 @@ class CollectSequencesFromJob(pyblish.api.ContextPlugin):
                 start = data.get("frameStart", indices[0])
                 end = data.get("frameEnd", indices[-1])
 
-                # root = os.path.normpath(root)
-                # self.log.info("Source: {}}".format(data.get("source", "")))
-
                 ext = list(collection)[0].split('.')[-1]
 
                 instance.data.update({
@@ -195,6 +192,8 @@ class CollectSequencesFromJob(pyblish.api.ContextPlugin):
                     'name': ext,
                     'ext': '{}'.format(ext),
                     'files': list(collection),
+                    "frameStart": start,
+                    "frameEnd": end,
                     "stagingDir": root,
                     "anatomy_template": "render",
                     "fps": fps,

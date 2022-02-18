@@ -34,25 +34,25 @@
             "label": "Publish plugins",
             "children": [
                 {
-                    "type": "schema_template",
-                    "name": "template_publish_plugin",
-                    "template_data": [
-                        {
-                            "key": "ValidateContainers",
-                            "label": "ValidateContainers"
-                        }
-                    ]
-                },
-                {
                     "type": "dict",
                     "collapsible": true,
                     "is_group": true,
-                    "key": "CollectRemoteInstances",
-                    "label": "Collect Instances for Webpublish",
+                    "key": "CollectColorCodedInstances",
+                    "label": "Collect Color Coded Instances",
                     "children": [
                         {
                             "type": "label",
-                            "label": "Set color for publishable layers, set publishable families."
+                            "label": "Set color for publishable layers, set its resulting family and template for subset name. Can create flatten image from published instances"
+                        },
+                        {
+                            "type": "boolean",
+                            "key": "create_flatten_image",
+                            "label": "Create flatten image"
+                        },
+                        {
+                            "type": "text",
+                            "key": "flatten_subset_template",
+                            "label": "Subset template for flatten image"
                         },
                         {
                             "type": "list",
@@ -105,6 +105,38 @@
                                     }
                                 ]
                             }
+                        }
+                    ]
+                },
+                {
+                    "type": "schema_template",
+                    "name": "template_publish_plugin",
+                    "template_data": [
+                        {
+                            "key": "ValidateContainers",
+                            "label": "ValidateContainers"
+                        }
+                    ]
+                },
+                {
+                    "type": "dict",
+                    "collapsible": true,
+                    "key": "ValidateNaming",
+                    "label": "Validate naming of subsets and layers",
+                    "children": [
+                        {
+                            "type": "label",
+                            "label": "Subset cannot contain invalid characters or extract to file would fail"
+                        },
+                        {
+                            "type": "text",
+                            "key": "invalid_chars",
+                            "label": "Regex pattern of invalid characters"
+                        },
+                        {
+                            "type": "text",
+                            "key": "replace_char",
+                            "label": "Replacement character"
                         }
                     ]
                 },

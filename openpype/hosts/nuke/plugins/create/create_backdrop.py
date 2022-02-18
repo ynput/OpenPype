@@ -1,9 +1,12 @@
-from avalon.nuke import lib as anlib
-from openpype.hosts.nuke.api import plugin
 import nuke
+from openpype.hosts.nuke.api import plugin
+from openpype.hosts.nuke.api.lib import (
+    select_nodes,
+    set_avalon_knob_data
+)
 
 
-class CreateBackdrop(plugin.PypeCreator):
+class CreateBackdrop(plugin.OpenPypeCreator):
     """Add Publishable Backdrop"""
 
     name = "nukenodes"
@@ -25,14 +28,14 @@ class CreateBackdrop(plugin.PypeCreator):
             nodes = self.nodes
 
             if len(nodes) >= 1:
-                anlib.select_nodes(nodes)
+                select_nodes(nodes)
                 bckd_node = autoBackdrop()
                 bckd_node["name"].setValue("{}_BDN".format(self.name))
                 bckd_node["tile_color"].setValue(int(self.node_color, 16))
                 bckd_node["note_font_size"].setValue(24)
                 bckd_node["label"].setValue("[{}]".format(self.name))
                 # add avalon knobs
-                instance = anlib.set_avalon_knob_data(bckd_node, self.data)
+                instance = set_avalon_knob_data(bckd_node, self.data)
 
                 return instance
             else:
@@ -48,6 +51,6 @@ class CreateBackdrop(plugin.PypeCreator):
             bckd_node["note_font_size"].setValue(24)
             bckd_node["label"].setValue("[{}]".format(self.name))
             # add avalon knobs
-            instance = anlib.set_avalon_knob_data(bckd_node, self.data)
+            instance = set_avalon_knob_data(bckd_node, self.data)
 
             return instance

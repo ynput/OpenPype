@@ -2,7 +2,7 @@
 from __future__ import absolute_import
 
 import pyblish.api
-
+from avalon import io
 
 from openpype.api import get_errored_instances_from_context
 
@@ -72,8 +72,7 @@ class GenerateUUIDsOnInvalidAction(pyblish.api.Action):
             nodes (list): all nodes to regenerate ids on
         """
 
-        from openpype.hosts.maya.api import lib
-        import avalon.io as io
+        from . import lib
 
         asset = instance.data['asset']
         asset_id = io.find_one({"name": asset, "type": "asset"},

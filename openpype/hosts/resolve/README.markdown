@@ -4,10 +4,10 @@
 -   add absolute path to ffmpeg into openpype settings
     ![image](https://user-images.githubusercontent.com/40640033/102630786-43294f00-414d-11eb-98de-f0ae51f62077.png)
 -   install Python 3.6 into `%LOCALAPPDATA%/Programs/Python/Python36` (only respected path by Resolve)
--   install OpenTimelineIO for 3.6 `%LOCALAPPDATA%\Programs\Python\Python36\python.exe -m pip install git+https://github.com/PixarAnimationStudios/OpenTimelineIO.git@5aa24fbe89d615448876948fe4b4900455c9a3e8` and move builded files from `%LOCALAPPDATA%/Programs/Python/Python36/Lib/site-packages/opentimelineio/cxx-libs/bin and lib` to `%LOCALAPPDATA%/Programs/Python/Python36/Lib/site-packages/opentimelineio/`. I was building it on Win10 machine with Visual Studio Community 2019 and
+-   install OpenTimelineIO for 3.6 `%LOCALAPPDATA%\Programs\Python\Python36\python.exe -m pip install git+https://github.com/PixarAnimationStudios/OpenTimelineIO.git@5aa24fbe89d615448876948fe4b4900455c9a3e8` and move built files from `%LOCALAPPDATA%/Programs/Python/Python36/Lib/site-packages/opentimelineio/cxx-libs/bin and lib` to `%LOCALAPPDATA%/Programs/Python/Python36/Lib/site-packages/opentimelineio/`. I was building it on Win10 machine with Visual Studio Community 2019 and
     ![image](https://user-images.githubusercontent.com/40640033/102792588-ffcb1c80-43a8-11eb-9c6b-bf2114ed578e.png) with installed CMake in PATH.
 -   install PySide2 for 3.6 `%LOCALAPPDATA%\Programs\Python\Python36\python.exe -m pip install PySide2`
--   make sure Resovle Fusion (Fusion Tab/menu/Fusion/Fusion Setings) is set to Python 3.6
+-   make sure Resolve Fusion (Fusion Tab/menu/Fusion/Fusion Settings) is set to Python 3.6
     ![image](https://user-images.githubusercontent.com/40640033/102631545-280b0f00-414e-11eb-89fc-98ac268d209d.png)
 
 #### Editorial setup

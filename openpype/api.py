@@ -17,6 +17,7 @@ from .lib import (
     version_up,
     get_asset,
     get_hierarchy,
+    get_workdir_data,
     get_version_from_path,
     get_last_version_from_path,
     get_app_environments_for_context,
@@ -30,8 +31,6 @@ from .lib import (
 )
 
 from .lib.mongo import (
-    decompose_url,
-    compose_url,
     get_default_components
 )
 
@@ -83,8 +82,6 @@ __all__ = [
     "Anatomy",
     "config",
     "execute",
-    "decompose_url",
-    "compose_url",
     "get_default_components",
     "ApplicationManager",
     "BuildWorkfile",

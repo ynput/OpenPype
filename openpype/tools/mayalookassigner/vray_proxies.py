@@ -10,11 +10,9 @@ import six
 import alembic.Abc
 from maya import cmds
 
-import avalon.io as io
-import avalon.maya
-import avalon.api as api
+from avalon import io, api
 
-import openpype.hosts.maya.api.lib as lib
+from openpype.hosts.maya.api import lib
 
 
 log = logging.getLogger(__name__)
@@ -41,7 +39,12 @@ def get_alembic_paths_by_property(filename, attr, verbose=False):
     filename = filename.replace("\\", "/")
     filename = str(filename)  # path must be string
 
-    archive = alembic.Abc.IArchive(filename)
+    try:
+        archive = alembic.Abc.IArchive(filename)
+    except RuntimeError:
+        # invalid alembic file - probably vrmesh
+        log.warning("{} is not an alembic file".format(filename))
+        return {}
     root = archive.getTop()
 
     iterator = list(root.children)
@@ -198,12 +201,10 @@ def load_look(version_id):
             raise RuntimeError("Could not find LookLoader, this is a bug")
 
         # Reference the look file
-        with avalon.maya.maintained_selection():
+        with lib.maintained_selection():
             container_node = api.load(loader, look_representation)
 
-    # Get container members
-    shader_nodes = cmds.sets(container_node, query=True)
-    return shader_nodes
+    return cmds.sets(container_node, query=True)
 
 
 def get_latest_version(asset_id, subset):

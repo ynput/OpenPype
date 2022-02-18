@@ -4,8 +4,12 @@ from .categories import (
     SystemWidget,
     ProjectWidget
 )
-from .widgets import ShadowWidget, RestartDialog
-from . import style
+from .widgets import (
+    ShadowWidget,
+    RestartDialog,
+    SettingsTabWidget
+)
+from openpype import style
 
 from openpype.lib import is_admin_password_required
 from openpype.widgets import PasswordDialog
@@ -25,7 +29,7 @@ class MainWidget(QtWidgets.QWidget):
 
         self._password_dialog = None
 
-        self.setObjectName("MainWidget")
+        self.setObjectName("SettingsMainWidget")
         self.setWindowTitle("OpenPype Settings")
 
         self.resize(self.widget_width, self.widget_height)
@@ -34,7 +38,7 @@ class MainWidget(QtWidgets.QWidget):
         self.setStyleSheet(stylesheet)
         self.setWindowIcon(QtGui.QIcon(style.app_icon_path()))
 
-        header_tab_widget = QtWidgets.QTabWidget(parent=self)
+        header_tab_widget = SettingsTabWidget(parent=self)
 
         studio_widget = SystemWidget(user_role, header_tab_widget)
         project_widget = ProjectWidget(user_role, header_tab_widget)
@@ -63,7 +67,13 @@ class MainWidget(QtWidgets.QWidget):
             tab_widget.restart_required_trigger.connect(
                 self._on_restart_required
             )
+            tab_widget.full_path_requested.connect(self._on_full_path_request)
 
+        header_tab_widget.context_menu_requested.connect(
+            self._on_context_menu_request
+        )
+
+        self._header_tab_widget = header_tab_widget
         self.tab_widgets = tab_widgets
 
     def _on_tab_save(self, source_widget):
@@ -89,6 +99,26 @@ class MainWidget(QtWidgets.QWidget):
         app = QtWidgets.QApplication.instance()
         if app:
             app.processEvents()
+
+    def _on_full_path_request(self, category, path):
+        for tab_widget in self.tab_widgets:
+            if tab_widget.contain_category_key(category):
+                idx = self._header_tab_widget.indexOf(tab_widget)
+                self._header_tab_widget.setCurrentIndex(idx)
+                tab_widget.set_category_path(category, path)
+                break
+
+    def _on_context_menu_request(self, tab_idx):
+        widget = self._header_tab_widget.widget(tab_idx)
+        if not widget:
+            return
+
+        menu = QtWidgets.QMenu(self)
+        widget.add_context_actions(menu)
+        if menu.actions():
+            result = menu.exec_(QtGui.QCursor.pos())
+            if result is not None:
+                self._header_tab_widget.setCurrentIndex(tab_idx)
 
     def showEvent(self, event):
         super(MainWidget, self).showEvent(event)
@@ -143,7 +173,7 @@ class MainWidget(QtWidgets.QWidget):
     def _on_restart_required(self):
         # Don't show dialog if there are not registered slots for
         #   `trigger_restart` signal.
-        # - For example when settings are runnin as standalone tool
+        # - For example when settings are running as standalone tool
         # - PySide2 and PyQt5 compatible way how to find out
         method_index = self.metaObject().indexOfMethod("trigger_restart()")
         method = self.metaObject().method(method_index)

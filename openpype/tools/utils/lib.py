@@ -9,8 +9,13 @@ import avalon.api
 from avalon import style
 from avalon.vendor import qtawesome
 
-from openpype.api import get_project_settings
+from openpype.api import (
+    get_project_settings,
+    Logger
+)
 from openpype.lib import filter_profiles
+from openpype.style import get_objected_colors
+from openpype.resources import get_image_path
 
 
 def center_window(window):
@@ -23,6 +28,46 @@ def center_window(window):
     if geo.y() < screen_geo.y():
         geo.setY(screen_geo.y())
     window.move(geo.topLeft())
+
+
+def set_style_property(widget, property_name, property_value):
+    """Set widget's property that may affect style.
+
+    If current property value is different then style of widget is polished.
+    """
+    cur_value = widget.property(property_name)
+    if cur_value == property_value:
+        return
+    widget.setProperty(property_name, property_value)
+    widget.style().polish(widget)
+
+
+def paint_image_with_color(image, color):
+    """Redraw image with single color using it's alpha.
+
+    It is expected that input image is singlecolor image with alpha.
+
+    Args:
+        image (QImage): Loaded image with alpha.
+        color (QColor): Color that will be used to paint image.
+    """
+    width = image.width()
+    height = image.height()
+
+    alpha_mask = image.createAlphaMask()
+    alpha_region = QtGui.QRegion(QtGui.QBitmap.fromImage(alpha_mask))
+
+    pixmap = QtGui.QPixmap(width, height)
+    pixmap.fill(QtCore.Qt.transparent)
+
+    painter = QtGui.QPainter(pixmap)
+    painter.setClipRegion(alpha_region)
+    painter.setPen(QtCore.Qt.NoPen)
+    painter.setBrush(color)
+    painter.drawRect(QtCore.QRect(0, 0, width, height))
+    painter.end()
+
+    return pixmap
 
 
 def format_version(value, hero_version=False):
@@ -101,7 +146,7 @@ def preserve_expanded_rows(tree_view, column=0, role=None):
 
     This function is created to maintain the expand vs collapse status of
     the model items. When refresh is triggered the items which are expanded
-    will stay expanded and vise versa.
+    will stay expanded and vice versa.
 
     Arguments:
         tree_view (QWidgets.QTreeView): the tree view which is
@@ -145,7 +190,7 @@ def preserve_selection(tree_view, column=0, role=None, current_index=True):
 
     This function is created to maintain the selection status of
     the model items. When refresh is triggered the items which are expanded
-    will stay expanded and vise versa.
+    will stay expanded and vice versa.
 
         tree_view (QWidgets.QTreeView): the tree view nested in the application
         column (int): the column to retrieve the data from
@@ -200,6 +245,7 @@ class FamilyConfigCache:
         self.dbcon = dbcon
         self.family_configs = {}
         self._family_filters_set = False
+        self._family_filters_is_include = True
         self._require_refresh = True
 
     @classmethod
@@ -221,7 +267,7 @@ class FamilyConfigCache:
                 "icon": self.default_icon()
             }
             if self._family_filters_set:
-                item["state"] = False
+                item["state"] = not self._family_filters_is_include
         return item
 
     def refresh(self, force=False):
@@ -285,20 +331,23 @@ class FamilyConfigCache:
             matching_item = filter_profiles(profiles, profiles_filter)
 
         families = []
+        is_include = True
         if matching_item:
             families = matching_item["filter_families"]
+            is_include = matching_item["is_include"]
 
         if not families:
             return
 
         self._family_filters_set = True
+        self._family_filters_is_include = is_include
 
         # Replace icons with a Qt icon we can use in the user interfaces
         for family in families:
             family_info = {
                 "name": family,
                 "icon": self.default_icon(),
-                "state": True
+                "state": is_include
             }
 
             self.family_configs[family] = family_info
@@ -337,7 +386,7 @@ class GroupsConfig:
         group_configs = []
         project_name = self.dbcon.Session.get("AVALON_PROJECT")
         if project_name:
-            # Get pre-defined group name and apperance from project config
+            # Get pre-defined group name and appearance from project config
             project_doc = self.dbcon.find_one(
                 {"type": "project"},
                 projection={"config.groups": True}
@@ -445,6 +494,30 @@ class GroupsConfig:
         return ordered_groups, subset_docs_without_group, subset_docs_by_group
 
 
+class DynamicQThread(QtCore.QThread):
+    """QThread which can run any function with argument and kwargs.
+
+    Args:
+        func (function): Function which will be called.
+        args (tuple): Arguments which will be passed to function.
+        kwargs (tuple): Keyword arguments which will be passed to function.
+        parent (QObject): Parent of thread.
+    """
+    def __init__(self, func, args=None, kwargs=None, parent=None):
+        super(DynamicQThread, self).__init__(parent)
+        if args is None:
+            args = tuple()
+        if kwargs is None:
+            kwargs = {}
+        self._func = func
+        self._args = args
+        self._kwargs = kwargs
+
+    def run(self):
+        """Execute the function with arguments."""
+        self._func(*self._args, **self._kwargs)
+
+
 def create_qthread(func, *args, **kwargs):
     class Thread(QtCore.QThread):
         def run(self):
@@ -453,6 +526,7 @@ def create_qthread(func, *args, **kwargs):
 
 
 def get_repre_icons():
+    """Returns a dict {'provider_name': QIcon}"""
     try:
         from openpype_modules import sync_server
     except Exception:
@@ -464,9 +538,17 @@ def get_repre_icons():
         "providers", "resources"
     )
     icons = {}
-    # TODO get from sync module
-    for provider in ['studio', 'local_drive', 'gdrive']:
-        pix_url = "{}/{}.png".format(resource_path, provider)
+    if not os.path.exists(resource_path):
+        print("No icons for Site Sync found")
+        return {}
+
+    for file_name in os.listdir(resource_path):
+        if file_name and not file_name.endswith("png"):
+            continue
+
+        provider, _ = os.path.splitext(file_name)
+
+        pix_url = os.path.join(resource_path, file_name)
         icons[provider] = QtGui.QIcon(pix_url)
 
     return icons
@@ -537,3 +619,84 @@ def is_remove_site_loader(loader):
 
 def is_add_site_loader(loader):
     return hasattr(loader, "add_site_to_representation")
+
+
+class WrappedCallbackItem:
+    """Structure to store information about callback and args/kwargs for it.
+
+    Item can be used to execute callback in main thread which may be needed
+    for execution of Qt objects.
+
+    Item store callback (callable variable), arguments and keyword arguments
+    for the callback. Item hold information about it's process.
+    """
+    not_set = object()
+    _log = None
+
+    def __init__(self, callback, *args, **kwargs):
+        self._done = False
+        self._exception = self.not_set
+        self._result = self.not_set
+        self._callback = callback
+        self._args = args
+        self._kwargs = kwargs
+
+    def __call__(self):
+        self.execute()
+
+    @property
+    def log(self):
+        cls = self.__class__
+        if cls._log is None:
+            cls._log = Logger.get_logger(cls.__name__)
+        return cls._log
+
+    @property
+    def done(self):
+        return self._done
+
+    @property
+    def exception(self):
+        return self._exception
+
+    @property
+    def result(self):
+        return self._result
+
+    def execute(self):
+        """Execute callback and store it's result.
+
+        Method must be called from main thread. Item is marked as `done`
+        when callback execution finished. Store output of callback of exception
+        information when callback raise one.
+        """
+        if self.done:
+            self.log.warning("- item is already processed")
+            return
+
+        self.log.debug("Running callback: {}".format(str(self._callback)))
+        try:
+            result = self._callback(*self._args, **self._kwargs)
+            self._result = result
+
+        except Exception as exc:
+            self._exception = exc
+
+        finally:
+            self._done = True
+
+
+def get_warning_pixmap(color=None):
+    """Warning icon as QPixmap.
+
+    Args:
+        color(QtGui.QColor): Color that will be used to paint warning icon.
+    """
+    src_image_path = get_image_path("warning.png")
+    src_image = QtGui.QImage(src_image_path)
+    if color is None:
+        colors = get_objected_colors()
+        color_value = colors["delete-btn-bg"]
+        color = color_value.get_qcolor()
+
+    return paint_image_with_color(src_image, color)

@@ -1,8 +1,7 @@
 import re
 import logging
-import collections
 
-from avalon.vendor.Qt import QtCore, QtWidgets
+from Qt import QtCore, QtWidgets
 from avalon.vendor import qtawesome
 from avalon import io
 from avalon import style

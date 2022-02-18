@@ -32,8 +32,8 @@ You have two ways of making this happen
 
 #### Automatic Updates
 
-Everytime and Artist launches OpenPype on their workstation, it will look to a pre-defined 
-[openPype update location](#self) for any versions that are newer than the
+Every time and Artist launches OpenPype on their workstation, it will look to a pre-defined 
+[openPype update location](admin_settings_system.md#openpype-deployment-control) for any versions that are newer than the
 latest, locally installed version. If such version is found, it will be downloaded,  
 automatically extracted to the correct place and launched. This will become the default 
 version to run for the artist, until a higher version is detected in the update location again.

@@ -209,9 +209,11 @@ def update_container(track_item, data=None):
 
 def launch_workfiles_app(*args):
     ''' Wrapping function for workfiles launcher '''
+    from .lib import get_main_window
 
+    main_window = get_main_window()
     # show workfile gui
-    host_tools.show_workfiles()
+    host_tools.show_workfiles(parent=main_window)
 
 
 def publish(parent):

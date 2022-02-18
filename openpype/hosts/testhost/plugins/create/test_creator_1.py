@@ -1,3 +1,4 @@
+import json
 from openpype import resources
 from openpype.hosts.testhost.api import pipeline
 from openpype.pipeline import (
@@ -12,6 +13,8 @@ class TestCreatorOne(Creator):
     label = "test"
     family = "test"
     description = "Testing creator of testhost"
+
+    create_allow_context_change = False
 
     def get_icon(self):
         return resources.get_openpype_splash_filepath()
@@ -33,7 +36,10 @@ class TestCreatorOne(Creator):
         for instance in instances:
             self._remove_instance_from_context(instance)
 
-    def create(self, subset_name, data, options=None):
+    def create(self, subset_name, data, pre_create_data):
+        print("Data that can be used in create:\n{}".format(
+            json.dumps(pre_create_data, indent=4)
+        ))
         new_instance = CreatedInstance(self.family, subset_name, data, self)
         pipeline.HostContext.add_instance(new_instance.data_to_store())
         self.log.info(new_instance.data)
@@ -46,9 +52,21 @@ class TestCreatorOne(Creator):
             "different_variant"
         ]
 
-    def get_attribute_defs(self):
+    def get_instance_attr_defs(self):
         output = [
-            lib.NumberDef("number_key", label="Number")
+            lib.NumberDef("number_key", label="Number"),
+        ]
+        return output
+
+    def get_pre_create_attr_defs(self):
+        output = [
+            lib.BoolDef("use_selection", label="Use selection"),
+            lib.UISeparatorDef(),
+            lib.UILabelDef("Testing label"),
+            lib.FileDef("filepath", folders=True, label="Filepath"),
+            lib.FileDef(
+                "filepath_2", multipath=True, folders=True, label="Filepath 2"
+            )
         ]
         return output
 

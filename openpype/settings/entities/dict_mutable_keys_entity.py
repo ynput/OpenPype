@@ -60,6 +60,12 @@ class DictMutableKeysEntity(EndpointEntity):
     def pop(self, key, *args, **kwargs):
         if key in self.required_keys:
             raise RequiredKeyModified(self.path, key)
+
+        if self._override_state is OverrideState.STUDIO:
+            self._has_studio_override = True
+        elif self._override_state is OverrideState.PROJECT:
+            self._has_project_override = True
+
         result = self.children_by_key.pop(key, *args, **kwargs)
         self.on_change()
         return result
@@ -191,6 +197,9 @@ class DictMutableKeysEntity(EndpointEntity):
         child_entity = self.children_by_key[key]
         self.set_child_label(child_entity, label)
 
+    def has_child_with_key(self, key):
+        return key in self.children_by_key
+
     def _item_initialization(self):
         self._default_metadata = {}
         self._studio_override_metadata = {}
@@ -213,7 +222,7 @@ class DictMutableKeysEntity(EndpointEntity):
         self.required_keys = self.schema_data.get("required_keys") or []
         self.collapsible_key = self.schema_data.get("collapsible_key") or False
         # GUI attributes
-        self.hightlight_content = (
+        self.highlight_content = (
             self.schema_data.get("highlight_content") or False
         )
 

@@ -97,7 +97,7 @@ class SFTPHandler(AbstractProvider):
         # {platform} tells that value is multiplatform and only specific OS
         # should be returned
         editable = [
-            # credentials could be overriden on Project or User level
+            # credentials could be overridden on Project or User level
             {
                 'key': "sftp_host",
                 'label': "SFTP host name",
@@ -129,7 +129,7 @@ class SFTPHandler(AbstractProvider):
                 'label': "SFTP user ssh key password",
                 'type': 'text'
             },
-            # roots could be overriden only on Project leve, User cannot
+            # roots could be overridden only on Project level, User cannot
             {
                 "key": "root",
                 "label": "Roots",
@@ -192,7 +192,7 @@ class SFTPHandler(AbstractProvider):
             Format is importing for usage of python's format ** approach
         """
         # roots cannot be locally overridden
-        return self.presets['roots']
+        return self.presets['root']
 
     def get_tree(self):
         """
@@ -421,7 +421,8 @@ class SFTPHandler(AbstractProvider):
 
         try:
             return pysftp.Connection(**conn_params)
-        except paramiko.ssh_exception.SSHException:
+        except (paramiko.ssh_exception.SSHException,
+                pysftp.exceptions.ConnectionException):
             log.warning("Couldn't connect", exc_info=True)
 
     def _mark_progress(self, collection, file, representation, server, site,

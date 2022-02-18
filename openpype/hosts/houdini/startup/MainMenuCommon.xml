@@ -57,16 +57,14 @@ host_tools.show_workfiles(parent)
             </scriptItem>
 
             <separatorItem/>
-
-            <subMenu id="avalon_reload_pipeline">
-                <label>System</label>
-                <scriptItem>
-                    <label>Reload Pipeline (unstable)</label>
-                    <scriptCode><![CDATA[
-from avalon.houdini import pipeline
-pipeline.reload_pipeline()]]></scriptCode>
-                </scriptItem>
-            </subMenu>
+            <scriptItem id="experimental_tools">
+                <label>Experimental tools...</label>
+                <scriptCode><![CDATA[
+import hou
+from openpype.tools.utils import host_tools
+parent = hou.qt.mainWindow()
+host_tools.show_experimental_tools_dialog(parent)]]></scriptCode>
+            </scriptItem>
         </subMenu>
     </menuBar>
 </mainMenu>

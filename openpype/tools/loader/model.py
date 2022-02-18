@@ -243,9 +243,9 @@ class SubsetsModel(TreeModel, BaseRepresentationModel):
 
                 # update availability on active site when version changes
                 if self.sync_server.enabled and version:
-                    site = self.active_site
                     query = self._repre_per_version_pipeline([version["_id"]],
-                                                             site)
+                                                             self.active_site,
+                                                             self.remote_site)
                     docs = list(self.dbcon.aggregate(query))
                     if docs:
                         repre = docs.pop()
@@ -801,47 +801,63 @@ class SubsetsModel(TreeModel, BaseRepresentationModel):
             {"$unwind": "$files"},
             {'$addFields': {
                 'order_local': {
-                    '$filter': {'input': '$files.sites', 'as': 'p',
-                                'cond': {'$eq': ['$$p.name', active_site]}
-                                }}
+                    '$filter': {
+                        'input': '$files.sites', 'as': 'p',
+                        'cond': {'$eq': ['$$p.name', active_site]}
+                    }
+                }
             }},
             {'$addFields': {
                 'order_remote': {
-                    '$filter': {'input': '$files.sites', 'as': 'p',
-                                'cond': {'$eq': ['$$p.name', remote_site]}
-                                }}
+                    '$filter': {
+                        'input': '$files.sites', 'as': 'p',
+                        'cond': {'$eq': ['$$p.name', remote_site]}
+                    }
+                }
             }},
             {'$addFields': {
                 'progress_local': {"$arrayElemAt": [{
-                    '$cond': [{'$size': "$order_local.progress"},
-                              "$order_local.progress",
-                              # if exists created_dt count is as available
-                              {'$cond': [
-                                  {'$size': "$order_local.created_dt"},
-                                  [1],
-                                  [0]
-                              ]}
-                              ]}, 0]}
+                    '$cond': [
+                        {'$size': "$order_local.progress"},
+                        "$order_local.progress",
+                        # if exists created_dt count is as available
+                        {'$cond': [
+                            {'$size': "$order_local.created_dt"},
+                            [1],
+                            [0]
+                        ]}
+                    ]},
+                    0
+                ]}
             }},
             {'$addFields': {
                 'progress_remote': {"$arrayElemAt": [{
-                    '$cond': [{'$size': "$order_remote.progress"},
-                              "$order_remote.progress",
-                              # if exists created_dt count is as available
-                              {'$cond': [
-                                  {'$size': "$order_remote.created_dt"},
-                                  [1],
-                                  [0]
-                              ]}
-                              ]}, 0]}
+                    '$cond': [
+                        {'$size': "$order_remote.progress"},
+                        "$order_remote.progress",
+                        # if exists created_dt count is as available
+                        {'$cond': [
+                            {'$size': "$order_remote.created_dt"},
+                            [1],
+                            [0]
+                        ]}
+                    ]},
+                    0
+                ]}
             }},
             {'$group': {  # first group by repre
                 '_id': '$_id',
                 'parent': {'$first': '$parent'},
-                'avail_ratio_local': {'$first': {
-                    '$divide': [{'$sum': "$progress_local"}, {'$sum': 1}]}},
-                'avail_ratio_remote': {'$first': {
-                    '$divide': [{'$sum': "$progress_remote"}, {'$sum': 1}]}}
+                'avail_ratio_local': {
+                    '$first': {
+                        '$divide': [{'$sum': "$progress_local"}, {'$sum': 1}]
+                    }
+                },
+                'avail_ratio_remote': {
+                    '$first': {
+                        '$divide': [{'$sum': "$progress_remote"}, {'$sum': 1}]
+                    }
+                }
             }},
             {'$group': {  # second group by parent, eg version_id
                 '_id': '$parent',

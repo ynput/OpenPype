@@ -12,6 +12,10 @@
             "key": "defaults",
             "children": [
                 {
+                    "type": "label",
+                    "label": "The list of existing placeholders is available here:<br> https://openpype.io/docs/admin_settings_project_anatomy/#available-template-keys "
+                },
+                {
                     "type": "number",
                     "key": "version_padding",
                     "label": "Version Padding",
@@ -138,6 +142,28 @@
             "key": "delivery",
             "label": "Delivery",
             "object_type": "text"
+        },
+        {
+            "type": "dict",
+            "key": "unreal",
+            "label": "Unreal",
+            "children": [
+                {
+                    "type": "text",
+                    "key": "folder",
+                    "label": "Folder"
+                },
+                {
+                    "type": "text",
+                    "key": "file",
+                    "label": "File"
+                },
+                {
+                    "type": "text",
+                    "key": "path",
+                    "label": "Path"
+                }
+            ]
         },
         {
             "type": "dict-modifiable",

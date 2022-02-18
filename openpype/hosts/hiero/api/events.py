@@ -31,7 +31,7 @@ def beforeNewProjectCreated(event):
 
 def afterNewProjectCreated(event):
     log.info("after new project created event...")
-    # sync avalon data to project properities
+    # sync avalon data to project properties
     sync_avalon_data_to_workfile()
 
     # add tags from preset
@@ -51,7 +51,7 @@ def beforeProjectLoad(event):
 
 def afterProjectLoad(event):
     log.info("after project load event...")
-    # sync avalon data to project properities
+    # sync avalon data to project properties
     sync_avalon_data_to_workfile()
 
     # add tags from preset

@@ -1,7 +1,7 @@
 import os
 
 import openpype.api
-from avalon import photoshop
+from openpype.hosts.photoshop import api as photoshop
 
 
 class ExtractImage(openpype.api.Extractor):
@@ -27,8 +27,13 @@ class ExtractImage(openpype.api.Extractor):
             self.log.info("Extracting %s" % str(list(instance)))
             with photoshop.maintained_visibility():
                 # Hide all other layers.
+                layer = instance.data.get("layer")
+                ids = set([layer.id])
+                add_ids = instance.data.pop("ids", None)
+                if add_ids:
+                    ids.update(set(add_ids))
                 extract_ids = set([ll.id for ll in stub.
-                                   get_layers_in_layers([instance[0]])])
+                                   get_layers_in_layers_ids(ids)])
 
                 for layer in stub.get_layers():
                     # limit unnecessary calls to client

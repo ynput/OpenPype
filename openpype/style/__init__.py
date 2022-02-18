@@ -1,8 +1,10 @@
 import os
 import json
 import collections
-from openpype import resources
 import six
+
+from openpype import resources
+
 from .color_defs import parse_color
 
 
@@ -10,6 +12,18 @@ _STYLESHEET_CACHE = None
 _FONT_IDS = None
 
 current_dir = os.path.dirname(os.path.abspath(__file__))
+
+
+def get_style_image_path(image_name):
+    # All filenames are lowered
+    image_name = image_name.lower()
+    # Male sure filename has png extension
+    if not image_name.endswith(".png"):
+        image_name += ".png"
+    filepath = os.path.join(current_dir, "images", image_name)
+    if os.path.exists(filepath):
+        return filepath
+    return None
 
 
 def _get_colors_raw_data():
@@ -128,9 +142,13 @@ def _load_font():
         _FONT_IDS = []
         fonts_dirpath = os.path.join(current_dir, "fonts")
         font_dirs = []
-        font_dirs.append(os.path.join(fonts_dirpath, "Montserrat"))
-        font_dirs.append(os.path.join(fonts_dirpath, "Spartan"))
-        font_dirs.append(os.path.join(fonts_dirpath, "RobotoMono", "static"))
+        font_dirs.append(os.path.join(fonts_dirpath, "Noto_Sans"))
+        font_dirs.append(os.path.join(
+            fonts_dirpath,
+            "Noto_Sans_Mono",
+            "static",
+            "NotoSansMono"
+        ))
 
         loaded_fonts = []
         for font_dir in font_dirs:
@@ -156,6 +174,11 @@ def load_stylesheet():
     return _STYLESHEET_CACHE
 
 
-def app_icon_path():
+def get_app_icon_path():
     """Path to OpenPype icon."""
     return resources.get_openpype_icon_filepath()
+
+
+def app_icon_path():
+    # Backwards compatibility
+    return get_app_icon_path()
