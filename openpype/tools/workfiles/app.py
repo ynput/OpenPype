@@ -116,7 +116,7 @@ class CommentMatcher(object):
             "|".join(re.escape(ext[1:]) for ext in extensions)
         )
 
-        # Use placeholders that we can safely escape with regex
+        # Use placeholders that will never be in the filename
         temp_data = copy.deepcopy(data)
         temp_data["comment"] = "<<comment>>"
         temp_data["version"] = "<<version>>"
@@ -126,11 +126,14 @@ class CommentMatcher(object):
         fname_pattern = formatted[template_key]["file"]
         fname_pattern = re.escape(fname_pattern)
 
-        # Replace comment and version with something we can match with
-        # regex
-        fname_pattern = fname_pattern.replace("<<comment>>", "(.+)")
-        fname_pattern = fname_pattern.replace("<<version>>", "[0-9]+")
-        fname_pattern = fname_pattern.replace("<<ext>>", any_extension)
+        # Replace comment and version with something we can match with regex
+        replacements = {
+            "<<comment>>": "(.+)",
+            "<<version>>": "[0-9]+",
+            "<<ext>>": any_extension,
+        }
+        for src, dest in replacements.items():
+            fname_pattern = fname_pattern.replace(re.escape(src), dest)
 
         # Match from beginning to end of string to be safe
         fname_pattern = "^{}$".format(fname_pattern)
