@@ -35,7 +35,7 @@ class ExtractReview(openpype.api.Extractor):
         layers = self._get_layers_from_image_instances(instance)
         self.log.info("Layers image instance found: {}".format(layers))
 
-        if self.make_image_sequence and layers:
+        if self.make_image_sequence and len(layers) > 1:
             self.log.info("Extract layers to image sequence.")
             img_list = self._saves_sequences_layers(staging_dir, layers)
 
