@@ -76,9 +76,6 @@ def install():
     avalon.api.on("taskChanged", on_task_changed)
     avalon.api.on("before.workfile.save", before_workfile_save)
 
-    log.info("Setting default family states for loader..")
-    avalon.api.data["familiesStateToggled"] = ["imagesequence"]
-
 
 def _set_project():
     """Sets the maya project to the current Session's work directory.

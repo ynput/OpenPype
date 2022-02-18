@@ -1,7 +1,7 @@
-from avalon import houdini
+from openpype.hosts.houdini.api import plugin
 
 
-class CreateArnoldAss(houdini.Creator):
+class CreateArnoldAss(plugin.Creator):
     """Arnold .ass Archive"""
 
     label = "Arnold ASS"

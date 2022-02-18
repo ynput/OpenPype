@@ -11,7 +11,6 @@ class CreateLook(plugin.Creator):
     label = "Look"
     family = "look"
     icon = "paint-brush"
-    defaults = ['Main']
     make_tx = True
 
     def __init__(self, *args, **kwargs):

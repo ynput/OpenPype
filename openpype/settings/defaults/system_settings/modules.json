@@ -13,7 +13,7 @@
         }
     },
     "ftrack": {
-        "enabled": true,
+        "enabled": false,
         "ftrack_server": "",
         "ftrack_actions_path": {
             "windows": [],

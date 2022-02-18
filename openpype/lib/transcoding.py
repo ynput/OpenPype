@@ -30,6 +30,9 @@ INT_TAGS = {
     "deep",
     "subimages",
 }
+
+XML_CHAR_REF_REGEX_HEX = re.compile(r"&#x?[0-9a-fA-F]+;")
+
 # Regex to parse array attributes
 ARRAY_TYPE_REGEX = re.compile(r"^(int|float|string)\[\d+\]$")
 
@@ -190,6 +193,17 @@ def parse_oiio_xml_output(xml_string, logger=None):
     output = {}
     if not xml_string:
         return output
+
+    # Fix values with ampresand (lazy fix)
+    # - oiiotool exports invalid xml which ElementTree can't handle
+    #   e.g. "&#01;"
+    # WARNING: this will affect even valid character entities. If you need
+    #   those values correctly, this must take care of valid character ranges.
+    #   See https://github.com/pypeclub/OpenPype/pull/2729
+    matches = XML_CHAR_REF_REGEX_HEX.findall(xml_string)
+    for match in matches:
+        new_value = match.replace("&", "&amp;")
+        xml_string = xml_string.replace(match, new_value)
 
     if logger is None:
         logger = logging.getLogger("OIIO-xml-parse")
