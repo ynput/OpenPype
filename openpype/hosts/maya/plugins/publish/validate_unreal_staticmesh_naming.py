@@ -79,6 +79,9 @@ class ValidateUnrealStaticMeshName(pyblish.api.InstancePlugin):
             ["static_mesh_prefix"]
         )
 
+        to_combine = instance.data.get("membersToCombine")
+        if not to_combine:
+            raise ValueError("Missing geometry to export.")
         combined_geometry_name = instance.data.get(
             "staticMeshCombinedName", None)
         if cls.validate_mesh:

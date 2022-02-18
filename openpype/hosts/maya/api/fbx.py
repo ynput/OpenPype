@@ -110,7 +110,7 @@ class FBXExtractor:
 
     def __init__(self, log=None):
         # Ensure FBX plug-in is loaded
-        self.log = log or logging.getLogger(__class__.__name__)
+        self.log = log or logging.getLogger(self.__class__.__name__)
         cmds.loadPlugin("fbxmaya", quiet=True)
 
     def parse_overrides(self, instance, options):

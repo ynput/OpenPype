@@ -22,7 +22,6 @@ class ExtractUnrealStaticMesh(openpype.api.Extractor):
     families = ["staticMesh"]
 
     def process(self, instance):
-        fbx_exporter = fbx.FBXExtractor(log=self.log)
         to_combine = instance.data.get("membersToCombine")
         static_mesh_name = instance.data.get("staticMeshCombinedName")
         duplicates = []
@@ -46,13 +45,13 @@ class ExtractUnrealStaticMesh(openpype.api.Extractor):
                 )
                 cmds.duplicate(to_combine[0], name=static_mesh_name, ic=True)
 
-            delete_bin.extend(static_mesh_name)
+            delete_bin.extend([static_mesh_name])
             delete_bin.extend(duplicates)
 
             members = [static_mesh_name]
             members += instance.data["collisionMembers"]
 
-            fbx_exporter = fbx.FBXExtractor()
+            fbx_exporter = fbx.FBXExtractor(log=self.log)
 
             # Define output path
             staging_dir = self.staging_dir(instance)
@@ -73,6 +72,9 @@ class ExtractUnrealStaticMesh(openpype.api.Extractor):
                 with root_parent(members):
                     self.log.info("Un-parenting: {}".format(members))
                     fbx_exporter.export(members, path)
+
+        if "representations" not in instance.data:
+            instance.data["representations"] = []
 
         representation = {
             'name': 'fbx',
