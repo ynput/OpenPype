@@ -1,4 +1,4 @@
-import os, sys
+import os
 import json
 from pathlib import Path
 
@@ -83,7 +83,9 @@ class LayoutLoader(api.Loader):
 
         return asset_doc.get("data")
 
-    def _set_sequence_hierarchy(self, seq_i, seq_j, data_i, data_j, map_paths):
+    def _set_sequence_hierarchy(self, 
+        seq_i, seq_j, max_frame_i, min_frame_j, max_frame_j, map_paths
+    ):
         # Get existing sequencer tracks or create them if they don't exist
         tracks = seq_i.get_master_tracks()
         subscene_track = None
@@ -110,8 +112,8 @@ class LayoutLoader(api.Loader):
             subscene.set_row_index(len(subscene_track.get_sections()))
             subscene.set_editor_property('sub_sequence', seq_j)
             subscene.set_range(
-                data_j.get("frameStart"),
-                data_j.get("frameEnd") + 1)
+                min_frame_j,
+                max_frame_j + 1)
 
         # Create the visibility section
         ar = unreal.AssetRegistryHelpers.get_asset_registry()
@@ -126,25 +128,25 @@ class LayoutLoader(api.Loader):
         index = len(visibility_track.get_sections())
 
         vis_section.set_range(
-            data_j.get("frameStart"),
-            data_j.get("frameEnd") + 1)
+            min_frame_j,
+            max_frame_j + 1)
         vis_section.set_visibility(unreal.LevelVisibility.VISIBLE)
         vis_section.set_row_index(index)
         vis_section.set_level_names(maps)
 
-        if data_j.get("frameStart") > 1:
+        if min_frame_j > 1:
             hid_section = visibility_track.add_section()
             hid_section.set_range(
                 1,
-                data_j.get("frameStart"))
+                min_frame_j)
             hid_section.set_visibility(unreal.LevelVisibility.HIDDEN)
             hid_section.set_row_index(index)
             hid_section.set_level_names(maps)
-        if data_j.get("frameEnd") < data_i.get("frameEnd"):
+        if max_frame_j < max_frame_i:
             hid_section = visibility_track.add_section()
             hid_section.set_range(
-                data_j.get("frameEnd") + 1,
-                data_i.get("frameEnd") + 1)
+                max_frame_j + 1,
+                max_frame_i + 1)
             hid_section.set_visibility(unreal.LevelVisibility.HIDDEN)
             hid_section.set_row_index(index)
             hid_section.set_level_names(maps)
@@ -515,6 +517,7 @@ class LayoutLoader(api.Loader):
         # Get all the sequences in the hierarchy. It will create them, if 
         # they don't exist.
         sequences = []
+        frame_ranges = []
         i = 0
         for h in hierarchy_list:
             root_content = EditorAssetLibrary.list_assets(
@@ -563,12 +566,16 @@ class LayoutLoader(api.Loader):
                         "data.visualParent": e.get('_id')
                     }))
 
+                min_frame = min(start_frames)
+                max_frame = max(end_frames)
+
                 scene.set_display_rate(
                     unreal.FrameRate(asset_data.get('data').get("fps"), 1.0))
-                scene.set_playback_start(min(start_frames))
-                scene.set_playback_end(max(end_frames))
+                scene.set_playback_start(min_frame)
+                scene.set_playback_end(max_frame)
 
                 sequences.append(scene)
+                frame_ranges.append((min_frame, max_frame))
             else:
                 for e in existing_sequences:
                     sequences.append(e.get_asset())
@@ -582,28 +589,23 @@ class LayoutLoader(api.Loader):
             factory=unreal.LevelSequenceFactoryNew()
         )
 
-        # Add sequences data to hierarchy
-        data_i = self._get_data(sequences[0].get_name())
-
+        # sequences and frame_ranges have the same length
         for i in range(0, len(sequences) - 1):
             maps_to_add = []
             for j in range(i + 1, len(maps)):
                 maps_to_add.append(maps[j].get('map'))
 
-            data_j = self._get_data(sequences[i + 1].get_name())
-
             self._set_sequence_hierarchy(
                 sequences[i], sequences[i + 1],
-                data_i, data_j,
+                frame_ranges[i][1],
+                frame_ranges[i + 1][0], frame_ranges[i + 1][1],
                 maps_to_add)
 
-            data_i = data_j
-
-        parent_data = self._get_data(sequences[-1].get_name())
         data = self._get_data(asset)
         self._set_sequence_hierarchy(
                 sequences[-1], shot,
-                parent_data, data,
+                frame_ranges[-1][1],
+                data.get('clipIn'), data.get('clipOut'),
                 [maps[-1].get('map')])
 
         EditorLevelLibrary.load_level(maps[-1].get('map'))
