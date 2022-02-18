@@ -1820,6 +1820,40 @@ def apply_attributes(attributes, nodes_by_id):
                 set_attribute(attr, value, node)
 
 
+def get_container_members(container):
+    """Returns the members of a container.
+    This includes the nodes from any loaded references in the container.
+    """
+    if isinstance(container, dict):
+        # Assume it's a container dictionary
+        container = container["objectName"]
+
+    members = cmds.sets(container, query=True) or []
+    members = cmds.ls(members, long=True, objectsOnly=True) or []
+    members = set(members)
+
+    # Include any referenced nodes from any reference in the container
+    # This is required since we've removed adding ALL nodes of a reference
+    # into the container set and only add the reference node now.
+    for ref in cmds.ls(members, exactType="reference", objectsOnly=True):
+
+        # Ignore any `:sharedReferenceNode`
+        if ref.rsplit(":", 1)[-1].startswith("sharedReferenceNode"):
+            continue
+
+        # Ignore _UNKNOWN_REF_NODE_ (PLN-160)
+        if ref.rsplit(":", 1)[-1].startswith("_UNKNOWN_REF_NODE_"):
+            continue
+
+        reference_members = cmds.referenceQuery(ref, nodes=True)
+        reference_members = cmds.ls(reference_members,
+                                    long=True,
+                                    objectsOnly=True)
+        members.update(reference_members)
+
+    return members
+
+
 # region LOOKDEV
 def list_looks(asset_id):
     """Return all look subsets for the given asset
@@ -1882,7 +1916,7 @@ def assign_look_by_version(nodes, version_id):
             container_node = pipeline.load(Loader, look_representation)
 
     # Get container members
-    shader_nodes = cmds.sets(container_node, query=True)
+    shader_nodes = get_container_members(container_node)
 
     # Load relationships
     shader_relation = api.get_representation_path(json_representation)
@@ -2108,7 +2142,7 @@ def get_container_transforms(container, members=None, root=False):
     """
 
     if not members:
-        members = cmds.sets(container["objectName"], query=True)
+        members = get_container_members(container)
 
     results = cmds.ls(members, type="transform", long=True)
     if root:

@@ -101,6 +101,7 @@ class IntegrateAssetNew(pyblish.api.InstancePlugin):
                 "effect",
                 "xgen",
                 "hda",
+                "usd",
                 "staticMesh"
                 ]
     exclude_families = ["clip"]

@@ -204,7 +204,9 @@ def load_look(version_id):
         with lib.maintained_selection():
             container_node = api.load(loader, look_representation)
 
-    return cmds.sets(container_node, query=True)
+    # Get container members
+    shader_nodes = lib.get_container_members(container_node)
+    return shader_nodes
 
 
 def get_latest_version(asset_id, subset):

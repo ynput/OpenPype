@@ -1,5 +1,6 @@
 import sys
 import os
+import re
 import copy
 import getpass
 import shutil
@@ -37,6 +38,185 @@ module = sys.modules[__name__]
 module.window = None
 
 
+def build_workfile_data(session):
+    """Get the data required for workfile formatting from avalon `session`"""
+
+    # Set work file data for template formatting
+    asset_name = session["AVALON_ASSET"]
+    task_name = session["AVALON_TASK"]
+    project_doc = io.find_one(
+        {"type": "project"},
+        {
+            "name": True,
+            "data.code": True,
+            "config.tasks": True,
+        }
+    )
+
+    asset_doc = io.find_one(
+        {
+            "type": "asset",
+            "name": asset_name
+        },
+        {
+            "data.tasks": True,
+            "data.parents": True
+        }
+    )
+
+    task_type = asset_doc["data"]["tasks"].get(task_name, {}).get("type")
+
+    project_task_types = project_doc["config"]["tasks"]
+    task_short = project_task_types.get(task_type, {}).get("short_name")
+
+    asset_parents = asset_doc["data"]["parents"]
+    parent_name = project_doc["name"]
+    if asset_parents:
+        parent_name = asset_parents[-1]
+
+    data = {
+        "project": {
+            "name": project_doc["name"],
+            "code": project_doc["data"].get("code")
+        },
+        "asset": asset_name,
+        "task": {
+            "name": task_name,
+            "type": task_type,
+            "short": task_short,
+        },
+        "parent": parent_name,
+        "version": 1,
+        "user": getpass.getuser(),
+        "comment": "",
+        "ext": None
+    }
+
+    # add system general settings anatomy data
+    system_general_data = get_system_general_anatomy_data()
+    data.update(system_general_data)
+
+    return data
+
+
+class CommentMatcher(object):
+    """Use anatomy and work file data to parse comments from filenames"""
+    def __init__(self, anatomy, template_key, data):
+
+        self.fname_regex = None
+
+        template = anatomy.templates[template_key]["file"]
+        if "{comment}" not in template:
+            # Don't look for comment if template doesn't allow it
+            return
+
+        # Create a regex group for extensions
+        extensions = api.registered_host().file_extensions()
+        any_extension = "(?:{})".format(
+            "|".join(re.escape(ext[1:]) for ext in extensions)
+        )
+
+        # Use placeholders that will never be in the filename
+        temp_data = copy.deepcopy(data)
+        temp_data["comment"] = "<<comment>>"
+        temp_data["version"] = "<<version>>"
+        temp_data["ext"] = "<<ext>>"
+
+        formatted = anatomy.format(temp_data)
+        fname_pattern = formatted[template_key]["file"]
+        fname_pattern = re.escape(fname_pattern)
+
+        # Replace comment and version with something we can match with regex
+        replacements = {
+            "<<comment>>": "(.+)",
+            "<<version>>": "[0-9]+",
+            "<<ext>>": any_extension,
+        }
+        for src, dest in replacements.items():
+            fname_pattern = fname_pattern.replace(re.escape(src), dest)
+
+        # Match from beginning to end of string to be safe
+        fname_pattern = "^{}$".format(fname_pattern)
+
+        self.fname_regex = re.compile(fname_pattern)
+
+    def parse_comment(self, filepath):
+        """Parse the {comment} part from a filename"""
+        if not self.fname_regex:
+            return
+
+        fname = os.path.basename(filepath)
+        match = self.fname_regex.match(fname)
+        if match:
+            return match.group(1)
+
+
+class SubversionLineEdit(QtWidgets.QWidget):
+    """QLineEdit with QPushButton for drop down selection of list of strings"""
+    def __init__(self, parent=None):
+        super(SubversionLineEdit, self).__init__(parent=parent)
+
+        layout = QtWidgets.QHBoxLayout(self)
+        layout.setContentsMargins(0, 0, 0, 0)
+        layout.setSpacing(3)
+
+        self._input = PlaceholderLineEdit()
+        self._button = QtWidgets.QPushButton("")
+        self._button.setFixedWidth(18)
+        self._menu = QtWidgets.QMenu(self)
+        self._button.setMenu(self._menu)
+
+        layout.addWidget(self._input)
+        layout.addWidget(self._button)
+
+    @property
+    def input(self):
+        return self._input
+
+    def set_values(self, values):
+        self._update(values)
+
+    def _on_button_clicked(self):
+        self._menu.exec_()
+
+    def _on_action_clicked(self, action):
+        self._input.setText(action.text())
+
+    def _update(self, values):
+        """Create optional predefined subset names
+
+        Args:
+            default_names(list): all predefined names
+
+        Returns:
+             None
+        """
+
+        menu = self._menu
+        button = self._button
+
+        state = any(values)
+        button.setEnabled(state)
+        if state is False:
+            return
+
+        # Include an empty string
+        values = [""] + sorted(values)
+
+        # Get and destroy the action group
+        group = button.findChild(QtWidgets.QActionGroup)
+        if group:
+            group.deleteLater()
+
+        # Build new action group
+        group = QtWidgets.QActionGroup(button)
+        for name in values:
+            action = group.addAction(name)
+            menu.addAction(action)
+
+        group.triggered.connect(self._on_action_clicked)
+
+
 class NameWindow(QtWidgets.QDialog):
     """Name Window to define a unique filename inside a root folder
 
@@ -58,60 +238,7 @@ class NameWindow(QtWidgets.QDialog):
             # Fallback to active session
             session = api.Session
 
-        # Set work file data for template formatting
-        asset_name = session["AVALON_ASSET"]
-        task_name = session["AVALON_TASK"]
-        project_doc = io.find_one(
-            {"type": "project"},
-            {
-                "name": True,
-                "data.code": True,
-                "config.tasks": True,
-            }
-        )
-
-        asset_doc = io.find_one(
-            {
-                "type": "asset",
-                "name": asset_name
-            },
-            {
-                "data.tasks": True,
-                "data.parents": True
-            }
-        )
-
-        task_type = asset_doc["data"]["tasks"].get(task_name, {}).get("type")
-
-        project_task_types = project_doc["config"]["tasks"]
-        task_short = project_task_types.get(task_type, {}).get("short_name")
-
-        asset_parents = asset_doc["data"]["parents"]
-        parent_name = project_doc["name"]
-        if asset_parents:
-            parent_name = asset_parents[-1]
-
-        self.data = {
-            "project": {
-                "name": project_doc["name"],
-                "code": project_doc["data"].get("code")
-            },
-            "asset": asset_name,
-            "task": {
-                "name": task_name,
-                "type": task_type,
-                "short": task_short,
-            },
-            "parent": parent_name,
-            "version": 1,
-            "user": getpass.getuser(),
-            "comment": "",
-            "ext": None
-        }
-
-        # add system general settings anatomy data
-        system_general_data = get_system_general_anatomy_data()
-        self.data.update(system_general_data)
+        self.data = build_workfile_data(session)
 
         # Store project anatomy
         self.anatomy = anatomy
@@ -154,8 +281,8 @@ class NameWindow(QtWidgets.QDialog):
         preview_label = QtWidgets.QLabel("Preview filename", inputs_widget)
 
         # Subversion input
-        subversion_input = PlaceholderLineEdit(inputs_widget)
-        subversion_input.setPlaceholderText("Will be part of filename.")
+        subversion = SubversionLineEdit(inputs_widget)
+        subversion.input.setPlaceholderText("Will be part of filename.")
 
         # Extensions combobox
         ext_combo = QtWidgets.QComboBox(inputs_widget)
@@ -176,9 +303,27 @@ class NameWindow(QtWidgets.QDialog):
 
         # Add subversion only if template contains `{comment}`
         if "{comment}" in self.template:
-            inputs_layout.addRow("Subversion:", subversion_input)
+            inputs_layout.addRow("Subversion:", subversion)
+
+            # Detect whether a {comment} is in the current filename - if so,
+            # preserve it by default and set it in the comment/subversion field
+            current_filepath = self.host.current_file()
+            if current_filepath:
+                # We match the current filename against the current session
+                # instead of the session where the user is saving to.
+                current_data = build_workfile_data(api.Session)
+                matcher = CommentMatcher(anatomy, template_key, current_data)
+                comment = matcher.parse_comment(current_filepath)
+                if comment:
+                    log.info("Detected subversion comment: {}".format(comment))
+                    self.data["comment"] = comment
+                    subversion.input.setText(comment)
+
+            existing_comments = self.get_existing_comments()
+            subversion.set_values(existing_comments)
+
         else:
-            subversion_input.setVisible(False)
+            subversion.setVisible(False)
         inputs_layout.addRow("Extension:", ext_combo)
         inputs_layout.addRow("Preview:", preview_label)
 
@@ -193,7 +338,7 @@ class NameWindow(QtWidgets.QDialog):
             self.on_version_checkbox_changed
         )
 
-        subversion_input.textChanged.connect(self.on_comment_changed)
+        subversion.input.textChanged.connect(self.on_comment_changed)
         ext_combo.currentIndexChanged.connect(self.on_extension_changed)
 
         btn_ok.pressed.connect(self.on_ok_pressed)
@@ -204,7 +349,7 @@ class NameWindow(QtWidgets.QDialog):
 
         # Force default focus to comment, some hosts didn't automatically
         # apply focus to this line edit (e.g. Houdini)
-        subversion_input.setFocus()
+        subversion.input.setFocus()
 
         # Store widgets
         self.btn_ok = btn_ok
@@ -215,11 +360,31 @@ class NameWindow(QtWidgets.QDialog):
         self.last_version_check = last_version_check
 
         self.preview_label = preview_label
-        self.subversion_input = subversion_input
+        self.subversion = subversion
         self.ext_combo = ext_combo
         self._ext_delegate = ext_delegate
 
         self.refresh()
+
+    def get_existing_comments(self):
+
+        matcher = CommentMatcher(self.anatomy, self.template_key, self.data)
+        host_extensions = set(self.host.file_extensions())
+        comments = set()
+        if os.path.isdir(self.root):
+            for fname in os.listdir(self.root):
+                if not os.path.isfile(os.path.join(self.root, fname)):
+                    continue
+
+                ext = os.path.splitext(fname)[-1]
+                if ext not in host_extensions:
+                    continue
+
+                comment = matcher.parse_comment(fname)
+                if comment:
+                    comments.add(comment)
+
+        return list(comments)
 
     def on_version_spinbox_changed(self, value):
         self.data["version"] = value
