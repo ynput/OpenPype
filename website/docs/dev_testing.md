@@ -23,7 +23,7 @@ If you would like just to experiment with provided integration tests, and have p
 ```
 - From build:
 ```
-- ${OPENPYPE_BUILD}/openpype_console run {ABSOLUT_PATH_OPENPYPE_ROOT}/tests/integration/hosts/nuke`
+- ${OPENPYPE_BUILD}/openpype_console run {ABSOLUTE_PATH_OPENPYPE_ROOT}/tests/integration/hosts/nuke`
 ```
 Modify tests path argument to limit which tests should be run (`../tests/integration` will run all implemented integration tests).
 
