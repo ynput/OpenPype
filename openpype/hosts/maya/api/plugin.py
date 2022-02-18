@@ -1,7 +1,13 @@
+import os
+
+from maya import cmds
+
 from avalon import api
 from avalon.vendor import qargparse
-import avalon.maya
 from openpype.api import PypeCreatorMixin
+
+from .pipeline import containerise
+from . import lib
 
 
 def get_reference_node(members, log=None):
@@ -13,8 +19,6 @@ def get_reference_node(members, log=None):
         str: Reference node name.
 
     """
-
-    from maya import cmds
 
     # Collect the references without .placeHolderList[] attributes as
     # unique entries (objects only) and skipping the sharedReferenceNode.
@@ -61,8 +65,6 @@ def get_reference_node_parents(ref):
         list: The upstream parent reference nodes.
 
     """
-    from maya import cmds
-
     parent = cmds.referenceQuery(ref,
                                  referenceNode=True,
                                  parent=True)
@@ -75,11 +77,27 @@ def get_reference_node_parents(ref):
     return parents
 
 
-class Creator(PypeCreatorMixin, avalon.maya.Creator):
-    pass
+class Creator(PypeCreatorMixin, api.Creator):
+    defaults = ['Main']
+
+    def process(self):
+        nodes = list()
+
+        with lib.undo_chunk():
+            if (self.options or {}).get("useSelection"):
+                nodes = cmds.ls(selection=True)
+
+            instance = cmds.sets(nodes, name=self.name)
+            lib.imprint(instance, self.data)
+
+        return instance
 
 
-class ReferenceLoader(api.Loader):
+class Loader(api.Loader):
+    hosts = ["maya"]
+
+
+class ReferenceLoader(Loader):
     """A basic ReferenceLoader for Maya
 
     This will implement the basic behavior for a loader to inherit from that
@@ -117,11 +135,6 @@ class ReferenceLoader(api.Loader):
         namespace=None,
         options=None
     ):
-
-        import os
-        from avalon.maya import lib
-        from avalon.maya.pipeline import containerise
-
         assert os.path.exists(self.fname), "%s does not exist." % self.fname
 
         asset = context['asset']
@@ -182,8 +195,6 @@ class ReferenceLoader(api.Loader):
 
 
     def update(self, container, representation):
-
-        import os
         from maya import cmds
 
         node = container["objectName"]

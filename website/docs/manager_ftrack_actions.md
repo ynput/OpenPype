@@ -73,7 +73,7 @@ Project Manager or Supervisor must set project's applications during project pre
 Synchronization to Avalon is key process to keep OpenPype data updated. Action updates selected entities (Project, Shot, Sequence, etc.) and all nested entities to Avalon database. If action is successfully finished [Sync Hier Attrs](#sync-hier-attrs) action is triggered.
 
 There are 2 versions of **Sync to Avalon**, first labeled as **server** second as **local**.
-* **server** version will be processed with [event server](module_ftrack#event-server)
+* **server** version will be processed with [event server](module_ftrack.md#event-server)
 * **local** version will be processed with user's OpenPype tray application
 
 It is recommended to use **local** version if possible to avoid unnecessary deceleration of event server.
@@ -85,7 +85,7 @@ It is recommended to use **local** version if possible to avoid unnecessary dece
 Synchronization to Avalon of Ftrack's hierarchical Custom attributes is a bit complicated so we decided to split synchronization process into 2 actions. This action updates hierarchical Custom attributes of selected entities (Project, Shot, Sequence, etc.) and all their nested entities to pipeline database. This action is also triggered automatically after successfully finished [Sync To Avalon](#sync-to-avalon) action.
 
 There are 2 versions of **Sync Hier Attrs** first labeled as **server** second as **local**.
-* **server** version will be processed with [event server](module_ftrack#event-server)
+* **server** version will be processed with [event server](module_ftrack.md#event-server)
 * **local** version will be processed with user's OpenPype application
 
 It is recommended to use **local** version if possible to avoid unnecessary deceleration of event server.

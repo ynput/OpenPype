@@ -338,7 +338,7 @@ to update packages version, just run `poetry update` or delete lock file.
 
 ### create_zip
 Script to create packaged OpenPype version from current sources. This will strip developer stuff and
-package it into zip that can be used for [auto-updates for studio wide distributions](admin_distribute#automatic-updates), etc.
+package it into zip that can be used for [auto-updates for studio wide distributions](admin_distribute.md#automatic-updates), etc.
 Same as:
 ```shell
 poetry run python ./tools/create_zip.py

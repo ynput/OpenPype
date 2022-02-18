@@ -131,6 +131,11 @@
                             "object_type": {
                                 "type": "text"
                             }
+                        },
+                        {
+                            "type": "boolean",
+                            "key": "reviewable",
+                            "label": "Add reviewable toggle"
                         }
                     ]
                 }

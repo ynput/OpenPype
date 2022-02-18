@@ -3,14 +3,14 @@ import json
 import re
 import glob
 from collections import defaultdict
+from pprint import pprint
 
 from maya import cmds
 
 from avalon import api, io
-from avalon.maya import lib as avalon_lib, pipeline
-from openpype.hosts.maya.api import lib
 from openpype.api import get_project_settings
-from pprint import pprint
+from openpype.hosts.maya.api import lib
+from openpype.hosts.maya.api.pipeline import containerise
 
 
 class YetiCacheLoader(api.Loader):
@@ -75,11 +75,13 @@ class YetiCacheLoader(api.Loader):
 
         self[:] = nodes
 
-        return pipeline.containerise(name=name,
-                                     namespace=namespace,
-                                     nodes=nodes,
-                                     context=context,
-                                     loader=self.__class__.__name__)
+        return containerise(
+            name=name,
+            namespace=namespace,
+            nodes=nodes,
+            context=context,
+            loader=self.__class__.__name__
+        )
 
     def remove(self, container):
 
@@ -239,9 +241,11 @@ class YetiCacheLoader(api.Loader):
 
         asset_name = "{}_".format(asset)
         prefix = "_" if asset_name[0].isdigit()else ""
-        namespace = avalon_lib.unique_namespace(asset_name,
-                                                prefix=prefix,
-                                                suffix="_")
+        namespace = lib.unique_namespace(
+            asset_name,
+            prefix=prefix,
+            suffix="_"
+        )
 
         return namespace
 

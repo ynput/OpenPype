@@ -4,8 +4,8 @@ import os
 
 from maya import cmds
 
-import avalon.maya
 import openpype.api
+from openpype.hosts.maya.api.lib import maintained_selection
 
 
 class ExtractMayaSceneRaw(openpype.api.Extractor):
@@ -59,7 +59,7 @@ class ExtractMayaSceneRaw(openpype.api.Extractor):
 
         # Perform extraction
         self.log.info("Performing extraction ...")
-        with avalon.maya.maintained_selection():
+        with maintained_selection():
             cmds.select(members, noExpand=True)
             cmds.file(path,
                       force=True,

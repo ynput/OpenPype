@@ -1,8 +1,14 @@
-from avalon.maya import lib
+# -*- coding: utf-8 -*-
+import os
+import maya.cmds as cmds  # noqa
 from avalon import api
 from openpype.api import get_project_settings
-import os
-import maya.cmds as cmds
+from openpype.hosts.maya.api.lib import (
+    maintained_selection,
+    namespaced,
+    unique_namespace
+)
+from openpype.hosts.maya.api.pipeline import containerise
 
 
 class VRaySceneLoader(api.Loader):
@@ -18,8 +24,6 @@ class VRaySceneLoader(api.Loader):
 
     def load(self, context, name, namespace, data):
 
-        from avalon.maya.pipeline import containerise
-        from openpype.hosts.maya.api.lib import namespaced
 
         try:
             family = context["representation"]["context"]["family"]
@@ -27,7 +31,7 @@ class VRaySceneLoader(api.Loader):
             family = "vrayscene_layer"
 
         asset_name = context['asset']["name"]
-        namespace = namespace or lib.unique_namespace(
+        namespace = namespace or unique_namespace(
             asset_name + "_",
             prefix="_" if asset_name[0].isdigit() else "",
             suffix="_",
@@ -36,7 +40,7 @@ class VRaySceneLoader(api.Loader):
         # Ensure V-Ray for Maya is loaded.
         cmds.loadPlugin("vrayformaya", quiet=True)
 
-        with lib.maintained_selection():
+        with maintained_selection():
             cmds.namespace(addNamespace=namespace)
             with namespaced(namespace, new=False):
                 nodes, root_node = self.create_vray_scene(name,

@@ -9,6 +9,7 @@ from openpype.settings.lib import (
 )
 from openpype.tools.settings import CHILD_OFFSET
 from openpype.api import (
+    Logger,
     SystemSettings,
     ProjectSettings
 )
@@ -32,7 +33,7 @@ from .constants import (
     LOCAL_APPS_KEY
 )
 
-log = logging.getLogger(__name__)
+log = Logger.get_logger(__name__)
 
 
 class LocalSettingsWidget(QtWidgets.QWidget):
@@ -250,6 +251,9 @@ class LocalSettingsWindow(QtWidgets.QWidget):
             self._settings_widget.update_local_settings(value)
 
         except Exception as exc:
+            log.warning(
+                "Failed to create local settings window", exc_info=True
+            )
             error_msg = str(exc)
 
         crashed = error_msg is not None

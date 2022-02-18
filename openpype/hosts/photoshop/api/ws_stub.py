@@ -186,9 +186,26 @@ class PhotoshopServerStub:
         Returns:
             <list of PSItem>
         """
+        parent_ids = set([lay.id for lay in layers])
+
+        return self._get_layers_in_layers(parent_ids)
+
+    def get_layers_in_layers_ids(self, layers_ids):
+        """Return all layers that belong to layers (might be groups).
+
+        Args:
+            layers <list of PSItem>:
+
+        Returns:
+            <list of PSItem>
+        """
+        parent_ids = set(layers_ids)
+
+        return self._get_layers_in_layers(parent_ids)
+
+    def _get_layers_in_layers(self, parent_ids):
         all_layers = self.get_layers()
         ret = []
-        parent_ids = set([lay.id for lay in layers])
 
         for layer in all_layers:
             parents = set(layer.parents)

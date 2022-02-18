@@ -1,4 +1,5 @@
-from avalon import api, harmony
+from avalon import api
+import openpype.hosts.harmony.api as harmony
 
 sig = harmony.signature()
 func = """
