@@ -1068,6 +1068,7 @@ class RepresentationModel(TreeModel, BaseRepresentationModel):
         self._icons = lib.get_repre_icons()
         self._icons["repre"] = qtawesome.icon("fa.file-o",
                                               color=style.colors.default)
+        self._items_by_id = {}
 
     def set_version_ids(self, version_ids):
         self.version_ids = version_ids
@@ -1075,6 +1076,9 @@ class RepresentationModel(TreeModel, BaseRepresentationModel):
 
     def data(self, index, role):
         item = index.internalPointer()
+
+        if role == ITEM_ID_ROLE:
+            return item["id"]
 
         if role == self.IdRole:
             return item.get("_id")
@@ -1149,8 +1153,11 @@ class RepresentationModel(TreeModel, BaseRepresentationModel):
             if len(self.version_ids) > 1:
                 group = repre_groups.get(doc["name"])
                 if not group:
+
                     group_item = Item()
+                    item_id = str(uuid4())
                     group_item.update({
+                        "id": item_id,
                         "_id": doc["_id"],
                         "name": doc["name"],
                         "isMerged": True,
@@ -1161,6 +1168,7 @@ class RepresentationModel(TreeModel, BaseRepresentationModel):
                             color=style.colors.default
                         )
                     })
+                    self._items_by_id[item_id] = group_item
                     self.add_child(group_item, None)
                     repre_groups[doc["name"]] = group_item
                     repre_groups_items[doc["name"]] = 0
@@ -1173,7 +1181,9 @@ class RepresentationModel(TreeModel, BaseRepresentationModel):
             active_site_icon = self._icons.get(self.active_provider)
             remote_site_icon = self._icons.get(self.remote_provider)
 
+            item_id = str(uuid4())
             data = {
+                "id": item_id,
                 "_id": doc["_id"],
                 "name": doc["name"],
                 "subset": doc["context"]["subset"],
@@ -1192,6 +1202,7 @@ class RepresentationModel(TreeModel, BaseRepresentationModel):
 
             item = Item()
             item.update(data)
+            self._items_by_id[item_id] = item
 
             current_progress = {
                 'active_site_progress': progress[self.active_site],
@@ -1214,6 +1225,9 @@ class RepresentationModel(TreeModel, BaseRepresentationModel):
 
         self.endResetModel()
         self.refreshed.emit(False)
+
+    def get_item_by_id(self, item_id):
+        return self._items_by_id.get(item_id)
 
     def refresh(self):
         docs = []
