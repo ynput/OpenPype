@@ -1,6 +1,5 @@
 # -*- coding: utf-8 -*-
 """Tools to work with FBX."""
-import os
 import logging
 
 from pyblish.api import Instance

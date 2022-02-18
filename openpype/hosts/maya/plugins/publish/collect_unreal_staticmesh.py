@@ -29,7 +29,7 @@ class CollectUnrealStaticMesh(pyblish.api.InstancePlugin):
         # take the name from instance (without the `staticMesh_` prefix)
         instance.data["staticMeshCombinedName"] = "{}_{}".format(
             sm_prefix,
-            instance.name[len(instance.data.get("family"))+3:]
+            instance.name[len(instance.data.get("family")) + 3:]
         )
 
         geometry_set = [i for i in instance if i == "geometry_SET"]
