@@ -298,7 +298,7 @@
                 },
                 {
                     "families": [
-                        "unrealStaticMesh"
+                        "staticMesh"
                     ],
                     "hosts": [
                         "maya"
