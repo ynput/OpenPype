@@ -5,6 +5,7 @@ def create_batch(name, frame_start, frame_end, **kwargs):
     schematicReels = ['LoadedReel1']
     shelfReels = ['ShelfReel1']
 
+    write_pref = kwargs["write_pref"]
     handle_start = kwargs.get("handleStart")
     handle_end = kwargs.get("handleEnd")
 
@@ -27,11 +28,23 @@ def create_batch(name, frame_start, frame_end, **kwargs):
         # use this command to switch to the batch tab
         flame.batch.go_to()
 
-    comp = flame.batch.create_node("Comp")
-    writeFile = flame.batch.create_node("Write File")
+    comp_node = flame.batch.create_node("Comp")
+
+    # create write node
+    write_node = flame.batch.create_node('Write File')
+    write_node.media_path = write_pref["media_path"]
+    write_node.media_path_pattern = write_pref["media_path_pattern"]
+    write_node.create_clip = write_pref["create_clip"]
+    write_node.include_setup = write_pref["include_setup"]
+    write_node.create_clip_path = write_pref["create_clip_path"]
+    write_node.include_setup_path = write_pref["include_setup_path"]
+    write_node.file_type = write_pref["file_type"]
+    write_node.bit_depth = write_pref["bit_depth"]
+    write_node.frame_index_mode = write_pref["frame_index_mode"]
+    write_node.frame_padding = int(write_pref["frame_padding"])
 
     # connect nodes
-    flame.batch.connect_nodes(comp, "Result", writeFile, "Front")
+    flame.batch.connect_nodes(comp_node, "Result", write_node, "Front")
 
     # sort batch nodes
     flame.batch.organize()
