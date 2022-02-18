@@ -206,21 +206,51 @@ def unique_namespace(namespace, format="%02d", prefix="", suffix=""):
         format (str, optional): Formatting of the given iteration number
         suffix (str, optional): Only consider namespaces with this suffix.
 
+    >>> unique_namespace("bar")
+    # bar01
+    >>> unique_namespace(":hello")
+    # :hello01
+    >>> unique_namespace("bar:", suffix="_NS")
+    # bar01_NS:
+
     """
 
+    def current_namespace():
+        current = cmds.namespaceInfo(currentNamespace=True,
+                                     absoluteName=True)
+        # When inside a namespace Maya adds no trailing :
+        if not current.endswith(":"):
+            current += ":"
+        return current
+
+    # Always check against the absolute namespace root
+    # There's no clash with :x if we're defining namespace :a:x
+    ROOT = ":" if namespace.startswith(":") else current_namespace()
+
+    # Strip trailing `:` tokens since we might want to add a suffix
+    start = ":" if namespace.startswith(":") else ""
+    end = ":" if namespace.endswith(":") else ""
+    namespace = namespace.strip(":")
+    if ":" in namespace:
+        # Split off any nesting that we don't uniqify anyway.
+        parents, namespace = namespace.rsplit(":", 1)
+        start += parents + ":"
+        ROOT += start
+
+    def exists(n):
+        # Check for clash with nodes and namespaces
+        fullpath = ROOT + n
+        return cmds.objExists(fullpath) or cmds.namespace(exists=fullpath)
+
     iteration = 1
-    unique = prefix + (namespace + format % iteration) + suffix
+    while True:
+        nr_namespace = namespace + format % iteration
+        unique = prefix + nr_namespace + suffix
 
-    # The `existing` set does not just contain the namespaces but *all* nodes
-    # within "current namespace". We need all because the namespace could
-    # also clash with a node name. To be truly unique and valid one needs to
-    # check against all.
-    existing = set(cmds.namespaceInfo(listNamespace=True))
-    while unique in existing:
+        if not exists(unique):
+            return start + unique + end
+
         iteration += 1
-        unique = prefix + (namespace + format % iteration) + suffix
-
-    return unique
 
 
 def read(node):
