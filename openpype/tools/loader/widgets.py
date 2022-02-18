@@ -1283,6 +1283,40 @@ class RepresentationWidget(QtWidgets.QWidget):
             }
         return repre_context_by_id
 
+    def get_selected_items(self):
+        selection_model = self.tree_view.selectionModel()
+        indexes = selection_model.selectedIndexes()
+
+        item_ids = set()
+        for index in indexes:
+            item_id = index.data(ITEM_ID_ROLE)
+            if item_id is not None:
+                item_ids.add(item_id)
+
+        output = []
+        for item_id in item_ids:
+            item = self.model.get_item_by_id(item_id)
+            if item is not None:
+                output.append(item)
+        return output
+
+    def get_selected_repre_items(self):
+        output = []
+        items = collections.deque(self.get_selected_items())
+
+        item_ids = set()
+        while items:
+            item = items.popleft()
+            if item.get("isGroup") or item.get("isMerged"):
+                for child in item.children():
+                    items.appendleft(child)
+            else:
+                item_id = item["id"]
+                if item_id not in item_ids:
+                    item_ids.add(item_id)
+                    output.append(item)
+        return output
+
     def on_context_menu(self, point):
         """Shows menu with loader actions on Right-click.
 
@@ -1301,10 +1335,8 @@ class RepresentationWidget(QtWidgets.QWidget):
         selection = self.tree_view.selectionModel()
         rows = selection.selectedRows(column=0)
 
-        items = self.get_selected_subsets()
-
+        items = self.get_selected_repre_items()
         selected_side = self._get_selected_side(point_index, rows)
-
         # Get all representation->loader combinations available for the
         # index under the cursor, so we can list the user the options.
         available_loaders = api.discover(api.Loader)
