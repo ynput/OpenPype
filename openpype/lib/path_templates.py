@@ -584,6 +584,10 @@ class TemplatePartResult:
 
 
 class FormatObject(object):
+    """Object that can be used for formatting.
+
+    This is base that is valid for to be used in 'StringTemplate' value.
+    """
     def __init__(self):
         self.value = ""
 

@@ -16,6 +16,15 @@ sys.path.insert(0, python_version_dir)
 site.addsitedir(python_version_dir)
 
 
+from .path_templates import (
+    merge_dict,
+    TemplateMissingKey,
+    TemplateUnsolved,
+    StringTemplate,
+    TemplatesDict,
+    FormatObject,
+)
+
 from .env_tools import (
     env_value_to_bool,
     get_paths_from_environ,
@@ -41,7 +50,6 @@ from .mongo import (
     OpenPypeMongoConnection
 )
 from .anatomy import (
-    merge_dict,
     Anatomy
 )
 
@@ -183,6 +191,13 @@ from .openpype_version import (
 terminal = Terminal
 
 __all__ = [
+    "merge_dict",
+    "TemplateMissingKey",
+    "TemplateUnsolved",
+    "StringTemplate",
+    "TemplatesDict",
+    "FormatObject",
+
     "get_openpype_execute_args",
     "get_pype_execute_args",
     "get_linux_launcher_args",
@@ -285,7 +300,6 @@ __all__ = [
 
     "terminal",
 
-    "merge_dict",
     "Anatomy",
 
     "get_datetime_data",
