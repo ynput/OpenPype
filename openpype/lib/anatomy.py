@@ -10,10 +10,8 @@ from openpype.settings.lib import (
     get_anatomy_settings
 )
 from .path_templates import (
-    merge_dict,
     TemplateUnsolved,
     TemplateResult,
-    TemplatesResultDict,
     TemplatesDict,
     FormatObject,
 )
@@ -69,7 +67,10 @@ class Anatomy:
                 " to load data for specific project."
             ))
 
+        from .avalon_context import get_project_code
+
         self.project_name = project_name
+        self.project_code = get_project_code(project_name)
 
         self._data = self._prepare_anatomy_data(
             get_anatomy_settings(project_name, site_name)
