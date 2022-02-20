@@ -13,13 +13,15 @@ def main(env):
     # so we make sure to move out of it to avoid DLL Load Failed errors.
     os.chdir("..")
 
+    import avalon.api
+    from openpype.hosts.fusion import api
     from openpype.hosts.fusion.api import menu
-    import avalon.fusion
+
     # Registers pype's Global pyblish plugins
     openpype.install()
 
     # activate resolve from pype
-    avalon.api.install(avalon.fusion)
+    avalon.api.install(api)
 
     log.info(f"Avalon registered hosts: {avalon.api.registered_host()}")
 

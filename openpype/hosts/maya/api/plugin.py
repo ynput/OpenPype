@@ -78,6 +78,8 @@ def get_reference_node_parents(ref):
 
 
 class Creator(PypeCreatorMixin, api.Creator):
+    defaults = ['Main']
+
     def process(self):
         nodes = list()
 

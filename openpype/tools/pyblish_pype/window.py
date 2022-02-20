@@ -1039,6 +1039,8 @@ class Window(QtWidgets.QDialog):
             and not self.controller.stopped
         )
         self.button_suspend_logs.setEnabled(suspend_log_bool)
+        if not self.isVisible():
+            self.setVisible(True)
 
     def on_was_skipped(self, plugin):
         plugin_item = self.plugin_model.plugin_items[plugin.id]
@@ -1111,6 +1113,9 @@ class Window(QtWidgets.QDialog):
             self.perspective_widget.update_context(
                 plugin_item, instance_item
             )
+
+        if not self.isVisible():
+            self.setVisible(True)
 
     # -------------------------------------------------------------------------
     #

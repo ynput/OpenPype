@@ -58,7 +58,7 @@ class OpenPypeMenu(QtWidgets.QWidget):
         create_btn = QtWidgets.QPushButton("Create...", self)
         publish_btn = QtWidgets.QPushButton("Publish...", self)
         load_btn = QtWidgets.QPushButton("Load...", self)
-        inventory_btn = QtWidgets.QPushButton("Inventory...", self)
+        manager_btn = QtWidgets.QPushButton("Manage...", self)
         libload_btn = QtWidgets.QPushButton("Library...", self)
         rendermode_btn = QtWidgets.QPushButton("Set render mode...", self)
         duplicate_with_inputs_btn = QtWidgets.QPushButton(
@@ -82,7 +82,7 @@ class OpenPypeMenu(QtWidgets.QWidget):
         layout.addWidget(create_btn)
         layout.addWidget(load_btn)
         layout.addWidget(publish_btn)
-        layout.addWidget(inventory_btn)
+        layout.addWidget(manager_btn)
 
         layout.addWidget(Spacer(15, self))
 
@@ -106,7 +106,7 @@ class OpenPypeMenu(QtWidgets.QWidget):
         create_btn.clicked.connect(self.on_create_clicked)
         publish_btn.clicked.connect(self.on_publish_clicked)
         load_btn.clicked.connect(self.on_load_clicked)
-        inventory_btn.clicked.connect(self.on_inventory_clicked)
+        manager_btn.clicked.connect(self.on_manager_clicked)
         libload_btn.clicked.connect(self.on_libload_clicked)
         rendermode_btn.clicked.connect(self.on_rendernode_clicked)
         duplicate_with_inputs_btn.clicked.connect(
@@ -149,8 +149,8 @@ class OpenPypeMenu(QtWidgets.QWidget):
         print("Clicked Load")
         host_tools.show_loader(use_context=True)
 
-    def on_inventory_clicked(self):
-        print("Clicked Inventory")
+    def on_manager_clicked(self):
+        print("Clicked Manager")
         host_tools.show_scene_inventory()
 
     def on_libload_clicked(self):
@@ -158,11 +158,10 @@ class OpenPypeMenu(QtWidgets.QWidget):
         host_tools.show_library_loader()
 
     def on_rendernode_clicked(self):
-        from avalon import style
         print("Clicked Set Render Mode")
         if self.render_mode_widget is None:
             window = set_rendermode.SetRenderMode()
-            window.setStyleSheet(style.load_stylesheet())
+            window.setStyleSheet(load_stylesheet())
             window.show()
             self.render_mode_widget = window
         else:

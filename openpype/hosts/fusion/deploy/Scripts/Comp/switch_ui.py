@@ -4,13 +4,12 @@ import logging
 
 from Qt import QtWidgets, QtCore
 
-import avalon.io as io
-import avalon.api as api
-import avalon.pipeline as pipeline
-import avalon.fusion
-import avalon.style as style
+import avalon.api
+from avalon import io, pipeline
 from avalon.vendor import qtawesome as qta
 
+from openpype import style
+from openpype.hosts.fusion import api
 
 log = logging.getLogger("Fusion Switch Shot")
 
@@ -150,7 +149,7 @@ class App(QtWidgets.QWidget):
         if not self._use_current.isChecked():
             file_name = self._comps.itemData(self._comps.currentIndex())
         else:
-            comp = avalon.fusion.get_current_comp()
+            comp = api.get_current_comp()
             file_name = comp.GetAttrs("COMPS_FileName")
 
         asset = self._assets.currentText()
@@ -161,11 +160,11 @@ class App(QtWidgets.QWidget):
     def _get_context_directory(self):
 
         project = io.find_one({"type": "project",
-                               "name": api.Session["AVALON_PROJECT"]},
+                               "name": avalon.api.Session["AVALON_PROJECT"]},
                               projection={"config": True})
 
         template = project["config"]["template"]["work"]
-        dir = pipeline._format_work_template(template, api.Session)
+        dir = pipeline._format_work_template(template, avalon.api.Session)
 
         return dir
 
@@ -174,7 +173,7 @@ class App(QtWidgets.QWidget):
         return items
 
     def collect_assets(self):
-        return list(io.find({"type": "asset", "silo": "film"}))
+        return list(io.find({"type": "asset"}, {"name": True}))
 
     def populate_comp_box(self, files):
         """Ensure we display the filename only but the path is stored as well
@@ -193,7 +192,7 @@ class App(QtWidgets.QWidget):
 
 if __name__ == '__main__':
     import sys
-    api.install(avalon.fusion)
+    avalon.api.install(api)
 
     app = QtWidgets.QApplication(sys.argv)
     window = App()

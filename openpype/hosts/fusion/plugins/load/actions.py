@@ -13,7 +13,8 @@ class FusionSetFrameRangeLoader(api.Loader):
                 "imagesequence",
                 "render",
                 "yeticache",
-                "pointcache"]
+                "pointcache",
+                "render"]
     representations = ["*"]
 
     label = "Set frame range"
@@ -47,7 +48,8 @@ class FusionSetFrameRangeWithHandlesLoader(api.Loader):
                 "imagesequence",
                 "render",
                 "yeticache",
-                "pointcache"]
+                "pointcache",
+                "render"]
     representations = ["*"]
 
     label = "Set frame range (with handles)"
