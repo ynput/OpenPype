@@ -68,6 +68,7 @@ def install():
 
     # Set asset settings for the empty scene directly after launch of Houdini
     # so it initializes into the correct scene FPS, Frame Range, etc.
+    # todo: make sure this doesn't trigger when opening with last workfile
     _set_context_settings()
 
 
