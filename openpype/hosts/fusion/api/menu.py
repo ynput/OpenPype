@@ -14,6 +14,7 @@ from openpype.hosts.fusion.api import (
     set_framerange
 )
 
+
 class Spacer(QtWidgets.QWidget):
     def __init__(self, height, *args, **kwargs):
         super(Spacer, self).__init__(*args, **kwargs)
@@ -128,9 +129,11 @@ class OpenPypeMenu(QtWidgets.QWidget):
 
         # Create a wrapper callback that we only store
         # for as long as we want it to persist as callback
-        callback = lambda *args: fn()
-        self._callbacks.append(callback)
-        api.on(name, callback)
+        def _callback(*args):
+            fn()
+
+        self._callbacks.append(_callback)
+        api.on(name, _callback)
 
     def deregister_all_callbacks(self):
         self._callbacks[:] = []
