@@ -66,9 +66,9 @@ def install():
 
     sys.path.append(hou_pythonpath)
 
-    # Set asset FPS for the empty scene directly after launch of Houdini
-    # so it initializes into the correct scene FPS
-    _set_asset_fps()
+    # Set asset settings for the empty scene directly after launch of Houdini
+    # so it initializes into the correct scene FPS, Frame Range, etc.
+    _set_context_settings()
 
 
 def uninstall():
@@ -280,16 +280,30 @@ def on_open(*args):
 def on_new(_):
     """Set project resolution and fps when create a new file"""
     log.info("Running callback on new..")
-    _set_asset_fps()
+    _set_context_settings()
 
 
-def _set_asset_fps():
-    """Set Houdini scene FPS to the default required for current asset"""
+def _set_context_settings():
+    """Apply the project settings from the project definition
+
+    Settings can be overwritten by an asset if the asset.data contains
+    any information regarding those settings.
+
+    Examples of settings:
+        fps
+        resolution
+        renderer
+
+    Returns:
+        None
+    """
 
     # Set new scene fps
     fps = get_asset_fps()
     print("Setting scene FPS to %i" % fps)
     lib.set_scene_fps(fps)
+
+    lib.reset_framerange()
 
 
 def on_pyblish_instance_toggled(instance, new_value, old_value):
