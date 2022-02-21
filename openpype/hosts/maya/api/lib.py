@@ -2,7 +2,6 @@
 
 import os
 import sys
-import re
 import platform
 import uuid
 import math
