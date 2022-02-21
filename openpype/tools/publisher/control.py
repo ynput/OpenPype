@@ -982,6 +982,9 @@ class PublisherController:
 
         self._publish_next_process()
 
+    def reset_project_data_cache(self):
+        self._asset_docs_cache.reset()
+
 
 def collect_families_from_instances(instances, only_active=False):
     """Collect all families for passed publish instances.
