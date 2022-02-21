@@ -42,18 +42,23 @@ class MainThreadProcess(QtCore.QObject):
     This approach gives ability to update UI meanwhile plugin is in progress.
     """
 
-    timer_interval = 3
+    count_timeout = 2
 
     def __init__(self):
         super(MainThreadProcess, self).__init__()
         self._items_to_process = collections.deque()
 
         timer = QtCore.QTimer()
-        timer.setInterval(self.timer_interval)
+        timer.setInterval(0)
 
         timer.timeout.connect(self._execute)
 
         self._timer = timer
+        self._switch_counter = self.count_timeout
+
+    def process(self, func, *args, **kwargs):
+        item = MainThreadItem(func, *args, **kwargs)
+        self.add_item(item)
 
     def add_item(self, item):
         self._items_to_process.append(item)
@@ -61,6 +66,12 @@ class MainThreadProcess(QtCore.QObject):
     def _execute(self):
         if not self._items_to_process:
             return
+
+        if self._switch_counter > 0:
+            self._switch_counter -= 1
+            return
+
+        self._switch_counter = self.count_timeout
 
         item = self._items_to_process.popleft()
         item.process()
