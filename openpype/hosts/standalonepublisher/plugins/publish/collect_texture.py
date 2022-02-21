@@ -411,7 +411,6 @@ class CollectTextures(pyblish.api.ContextPlugin):
             Raises:
                 ValueError - if broken 'input_naming_groups'
         """
-        self.log.info("{} {} {}".format(name, input_naming_patterns, input_naming_groups))
         for input_pattern in input_naming_patterns:
             for cs in color_spaces:
                 pattern = input_pattern.replace('{color_space}', cs)
@@ -426,7 +425,6 @@ class CollectTextures(pyblish.api.ContextPlugin):
 
                     try:
                         parsed_value = regex_result[0][idx]
-                        self.log.info("par{}".format(parsed_value))
                         return parsed_value
                     except IndexError:
                         self.log.warning("Wrong index, probably "
