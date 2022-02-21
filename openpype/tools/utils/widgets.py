@@ -63,6 +63,29 @@ class ClickableFrame(BaseClickableFrame):
         self.clicked.emit()
 
 
+class ClickableLabel(QtWidgets.QLabel):
+    """Label that catch left mouse click and can trigger 'clicked' signal."""
+    clicked = QtCore.Signal()
+
+    def __init__(self, parent):
+        super(ClickableLabel, self).__init__(parent)
+
+        self._mouse_pressed = False
+
+    def mousePressEvent(self, event):
+        if event.button() == QtCore.Qt.LeftButton:
+            self._mouse_pressed = True
+        super(ClickableLabel, self).mousePressEvent(event)
+
+    def mouseReleaseEvent(self, event):
+        if self._mouse_pressed:
+            self._mouse_pressed = False
+            if self.rect().contains(event.pos()):
+                self.clicked.emit()
+
+        super(ClickableLabel, self).mouseReleaseEvent(event)
+
+
 class ExpandBtnLabel(QtWidgets.QLabel):
     """Label showing expand icon meant for ExpandBtn."""
     def __init__(self, parent):

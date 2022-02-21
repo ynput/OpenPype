@@ -2,11 +2,12 @@ from .widgets import (
     PlaceholderLineEdit,
     BaseClickableFrame,
     ClickableFrame,
+    ClickableLabel,
     ExpandBtn,
     PixmapLabel,
     IconButton,
 )
-
+from .views import DeselectableTreeView
 from .error_dialog import ErrorMessageBox
 from .lib import (
     WrappedCallbackItem,
@@ -24,9 +25,12 @@ __all__ = (
     "PlaceholderLineEdit",
     "BaseClickableFrame",
     "ClickableFrame",
+    "ClickableLabel",
     "ExpandBtn",
     "PixmapLabel",
     "IconButton",
+
+    "DeselectableTreeView",
 
     "ErrorMessageBox",
 
