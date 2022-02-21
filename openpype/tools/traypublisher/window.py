@@ -1,8 +1,21 @@
+"""Tray publisher is extending publisher tool.
+
+Adds ability to select project using overlay widget with list of projects.
+
+Tray publisher can be considered as host implementeation with creators and
+publishing plugins.
+"""
+
+import os
 from Qt import QtWidgets, QtCore
 
 import avalon.api
 from avalon import io
 from avalon.api import AvalonMongoDB
+from openpype.hosts.traypublisher import (
+    api as traypublisher
+)
+from openpype.hosts.traypublisher.api.pipeline import HostContext
 from openpype.tools.publisher import PublisherWindow
 from openpype.tools.utils.constants import PROJECT_NAME_ROLE
 from openpype.tools.utils.models import (
@@ -127,8 +140,10 @@ class TrayPublishWindow(PublisherWindow):
         self._resize_overlay()
 
     def _on_project_select(self, project_name):
+        # TODO register project specific plugin paths
         self.controller.save_changes()
         self.controller.reset_project_data_cache()
+        os.environ["AVALON_PROJECT"] = project_name
         io.Session["AVALON_PROJECT"] = project_name
         io.install()
 
@@ -142,6 +157,7 @@ class TrayPublishWindow(PublisherWindow):
 
 
 def main():
+    avalon.api.install(traypublisher)
     app = QtWidgets.QApplication([])
     window = TrayPublishWindow()
     window.show()
