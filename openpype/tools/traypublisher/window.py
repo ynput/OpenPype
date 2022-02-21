@@ -13,7 +13,6 @@ from avalon.api import AvalonMongoDB
 from openpype.hosts.traypublisher import (
     api as traypublisher
 )
-from openpype.hosts.traypublisher.api.pipeline import HostContext
 from openpype.tools.publisher import PublisherWindow
 from openpype.tools.utils.constants import PROJECT_NAME_ROLE
 from openpype.tools.utils.models import (

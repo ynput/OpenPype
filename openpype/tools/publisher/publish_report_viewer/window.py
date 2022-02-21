@@ -123,12 +123,12 @@ class LoadedFilesMopdel(QtGui.QStandardItemModel):
             return
 
         new_items = []
-        for filepath in filtered_paths:
+        for normalized_path in filtered_paths:
             try:
                 with open(normalized_path, "r") as stream:
                     data = json.load(stream)
                 report = PublishReport(data)
-            except Exception as exc:
+            except Exception:
                 # TODO handle errors
                 continue
 

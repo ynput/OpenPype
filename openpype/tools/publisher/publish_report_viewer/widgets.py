@@ -253,6 +253,7 @@ class DetailsPopup(QtWidgets.QDialog):
 
         self._center_widget = center_widget
         self._first_show = True
+        self._layout = layout
 
     def showEvent(self, event):
         layout = self.layout()
