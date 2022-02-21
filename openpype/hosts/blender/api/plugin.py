@@ -1,7 +1,7 @@
 """Shared functionality for pipeline plugins for Blender."""
 
 from pathlib import Path
-from typing import Dict, List, Optional
+from typing import Dict, List, Optional, Generator
 
 import bpy
 
@@ -40,6 +40,18 @@ def model_asset_name(
         name = f"{name}_{namespace}"
     return name
 
+def get_container_collections() -> list:
+        """Return all 'model' collections.
+
+        Check if the family is 'model' and if it doesn't have the
+        representation set. If the representation is set, it is a loaded model
+        and we don't want to publish it.
+        """
+        collections = []
+        for collection in bpy.data.collections:
+            if collection.get(AVALON_PROPERTY):
+                collections.append(collection)
+        return collections
 
 def get_unique_number(
         asset: str, subset: str
@@ -57,18 +69,18 @@ def get_unique_number(
     return f"{count:0>2}"
 
 
-def get_model_unique_number(name:str) -> str:
+def get_model_unique_number(current_container_name:str) -> str:
     """Return a unique number based on the asset name."""
     data_collections = bpy.data.collections
     container_names = [c.name for c in data_collections if c.get(AVALON_PROPERTY)]
     if container_names == []:
-        return "01"
+        return "001"
     count = 1
-    name = f"{name}_{count:0>2}"
+    name = f"{current_container_name}_{count:0>3}"
     while name in container_names:
         count += 1
-        name = f"{name}_{count:0>2}"
-    return f"{count:0>2}"
+        name = f"{current_container_name}_{count:0>3}"
+    return f"{count:0>3}"
 
 
 def prepare_data(data, container_name=None):

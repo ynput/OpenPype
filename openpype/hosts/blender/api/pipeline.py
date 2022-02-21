@@ -30,6 +30,7 @@ AVALON_INSTANCES = "AVALON_INSTANCES"
 AVALON_CONTAINERS = "AVALON_CONTAINERS"
 AVALON_PROPERTY = 'avalon'
 MODEL_TASK_NAME = 'Model'
+RIG_TASK_NAME = 'Rig'
 IS_HEADLESS = bpy.app.background
 
 log = Logger.get_logger(__name__)

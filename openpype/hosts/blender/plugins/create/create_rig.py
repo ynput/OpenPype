@@ -4,7 +4,7 @@ import bpy
 
 from avalon import api
 from openpype.hosts.blender.api import plugin, lib, ops
-from openpype.hosts.blender.api.pipeline import AVALON_INSTANCES
+from openpype.hosts.blender.api.pipeline import AVALON_INSTANCES,RIG_TASK_NAME
 
 
 class CreateRig(plugin.Creator):
@@ -21,29 +21,33 @@ class CreateRig(plugin.Creator):
         ops.execute_in_main_thread(mti)
 
     def _process(self):
-        # Get Instance Container or create it if it does not exist
-        instances = bpy.data.collections.get(AVALON_INSTANCES)
-        if not instances:
-            instances = bpy.data.collections.new(name=AVALON_INSTANCES)
-            bpy.context.scene.collection.children.link(instances)
-
-        # Create instance object
+        # get info from data and create name value
         asset = self.data["asset"]
         subset = self.data["subset"]
-        name = plugin.asset_name(asset, subset)
-        asset_group = bpy.data.objects.new(name=name, object_data=None)
-        asset_group.empty_display_type = 'SINGLE_ARROW'
-        instances.objects.link(asset_group)
-        self.data['task'] = api.Session.get('AVALON_TASK')
-        lib.imprint(asset_group, self.data)
+        # name = plugin.asset_name(asset, subset)
 
+        name = RIG_TASK_NAME
+        containers = plugin.get_container_collections()
+
+        # Get Instance Container or create it if it does not exist
+        instance = bpy.data.collections.get(name)
+        if not instance:
+            instance = bpy.data.collections.new(name=name)
+            bpy.context.scene.collection.children.link(instance)
+
+        self.data['task'] = api.Session.get('AVALON_TASK')
+        lib.imprint(instance, self.data)
+
+        for container in containers:
+            print(instance.name)
+            print(container.name)
+            instance.children.link(container)
+            bpy.context.scene.collection.children.unlink(container)
+        #
         # Add selected objects to instance
         if (self.options or {}).get("useSelection"):
-            bpy.context.view_layer.objects.active = asset_group
             selected = lib.get_selection()
             for obj in selected:
-                obj.select_set(True)
-            selected.append(asset_group)
-            bpy.ops.object.parent_set(keep_transform=True)
-
-        return asset_group
+                instance.objects.link(obj)
+                bpy.context.scene.collection.objects.unlink(obj)
+        return instance
