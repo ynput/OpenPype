@@ -6,11 +6,9 @@ Tray publisher can be considered as host implementeation with creators and
 publishing plugins.
 """
 
-import os
 from Qt import QtWidgets, QtCore
 
 import avalon.api
-from avalon import io
 from avalon.api import AvalonMongoDB
 from openpype.hosts.traypublisher import (
     api as traypublisher
@@ -143,9 +141,6 @@ class TrayPublishWindow(PublisherWindow):
         # TODO register project specific plugin paths
         self.controller.save_changes()
         self.controller.reset_project_data_cache()
-        os.environ["AVALON_PROJECT"] = project_name
-        io.Session["AVALON_PROJECT"] = project_name
-        io.install()
 
         self.reset()
         if not self.controller.instances:

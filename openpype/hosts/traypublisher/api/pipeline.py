@@ -3,6 +3,7 @@ import json
 import tempfile
 import atexit
 
+from avalon import io
 import avalon.api
 import pyblish.api
 
@@ -172,10 +173,8 @@ def install():
 
 
 def set_project_name(project_name):
-    # Deregister project specific plugins and register new project plugins
-    old_project_name = HostContext.get_project_name()
-    if old_project_name is not None and old_project_name != project_name:
-        pass
+    # TODO Deregister project specific plugins and register new project plugins
     os.environ["AVALON_PROJECT"] = project_name
     avalon.api.Session["AVALON_PROJECT"] = project_name
+    io.install()
     HostContext.set_project_name(project_name)
