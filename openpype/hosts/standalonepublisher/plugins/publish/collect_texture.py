@@ -414,7 +414,6 @@ class CollectTextures(pyblish.api.ContextPlugin):
         for input_pattern in input_naming_patterns:
             for cs in color_spaces:
                 pattern = input_pattern.replace('{color_space}', cs)
-                self.log.info("{} {}".format(pattern, name))
                 regex_result = re.findall(pattern, name)
                 if regex_result:
                     idx = list(input_naming_groups).index(key)
