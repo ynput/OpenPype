@@ -1,4 +1,3 @@
-from openpype import resources
 from openpype.hosts.traypublisher.api import pipeline
 from openpype.pipeline import (
     Creator,
@@ -45,7 +44,7 @@ class WorkfileCreator(Creator):
     ]
 
     def get_icon(self):
-        return resources.get_openpype_splash_filepath()
+        return "fa.file"
 
     def collect_instances(self):
         for instance_data in pipeline.list_instances():
