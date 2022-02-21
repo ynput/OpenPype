@@ -154,52 +154,8 @@ def maintained_selection():
             cmds.select(clear=True)
 
 
-def unique_name(name, format="%02d", namespace="", prefix="", suffix=""):
-    """Return unique `name`
-
-    The function takes into consideration an optional `namespace`
-    and `suffix`. The suffix is included in evaluating whether a
-    name exists - such as `name` + "_GRP" - but isn't included
-    in the returned value.
-
-    If a namespace is provided, only names within that namespace
-    are considered when evaluating whether the name is unique.
-
-    Arguments:
-        format (str, optional): The `name` is given a number, this determines
-            how this number is formatted. Defaults to a padding of 2.
-            E.g. my_name01, my_name02.
-        namespace (str, optional): Only consider names within this namespace.
-        suffix (str, optional): Only consider names with this suffix.
-
-    Example:
-        >>> name = cmds.createNode("transform", name="MyName")
-        >>> cmds.objExists(name)
-        True
-        >>> unique = unique_name(name)
-        >>> cmds.objExists(unique)
-        False
-
-    """
-
-    iteration = 1
-    unique = prefix + (name + format % iteration) + suffix
-
-    while cmds.objExists(namespace + ":" + unique):
-        iteration += 1
-        unique = prefix + (name + format % iteration) + suffix
-
-    if suffix:
-        return unique[:-len(suffix)]
-
-    return unique
-
-
 def unique_namespace(namespace, format="%02d", prefix="", suffix=""):
     """Return unique namespace
-
-    Similar to :func:`unique_name` but evaluating namespaces
-    as opposed to object names.
 
     Arguments:
         namespace (str): Name of namespace to consider
@@ -509,17 +465,6 @@ def lsattrs(attrs):
 
 
 @contextlib.contextmanager
-def without_extension():
-    """Use cmds.file with defaultExtensions=False"""
-    previous_setting = cmds.file(defaultExtensions=True, query=True)
-    try:
-        cmds.file(defaultExtensions=False)
-        yield
-    finally:
-        cmds.file(defaultExtensions=previous_setting)
-
-
-@contextlib.contextmanager
 def attribute_values(attr_values):
     """Remaps node attributes to values during context.
 
@@ -595,26 +540,6 @@ def evaluation(mode="off"):
         yield
     finally:
         cmds.evaluationManager(mode=original)
-
-
-@contextlib.contextmanager
-def no_refresh():
-    """Temporarily disables Maya's UI updates
-
-    Note:
-        This only disabled the main pane and will sometimes still
-        trigger updates in torn off panels.
-
-    """
-
-    pane = _get_mel_global('gMainPane')
-    state = cmds.paneLayout(pane, query=True, manage=True)
-    cmds.paneLayout(pane, edit=True, manage=False)
-
-    try:
-        yield
-    finally:
-        cmds.paneLayout(pane, edit=True, manage=state)
 
 
 @contextlib.contextmanager
@@ -1465,22 +1390,6 @@ def set_id(node, unique_id, overwrite=False):
     if not exists or overwrite:
         attr = "{0}.cbId".format(node)
         cmds.setAttr(attr, unique_id, type="string")
-
-
-def remove_id(node):
-    """Remove the id attribute from the input node.
-
-    Args:
-        node (str): The node name
-
-    Returns:
-        bool: Whether an id attribute was deleted
-
-    """
-    if cmds.attributeQuery("cbId", node=node, exists=True):
-        cmds.deleteAttr("{}.cbId".format(node))
-        return True
-    return False
 
 
 # endregion ID
