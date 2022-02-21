@@ -552,7 +552,7 @@ class MultiFilesWidget(QtWidgets.QFrame):
         self._update_visibility()
 
     def _update_visibility(self):
-        files_exists = self._files_model.rowCount() > 0
+        files_exists = self._files_proxy_model.rowCount() > 0
         self._files_view.setVisible(files_exists)
         self._empty_widget.setVisible(not files_exists)
 
