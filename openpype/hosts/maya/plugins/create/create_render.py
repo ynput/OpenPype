@@ -64,7 +64,6 @@ class CreateRender(plugin.Creator):
     label = "Render"
     family = "rendering"
     icon = "eye"
-    defaults = ["Main"]
 
     _token = None
     _user = None
@@ -86,7 +85,7 @@ class CreateRender(plugin.Creator):
         'vray': 'maya/<scene>/<Layer>/<Layer>',
         'arnold': 'maya/<Scene>/<RenderLayer>/<RenderLayer>{aov_separator}<RenderPass>',  # noqa
         'renderman': 'maya/<Scene>/<layer>/<layer>{aov_separator}<aov>',
-        'redshift': 'maya/<Scene>/<RenderLayer>/<RenderLayer>{aov_separator}<RenderPass>'  # noqa
+        'redshift': 'maya/<Scene>/<RenderLayer>/<RenderLayer>'  # noqa
     }
 
     _aov_chars = {
@@ -452,9 +451,7 @@ class CreateRender(plugin.Creator):
         if renderer == "vray":
             self._set_vray_settings(asset)
         if renderer == "redshift":
-            _ = self._set_renderer_option(
-                "RedshiftOptions", "{}.imageFormat", 1
-            )
+            cmds.setAttr("redshiftOptions.imageFormat", 1)
 
             # resolution
             cmds.setAttr(

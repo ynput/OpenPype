@@ -30,6 +30,7 @@ class Creator(PypeCreatorMixin, avalon.api.Creator):
     the node.
 
     """
+    defaults = ['Main']
 
     def __init__(self, *args, **kwargs):
         super(Creator, self).__init__(*args, **kwargs)

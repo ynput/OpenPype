@@ -143,9 +143,8 @@ class Window(QtWidgets.QDialog):
         # TODO add parent
         overview_page = QtWidgets.QWidget()
 
-        overview_instance_view = view.InstanceView(
-            animated=settings.Animated, parent=overview_page
-        )
+        overview_instance_view = view.InstanceView(parent=overview_page)
+        overview_instance_view.setAnimated(settings.Animated)
         overview_instance_delegate = delegate.InstanceDelegate(
             parent=overview_instance_view
         )
@@ -156,9 +155,8 @@ class Window(QtWidgets.QDialog):
         overview_instance_view.setItemDelegate(overview_instance_delegate)
         overview_instance_view.setModel(instance_sort_proxy)
 
-        overview_plugin_view = view.PluginView(
-            animated=settings.Animated, parent=overview_page
-        )
+        overview_plugin_view = view.PluginView(parent=overview_page)
+        overview_plugin_view.setAnimated(settings.Animated)
         overview_plugin_delegate = delegate.PluginDelegate(
             parent=overview_plugin_view
         )
@@ -307,21 +305,12 @@ class Window(QtWidgets.QDialog):
         on.setStartValue(0)
         on.setEndValue(1)
 
-        off = QtCore.QPropertyAnimation(info_effect, b"opacity")
-        off.setDuration(0)
-        off.setStartValue(1)
-        off.setEndValue(0)
-
         fade = QtCore.QPropertyAnimation(info_effect, b"opacity")
         fade.setDuration(500)
         fade.setStartValue(1.0)
         fade.setEndValue(0.0)
 
         animation_info_msg = QtCore.QSequentialAnimationGroup()
-        animation_info_msg.addAnimation(on)
-        animation_info_msg.addPause(50)
-        animation_info_msg.addAnimation(off)
-        animation_info_msg.addPause(50)
         animation_info_msg.addAnimation(on)
         animation_info_msg.addPause(2000)
         animation_info_msg.addAnimation(fade)
@@ -1023,9 +1012,11 @@ class Window(QtWidgets.QDialog):
                 {GroupStates.HasFinished: True},
                 Roles.PublishFlagsRole
             )
+            self.overview_plugin_view.setAnimated(False)
             self.overview_plugin_view.collapse(group_index)
 
     def on_was_stopped(self):
+        self.overview_plugin_view.setAnimated(settings.Animated)
         errored = self.controller.errored
         if self.controller.collect_state == 0:
             self.footer_button_play.setEnabled(False)
@@ -1048,6 +1039,8 @@ class Window(QtWidgets.QDialog):
             and not self.controller.stopped
         )
         self.button_suspend_logs.setEnabled(suspend_log_bool)
+        if not self.isVisible():
+            self.setVisible(True)
 
     def on_was_skipped(self, plugin):
         plugin_item = self.plugin_model.plugin_items[plugin.id]
@@ -1057,6 +1050,7 @@ class Window(QtWidgets.QDialog):
         )
 
     def on_was_finished(self):
+        self.overview_plugin_view.setAnimated(settings.Animated)
         self.footer_button_play.setEnabled(False)
         self.footer_button_validate.setEnabled(False)
         self.footer_button_reset.setEnabled(True)
@@ -1119,6 +1113,9 @@ class Window(QtWidgets.QDialog):
             self.perspective_widget.update_context(
                 plugin_item, instance_item
             )
+
+        if not self.isVisible():
+            self.setVisible(True)
 
     # -------------------------------------------------------------------------
     #
@@ -1313,9 +1310,9 @@ class Window(QtWidgets.QDialog):
         self.animation_info_msg.stop()
         self.animation_info_msg.start()
 
-        # TODO(marcus): Should this be configurable? Do we want
-        # the shell to fill up with these messages?
-        util.u_print(message)
+        if settings.PrintInfo:
+            # Print message to console
+            util.u_print(message)
 
     def warning(self, message):
         """Block processing and print warning until user hits "Continue"

@@ -21,9 +21,6 @@ FINISHED_OK_STATUS = "finished_ok"
 
 def headless_publish(log, close_plugin_name=None, is_test=False):
     """Runs publish in a opened host with a context and closes Python process.
-
-        Host is being closed via ClosePS pyblish plugin which triggers 'exit'
-        method in ConsoleTrayApp.
     """
     if not is_test:
         dbcon = get_webpublish_conn()
