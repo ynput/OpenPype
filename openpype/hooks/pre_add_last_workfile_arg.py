@@ -39,6 +39,5 @@ class AddLastWorkfileToLaunchArgs(PreLaunchHook):
             self.log.info("Current context does not have any workfile yet.")
             return
 
-        if last_workfile:
-            # Add path to workfile to arguments
-            self.launch_context.launch_args.append(last_workfile)
+        # Add path to workfile to arguments
+        self.launch_context.launch_args.append(last_workfile)
