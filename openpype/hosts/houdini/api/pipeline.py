@@ -281,6 +281,14 @@ def on_open(*args):
 
 def on_new(_):
     """Set project resolution and fps when create a new file"""
+
+    if hou.hipFile.isLoadingHipFile():
+        # This event also triggers when Houdini opens a file due to the
+        # new event being registered to 'afterClear'. As such we can skip
+        # 'new' logic if the user is opening a file anyway
+        log.debug("Skipping on new callback due to scene being opened.")
+        return
+
     log.info("Running callback on new..")
     _set_context_settings()
 
