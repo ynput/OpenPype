@@ -4,6 +4,7 @@ import logging
 import contextlib
 
 import hou
+import hdefereval
 
 import pyblish.api
 import avalon.api
@@ -282,6 +283,15 @@ def on_new(_):
     """Set project resolution and fps when create a new file"""
     log.info("Running callback on new..")
     _set_context_settings()
+
+    # It seems that the current frame always gets reset to frame 1 on
+    # new scene. So we enforce current frame to be at the start of the playbar
+    # with execute deferred
+    def _enforce_start_frame():
+        start = hou.playbar.playbackRange()[0]
+        hou.setFrame(start)
+
+    hdefereval.executeDeferred(_enforce_start_frame)
 
 
 def _set_context_settings():
