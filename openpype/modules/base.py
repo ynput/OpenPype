@@ -41,6 +41,7 @@ DEFAULT_OPENPYPE_MODULES = (
     "project_manager_action",
     "settings_action",
     "standalonepublish_action",
+    "traypublish_action",
     "job_queue",
     "timers_manager",
 )
@@ -844,6 +845,7 @@ class TrayModulesManager(ModulesManager):
         "avalon",
         "clockify",
         "standalonepublish_tool",
+        "traypublish_tool",
         "log_viewer",
         "local_settings",
         "settings"

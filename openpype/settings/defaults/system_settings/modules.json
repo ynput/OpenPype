@@ -191,6 +191,9 @@
     "standalonepublish_tool": {
         "enabled": true
     },
+    "traypublish_tool": {
+        "enabled": false
+    },
     "project_manager": {
         "enabled": true
     },
