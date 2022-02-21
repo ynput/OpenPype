@@ -169,11 +169,11 @@ def create_unreal_project(project_name: str,
                           env: dict = None) -> None:
     """This will create `.uproject` file at specified location.
 
-    As there is no way I know to create project via command line, this is
-    easiest option. Unreal project file is basically JSON file. If we find
-    `AVALON_UNREAL_PLUGIN` environment variable we assume this is location
-    of Avalon Integration Plugin and we copy its content to project folder
-    and enable this plugin.
+    As there is no way I know to create a project via command line, this is
+    easiest option. Unreal project file is basically a JSON file. If we find
+    the `OPENPYPE_UNREAL_PLUGIN` environment variable we assume this is the
+    location of the Integration Plugin and we copy its content to the project
+    folder and enable this plugin.
 
     Args:
         project_name (str): Name of the project.
@@ -254,14 +254,14 @@ def create_unreal_project(project_name: str,
             {"Name": "PythonScriptPlugin", "Enabled": True},
             {"Name": "EditorScriptingUtilities", "Enabled": True},
             {"Name": "SequencerScripting", "Enabled": True},
-            {"Name": "Avalon", "Enabled": True}
+            {"Name": "OpenPype", "Enabled": True}
         ]
     }
 
     if dev_mode or preset["dev_mode"]:
-        # this will add project module and necessary source file to make it
-        # C++ project and to (hopefully) make Unreal Editor to compile all
-        # sources at start
+        # this will add the project module and necessary source file to
+        # make it a C++ project and to (hopefully) make Unreal Editor to
+        # compile all # sources at start
 
         data["Modules"] = [{
             "Name": project_name,
