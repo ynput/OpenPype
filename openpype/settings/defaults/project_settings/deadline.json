@@ -36,6 +36,9 @@
                 ],
                 "celaction": [
                     ".*"
+                ],
+                "harmony": [
+                    ".*"
                 ]
             }
         },
@@ -90,7 +93,8 @@
             "primary_pool": "",
             "secondary_pool": "",
             "group": "",
-            "department": ""
+            "department": "",
+            "multiprocess": true
         }
     }
 }

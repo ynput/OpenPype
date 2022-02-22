@@ -110,19 +110,19 @@ class FlameMenuProjectConnect(_FlameMenuApp):
         menu = deepcopy(self.menu)
 
         menu['actions'].append({
-            "name": "Workfiles ...",
+            "name": "Workfiles...",
             "execute": lambda x: self.tools_helper.show_workfiles()
         })
         menu['actions'].append({
-            "name": "Load ...",
+            "name": "Load...",
             "execute": lambda x: self.tools_helper.show_loader()
         })
         menu['actions'].append({
-            "name": "Manage ...",
+            "name": "Manage...",
             "execute": lambda x: self.tools_helper.show_scene_inventory()
         })
         menu['actions'].append({
-            "name": "Library ...",
+            "name": "Library...",
             "execute": lambda x: self.tools_helper.show_library_loader()
         })
         return menu
@@ -164,24 +164,27 @@ class FlameMenuTimeline(_FlameMenuApp):
         menu = deepcopy(self.menu)
 
         menu['actions'].append({
-            "name": "Create ...",
+            "name": "Create...",
             "execute": lambda x: callback_selection(
                 x, self.tools_helper.show_creator)
         })
         menu['actions'].append({
-            "name": "Publish ...",
+            "name": "Publish...",
             "execute": lambda x: callback_selection(
                 x, self.tools_helper.show_publish)
         })
         menu['actions'].append({
-            "name": "Load ...",
+            "name": "Load...",
             "execute": lambda x: self.tools_helper.show_loader()
         })
         menu['actions'].append({
-            "name": "Manage ...",
+            "name": "Manage...",
             "execute": lambda x: self.tools_helper.show_scene_inventory()
         })
-
+        menu['actions'].append({
+            "name": "Library...",
+            "execute": lambda x: self.tools_helper.show_library_loader()
+        })
         return menu
 
     def refresh(self, *args, **kwargs):

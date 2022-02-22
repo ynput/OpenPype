@@ -182,8 +182,11 @@ def get_output_parameter(node):
         return node.parm("filename")
     elif node_type == "comp":
         return node.parm("copoutput")
-    else:
-        raise TypeError("Node type '%s' not supported" % node_type)
+    elif node_type == "arnold":
+        if node.evalParm("ar_ass_export_enable"):
+            return node.parm("ar_ass_file")
+
+    raise TypeError("Node type '%s' not supported" % node_type)
 
 
 @contextmanager
@@ -403,31 +406,46 @@ def imprint(node, data):
     node.setParmTemplateGroup(parm_group)
 
 
-def lsattr(attr, value=None):
+def lsattr(attr, value=None, root="/"):
+    """Return nodes that have `attr`
+     When `value` is not None it will only return nodes matching that value
+     for the given attribute.
+     Args:
+         attr (str): Name of the attribute (hou.Parm)
+         value (object, Optional): The value to compare the attribute too.
+            When the default None is provided the value check is skipped.
+        root (str): The root path in Houdini to search in.
+    Returns:
+        list: Matching nodes that have attribute with value.
+    """
     if value is None:
-        nodes = list(hou.node("/obj").allNodes())
+        # Use allSubChildren() as allNodes() errors on nodes without
+        # permission to enter without a means to continue of querying
+        # the rest
+        nodes = hou.node(root).allSubChildren()
         return [n for n in nodes if n.parm(attr)]
     return lsattrs({attr: value})
 
 
-def lsattrs(attrs):
+def lsattrs(attrs, root="/"):
     """Return nodes matching `key` and `value`
-
     Arguments:
         attrs (dict): collection of attribute: value
-
+        root (str): The root path in Houdini to search in.
     Example:
         >> lsattrs({"id": "myId"})
         ["myNode"]
         >> lsattr("id")
         ["myNode", "myOtherNode"]
-
     Returns:
-        list
+        list: Matching nodes that have attribute with value.
     """
 
     matches = set()
-    nodes = list(hou.node("/obj").allNodes())  # returns generator object
+    # Use allSubChildren() as allNodes() errors on nodes without
+    # permission to enter without a means to continue of querying
+    # the rest
+    nodes = hou.node(root).allSubChildren()
     for node in nodes:
         for attr in attrs:
             if not node.parm(attr):
@@ -524,3 +542,37 @@ def maintained_selection():
         if previous_selection:
             for node in previous_selection:
                 node.setSelected(on=True)
+
+
+def reset_framerange():
+    """Set frame range to current asset"""
+
+    asset_name = api.Session["AVALON_ASSET"]
+    asset = io.find_one({"name": asset_name, "type": "asset"})
+
+    frame_start = asset["data"].get("frameStart")
+    frame_end = asset["data"].get("frameEnd")
+    # Backwards compatibility
+    if frame_start is None or frame_end is None:
+        frame_start = asset["data"].get("edit_in")
+        frame_end = asset["data"].get("edit_out")
+
+    if frame_start is None or frame_end is None:
+        log.warning("No edit information found for %s" % asset_name)
+        return
+
+    handles = asset["data"].get("handles") or 0
+    handle_start = asset["data"].get("handleStart")
+    if handle_start is None:
+        handle_start = handles
+
+    handle_end = asset["data"].get("handleEnd")
+    if handle_end is None:
+        handle_end = handles
+
+    frame_start -= int(handle_start)
+    frame_end += int(handle_end)
+
+    hou.playbar.setFrameRange(frame_start, frame_end)
+    hou.playbar.setPlaybackRange(frame_start, frame_end)
+    hou.setFrame(frame_start)

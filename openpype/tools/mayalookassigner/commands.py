@@ -87,7 +87,7 @@ def get_all_asset_nodes():
 
         # Gather all information
         container_name = container["objectName"]
-        nodes += cmds.sets(container_name, query=True, nodesOnly=True) or []
+        nodes += lib.get_container_members(container_name)
 
     nodes = list(set(nodes))
     return nodes
@@ -195,7 +195,7 @@ def remove_unused_looks():
     unused = []
     for container in host.ls():
         if container['loader'] == "LookLoader":
-            members = cmds.sets(container['objectName'], query=True)
+            members = lib.get_container_members(container['objectName'])
             look_sets = cmds.ls(members, type="objectSet")
             for look_set in look_sets:
                 # If the set is used than we consider this look *in use*

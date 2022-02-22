@@ -303,7 +303,7 @@ class AssetModel(QtGui.QStandardItemModel):
 
         self._doc_fetched.connect(self._on_docs_fetched)
 
-        self._items_with_color_by_id = {}
+        self._item_ids_with_color = set()
         self._items_by_asset_id = {}
 
         self._last_project_name = None
@@ -381,9 +381,11 @@ class AssetModel(QtGui.QStandardItemModel):
         self._stop_fetch_thread()
 
     def clear_underlines(self):
-        for asset_id in tuple(self._items_with_color_by_id.keys()):
-            item = self._items_with_color_by_id.pop(asset_id)
-            item.setData(None, ASSET_UNDERLINE_COLORS_ROLE)
+        for asset_id in set(self._item_ids_with_color):
+            self._item_ids_with_color.remove(asset_id)
+            item = self._items_by_asset_id.get(asset_id)
+            if item is not None:
+                item.setData(None, ASSET_UNDERLINE_COLORS_ROLE)
 
     def set_underline_colors(self, colors_by_asset_id):
         self.clear_underlines()
@@ -393,12 +395,13 @@ class AssetModel(QtGui.QStandardItemModel):
             if item is None:
                 continue
             item.setData(colors, ASSET_UNDERLINE_COLORS_ROLE)
+            self._item_ids_with_color.add(asset_id)
 
     def _clear_items(self):
         root_item = self.invisibleRootItem()
         root_item.removeRows(0, root_item.rowCount())
         self._items_by_asset_id = {}
-        self._items_with_color_by_id = {}
+        self._item_ids_with_color = set()
 
     def _on_docs_fetched(self):
         # Make sure refreshing did not change

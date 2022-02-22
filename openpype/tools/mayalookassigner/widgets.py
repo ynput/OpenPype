@@ -16,8 +16,6 @@ from . import views
 
 from maya import cmds
 
-MODELINDEX = QtCore.QModelIndex()
-
 
 class AssetOutliner(QtWidgets.QWidget):
     refreshed = QtCore.Signal()

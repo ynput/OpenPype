@@ -128,7 +128,7 @@ class SyncLinksToAvalon(BaseEvent):
 
     def _get_mongo_ids_by_ftrack_ids(self, session, attr_id, ftrack_ids):
         output = query_custom_attributes(
-            session, [attr_id], ftrack_ids
+            session, [attr_id], ftrack_ids, True
         )
         mongo_id_by_ftrack_id = {}
         for item in output:

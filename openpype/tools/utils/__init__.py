@@ -10,7 +10,10 @@ from .widgets import (
 from .error_dialog import ErrorMessageBox
 from .lib import (
     WrappedCallbackItem,
-    paint_image_with_color
+    paint_image_with_color,
+    get_warning_pixmap,
+    set_style_property,
+    DynamicQThread,
 )
 
 from .models import (
@@ -29,6 +32,9 @@ __all__ = (
 
     "WrappedCallbackItem",
     "paint_image_with_color",
+    "get_warning_pixmap",
+    "set_style_property",
+    "DynamicQThread",
 
     "RecursiveSortFilterProxyModel",
 )

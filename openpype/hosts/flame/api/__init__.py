@@ -28,7 +28,8 @@ from .lib import (
     get_reformated_filename,
     get_frame_from_filename,
     get_padding_from_filename,
-    maintained_object_duplication
+    maintained_object_duplication,
+    get_clip_segment
 )
 from .utils import (
     setup,
@@ -52,7 +53,10 @@ from .menu import (
 )
 from .plugin import (
     Creator,
-    PublishableClip
+    PublishableClip,
+    ClipLoader,
+    OpenClipSolver
+
 )
 from .workio import (
     open_file,
@@ -96,6 +100,7 @@ __all__ = [
     "get_frame_from_filename",
     "get_padding_from_filename",
     "maintained_object_duplication",
+    "get_clip_segment",
 
     # pipeline
     "install",
@@ -122,6 +127,8 @@ __all__ = [
     # plugin
     "Creator",
     "PublishableClip",
+    "ClipLoader",
+    "OpenClipSolver",
 
     # workio
     "open_file",

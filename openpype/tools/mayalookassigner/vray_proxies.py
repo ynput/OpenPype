@@ -10,11 +10,9 @@ import six
 import alembic.Abc
 from maya import cmds
 
-import avalon.io as io
-import avalon.maya
-import avalon.api as api
+from avalon import io, api
 
-import openpype.hosts.maya.api.lib as lib
+from openpype.hosts.maya.api import lib
 
 
 log = logging.getLogger(__name__)
@@ -203,10 +201,12 @@ def load_look(version_id):
             raise RuntimeError("Could not find LookLoader, this is a bug")
 
         # Reference the look file
-        with avalon.maya.maintained_selection():
+        with lib.maintained_selection():
             container_node = api.load(loader, look_representation)
 
-    return cmds.sets(container_node, query=True)
+    # Get container members
+    shader_nodes = lib.get_container_members(container_node)
+    return shader_nodes
 
 
 def get_latest_version(asset_id, subset):
