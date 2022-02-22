@@ -1,8 +1,20 @@
 import pyblish.api
 
-import openpype.hosts.maya.api.action
 from avalon import io
-import openpype.api
+
+
+def validate_subset_exists(asset_name, subset_name):
+    """Check subset exists in the database under the asset"""
+
+    asset = io.find_one({"type": "asset", "name": asset_name},
+                        {"_id": True})
+    is_valid = io.find_one({
+        "type": "subset",
+        "name": subset_name,
+        "parent": asset["_id"]
+    }, {"_id": True})
+
+    return is_valid
 
 
 class ValidateRenderLayerAOVs(pyblish.api.InstancePlugin):
@@ -25,34 +37,18 @@ class ValidateRenderLayerAOVs(pyblish.api.InstancePlugin):
     label = "Render Passes / AOVs Are Registered"
     hosts = ["maya"]
     families = ["renderlayer"]
-    actions = [openpype.hosts.maya.api.action.SelectInvalidAction]
 
     def process(self, instance):
-        invalid = self.get_invalid(instance)
-        if invalid:
-            raise RuntimeError("Found unregistered subsets: {}".format(invalid))
-
-    def get_invalid(self, instance):
-
-        invalid = []
 
         asset_name = instance.data["asset"]
         render_passses = instance.data.get("renderPasses", [])
+        invalid = []
         for render_pass in render_passses:
-            is_valid = self.validate_subset_registered(asset_name, render_pass)
+            is_valid = validate_subset_exists(asset_name, render_pass)
             if not is_valid:
                 invalid.append(render_pass)
 
-        return invalid
-
-    def validate_subset_registered(self, asset_name, subset_name):
-        """Check if subset is registered in the database under the asset"""
-
-        asset = io.find_one({"type": "asset", "name": asset_name})
-        is_valid = io.find_one({
-            "type": "subset",
-            "name": subset_name,
-            "parent": asset["_id"]
-        })
-
-        return is_valid
+        invalid = self.get_invalid(instance)
+        if invalid:
+            raise RuntimeError("Found unregistered subsets: "
+                               "{}".format(invalid))
