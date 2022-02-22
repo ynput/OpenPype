@@ -12,6 +12,7 @@ class Creator(PypeCreatorMixin, avalon.api.Creator):
     created node.
     """
 
+    defaults = ["Main"]
     node_type = "COMPOSITE"
 
     def setup_node(self, node):

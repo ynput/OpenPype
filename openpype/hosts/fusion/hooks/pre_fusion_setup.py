@@ -1,7 +1,5 @@
 import os
-import importlib
 from openpype.lib import PreLaunchHook, ApplicationLaunchFailed
-from openpype.hosts.fusion.api import utils
 from openpype.hosts.fusion import HOST_DIR
 
 
@@ -26,10 +24,10 @@ class FusionPrelaunch(PreLaunchHook):
                 break
         else:
             raise ApplicationLaunchFailed(
-                "Python 3.6 is not installed at the provided path: \n"
-                "Either make sure the 'environments/fusion.json' has "
-                "'PYTHON36' set correctly or make sure Python 3.6 is installed "
-                f"in the given path.\n\nPYTHON36: {fusion_python36_home}"
+                "Python 3.6 is not installed at the provided path.\n"
+                "Either make sure the environments in fusion settings has"
+                " 'PYTHON36' set corectly or make sure Python 3.6 is installed"
+                f" in the given path.\n\nPYTHON36: {fusion_python36_home}"
             )
 
         self.log.info(f"Setting {py36_var}: '{py36_dir}'...")
@@ -44,18 +42,3 @@ class FusionPrelaunch(PreLaunchHook):
         prefs = os.path.join(HOST_DIR, "deploy", "fusion_shared.prefs")
         self.log.info(f"Setting {pref_var}: {prefs}")
         self.launch_context.env[pref_var] = prefs
-
-        try:
-            __import__("avalon.fusion")
-            __import__("pyblish")
-
-        except ImportError:
-            self.log.warning(
-                "pyblish: Could not load Fusion integration.",
-                exc_info=True
-            )
-
-        else:
-            # Resolve Setup integration
-            importlib.reload(utils)
-            utils.setup(self.launch_context.env)

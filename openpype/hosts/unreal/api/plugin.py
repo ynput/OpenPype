@@ -4,7 +4,7 @@ import openpype.api
 
 class Creator(openpype.api.Creator):
     """This serves as skeleton for future OpenPype specific functionality"""
-    pass
+    defaults = ['Main']
 
 
 class Loader(api.Loader):

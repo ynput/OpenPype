@@ -64,7 +64,6 @@ class CreateRender(plugin.Creator):
     label = "Render"
     family = "rendering"
     icon = "eye"
-    defaults = ["Main"]
 
     _token = None
     _user = None
