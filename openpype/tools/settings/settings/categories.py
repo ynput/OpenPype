@@ -383,7 +383,7 @@ class SettingsCategoryWidget(QtWidgets.QWidget):
 
     def change_path(self, path):
         """Change path and go to widget."""
-        self.breadcrumbs_widget.change_path(path)
+        self.breadcrumbs_bar.change_path(path)
 
     def set_path(self, path):
         """Called from clicked widget."""
