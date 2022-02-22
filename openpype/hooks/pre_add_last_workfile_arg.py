@@ -18,6 +18,7 @@ class AddLastWorkfileToLaunchArgs(PreLaunchHook):
         "nukex",
         "hiero",
         "nukestudio",
+        "fusion",
         "blender",
         "photoshop",
         "tvpaint",
