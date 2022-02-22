@@ -736,7 +736,10 @@ class AssetRecursiveSortFilterModel(QtCore.QSortFilterProxyModel):
         valid = True
         if self._name_filter:
             name = model.data(source_index, ASSET_NAME_ROLE)
-            if not re.search(self._name_filter, name, re.IGNORECASE):
+            if (
+                name is None
+                or not re.search(self._name_filter, name, re.IGNORECASE)
+            ):
                 valid = False
 
         if valid and self._task_types_filter:
