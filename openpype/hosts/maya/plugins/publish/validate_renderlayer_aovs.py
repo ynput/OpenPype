@@ -48,7 +48,6 @@ class ValidateRenderLayerAOVs(pyblish.api.InstancePlugin):
             if not is_valid:
                 invalid.append(render_pass)
 
-        invalid = self.get_invalid(instance)
         if invalid:
             raise RuntimeError("Found unregistered subsets: "
                                "{}".format(invalid))
