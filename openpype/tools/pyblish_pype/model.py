@@ -428,12 +428,12 @@ class PluginModel(QtGui.QStandardItemModel):
         self.clear()
 
     def append(self, plugin):
-        plugin_groups = self.controller.order_groups.groups()
+        plugin_groups = self.controller.order_groups.groups
         label = None
         order = None
-        for _order, _label in reversed(plugin_groups.items()):
+        for _order, item in reversed(plugin_groups.items()):
             if _order is None or plugin.order < _order:
-                label = _label
+                label = item["label"]
                 order = _order
             else:
                 break
