@@ -367,6 +367,11 @@
                             "type": "text",
                             "key": "department",
                             "label": "Department"
+                        },
+                        {
+                            "type": "boolean",
+                            "key": "multiprocess",
+                            "label": "Multiprocess"
                         }
                     ]
                 },

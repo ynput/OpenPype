@@ -7,9 +7,10 @@ from openpype.lib import (
     PreLaunchHook,
     get_openpype_username
 )
-from openpype.api import get_anatomy_settings
+from openpype.lib.applications import (
+    ApplicationLaunchFailed
+)
 from openpype.hosts import flame as opflame
-import openpype.hosts.flame.api as opfapi
 import openpype
 from pprint import pformat
 
@@ -39,7 +40,16 @@ class FlamePrelaunch(PreLaunchHook):
         project_name = project_doc["name"]
 
         # get image io
-        project_anatomy = get_anatomy_settings(project_name)
+        project_anatomy = self.data["anatomy"]
+
+        # make sure anatomy settings are having flame key
+        if not project_anatomy["imageio"].get("flame"):
+            raise ApplicationLaunchFailed((
+                "Anatomy project settings are missing `flame` key. "
+                "Please make sure you remove project overides on "
+                "Anatomy Image io")
+            )
+
         imageio_flame = project_anatomy["imageio"]["flame"]
 
         # get user name and host name
@@ -88,8 +98,6 @@ class FlamePrelaunch(PreLaunchHook):
         self._add_pythonpath()
 
         app_arguments = self._get_launch_arguments(data_to_script)
-
-        # opfapi.setup(self.launch_context.env)
 
         self.launch_context.launch_args.extend(app_arguments)
 

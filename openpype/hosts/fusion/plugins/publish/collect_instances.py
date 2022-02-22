@@ -34,7 +34,7 @@ class CollectInstances(pyblish.api.ContextPlugin):
     def process(self, context):
         """Collect all image sequence tools"""
 
-        from avalon.fusion.lib import get_frame_path
+        from openpype.hosts.fusion.api.lib import get_frame_path
 
         comp = context.data["currentComp"]
 

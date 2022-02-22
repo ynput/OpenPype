@@ -396,9 +396,7 @@ class LibraryLoaderWindow(QtWidgets.QDialog):
             self._versionschanged()
             return
 
-        selected_subsets = self._subsets_widget.selected_subsets(
-            _merged=True, _other=False
-        )
+        selected_subsets = self._subsets_widget.get_selected_merge_items()
 
         asset_colors = {}
         asset_ids = []
@@ -423,35 +421,14 @@ class LibraryLoaderWindow(QtWidgets.QDialog):
         self._versionschanged()
 
     def _versionschanged(self):
-        selection = self._subsets_widget.view.selectionModel()
-
-        # Active must be in the selected rows otherwise we
-        # assume it's not actually an "active" current index.
-        version_docs = None
+        items = self._subsets_widget.get_selected_subsets()
         version_doc = None
-        active = selection.currentIndex()
-        rows = selection.selectedRows(column=active.column())
-        if active and active in rows:
-            item = active.data(self._subsets_widget.model.ItemRole)
-            if (
-                item is not None
-                and not (item.get("isGroup") or item.get("isMerged"))
-            ):
-                version_doc = item["version_document"]
-
-        if rows:
-            version_docs = []
-            for index in rows:
-                if not index or not index.isValid():
-                    continue
-                item = index.data(self._subsets_widget.model.ItemRole)
-                if (
-                    item is None
-                    or item.get("isGroup")
-                    or item.get("isMerged")
-                ):
-                    continue
-                version_docs.append(item["version_document"])
+        version_docs = []
+        for item in items:
+            doc = item["version_document"]
+            version_docs.append(doc)
+            if version_doc is None:
+                version_doc = doc
 
         self._version_info_widget.set_version(version_doc)
 
