@@ -20,7 +20,7 @@ class OpenPypeContextSelector:
 
     def __init__(self):
         self.job = rr.getJob()
-        self.context = None
+        self.context = {}
 
         self.openpype_executable = "openpype_gui"
         if platform.system().lower() == "windows":
