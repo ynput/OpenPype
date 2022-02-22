@@ -1138,8 +1138,8 @@ class Window(QtWidgets.QDialog):
         if self.intent_model.has_items:
             self.intent_box.setCurrentIndex(self.intent_model.default_index)
 
-        if self.comment_box.text():
-            self.comment_box.placeholder.setVisible(False)
+        self.comment_box.placeholder.setVisible(False)
+        if not self.comment_box.text():
             self.comment_box.placeholder.setVisible(True)
         # Launch controller reset
         self.controller.reset()
