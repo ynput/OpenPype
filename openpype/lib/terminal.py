@@ -49,8 +49,8 @@ class Terminal:
         """
 
         from openpype.lib import env_value_to_bool
-        use_colors = env_value_to_bool(
-            "OPENPYPE_LOG_NO_COLORS", default=Terminal.use_colors
+        use_colors = not env_value_to_bool(
+            "OPENPYPE_LOG_NO_COLORS", default=not Terminal.use_colors
         )
         if not use_colors:
             Terminal.use_colors = use_colors
