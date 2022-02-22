@@ -1,11 +1,18 @@
 # -*- coding: utf-8 -*-
 """Loader for Redshift proxy."""
-from avalon.maya import lib
+import os
+import clique
+
+import maya.cmds as cmds
+
 from avalon import api
 from openpype.api import get_project_settings
-import os
-import maya.cmds as cmds
-import clique
+from openpype.hosts.maya.api.lib import (
+    namespaced,
+    maintained_selection,
+    unique_namespace
+)
+from openpype.hosts.maya.api.pipeline import containerise
 
 
 class RedshiftProxyLoader(api.Loader):
@@ -21,17 +28,13 @@ class RedshiftProxyLoader(api.Loader):
 
     def load(self, context, name=None, namespace=None, options=None):
         """Plugin entry point."""
-
-        from avalon.maya.pipeline import containerise
-        from openpype.hosts.maya.api.lib import namespaced
-
         try:
             family = context["representation"]["context"]["family"]
         except ValueError:
             family = "redshiftproxy"
 
         asset_name = context['asset']["name"]
-        namespace = namespace or lib.unique_namespace(
+        namespace = namespace or unique_namespace(
             asset_name + "_",
             prefix="_" if asset_name[0].isdigit() else "",
             suffix="_",
@@ -40,7 +43,7 @@ class RedshiftProxyLoader(api.Loader):
         # Ensure Redshift for Maya is loaded.
         cmds.loadPlugin("redshift4maya", quiet=True)
 
-        with lib.maintained_selection():
+        with maintained_selection():
             cmds.namespace(addNamespace=namespace)
             with namespaced(namespace, new=False):
                 nodes, group_node = self.create_rs_proxy(

@@ -377,7 +377,15 @@ def _write_instances(*args, **kwargs):
 
 
 def ls():
-    return get_workfile_metadata(SECTION_NAME_CONTAINERS)
+    output = get_workfile_metadata(SECTION_NAME_CONTAINERS)
+    if output:
+        for item in output:
+            if "objectName" not in item and "members" in item:
+                members = item["members"]
+                if isinstance(members, list):
+                    members = "|".join(members)
+                item["objectName"] = members
+    return output
 
 
 def on_instance_toggle(instance, old_value, new_value):

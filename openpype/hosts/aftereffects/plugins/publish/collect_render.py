@@ -20,6 +20,7 @@ class AERenderInstance(RenderInstance):
     fps = attr.ib(default=None)
     projectEntity = attr.ib(default=None)
     stagingDir = attr.ib(default=None)
+    app_version = attr.ib(default=None)
 
 
 class CollectAERender(abstract_collect_render.AbstractCollectRender):
@@ -40,6 +41,9 @@ class CollectAERender(abstract_collect_render.AbstractCollectRender):
 
     def get_instances(self, context):
         instances = []
+
+        app_version = self.stub.get_app_version()
+        app_version = app_version[0:4]
 
         current_file = context.data["currentFile"]
         version = context.data["version"]
@@ -105,7 +109,8 @@ class CollectAERender(abstract_collect_render.AbstractCollectRender):
                     frameEnd=frameEnd,
                     frameStep=1,
                     toBeRenderedOn='deadline',
-                    fps=fps
+                    fps=fps,
+                    app_version=app_version
                 )
 
                 comp = compositions_by_id.get(int(item_id))
@@ -118,6 +123,7 @@ class CollectAERender(abstract_collect_render.AbstractCollectRender):
                 instance.anatomyData = context.data["anatomyData"]
 
                 instance.outputDir = self._get_output_dir(instance)
+                instance.context = context
 
                 settings = get_project_settings(os.getenv("AVALON_PROJECT"))
                 reviewable_subset_filter = \
@@ -142,7 +148,6 @@ class CollectAERender(abstract_collect_render.AbstractCollectRender):
                                 break
 
                 self.log.info("New instance:: {}".format(instance))
-
                 instances.append(instance)
 
         return instances

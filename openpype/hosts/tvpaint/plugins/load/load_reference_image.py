@@ -7,7 +7,7 @@ from openpype.hosts.tvpaint.api import lib, pipeline, plugin
 class LoadImage(plugin.Loader):
     """Load image or image sequence to TVPaint as new layer."""
 
-    families = ["render", "image", "background", "plate"]
+    families = ["render", "image", "background", "plate", "review"]
     representations = ["*"]
 
     label = "Load Image"

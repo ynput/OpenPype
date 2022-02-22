@@ -1,10 +1,10 @@
 import os
-import subprocess
 
 from openpype.lib import (
     PreLaunchHook,
     get_openpype_execute_args
 )
+from openpype.lib.applications import get_non_python_host_kwargs
 
 from openpype import PACKAGE_DIR as OPENPYPE_DIR
 
@@ -51,3 +51,7 @@ class NonPythonHostHook(PreLaunchHook):
 
         if remainders:
             self.launch_context.launch_args.extend(remainders)
+
+        self.launch_context.kwargs = \
+            get_non_python_host_kwargs(self.launch_context.kwargs)
+

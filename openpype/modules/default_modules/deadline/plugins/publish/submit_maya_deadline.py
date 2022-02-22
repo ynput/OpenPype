@@ -404,7 +404,13 @@ class MayaSubmitDeadline(pyblish.api.InstancePlugin):
         dirname = os.path.join(workspace, default_render_file)
         renderlayer = instance.data['setMembers']       # rs_beauty
         deadline_user = context.data.get("user", getpass.getuser())
-        jobname = "%s - %s" % (filename, instance.name)
+
+        # Always use the original work file name for the Job name even when
+        # rendering is done from the published Work File. The original work
+        # file name is clearer because it can also have subversion strings,
+        # etc. which are stripped for the published file.
+        src_filename = os.path.basename(context.data["currentFile"])
+        jobname = "%s - %s" % (src_filename, instance.name)
 
         # Get the variables depending on the renderer
         render_variables = get_renderer_variables(renderlayer, dirname)
@@ -452,7 +458,7 @@ class MayaSubmitDeadline(pyblish.api.InstancePlugin):
         self.payload_skeleton["JobInfo"]["Plugin"] = self._instance.data.get(
             "mayaRenderPlugin", "MayaBatch")
 
-        self.payload_skeleton["JobInfo"]["BatchName"] = filename
+        self.payload_skeleton["JobInfo"]["BatchName"] = src_filename
         # Job name, as seen in Monitor
         self.payload_skeleton["JobInfo"]["Name"] = jobname
         # Arbitrary username, for visualisation in Monitor
@@ -498,6 +504,9 @@ class MayaSubmitDeadline(pyblish.api.InstancePlugin):
             "OPENPYPE_DEV",
             "OPENPYPE_LOG_NO_COLORS"
         ]
+        # Add mongo url if it's enabled
+        if instance.context.data.get("deadlinePassMongoUrl"):
+            keys.append("OPENPYPE_MONGO")
 
         environment = dict({key: os.environ[key] for key in keys
                             if key in os.environ}, **api.Session)

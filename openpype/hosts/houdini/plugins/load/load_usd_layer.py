@@ -1,15 +1,12 @@
 from avalon import api
-from avalon.houdini import pipeline, lib
+from openpype.hosts.houdini.api import lib, pipeline
 
 
 class USDSublayerLoader(api.Loader):
     """Sublayer USD file in Solaris"""
 
     families = [
-        "colorbleed.usd",
-        "colorbleed.pointcache",
-        "colorbleed.animation",
-        "colorbleed.camera",
+        "usd",
         "usdCamera",
     ]
     label = "Sublayer USD"

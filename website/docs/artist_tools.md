@@ -114,7 +114,7 @@ To filter assets/subsets by name just type name or part of name to filter text i
 <div class="row markdown">
 <div class="col col--6 markdown">
 
-To filter [subsets](artist_concepts#subset) by their [families](artist_publish#families) you can use families list where you can check families you want to see or uncheck families you are not interested in.
+To filter [subsets](artist_concepts.md#subset) by their [families](artist_publish.md#families) you can use families list where you can check families you want to see or uncheck families you are not interested in.
 
 </div>
 <div class="col col--6 markdown">
@@ -233,7 +233,7 @@ Integrator takes the extracted files, categorizes and moves them to a correct lo
 With Scene Inventory, you can browse, update and change subsets loaded with [Loader](#loader) into your scene or script.
 
 :::note
-You should first understand [Key concepts](artist_concepts#) to understand how you can use this tool.
+You should first understand [Key concepts](artist_concepts) to understand how you can use this tool.
 :::
 
 ### Details

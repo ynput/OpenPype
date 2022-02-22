@@ -6,6 +6,7 @@ from avalon.vendor import qtawesome
 
 from .delegates import ActionDelegate
 from . import lib
+from .actions import ApplicationAction
 from .models import ActionModel
 from openpype.tools.flickcharm import FlickCharm
 from .constants import (
@@ -239,10 +240,12 @@ class ActionBar(QtWidgets.QWidget):
         is_variant_group = index.data(VARIANT_GROUP_ROLE)
         if not is_group and not is_variant_group:
             action = index.data(ACTION_ROLE)
-            if index.data(FORCE_NOT_OPEN_WORKFILE_ROLE):
-                action.data["start_last_workfile"] = False
-            else:
-                action.data.pop("start_last_workfile", None)
+            # Change data of application action
+            if issubclass(action, ApplicationAction):
+                if index.data(FORCE_NOT_OPEN_WORKFILE_ROLE):
+                    action.data["start_last_workfile"] = False
+                else:
+                    action.data.pop("start_last_workfile", None)
             self._start_animation(index)
             self.action_clicked.emit(action)
             return

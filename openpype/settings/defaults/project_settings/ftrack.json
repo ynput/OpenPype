@@ -292,7 +292,8 @@
                     ],
                     "families": [
                         "write",
-                        "render"
+                        "render",
+                        "prerender"
                     ],
                     "task_types": [],
                     "tasks": [],
@@ -331,6 +332,18 @@
                     "tasks": [],
                     "add_ftrack_family": true,
                     "advanced_filtering": []
+                },
+                {
+                    "hosts": [
+                        "houdini"
+                    ],
+                    "families": [
+                        "usd"
+                    ],
+                    "task_types": [],
+                    "tasks": [],
+                    "add_ftrack_family": true,
+                    "advanced_filtering": []
                 }
             ]
         },
@@ -353,6 +366,7 @@
                 "setdress": "setdress",
                 "pointcache": "cache",
                 "render": "render",
+                "prerender": "render",
                 "render2d": "render",
                 "nukescript": "comp",
                 "write": "render",
@@ -374,7 +388,8 @@
                 "layout": "layout",
                 "unrealStaticMesh": "geo",
                 "vrayproxy": "cache",
-                "redshiftproxy": "cache"
+                "redshiftproxy": "cache",
+                "usd": "usd"
             }
         }
     }

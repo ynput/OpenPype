@@ -237,17 +237,15 @@ class HarmonySubmitDeadline(
     order = pyblish.api.IntegratorOrder + 0.1
     hosts = ["harmony"]
     families = ["render.farm"]
-    if not os.environ.get("DEADLINE_REST_URL"):
-        optional = False
-        active = False
-    else:
-        optional = True
 
+    optional = True
     use_published = False
     primary_pool = ""
     secondary_pool = ""
     priority = 50
     chunk_size = 1000000
+    group = "none"
+    department = ""
 
     def get_job_info(self):
         job_info = DeadlineJobInfo("Harmony")
@@ -264,6 +262,8 @@ class HarmonySubmitDeadline(
         job_info.SecondaryPool = self.secondary_pool
         job_info.ChunkSize = self.chunk_size
         job_info.BatchName = os.path.basename(self._instance.data["source"])
+        job_info.Department = self.department
+        job_info.Group = self.group
 
         keys = [
             "FTRACK_API_KEY",
@@ -276,6 +276,9 @@ class HarmonySubmitDeadline(
             "OPENPYPE_DEV",
             "OPENPYPE_LOG_NO_COLORS"
         ]
+        # Add mongo url if it's enabled
+        if self._instance.context.data.get("deadlinePassMongoUrl"):
+            keys.append("OPENPYPE_MONGO")
 
         environment = dict({key: os.environ[key] for key in keys
                             if key in os.environ}, **api.Session)
@@ -317,7 +320,6 @@ class HarmonySubmitDeadline(
             / published_scene.stem
             / f"{published_scene.stem}.xstage"
         )
-
         unzip_dir = (published_scene.parent / published_scene.stem)
         with _ZipFile(published_scene, "r") as zip_ref:
             zip_ref.extractall(unzip_dir.as_posix())
@@ -348,12 +350,9 @@ class HarmonySubmitDeadline(
         # use that one.
         if not ideal_scene:
             xstage_path = xstage_files[0]
-
         return xstage_path
 
     def get_plugin_info(self):
-        work_scene = Path(self._instance.data["source"])
-
         # this is path to published scene workfile _ZIP_. Before
         # rendering, we need to unzip it.
         published_scene = Path(
@@ -365,14 +364,13 @@ class HarmonySubmitDeadline(
         # for submit_publish job to create .json file in
         self._instance.data["outputDir"] = render_path
         new_expected_files = []
-        work_path_str = str(work_scene.parent.as_posix())
         render_path_str = str(render_path.as_posix())
         for file in self._instance.data["expectedFiles"]:
             _file = str(Path(file).as_posix())
+            expected_dir_str = os.path.dirname(_file)
             new_expected_files.append(
-                _file.replace(work_path_str, render_path_str)
+                _file.replace(expected_dir_str, render_path_str)
             )
-
         audio_file = self._instance.data.get("audioFile")
         if audio_file:
             abs_path = xstage_path.parent / audio_file
