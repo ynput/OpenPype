@@ -29,11 +29,11 @@ class ExtractFBX(api.Extractor):
         selected = []
         asset_group = None
 
-        for obj in instance:
-            obj.select_set(True)
-            selected.append(obj)
-            if obj.get(AVALON_PROPERTY):
-                asset_group = obj
+        # for obj in instance:
+        #     obj.select_set(True)
+        #     selected.append(obj)
+        #     if obj.get(AVALON_PROPERTY):
+        #         asset_group = obj
 
         context = plugin.create_blender_context(
             active=instance, selected=selected)

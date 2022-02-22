@@ -54,7 +54,7 @@ class BlendModelLoader(plugin.AssetLoader):
         container = None
         instances = plugin.get_instance_list()
         for collection in instances:
-            if scene_collection.children.get(collection.name) == None:
+            if scene_collection.children.get(collection.name) is None:
                 container = collection
                 break
 
@@ -101,11 +101,11 @@ class BlendModelLoader(plugin.AssetLoader):
         plugin.deselect_all()
 
         # override the container and the objects
-        container.override_create(remap_local_usages=True)
+        container_overrided = container.override_create(remap_local_usages=True)
         for obj in objects:
             obj.override_create(remap_local_usages=True)
 
-        return container
+        return container_overrided
 
     def process_asset(
             self, context: dict,
