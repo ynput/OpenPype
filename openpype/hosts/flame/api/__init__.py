@@ -70,6 +70,9 @@ from .render_utils import (
     export_clip,
     get_preset_path_by_xml_name
 )
+from .batch_utils import (
+    create_batch
+)
 
 __all__ = [
     # constants
@@ -140,5 +143,8 @@ __all__ = [
 
     # render utils
     "export_clip",
-    "get_preset_path_by_xml_name"
+    "get_preset_path_by_xml_name",
+
+    # batch utils
+    "create_batch"
 ]
