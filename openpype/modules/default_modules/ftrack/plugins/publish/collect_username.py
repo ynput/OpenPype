@@ -33,7 +33,6 @@ class CollectUsername(pyblish.api.ContextPlugin):
 
     def process(self, context):
         self.log.info("CollectUsername")
-
         os.environ["FTRACK_API_USER"] = os.environ["FTRACK_BOT_API_USER"]
         os.environ["FTRACK_API_KEY"] = os.environ["FTRACK_BOT_API_KEY"]
 
@@ -61,3 +60,4 @@ class CollectUsername(pyblish.api.ContextPlugin):
         username = user[0].get("username")
         self.log.debug("Resolved ftrack username:: {}".format(username))
         os.environ["FTRACK_API_USER"] = username
+        os.environ["OPENPYPE_USERNAME"] = username  # for burnins
