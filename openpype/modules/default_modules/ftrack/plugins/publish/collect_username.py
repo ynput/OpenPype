@@ -56,8 +56,10 @@ class CollectUsername(pyblish.api.ContextPlugin):
         if not user:
             raise ValueError(
                 "Couldn't find user with {} email".format(user_email))
-
-        username = user[0].get("username")
+        user = user[0]
+        username = user.get("username")
         self.log.debug("Resolved ftrack username:: {}".format(username))
         os.environ["FTRACK_API_USER"] = username
-        os.environ["OPENPYPE_USERNAME"] = username  # for burnins
+        burnin_name = "{} {}".format(user.get("first_name"),
+                                     user.get("last_name"))
+        os.environ["WEBPUBLISH_OPENPYPE_USERNAME"] = burnin_name
