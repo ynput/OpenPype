@@ -11,7 +11,6 @@ import os
 import re
 from typing import Dict, List
 
-from avalon.api import AvalonMongoDB
 import gazu
 from gazu.asset import all_assets_for_project, all_asset_types, new_asset
 from gazu.shot import (
@@ -21,7 +20,6 @@ from gazu.shot import (
     new_episode,
     new_sequence,
     new_shot,
-    update_sequence,
 )
 from gazu.task import (
     all_tasks_for_asset,
@@ -31,11 +29,15 @@ from gazu.task import (
     new_task,
     new_task_type,
 )
+from pymongo import DeleteOne, UpdateOne
+
+from avalon.api import AvalonMongoDB
 from openpype.api import get_project_settings
 from openpype.lib import create_project
 from openpype.modules import JsonFilesSettingsDef, OpenPypeModule, ModulesManager
-from pymongo import DeleteOne, UpdateOne
+from openpype.modules.default_modules.kitsu.utils.openpype import sync_project
 from openpype_interfaces import IPluginPaths, ITrayAction
+from .listeners import add_listeners
 
 
 # Settings definition of this addon using `JsonFilesSettingsDef`
@@ -371,8 +373,6 @@ def sync_zou():
         if bulk_writes:
             project_col.bulk_write(bulk_writes)
 
-    # TODO Create events daemons
-
     dbcon.uninstall()
 
 
@@ -412,35 +412,8 @@ def sync_openpype():
             if not e["data"].get("is_substitute")
         ]
 
-        # Create project if is not available
-        # - creation is required to be able set project anatomy and attributes
-        to_insert = []
-        if not project_doc:
-            print(f"Creating project '{project_name}'")
-            project_doc = create_project(project_name, project_code, dbcon=dbcon)
-
-        # Project data and tasks
-        bulk_writes.append(
-            UpdateOne(
-                {"_id": project_doc["_id"]},
-                {
-                    "$set": {
-                        "config.tasks": {
-                            t["name"]: {"short_name": t.get("short_name", t["name"])}
-                            for t in all_task_types_for_project(project)
-                        },
-                        "data": project["data"].update(
-                            {
-                                "code": project["code"],
-                                "fps": project["fps"],
-                                "resolutionWidth": project["resolution"].split("x")[0],
-                                "resolutionHeight": project["resolution"].split("x")[1],
-                            }
-                        ),
-                    }
-                },
-            )
-        )
+        # Sync project. Create if doesn't exist
+        bulk_writes.append(sync_project(project, dbcon))
 
         # Query all assets of the local project
         project_col = dbcon.database[project_code]
@@ -452,6 +425,7 @@ def sync_openpype():
         asset_doc_ids[project["id"]] = project_doc
 
         # Create
+        to_insert = []
         to_insert.extend(
             [
                 {
@@ -570,6 +544,16 @@ def update_op_assets(
             )
 
     return bulk_writes
+
+
+@cli_main.command()
+def listen():
+    """Show ExampleAddon dialog.
+
+    We don't have access to addon directly through cli so we have to create
+    it again.
+    """
+    add_listeners()
 
 
 @cli_main.command()
