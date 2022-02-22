@@ -15,6 +15,19 @@ class CreateRig(plugin.Creator):
     family = "rig"
     icon = "wheelchair"
 
+    def get_selection_hierarchie(self):
+        nodes = bpy.context.selected_objects
+        children_of_the_object = list()
+        objects =  list()
+
+        for obj in nodes:
+            objects.append(obj)
+            if obj.type !="ARMATURE":
+                nodes.extend(list(obj.children))
+
+        objects.reverse()
+        return objects
+
     def process(self):
         """ Run the creator on Blender main thread"""
         mti = ops.MainThreadItem(self._process)
@@ -27,7 +40,7 @@ class CreateRig(plugin.Creator):
         # name = plugin.asset_name(asset, subset)
 
         name = RIG_TASK_NAME
-        containers = plugin.get_container_collections()
+        containers = bpy.context.scene.collection.children
 
         # Get Instance Container or create it if it does not exist
         instance = bpy.data.collections.get(name)
@@ -39,15 +52,21 @@ class CreateRig(plugin.Creator):
         lib.imprint(instance, self.data)
 
         for container in containers:
-            print(instance.name)
-            print(container.name)
-            instance.children.link(container)
-            bpy.context.scene.collection.children.unlink(container)
-        #
+            if  instance.children.get(container.name) is None and instance != container:
+                bpy.context.scene.collection.children.unlink(container)
+                instance.children.link(container)
+
+
         # Add selected objects to instance
+        objects_to_link = list()
         if (self.options or {}).get("useSelection"):
-            selected = lib.get_selection()
-            for obj in selected:
+            objects_to_link = self.get_selection_hierarchie()
+        else:
+            objects_to_link = bpy.context.scene.collection.objects
+
+        for obj in objects_to_link:
+            if instance.get(obj.name) is None:
                 instance.objects.link(obj)
+            if bpy.context.scene.collection.objects.get(obj.name) is not None:
                 bpy.context.scene.collection.objects.unlink(obj)
         return instance

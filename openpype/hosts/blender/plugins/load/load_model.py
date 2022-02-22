@@ -74,8 +74,8 @@ class BlendModelLoader(plugin.AssetLoader):
         for obj in nodes:
             if obj.parent is None:
                 children_of_the_collection.append(obj)
-        nodes = children_of_the_collection
 
+        nodes = children_of_the_collection
         for obj in nodes:
             objects.append(obj)
             nodes.extend(list(obj.children))

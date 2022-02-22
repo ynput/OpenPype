@@ -44,4 +44,10 @@ class CreateModel(plugin.Creator):
             for obj in selected:
                 instance.objects.link(obj)
                 bpy.context.scene.collection.objects.unlink(obj)
+        else:
+            objects = bpy.context.scene.collection.objects
+            for obj in objects:
+                instance.objects.link(obj)
+                bpy.context.scene.collection.objects.unlink(obj)
+
         return instance
