@@ -110,7 +110,7 @@ class OpenPypeMenu(QtWidgets.QWidget):
         load_btn.clicked.connect(self.on_load_clicked)
         manager_btn.clicked.connect(self.on_manager_clicked)
         libload_btn.clicked.connect(self.on_libload_clicked)
-        rendermode_btn.clicked.connect(self.on_rendernode_clicked)
+        rendermode_btn.clicked.connect(self.on_rendermode_clicked)
         duplicate_with_inputs_btn.clicked.connect(
             self.on_duplicate_with_inputs_clicked)
         set_resolution_btn.clicked.connect(self.on_set_resolution_clicked)
@@ -162,7 +162,7 @@ class OpenPypeMenu(QtWidgets.QWidget):
         print("Clicked Library")
         host_tools.show_library_loader()
 
-    def on_rendernode_clicked(self):
+    def on_rendermode_clicked(self):
         print("Clicked Set Render Mode")
         if self.render_mode_widget is None:
             window = set_rendermode.SetRenderMode()
@@ -173,8 +173,8 @@ class OpenPypeMenu(QtWidgets.QWidget):
             self.render_mode_widget.show()
 
     def on_duplicate_with_inputs_clicked(self):
+        print("Clicked Duplicate with input connections")
         duplicate_with_inputs.duplicate_with_input_connections()
-        print("Clicked Set Colorspace")
 
     def on_set_resolution_clicked(self):
         print("Clicked Reset Resolution")
