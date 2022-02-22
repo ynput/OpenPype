@@ -98,13 +98,13 @@ class CreateWritePrerender(plugin.OpenPypeCreator):
                                    "/{subset}.{frame}.{ext}")})
 
         self.log.info("write_data: {}".format(write_data))
-
+        reviewable = self.presets.get("reviewable")
         write_node = create_write_node(
             self.data["subset"],
             write_data,
             input=selected_node,
             prenodes=[],
-            review=False,
+            review=reviewable,
             linked_knobs=["channels", "___", "first", "last", "use_limit"])
 
         # relinking to collected connections

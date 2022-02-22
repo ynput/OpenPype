@@ -62,9 +62,9 @@ def install_fonts():
         # In hosts, this will be called each time the GUI is shown,
         # potentially installing a font each time.
         if database.addApplicationFont(path) < 0:
-            print("Could not install %s\n" % path)
+            print("Could not install %s" % path)
         else:
-            print("Installed %s\n" % font)
+            print("Installed %s" % font)
 
 
 def on_destroyed():

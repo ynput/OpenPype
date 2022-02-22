@@ -586,7 +586,10 @@ class BaseCommunicator:
             "additional_libraries"
         )
         additional_libs_folder = additional_libs_folder.replace("\\", "/")
-        if additional_libs_folder not in os.environ["PATH"]:
+        if (
+            os.path.exists(additional_libs_folder)
+            and additional_libs_folder not in os.environ["PATH"]
+        ):
             os.environ["PATH"] += (os.pathsep + additional_libs_folder)
 
         # Path to TVPaint's plugins folder (where we want to add our plugin)
