@@ -527,6 +527,7 @@ def get_segment_attributes(segment):
 
     # Add timeline segment to tree
     clip_data = {
+        "shot_name": segment.shot_name.get_value(),
         "segment_name": segment.name.get_value(),
         "segment_comment": segment.comment.get_value(),
         "tape_name": segment.tape_name,
