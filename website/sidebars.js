@@ -134,15 +134,7 @@ module.exports = {
     ],
      Dev: [
         "dev_introduction",
-        {
-            type: "category",
-            label: "Dev documentation",
-            items: [
-                "dev_requirements",
-                "dev_build",
-                "dev_testing",
-                "dev_contribute",
-            ],
-        }
+        "dev_testing",
+        "dev_contribute"
      ]
 };
