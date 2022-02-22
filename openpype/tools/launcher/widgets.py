@@ -257,7 +257,7 @@ class ActionBar(QtWidgets.QWidget):
 
     def _start_animation(self, index):
         # Offset refresh timout
-        self.launcher_model.start_refresh_timer()
+        self._launcher_model.start_refresh_timer()
         action_id = index.data(ACTION_ID_ROLE)
         item = self.model.items_by_id.get(action_id)
         if item:
@@ -325,7 +325,7 @@ class ActionBar(QtWidgets.QWidget):
             return
 
         # Offset refresh timout
-        self.launcher_model.start_refresh_timer()
+        self._launcher_model.start_refresh_timer()
 
         actions = index.data(ACTION_ROLE)
 
