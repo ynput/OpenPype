@@ -21,7 +21,7 @@ class AddLastWorkfileToLaunchArgs(PreLaunchHook):
         "blender",
         "photoshop",
         "tvpaint",
-        "afftereffects"
+        "aftereffects"
     ]
 
     def execute(self):

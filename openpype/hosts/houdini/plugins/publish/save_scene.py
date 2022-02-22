@@ -2,26 +2,14 @@ import pyblish.api
 import avalon.api
 
 
-class SaveCurrentScene(pyblish.api.InstancePlugin):
+class SaveCurrentScene(pyblish.api.ContextPlugin):
     """Save current scene"""
 
     label = "Save current file"
-    order = pyblish.api.IntegratorOrder - 0.49
+    order = pyblish.api.ExtractorOrder - 0.49
     hosts = ["houdini"]
-    families = ["usdrender",
-                "redshift_rop"]
-    targets = ["local"]
 
-    def process(self, instance):
-
-        # This should be a ContextPlugin, but this is a workaround
-        # for a bug in pyblish to run once for a family: issue #250
-        context = instance.context
-        key = "__hasRun{}".format(self.__class__.__name__)
-        if context.data.get(key, False):
-            return
-        else:
-            context.data[key] = True
+    def process(self, context):
 
         # Filename must not have changed since collecting
         host = avalon.api.registered_host()
