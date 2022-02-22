@@ -91,6 +91,8 @@ class SettingsCategoryWidget(QtWidgets.QWidget):
     state_changed = QtCore.Signal()
     saved = QtCore.Signal(QtWidgets.QWidget)
     restart_required_trigger = QtCore.Signal()
+    reset_started = QtCore.Signal()
+    reset_finished = QtCore.Signal()
     full_path_requested = QtCore.Signal(str, str)
 
     require_restart_label_text = (
@@ -379,7 +381,12 @@ class SettingsCategoryWidget(QtWidgets.QWidget):
         """Change path of widget based on category full path."""
         pass
 
+    def change_path(self, path):
+        """Change path and go to widget."""
+        self.breadcrumbs_bar.change_path(path)
+
     def set_path(self, path):
+        """Called from clicked widget."""
         self.breadcrumbs_bar.set_path(path)
 
     def _add_developer_ui(self, footer_layout, footer_widget):
@@ -492,6 +499,7 @@ class SettingsCategoryWidget(QtWidgets.QWidget):
         self._update_labels_visibility()
 
     def reset(self):
+        self.reset_started.emit()
         self.set_state(CategoryState.Working)
 
         self._on_reset_start()
@@ -596,6 +604,7 @@ class SettingsCategoryWidget(QtWidgets.QWidget):
             self._on_reset_crash()
         else:
             self._on_reset_success()
+        self.reset_finished.emit()
 
     def _on_source_version_change(self, version):
         if self._updating_root:
