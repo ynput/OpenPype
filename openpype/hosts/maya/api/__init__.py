@@ -32,11 +32,9 @@ from .lib import (
     read,
 
     apply_shaders,
-    without_extension,
     maintained_selection,
     suspended_refresh,
 
-    unique_name,
     unique_namespace,
 )
 
@@ -65,11 +63,9 @@ __all__ = [
     "lsattrs",
     "read",
 
-    "unique_name",
     "unique_namespace",
 
     "apply_shaders",
-    "without_extension",
     "maintained_selection",
     "suspended_refresh",
 
