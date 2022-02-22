@@ -2,8 +2,15 @@ import flame
 
 
 def create_batch(name, frame_start, frame_end, **kwargs):
-    schematicReels = ['LoadedReel1']
-    shelfReels = ['ShelfReel1']
+    """Create Batch Group in active project's Desktop
+
+    Args:
+        name (str): name of batch group to be created
+        frame_start (int): start frame of batch
+        frame_end (int): end frame of batch
+    """
+    schematic_reels = kwargs.get("shematic_reels") or ['LoadedReel1']
+    shelf_reels = kwargs.get("shelf_reels") or ['ShelfReel1']
 
     write_pref = kwargs["write_pref"]
     handle_start = kwargs.get("handleStart")
@@ -20,8 +27,8 @@ def create_batch(name, frame_start, frame_end, **kwargs):
         name,
         start_frame=frame_start,
         duration=frame_end,
-        reels=schematicReels,
-        shelf_reels=shelfReels
+        reels=schematic_reels,
+        shelf_reels=shelf_reels
     )
 
     if kwargs.get("switch_batch_tab"):
