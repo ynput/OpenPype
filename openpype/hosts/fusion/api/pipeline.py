@@ -97,7 +97,7 @@ def uninstall():
     )
 
 
-def on_pyblish_instance_toggled(instance, new_value, old_value):
+def on_pyblish_instance_toggled(instance, old_value, new_value):
     """Toggle saver tool passthrough states on instance toggles."""
     comp = instance.context.data.get("currentComp")
     if not comp:
