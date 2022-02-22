@@ -3,6 +3,10 @@ from __future__ import print_function
 import os
 import sys
 
+# only testing dependency for nested modules in package
+import six  # noqa
+
+
 SCRIPT_DIR = os.path.dirname(__file__)
 PACKAGE_DIR = os.path.join(SCRIPT_DIR, "modules")
 sys.path.append(PACKAGE_DIR)

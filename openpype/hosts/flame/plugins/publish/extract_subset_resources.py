@@ -22,6 +22,7 @@ class ExtractSubsetResources(openpype.api.Extractor):
             "ext": "jpg",
             "xml_preset_file": "Jpeg (8-bit).xml",
             "xml_preset_dir": "",
+            "colorspace_out": "Output - sRGB",
             "representation_add_range": False,
             "representation_tags": ["thumbnail"]
         },
@@ -29,6 +30,7 @@ class ExtractSubsetResources(openpype.api.Extractor):
             "ext": "mov",
             "xml_preset_file": "Apple iPad (1920x1080).xml",
             "xml_preset_dir": "",
+            "colorspace_out": "Output - Rec.709",
             "representation_add_range": True,
             "representation_tags": [
                 "review",
@@ -45,7 +47,6 @@ class ExtractSubsetResources(openpype.api.Extractor):
     export_presets_mapping = {}
 
     def process(self, instance):
-
         if (
             self.keep_original_representation
             and "representations" not in instance.data
@@ -84,6 +85,7 @@ class ExtractSubsetResources(openpype.api.Extractor):
                 preset_file = preset_config["xml_preset_file"]
                 preset_dir = preset_config["xml_preset_dir"]
                 repre_tags = preset_config["representation_tags"]
+                color_out = preset_config["colorspace_out"]
 
                 # validate xml preset file is filled
                 if preset_file == "":
@@ -129,16 +131,30 @@ class ExtractSubsetResources(openpype.api.Extractor):
                 opfapi.export_clip(
                     export_dir_path, duplclip, preset_path, **kwargs)
 
+                extension = preset_config["ext"]
                 # create representation data
                 representation_data = {
                     "name": unique_name,
                     "outputName": unique_name,
-                    "ext": preset_config["ext"],
+                    "ext": extension,
                     "stagingDir": export_dir_path,
-                    "tags": repre_tags
+                    "tags": repre_tags,
+                    "data": {
+                        "colorspace": color_out
+                    }
                 }
 
+                # collect all available content of export dir
                 files = os.listdir(export_dir_path)
+
+                # make sure no nested folders inside
+                n_stage_dir, n_files = self._unfolds_nested_folders(
+                    export_dir_path, files, extension)
+
+                # fix representation in case of nested folders
+                if n_stage_dir:
+                    representation_data["stagingDir"] = n_stage_dir
+                    files = n_files
 
                 # add files to represetation but add
                 # imagesequence as list
@@ -170,3 +186,63 @@ class ExtractSubsetResources(openpype.api.Extractor):
 
         self.log.debug("All representations: {}".format(
             pformat(instance.data["representations"])))
+
+    def _unfolds_nested_folders(self, stage_dir, files_list, ext):
+        """Unfolds nested folders
+
+        Args:
+            stage_dir (str): path string with directory
+            files_list (list): list of file names
+            ext (str): extension (jpg)[without dot]
+
+        Raises:
+            IOError: in case no files were collected form any directory
+
+        Returns:
+            str, list: new staging dir path, new list of file names
+            or
+            None, None: In case single file in `files_list`
+        """
+        # exclude single files which are having extension
+        # the same as input ext attr
+        if (
+            # only one file in list
+            len(files_list) == 1
+            # file is having extension as input
+            and ext in os.path.splitext(files_list[0])[-1]
+        ):
+            return None, None
+        elif (
+            # more then one file in list
+            len(files_list) >= 1
+            # extension is correct
+            and ext in os.path.splitext(files_list[0])[-1]
+            # test file exists
+            and os.path.exists(
+                os.path.join(stage_dir, files_list[0])
+            )
+        ):
+            return None, None
+
+        new_stage_dir = None
+        new_files_list = []
+        for file in files_list:
+            search_path = os.path.join(stage_dir, file)
+            if not os.path.isdir(search_path):
+                continue
+            for root, _dirs, files in os.walk(search_path):
+                for _file in files:
+                    _fn, _ext = os.path.splitext(_file)
+                    if ext.lower() != _ext[1:].lower():
+                        continue
+                    new_files_list.append(_file)
+                    if not new_stage_dir:
+                        new_stage_dir = root
+
+        if not new_stage_dir:
+            raise AssertionError(
+                "Files in `{}` are not correct! Check `{}`".format(
+                    files_list, stage_dir)
+            )
+
+        return new_stage_dir, new_files_list
