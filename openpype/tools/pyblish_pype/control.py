@@ -297,7 +297,9 @@ class Controller(QtCore.QObject):
     def on_published(self):
         if self.is_running:
             self.is_running = False
-        self._current_state = "Pulished"
+        self._current_state = (
+            "Published" if not self.errored else "Published, with errors"
+        )
         self.was_finished.emit()
         self._main_thread_processor.stop()
 
@@ -375,7 +377,10 @@ class Controller(QtCore.QObject):
 
                 if self.collect_state == 0:
                     self.collect_state = 1
-                    self._current_state = "Collected"
+                    self._current_state = (
+                        "Ready" if not self.errored else
+                        "Collected, with errors"
+                    )
                     self.switch_toggleability.emit(True)
                     self.passed_group.emit(current_group_order)
                     yield IterationBreak("Collected")
@@ -383,6 +388,11 @@ class Controller(QtCore.QObject):
                 else:
                     self.passed_group.emit(current_group_order)
                     if self.errored:
+                        self._current_state = (
+                            "Stopped, due to errors" if not
+                            self.processing["stop_on_validation"] else
+                            "Validated, with errors"
+                        )
                         yield IterationBreak("Last group errored")
 
             if self.collect_state == 1:
@@ -392,7 +402,10 @@ class Controller(QtCore.QObject):
             if not self.validated and plugin.order > self.validators_order:
                 self.validated = True
                 if self.processing["stop_on_validation"]:
-                    self._current_state = "Validated"
+                    self._current_state = (
+                        "Validated" if not self.errored else
+                        "Validated, with errors"
+                    )
                     yield IterationBreak("Validated")
 
             # Stop if was stopped
