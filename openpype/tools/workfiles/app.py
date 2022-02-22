@@ -544,6 +544,10 @@ class FilesWidget(QtWidgets.QWidget):
         # file on a refresh of the files model.
         self.auto_select_latest_modified = True
 
+        # Avoid crash in Blender and store the message box
+        # (setting parent doesn't work as it hides the message box)
+        self._messagebox = None
+
         files_view = FilesView(self)
 
         # Create the Files model
@@ -722,7 +726,7 @@ class FilesWidget(QtWidgets.QWidget):
         self.file_opened.emit()
 
     def save_changes_prompt(self):
-        messagebox = QtWidgets.QMessageBox(parent=self)
+        self._messagebox = messagebox = QtWidgets.QMessageBox(parent=self)
         messagebox.setWindowFlags(messagebox.windowFlags() |
                                   QtCore.Qt.FramelessWindowHint)
         messagebox.setIcon(messagebox.Warning)
