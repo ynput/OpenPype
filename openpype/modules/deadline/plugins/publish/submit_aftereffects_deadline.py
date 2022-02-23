@@ -5,9 +5,9 @@ import pyblish.api
 
 from avalon import api
 
-from openpype.lib import abstract_submit_deadline
-from openpype.lib.abstract_submit_deadline import DeadlineJobInfo
 from openpype.lib import env_value_to_bool
+from openpype_modules.deadline import abstract_submit_deadline
+from openpype_modules.deadline.abstract_submit_deadline import DeadlineJobInfo
 
 
 @attr.s
@@ -24,7 +24,9 @@ class DeadlinePluginInfo():
     MultiProcess = attr.ib(default=None)
 
 
-class AfterEffectsSubmitDeadline(abstract_submit_deadline.AbstractSubmitDeadline):
+class AfterEffectsSubmitDeadline(
+    abstract_submit_deadline.AbstractSubmitDeadline
+):
 
     label = "Submit AE to Deadline"
     order = pyblish.api.IntegratorOrder + 0.1

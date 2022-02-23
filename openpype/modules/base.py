@@ -33,6 +33,7 @@ DEFAULT_OPENPYPE_MODULES = (
     "avalon_apps",
     "clockify",
     "log_viewer",
+    "deadline",
     "muster",
     "royal_render",
     "python_console_interpreter",

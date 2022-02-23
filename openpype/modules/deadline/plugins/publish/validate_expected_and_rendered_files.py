@@ -4,8 +4,8 @@ import requests
 
 import pyblish.api
 
-from openpype.lib.abstract_submit_deadline import requests_get
 from openpype.lib.delivery import collect_frames
+from openpype_modules.deadline.abstract_submit_deadline import requests_get
 
 
 class ValidateExpectedFiles(pyblish.api.InstancePlugin):
