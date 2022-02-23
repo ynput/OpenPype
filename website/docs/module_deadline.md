@@ -20,7 +20,7 @@ For [AWS Thinkbox Deadline](https://www.awsthinkbox.com/deadline) support you ne
 
 4. Point OpenPype to your deadline webservice URL in the [OpenPype Admin Settings](admin_settings_system.md#deadline).
 
-5. Install our custom plugin and scripts to your deadline repository. It should be as simple as copying content of `openPype/vendor/deadline/custom` to `path/to/your/deadline/repository/custom`.
+5. Install our custom plugin and scripts to your deadline repository. It should be as simple as copying content of `openpype/modules/deadline/repository/custom` to `path/to/your/deadline/repository/custom`.
 
 
 ## Configuration
