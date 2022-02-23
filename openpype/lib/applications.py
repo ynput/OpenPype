@@ -1508,10 +1508,12 @@ def prepare_context_environments(data, env_group=None):
         "AVALON_PROJECT": project_doc["name"],
         "AVALON_ASSET": asset_doc["name"],
         "AVALON_TASK": task_name,
-        "AVALON_APP": app.host_name,
         "AVALON_APP_NAME": app.full_name,
         "AVALON_WORKDIR": workdir
     }
+    if app.is_host:
+        context_env["AVALON_APP"]: app.host_name
+
     log.debug(
         "Context environments set:\n{}".format(
             json.dumps(context_env, indent=4)
