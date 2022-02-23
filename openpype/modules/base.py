@@ -35,6 +35,7 @@ DEFAULT_OPENPYPE_MODULES = (
     "log_viewer",
     "muster",
     "python_console_interpreter",
+    "ftrack",
     "slack",
     "webserver",
     "launcher_action",
