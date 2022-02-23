@@ -127,6 +127,14 @@ class ValidateExpectedFiles(pyblish.api.InstancePlugin):
 
         file_name_template = frame_placeholder = None
         for file_name, frame in sources_and_frames.items():
+
+            # There might be cases where clique was unable to collect
+            # collections in `collect_frames` - thus we capture that case
+            if frame is None:
+                self.log.warning("Unable to detect frame from filename: "
+                                 "{}".format(file_name))
+                continue
+
             frame_placeholder = "#" * len(frame)
             file_name_template = os.path.basename(
                 file_name.replace(frame, frame_placeholder))
