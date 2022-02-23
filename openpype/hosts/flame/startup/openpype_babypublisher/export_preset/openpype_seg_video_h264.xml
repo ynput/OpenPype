@@ -43,7 +43,7 @@
             <targetVersion>2021</targetVersion>
             <pathSuffix>/profiles/.33622016/HDTV_720p_8Mbits.cdxprof</pathSuffix>
         </codecProfile>
-        <namePattern>&lt;segment name&gt;_&lt;video codec&gt;</namePattern>
+        <namePattern>&lt;shot name&gt;_&lt;video codec&gt;</namePattern>
         <compressionQuality>50</compressionQuality>
         <transferCharacteristic>2</transferCharacteristic>
         <colorimetricSpecification>4</colorimetricSpecification>
