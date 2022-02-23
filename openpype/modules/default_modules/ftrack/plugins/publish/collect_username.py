@@ -60,6 +60,8 @@ class CollectUsername(pyblish.api.ContextPlugin):
         username = user.get("username")
         self.log.debug("Resolved ftrack username:: {}".format(username))
         os.environ["FTRACK_API_USER"] = username
-        burnin_name = "{} {}".format(user.get("first_name"),
-                                     user.get("last_name"))
+
+        burnin_name = username
+        if '@' in burnin_name:
+            burnin_name = burnin_name[:burnin_name.index('@')]
         os.environ["WEBPUBLISH_OPENPYPE_USERNAME"] = burnin_name
