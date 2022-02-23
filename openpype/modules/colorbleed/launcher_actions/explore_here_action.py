@@ -1,9 +1,7 @@
 import os
-import string
 import getpass
 
-from avalon import api, lib, pipeline
-from avalon.vendor import six
+from avalon import api
 
 STUB = "<<NULL>>"
 
