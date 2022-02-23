@@ -47,6 +47,8 @@ DEFAULT_OPENPYPE_MODULES = (
     "job_queue",
     "timers_manager",
     "sync_server",
+    # Hack our way into the default modules
+    "colorbleed"
 )
 
 
