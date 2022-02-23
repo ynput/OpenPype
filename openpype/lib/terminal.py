@@ -54,7 +54,7 @@ class Terminal:
         )
         if log_no_colors is not None:
             Terminal.use_colors = not log_no_colors
-        
+
         if not Terminal.use_colors:
             Terminal._initialized = True
             return
