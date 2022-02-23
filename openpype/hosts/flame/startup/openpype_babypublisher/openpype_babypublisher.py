@@ -19,7 +19,7 @@ def flame_panel_executor(selection):
         print("panel_app module removed from sys.modules")
 
     import panel_app
-    panel_app.FlameToFtrackPanel(selection)
+    panel_app.FlameBabyPublisherPanel(selection)
 
 
 def scope_sequence(selection):

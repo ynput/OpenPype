@@ -37,7 +37,7 @@ class MainWindow(QtWidgets.QWidget):
         event.accept()
 
 
-class FlameToFtrackPanel(object):
+class FlameBabyPublisherPanel(object):
     session = None
     temp_data_dir = None
     processed_components = []
