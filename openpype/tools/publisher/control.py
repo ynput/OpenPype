@@ -184,11 +184,21 @@ class PublishReport:
 
         self._stored_plugins.append(plugin)
 
+        plugin_data_item = self._create_plugin_data_item(plugin)
+
+        self._plugin_data_with_plugin.append({
+            "plugin": plugin,
+            "data": plugin_data_item
+        })
+        self._plugin_data.append(plugin_data_item)
+        return plugin_data_item
+
+    def _create_plugin_data_item(self, plugin):
         label = None
         if hasattr(plugin, "label"):
             label = plugin.label
 
-        plugin_data_item = {
+        return {
             "name": plugin.__name__,
             "label": label,
             "order": plugin.order,
@@ -197,12 +207,6 @@ class PublishReport:
             "skipped": False,
             "passed": False
         }
-        self._plugin_data_with_plugin.append({
-            "plugin": plugin,
-            "data": plugin_data_item
-        })
-        self._plugin_data.append(plugin_data_item)
-        return plugin_data_item
 
     def set_plugin_skipped(self):
         """Set that current plugin has been skipped."""
@@ -252,7 +256,7 @@ class PublishReport:
         if publish_plugins:
             for plugin in publish_plugins:
                 if plugin not in self._stored_plugins:
-                    plugins_data.append(self._add_plugin_data_item(plugin))
+                    plugins_data.append(self._create_plugin_data_item(plugin))
 
         crashed_file_paths = {}
         if self._publish_discover_result is not None:
