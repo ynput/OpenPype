@@ -469,13 +469,17 @@ class FlameBabyPublisherPanel(object):
         for sequence in self.selection:
             frame_rate = float(str(sequence.frame_rate)[:-4])
             for ver in sequence.versions:
-                for tracks in ver.tracks:
-                    for segment in tracks.segments:
+                for track in ver.tracks:
+                    if len(track.segments) == 0 and track.hidden:
+                        continue
+                    for segment in track.segments:
                         print(segment.attributes)
                         if segment.name.get_value() == "":
                             continue
+                        if segment.hidden.get_value() is True:
+                            continue
                         # get clip frame duration
-                        record_duration = segment.record_duration.get_value()
+                        record_duration = str(segment.record_duration)[1:-1]
                         clip_duration = app_utils.timecode_to_frames(
                             record_duration, frame_rate)
 
