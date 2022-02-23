@@ -35,7 +35,7 @@ DEFAULT_OPENPYPE_MODULES = (
     "log_viewer",
     "deadline",
     "muster",
-    "royal_render",
+    "royalrender",
     "python_console_interpreter",
     "ftrack",
     "slack",
