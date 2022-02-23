@@ -228,6 +228,16 @@ class Controller(QtCore.QObject):
     def reset_context(self):
         self.log.debug("Resetting pyblish context object")
 
+        comment = None
+        if (
+            self.context is not None and
+            self.context.data.get("comment") and
+            # We only preserve the user typed comment if we are *not*
+            # resetting from a successful publish without errors
+            self._current_state != "Published"
+        ):
+            comment = self.context.data["comment"]
+
         self.context = pyblish.api.Context()
 
         self.context._publish_states = InstanceStates.ContextType
@@ -248,6 +258,10 @@ class Controller(QtCore.QObject):
         self.context.data["icon"] = "book"
 
         self.context.families = ("__context__",)
+
+        if comment:
+            # Preserve comment on reset if user previously had a comment
+            self.context.data["comment"] = comment
 
         self.log.debug("Reset of pyblish context object done")
 
