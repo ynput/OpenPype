@@ -35,7 +35,6 @@ def main(*subprocess_args):
     launcher.start()
 
     if os.environ.get("HEADLESS_PUBLISH"):
-        # reusing ConsoleTrayApp approach as it was already implemented
         launcher.execute_in_main_thread(lambda: headless_publish(
             log,
             "CloseAE",

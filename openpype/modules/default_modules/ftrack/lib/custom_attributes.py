@@ -17,7 +17,7 @@ def default_custom_attributes_definition():
 def app_definitions_from_app_manager(app_manager):
     _app_definitions = []
     for app_name, app in app_manager.applications.items():
-        if app.enabled and app.is_host:
+        if app.enabled:
             _app_definitions.append(
                 (app_name, app.full_label)
             )
@@ -88,26 +88,36 @@ def join_query_keys(keys):
     return ",".join(["\"{}\"".format(key) for key in keys])
 
 
-def query_custom_attributes(session, conf_ids, entity_ids, table_name=None):
+def query_custom_attributes(
+    session, conf_ids, entity_ids, only_set_values=False
+):
     """Query custom attribute values from ftrack database.
 
     Using ftrack call method result may differ based on used table name and
     version of ftrack server.
+
+    For hierarchical attributes you shou always use `only_set_values=True`
+    otherwise result will be default value of custom attribute and it would not
+    be possible to differentiate if value is set on entity or default value is
+    used.
 
     Args:
         session(ftrack_api.Session): Connected ftrack session.
         conf_id(list, set, tuple): Configuration(attribute) ids which are
             queried.
         entity_ids(list, set, tuple): Entity ids for which are values queried.
-        table_name(str): Table nam from which values are queried. Not
-            recommended to change until you know what it means.
+        only_set_values(bool): Entities that don't have explicitly set
+            value won't return a value. If is set to False then default custom
+            attribute value is returned if value is not set.
     """
     output = []
     # Just skip
     if not conf_ids or not entity_ids:
         return output
 
-    if table_name is None:
+    if only_set_values:
+        table_name = "CustomAttributeValue"
+    else:
         table_name = "ContextCustomAttributeValue"
 
     # Prepare values to query
@@ -122,19 +132,16 @@ def query_custom_attributes(session, conf_ids, entity_ids, table_name=None):
         entity_ids_joined = join_query_keys(
             entity_ids[idx:idx + chunk_size]
         )
-
-        call_expr = [{
-            "action": "query",
-            "expression": (
-                "select value, entity_id from {}"
-                " where entity_id in ({}) and configuration_id in ({})"
-            ).format(table_name, entity_ids_joined, attributes_joined)
-        }]
-        if hasattr(session, "call"):
-            [result] = session.call(call_expr)
-        else:
-            [result] = session._call(call_expr)
-
-        for item in result["data"]:
-            output.append(item)
+        output.extend(
+            session.query(
+                (
+                    "select value, entity_id from {}"
+                    " where entity_id in ({}) and configuration_id in ({})"
+                ).format(
+                    table_name,
+                    entity_ids_joined,
+                    attributes_joined
+                )
+            ).all()
+        )
     return output

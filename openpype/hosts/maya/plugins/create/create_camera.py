@@ -11,7 +11,6 @@ class CreateCamera(plugin.Creator):
     label = "Camera"
     family = "camera"
     icon = "video-camera"
-    defaults = ['Main']
 
     def __init__(self, *args, **kwargs):
         super(CreateCamera, self).__init__(*args, **kwargs)
@@ -33,4 +32,3 @@ class CreateCameraRig(plugin.Creator):
     label = "Camera Rig"
     family = "camerarig"
     icon = "video-camera"
-    defaults = ['Main']

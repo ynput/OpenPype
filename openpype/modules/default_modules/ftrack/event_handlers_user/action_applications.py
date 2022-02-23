@@ -2,10 +2,11 @@ import os
 from uuid import uuid4
 
 from openpype_modules.ftrack.lib import BaseAction
-from openpype.lib import (
+from openpype.lib.applications import (
     ApplicationManager,
     ApplicationLaunchFailed,
-    ApplictionExecutableNotFound
+    ApplictionExecutableNotFound,
+    CUSTOM_LAUNCH_APP_GROUPS
 )
 from avalon.api import AvalonMongoDB
 
@@ -134,6 +135,9 @@ class AppplicationsAction(BaseAction):
         for app_name in avalon_project_apps:
             app = self.application_manager.applications.get(app_name)
             if not app or not app.enabled:
+                continue
+
+            if app.group.name in CUSTOM_LAUNCH_APP_GROUPS:
                 continue
 
             app_icon = app.icon

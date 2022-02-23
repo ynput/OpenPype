@@ -194,7 +194,6 @@ main () {
   "$POETRY_HOME/bin/poetry" run pip install setuptools==49.6.0
   "$POETRY_HOME/bin/poetry" run pip install --disable-pip-version-check --force-reinstall wheel
   "$POETRY_HOME/bin/poetry" run python -m pip install --disable-pip-version-check --force-reinstall pip
-  "$POETRY_HOME/bin/poetry" run pip install --disable-pip-version-check --force-reinstall cx_freeze -i $openpype_index --extra-index-url https://pypi.org/simple
 }
 
 return_code=0

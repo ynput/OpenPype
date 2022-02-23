@@ -20,18 +20,23 @@ class CollectSlackFamilies(pyblish.api.InstancePlugin):
     def process(self, instance):
         task_name = io.Session.get("AVALON_TASK")
         family = self.main_family_from_instance(instance)
-
         key_values = {
             "families": family,
             "tasks": task_name,
             "hosts": instance.data["anatomyData"]["app"],
+            "subsets": instance.data["subset"]
         }
 
         profile = filter_profiles(self.profiles, key_values,
                                   logger=self.log)
 
+        if not profile:
+            self.log.info("No profile found, notification won't be send")
+            return
+
         # make slack publishable
         if profile:
+            self.log.info("Found profile: {}".format(profile))
             if instance.data.get('families'):
                 instance.data['families'].append('slack')
             else:

@@ -150,7 +150,7 @@ class DictImmutableKeysWidget(BaseWidget):
         content_widget.setObjectName("ContentWidget")
 
         if self.entity.highlight_content:
-            content_state = "hightlighted"
+            content_state = "highlighted"
             bottom_margin = 5
         else:
             content_state = ""
@@ -477,7 +477,7 @@ class OpenPypeVersionText(TextWidget):
             self.entity.set(value)
             self.update_style()
         else:
-            # Manually trigger hierachical style update
+            # Manually trigger hierarchical style update
             self.ignore_input_changes.set_ignore(True)
             self.ignore_input_changes.set_ignore(False)
 
@@ -675,7 +675,7 @@ class RawJsonWidget(InputWidget):
             self.entity.set(self.input_field.json_value())
             self.update_style()
         else:
-            # Manually trigger hierachical style update
+            # Manually trigger hierarchical style update
             self.ignore_input_changes.set_ignore(True)
             self.ignore_input_changes.set_ignore(False)
 
@@ -792,7 +792,7 @@ class PathWidget(BaseWidget):
         self.input_field.hierarchical_style_update()
 
     def _on_entity_change(self):
-        # No need to do anything. Styles will be updated from top hierachy.
+        # No need to do anything. Styles will be updated from top hierarchy.
         pass
 
     def update_style(self):

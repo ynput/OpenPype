@@ -694,13 +694,13 @@ class ExtractReview(pyblish.api.InstancePlugin):
         audio_args_dentifiers = ["-af", "-filter:a"]
         for arg in tuple(output_args):
             for identifier in video_args_dentifiers:
-                if identifier in arg:
+                if arg.startswith("{} ".format(identifier)):
                     output_args.remove(arg)
                     arg = arg.replace(identifier, "").strip()
                     video_filters.append(arg)
 
             for identifier in audio_args_dentifiers:
-                if identifier in arg:
+                if arg.startswith("{} ".format(identifier)):
                     output_args.remove(arg)
                     arg = arg.replace(identifier, "").strip()
                     audio_filters.append(arg)

@@ -527,6 +527,7 @@ def get_segment_attributes(segment):
 
     # Add timeline segment to tree
     clip_data = {
+        "shot_name": segment.shot_name.get_value(),
         "segment_name": segment.name.get_value(),
         "segment_comment": segment.comment.get_value(),
         "tape_name": segment.tape_name,
@@ -692,3 +693,18 @@ def maintained_object_duplication(item):
     finally:
         # delete the item at the end
         flame.delete(duplicate)
+
+
+def get_clip_segment(flame_clip):
+    name = flame_clip.name.get_value()
+    version = flame_clip.versions[0]
+    track = version.tracks[0]
+    segments = track.segments
+
+    if len(segments) < 1:
+        raise ValueError("Clip `{}` has no segments!".format(name))
+
+    if len(segments) > 1:
+        raise ValueError("Clip `{}` has too many segments!".format(name))
+
+    return segments[0]

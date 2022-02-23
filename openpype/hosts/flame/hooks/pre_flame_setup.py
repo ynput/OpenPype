@@ -4,9 +4,13 @@ import tempfile
 import contextlib
 import socket
 from openpype.lib import (
-    PreLaunchHook, get_openpype_username)
+    PreLaunchHook,
+    get_openpype_username
+)
+from openpype.lib.applications import (
+    ApplicationLaunchFailed
+)
 from openpype.hosts import flame as opflame
-import openpype.hosts.flame.api as opfapi
 import openpype
 from pprint import pformat
 
@@ -33,7 +37,25 @@ class FlamePrelaunch(PreLaunchHook):
 
         """Hook entry method."""
         project_doc = self.data["project_doc"]
+        project_name = project_doc["name"]
+
+        # get image io
+        project_anatomy = self.data["anatomy"]
+
+        # make sure anatomy settings are having flame key
+        if not project_anatomy["imageio"].get("flame"):
+            raise ApplicationLaunchFailed((
+                "Anatomy project settings are missing `flame` key. "
+                "Please make sure you remove project overides on "
+                "Anatomy Image io")
+            )
+
+        imageio_flame = project_anatomy["imageio"]["flame"]
+
+        # get user name and host name
         user_name = get_openpype_username()
+        user_name = user_name.replace(".", "_")
+
         hostname = socket.gethostname()  # not returning wiretap host name
 
         self.log.debug("Collected user \"{}\"".format(user_name))
@@ -41,7 +63,7 @@ class FlamePrelaunch(PreLaunchHook):
         _db_p_data = project_doc["data"]
         width = _db_p_data["resolutionWidth"]
         height = _db_p_data["resolutionHeight"]
-        fps = int(_db_p_data["fps"])
+        fps = float(_db_p_data["fps"])
 
         project_data = {
             "Name": project_doc["name"],
@@ -52,8 +74,8 @@ class FlamePrelaunch(PreLaunchHook):
             "FrameHeight": int(height),
             "AspectRatio": float((width / height) * _db_p_data["pixelAspect"]),
             "FrameRate": "{} fps".format(fps),
-            "FrameDepth": "16-bit fp",
-            "FieldDominance": "PROGRESSIVE"
+            "FrameDepth": str(imageio_flame["project"]["frameDepth"]),
+            "FieldDominance": str(imageio_flame["project"]["fieldDominance"])
         }
 
         data_to_script = {
@@ -61,10 +83,10 @@ class FlamePrelaunch(PreLaunchHook):
             "host_name": _env.get("FLAME_WIRETAP_HOSTNAME") or hostname,
             "volume_name": _env.get("FLAME_WIRETAP_VOLUME"),
             "group_name": _env.get("FLAME_WIRETAP_GROUP"),
-            "color_policy": "ACES 1.1",
+            "color_policy": str(imageio_flame["project"]["colourPolicy"]),
 
             # from project
-            "project_name": project_doc["name"],
+            "project_name": project_name,
             "user_name": user_name,
             "project_data": project_data
         }
@@ -76,8 +98,6 @@ class FlamePrelaunch(PreLaunchHook):
         self._add_pythonpath()
 
         app_arguments = self._get_launch_arguments(data_to_script)
-
-        opfapi.setup(self.launch_context.env)
 
         self.launch_context.launch_args.extend(app_arguments)
 

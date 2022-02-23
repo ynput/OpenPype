@@ -12,7 +12,6 @@ class CreateReview(plugin.Creator):
     label = "Review"
     family = "review"
     icon = "video-camera"
-    defaults = ['Main']
     keepImages = False
     isolate = False
     imagePlane = True

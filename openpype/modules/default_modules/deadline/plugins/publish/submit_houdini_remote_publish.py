@@ -105,15 +105,21 @@ class HoudiniSubmitPublishDeadline(pyblish.api.ContextPlugin):
                 # Clarify job name per submission (include instance name)
                 payload["JobInfo"]["Name"] = job_name + " - %s" % instance
                 self.submit_job(
-                    payload, instances=[instance], deadline=AVALON_DEADLINE
+                    context,
+                    payload,
+                    instances=[instance],
+                    deadline=AVALON_DEADLINE
                 )
         else:
             # Submit a single job
             self.submit_job(
-                payload, instances=instance_names, deadline=AVALON_DEADLINE
+                context,
+                payload,
+                instances=instance_names,
+                deadline=AVALON_DEADLINE
             )
 
-    def submit_job(self, payload, instances, deadline):
+    def submit_job(self, context, payload, instances, deadline):
 
         # Ensure we operate on a copy, a shallow copy is fine.
         payload = payload.copy()
@@ -125,6 +131,9 @@ class HoudiniSubmitPublishDeadline(pyblish.api.ContextPlugin):
             # similar environment using it, e.g. "houdini17.5;pluginx2.3"
             "AVALON_TOOLS",
         ]
+        # Add mongo url if it's enabled
+        if context.data.get("deadlinePassMongoUrl"):
+            keys.append("OPENPYPE_MONGO")
 
         environment = dict(
             {key: os.environ[key] for key in keys if key in os.environ},

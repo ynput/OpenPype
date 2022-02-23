@@ -537,6 +537,13 @@ class AfterEffectsServerStub():
 
         return self._handle_return(res)
 
+    def get_app_version(self):
+        """Returns version number of installed application (17.5...)."""
+        res = self.websocketserver.call(self.client.call(
+            'AfterEffects.get_app_version'))
+
+        return self._handle_return(res)
+
     def close(self):
         res = self.websocketserver.call(self.client.call('AfterEffects.close'))
 
