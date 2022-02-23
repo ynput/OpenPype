@@ -23,7 +23,9 @@ class CameraLoader(api.Loader):
 
         return asset_doc.get("data")
 
-    def _set_sequence_hierarchy(self, seq_i, seq_j, data_i, data_j):
+    def _set_sequence_hierarchy(self,
+        seq_i, seq_j, min_frame_j, max_frame_j
+    ):
         tracks = seq_i.get_master_tracks()
         track = None
         for t in tracks:
@@ -44,8 +46,8 @@ class CameraLoader(api.Loader):
             subscene.set_row_index(len(track.get_sections()))
             subscene.set_editor_property('sub_sequence', seq_j)
             subscene.set_range(
-                data_j.get("frameStart"),
-                data_j.get("frameEnd") + 1)
+                min_frame_j,
+                max_frame_j + 1)
 
     def load(self, context, name, namespace, data):
         """
@@ -129,6 +131,7 @@ class CameraLoader(api.Loader):
         # Get all the sequences in the hierarchy. It will create them, if 
         # they don't exist.
         sequences = []
+        frame_ranges = []
         i = 0
         for h in hierarchy_list:
             root_content = unreal.EditorAssetLibrary.list_assets(
@@ -170,15 +173,22 @@ class CameraLoader(api.Loader):
                         "data.visualParent": e.get('_id')
                     }))
 
+                min_frame = min(start_frames)
+                max_frame = max(end_frames)
+
                 scene.set_display_rate(
                     unreal.FrameRate(asset_data.get('data').get("fps"), 1.0))
-                scene.set_playback_start(min(start_frames))
-                scene.set_playback_end(max(end_frames))
+                scene.set_playback_start(min_frame)
+                scene.set_playback_end(max_frame)
 
                 sequences.append(scene)
+                frame_ranges.append((min_frame, max_frame))
             else:
                 for e in existing_sequences:
                     sequences.append(e.get_asset())
+                    frame_ranges.append((
+                        e.get_asset().get_playback_start(),
+                        e.get_asset().get_playback_end()))
 
             i += 1
 
@@ -192,20 +202,15 @@ class CameraLoader(api.Loader):
         )
 
         # Add sequences data to hierarchy
-        data_i = self._get_data(sequences[0].get_name())
-
         for i in range(0, len(sequences) - 1):
-            data_j = self._get_data(sequences[i + 1].get_name())
-
             self._set_sequence_hierarchy(
-                sequences[i], sequences[i + 1], data_i, data_j)
+                sequences[i], sequences[i + 1],
+                frame_ranges[i + 1][0], frame_ranges[i + 1][1])
 
-            data_i = data_j
-
-        parent_data = self._get_data(sequences[-1].get_name())
         data = self._get_data(asset)
         self._set_sequence_hierarchy(
-                sequences[-1], cam_seq, parent_data, data)
+                sequences[-1], cam_seq,
+                data.get('clipIn'), data.get('clipOut'))
 
         settings = unreal.MovieSceneUserImportFBXSettings()
         settings.set_editor_property('reduce_keys', False)
