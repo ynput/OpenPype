@@ -33,7 +33,6 @@ class CollectUsername(pyblish.api.ContextPlugin):
 
     def process(self, context):
         self.log.info("CollectUsername")
-
         os.environ["FTRACK_API_USER"] = os.environ["FTRACK_BOT_API_USER"]
         os.environ["FTRACK_API_KEY"] = os.environ["FTRACK_BOT_API_KEY"]
 
@@ -57,7 +56,12 @@ class CollectUsername(pyblish.api.ContextPlugin):
         if not user:
             raise ValueError(
                 "Couldn't find user with {} email".format(user_email))
-
-        username = user[0].get("username")
+        user = user[0]
+        username = user.get("username")
         self.log.debug("Resolved ftrack username:: {}".format(username))
         os.environ["FTRACK_API_USER"] = username
+
+        burnin_name = username
+        if '@' in burnin_name:
+            burnin_name = burnin_name[:burnin_name.index('@')]
+        os.environ["WEBPUBLISH_OPENPYPE_USERNAME"] = burnin_name
