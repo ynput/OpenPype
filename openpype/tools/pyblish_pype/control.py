@@ -229,7 +229,13 @@ class Controller(QtCore.QObject):
         self.log.debug("Resetting pyblish context object")
 
         comment = None
-        if self.context is not None and self.context.data.get("comment"):
+        if (
+            self.context is not None and
+            self.context.data.get("comment") and
+            # We only preserve the user typed comment if we are *not*
+            # resetting from a successful publish without errors
+            self._current_state != "Published"
+        ):
             comment = self.context.data["comment"]
 
         self.context = pyblish.api.Context()
