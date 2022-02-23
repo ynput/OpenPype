@@ -472,10 +472,10 @@ class FlameBabyPublisherPanel(object):
                 for tracks in ver.tracks:
                     for segment in tracks.segments:
                         print(segment.attributes)
-                        if str(segment.name)[1:-1] == "":
+                        if segment.name.get_value() == "":
                             continue
                         # get clip frame duration
-                        record_duration = str(segment.record_duration)[1:-1]
+                        record_duration = segment.record_duration.get_value()
                         clip_duration = app_utils.timecode_to_frames(
                             record_duration, frame_rate)
 
