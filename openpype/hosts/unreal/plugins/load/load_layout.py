@@ -530,15 +530,8 @@ class LayoutLoader(api.Loader):
                     asset).get_class().get_name() == 'LevelSequence'
             ]
 
-            # for asset in root_content:
-            #     asset_data = EditorAssetLibrary.find_asset_data(asset)
-            #     # imported_asset = unreal.AssetRegistryHelpers.get_asset(
-            #     #     imported_asset_data)
-            #     if asset_data.get_class().get_name() == 'LevelSequence':
-            #         break
-
             if not existing_sequences:
-                scene = tools.create_asset(
+                sequence = tools.create_asset(
                     asset_name=hierarchy[i],
                     package_path=h,
                     asset_class=unreal.LevelSequence,
@@ -569,13 +562,23 @@ class LayoutLoader(api.Loader):
                 min_frame = min(start_frames)
                 max_frame = max(end_frames)
 
-                scene.set_display_rate(
+                sequence.set_display_rate(
                     unreal.FrameRate(asset_data.get('data').get("fps"), 1.0))
-                scene.set_playback_start(min_frame)
-                scene.set_playback_end(max_frame)
+                sequence.set_playback_start(min_frame)
+                sequence.set_playback_end(max_frame)
 
-                sequences.append(scene)
+                sequences.append(sequence)
                 frame_ranges.append((min_frame, max_frame))
+
+                tracks = sequence.get_master_tracks()
+                track = None
+                for t in tracks:
+                    if t.get_class() == unreal.MovieSceneCameraCutTrack.static_class():
+                        track = t
+                        break
+                if not track:
+                    track = sequence.add_master_track(
+                        unreal.MovieSceneCameraCutTrack)
             else:
                 for e in existing_sequences:
                     sequences.append(e.get_asset())
