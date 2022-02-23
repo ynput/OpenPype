@@ -60,6 +60,9 @@ class IntegrateSlackAPI(pyblish.api.InstancePlugin):
                                            message,
                                            publish_files)
 
+                if not msg_id:
+                    return
+
                 msg = {
                     "type": "slack",
                     "msg_id": msg_id,
@@ -177,6 +180,8 @@ class IntegrateSlackAPI(pyblish.api.InstancePlugin):
             error_str = self._enrich_error(str(e), channel)
             self.log.warning("Error happened: {}".format(error_str))
 
+        return None, []
+
     def _python3_call(self, token, channel, message, publish_files):
         from slack_sdk import WebClient
         from slack_sdk.errors import SlackApiError
@@ -205,6 +210,8 @@ class IntegrateSlackAPI(pyblish.api.InstancePlugin):
             # You will get a SlackApiError if "ok" is False
             error_str = self._enrich_error(str(e.response["error"]), channel)
             self.log.warning("Error happened {}".format(error_str))
+
+        return None, []
 
     def _enrich_error(self, error_str, channel):
         """Enhance known errors with more helpful notations."""
