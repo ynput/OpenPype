@@ -8,7 +8,7 @@ PLUGIN_DIR = os.path.dirname(os.path.dirname(__file__))
 EXPORT_PRESETS_DIR = os.path.join(PLUGIN_DIR, "export_preset")
 
 CONFIG_DIR = os.path.join(os.path.expanduser(
-    "~/.openpype"), "openpype_flame_to_ftrack")
+    "~/.openpype"), "openpype_babypublisher")
 
 
 @contextmanager
