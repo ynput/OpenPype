@@ -433,7 +433,7 @@ class MultiFilesWidget(QtWidgets.QFrame):
             filenames = index.data(FILENAMES_ROLE)
             for filename in filenames:
                 filepaths.add(os.path.join(dirpath, filename))
-        return filepaths
+        return list(filepaths)
 
     def set_filters(self, folders_allowed, exts_filter):
         self._files_proxy_model.set_allow_folders(folders_allowed)
