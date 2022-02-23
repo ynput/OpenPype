@@ -11,7 +11,6 @@ class CreatePointCache(plugin.Creator):
     label = "Point Cache"
     family = "pointcache"
     icon = "gears"
-    defaults = ['Main']
 
     def __init__(self, *args, **kwargs):
         super(CreatePointCache, self).__init__(*args, **kwargs)

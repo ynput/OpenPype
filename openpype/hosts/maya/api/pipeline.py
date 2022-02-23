@@ -76,9 +76,6 @@ def install():
     avalon.api.on("taskChanged", on_task_changed)
     avalon.api.on("before.workfile.save", before_workfile_save)
 
-    log.info("Setting default family states for loader..")
-    avalon.api.data["familiesStateToggled"] = ["imagesequence"]
-
 
 def _set_project():
     """Sets the maya project to the current Session's work directory.
@@ -185,76 +182,6 @@ def uninstall():
     )
 
     menu.uninstall()
-
-
-def lock():
-    """Lock scene
-
-    Add an invisible node to your Maya scene with the name of the
-    current file, indicating that this file is "locked" and cannot
-    be modified any further.
-
-    """
-
-    if not cmds.objExists("lock"):
-        with lib.maintained_selection():
-            cmds.createNode("objectSet", name="lock")
-            cmds.addAttr("lock", ln="basename", dataType="string")
-
-            # Permanently hide from outliner
-            cmds.setAttr("lock.verticesOnlySet", True)
-
-    fname = cmds.file(query=True, sceneName=True)
-    basename = os.path.basename(fname)
-    cmds.setAttr("lock.basename", basename, type="string")
-
-
-def unlock():
-    """Permanently unlock a locked scene
-
-    Doesn't throw an error if scene is already unlocked.
-
-    """
-
-    try:
-        cmds.delete("lock")
-    except ValueError:
-        pass
-
-
-def is_locked():
-    """Query whether current scene is locked"""
-    fname = cmds.file(query=True, sceneName=True)
-    basename = os.path.basename(fname)
-
-    if self._ignore_lock:
-        return False
-
-    try:
-        return cmds.getAttr("lock.basename") == basename
-    except ValueError:
-        return False
-
-
-@contextlib.contextmanager
-def lock_ignored():
-    """Context manager for temporarily ignoring the lock of a scene
-
-    The purpose of this function is to enable locking a scene and
-    saving it with the lock still in place.
-
-    Example:
-        >>> with lock_ignored():
-        ...   pass  # Do things without lock
-
-    """
-
-    self._ignore_lock = True
-
-    try:
-        yield
-    finally:
-        self._ignore_lock = False
 
 
 def parse_container(container):
