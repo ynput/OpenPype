@@ -78,7 +78,7 @@ class FlameToFtrackPanel(object):
 
         # creating ui
         self.window.setMinimumSize(1500, 600)
-        self.window.setWindowTitle('Sequence Shots to Ftrack')
+        self.window.setWindowTitle('OpenPype: Baby-publisher')
         self.window.setWindowFlags(QtCore.Qt.WindowStaysOnTopHint)
         self.window.setAttribute(QtCore.Qt.WA_DeleteOnClose)
         self.window.setFocusPolicy(QtCore.Qt.StrongFocus)

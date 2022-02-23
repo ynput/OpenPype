@@ -30,7 +30,7 @@ def scope_sequence(selection):
 def get_media_panel_custom_ui_actions():
     return [
         {
-            "name": "OpenPype: Ftrack",
+            "name": "OpenPype: Baby-publisher",
             "actions": [
                 {
                     "name": "Create Shots",
