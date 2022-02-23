@@ -579,6 +579,9 @@ class LayoutLoader(api.Loader):
             else:
                 for e in existing_sequences:
                     sequences.append(e.get_asset())
+                    frame_ranges.append((
+                        e.get_asset().get_playback_start(),
+                        e.get_asset().get_playback_end()))
 
             i += 1
 
