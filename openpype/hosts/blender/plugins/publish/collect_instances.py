@@ -4,9 +4,7 @@ from typing import Generator
 import bpy
 
 import pyblish.api
-from openpype.hosts.blender.api.pipeline import (
-    AVALON_PROPERTY
-)
+from openpype.hosts.blender.api.pipeline import AVALON_PROPERTY
 
 
 class CollectInstances(pyblish.api.ContextPlugin):
@@ -31,15 +29,15 @@ class CollectInstances(pyblish.api.ContextPlugin):
 
     def process(self, context):
         """Collect the models from the current Blender scene."""
-        #get list of the collections with avalon properties in the scenes
+        # get list of the collections with avalon properties in the scenes
         collections = self.get_collections()
 
         for collection in collections:
             avalon_prop = collection[AVALON_PROPERTY]
-            asset = avalon_prop['asset']
-            family = avalon_prop['family']
-            subset = avalon_prop['subset']
-            task = avalon_prop['task']
+            asset = avalon_prop["asset"]
+            family = avalon_prop["family"]
+            subset = avalon_prop["subset"]
+            task = avalon_prop["task"]
             name = collection.name
             instance = context.create_instance(
                 name=name,

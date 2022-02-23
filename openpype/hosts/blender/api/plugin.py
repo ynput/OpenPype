@@ -8,21 +8,13 @@ import bpy
 import avalon.api
 from openpype.api import PypeCreatorMixin
 from .pipeline import AVALON_PROPERTY
-from .ops import (
-    MainThreadItem,
-    execute_in_main_thread
-)
-from .lib import (
-    imprint,
-    get_selection
-)
+from .ops import MainThreadItem, execute_in_main_thread
+from .lib import imprint, get_selection
 
 VALID_EXTENSIONS = [".blend", ".json", ".abc", ".fbx"]
 
 
-def asset_name(
-        asset: str, subset: str, namespace: Optional[str] = None
-) -> str:
+def asset_name(asset: str, subset: str, namespace: Optional[str] = None) -> str:
     """Return a consistent name for an asset."""
     name = f"{asset}"
     if namespace:
@@ -31,31 +23,29 @@ def asset_name(
     return name
 
 
-def model_asset_name(
-        model_name: str,  namespace: Optional[str] = None
-) -> str:
+def model_asset_name(model_name: str, namespace: Optional[str] = None) -> str:
     """Return a consistent name for an asset."""
     name = f"{model_name}"
     if namespace:
         name = f"{name}_{namespace}"
     return name
 
+
 def get_container_collections() -> list:
-        """Return all 'model' collections.
+    """Return all 'model' collections.
 
-        Check if the family is 'model' and if it doesn't have the
-        representation set. If the representation is set, it is a loaded model
-        and we don't want to publish it.
-        """
-        collections = []
-        for collection in bpy.data.collections:
-            if collection.get(AVALON_PROPERTY):
-                collections.append(collection)
-        return collections
+    Check if the family is 'model' and if it doesn't have the
+    representation set. If the representation is set, it is a loaded model
+    and we don't want to publish it.
+    """
+    collections = []
+    for collection in bpy.data.collections:
+        if collection.get(AVALON_PROPERTY):
+            collections.append(collection)
+    return collections
 
-def get_unique_number(
-        asset: str, subset: str
-) -> str:
+
+def get_unique_number(asset: str, subset: str) -> str:
     """Return a unique number based on the asset name."""
     data_collections = bpy.data.collections
     container_names = [c.name for c in data_collections if c.get(AVALON_PROPERTY)]
@@ -69,7 +59,7 @@ def get_unique_number(
     return f"{count:0>2}"
 
 
-def get_model_unique_number(current_container_name:str) -> str:
+def get_model_unique_number(current_container_name: str) -> str:
     """Return a unique number based on the asset name."""
     data_collections = bpy.data.collections
     container_names = [c.name for c in data_collections if c.get(AVALON_PROPERTY)]
@@ -93,8 +83,10 @@ def prepare_data(data, container_name=None):
     return local_data
 
 
-def create_blender_context(active: Optional[bpy.types.Object] = None,
-                           selected: Optional[bpy.types.Object] = None, ):
+def create_blender_context(
+    active: Optional[bpy.types.Object] = None,
+    selected: Optional[bpy.types.Object] = None,
+):
     """Create a new Blender context. If an object is passed as
     parameter, it is set as selected and active.
     """
@@ -106,16 +98,16 @@ def create_blender_context(active: Optional[bpy.types.Object] = None,
 
     for win in bpy.context.window_manager.windows:
         for area in win.screen.areas:
-            if area.type == 'VIEW_3D':
+            if area.type == "VIEW_3D":
                 for region in area.regions:
-                    if region.type == 'WINDOW':
-                        override_context['window'] = win
-                        override_context['screen'] = win.screen
-                        override_context['area'] = area
-                        override_context['region'] = region
-                        override_context['scene'] = bpy.context.scene
-                        override_context['active_object'] = active
-                        override_context['selected_objects'] = selected
+                    if region.type == "WINDOW":
+                        override_context["window"] = win
+                        override_context["screen"] = win.screen
+                        override_context["area"] = area
+                        override_context["region"] = region
+                        override_context["scene"] = bpy.context.scene
+                        override_context["active_object"] = active
+                        override_context["selected_objects"] = selected
                         return override_context
     raise Exception("Could not create a custom Blender context.")
 
@@ -158,12 +150,12 @@ def deselect_all():
     active = bpy.context.view_layer.objects.active
 
     for obj in bpy.data.objects:
-        if obj.mode != 'OBJECT':
+        if obj.mode != "OBJECT":
             modes.append((obj, obj.mode))
             bpy.context.view_layer.objects.active = obj
-            bpy.ops.object.mode_set(mode='OBJECT')
+            bpy.ops.object.mode_set(mode="OBJECT")
 
-    bpy.ops.object.select_all(action='DESELECT')
+    bpy.ops.object.select_all(action="DESELECT")
 
     for p in modes:
         bpy.context.view_layer.objects.active = p[0]
@@ -205,18 +197,26 @@ class AssetLoader(avalon.api.Loader):
     """
 
     @staticmethod
-    def _get_instance_empty(instance_name: str, nodes: List) -> Optional[bpy.types.Object]:
+    def _get_instance_empty(
+        instance_name: str, nodes: List
+    ) -> Optional[bpy.types.Object]:
         """Get the 'instance empty' that holds the collection instance."""
         for node in nodes:
             if not isinstance(node, bpy.types.Object):
                 continue
-            if (node.type == 'EMPTY' and node.instance_type == 'COLLECTION'
-                    and node.instance_collection and node.name == instance_name):
+            if (
+                node.type == "EMPTY"
+                and node.instance_type == "COLLECTION"
+                and node.instance_collection
+                and node.name == instance_name
+            ):
                 return node
         return None
 
     @staticmethod
-    def _get_instance_collection(instance_name: str, nodes: List) -> Optional[bpy.types.Collection]:
+    def _get_instance_collection(
+        instance_name: str, nodes: List
+    ) -> Optional[bpy.types.Collection]:
         """Get the 'instance collection' (container) for this asset."""
         for node in nodes:
             if not isinstance(node, bpy.types.Collection):
@@ -226,7 +226,9 @@ class AssetLoader(avalon.api.Loader):
         return None
 
     @staticmethod
-    def _get_library_from_container(container: bpy.types.Collection) -> bpy.types.Library:
+    def _get_library_from_container(
+        container: bpy.types.Collection,
+    ) -> bpy.types.Library:
         """Find the library file from the container.
 
         It traverses the objects from this collection, checks if there is only
@@ -242,34 +244,40 @@ class AssetLoader(avalon.api.Loader):
             assert obj.library, f"'{obj.name}' is not linked."
             libraries.add(obj.library)
 
-        assert len(
-            libraries) == 1, "'{container.name}' contains objects from more then 1 library."
+        assert (
+            len(libraries) == 1
+        ), "'{container.name}' contains objects from more then 1 library."
 
         return list(libraries)[0]
 
-    def process_asset(self,
-                      context: dict,
-                      name: str,
-                      namespace: Optional[str] = None,
-                      options: Optional[Dict] = None):
+    def process_asset(
+        self,
+        context: dict,
+        name: str,
+        namespace: Optional[str] = None,
+        options: Optional[Dict] = None,
+    ):
         """Must be implemented by a sub-class"""
         raise NotImplementedError("Must be implemented by a sub-class")
 
-    def load(self,
-             context: dict,
-             name: Optional[str] = None,
-             namespace: Optional[str] = None,
-             options: Optional[Dict] = None) -> Optional[bpy.types.Collection]:
-        """ Run the loader on Blender main thread"""
+    def load(
+        self,
+        context: dict,
+        name: Optional[str] = None,
+        namespace: Optional[str] = None,
+        options: Optional[Dict] = None,
+    ) -> Optional[bpy.types.Collection]:
+        """Run the loader on Blender main thread"""
         mti = MainThreadItem(self._load, context, name, namespace, options)
         execute_in_main_thread(mti)
 
-    def _load(self,
-              context: dict,
-              name: Optional[str] = None,
-              namespace: Optional[str] = None,
-              options: Optional[Dict] = None
-              ) -> Optional[bpy.types.Collection]:
+    def _load(
+        self,
+        context: dict,
+        name: Optional[str] = None,
+        namespace: Optional[str] = None,
+        options: Optional[Dict] = None,
+    ) -> Optional[bpy.types.Collection]:
         """Load asset via database
 
         Arguments:
@@ -284,13 +292,9 @@ class AssetLoader(avalon.api.Loader):
 
         asset = context["asset"]["name"]
         subset = context["subset"]["name"]
-        unique_number = get_unique_number(
-            asset, subset
-        )
+        unique_number = get_unique_number(asset, subset)
         namespace = namespace or f"{asset}_{unique_number}"
-        name = name or asset_name(
-            asset, subset, unique_number
-        )
+        name = name or asset_name(asset, subset, unique_number)
 
         nodes = self.process_asset(
             context=context,
@@ -326,7 +330,7 @@ class AssetLoader(avalon.api.Loader):
         raise NotImplementedError("Must be implemented by a sub-class")
 
     def update(self, container: Dict, representation: Dict):
-        """ Run the update on Blender main thread"""
+        """Run the update on Blender main thread"""
         mti = MainThreadItem(self.exec_update, container, representation)
         execute_in_main_thread(mti)
 
@@ -335,6 +339,6 @@ class AssetLoader(avalon.api.Loader):
         raise NotImplementedError("Must be implemented by a sub-class")
 
     def remove(self, container: Dict) -> bool:
-        """ Run the remove on Blender main thread"""
+        """Run the remove on Blender main thread"""
         mti = MainThreadItem(self.exec_remove, container)
         execute_in_main_thread(mti)

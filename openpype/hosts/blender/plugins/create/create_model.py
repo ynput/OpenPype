@@ -16,13 +16,13 @@ class CreateModel(plugin.Creator):
     icon = "cube"
 
     def process(self):
-        """ Run the creator on Blender main thread"""
+        """Run the creator on Blender main thread"""
         mti = ops.MainThreadItem(self._process)
         ops.execute_in_main_thread(mti)
 
     def _process(self):
 
-        # get info from data and create name value
+        # Get info from data and create name value
         asset = self.data["asset"]
         subset = self.data["subset"]
         #name = plugin.asset_name(asset, subset)
@@ -34,8 +34,8 @@ class CreateModel(plugin.Creator):
             instance = bpy.data.collections.new(name=name)
             bpy.context.scene.collection.children.link(instance)
 
-        #add custum property on the instance with the data
-        self.data['task'] = api.Session.get('AVALON_TASK')
+        # Add custum property on the instance with the data
+        self.data["task"] = api.Session.get("AVALON_TASK")
         lib.imprint(instance, self.data)
 
         # Add selected objects to instance

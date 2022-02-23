@@ -4,7 +4,7 @@ import bpy
 
 from avalon import api
 from openpype.hosts.blender.api import plugin, lib, ops
-from openpype.hosts.blender.api.pipeline import AVALON_INSTANCES,RIG_TASK_NAME
+from openpype.hosts.blender.api.pipeline import AVALON_INSTANCES, RIG_TASK_NAME
 
 
 class CreateRig(plugin.Creator):
@@ -18,18 +18,18 @@ class CreateRig(plugin.Creator):
     def get_selection_hierarchie(self):
         nodes = bpy.context.selected_objects
         children_of_the_object = list()
-        objects =  list()
+        objects = list()
 
         for obj in nodes:
             objects.append(obj)
-            if obj.type !="ARMATURE":
+            if obj.type != "ARMATURE":
                 nodes.extend(list(obj.children))
 
         objects.reverse()
         return objects
 
     def process(self):
-        """ Run the creator on Blender main thread"""
+        """Run the creator on Blender main thread"""
         mti = ops.MainThreadItem(self._process)
         ops.execute_in_main_thread(mti)
 
@@ -48,14 +48,13 @@ class CreateRig(plugin.Creator):
             instance = bpy.data.collections.new(name=name)
             bpy.context.scene.collection.children.link(instance)
 
-        self.data['task'] = api.Session.get('AVALON_TASK')
+        self.data["task"] = api.Session.get("AVALON_TASK")
         lib.imprint(instance, self.data)
 
         for container in containers:
-            if  instance.children.get(container.name) is None and instance != container:
+            if instance.children.get(container.name) is None and instance != container:
                 bpy.context.scene.collection.children.unlink(container)
                 instance.children.link(container)
-
 
         # Add selected objects to instance
         objects_to_link = list()

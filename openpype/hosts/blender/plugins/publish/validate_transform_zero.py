@@ -35,9 +35,9 @@ class ValidateTransformZero(pyblish.api.InstancePlugin):
 
     def process(self, instance):
 
-        #not sure if it's to check the controllers or the objects in the instance
+        # not sure if it's to check the controllers or the objects in the instance
 
         invalid = self.get_invalid(instance)
-        #if invalid:
-            #raise RuntimeError(
-                #f"Object found in instance is not in Object Mode: {invalid}")
+        # if invalid:
+        # raise RuntimeError(
+        # f"Object found in instance is not in Object Mode: {invalid}")

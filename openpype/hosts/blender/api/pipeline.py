@@ -28,9 +28,9 @@ ORIGINAL_EXCEPTHOOK = sys.excepthook
 
 AVALON_INSTANCES = "AVALON_INSTANCES"
 AVALON_CONTAINERS = "AVALON_CONTAINERS"
-AVALON_PROPERTY = 'avalon'
-MODEL_TASK_NAME = 'Model'
-RIG_TASK_NAME = 'Rig'
+AVALON_PROPERTY = "avalon"
+MODEL_TASK_NAME = "Model"
+RIG_TASK_NAME = "Rig"
 IS_HEADLESS = bpy.app.background
 
 log = Logger.get_logger(__name__)
@@ -77,10 +77,7 @@ def uninstall():
 
 def set_start_end_frames():
     asset_name = io.Session["AVALON_ASSET"]
-    asset_doc = io.find_one({
-        "type": "asset",
-        "name": asset_name
-    })
+    asset_doc = io.find_one({"type": "asset", "name": asset_name})
 
     scene = bpy.context.scene
 
@@ -147,6 +144,7 @@ def _on_load_post(*args):
 
 def _register_callbacks():
     """Register callbacks for certain events."""
+
     def _remove_handler(handlers: List, callback: Callable):
         """Remove the callback from the given handler list."""
 
@@ -204,13 +202,13 @@ def reload_pipeline(*args):
     avalon.api.uninstall()
 
     for module in (
-            "avalon.io",
-            "avalon.lib",
-            "avalon.pipeline",
-            "avalon.tools.creator.app",
-            "avalon.tools.manager.app",
-            "avalon.api",
-            "avalon.tools",
+        "avalon.io",
+        "avalon.lib",
+        "avalon.pipeline",
+        "avalon.tools.creator.app",
+        "avalon.tools.manager.app",
+        "avalon.api",
+        "avalon.tools",
     ):
         module = importlib.import_module(module)
         importlib.reload(module)
@@ -269,12 +267,14 @@ def metadata_update(node: bpy.types.bpy_struct_meta_idprop, data: Dict):
         node[AVALON_PROPERTY][key] = value
 
 
-def containerise(name: str,
-                 namespace: str,
-                 nodes: List,
-                 context: Dict,
-                 loader: Optional[str] = None,
-                 suffix: Optional[str] = "CON") -> bpy.types.Collection:
+def containerise(
+    name: str,
+    namespace: str,
+    nodes: List,
+    context: Dict,
+    loader: Optional[str] = None,
+    suffix: Optional[str] = "CON",
+) -> bpy.types.Collection:
     """Bundle `nodes` into an assembly and imprint it with metadata
 
     Containerisation enables a tracking of version, author and origin
@@ -307,7 +307,7 @@ def containerise(name: str,
         "schema": "openpype:container-2.0",
         "id": AVALON_CONTAINER_ID,
         "name": name,
-        "namespace": namespace or '',
+        "namespace": namespace or "",
         "loader": str(loader),
         "representation": str(context["representation"]["_id"]),
     }
@@ -319,12 +319,13 @@ def containerise(name: str,
 
 
 def containerise_existing(
-        container: bpy.types.Collection,
-        name: str,
-        namespace: str,
-        context: Dict,
-        loader: Optional[str] = None,
-        suffix: Optional[str] = "CON") -> bpy.types.Collection:
+    container: bpy.types.Collection,
+    name: str,
+    namespace: str,
+    context: Dict,
+    loader: Optional[str] = None,
+    suffix: Optional[str] = "CON",
+) -> bpy.types.Collection:
     """Imprint or update container with metadata.
 
     Arguments:
@@ -346,7 +347,7 @@ def containerise_existing(
         "schema": "openpype:container-2.0",
         "id": AVALON_CONTAINER_ID,
         "name": name,
-        "namespace": namespace or '',
+        "namespace": namespace or "",
         "loader": str(loader),
         "representation": str(context["representation"]["_id"]),
     }
@@ -357,8 +358,7 @@ def containerise_existing(
     return container
 
 
-def parse_container(container: bpy.types.Collection,
-                    validate: bool = True) -> Dict:
+def parse_container(container: bpy.types.Collection, validate: bool = True) -> Dict:
     """Return the container node's full container data.
 
     Args:
@@ -410,9 +410,7 @@ def update_hierarchy(containers):
         # FIXME (jasperge): re-evaluate this. How would it be possible
         # to 'nest' assets?  Collections can have several parents, for
         # now assume it has only 1 parent
-        parent = [
-            coll for coll in bpy.data.collections if container in coll.children
-        ]
+        parent = [coll for coll in bpy.data.collections if container in coll.children]
         for node in parent:
             if node in all_containers:
                 container["parent"] = node

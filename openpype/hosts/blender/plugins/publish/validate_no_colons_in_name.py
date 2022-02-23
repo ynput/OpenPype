@@ -23,12 +23,12 @@ class ValidateNoColonsInName(pyblish.api.InstancePlugin):
     def get_invalid(cls, instance) -> List:
         invalid = []
         for obj in [obj for obj in instance]:
-            if ':' in obj.name:
+            if ":" in obj.name:
                 invalid.append(obj)
             if bpy.data.collections.get(obj.name) is None:
-                if obj.type == 'ARMATURE':
+                if obj.type == "ARMATURE":
                     for bone in obj.data.bones:
-                        if ':' in bone.name:
+                        if ":" in bone.name:
                             invalid.append(obj)
                             break
         return invalid
@@ -36,5 +36,4 @@ class ValidateNoColonsInName(pyblish.api.InstancePlugin):
     def process(self, instance):
         invalid = self.get_invalid(instance)
         if invalid:
-            raise RuntimeError(
-                f"Objects found with colon in name: {invalid}")
+            raise RuntimeError(f"Objects found with colon in name: {invalid}")

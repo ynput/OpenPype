@@ -29,14 +29,14 @@ class ExtractBlend(openpype.api.Extractor):
         for obj in collection.objects:
             data_blocks.add(obj)
             # Pack used images in the blend files.
-            if obj.type == 'MESH':
+            if obj.type == "MESH":
                 for material_slot in obj.material_slots:
                     mat = material_slot.material
                     if mat and mat.use_nodes:
                         tree = mat.node_tree
-                        if tree.type == 'SHADER':
+                        if tree.type == "SHADER":
                             for node in tree.nodes:
-                                if node.bl_idname == 'ShaderNodeTexImage':
+                                if node.bl_idname == "ShaderNodeTexImage":
                                     if node.image:
                                         node.image.pack()
 
@@ -46,12 +46,11 @@ class ExtractBlend(openpype.api.Extractor):
             instance.data["representations"] = []
 
         representation = {
-            'name': 'blend',
-            'ext': 'blend',
-            'files': filename,
+            "name": "blend",
+            "ext": "blend",
+            "files": filename,
             "stagingDir": stagingdir,
         }
         instance.data["representations"].append(representation)
 
-        self.log.info("Extracted instance '%s' to: %s",
-                      instance.name, representation)
+        self.log.info("Extracted instance '%s' to: %s", instance.name, representation)
