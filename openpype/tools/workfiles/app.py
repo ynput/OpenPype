@@ -726,9 +726,9 @@ class FilesWidget(QtWidgets.QWidget):
         self.file_opened.emit()
 
     def save_changes_prompt(self):
-        self._messagebox = messagebox = QtWidgets.QMessageBox()
-
-        messagebox.setWindowFlags(QtCore.Qt.FramelessWindowHint)
+        self._messagebox = messagebox = QtWidgets.QMessageBox(parent=self)
+        messagebox.setWindowFlags(messagebox.windowFlags() |
+                                  QtCore.Qt.FramelessWindowHint)
         messagebox.setIcon(messagebox.Warning)
         messagebox.setWindowTitle("Unsaved Changes!")
         messagebox.setText(
@@ -738,10 +738,6 @@ class FilesWidget(QtWidgets.QWidget):
         messagebox.setStandardButtons(
             messagebox.Yes | messagebox.No | messagebox.Cancel
         )
-
-        # Parenting the QMessageBox to the Widget seems to crash
-        # so we skip parenting and explicitly apply the stylesheet.
-        messagebox.setStyle(self.style())
 
         result = messagebox.exec_()
         if result == messagebox.Yes:
