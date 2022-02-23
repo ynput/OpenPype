@@ -2,7 +2,8 @@
     "create": {
         "CreateShotClip": {
             "hierarchy": "{folder}/{sequence}",
-            "clipRename": true,
+            "useShotName": true,
+            "clipRename": false,
             "clipName": "{sequence}{shot}",
             "segmentIndex": true,
             "countFrom": 10,
