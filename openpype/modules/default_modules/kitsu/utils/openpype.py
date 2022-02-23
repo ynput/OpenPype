@@ -75,7 +75,7 @@ def update_op_assets(
             else None
         )
         if substitute_parent_item:
-            parent_zou_id = substitute_parent_item["id"]
+            parent_zou_id = substitute_parent_item["parent_id"]
         else:
             parent_zou_id = (
                 item.get("parent_id") or item.get("episode_id") or item.get("source_id")

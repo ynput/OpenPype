@@ -112,4 +112,151 @@ def add_listeners():
     gazu.events.add_listener(event_client, "asset:update", update_asset)
     gazu.events.add_listener(event_client, "asset:delete", delete_asset)
 
+    # == Episode ==
+    def new_episode(data):
+        """Create new episode into OP DB."""
+        # Get project entity
+        project_col = set_op_project(dbcon, data["project_id"])
+
+        # Get gazu entity
+        episode = gazu.shot.get_episode(data["episode_id"])
+
+        # Insert doc in DB
+        project_col.insert_one(create_op_asset(episode))
+
+        # Update
+        update_episode(data)
+
+    def update_episode(data):
+        """Update episode into OP DB."""
+        project_col = set_op_project(dbcon, data["project_id"])
+        project_doc = dbcon.find_one({"type": "project"})
+
+        # Get gazu entity
+        episode = gazu.shot.get_episode(data["episode_id"])
+
+        # Find asset doc
+        # Query all assets of the local project
+        zou_ids_and_asset_docs = {
+            asset_doc["data"]["zou"]["id"]: asset_doc
+            for asset_doc in project_col.find({"type": "asset"})
+            if asset_doc["data"].get("zou", {}).get("id")
+        }
+        zou_ids_and_asset_docs[episode["project_id"]] = project_doc
+
+        # Update
+        asset_doc_id, asset_update = update_op_assets(
+            [episode], zou_ids_and_asset_docs
+        )[0]
+        project_col.update_one({"_id": asset_doc_id}, asset_update)
+
+    def delete_episode(data):
+        """Delete shot of OP DB."""
+        project_col = set_op_project(dbcon, data["project_id"])
+        print("delete episode")  # TODO check bugfix
+
+        # Delete
+        project_col.delete_one({"type": "asset", "data.zou.id": data["episode_id"]})
+
+    gazu.events.add_listener(event_client, "episode:new", new_episode)
+    gazu.events.add_listener(event_client, "episode:update", update_episode)
+    gazu.events.add_listener(event_client, "episode:delete", delete_episode)
+
+    # == Sequence ==
+    def new_sequence(data):
+        """Create new sequnce into OP DB."""
+        # Get project entity
+        project_col = set_op_project(dbcon, data["project_id"])
+
+        # Get gazu entity
+        sequence = gazu.shot.get_sequence(data["sequence_id"])
+
+        # Insert doc in DB
+        project_col.insert_one(create_op_asset(sequence))
+
+        # Update
+        update_sequence(data)
+
+    def update_sequence(data):
+        """Update sequence into OP DB."""
+        project_col = set_op_project(dbcon, data["project_id"])
+        project_doc = dbcon.find_one({"type": "project"})
+
+        # Get gazu entity
+        sequence = gazu.shot.get_sequence(data["sequence_id"])
+
+        # Find asset doc
+        # Query all assets of the local project
+        zou_ids_and_asset_docs = {
+            asset_doc["data"]["zou"]["id"]: asset_doc
+            for asset_doc in project_col.find({"type": "asset"})
+            if asset_doc["data"].get("zou", {}).get("id")
+        }
+        zou_ids_and_asset_docs[sequence["project_id"]] = project_doc
+
+        # Update
+        asset_doc_id, asset_update = update_op_assets(
+            [sequence], zou_ids_and_asset_docs
+        )[0]
+        project_col.update_one({"_id": asset_doc_id}, asset_update)
+
+    def delete_sequence(data):
+        """Delete sequence of OP DB."""
+        project_col = set_op_project(dbcon, data["project_id"])
+        print("delete sequence")  # TODO check bugfix
+
+        # Delete
+        project_col.delete_one({"type": "asset", "data.zou.id": data["sequence_id"]})
+
+    gazu.events.add_listener(event_client, "sequence:new", new_sequence)
+    gazu.events.add_listener(event_client, "sequence:update", update_sequence)
+    gazu.events.add_listener(event_client, "sequence:delete", delete_sequence)
+
+    # == Shot ==
+    def new_shot(data):
+        """Create new shot into OP DB."""
+        # Get project entity
+        project_col = set_op_project(dbcon, data["project_id"])
+
+        # Get gazu entity
+        shot = gazu.shot.get_shot(data["shot_id"])
+
+        # Insert doc in DB
+        project_col.insert_one(create_op_asset(shot))
+
+        # Update
+        update_shot(data)
+
+    def update_shot(data):
+        """Update shot into OP DB."""
+        project_col = set_op_project(dbcon, data["project_id"])
+        project_doc = dbcon.find_one({"type": "project"})
+
+        # Get gazu entity
+        shot = gazu.shot.get_shot(data["shot_id"])
+
+        # Find asset doc
+        # Query all assets of the local project
+        zou_ids_and_asset_docs = {
+            asset_doc["data"]["zou"]["id"]: asset_doc
+            for asset_doc in project_col.find({"type": "asset"})
+            if asset_doc["data"].get("zou", {}).get("id")
+        }
+        zou_ids_and_asset_docs[shot["project_id"]] = project_doc
+
+        # Update
+        asset_doc_id, asset_update = update_op_assets([shot], zou_ids_and_asset_docs)[0]
+        project_col.update_one({"_id": asset_doc_id}, asset_update)
+
+    def delete_shot(data):
+        """Delete shot of OP DB."""
+        project_col = set_op_project(dbcon, data["project_id"])
+
+        # Delete
+        project_col.delete_one({"type": "asset", "data.zou.id": data["shot_id"]})
+
+    gazu.events.add_listener(event_client, "shot:new", new_shot)
+    gazu.events.add_listener(event_client, "shot:update", update_shot)
+    gazu.events.add_listener(event_client, "shot:delete", delete_shot)
+
     gazu.events.run_client(event_client)
