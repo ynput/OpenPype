@@ -492,11 +492,11 @@ class FlameToFtrackPanel(object):
 
                         # Add timeline segment to tree
                         QtWidgets.QTreeWidgetItem(self.tree, [
-                            str(sequence.name)[1:-1],  # seq
-                            str(segment.name)[1:-1],  # shot
+                            sequence.name.get_value(),  # seq name
+                            segment.shot_name.get_value(),  # shot name
                             str(clip_duration),  # clip duration
                             shot_description,  # shot description
-                            str(segment.comment)[1:-1]  # task description
+                            segment.comment.get_value()  # task description
                         ]).setFlags(
                             QtCore.Qt.ItemIsEditable
                             | QtCore.Qt.ItemIsEnabled
