@@ -121,7 +121,7 @@ class IntegrateSlackAPI(pyblish.api.InstancePlugin):
     def _get_thumbnail_path(self, instance):
         """Returns abs url for thumbnail if present in instance repres"""
         published_path = None
-        for repre in instance.data['representations']:
+        for repre in instance.data.get("representations", []):
             if repre.get('thumbnail') or "thumbnail" in repre.get('tags', []):
                 if os.path.exists(repre["published_path"]):
                     published_path = repre["published_path"]
@@ -131,7 +131,7 @@ class IntegrateSlackAPI(pyblish.api.InstancePlugin):
     def _get_review_path(self, instance):
         """Returns abs url for review if present in instance repres"""
         published_path = None
-        for repre in instance.data['representations']:
+        for repre in instance.data.get("representations", []):
             tags = repre.get('tags', [])
             if (repre.get("review")
                     or "review" in tags
