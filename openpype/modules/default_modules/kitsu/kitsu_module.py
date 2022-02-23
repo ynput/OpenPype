@@ -22,10 +22,7 @@ from gazu.shot import (
     new_shot,
 )
 from gazu.task import (
-    all_tasks_for_asset,
-    all_tasks_for_shot,
     all_task_types,
-    all_task_types_for_project,
     new_task,
     new_task_type,
 )
@@ -33,9 +30,12 @@ from pymongo import DeleteOne, UpdateOne
 
 from avalon.api import AvalonMongoDB
 from openpype.api import get_project_settings
-from openpype.lib import create_project
 from openpype.modules import JsonFilesSettingsDef, OpenPypeModule, ModulesManager
-from openpype.modules.default_modules.kitsu.utils.openpype import sync_project
+from openpype.modules.default_modules.kitsu.utils.openpype import (
+    create_op_asset,
+    sync_project,
+    update_op_assets,
+)
 from openpype_interfaces import IPluginPaths, ITrayAction
 from .listeners import add_listeners
 
@@ -417,33 +417,28 @@ def sync_openpype():
 
         # Query all assets of the local project
         project_col = dbcon.database[project_code]
-        asset_doc_ids = {
+        zou_ids_and_asset_docs = {
             asset_doc["data"]["zou"]["id"]: asset_doc
             for asset_doc in project_col.find({"type": "asset"})
             if asset_doc["data"].get("zou", {}).get("id")
         }
-        asset_doc_ids[project["id"]] = project_doc
+        zou_ids_and_asset_docs[project["id"]] = project_doc
 
         # Create
         to_insert = []
         to_insert.extend(
             [
-                {
-                    "name": item["name"],
-                    "type": "asset",
-                    "schema": "openpype:asset-3.0",
-                    "data": {"zou": item, "tasks": {}},
-                }
+                create_op_asset(item)
                 for item in all_entities
-                if item["id"] not in asset_doc_ids.keys()
+                if item["id"] not in zou_ids_and_asset_docs.keys()
             ]
         )
         if to_insert:
-            # Insert in doc
+            # Insert doc in DB
             project_col.insert_many(to_insert)
 
             # Update existing docs
-            asset_doc_ids.update(
+            zou_ids_and_asset_docs.update(
                 {
                     asset_doc["data"]["zou"]["id"]: asset_doc
                     for asset_doc in project_col.find({"type": "asset"})
@@ -452,15 +447,23 @@ def sync_openpype():
             )
 
         # Update
-        bulk_writes.extend(update_op_assets(all_entities, asset_doc_ids))
+        bulk_writes.extend(
+            [
+                UpdateOne({"_id": id}, update)
+                for id, update in update_op_assets(all_entities, zou_ids_and_asset_docs)
+            ]
+        )
 
         # Delete
-        diff_assets = set(asset_doc_ids.keys()) - {
+        diff_assets = set(zou_ids_and_asset_docs.keys()) - {
             e["id"] for e in all_entities + [project]
         }
         if diff_assets:
             bulk_writes.extend(
-                [DeleteOne(asset_doc_ids[asset_id]) for asset_id in diff_assets]
+                [
+                    DeleteOne(zou_ids_and_asset_docs[asset_id])
+                    for asset_id in diff_assets
+                ]
             )
 
         # Write into DB
@@ -468,82 +471,6 @@ def sync_openpype():
             project_col.bulk_write(bulk_writes)
 
     dbcon.uninstall()
-
-
-def update_op_assets(
-    entities_list: List[dict], asset_doc_ids: Dict[str, dict]
-) -> List[UpdateOne]:
-    """Update OpenPype assets.
-    Set 'data' and 'parent' fields.
-
-    :param entities_list: List of zou entities to update
-    :param asset_doc_ids: Dicts of [{zou_id: asset_doc}, ...]
-    :return: List of UpdateOne objects
-    """
-    bulk_writes = []
-    for item in entities_list:
-        # Update asset
-        item_doc = asset_doc_ids[item["id"]]
-        item_data = item_doc["data"].copy()
-        item_data["zou"] = item
-
-        # Tasks
-        tasks_list = None
-        if item["type"] == "Asset":
-            tasks_list = all_tasks_for_asset(item)
-        elif item["type"] == "Shot":
-            tasks_list = all_tasks_for_shot(item)
-            # TODO frame in and out
-        if tasks_list:
-            item_data["tasks"] = {
-                t["task_type_name"]: {"type": t["task_type_name"]} for t in tasks_list
-            }
-
-        # Visual parent for hierarchy
-        substitute_parent_item = (
-            item_data["parent_substitutes"][0]
-            if item_data.get("parent_substitutes")
-            else None
-        )
-        parent_zou_id = item["parent_id"] or item["source_id"]
-        if substitute_parent_item:
-            parent_zou_id = (
-                substitute_parent_item["parent_id"]
-                or substitute_parent_item["source_id"]
-            )
-            visual_parent_doc = asset_doc_ids[parent_zou_id]
-            item_data["visualParent"] = visual_parent_doc["_id"]
-
-        # Add parents for hierarchy
-        item_data["parents"] = []
-        while parent_zou_id is not None:
-            parent_doc = asset_doc_ids[parent_zou_id]
-            item_data["parents"].insert(0, parent_doc["name"])
-
-            parent_zou_id = next(
-                i for i in entities_list if i["id"] == parent_doc["data"]["zou"]["id"]
-            )["parent_id"]
-
-        # Update 'data' different in zou DB
-        updated_data = {
-            k: item_data[k]
-            for k in item_data.keys()
-            if item_doc["data"].get(k) != item_data[k]
-        }
-        if updated_data or not item_doc.get("parent"):
-            bulk_writes.append(
-                UpdateOne(
-                    {"_id": item_doc["_id"]},
-                    {
-                        "$set": {
-                            "data": item_data,
-                            "parent": asset_doc_ids[item["project_id"]]["_id"],
-                        }
-                    },
-                )
-            )
-
-    return bulk_writes
 
 
 @cli_main.command()
