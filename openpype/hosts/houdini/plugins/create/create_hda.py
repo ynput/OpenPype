@@ -1,8 +1,8 @@
 # -*- coding: utf-8 -*-
-from openpype.hosts.houdini.api import plugin
-from avalon.houdini import lib
-from avalon import io
 import hou
+from avalon import io
+from openpype.hosts.houdini.api import lib
+from openpype.hosts.houdini.api import plugin
 
 
 class CreateHDA(plugin.Creator):

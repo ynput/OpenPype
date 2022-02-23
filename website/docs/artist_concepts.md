@@ -12,7 +12,7 @@ In our pipeline all the main entities the project is made from are internally co
 
 ### Subset
 
-Usually, an asset needs to be created in multiple *'flavours'*. A character might have multiple different looks, model needs to be published in different resolutions, a standard animation rig might not be useable in a crowd system and so on. 'Subsets' are here to accommodate all this variety that might be needed within a single asset. A model might have subset: *'main'*, *'proxy'*, *'sculpt'*, while data of *'look'* family could have subsets *'main'*, *'dirty'*, *'damaged'*. Subsets have some recommendations for their names, but ultimately it's up to the artist to use them for separation of publishes when needed.
+Usually, an asset needs to be created in multiple *'flavours'*. A character might have multiple different looks, model needs to be published in different resolutions, a standard animation rig might not be usable in a crowd system and so on. 'Subsets' are here to accommodate all this variety that might be needed within a single asset. A model might have subset: *'main'*, *'proxy'*, *'sculpt'*, while data of *'look'* family could have subsets *'main'*, *'dirty'*, *'damaged'*. Subsets have some recommendations for their names, but ultimately it's up to the artist to use them for separation of publishes when needed.
 
 ### Version
 

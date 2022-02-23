@@ -19,6 +19,7 @@ class CreateRender(openpype.api.Creator):
     name = "renderDefault"
     label = "Render on Farm"
     family = "render"
+    defaults = ["Main"]
 
     def process(self):
         stub = get_stub()  # only after After Effects is up

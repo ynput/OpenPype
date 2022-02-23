@@ -50,39 +50,6 @@
                             "label": "Skip Timeline Check  for Tasks"
                         }
                     ]
-                },
-                {
-                    "type": "dict",
-                    "collapsible": true,
-                    "key": "AfterEffectsSubmitDeadline",
-                    "label": "AfterEffects Submit to Deadline",
-                    "children": [
-                        {
-                            "type": "boolean",
-                            "key": "use_published",
-                            "label": "Use Published scene"
-                        },
-                        {
-                            "type": "number",
-                            "key": "priority",
-                            "label": "Priority"
-                        },
-                        {
-                            "type": "text",
-                            "key": "primary_pool",
-                            "label": "Primary Pool"
-                        },
-                        {
-                            "type": "text",
-                            "key": "secondary_pool",
-                            "label": "Secondary Pool"
-                        },
-                        {
-                            "type": "number",
-                            "key": "chunk_size",
-                            "label": "Frames Per Task"
-                        }
-                    ]
                 }
             ]
         },

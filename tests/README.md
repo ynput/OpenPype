@@ -12,8 +12,6 @@ Structure:
     
 How to run:
 ----------
-- single test class could be run by PyCharm and its pytest runner directly
-- OR
 - use Openpype command 'runtests' from command line (`.venv` in ${OPENPYPE_ROOT} must be activated to use configured Python!)
 -- `${OPENPYPE_ROOT}/python start.py runtests`
   

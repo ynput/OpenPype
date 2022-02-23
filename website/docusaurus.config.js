@@ -17,9 +17,15 @@ module.exports = {
         },
         theme: {
           customCss: require.resolve('./src/css/custom.css')
-        }
+        },
+        gtag: {
+        trackingID: 'G-DTKXMFENFY',
+        // Optional fields.
+        anonymizeIP: false, // Should IPs be anonymized?
       }
-    ]
+      }
+    ],
+    
   ],
   themeConfig: {
     colorMode: {
@@ -33,7 +39,7 @@ module.exports = {
     announcementBar: {
       id: 'help_with_docs', // Any value that will identify this message.
       content:
-      'Help us make it better., <b><a href="https://github.com/pypeclub/OpenPype/tree/develop/website"></a></b>.',
+      'Help us make this documentation better. <b><a href="https://github.com/pypeclub/OpenPype/tree/develop/website">Edit on github.</a></b>.',
       backgroundColor: '#fff', // Defaults to `#fff`.
       textColor: '#000', // Defaults to `#000`.
     },
@@ -58,14 +64,16 @@ module.exports = {
           position: 'left'
         },
           {
-            href: 'https://pype.club',
-            label: 'pypeclub',
+            to: 'https://pype.club',
+            'aria-label': 'pypeclub',
+            className: 'header-pypeclub-link',
             position: 'right',
           },{
-          href: 'https://github.com/pypeclub',
-          label: 'Github',
+          to: 'https://github.com/pypeclub',
+          'aria-label': 'Github',
+          className: 'header-github-link',
           position: 'right',
-        },
+        }
       ]
     },
     footer: {
@@ -111,16 +119,11 @@ module.exports = {
     algolia: {
       apiKey: '5e01ee3bfbb744ca6f25d4b281ce38a9',
       indexName: 'openpype',
-      // Optional: see doc section bellow
+      // Optional: see doc section below
       contextualSearch: true,
       // Optional: Algolia search parameters
       searchParameters: {},
-    },
-    gtag: {
-      trackingID: 'G-DTKXMFENFY',
-      // Optional fields.
-      anonymizeIP: false, // Should IPs be anonymized?
-    },
+    }
   },
   stylesheets: [
         'https://use.fontawesome.com/releases/v5.7.2/css/all.css'

@@ -138,7 +138,7 @@ $ exec $SHELL
 
 # install Python 3.7.10
 # python will be downloaded and build so please make sure
-# you have all necessary requirements installed (see bellow).
+# you have all necessary requirements installed (see below).
 $ pyenv install -v 3.7.10
 
 # change path to pype 3
@@ -193,7 +193,7 @@ For more information about setting your build environment please refer to [pyenv
 <TabItem value="mac">
 
 ### MacOS
-To build pype on MacOS you wil need:
+To build pype on MacOS you will need:
 
 - **[Homebrew](https://brew.sh)** - easy way of installing everything necessary.
 - **[CMake](https://cmake.org/)** to build some external OpenPype dependencies.

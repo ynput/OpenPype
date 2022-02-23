@@ -89,7 +89,7 @@ paste to any terminal of your choice
 <div class="col col--6 markdown">
 
 
-As it is shown in bellow picture you have to go to Fusion Tab and then in Fusion menu find Fusion Settings. Go to Fusion/Script and find Default Python Version and swith to Python 3.6
+As it is shown in below picture you have to go to Fusion Tab and then in Fusion menu find Fusion Settings. Go to Fusion/Script and find Default Python Version and switch to Python 3.6
 
 </div>
 

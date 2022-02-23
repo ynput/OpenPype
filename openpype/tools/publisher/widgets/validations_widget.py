@@ -6,8 +6,8 @@ except Exception:
 
 from Qt import QtWidgets, QtCore, QtGui
 
+from openpype.tools.utils import BaseClickableFrame
 from .widgets import (
-    ClickableFrame,
     IconValuePixmapLabel
 )
 
@@ -55,7 +55,7 @@ class ValidationErrorTitleWidget(QtWidgets.QWidget):
         self._error_info = error_info
         self._selected = False
 
-        title_frame = ClickableFrame(self)
+        title_frame = BaseClickableFrame(self)
         title_frame.setObjectName("ValidationErrorTitleFrame")
         title_frame._mouse_release_callback = self._mouse_release_callback
 
@@ -168,7 +168,7 @@ class ValidationErrorTitleWidget(QtWidgets.QWidget):
             self._toggle_instance_btn.setArrowType(QtCore.Qt.RightArrow)
 
 
-class ActionButton(ClickableFrame):
+class ActionButton(BaseClickableFrame):
     """Plugin's action callback button.
 
     Action may have label or icon or both.

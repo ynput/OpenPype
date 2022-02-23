@@ -47,7 +47,7 @@ It is possible to create multiple tokens and configure different scopes for them
 
 ### Profiles
 Profiles are used to select when to trigger notification. One or multiple profiles
-could be configured, `Families`, `Task names` (regex available), `Host names` combination is needed.
+could be configured, `Families`, `Task names` (regex available), `Host names`, `Subset names` (regex available) combination is needed.
 
 Eg. If I want to be notified when render is published from Maya, setting is:
 

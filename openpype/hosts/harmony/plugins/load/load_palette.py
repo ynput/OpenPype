@@ -1,7 +1,8 @@
 import os
 import shutil
 
-from avalon import api, harmony
+from avalon import api
+import openpype.hosts.harmony.api as harmony
 
 
 class ImportPaletteLoader(api.Loader):
@@ -41,7 +42,9 @@ class ImportPaletteLoader(api.Loader):
         harmony.save_scene()
 
         msg = "Updated {}.".format(subset_name)
-        msg += " You need to reload the scene to see the changes."
+        msg += " You need to reload the scene to see the changes.\n"
+        msg += "Please save workfile when ready and use Workfiles "
+        msg += "to reopen it."
 
         harmony.send(
             {
