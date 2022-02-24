@@ -1,5 +1,6 @@
 import os
 import sys
+import logging
 
 from Qt import QtWidgets, QtCore
 from avalon.vendor import qtawesome
@@ -20,6 +21,9 @@ from .model import (
 )
 from .view import SceneInvetoryView
 
+from ..utils.lib import iter_model_rows
+
+log = logging.getLogger(__name__)
 
 module = sys.modules[__name__]
 module.window = None
@@ -54,6 +58,10 @@ class SceneInventoryWindow(QtWidgets.QDialog):
         outdated_only_checkbox.setToolTip("Show outdated files only")
         outdated_only_checkbox.setChecked(False)
 
+        icon = qtawesome.icon("fa.arrow-up", color="white")
+        update_all_button = QtWidgets.QPushButton(self)
+        update_all_button.setIcon(icon)
+
         icon = qtawesome.icon("fa.refresh", color="white")
         refresh_button = QtWidgets.QPushButton(self)
         refresh_button.setIcon(icon)
@@ -62,6 +70,7 @@ class SceneInventoryWindow(QtWidgets.QDialog):
         control_layout.addWidget(filter_label)
         control_layout.addWidget(text_filter)
         control_layout.addWidget(outdated_only_checkbox)
+        control_layout.addWidget(update_all_button)
         control_layout.addWidget(refresh_button)
 
         # endregion control
@@ -102,7 +111,9 @@ class SceneInventoryWindow(QtWidgets.QDialog):
         )
         view.data_changed.connect(self.refresh)
         refresh_button.clicked.connect(self.refresh)
+        update_all_button.clicked.connect(self._on_update_all)
 
+        self._update_all_button = update_all_button
         self._outdated_only_checkbox = outdated_only_checkbox
         self._view = view
         self._model = model
@@ -157,6 +168,42 @@ class SceneInventoryWindow(QtWidgets.QDialog):
         self._proxy.set_filter_outdated(
             self._outdated_only_checkbox.isChecked()
         )
+
+    def _on_update_all(self):
+        """Update all items that are currently 'outdated' in the view"""
+
+        # Get all items from outdated groups
+        outdated_items = []
+        for index in iter_model_rows(self._model,
+                                     column=0,
+                                     include_root=False):
+            item = index.data(self._model.ItemRole)
+
+            if not item.get("isGroupNode"):
+                continue
+
+            # Only the group nodes contain the "highest_version" data and as
+            # such we find only the groups and take its children.
+            if not self._model.outdated(item):
+                continue
+
+            # Collect all children which we want to update
+            children = item.children()
+            outdated_items.extend(children)
+
+        if not outdated_items:
+            log.info("Nothing to update.")
+            return
+
+        # Trigger update to latest
+        # Logic copied from SceneInventoryView._build_item_menu_for_selection
+        for item in outdated_items:
+            try:
+                api.update(item, -1)
+            except AssertionError:
+                self._show_version_error_dialog(None, [item])
+                log.warning("Update failed", exc_info=True)
+        self._view.data_changed.emit()
 
 
 def show(root=None, debug=False, parent=None, items=None):
