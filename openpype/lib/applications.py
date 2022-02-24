@@ -1296,7 +1296,7 @@ def get_app_environments_for_context(
         "env": env
     })
 
-    prepare_host_environments(data, env_group)
+    prepare_app_environments(data, env_group)
     prepare_context_environments(data, env_group)
 
     # Discard avalon connection
@@ -1317,7 +1317,7 @@ def _merge_env(env, current_env):
     return result
 
 
-def prepare_host_environments(data, env_group=None, implementation_envs=True):
+def prepare_app_environments(data, env_group=None, implementation_envs=True):
     """Modify launch environments based on launched app and context.
 
     Args:
@@ -1475,6 +1475,22 @@ def prepare_context_environments(data, env_group=None):
     )
 
     app = data["app"]
+    context_env = {
+        "AVALON_PROJECT": project_doc["name"],
+        "AVALON_ASSET": asset_doc["name"],
+        "AVALON_TASK": task_name,
+        "AVALON_APP_NAME": app.full_name
+    }
+
+    log.debug(
+        "Context environments set:\n{}".format(
+            json.dumps(context_env, indent=4)
+        )
+    )
+    data["env"].update(context_env)
+    if not app.is_host:
+        return
+
     workdir_data = get_workdir_data(
         project_doc, asset_doc, task_name, app.host_name
     )
@@ -1505,20 +1521,8 @@ def prepare_context_environments(data, env_group=None):
                 "Couldn't create workdir because: {}".format(str(exc))
             )
 
-    context_env = {
-        "AVALON_PROJECT": project_doc["name"],
-        "AVALON_ASSET": asset_doc["name"],
-        "AVALON_TASK": task_name,
-        "AVALON_APP": app.host_name,
-        "AVALON_APP_NAME": app.full_name,
-        "AVALON_WORKDIR": workdir
-    }
-    log.debug(
-        "Context environments set:\n{}".format(
-            json.dumps(context_env, indent=4)
-        )
-    )
-    data["env"].update(context_env)
+    data["env"]["AVALON_APP"] = app.host_name
+    data["env"]["AVALON_WORKDIR"] = workdir
 
     _prepare_last_workfile(data, workdir)
 

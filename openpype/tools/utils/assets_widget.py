@@ -354,7 +354,6 @@ class AssetModel(QtGui.QStandardItemModel):
 
         Args:
             force (bool): Stop currently running refresh start new refresh.
-            clear (bool): Clear model before refresh thread starts.
         """
         # Skip fetch if there is already other thread fetching documents
         if self._refreshing:

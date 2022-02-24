@@ -139,7 +139,7 @@ from .applications import (
     PostLaunchHook,
 
     EnvironmentPrepData,
-    prepare_host_environments,
+    prepare_app_environments,
     prepare_context_environments,
     get_app_environments_for_context,
     apply_project_environments_value
@@ -270,7 +270,7 @@ __all__ = [
     "PreLaunchHook",
     "PostLaunchHook",
     "EnvironmentPrepData",
-    "prepare_host_environments",
+    "prepare_app_environments",
     "prepare_context_environments",
     "get_app_environments_for_context",
     "apply_project_environments_value",

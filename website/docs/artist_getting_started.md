@@ -81,4 +81,4 @@ If you're connected to your studio, OpenPype will check for, and install updates
 
 ## Advanced use
 
-For more advanced use of OpenPype commands please visit [Admin section](admin_openpype_commands).
+For more advanced use of OpenPype commands please visit [Admin section](admin_openpype_commands.md).
