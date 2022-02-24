@@ -360,10 +360,11 @@ class FtrackComponentCreator:
 
 
 class FtrackEntityOperator:
+    existing_tasks = []
+
     def __init__(self, session, project_entity):
         self.session = session
         self.project_entity = project_entity
-        self.existing_tasks = []
 
     def commit(self):
         try:

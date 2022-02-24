@@ -33,6 +33,7 @@ class MainWindow(QtWidgets.QWidget):
         self.panel_class.clear_temp_data()
         self.panel_class.close()
         clear_inner_modules()
+        ftrack_lib.FtrackEntityOperator.existing_tasks = []
         # now the panel can be closed
         event.accept()
 
