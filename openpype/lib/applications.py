@@ -28,7 +28,8 @@ from .profiles_filtering import filter_profiles
 from .local_settings import get_openpype_username
 from .avalon_context import (
     get_workdir_data,
-    get_workdir_with_workdir_data
+    get_workdir_with_workdir_data,
+    get_workfile_template_key
 )
 
 from .python_module_tools import (
@@ -1587,14 +1588,15 @@ def _prepare_last_workfile(data, workdir):
     last_workfile_path = data.get("last_workfile_path") or ""
     if not last_workfile_path:
         extensions = avalon.api.HOST_WORKFILE_EXTENSIONS.get(app.host_name)
-
         if extensions:
             anatomy = data["anatomy"]
+            project_settings = data["project_settings"]
+            task_type = workdir_data["task"]["type"]
+            template_key = get_workfile_template_key(
+                task_type, app.host_name, project_settings=project_settings
+            )
             # Find last workfile
-            file_template = anatomy.templates["work"]["file"]
-            # Replace {task} by '{task[name]}' for backward compatibility
-            if '{task}' in file_template:
-                file_template = file_template.replace('{task}', '{task[name]}')
+            file_template = str(anatomy.templates[template_key]["file"])
 
             workdir_data.update({
                 "version": 1,
