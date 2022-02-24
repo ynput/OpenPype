@@ -6,7 +6,7 @@ from openpype_interfaces import ITrayAction
 
 
 class TrayPublishAction(OpenPypeModule, ITrayAction):
-    label = "Tray Publish (beta)"
+    label = "New Publish (beta)"
     name = "traypublish_tool"
 
     def initialize(self, modules_settings):
