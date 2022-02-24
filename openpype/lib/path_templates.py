@@ -126,6 +126,19 @@ class StringTemplate(object):
 
         self._parts = self.find_optional_parts(new_parts)
 
+    def __str__(self):
+        return self.template
+
+    def __repr__(self):
+        return "<{}> {}".format(self.__class__.__name__, self.template)
+
+    def __contains__(self, other):
+        return other in self.template
+
+    def replace(self, *args, **kwargs):
+        self._template = self.template.replace(*args, **kwargs)
+        return self
+
     @property
     def template(self):
         return self._template
