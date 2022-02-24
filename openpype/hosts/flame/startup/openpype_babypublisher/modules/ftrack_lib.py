@@ -392,10 +392,7 @@ class FtrackEntityOperator:
         query = '{} where name is "{}" and project_id is "{}"'.format(
             type, name, self.project_entity["id"])
 
-        try:
-            entity = session.query(query).one()
-        except Exception:
-            entity = None
+        entity = session.query(query).first()
 
         # if entity doesnt exist then create one
         if not entity:
