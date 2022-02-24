@@ -363,6 +363,7 @@ class FtrackEntityOperator:
     def __init__(self, session, project_entity):
         self.session = session
         self.project_entity = project_entity
+        self.existing_tasks = []
 
     def commit(self):
         try:
@@ -427,10 +428,21 @@ class FtrackEntityOperator:
         return parents
 
     def create_task(self, task_type, task_types, parent):
-        existing_task = [
+        _exising_tasks = [
             child for child in parent['children']
             if child.entity_type.lower() == 'task'
-            if child['name'].lower() in task_type.lower()
+        ]
+
+        # add task into existing tasks if they are not already there
+        for _t in _exising_tasks:
+            if _t in self.existing_tasks:
+                continue
+            self.existing_tasks.append(_t)
+
+        existing_task = [
+            task for task in self.existing_tasks
+            if task['name'].lower() in task_type.lower()
+            if task['parent'] == parent
         ]
 
         if existing_task:
@@ -442,4 +454,5 @@ class FtrackEntityOperator:
         })
         task["type"] = task_types[task_type]
 
+        self.existing_tasks.append(task)
         return task
