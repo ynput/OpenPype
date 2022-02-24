@@ -2,7 +2,7 @@ from openpype.api import Anatomy
 from openpype.lib import (
     PreLaunchHook,
     EnvironmentPrepData,
-    prepare_host_environments,
+    prepare_app_environments,
     prepare_context_environments
 )
 
@@ -14,14 +14,6 @@ class GlobalHostDataHook(PreLaunchHook):
 
     def execute(self):
         """Prepare global objects to `data` that will be used for sure."""
-        if not self.application.is_host:
-            self.log.info(
-                "Skipped hook {}. Application is not marked as host.".format(
-                    self.__class__.__name__
-                )
-            )
-            return
-
         self.prepare_global_data()
 
         if not self.data.get("asset_doc"):
@@ -49,7 +41,7 @@ class GlobalHostDataHook(PreLaunchHook):
             "log": self.log
         })
 
-        prepare_host_environments(temp_data, self.launch_context.env_group)
+        prepare_app_environments(temp_data, self.launch_context.env_group)
         prepare_context_environments(temp_data)
 
         temp_data.pop("log")
