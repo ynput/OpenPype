@@ -20,12 +20,12 @@ DEFAULT_COLOR = "#fb9c15"
 log = logging.getLogger("SceneInventory")
 
 
-class SceneInvetoryView(QtWidgets.QTreeView):
+class SceneInventoryView(QtWidgets.QTreeView):
     data_changed = QtCore.Signal()
     hierarchy_view_changed = QtCore.Signal(bool)
 
     def __init__(self, parent=None):
-        super(SceneInvetoryView, self).__init__(parent=parent)
+        super(SceneInventoryView, self).__init__(parent=parent)
 
         # view settings
         self.setIndentation(12)

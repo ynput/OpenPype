@@ -19,7 +19,7 @@ from .model import (
     InventoryModel,
     FilterProxyModel
 )
-from .view import SceneInvetoryView
+from .view import SceneInventoryView
 
 from ..utils.lib import iter_model_rows
 
@@ -82,7 +82,7 @@ class SceneInventoryWindow(QtWidgets.QDialog):
         proxy.setDynamicSortFilter(True)
         proxy.setFilterCaseSensitivity(QtCore.Qt.CaseInsensitive)
 
-        view = SceneInvetoryView(self)
+        view = SceneInventoryView(self)
         view.setModel(proxy)
 
         # set some nice default widths for the view
@@ -107,7 +107,7 @@ class SceneInventoryWindow(QtWidgets.QDialog):
             self._on_outdated_state_change
         )
         view.hierarchy_view_changed.connect(
-            self._on_hiearchy_view_change
+            self._on_hierarchy_view_change
         )
         view.data_changed.connect(self.refresh)
         refresh_button.clicked.connect(self.refresh)
@@ -157,7 +157,7 @@ class SceneInventoryWindow(QtWidgets.QDialog):
                     kwargs["selected"] = self._view._selected
                 self._model.refresh(**kwargs)
 
-    def _on_hiearchy_view_change(self, enabled):
+    def _on_hierarchy_view_change(self, enabled):
         self._proxy.set_hierarchy_view(enabled)
         self._model.set_hierarchy_view(enabled)
 
