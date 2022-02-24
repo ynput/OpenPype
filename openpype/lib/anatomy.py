@@ -402,7 +402,9 @@ class AnatomyTemplates(TemplatesDict):
         return self.templates.get(key, default)
 
     def reset(self):
+        self._raw_templates = None
         self._templates = None
+        self._objected_templates = None
 
     @property
     def project_name(self):
@@ -414,13 +416,21 @@ class AnatomyTemplates(TemplatesDict):
 
     @property
     def templates(self):
+        self._validate_discovery()
+        return self._templates
+
+    @property
+    def objected_templates(self):
+        self._validate_discovery()
+        return self._objected_templates
+
+    def _validate_discovery(self):
         if self.project_name != self.loaded_project:
-            self._templates = None
+            self.reset()
 
         if self._templates is None:
             self._discover()
             self.loaded_project = self.project_name
-        return self._templates
 
     def _format_value(self, value, data):
         if isinstance(value, RootItem):
@@ -434,31 +444,34 @@ class AnatomyTemplates(TemplatesDict):
 
     def set_templates(self, templates):
         if not templates:
-            self._raw_templates = None
-            self._templates = None
-        else:
-            self._raw_templates = copy.deepcopy(templates)
-            templates = copy.deepcopy(templates)
-            v_queue = collections.deque()
-            v_queue.append(templates)
-            while v_queue:
-                item = v_queue.popleft()
-                if not isinstance(item, dict):
-                    continue
+            self.reset()
+            return
 
-                for key in tuple(item.keys()):
-                    value = item[key]
-                    if isinstance(value, dict):
-                        v_queue.append(value)
+        self._raw_templates = copy.deepcopy(templates)
+        templates = copy.deepcopy(templates)
+        v_queue = collections.deque()
+        v_queue.append(templates)
+        while v_queue:
+            item = v_queue.popleft()
+            if not isinstance(item, dict):
+                continue
 
-                    elif (
-                        isinstance(value, StringType)
-                        and "{task}" in value
-                    ):
-                        item[key] = value.replace("{task}", "{task[name]}")
+            for key in tuple(item.keys()):
+                value = item[key]
+                if isinstance(value, dict):
+                    v_queue.append(value)
 
-            solved_templates = self.solve_template_inner_links(templates)
-            self._templates = self.create_ojected_templates(solved_templates)
+                elif (
+                    isinstance(value, StringType)
+                    and "{task}" in value
+                ):
+                    item[key] = value.replace("{task}", "{task[name]}")
+
+        solved_templates = self.solve_template_inner_links(templates)
+        self._templates = solved_templates
+        self._objected_templates = self.create_ojected_templates(
+            solved_templates
+        )
 
     def default_templates(self):
         """Return default templates data with solved inner keys."""
