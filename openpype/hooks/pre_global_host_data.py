@@ -2,7 +2,7 @@ from openpype.api import Anatomy
 from openpype.lib import (
     PreLaunchHook,
     EnvironmentPrepData,
-    prepare_host_environments,
+    prepare_app_environments,
     prepare_context_environments
 )
 
@@ -41,8 +41,7 @@ class GlobalHostDataHook(PreLaunchHook):
             "log": self.log
         })
 
-        if app.is_host:
-            prepare_host_environments(temp_data, self.launch_context.env_group)
+        prepare_app_environments(temp_data, self.launch_context.env_group)
         prepare_context_environments(temp_data)
 
         temp_data.pop("log")
