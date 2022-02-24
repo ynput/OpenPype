@@ -16,10 +16,11 @@ def flame_panel_executor(selection):
     if "panel_app" in sys.modules.keys():
         print("panel_app module is already loaded")
         del sys.modules["panel_app"]
+        import panel_app
+        reload(panel_app)  # noqa
         print("panel_app module removed from sys.modules")
 
-    import panel_app
-    panel_app.FlameToFtrackPanel(selection)
+    panel_app.FlameBabyPublisherPanel(selection)
 
 
 def scope_sequence(selection):
@@ -30,7 +31,7 @@ def scope_sequence(selection):
 def get_media_panel_custom_ui_actions():
     return [
         {
-            "name": "OpenPype: Ftrack",
+            "name": "OpenPype: Baby-publisher",
             "actions": [
                 {
                     "name": "Create Shots",

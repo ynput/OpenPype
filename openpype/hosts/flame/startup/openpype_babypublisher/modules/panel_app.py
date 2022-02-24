@@ -1,4 +1,4 @@
-from PySide2 import QtWidgets, QtCore
+from Qt import QtWidgets, QtCore
 
 import uiwidgets
 import app_utils
@@ -33,11 +33,12 @@ class MainWindow(QtWidgets.QWidget):
         self.panel_class.clear_temp_data()
         self.panel_class.close()
         clear_inner_modules()
+        ftrack_lib.FtrackEntityOperator.existing_tasks = []
         # now the panel can be closed
         event.accept()
 
 
-class FlameToFtrackPanel(object):
+class FlameBabyPublisherPanel(object):
     session = None
     temp_data_dir = None
     processed_components = []
@@ -78,7 +79,7 @@ class FlameToFtrackPanel(object):
 
         # creating ui
         self.window.setMinimumSize(1500, 600)
-        self.window.setWindowTitle('Sequence Shots to Ftrack')
+        self.window.setWindowTitle('OpenPype: Baby-publisher')
         self.window.setWindowFlags(QtCore.Qt.WindowStaysOnTopHint)
         self.window.setAttribute(QtCore.Qt.WA_DeleteOnClose)
         self.window.setFocusPolicy(QtCore.Qt.StrongFocus)
@@ -469,10 +470,14 @@ class FlameToFtrackPanel(object):
         for sequence in self.selection:
             frame_rate = float(str(sequence.frame_rate)[:-4])
             for ver in sequence.versions:
-                for tracks in ver.tracks:
-                    for segment in tracks.segments:
+                for track in ver.tracks:
+                    if len(track.segments) == 0 and track.hidden:
+                        continue
+                    for segment in track.segments:
                         print(segment.attributes)
-                        if str(segment.name)[1:-1] == "":
+                        if segment.name.get_value() == "":
+                            continue
+                        if segment.hidden.get_value() is True:
                             continue
                         # get clip frame duration
                         record_duration = str(segment.record_duration)[1:-1]
@@ -492,11 +497,11 @@ class FlameToFtrackPanel(object):
 
                         # Add timeline segment to tree
                         QtWidgets.QTreeWidgetItem(self.tree, [
-                            str(sequence.name)[1:-1],  # seq
-                            str(segment.name)[1:-1],  # shot
+                            sequence.name.get_value(),  # seq name
+                            segment.shot_name.get_value(),  # shot name
                             str(clip_duration),  # clip duration
                             shot_description,  # shot description
-                            str(segment.comment)[1:-1]  # task description
+                            segment.comment.get_value()  # task description
                         ]).setFlags(
                             QtCore.Qt.ItemIsEditable
                             | QtCore.Qt.ItemIsEnabled
