@@ -171,7 +171,7 @@ class StringTemplate(object):
         missing_keys |= result.missing_optional_keys
 
         solved = result.solved
-        used_values = result.split_keys_to_subdicts(result.used_values)
+        used_values = result.get_clean_used_values()
 
         return TemplateResult(
             result.output,
@@ -485,7 +485,7 @@ class TemplatePartResult:
         self._missing_optional_keys = set()
         self._invalid_optional_types = {}
 
-        # Used values stored by key
+        # Used values stored by key with origin type
         #   - key without any padding or key modifiers
         #   - value from filling data
         #   Example: {"version": 1}
@@ -583,6 +583,15 @@ class TemplatePartResult:
                 data = data[subkey]
             data[last_key] = value
         return output
+
+    def get_clean_used_values(self):
+        new_used_values = {}
+        for key, value in self.used_values.items():
+            if isinstance(value, FormatObject):
+                value = str(value)
+            new_used_values[key] = value
+
+        return self.split_keys_to_subdicts(new_used_values)
 
     def add_realy_used_value(self, key, value):
         self._realy_used_values[key] = value
@@ -724,7 +733,7 @@ class FormattingPart:
 
             formatted_value = self.template.format(**fill_data)
             result.add_realy_used_value(key, formatted_value)
-            result.add_used_value(existence_check, value)
+            result.add_used_value(existence_check, formatted_value)
             result.add_output(formatted_value)
             return result
 
