@@ -235,20 +235,6 @@
         },
         {
             "type": "dict",
-            "key": "traypublish_tool",
-            "label": "Tray Publish (beta)",
-            "collapsible": true,
-            "checkbox_key": "enabled",
-            "children": [
-                {
-                    "type": "boolean",
-                    "key": "enabled",
-                    "label": "Enabled"
-                }
-            ]
-        },
-        {
-            "type": "dict",
             "key": "project_manager",
             "label": "Project Manager (beta)",
             "collapsible": true,

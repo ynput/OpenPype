@@ -11,7 +11,7 @@ class TrayPublishAction(OpenPypeModule, ITrayAction):
 
     def initialize(self, modules_settings):
         import openpype
-        self.enabled = modules_settings[self.name]["enabled"]
+        self.enabled = True
         self.publish_paths = [
             os.path.join(
                 openpype.PACKAGE_DIR,
@@ -21,9 +21,20 @@ class TrayPublishAction(OpenPypeModule, ITrayAction):
                 "publish"
             )
         ]
+        self._experimental_tools = None
 
     def tray_init(self):
-        return
+        from openpype.tools.experimental_tools import ExperimentalTools
+
+        self._experimental_tools = ExperimentalTools()
+
+    def tray_menu(self, *args, **kwargs):
+        super(TrayPublishAction, self).tray_menu(*args, **kwargs)
+        traypublisher = self._experimental_tools.get("traypublisher")
+        visible = False
+        if traypublisher and traypublisher.enabled:
+            visible = True
+        self._action_item.setVisible(visible)
 
     def on_action_trigger(self):
         self.run_traypublisher()
