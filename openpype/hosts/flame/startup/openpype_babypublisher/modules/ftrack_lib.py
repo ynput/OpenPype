@@ -389,13 +389,17 @@ class FtrackEntityOperator:
         return entity
 
     def get_ftrack_entity(self, session, type, name, parent):
-        query = '{} where name is "{}" and project_id is "{}"'.format(
+        query_no_parent = '{} where name is "{}" and project_id is "{}"'.format(
             type, name, self.project_entity["id"])
+        query_with_parent = (
+            '{} where name is "{}" and project_id is "{}" '
+            'and parent_id is {}').format(
+                type, name, self.project_entity["id"], parent["id"])
 
-        try:
-            entity = session.query(query).one()
-        except Exception:
-            entity = None
+        entity = (
+            session.query(query_no_parent).first() or
+            session.query(query_with_parent).first()
+        )
 
         # if entity doesnt exist then create one
         if not entity:
