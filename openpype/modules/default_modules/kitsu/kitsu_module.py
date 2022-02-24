@@ -9,7 +9,6 @@ in global space here until are required or used.
 import click
 import os
 import re
-from typing import Dict, List
 
 import gazu
 from gazu.asset import all_assets_for_project, all_asset_types, new_asset

@@ -1,7 +1,7 @@
 from typing import Dict, List
 import gazu
 
-from pymongo import DeleteOne, UpdateOne
+from pymongo import UpdateOne
 from pymongo.collection import Collection
 
 from gazu.task import (

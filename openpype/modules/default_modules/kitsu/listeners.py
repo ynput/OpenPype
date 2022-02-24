@@ -1,8 +1,5 @@
-from turtle import update
 import gazu
 import os
-
-from pymongo import DeleteOne, UpdateOne
 
 from avalon.api import AvalonMongoDB
 from openpype.modules.default_modules.kitsu.utils.openpype import (
@@ -258,5 +255,57 @@ def add_listeners():
     gazu.events.add_listener(event_client, "shot:new", new_shot)
     gazu.events.add_listener(event_client, "shot:update", update_shot)
     gazu.events.add_listener(event_client, "shot:delete", delete_shot)
+
+    # == Task ==
+    def new_task(data):
+        """Create new task into OP DB."""
+        print("new", data)
+        # Get project entity
+        project_col = set_op_project(dbcon, data["project_id"])
+
+        # Get gazu entity
+        task = gazu.task.get_task(data["task_id"])
+
+        # Find asset doc
+        asset_doc = project_col.find_one(
+            {"type": "asset", "data.zou.id": task["entity"]["id"]}
+        )
+
+        # Update asset tasks with new one
+        asset_tasks = asset_doc["data"].get("tasks")
+        task_type_name = task["task_type"]["name"]
+        asset_tasks[task_type_name] = {"type": task_type_name, "zou": task}
+        project_col.update_one(
+            {"_id": asset_doc["_id"]}, {"$set": {"data.tasks": asset_tasks}}
+        )
+
+    def update_task(data):
+        """Update task into OP DB."""
+        # TODO is it necessary?
+        pass
+
+    def delete_task(data):
+        """Delete task of OP DB."""
+        project_col = set_op_project(dbcon, data["project_id"])
+
+        # Find asset doc
+        asset_docs = [doc for doc in project_col.find({"type": "asset"})]
+        for doc in asset_docs:
+            # Match task
+            for name, task in doc["data"]["tasks"].items():
+                if task.get("zou") and data["task_id"] == task["zou"]["id"]:
+                    # Pop task
+                    asset_tasks = doc["data"].get("tasks")
+                    asset_tasks.pop(name)
+
+                    # Delete task in DB
+                    project_col.update_one(
+                        {"_id": doc["_id"]}, {"$set": {"data.tasks": asset_tasks}}
+                    )
+                    return
+
+    gazu.events.add_listener(event_client, "task:new", new_task)
+    gazu.events.add_listener(event_client, "task:update", update_task)
+    gazu.events.add_listener(event_client, "task:delete", delete_task)
 
     gazu.events.run_client(event_client)
