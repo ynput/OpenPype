@@ -70,6 +70,12 @@
                                         "object_type": "text"
                                     },
                                     {
+                                        "key": "subsets",
+                                        "label": "Subset names",
+                                        "type": "list",
+                                        "object_type": "text"
+                                    },
+                                    {
                                         "type": "separator"
                                     },
                                     {

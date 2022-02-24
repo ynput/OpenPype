@@ -33,8 +33,11 @@ DEFAULT_OPENPYPE_MODULES = (
     "avalon_apps",
     "clockify",
     "log_viewer",
+    "deadline",
     "muster",
+    "royalrender",
     "python_console_interpreter",
+    "ftrack",
     "slack",
     "webserver",
     "launcher_action",
@@ -44,6 +47,7 @@ DEFAULT_OPENPYPE_MODULES = (
     "traypublish_action",
     "job_queue",
     "timers_manager",
+    "sync_server",
 )
 
 
@@ -219,8 +223,6 @@ def load_interfaces(force=False):
 
 def _load_interfaces():
     # Key under which will be modules imported in `sys.modules`
-    from openpype.lib import import_filepath
-
     modules_key = "openpype_interfaces"
 
     sys.modules[modules_key] = openpype_interfaces = (

@@ -51,12 +51,6 @@ def version_up(filepath):
                                                      padding=padding)
         new_label = label.replace(version, new_version, 1)
         new_basename = _rreplace(basename, label, new_label)
-
-    if not new_basename.endswith(new_label):
-        index = (new_basename.find(new_label))
-        index += len(new_label)
-        new_basename = new_basename[:index]
-
     new_filename = "{}{}".format(new_basename, ext)
     new_filename = os.path.join(dirname, new_filename)
     new_filename = os.path.normpath(new_filename)
@@ -65,8 +59,19 @@ def version_up(filepath):
         raise RuntimeError("Created path is the same as current file,"
                            "this is a bug")
 
+    # We check for version clashes against the current file for any file
+    # that matches completely in name up to the {version} label found. Thus
+    # if source file was test_v001_test.txt we want to also check clashes
+    # against test_v002.txt but do want to preserve the part after the version
+    # label for our new filename
+    clash_basename = new_basename
+    if not clash_basename.endswith(new_label):
+        index = (clash_basename.find(new_label))
+        index += len(new_label)
+        clash_basename = clash_basename[:index]
+
     for file in os.listdir(dirname):
-        if file.endswith(ext) and file.startswith(new_basename):
+        if file.endswith(ext) and file.startswith(clash_basename):
             log.info("Skipping existing version %s" % new_label)
             return version_up(new_filename)
 
