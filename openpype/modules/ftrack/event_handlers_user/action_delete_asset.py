@@ -3,8 +3,9 @@ import uuid
 from datetime import datetime
 
 from bson.objectid import ObjectId
-from openpype_modules.ftrack.lib import BaseAction, statics_icon
 from avalon.api import AvalonMongoDB
+from openpype_modules.ftrack.lib import BaseAction, statics_icon
+from openpype_modules.ftrack.lib.avalon_sync import create_chunks
 
 
 class DeleteAssetSubset(BaseAction):
@@ -554,8 +555,8 @@ class DeleteAssetSubset(BaseAction):
                 ftrack_proc_txt, ", ".join(ftrack_ids_to_delete)
             ))
 
-            entities_by_link_len = (
-                self._filter_entities_to_delete(ftrack_ids_to_delete, session)
+            entities_by_link_len = self._prepare_entities_before_delete(
+                ftrack_ids_to_delete, session
             )
             for link_len in sorted(entities_by_link_len.keys(), reverse=True):
                 for entity in entities_by_link_len[link_len]:
@@ -609,7 +610,7 @@ class DeleteAssetSubset(BaseAction):
 
         return self.report_handle(report_messages, project_name, event)
 
-    def _filter_entities_to_delete(self, ftrack_ids_to_delete, session):
+    def _prepare_entities_before_delete(self, ftrack_ids_to_delete, session):
         """Filter children entities to avoid CircularDependencyError."""
         joined_ids_to_delete = ", ".join(
             ["\"{}\"".format(id) for id in ftrack_ids_to_delete]
@@ -637,6 +638,21 @@ class DeleteAssetSubset(BaseAction):
             for entity in _to_delete:
                 parent_ids_to_delete.append(entity["id"])
                 to_delete_entities.append(entity)
+
+        # Unset 'task_id' from AssetVersion entities
+        # - when task is deleted the asset version is not marked for deletion
+        task_ids = set(
+            entity["id"]
+            for entity in to_delete_entities
+            if entity.entity_type.lower() == "task"
+        )
+        for chunk in create_chunks(task_ids):
+            asset_versions = session.query((
+                "select id, task_id from AssetVersion where task_id in ({})"
+            ).format(self.join_query_keys(chunk))).all()
+            for asset_version in asset_versions:
+                asset_version["task_id"] = None
+            session.commit()
 
         entities_by_link_len = collections.defaultdict(list)
         for entity in to_delete_entities:
