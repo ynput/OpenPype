@@ -226,6 +226,41 @@
                                 "label": "Add additional tags to representations",
                                 "type": "list",
                                 "object_type": "text"
+                            },
+                            {
+                                "type": "separator"
+                            },
+                            {
+                                "type": "boolean",
+                                "key": "reformat_node_add",
+                                "label": "Add Reformat Node"
+                            },
+                            {
+                                "type": "collapsible-wrap",
+                                "label": "Reformat Node Knobs",
+                                "collapsible": true,
+                                "collapsed": false,
+                                "children": [
+                                    {
+                                        "type": "list",
+                                        "key": "reformat_node_config",
+                                        "object_type": {
+                                            "type": "dict",
+                                            "children": [
+                                                {
+                                                    "type": "text",
+                                                    "key": "name",
+                                                    "label": "Knob Name"
+                                                },
+                                                {
+                                                    "type": "text",
+                                                    "key": "value",
+                                                    "label": "Knob Value"
+                                                }
+                                            ]
+                                        }
+                                    }
+                                ]
                             }
                         ]
                     }
