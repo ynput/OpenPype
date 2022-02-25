@@ -75,6 +75,7 @@ class SearchEntitiesDialog(QtWidgets.QDialog):
 
         filter_changed_timer = QtCore.QTimer()
         filter_changed_timer.setInterval(200)
+        filter_changed_timer.setSingleShot(True)
 
         view.selectionModel().selectionChanged.connect(
             self._on_selection_change
