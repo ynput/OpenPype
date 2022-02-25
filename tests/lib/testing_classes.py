@@ -293,13 +293,16 @@ class PublishTest(ModuleUnitTest):
         yield app_process
 
     @pytest.fixture(scope="module")
-    def publish_finished(self, dbcon, launched_app, download_test_data):
+    def publish_finished(self, dbcon, launched_app, download_test_data,
+                         timeout):
         """Dummy fixture waiting for publish to finish"""
         import time
         time_start = time.time()
+        timeout = timeout or self.TIMEOUT
+        timeout = float(timeout)
         while launched_app.poll() is None:
             time.sleep(0.5)
-            if time.time() - time_start > self.TIMEOUT:
+            if time.time() - time_start > timeout:
                 launched_app.terminate()
                 raise ValueError("Timeout reached")
 
