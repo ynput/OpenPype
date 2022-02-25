@@ -13,7 +13,11 @@ from avalon import io
 from avalon.pipeline import AVALON_CONTAINER_ID
 
 from openpype.hosts import tvpaint
-from openpype.api import get_current_project_settings
+from openpype.api import (
+    get_current_project_settings,
+    Anatomy
+)
+from openpype.lib import get_frame_info
 
 from .lib import (
     execute_george,
@@ -447,11 +451,11 @@ def set_context_settings(asset_doc=None):
             "name": avalon.io.Session["AVALON_ASSET"]
         })
 
-    project_doc = avalon.io.find_one({"type": "project"})
+    anatomy = Anatomy(avalon.io.Session["AVALON_PROJECT"])
 
     framerate = asset_doc["data"].get("fps")
     if framerate is None:
-        framerate = project_doc["data"].get("fps")
+        framerate = anatomy["attributes"].get("fps")
 
     if framerate is not None:
         execute_george(
@@ -466,8 +470,8 @@ def set_context_settings(asset_doc=None):
     width = asset_doc["data"].get(width_key)
     height = asset_doc["data"].get(height_key)
     if width is None or height is None:
-        width = project_doc["data"].get(width_key)
-        height = project_doc["data"].get(height_key)
+        width = anatomy["attributes"].get(width_key)
+        height = anatomy["attributes"].get(height_key)
 
     if width is None or height is None:
         print("Resolution was not found!")
@@ -476,24 +480,21 @@ def set_context_settings(asset_doc=None):
             "tv_resizepage {} {} 0".format(width, height)
         )
 
-    frame_start = asset_doc["data"].get("frameStart")
-    frame_end = asset_doc["data"].get("frameEnd")
-
-    if frame_start is None or frame_end is None:
-        print("Frame range was not found!")
+    frame_info = get_frame_info(asset_doc, anatomy=anatomy)
+    if frame_info is None:
+        print("Asset contain invalid frame range info!")
         return
 
-    handles = asset_doc["data"].get("handles") or 0
-    handle_start = asset_doc["data"].get("handleStart")
-    handle_end = asset_doc["data"].get("handleEnd")
-
-    if handle_start is None or handle_end is None:
-        handle_start = handles
-        handle_end = handles
+    if not frame_info.is_valid:
+        print("Frame ranges of asset \"{}\" contain invalid frame range info!")
+        return
 
     # Always start from 0 Mark In and set only Mark Out
     mark_in = 0
-    mark_out = mark_in + (frame_end - frame_start) + handle_start + handle_end
+    mark_out = (
+        mark_in
+        + (frame_info.handle_frame_end - frame_info.handle_frame_start)
+    )
 
     execute_george("tv_markin {} set".format(mark_in))
     execute_george("tv_markout {} set".format(mark_out))
