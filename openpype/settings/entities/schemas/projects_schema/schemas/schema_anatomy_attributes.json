@@ -44,6 +44,12 @@
             "label": "Handle End"
         },
         {
+            "type": "boolean",
+            "key": "handlesExtend",
+            "label": "Handles extend",
+            "tooltip": "Handles extend frame start/end."
+        },
+        {
             "type": "number",
             "key": "resolutionWidth",
             "label": "Resolution Width"

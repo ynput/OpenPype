@@ -6,6 +6,7 @@
     "clipOut": 1,
     "handleStart": 0,
     "handleEnd": 0,
+    "handlesExtend": true,
     "resolutionWidth": 1920,
     "resolutionHeight": 1080,
     "pixelAspect": 1.0,
