@@ -7,6 +7,11 @@
         "library_project": {
           "label": "Library Project",
           "type": "boolean"
+        },
+        "handlesExtend": {
+            "label": "Frame handles extend",
+            "type": "boolean",
+            "default": true
         }
     },
     "is_hierarchical": {

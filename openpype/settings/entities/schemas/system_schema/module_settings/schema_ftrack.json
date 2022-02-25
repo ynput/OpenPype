@@ -93,6 +93,9 @@
                                 },
                                 {
                                     "key": "applications"
+                                },
+                                {
+                                    "key": "handlesExtend"
                                 }
                             ]
                         }
