@@ -23,9 +23,13 @@ class CollectInstances(pyblish.api.ContextPlugin):
         representation set. If the representation is set, it is a loaded model
         and we don't want to publish it.
         """
-        for collection in bpy.data.collections:
-            if collection.get(AVALON_PROPERTY) and collection.library is None:
-                yield collection
+        for collection in bpy.context.scene.collection.children:
+            if collection.get(AVALON_PROPERTY):
+                if (
+                        collection.get(AVALON_PROPERTY).get("id")
+                        == "pyblish.avalon.instance"
+                ):
+                    yield collection
 
     def process(self, context):
         """Collect the models from the current Blender scene."""
