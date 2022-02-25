@@ -15,6 +15,7 @@ from avalon import io, schema
 from avalon.pipeline import AVALON_CONTAINER_ID
 
 from openpype.api import Logger
+from openpype.lib import get_frame_info
 import openpype.hosts.blender
 
 HOST_DIR = os.path.dirname(os.path.abspath(openpype.hosts.blender.__file__))
@@ -83,8 +84,6 @@ def set_start_end_frames():
     scene = bpy.context.scene
 
     # Default scene settings
-    frameStart = scene.frame_start
-    frameEnd = scene.frame_end
     fps = scene.render.fps
     resolution_x = scene.render.resolution_x
     resolution_y = scene.render.resolution_y
@@ -95,10 +94,6 @@ def set_start_end_frames():
     if not data:
         return
 
-    if data.get("frameStart"):
-        frameStart = data.get("frameStart")
-    if data.get("frameEnd"):
-        frameEnd = data.get("frameEnd")
     if data.get("fps"):
         fps = data.get("fps")
     if data.get("resolutionWidth"):
@@ -106,11 +101,14 @@ def set_start_end_frames():
     if data.get("resolutionHeight"):
         resolution_y = data.get("resolutionHeight")
 
-    scene.frame_start = frameStart
-    scene.frame_end = frameEnd
     scene.render.fps = fps
     scene.render.resolution_x = resolution_x
     scene.render.resolution_y = resolution_y
+
+    frame_info = get_frame_info(asset_doc)
+    if frame_info is not None:
+        scene.frame_start = frame_info.handle_frame_start
+        scene.frame_end = frame_info.handle_frame_end
 
 
 def on_new(arg1, arg2):
