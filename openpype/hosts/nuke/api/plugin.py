@@ -446,6 +446,8 @@ class ExporterReviewMov(ExporterReview):
         return path
 
     def generate_mov(self, farm=False, **kwargs):
+        reformat_node_add = kwargs["reformat_node_add"]
+        reformat_node_config = kwargs["reformat_node_config"]
         bake_viewer_process = kwargs["bake_viewer_process"]
         bake_viewer_input_process_node = kwargs[
             "bake_viewer_input_process"]
@@ -482,6 +484,25 @@ class ExporterReviewMov(ExporterReview):
         self._temp_nodes[subset].append(r_node)
         self.previous_node = r_node
         self.log.debug("Read...   `{}`".format(self._temp_nodes[subset]))
+
+        # add reformat node
+        if reformat_node_add:
+            rf_node = nuke.createNode("Reformat")
+            for kn_conf in reformat_node_config:
+                k_name = str(kn_conf["name"])
+                k_value = str(kn_conf["value"])
+                if k_value == "true":
+                    k_value = True
+                if k_value == "false":
+                    k_value = False
+                rf_node[k_name].setValue(k_value)
+
+            # connect
+            rf_node.setInput(0, self.previous_node)
+            self._temp_nodes[subset].append(rf_node)
+            self.previous_node = rf_node
+            self.log.debug(
+                "Reformat...   `{}`".format(self._temp_nodes[subset]))
 
         # only create colorspace baking if toggled on
         if bake_viewer_process:
@@ -555,7 +576,7 @@ class ExporterReviewMov(ExporterReview):
 
         self.log.debug("Representation...   `{}`".format(self.data))
 
-        self.clean_nodes(subset)
+        # self.clean_nodes(subset)
         nuke.scriptSave()
 
         return self.data
