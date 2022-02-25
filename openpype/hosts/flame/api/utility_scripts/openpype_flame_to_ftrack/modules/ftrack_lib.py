@@ -139,17 +139,7 @@ class FtrackComponentCreator:
         if name == "ftrackreview-mp4":
             duration = data["duration"]
 
-            handle_start = data.get("handleStart", None)
-            handle_end = data.get("handleEnd", None)
-            if handle_start is not None:
-                duration += handle_start
-            if handle_end is not None:
-                duration += handle_end
-            if handle_start is None and handle_end is None:
-                # Backwards compatibility; old style 'handles'
-                # We multiply by two because old-style handles defined
-                # both the handle start and handle end
-                duration += data.get("handles", 0) * 2
+            handles = data["handles"]
 
             fps = data["fps"]
             component_data["metadata"] = {
