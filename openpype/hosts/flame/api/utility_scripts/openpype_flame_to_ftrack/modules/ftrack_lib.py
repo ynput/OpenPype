@@ -145,7 +145,7 @@ class FtrackComponentCreator:
             component_data["metadata"] = {
                 'ftr_meta': json.dumps({
                     'frameIn': int(0),
-                    'frameOut': int(duration),
+                    'frameOut': int(duration + (handles * 2)),
                     'frameRate': float(fps)
                 })
             }
