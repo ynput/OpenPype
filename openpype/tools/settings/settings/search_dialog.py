@@ -30,7 +30,7 @@ class RecursiveSortFilterProxyModel(QtCore.QSortFilterProxyModel):
         regex = self.filterRegExp()
         if not regex.isEmpty() and regex.isValid():
             pattern = regex.pattern()
-            compiled_regex = re.compile(pattern)
+            compiled_regex = re.compile(pattern, re.IGNORECASE)
             source_model = self.sourceModel()
 
             # Check current index itself in all columns
