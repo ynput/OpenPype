@@ -27,6 +27,7 @@ import collections
 
 from avalon import io
 import pyblish.api
+from openpype.lib import get_frame_info
 
 
 class CollectAnatomyInstanceData(pyblish.api.ContextPlugin):
@@ -92,6 +93,7 @@ class CollectAnatomyInstanceData(pyblish.api.ContextPlugin):
             for asset_doc in asset_docs
         }
 
+        anatomy = context.data["anatomy"]
         not_found_asset_names = []
         for asset_name, instances in instances_with_missing_asset_doc.items():
             asset_doc = asset_docs_by_name.get(asset_name)
@@ -101,6 +103,9 @@ class CollectAnatomyInstanceData(pyblish.api.ContextPlugin):
 
             for _instance in instances:
                 _instance.data["assetEntity"] = asset_doc
+                _instance.data["assetFrameInfo"] = get_frame_info(
+                    asset_doc, anatomy
+                )
 
         if not_found_asset_names:
             joined_asset_names = ", ".join(
