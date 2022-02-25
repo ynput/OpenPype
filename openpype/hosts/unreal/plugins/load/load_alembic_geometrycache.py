@@ -3,7 +3,10 @@ import os
 from avalon import api, pipeline
 from avalon.unreal import lib
 from avalon.unreal import pipeline as unreal_pipeline
+
 import unreal
+
+from openpype.lib import get_frame_info
 
 
 class PointCacheAlembicLoader(api.Loader):
@@ -95,8 +98,10 @@ class PointCacheAlembicLoader(api.Loader):
 
         unreal.EditorAssetLibrary.make_directory(asset_dir)
 
-        frame_start = context.get('asset').get('data').get('frameStart')
-        frame_end = context.get('asset').get('data').get('frameEnd')
+        asset_doc = context["asset"]
+        frame_info = get_frame_info(asset_doc)
+        frame_start = frame_info.frame_start
+        frame_end = frame_info.frame_end
 
         # If frame start and end are the same, we increase the end frame by
         # one, otherwise Unreal will not import it

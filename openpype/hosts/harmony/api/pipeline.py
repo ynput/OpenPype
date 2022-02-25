@@ -44,28 +44,25 @@ def get_asset_settings():
         dict: Scene data.
 
     """
-    asset_data = lib.get_asset()["data"]
+    asset_doc = lib.get_asset()
+    asset_data = asset_doc["data"]
     fps = asset_data.get("fps")
-    frame_start = asset_data.get("frameStart")
-    frame_end = asset_data.get("frameEnd")
-    handle_start = asset_data.get("handleStart")
-    handle_end = asset_data.get("handleEnd")
     resolution_width = asset_data.get("resolutionWidth")
     resolution_height = asset_data.get("resolutionHeight")
     entity_type = asset_data.get("entityType")
 
-    scene_data = {
+    frame_info = lib.get_frame_info(asset_doc)
+
+    return {
         "fps": fps,
-        "frameStart": frame_start,
-        "frameEnd": frame_end,
-        "handleStart": handle_start,
-        "handleEnd": handle_end,
         "resolutionWidth": resolution_width,
         "resolutionHeight": resolution_height,
-        "entityType": entity_type
+        "entityType": entity_type,
+        "frameStart": frame_info.frame_start,
+        "frameEnd": frame_info.frame_end,
+        "handleStart": frame_info.handle_start,
+        "handleEnd": frame_info.handle_end,
     }
-
-    return scene_data
 
 
 def ensure_scene_settings():

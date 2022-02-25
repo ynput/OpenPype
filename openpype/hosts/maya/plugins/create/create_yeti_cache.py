@@ -1,5 +1,3 @@
-from collections import OrderedDict
-
 from openpype.hosts.maya.api import (
     lib,
     plugin

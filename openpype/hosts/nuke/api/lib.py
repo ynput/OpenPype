@@ -24,6 +24,7 @@ from openpype.api import (
     ApplicationManager
 )
 from openpype.tools.utils import host_tools
+from openpype.lib import get_frame_info
 from openpype.lib.path_tools import HostDirmap
 from openpype.settings import get_project_settings
 from openpype.modules import ModulesManager
@@ -1440,28 +1441,25 @@ class WorkfileSettings(object):
             return
 
         # get handles values
-        handle_start = data["handleStart"]
-        handle_end = data["handleEnd"]
-
+        frame_info = get_frame_info(self._asset_entity)
         fps = float(data["fps"])
-        frame_start = int(data["frameStart"]) - handle_start
-        frame_end = int(data["frameEnd"]) + handle_end
 
         self._root_node["lock_range"].setValue(False)
         self._root_node["fps"].setValue(fps)
-        self._root_node["first_frame"].setValue(frame_start)
-        self._root_node["last_frame"].setValue(frame_end)
+        self._root_node["first_frame"].setValue(frame_info.handle_frame_start)
+        self._root_node["last_frame"].setValue(frame_info.handle_frame_end)
         self._root_node["lock_range"].setValue(True)
 
         # setting active viewers
         try:
-            nuke.frame(int(data["frameStart"]))
+            nuke.frame(int(frame_info.frame_start))
         except Exception as e:
             log.warning("no viewer in scene: `{}`".format(e))
 
         range = '{0}-{1}'.format(
-            int(data["frameStart"]),
-            int(data["frameEnd"]))
+            int(frame_info.frame_start),
+            int(frame_info.frame_end)
+        )
 
         for node in nuke.allNodes(filter="Viewer"):
             node['frame_range'].setValue(range)
@@ -1471,8 +1469,8 @@ class WorkfileSettings(object):
 
         # adding handle_start/end to root avalon knob
         if not set_avalon_knob_data(self._root_node, {
-            "handleStart": int(handle_start),
-            "handleEnd": int(handle_end)
+            "handleStart": int(frame_info.handle_start),
+            "handleEnd": int(frame_info.handle_end)
         }):
             log.warning("Cannot set Avalon knob to Root node!")
 
@@ -1581,29 +1579,6 @@ class WorkfileSettings(object):
         favorite_items.update({"Work dir": work_dir.replace("\\", "/")})
 
         set_context_favorites(favorite_items)
-
-
-def get_hierarchical_attr(entity, attr, default=None):
-    attr_parts = attr.split('.')
-    value = entity
-    for part in attr_parts:
-        value = value.get(part)
-        if not value:
-            break
-
-    if value or entity['type'].lower() == 'project':
-        return value
-
-    parent_id = entity['parent']
-    if (
-        entity['type'].lower() == 'asset'
-        and entity.get('data', {}).get('visualParent')
-    ):
-        parent_id = entity['data']['visualParent']
-
-    parent = io.find_one({'_id': parent_id})
-
-    return get_hierarchical_attr(parent, attr)
 
 
 def get_write_node_template_attr(node):

@@ -5,7 +5,7 @@ from contextlib import contextmanager
 import six
 
 from avalon import api, io
-from openpype.api import get_asset
+from openpype.lib import get_asset, get_frame_info
 
 
 import hou
@@ -548,30 +548,15 @@ def reset_framerange():
     """Set frame range to current asset"""
 
     asset_name = api.Session["AVALON_ASSET"]
-    asset = io.find_one({"name": asset_name, "type": "asset"})
+    asset_doc = io.find_one({"name": asset_name, "type": "asset"})
 
-    frame_start = asset["data"].get("frameStart")
-    frame_end = asset["data"].get("frameEnd")
-    # Backwards compatibility
-    if frame_start is None or frame_end is None:
-        frame_start = asset["data"].get("edit_in")
-        frame_end = asset["data"].get("edit_out")
-
-    if frame_start is None or frame_end is None:
+    frame_info = get_frame_info(asset_doc)
+    if frame_info is None:
         log.warning("No edit information found for %s" % asset_name)
         return
 
-    handles = asset["data"].get("handles") or 0
-    handle_start = asset["data"].get("handleStart")
-    if handle_start is None:
-        handle_start = handles
-
-    handle_end = asset["data"].get("handleEnd")
-    if handle_end is None:
-        handle_end = handles
-
-    frame_start -= int(handle_start)
-    frame_end += int(handle_end)
+    frame_start = frame_info.handle_frame_start
+    frame_end = frame_info.handle_frame_start
 
     hou.playbar.setFrameRange(frame_start, frame_end)
     hou.playbar.setPlaybackRange(frame_start, frame_end)
