@@ -17,13 +17,14 @@ class CollectWorkfile(pyblish.api.ContextPlugin):
         version = context.data["version"]
         asset_entity = context.data["assetEntity"]
         project_entity = context.data["projectEntity"]
+        frame_info = context.data["assetFrameInfo"]
 
         shared_instance_data = {
             "asset": asset_entity["name"],
-            "frameStart": asset_entity["data"]["frameStart"],
-            "frameEnd": asset_entity["data"]["frameEnd"],
-            "handleStart": asset_entity["data"]["handleStart"],
-            "handleEnd": asset_entity["data"]["handleEnd"],
+            "frameStart": frame_info.frame_start,
+            "frameEnd": frame_info.frame_end,
+            "handleStart": frame_info.handle_start,
+            "handleEnd": frame_info.handle_end,
             "fps": asset_entity["data"]["fps"],
             "resolutionWidth": asset_entity["data"].get(
                 "resolutionWidth",

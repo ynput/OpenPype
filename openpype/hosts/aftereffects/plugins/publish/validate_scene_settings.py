@@ -4,8 +4,7 @@ import os
 import re
 
 import pyblish.api
-
-from openpype.hosts.aftereffects.api import get_asset_settings
+from openpype.lib import get_frame_info
 
 
 class ValidateSceneSettings(pyblish.api.InstancePlugin):
@@ -58,7 +57,27 @@ class ValidateSceneSettings(pyblish.api.InstancePlugin):
 
     def process(self, instance):
         """Plugin entry point."""
-        expected_settings = get_asset_settings()
+        asset_doc = instance.data.get("AssetEntity")
+        if asset_doc is None:
+            asset_doc = instance.context.data.get("AssetEntity")
+
+        asset_data = asset_doc["data"]
+        fps = asset_data.get("fps")
+        resolution_width = asset_data.get("resolutionWidth")
+        resolution_height = asset_data.get("resolutionHeight")
+
+        anatomy = instance.context.data.get("anatomy")
+        frame_info = get_frame_info(asset_doc, anatomy)
+
+        expected_settings = {
+            "fps": fps,
+            "resolutionWidth": resolution_width,
+            "resolutionHeight": resolution_height,
+            "frameStartHandle": frame_info.handle_frame_start,
+            "frameEndHandle": frame_info.handle_frame_end,
+            "duration": frame_info.frame_range
+        }
+
         self.log.info("config from DB::{}".format(expected_settings))
 
         if any(re.search(pattern, os.getenv('AVALON_TASK'))
@@ -69,49 +88,51 @@ class ValidateSceneSettings(pyblish.api.InstancePlugin):
         if any(re.search(pattern, os.getenv('AVALON_TASK'))
                 for pattern in self.skip_timelines_check):
             expected_settings.pop('fps', None)
-            expected_settings.pop('frameStart', None)
-            expected_settings.pop('frameEnd', None)
-            expected_settings.pop('handleStart', None)
-            expected_settings.pop('handleEnd', None)
+            expected_settings.pop('frameStartHandle', None)
+            expected_settings.pop('frameEndHandle', None)
 
         # handle case where ftrack uses only two decimal places
         # 23.976023976023978 vs. 23.98
         fps = instance.data.get("fps")
         if fps:
             if isinstance(fps, float):
-                fps = float(
-                    "{:.2f}".format(fps))
+                fps = float("{:.2f}".format(fps))
             expected_settings["fps"] = fps
-
-        duration = instance.data.get("frameEndHandle") - \
-            instance.data.get("frameStartHandle") + 1
 
         self.log.debug("filtered config::{}".format(expected_settings))
 
+        scene_frame_start = instance.data["frameStartHandle"]
+        scene_frame_end = instance.data["frameEndHandle"]
         current_settings = {
             "fps": fps,
-            "frameStartHandle": instance.data.get("frameStartHandle"),
-            "frameEndHandle": instance.data.get("frameEndHandle"),
             "resolutionWidth": instance.data.get("resolutionWidth"),
             "resolutionHeight": instance.data.get("resolutionHeight"),
-            "duration": duration
+            "frameStartHandle": scene_frame_start,
+            "frameEndHandle": scene_frame_end,
+            "duration": scene_frame_end - scene_frame_start + 1
         }
         self.log.info("current_settings:: {}".format(current_settings))
 
         invalid_settings = []
+        handles_info_added = False
         for key, value in expected_settings.items():
-            if value != current_settings[key]:
-                invalid_settings.append(
-                    "{} expected: {}  found: {}".format(key, value,
-                                                        current_settings[key])
-                )
+            current_value = current_settings[key]
+            if value == current_value:
+                continue
 
-        if ((expected_settings.get("handleStart")
-            or expected_settings.get("handleEnd"))
-           and invalid_settings):
-            msg = "Handles included in calculation. Remove handles in DB " +\
-                  "or extend frame range in Composition Setting."
-            invalid_settings[-1]["reason"] = msg
+            msg = "{} expected: {} found: {}".format(
+                key, value, current_value
+            )
+            if (
+                not handles_info_added
+                and key in ("frameStartHandle", "frameEndHandle")
+            ):
+                handles_info_added = True
+                msg += (
+                    " Handles included in calculation. Remove handles in DB "
+                    "or extend frame range in Composition Setting."
+                )
+            invalid_settings.append(msg)
 
         msg = "Found invalid settings:\n{}".format(
             "\n".join(invalid_settings)

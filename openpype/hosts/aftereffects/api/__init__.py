@@ -11,7 +11,6 @@ from .launch_logic import (
 
 from .pipeline import (
     ls,
-    get_asset_settings,
     install,
     uninstall,
     list_instances,
@@ -45,7 +44,6 @@ __all__ = [
 
     # pipeline
     "ls",
-    "get_asset_settings",
     "install",
     "uninstall",
     "list_instances",
