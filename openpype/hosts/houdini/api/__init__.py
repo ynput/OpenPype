@@ -24,8 +24,7 @@ from .lib import (
     lsattrs,
     read,
 
-    maintained_selection,
-    unique_name
+    maintained_selection
 )
 
 
@@ -51,8 +50,7 @@ __all__ = [
     "lsattrs",
     "read",
 
-    "maintained_selection",
-    "unique_name"
+    "maintained_selection"
 ]
 
 # Backwards API compatibility
