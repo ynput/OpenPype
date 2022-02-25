@@ -134,11 +134,18 @@ def sync_project(project: dict, dbcon: AvalonMongoDB) -> UpdateOne:
         print(f"Creating project '{project_name}'")
         project_doc = create_project(project_name, project_name, dbcon=dbcon)
 
-    print(f"Synchronizing {project_name}...")
-
     # Project data and tasks
-    if not project["data"]:  # Sentinel
-        project["data"] = {}
+    project_data = project["data"] or {}
+
+    # Update data
+    project_data.update(
+        {
+            "code": project["code"],
+            "fps": project["fps"],
+            "resolutionWidth": project["resolution"].split("x")[0],
+            "resolutionHeight": project["resolution"].split("x")[1],
+        }
+    )
 
     return UpdateOne(
         {"_id": project_doc["_id"]},
@@ -148,14 +155,7 @@ def sync_project(project: dict, dbcon: AvalonMongoDB) -> UpdateOne:
                     t["name"]: {"short_name": t.get("short_name", t["name"])}
                     for t in gazu.task.all_task_types_for_project(project)
                 },
-                "data": project["data"].update(
-                    {
-                        "code": project["code"],
-                        "fps": project["fps"],
-                        "resolutionWidth": project["resolution"].split("x")[0],
-                        "resolutionHeight": project["resolution"].split("x")[1],
-                    }
-                ),
+                "data": project_data,
             }
         },
     )

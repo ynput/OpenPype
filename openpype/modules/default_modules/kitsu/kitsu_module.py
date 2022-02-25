@@ -408,7 +408,7 @@ def sync_openpype():
         all_entities = [
             e
             for e in all_assets + all_episodes + all_seqs + all_shots
-            if not e["data"].get("is_substitute")
+            if e["data"] and not e["data"].get("is_substitute")
         ]
 
         # Sync project. Create if doesn't exist
