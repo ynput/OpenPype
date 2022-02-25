@@ -213,7 +213,6 @@ class PublishFrame(QtWidgets.QFrame):
         close_report_btn.setIcon(close_report_icon)
 
         details_layout = QtWidgets.QVBoxLayout(details_widget)
-        details_layout.setContentsMargins(0, 0, 0, 0)
         details_layout.addWidget(report_view)
         details_layout.addWidget(close_report_btn)
 
@@ -495,10 +494,11 @@ class PublishFrame(QtWidgets.QFrame):
     def _on_show_details(self):
         self._change_bg_property(2)
         self._main_layout.setCurrentWidget(self._details_widget)
-        logs = self.controller.get_publish_report()
-        self._report_view.set_report(logs)
+        report_data = self.controller.get_publish_report()
+        self._report_view.set_report_data(report_data)
 
     def _on_close_report_clicked(self):
+        self._report_view.close_details_popup()
         if self.controller.get_publish_crash_error():
             self._change_bg_property()
 

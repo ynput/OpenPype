@@ -1261,6 +1261,12 @@ QScrollBar::add-page:vertical, QScrollBar::sub-page:vertical {
     background: {color:restart-btn-bg};
 }
 
+/* Tray publisher */
+#ChooseProjectLabel {
+    font-size: 15pt;
+    font-weight: 750;
+}
+
 /* Globally used names */
 #Separator {
     background: {color:bg-menu-separator};

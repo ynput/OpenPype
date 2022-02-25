@@ -81,6 +81,11 @@ class PypeCommands:
         standalonepublish.main()
 
     @staticmethod
+    def launch_traypublisher():
+        from openpype.tools import traypublisher
+        traypublisher.main()
+
+    @staticmethod
     def publish(paths, targets=None, gui=False):
         """Start headless publishing.
 
