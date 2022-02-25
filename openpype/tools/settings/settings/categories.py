@@ -715,7 +715,12 @@ class SettingsCategoryWidget(QtWidgets.QWidget):
             self._outdated_version_label,
             self._require_restart_label,
         }
-        if self.entity.require_restart:
+        if self.is_modifying_defaults or self.entity is None:
+            require_restart = False
+        else:
+            require_restart = self.entity.require_restart
+
+        if require_restart:
             visible_label = self._require_restart_label
         elif self._is_loaded_version_outdated:
             visible_label = self._outdated_version_label
