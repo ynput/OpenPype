@@ -93,6 +93,10 @@ from .avalon_context import (
     get_workdir,
     get_workdir_with_workdir_data,
 
+    UnifiedFrameInfo,
+    get_frame_info,
+    get_frame_info_by_name,
+
     create_workfile_doc,
     save_workfile_data_to_doc,
     get_workfile_doc,
@@ -232,6 +236,10 @@ __all__ = [
     "get_workdir_data",
     "get_workdir",
     "get_workdir_with_workdir_data",
+
+    "UnifiedFrameInfo",
+    "get_frame_info",
+    "get_frame_info_by_name",
 
     "create_workfile_doc",
     "save_workfile_data_to_doc",

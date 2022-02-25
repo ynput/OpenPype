@@ -14,6 +14,7 @@ from openpype.settings import (
     get_system_settings
 )
 from .anatomy import Anatomy
+from .log import PypeLogger
 from .profiles_filtering import filter_profiles
 
 # avalon module is not imported at the top
@@ -259,6 +260,200 @@ def get_hierarchy(asset_name=None):
     )
 
     return "/".join(hierarchy_items)
+
+
+class UnifiedFrameInfo:
+    """Holder of frame start/end and handles start/end.
+
+    Handles can extend or reduce a frame range. UnifiedFrameInfo always
+    works with handles as they're extending frame start/end.
+
+    ## Example
+    Data from asset document:
+    - frame start: 1001
+    - frame end: 1100
+    - handle start: 10
+    - handle end: 10
+
+    1. Project has stored that handles "Extend"
+    - frame range with handles: 991 - 1110 (120 frames)
+    - frame range without handles: 1001 - 1100 (100 frames)
+
+    2. Project has stored that handles "Reduce"
+    - frame range with handles: 1001 - 1100 (100 frames)
+    - frame range without handles: 1011 - 1090 (80 frames)
+
+
+    Class unifies access too `frame_start`, `fram_end`, `handle_frame_start`
+    and `handle_frame_end`.
+
+    Keeps tray about current state of handles if are extending of reducing
+    frame range. If you want to get data to store please set if handles
+    should be extended using `change_handles_extend` and then
+    `real_frame_start` and `real_frame_end`.
+    """
+
+    def __init__(
+        self,
+        frame_start,
+        frame_end,
+        handle_start,
+        handle_end,
+        handles_extend=None
+    ):
+        if handles_extend is None:
+            handles_extend = True
+        self.frame_start = frame_start
+        self.frame_end = frame_end
+        self.handle_start = handle_start or 0
+        self.handle_end = handle_end or 0
+        self._handles_extend = True
+        self.change_handles_extend(handles_extend)
+
+        self._log = None
+
+    @property
+    def log(self):
+        if self._log is None:
+            self._log = PypeLogger.get_logger(self.__class__.__name__)
+        return self._log
+
+    def __str__(self):
+        return "< {}: ({}) {}-{} ({}) >".format(
+            self.__class__.__name__,
+            self.handle_frame_start,
+            self.frame_start,
+            self.frame_end,
+            self.handle_frame_end
+        )
+
+    @property
+    def handle_frame_start(self):
+        """Frame start with handles."""
+        # QUESTION should we reduce handles if they're lower than '0'?
+        return self.frame_start - self.handle_start
+
+    @property
+    def handle_frame_end(self):
+        """Frame end with handles."""
+        return self.frame_end + self.handle_end
+
+    @property
+    def real_frame_start(self):
+        """Frame start that would be stored in project or asset doc."""
+        if self._handles_extend:
+            return self.frame_start
+        return self.handle_frame_start
+
+    @property
+    def real_frame_end(self):
+        """Frame end that would be stored in project or asset doc."""
+        if self._handles_extend:
+            return self.frame_end
+        return self.handle_frame_end
+
+    @property
+    def frame_range_without_handles(self):
+        """Frame range without handles."""
+        return (self.frame_end - self.frame_start) + 1
+
+    @property
+    def frame_range(self):
+        """Frame range with handles."""
+        return (self.handle_frame_end - self.handle_frame_start) + 1
+
+    @property
+    def is_valid(self):
+        """Is frame range valid."""
+        # When handle start/end reduce from frames it is possible that frame
+        #   end is lower then frame start
+        #   - 1001-1010-10-10 -> <1011-1000>
+        if self.handle_frame_end < self.handle_frame_start:
+            return False
+        if self.handle_frame_start < 0:
+            return False
+        return True
+
+    def change_handles_extend(
+        self, handles_extend=None, keep_frame_range=True
+    ):
+        """Change state of handles extending frame start/end.
+
+        Args:
+            handles_extend(bool): Explicitly set if handles extend or reduce
+                frame start/end.
+            keep_frame_range(bool): Frame range will be kept so the change
+                is just for calculation of frame start/end for storing.
+        """
+        if handles_extend is None:
+            handles_extend = not self._handles_extend
+
+        elif self._handles_extend == handles_extend:
+            return
+
+        self._handles_extend = handles_extend
+        if keep_frame_range:
+            return
+        if handles_extend:
+            self.frame_start -= self.handle_start
+            self.frame_end += self.handle_end
+        else:
+            self.frame_start += self.handle_start
+            self.frame_end -= self.handle_end
+
+    def get_handles_data(self):
+        """Get data that would be stored in project or asset doc."""
+        return {
+            "frameStart": self.real_frame_start,
+            "frameEnd": self.real_frame_end,
+            "handleStart": self.handle_start,
+            "handleEnd": self.handle_end
+        }
+
+
+def get_frame_info(asset_doc, anatomy=None, project_name=None):
+    """Get frame information about asset from asset document.
+
+    Uses project anatomy to determine if handles are extending frame range.
+
+    Returns:
+        UnifiedFrameInfo: Frame info object.
+        None: When frame start/end on asset docs are invalid.
+
+    Raises:
+        ProjectNotSet: When project is not passed and is not set global
+            project.
+    """
+    if anatomy is None:
+        anatomy = Anatomy(project_name)
+
+    asset_data = asset_doc["data"]
+
+    frame_start = asset_data.get("frameStart")
+    frame_end = asset_data.get("frameEnd")
+    handle_start = asset_data.get("handleStart") or 0
+    handle_end = asset_data.get("handleEnd") or 0
+    handles_extend = anatomy["attributes"].get("handlesExtend")
+    if frame_start is None or frame_end is None:
+        return None
+
+    return UnifiedFrameInfo(
+        frame_start, frame_end, handle_start, handle_end, handles_extend
+    )
+
+
+def get_frame_info_by_names(asset_name, project_name=None):
+    from avalon.api import AvalonMongoDB
+
+    if project_name is None:
+        project_name = os.environ["AVALON_PROJECT"]
+
+    dbcon = AvalonMongoDB()
+    dbcon.Session["AVALON_PROJECT"] = project_name
+    asset_doc = dbcon.find_one({"type": "asset", "name": asset_name})
+    if not asset_doc:
+        return None
+    return get_frame_info(asset_doc, project_name=project_name)
 
 
 def get_system_general_anatomy_data():
