@@ -95,7 +95,7 @@ from .avalon_context import (
 
     UnifiedFrameInfo,
     get_frame_info,
-    get_frame_info_by_name,
+    get_frame_info_by_names,
 
     create_workfile_doc,
     save_workfile_data_to_doc,
@@ -239,7 +239,7 @@ __all__ = [
 
     "UnifiedFrameInfo",
     "get_frame_info",
-    "get_frame_info_by_name",
+    "get_frame_info_by_names",
 
     "create_workfile_doc",
     "save_workfile_data_to_doc",
