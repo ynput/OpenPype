@@ -535,6 +535,7 @@ class TasksCombobox(QtWidgets.QComboBox):
             return
 
         self._text = text
+        self.repaint()
 
     def paintEvent(self, event):
         """Paint custom text without using QLineEdit.
@@ -548,6 +549,7 @@ class TasksCombobox(QtWidgets.QComboBox):
         self.initStyleOption(opt)
         if self._text is not None:
             opt.currentText = self._text
+
         style = self.style()
         style.drawComplexControl(
             QtWidgets.QStyle.CC_ComboBox, opt, painter, self
@@ -609,11 +611,15 @@ class TasksCombobox(QtWidgets.QComboBox):
         if self._selected_items:
             is_valid = True
 
+        valid_task_names = []
         for task_name in self._selected_items:
-            is_valid = self._model.is_task_name_valid(asset_name, task_name)
-            if not is_valid:
-                break
+            _is_valid = self._model.is_task_name_valid(asset_name, task_name)
+            if _is_valid:
+                valid_task_names.append(task_name)
+            else:
+                is_valid = _is_valid
 
+        self._selected_items = valid_task_names
         if len(self._selected_items) == 0:
             self.set_selected_item("")
 
@@ -625,6 +631,7 @@ class TasksCombobox(QtWidgets.QComboBox):
             if multiselection_text is None:
                 multiselection_text = "|".join(self._selected_items)
             self.set_selected_item(multiselection_text)
+
         self._set_is_valid(is_valid)
 
     def set_selected_items(self, asset_task_combinations=None):
@@ -708,8 +715,7 @@ class TasksCombobox(QtWidgets.QComboBox):
         idx = self.findText(item_name)
         # Set current index (must be set to -1 if is invalid)
         self.setCurrentIndex(idx)
-        if idx < 0:
-            self.set_text(item_name)
+        self.set_text(item_name)
 
     def reset_to_origin(self):
         """Change to task names set with last `set_selected_items` call."""

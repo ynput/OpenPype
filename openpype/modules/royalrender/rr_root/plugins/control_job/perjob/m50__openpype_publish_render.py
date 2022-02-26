@@ -20,7 +20,7 @@ class OpenPypeContextSelector:
 
     def __init__(self):
         self.job = rr.getJob()
-        self.context = None
+        self.context = {}
 
         self.openpype_executable = "openpype_gui"
         if platform.system().lower() == "windows":
@@ -136,7 +136,7 @@ class OpenPypeContextSelector:
 
     def run_publish(self):
         """Run publish process."""
-        env = {'AVALON_PROJECT': str(self.context.get("project")),
+        env = {"AVALON_PROJECT": str(self.context.get("project")),
                "AVALON_ASSET": str(self.context.get("asset")),
                "AVALON_TASK": str(self.context.get("task")),
                "AVALON_APP_NAME": str(self.context.get("app_name"))}
@@ -179,4 +179,18 @@ class OpenPypeContextSelector:
 
 print("running selector")
 selector = OpenPypeContextSelector()
+
+# try to set context from environment
+selector.context["project"] = os.getenv("AVALON_PROJECT")
+selector.context["asset"] = os.getenv("AVALON_ASSET")
+selector.context["task"] = os.getenv("AVALON_TASK")
+selector.context["app_name"] = os.getenv("AVALON_APP_NAME")
+
+# if anything inside is None, scratch the whole thing and
+# ask user for context.
+for _, v in selector.context.items():
+    if not v:
+        selector.context = {}
+        break
+
 selector.process_job()

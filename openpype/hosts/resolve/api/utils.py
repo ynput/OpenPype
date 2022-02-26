@@ -70,9 +70,9 @@ def get_resolve_module():
             sys.exit()
     # assign global var and return
     bmdvr = bmd.scriptapp("Resolve")
-    # bmdvf = bmd.scriptapp("Fusion")
+    bmdvf = bmd.scriptapp("Fusion")
     resolve.api.bmdvr = bmdvr
-    resolve.api.bmdvf = bmdvr.Fusion()
+    resolve.api.bmdvf = bmdvf
     log.info(("Assigning resolve module to "
               f"`pype.hosts.resolve.api.bmdvr`: {resolve.api.bmdvr}"))
     log.info(("Assigning resolve module to "

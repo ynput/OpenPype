@@ -29,6 +29,7 @@ from .execute import (
     get_linux_launcher_args,
     execute,
     run_subprocess,
+    run_detached_process,
     run_openpype_process,
     clean_envs_for_openpype_process,
     path_to_subprocess_arg,
@@ -130,7 +131,7 @@ from .applications import (
     PostLaunchHook,
 
     EnvironmentPrepData,
-    prepare_host_environments,
+    prepare_app_environments,
     prepare_context_environments,
     get_app_environments_for_context,
     apply_project_environments_value
@@ -188,6 +189,7 @@ __all__ = [
     "get_linux_launcher_args",
     "execute",
     "run_subprocess",
+    "run_detached_process",
     "run_openpype_process",
     "clean_envs_for_openpype_process",
     "path_to_subprocess_arg",
@@ -261,7 +263,7 @@ __all__ = [
     "PreLaunchHook",
     "PostLaunchHook",
     "EnvironmentPrepData",
-    "prepare_host_environments",
+    "prepare_app_environments",
     "prepare_context_environments",
     "get_app_environments_for_context",
     "apply_project_environments_value",

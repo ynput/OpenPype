@@ -1,4 +1,4 @@
-from PySide2 import QtWidgets, QtCore
+from Qt import QtWidgets, QtCore
 
 
 class FlameLabel(QtWidgets.QLabel):

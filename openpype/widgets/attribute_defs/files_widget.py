@@ -433,7 +433,7 @@ class MultiFilesWidget(QtWidgets.QFrame):
             filenames = index.data(FILENAMES_ROLE)
             for filename in filenames:
                 filepaths.add(os.path.join(dirpath, filename))
-        return filepaths
+        return list(filepaths)
 
     def set_filters(self, folders_allowed, exts_filter):
         self._files_proxy_model.set_allow_folders(folders_allowed)
@@ -552,7 +552,7 @@ class MultiFilesWidget(QtWidgets.QFrame):
         self._update_visibility()
 
     def _update_visibility(self):
-        files_exists = self._files_model.rowCount() > 0
+        files_exists = self._files_proxy_model.rowCount() > 0
         self._files_view.setVisible(files_exists)
         self._empty_widget.setVisible(not files_exists)
 

@@ -33,6 +33,30 @@ CURRENT_DOC_SCHEMAS = {
 }
 
 
+def create_chunks(iterable, chunk_size=None):
+    """Separate iterable into multiple chunks by size.
+
+    Args:
+        iterable(list|tuple|set): Object that will be separated into chunks.
+        chunk_size(int): Size of one chunk. Default value is 200.
+
+    Returns:
+        list<list>: Chunked items.
+    """
+    chunks = []
+    if not iterable:
+        return chunks
+
+    tupled_iterable = tuple(iterable)
+    iterable_size = len(tupled_iterable)
+    if chunk_size is None:
+        chunk_size = 200
+
+    for idx in range(0, iterable_size, chunk_size):
+        chunks.append(tupled_iterable[idx:idx + chunk_size])
+    return chunks
+
+
 def check_regex(name, entity_type, in_schema=None, schema_patterns=None):
     schema_name = "asset-3.0"
     if in_schema:
@@ -1147,10 +1171,8 @@ class SyncEntitiesFactory:
         ids_len = len(tupled_ids)
         chunk_size = int(5000 / ids_len)
         all_links = []
-        for idx in range(0, ids_len, chunk_size):
-            entity_ids_joined = join_query_keys(
-                tupled_ids[idx:idx + chunk_size]
-            )
+        for chunk in create_chunks(ftrack_ids, chunk_size):
+            entity_ids_joined = join_query_keys(chunk)
 
             all_links.extend(self.session.query((
                 "select from_id, to_id from"
