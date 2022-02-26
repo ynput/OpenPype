@@ -138,9 +138,7 @@ class FtrackComponentCreator:
 
         if name == "ftrackreview-mp4":
             duration = data["duration"]
-
             handles = data["handles"]
-
             fps = data["fps"]
             component_data["metadata"] = {
                 'ftr_meta': json.dumps({
