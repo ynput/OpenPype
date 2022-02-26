@@ -82,9 +82,9 @@ class ValidateVrayReferencedAOVs(pyblish.api.InstancePlugin):
             bool: cast Maya attribute to Pythons boolean value.
 
         """
-        if isinstance(attr_val, types.BooleanType):
+        if isinstance(attr_val, bool):
             return attr_val
-        elif isinstance(attr_val, (types.ListType, types.GeneratorType)):
+        elif isinstance(attr_val, (list, types.GeneratorType)):
             return any(attr_val)
         else:
             return bool(attr_val)

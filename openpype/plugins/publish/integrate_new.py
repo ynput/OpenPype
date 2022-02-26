@@ -148,7 +148,10 @@ class IntegrateAssetNew(pyblish.api.InstancePlugin):
 
         project_entity = instance.data["projectEntity"]
 
-        context_asset_name = context.data["assetEntity"]["name"]
+        context_asset_name = None
+        context_asset_doc = context.data.get("assetEntity")
+        if context_asset_doc:
+            context_asset_name = context_asset_doc["name"]
 
         asset_name = instance.data["asset"]
         asset_entity = instance.data.get("assetEntity")

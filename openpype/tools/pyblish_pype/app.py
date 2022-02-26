@@ -90,9 +90,8 @@ def show(parent=None):
         install_fonts()
         install_translator(app)
 
-        ctrl = control.Controller()
-
         if self._window is None:
+            ctrl = control.Controller()
             self._window = window.Window(ctrl, parent)
             self._window.destroyed.connect(on_destroyed)
 

@@ -1139,9 +1139,10 @@ class Window(QtWidgets.QDialog):
             self.intent_box.setCurrentIndex(self.intent_model.default_index)
 
         self.comment_box.placeholder.setVisible(False)
-        self.comment_box.placeholder.setVisible(True)
         # Launch controller reset
         self.controller.reset()
+        if not self.comment_box.text():
+            self.comment_box.placeholder.setVisible(True)
 
     def validate(self):
         self.info(self.tr("Preparing validate.."))

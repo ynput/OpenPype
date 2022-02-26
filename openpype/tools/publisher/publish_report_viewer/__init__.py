@@ -1,3 +1,6 @@
+from .report_items import (
+    PublishReport
+)
 from .widgets import (
     PublishReportViewerWidget
 )
@@ -8,6 +11,8 @@ from .window import (
 
 
 __all__ = (
+    "PublishReport",
+
     "PublishReportViewerWidget",
 
     "PublishReportViewerWindow",
