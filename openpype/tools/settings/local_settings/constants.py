@@ -5,7 +5,7 @@ LABEL_REMOVE_PROJECT = "Remove from project"
 LABEL_ADD_PROJECT = "Add to project"
 LABEL_DISCARD_CHANGES = "Discard changes"
 
-# Local setting contants
+# Local setting constants
 # TODO move to settings constants
 LOCAL_GENERAL_KEY = "general"
 LOCAL_PROJECTS_KEY = "projects"

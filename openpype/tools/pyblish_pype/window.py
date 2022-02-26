@@ -143,9 +143,8 @@ class Window(QtWidgets.QDialog):
         # TODO add parent
         overview_page = QtWidgets.QWidget()
 
-        overview_instance_view = view.InstanceView(
-            animated=settings.Animated, parent=overview_page
-        )
+        overview_instance_view = view.InstanceView(parent=overview_page)
+        overview_instance_view.setAnimated(settings.Animated)
         overview_instance_delegate = delegate.InstanceDelegate(
             parent=overview_instance_view
         )
@@ -156,9 +155,8 @@ class Window(QtWidgets.QDialog):
         overview_instance_view.setItemDelegate(overview_instance_delegate)
         overview_instance_view.setModel(instance_sort_proxy)
 
-        overview_plugin_view = view.PluginView(
-            animated=settings.Animated, parent=overview_page
-        )
+        overview_plugin_view = view.PluginView(parent=overview_page)
+        overview_plugin_view.setAnimated(settings.Animated)
         overview_plugin_delegate = delegate.PluginDelegate(
             parent=overview_plugin_view
         )
@@ -298,34 +296,6 @@ class Window(QtWidgets.QDialog):
         self.main_layout.setSpacing(0)
         self.main_layout.addWidget(main_widget)
 
-        # Display info
-        info_effect = QtWidgets.QGraphicsOpacityEffect(footer_info)
-        footer_info.setGraphicsEffect(info_effect)
-
-        on = QtCore.QPropertyAnimation(info_effect, b"opacity")
-        on.setDuration(0)
-        on.setStartValue(0)
-        on.setEndValue(1)
-
-        off = QtCore.QPropertyAnimation(info_effect, b"opacity")
-        off.setDuration(0)
-        off.setStartValue(1)
-        off.setEndValue(0)
-
-        fade = QtCore.QPropertyAnimation(info_effect, b"opacity")
-        fade.setDuration(500)
-        fade.setStartValue(1.0)
-        fade.setEndValue(0.0)
-
-        animation_info_msg = QtCore.QSequentialAnimationGroup()
-        animation_info_msg.addAnimation(on)
-        animation_info_msg.addPause(50)
-        animation_info_msg.addAnimation(off)
-        animation_info_msg.addPause(50)
-        animation_info_msg.addAnimation(on)
-        animation_info_msg.addPause(2000)
-        animation_info_msg.addAnimation(fade)
-
         """Setup
 
         Widgets are referred to in CSS via their object-name. We
@@ -459,6 +429,8 @@ class Window(QtWidgets.QDialog):
         self.footer_button_validate = footer_button_validate
         self.footer_button_play = footer_button_play
 
+        self.footer_info = footer_info
+
         self.overview_instance_view = overview_instance_view
         self.overview_plugin_view = overview_plugin_view
         self.plugin_model = plugin_model
@@ -467,8 +439,6 @@ class Window(QtWidgets.QDialog):
         self.instance_sort_proxy = instance_sort_proxy
 
         self.presets_button = presets_button
-
-        self.animation_info_msg = animation_info_msg
 
         self.terminal_model = terminal_model
         self.terminal_proxy = terminal_proxy
@@ -909,6 +879,13 @@ class Window(QtWidgets.QDialog):
             self.tr("Processing"), plugin_item.data(QtCore.Qt.DisplayRole)
         ))
 
+        visibility = True
+        if hasattr(plugin, "hide_ui_on_process") and plugin.hide_ui_on_process:
+            visibility = False
+
+        if self.isVisible() != visibility:
+            self.setVisible(visibility)
+
     def on_plugin_action_menu_requested(self, pos):
         """The user right-clicked on a plug-in
          __________
@@ -988,6 +965,8 @@ class Window(QtWidgets.QDialog):
         self.footer_button_stop.setEnabled(True)
         self.footer_button_play.setEnabled(False)
 
+        self._update_state()
+
     def on_passed_group(self, order):
         for group_item in self.instance_model.group_items.values():
             group_index = self.instance_sort_proxy.mapFromSource(
@@ -1016,9 +995,13 @@ class Window(QtWidgets.QDialog):
                 {GroupStates.HasFinished: True},
                 Roles.PublishFlagsRole
             )
+            self.overview_plugin_view.setAnimated(False)
             self.overview_plugin_view.collapse(group_index)
 
+        self._update_state()
+
     def on_was_stopped(self):
+        self.overview_plugin_view.setAnimated(settings.Animated)
         errored = self.controller.errored
         if self.controller.collect_state == 0:
             self.footer_button_play.setEnabled(False)
@@ -1042,6 +1025,11 @@ class Window(QtWidgets.QDialog):
         )
         self.button_suspend_logs.setEnabled(suspend_log_bool)
 
+        self._update_state()
+
+        if not self.isVisible():
+            self.setVisible(True)
+
     def on_was_skipped(self, plugin):
         plugin_item = self.plugin_model.plugin_items[plugin.id]
         plugin_item.setData(
@@ -1050,6 +1038,7 @@ class Window(QtWidgets.QDialog):
         )
 
     def on_was_finished(self):
+        self.overview_plugin_view.setAnimated(settings.Animated)
         self.footer_button_play.setEnabled(False)
         self.footer_button_validate.setEnabled(False)
         self.footer_button_reset.setEnabled(True)
@@ -1083,6 +1072,7 @@ class Window(QtWidgets.QDialog):
             )
 
         self.update_compatibility()
+        self._update_state()
 
     def on_was_processed(self, result):
         existing_ids = set(self.instance_model.instance_items.keys())
@@ -1112,6 +1102,9 @@ class Window(QtWidgets.QDialog):
             self.perspective_widget.update_context(
                 plugin_item, instance_item
             )
+
+        if not self.isVisible():
+            self.setVisible(True)
 
     # -------------------------------------------------------------------------
     #
@@ -1146,9 +1139,10 @@ class Window(QtWidgets.QDialog):
             self.intent_box.setCurrentIndex(self.intent_model.default_index)
 
         self.comment_box.placeholder.setVisible(False)
-        self.comment_box.placeholder.setVisible(True)
         # Launch controller reset
-        util.defer(500, self.controller.reset)
+        self.controller.reset()
+        if not self.comment_box.text():
+            self.comment_box.placeholder.setVisible(True)
 
     def validate(self):
         self.info(self.tr("Preparing validate.."))
@@ -1159,7 +1153,9 @@ class Window(QtWidgets.QDialog):
 
         self.button_suspend_logs.setEnabled(False)
 
-        util.defer(5, self.controller.validate)
+        self.controller.validate()
+
+        self._update_state()
 
     def publish(self):
         self.info(self.tr("Preparing publish.."))
@@ -1170,7 +1166,9 @@ class Window(QtWidgets.QDialog):
 
         self.button_suspend_logs.setEnabled(False)
 
-        util.defer(5, self.controller.publish)
+        self.controller.publish()
+
+        self._update_state()
 
     def act(self, plugin_item, action):
         self.info("%s %s.." % (self.tr("Preparing"), action))
@@ -1187,9 +1185,7 @@ class Window(QtWidgets.QDialog):
         )
 
         # Give Qt time to draw
-        util.defer(100, lambda: self.controller.act(
-            plugin_item.plugin, action
-        ))
+        self.controller.act(plugin_item.plugin, action)
 
         self.info(self.tr("Action prepared."))
 
@@ -1267,7 +1263,7 @@ class Window(QtWidgets.QDialog):
             self.info(self.tr("..as soon as processing is finished.."))
             self.controller.stop()
             self.finished.connect(self.close)
-            util.defer(2000, on_problem)
+            util.defer(200, on_problem)
             return event.ignore()
 
         self.state["is_closing"] = True
@@ -1288,6 +1284,9 @@ class Window(QtWidgets.QDialog):
     #
     # -------------------------------------------------------------------------
 
+    def _update_state(self):
+        self.footer_info.setText(self.controller.current_state)
+
     def info(self, message):
         """Print user-facing information
 
@@ -1295,22 +1294,15 @@ class Window(QtWidgets.QDialog):
             message (str): Text message for the user
 
         """
-
-        info = self.findChild(QtWidgets.QLabel, "FooterInfo")
-        info.setText(message)
-
         # Include message in terminal
         self.terminal_model.append([{
             "label": message,
             "type": "info"
         }])
 
-        self.animation_info_msg.stop()
-        self.animation_info_msg.start()
-
-        # TODO(marcus): Should this be configurable? Do we want
-        # the shell to fill up with these messages?
-        util.u_print(message)
+        if settings.PrintInfo:
+            # Print message to console
+            util.u_print(message)
 
     def warning(self, message):
         """Block processing and print warning until user hits "Continue"

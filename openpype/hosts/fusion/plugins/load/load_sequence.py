@@ -1,12 +1,15 @@
 import os
 import contextlib
 
-from avalon import api
-import avalon.io as io
+from avalon import api, io
 
-from avalon import fusion
+from openpype.hosts.fusion.api import (
+    imprint_container,
+    get_current_comp,
+    comp_lock_and_undo_chunk
+)
 
-comp = fusion.get_current_comp()
+comp = get_current_comp()
 
 
 @contextlib.contextmanager
@@ -117,7 +120,7 @@ def loader_shift(loader, frame, relative=True):
 class FusionLoadSequence(api.Loader):
     """Load image sequence into Fusion"""
 
-    families = ["imagesequence", "review"]
+    families = ["imagesequence", "review", "render"]
     representations = ["*"]
 
     label = "Load sequence"
@@ -126,13 +129,6 @@ class FusionLoadSequence(api.Loader):
     color = "orange"
 
     def load(self, context, name, namespace, data):
-
-        from avalon.fusion import (
-            imprint_container,
-            get_current_comp,
-            comp_lock_and_undo_chunk
-        )
-
         # Fallback to asset name when namespace is None
         if namespace is None:
             namespace = context['asset']['name']
@@ -185,32 +181,30 @@ class FusionLoadSequence(api.Loader):
               - We do the same like Fusion - allow fusion to take control.
 
             - HoldFirstFrame: Fusion resets this to 0
-              - We preverse the value.
+              - We preserve the value.
 
             - HoldLastFrame: Fusion resets this to 0
-              - We preverse the value.
+              - We preserve the value.
 
             - Reverse: Fusion resets to disabled if "Loop" is not enabled.
               - We preserve the value.
 
             - Depth: Fusion resets to "Format"
-              - We preverse the value.
+              - We preserve the value.
 
             - KeyCode: Fusion resets to ""
-              - We preverse the value.
+              - We preserve the value.
 
             - TimeCodeOffset: Fusion resets to 0
-              - We preverse the value.
+              - We preserve the value.
 
         """
-
-        from avalon.fusion import comp_lock_and_undo_chunk
 
         tool = container["_tool"]
         assert tool.ID == "Loader", "Must be Loader"
         comp = tool.Comp()
 
-        root = api.get_representation_path(representation)
+        root = os.path.dirname(api.get_representation_path(representation))
         path = self._get_first_image(root)
 
         # Get start frame from version data
@@ -247,9 +241,6 @@ class FusionLoadSequence(api.Loader):
             tool.SetData("avalon.representation", str(representation["_id"]))
 
     def remove(self, container):
-
-        from avalon.fusion import comp_lock_and_undo_chunk
-
         tool = container["_tool"]
         assert tool.ID == "Loader", "Must be Loader"
         comp = tool.Comp()

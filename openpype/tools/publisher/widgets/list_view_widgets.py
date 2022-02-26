@@ -6,7 +6,7 @@ attribute on instance (Group defined by creator).
 Each item can be enabled/disabled with their checkbox, whole group
 can be enabled/disabled with checkbox on group or
 selection can be enabled disabled using checkbox or keyboard key presses:
-- Space - change state of selection to oposite
+- Space - change state of selection to opposite
 - Enter - enable selection
 - Backspace - disable selection
 
@@ -589,7 +589,7 @@ class InstanceListView(AbstractInstanceView):
         # - create new instance, update existing and remove not existing
         for group_name, group_item in self._group_items.items():
             # Instance items to remove
-            # - will contain all exising instance ids at the start
+            # - will contain all existing instance ids at the start
             # - instance ids may be removed when existing instances are checked
             to_remove = set()
             # Mapping of existing instances under group item
@@ -659,7 +659,7 @@ class InstanceListView(AbstractInstanceView):
             for instance_id in to_remove:
                 idx_to_remove.append(existing_mapping[instance_id])
 
-            # Remove them in reverse order to prevend row index changes
+            # Remove them in reverse order to prevent row index changes
             for idx in reversed(sorted(idx_to_remove)):
                 group_item.removeRows(idx, 1)
 

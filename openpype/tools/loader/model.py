@@ -1,6 +1,7 @@
 import copy
 import re
 import math
+from uuid import uuid4
 
 from avalon import (
     style,
@@ -21,6 +22,8 @@ from openpype.tools.utils.constants import (
     LOCAL_AVAILABILITY_ROLE,
     REMOTE_AVAILABILITY_ROLE
 )
+
+ITEM_ID_ROLE = QtCore.Qt.UserRole + 90
 
 
 def is_filtering_recursible():
@@ -179,6 +182,7 @@ class SubsetsModel(TreeModel, BaseRepresentationModel):
         self._icons = {
             "subset": qtawesome.icon("fa.file-o", color=style.colors.default)
         }
+        self._items_by_id = {}
 
         self._doc_fetching_thread = None
         self._doc_fetching_stop = False
@@ -187,6 +191,15 @@ class SubsetsModel(TreeModel, BaseRepresentationModel):
         self.doc_fetched.connect(self.on_doc_fetched)
 
         self.refresh()
+
+    def get_item_by_id(self, item_id):
+        return self._items_by_id.get(item_id)
+
+    def add_child(self, new_item, *args, **kwargs):
+        item_id = str(uuid4())
+        new_item["id"] = item_id
+        self._items_by_id[item_id] = new_item
+        super(SubsetsModel, self).add_child(new_item, *args, **kwargs)
 
     def set_assets(self, asset_ids):
         self._asset_ids = asset_ids
@@ -486,7 +499,7 @@ class SubsetsModel(TreeModel, BaseRepresentationModel):
     def refresh(self):
         self.stop_fetch_thread()
         self.clear()
-
+        self._items_by_id = {}
         self.reset_sync_server()
 
         if not self._asset_ids:
@@ -497,6 +510,7 @@ class SubsetsModel(TreeModel, BaseRepresentationModel):
 
     def on_doc_fetched(self):
         self.clear()
+        self._items_by_id = {}
         self.beginResetModel()
 
         asset_docs_by_id = self._doc_payload.get(
@@ -524,9 +538,13 @@ class SubsetsModel(TreeModel, BaseRepresentationModel):
             return
 
         self._fill_subset_items(
-            asset_docs_by_id, subset_docs_by_id, last_versions_by_subset_id,
+            asset_docs_by_id,
+            subset_docs_by_id,
+            last_versions_by_subset_id,
             repre_info_by_version_id
         )
+        self.endResetModel()
+        self.refreshed.emit(True)
 
     def create_multiasset_group(
         self, subset_name, asset_ids, subset_counter, parent_item=None
@@ -538,7 +556,6 @@ class SubsetsModel(TreeModel, BaseRepresentationModel):
         merge_group.update({
             "subset": "{} ({})".format(subset_name, len(asset_ids)),
             "isMerged": True,
-            "childRow": 0,
             "subsetColor": subset_color,
             "assetIds": list(asset_ids),
             "icon": qtawesome.icon(
@@ -547,7 +564,6 @@ class SubsetsModel(TreeModel, BaseRepresentationModel):
             )
         })
 
-        subset_counter += 1
         self.add_child(merge_group, parent_item)
 
         return merge_group
@@ -567,8 +583,7 @@ class SubsetsModel(TreeModel, BaseRepresentationModel):
             group_item = Item()
             group_item.update({
                 "subset": group_name,
-                "isGroup": True,
-                "childRow": 0
+                "isGroup": True
             })
             group_item.update(group_data)
 
@@ -666,14 +681,14 @@ class SubsetsModel(TreeModel, BaseRepresentationModel):
                 index = self.index(item.row(), 0, parent_index)
                 self.set_version(index, last_version)
 
-        self.endResetModel()
-        self.refreshed.emit(True)
-
     def data(self, index, role):
         if not index.isValid():
             return
 
         item = index.internalPointer()
+        if role == ITEM_ID_ROLE:
+            return item["id"]
+
         if role == self.SortDescendingRole:
             if item.get("isGroup"):
                 # Ensure groups be on top when sorting by descending order
@@ -1053,6 +1068,7 @@ class RepresentationModel(TreeModel, BaseRepresentationModel):
         self._icons = lib.get_repre_icons()
         self._icons["repre"] = qtawesome.icon("fa.file-o",
                                               color=style.colors.default)
+        self._items_by_id = {}
 
     def set_version_ids(self, version_ids):
         self.version_ids = version_ids
@@ -1060,6 +1076,9 @@ class RepresentationModel(TreeModel, BaseRepresentationModel):
 
     def data(self, index, role):
         item = index.internalPointer()
+
+        if role == ITEM_ID_ROLE:
+            return item["id"]
 
         if role == self.IdRole:
             return item.get("_id")
@@ -1134,12 +1153,14 @@ class RepresentationModel(TreeModel, BaseRepresentationModel):
             if len(self.version_ids) > 1:
                 group = repre_groups.get(doc["name"])
                 if not group:
+
                     group_item = Item()
+                    item_id = str(uuid4())
                     group_item.update({
+                        "id": item_id,
                         "_id": doc["_id"],
                         "name": doc["name"],
                         "isMerged": True,
-                        "childRow": 0,
                         "active_site_name": self.active_site,
                         "remote_site_name": self.remote_site,
                         "icon": qtawesome.icon(
@@ -1147,6 +1168,7 @@ class RepresentationModel(TreeModel, BaseRepresentationModel):
                             color=style.colors.default
                         )
                     })
+                    self._items_by_id[item_id] = group_item
                     self.add_child(group_item, None)
                     repre_groups[doc["name"]] = group_item
                     repre_groups_items[doc["name"]] = 0
@@ -1159,7 +1181,9 @@ class RepresentationModel(TreeModel, BaseRepresentationModel):
             active_site_icon = self._icons.get(self.active_provider)
             remote_site_icon = self._icons.get(self.remote_provider)
 
+            item_id = str(uuid4())
             data = {
+                "id": item_id,
                 "_id": doc["_id"],
                 "name": doc["name"],
                 "subset": doc["context"]["subset"],
@@ -1178,6 +1202,7 @@ class RepresentationModel(TreeModel, BaseRepresentationModel):
 
             item = Item()
             item.update(data)
+            self._items_by_id[item_id] = item
 
             current_progress = {
                 'active_site_progress': progress[self.active_site],
@@ -1200,6 +1225,9 @@ class RepresentationModel(TreeModel, BaseRepresentationModel):
 
         self.endResetModel()
         self.refreshed.emit(False)
+
+    def get_item_by_id(self, item_id):
+        return self._items_by_id.get(item_id)
 
     def refresh(self):
         docs = []

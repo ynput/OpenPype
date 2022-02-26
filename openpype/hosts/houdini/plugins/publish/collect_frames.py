@@ -1,8 +1,18 @@
 import os
 import re
 
+import hou
 import pyblish.api
 from openpype.hosts.houdini.api import lib
+
+
+def splitext(name, allowed_multidot_extensions):
+
+    for ext in allowed_multidot_extensions:
+        if name.endswith(ext):
+            return name[:-len(ext)], ext
+
+    return os.path.splitext(name)
 
 
 class CollectFrames(pyblish.api.InstancePlugin):
@@ -10,16 +20,26 @@ class CollectFrames(pyblish.api.InstancePlugin):
 
     order = pyblish.api.CollectorOrder
     label = "Collect Frames"
-    families = ["vdbcache", "imagesequence"]
+    families = ["vdbcache", "imagesequence", "ass"]
 
     def process(self, instance):
 
         ropnode = instance[0]
 
-        output_parm = lib.get_output_parameter(ropnode)
-        output = output_parm.eval()
+        start_frame = instance.data.get("frameStart", None)
+        end_frame = instance.data.get("frameEnd", None)
 
-        _, ext = os.path.splitext(output)
+        output_parm = lib.get_output_parameter(ropnode)
+        if start_frame is not None:
+            # When rendering only a single frame still explicitly
+            # get the name for that particular frame instead of current frame
+            output = output_parm.evalAtFrame(start_frame)
+        else:
+            self.log.warning("Using current frame: {}".format(hou.frame()))
+            output = output_parm.eval()
+
+        _, ext = splitext(output,
+                          allowed_multidot_extensions=[".ass.gz"])
         file_name = os.path.basename(output)
         result = file_name
 
@@ -30,14 +50,11 @@ class CollectFrames(pyblish.api.InstancePlugin):
         pattern = r"\w+\.(\d+)" + re.escape(ext)
         match = re.match(pattern, file_name)
 
-        start_frame = instance.data.get("frameStart", None)
-        end_frame = instance.data.get("frameEnd", None)
-
         if match and start_frame is not None:
 
             # Check if frames are bigger than 1 (file collection)
             # override the result
-            if end_frame - start_frame > 1:
+            if end_frame - start_frame > 0:
                 result = self.create_file_list(
                     match, int(start_frame), int(end_frame)
                 )

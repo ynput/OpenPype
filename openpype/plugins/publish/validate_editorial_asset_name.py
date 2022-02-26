@@ -32,7 +32,7 @@ class ValidateEditorialAssetName(pyblish.api.ContextPlugin):
         self.log.debug("__ db_assets: {}".format(db_assets))
 
         asset_db_docs = {
-            str(e["name"]): e["data"]["parents"]
+            str(e["name"]): [str(p) for p in e["data"]["parents"]]
             for e in db_assets}
 
         self.log.debug("__ project_entities: {}".format(
@@ -43,17 +43,15 @@ class ValidateEditorialAssetName(pyblish.api.ContextPlugin):
         for asset in asset_and_parents.keys():
             if asset not in asset_db_docs.keys():
                 # add to some nonexistent list for next layer of check
-                assets_missing_name.update({asset: asset_and_parents[asset]})
+                assets_missing_name[asset] = asset_and_parents[asset]
                 continue
 
             if asset_and_parents[asset] != asset_db_docs[asset]:
                 # add to some nonexistent list for next layer of check
-                assets_wrong_parent.update({
-                    asset: {
-                        "required": asset_and_parents[asset],
-                        "already_in_db": asset_db_docs[asset]
-                    }
-                })
+                assets_wrong_parent[asset] = {
+                    "required": asset_and_parents[asset],
+                    "already_in_db": asset_db_docs[asset]
+                }
                 continue
 
             self.log.info("correct asset: {}".format(asset))
@@ -62,17 +60,24 @@ class ValidateEditorialAssetName(pyblish.api.ContextPlugin):
             wrong_names = {}
             self.log.debug(
                 ">> assets_missing_name: {}".format(assets_missing_name))
-            for asset in assets_missing_name.keys():
+
+            # This will create set asset names
+            asset_names = {
+                a.lower().replace("_", "") for a in asset_db_docs
+            }
+
+            for asset in assets_missing_name:
                 _asset = asset.lower().replace("_", "")
-                if _asset in [a.lower().replace("_", "")
-                              for a in asset_db_docs.keys()]:
-                    wrong_names.update({
-                        "required_name": asset,
-                        "used_variants_in_db": [
-                            a for a in asset_db_docs.keys()
-                            if a.lower().replace("_", "") == _asset
-                        ]
-                    })
+                if _asset in asset_names:
+                    wrong_names[asset].update(
+                        {
+                            "required_name": asset,
+                            "used_variants_in_db": [
+                                a for a in asset_db_docs
+                                if a.lower().replace("_", "") == _asset
+                            ]
+                        }
+                    )
 
             if wrong_names:
                 self.log.debug(
@@ -114,8 +119,8 @@ class ValidateEditorialAssetName(pyblish.api.ContextPlugin):
 
             parents = instance.data["parents"]
 
-            return_dict.update({
-                asset: [p["entity_name"] for p in parents
-                        if p["entity_type"].lower() != "project"]
-            })
+            return_dict[asset] = [
+                str(p["entity_name"]) for p in parents
+                if p["entity_type"].lower() != "project"
+            ]
         return return_dict

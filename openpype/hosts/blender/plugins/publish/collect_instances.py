@@ -1,11 +1,13 @@
+import json
 from typing import Generator
 
 import bpy
-import json
 
 import pyblish.api
-from avalon.blender.pipeline import AVALON_PROPERTY
-from avalon.blender.pipeline import AVALON_INSTANCES
+from openpype.hosts.blender.api.pipeline import (
+    AVALON_INSTANCES,
+    AVALON_PROPERTY,
+)
 
 
 class CollectInstances(pyblish.api.ContextPlugin):

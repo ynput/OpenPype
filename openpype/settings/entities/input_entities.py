@@ -441,6 +441,16 @@ class TextEntity(InputEntity):
         # GUI attributes
         self.multiline = self.schema_data.get("multiline", False)
         self.placeholder_text = self.schema_data.get("placeholder")
+        self.value_hints = self.schema_data.get("value_hints") or []
+
+    def schema_validations(self):
+        if self.multiline and self.value_hints:
+            reason = (
+                "TextEntity entity can't use value hints"
+                " for multiline input (yet)."
+            )
+            raise EntitySchemaError(self, reason)
+        super(TextEntity, self).schema_validations()
 
     def _convert_to_valid_type(self, value):
         # Allow numbers converted to string
@@ -458,6 +468,17 @@ class PathInput(InputEntity):
 
         # GUI attributes
         self.placeholder_text = self.schema_data.get("placeholder")
+
+    def set(self, value):
+        # Strip value
+        super(PathInput, self).set(value.strip())
+
+    def set_override_state(self, state, ignore_missing_defaults):
+        super(PathInput, self).set_override_state(
+            state, ignore_missing_defaults
+        )
+        # Strip current value
+        self._current_value = self._current_value.strip()
 
 
 class RawJsonEntity(InputEntity):

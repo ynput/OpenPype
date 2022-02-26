@@ -4,7 +4,12 @@ import tempfile
 import contextlib
 import socket
 from openpype.lib import (
-    PreLaunchHook, get_openpype_username)
+    PreLaunchHook,
+    get_openpype_username
+)
+from openpype.lib.applications import (
+    ApplicationLaunchFailed
+)
 from openpype.hosts import flame as opflame
 import openpype
 from pprint import pformat
@@ -13,26 +18,44 @@ from pprint import pformat
 class FlamePrelaunch(PreLaunchHook):
     """ Flame prelaunch hook
 
-    Will make sure flame_script_dirs are coppied to user's folder defined
+    Will make sure flame_script_dirs are copied to user's folder defined
     in environment var FLAME_SCRIPT_DIR.
     """
     app_groups = ["flame"]
-
-    # todo: replace version number with avalon launch app version
-    flame_python_exe = "/opt/Autodesk/python/2021/bin/python2.7"
 
     wtc_script_path = os.path.join(
         opflame.HOST_DIR, "api", "scripts", "wiretap_com.py")
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
-
         self.signature = "( {} )".format(self.__class__.__name__)
 
     def execute(self):
+        _env = self.launch_context.env
+        self.flame_python_exe = _env["OPENPYPE_FLAME_PYTHON_EXEC"]
+        self.flame_pythonpath = _env["OPENPYPE_FLAME_PYTHONPATH"]
+
         """Hook entry method."""
         project_doc = self.data["project_doc"]
+        project_name = project_doc["name"]
+
+        # get image io
+        project_anatomy = self.data["anatomy"]
+
+        # make sure anatomy settings are having flame key
+        if not project_anatomy["imageio"].get("flame"):
+            raise ApplicationLaunchFailed((
+                "Anatomy project settings are missing `flame` key. "
+                "Please make sure you remove project overides on "
+                "Anatomy Image io")
+            )
+
+        imageio_flame = project_anatomy["imageio"]["flame"]
+
+        # get user name and host name
         user_name = get_openpype_username()
+        user_name = user_name.replace(".", "_")
+
         hostname = socket.gethostname()  # not returning wiretap host name
 
         self.log.debug("Collected user \"{}\"".format(user_name))
@@ -40,7 +63,7 @@ class FlamePrelaunch(PreLaunchHook):
         _db_p_data = project_doc["data"]
         width = _db_p_data["resolutionWidth"]
         height = _db_p_data["resolutionHeight"]
-        fps = int(_db_p_data["fps"])
+        fps = float(_db_p_data["fps"])
 
         project_data = {
             "Name": project_doc["name"],
@@ -51,30 +74,41 @@ class FlamePrelaunch(PreLaunchHook):
             "FrameHeight": int(height),
             "AspectRatio": float((width / height) * _db_p_data["pixelAspect"]),
             "FrameRate": "{} fps".format(fps),
-            "FrameDepth": "16-bit fp",
-            "FieldDominance": "PROGRESSIVE"
+            "FrameDepth": str(imageio_flame["project"]["frameDepth"]),
+            "FieldDominance": str(imageio_flame["project"]["fieldDominance"])
         }
-
 
         data_to_script = {
             # from settings
-            "host_name": os.getenv("FLAME_WIRETAP_HOSTNAME") or hostname,
-            "volume_name": os.getenv("FLAME_WIRETAP_VOLUME"),
-            "group_name": os.getenv("FLAME_WIRETAP_GROUP"),
-            "color_policy": "ACES 1.1",
+            "host_name": _env.get("FLAME_WIRETAP_HOSTNAME") or hostname,
+            "volume_name": _env.get("FLAME_WIRETAP_VOLUME"),
+            "group_name": _env.get("FLAME_WIRETAP_GROUP"),
+            "color_policy": str(imageio_flame["project"]["colourPolicy"]),
 
             # from project
-            "project_name": project_doc["name"],
+            "project_name": project_name,
             "user_name": user_name,
             "project_data": project_data
         }
+
+        self.log.info(pformat(dict(_env)))
+        self.log.info(pformat(data_to_script))
+
+        # add to python path from settings
+        self._add_pythonpath()
+
         app_arguments = self._get_launch_arguments(data_to_script)
 
-        self.log.info(pformat(dict(self.launch_context.env)))
-
-        opflame.setup(self.launch_context.env)
-
         self.launch_context.launch_args.extend(app_arguments)
+
+    def _add_pythonpath(self):
+        pythonpath = self.launch_context.env.get("PYTHONPATH")
+
+        # separate it explicity by `;` that is what we use in settings
+        new_pythonpath = self.flame_pythonpath.split(os.pathsep)
+        new_pythonpath += pythonpath.split(os.pathsep)
+
+        self.launch_context.env["PYTHONPATH"] = os.pathsep.join(new_pythonpath)
 
     def _get_launch_arguments(self, script_data):
         # Dump data to string
@@ -83,7 +117,9 @@ class FlamePrelaunch(PreLaunchHook):
         with make_temp_file(dumped_script_data) as tmp_json_path:
             # Prepare subprocess arguments
             args = [
-                self.flame_python_exe,
+                self.flame_python_exe.format(
+                    **self.launch_context.env
+                ),
                 self.wtc_script_path,
                 tmp_json_path
             ]
@@ -91,7 +127,7 @@ class FlamePrelaunch(PreLaunchHook):
 
             process_kwargs = {
                 "logger": self.log,
-                "env": {}
+                "env": self.launch_context.env
             }
 
             openpype.api.run_subprocess(args, **process_kwargs)

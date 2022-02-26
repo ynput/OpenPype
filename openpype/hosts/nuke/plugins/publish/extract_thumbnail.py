@@ -1,9 +1,9 @@
 import sys
 import os
 import nuke
-from avalon.nuke import lib as anlib
 import pyblish.api
 import openpype
+from openpype.hosts.nuke.api.lib import maintained_selection
 
 
 if sys.version_info[0] >= 3:
@@ -30,7 +30,7 @@ class ExtractThumbnail(openpype.api.Extractor):
         if "render.farm" in instance.data["families"]:
             return
 
-        with anlib.maintained_selection():
+        with maintained_selection():
             self.log.debug("instance: {}".format(instance))
             self.log.debug("instance.data[families]: {}".format(
                 instance.data["families"]))

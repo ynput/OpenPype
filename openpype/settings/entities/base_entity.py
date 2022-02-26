@@ -9,7 +9,7 @@ from .lib import (
 )
 
 from .exceptions import (
-    BaseInvalidValueType,
+    BaseInvalidValue,
     InvalidValueType,
     SchemeGroupHierarchyBug,
     EntitySchemaError
@@ -437,7 +437,7 @@ class BaseItemEntity(BaseEntity):
 
         try:
             new_value = self.convert_to_valid_type(value)
-        except BaseInvalidValueType:
+        except BaseInvalidValue:
             new_value = NOT_SET
 
         if new_value is not NOT_SET:
@@ -752,7 +752,7 @@ class BaseItemEntity(BaseEntity):
 
     @abstractmethod
     def _add_to_project_override(self, on_change_trigger):
-        """Item's implementation to set values as overriden for project.
+        """Item's implementation to set values as overridden for project.
 
         Mark item and all it's children to be stored as project overrides.
         """
@@ -794,7 +794,7 @@ class BaseItemEntity(BaseEntity):
         """Item's implementation to remove project overrides.
 
         Mark item as does not have project overrides. Must not change
-        `was_overriden` attribute value.
+        `was_overridden` attribute value.
 
         Args:
             on_change_trigger (list): Callbacks of `on_change` should be stored

@@ -13,7 +13,7 @@ import pyblish
 import openpype
 import openpype.api
 from openpype.lib import (
-    get_pype_execute_args,
+    run_openpype_process,
 
     get_transcode_temp_directory,
     convert_for_ffmpeg,
@@ -48,7 +48,8 @@ class ExtractBurnin(openpype.api.Extractor):
         "tvpaint",
         "webpublisher",
         "aftereffects",
-        "photoshop"
+        "photoshop",
+        "flame"
         # "resolve"
     ]
     optional = True
@@ -168,9 +169,8 @@ class ExtractBurnin(openpype.api.Extractor):
         anatomy = instance.context.data["anatomy"]
         scriptpath = self.burnin_script_path()
 
-        # Executable args that will execute the script
-        # [pype executable, *pype script, "run"]
-        executable_args = get_pype_execute_args("run", scriptpath)
+        # Args that will execute the script
+        executable_args = ["run", scriptpath]
         burnins_per_repres = self._get_burnins_per_representations(
             instance, burnin_defs
         )
@@ -313,7 +313,7 @@ class ExtractBurnin(openpype.api.Extractor):
                 if platform.system().lower() == "windows":
                     process_kwargs["creationflags"] = CREATE_NO_WINDOW
 
-                openpype.api.run_subprocess(args, **process_kwargs)
+                run_openpype_process(*args, **process_kwargs)
                 # Remove the temporary json
                 os.remove(temporary_json_filepath)
 
@@ -477,6 +477,12 @@ class ExtractBurnin(openpype.api.Extractor):
             "frame_start_handle": frame_start_handle,
             "frame_end_handle": frame_end_handle
         }
+
+        # use explicit username for webpublishes as rewriting
+        # OPENPYPE_USERNAME might have side effects
+        webpublish_user_name = os.environ.get("WEBPUBLISH_OPENPYPE_USERNAME")
+        if webpublish_user_name:
+            burnin_data["username"] = webpublish_user_name
 
         self.log.debug(
             "Basic burnin_data: {}".format(json.dumps(burnin_data, indent=4))

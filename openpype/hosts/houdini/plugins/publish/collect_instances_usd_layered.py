@@ -1,6 +1,6 @@
 import hou
 import pyblish.api
-from avalon.houdini import lib
+from openpype.hosts.houdini.api import lib
 import openpype.hosts.houdini.api.usd as hou_usdlib
 import openpype.lib.usdlib as usdlib
 

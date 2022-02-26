@@ -8,15 +8,17 @@ log = Logger().get_logger(__name__)
 
 
 def main(env):
+    import avalon.api
+    from openpype.hosts.fusion import api
     from openpype.hosts.fusion.api import menu
-    import avalon.fusion
+
     # Registers pype's Global pyblish plugins
     openpype.install()
 
     # activate resolve from pype
-    avalon.api.install(avalon.fusion)
+    avalon.api.install(api)
 
-    log.info(f"Avalon registred hosts: {avalon.api.registered_host()}")
+    log.info(f"Avalon registered hosts: {avalon.api.registered_host()}")
 
     menu.launch_openpype_menu()
 

@@ -1,9 +1,8 @@
 import os
 from Qt import QtWidgets
 from copy import deepcopy
-
+from pprint import pformat
 from openpype.tools.utils.host_tools import HostToolsHelper
-
 
 menu_group_name = 'OpenPype'
 
@@ -26,6 +25,17 @@ default_flame_export_presets = {
 }
 
 
+def callback_selection(selection, function):
+    import openpype.hosts.flame.api as opfapi
+    opfapi.CTX.selection = selection
+    print("Hook Selection: \n\t{}".format(
+        pformat({
+            index: (type(item), item.name)
+            for index, item in enumerate(opfapi.CTX.selection)})
+    ))
+    function()
+
+
 class _FlameMenuApp(object):
     def __init__(self, framework):
         self.name = self.__class__.__name__
@@ -34,7 +44,7 @@ class _FlameMenuApp(object):
         self.menu_group_name = menu_group_name
         self.dynamic_menu_data = {}
 
-        # flame module is only avaliable when a
+        # flame module is only available when a
         # flame project is loaded and initialized
         self.flame = None
         try:
@@ -97,39 +107,25 @@ class FlameMenuProjectConnect(_FlameMenuApp):
         if not self.flame:
             return []
 
-        flame_project_name = self.flame_project_name
-        self.log.info("______ {} ______".format(flame_project_name))
-
         menu = deepcopy(self.menu)
 
         menu['actions'].append({
-            "name": "Workfiles ...",
+            "name": "Workfiles...",
             "execute": lambda x: self.tools_helper.show_workfiles()
         })
         menu['actions'].append({
-            "name": "Create ...",
-            "execute": lambda x: self.tools_helper.show_creator()
-        })
-        menu['actions'].append({
-            "name": "Publish ...",
-            "execute": lambda x: self.tools_helper.show_publish()
-        })
-        menu['actions'].append({
-            "name": "Load ...",
+            "name": "Load...",
             "execute": lambda x: self.tools_helper.show_loader()
         })
         menu['actions'].append({
-            "name": "Manage ...",
+            "name": "Manage...",
             "execute": lambda x: self.tools_helper.show_scene_inventory()
         })
         menu['actions'].append({
-            "name": "Library ...",
+            "name": "Library...",
             "execute": lambda x: self.tools_helper.show_library_loader()
         })
         return menu
-
-    def get_projects(self, *args, **kwargs):
-        pass
 
     def refresh(self, *args, **kwargs):
         self.rescan()
@@ -165,32 +161,31 @@ class FlameMenuTimeline(_FlameMenuApp):
         if not self.flame:
             return []
 
-        flame_project_name = self.flame_project_name
-        self.log.info("______ {} ______".format(flame_project_name))
-
         menu = deepcopy(self.menu)
 
         menu['actions'].append({
-            "name": "Create ...",
-            "execute": lambda x: self.tools_helper.show_creator()
+            "name": "Create...",
+            "execute": lambda x: callback_selection(
+                x, self.tools_helper.show_creator)
         })
         menu['actions'].append({
-            "name": "Publish ...",
-            "execute": lambda x: self.tools_helper.show_publish()
+            "name": "Publish...",
+            "execute": lambda x: callback_selection(
+                x, self.tools_helper.show_publish)
         })
         menu['actions'].append({
-            "name": "Load ...",
+            "name": "Load...",
             "execute": lambda x: self.tools_helper.show_loader()
         })
         menu['actions'].append({
-            "name": "Manage ...",
+            "name": "Manage...",
             "execute": lambda x: self.tools_helper.show_scene_inventory()
         })
-
+        menu['actions'].append({
+            "name": "Library...",
+            "execute": lambda x: self.tools_helper.show_library_loader()
+        })
         return menu
-
-    def get_projects(self, *args, **kwargs):
-        pass
 
     def refresh(self, *args, **kwargs):
         self.rescan()

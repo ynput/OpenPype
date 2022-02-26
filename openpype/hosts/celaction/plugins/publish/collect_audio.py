@@ -32,7 +32,7 @@ class AppendCelactionAudio(pyblish.api.ContextPlugin):
         repr = next((r for r in reprs), None)
         if not repr:
             raise "Missing `audioMain` representation"
-        self.log.info(f"represetation is: {repr}")
+        self.log.info(f"representation is: {repr}")
 
         audio_file = repr.get('data', {}).get('path', "")
 
@@ -56,7 +56,7 @@ class AppendCelactionAudio(pyblish.api.ContextPlugin):
             representations (list): list for all representations
 
         Returns:
-            dict: subsets with version and representaions in keys
+            dict: subsets with version and representations in keys
         """
 
         # Query all subsets for asset

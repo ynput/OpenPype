@@ -11,6 +11,8 @@ import TabItem from '@theme/TabItem';
 
 Settings applicable to the full studio.
 
+![general_settings](assets/settings/settings_system_general.png)
+
 **`Studio Name`** - Full name of the studio (can be used as variable on some places)
 
 **`Studio Code`** - Studio acronym or a short code (can be used as variable on some places)
@@ -24,10 +26,27 @@ as a naive barier to prevent artists from accidental setting changes.
 **`Disk mapping`** - Platform dependent configuration for mapping of virtual disk(s) on an artist's OpenPype machines before OP starts up. 
 Uses `subst` command, if configured volume character in `Destination` field already exists, no re-mapping is done for that character(volume).
 
+### OpenPype deployment control
 **`Versions Repository`** - Location where automatic update mechanism searches for zip files with
-OpenPype update packages. To read more about preparing OpenPype for automatic updates go to [Admin Distribute docs](admin_distribute#2-openpype-codebase)
+OpenPype update packages. To read more about preparing OpenPype for automatic updates go to [Admin Distribute docs](admin_distribute.md#2-openpype-codebase)
 
-![general_settings](assets/settings/settings_system_general.png)
+**`Production version`** - Define what is current production version. When value is not set then latest version available in versions repository is resolved as production version.
+
+**`Staging version`** - Define what is current staging version. When value is not set then latest staging version available in versions repository is resolved as staging version.
+
+For more information about Production and Staging go to [Distribute](admin_distribute.md#staging-vs-production).
+
+**Production version** and **Staging version** fields will define which version will be used in studio. Filling explicit version will force new OpenPype processes to use it. That gives more control over studio deployment especially when some workstations don't have access to version repository (e.g. remote users). It can be also used to downgrade studio version when newer version have production breaking bug.
+
+When fields are not filled the latest version in versions repository is used as studio version. That makes updating easier as it is not needed to modify settings but workstations without access to versions repository can't find out which OpenPype version should be used.
+
+If version repository is not set or is not accessible for workstation the latest available version on workstation is used or version inside build.
+
+**`Version check interval`** - OpenPype tray application check if currently used OpenPype version is up to date with production/staging version. It is possible to modify how often the validation is triggered in minutes. It is possible to set the interval to `0`. That will turn off version validations but it is not recommend.
+
+A dialog asking for restart is shown when OpenPype tray application detect that different version should be used.
+![general_settings](assets/settings/settings_system_version_update.png)
+![general_settings](assets/settings/settings_system_version_downgrade.png)
 
 ## Modules
 
@@ -105,7 +124,7 @@ also called a `Host` and these two terms might be used interchangeably in the do
 Each Host is made of two levels. 
 1. **Application group** - This is the main name of the application and you can define extra environments
 that are applicable to all versions of the given application. For example any extra Maya scripts that are not
-version dependant, can be added to `Maya` environment here.
+version dependent, can be added to `Maya` environment here.
 2. **Application versions** - Here you can define executables (per platform) for each supported version of 
 the DCC and any default arguments (`--nukex` for instance). You can also further extend it's environment. 
 

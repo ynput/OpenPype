@@ -164,7 +164,7 @@ def prepare_template_data(fill_pairs):
     """
         Prepares formatted data for filling template.
 
-        It produces mutliple variants of keys (key, Key, KEY) to control
+        It produces multiple variants of keys (key, Key, KEY) to control
         format of filled template.
 
         Args:
@@ -288,7 +288,7 @@ def set_plugin_attributes_from_settings(
     if project_name is None:
         project_name = os.environ.get("AVALON_PROJECT")
 
-    # map plugin superclass to preset json. Currenly suppoted is load and
+    # map plugin superclass to preset json. Currently supported is load and
     # create (avalon.api.Loader and avalon.api.Creator)
     plugin_type = None
     if superclass.__name__.split(".")[-1] in ("Loader", "SubsetLoader"):

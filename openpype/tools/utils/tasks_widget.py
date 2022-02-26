@@ -9,6 +9,7 @@ from .views import DeselectableTreeView
 TASK_NAME_ROLE = QtCore.Qt.UserRole + 1
 TASK_TYPE_ROLE = QtCore.Qt.UserRole + 2
 TASK_ORDER_ROLE = QtCore.Qt.UserRole + 3
+TASK_ASSIGNEE_ROLE = QtCore.Qt.UserRole + 4
 
 
 class TasksModel(QtGui.QStandardItemModel):
@@ -144,11 +145,19 @@ class TasksModel(QtGui.QStandardItemModel):
             task_type_icon = task_type_info.get("icon")
             icon = self._get_icon(task_icon, task_type_icon)
 
+            task_assignees = set()
+            assignees_data = task_info.get("assignees") or []
+            for assignee in assignees_data:
+                username = assignee.get("username")
+                if username:
+                    task_assignees.add(username)
+
             label = "{} ({})".format(task_name, task_type or "type N/A")
             item = QtGui.QStandardItem(label)
             item.setData(task_name, TASK_NAME_ROLE)
             item.setData(task_type, TASK_TYPE_ROLE)
             item.setData(task_order, TASK_ORDER_ROLE)
+            item.setData(task_assignees, TASK_ASSIGNEE_ROLE)
             item.setData(icon, QtCore.Qt.DecorationRole)
             item.setFlags(QtCore.Qt.ItemIsEnabled | QtCore.Qt.ItemIsSelectable)
             items.append(item)
@@ -194,6 +203,8 @@ class TasksWidget(QtWidgets.QWidget):
     task_changed = QtCore.Signal()
 
     def __init__(self, dbcon, parent=None):
+        self._dbcon = dbcon
+
         super(TasksWidget, self).__init__(parent)
 
         tasks_view = DeselectableTreeView(self)
@@ -204,9 +215,8 @@ class TasksWidget(QtWidgets.QWidget):
         header_view = tasks_view.header()
         header_view.setSortIndicator(0, QtCore.Qt.AscendingOrder)
 
-        tasks_model = TasksModel(dbcon)
-        tasks_proxy = TasksProxyModel()
-        tasks_proxy.setSourceModel(tasks_model)
+        tasks_model = self._create_source_model()
+        tasks_proxy = self._create_proxy_model(tasks_model)
         tasks_view.setModel(tasks_proxy)
 
         layout = QtWidgets.QVBoxLayout(self)
@@ -221,6 +231,19 @@ class TasksWidget(QtWidgets.QWidget):
         self._tasks_view = tasks_view
 
         self._last_selected_task_name = None
+
+    def _create_source_model(self):
+        """Create source model of tasks widget.
+
+        Model must have available 'refresh' method and 'set_asset_id' to change
+        context of asset.
+        """
+        return TasksModel(self._dbcon)
+
+    def _create_proxy_model(self, source_model):
+        proxy = TasksProxyModel()
+        proxy.setSourceModel(source_model)
+        return proxy
 
     def refresh(self):
         self._tasks_model.refresh()
@@ -240,6 +263,10 @@ class TasksWidget(QtWidgets.QWidget):
 
         # Force a task changed emit.
         self.task_changed.emit()
+
+    def _clear_selection(self):
+        selection_model = self._tasks_view.selectionModel()
+        selection_model.clearSelection()
 
     def select_task_name(self, task_name):
         """Select a task by name.
@@ -270,6 +297,10 @@ class TasksWidget(QtWidgets.QWidget):
                 # Set the currently active index
                 self._tasks_view.setCurrentIndex(index)
                 break
+
+        last_selected_task_name = self.get_selected_task_name()
+        if last_selected_task_name:
+            self._last_selected_task_name = last_selected_task_name
 
     def get_selected_task_name(self):
         """Return name of task at current index (selected)

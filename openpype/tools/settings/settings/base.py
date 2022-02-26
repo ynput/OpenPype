@@ -32,6 +32,15 @@ class BaseWidget(QtWidgets.QWidget):
         self.label_widget = None
         self.create_ui()
 
+    @staticmethod
+    def set_style_property(obj, property_name, property_value):
+        """Change QWidget property and polish it's style."""
+        if obj.property(property_name) == property_value:
+            return
+
+        obj.setProperty(property_name, property_value)
+        obj.style().polish(obj)
+
     def scroll_to(self, widget):
         self.category_widget.scroll_to(widget)
 
@@ -84,7 +93,7 @@ class BaseWidget(QtWidgets.QWidget):
         if is_modified:
             return "modified"
         if has_project_override:
-            return "overriden"
+            return "overridden"
         if has_studio_override:
             return "studio"
         return ""
@@ -159,7 +168,7 @@ class BaseWidget(QtWidgets.QWidget):
             with self.category_widget.working_state_context():
                 self.entity.add_to_project_override
 
-        action = QtWidgets.QAction("Add to project project override")
+        action = QtWidgets.QAction("Add to project override")
         actions_mapping[action] = add_to_project_override
         menu.addAction(action)
 
@@ -280,7 +289,7 @@ class BaseWidget(QtWidgets.QWidget):
         action = QtWidgets.QAction("Paste", menu)
         output.append((action, paste_value))
 
-        # Paste value to matchin entity
+        # Paste value to matching entity
         def paste_value_to_path():
             with self.category_widget.working_state_context():
                 _set_entity_value(matching_entity, value)

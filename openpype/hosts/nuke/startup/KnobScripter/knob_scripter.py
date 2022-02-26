@@ -1,6 +1,6 @@
 # -------------------------------------------------
 # KnobScripter by Adrian Pueyo
-# Complete python sript editor for Nuke
+# Complete python script editor for Nuke
 # adrianpueyo.com, 2016-2019
 import string
 import traceback
@@ -2539,7 +2539,7 @@ class KnobScripterTextEdit(QtWidgets.QPlainTextEdit):
         if self.noSelection:
             self.cursor.setPosition(self.lastChar)
 
-        # check whether the the orignal selection was from top to bottom or vice versa
+        # check whether the the original selection was from top to bottom or vice versa
         else:
             if self.originalPosition == self.firstChar:
                 first = self.lastChar
@@ -3012,7 +3012,7 @@ class KnobScripterTextEditMain(KnobScripterTextEdit):
         return match_key, match_snippet
 
     def placeholderToEnd(self, text, placeholder):
-        '''Returns distance (int) from the first ocurrence of the placeholder, to the end of the string with placeholders removed'''
+        '''Returns distance (int) from the first occurrence of the placeholder, to the end of the string with placeholders removed'''
         search = re.search(placeholder, text)
         if not search:
             return -1
@@ -3671,7 +3671,7 @@ class KnobScripterPrefs(QtWidgets.QDialog):
 
 def updateContext():
     '''
-    Get the current selection of nodes with their appropiate context
+    Get the current selection of nodes with their appropriate context
     Doing this outside the KnobScripter -> forces context update inside groups when needed
     '''
     global knobScripterSelectedNodes

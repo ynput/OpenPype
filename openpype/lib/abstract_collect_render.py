@@ -49,7 +49,7 @@ class RenderInstance(object):
     handleStart = attr.ib(default=None)  # start frame
     handleEnd = attr.ib(default=None)  # start frame
 
-    # for softwares (like Harmony) where frame range cannot be set by DB
+    # for software (like Harmony) where frame range cannot be set by DB
     # handles need to be propagated if exist
     ignoreFrameHandleCheck = attr.ib(default=False)
 
@@ -57,7 +57,7 @@ class RenderInstance(object):
     # With default values
     # metadata
     renderer = attr.ib(default="")  # renderer - can be used in Deadline
-    review = attr.ib(default=False)  # genereate review from instance (bool)
+    review = attr.ib(default=False)  # generate review from instance (bool)
     priority = attr.ib(default=50)  # job priority on farm
 
     family = attr.ib(default="renderlayer")
@@ -76,6 +76,7 @@ class RenderInstance(object):
     deadlineSubmissionJob = attr.ib(default=None)
     anatomyData = attr.ib(default=None)
     outputDir = attr.ib(default=None)
+    context = attr.ib(default=None)
 
     @frameStart.validator
     def check_frame_start(self, _, value):

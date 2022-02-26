@@ -18,11 +18,11 @@ if (typeof $ === 'undefined'){
  * @classdesc Image Sequence loader JS code.
  */
 var ImageSequenceLoader = function() {
-    this.PNGTransparencyMode = 0; // Premultiplied wih Black
-    this.TGATransparencyMode = 0; // Premultiplied wih Black
-    this.SGITransparencyMode = 0; // Premultiplied wih Black
+    this.PNGTransparencyMode = 0; // Premultiplied with Black
+    this.TGATransparencyMode = 0; // Premultiplied with Black
+    this.SGITransparencyMode = 0; // Premultiplied with Black
     this.LayeredPSDTransparencyMode = 1; // Straight
-    this.FlatPSDTransparencyMode = 2; // Premultiplied wih White
+    this.FlatPSDTransparencyMode = 2; // Premultiplied with White
 };
 
 
@@ -84,7 +84,7 @@ ImageSequenceLoader.getUniqueColumnName = function(columnPrefix) {
  * @return {string}  Read node name
  *
  * @example
- * // Agrguments are in following order:
+ * // Arguments are in following order:
  * var args = [
  *    files, // Files in file sequences.
  *    asset, // Asset name.
@@ -97,11 +97,11 @@ ImageSequenceLoader.prototype.importFiles = function(args) {
     MessageLog.trace("ImageSequence:: " + typeof PypeHarmony);
     MessageLog.trace("ImageSequence $:: " + typeof $);
     MessageLog.trace("ImageSequence OH:: " + typeof PypeHarmony.OpenHarmony);
-    var PNGTransparencyMode = 0; // Premultiplied wih Black
-    var TGATransparencyMode = 0; // Premultiplied wih Black
-    var SGITransparencyMode = 0; // Premultiplied wih Black
+    var PNGTransparencyMode = 0; // Premultiplied with Black
+    var TGATransparencyMode = 0; // Premultiplied with Black
+    var SGITransparencyMode = 0; // Premultiplied with Black
     var LayeredPSDTransparencyMode = 1; // Straight
-    var FlatPSDTransparencyMode = 2; // Premultiplied wih White
+    var FlatPSDTransparencyMode = 2; // Premultiplied with White
 
     var doc = $.scn;
     var files = args[0];
@@ -224,7 +224,7 @@ ImageSequenceLoader.prototype.importFiles = function(args) {
  * @return {string}  Read node name
  *
  * @example
- * // Agrguments are in following order:
+ * // Arguments are in following order:
  * var args = [
  *    files, // Files in file sequences
  *    name, // Node name

@@ -49,7 +49,7 @@ import maya.app.renderSetup.model.renderSetup as renderSetup
 
 import pyblish.api
 
-from avalon import maya, api
+from avalon import api
 from openpype.hosts.maya.api.lib_renderproducts import get as get_layer_render_products  # noqa: E501
 from openpype.hosts.maya.api import lib
 
@@ -126,7 +126,7 @@ class CollectMayaRender(pyblish.api.ContextPlugin):
                         r"^.+:(.*)", layer).group(1)
             except IndexError:
                 msg = "Invalid layer name in set [ {} ]".format(layer)
-                self.log.warnig(msg)
+                self.log.warning(msg)
                 continue
 
             self.log.info("processing %s" % layer)
@@ -234,13 +234,14 @@ class CollectMayaRender(pyblish.api.ContextPlugin):
             publish_meta_path = None
             for aov in exp_files:
                 full_paths = []
-                for file in aov[aov.keys()[0]]:
+                aov_first_key = list(aov.keys())[0]
+                for file in aov[aov_first_key]:
                     full_path = os.path.join(workspace, default_render_file,
                                              file)
                     full_path = full_path.replace("\\", "/")
                     full_paths.append(full_path)
                     publish_meta_path = os.path.dirname(full_path)
-                aov_dict[aov.keys()[0]] = full_paths
+                aov_dict[aov_first_key] = full_paths
 
             frame_start_render = int(self.get_render_attribute(
                 "startFrame", layer=layer_name))
@@ -409,7 +410,7 @@ class CollectMayaRender(pyblish.api.ContextPlugin):
             dict: only overrides with values
 
         """
-        attributes = maya.read(render_globals)
+        attributes = lib.read(render_globals)
 
         options = {"renderGlobals": {}}
         options["renderGlobals"]["Priority"] = attributes["priority"]

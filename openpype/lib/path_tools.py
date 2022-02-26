@@ -1,13 +1,15 @@
-import json
-import logging
 import os
 import re
 import abc
+import json
+import logging
 import six
 
+from openpype.settings import get_project_settings
+from openpype.settings.lib import get_site_local_overrides
 
 from .anatomy import Anatomy
-from openpype.settings import get_project_settings
+from .profiles_filtering import filter_profiles
 
 log = logging.getLogger(__name__)
 
@@ -49,12 +51,6 @@ def version_up(filepath):
                                                      padding=padding)
         new_label = label.replace(version, new_version, 1)
         new_basename = _rreplace(basename, label, new_label)
-
-    if not new_basename.endswith(new_label):
-        index = (new_basename.find(new_label))
-        index += len(new_label)
-        new_basename = new_basename[:index]
-
     new_filename = "{}{}".format(new_basename, ext)
     new_filename = os.path.join(dirname, new_filename)
     new_filename = os.path.normpath(new_filename)
@@ -63,8 +59,19 @@ def version_up(filepath):
         raise RuntimeError("Created path is the same as current file,"
                            "this is a bug")
 
+    # We check for version clashes against the current file for any file
+    # that matches completely in name up to the {version} label found. Thus
+    # if source file was test_v001_test.txt we want to also check clashes
+    # against test_v002.txt but do want to preserve the part after the version
+    # label for our new filename
+    clash_basename = new_basename
+    if not clash_basename.endswith(new_label):
+        index = (clash_basename.find(new_label))
+        index += len(new_label)
+        clash_basename = clash_basename[:index]
+
     for file in os.listdir(dirname):
-        if file.endswith(ext) and file.startswith(new_basename):
+        if file.endswith(ext) and file.startswith(clash_basename):
             log.info("Skipping existing version %s" % new_label)
             return version_up(new_filename)
 
@@ -114,10 +121,10 @@ def get_last_version_from_path(path_dir, filter):
     filtred_files = list()
 
     # form regex for filtering
-    patern = r".*".join(filter)
+    pattern = r".*".join(filter)
 
     for file in os.listdir(path_dir):
-        if not re.findall(patern, file):
+        if not re.findall(pattern, file):
             continue
         filtred_files.append(file)
 
@@ -198,6 +205,58 @@ def get_project_basic_paths(project_name):
     if isinstance(folder_structure, str):
         folder_structure = json.loads(folder_structure)
     return _list_path_items(folder_structure)
+
+
+def create_workdir_extra_folders(
+    workdir, host_name, task_type, task_name, project_name,
+    project_settings=None
+):
+    """Create extra folders in work directory based on context.
+
+    Args:
+        workdir (str): Path to workdir where workfiles is stored.
+        host_name (str): Name of host implementation.
+        task_type (str): Type of task for which extra folders should be
+            created.
+        task_name (str): Name of task for which extra folders should be
+            created.
+        project_name (str): Name of project on which task is.
+        project_settings (dict): Prepared project settings. Are loaded if not
+            passed.
+    """
+    # Load project settings if not set
+    if not project_settings:
+        project_settings = get_project_settings(project_name)
+
+    # Load extra folders profiles
+    extra_folders_profiles = (
+        project_settings["global"]["tools"]["Workfiles"]["extra_folders"]
+    )
+    # Skip if are empty
+    if not extra_folders_profiles:
+        return
+
+    # Prepare profiles filters
+    filter_data = {
+        "task_types": task_type,
+        "task_names": task_name,
+        "hosts": host_name
+    }
+    profile = filter_profiles(extra_folders_profiles, filter_data)
+    if profile is None:
+        return
+
+    for subfolder in profile["folders"]:
+        # Make sure backslashes are converted to forwards slashes
+        #   and does not start with slash
+        subfolder = subfolder.replace("\\", "/").lstrip("/")
+        # Skip empty strings
+        if not subfolder:
+            continue
+
+        fullpath = os.path.join(workdir, subfolder)
+        if not os.path.exists(fullpath):
+            os.makedirs(fullpath)
 
 
 @six.add_metaclass(abc.ABCMeta)

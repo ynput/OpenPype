@@ -35,18 +35,6 @@ def install():
     """
     from .. import get_resolve_module
 
-    # Disable all families except for the ones we explicitly want to see
-    family_states = [
-        "imagesequence",
-        "render2d",
-        "plate",
-        "render",
-        "mov",
-        "clip"
-    ]
-    avalon.data["familiesStateDefault"] = False
-    avalon.data["familiesStateToggled"] = family_states
-
     log.info("openpype.hosts.resolve installed")
 
     pyblish.register_host("resolve")
@@ -64,7 +52,7 @@ def install():
 
 
 def uninstall():
-    """Uninstall all tha was installed
+    """Uninstall all that was installed
 
     This is where you undo everything that was done in `install()`.
     That means, removing menus, deregistering families and  data

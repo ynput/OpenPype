@@ -1,14 +1,15 @@
 import os
 import re
-import attr
 import tempfile
+import attr
 
-from avalon import aftereffects
 import pyblish.api
 
 from openpype.settings import get_project_settings
 from openpype.lib import abstract_collect_render
 from openpype.lib.abstract_collect_render import RenderInstance
+
+from openpype.hosts.aftereffects.api import get_stub
 
 
 @attr.s
@@ -19,6 +20,7 @@ class AERenderInstance(RenderInstance):
     fps = attr.ib(default=None)
     projectEntity = attr.ib(default=None)
     stagingDir = attr.ib(default=None)
+    app_version = attr.ib(default=None)
 
 
 class CollectAERender(abstract_collect_render.AbstractCollectRender):
@@ -35,10 +37,13 @@ class CollectAERender(abstract_collect_render.AbstractCollectRender):
     padding_width = 6
     rendered_extension = 'png'
 
-    stub = aftereffects.stub()
+    stub = get_stub()
 
     def get_instances(self, context):
         instances = []
+
+        app_version = self.stub.get_app_version()
+        app_version = app_version[0:4]
 
         current_file = context.data["currentFile"]
         version = context.data["version"]
@@ -104,7 +109,8 @@ class CollectAERender(abstract_collect_render.AbstractCollectRender):
                     frameEnd=frameEnd,
                     frameStep=1,
                     toBeRenderedOn='deadline',
-                    fps=fps
+                    fps=fps,
+                    app_version=app_version
                 )
 
                 comp = compositions_by_id.get(int(item_id))
@@ -117,6 +123,7 @@ class CollectAERender(abstract_collect_render.AbstractCollectRender):
                 instance.anatomyData = context.data["anatomyData"]
 
                 instance.outputDir = self._get_output_dir(instance)
+                instance.context = context
 
                 settings = get_project_settings(os.getenv("AVALON_PROJECT"))
                 reviewable_subset_filter = \
@@ -141,7 +148,6 @@ class CollectAERender(abstract_collect_render.AbstractCollectRender):
                                 break
 
                 self.log.info("New instance:: {}".format(instance))
-
                 instances.append(instance)
 
         return instances
@@ -157,7 +163,7 @@ class CollectAERender(abstract_collect_render.AbstractCollectRender):
                 in url
 
         Returns:
-            (list) of absolut urls to rendered file
+            (list) of absolute urls to rendered file
         """
         start = render_instance.frameStart
         end = render_instance.frameEnd
