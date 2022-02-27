@@ -75,7 +75,7 @@ class ValidateSceneSettings(pyblish.api.InstancePlugin):
             "resolutionHeight": resolution_height,
             "frameStartHandle": frame_info.handle_frame_start,
             "frameEndHandle": frame_info.handle_frame_end,
-            "duration": frame_info.frame_range
+            "duration": frame_info.duration
         }
 
         self.log.info("config from DB::{}".format(expected_settings))

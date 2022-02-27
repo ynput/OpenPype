@@ -29,7 +29,7 @@ class ValidateFrameRange(pyblish.api.InstancePlugin):
         if not asset_doc:
             asset_doc = lib.get_asset(instance.data["asset"])
         frame_info = lib.get_frame_info(asset_doc)
-        duration = frame_info.frame_range
+        duration = frame_info.duration
 
         repre = instance.data.get("representations", [None])
         if not repre:

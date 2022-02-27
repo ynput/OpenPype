@@ -353,12 +353,12 @@ class UnifiedFrameInfo:
         return self.handle_frame_end
 
     @property
-    def frame_range_without_handles(self):
+    def duration_without_handles(self):
         """Frame range without handles."""
         return (self.frame_end - self.frame_start) + 1
 
     @property
-    def frame_range(self):
+    def duration(self):
         """Frame range with handles."""
         return (self.handle_frame_end - self.handle_frame_start) + 1
 
