@@ -3,6 +3,7 @@
 """
 
 from avalon import api
+from openpype.lib import get_frame_info
 from openpype.hosts.maya.api.lib import (
     maintained_selection,
     unique_namespace
@@ -29,18 +30,27 @@ class SetFrameRangeLoader(api.Loader):
         version = context['version']
         version_data = version.get("data", {})
 
-        start = version_data.get("frameStart", None)
-        end = version_data.get("frameEnd", None)
+        frame_start = version_data.get("frameStart", None)
+        frame_end = version_data.get("frameEnd", None)
 
-        if start is None or end is None:
-            print("Skipping setting frame range because start or "
-                  "end frame data is missing..")
+        if frame_start is None or frame_end is None:
+            print((
+                "Skipping setting frame range because start or"
+                " end frame data is missing.."
+            ))
             return
 
-        cmds.playbackOptions(minTime=start,
-                             maxTime=end,
-                             animationStartTime=start,
-                             animationEndTime=end)
+        handle_start = version_data.get("handleStart")
+        handle_end = version_data.get("handleStart")
+        frame_info = get_frame_info(
+            frame_start, frame_end, handle_start, handle_end
+        )
+        cmds.playbackOptions(
+            minTime=frame_info.frame_start,
+            maxTime=frame_info.frame_end,
+            animationStartTime=frame_info.frame_start,
+            animationEndTime=frame_info.frame_end
+        )
 
 
 class SetFrameRangeWithHandlesLoader(api.Loader):
@@ -63,22 +73,26 @@ class SetFrameRangeWithHandlesLoader(api.Loader):
         version = context['version']
         version_data = version.get("data", {})
 
-        start = version_data.get("frameStart", None)
-        end = version_data.get("frameEnd", None)
+        frame_start = version_data.get("frameStart", None)
+        frame_end = version_data.get("frameEnd", None)
 
-        if start is None or end is None:
+        if frame_start is None or frame_end is None:
             print("Skipping setting frame range because start or "
                   "end frame data is missing..")
             return
 
-        # Include handles
-        start -= version_data.get("handleStart", 0)
-        end += version_data.get("handleEnd", 0)
+        handle_start = version_data.get("handleStart")
+        handle_end = version_data.get("handleStart")
+        frame_info = get_frame_info(
+            frame_start, frame_end, handle_start, handle_end
+        )
 
-        cmds.playbackOptions(minTime=start,
-                             maxTime=end,
-                             animationStartTime=start,
-                             animationEndTime=end)
+        cmds.playbackOptions(
+            minTime=frame_info.handle_frame_start,
+            maxTime=frame_info.handle_frame_end,
+            animationStartTime=frame_info.handle_frame_start,
+            animationEndTime=frame_info.handle_frame_end
+        )
 
 
 class ImportMayaLoader(api.Loader):

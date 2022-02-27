@@ -2,6 +2,7 @@ import nuke
 from avalon.vendor import qargparse
 from avalon import api, io
 
+from openpype.lib import get_frame_info
 from openpype.hosts.nuke.api.lib import (
     get_imageio_input_colorspace,
     maintained_selection
@@ -88,14 +89,16 @@ class LoadClip(plugin.NukeLoader):
         self.log.debug(
             "Representation id `{}` ".format(repre_id))
 
-        self.handle_start = version_data.get("handleStart", 0)
-        self.handle_end = version_data.get("handleEnd", 0)
+        frame_start = version_data["frameStart"]
+        frame_end = version_data["frameEnd"]
+        handle_start = version_data.get("handleStart")
+        handle_end = version_data.get("handleEnd")
+        frame_info = get_frame_info(
+            frame_start, frame_end, handle_start, handle_end
+        )
 
-        first = version_data.get("frameStart", None)
-        last = version_data.get("frameEnd", None)
-        first -= self.handle_start
-        last += self.handle_end
-
+        first = frame_info.handle_frame_start
+        last = frame_info.handle_frame_end
         if not is_sequence:
             duration = last - first + 1
             first = 1
@@ -165,7 +168,9 @@ class LoadClip(plugin.NukeLoader):
                 data=data_imprint)
 
         if version_data.get("retime", None):
-            self._make_retimes(read_node, version_data)
+            self._make_retimes(
+                read_node, version_data, frame_info.handle_start
+            )
 
         self.set_as_member(read_node)
 
@@ -203,13 +208,18 @@ class LoadClip(plugin.NukeLoader):
         colorspace = representation["data"].get("colorspace")
         colorspace = colorspace or version_data.get("colorspace")
 
-        self.handle_start = version_data.get("handleStart", 0)
-        self.handle_end = version_data.get("handleEnd", 0)
+        frame_start = version_data["frameStart"]
+        frame_end = version_data["frameEnd"]
+        handle_start = version_data.get("handleStart")
+        handle_end = version_data.get("handleEnd")
+        frame_info = get_frame_info(
+            frame_start, frame_end, handle_start, handle_end
+        )
+        handle_start = frame_info.handle_start
+        handle_end = frame_info.handle_end
 
-        first = version_data.get("frameStart", None)
-        last = version_data.get("frameEnd", None)
-        first -= self.handle_start
-        last += self.handle_end
+        first = frame_info.handle_frame_start
+        last = frame_info.handle_frame_end
 
         if not is_sequence:
             duration = last - first + 1
@@ -248,8 +258,8 @@ class LoadClip(plugin.NukeLoader):
                 "version": str(version.get("name")),
                 "db_colorspace": colorspace,
                 "source": version_data.get("source"),
-                "handleStart": str(self.handle_start),
-                "handleEnd": str(self.handle_end),
+                "handleStart": str(handle_start),
+                "handleEnd": str(handle_end),
                 "fps": str(version_data.get("fps")),
                 "author": version_data.get("author")
             }
@@ -280,7 +290,7 @@ class LoadClip(plugin.NukeLoader):
             self.log.info("updated to version: {}".format(version.get("name")))
 
         if version_data.get("retime", None):
-            self._make_retimes(read_node, version_data)
+            self._make_retimes(read_node, version_data, handle_start)
         else:
             self.clear_members(read_node)
 
@@ -305,7 +315,7 @@ class LoadClip(plugin.NukeLoader):
         # set start frame depending on workfile or version
         self._loader_shift(read_node, start_at_workfile)
 
-    def _make_retimes(self, parent_node, version_data):
+    def _make_retimes(self, parent_node, version_data, handle_start):
         ''' Create all retime and timewarping nodes with copied animation '''
         speed = version_data.get('speed', 1)
         time_warp_nodes = version_data.get('timewarps', [])
@@ -333,7 +343,7 @@ class LoadClip(plugin.NukeLoader):
                 last_node = rtn
 
             if time_warp_nodes != []:
-                start_anim = self.script_start + (self.handle_start / speed)
+                start_anim = self.script_start + (handle_start / speed)
                 for timewarp in time_warp_nodes:
                     twn = nuke.createNode(
                         timewarp["Class"],
