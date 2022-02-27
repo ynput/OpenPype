@@ -50,8 +50,8 @@ class HoudiniSubmitRenderDeadline(pyblish.api.InstancePlugin):
 
         # StartFrame to EndFrame by byFrameStep
         frames = "{start}-{end}x{step}".format(
-            start=int(instance.data["startFrame"]),
-            end=int(instance.data["endFrame"]),
+            start=int(instance.data["frameStart"]),
+            end=int(instance.data["frameEnd"]),
             step=int(instance.data["byFrameStep"]),
         )
 

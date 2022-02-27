@@ -377,10 +377,15 @@ def run(script):
               "--app_variant",
               help="Provide specific app variant for test, empty for latest",
               default=None)
-def runtests(folder, mark, pyargs, test_data_folder, persist, app_variant):
+@click.option("-t",
+              "--timeout",
+              help="Provide specific timeout value for test case",
+              default=None)
+def runtests(folder, mark, pyargs, test_data_folder, persist, app_variant,
+             timeout):
     """Run all automatic tests after proper initialization via start.py"""
     PypeCommands().run_tests(folder, mark, pyargs, test_data_folder,
-                             persist, app_variant)
+                             persist, app_variant, timeout)
 
 
 @main.command()

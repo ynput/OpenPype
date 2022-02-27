@@ -175,7 +175,7 @@ class ProcessLauncher(QtCore.QObject):
     def start(self):
         if self._started:
             return
-        self.log.info("Started launch logic of AfterEffects")
+        self.log.info("Started launch logic of Photoshop")
         self._started = True
         self._start_process_timer.start()
 
