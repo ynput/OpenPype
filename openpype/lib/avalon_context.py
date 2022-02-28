@@ -14,7 +14,6 @@ from openpype.settings import (
     get_system_settings
 )
 from .anatomy import Anatomy
-from .log import PypeLogger
 from .profiles_filtering import filter_profiles
 
 # avalon module is not imported at the top
