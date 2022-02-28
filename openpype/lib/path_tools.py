@@ -151,8 +151,8 @@ def concatenate_splitted_paths(split_paths, anatomy):
                     log.debug("Root {} path path {} not exist on \
                         computer!".format(root, root_path))
                     continue
-                clean_items = [f"{{root[{root}]}}", "{project[name]}"] \
-                    + clean_items[1:]
+                clean_items = ["{{root[{}]}}".format(root),
+                               r"{project[name]}"] + clean_items[1:]
                 output.append(os.path.normpath(os.path.sep.join(clean_items)))
             continue
 
