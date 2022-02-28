@@ -310,14 +310,6 @@ class UnifiedFrameInfo:
         self._handles_extend = True
         self.change_handles_extend(handles_extend)
 
-        self._log = None
-
-    @property
-    def log(self):
-        if self._log is None:
-            self._log = PypeLogger.get_logger(self.__class__.__name__)
-        return self._log
-
     def __str__(self):
         return "< {}: ({}) {}-{} ({}) >".format(
             self.__class__.__name__,
