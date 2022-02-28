@@ -9,11 +9,10 @@ import TabItem from '@theme/TabItem';
 
 OpenPype stores all of it's settings and configuration in the mongo database. To make the configuration as easy as possible we provide a robust GUI where you can access and change everything that is configurable
 
-**Settings** GUI can be started from the tray menu.
+**Settings** GUI can be started from the tray menu Admin -> Studio Settings.
 
 Please keep in mind that these settings are set-up for the full studio and not per-individual. If you're looking for individual artist settings, you can head to 
-[Local Settings](#local-settings) section in the artist documentation.
-
+[Local Settings](admin_settings_local.md) section in the artist documentation.
 
 ## Categories
 
@@ -23,18 +22,20 @@ We use simple colour coding to show you any changes to the settings:
 - **Orange**: [Project Override](#project-overrides)
 - **Blue**: Changed and unsaved value
 
+![Colour coding](assets/settings/settings_colour_coding.png)
+
 You'll find that settings are split into categories:
 
-### [System](admin_settings_system)
+### System
 
 System sections contains all settings that can be configured on a studio level, but cannot
 be changed on a per-project basis. These include mostly high level options like path to
 mongo database, toggling major modules on and off and configuring studio wide application
 availability. 
 
-### [Project](admin_settings_project)
+### Project
 
-Project tab contains most of OpenPype settings and all of them can be configured and overriden on a per-project basis if need be. This includes most of the workflow behaviors 
+Project tab contains most of OpenPype settings and all of them can be configured and overridden on a per-project basis if need be. This includes most of the workflow behaviors 
 like what formats to export, naming conventions, publishing validations, automatic assets loaders and a lot more. 
 
 We recommend to try to keep as many configurations as possible on a studio level and only override selectively, because micromanaging all of the project settings might become cumbersome down the line. Most of the settings can be safely adjusted and locked on a project
@@ -42,7 +43,7 @@ after the production started.
 
 ## Understanding Overrides
 
-Most of the individual settings can be set and overriden on multiple levels. 
+Most of the individual settings can be set and overridden on multiple levels. 
 
 ### OpenPype defaults
 When you first open settings all of the values and categories will be marked with a 
@@ -72,7 +73,7 @@ You can also reset any settings to OpenPype default by doing `right click` and `
 
 ### Project Overrides
 
-Many settings are usefull to be adjusted on a per-project basis. To identify project
+Many settings are useful to be adjusted on a per-project basis. To identify project
 overrides, they are marked with **orange edge** and **orange labels** in the settings GUI.
 
 To set project overrides proceed the same way as with the Studio defaults, but first select 

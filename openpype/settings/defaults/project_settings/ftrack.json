@@ -292,7 +292,8 @@
                     ],
                     "families": [
                         "write",
-                        "render"
+                        "render",
+                        "prerender"
                     ],
                     "task_types": [],
                     "tasks": [],
@@ -331,6 +332,18 @@
                     "tasks": [],
                     "add_ftrack_family": true,
                     "advanced_filtering": []
+                },
+                {
+                    "hosts": [
+                        "houdini"
+                    ],
+                    "families": [
+                        "usd"
+                    ],
+                    "task_types": [],
+                    "tasks": [],
+                    "add_ftrack_family": true,
+                    "advanced_filtering": []
                 }
             ]
         },
@@ -342,6 +355,42 @@
         "ValidateFtrackAttributes": {
             "enabled": false,
             "ftrack_custom_attributes": {}
+        },
+        "IntegrateFtrackInstance": {
+            "family_mapping": {
+                "camera": "cam",
+                "look": "look",
+                "mayaascii": "scene",
+                "model": "geo",
+                "rig": "rig",
+                "setdress": "setdress",
+                "pointcache": "cache",
+                "render": "render",
+                "prerender": "render",
+                "render2d": "render",
+                "nukescript": "comp",
+                "write": "render",
+                "review": "mov",
+                "plate": "img",
+                "audio": "audio",
+                "workfile": "scene",
+                "animation": "cache",
+                "image": "img",
+                "reference": "reference",
+                "ass": "cache",
+                "mayaScene": "scene",
+                "camerarig": "rig",
+                "yeticache": "cache",
+                "yetiRig": "rig",
+                "xgen": "xgen",
+                "rendersetup": "rendersetup",
+                "assembly": "assembly",
+                "layout": "layout",
+                "unrealStaticMesh": "geo",
+                "vrayproxy": "cache",
+                "redshiftproxy": "cache",
+                "usd": "usd"
+            }
         }
     }
 }

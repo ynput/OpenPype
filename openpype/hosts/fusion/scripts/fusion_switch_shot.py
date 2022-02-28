@@ -4,12 +4,12 @@ import sys
 import logging
 
 # Pipeline imports
-from avalon import api, io, pipeline
-import avalon.fusion
+import avalon.api
+from avalon import io, pipeline
 
-# Config imports
-import openpype.lib as pype
-import openpype.hosts.fusion.api.lib as fusion_lib
+from openpype.lib import version_up
+from openpype.hosts.fusion import api
+from openpype.hosts.fusion.api import lib
 
 log = logging.getLogger("Update Slap Comp")
 
@@ -87,7 +87,7 @@ def _format_filepath(session):
 
     # Create new unique filepath
     if os.path.exists(new_filepath):
-        new_filepath = pype.version_up(new_filepath)
+        new_filepath = version_up(new_filepath)
 
     return new_filepath
 
@@ -119,7 +119,7 @@ def _update_savers(comp, session):
 
     comp.Print("New renders to: %s\n" % renders)
 
-    with avalon.fusion.comp_lock_and_undo_chunk(comp):
+    with api.comp_lock_and_undo_chunk(comp):
         savers = comp.GetToolList(False, "Saver").values()
         for saver in savers:
             filepath = saver.GetAttrs("TOOLST_Clip_Name")[1.0]
@@ -176,7 +176,7 @@ def update_frame_range(comp, representations):
     versions = list(versions)
 
     versions = [v for v in versions
-                if v["data"].get("startFrame", None) is not None]
+                if v["data"].get("frameStart", None) is not None]
 
     if not versions:
         log.warning("No versions loaded to match frame range to.\n")
@@ -185,7 +185,7 @@ def update_frame_range(comp, representations):
     start = min(v["data"]["frameStart"] for v in versions)
     end = max(v["data"]["frameEnd"] for v in versions)
 
-    fusion_lib.update_frame_range(start, end, comp=comp)
+    lib.update_frame_range(start, end, comp=comp)
 
 
 def switch(asset_name, filepath=None, new=True):
@@ -215,11 +215,11 @@ def switch(asset_name, filepath=None, new=True):
 
     # Get current project
     self._project = io.find_one({"type": "project",
-                                 "name": api.Session["AVALON_PROJECT"]})
+                                 "name": avalon.api.Session["AVALON_PROJECT"]})
 
     # Go to comp
     if not filepath:
-        current_comp = avalon.fusion.get_current_comp()
+        current_comp = api.get_current_comp()
         assert current_comp is not None, "Could not find current comp"
     else:
         fusion = _get_fusion_instance()
@@ -227,14 +227,14 @@ def switch(asset_name, filepath=None, new=True):
         assert current_comp is not None, (
             "Fusion could not load '{}'").format(filepath)
 
-    host = api.registered_host()
+    host = avalon.api.registered_host()
     containers = list(host.ls())
     assert containers, "Nothing to update"
 
     representations = []
     for container in containers:
         try:
-            representation = fusion_lib.switch_item(
+            representation = lib.switch_item(
                 container,
                 asset_name=asset_name)
             representations.append(representation)
@@ -246,7 +246,7 @@ def switch(asset_name, filepath=None, new=True):
     current_comp.Print(message)
 
     # Build the session to switch to
-    switch_to_session = api.Session.copy()
+    switch_to_session = avalon.api.Session.copy()
     switch_to_session["AVALON_ASSET"] = asset['name']
 
     if new:
@@ -255,7 +255,7 @@ def switch(asset_name, filepath=None, new=True):
         # Update savers output based on new session
         _update_savers(current_comp, switch_to_session)
     else:
-        comp_path = pype.version_up(filepath)
+        comp_path = version_up(filepath)
 
     current_comp.Print(comp_path)
 
@@ -288,7 +288,7 @@ if __name__ == '__main__':
 
     args, unknown = parser.parse_args()
 
-    api.install(avalon.fusion)
+    avalon.api.install(api)
     switch(args.asset_name, args.file_path)
 
     sys.exit(0)

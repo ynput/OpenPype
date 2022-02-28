@@ -3,9 +3,6 @@ import logging
 
 import Qt
 from Qt import QtCore, QtGui
-from avalon.vendor import qtawesome
-from avalon import style, io
-from . import lib
 from .constants import (
     PROJECT_IS_ACTIVE_ROLE,
     PROJECT_NAME_ROLE,
@@ -199,31 +196,37 @@ class Item(dict):
 
 
 class RecursiveSortFilterProxyModel(QtCore.QSortFilterProxyModel):
-    """Filters to the regex if any of the children matches allow parent"""
-    def filterAcceptsRow(self, row, parent):
+    """Recursive proxy model.
+    Item is not filtered if any children match the filter.
+    Use case: Filtering by string - parent won't be filtered if does not match
+        the filter string but first checks if any children does.
+    """
+    def filterAcceptsRow(self, row, parent_index):
         regex = self.filterRegExp()
         if not regex.isEmpty():
-            pattern = regex.pattern()
             model = self.sourceModel()
-            source_index = model.index(row, self.filterKeyColumn(), parent)
+            source_index = model.index(
+                row, self.filterKeyColumn(), parent_index
+            )
             if source_index.isValid():
+                pattern = regex.pattern()
+
                 # Check current index itself
-                key = model.data(source_index, self.filterRole())
-                if re.search(pattern, key, re.IGNORECASE):
+                value = model.data(source_index, self.filterRole())
+                if re.search(pattern, value, re.IGNORECASE):
                     return True
 
-                # Check children
                 rows = model.rowCount(source_index)
-                for i in range(rows):
-                    if self.filterAcceptsRow(i, source_index):
+                for idx in range(rows):
+                    if self.filterAcceptsRow(idx, source_index):
                         return True
 
                 # Otherwise filter it
                 return False
 
-        return super(
-            RecursiveSortFilterProxyModel, self
-        ).filterAcceptsRow(row, parent)
+        return super(RecursiveSortFilterProxyModel, self).filterAcceptsRow(
+            row, parent_index
+        )
 
 
 class ProjectModel(QtGui.QStandardItemModel):

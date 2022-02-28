@@ -3,12 +3,12 @@ import os
 
 from maya import cmds  # noqa
 import maya.mel as mel  # noqa
-from openpype.hosts.maya.api.lib import root_parent
-
 import pyblish.api
-import avalon.maya
-
 import openpype.api
+from openpype.hosts.maya.api.lib import (
+    root_parent,
+    maintained_selection
+)
 
 
 class ExtractFBX(openpype.api.Extractor):
@@ -168,12 +168,8 @@ class ExtractFBX(openpype.api.Extractor):
         self.log.info("Export options: {0}".format(options))
 
         # Collect the start and end including handles
-        start = instance.data["frameStart"]
-        end = instance.data["frameEnd"]
-        handles = instance.data.get("handles", 0)
-        if handles:
-            start -= handles
-            end += handles
+        start = instance.data["frameStartHandle"]
+        end = instance.data["frameEndHandle"]
 
         options['bakeComplexStart'] = start
         options['bakeComplexEnd'] = end
@@ -205,13 +201,13 @@ class ExtractFBX(openpype.api.Extractor):
 
         # Export
         if "unrealStaticMesh" in instance.data["families"]:
-            with avalon.maya.maintained_selection():
+            with maintained_selection():
                 with root_parent(members):
                     self.log.info("Un-parenting: {}".format(members))
                     cmds.select(members, r=1, noExpand=True)
                     mel.eval('FBXExport -f "{}" -s'.format(path))
         else:
-            with avalon.maya.maintained_selection():
+            with maintained_selection():
                 cmds.select(members, r=1, noExpand=True)
                 mel.eval('FBXExport -f "{}" -s'.format(path))
 

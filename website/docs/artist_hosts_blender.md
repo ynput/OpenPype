@@ -55,12 +55,12 @@ can edit that field to change it to different asset (but that one must already e
 
 `Subset` field is a name you can decide on. It should describe what kind of data you
 have in the model. For example, you can name it `Proxy` to indicate that this is
-low resolution stuff. See [Subset](artist_concepts#subset).
+low resolution stuff. See [Subset](artist_concepts.md#subset).
 
 <!-- :::note LOD support
 By changing subset name you can take advantage of _LOD support_ in OpenPype. Your
 asset can contain various resolution defined by different subsets. You can then
-switch between them very easy using [Inventory (Manage)](artist_tools#inventory).
+switch between them very easy using [Inventory (Manage)](artist_tools.md#inventory).
 There LODs are conveniently grouped so they don't clutter Inventory view.
 
 Name your subset like `main_LOD1`. Important part is that `_LOD1`. You can have as many LODs as you need.
@@ -96,7 +96,7 @@ Now let's publish it. Go **OpenPype → Publish...**. You will be presented with
 ![Model publish](assets/blender-model_pre_publish.jpg)
 
 Note that content of this window can differs by your pipeline configuration.
-For more detail see [Publisher](artist_tools#publisher).
+For more detail see [Publisher](artist_tools.md#publisher).
 
 Items in left column are instances you will be publishing. You can disable them
 by clicking on square next to them. White filled square indicate they are ready for
@@ -150,7 +150,7 @@ it can take a while. You should end up with everything green and message
 **Finished successfully ...** You can now close publisher window.
 
 To check for yourself that model is published, open
-[Asset Loader](artist_tools#loader) - **OpenPype → Load...**.
+[Asset Loader](artist_tools.md#loader) - **OpenPype → Load...**.
 There you should see your model, named `modelDefault`.
 
 ### Loading models
@@ -195,7 +195,7 @@ this:
 ### Publishing rigs
 
 Publishing rig is done in same way as publishing everything else. Save your scene
-and go **OpenPype → Publish**. For more detail see [Publisher](artist_tools#publisher).
+and go **OpenPype → Publish**. For more detail see [Publisher](artist_tools.md#publisher).
 
 ### Loading rigs
 

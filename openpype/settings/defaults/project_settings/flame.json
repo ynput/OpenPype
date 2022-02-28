@@ -2,7 +2,8 @@
     "create": {
         "CreateShotClip": {
             "hierarchy": "{folder}/{sequence}",
-            "clipRename": true,
+            "useShotName": true,
+            "clipRename": false,
             "clipName": "{sequence}{shot}",
             "segmentIndex": true,
             "countFrom": 10,
@@ -24,12 +25,38 @@
             "export_presets_mapping": {
                 "exr16fpdwaa": {
                     "ext": "exr",
-                    "xml_preset_dir": "",
                     "xml_preset_file": "OpenEXR (16-bit fp DWAA).xml",
+                    "xml_preset_dir": "",
+                    "colorspace_out": "ACES - ACEScg",
                     "representation_add_range": true,
                     "representation_tags": []
                 }
             }
+        }
+    },
+    "load": {
+        "LoadClip": {
+            "enabled": true,
+            "families": [
+                "render2d",
+                "source",
+                "plate",
+                "render",
+                "review"
+            ],
+            "representations": [
+                "exr",
+                "dpx",
+                "jpg",
+                "jpeg",
+                "png",
+                "h264",
+                "mov",
+                "mp4"
+            ],
+            "reel_group_name": "OpenPype_Reels",
+            "reel_name": "Loaded",
+            "clip_name_template": "{asset}_{subset}_{representation}"
         }
     }
 }

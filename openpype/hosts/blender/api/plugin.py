@@ -49,10 +49,13 @@ def get_unique_number(
     return f"{count:0>2}"
 
 
-def prepare_data(data, container_name):
+def prepare_data(data, container_name=None):
     name = data.name
     local_data = data.make_local()
-    local_data.name = f"{container_name}:{name}"
+    if container_name:
+        local_data.name = f"{container_name}:{name}"
+    else:
+        local_data.name = f"{name}"
     return local_data
 
 
@@ -128,6 +131,8 @@ def deselect_all():
 
 class Creator(PypeCreatorMixin, avalon.api.Creator):
     """Base class for Creator plug-ins."""
+    defaults = ['Main']
+
     def process(self):
         collection = bpy.data.collections.new(name=self.data["subset"])
         bpy.context.scene.collection.children.link(collection)

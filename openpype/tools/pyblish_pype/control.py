@@ -47,18 +47,22 @@ class MainThreadProcess(QtCore.QObject):
 
     This approach gives ability to update UI meanwhile plugin is in progress.
     """
-    timer_interval = 3
+    # How many times let pass QtApplication to process events
+    # - use 2 as resize event can trigger repaint event but not process in
+    #   same loop
+    count_timeout = 2
 
     def __init__(self):
         super(MainThreadProcess, self).__init__()
         self._items_to_process = collections.deque()
 
         timer = QtCore.QTimer()
-        timer.setInterval(self.timer_interval)
+        timer.setInterval(0)
 
         timer.timeout.connect(self._execute)
 
         self._timer = timer
+        self._switch_counter = self.count_timeout
 
     def process(self, func, *args, **kwargs):
         item = MainThreadItem(func, *args, **kwargs)
@@ -70,6 +74,12 @@ class MainThreadProcess(QtCore.QObject):
     def _execute(self):
         if not self._items_to_process:
             return
+
+        if self._switch_counter > 0:
+            self._switch_counter -= 1
+            return
+
+        self._switch_counter = self.count_timeout
 
         item = self._items_to_process.popleft()
         item.process()
@@ -106,14 +116,14 @@ class Controller(QtCore.QObject):
     # ??? Emitted for each process
     was_processed = QtCore.Signal(dict)
 
-    # Emmited when reset
+    # Emitted when reset
     # - all data are reset (plugins, processing, pari yielder, etc.)
     was_reset = QtCore.Signal()
 
-    # Emmited when previous group changed
+    # Emitted when previous group changed
     passed_group = QtCore.Signal(object)
 
-    # Emmited when want to change state of instances
+    # Emitted when want to change state of instances
     switch_toggleability = QtCore.Signal(bool)
 
     # On action finished
@@ -142,6 +152,8 @@ class Controller(QtCore.QObject):
         self.instance_toggled.connect(self._on_instance_toggled)
         self._main_thread_processor = MainThreadProcess()
 
+        self._current_state = ""
+
     def reset_variables(self):
         self.log.debug("Resetting pyblish context variables")
 
@@ -149,6 +161,7 @@ class Controller(QtCore.QObject):
         self.is_running = False
         self.stopped = False
         self.errored = False
+        self._current_state = ""
 
         # Active producer of pairs
         self.pair_generator = None
@@ -157,7 +170,6 @@ class Controller(QtCore.QObject):
 
         # Orders which changes GUI
         # - passing collectors order disables plugin/instance toggle
-        self.collectors_order = None
         self.collect_state = 0
 
         # - passing validators order disables validate button and gives ability
@@ -166,11 +178,8 @@ class Controller(QtCore.QObject):
         self.validated = False
 
         # Get collectors and validators order
-        self.order_groups.reset()
-        plugin_groups = self.order_groups.groups()
-        plugin_groups_keys = list(plugin_groups.keys())
-        self.collectors_order = plugin_groups_keys[0]
-        self.validators_order = self.order_groups.validation_order()
+        plugin_groups_keys = list(self.order_groups.groups.keys())
+        self.validators_order = self.order_groups.validation_order
         next_group_order = None
         if len(plugin_groups_keys) > 1:
             next_group_order = plugin_groups_keys[1]
@@ -181,12 +190,17 @@ class Controller(QtCore.QObject):
             "stop_on_validation": False,
             # Used?
             "last_plugin_order": None,
-            "current_group_order": self.collectors_order,
+            "current_group_order": plugin_groups_keys[0],
             "next_group_order": next_group_order,
             "nextOrder": None,
             "ordersWithError": set()
         }
+        self._set_state_by_order()
         self.log.debug("Reset of pyblish context variables done")
+
+    @property
+    def current_state(self):
+        return self._current_state
 
     def presets_by_hosts(self):
         # Get global filters as base
@@ -214,6 +228,16 @@ class Controller(QtCore.QObject):
     def reset_context(self):
         self.log.debug("Resetting pyblish context object")
 
+        comment = None
+        if (
+            self.context is not None and
+            self.context.data.get("comment") and
+            # We only preserve the user typed comment if we are *not*
+            # resetting from a successful publish without errors
+            self._current_state != "Published"
+        ):
+            comment = self.context.data["comment"]
+
         self.context = pyblish.api.Context()
 
         self.context._publish_states = InstanceStates.ContextType
@@ -234,6 +258,10 @@ class Controller(QtCore.QObject):
         self.context.data["icon"] = "book"
 
         self.context.families = ("__context__",)
+
+        if comment:
+            # Preserve comment on reset if user previously had a comment
+            self.context.data["comment"] = comment
 
         self.log.debug("Reset of pyblish context object done")
 
@@ -283,6 +311,9 @@ class Controller(QtCore.QObject):
     def on_published(self):
         if self.is_running:
             self.is_running = False
+        self._current_state = (
+            "Published" if not self.errored else "Published, with errors"
+        )
         self.was_finished.emit()
         self._main_thread_processor.stop()
 
@@ -322,7 +353,7 @@ class Controller(QtCore.QObject):
         try:
             result = pyblish.plugin.process(plugin, self.context, instance)
             # Make note of the order at which the
-            # potential error error occured.
+            # potential error error occurred.
             if result["error"] is not None:
                 self.processing["ordersWithError"].add(plugin.order)
 
@@ -345,7 +376,7 @@ class Controller(QtCore.QObject):
                 new_current_group_order = self.processing["next_group_order"]
                 if new_current_group_order is not None:
                     current_next_order_found = False
-                    for order in self.order_groups.groups().keys():
+                    for order in self.order_groups.groups.keys():
                         if current_next_order_found:
                             new_next_group_order = order
                             break
@@ -360,6 +391,10 @@ class Controller(QtCore.QObject):
 
                 if self.collect_state == 0:
                     self.collect_state = 1
+                    self._current_state = (
+                        "Ready" if not self.errored else
+                        "Collected, with errors"
+                    )
                     self.switch_toggleability.emit(True)
                     self.passed_group.emit(current_group_order)
                     yield IterationBreak("Collected")
@@ -367,6 +402,11 @@ class Controller(QtCore.QObject):
                 else:
                     self.passed_group.emit(current_group_order)
                     if self.errored:
+                        self._current_state = (
+                            "Stopped, due to errors" if not
+                            self.processing["stop_on_validation"] else
+                            "Validated, with errors"
+                        )
                         yield IterationBreak("Last group errored")
 
             if self.collect_state == 1:
@@ -376,17 +416,23 @@ class Controller(QtCore.QObject):
             if not self.validated and plugin.order > self.validators_order:
                 self.validated = True
                 if self.processing["stop_on_validation"]:
+                    self._current_state = (
+                        "Validated" if not self.errored else
+                        "Validated, with errors"
+                    )
                     yield IterationBreak("Validated")
 
             # Stop if was stopped
             if self.stopped:
                 self.stopped = False
+                self._current_state = "Paused"
                 yield IterationBreak("Stopped")
 
             # check test if will stop
             self.processing["nextOrder"] = plugin.order
             message = self.test(**self.processing)
             if message:
+                self._current_state = "Paused"
                 yield IterationBreak("Stopped due to \"{}\"".format(message))
 
             self.processing["last_plugin_order"] = plugin.order
@@ -416,6 +462,7 @@ class Controller(QtCore.QObject):
                     # Stop if was stopped
                     if self.stopped:
                         self.stopped = False
+                        self._current_state = "Paused"
                         yield IterationBreak("Stopped")
 
                     yield (plugin, instance)
@@ -526,20 +573,27 @@ class Controller(QtCore.QObject):
             MainThreadItem(on_next)
         )
 
+    def _set_state_by_order(self):
+        order = self.processing["current_group_order"]
+        self._current_state = self.order_groups.groups[order]["state"]
+
     def collect(self):
         """ Iterate and process Collect plugins
         - load_plugins method is launched again when finished
         """
+        self._set_state_by_order()
         self._main_thread_processor.process(self._start_collect)
         self._main_thread_processor.start()
 
     def validate(self):
         """ Process plugins to validations_order value."""
+        self._set_state_by_order()
         self._main_thread_processor.process(self._start_validate)
         self._main_thread_processor.start()
 
     def publish(self):
         """ Iterate and process all remaining plugins."""
+        self._set_state_by_order()
         self._main_thread_processor.process(self._start_publish)
         self._main_thread_processor.start()
 
@@ -564,7 +618,7 @@ class Controller(QtCore.QObject):
         case must be taken to ensure there are no memory leaks.
         Explicitly deleting objects shines a light on where objects
         may still be referenced in the form of an error. No errors
-        means this was uneccesary, but that's ok.
+        means this was unnecessary, but that's ok.
         """
 
         for instance in self.context:

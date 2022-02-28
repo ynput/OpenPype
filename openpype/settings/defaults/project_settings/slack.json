@@ -10,6 +10,7 @@
                     "hosts": [],
                     "task_types": [],
                     "tasks": [],
+                    "subsets": [],
                     "channel_messages": []
                 }
             ]

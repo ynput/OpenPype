@@ -8,4 +8,3 @@ class CreateXgen(plugin.Creator):
     label = "Xgen Interactive"
     family = "xgen"
     icon = "pagelines"
-    defaults = ['Main']

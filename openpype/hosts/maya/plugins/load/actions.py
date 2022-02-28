@@ -3,6 +3,10 @@
 """
 
 from avalon import api
+from openpype.hosts.maya.api.lib import (
+    maintained_selection,
+    unique_namespace
+)
 
 
 class SetFrameRangeLoader(api.Loader):
@@ -68,9 +72,8 @@ class SetFrameRangeWithHandlesLoader(api.Loader):
             return
 
         # Include handles
-        handles = version_data.get("handles", 0)
-        start -= handles
-        end += handles
+        start -= version_data.get("handleStart", 0)
+        end += version_data.get("handleEnd", 0)
 
         cmds.playbackOptions(minTime=start,
                              maxTime=end,
@@ -98,22 +101,19 @@ class ImportMayaLoader(api.Loader):
     def load(self, context, name=None, namespace=None, data=None):
         import maya.cmds as cmds
 
-        from avalon import maya
-        from avalon.maya import lib
-
         choice = self.display_warning()
         if choice is False:
             return
 
         asset = context['asset']
 
-        namespace = namespace or lib.unique_namespace(
+        namespace = namespace or unique_namespace(
             asset["name"] + "_",
             prefix="_" if asset["name"][0].isdigit() else "",
             suffix="_",
         )
 
-        with maya.maintained_selection():
+        with maintained_selection():
             cmds.file(self.fname,
                       i=True,
                       preserveReferences=True,
