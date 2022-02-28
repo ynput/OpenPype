@@ -1,5 +1,6 @@
 import pyblish.api
 import avalon.api as avalon
+from openpype.lib import UnifiedFrameInfo
 
 
 class CollectHierarchy(pyblish.api.ContextPlugin):
@@ -23,6 +24,12 @@ class CollectHierarchy(pyblish.api.ContextPlugin):
         final_context = {}
         final_context[project_name] = {}
         final_context[project_name]['entity_type'] = 'Project'
+
+        anatomy = context.data["anatomy"]
+        # Find out if handles are extending or inclusive on project
+        handles_extend = anatomy["attributes"].get("handlesExtend")
+        if handles_extend is None:
+            handles_extend = True
 
         for instance in context:
             self.log.info("Processing instance: `{}` ...".format(instance))
@@ -53,11 +60,26 @@ class CollectHierarchy(pyblish.api.ContextPlugin):
             shot_data['tasks'] = instance.data.get("tasks") or {}
             shot_data["comments"] = instance.data.get("comments", [])
 
+            # Recalculate frame start/end based on anatomy value
+            #   "handlesExtend" which may change how frame start/end are stored
+            # Create frame info based on instance data
+            #   - handles should always extend during publishing
+            frame_info = UnifiedFrameInfo(
+                instance.data["frameStart"],
+                instance.data["frameEnd"],
+                instance.data["handleStart"],
+                instance.data["handleEnd"],
+                True
+            )
+            # Change frame info calculation but keep full frame range
+            # - nothing will change if 'handles_extend' is 'True'
+            frame_info.change_handles_extend(handles_extend, True)
+
             shot_data["attributes"] = {
-                "handleStart": instance.data["handleStart"],
-                "handleEnd": instance.data["handleEnd"],
-                "frameStart": instance.data["frameStart"],
-                "frameEnd": instance.data["frameEnd"],
+                "handleStart": frame_info.handle_start,
+                "handleEnd": frame_info.handle_end,
+                "frameStart": frame_info.real_frame_start,
+                "frameEnd": frame_info.real_handle_end,
                 "clipIn": instance.data["clipIn"],
                 "clipOut": instance.data["clipOut"],
                 'fps': instance.context.data["fps"],
