@@ -54,12 +54,17 @@ class BlendModelLoader(plugin.AssetLoader):
 
         # Find the loaded collection and set in variable container_collection
         container_collection = None
-        instances = plugin.get_instance_list()
-        for collection in instances:
-            if scene_collection.children.get(collection.name) is None:
-                container_collection = collection
+        instances = plugin.get_instances_list()
+        scene_collection_names_list = list()
+        for collection in plugin.get_all_collections_in_collection(scene_collection):
+            scene_collection_names_list.append(collection.name)
+
+        for data_collection in instances:
+            if data_collection.name not in scene_collection_names_list:
+                container_collection = data_collection
                 break
         self.original_container_name = container_collection.name
+
         # Get namespace (container name + unique_number)
         unique_number = plugin.get_model_unique_number(container_collection.name)
         self.namespace = plugin.model_asset_name(
@@ -136,6 +141,11 @@ class BlendModelLoader(plugin.AssetLoader):
 
         # Process the load of the model
         avalon_container = self._process(libpath)
+
+        self.log.info(
+            "Container:\nRepresentation: %s",
+            pformat(context["representation"], indent=2),
+        )
 
         # TODO check which data should be on the container custom property
         avalon_container[AVALON_PROPERTY] = {

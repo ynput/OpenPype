@@ -112,14 +112,24 @@ def create_blender_context(
     raise Exception("Could not create a custom Blender context.")
 
 
-def get_instance_list():
-    """Get the parent of the input collection"""
+def get_instances_list():
+    """Get all the data collections """
     instances = []
-    for collection in bpy.data.collections:
+    nodes = bpy.data.collections
+
+    for collection in nodes:
         if collection.get(AVALON_PROPERTY):
             instances.append(collection)
     return instances
 
+def get_all_collections_in_collection(collection):
+    """get_all_collections_in_collection"""
+    check_list = [collection]
+
+    for c in check_list:
+        check_list.extend(c.children)
+
+    return check_list
 
 def get_parent_collection(collection):
     """Get the parent of the input collection"""
