@@ -18,7 +18,7 @@ import openpype.api
 from datetime import datetime
 # from pype.modules import ModulesManager
 from openpype.lib.profiles_filtering import filter_profiles
-from openpype.lib import prepare_template_data, UnifiedFrameInfo
+from openpype.lib import prepare_template_data
 
 # this is needed until speedcopy for linux is fixed
 if sys.platform == "win32":
