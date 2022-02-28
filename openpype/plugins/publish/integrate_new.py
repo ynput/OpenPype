@@ -922,52 +922,22 @@ class IntegrateAssetNew(pyblish.api.InstancePlugin):
             version_data["intent"] = intent_value
 
         # Include optional data if present in
-        optionals = [
-            "step", "handles", "sourceHashes"
-        ]
-        for key in optionals:
-            if key in instance.data:
-                version_data[key] = instance.data[key]
-        version_data.update(self._get_optional_frame_data(instance))
+        version_data.update(self._get_optional_version_data(instance))
 
         return version_data
 
-    def _get_optional_frame_data(self, instance):
-        anatomy = instance.context.data["anatomy"]
+    def _get_optional_version_data(self, instance):
         optional_keys = (
-            "frameStart", "frameEnd", "handleEnd", "handleStart"
+            "frameStart", "frameEnd", "handleEnd", "handleStart",
+            "step", "sourceHashes",
+            # QUESTION is "handles" needed?
+            "handles"
         )
         optional_values = {}
         for key in optional_keys:
             value = instance.data.get(key)
             if value is not None:
                 optional_values[key] = value
-
-        # Skip if frame start of end are not available
-        if (
-            "frameStart" not in optional_values
-            or "frameEnd" not in optional_values
-        ):
-            return optional_values
-
-        # Skip if both handles are not available
-        if (
-            "handleStart" not in optional_values
-            and "handleEnd" not in optional_values
-        ):
-            return optional_values
-
-        frame_info = UnifiedFrameInfo(
-            optional_values["frameStart"],
-            optional_values["frameEnd"],
-            optional_values.get("handleStart"),
-            optional_values.get("handleEnd"),
-            anatomy
-        )
-        optional_values["frameStart"] = frame_info.real_frame_start
-        optional_values["frameEnd"] = frame_info.real_frame_end
-        optional_values["handleStart"] = frame_info.handle_start
-        optional_values["handleEnd"] = frame_info.handle_end
         return optional_values
 
     def main_family_from_instance(self, instance):

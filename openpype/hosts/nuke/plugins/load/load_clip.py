@@ -2,7 +2,6 @@ import nuke
 from avalon.vendor import qargparse
 from avalon import api, io
 
-from openpype.lib import get_frame_info
 from openpype.hosts.nuke.api.lib import (
     get_imageio_input_colorspace,
     maintained_selection
@@ -91,14 +90,11 @@ class LoadClip(plugin.NukeLoader):
 
         frame_start = version_data["frameStart"]
         frame_end = version_data["frameEnd"]
-        handle_start = version_data.get("handleStart")
-        handle_end = version_data.get("handleEnd")
-        frame_info = get_frame_info(
-            frame_start, frame_end, handle_start, handle_end
-        )
+        handle_start = version_data.get("handleStart") or 0
+        handle_end = version_data.get("handleEnd") or 0
 
-        first = frame_info.handle_frame_start
-        last = frame_info.handle_frame_end
+        first = frame_start - handle_start
+        last = frame_end + handle_end
         if not is_sequence:
             duration = last - first + 1
             first = 1
@@ -168,9 +164,7 @@ class LoadClip(plugin.NukeLoader):
                 data=data_imprint)
 
         if version_data.get("retime", None):
-            self._make_retimes(
-                read_node, version_data, frame_info.handle_start
-            )
+            self._make_retimes(read_node, version_data, handle_start)
 
         self.set_as_member(read_node)
 
@@ -210,16 +204,11 @@ class LoadClip(plugin.NukeLoader):
 
         frame_start = version_data["frameStart"]
         frame_end = version_data["frameEnd"]
-        handle_start = version_data.get("handleStart")
-        handle_end = version_data.get("handleEnd")
-        frame_info = get_frame_info(
-            frame_start, frame_end, handle_start, handle_end
-        )
-        handle_start = frame_info.handle_start
-        handle_end = frame_info.handle_end
+        handle_start = version_data.get("handleStart") or 0
+        handle_end = version_data.get("handleEnd") or 0
 
-        first = frame_info.handle_frame_start
-        last = frame_info.handle_frame_end
+        first = frame_start - handle_start
+        last = frame_end + handle_end
 
         if not is_sequence:
             duration = last - first + 1

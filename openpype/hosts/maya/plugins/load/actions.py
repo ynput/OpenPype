@@ -3,7 +3,6 @@
 """
 
 from avalon import api
-from openpype.lib import get_frame_info
 from openpype.hosts.maya.api.lib import (
     maintained_selection,
     unique_namespace
@@ -40,16 +39,11 @@ class SetFrameRangeLoader(api.Loader):
             ))
             return
 
-        handle_start = version_data.get("handleStart")
-        handle_end = version_data.get("handleStart")
-        frame_info = get_frame_info(
-            frame_start, frame_end, handle_start, handle_end
-        )
         cmds.playbackOptions(
-            minTime=frame_info.frame_start,
-            maxTime=frame_info.frame_end,
-            animationStartTime=frame_info.frame_start,
-            animationEndTime=frame_info.frame_end
+            minTime=frame_start,
+            maxTime=frame_end,
+            animationStartTime=frame_start,
+            animationEndTime=frame_end
         )
 
 
@@ -81,17 +75,15 @@ class SetFrameRangeWithHandlesLoader(api.Loader):
                   "end frame data is missing..")
             return
 
-        handle_start = version_data.get("handleStart")
-        handle_end = version_data.get("handleStart")
-        frame_info = get_frame_info(
-            frame_start, frame_end, handle_start, handle_end
-        )
-
+        handle_start = version_data.get("handleStart") or 0
+        handle_end = version_data.get("handleStart") or 0
+        handle_frame_start = frame_start - handle_start
+        handle_frame_end = frame_end + handle_end
         cmds.playbackOptions(
-            minTime=frame_info.handle_frame_start,
-            maxTime=frame_info.handle_frame_end,
-            animationStartTime=frame_info.handle_frame_start,
-            animationEndTime=frame_info.handle_frame_end
+            minTime=handle_frame_start,
+            maxTime=handle_frame_end,
+            animationStartTime=handle_frame_start,
+            animationEndTime=handle_frame_end
         )
 
 
