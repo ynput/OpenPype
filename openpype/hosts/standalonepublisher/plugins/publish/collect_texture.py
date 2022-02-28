@@ -81,13 +81,9 @@ class CollectTextures(pyblish.api.ContextPlugin):
             parsed_subset = instance.data["subset"].replace(
                 instance.data["family"], '')
 
-            fill_pairs = {
+            explicit_data = {
                 "subset": parsed_subset
             }
-
-            fill_pairs = prepare_template_data(fill_pairs)
-            workfile_subset = format_template_with_optional_keys(
-                fill_pairs, self.workfile_subset_template)
 
             processed_instance = False
             for repre in instance.data["representations"]:
@@ -101,6 +97,18 @@ class CollectTextures(pyblish.api.ContextPlugin):
 
                 if ext in self.main_workfile_extensions or \
                         ext in self.other_workfile_extensions:
+
+                    formatting_data = self._get_parsed_groups(
+                        repre_file,
+                        self.input_naming_patterns["workfile"],
+                        self.input_naming_groups["workfile"],
+                        self.color_space
+                    )
+
+                    formatting_data.update(explicit_data)
+                    fill_pairs = prepare_template_data(formatting_data)
+                    workfile_subset = format_template_with_optional_keys(
+                        fill_pairs, self.workfile_subset_template)
 
                     asset_build = self._get_asset_build(
                         repre_file,
