@@ -5,7 +5,58 @@ import platform
 import subprocess
 import distutils
 
-log = logging.getLogger("FFmpeg utils")
+log = logging.getLogger("Vendor utils")
+
+
+def find_executable(executable):
+    """Find full path to executable.
+
+    Also tries additional extensions if passed executable does not contain one.
+
+    Paths where it is looked for executable is defined by 'PATH' environment
+    variable, 'os.confstr("CS_PATH")' or 'os.defpath'.
+
+    Args:
+        executable(str): Name of executable with or without extension. Can be
+            path to file.
+
+    Returns:
+        str: Full path to executable with extension (is file).
+        None: When the executable was not found.
+    """
+    if os.path.isfile(executable):
+        return executable
+
+    low_platform = platform.system().lower()
+    _, ext = os.path.splitext(executable)
+    variants = [executable]
+    if not ext:
+        if low_platform == "windows":
+            exts = [".exe", ".ps1", ".bat"]
+            for ext in os.getenv("PATHEXT", "").split(os.pathsep):
+                ext = ext.lower()
+                if ext and ext not in exts:
+                    exts.append(ext)
+        else:
+            exts = [".sh"]
+
+        for ext in exts:
+            variant = executable + ext
+            if os.path.isfile(variant):
+                return variant
+            variants.append(variant)
+
+    path_str = os.environ.get("PATH", None)
+    if path_str is None:
+        if hasattr(os, "confstr"):
+            path_str = os.confstr("CS_PATH")
+        elif hasattr(os, "defpath"):
+            path_str = os.defpath
+
+    if not path_str:
+        return None
+
+    paths = path_str.split(os.pathsep)
 
 
 def get_vendor_bin_path(bin_app):
