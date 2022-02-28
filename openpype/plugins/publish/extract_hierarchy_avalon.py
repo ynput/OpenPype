@@ -52,7 +52,7 @@ class ExtractHierarchyToAvalon(pyblish.api.ContextPlugin):
             data["entityType"] = entity_type
 
             # Custom attributes.
-            for k, val in entity_data.get("custom_attributes", {}).items():
+            for k, val in entity_data.get("attributes", {}).items():
                 data[k] = val
 
             if entity_type.lower() != "project":
