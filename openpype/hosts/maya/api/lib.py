@@ -2,14 +2,12 @@
 
 import os
 import sys
-import re
 import platform
 import uuid
 import math
 
 import json
 import logging
-import itertools
 import contextlib
 from collections import OrderedDict, defaultdict
 from math import ceil
@@ -154,52 +152,8 @@ def maintained_selection():
             cmds.select(clear=True)
 
 
-def unique_name(name, format="%02d", namespace="", prefix="", suffix=""):
-    """Return unique `name`
-
-    The function takes into consideration an optional `namespace`
-    and `suffix`. The suffix is included in evaluating whether a
-    name exists - such as `name` + "_GRP" - but isn't included
-    in the returned value.
-
-    If a namespace is provided, only names within that namespace
-    are considered when evaluating whether the name is unique.
-
-    Arguments:
-        format (str, optional): The `name` is given a number, this determines
-            how this number is formatted. Defaults to a padding of 2.
-            E.g. my_name01, my_name02.
-        namespace (str, optional): Only consider names within this namespace.
-        suffix (str, optional): Only consider names with this suffix.
-
-    Example:
-        >>> name = cmds.createNode("transform", name="MyName")
-        >>> cmds.objExists(name)
-        True
-        >>> unique = unique_name(name)
-        >>> cmds.objExists(unique)
-        False
-
-    """
-
-    iteration = 1
-    unique = prefix + (name + format % iteration) + suffix
-
-    while cmds.objExists(namespace + ":" + unique):
-        iteration += 1
-        unique = prefix + (name + format % iteration) + suffix
-
-    if suffix:
-        return unique[:-len(suffix)]
-
-    return unique
-
-
 def unique_namespace(namespace, format="%02d", prefix="", suffix=""):
     """Return unique namespace
-
-    Similar to :func:`unique_name` but evaluating namespaces
-    as opposed to object names.
 
     Arguments:
         namespace (str): Name of namespace to consider
@@ -312,155 +266,10 @@ def float_round(num, places=0, direction=ceil):
 
 def pairwise(iterable):
     """s -> (s0,s1), (s2,s3), (s4, s5), ..."""
+    from six.moves import zip
+
     a = iter(iterable)
-    return itertools.izip(a, a)
-
-
-def unique(name):
-    assert isinstance(name, string_types), "`name` must be string"
-
-    while cmds.objExists(name):
-        matches = re.findall(r"\d+$", name)
-
-        if matches:
-            match = matches[-1]
-            name = name.rstrip(match)
-            number = int(match) + 1
-        else:
-            number = 1
-
-        name = name + str(number)
-
-    return name
-
-
-def uv_from_element(element):
-    """Return the UV coordinate of given 'element'
-
-    Supports components, meshes, nurbs.
-
-    """
-
-    supported = ["mesh", "nurbsSurface"]
-
-    uv = [0.5, 0.5]
-
-    if "." not in element:
-        type = cmds.nodeType(element)
-        if type == "transform":
-            geometry_shape = cmds.listRelatives(element, shapes=True)
-
-            if len(geometry_shape) >= 1:
-                geometry_shape = geometry_shape[0]
-            else:
-                return
-
-        elif type in supported:
-            geometry_shape = element
-
-        else:
-            cmds.error("Could not do what you wanted..")
-            return
-    else:
-        # If it is indeed a component - get the current Mesh
-        try:
-            parent = element.split(".", 1)[0]
-
-            # Maya is funny in that when the transform of the shape
-            # of the component element has children, the name returned
-            # by that elementection is the shape. Otherwise, it is
-            # the transform. So lets see what type we're dealing with here.
-            if cmds.nodeType(parent) in supported:
-                geometry_shape = parent
-            else:
-                geometry_shape = cmds.listRelatives(parent, shapes=1)[0]
-
-            if not geometry_shape:
-                cmds.error("Skipping %s: Could not find shape." % element)
-                return
-
-            if len(cmds.ls(geometry_shape)) > 1:
-                cmds.warning("Multiple shapes with identical "
-                             "names found. This might not work")
-
-        except TypeError as e:
-            cmds.warning("Skipping %s: Didn't find a shape "
-                         "for component elementection. %s" % (element, e))
-            return
-
-        try:
-            type = cmds.nodeType(geometry_shape)
-
-            if type == "nurbsSurface":
-                # If a surfacePoint is elementected on a nurbs surface
-                root, u, v = element.rsplit("[", 2)
-                uv = [float(u[:-1]), float(v[:-1])]
-
-            if type == "mesh":
-                # -----------
-                # Average the U and V values
-                # ===========
-                uvs = cmds.polyListComponentConversion(element, toUV=1)
-                if not uvs:
-                    cmds.warning("Couldn't derive any UV's from "
-                                 "component, reverting to default U and V")
-                    raise TypeError
-
-                # Flatten list of Uv's as sometimes it returns
-                # neighbors like this [2:3] instead of [2], [3]
-                flattened = []
-
-                for uv in uvs:
-                    flattened.extend(cmds.ls(uv, flatten=True))
-
-                uvs = flattened
-
-                sumU = 0
-                sumV = 0
-                for uv in uvs:
-                    try:
-                        u, v = cmds.polyEditUV(uv, query=True)
-                    except Exception:
-                        cmds.warning("Couldn't find any UV coordinated, "
-                                     "reverting to default U and V")
-                        raise TypeError
-
-                    sumU += u
-                    sumV += v
-
-                averagedU = sumU / len(uvs)
-                averagedV = sumV / len(uvs)
-
-                uv = [averagedU, averagedV]
-        except TypeError:
-            pass
-
-    return uv
-
-
-def shape_from_element(element):
-    """Return shape of given 'element'
-
-    Supports components, meshes, and surfaces
-
-    """
-
-    try:
-        # Get either shape or transform, based on element-type
-        node = cmds.ls(element, objectsOnly=True)[0]
-    except Exception:
-        cmds.warning("Could not find node in %s" % element)
-        return None
-
-    if cmds.nodeType(node) == 'transform':
-        try:
-            return cmds.listRelatives(node, shapes=True)[0]
-        except Exception:
-            cmds.warning("Could not find shape in %s" % element)
-            return None
-
-    else:
-        return node
+    return zip(a, a)
 
 
 def export_alembic(nodes,
@@ -546,7 +355,8 @@ def collect_animation_data(fps=False):
     data = OrderedDict()
     data["frameStart"] = start
     data["frameEnd"] = end
-    data["handles"] = 0
+    data["handleStart"] = 0
+    data["handleEnd"] = 0
     data["step"] = 1.0
 
     if fps:
@@ -605,115 +415,6 @@ def imprint(node, data):
 
         cmds.addAttr(node, longName=key, **add_type)
         cmds.setAttr(node + "." + key, value, **set_type)
-
-
-def serialise_shaders(nodes):
-    """Generate a shader set dictionary
-
-    Arguments:
-        nodes (list): Absolute paths to nodes
-
-    Returns:
-        dictionary of (shader: id) pairs
-
-    Schema:
-        {
-            "shader1": ["id1", "id2"],
-            "shader2": ["id3", "id1"]
-        }
-
-    Example:
-        {
-            "Bazooka_Brothers01_:blinn4SG": [
-                "f9520572-ac1d-11e6-b39e-3085a99791c9.f[4922:5001]",
-                "f9520572-ac1d-11e6-b39e-3085a99791c9.f[4587:4634]",
-                "f9520572-ac1d-11e6-b39e-3085a99791c9.f[1120:1567]",
-                "f9520572-ac1d-11e6-b39e-3085a99791c9.f[4251:4362]"
-            ],
-            "lambert2SG": [
-                "f9520571-ac1d-11e6-9dbb-3085a99791c9"
-            ]
-        }
-
-    """
-
-    valid_nodes = cmds.ls(
-        nodes,
-        long=True,
-        recursive=True,
-        showType=True,
-        objectsOnly=True,
-        type="transform"
-    )
-
-    meshes_by_id = {}
-    for mesh in valid_nodes:
-        shapes = cmds.listRelatives(valid_nodes[0],
-                                    shapes=True,
-                                    fullPath=True) or list()
-
-        if shapes:
-            shape = shapes[0]
-            if not cmds.nodeType(shape):
-                continue
-
-            try:
-                id_ = cmds.getAttr(mesh + ".mbID")
-
-                if id_ not in meshes_by_id:
-                    meshes_by_id[id_] = list()
-
-                meshes_by_id[id_].append(mesh)
-
-            except ValueError:
-                continue
-
-    meshes_by_shader = dict()
-    for mesh in meshes_by_id.values():
-        shape = cmds.listRelatives(mesh,
-                                   shapes=True,
-                                   fullPath=True) or list()
-
-        for shader in cmds.listConnections(shape,
-                                           type="shadingEngine") or list():
-
-            # Objects in this group are those that haven't got
-            # any shaders. These are expected to be managed
-            # elsewhere, such as by the default model loader.
-            if shader == "initialShadingGroup":
-                continue
-
-            if shader not in meshes_by_shader:
-                meshes_by_shader[shader] = list()
-
-            shaded = cmds.sets(shader, query=True) or list()
-            meshes_by_shader[shader].extend(shaded)
-
-    shader_by_id = {}
-    for shader, shaded in meshes_by_shader.items():
-
-        if shader not in shader_by_id:
-            shader_by_id[shader] = list()
-
-        for mesh in shaded:
-
-            # Enable shader assignment to faces.
-            name = mesh.split(".f[")[0]
-
-            transform = name
-            if cmds.objectType(transform) == "mesh":
-                transform = cmds.listRelatives(name, parent=True)[0]
-
-            try:
-                id_ = cmds.getAttr(transform + ".mbID")
-                shader_by_id[shader].append(mesh.replace(name, id_))
-            except KeyError:
-                continue
-
-        # Remove duplicates
-        shader_by_id[shader] = list(set(shader_by_id[shader]))
-
-    return shader_by_id
 
 
 def lsattr(attr, value=None):
@@ -795,17 +496,6 @@ def lsattrs(attrs):
 
 
 @contextlib.contextmanager
-def without_extension():
-    """Use cmds.file with defaultExtensions=False"""
-    previous_setting = cmds.file(defaultExtensions=True, query=True)
-    try:
-        cmds.file(defaultExtensions=False)
-        yield
-    finally:
-        cmds.file(defaultExtensions=previous_setting)
-
-
-@contextlib.contextmanager
 def attribute_values(attr_values):
     """Remaps node attributes to values during context.
 
@@ -881,26 +571,6 @@ def evaluation(mode="off"):
         yield
     finally:
         cmds.evaluationManager(mode=original)
-
-
-@contextlib.contextmanager
-def no_refresh():
-    """Temporarily disables Maya's UI updates
-
-    Note:
-        This only disabled the main pane and will sometimes still
-        trigger updates in torn off panels.
-
-    """
-
-    pane = _get_mel_global('gMainPane')
-    state = cmds.paneLayout(pane, query=True, manage=True)
-    cmds.paneLayout(pane, edit=True, manage=False)
-
-    try:
-        yield
-    finally:
-        cmds.paneLayout(pane, edit=True, manage=state)
 
 
 @contextlib.contextmanager
@@ -1569,15 +1239,6 @@ def extract_alembic(file,
     return file
 
 
-def maya_temp_folder():
-    scene_dir = os.path.dirname(cmds.file(query=True, sceneName=True))
-    tmp_dir = os.path.abspath(os.path.join(scene_dir, "..", "tmp"))
-    if not os.path.isdir(tmp_dir):
-        os.makedirs(tmp_dir)
-
-    return tmp_dir
-
-
 # region ID
 def get_id_required_nodes(referenced_nodes=False, nodes=None):
     """Filter out any node which are locked (reference) or readOnly
@@ -1760,22 +1421,6 @@ def set_id(node, unique_id, overwrite=False):
     if not exists or overwrite:
         attr = "{0}.cbId".format(node)
         cmds.setAttr(attr, unique_id, type="string")
-
-
-def remove_id(node):
-    """Remove the id attribute from the input node.
-
-    Args:
-        node (str): The node name
-
-    Returns:
-        bool: Whether an id attribute was deleted
-
-    """
-    if cmds.attributeQuery("cbId", node=node, exists=True):
-        cmds.deleteAttr("{}.cbId".format(node))
-        return True
-    return False
 
 
 # endregion ID
@@ -2453,6 +2098,7 @@ def reset_scene_resolution():
 
     set_scene_resolution(width, height, pixelAspect)
 
+
 def set_context_settings():
     """Apply the project settings from the project definition
 
@@ -2911,7 +2557,7 @@ def get_attr_in_layer(attr, layer):
 
 
 def fix_incompatible_containers():
-    """Return whether the current scene has any outdated content"""
+    """Backwards compatibility: old containers to use new ReferenceLoader"""
 
     host = api.registered_host()
     for container in host.ls():
@@ -3150,7 +2796,7 @@ class RenderSetupListObserver:
                 cmds.delete(render_layer_set_name)
 
 
-class RenderSetupItemObserver():
+class RenderSetupItemObserver:
     """Handle changes in render setup items."""
 
     def __init__(self, item):
@@ -3342,7 +2988,27 @@ def set_colorspace():
     """
     project_name = os.getenv("AVALON_PROJECT")
     imageio = get_anatomy_settings(project_name)["imageio"]["maya"]
-    root_dict = imageio["colorManagementPreference"]
+
+    # Maya 2022+ introduces new OCIO v2 color management settings that
+    # can override the old color managenement preferences. OpenPype has
+    # separate settings for both so we fall back when necessary.
+    use_ocio_v2 = imageio["colorManagementPreference_v2"]["enabled"]
+    required_maya_version = 2022
+    maya_version = int(cmds.about(version=True))
+    maya_supports_ocio_v2 = maya_version >= required_maya_version
+    if use_ocio_v2 and not maya_supports_ocio_v2:
+        # Fallback to legacy behavior with a warning
+        log.warning("Color Management Preference v2 is enabled but not "
+                    "supported by current Maya version: {} (< {}). Falling "
+                    "back to legacy settings.".format(
+                        maya_version, required_maya_version)
+                    )
+        use_ocio_v2 = False
+
+    if use_ocio_v2:
+        root_dict = imageio["colorManagementPreference_v2"]
+    else:
+        root_dict = imageio["colorManagementPreference"]
 
     if not isinstance(root_dict, dict):
         msg = "set_colorspace(): argument should be dictionary"
@@ -3350,11 +3016,12 @@ def set_colorspace():
 
     log.debug(">> root_dict: {}".format(root_dict))
 
-    # first enable color management
+    # enable color management
     cmds.colorManagementPrefs(e=True, cmEnabled=True)
     cmds.colorManagementPrefs(e=True, ocioRulesEnabled=True)
 
-    # second set config path
+    # set config path
+    custom_ocio_config = False
     if root_dict.get("configFilePath"):
         unresolved_path = root_dict["configFilePath"]
         ocio_paths = unresolved_path[platform.system().lower()]
@@ -3371,22 +3038,56 @@ def set_colorspace():
             cmds.colorManagementPrefs(e=True, cmConfigFileEnabled=True)
             log.debug("maya '{}' changed to: {}".format(
                 "configFilePath", resolved_path))
-            root_dict.pop("configFilePath")
+            custom_ocio_config = True
         else:
             cmds.colorManagementPrefs(e=True, cmConfigFileEnabled=False)
-            cmds.colorManagementPrefs(e=True, configFilePath="" )
+            cmds.colorManagementPrefs(e=True, configFilePath="")
 
-    # third set rendering space and view transform
-    renderSpace = root_dict["renderSpace"]
-    cmds.colorManagementPrefs(e=True, renderingSpaceName=renderSpace)
-    viewTransform = root_dict["viewTransform"]
-    cmds.colorManagementPrefs(e=True, viewTransformName=viewTransform)
+    # If no custom OCIO config file was set we make sure that Maya 2022+
+    # either chooses between Maya's newer default v2 or legacy config based
+    # on OpenPype setting to use ocio v2 or not.
+    if maya_supports_ocio_v2 and not custom_ocio_config:
+        if use_ocio_v2:
+            # Use Maya 2022+ default OCIO v2 config
+            log.info("Setting default Maya OCIO v2 config")
+            cmds.colorManagementPrefs(edit=True, configFilePath="")
+        else:
+            # Set the Maya default config file path
+            log.info("Setting default Maya OCIO v1 legacy config")
+            cmds.colorManagementPrefs(edit=True, configFilePath="legacy")
+
+    # set color spaces for rendering space and view transforms
+    def _colormanage(**kwargs):
+        """Wrapper around `cmds.colorManagementPrefs`.
+
+        This logs errors instead of raising an error so color management
+        settings get applied as much as possible.
+
+        """
+        assert len(kwargs) == 1, "Must receive one keyword argument"
+        try:
+            cmds.colorManagementPrefs(edit=True, **kwargs)
+            log.debug("Setting Color Management Preference: {}".format(kwargs))
+        except RuntimeError as exc:
+            log.error(exc)
+
+    if use_ocio_v2:
+        _colormanage(renderingSpaceName=root_dict["renderSpace"])
+        _colormanage(displayName=root_dict["displayName"])
+        _colormanage(viewName=root_dict["viewName"])
+    else:
+        _colormanage(renderingSpaceName=root_dict["renderSpace"])
+        if maya_supports_ocio_v2:
+            _colormanage(viewName=root_dict["viewTransform"])
+            _colormanage(displayName="legacy")
+        else:
+            _colormanage(viewTransformName=root_dict["viewTransform"])
 
 
 @contextlib.contextmanager
 def root_parent(nodes):
     # type: (list) -> list
-    """Context manager to un-parent provided nodes and return then back."""
+    """Context manager to un-parent provided nodes and return them back."""
     import pymel.core as pm  # noqa
 
     node_parents = []

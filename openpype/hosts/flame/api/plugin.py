@@ -361,6 +361,7 @@ class PublishableClip:
     vertical_sync_default = False
     driving_layer_default = ""
     index_from_segment_default = False
+    use_shot_name_default = False
 
     def __init__(self, segment, **kwargs):
         self.rename_index = kwargs["rename_index"]
@@ -376,6 +377,7 @@ class PublishableClip:
         # segment (clip) main attributes
         self.cs_name = self.clip_data["segment_name"]
         self.cs_index = int(self.clip_data["segment"])
+        self.shot_name = self.clip_data["shot_name"]
 
         # get track name and index
         self.track_index = int(self.clip_data["track"])
@@ -419,18 +421,21 @@ class PublishableClip:
         # deal with clip name
         new_name = self.marker_data.pop("newClipName")
 
-        if self.rename:
+        if self.rename and not self.use_shot_name:
             # rename segment
             self.current_segment.name = str(new_name)
             self.marker_data["asset"] = str(new_name)
+        elif self.use_shot_name:
+            self.marker_data["asset"] = self.shot_name
+            self.marker_data["hierarchyData"]["shot"] = self.shot_name
         else:
             self.marker_data["asset"] = self.cs_name
             self.marker_data["hierarchyData"]["shot"] = self.cs_name
 
         if self.marker_data["heroTrack"] and self.review_layer:
-            self.marker_data.update({"reviewTrack": self.review_layer})
+            self.marker_data["reviewTrack"] = self.review_layer
         else:
-            self.marker_data.update({"reviewTrack": None})
+            self.marker_data["reviewTrack"] = None
 
         # create pype tag on track_item and add data
         fpipeline.imprint(self.current_segment, self.marker_data)
@@ -463,6 +468,8 @@ class PublishableClip:
         # ui_inputs data or default values if gui was not used
         self.rename = self.ui_inputs.get(
             "clipRename", {}).get("value") or self.rename_default
+        self.use_shot_name = self.ui_inputs.get(
+            "useShotName", {}).get("value") or self.use_shot_name_default
         self.clip_name = self.ui_inputs.get(
             "clipName", {}).get("value") or self.clip_name_default
         self.hierarchy = self.ui_inputs.get(

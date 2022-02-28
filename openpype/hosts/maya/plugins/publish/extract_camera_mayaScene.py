@@ -43,7 +43,8 @@ def grouper(iterable, n, fillvalue=None):
 
     """
     args = [iter(iterable)] * n
-    return itertools.izip_longest(fillvalue=fillvalue, *args)
+    from six.moves import zip_longest
+    return zip_longest(fillvalue=fillvalue, *args)
 
 
 def unlock(plug):
@@ -117,19 +118,9 @@ class ExtractCameraMayaScene(openpype.api.Extractor):
                     # no preset found
                     pass
 
-        framerange = [instance.data.get("frameStart", 1),
-                      instance.data.get("frameEnd", 1)]
-        handle_start = instance.data.get("handleStart", 0)
-        handle_end = instance.data.get("handleEnd", 0)
-
-        # TODO: deprecated attribute "handles"
-
-        if handle_start is None:
-            handle_start = instance.data.get("handles", 0)
-            handle_end = instance.data.get("handles", 0)
-
-        range_with_handles = [framerange[0] - handle_start,
-                              framerange[1] + handle_end]
+        # Collect the start and end including handles
+        start = instance.data["frameStartHandle"]
+        end = instance.data["frameEndHandle"]
 
         step = instance.data.get("step", 1.0)
         bake_to_worldspace = instance.data("bakeToWorldSpace", True)
@@ -164,7 +155,7 @@ class ExtractCameraMayaScene(openpype.api.Extractor):
                             "Performing camera bakes: {}".format(transform))
                         baked = lib.bake_to_world_space(
                             transform,
-                            frame_range=range_with_handles,
+                            frame_range=[start, end],
                             step=step
                         )
                         baked_shapes = cmds.ls(baked,

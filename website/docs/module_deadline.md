@@ -12,15 +12,15 @@ import TabItem from '@theme/TabItem';
 
 For [AWS Thinkbox Deadline](https://www.awsthinkbox.com/deadline) support you need to set a few things up in both OpenPype and Deadline itself
 
-1. Deploy OpenPype executable to all nodes of Deadline farm. See [Install & Run](admin_use).
+1. Deploy OpenPype executable to all nodes of Deadline farm. See [Install & Run](admin_use.md)
 
 2. Enable Deadline Module in the [OpenPype Admin Settings](admin_settings_system.md#deadline).
 
-3. Set up *Deadline Web API service*. For more details on how to do it, see [here](https://docs.thinkboxsoftware.com/products/deadline/10.0/1_User%20Manual/manual/web-service.html).
+3. Set up *Deadline Web API service*. For more details on how to do it, see [here](https://docs.thinkboxsoftware.com/products/deadline/10.1/1_User%20Manual/manual/web-service.html).
 
 4. Point OpenPype to your deadline webservice URL in the [OpenPype Admin Settings](admin_settings_system.md#deadline).
 
-5. Install our custom plugin and scripts to your deadline repository. It should be as simple as copying content of `openPype/vendor/deadline/custom` to `path/to/your/deadline/repository/custom`.
+5. Install our custom plugin and scripts to your deadline repository. It should be as simple as copying content of `openpype/modules/deadline/repository/custom` to `path/to/your/deadline/repository/custom`.
 
 
 ## Configuration

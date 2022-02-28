@@ -58,9 +58,15 @@ module.exports = {
           to: 'docs/artist_getting_started',
           label: 'User Docs',
           position: 'left'
-        }, {
+        },
+        {
           to: 'docs/system_introduction',
           label: 'Admin Docs',
+          position: 'left'
+        },
+        {
+          to: 'docs/dev_introduction',
+          label: 'Dev Docs',
           position: 'left'
         },
           {
