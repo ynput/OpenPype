@@ -174,6 +174,8 @@ class CreatorDescriptionWidget(QtWidgets.QWidget):
 
 
 class CreateDialog(QtWidgets.QDialog):
+    default_size = (900, 500)
+
     def __init__(
         self, controller, asset_name=None, task_name=None, parent=None
     ):
@@ -262,11 +264,16 @@ class CreateDialog(QtWidgets.QDialog):
         mid_layout.addLayout(form_layout, 0)
         mid_layout.addWidget(create_btn, 0)
 
+        splitter_widget = QtWidgets.QSplitter(self)
+        splitter_widget.addWidget(context_widget)
+        splitter_widget.addWidget(mid_widget)
+        splitter_widget.addWidget(pre_create_widget)
+        splitter_widget.setStretchFactor(0, 1)
+        splitter_widget.setStretchFactor(1, 1)
+        splitter_widget.setStretchFactor(2, 1)
+
         layout = QtWidgets.QHBoxLayout(self)
-        layout.setSpacing(10)
-        layout.addWidget(context_widget, 1)
-        layout.addWidget(mid_widget, 1)
-        layout.addWidget(pre_create_widget, 1)
+        layout.addWidget(splitter_widget, 1)
 
         prereq_timer = QtCore.QTimer()
         prereq_timer.setInterval(50)
@@ -289,6 +296,8 @@ class CreateDialog(QtWidgets.QDialog):
 
         controller.add_plugins_refresh_callback(self._on_plugins_refresh)
 
+        self._splitter_widget = splitter_widget
+
         self._pre_create_widget = pre_create_widget
 
         self._context_widget = context_widget
@@ -308,6 +317,7 @@ class CreateDialog(QtWidgets.QDialog):
         self.create_btn = create_btn
 
         self._prereq_timer = prereq_timer
+        self._first_show = True
 
     def _context_change_is_enabled(self):
         return self._context_widget.isEnabled()
@@ -643,6 +653,16 @@ class CreateDialog(QtWidgets.QDialog):
 
     def showEvent(self, event):
         super(CreateDialog, self).showEvent(event)
+        if self._first_show:
+            self._first_show = False
+            width, height = self.default_size
+            self.resize(width, height)
+
+            third_size = int(width / 3)
+            self._splitter_widget.setSizes(
+                [third_size, third_size, width - (2 * third_size)]
+            )
+
         if self._last_pos is not None:
             self.move(self._last_pos)
 

@@ -29,7 +29,7 @@
         <fileType>Jpeg</fileType>
         <codec>923688</codec>
         <codecProfile></codecProfile>
-        <namePattern>&lt;segment name&gt;</namePattern>
+        <namePattern>&lt;shot name&gt;</namePattern>
         <compressionQuality>100</compressionQuality>
         <transferCharacteristic>2</transferCharacteristic>
         <colorimetricSpecification>4</colorimetricSpecification>
