@@ -147,6 +147,13 @@ class CollectTextures(pyblish.api.ContextPlugin):
                     }
                     resource_files[workfile_subset].append(item)
 
+                formatting_data = self._get_parsed_groups(
+                    repre_file,
+                    self.input_naming_patterns["textures"],
+                    self.input_naming_groups["textures"],
+                    self.color_space
+                )
+
                 if ext in self.texture_extensions:
                     c_space = self._get_color_space(
                         repre_file,
@@ -167,12 +174,14 @@ class CollectTextures(pyblish.api.ContextPlugin):
                         self.color_space
                     )
 
-                    formatting_data = {
+                    explicit_data = {
                         "color_space": c_space or '',  # None throws exception
                         "channel": channel or '',
                         "shader": shader or '',
                         "subset": parsed_subset or ''
                     }
+
+                    formatting_data.update(explicit_data)
 
                     fill_pairs = prepare_template_data(formatting_data)
                     subset = format_template_with_optional_keys(
@@ -320,13 +329,14 @@ class CollectTextures(pyblish.api.ContextPlugin):
         """
         asset_name = "NOT_AVAIL"
 
-        return self._parse(name, input_naming_patterns, input_naming_groups,
-                           color_spaces, 'asset') or asset_name
+        return (self._parse_key(name, input_naming_patterns,
+                                input_naming_groups, color_spaces, 'asset') or
+                asset_name)
 
     def _get_version(self, name, input_naming_patterns, input_naming_groups,
                      color_spaces):
-        found = self._parse(name, input_naming_patterns, input_naming_groups,
-                            color_spaces, 'version')
+        found = self._parse_key(name, input_naming_patterns,
+                                input_naming_groups, color_spaces, 'version')
 
         if found:
             return found.replace('v', '')
@@ -336,8 +346,8 @@ class CollectTextures(pyblish.api.ContextPlugin):
     def _get_udim(self, name, input_naming_patterns, input_naming_groups,
                   color_spaces):
         """Parses from 'name' udim value."""
-        found = self._parse(name, input_naming_patterns, input_naming_groups,
-                            color_spaces, 'udim')
+        found = self._parse_key(name, input_naming_patterns,
+                                input_naming_groups, color_spaces, 'udim')
         if found:
             return found
 
@@ -375,8 +385,8 @@ class CollectTextures(pyblish.api.ContextPlugin):
             Unknown format of channel name and color spaces >> cs are known
             list - 'color_space' used as a placeholder
         """
-        found = self._parse(name, input_naming_patterns, input_naming_groups,
-                            color_spaces, 'shader')
+        found = self._parse_key(name, input_naming_patterns,
+                                input_naming_groups, color_spaces, 'shader')
         if found:
             return found
 
@@ -389,15 +399,15 @@ class CollectTextures(pyblish.api.ContextPlugin):
             Unknown format of channel name and color spaces >> cs are known
             list - 'color_space' used as a placeholder
         """
-        found = self._parse(name, input_naming_patterns, input_naming_groups,
-                            color_spaces, 'channel')
+        found = self._parse_key(name, input_naming_patterns,
+                                input_naming_groups, color_spaces, 'channel')
         if found:
             return found
 
         self.log.warning("Didn't find channel in {}".format(name))
 
-    def _parse(self, name, input_naming_patterns, input_naming_groups,
-               color_spaces, key):
+    def _parse_key(self, name, input_naming_patterns, input_naming_groups,
+                   color_spaces, key):
         """Universal way to parse 'name' with configurable regex groups.
 
             Args:
@@ -411,23 +421,46 @@ class CollectTextures(pyblish.api.ContextPlugin):
             Raises:
                 ValueError - if broken 'input_naming_groups'
         """
+        parsed_groups = self._get_parsed_groups(name,
+                                                input_naming_patterns,
+                                                input_naming_groups,
+                                                color_spaces)
+
+        try:
+            parsed_value = parsed_groups[key]
+            return parsed_value
+        except IndexError:
+            msg = ("input_naming_groups must " +
+                   "have '{}' key".format(key))
+            raise ValueError(msg)
+
+    def _get_parsed_groups(self, name, input_naming_patterns,
+                           input_naming_groups, color_spaces):
+        """Universal way to parse 'name' with configurable regex groups.
+
+        Args:
+            name (str): workfile name or texture name
+            input_naming_patterns (list):
+                [workfile_pattern] or [texture_pattern]
+            input_naming_groups (list)
+                ordinal position of regex groups matching to input_naming..
+            color_spaces (list) - predefined color spaces
+
+        Returns:
+            (dict) {group_name:parsed_value}
+        """
         for input_pattern in input_naming_patterns:
             for cs in color_spaces:
                 pattern = input_pattern.replace('{color_space}', cs)
                 regex_result = re.findall(pattern, name)
                 if regex_result:
-                    idx = list(input_naming_groups).index(key)
-                    if idx < 0:
-                        msg = "input_naming_groups must " +\
-                              "have '{}' key".format(key)
-                        raise ValueError(msg)
+                    if len(regex_result[0]) == len(input_naming_groups):
+                        return dict(zip(input_naming_groups, regex_result[0]))
+                    else:
+                        self.log.warning("No of parsed groups doesn't match "
+                                         "no of group labels")
 
-                    try:
-                        parsed_value = regex_result[0][idx]
-                        return parsed_value
-                    except IndexError:
-                        self.log.warning("Wrong index, probably "
-                                         "wrong name {}".format(name))
+        return {}
 
     def _update_representations(self, upd_representations):
         """Frames dont have sense for textures, add collected udims instead."""
