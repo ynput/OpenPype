@@ -58,7 +58,7 @@ def find_executable(executable):
     paths = path_str.split(os.pathsep)
     for path in paths:
         for variant in variants:
-            filepath = os.path.abspath(os.path.join(path, executable))
+            filepath = os.path.abspath(os.path.join(path, variant))
             if os.path.isfile(filepath):
                 return filepath
     return None
