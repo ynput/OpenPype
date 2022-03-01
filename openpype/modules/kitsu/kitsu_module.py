@@ -24,7 +24,7 @@ from pymongo import DeleteOne, UpdateOne
 from avalon.api import AvalonMongoDB
 from openpype.api import get_project_settings
 from openpype.modules import JsonFilesSettingsDef, OpenPypeModule, ModulesManager
-from openpype.modules.default_modules.kitsu.utils.openpype import (
+from openpype.modules.kitsu.utils.openpype import (
     create_op_asset,
     sync_project,
     update_op_assets,
