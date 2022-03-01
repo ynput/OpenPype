@@ -2,8 +2,8 @@
 """Load camera from FBX."""
 import os
 
-from avalon import api, io, pipeline
-from openpype.hosts.unreal.api import lib, plugin
+from avalon import io, pipeline
+from openpype.hosts.unreal.api import plugin
 from openpype.hosts.unreal.api import pipeline as unreal_pipeline
 import unreal  # noqa
 
