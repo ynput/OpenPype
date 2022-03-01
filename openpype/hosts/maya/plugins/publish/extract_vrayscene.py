@@ -3,9 +3,9 @@
 import os
 import re
 
-import avalon.maya
 import openpype.api
 from openpype.hosts.maya.api.render_setup_tools import export_in_rs_layer
+from openpype.hosts.maya.api.lib import maintained_selection
 
 from maya import cmds
 
@@ -36,7 +36,7 @@ class ExtractVrayscene(openpype.api.Extractor):
         else:
             node = vray_settings[0]
 
-        # setMembers on vrayscene_layer shoudl contain layer name.
+        # setMembers on vrayscene_layer should contain layer name.
         layer_name = instance.data.get("layer")
 
         staging_dir = self.staging_dir(instance)
@@ -57,7 +57,7 @@ class ExtractVrayscene(openpype.api.Extractor):
 
         # Write out vrscene file
         self.log.info("Writing: '%s'" % file_path)
-        with avalon.maya.maintained_selection():
+        with maintained_selection():
             if "*" not in instance.data["setMembers"]:
                 self.log.info(
                     "Exporting: {}".format(instance.data["setMembers"]))
@@ -111,7 +111,7 @@ class ExtractVrayscene(openpype.api.Extractor):
             layer (str): layer name.
             template (str): token template.
             start_frame (int, optional): start frame - if set we use
-                mutliple files export mode.
+                multiple files export mode.
 
         Returns:
             str: formatted path.

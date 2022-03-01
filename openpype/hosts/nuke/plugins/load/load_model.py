@@ -1,7 +1,11 @@
-from avalon import api, io
-from avalon.nuke import lib as anlib
-from avalon.nuke import containerise, update_container
 import nuke
+from avalon import api, io
+from openpype.hosts.nuke.api.lib import maintained_selection
+from openpype.hosts.nuke.api import (
+    containerise,
+    update_container,
+    viewer_update_and_undo_stop
+)
 
 
 class AlembicModelLoader(api.Loader):
@@ -43,7 +47,7 @@ class AlembicModelLoader(api.Loader):
         # getting file path
         file = self.fname.replace("\\", "/")
 
-        with anlib.maintained_selection():
+        with maintained_selection():
             model_node = nuke.createNode(
                 "ReadGeo2",
                 "name {} file {} ".format(
@@ -122,7 +126,7 @@ class AlembicModelLoader(api.Loader):
         # getting file path
         file = api.get_representation_path(representation).replace("\\", "/")
 
-        with anlib.maintained_selection():
+        with maintained_selection():
             model_node = nuke.toNode(object_name)
             model_node['selected'].setValue(True)
 
@@ -156,7 +160,7 @@ class AlembicModelLoader(api.Loader):
         # color node by correct color by actual version
         self.node_version_color(version, model_node)
 
-        self.log.info("udated to version: {}".format(version.get("name")))
+        self.log.info("updated to version: {}".format(version.get("name")))
 
         return update_container(model_node, data_imprint)
 
@@ -181,7 +185,6 @@ class AlembicModelLoader(api.Loader):
         self.update(container, representation)
 
     def remove(self, container):
-        from avalon.nuke import viewer_update_and_undo_stop
         node = nuke.toNode(container['objectName'])
         with viewer_update_and_undo_stop():
             nuke.delete(node)

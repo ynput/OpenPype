@@ -12,7 +12,7 @@ from Qt.QtCore import QTimer  # noqa
 from .install_thread import InstallThread
 from .tools import (
     validate_mongo_connection,
-    get_openpype_path_from_db
+    get_openpype_icon_path
 )
 
 from .nice_progress_bar import NiceProgressBar
@@ -187,7 +187,6 @@ class InstallDialog(QtWidgets.QDialog):
         current_dir = os.path.dirname(os.path.abspath(__file__))
         roboto_font_path = os.path.join(current_dir, "RobotoMono-Regular.ttf")
         poppins_font_path = os.path.join(current_dir, "Poppins")
-        icon_path = os.path.join(current_dir, "openpype_icon.png")
 
         # Install roboto font
         QtGui.QFontDatabase.addApplicationFont(roboto_font_path)
@@ -196,6 +195,7 @@ class InstallDialog(QtWidgets.QDialog):
                 QtGui.QFontDatabase.addApplicationFont(filename)
 
         # Load logo
+        icon_path = get_openpype_icon_path()
         pixmap_openpype_logo = QtGui.QPixmap(icon_path)
         # Set logo as icon of window
         self.setWindowIcon(QtGui.QIcon(pixmap_openpype_logo))

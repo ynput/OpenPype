@@ -9,7 +9,10 @@ import collections
 import functools
 import getpass
 
-from openpype.settings import get_project_settings
+from openpype.settings import (
+    get_project_settings,
+    get_system_settings
+)
 from .anatomy import Anatomy
 from .profiles_filtering import filter_profiles
 
@@ -258,6 +261,18 @@ def get_hierarchy(asset_name=None):
     return "/".join(hierarchy_items)
 
 
+def get_system_general_anatomy_data():
+    system_settings = get_system_settings()
+    studio_name = system_settings["general"]["studio_name"]
+    studio_code = system_settings["general"]["studio_code"]
+    return {
+        "studio": {
+            "name": studio_name,
+            "code": studio_code
+        }
+    }
+
+
 def get_linked_asset_ids(asset_doc):
     """Return linked asset ids for `asset_doc` from DB
 
@@ -443,7 +458,7 @@ def get_workfile_template_key(
     Function is using profiles from project settings to return right template
     for passet task type and host name.
 
-    One of 'project_name' or 'project_settings' must be passed it is preffered
+    One of 'project_name' or 'project_settings' must be passed it is preferred
     to pass settings if are already available.
 
     Args:
@@ -536,6 +551,10 @@ def get_workdir_data(project_doc, asset_doc, task_name, host_name):
         "user": getpass.getuser(),
         "hierarchy": hierarchy,
     }
+
+    system_general_data = get_system_general_anatomy_data()
+    data.update(system_general_data)
+
     return data
 
 
@@ -545,7 +564,7 @@ def get_workdir_with_workdir_data(
     """Fill workdir path from entered data and project's anatomy.
 
     It is possible to pass only project's name instead of project's anatomy but
-    one of them **must** be entered. It is preffered to enter anatomy if is
+    one of them **must** be entered. It is preferred to enter anatomy if is
     available as initialization of a new Anatomy object may be time consuming.
 
     Args:
@@ -582,7 +601,7 @@ def get_workdir_with_workdir_data(
         )
 
     anatomy_filled = anatomy.format(workdir_data)
-    # Output is TemplateResult object which contain usefull data
+    # Output is TemplateResult object which contain useful data
     return anatomy_filled[template_key]["folder"]
 
 
@@ -604,7 +623,7 @@ def get_workdir(
             because workdir template may contain `{app}` key. In `Session`
             is stored under `AVALON_APP` key.
         anatomy (Anatomy): Optional argument. Anatomy object is created using
-            project name from `project_doc`. It is preffered to pass this
+            project name from `project_doc`. It is preferred to pass this
             argument as initialization of a new Anatomy object may be time
             consuming.
         template_key (str): Key of work templates in anatomy templates. Default
@@ -619,7 +638,7 @@ def get_workdir(
     workdir_data = get_workdir_data(
         project_doc, asset_doc, task_name, host_name
     )
-    # Output is TemplateResult object which contain usefull data
+    # Output is TemplateResult object which contain useful data
     return get_workdir_with_workdir_data(
         workdir_data, anatomy, template_key=template_key
     )
@@ -1036,7 +1055,7 @@ class BuildWorkfile:
         return valid_profiles
 
     def _prepare_profile_for_subsets(self, subsets, profiles):
-        """Select profile for each subset byt it's data.
+        """Select profile for each subset by it's data.
 
         Profiles are filtered for each subset individually.
         Profile is filtered by subset's family, optionally by name regex and
@@ -1197,7 +1216,7 @@ class BuildWorkfile:
         Representations are tried to load by names defined in configuration.
         If subset has representation matching representation name each loader
         is tried to load it until any is successful. If none of them was
-        successful then next reprensentation name is tried.
+        successful then next representation name is tried.
         Subset process loop ends when any representation is loaded or
         all matching representations were already tried.
 
@@ -1240,7 +1259,7 @@ class BuildWorkfile:
 
         print("representations", representations)
 
-        # Load ordered reprensentations.
+        # Load ordered representations.
         for subset_id, repres in representations_ordered:
             subset_name = subsets_by_id[subset_id]["name"]
 
@@ -1505,7 +1524,7 @@ def _get_task_context_data_for_anatomy(
         "requested task type: `{}`".format(task_type)
     )
 
-    return {
+    data = {
         "project": {
             "name": project_doc["name"],
             "code": project_doc["data"].get("code")
@@ -1517,6 +1536,11 @@ def _get_task_context_data_for_anatomy(
             "short_name": project_task_type_data["short_name"]
         }
     }
+
+    system_general_data = get_system_general_anatomy_data()
+    data.update(system_general_data)
+
+    return data
 
 
 def get_custom_workfile_template_by_context(
@@ -1560,7 +1584,7 @@ def get_custom_workfile_template_by_context(
     # get path from matching profile
     matching_item = filter_profiles(
         template_profiles,
-        {"task_type": current_task_type}
+        {"task_types": current_task_type}
     )
     # when path is available try to format it in case
     # there are some anatomy template strings

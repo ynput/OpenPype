@@ -1,9 +1,7 @@
 from avalon import api
 import pyblish.api
-from avalon import photoshop
-
 import openpype.api
-from openpype.pipeline import PublishXmlValidationError
+from openpype.hosts.photoshop import api as photoshop
 
 
 class ValidateInstanceAssetRepair(pyblish.api.Action):
@@ -58,10 +56,4 @@ class ValidateInstanceAsset(pyblish.api.InstancePlugin):
             f"If that's not correct value, close workfile and "
             f"reopen via Workfiles!"
         )
-        formatting_data = {
-            "found": instance_asset,
-            "expected": current_asset
-        }
-        if instance_asset != current_asset:
-            raise PublishXmlValidationError(self, msg,
-                                            formatting_data=formatting_data)
+        assert instance_asset == current_asset, msg

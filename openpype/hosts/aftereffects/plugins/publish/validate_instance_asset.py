@@ -1,8 +1,8 @@
 from avalon import api
 import pyblish.api
 import openpype.api
-from avalon import aftereffects
 from openpype.pipeline import PublishXmlValidationError
+from openpype.hosts.aftereffects.api import get_stub
 
 
 class ValidateInstanceAssetRepair(pyblish.api.Action):
@@ -23,12 +23,13 @@ class ValidateInstanceAssetRepair(pyblish.api.Action):
 
         # Apply pyblish.logic to get the instances for the plug-in
         instances = pyblish.api.instances_by_plugin(failed, plugin)
-        stub = aftereffects.stub()
+        stub = get_stub()
         for instance in instances:
             data = stub.read(instance[0])
 
             data["asset"] = api.Session["AVALON_ASSET"]
             stub.imprint(instance[0], data)
+
 
 class ValidateInstanceAsset(pyblish.api.InstancePlugin):
     """Validate the instance asset is the current selected context asset.

@@ -7,7 +7,7 @@ from maya import cmds
 
 import pyblish.api
 from avalon import api
-from openpype.hosts.maya import lib
+from openpype.hosts.maya.api import lib
 
 
 class CollectVrayScene(pyblish.api.InstancePlugin):
@@ -48,7 +48,7 @@ class CollectVrayScene(pyblish.api.InstancePlugin):
                 expected_layer_name = re.search(r"^.+:(.*)", layer).group(1)
             except IndexError:
                 msg = "Invalid layer name in set [ {} ]".format(layer)
-                self.log.warnig(msg)
+                self.log.warning(msg)
                 continue
 
             self.log.info("processing %s" % layer)

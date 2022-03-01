@@ -1,11 +1,12 @@
 from collections import OrderedDict
-from openpype.hosts.nuke.api import (
-    plugin,
-    lib)
+
 import nuke
 
+from openpype.hosts.nuke.api import plugin
+from openpype.hosts.nuke.api.lib import create_write_node
 
-class CreateWritePrerender(plugin.PypeCreator):
+
+class CreateWritePrerender(plugin.OpenPypeCreator):
     # change this to template preset
     name = "WritePrerender"
     label = "Create Write Prerender"
@@ -97,13 +98,13 @@ class CreateWritePrerender(plugin.PypeCreator):
                                    "/{subset}.{frame}.{ext}")})
 
         self.log.info("write_data: {}".format(write_data))
-
-        write_node = lib.create_write_node(
+        reviewable = self.presets.get("reviewable")
+        write_node = create_write_node(
             self.data["subset"],
             write_data,
             input=selected_node,
             prenodes=[],
-            review=False,
+            review=reviewable,
             linked_knobs=["channels", "___", "first", "last", "use_limit"])
 
         # relinking to collected connections

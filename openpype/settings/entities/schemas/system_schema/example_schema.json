@@ -11,13 +11,13 @@
         },
         {
             "type": "dict-conditional",
-            "key": "overriden_value",
-            "label": "Overriden value",
-            "enum_key": "overriden",
+            "key": "overridden_value",
+            "label": "Overridden value",
+            "enum_key": "overridden",
             "enum_is_horizontal": true,
             "enum_children": [
                 {
-                    "key": "overriden",
+                    "key": "overridden",
                     "label": "Override value",
                     "children": [
                         {

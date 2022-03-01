@@ -6,9 +6,7 @@ import re
 
 import pyblish.api
 
-from avalon import harmony
-
-import openpype.hosts.harmony
+import openpype.hosts.harmony.api as harmony
 from openpype.pipeline import PublishXmlValidationError
 
 
@@ -21,12 +19,12 @@ class ValidateSceneSettingsRepair(pyblish.api.Action):
 
     def process(self, context, plugin):
         """Repair action entry point."""
-        expected = openpype.hosts.harmony.api.get_asset_settings()
+        expected = harmony.get_asset_settings()
         asset_settings = _update_frames(dict.copy(expected))
         asset_settings["frameStart"] = 1
         asset_settings["frameEnd"] = asset_settings["frameEnd"] + \
             asset_settings["handleEnd"]
-        openpype.hosts.harmony.api.set_scene_settings(asset_settings)
+        harmony.set_scene_settings(asset_settings)
         if not os.path.exists(context.data["scenePath"]):
             self.log.info("correcting scene name")
             scene_dir = os.path.dirname(context.data["currentFile"])
@@ -57,7 +55,7 @@ class ValidateSceneSettings(pyblish.api.InstancePlugin):
 
     def process(self, instance):
         """Plugin entry point."""
-        expected_settings = openpype.hosts.harmony.api.get_asset_settings()
+        expected_settings = harmony.get_asset_settings()
         self.log.info("scene settings from DB:".format(expected_settings))
 
         expected_settings = _update_frames(dict.copy(expected_settings))

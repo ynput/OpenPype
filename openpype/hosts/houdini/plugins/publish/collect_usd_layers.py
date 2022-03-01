@@ -48,7 +48,7 @@ class CollectUsdLayers(pyblish.api.InstancePlugin):
             label = "{0} -> {1}".format(instance.data["name"], name)
             layer_inst = context.create_instance(name)
 
-            family = "colorbleed.usdlayer"
+            family = "usdlayer"
             layer_inst.data["family"] = family
             layer_inst.data["families"] = [family]
             layer_inst.data["subset"] = "__stub__"

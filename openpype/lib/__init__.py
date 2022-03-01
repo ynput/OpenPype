@@ -24,16 +24,19 @@ from .env_tools import (
 
 from .terminal import Terminal
 from .execute import (
+    get_openpype_execute_args,
     get_pype_execute_args,
+    get_linux_launcher_args,
     execute,
     run_subprocess,
+    run_detached_process,
+    run_openpype_process,
+    clean_envs_for_openpype_process,
     path_to_subprocess_arg,
     CREATE_NO_WINDOW
 )
 from .log import PypeLogger, timeit
 from .mongo import (
-    decompose_url,
-    compose_url,
     get_default_components,
     validate_mongo_connection,
     OpenPypeMongoConnection
@@ -82,6 +85,7 @@ from .avalon_context import (
     get_hierarchy,
     get_linked_assets,
     get_latest_version,
+    get_system_general_anatomy_data,
 
     get_workfile_template_key,
     get_workfile_template_key_from_context,
@@ -127,7 +131,7 @@ from .applications import (
     PostLaunchHook,
 
     EnvironmentPrepData,
-    prepare_host_environments,
+    prepare_app_environments,
     prepare_context_environments,
     get_app_environments_for_context,
     apply_project_environments_value
@@ -150,7 +154,8 @@ from .path_tools import (
     get_version_from_path,
     get_last_version_from_path,
     create_project_folders,
-    get_project_basic_paths
+    create_workdir_extra_folders,
+    get_project_basic_paths,
 )
 
 from .editorial import (
@@ -165,17 +170,28 @@ from .editorial import (
     make_sequence_collection
 )
 
-from .pype_info import (
+from .openpype_version import (
+    op_version_control_available,
     get_openpype_version,
-    get_build_version
+    get_build_version,
+    get_expected_version,
+    is_running_from_build,
+    is_running_staging,
+    is_current_version_studio_latest,
+    is_current_version_higher_than_expected
 )
 
 terminal = Terminal
 
 __all__ = [
+    "get_openpype_execute_args",
     "get_pype_execute_args",
+    "get_linux_launcher_args",
     "execute",
     "run_subprocess",
+    "run_detached_process",
+    "run_openpype_process",
+    "clean_envs_for_openpype_process",
     "path_to_subprocess_arg",
     "CREATE_NO_WINDOW",
 
@@ -209,6 +225,7 @@ __all__ = [
     "get_hierarchy",
     "get_linked_assets",
     "get_latest_version",
+    "get_system_general_anatomy_data",
 
     "get_workfile_template_key",
     "get_workfile_template_key_from_context",
@@ -246,7 +263,7 @@ __all__ = [
     "PreLaunchHook",
     "PostLaunchHook",
     "EnvironmentPrepData",
-    "prepare_host_environments",
+    "prepare_app_environments",
     "prepare_context_environments",
     "get_app_environments_for_context",
     "apply_project_environments_value",
@@ -276,8 +293,6 @@ __all__ = [
     "get_datetime_data",
 
     "PypeLogger",
-    "decompose_url",
-    "compose_url",
     "get_default_components",
     "validate_mongo_connection",
     "OpenPypeMongoConnection",
@@ -294,8 +309,14 @@ __all__ = [
     "frames_to_timecode",
     "make_sequence_collection",
     "create_project_folders",
+    "create_workdir_extra_folders",
     "get_project_basic_paths",
 
+    "op_version_control_available",
     "get_openpype_version",
     "get_build_version",
+    "get_expected_version",
+    "is_running_from_build",
+    "is_running_staging",
+    "is_current_version_studio_latest",
 ]

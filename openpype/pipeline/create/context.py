@@ -94,6 +94,7 @@ class AttributeValues:
         attr_defs_by_key = {
             attr_def.key: attr_def
             for attr_def in attr_defs
+            if attr_def.is_value_def
         }
         for key, value in values.items():
             if key not in attr_defs_by_key:
@@ -360,7 +361,7 @@ class CreatedInstance:
     #   their individual children but not on their own
     __immutable_keys = (
         "id",
-        "uuid",
+        "instance_id",
         "family",
         "creator_identifier",
         "creator_attributes",
@@ -418,7 +419,7 @@ class CreatedInstance:
         # Stored creator specific attribute values
         # {key: value}
         creator_values = copy.deepcopy(orig_creator_attributes)
-        creator_attr_defs = creator.get_attribute_defs()
+        creator_attr_defs = creator.get_instance_attr_defs()
 
         self._data["creator_attributes"] = CreatorAttributeValues(
             self, creator_attr_defs, creator_values, orig_creator_attributes
@@ -433,8 +434,8 @@ class CreatedInstance:
         if data:
             self._data.update(data)
 
-        if not self._data.get("uuid"):
-            self._data["uuid"] = str(uuid4())
+        if not self._data.get("instance_id"):
+            self._data["instance_id"] = str(uuid4())
 
         self._asset_is_valid = self.has_set_asset
         self._task_is_valid = self.has_set_task
@@ -550,7 +551,7 @@ class CreatedInstance:
     @property
     def id(self):
         """Instance identifier."""
-        return self._data["uuid"]
+        return self._data["instance_id"]
 
     @property
     def data(self):

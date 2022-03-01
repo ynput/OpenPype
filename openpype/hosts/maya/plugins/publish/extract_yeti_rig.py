@@ -7,9 +7,8 @@ import contextlib
 
 from maya import cmds
 
-import avalon.maya.lib as lib
 import openpype.api
-import openpype.hosts.maya.api.lib as maya
+from openpype.hosts.maya.api import lib
 
 
 @contextlib.contextmanager

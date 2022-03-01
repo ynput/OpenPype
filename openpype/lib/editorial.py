@@ -116,7 +116,7 @@ def range_from_frames(start, duration, fps):
         fps (float): frame range
 
     Returns:
-        otio._ot._ot.TimeRange: crated range
+        otio._ot._ot.TimeRange: created range
 
     """
     return _ot.TimeRange(
@@ -131,7 +131,7 @@ def frames_to_secons(frames, framerate):
 
     Args:
         frames (int): frame
-        framerate (flaot): frame rate
+        framerate (float): frame rate
 
     Returns:
         float: second value
@@ -257,7 +257,7 @@ def get_media_range_with_retimes(otio_clip, handle_start, handle_end):
             ((source_range.duration.value - 1) * abs(
                 time_scalar)) + offset_out))
 
-    # calculate available hanles
+    # calculate available handles
     if (media_in_trimmed - media_in) < handle_start:
         handle_start = (media_in_trimmed - media_in)
     if (media_out - media_out_trimmed) < handle_end:

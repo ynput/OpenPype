@@ -14,7 +14,8 @@ from openpype.lib.remote_publish import (
     publish_and_log,
     fail_batch,
     find_variant_key,
-    get_task_data
+    get_task_data,
+    IN_PROGRESS_STATUS
 )
 
 
@@ -80,6 +81,11 @@ class PypeCommands:
         standalonepublish.main()
 
     @staticmethod
+    def launch_traypublisher():
+        from openpype.tools import traypublisher
+        traypublisher.main()
+
+    @staticmethod
     def publish(paths, targets=None, gui=False):
         """Start headless publishing.
 
@@ -133,7 +139,7 @@ class PypeCommands:
                 print(f"setting target: {target}")
                 pyblish.api.register_target(target)
         else:
-            pyblish.api.register_target("filesequence")
+            pyblish.api.register_target("farm")
 
         os.environ["OPENPYPE_PUBLISH_DATA"] = os.pathsep.join(paths)
 
@@ -161,21 +167,32 @@ class PypeCommands:
         log.info("Publish finished.")
 
     @staticmethod
-    def remotepublishfromapp(project, batch_dir, host_name,
-                             user, targets=None):
+    def remotepublishfromapp(project, batch_path, host_name,
+                             user_email, targets=None):
         """Opens installed variant of 'host' and run remote publish there.
 
-            Currently implemented and tested for Photoshop where customer
-            wants to process uploaded .psd file and publish collected layers
-            from there.
+        Currently implemented and tested for Photoshop where customer
+        wants to process uploaded .psd file and publish collected layers
+        from there.
 
-            Checks if no other batches are running (status =='in_progress). If
-            so, it sleeps for SLEEP (this is separate process),
-            waits for WAIT_FOR seconds altogether.
+        Checks if no other batches are running (status =='in_progress). If
+        so, it sleeps for SLEEP (this is separate process),
+        waits for WAIT_FOR seconds altogether.
 
-            Requires installed host application on the machine.
+        Requires installed host application on the machine.
 
-            Runs publish process as user would, in automatic fashion.
+        Runs publish process as user would, in automatic fashion.
+
+        Args:
+            project (str): project to publish (only single context is expected
+                per call of remotepublish
+            batch_path (str): Path batch folder. Contains subfolders with
+                resources (workfile, another subfolder 'renders' etc.)
+            host_name (str): 'photoshop'
+            user_email (string): email address for webpublisher - used to
+                find Ftrack user with same email
+            targets (list): Pyblish targets
+                (to choose validator for example)
         """
         import pyblish.api
         from openpype.api import Logger
@@ -185,9 +202,9 @@ class PypeCommands:
 
         log.info("remotepublishphotoshop command")
 
-        task_data = get_task_data(batch_dir)
+        task_data = get_task_data(batch_path)
 
-        workfile_path = os.path.join(batch_dir,
+        workfile_path = os.path.join(batch_path,
                                      task_data["task"],
                                      task_data["files"][0])
 
@@ -196,9 +213,9 @@ class PypeCommands:
         batch_id = task_data["batch"]
         dbcon = get_webpublish_conn()
         # safer to start logging here, launch might be broken altogether
-        _id = start_webpublish_log(dbcon, batch_id, user)
+        _id = start_webpublish_log(dbcon, batch_id, user_email)
 
-        batches_in_progress = list(dbcon.find({"status": "in_progress"}))
+        batches_in_progress = list(dbcon.find({"status": IN_PROGRESS_STATUS}))
         if len(batches_in_progress) > 1:
             fail_batch(_id, batches_in_progress, dbcon)
             print("Another batch running, probably stuck, ask admin for help")
@@ -219,10 +236,11 @@ class PypeCommands:
         print("env:: {}".format(env))
         os.environ.update(env)
 
-        os.environ["OPENPYPE_PUBLISH_DATA"] = batch_dir
+        os.environ["OPENPYPE_PUBLISH_DATA"] = batch_path
         # must pass identifier to update log lines for a batch
         os.environ["BATCH_LOG_ID"] = str(_id)
         os.environ["HEADLESS_PUBLISH"] = 'true'  # to use in app lib
+        os.environ["USER_EMAIL"] = user_email
 
         pyblish.api.register_host(host_name)
         if targets:
@@ -238,7 +256,10 @@ class PypeCommands:
 
         data = {
             "last_workfile_path": workfile_path,
-            "start_last_workfile": True
+            "start_last_workfile": True,
+            "project_name": project,
+            "asset_name": asset,
+            "task_name": task_name
         }
 
         launched_app = application_manager.launch(app_name, **data)
@@ -247,7 +268,7 @@ class PypeCommands:
             time.sleep(0.5)
 
     @staticmethod
-    def remotepublish(project, batch_path, user, targets=None):
+    def remotepublish(project, batch_path, user_email, targets=None):
         """Start headless publishing.
 
         Used to publish rendered assets, workfiles etc.
@@ -259,7 +280,8 @@ class PypeCommands:
                 per call of remotepublish
             batch_path (str): Path batch folder. Contains subfolders with
                 resources (workfile, another subfolder 'renders' etc.)
-            user (string): email address for webpublisher
+            user_email (string): email address for webpublisher - used to
+                find Ftrack user with same email
             targets (list): Pyblish targets
                 (to choose validator for example)
 
@@ -283,6 +305,7 @@ class PypeCommands:
         os.environ["OPENPYPE_PUBLISH_DATA"] = batch_path
         os.environ["AVALON_PROJECT"] = project
         os.environ["AVALON_APP"] = host_name
+        os.environ["USER_EMAIL"] = user_email
 
         pyblish.api.register_host(host_name)
 
@@ -298,9 +321,9 @@ class PypeCommands:
 
         _, batch_id = os.path.split(batch_path)
         dbcon = get_webpublish_conn()
-        _id = start_webpublish_log(dbcon, batch_id, user)
+        _id = start_webpublish_log(dbcon, batch_id, user_email)
 
-        publish_and_log(dbcon, _id, log)
+        publish_and_log(dbcon, _id, log, batch_id=batch_id)
 
         log.info("Publish finished.")
 
@@ -345,7 +368,7 @@ class PypeCommands:
         pass
 
     def run_tests(self, folder, mark, pyargs,
-                  test_data_folder, persist, app_variant):
+                  test_data_folder, persist, app_variant, timeout):
         """
             Runs tests from 'folder'
 
@@ -383,6 +406,9 @@ class PypeCommands:
         if app_variant:
             args.extend(["--app_variant", app_variant])
 
+        if timeout:
+            args.extend(["--timeout", timeout])
+
         print("run_tests args: {}".format(args))
         import pytest
         pytest.main(args)
@@ -418,3 +444,13 @@ class PypeCommands:
 
         version_packer = VersionRepacker(directory)
         version_packer.process()
+
+    def pack_project(self, project_name, dirpath):
+        from openpype.lib.project_backpack import pack_project
+
+        pack_project(project_name, dirpath)
+
+    def unpack_project(self, zip_filepath, new_root):
+        from openpype.lib.project_backpack import unpack_project
+
+        unpack_project(zip_filepath, new_root)

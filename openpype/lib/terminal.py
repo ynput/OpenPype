@@ -49,11 +49,13 @@ class Terminal:
         """
 
         from openpype.lib import env_value_to_bool
-        use_colors = env_value_to_bool(
-            "OPENPYPE_LOG_NO_COLORS", default=Terminal.use_colors
+        log_no_colors = env_value_to_bool(
+            "OPENPYPE_LOG_NO_COLORS", default=None
         )
-        if not use_colors:
-            Terminal.use_colors = use_colors
+        if log_no_colors is not None:
+            Terminal.use_colors = not log_no_colors
+
+        if not Terminal.use_colors:
             Terminal._initialized = True
             return
 
@@ -130,7 +132,7 @@ class Terminal:
     def _multiple_replace(text, adict):
         """Replace multiple tokens defined in dict.
 
-        Find and replace all occurances of strings defined in dict is
+        Find and replace all occurrences of strings defined in dict is
         supplied string.
 
         Args:

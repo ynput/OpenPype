@@ -11,7 +11,10 @@ from Qt import QtWidgets, QtCore, QtGui
 from avalon import api, pipeline
 from avalon.lib import HeroVersionType
 
-from openpype.tools.utils import lib as tools_lib
+from openpype.tools.utils import (
+    ErrorMessageBox,
+    lib as tools_lib
+)
 from openpype.tools.utils.delegates import (
     VersionDelegate,
     PrettyTimeDelegate
@@ -31,7 +34,8 @@ from .model import (
     SubsetFilterProxyModel,
     FamiliesFilterProxyModel,
     RepresentationModel,
-    RepresentationSortProxyModel
+    RepresentationSortProxyModel,
+    ITEM_ID_ROLE
 )
 from . import lib
 
@@ -64,20 +68,37 @@ class OverlayFrame(QtWidgets.QFrame):
         self.label_widget.setText(label)
 
 
-class LoadErrorMessageBox(QtWidgets.QDialog):
+class LoadErrorMessageBox(ErrorMessageBox):
     def __init__(self, messages, parent=None):
-        super(LoadErrorMessageBox, self).__init__(parent)
-        self.setWindowTitle("Loading failed")
-        self.setFocusPolicy(QtCore.Qt.StrongFocus)
+        self._messages = messages
+        super(LoadErrorMessageBox, self).__init__("Loading failed", parent)
 
-        body_layout = QtWidgets.QVBoxLayout(self)
-
-        main_label = (
+    def _create_top_widget(self, parent_widget):
+        label_widget = QtWidgets.QLabel(parent_widget)
+        label_widget.setText(
             "<span style='font-size:18pt;'>Failed to load items</span>"
         )
-        main_label_widget = QtWidgets.QLabel(main_label, self)
-        body_layout.addWidget(main_label_widget)
+        return label_widget
 
+    def _get_report_data(self):
+        report_data = []
+        for exc_msg, tb_text, repre, subset, version in self._messages:
+            report_message = (
+                "During load error happened on Subset: \"{subset}\""
+                " Representation: \"{repre}\" Version: {version}"
+                "\n\nError message: {message}"
+            ).format(
+                subset=subset,
+                repre=repre,
+                version=version,
+                message=exc_msg
+            )
+            if tb_text:
+                report_message += "\n\n{}".format(tb_text)
+            report_data.append(report_message)
+        return report_data
+
+    def _create_content(self, content_layout):
         item_name_template = (
             "<span style='font-weight:bold;'>Subset:</span> {}<br>"
             "<span style='font-weight:bold;'>Version:</span> {}<br>"
@@ -85,46 +106,27 @@ class LoadErrorMessageBox(QtWidgets.QDialog):
         )
         exc_msg_template = "<span style='font-weight:bold'>{}</span>"
 
-        for exc_msg, tb, repre, subset, version in messages:
+        for exc_msg, tb_text, repre, subset, version in self._messages:
             line = self._create_line()
-            body_layout.addWidget(line)
+            content_layout.addWidget(line)
 
             item_name = item_name_template.format(subset, version, repre)
             item_name_widget = QtWidgets.QLabel(
                 item_name.replace("\n", "<br>"), self
             )
-            body_layout.addWidget(item_name_widget)
+            item_name_widget.setWordWrap(True)
+            content_layout.addWidget(item_name_widget)
 
             exc_msg = exc_msg_template.format(exc_msg.replace("\n", "<br>"))
             message_label_widget = QtWidgets.QLabel(exc_msg, self)
-            body_layout.addWidget(message_label_widget)
+            message_label_widget.setWordWrap(True)
+            content_layout.addWidget(message_label_widget)
 
-            if tb:
-                tb_widget = QtWidgets.QLabel(tb.replace("\n", "<br>"), self)
-                tb_widget.setTextInteractionFlags(
-                    QtCore.Qt.TextBrowserInteraction
-                )
-                body_layout.addWidget(tb_widget)
-
-        footer_widget = QtWidgets.QWidget(self)
-        footer_layout = QtWidgets.QHBoxLayout(footer_widget)
-        buttonBox = QtWidgets.QDialogButtonBox(QtCore.Qt.Vertical)
-        buttonBox.setStandardButtons(
-            QtWidgets.QDialogButtonBox.StandardButton.Ok
-        )
-        buttonBox.accepted.connect(self._on_accept)
-        footer_layout.addWidget(buttonBox, alignment=QtCore.Qt.AlignRight)
-        body_layout.addWidget(footer_widget)
-
-    def _on_accept(self):
-        self.close()
-
-    def _create_line(self):
-        line = QtWidgets.QFrame(self)
-        line.setFixedHeight(2)
-        line.setFrameShape(QtWidgets.QFrame.HLine)
-        line.setFrameShadow(QtWidgets.QFrame.Sunken)
-        return line
+            if tb_text:
+                line = self._create_line()
+                tb_widget = self._create_traceback_widget(tb_text, self)
+                content_layout.addWidget(line)
+                content_layout.addWidget(tb_widget)
 
 
 class SubsetWidget(QtWidgets.QWidget):
@@ -350,6 +352,59 @@ class SubsetWidget(QtWidgets.QWidget):
 
         lib.change_visibility(self.model, self.view, "repre_info", enabled)
 
+    def get_selected_items(self):
+        selection_model = self.view.selectionModel()
+        indexes = selection_model.selectedIndexes()
+
+        item_ids = set()
+        for index in indexes:
+            item_id = index.data(ITEM_ID_ROLE)
+            if item_id is not None:
+                item_ids.add(item_id)
+
+        output = []
+        for item_id in item_ids:
+            item = self.model.get_item_by_id(item_id)
+            if item is not None:
+                output.append(item)
+        return output
+
+    def get_selected_merge_items(self):
+        output = []
+        items = collections.deque(self.get_selected_items())
+
+        item_ids = set()
+        while items:
+            item = items.popleft()
+            if item.get("isGroup"):
+                for child in item.children():
+                    items.appendleft(child)
+
+            elif item.get("isMerged"):
+                item_id = item["id"]
+                if item_id not in item_ids:
+                    item_ids.add(item_id)
+                    output.append(item)
+
+        return output
+
+    def get_selected_subsets(self):
+        output = []
+        items = collections.deque(self.get_selected_items())
+
+        item_ids = set()
+        while items:
+            item = items.popleft()
+            if item.get("isGroup") or item.get("isMerged"):
+                for child in item.children():
+                    items.appendleft(child)
+            else:
+                item_id = item["id"]
+                if item_id not in item_ids:
+                    item_ids.add(item_id)
+                    output.append(item)
+        return output
+
     def on_context_menu(self, point):
         """Shows menu with loader actions on Right-click.
 
@@ -366,10 +421,7 @@ class SubsetWidget(QtWidgets.QWidget):
             return
 
         # Get selected subsets without groups
-        selection = self.view.selectionModel()
-        rows = selection.selectedRows(column=0)
-
-        items = lib.get_selected_items(rows, self.model.ItemRole)
+        items = self.get_selected_subsets()
 
         # Get all representation->loader combinations available for the
         # index under the cursor, so we can list the user the options.
@@ -535,37 +587,8 @@ class SubsetWidget(QtWidgets.QWidget):
         self.load_ended.emit()
 
         if error_info:
-            box = LoadErrorMessageBox(error_info)
+            box = LoadErrorMessageBox(error_info, self)
             box.show()
-
-    def selected_subsets(self, _groups=False, _merged=False, _other=True):
-        selection = self.view.selectionModel()
-        rows = selection.selectedRows(column=0)
-
-        subsets = list()
-        if not any([_groups, _merged, _other]):
-            self.echo((
-                "This is a BUG: Selected_subsets args must contain"
-                " at least one value set to True"
-            ))
-            return subsets
-
-        for row in rows:
-            item = row.data(self.model.ItemRole)
-            if item.get("isGroup"):
-                if not _groups:
-                    continue
-
-            elif item.get("isMerged"):
-                if not _merged:
-                    continue
-            else:
-                if not _other:
-                    continue
-
-            subsets.append(item)
-
-        return subsets
 
     def group_subsets(self, name, asset_ids, items):
         field = "data.subsetGroup"
@@ -1260,6 +1283,40 @@ class RepresentationWidget(QtWidgets.QWidget):
             }
         return repre_context_by_id
 
+    def get_selected_items(self):
+        selection_model = self.tree_view.selectionModel()
+        indexes = selection_model.selectedIndexes()
+
+        item_ids = set()
+        for index in indexes:
+            item_id = index.data(ITEM_ID_ROLE)
+            if item_id is not None:
+                item_ids.add(item_id)
+
+        output = []
+        for item_id in item_ids:
+            item = self.model.get_item_by_id(item_id)
+            if item is not None:
+                output.append(item)
+        return output
+
+    def get_selected_repre_items(self):
+        output = []
+        items = collections.deque(self.get_selected_items())
+
+        item_ids = set()
+        while items:
+            item = items.popleft()
+            if item.get("isGroup") or item.get("isMerged"):
+                for child in item.children():
+                    items.appendleft(child)
+            else:
+                item_id = item["id"]
+                if item_id not in item_ids:
+                    item_ids.add(item_id)
+                    output.append(item)
+        return output
+
     def on_context_menu(self, point):
         """Shows menu with loader actions on Right-click.
 
@@ -1278,10 +1335,8 @@ class RepresentationWidget(QtWidgets.QWidget):
         selection = self.tree_view.selectionModel()
         rows = selection.selectedRows(column=0)
 
-        items = lib.get_selected_items(rows, self.model.ItemRole)
-
+        items = self.get_selected_repre_items()
         selected_side = self._get_selected_side(point_index, rows)
-
         # Get all representation->loader combinations available for the
         # index under the cursor, so we can list the user the options.
         available_loaders = api.discover(api.Loader)
@@ -1431,7 +1486,7 @@ class RepresentationWidget(QtWidgets.QWidget):
         self.load_ended.emit()
 
         if errors:
-            box = LoadErrorMessageBox(errors)
+            box = LoadErrorMessageBox(errors, self)
             box.show()
 
     def _get_optional_labels(self, loaders, selected_side):

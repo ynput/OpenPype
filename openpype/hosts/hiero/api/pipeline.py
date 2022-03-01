@@ -51,16 +51,6 @@ def install():
     # register callback for switching publishable
     pyblish.register_callback("instanceToggled", on_pyblish_instance_toggled)
 
-    # Disable all families except for the ones we explicitly want to see
-    family_states = [
-        "write",
-        "review",
-        "plate"
-    ]
-
-    avalon.data["familiesStateDefault"] = False
-    avalon.data["familiesStateToggled"] = family_states
-
     # install menu
     menu.menu_install()
 

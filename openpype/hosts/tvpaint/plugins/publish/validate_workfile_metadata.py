@@ -1,6 +1,6 @@
 import pyblish.api
-from avalon.tvpaint import save_file
 from openpype.pipeline import PublishXmlValidationError
+from openpype.hosts.tvpaint.api import save_file
 
 
 class ValidateWorkfileMetadataRepair(pyblish.api.Action):

@@ -1,10 +1,8 @@
 import re
 
 import pyblish.api
-from avalon import photoshop
-
 import openpype.api
-from openpype.pipeline import PublishXmlValidationError
+from openpype.hosts.photoshop import api as photoshop
 
 
 class ValidateNamingRepair(pyblish.api.Action):
@@ -71,18 +69,14 @@ class ValidateNaming(pyblish.api.InstancePlugin):
     replace_char = ''
 
     def process(self, instance):
-        msg = "Name \"{}\" is not allowed.".format(instance.data["name"])
+        help_msg = ' Use Repair action (A) in Pyblish to fix it.'
+        msg = "Name \"{}\" is not allowed.{}".format(instance.data["name"],
+                                                     help_msg)
+        assert not re.search(self.invalid_chars, instance.data["name"]), msg
 
-        formatting_data = {"error_msg": msg}
-        if re.search(self.invalid_chars, instance.data["name"]):
-            raise PublishXmlValidationError(self, msg,
-                                            formatting_data=formatting_data)
-
-        msg = "Subset \"{}\" is not allowed.".format(instance.data["subset"])
-        formatting_data = {"error_msg": msg}
-        if re.search(self.invalid_chars, instance.data["subset"]):
-            raise PublishXmlValidationError(self, msg,
-                                            formatting_data=formatting_data)
+        msg = "Subset \"{}\" is not allowed.{}".format(instance.data["subset"],
+                                                       help_msg)
+        assert not re.search(self.invalid_chars, instance.data["subset"]), msg
 
     @classmethod
     def get_replace_chars(cls):

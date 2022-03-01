@@ -12,7 +12,7 @@ from openpype.lib.plugin_tools import (
     parse_json,
     get_batch_asset_task_info
 )
-from openpype.lib.remote_publish import get_webpublish_conn
+from openpype.lib.remote_publish import get_webpublish_conn, IN_PROGRESS_STATUS
 
 
 class CollectBatchData(pyblish.api.ContextPlugin):
@@ -59,6 +59,7 @@ class CollectBatchData(pyblish.api.ContextPlugin):
         context.data["asset"] = asset_name
         context.data["task"] = task_name
         context.data["taskType"] = task_type
+        context.data["project_name"] = project_name
 
         self._set_ctx_path(batch_data)
 
@@ -74,7 +75,7 @@ class CollectBatchData(pyblish.api.ContextPlugin):
             dbcon.update_one(
                 {
                     "batch_id": batch_id,
-                    "status": "in_progress"
+                    "status": IN_PROGRESS_STATUS
                 },
                 {
                     "$set": {

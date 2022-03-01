@@ -6,8 +6,8 @@ except Exception:
 
 from Qt import QtWidgets, QtCore, QtGui
 
+from openpype.tools.utils import BaseClickableFrame
 from .widgets import (
-    ClickableFrame,
     IconValuePixmapLabel
 )
 from ..constants import (
@@ -60,7 +60,7 @@ class ValidationErrorTitleWidget(QtWidgets.QWidget):
         self._error_info = error_info
         self._selected = False
 
-        title_frame = ClickableFrame(self)
+        title_frame = BaseClickableFrame(self)
         title_frame.setObjectName("ValidationErrorTitleFrame")
         title_frame._mouse_release_callback = self._mouse_release_callback
 
@@ -172,6 +172,17 @@ class ValidationErrorTitleWidget(QtWidgets.QWidget):
         """Mark this widget as selected on click."""
         self.set_selected(True)
 
+    def current_desctiption_text(self):
+        if self._context_validation:
+            return self._help_text_by_instance_id[None]
+        index = self._instances_view.currentIndex()
+        # TODO make sure instance is selected
+        if not index.isValid():
+            index = self._instances_model.index(0, 0)
+
+        indence_id = index.data(INSTANCE_ID_ROLE)
+        return self._help_text_by_instance_id[indence_id]
+
     @property
     def is_selected(self):
         """Is widget marked a selected"""
@@ -229,7 +240,7 @@ class ValidationErrorTitleWidget(QtWidgets.QWidget):
         self.instance_changed.emit(self._index)
 
 
-class ActionButton(ClickableFrame):
+class ActionButton(BaseClickableFrame):
     """Plugin's action callback button.
 
     Action may have label or icon or both.
@@ -253,7 +264,7 @@ class ActionButton(ClickableFrame):
         layout = QtWidgets.QHBoxLayout(self)
         layout.setContentsMargins(5, 0, 5, 0)
         layout.addWidget(label_widget, 1)
-        if icon_label is not None:
+        if icon_label:
             layout.addWidget(icon_label, 0)
 
         self.setSizePolicy(
@@ -340,7 +351,7 @@ class VerticallScrollArea(QtWidgets.QScrollArea):
     The biggest difference is that the scroll area has scroll bar on left side
     and resize of content will also resize scrollarea itself.
 
-    Resize if deffered by 100ms because at the moment of resize are not yet
+    Resize if deferred by 100ms because at the moment of resize are not yet
     propagated sizes and visibility of scroll bars.
     """
     def __init__(self, *args, **kwargs):
@@ -550,6 +561,10 @@ class ValidationsWidget(QtWidgets.QWidget):
 
         self._update_description()
 
+        self._actions_widget.set_plugin(error_item["plugin"])
+
+        self._update_description()
+
     def _on_instance_change(self, index):
         if self._previous_select and self._previous_select.index != index:
             return
@@ -558,6 +573,7 @@ class ValidationsWidget(QtWidgets.QWidget):
     def _update_description(self):
         description = self._previous_select.current_desctiption_text()
         if commonmark:
-            self._error_details_input.setHtml(description)
+            html = commonmark.commonmark(description)
+            self._error_details_input.setHtml(html)
         else:
             self._error_details_input.setMarkdown(description)

@@ -1,8 +1,8 @@
 import json
 
 import pyblish.api
-from avalon.tvpaint import lib
 from openpype.pipeline import PublishXmlValidationError
+from openpype.hosts.tvpaint.api import lib
 
 
 class ValidateMarksRepair(pyblish.api.Action):
@@ -45,7 +45,7 @@ class ValidateMarks(pyblish.api.ContextPlugin):
         handle_start = context.data["handleStart"]
         handle_end = context.data["handleEnd"]
 
-        # Calculate expeted Mark out (Mark In + duration - 1)
+        # Calculate expected Mark out (Mark In + duration - 1)
         expected_mark_out = (
             scene_mark_in
             + (frame_end - frame_start)

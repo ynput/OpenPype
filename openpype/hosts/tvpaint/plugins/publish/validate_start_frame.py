@@ -1,6 +1,6 @@
 import pyblish.api
-from avalon.tvpaint import lib
 from openpype.pipeline import PublishXmlValidationError
+from openpype.hosts.tvpaint.api import lib
 
 
 class RepairStartFrame(pyblish.api.Action):

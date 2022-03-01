@@ -13,10 +13,18 @@
         }
     },
     "ftrack": {
-        "enabled": true,
+        "enabled": false,
         "ftrack_server": "",
-        "ftrack_actions_path": [],
-        "ftrack_events_path": [],
+        "ftrack_actions_path": {
+            "windows": [],
+            "darwin": [],
+            "linux": []
+        },
+        "ftrack_events_path": {
+            "windows": [],
+            "darwin": [],
+            "linux": []
+        },
         "intent": {
             "items": {
                 "-": "-",

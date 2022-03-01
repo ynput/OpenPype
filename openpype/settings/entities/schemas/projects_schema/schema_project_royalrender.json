@@ -1,0 +1,34 @@
+{
+  "type": "dict",
+  "key": "royalrender",
+  "label": "Royal Render",
+  "collapsible": true,
+  "is_file": true,
+  "children": [
+    {
+      "type": "dict",
+      "collapsible": true,
+      "key": "publish",
+      "label": "Publish plugins",
+      "children": [
+        {
+            "type": "label",
+            "label": "Collectors"
+        },
+        {
+          "type": "dict",
+          "collapsible": true,
+          "key": "CollectSequencesFromJob",
+          "label": "Collect Sequences from the Job",
+          "children": [
+            {
+              "type": "boolean",
+              "key": "review",
+              "label": "Generate reviews from sequences"
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}

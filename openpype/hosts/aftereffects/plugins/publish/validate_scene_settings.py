@@ -5,12 +5,8 @@ import re
 
 import pyblish.api
 
-from avalon import aftereffects
-
 from openpype.pipeline import PublishXmlValidationError
-import openpype.hosts.aftereffects.api as api
-
-stub = aftereffects.stub()
+from openpype.hosts.aftereffects.api import get_asset_settings
 
 
 class ValidateSceneSettings(pyblish.api.InstancePlugin):
@@ -48,7 +44,7 @@ class ValidateSceneSettings(pyblish.api.InstancePlugin):
             resolutionWidth
             resolutionHeight
             TODO support in extension is missing for now
-            
+
          By defaults validates duration (how many frames should be published)
     """
 
@@ -63,7 +59,7 @@ class ValidateSceneSettings(pyblish.api.InstancePlugin):
 
     def process(self, instance):
         """Plugin entry point."""
-        expected_settings = api.get_asset_settings()
+        expected_settings = get_asset_settings()
         self.log.info("config from DB::{}".format(expected_settings))
 
         if any(re.search(pattern, os.getenv('AVALON_TASK'))

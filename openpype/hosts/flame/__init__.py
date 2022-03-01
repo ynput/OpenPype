@@ -1,105 +1,22 @@
-from .api.utils import (
-    setup
-)
-
-from .api.pipeline import (
-    install,
-    uninstall,
-    ls,
-    containerise,
-    update_container,
-    maintained_selection,
-    remove_instance,
-    list_instances,
-    imprint
-)
-
-from .api.lib import (
-    FlameAppFramework,
-    maintain_current_timeline,
-    get_project_manager,
-    get_current_project,
-    get_current_timeline,
-    create_bin,
-)
-
-from .api.menu import (
-    FlameMenuProjectConnect,
-    FlameMenuTimeline
-)
-
-from .api.workio import (
-    open_file,
-    save_file,
-    current_file,
-    has_unsaved_changes,
-    file_extensions,
-    work_root
-)
-
 import os
 
 HOST_DIR = os.path.dirname(
     os.path.abspath(__file__)
 )
-API_DIR = os.path.join(HOST_DIR, "api")
-PLUGINS_DIR = os.path.join(HOST_DIR, "plugins")
-PUBLISH_PATH = os.path.join(PLUGINS_DIR, "publish")
-LOAD_PATH = os.path.join(PLUGINS_DIR, "load")
-CREATE_PATH = os.path.join(PLUGINS_DIR, "create")
-INVENTORY_PATH = os.path.join(PLUGINS_DIR, "inventory")
-
-app_framework = None
-apps = []
 
 
-__all__ = [
-    "HOST_DIR",
-    "API_DIR",
-    "PLUGINS_DIR",
-    "PUBLISH_PATH",
-    "LOAD_PATH",
-    "CREATE_PATH",
-    "INVENTORY_PATH",
-    "INVENTORY_PATH",
+def add_implementation_envs(env, _app):
+    # Add requirements to DL_PYTHON_HOOK_PATH
+    pype_root = os.environ["OPENPYPE_REPOS_ROOT"]
 
-    "app_framework",
-    "apps",
+    env["DL_PYTHON_HOOK_PATH"] = os.path.join(
+        pype_root, "openpype", "hosts", "flame", "startup")
+    env.pop("QT_AUTO_SCREEN_SCALE_FACTOR", None)
 
-    # pipeline
-    "install",
-    "uninstall",
-    "ls",
-    "containerise",
-    "update_container",
-    "reload_pipeline",
-    "maintained_selection",
-    "remove_instance",
-    "list_instances",
-    "imprint",
-
-    # utils
-    "setup",
-
-    # lib
-    "FlameAppFramework",
-    "maintain_current_timeline",
-    "get_project_manager",
-    "get_current_project",
-    "get_current_timeline",
-    "create_bin",
-
-    # menu
-    "FlameMenuProjectConnect",
-    "FlameMenuTimeline",
-
-    # plugin
-
-    # workio
-    "open_file",
-    "save_file",
-    "current_file",
-    "has_unsaved_changes",
-    "file_extensions",
-    "work_root"
-]
+    # Set default values if are not already set via settings
+    defaults = {
+        "LOGLEVEL": "DEBUG"
+    }
+    for key, value in defaults.items():
+        if not env.get(key):
+            env[key] = value

@@ -100,7 +100,8 @@ class IntegrateAssetNew(pyblish.api.InstancePlugin):
                 "redshiftproxy",
                 "effect",
                 "xgen",
-                "hda"
+                "hda",
+                "usd"
                 ]
     exclude_families = ["clip"]
     db_representation_context_keys = [
@@ -147,7 +148,10 @@ class IntegrateAssetNew(pyblish.api.InstancePlugin):
 
         project_entity = instance.data["projectEntity"]
 
-        context_asset_name = context.data["assetEntity"]["name"]
+        context_asset_name = None
+        context_asset_doc = context.data.get("assetEntity")
+        if context_asset_doc:
+            context_asset_name = context_asset_doc["name"]
 
         asset_name = instance.data["asset"]
         asset_entity = instance.data.get("assetEntity")
@@ -389,6 +393,7 @@ class IntegrateAssetNew(pyblish.api.InstancePlugin):
             repre["ext"] = ext
             template_data["ext"] = ext
 
+            self.log.info(template_name)
             template = os.path.normpath(
                 anatomy.templates[template_name]["path"])
 
@@ -476,6 +481,8 @@ class IntegrateAssetNew(pyblish.api.InstancePlugin):
                     if index_frame_start is not None:
                         dst_padding_exp = "%0{}d".format(frame_start_padding)
                         dst_padding = dst_padding_exp % (index_frame_start + frame_number)  # noqa: E501
+                    elif repre.get("udim"):
+                        dst_padding = int(i)
 
                     dst = "{0}{1}{2}".format(
                         dst_head,
@@ -580,7 +587,7 @@ class IntegrateAssetNew(pyblish.api.InstancePlugin):
             if repre.get("outputName"):
                 representation["context"]["output"] = repre['outputName']
 
-            if sequence_repre and repre.get("frameStart"):
+            if sequence_repre and repre.get("frameStart") is not None:
                 representation['context']['frame'] = (
                     dst_padding_exp % int(repre.get("frameStart"))
                 )

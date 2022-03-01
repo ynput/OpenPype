@@ -3,8 +3,8 @@ import os
 from avalon import harmony
 import pyblish.api
 import openpype.api
-
 from openpype.pipeline import PublishXmlValidationError
+import openpype.hosts.harmony.api as harmony
 
 
 class ValidateInstanceRepair(pyblish.api.Action):
@@ -55,4 +55,3 @@ class ValidateInstance(pyblish.api.InstancePlugin):
         if instance_asset != current_asset:
             raise PublishXmlValidationError(self, msg,
                                             formatting_data=formatting_data)
-

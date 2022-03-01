@@ -70,6 +70,12 @@
                                         "object_type": "text"
                                     },
                                     {
+                                        "key": "subsets",
+                                        "label": "Subset names",
+                                        "type": "list",
+                                        "object_type": "text"
+                                    },
+                                    {
                                         "type": "separator"
                                     },
                                     {
@@ -90,6 +96,11 @@
                                                     "type": "boolean",
                                                     "key": "upload_thumbnail",
                                                     "label": "Upload thumbnail"
+                                                },
+                                                {
+                                                    "type": "boolean",
+                                                    "key": "upload_review",
+                                                    "label": "Upload review"
                                                 },
                                                 {
                                                     "type": "text",

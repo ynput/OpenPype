@@ -16,6 +16,11 @@ from pymongo.errors import (
 )
 
 
+class OpenPypeVersionNotFound(Exception):
+    """OpenPype version was not found in remote and local repository."""
+    pass
+
+
 def should_add_certificate_path_to_mongo_url(mongo_url):
     """Check if should add ca certificate to mongo url.
 
@@ -156,18 +161,17 @@ def get_openpype_global_settings(url: str) -> dict:
     return global_settings.get("data") or {}
 
 
-def get_openpype_path_from_db(url: str) -> Union[str, None]:
+def get_openpype_path_from_settings(settings: dict) -> Union[str, None]:
     """Get OpenPype path from global settings.
 
     Args:
-        url (str): mongodb url.
+        settings (dict): mongodb url.
 
     Returns:
         path to OpenPype or None if not found
     """
-    global_settings = get_openpype_global_settings(url)
     paths = (
-        global_settings
+        settings
         .get("openpype_path", {})
         .get(platform.system().lower())
     ) or []
@@ -182,6 +186,28 @@ def get_openpype_path_from_db(url: str) -> Union[str, None]:
     return None
 
 
+def get_expected_studio_version_str(
+    staging=False, global_settings=None
+) -> str:
+    """Version that should be currently used in studio.
+
+    Args:
+        staging (bool): Get current version for staging.
+        global_settings (dict): Optional precached global settings.
+
+    Returns:
+        str: OpenPype version which should be used. Empty string means latest.
+    """
+    mongo_url = os.environ.get("OPENPYPE_MONGO")
+    if global_settings is None:
+        global_settings = get_openpype_global_settings(mongo_url)
+    if staging:
+        key = "staging_version"
+    else:
+        key = "production_version"
+    return global_settings.get(key) or ""
+
+
 def load_stylesheet() -> str:
     """Load css style sheet.
 
@@ -192,3 +218,11 @@ def load_stylesheet() -> str:
     stylesheet_path = Path(__file__).parent.resolve() / "stylesheet.css"
 
     return stylesheet_path.read_text()
+
+
+def get_openpype_icon_path() -> str:
+    """Path to OpenPype icon png file."""
+    return os.path.join(
+        os.path.dirname(os.path.abspath(__file__)),
+        "openpype_icon.png"
+    )

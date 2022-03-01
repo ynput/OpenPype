@@ -9,16 +9,21 @@ import os
 
 import maya.cmds as cmds
 
-from avalon.maya import lib
 from avalon import api, io
 from openpype.api import get_project_settings
+from openpype.hosts.maya.api.lib import (
+    maintained_selection,
+    namespaced,
+    unique_namespace
+)
+from openpype.hosts.maya.api.pipeline import containerise
 
 
 class VRayProxyLoader(api.Loader):
     """Load VRay Proxy with Alembic or VrayMesh."""
 
-    families = ["vrayproxy"]
-    representations = ["vrmesh"]
+    families = ["vrayproxy", "model", "pointcache", "animation"]
+    representations = ["vrmesh", "abc"]
 
     label = "Import VRay Proxy"
     order = -10
@@ -36,8 +41,6 @@ class VRayProxyLoader(api.Loader):
             options (dict): Optional loader options.
 
         """
-        from avalon.maya.pipeline import containerise
-        from openpype.hosts.maya.api.lib import namespaced
 
         try:
             family = context["representation"]["context"]["family"]
@@ -48,7 +51,7 @@ class VRayProxyLoader(api.Loader):
         self.fname = self._get_abc(context["version"]["_id"]) or self.fname
 
         asset_name = context['asset']["name"]
-        namespace = namespace or lib.unique_namespace(
+        namespace = namespace or unique_namespace(
             asset_name + "_",
             prefix="_" if asset_name[0].isdigit() else "",
             suffix="_",
@@ -57,7 +60,7 @@ class VRayProxyLoader(api.Loader):
         # Ensure V-Ray for Maya is loaded.
         cmds.loadPlugin("vrayformaya", quiet=True)
 
-        with lib.maintained_selection():
+        with maintained_selection():
             cmds.namespace(addNamespace=namespace)
             with namespaced(namespace, new=False):
                 nodes, group_node = self.create_vray_proxy(

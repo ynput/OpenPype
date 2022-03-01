@@ -3,14 +3,13 @@ from maya import cmds
 import pyblish.api
 import openpype.api
 import openpype.hosts.maya.api.action
+from openpype.hosts.maya.api import lib
 
 
 class ValidateShapeZero(pyblish.api.Validator):
-    """shape can't have any values
+    """Shape components may not have any "tweak" values
 
-    To solve this issue, try freezing the shapes. So long
-    as the translation, rotation and scaling values are zero,
-    you're all good.
+    To solve this issue, try freezing the shapes.
 
     """
 
@@ -47,13 +46,22 @@ class ValidateShapeZero(pyblish.api.Validator):
     @classmethod
     def repair(cls, instance):
         invalid_shapes = cls.get_invalid(instance)
-        for shape in invalid_shapes:
-            cmds.polyCollapseTweaks(shape)
+        if not invalid_shapes:
+            return
+
+        with lib.maintained_selection():
+            with lib.tool("selectSuperContext"):
+                for shape in invalid_shapes:
+                    cmds.polyCollapseTweaks(shape)
+                    # cmds.polyCollapseTweaks keeps selecting the geometry
+                    # after each command. When running on many meshes
+                    # after one another this tends to get really heavy
+                    cmds.select(clear=True)
 
     def process(self, instance):
         """Process all the nodes in the instance "objectSet"""
 
         invalid = self.get_invalid(instance)
         if invalid:
-            raise ValueError("Nodes found with shape or vertices not freezed"
-                             "values: {0}".format(invalid))
+            raise ValueError("Shapes found with non-zero component tweaks: "
+                             "{0}".format(invalid))

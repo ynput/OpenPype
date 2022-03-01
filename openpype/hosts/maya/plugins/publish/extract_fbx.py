@@ -1,12 +1,14 @@
+# -*- coding: utf-8 -*-
 import os
 
-from maya import cmds
-import maya.mel as mel
-
+from maya import cmds  # noqa
+import maya.mel as mel  # noqa
 import pyblish.api
-import avalon.maya
-
 import openpype.api
+from openpype.hosts.maya.api.lib import (
+    root_parent,
+    maintained_selection
+)
 
 
 class ExtractFBX(openpype.api.Extractor):
@@ -166,12 +168,8 @@ class ExtractFBX(openpype.api.Extractor):
         self.log.info("Export options: {0}".format(options))
 
         # Collect the start and end including handles
-        start = instance.data["frameStart"]
-        end = instance.data["frameEnd"]
-        handles = instance.data.get("handles", 0)
-        if handles:
-            start -= handles
-            end += handles
+        start = instance.data["frameStartHandle"]
+        end = instance.data["frameEndHandle"]
 
         options['bakeComplexStart'] = start
         options['bakeComplexEnd'] = end
@@ -192,10 +190,7 @@ class ExtractFBX(openpype.api.Extractor):
             if isinstance(value, bool):
                 value = str(value).lower()
 
-            template = "FBXExport{0} -v {1}"
-            if key == "UpAxis":
-                template = "FBXExport{0} {1}"
-
+            template = "FBXExport{0} {1}" if key == "UpAxis" else "FBXExport{0} -v {1}"  # noqa
             cmd = template.format(key, value)
             self.log.info(cmd)
             mel.eval(cmd)
@@ -205,9 +200,16 @@ class ExtractFBX(openpype.api.Extractor):
         mel.eval("FBXExportGenerateLog -v false")
 
         # Export
-        with avalon.maya.maintained_selection():
-            cmds.select(members, r=1, noExpand=True)
-            mel.eval('FBXExport -f "{}" -s'.format(path))
+        if "unrealStaticMesh" in instance.data["families"]:
+            with maintained_selection():
+                with root_parent(members):
+                    self.log.info("Un-parenting: {}".format(members))
+                    cmds.select(members, r=1, noExpand=True)
+                    mel.eval('FBXExport -f "{}" -s'.format(path))
+        else:
+            with maintained_selection():
+                cmds.select(members, r=1, noExpand=True)
+                mel.eval('FBXExport -f "{}" -s'.format(path))
 
         if "representations" not in instance.data:
             instance.data["representations"] = []
