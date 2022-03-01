@@ -726,10 +726,11 @@ class AnatomyTemplates(TemplatesDict):
         return output
 
     def format(self, data, strict=True):
+        copy_data = copy.deepcopy(data)
         roots = self.roots
         if roots:
-            data["root"] = roots
-        result = super(AnatomyTemplates, self).format(data)
+            copy_data["root"] = roots
+        result = super(AnatomyTemplates, self).format(copy_data)
         result.strict = strict
         return result
 
