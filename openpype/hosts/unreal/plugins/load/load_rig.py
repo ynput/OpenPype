@@ -32,8 +32,8 @@ class SkeletalMeshFBXLoader(plugin.Loader):
                              This is not passed here, so namespace is set
                              by `containerise()` because only then we know
                              real path.
-            options (dict): Those would be data to be imprinted. This is not used
-                         now, data are imprinted by `containerise()`.
+            options (dict): Those would be data to be imprinted. This is not
+                used now, data are imprinted by `containerise()`.
 
         Returns:
             list(str): list of container content
