@@ -203,17 +203,6 @@ class ValidationErrorTitleWidget(QtWidgets.QWidget):
         self._title_frame.setProperty("selected", value)
         self._title_frame.style().polish(self._title_frame)
 
-    def current_desctiption_text(self):
-        if self._context_validation:
-            return self._help_text_by_instance_id[None]
-        index = self._instances_view.currentIndex()
-        # TODO make sure instance is selected
-        if not index.isValid():
-            index = self._instances_model.index(0, 0)
-
-        indence_id = index.data(INSTANCE_ID_ROLE)
-        return self._help_text_by_instance_id[indence_id]
-
     def set_selected(self, selected=None):
         """Change selected state of widget."""
         if selected is None:
@@ -557,9 +546,6 @@ class ValidationsWidget(QtWidgets.QWidget):
         self._previous_select = self._title_widgets[index]
 
         error_item = self._error_info[index]
-        self._actions_widget.set_plugin(error_item["plugin"])
-
-        self._update_description()
 
         self._actions_widget.set_plugin(error_item["plugin"])
 
