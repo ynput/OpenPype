@@ -202,7 +202,7 @@
                     ],
                     "task_types": [],
                     "tasks": [],
-                    "template_name": "unreal"
+                    "template_name": "maya2unreal"
                 }
             ],
             "subset_grouping_profiles": [
@@ -315,6 +315,13 @@
                     "task_types": [],
                     "hosts": [],
                     "workfile_template": "work"
+                },
+                {
+                    "task_types": [],
+                    "hosts": [
+                        "unreal"
+                    ],
+                    "workfile_template": "unreal"
                 }
             ],
             "last_workfile_on_startup": [
