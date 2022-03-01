@@ -4,12 +4,14 @@ openpype_detected = True
 try:
     from avalon import api
 except ImportError as exc:
+    api = None
     openpype_detected = False
     unreal.log_error("Avalon: cannot load Avalon [ {} ]".format(exc))
 
 try:
-    from openpype.host.unreal import api as openpype_host
+    from openpype.hosts.unreal import api as openpype_host
 except ImportError as exc:
+    openpype_host = None
     openpype_detected = False
     unreal.log_error("OpenPype: cannot load OpenPype [ {} ]".format(exc))
 

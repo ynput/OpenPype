@@ -1,4 +1,4 @@
-#include "Avalon.h"
+#include "OpenPype.h"
 #include "LevelEditor.h"
 #include "OpenPypePythonBridge.h"
 #include "OpenPypeStyle.h"
@@ -75,7 +75,7 @@ void FOpenPypeModule::AddToobarEntry(FToolBarBuilder& ToolbarBuilder)
 	{
 		ToolbarBuilder.AddToolBarButton(
 			FUIAction(
-				FExecuteAction::CreateRaw(this, &FAvalonModule::MenuPopup),
+				FExecuteAction::CreateRaw(this, &FOpenPypeModule::MenuPopup),
 				NULL,
 				FIsActionChecked()
 

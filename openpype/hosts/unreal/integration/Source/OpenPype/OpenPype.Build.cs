@@ -4,7 +4,7 @@ using UnrealBuildTool;
 
 public class OpenPype : ModuleRules
 {
-	public Avalon(ReadOnlyTargetRules Target) : base(Target)
+	public OpenPype(ReadOnlyTargetRules Target) : base(Target)
 	{
 		PCHUsage = ModuleRules.PCHUsageMode.UseExplicitOrSharedPCHs;
 		

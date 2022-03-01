@@ -1,7 +1,7 @@
 #pragma once
 
 #include "Engine.h"
-#include "AvalonLib.generated.h"
+#include "OpenPypeLib.generated.h"
 
 
 UCLASS(Blueprintable)

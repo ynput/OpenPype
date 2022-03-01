@@ -12,7 +12,7 @@
  * 
  */
 UCLASS(Blueprintable)
-class AVALON_API UAssetContainer : public UAssetUserData
+class OPENPYPE_API UAssetContainer : public UAssetUserData
 {
 	GENERATED_BODY()
 	

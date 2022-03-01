@@ -18,5 +18,5 @@ public:
 
 private:
 	static TUniquePtr< FSlateStyleSet > Create();
-	static TUniquePtr< FSlateStyleSet > AvalonStyleInstance;
+	static TUniquePtr< FSlateStyleSet > OpenPypeStyleInstance;
 };
