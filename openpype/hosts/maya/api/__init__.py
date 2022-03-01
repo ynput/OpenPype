@@ -10,12 +10,6 @@ from .pipeline import (
 
     ls,
     containerise,
-
-    lock,
-    unlock,
-    is_locked,
-    lock_ignored,
-
 )
 from .plugin import (
     Creator,
@@ -38,11 +32,9 @@ from .lib import (
     read,
 
     apply_shaders,
-    without_extension,
     maintained_selection,
     suspended_refresh,
 
-    unique_name,
     unique_namespace,
 )
 
@@ -53,11 +45,6 @@ __all__ = [
 
     "ls",
     "containerise",
-
-    "lock",
-    "unlock",
-    "is_locked",
-    "lock_ignored",
 
     "Creator",
     "Loader",
@@ -76,11 +63,9 @@ __all__ = [
     "lsattrs",
     "read",
 
-    "unique_name",
     "unique_namespace",
 
     "apply_shaders",
-    "without_extension",
     "maintained_selection",
     "suspended_refresh",
 

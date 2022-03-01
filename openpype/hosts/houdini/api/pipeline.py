@@ -4,6 +4,7 @@ import logging
 import contextlib
 
 import hou
+import hdefereval
 
 import pyblish.api
 import avalon.api
@@ -66,9 +67,10 @@ def install():
 
     sys.path.append(hou_pythonpath)
 
-    # Set asset FPS for the empty scene directly after launch of Houdini
-    # so it initializes into the correct scene FPS
-    _set_asset_fps()
+    # Set asset settings for the empty scene directly after launch of Houdini
+    # so it initializes into the correct scene FPS, Frame Range, etc.
+    # todo: make sure this doesn't trigger when opening with last workfile
+    _set_context_settings()
 
 
 def uninstall():
@@ -279,17 +281,48 @@ def on_open(*args):
 
 def on_new(_):
     """Set project resolution and fps when create a new file"""
+
+    if hou.hipFile.isLoadingHipFile():
+        # This event also triggers when Houdini opens a file due to the
+        # new event being registered to 'afterClear'. As such we can skip
+        # 'new' logic if the user is opening a file anyway
+        log.debug("Skipping on new callback due to scene being opened.")
+        return
+
     log.info("Running callback on new..")
-    _set_asset_fps()
+    _set_context_settings()
+
+    # It seems that the current frame always gets reset to frame 1 on
+    # new scene. So we enforce current frame to be at the start of the playbar
+    # with execute deferred
+    def _enforce_start_frame():
+        start = hou.playbar.playbackRange()[0]
+        hou.setFrame(start)
+
+    hdefereval.executeDeferred(_enforce_start_frame)
 
 
-def _set_asset_fps():
-    """Set Houdini scene FPS to the default required for current asset"""
+def _set_context_settings():
+    """Apply the project settings from the project definition
+
+    Settings can be overwritten by an asset if the asset.data contains
+    any information regarding those settings.
+
+    Examples of settings:
+        fps
+        resolution
+        renderer
+
+    Returns:
+        None
+    """
 
     # Set new scene fps
     fps = get_asset_fps()
     print("Setting scene FPS to %i" % fps)
     lib.set_scene_fps(fps)
+
+    lib.reset_framerange()
 
 
 def on_pyblish_instance_toggled(instance, new_value, old_value):

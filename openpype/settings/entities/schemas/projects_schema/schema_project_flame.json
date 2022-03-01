@@ -30,6 +30,11 @@
                             },
                             {
                                 "type": "boolean",
+                                "key": "useShotName",
+                                "label": "Use Shot Name"
+                            },
+                            {
+                                "type": "boolean",
                                 "key": "clipRename",
                                 "label": "Rename clips"
                             },

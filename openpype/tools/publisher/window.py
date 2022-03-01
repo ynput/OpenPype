@@ -84,7 +84,7 @@ class PublisherWindow(QtWidgets.QDialog):
 
         # Content
         # Subset widget
-        subset_frame = QtWidgets.QWidget(self)
+        subset_frame = QtWidgets.QFrame(self)
 
         subset_views_widget = BorderedLabelWidget(
             "Subsets to publish", subset_frame
@@ -224,6 +224,9 @@ class PublisherWindow(QtWidgets.QDialog):
         controller.add_publish_started_callback(self._on_publish_start)
         controller.add_publish_validated_callback(self._on_publish_validated)
         controller.add_publish_stopped_callback(self._on_publish_stop)
+
+        # Store header for TrayPublisher
+        self._header_layout = header_layout
 
         self.content_stacked_layout = content_stacked_layout
         self.publish_frame = publish_frame

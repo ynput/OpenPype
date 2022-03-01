@@ -93,7 +93,7 @@
                 }
             },
             "__dynamic_keys_labels__": {
-                "2022": "2022 (Testing Only)"
+                "2022": "2022"
             }
         }
     },
@@ -135,7 +135,7 @@
                     "OPENPYPE_WIRETAP_TOOLS": "/opt/Autodesk/wiretap/tools/2021"
                 }
             },
-            "2021.1": {
+            "2021_1": {
                 "use_python_2": true,
                 "executables": {
                     "windows": [],
@@ -159,7 +159,7 @@
             },
             "__dynamic_keys_labels__": {
                 "2021": "2021",
-                "2021.1": "2021.1"
+                "2021_1": "2021.1"
             }
         }
     },
