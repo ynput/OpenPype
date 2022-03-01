@@ -154,8 +154,10 @@ class FBXExtractor:
         self.log.info("Export options: {0}".format(options))
 
         # Collect the start and end including handles
-        start = instance.data["frameStartHandle"]
-        end = instance.data["frameEndHandle"]
+        start = instance.data.get("frameStartHandle") or \
+            instance.context.data.get("frameStartHandle")
+        end = instance.data.get("frameEndHandle") or \
+            instance.context.data.get("frameEndHandle")
 
         options['bakeComplexStart'] = start
         options['bakeComplexEnd'] = end
