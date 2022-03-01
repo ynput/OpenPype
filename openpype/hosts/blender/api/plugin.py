@@ -113,7 +113,7 @@ def create_blender_context(
 
 
 def get_instances_list():
-    """Get all the data collections """
+    """Get all the data collections"""
     instances = []
     nodes = bpy.data.collections
 
@@ -122,14 +122,16 @@ def get_instances_list():
             instances.append(collection)
     return instances
 
+
 def get_all_collections_in_collection(collection):
     """get_all_collections_in_collection"""
-    check_list = [collection]
+    check_list = collection.children.values()
 
     for c in check_list:
         check_list.extend(c.children)
 
     return check_list
+
 
 def get_parent_collection(collection):
     """Get the parent of the input collection"""
@@ -139,8 +141,20 @@ def get_parent_collection(collection):
         if collection.name in c.children.keys():
             return c
         check_list.extend(c.children)
-
     return None
+
+
+def is_local_collection(collection):
+    """Check if all members of a collection are local"""
+    for object in collection.all_objects:
+        if object.library is None and object.override_library is None:
+            return True
+    collections_list = get_all_collections_in_collection(collection)
+    collections_list.append(collection)
+    for collection in collections_list:
+        if collection.library is None and collection.override_library is None:
+            return True
+    return False
 
 
 def get_local_collection_with_name(name):
