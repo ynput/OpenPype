@@ -5,7 +5,7 @@
 #include "Engine.h"
 
 
-class FAvalonModule : public IModuleInterface
+class FOpenPypeModule : public IModuleInterface
 {
 public:
 	virtual void StartupModule() override;

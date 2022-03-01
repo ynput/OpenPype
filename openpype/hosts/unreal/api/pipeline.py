@@ -1,21 +1,17 @@
 # -*- coding: utf-8 -*-
-import sys
 import pyblish.api
 from avalon.pipeline import AVALON_CONTAINER_ID
 
 import unreal  # noqa
 from typing import List
-
 from openpype.tools.utils import host_tools
-
 from avalon import api
 
 
-AVALON_CONTAINERS = "OpenPypeContainers"
+OPENPYPE_CONTAINERS = "OpenPypeContainers"
 
 
 def install():
-
     pyblish.api.register_host("unreal")
     _register_callbacks()
     _register_events()
@@ -46,7 +42,7 @@ class Creator(api.Creator):
     def process(self):
         nodes = list()
 
-        with unreal.ScopedEditorTransaction("Avalon Creating Instance"):
+        with unreal.ScopedEditorTransaction("OpenPype Creating Instance"):
             if (self.options or {}).get("useSelection"):
                 self.log.info("setting ...")
                 print("settings ...")
@@ -63,23 +59,21 @@ class Creator(api.Creator):
         return instance
 
 
-class Loader(api.Loader):
-    hosts = ["unreal"]
-
-
 def ls():
-    """
-    List all containers found in *Content Manager* of Unreal and return
+    """List all containers.
+
+    List all found in *Content Manager* of Unreal and return
     metadata from them. Adding `objectName` to set.
+
     """
     ar = unreal.AssetRegistryHelpers.get_asset_registry()
-    avalon_containers = ar.get_assets_by_class("AssetContainer", True)
+    openpype_containers = ar.get_assets_by_class("AssetContainer", True)
 
     # get_asset_by_class returns AssetData. To get all metadata we need to
     # load asset. get_tag_values() work only on metadata registered in
-    # Asset Registy Project settings (and there is no way to set it with
+    # Asset Registry Project settings (and there is no way to set it with
     # python short of editing ini configuration file).
-    for asset_data in avalon_containers:
+    for asset_data in openpype_containers:
         asset = asset_data.get_asset()
         data = unreal.EditorAssetLibrary.get_metadata_tag_values(asset)
         data["objectName"] = asset_data.asset_name
@@ -89,8 +83,7 @@ def ls():
 
 
 def parse_container(container):
-    """
-    To get data from container, AssetContainer must be loaded.
+    """To get data from container, AssetContainer must be loaded.
 
     Args:
         container(str): path to container
@@ -107,20 +100,19 @@ def parse_container(container):
 
 
 def publish():
-    """Shorthand to publish from within host"""
+    """Shorthand to publish from within host."""
     import pyblish.util
 
     return pyblish.util.publish()
 
 
 def containerise(name, namespace, nodes, context, loader=None, suffix="_CON"):
-
     """Bundles *nodes* (assets) into a *container* and add metadata to it.
 
     Unreal doesn't support *groups* of assets that you can add metadata to.
     But it does support folders that helps to organize asset. Unfortunately
     those folders are just that - you cannot add any additional information
-    to them. `Avalon Integration Plugin`_ is providing way out - Implementing
+    to them. OpenPype Integration Plugin is providing way out - Implementing
     `AssetContainer` Blueprint class. This class when added to folder can
     handle metadata on it using standard
     :func:`unreal.EditorAssetLibrary.set_metadata_tag()` and
@@ -129,10 +121,7 @@ def containerise(name, namespace, nodes, context, loader=None, suffix="_CON"):
     those assets is available as `assets` property.
 
     This is list of strings starting with asset type and ending with its path:
-    `Material /Game/Avalon/Test/TestMaterial.TestMaterial`
-
-    .. _Avalon Integration Plugin:
-        https://github.com/pypeclub/avalon-unreal-integration
+    `Material /Game/OpenPype/Test/TestMaterial.TestMaterial`
 
     """
     # 1 - create directory for container
@@ -160,10 +149,11 @@ def containerise(name, namespace, nodes, context, loader=None, suffix="_CON"):
 
 
 def instantiate(root, name, data, assets=None, suffix="_INS"):
-    """
-    Bundles *nodes* into *container* marking it with metadata as publishable
-    instance. If assets are provided, they are moved to new path where
-    `AvalonPublishInstance` class asset is created and imprinted with metadata.
+    """Bundles *nodes* into *container*.
+
+    Marking it with metadata as publishable instance. If assets are provided,
+    they are moved to new path where `OpenPypePublishInstance` class asset is
+    created and imprinted with metadata.
 
     This can then be collected for publishing by Pyblish for example.
 
@@ -174,6 +164,7 @@ def instantiate(root, name, data, assets=None, suffix="_INS"):
         assets (list of str): list of asset paths to include in publish
                               instance
         suffix (str): suffix string to append to instance name
+
     """
     container_name = "{}{}".format(name, suffix)
 
@@ -203,7 +194,7 @@ def imprint(node, data):
             loaded_asset, key, str(value)
         )
 
-    with unreal.ScopedEditorTransaction("Avalon containerising"):
+    with unreal.ScopedEditorTransaction("OpenPype containerising"):
         unreal.EditorAssetLibrary.save_asset(node)
 
 
@@ -248,7 +239,7 @@ def show_experimental_tools():
 
 
 def create_folder(root: str, name: str) -> str:
-    """Create new folder
+    """Create new folder.
 
     If folder exists, append number at the end and try again, incrementing
     if needed.
@@ -281,8 +272,7 @@ def create_folder(root: str, name: str) -> str:
 
 
 def move_assets_to_path(root: str, name: str, assets: List[str]) -> str:
-    """
-    Moving (renaming) list of asset paths to new destination.
+    """Moving (renaming) list of asset paths to new destination.
 
     Args:
         root (str): root of the path (eg. `/Game`)
@@ -316,8 +306,8 @@ def move_assets_to_path(root: str, name: str, assets: List[str]) -> str:
 
 
 def create_container(container: str, path: str) -> unreal.Object:
-    """
-    Helper function to create Asset Container class on given path.
+    """Helper function to create Asset Container class on given path.
+
     This Asset Class helps to mark given path as Container
     and enable asset version control on it.
 
@@ -331,7 +321,7 @@ def create_container(container: str, path: str) -> unreal.Object:
 
     Example:
 
-        create_avalon_container(
+        create_container(
             "/Game/modelingFooCharacter_CON",
             "modelingFooCharacter_CON"
         )
@@ -345,9 +335,9 @@ def create_container(container: str, path: str) -> unreal.Object:
 
 
 def create_publish_instance(instance: str, path: str) -> unreal.Object:
-    """
-    Helper function to create Avalon Publish Instance  on given path.
-    This behaves similary as :func:`create_avalon_container`.
+    """Helper function to create OpenPype Publish Instance on given path.
+
+    This behaves similarly as :func:`create_openpype_container`.
 
     Args:
         path (str): Path where to create Publish Instance.
@@ -365,13 +355,13 @@ def create_publish_instance(instance: str, path: str) -> unreal.Object:
         )
 
     """
-    factory = unreal.AvalonPublishInstanceFactory()
+    factory = unreal.OpenPypePublishInstanceFactory()
     tools = unreal.AssetToolsHelpers().get_asset_tools()
     asset = tools.create_asset(instance, path, None, factory)
     return asset
 
 
-def cast_map_to_str_dict(map) -> dict:
+def cast_map_to_str_dict(umap) -> dict:
     """Cast Unreal Map to dict.
 
     Helper function to cast Unreal Map object to plain old python
@@ -379,10 +369,10 @@ def cast_map_to_str_dict(map) -> dict:
     metadata dicts.
 
     Args:
-        map: Unreal Map object
+        umap: Unreal Map object
 
     Returns:
         dict
 
     """
-    return {str(key): str(value) for (key, value) in map.items()}
+    return {str(key): str(value) for (key, value) in umap.items()}

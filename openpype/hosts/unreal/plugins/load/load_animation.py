@@ -1,14 +1,16 @@
+# -*- coding: utf-8 -*-
+"""Load FBX with animations."""
 import os
 import json
 
 from avalon import api, pipeline
-from avalon.unreal import lib
-from avalon.unreal import pipeline as unreal_pipeline
-import unreal
+from openpype.hosts.unreal.api import plugin
+from openpype.hosts.unreal.api import pipeline as unreal_pipeline
+import unreal  # noqa
 
 
-class AnimationFBXLoader(api.Loader):
-    """Load Unreal SkeletalMesh from FBX"""
+class AnimationFBXLoader(plugin.Loader):
+    """Load Unreal SkeletalMesh from FBX."""
 
     families = ["animation"]
     label = "Import FBX Animation"
@@ -37,10 +39,10 @@ class AnimationFBXLoader(api.Loader):
 
         Returns:
             list(str): list of container content
-        """
 
-        # Create directory for asset and avalon container
-        root = "/Game/Avalon/Assets"
+        """
+        # Create directory for asset and OpenPype container
+        root = "/Game/OpenPype/Assets"
         asset = context.get('asset').get('name')
         suffix = "_CON"
         if asset:
@@ -62,9 +64,9 @@ class AnimationFBXLoader(api.Loader):
         task = unreal.AssetImportTask()
         task.options = unreal.FbxImportUI()
 
-        libpath = self.fname.replace("fbx", "json")
+        lib_path = self.fname.replace("fbx", "json")
 
-        with open(libpath, "r") as fp:
+        with open(lib_path, "r") as fp:
             data = json.load(fp)
 
         instance_name = data.get("instance_name")
@@ -127,7 +129,7 @@ class AnimationFBXLoader(api.Loader):
         unreal.AssetToolsHelpers.get_asset_tools().import_asset_tasks([task])
 
         # Create Asset Container
-        lib.create_avalon_container(
+        unreal_pipeline.create_container(
             container=container_name, path=asset_dir)
 
         data = {

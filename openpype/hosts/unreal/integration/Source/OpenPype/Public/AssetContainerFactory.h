@@ -10,7 +10,7 @@
  * 
  */
 UCLASS()
-class AVALON_API UAssetContainerFactory : public UFactory
+class OPENPYPE_API UAssetContainerFactory : public UFactory
 {
 	GENERATED_BODY()
 

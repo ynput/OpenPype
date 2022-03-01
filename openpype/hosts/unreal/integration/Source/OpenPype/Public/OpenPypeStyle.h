@@ -5,7 +5,7 @@ class FSlateStyleSet;
 class ISlateStyle;
 
 
-class FAvalonStyle
+class FOpenPypeStyle
 {
 public:
 	static void Initialize();

@@ -5,7 +5,7 @@
 
 
 UCLASS(Blueprintable)
-class AVALON_API UAvalonLib : public UObject 
+class OPENPYPE_API UOpenPypeLib : public UObject
 {
 
 	GENERATED_BODY()

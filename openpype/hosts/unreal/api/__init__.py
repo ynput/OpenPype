@@ -16,7 +16,7 @@ INVENTORY_PATH = os.path.join(PLUGINS_DIR, "inventory")
 
 
 def install():
-    """Install Unreal configuration for Avalon."""
+    """Install Unreal configuration for OpenPype."""
     print("-=" * 40)
     logo = '''.
 .

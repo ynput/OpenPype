@@ -1,15 +1,15 @@
 #pragma once
 #include "Engine.h"
-#include "AvalonPythonBridge.generated.h"
+#include "OpenPypePythonBridge.generated.h"
 
 UCLASS(Blueprintable)
-class UAvalonPythonBridge : public UObject
+class UOpenPypePythonBridge : public UObject
 {
 	GENERATED_BODY()
 
 public:
 	UFUNCTION(BlueprintCallable, Category = Python)
-		static UAvalonPythonBridge* Get();
+		static UOpenPypePythonBridge* Get();
 
 	UFUNCTION(BlueprintImplementableEvent, Category = Python)
 		void RunInPython_Popup() const;

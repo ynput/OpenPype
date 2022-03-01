@@ -29,7 +29,7 @@ class OpenPypeHelpers(unreal.OpenPypeLib):
 
         Example:
 
-            AvalonHelpers().set_folder_color(
+            OpenPypeHelpers().set_folder_color(
                 "/Game/Path", unreal.LinearColor(a=1.0, r=1.0, g=0.5, b=0)
             )
 

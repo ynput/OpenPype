@@ -230,18 +230,18 @@ def create_unreal_project(project_name: str,
             ue_id = "{" + loaded_modules.get("BuildId") + "}"
 
     plugins_path = None
-    if os.path.isdir(env.get("AVALON_UNREAL_PLUGIN", "")):
+    if os.path.isdir(env.get("OPENPYPE_UNREAL_PLUGIN", "")):
         # copy plugin to correct path under project
         plugins_path = pr_dir / "Plugins"
-        avalon_plugin_path = plugins_path / "Avalon"
-        if not avalon_plugin_path.is_dir():
-            avalon_plugin_path.mkdir(parents=True, exist_ok=True)
+        openpype_plugin_path = plugins_path / "OpenPype"
+        if not openpype_plugin_path.is_dir():
+            openpype_plugin_path.mkdir(parents=True, exist_ok=True)
             dir_util._path_created = {}
-            dir_util.copy_tree(os.environ.get("AVALON_UNREAL_PLUGIN"),
-                               avalon_plugin_path.as_posix())
+            dir_util.copy_tree(os.environ.get("OPENPYPE_UNREAL_PLUGIN"),
+                               openpype_plugin_path.as_posix())
 
-            if not (avalon_plugin_path / "Binaries").is_dir() \
-                    or not (avalon_plugin_path / "Intermediate").is_dir():
+            if not (openpype_plugin_path / "Binaries").is_dir() \
+                    or not (openpype_plugin_path / "Intermediate").is_dir():
                 dev_mode = True
 
     # data for project file
@@ -304,7 +304,7 @@ def _prepare_cpp_project(project_file: Path, engine_path: Path) -> None:
     """Prepare CPP Unreal Project.
 
     This function will add source files needed for project to be
-    rebuild along with the avalon integration plugin.
+    rebuild along with the OpenPype integration plugin.
 
     There seems not to be automated way to do it from command line.
     But there might be way to create at least those target and build files

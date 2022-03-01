@@ -1,19 +1,19 @@
 #include "Avalon.h"
 #include "LevelEditor.h"
-#include "AvalonPythonBridge.h"
-#include "AvalonStyle.h"
+#include "OpenPypePythonBridge.h"
+#include "OpenPypeStyle.h"
 
 
-static const FName AvalonTabName("Avalon");
+static const FName OpenPypeTabName("OpenPype");
 
-#define LOCTEXT_NAMESPACE "FAvalonModule"
+#define LOCTEXT_NAMESPACE "FOpenPypeModule"
 
 // This function is triggered when the plugin is staring up
-void FAvalonModule::StartupModule()
+void FOpenPypeModule::StartupModule()
 {
 
-	FAvalonStyle::Initialize();
-	FAvalonStyle::SetIcon("Logo", "openpype40");
+	FOpenPypeStyle::Initialize();
+	FOpenPypeStyle::SetIcon("Logo", "openpype40");
 
 	// Create the Extender that will add content to the menu
 	FLevelEditorModule& LevelEditorModule = FModuleManager::LoadModuleChecked<FLevelEditorModule>("LevelEditor");
@@ -25,13 +25,13 @@ void FAvalonModule::StartupModule()
 		"LevelEditor",
 		EExtensionHook::After,
 		NULL,
-		FMenuExtensionDelegate::CreateRaw(this, &FAvalonModule::AddMenuEntry)
+		FMenuExtensionDelegate::CreateRaw(this, &FOpenPypeModule::AddMenuEntry)
 	);
 	ToolbarExtender->AddToolBarExtension(
 		"Settings",
 		EExtensionHook::After,
 		NULL,
-		FToolBarExtensionDelegate::CreateRaw(this, &FAvalonModule::AddToobarEntry));
+		FToolBarExtensionDelegate::CreateRaw(this, &FOpenPypeModule::AddToobarEntry));
 
 
 	LevelEditorModule.GetMenuExtensibilityManager()->AddExtender(MenuExtender);
@@ -39,13 +39,13 @@ void FAvalonModule::StartupModule()
 
 }
 
-void FAvalonModule::ShutdownModule()
+void FOpenPypeModule::ShutdownModule()
 {
-	FAvalonStyle::Shutdown();
+	FOpenPypeStyle::Shutdown();
 }
 
 
-void FAvalonModule::AddMenuEntry(FMenuBuilder& MenuBuilder)
+void FOpenPypeModule::AddMenuEntry(FMenuBuilder& MenuBuilder)
 {
 	// Create Section
 	MenuBuilder.BeginSection("OpenPype", TAttribute<FText>(FText::FromString("OpenPype")));
@@ -54,22 +54,22 @@ void FAvalonModule::AddMenuEntry(FMenuBuilder& MenuBuilder)
 		MenuBuilder.AddMenuEntry(
 			FText::FromString("Tools..."),
 			FText::FromString("Pipeline tools"),
-			FSlateIcon(FAvalonStyle::GetStyleSetName(), "OpenPype.Logo"),
-			FUIAction(FExecuteAction::CreateRaw(this, &FAvalonModule::MenuPopup))
+			FSlateIcon(FOpenPypeStyle::GetStyleSetName(), "OpenPype.Logo"),
+			FUIAction(FExecuteAction::CreateRaw(this, &FOpenPypeModule::MenuPopup))
 		);
 
 		MenuBuilder.AddMenuEntry(
 			FText::FromString("Tools dialog..."),
 			FText::FromString("Pipeline tools dialog"),
-			FSlateIcon(FAvalonStyle::GetStyleSetName(), "OpenPype.Logo"),
-			FUIAction(FExecuteAction::CreateRaw(this, &FAvalonModule::MenuDialog))
+			FSlateIcon(FOpenPypeStyle::GetStyleSetName(), "OpenPype.Logo"),
+			FUIAction(FExecuteAction::CreateRaw(this, &FOpenPypeModule::MenuDialog))
 		);
 
 	}
 	MenuBuilder.EndSection();
 }
 
-void FAvalonModule::AddToobarEntry(FToolBarBuilder& ToolbarBuilder)
+void FOpenPypeModule::AddToobarEntry(FToolBarBuilder& ToolbarBuilder)
 {
 	ToolbarBuilder.BeginSection(TEXT("OpenPype"));
 	{
@@ -83,21 +83,21 @@ void FAvalonModule::AddToobarEntry(FToolBarBuilder& ToolbarBuilder)
 			NAME_None,
 			LOCTEXT("OpenPype_label", "OpenPype"),
 			LOCTEXT("OpenPype_tooltip", "OpenPype Tools"),
-			FSlateIcon(FAvalonStyle::GetStyleSetName(), "OpenPype.Logo")
+			FSlateIcon(FOpenPypeStyle::GetStyleSetName(), "OpenPype.Logo")
 		);
 	}
 	ToolbarBuilder.EndSection();
 }
 
 
-void FAvalonModule::MenuPopup() {
-	UAvalonPythonBridge* bridge = UAvalonPythonBridge::Get();
+void FOpenPypeModule::MenuPopup() {
+	UOpenPypePythonBridge* bridge = UOpenPypePythonBridge::Get();
 	bridge->RunInPython_Popup();
 }
 
-void FAvalonModule::MenuDialog() {
-	UAvalonPythonBridge* bridge = UAvalonPythonBridge::Get();
+void FOpenPypeModule::MenuDialog() {
+	UOpenPypePythonBridge* bridge = UOpenPypePythonBridge::Get();
 	bridge->RunInPython_Dialog();
 }
 
-IMPLEMENT_MODULE(FAvalonModule, Avalon)
+IMPLEMENT_MODULE(FOpenPypeModule, OpenPype)

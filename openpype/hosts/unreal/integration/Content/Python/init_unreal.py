@@ -1,27 +1,32 @@
 import unreal
 
-avalon_detected = True
+openpype_detected = True
 try:
     from avalon import api
-    from avalon import unreal as avalon_unreal
 except ImportError as exc:
-    avalon_detected = False
-    unreal.log_error("Avalon: cannot load avalon [ {} ]".format(exc))
+    openpype_detected = False
+    unreal.log_error("Avalon: cannot load Avalon [ {} ]".format(exc))
 
-if avalon_detected:
-    api.install(avalon_unreal)
+try:
+    from openpype.host.unreal import api as openpype_host
+except ImportError as exc:
+    openpype_detected = False
+    unreal.log_error("OpenPype: cannot load OpenPype [ {} ]".format(exc))
+
+if openpype_detected:
+    api.install(openpype_host)
 
 
 @unreal.uclass()
-class AvalonIntegration(unreal.AvalonPythonBridge):
+class OpenPypeIntegration(unreal.OpenPypePythonBridge):
     @unreal.ufunction(override=True)
     def RunInPython_Popup(self):
-        unreal.log_warning("Avalon: showing tools popup")
-        if avalon_detected:
-            avalon_unreal.show_tools_popup()
+        unreal.log_warning("OpenPype: showing tools popup")
+        if openpype_detected:
+            openpype_host.show_tools_popup()
 
     @unreal.ufunction(override=True)
     def RunInPython_Dialog(self):
-        unreal.log_warning("Avalon: showing tools dialog")
-        if avalon_detected:
-            avalon_unreal.show_tools_dialog()
+        unreal.log_warning("OpenPype: showing tools dialog")
+        if openpype_detected:
+            openpype_host.show_tools_dialog()

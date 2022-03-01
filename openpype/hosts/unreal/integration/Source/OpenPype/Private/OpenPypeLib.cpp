@@ -1,4 +1,4 @@
-#include "AvalonLib.h"
+#include "OpenPypeLib.h"
 #include "Misc/Paths.h"
 #include "Misc/ConfigCacheIni.h"
 #include "UObject/UnrealType.h"
@@ -10,7 +10,7 @@
  * @warning This color will appear only after Editor restart. Is there a better way?
  */
 
-void UAvalonLib::CSetFolderColor(FString FolderPath, FLinearColor FolderColor, bool bForceAdd)
+void UOpenPypeLib::CSetFolderColor(FString FolderPath, FLinearColor FolderColor, bool bForceAdd)
 {
 	auto SaveColorInternal = [](FString InPath, FLinearColor InFolderColor)
 	{
@@ -30,7 +30,7 @@ void UAvalonLib::CSetFolderColor(FString FolderPath, FLinearColor FolderColor, b
  * @param cls - class
  * @return TArray of properties
  */
-TArray<FString> UAvalonLib::GetAllProperties(UClass* cls)
+TArray<FString> UOpenPypeLib::GetAllProperties(UClass* cls)
 {
 	TArray<FString> Ret;
 	if (cls != nullptr)

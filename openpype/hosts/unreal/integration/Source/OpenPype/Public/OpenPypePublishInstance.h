@@ -1,16 +1,16 @@
 #pragma once
 
 #include "Engine.h"
-#include "AvalonPublishInstance.generated.h"
+#include "OpenPypePublishInstance.generated.h"
 
 
 UCLASS(Blueprintable)
-class AVALON_API UAvalonPublishInstance : public UObject
+class OPENPYPE_API UOpenPypePublishInstance : public UObject
 {
 	GENERATED_BODY()
 
 public:
-	UAvalonPublishInstance(const FObjectInitializer& ObjectInitalizer);
+	UOpenPypePublishInstance(const FObjectInitializer& ObjectInitalizer);
 
 	UPROPERTY(EditAnywhere, BlueprintReadOnly)
 		TArray<FString> assets;

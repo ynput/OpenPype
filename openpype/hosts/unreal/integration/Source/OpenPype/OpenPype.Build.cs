@@ -2,7 +2,7 @@
 
 using UnrealBuildTool;
 
-public class Avalon : ModuleRules
+public class OpenPype : ModuleRules
 {
 	public Avalon(ReadOnlyTargetRules Target) : base(Target)
 	{
