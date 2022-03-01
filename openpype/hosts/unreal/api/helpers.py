@@ -15,7 +15,7 @@ class OpenPypeHelpers(unreal.OpenPypeLib):
     """
 
     @unreal.ufunction(params=[str, unreal.LinearColor, bool])
-    def set_folder_color(self, path: str, color: unreal.LinearColor) -> Bool:
+    def set_folder_color(self, path: str, color: unreal.LinearColor) -> None:
         """Set color on folder in Content Browser.
 
         This method sets color on folder in Content Browser. Unfortunately

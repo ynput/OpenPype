@@ -4,7 +4,7 @@ import logging
 from avalon import api as avalon
 from pyblish import api as pyblish
 import openpype.hosts.unreal
-from .plugin import(
+from .plugin import (
     Loader,
     Creator
 )

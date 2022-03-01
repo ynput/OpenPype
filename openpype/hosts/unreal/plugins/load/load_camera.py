@@ -111,7 +111,8 @@ class CameraLoader(plugin.Loader):
         )
 
         # Create Asset Container
-        unreal_pipeline.create_container(container=container_name, path=asset_dir)
+        unreal_pipeline.create_container(
+            container=container_name, path=asset_dir)
 
         data = {
             "schema": "openpype:container-2.0",
