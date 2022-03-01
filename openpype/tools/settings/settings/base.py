@@ -1,6 +1,7 @@
 import sys
 import json
 import traceback
+import functools
 
 from Qt import QtWidgets, QtGui, QtCore
 
@@ -10,22 +11,6 @@ from openpype.tools.settings import CHILD_OFFSET
 from .widgets import ExpandingWidget
 from .lib import create_deffered_value_change_timer
 from .constants import DEFAULT_PROJECT_LABEL
-
-
-class _Callback:
-    """Callback wrapper which stores it's args and kwargs.
-
-    Using lambda has few issues if local variables are passed to called
-    functions in loop it may change the value of the variable in already
-    stored callback.
-    """
-    def __init__(self, func, *args, **kwargs):
-        self._func = func
-        self._args = args
-        self._kwargs = kwargs
-
-    def __call__(self):
-        self._func(*self._args, **self._kwargs)
 
 
 class BaseWidget(QtWidgets.QWidget):
@@ -341,10 +326,7 @@ class BaseWidget(QtWidgets.QWidget):
 
             action = QtWidgets.QAction(project_name)
             submenu.addAction(action)
-            # Use custom callback object instead of lambda
-            #   - project_name value is changed each value so all actions will
-            #       use the same source project
-            actions_mapping[action] = _Callback(
+            actions_mapping[action] = functools.partial(
                 self._apply_values_from_project,
                 project_name
             )
