@@ -10,7 +10,7 @@ from openpype.lib import (
     get_workdir_data,
     get_workfile_template_key
 )
-from openpype.hosts.unreal.api import lib as unreal_lib
+import openpype.hosts.unreal.lib as unreal_lib
 
 
 class UnrealPrelaunchHook(PreLaunchHook):
