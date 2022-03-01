@@ -7,7 +7,6 @@ import platform
 import collections
 import inspect
 import subprocess
-import distutils.spawn
 from abc import ABCMeta, abstractmethod
 
 import six
