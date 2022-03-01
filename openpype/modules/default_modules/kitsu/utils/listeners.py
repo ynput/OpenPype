@@ -2,7 +2,7 @@ import gazu
 import os
 
 from avalon.api import AvalonMongoDB
-from openpype.modules.default_modules.kitsu.utils.openpype import (
+from .openpype import (
     create_op_asset,
     set_op_project,
     sync_project,

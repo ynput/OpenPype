@@ -17,16 +17,6 @@
             "label": "Server"
         },
         {
-            "type": "text",
-            "key": "script_login",
-            "label": "Script Login"
-        },
-        {
-            "type": "text",
-            "key": "script_pwd",
-            "label": "Script Password"
-        },
-        {
             "type": "splitter"
         }
     ]

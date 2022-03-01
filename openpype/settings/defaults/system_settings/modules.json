@@ -139,9 +139,7 @@
     },
     "kitsu": {
         "enabled": false,
-        "server": "",
-        "script_login": "",
-        "script_pwd": ""
+        "server": ""
     },
     "timers_manager": {
         "enabled": true,

@@ -1,11 +1,5 @@
-"""Addon definition is located here.
+"""Kitsu module."""
 
-Import of python packages that may not be available should not be imported
-in global space here until are required or used.
-- Qt related imports
-- imports of Python 3 packages
-    - we still support Python 2 hosts where addon definition should available
-"""
 import click
 import os
 import re
@@ -35,20 +29,12 @@ from openpype.modules.default_modules.kitsu.utils.openpype import (
     sync_project,
     update_op_assets,
 )
+from openpype.settings.lib import get_local_settings
 from openpype_interfaces import IPluginPaths, ITrayAction
-from .listeners import add_listeners
+from .utils.listeners import start_listeners
 
 
-# Settings definition of this addon using `JsonFilesSettingsDef`
-# - JsonFilesSettingsDef is prepared settings definition using json files
-#   to define settings and store default values
 class AddonSettingsDef(JsonFilesSettingsDef):
-    # This will add prefixes to every schema and template from `schemas`
-    #   subfolder.
-    # - it is not required to fill the prefix but it is highly
-    #   recommended as schemas and templates may have name clashes across
-    #   multiple addons
-    # - it is also recommended that prefix has addon name in it
     schema_prefix = "kitsu"
 
     def get_settings_root_path(self):
@@ -61,20 +47,15 @@ class AddonSettingsDef(JsonFilesSettingsDef):
 
 
 class KitsuModule(OpenPypeModule, IPluginPaths, ITrayAction):
-    """This Addon has defined it's settings and interface.
-
-    This example has system settings with an enabled option. And use
-    few other interfaces:
-    - `IPluginPaths` to define custom plugin paths
-    - `ITrayAction` to be shown in tray tool
-    """
+    """Kitsu module class."""
 
     label = "Kitsu"
     name = "kitsu"
 
     def initialize(self, settings):
-        """Initialization of addon."""
+        """Initialization of module."""
         module_settings = settings[self.name]
+        local_kitsu_settings = get_local_settings().get("kitsu", {})
 
         # Enabled by settings
         self.enabled = module_settings.get("enabled", False)
@@ -93,8 +74,8 @@ class KitsuModule(OpenPypeModule, IPluginPaths, ITrayAction):
         self.server_url = kitsu_url
 
         # Set credentials
-        self.script_login = module_settings["script_login"]
-        self.script_pwd = module_settings["script_pwd"]
+        self.kitsu_login = local_kitsu_settings["login"]
+        self.kitsu_password = local_kitsu_settings["password"]
 
         # Prepare variables that can be used or set afterwards
         self._connected_modules = None
@@ -113,8 +94,8 @@ class KitsuModule(OpenPypeModule, IPluginPaths, ITrayAction):
         """Kitsu's global environments."""
         return {
             "KITSU_SERVER": self.server_url,
-            "KITSU_LOGIN": self.script_login,
-            "KITSU_PWD": self.script_pwd,
+            "KITSU_LOGIN": self.kitsu_login,
+            "KITSU_PWD": self.kitsu_password,
         }
 
     def _create_dialog(self):
@@ -122,9 +103,9 @@ class KitsuModule(OpenPypeModule, IPluginPaths, ITrayAction):
         if self._dialog is not None:
             return
 
-        from .widgets import MyExampleDialog
+        from .kitsu_widgets import PasswordDialog
 
-        self._dialog = MyExampleDialog()
+        self._dialog = PasswordDialog()
 
     def show_dialog(self):
         """Show dialog with connected modules.
@@ -376,7 +357,10 @@ def sync_zou():
 
 
 @cli_main.command()
-def sync_openpype():
+@click.option(
+    "-l", "--listen", is_flag=True, help="Listen Kitsu server after synchronization."
+)
+def sync_openpype(listen: bool):
     """Synchronize openpype database from Zou sever database."""
 
     # Connect to server
@@ -471,27 +455,23 @@ def sync_openpype():
 
     dbcon.uninstall()
 
+    # Run listening
+    if listen:
+        start_listeners()
+
 
 @cli_main.command()
 def listen():
-    """Show ExampleAddon dialog.
-
-    We don't have access to addon directly through cli so we have to create
-    it again.
-    """
-    add_listeners()
+    """Listen to Kitsu server."""
+    start_listeners()
 
 
 @cli_main.command()
-def show_dialog():
-    """Show ExampleAddon dialog.
-
-    We don't have access to addon directly through cli so we have to create
-    it again.
-    """
+def sign_in():
+    """Show credentials dialog."""
     from openpype.tools.utils.lib import qt_app_context
 
     manager = ModulesManager()
-    example_addon = manager.modules_by_name[KitsuModule.name]
+    kitsu_addon = manager.modules_by_name[KitsuModule.name]
     with qt_app_context():
-        example_addon.show_dialog()
+        kitsu_addon.show_dialog()
