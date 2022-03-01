@@ -53,7 +53,7 @@ class ValidateUnrealStaticMeshName(pyblish.api.InstancePlugin):
     order = openpype.api.ValidateContentsOrder
     hosts = ["maya"]
     families = ["staticMesh"]
-    label = "Unreal StaticMesh Name"
+    label = "Unreal Static Mesh Name"
     actions = [openpype.hosts.maya.api.action.SelectInvalidAction]
     regex_mesh = r"(?P<renderName>.*))"
     regex_collision = r"(?P<renderName>.*)"
@@ -101,7 +101,7 @@ class ValidateUnrealStaticMeshName(pyblish.api.InstancePlugin):
                 cls.log.warning("No collision objects to validate.")
                 return False
 
-            regex_collision = "{}{}".format(
+            regex_collision = "{}{}_(\\d+)".format(
                 "(?P<prefix>({}))_".format(
                     "|".join("{0}".format(p) for p in collision_prefixes)
                 ) or "", cls.regex_collision
