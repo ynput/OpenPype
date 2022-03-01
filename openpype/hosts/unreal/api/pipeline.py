@@ -1,20 +1,60 @@
 # -*- coding: utf-8 -*-
-import pyblish.api
-from avalon.pipeline import AVALON_CONTAINER_ID
-
-import unreal  # noqa
+import os
+import logging
 from typing import List
-from openpype.tools.utils import host_tools
+
+import pyblish.api
+import avalon
+from avalon.pipeline import AVALON_CONTAINER_ID
 from avalon import api
 
+from openpype.tools.utils import host_tools
+import openpype.hosts.unreal
 
+import unreal  # noqa
+
+
+logger = logging.getLogger("openpype.hosts.unreal")
 OPENPYPE_CONTAINERS = "OpenPypeContainers"
+
+HOST_DIR = os.path.dirname(os.path.abspath(openpype.hosts.unreal.__file__))
+PLUGINS_DIR = os.path.join(HOST_DIR, "plugins")
+PUBLISH_PATH = os.path.join(PLUGINS_DIR, "publish")
+LOAD_PATH = os.path.join(PLUGINS_DIR, "load")
+CREATE_PATH = os.path.join(PLUGINS_DIR, "create")
+INVENTORY_PATH = os.path.join(PLUGINS_DIR, "inventory")
 
 
 def install():
-    pyblish.api.register_host("unreal")
+    """Install Unreal configuration for OpenPype."""
+    print("-=" * 40)
+    logo = '''.
+.
+     ____________
+   / \\      __   \\
+   \\  \\     \\/_\\  \\
+    \\  \\     _____/ ______
+     \\  \\    \\___// \\     \\
+      \\  \\____\\   \\  \\_____\\
+       \\/_____/    \\/______/  PYPE Club .
+.
+'''
+    print(logo)
+    print("installing OpenPype for Unreal ...")
+    print("-=" * 40)
+    logger.info("installing OpenPype for Unreal")
+    pyblish.api.register_plugin_path(str(PUBLISH_PATH))
+    api.register_plugin_path(api.Loader, str(LOAD_PATH))
+    api.register_plugin_path(api.Creator, str(CREATE_PATH))
     _register_callbacks()
     _register_events()
+
+
+def uninstall():
+    """Uninstall Unreal configuration for Avalon."""
+    pyblish.api.deregister_plugin_path(str(PUBLISH_PATH))
+    api.deregister_plugin_path(api.Loader, str(LOAD_PATH))
+    api.deregister_plugin_path(api.Creator, str(CREATE_PATH))
 
 
 def _register_callbacks():
@@ -29,10 +69,6 @@ def _register_events():
     TODO: Implement callbacks if supported by UE4
     """
     pass
-
-
-def uninstall():
-    pyblish.api.deregister_host("unreal")
 
 
 class Creator(api.Creator):
