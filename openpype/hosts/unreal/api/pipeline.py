@@ -4,7 +4,6 @@ import logging
 from typing import List
 
 import pyblish.api
-import avalon
 from avalon.pipeline import AVALON_CONTAINER_ID
 from avalon import api
 
