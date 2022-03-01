@@ -23,12 +23,16 @@ def find_executable(executable):
         str: Full path to executable with extension (is file).
         None: When the executable was not found.
     """
+    # Skip if passed path is file
     if os.path.isfile(executable):
         return executable
 
     low_platform = platform.system().lower()
     _, ext = os.path.splitext(executable)
+
+    # Prepare variants for which it will be looked
     variants = [executable]
+    # Add other extension variants only if passed executable does not have one
     if not ext:
         if low_platform == "windows":
             exts = [".exe", ".ps1", ".bat"]
@@ -45,6 +49,7 @@ def find_executable(executable):
                 return variant
             variants.append(variant)
 
+    # Get paths where to look for executable
     path_str = os.environ.get("PATH", None)
     if path_str is None:
         if hasattr(os, "confstr"):
@@ -52,15 +57,13 @@ def find_executable(executable):
         elif hasattr(os, "defpath"):
             path_str = os.defpath
 
-    if not path_str:
-        return None
-
-    paths = path_str.split(os.pathsep)
-    for path in paths:
-        for variant in variants:
-            filepath = os.path.abspath(os.path.join(path, variant))
-            if os.path.isfile(filepath):
-                return filepath
+    if path_str:
+        paths = path_str.split(os.pathsep)
+        for path in paths:
+            for variant in variants:
+                filepath = os.path.abspath(os.path.join(path, variant))
+                if os.path.isfile(filepath):
+                    return filepath
     return None
 
 
