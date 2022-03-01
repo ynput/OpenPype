@@ -1,5 +1,8 @@
-from avalon import api
+# -*- coding: utf-8 -*-
+from abc import ABC
+
 import openpype.api
+import avalon.api
 
 
 class Creator(openpype.api.Creator):
@@ -7,6 +10,6 @@ class Creator(openpype.api.Creator):
     defaults = ['Main']
 
 
-class Loader(api.Loader):
+class Loader(avalon.api.Loader, ABC):
     """This serves as skeleton for future OpenPype specific functionality"""
     pass
