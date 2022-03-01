@@ -154,15 +154,8 @@ class FBXExtractor:
         self.log.info("Export options: {0}".format(options))
 
         # Collect the start and end including handles
-        # TODO: Move this to library function (pypeclub/OpenPype#2648)
-        start = instance.data["frameStart"]
-        end = instance.data["frameEnd"]
-        handle_start = instance.data.get("handleStart", 0)
-        handle_end = instance.data.get("handleEnd", 0)
-        if handle_start:
-            start -= handle_start
-        if handle_end:
-            end += handle_end
+        start = instance.data["frameStartHandle"]
+        end = instance.data["frameEndHandle"]
 
         options['bakeComplexStart'] = start
         options['bakeComplexEnd'] = end
