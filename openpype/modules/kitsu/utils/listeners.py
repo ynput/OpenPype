@@ -10,7 +10,8 @@ from .openpype import (
 )
 
 
-def add_listeners():
+def start_listeners():
+    """Start listeners to keep OpenPype up-to-date with Kitsu."""
     # Connect to server
     gazu.client.set_host(os.environ["KITSU_SERVER"])
 
