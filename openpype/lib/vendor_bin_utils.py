@@ -7,6 +7,25 @@ import subprocess
 log = logging.getLogger("Vendor utils")
 
 
+def is_file_executable(filepath):
+    """Filepath lead to executable file.
+
+    Args:
+        filepath(str): Full path to file.
+    """
+    if not filepath:
+        return False
+
+    if os.path.isfile(filepath):
+        if os.access(filepath, os.X_OK):
+            return True
+
+        log.info(
+            "Filepath is not available for execution \"{}\"".format(filepath)
+        )
+    return False
+
+
 def find_executable(executable):
     """Find full path to executable.
 
@@ -24,7 +43,7 @@ def find_executable(executable):
         None: When the executable was not found.
     """
     # Skip if passed path is file
-    if os.path.isfile(executable):
+    if is_file_executable(executable):
         return executable
 
     low_platform = platform.system().lower()
@@ -45,7 +64,7 @@ def find_executable(executable):
 
         for ext in exts:
             variant = executable + ext
-            if os.path.isfile(variant):
+            if is_file_executable(variant):
                 return variant
             variants.append(variant)
 
@@ -62,7 +81,7 @@ def find_executable(executable):
         for path in paths:
             for variant in variants:
                 filepath = os.path.abspath(os.path.join(path, variant))
-                if os.path.isfile(filepath):
+                if is_file_executable(filepath):
                     return filepath
     return None
 
