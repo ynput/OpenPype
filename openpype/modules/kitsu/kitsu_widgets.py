@@ -4,11 +4,10 @@ import gazu
 from Qt import QtWidgets, QtCore, QtGui
 
 from openpype import style
+from openpype.lib.local_settings import OpenPypeSecureRegistry
 from openpype.resources import get_resource
 from openpype.settings.lib import (
-    get_local_settings,
     get_system_settings,
-    save_local_settings,
 )
 
 from openpype.widgets.password_dialog import PressHoverButton
@@ -26,8 +25,11 @@ class PasswordDialog(QtWidgets.QDialog):
         self.resize(300, 120)
 
         system_settings = get_system_settings()
-        kitsu_settings = get_local_settings().get("kitsu", {})
-        remembered = kitsu_settings.get("remember")
+        user_registry = OpenPypeSecureRegistry("kitsu_user")
+        remembered = bool(
+            user_registry.get_item("login", None)
+            or user_registry.get_item("password", None)
+        )
 
         self._final_result = None
         self._connectable = bool(
@@ -47,7 +49,7 @@ class PasswordDialog(QtWidgets.QDialog):
 
         login_input = QtWidgets.QLineEdit(
             login_widget,
-            text=kitsu_settings.get("login") if remembered else None,
+            text=user_registry.get_item("login") if remembered else None,
         )
         login_input.setPlaceholderText("Your Kitsu account login...")
 
@@ -63,7 +65,7 @@ class PasswordDialog(QtWidgets.QDialog):
 
         password_input = QtWidgets.QLineEdit(
             password_widget,
-            text=kitsu_settings.get("password") if remembered else None,
+            text=user_registry.get_item("password") if remembered else None,
         )
         password_input.setPlaceholderText("Your password...")
         password_input.setEchoMode(QtWidgets.QLineEdit.Password)
@@ -161,29 +163,22 @@ class PasswordDialog(QtWidgets.QDialog):
         os.environ["KITSU_LOGIN"] = login_value
         os.environ["KITSU_PWD"] = pwd_value
 
-        # Get settings
-        local_settings = get_local_settings()
-        local_settings.setdefault("kitsu", {})
+        # Get user registry
+        user_registry = OpenPypeSecureRegistry("kitsu_user")
 
         # Remember password cases
         if remember:
             # Set local settings
-            local_settings["kitsu"]["login"] = login_value
-            local_settings["kitsu"]["password"] = pwd_value
+            user_registry.set_item("login", login_value)
+            user_registry.set_item("password", pwd_value)
         else:
             # Clear local settings
-            local_settings["kitsu"]["login"] = None
-            local_settings["kitsu"]["password"] = None
+            user_registry.delete_item("login")
+            user_registry.delete_item("password")
 
             # Clear input fields
             self.login_input.clear()
             self.password_input.clear()
-
-        # Keep 'remember' parameter
-        local_settings["kitsu"]["remember"] = remember
-
-        # Save settings
-        save_local_settings(local_settings)
 
         self._final_result = True
         self.close()
