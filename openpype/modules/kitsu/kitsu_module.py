@@ -10,7 +10,6 @@ from avalon.api import AvalonMongoDB
 from openpype.api import get_project_settings
 from openpype.lib.local_settings import OpenPypeSecureRegistry
 from openpype.modules import OpenPypeModule, ModulesManager
-from openpype.settings.lib import get_local_settings
 from openpype_interfaces import IPluginPaths, ITrayAction
 from .utils.listeners import start_listeners
 from .utils.openpype import (
@@ -126,7 +125,7 @@ def cli_main():
 
 @cli_main.command()
 def sync_zou():
-    """Synchronize Zou server database (Kitsu backend) with openpype database."""
+    """Synchronize Zou database (Kitsu backend) with openpype database."""
     import gazu
 
     # Connect to server
@@ -154,7 +153,9 @@ def sync_zou():
         # Create project
         if zou_project is None:
             raise RuntimeError(
-                f"Project '{project_name}' doesn't exist in Zou database, please create it in Kitsu and add OpenPype user to it before running synchronization."
+                f"Project '{project_name}' doesn't exist in Zou database, "
+                "please create it in Kitsu and add OpenPype user to it before "
+                "running synchronization."
             )
 
         # Update project settings and data
@@ -163,7 +164,8 @@ def sync_zou():
                 {
                     "code": op_project["data"]["code"],
                     "fps": op_project["data"]["fps"],
-                    "resolution": f"{op_project['data']['resolutionWidth']}x{op_project['data']['resolutionHeight']}",
+                    "resolution": f"{op_project['data']['resolutionWidth']}"
+                    f"x{op_project['data']['resolutionHeight']}",
                 }
             )
             gazu.project.update_project_data(
@@ -213,7 +215,8 @@ def sync_zou():
                 new_entity = gazu.asset.new_asset(
                     zou_project, asset_types[0], doc["name"]
                 )
-            # Match case in shot<sequence<episode order to support composed names like 'ep01_sq01_sh01'
+            # Match case in shot<sequence<episode order to support
+            # composed names like 'ep01_sq01_sh01'
             elif match.group(1):  # Shot
                 # Match and check parent doc
                 parent_doc = asset_docs[visual_parent_id]
@@ -221,15 +224,22 @@ def sync_zou():
                 if parent_doc["data"].get("zou", {}).get("type") != "Sequence":
                     # Substitute name
                     digits_padding = naming_pattern["sequence"].count("#")
+                    episode_name = naming_pattern["episode"].replace(
+                        "#" * digits_padding, "1".zfill(digits_padding)
+                    )
+                    sequence_name = naming_pattern["sequence"].replace(
+                        "#" * digits_padding, "1".zfill(digits_padding)
+                    )
                     substitute_sequence_name = (
-                        f'{naming_pattern["episode"].replace("#" * digits_padding, "1".zfill(digits_padding))}_'  # Episode
-                        f'{naming_pattern["sequence"].replace("#" * digits_padding, "1".zfill(digits_padding))}'  # Sequence
+                        f"{episode_name}_{sequence_name}"
                     )
 
                     # Warn
                     print(
-                        f"Shot {doc['name']} must be parented to a Sequence in Kitsu. "
-                        f"Creating automatically one substitute sequence called {substitute_sequence_name} in Kitsu..."
+                        f"Shot {doc['name']} must be parented to a Sequence "
+                        "in Kitsu. "
+                        f"Creating automatically one substitute sequence "
+                        f"called {substitute_sequence_name} in Kitsu..."
                     )
 
                     # Create new sequence and set it as substitute

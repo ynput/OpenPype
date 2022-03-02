@@ -37,8 +37,13 @@ class PasswordDialog(QtWidgets.QDialog):
         )
 
         # Server label
+        server_message = (
+            system_settings["modules"]["kitsu"]["server"]
+            if self._connectable
+            else "no server url set in Studio Settings..."
+        )
         server_label = QtWidgets.QLabel(
-            f"Server: {system_settings['modules']['kitsu']['server'] if self._connectable else 'no server url set in Studio Settings...'}",
+            f"Server: {server_message}",
             self,
         )
 
