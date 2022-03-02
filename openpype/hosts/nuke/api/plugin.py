@@ -489,12 +489,14 @@ class ExporterReviewMov(ExporterReview):
         if reformat_node_add:
             rf_node = nuke.createNode("Reformat")
             for kn_conf in reformat_node_config:
+                _type = kn_conf["type"]
                 k_name = str(kn_conf["name"])
-                k_value = str(kn_conf["value"])
-                if k_value == "true":
-                    k_value = True
-                if k_value == "false":
-                    k_value = False
+                k_value = kn_conf["value"]
+
+                # to remove unicode as nuke doesn't like it
+                if _type == "string":
+                    k_value = str(kn_conf["value"])
+
                 rf_node[k_name].setValue(k_value)
 
             # connect
