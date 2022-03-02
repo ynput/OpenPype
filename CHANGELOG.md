@@ -1,6 +1,6 @@
 # Changelog
 
-## [3.9.0-nightly.4](https://github.com/pypeclub/OpenPype/tree/HEAD)
+## [3.9.0-nightly.5](https://github.com/pypeclub/OpenPype/tree/HEAD)
 
 [Full Changelog](https://github.com/pypeclub/OpenPype/compare/3.8.2...HEAD)
 
@@ -14,21 +14,23 @@
 - Documentation: broken link fix [\#2785](https://github.com/pypeclub/OpenPype/pull/2785)
 - Documentation: link fixes [\#2772](https://github.com/pypeclub/OpenPype/pull/2772)
 - Update docusaurus to latest version [\#2760](https://github.com/pypeclub/OpenPype/pull/2760)
-- Various testing updates [\#2726](https://github.com/pypeclub/OpenPype/pull/2726)
 
 **🚀 Enhancements**
 
+- General: Color dialog UI fixes [\#2817](https://github.com/pypeclub/OpenPype/pull/2817)
 - General: Set context environments for non host applications [\#2803](https://github.com/pypeclub/OpenPype/pull/2803)
 - Tray publisher: New Tray Publisher host \(beta\) [\#2778](https://github.com/pypeclub/OpenPype/pull/2778)
 - Houdini: Implement Reset Frame Range [\#2770](https://github.com/pypeclub/OpenPype/pull/2770)
 - Pyblish Pype: Remove redundant new line in installed fonts printing [\#2758](https://github.com/pypeclub/OpenPype/pull/2758)
 - Flame: use Shot Name on segment for asset name [\#2751](https://github.com/pypeclub/OpenPype/pull/2751)
 - Flame: adding validator source clip [\#2746](https://github.com/pypeclub/OpenPype/pull/2746)
-- Work Files: Preserve subversion comment of current filename by default [\#2734](https://github.com/pypeclub/OpenPype/pull/2734)
+- Ftrack: Disable ftrack module by default [\#2732](https://github.com/pypeclub/OpenPype/pull/2732)
 - RoyalRender: Minor enhancements [\#2700](https://github.com/pypeclub/OpenPype/pull/2700)
 
 **🐛 Bug fixes**
 
+- Settings: Missing document with OP versions may break start of OpenPype [\#2825](https://github.com/pypeclub/OpenPype/pull/2825)
+- Settings UI: Fix "Apply from" action [\#2820](https://github.com/pypeclub/OpenPype/pull/2820)
 - Settings UI: Search case sensitivity [\#2810](https://github.com/pypeclub/OpenPype/pull/2810)
 - Flame Babypublisher optimalization [\#2806](https://github.com/pypeclub/OpenPype/pull/2806)
 - resolve: fixing fusion module loading [\#2802](https://github.com/pypeclub/OpenPype/pull/2802)
@@ -38,13 +40,15 @@
 - Maya: Fix `unique\_namespace` when in an namespace that is empty [\#2759](https://github.com/pypeclub/OpenPype/pull/2759)
 - Loader UI: Fix right click in representation widget [\#2757](https://github.com/pypeclub/OpenPype/pull/2757)
 - Aftereffects 2022 and Deadline [\#2748](https://github.com/pypeclub/OpenPype/pull/2748)
+- Flame: bunch of bugs [\#2745](https://github.com/pypeclub/OpenPype/pull/2745)
 - Maya: Save current scene on workfile publish [\#2744](https://github.com/pypeclub/OpenPype/pull/2744)
 - Version Up: Preserve parts of filename after version number \(like subversion\) on version\_up [\#2741](https://github.com/pypeclub/OpenPype/pull/2741)
-- Loader UI: Multiple asset selection and underline colors fixed [\#2731](https://github.com/pypeclub/OpenPype/pull/2731)
 - Maya: Remove some unused code [\#2709](https://github.com/pypeclub/OpenPype/pull/2709)
 
 **Merged pull requests:**
 
+- Move Unreal Implementation to OpenPype [\#2823](https://github.com/pypeclub/OpenPype/pull/2823)
+- Ftrack: Job killer with missing user [\#2819](https://github.com/pypeclub/OpenPype/pull/2819)
 - Ftrack: Unset task ids from asset versions before tasks are removed [\#2800](https://github.com/pypeclub/OpenPype/pull/2800)
 - Slack: fail gracefully if slack exception [\#2798](https://github.com/pypeclub/OpenPype/pull/2798)
 - Ftrack: Moved module one hierarchy level higher [\#2792](https://github.com/pypeclub/OpenPype/pull/2792)
@@ -54,10 +58,10 @@
 - Houdini: Remove duplicate ValidateOutputNode plug-in [\#2780](https://github.com/pypeclub/OpenPype/pull/2780)
 - Slack: Added regex for filtering on subset names [\#2775](https://github.com/pypeclub/OpenPype/pull/2775)
 - Houdini: Fix open last workfile [\#2767](https://github.com/pypeclub/OpenPype/pull/2767)
+- General: Extract template formatting from anatomy [\#2766](https://github.com/pypeclub/OpenPype/pull/2766)
 - Harmony: Rendering in Deadline didn't work in other machines than submitter [\#2754](https://github.com/pypeclub/OpenPype/pull/2754)
 - Houdini: Move Houdini Save Current File to beginning of ExtractorOrder [\#2747](https://github.com/pypeclub/OpenPype/pull/2747)
 - Maya: set Deadline job/batch name to original source workfile name instead of published workfile [\#2733](https://github.com/pypeclub/OpenPype/pull/2733)
-- Fusion: Moved implementation into OpenPype [\#2713](https://github.com/pypeclub/OpenPype/pull/2713)
 
 ## [3.8.2](https://github.com/pypeclub/OpenPype/tree/3.8.2) (2022-02-07)
 
