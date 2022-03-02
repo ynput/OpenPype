@@ -22,7 +22,7 @@ from .utils.openpype import (
 class KitsuModule(OpenPypeModule, IPluginPaths, ITrayAction):
     """Kitsu module class."""
 
-    label = "Kitsu"
+    label = "Kitsu Connect"
     name = "kitsu"
 
     def initialize(self, settings):
