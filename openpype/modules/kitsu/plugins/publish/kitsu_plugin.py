@@ -31,7 +31,9 @@ class IntegrateRig(pyblish.api.InstancePlugin):
 
         # Get task
         task_type = gazu.task.get_task_type_by_name(instance.data["task"])
-        entity_task = gazu.task.get_task_by_entity(asset_data["zou"], task_type)
+        entity_task = gazu.task.get_task_by_entity(
+            asset_data["zou"], task_type
+        )
 
         # Comment entity
         gazu.task.add_comment(

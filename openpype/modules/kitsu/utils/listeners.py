@@ -95,9 +95,9 @@ def start_listeners():
         zou_ids_and_asset_docs[asset["project_id"]] = project_doc
 
         # Update
-        asset_doc_id, asset_update = update_op_assets([asset], zou_ids_and_asset_docs)[
-            0
-        ]
+        asset_doc_id, asset_update = update_op_assets(
+            [asset], zou_ids_and_asset_docs
+        )[0]
         project_col.update_one({"_id": asset_doc_id}, asset_update)
 
     def delete_asset(data):
@@ -105,7 +105,9 @@ def start_listeners():
         project_col = set_op_project(dbcon, data["project_id"])
 
         # Delete
-        project_col.delete_one({"type": "asset", "data.zou.id": data["asset_id"]})
+        project_col.delete_one(
+            {"type": "asset", "data.zou.id": data["asset_id"]}
+        )
 
     gazu.events.add_listener(event_client, "asset:new", new_asset)
     gazu.events.add_listener(event_client, "asset:update", update_asset)
@@ -155,7 +157,9 @@ def start_listeners():
         print("delete episode")  # TODO check bugfix
 
         # Delete
-        project_col.delete_one({"type": "asset", "data.zou.id": data["episode_id"]})
+        project_col.delete_one(
+            {"type": "asset", "data.zou.id": data["episode_id"]}
+        )
 
     gazu.events.add_listener(event_client, "episode:new", new_episode)
     gazu.events.add_listener(event_client, "episode:update", update_episode)
@@ -205,7 +209,9 @@ def start_listeners():
         print("delete sequence")  # TODO check bugfix
 
         # Delete
-        project_col.delete_one({"type": "asset", "data.zou.id": data["sequence_id"]})
+        project_col.delete_one(
+            {"type": "asset", "data.zou.id": data["sequence_id"]}
+        )
 
     gazu.events.add_listener(event_client, "sequence:new", new_sequence)
     gazu.events.add_listener(event_client, "sequence:update", update_sequence)
@@ -244,7 +250,9 @@ def start_listeners():
         zou_ids_and_asset_docs[shot["project_id"]] = project_doc
 
         # Update
-        asset_doc_id, asset_update = update_op_assets([shot], zou_ids_and_asset_docs)[0]
+        asset_doc_id, asset_update = update_op_assets(
+            [shot], zou_ids_and_asset_docs
+        )[0]
         project_col.update_one({"_id": asset_doc_id}, asset_update)
 
     def delete_shot(data):
@@ -252,7 +260,9 @@ def start_listeners():
         project_col = set_op_project(dbcon, data["project_id"])
 
         # Delete
-        project_col.delete_one({"type": "asset", "data.zou.id": data["shot_id"]})
+        project_col.delete_one(
+            {"type": "asset", "data.zou.id": data["shot_id"]}
+        )
 
     gazu.events.add_listener(event_client, "shot:new", new_shot)
     gazu.events.add_listener(event_client, "shot:update", update_shot)
@@ -302,7 +312,8 @@ def start_listeners():
 
                     # Delete task in DB
                     project_col.update_one(
-                        {"_id": doc["_id"]}, {"$set": {"data.tasks": asset_tasks}}
+                        {"_id": doc["_id"]},
+                        {"$set": {"data.tasks": asset_tasks}},
                     )
                     return
 

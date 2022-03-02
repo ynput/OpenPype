@@ -65,7 +65,8 @@ def update_op_assets(
             tasks_list = all_tasks_for_shot(item)
             # TODO frame in and out
         item_data["tasks"] = {
-            t["task_type_name"]: {"type": t["task_type_name"]} for t in tasks_list
+            t["task_type_name"]: {"type": t["task_type_name"]}
+            for t in tasks_list
         }
 
         # Get zou parent id for correct hierarchy
@@ -79,7 +80,9 @@ def update_op_assets(
             parent_zou_id = substitute_parent_item["parent_id"]
         else:
             parent_zou_id = (
-                item.get("parent_id") or item.get("episode_id") or item.get("source_id")
+                item.get("parent_id")
+                or item.get("episode_id")
+                or item.get("source_id")
             )  # TODO check consistency
 
         # Visual parent for hierarchy
