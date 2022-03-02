@@ -51,10 +51,10 @@ class ValidateRigOutSetNodeIds(pyblish.api.InstancePlugin):
                          noIntermediate=True)
 
         for shape in shapes:
-            history_id = lib.get_id_from_history(shape)
-            if history_id:
+            sibling_id = lib.get_id_from_sibling(shape, history_only=False)
+            if sibling_id:
                 current_id = lib.get_id(shape)
-                if current_id != history_id:
+                if current_id != sibling_id:
                     invalid.append(shape)
 
         return invalid
@@ -63,10 +63,10 @@ class ValidateRigOutSetNodeIds(pyblish.api.InstancePlugin):
     def repair(cls, instance):
 
         for node in cls.get_invalid(instance):
-            # Get the original id from history
-            history_id = lib.get_id_from_history(node)
-            if not history_id:
-                cls.log.error("Could not find ID in history for '%s'", node)
+            # Get the original id from sibling
+            sibling_id = lib.get_id_from_sibling(node, history_only=False)
+            if not sibling_id:
+                cls.log.error("Could not find ID in siblings for '%s'", node)
                 continue
 
-            lib.set_id(node, history_id, overwrite=True)
+            lib.set_id(node, sibling_id, overwrite=True)

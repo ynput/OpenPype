@@ -1751,18 +1751,24 @@ def remove_other_uv_sets(mesh):
             cmds.removeMultiInstance(attr, b=True)
 
 
-def get_id_from_history(node):
+def get_id_from_sibling(node, history_only=True):
     """Return first node id in the history chain that matches this node.
 
     The nodes in history must be of the exact same node type and must be
     parented under the same parent.
 
+    If no matching node is found in history, the siblings of the node
+    are checked. Additionally to having the same parent, the sibling must
+    be marked as 'intermediate object'.
+
     Args:
-        node (str): node to retrieve the
+        node (str): node to retrieve the history from
+        history_only (bool): also looks in node's siblings if True
+            and if nothing found in history
 
     Returns:
-        str or None: The id from the node in history or None when no id found
-            on any valid nodes in the history.
+        str or None: The id from the sibling node or None when no id found
+            on any valid nodes in the history or siblings.
 
     """
 
@@ -1790,6 +1796,22 @@ def get_id_from_history(node):
         _id = get_id(similar_node)
         if _id:
             return _id
+
+    if not history_only:
+        # Get siblings of same type
+        similar_nodes = cmds.listRelatives(parent,
+                                           type=node_type,
+                                           fullPath=True)
+        # Exclude itself
+        similar_nodes = [x for x in similar_nodes if x != node]
+
+        for similar_node in similar_nodes:
+            # Check if "intermediate object"
+            if cmds.getAttr(similar_node + ".io"):
+                _id = get_id(similar_node)
+                if _id:
+                    return _id
+
 
 
 # Project settings
