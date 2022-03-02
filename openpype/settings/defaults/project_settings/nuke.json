@@ -126,24 +126,29 @@
                     "reformat_node_add": false,
                     "reformat_node_config": [
                         {
+                            "type": "string",
                             "name": "type",
                             "value": "to format"
                         },
                         {
+                            "type": "string",
                             "name": "format",
                             "value": "HD_1080"
                         },
                         {
+                            "type": "string",
                             "name": "filter",
                             "value": "Lanczos6"
                         },
                         {
+                            "type": "bool",
                             "name": "black_outside",
-                            "value": "true"
+                            "value": true
                         },
                         {
+                            "type": "bool",
                             "name": "pbb",
-                            "value": "false"
+                            "value": false
                         }
                     ]
                 }
