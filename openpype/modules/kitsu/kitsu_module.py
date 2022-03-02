@@ -8,6 +8,7 @@ from pymongo import DeleteOne, UpdateOne
 
 from avalon.api import AvalonMongoDB
 from openpype.api import get_project_settings
+from openpype.lib.local_settings import OpenPypeSecureRegistry
 from openpype.modules import OpenPypeModule, ModulesManager
 from openpype.settings.lib import get_local_settings
 from openpype_interfaces import IPluginPaths, ITrayAction
@@ -28,7 +29,9 @@ class KitsuModule(OpenPypeModule, IPluginPaths, ITrayAction):
     def initialize(self, settings):
         """Initialization of module."""
         module_settings = settings[self.name]
-        local_kitsu_settings = get_local_settings().get("kitsu", {})
+
+        # Get user registry
+        user_registry = OpenPypeSecureRegistry("kitsu_user")
 
         # Enabled by settings
         self.enabled = module_settings.get("enabled", False)
@@ -49,8 +52,8 @@ class KitsuModule(OpenPypeModule, IPluginPaths, ITrayAction):
         self.server_url = kitsu_url
 
         # Set credentials
-        self.kitsu_login = local_kitsu_settings["login"]
-        self.kitsu_password = local_kitsu_settings["password"]
+        self.kitsu_login = user_registry.get_item("login", None)
+        self.kitsu_password = user_registry.get_item("password", None)
 
         # Prepare variables that can be used or set afterwards
         self._connected_modules = None
@@ -359,7 +362,13 @@ def sync_openpype(listen: bool):
     gazu.client.set_host(os.environ["KITSU_SERVER"])
 
     # Authenticate
-    gazu.log_in(os.environ["KITSU_LOGIN"], os.environ["KITSU_PWD"])
+    kitsu_login = os.environ.get("KITSU_LOGIN")
+    kitsu_pwd = os.environ.get("KITSU_PWD")
+    if not kitsu_login or not kitsu_pwd:  # Sentinel to log-in
+        log_in_dialog()
+        return
+
+    gazu.log_in(kitsu_login, kitsu_pwd)
 
     # Iterate projects
     dbcon = AvalonMongoDB()
@@ -462,6 +471,11 @@ def listen():
 
 @cli_main.command()
 def sign_in():
+    """Sign-in command."""
+    log_in_dialog()
+
+
+def log_in_dialog():
     """Show credentials dialog."""
     from openpype.tools.utils.lib import qt_app_context
 
