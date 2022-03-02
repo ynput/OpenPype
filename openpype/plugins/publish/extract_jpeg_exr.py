@@ -34,7 +34,7 @@ class ExtractJpegEXR(pyblish.api.InstancePlugin):
         self.log.info("subset {}".format(instance.data['subset']))
 
         # skip crypto passes.
-        if 'crypto' in instance.data['subset']:
+        if 'crypto' in instance.data['subset'].lower():
             self.log.info("Skipping crypto passes.")
             return
 
