@@ -34,18 +34,6 @@ from openpype_interfaces import IPluginPaths, ITrayAction
 from .utils.listeners import start_listeners
 
 
-class AddonSettingsDef(JsonFilesSettingsDef):
-    schema_prefix = "kitsu"
-
-    def get_settings_root_path(self):
-        """Implemented abstract class of JsonFilesSettingsDef.
-
-        Return directory path where json files defying addon settings are
-        located.
-        """
-        return os.path.join(os.path.dirname(os.path.abspath(__file__)), "settings")
-
-
 class KitsuModule(OpenPypeModule, IPluginPaths, ITrayAction):
     """Kitsu module class."""
 
