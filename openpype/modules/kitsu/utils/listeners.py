@@ -1,4 +1,3 @@
-import gazu
 import os
 
 from avalon.api import AvalonMongoDB
@@ -12,6 +11,8 @@ from .openpype import (
 
 def start_listeners():
     """Start listeners to keep OpenPype up-to-date with Kitsu."""
+    import gazu
+
     # Connect to server
     gazu.client.set_host(os.environ["KITSU_SERVER"])
 

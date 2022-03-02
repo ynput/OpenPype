@@ -1,13 +1,7 @@
 from typing import Dict, List
-import gazu
 
 from pymongo import UpdateOne
 from pymongo.collection import Collection
-
-from gazu.task import (
-    all_tasks_for_asset,
-    all_tasks_for_shot,
-)
 
 from avalon.api import AvalonMongoDB
 from openpype.lib import create_project
@@ -32,6 +26,8 @@ def set_op_project(dbcon, project_id) -> Collection:
     :param dbcon: Connection to DB.
     :param project_id: Project zou ID
     """
+    import gazu
+
     project = gazu.project.get_project(project_id)
     project_name = project["name"]
     dbcon.Session["AVALON_PROJECT"] = project_name
@@ -49,6 +45,11 @@ def update_op_assets(
     :param asset_doc_ids: Dicts of [{zou_id: asset_doc}, ...]
     :return: List of (doc_id, update_dict) tuples
     """
+    from gazu.task import (
+        all_tasks_for_asset,
+        all_tasks_for_shot,
+    )
+
     assets_with_update = []
     for item in entities_list:
         # Update asset

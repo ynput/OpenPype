@@ -4,34 +4,19 @@ import click
 import os
 import re
 
-import gazu
-from gazu.asset import all_assets_for_project, all_asset_types, new_asset
-from gazu.shot import (
-    all_episodes_for_project,
-    all_sequences_for_project,
-    all_shots_for_project,
-    new_episode,
-    new_sequence,
-    new_shot,
-)
-from gazu.task import (
-    all_task_types,
-    new_task,
-    new_task_type,
-)
 from pymongo import DeleteOne, UpdateOne
 
 from avalon.api import AvalonMongoDB
 from openpype.api import get_project_settings
-from openpype.modules import JsonFilesSettingsDef, OpenPypeModule, ModulesManager
-from openpype.modules.kitsu.utils.openpype import (
+from openpype.modules import OpenPypeModule, ModulesManager
+from openpype.settings.lib import get_local_settings
+from openpype_interfaces import IPluginPaths, ITrayAction
+from .utils.listeners import start_listeners
+from .utils.openpype import (
     create_op_asset,
     sync_project,
     update_op_assets,
 )
-from openpype.settings.lib import get_local_settings
-from openpype_interfaces import IPluginPaths, ITrayAction
-from .utils.listeners import start_listeners
 
 
 class KitsuModule(OpenPypeModule, IPluginPaths, ITrayAction):
@@ -137,6 +122,7 @@ def cli_main():
 @cli_main.command()
 def sync_zou():
     """Synchronize Zou server database (Kitsu backend) with openpype database."""
+    import gazu
 
     # Connect to server
     gazu.client.set_host(os.environ["KITSU_SERVER"])
@@ -178,11 +164,11 @@ def sync_zou():
             gazu.project.update_project_data(zou_project, data=op_project["data"])
         gazu.project.update_project(zou_project)
 
-        asset_types = all_asset_types()
-        all_assets = all_assets_for_project(zou_project)
-        all_episodes = all_episodes_for_project(zou_project)
-        all_seqs = all_sequences_for_project(zou_project)
-        all_shots = all_shots_for_project(zou_project)
+        asset_types = gazu.asset.all_asset_types()
+        all_assets = gazu.asset.all_assets_for_project(zou_project)
+        all_episodes = gazu.shot.all_episodes_for_project(zou_project)
+        all_seqs = gazu.shot.all_sequences_for_project(zou_project)
+        all_shots = gazu.shot.all_shots_for_project(zou_project)
         all_entities_ids = {
             e["id"] for e in all_episodes + all_seqs + all_shots + all_assets
         }
@@ -217,7 +203,9 @@ def sync_zou():
             # Match asset type by it's name
             match = regex_ep.match(doc["name"])
             if not match:  # Asset
-                new_entity = new_asset(zou_project, asset_types[0], doc["name"])
+                new_entity = gazu.asset.new_asset(
+                    zou_project, asset_types[0], doc["name"]
+                )
             # Match case in shot<sequence<episode order to support composed names like 'ep01_sq01_sh01'
             elif match.group(1):  # Shot
                 # Match and check parent doc
@@ -238,7 +226,7 @@ def sync_zou():
                     )
 
                     # Create new sequence and set it as substitute
-                    created_sequence = new_sequence(
+                    created_sequence = gazu.shot.new_sequence(
                         zou_project, substitute_sequence_name, episode=zou_parent_id
                     )
                     gazu.shot.update_sequence_data(
@@ -250,7 +238,7 @@ def sync_zou():
                     zou_parent_id = created_sequence["id"]
 
                 # Create shot
-                new_entity = new_shot(
+                new_entity = gazu.shot.new_shot(
                     zou_project,
                     zou_parent_id,
                     doc["name"],
@@ -261,12 +249,12 @@ def sync_zou():
 
             elif match.group(2):  # Sequence
                 parent_doc = asset_docs[visual_parent_id]
-                new_entity = new_sequence(
+                new_entity = gazu.shot.new_sequence(
                     zou_project, doc["name"], episode=parent_doc["data"]["zou"]["id"]
                 )
 
             elif match.group(3):  # Episode
-                new_entity = new_episode(zou_project, doc["name"])
+                new_entity = gazu.shot.new_episode(zou_project, doc["name"])
 
             # Update doc with zou id
             doc["data"].update(
@@ -289,7 +277,7 @@ def sync_zou():
             )
 
         # Update assets
-        all_tasks_types = {t["name"]: t for t in all_task_types()}
+        all_tasks_types = {t["name"]: t for t in gazu.task.all_task_types()}
         assets_docs_to_update = [
             doc
             for doc in asset_docs.values()
@@ -323,11 +311,11 @@ def sync_zou():
 
                         # Create non existing task
                         if not task_type:
-                            task_type = new_task_type(task_name)
+                            task_type = gazu.task.new_task_type(task_name)
                             all_tasks_types[task_name] = task_type
 
                         # New task for entity
-                        new_task(entity, task_type)
+                        gazu.task.new_task(entity, task_type)
 
         # Delete
         deleted_entities = all_entities_ids - {
@@ -350,6 +338,7 @@ def sync_zou():
 )
 def sync_openpype(listen: bool):
     """Synchronize openpype database from Zou sever database."""
+    import gazu
 
     # Connect to server
     gazu.client.set_host(os.environ["KITSU_SERVER"])
@@ -373,10 +362,10 @@ def sync_openpype(listen: bool):
         print(f"Synchronizing {project_name}...")
 
         # Get all assets from zou
-        all_assets = all_assets_for_project(project)
-        all_episodes = all_episodes_for_project(project)
-        all_seqs = all_sequences_for_project(project)
-        all_shots = all_shots_for_project(project)
+        all_assets = gazu.asset.all_assets_for_project(project)
+        all_episodes = gazu.shot.all_episodes_for_project(project)
+        all_seqs = gazu.shot.all_sequences_for_project(project)
+        all_shots = gazu.shot.all_shots_for_project(project)
         all_entities = [
             e
             for e in all_assets + all_episodes + all_seqs + all_shots
