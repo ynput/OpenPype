@@ -77,6 +77,11 @@
                 },
                 {
                     "type": "color",
+                    "label": "Vray Scene:",
+                    "key": "vrayscene_layer"
+                },
+                {
+                    "type": "color",
                     "label": "Yeti Cache:",
                     "key": "yeticache"
                 },
