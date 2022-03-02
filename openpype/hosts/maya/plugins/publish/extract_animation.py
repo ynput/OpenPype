@@ -38,12 +38,8 @@ class ExtractAnimation(openpype.api.Extractor):
                                            fullPath=True) or []
 
         # Collect the start and end including handles
-        start = instance.data["frameStart"]
-        end = instance.data["frameEnd"]
-        handles = instance.data.get("handles", 0) or 0
-        if handles:
-            start -= handles
-            end += handles
+        start = instance.data["frameStartHandle"]
+        end = instance.data["frameEndHandle"]
 
         self.log.info("Extracting animation..")
         dirname = self.staging_dir(instance)

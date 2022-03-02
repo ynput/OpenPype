@@ -1,10 +1,12 @@
-import unreal
+# -*- coding: utf-8 -*-
+"""Create look in Unreal."""
+import unreal  # noqa
 from openpype.hosts.unreal.api.plugin import Creator
-from avalon.unreal import pipeline
+from openpype.hosts.unreal.api import pipeline
 
 
 class CreateLook(Creator):
-    """Shader connections defining shape look"""
+    """Shader connections defining shape look."""
 
     name = "unrealLook"
     label = "Unreal - Look"
@@ -49,14 +51,14 @@ class CreateLook(Creator):
         for material in materials:
             name = material.get_editor_property('material_slot_name')
             object_path = f"{full_path}/{name}.{name}"
-            object = unreal.EditorAssetLibrary.duplicate_loaded_asset(
+            unreal_object = unreal.EditorAssetLibrary.duplicate_loaded_asset(
                 cube.get_asset(), object_path
             )
 
             # Remove the default material of the cube object
-            object.get_editor_property('static_materials').pop()
+            unreal_object.get_editor_property('static_materials').pop()
 
-            object.add_material(
+            unreal_object.add_material(
                 material.get_editor_property('material_interface'))
 
             self.data["members"].append(object_path)
