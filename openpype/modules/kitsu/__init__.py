@@ -6,4 +6,4 @@ be found by OpenPype discovery.
 
 from .kitsu_module import KitsuModule
 
-__all__ = "KitsuModule"
+__all__ = ("KitsuModule", )
