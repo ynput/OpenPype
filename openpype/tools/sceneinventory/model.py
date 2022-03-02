@@ -8,7 +8,7 @@ from avalon import api, io, style, schema
 from avalon.vendor import qtawesome
 
 from avalon.lib import HeroVersionType
-from avalon.tools.models import TreeModel, Item
+from openpype.tools.utils.models import TreeModel, Item
 
 from .lib import (
     get_site_icons,
