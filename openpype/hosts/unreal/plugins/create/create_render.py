@@ -1,5 +1,8 @@
 import unreal
+
 from openpype.hosts.unreal.api.plugin import Creator
+
+from avalon import io
 from avalon.unreal import pipeline
 
 
@@ -21,7 +24,22 @@ class CreateRender(Creator):
     def process(self):
         name = self.data["subset"]
 
-        print(self.data)
+        ar = unreal.AssetRegistryHelpers.get_asset_registry()
+
+        # Get the master sequence and the master level.
+        # There should be only one sequence and one level in the directory.
+        filter = unreal.ARFilter(
+            class_names = ["LevelSequence"],
+            package_paths = [f"/Game/Avalon/{self.data['asset']}"],
+            recursive_paths = False)
+        sequences = ar.get_assets(filter)
+        ms = sequences[0].object_path
+        filter = unreal.ARFilter(
+            class_names = ["World"],
+            package_paths = [f"/Game/Avalon/{self.data['asset']}"],
+            recursive_paths = False)
+        levels = ar.get_assets(filter)
+        ml = levels[0].object_path
 
         selection = []
         if (self.options or {}).get("useSelection"):
@@ -46,8 +64,44 @@ class CreateRender(Creator):
             d = self.data.copy()
             d["members"] = [a]
             d["sequence"] = a
-            d["map"] = unreal.EditorLevelLibrary.get_editor_world().get_path_name()
+            d["master_sequence"] = ms
+            d["master_level"] = ml
             asset = ar.get_asset_by_object_path(a).get_asset()
-            container_name = f"{asset.get_name()}{self.suffix}"
-            pipeline.create_publish_instance(instance=container_name, path=path)
+            asset_name = asset.get_name()
+
+            # Get frame range. We need to go through the hierarchy and check
+            # the frame range for the children.
+            asset_data = io.find_one({
+                "type": "asset",
+                "name": asset_name
+            })
+            id = asset_data.get('_id')
+
+            elements = list(
+                io.find({"type": "asset", "data.visualParent": id}))
+
+            if elements:
+                start_frames = []
+                end_frames = []
+                for e in elements:
+                    start_frames.append(e.get('data').get('clipIn'))
+                    end_frames.append(e.get('data').get('clipOut'))
+
+                    elements.extend(io.find({
+                        "type": "asset",
+                        "data.visualParent": e.get('_id')
+                    }))
+
+                min_frame = min(start_frames)
+                max_frame = max(end_frames)
+            else:
+                min_frame = asset_data.get('data').get('clipIn')
+                max_frame = asset_data.get('data').get('clipOut')
+
+            d["startFrame"] = min_frame
+            d["endFrame"] = max_frame
+
+            container_name = f"{asset_name}{self.suffix}"
+            pipeline.create_publish_instance(
+                instance=container_name, path=path)
             pipeline.imprint("{}/{}".format(path, container_name), d)

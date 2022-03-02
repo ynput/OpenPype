@@ -1,10 +1,10 @@
 import avalon.unreal.pipeline as pipeline
-import avalon.unreal.lib as lib
 import unreal
 
 
 queue = None
 executor = None
+
 
 def _queue_finish_callback(exec, success):
     unreal.log("Render completed. Success: " + str(success))
@@ -45,41 +45,84 @@ def start_rendering():
         if data["family"] == "render":
             inst_data.append(data)
 
-    # subsystem = unreal.get_editor_subsystem(unreal.MoviePipelineQueueSubsystem)
+    # subsystem = unreal.get_editor_subsystem(
+    #     unreal.MoviePipelineQueueSubsystem)
     # queue = subsystem.get_queue()
     global queue
     queue = unreal.MoviePipelineQueue()
 
+    ar = unreal.AssetRegistryHelpers.get_asset_registry()
+
     for i in inst_data:
-        job = queue.allocate_new_job(unreal.MoviePipelineExecutorJob)
-        job.sequence = unreal.SoftObjectPath(i["sequence"])
-        job.map = unreal.SoftObjectPath(i["map"])
-        job.author = "OpenPype"
+        sequence = ar.get_asset_by_object_path(i["sequence"]).get_asset()
 
-        # User data could be used to pass data to the job, that can be read
-        # in the job's OnJobFinished callback. We could, for instance, 
-        # pass the AvalonPublishInstance's path to the job.
-        # job.user_data = ""
+        sequences = [{
+            "sequence": sequence,
+            "output": f"{i['subset']}/{sequence.get_name()}",
+            "frame_range": (
+                int(float(i["startFrame"])),
+                int(float(i["endFrame"])) + 1)
+        }]
+        render_list = []
 
-        output_setting = job.get_configuration().find_or_add_setting_by_class(
-            unreal.MoviePipelineOutputSetting)
-        output_setting.output_resolution = unreal.IntPoint(1280, 720)
-        output_setting.file_name_format = "{sequence_name}.{frame_number}"
-        output_setting.output_directory.path += f"{i['subset']}/"
+        # Get all the sequences to render. If there are subsequences,
+        # add them and their frame ranges to the render list. We also
+        # use the names for the output paths.
+        for s in sequences:
+            tracks = s.get('sequence').get_master_tracks()
+            subscene_track = None
+            for t in tracks:
+                if t.get_class() == unreal.MovieSceneSubTrack.static_class():
+                    subscene_track = t
+            if subscene_track is not None and subscene_track.get_sections():
+                subscenes = subscene_track.get_sections()
 
-        renderPass = job.get_configuration().find_or_add_setting_by_class(
-            unreal.MoviePipelineDeferredPassBase)
-        renderPass.disable_multisample_effects = True
+                for ss in subscenes:
+                    sequences.append({
+                        "sequence": ss.get_sequence(),
+                        "output": f"{s.get('output')}/{ss.get_sequence().get_name()}",
+                        "frame_range": (
+                            ss.get_start_frame(), ss.get_end_frame())
+                    })
+            else:
+                # Avoid rendering camera sequences
+                if "_camera" not in s.get('sequence').get_name():
+                    render_list.append(s)
 
-        job.get_configuration().find_or_add_setting_by_class(
-            unreal.MoviePipelineImageSequenceOutput_PNG)
+        # Create the rendering jobs and add them to the queue.
+        for r in render_list:
+            job = queue.allocate_new_job(unreal.MoviePipelineExecutorJob)
+            job.sequence = unreal.SoftObjectPath(i["master_sequence"])
+            job.map = unreal.SoftObjectPath(i["master_level"])
+            job.author = "OpenPype"
 
-    # TODO: check if queue is empty
+            # User data could be used to pass data to the job, that can be
+            # read in the job's OnJobFinished callback. We could,
+            # for instance, pass the AvalonPublishInstance's path to the job.
+            # job.user_data = ""
 
-    global executor
-    executor = unreal.MoviePipelinePIEExecutor()
-    executor.on_executor_finished_delegate.add_callable_unique(
-        _queue_finish_callback)
-    executor.on_individual_job_finished_delegate.add_callable_unique(
-        _job_finish_callback) # Only available on PIE Executor
-    executor.execute(queue)
+            settings = job.get_configuration().find_or_add_setting_by_class(
+                unreal.MoviePipelineOutputSetting)
+            settings.output_resolution = unreal.IntPoint(1920, 1080)
+            settings.custom_start_frame = r.get("frame_range")[0]
+            settings.custom_end_frame = r.get("frame_range")[1]
+            settings.use_custom_playback_range = True
+            settings.file_name_format = "{sequence_name}.{frame_number}"
+            settings.output_directory.path += r.get('output')
+
+            renderPass = job.get_configuration().find_or_add_setting_by_class(
+                unreal.MoviePipelineDeferredPassBase)
+            renderPass.disable_multisample_effects = True
+
+            job.get_configuration().find_or_add_setting_by_class(
+                unreal.MoviePipelineImageSequenceOutput_PNG)
+
+    # If there are jobs in the queue, start the rendering process.
+    if queue.get_jobs():
+        global executor
+        executor = unreal.MoviePipelinePIEExecutor()
+        executor.on_executor_finished_delegate.add_callable_unique(
+            _queue_finish_callback)
+        executor.on_individual_job_finished_delegate.add_callable_unique(
+            _job_finish_callback)  # Only available on PIE Executor
+        executor.execute(queue)
