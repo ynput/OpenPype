@@ -3,7 +3,6 @@ from collections import defaultdict
 
 from Qt import QtWidgets, QtCore
 
-# TODO: expose this better in avalon core
 from openpype.tools.utils.models import TreeModel
 from openpype.tools.utils.lib import (
     preserve_expanded_rows,
