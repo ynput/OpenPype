@@ -31,6 +31,7 @@ from openpype.lib import PypeLogger
 
 DEFAULT_OPENPYPE_MODULES = (
     "avalon_apps",
+    "kitsu",
     "clockify",
     "log_viewer",
     "muster",
@@ -839,6 +840,7 @@ class TrayModulesManager(ModulesManager):
     modules_menu_order = (
         "user",
         "ftrack",
+        "kitsu",
         "muster",
         "launcher_tool",
         "avalon",
