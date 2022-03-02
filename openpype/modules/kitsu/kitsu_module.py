@@ -42,7 +42,9 @@ class KitsuModule(OpenPypeModule, IPluginPaths, ITrayAction):
 
             # Check for "/api" url validity
             if not kitsu_url.endswith("api"):
-                kitsu_url = f"{kitsu_url}{'' if kitsu_url.endswith('/') else '/'}api"
+                kitsu_url = (
+                    f"{kitsu_url}{'' if kitsu_url.endswith('/') else '/'}api"
+                )
 
         self.server_url = kitsu_url
 
@@ -161,7 +163,9 @@ def sync_zou():
                     "resolution": f"{op_project['data']['resolutionWidth']}x{op_project['data']['resolutionHeight']}",
                 }
             )
-            gazu.project.update_project_data(zou_project, data=op_project["data"])
+            gazu.project.update_project_data(
+                zou_project, data=op_project["data"]
+            )
         gazu.project.update_project(zou_project)
 
         asset_types = gazu.asset.all_asset_types()
@@ -227,7 +231,9 @@ def sync_zou():
 
                     # Create new sequence and set it as substitute
                     created_sequence = gazu.shot.new_sequence(
-                        zou_project, substitute_sequence_name, episode=zou_parent_id
+                        zou_project,
+                        substitute_sequence_name,
+                        episode=zou_parent_id,
                     )
                     gazu.shot.update_sequence_data(
                         created_sequence, {"is_substitute": True}
@@ -244,13 +250,16 @@ def sync_zou():
                     doc["name"],
                     frame_in=doc["data"]["frameStart"],
                     frame_out=doc["data"]["frameEnd"],
-                    nb_frames=doc["data"]["frameEnd"] - doc["data"]["frameStart"],
+                    nb_frames=doc["data"]["frameEnd"]
+                    - doc["data"]["frameStart"],
                 )
 
             elif match.group(2):  # Sequence
                 parent_doc = asset_docs[visual_parent_id]
                 new_entity = gazu.shot.new_sequence(
-                    zou_project, doc["name"], episode=parent_doc["data"]["zou"]["id"]
+                    zou_project,
+                    doc["name"],
+                    episode=parent_doc["data"]["zou"]["id"],
                 )
 
             elif match.group(3):  # Episode
@@ -293,7 +302,10 @@ def sync_zou():
                 if frame_in or frame_out:
                     entity_data.update(
                         {
-                            "data": {"frame_in": frame_in, "frame_out": frame_out},
+                            "data": {
+                                "frame_in": frame_in,
+                                "frame_out": frame_out,
+                            },
                             "nb_frames": frame_out - frame_in,
                         }
                     )
@@ -334,7 +346,10 @@ def sync_zou():
 
 @cli_main.command()
 @click.option(
-    "-l", "--listen", is_flag=True, help="Listen Kitsu server after synchronization."
+    "-l",
+    "--listen",
+    is_flag=True,
+    help="Listen Kitsu server after synchronization.",
 )
 def sync_openpype(listen: bool):
     """Synchronize openpype database from Zou sever database."""
@@ -410,7 +425,9 @@ def sync_openpype(listen: bool):
         bulk_writes.extend(
             [
                 UpdateOne({"_id": id}, update)
-                for id, update in update_op_assets(all_entities, zou_ids_and_asset_docs)
+                for id, update in update_op_assets(
+                    all_entities, zou_ids_and_asset_docs
+                )
             ]
         )
 

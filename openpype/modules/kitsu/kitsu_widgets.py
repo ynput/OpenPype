@@ -46,7 +46,8 @@ class PasswordDialog(QtWidgets.QDialog):
         login_label = QtWidgets.QLabel("Login:", login_widget)
 
         login_input = QtWidgets.QLineEdit(
-            login_widget, text=kitsu_settings.get("login") if remembered else None
+            login_widget,
+            text=kitsu_settings.get("login") if remembered else None,
         )
         login_input.setPlaceholderText("Your Kitsu account login...")
 
@@ -61,7 +62,8 @@ class PasswordDialog(QtWidgets.QDialog):
         password_label = QtWidgets.QLabel("Password:", password_widget)
 
         password_input = QtWidgets.QLineEdit(
-            password_widget, text=kitsu_settings.get("password") if remembered else None
+            password_widget,
+            text=kitsu_settings.get("password") if remembered else None,
         )
         password_input.setPlaceholderText("Your password...")
         password_input.setEchoMode(QtWidgets.QLineEdit.Password)
@@ -87,7 +89,9 @@ class PasswordDialog(QtWidgets.QDialog):
 
         remember_checkbox = QtWidgets.QCheckBox("Remember", buttons_widget)
         remember_checkbox.setObjectName("RememberCheckbox")
-        remember_checkbox.setChecked(remembered if remembered is not None else True)
+        remember_checkbox.setChecked(
+            remembered if remembered is not None else True
+        )
 
         ok_btn = QtWidgets.QPushButton("Ok", buttons_widget)
         cancel_btn = QtWidgets.QPushButton("Cancel", buttons_widget)
@@ -137,7 +141,9 @@ class PasswordDialog(QtWidgets.QDialog):
     def _on_ok_click(self):
         # Check if is connectable
         if not self._connectable:
-            self.message_label.setText("Please set server url in Studio Settings!")
+            self.message_label.setText(
+                "Please set server url in Studio Settings!"
+            )
             return
 
         # Collect values
