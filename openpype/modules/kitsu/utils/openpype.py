@@ -132,6 +132,8 @@ def sync_project(project: dict, dbcon: AvalonMongoDB) -> UpdateOne:
     :param dbcon: DB to create project in
     :return: Update instance for the project
     """
+    import gazu
+
     project_name = project["name"]
     project_doc = dbcon.find_one({"type": "project"})
     if not project_doc:
