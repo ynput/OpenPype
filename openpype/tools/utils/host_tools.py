@@ -207,7 +207,7 @@ class HostToolsHelper:
         pyblish_show = self._discover_pyblish_gui()
         return pyblish_show(parent)
 
-    def _discover_pyblish_gui():
+    def _discover_pyblish_gui(self):
         """Return the most desirable of the currently registered GUIs"""
         # Prefer last registered
         guis = list(reversed(pyblish.api.registered_guis()))
