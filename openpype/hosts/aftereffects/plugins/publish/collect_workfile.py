@@ -10,6 +10,11 @@ class CollectWorkfile(pyblish.api.ContextPlugin):
     order = pyblish.api.CollectorOrder + 0.1
 
     def process(self, context):
+        for instance in context:
+            if instance.data["family"] == "workfile":
+                self.log.debug("Workfile instance found, skipping")
+                return
+
         task = api.Session["AVALON_TASK"]
         current_file = context.data["currentFile"]
         staging_dir = os.path.dirname(current_file)
