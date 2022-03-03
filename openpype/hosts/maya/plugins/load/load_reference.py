@@ -172,10 +172,6 @@ class ReferenceLoader(openpype.hosts.maya.api.plugin.ReferenceLoader):
         for node in nodes:
             id_attr = "{}.id".format(node)
             if not cmds.attributeQuery("id", node=node, exists=True):
-                print("-" * 80)
-                print("skipping {}".format(node))
                 continue
             if cmds.getAttr(id_attr) == AVALON_CONTAINER_ID:
-                print("=" * 80)
-                print("moving {}".format(node))
                 cmds.sets(node, forceElement=AVALON_CONTAINERS)
