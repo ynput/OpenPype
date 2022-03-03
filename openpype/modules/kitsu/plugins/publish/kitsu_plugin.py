@@ -40,6 +40,6 @@ class IntegrateRig(pyblish.api.InstancePlugin):
             entity_task,
             entity_task["task_status_id"],
             comment=f"Version {instance.data['version']} has been published!",
-        )
+        )  # TODO add comment from pyblish
 
         self.log.info("Version published to Kitsu successfully!")
