@@ -1802,6 +1802,8 @@ def get_id_from_sibling(node, history_only=True):
         similar_nodes = cmds.listRelatives(parent,
                                            type=node_type,
                                            fullPath=True)
+        similar_nodes = cmds.ls(similar_nodes, exactType=node_type, long=True)
+
         # Exclude itself
         similar_nodes = [x for x in similar_nodes if x != node]
 
