@@ -2,6 +2,7 @@ import os
 import re
 import tempfile
 import attr
+from copy import deepcopy
 
 import pyblish.api
 
@@ -29,20 +30,22 @@ class CollectAERender(abstract_collect_render.AbstractCollectRender):
     label = "Collect After Effects Render Layers"
     hosts = ["aftereffects"]
 
-    # internal
-    family_remapping = {
-        "render": ("render.farm", "farm"),   # (family, label)
-        "renderLocal": ("render", "local")
-    }
     padding_width = 6
     rendered_extension = 'png'
 
-    stub = get_stub()
+    _stub = None
+
+    @classmethod
+    def get_stub(cls):
+        if not cls._stub:
+            cls._stub = get_stub()
+        return cls._stub
 
     def get_instances(self, context):
         instances = []
+        instances_to_remove = []
 
-        app_version = self.stub.get_app_version()
+        app_version = CollectAERender.get_stub().get_app_version()
         app_version = app_version[0:4]
 
         current_file = context.data["currentFile"]
@@ -50,105 +53,91 @@ class CollectAERender(abstract_collect_render.AbstractCollectRender):
         asset_entity = context.data["assetEntity"]
         project_entity = context.data["projectEntity"]
 
-        compositions = self.stub.get_items(True)
+        compositions = CollectAERender.get_stub().get_items(True)
         compositions_by_id = {item.id: item for item in compositions}
-        for inst in self.stub.get_metadata():
-            schema = inst.get('schema')
-            # loaded asset container skip it
-            if schema and 'container' in schema:
+        for inst in context:
+            family = inst.data["family"]
+            if family != "render":
                 continue
+            self._debug_log(inst)
 
-            if not inst["members"]:
-                raise ValueError("Couldn't find id, unable to publish. " +
-                                 "Please recreate instance.")
-            item_id = inst["members"][0]
+            item_id = inst.data["members"][0]
 
-            work_area_info = self.stub.get_work_area(int(item_id))
+            work_area_info = CollectAERender.get_stub().get_work_area(
+                int(item_id))
 
             if not work_area_info:
                 self.log.warning("Orphaned instance, deleting metadata")
-                self.stub.remove_instance(int(item_id))
+                inst_id = inst.get("instance_id") or item_id
+                CollectAERender.get_stub().remove_instance(inst_id)
                 continue
 
-            frameStart = work_area_info.workAreaStart
-
-            frameEnd = round(work_area_info.workAreaStart +
-                             float(work_area_info.workAreaDuration) *
-                             float(work_area_info.frameRate)) - 1
+            frame_start = work_area_info.workAreaStart
+            frame_end = round(work_area_info.workAreaStart +
+                              float(work_area_info.workAreaDuration) *
+                              float(work_area_info.frameRate)) - 1
             fps = work_area_info.frameRate
             # TODO add resolution when supported by extension
 
-            if inst["family"] in self.family_remapping.keys() \
-                    and inst["active"]:
-                remapped_family = self.family_remapping[inst["family"]]
-                instance = AERenderInstance(
-                    family=remapped_family[0],
-                    families=[remapped_family[0]],
-                    version=version,
-                    time="",
-                    source=current_file,
-                    label="{} - {}".format(inst["subset"], remapped_family[1]),
-                    subset=inst["subset"],
-                    asset=context.data["assetEntity"]["name"],
-                    attachTo=False,
-                    setMembers='',
-                    publish=True,
-                    renderer='aerender',
-                    name=inst["subset"],
-                    resolutionWidth=asset_entity["data"].get(
-                        "resolutionWidth",
-                        project_entity["data"]["resolutionWidth"]),
-                    resolutionHeight=asset_entity["data"].get(
-                        "resolutionHeight",
-                        project_entity["data"]["resolutionHeight"]),
-                    pixelAspect=1,
-                    tileRendering=False,
-                    tilesX=0,
-                    tilesY=0,
-                    frameStart=frameStart,
-                    frameEnd=frameEnd,
-                    frameStep=1,
-                    toBeRenderedOn='deadline',
-                    fps=fps,
-                    app_version=app_version
-                )
+            if not inst.data["active"]:
+                continue
 
-                comp = compositions_by_id.get(int(item_id))
-                if not comp:
-                    raise ValueError("There is no composition for item {}".
-                                     format(item_id))
-                instance.comp_name = comp.name
-                instance.comp_id = item_id
-                instance._anatomy = context.data["anatomy"]
-                instance.anatomyData = context.data["anatomyData"]
+            subset_name = inst.data["subset"]
+            instance = AERenderInstance(
+                family=family,
+                families=[family],
+                version=version,
+                time="",
+                source=current_file,
+                label="{} - {}".format(subset_name, family),
+                subset=subset_name,
+                asset=context.data["assetEntity"]["name"],
+                attachTo=False,
+                setMembers='',
+                publish=True,
+                renderer='aerender',
+                name=subset_name,
+                resolutionWidth=asset_entity["data"].get(
+                    "resolutionWidth",
+                    project_entity["data"]["resolutionWidth"]),
+                resolutionHeight=asset_entity["data"].get(
+                    "resolutionHeight",
+                    project_entity["data"]["resolutionHeight"]),
+                pixelAspect=1,
+                tileRendering=False,
+                tilesX=0,
+                tilesY=0,
+                frameStart=frame_start,
+                frameEnd=frame_end,
+                frameStep=1,
+                toBeRenderedOn='deadline',
+                fps=fps,
+                app_version=app_version,
+                anatomyData=deepcopy(context.data["anatomyData"]),
+                context=context
+            )
 
-                instance.outputDir = self._get_output_dir(instance)
-                instance.context = context
+            comp = compositions_by_id.get(int(item_id))
+            if not comp:
+                raise ValueError("There is no composition for item {}".
+                                 format(item_id))
+            instance.outputDir = self._get_output_dir(instance)
+            instance.comp_name = comp.name
+            instance.comp_id = item_id
 
-                settings = get_project_settings(os.getenv("AVALON_PROJECT"))
-                reviewable_subset_filter = \
-                    (settings["deadline"]
-                             ["publish"]
-                             ["ProcessSubmittedJobOnFarm"]
-                             ["aov_filter"])
+            is_local = "renderLocal" in inst.data["families"]
+            if inst.data.get("creator_attributes"):
+                is_local = inst.data["creator_attributes"].get("farm")
+            if is_local:
+                # for local renders
+                instance = self._update_for_local(instance, project_entity)
 
-                if inst["family"] == "renderLocal":
-                    # for local renders
-                    instance.anatomyData["version"] = instance.version
-                    instance.anatomyData["subset"] = instance.subset
-                    instance.stagingDir = tempfile.mkdtemp()
-                    instance.projectEntity = project_entity
+            self.log.info("New instance:: {}".format(instance))
+            instances.append(instance)
+            instances_to_remove.append(inst)
 
-                    if self.hosts[0] in reviewable_subset_filter.keys():
-                        for aov_pattern in \
-                                reviewable_subset_filter[self.hosts[0]]:
-                            if re.match(aov_pattern, instance.subset):
-                                instance.families.append("review")
-                                instance.review = True
-                                break
-
-                self.log.info("New instance:: {}".format(instance))
-                instances.append(instance)
+        for instance in instances_to_remove:
+            context.remove(instance)
 
         return instances
 
@@ -169,7 +158,7 @@ class CollectAERender(abstract_collect_render.AbstractCollectRender):
         end = render_instance.frameEnd
 
         # pull file name from Render Queue Output module
-        render_q = self.stub.get_render_info()
+        render_q = CollectAERender.get_stub().get_render_info()
         if not render_q:
             raise ValueError("No file extension set in Render Queue")
         _, ext = os.path.splitext(os.path.basename(render_q.file_name))
@@ -216,3 +205,31 @@ class CollectAERender(abstract_collect_render.AbstractCollectRender):
 
         # for submit_publish_job
         return base_dir
+
+    def _update_for_local(self, instance, project_entity):
+        instance.anatomyData["version"] = instance.version
+        instance.anatomyData["subset"] = instance.subset
+        instance.stagingDir = tempfile.mkdtemp()
+        instance.projectEntity = project_entity
+
+        settings = get_project_settings(os.getenv("AVALON_PROJECT"))
+        reviewable_subset_filter = (settings["deadline"]
+                                    ["publish"]
+                                    ["ProcessSubmittedJobOnFarm"]
+                                    ["aov_filter"].get(self.hosts[0]))
+        for aov_pattern in reviewable_subset_filter:
+            if re.match(aov_pattern, instance.subset):
+                instance.families.append("review")
+                instance.review = True
+                break
+
+        return instance
+
+    def _debug_log(self, instance):
+        def _default_json(value):
+            return str(value)
+
+        import json
+        self.log.info(
+            json.dumps(instance.data, indent=4, default=_default_json)
+        )
