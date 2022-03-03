@@ -1,10 +1,13 @@
-import os
-
-import gazu
 from Qt import QtWidgets, QtCore, QtGui
 
 from openpype import style
-from openpype.lib.local_settings import OpenPypeSecureRegistry
+from openpype.modules.kitsu.utils.credentials import (
+    clear_credentials,
+    load_credentials,
+    save_credentials,
+    set_credentials_envs,
+    validate_credentials,
+)
 from openpype.resources import get_resource
 from openpype.settings.lib import (
     get_system_settings,
@@ -13,23 +16,20 @@ from openpype.settings.lib import (
 from openpype.widgets.password_dialog import PressHoverButton
 
 
-class PasswordDialog(QtWidgets.QDialog):
-    """Stupidly simple dialog to compare password from general settings."""
+class KitsuPasswordDialog(QtWidgets.QDialog):
+    """Kitsu login dialog."""
 
     finished = QtCore.Signal(bool)
 
     def __init__(self, parent=None):
-        super(PasswordDialog, self).__init__(parent)
+        super(KitsuPasswordDialog, self).__init__(parent)
 
         self.setWindowTitle("Kitsu Credentials")
         self.resize(300, 120)
 
         system_settings = get_system_settings()
-        user_registry = OpenPypeSecureRegistry("kitsu_user")
-        remembered = bool(
-            user_registry.get_item("login", None)
-            or user_registry.get_item("password", None)
-        )
+        user_login, user_pwd = load_credentials()
+        remembered = bool(user_login or user_pwd)
 
         self._final_result = None
         self._connectable = bool(
@@ -54,7 +54,7 @@ class PasswordDialog(QtWidgets.QDialog):
 
         login_input = QtWidgets.QLineEdit(
             login_widget,
-            text=user_registry.get_item("login") if remembered else None,
+            text=user_login if remembered else None,
         )
         login_input.setPlaceholderText("Your Kitsu account login...")
 
@@ -70,7 +70,7 @@ class PasswordDialog(QtWidgets.QDialog):
 
         password_input = QtWidgets.QLineEdit(
             password_widget,
-            text=user_registry.get_item("password") if remembered else None,
+            text=user_pwd if remembered else None,
         )
         password_input.setPlaceholderText("Your password...")
         password_input.setEchoMode(QtWidgets.QLineEdit.Password)
@@ -96,9 +96,7 @@ class PasswordDialog(QtWidgets.QDialog):
 
         remember_checkbox = QtWidgets.QCheckBox("Remember", buttons_widget)
         remember_checkbox.setObjectName("RememberCheckbox")
-        remember_checkbox.setChecked(
-            remembered if remembered is not None else True
-        )
+        remember_checkbox.setChecked(remembered)
 
         ok_btn = QtWidgets.QPushButton("Ok", buttons_widget)
         cancel_btn = QtWidgets.QPushButton("Cancel", buttons_widget)
@@ -139,10 +137,10 @@ class PasswordDialog(QtWidgets.QDialog):
         if event.key() in (QtCore.Qt.Key_Return, QtCore.Qt.Key_Enter):
             self._on_ok_click()
             return event.accept()
-        super(PasswordDialog, self).keyPressEvent(event)
+        super(KitsuPasswordDialog, self).keyPressEvent(event)
 
     def closeEvent(self, event):
-        super(PasswordDialog, self).closeEvent(event)
+        super(KitsuPasswordDialog, self).closeEvent(event)
         self.finished.emit(self.result())
 
     def _on_ok_click(self):
@@ -158,28 +156,19 @@ class PasswordDialog(QtWidgets.QDialog):
         pwd_value = self.password_input.text()
         remember = self.remember_checkbox.isChecked()
 
-        # Connect to server
-        gazu.client.set_host(os.environ["KITSU_SERVER"])
-
         # Authenticate
-        gazu.log_in(login_value, pwd_value)
-
-        # Set logging-in env vars
-        os.environ["KITSU_LOGIN"] = login_value
-        os.environ["KITSU_PWD"] = pwd_value
-
-        # Get user registry
-        user_registry = OpenPypeSecureRegistry("kitsu_user")
+        if validate_credentials(login_value, pwd_value):
+            set_credentials_envs(login_value, pwd_value)
+        else:
+            self.message_label.setText("Authentication failed...")
+            return
 
         # Remember password cases
         if remember:
-            # Set local settings
-            user_registry.set_item("login", login_value)
-            user_registry.set_item("password", pwd_value)
+            save_credentials(login_value, pwd_value)
         else:
             # Clear local settings
-            user_registry.delete_item("login")
-            user_registry.delete_item("password")
+            clear_credentials()
 
             # Clear input fields
             self.login_input.clear()

@@ -1,72 +1,143 @@
 import os
 
+import gazu
+
 from avalon.api import AvalonMongoDB
-from .openpype import (
+from .credentials import load_credentials, validate_credentials
+from .update_op_with_zou import (
     create_op_asset,
     set_op_project,
-    sync_project,
+    write_project_to_op,
     update_op_assets,
 )
 
 
-def start_listeners():
-    """Start listeners to keep OpenPype up-to-date with Kitsu."""
-    import gazu
+class Listener:
+    """Host Kitsu listener."""
 
-    # Connect to server
-    gazu.client.set_host(os.environ["KITSU_SERVER"])
+    def __init__(self, login, password):
+        """Create client and add listeners to events without starting it.
 
-    # Authenticate
-    gazu.log_in(os.environ["KITSU_LOGIN"], os.environ["KITSU_PWD"])
-    gazu.set_event_host(os.environ["KITSU_SERVER"].replace("api", "socket.io"))
-    event_client = gazu.events.init()
+            Run `listener.start()` to actually start the service.
 
-    # Connect to DB
-    dbcon = AvalonMongoDB()
-    dbcon.install()
+        Args:
+            login (str): Kitsu user login
+            password (str): Kitsu user password
+
+        Raises:
+            AuthFailedException: Wrong user login and/or password
+        """
+        self.dbcon = AvalonMongoDB()
+        self.dbcon.install()
+
+        gazu.client.set_host(os.environ["KITSU_SERVER"])
+
+        # Authenticate
+        if not validate_credentials(login, password):
+            raise gazu.exception.AuthFailedException(
+                f"Kitsu authentication failed for login: '{login}'..."
+            )
+
+        gazu.set_event_host(
+            os.environ["KITSU_SERVER"].replace("api", "socket.io")
+        )
+        self.event_client = gazu.events.init()
+
+        gazu.events.add_listener(
+            self.event_client, "project:new", self._new_project
+        )
+        gazu.events.add_listener(
+            self.event_client, "project:update", self._update_project
+        )
+        gazu.events.add_listener(
+            self.event_client, "project:delete", self._delete_project
+        )
+
+        gazu.events.add_listener(
+            self.event_client, "asset:new", self._new_asset
+        )
+        gazu.events.add_listener(
+            self.event_client, "asset:update", self._update_asset
+        )
+        gazu.events.add_listener(
+            self.event_client, "asset:delete", self._delete_asset
+        )
+
+        gazu.events.add_listener(
+            self.event_client, "episode:new", self._new_episode
+        )
+        gazu.events.add_listener(
+            self.event_client, "episode:update", self._update_episode
+        )
+        gazu.events.add_listener(
+            self.event_client, "episode:delete", self._delete_episode
+        )
+
+        gazu.events.add_listener(
+            self.event_client, "sequence:new", self._new_sequence
+        )
+        gazu.events.add_listener(
+            self.event_client, "sequence:update", self._update_sequence
+        )
+        gazu.events.add_listener(
+            self.event_client, "sequence:delete", self._delete_sequence
+        )
+
+        gazu.events.add_listener(self.event_client, "shot:new", self._new_shot)
+        gazu.events.add_listener(
+            self.event_client, "shot:update", self._update_shot
+        )
+        gazu.events.add_listener(
+            self.event_client, "shot:delete", self._delete_shot
+        )
+
+        gazu.events.add_listener(self.event_client, "task:new", self._new_task)
+        gazu.events.add_listener(
+            self.event_client, "task:update", self._update_task
+        )
+        gazu.events.add_listener(
+            self.event_client, "task:delete", self._delete_task
+        )
+
+    def start(self):
+        gazu.events.run_client(self.event_client)
 
     # == Project ==
-
-    def new_project(data):
+    def _new_project(self, data):
         """Create new project into OP DB."""
 
         # Use update process to avoid duplicating code
-        update_project(data)
+        self._update_project(data)
 
-    def update_project(data):
+    def _update_project(self, data):
         """Update project into OP DB."""
         # Get project entity
         project = gazu.project.get_project(data["project_id"])
         project_name = project["name"]
-        dbcon.Session["AVALON_PROJECT"] = project_name
 
-        update_project = sync_project(project, dbcon)
+        update_project = write_project_to_op(project, self.dbcon)
 
         # Write into DB
         if update_project:
-            project_col = dbcon.database[project_name]
+            project_col = self.dbcon.database[project_name]
             project_col.bulk_write([update_project])
 
-    def delete_project(data):
+    def _delete_project(self, data):
         """Delete project."""
         # Get project entity
         print(data)  # TODO check bugfix
         project = gazu.project.get_project(data["project_id"])
 
         # Delete project collection
-        project_col = dbcon.database[project["name"]]
+        project_col = self.dbcon.database[project["name"]]
         project_col.drop()
-
-    gazu.events.add_listener(event_client, "project:new", new_project)
-    gazu.events.add_listener(event_client, "project:update", update_project)
-    gazu.events.add_listener(event_client, "project:delete", delete_project)
 
     # == Asset ==
 
-    def new_asset(data):
+    def _new_asset(self, data):
         """Create new asset into OP DB."""
         # Get project entity
-        project_col = set_op_project(dbcon, data["project_id"])
+        project_col = set_op_project(self.dbcon, data["project_id"])
 
         # Get gazu entity
         asset = gazu.asset.get_asset(data["asset_id"])
@@ -75,12 +146,12 @@ def start_listeners():
         project_col.insert_one(create_op_asset(asset))
 
         # Update
-        update_asset(data)
+        self._update_asset(data)
 
-    def update_asset(data):
+    def _update_asset(self, data):
         """Update asset into OP DB."""
-        project_col = set_op_project(dbcon, data["project_id"])
-        project_doc = dbcon.find_one({"type": "project"})
+        project_col = set_op_project(self.dbcon, data["project_id"])
+        project_doc = self.dbcon.find_one({"type": "project"})
 
         # Get gazu entity
         asset = gazu.asset.get_asset(data["asset_id"])
@@ -100,24 +171,20 @@ def start_listeners():
         )[0]
         project_col.update_one({"_id": asset_doc_id}, asset_update)
 
-    def delete_asset(data):
+    def _delete_asset(self, data):
         """Delete asset of OP DB."""
-        project_col = set_op_project(dbcon, data["project_id"])
+        project_col = set_op_project(self.dbcon, data["project_id"])
 
         # Delete
         project_col.delete_one(
             {"type": "asset", "data.zou.id": data["asset_id"]}
         )
 
-    gazu.events.add_listener(event_client, "asset:new", new_asset)
-    gazu.events.add_listener(event_client, "asset:update", update_asset)
-    gazu.events.add_listener(event_client, "asset:delete", delete_asset)
-
     # == Episode ==
-    def new_episode(data):
+    def _new_episode(self, data):
         """Create new episode into OP DB."""
         # Get project entity
-        project_col = set_op_project(dbcon, data["project_id"])
+        project_col = set_op_project(self.dbcon, data["project_id"])
 
         # Get gazu entity
         episode = gazu.shot.get_episode(data["episode_id"])
@@ -126,12 +193,12 @@ def start_listeners():
         project_col.insert_one(create_op_asset(episode))
 
         # Update
-        update_episode(data)
+        self._update_episode(data)
 
-    def update_episode(data):
+    def _update_episode(self, data):
         """Update episode into OP DB."""
-        project_col = set_op_project(dbcon, data["project_id"])
-        project_doc = dbcon.find_one({"type": "project"})
+        project_col = set_op_project(self.dbcon, data["project_id"])
+        project_doc = self.dbcon.find_one({"type": "project"})
 
         # Get gazu entity
         episode = gazu.shot.get_episode(data["episode_id"])
@@ -151,9 +218,9 @@ def start_listeners():
         )[0]
         project_col.update_one({"_id": asset_doc_id}, asset_update)
 
-    def delete_episode(data):
+    def _delete_episode(self, data):
         """Delete shot of OP DB."""
-        project_col = set_op_project(dbcon, data["project_id"])
+        project_col = set_op_project(self.dbcon, data["project_id"])
         print("delete episode")  # TODO check bugfix
 
         # Delete
@@ -161,15 +228,11 @@ def start_listeners():
             {"type": "asset", "data.zou.id": data["episode_id"]}
         )
 
-    gazu.events.add_listener(event_client, "episode:new", new_episode)
-    gazu.events.add_listener(event_client, "episode:update", update_episode)
-    gazu.events.add_listener(event_client, "episode:delete", delete_episode)
-
     # == Sequence ==
-    def new_sequence(data):
+    def _new_sequence(self, data):
         """Create new sequnce into OP DB."""
         # Get project entity
-        project_col = set_op_project(dbcon, data["project_id"])
+        project_col = set_op_project(self.dbcon, data["project_id"])
 
         # Get gazu entity
         sequence = gazu.shot.get_sequence(data["sequence_id"])
@@ -178,12 +241,12 @@ def start_listeners():
         project_col.insert_one(create_op_asset(sequence))
 
         # Update
-        update_sequence(data)
+        self._update_sequence(data)
 
-    def update_sequence(data):
+    def _update_sequence(self, data):
         """Update sequence into OP DB."""
-        project_col = set_op_project(dbcon, data["project_id"])
-        project_doc = dbcon.find_one({"type": "project"})
+        project_col = set_op_project(self.dbcon, data["project_id"])
+        project_doc = self.dbcon.find_one({"type": "project"})
 
         # Get gazu entity
         sequence = gazu.shot.get_sequence(data["sequence_id"])
@@ -203,9 +266,9 @@ def start_listeners():
         )[0]
         project_col.update_one({"_id": asset_doc_id}, asset_update)
 
-    def delete_sequence(data):
+    def _delete_sequence(self, data):
         """Delete sequence of OP DB."""
-        project_col = set_op_project(dbcon, data["project_id"])
+        project_col = set_op_project(self.dbcon, data["project_id"])
         print("delete sequence")  # TODO check bugfix
 
         # Delete
@@ -213,15 +276,11 @@ def start_listeners():
             {"type": "asset", "data.zou.id": data["sequence_id"]}
         )
 
-    gazu.events.add_listener(event_client, "sequence:new", new_sequence)
-    gazu.events.add_listener(event_client, "sequence:update", update_sequence)
-    gazu.events.add_listener(event_client, "sequence:delete", delete_sequence)
-
     # == Shot ==
-    def new_shot(data):
+    def _new_shot(self, data):
         """Create new shot into OP DB."""
         # Get project entity
-        project_col = set_op_project(dbcon, data["project_id"])
+        project_col = set_op_project(self.dbcon, data["project_id"])
 
         # Get gazu entity
         shot = gazu.shot.get_shot(data["shot_id"])
@@ -230,12 +289,12 @@ def start_listeners():
         project_col.insert_one(create_op_asset(shot))
 
         # Update
-        update_shot(data)
+        self._update_shot(data)
 
-    def update_shot(data):
+    def _update_shot(self, data):
         """Update shot into OP DB."""
-        project_col = set_op_project(dbcon, data["project_id"])
-        project_doc = dbcon.find_one({"type": "project"})
+        project_col = set_op_project(self.dbcon, data["project_id"])
+        project_doc = self.dbcon.find_one({"type": "project"})
 
         # Get gazu entity
         shot = gazu.shot.get_shot(data["shot_id"])
@@ -255,25 +314,20 @@ def start_listeners():
         )[0]
         project_col.update_one({"_id": asset_doc_id}, asset_update)
 
-    def delete_shot(data):
+    def _delete_shot(self, data):
         """Delete shot of OP DB."""
-        project_col = set_op_project(dbcon, data["project_id"])
+        project_col = set_op_project(self.dbcon, data["project_id"])
 
         # Delete
         project_col.delete_one(
             {"type": "asset", "data.zou.id": data["shot_id"]}
         )
 
-    gazu.events.add_listener(event_client, "shot:new", new_shot)
-    gazu.events.add_listener(event_client, "shot:update", update_shot)
-    gazu.events.add_listener(event_client, "shot:delete", delete_shot)
-
     # == Task ==
-    def new_task(data):
+    def _new_task(self, data):
         """Create new task into OP DB."""
-        print("new", data)
         # Get project entity
-        project_col = set_op_project(dbcon, data["project_id"])
+        project_col = set_op_project(self.dbcon, data["project_id"])
 
         # Get gazu entity
         task = gazu.task.get_task(data["task_id"])
@@ -291,14 +345,14 @@ def start_listeners():
             {"_id": asset_doc["_id"]}, {"$set": {"data.tasks": asset_tasks}}
         )
 
-    def update_task(data):
+    def _update_task(self, data):
         """Update task into OP DB."""
         # TODO is it necessary?
         pass
 
-    def delete_task(data):
+    def _delete_task(self, data):
         """Delete task of OP DB."""
-        project_col = set_op_project(dbcon, data["project_id"])
+        project_col = set_op_project(self.dbcon, data["project_id"])
 
         # Find asset doc
         asset_docs = [doc for doc in project_col.find({"type": "asset"})]
@@ -307,7 +361,7 @@ def start_listeners():
             for name, task in doc["data"]["tasks"].items():
                 if task.get("zou") and data["task_id"] == task["zou"]["id"]:
                     # Pop task
-                    asset_tasks = doc["data"].get("tasks")
+                    asset_tasks = doc["data"].get("tasks", {})
                     asset_tasks.pop(name)
 
                     # Delete task in DB
@@ -317,8 +371,20 @@ def start_listeners():
                     )
                     return
 
-    gazu.events.add_listener(event_client, "task:new", new_task)
-    gazu.events.add_listener(event_client, "task:update", update_task)
-    gazu.events.add_listener(event_client, "task:delete", delete_task)
 
-    gazu.events.run_client(event_client)
+def start_listeners(login: str, password: str):
+    """Start listeners to keep OpenPype up-to-date with Kitsu.
+
+    Args:
+        login (str): Kitsu user login
+        password (str): Kitsu user password
+    """
+
+    # Connect to server
+    listener = Listener(login, password)
+    listener.start()
+
+
+if __name__ == "__main__":
+    # TODO not sure when this can be run and if this system is reliable
+    start_listeners(load_credentials())

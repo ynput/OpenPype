@@ -1,10 +1,17 @@
+"""Functions to update OpenPype data using Kitsu DB (a.k.a Zou)."""
 from typing import Dict, List
 
-from pymongo import UpdateOne
+from pymongo import DeleteOne, UpdateOne
 from pymongo.collection import Collection
+import gazu
+from gazu.task import (
+    all_tasks_for_asset,
+    all_tasks_for_shot,
+)
 
 from avalon.api import AvalonMongoDB
 from openpype.lib import create_project
+from openpype.modules.kitsu.utils.credentials import validate_credentials
 
 
 def create_op_asset(gazu_entity: dict) -> dict:
@@ -26,8 +33,6 @@ def set_op_project(dbcon, project_id) -> Collection:
     :param dbcon: Connection to DB.
     :param project_id: Project zou ID
     """
-    import gazu
-
     project = gazu.project.get_project(project_id)
     project_name = project["name"]
     dbcon.Session["AVALON_PROJECT"] = project_name
@@ -45,11 +50,6 @@ def update_op_assets(
     :param asset_doc_ids: Dicts of [{zou_id: asset_doc}, ...]
     :return: List of (doc_id, update_dict) tuples
     """
-    from gazu.task import (
-        all_tasks_for_asset,
-        all_tasks_for_shot,
-    )
-
     assets_with_update = []
     for item in entities_list:
         # Update asset
@@ -124,18 +124,19 @@ def update_op_assets(
     return assets_with_update
 
 
-def sync_project(project: dict, dbcon: AvalonMongoDB) -> UpdateOne:
-    """Sync project with database.
+def write_project_to_op(project: dict, dbcon: AvalonMongoDB) -> UpdateOne:
+    """Write gazu project to OP database.
     Create project if doesn't exist.
 
-    :param project: Gazu project
-    :param dbcon: DB to create project in
-    :return: Update instance for the project
-    """
-    import gazu
+    Args:
+        project (dict): Gazu project
+        dbcon (AvalonMongoDB): DB to create project in
 
+    Returns:
+        UpdateOne: Update instance for the project
+    """
     project_name = project["name"]
-    project_doc = dbcon.find_one({"type": "project"})
+    project_doc = dbcon.database[project_name].find_one({"type": "project"})
     if not project_doc:
         print(f"Creating project '{project_name}'")
         project_doc = create_project(project_name, project_name, dbcon=dbcon)
@@ -165,3 +166,123 @@ def sync_project(project: dict, dbcon: AvalonMongoDB) -> UpdateOne:
             }
         },
     )
+
+
+def sync_all_project(login: str, password: str):
+    """Update all OP projects in DB with Zou data.
+
+    Args:
+        login (str): Kitsu user login
+        password (str): Kitsu user password
+
+    Raises:
+        gazu.exception.AuthFailedException: Wrong user login and/or password
+    """
+
+    # Authenticate
+    if not validate_credentials(login, password):
+        raise gazu.exception.AuthFailedException(
+            f"Kitsu authentication failed for login: '{login}'..."
+        )
+
+    # Iterate projects
+    dbcon = AvalonMongoDB()
+    dbcon.install()
+    all_projects = gazu.project.all_projects()
+    for project in all_projects:
+        sync_project_from_kitsu(project["name"], dbcon, project)
+
+
+def sync_project_from_kitsu(
+    project_name: str, dbcon: AvalonMongoDB, project: dict = None
+):
+    """Update OP project in DB with Zou data.
+
+    Args:
+        project_name (str): Name of project to sync
+        dbcon (AvalonMongoDB): MongoDB connection
+        project (dict, optional): Project dict got using gazu.
+                                  Defaults to None.
+    """
+    bulk_writes = []
+
+    # Get project from zou
+    if not project:
+        project = gazu.project.get_project_by_name(project_name)
+    project_code = project_name
+
+    # Try to find project document
+    project_col = dbcon.database[project_code]
+    project_doc = project_col.find_one({"type": "project"})
+
+    print(f"Synchronizing {project_name}...")
+
+    # Get all assets from zou
+    all_assets = gazu.asset.all_assets_for_project(project)
+    all_episodes = gazu.shot.all_episodes_for_project(project)
+    all_seqs = gazu.shot.all_sequences_for_project(project)
+    all_shots = gazu.shot.all_shots_for_project(project)
+    all_entities = [
+        e
+        for e in all_assets + all_episodes + all_seqs + all_shots
+        if e["data"] and not e["data"].get("is_substitute")
+    ]
+
+    # Sync project. Create if doesn't exist
+    bulk_writes.append(write_project_to_op(project, dbcon))
+
+    # Query all assets of the local project
+    zou_ids_and_asset_docs = {
+        asset_doc["data"]["zou"]["id"]: asset_doc
+        for asset_doc in project_col.find({"type": "asset"})
+        if asset_doc["data"].get("zou", {}).get("id")
+    }
+    zou_ids_and_asset_docs[project["id"]] = project_doc
+
+    # Create
+    to_insert = []
+    to_insert.extend(
+        [
+            create_op_asset(item)
+            for item in all_entities
+            if item["id"] not in zou_ids_and_asset_docs.keys()
+        ]
+    )
+    if to_insert:
+        # Insert doc in DB
+        project_col.insert_many(to_insert)
+
+        # Update existing docs
+        zou_ids_and_asset_docs.update(
+            {
+                asset_doc["data"]["zou"]["id"]: asset_doc
+                for asset_doc in project_col.find({"type": "asset"})
+                if asset_doc["data"].get("zou")
+            }
+        )
+
+    # Update
+    bulk_writes.extend(
+        [
+            UpdateOne({"_id": id}, update)
+            for id, update in update_op_assets(
+                all_entities, zou_ids_and_asset_docs
+            )
+        ]
+    )
+
+    # Delete
+    diff_assets = set(zou_ids_and_asset_docs.keys()) - {
+        e["id"] for e in all_entities + [project]
+    }
+    if diff_assets:
+        bulk_writes.extend(
+            [
+                DeleteOne(zou_ids_and_asset_docs[asset_id])
+                for asset_id in diff_assets
+            ]
+        )
+
+    # Write into DB
+    if bulk_writes:
+        project_col.bulk_write(bulk_writes)
