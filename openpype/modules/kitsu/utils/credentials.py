@@ -8,15 +8,21 @@ from openpype.lib.local_settings import OpenPypeSecureRegistry
 
 
 def validate_credentials(
-    login: str, password: str, kitsu_url: str = os.environ.get("KITSU_SERVER")
+    login: str, password: str, kitsu_url: str = None
 ) -> bool:
     """Validate credentials by trying to connect to Kitsu host URL.
 
-    :param login: Kitsu Login
-    :param password: Kitsu Password
-    :param kitsu_url: Kitsu host URL
-    :return: Are credentials valid?
+    Args:
+        login (str): Kitsu user login
+        password (str): Kitsu user password
+        kitsu_url (str, optional): Kitsu host URL. Defaults to None.
+
+    Returns:
+        bool: Are credentials valid?
     """
+    if kitsu_url is None:
+        kitsu_url = os.environ.get("KITSU_SERVER")
+
     # Connect to server
     validate_host(kitsu_url)
 
@@ -32,8 +38,11 @@ def validate_credentials(
 def validate_host(kitsu_url: str) -> bool:
     """Validate credentials by trying to connect to Kitsu host URL.
 
-    :param kitsu_url: Kitsu host URL
-    :return: Is host valid?
+    Args:
+        kitsu_url (str, optional): Kitsu host URL.
+
+    Returns:
+        bool: Is host valid?
     """
     # Connect to server
     gazu.set_host(kitsu_url)
@@ -58,8 +67,9 @@ def clear_credentials():
 def save_credentials(login: str, password: str):
     """Save credentials in Secure Registry.
 
-    :param login: Kitsu Login
-    :param password: Kitsu Password
+    Args:
+        login (str): Kitsu user login
+        password (str): Kitsu user password
     """
     # Get user registry
     user_registry = OpenPypeSecureRegistry("kitsu_user")
@@ -72,7 +82,8 @@ def save_credentials(login: str, password: str):
 def load_credentials() -> Tuple[str, str]:
     """Load registered credentials.
 
-    :return: Login, Password
+    Returns:
+        Tuple[str, str]: (Login, Password)
     """
     # Get user registry
     user_registry = OpenPypeSecureRegistry("kitsu_user")
@@ -85,8 +96,9 @@ def load_credentials() -> Tuple[str, str]:
 def set_credentials_envs(login: str, password: str):
     """Set environment variables with Kitsu login and password.
 
-    :param login: Kitsu Login
-    :param password: Kitsu Password
+    Args:
+        login (str): Kitsu user login
+        password (str): Kitsu user password
     """
     os.environ["KITSU_LOGIN"] = login
     os.environ["KITSU_PWD"] = password
