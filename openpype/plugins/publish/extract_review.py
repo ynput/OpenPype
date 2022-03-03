@@ -1026,7 +1026,6 @@ class ExtractReview(pyblish.api.InstancePlugin):
                     color=fill_color_hex,
                     alpha=fill_color_alpha
                 )
-
                 output.extend([top_box, bottom_box])
 
             if line_color_alpha > 0 and line_thickness > 0:
@@ -1054,7 +1053,6 @@ class ExtractReview(pyblish.api.InstancePlugin):
                     l_color=line_color_hex,
                     l_alpha=line_color_alpha
                 )
-
                 output.extend([top_line, bottom_line])
 
         elif state == "pillar" and test_ratio_height:
@@ -1081,8 +1079,7 @@ class ExtractReview(pyblish.api.InstancePlugin):
                     color=fill_color_hex,
                     alpha=fill_color_alpha
                 )
-                if height_letterbox > 0:
-                    output.extend([left_box, right_box])
+                output.extend([left_box, right_box])
 
             if line_color_alpha > 0 and line_thickness > 0:
                 left_line = (
@@ -1108,8 +1105,7 @@ class ExtractReview(pyblish.api.InstancePlugin):
                     l_color=line_color_hex,
                     l_alpha=line_color_alpha
                 )
-                if height_letterbox > 0:
-                    output.extend([left_line, right_line])
+                output.extend([left_line, right_line])
 
         else:
             raise ValueError(
