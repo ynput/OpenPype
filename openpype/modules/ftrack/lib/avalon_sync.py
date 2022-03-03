@@ -2,6 +2,9 @@ import re
 import json
 import collections
 import copy
+import numbers
+
+import six
 
 from avalon.api import AvalonMongoDB
 
@@ -14,7 +17,7 @@ from openpype.api import (
 )
 from openpype.lib import ApplicationManager
 
-from .constants import CUST_ATTR_ID_KEY
+from .constants import CUST_ATTR_ID_KEY, FPS_KEYS
 from .custom_attributes import get_openpype_attr, query_custom_attributes
 
 from bson.objectid import ObjectId
@@ -31,6 +34,106 @@ CURRENT_DOC_SCHEMAS = {
     "asset": "openpype:asset-3.0",
     "config": "openpype:config-2.0"
 }
+
+
+class InvalidFpsValue(Exception):
+    pass
+
+
+def is_string_number(value):
+    """Can string value be converted to number (float)."""
+    if not isinstance(value, six.string_types):
+        raise TypeError("Expected {} got {}".format(
+            ", ".join(str(t) for t in six.string_types), str(type(value))
+        ))
+    if value == ".":
+        return False
+
+    if value.startswith("."):
+        value = "0" + value
+    elif value.endswith("."):
+        value = value + "0"
+
+    if re.match(r"^\d+(\.\d+)?$", value) is None:
+        return False
+    return True
+
+
+def convert_to_fps(source_value):
+    """Convert value into fps value.
+
+    Non string values are kept untouched. String is tried to convert.
+    Valid values:
+    "1000"
+    "1000.05"
+    "1000,05"
+    ",05"
+    ".05"
+    "1000,"
+    "1000."
+    "1000/1000"
+    "1000.05/1000"
+    "1000/1000.05"
+    "1000.05/1000.05"
+    "1000,05/1000"
+    "1000/1000,05"
+    "1000,05/1000,05"
+
+    Invalid values:
+    "/"
+    "/1000"
+    "1000/"
+    ","
+    "."
+    ...any other string
+
+    Returns:
+        float: Converted value.
+
+    Raises:
+        InvalidFpsValue: When value can't be converted to float.
+    """
+    if not isinstance(source_value, six.string_types):
+        if isinstance(source_value, numbers.Number):
+            return float(source_value)
+        return source_value
+
+    value = source_value.strip().replace(",", ".")
+    if not value:
+        raise InvalidFpsValue("Got empty value")
+
+    subs = value.split("/")
+    if len(subs) == 1:
+        str_value = subs[0]
+        if not is_string_number(str_value):
+            raise InvalidFpsValue(
+                "Value \"{}\" can't be converted to number.".format(value)
+            )
+        return float(str_value)
+
+    elif len(subs) == 2:
+        divident, divisor = subs
+        if not divident or not is_string_number(divident):
+            raise InvalidFpsValue(
+                "Divident value \"{}\" can't be converted to number".format(
+                    divident
+                )
+            )
+
+        if not divisor or not is_string_number(divisor):
+            raise InvalidFpsValue(
+                "Divisor value \"{}\" can't be converted to number".format(
+                    divident
+                )
+            )
+        divisor_float = float(divisor)
+        if divisor_float == 0.0:
+            raise InvalidFpsValue("Can't divide by zero")
+        return float(divident) / divisor_float
+
+    raise InvalidFpsValue(
+        "Value can't be converted to number \"{}\"".format(source_value)
+    )
 
 
 def create_chunks(iterable, chunk_size=None):
@@ -980,6 +1083,7 @@ class SyncEntitiesFactory:
             sync_ids
         )
 
+        invalid_fps_items = []
         for item in items:
             entity_id = item["entity_id"]
             attr_id = item["configuration_id"]
@@ -992,7 +1096,23 @@ class SyncEntitiesFactory:
             value = item["value"]
             if convert_type:
                 value = convert_type(value)
+
+            if key in FPS_KEYS:
+                try:
+                    value = convert_to_fps(value)
+                except InvalidFpsValue:
+                    invalid_fps_items.append((entity_id, value))
             self.entities_dict[entity_id][store_key][key] = value
+
+        if invalid_fps_items:
+            fps_msg = (
+                "These entities have invalid fps value in custom attributes"
+            )
+            items = []
+            for entity_id, value in invalid_fps_items:
+                ent_path = self.get_ent_path(entity_id)
+                items.append("{} - \"{}\"".format(ent_path, value))
+            self.report_items["error"][fps_msg] = items
 
         # process hierarchical attributes
         self.set_hierarchical_attribute(
@@ -1026,8 +1146,15 @@ class SyncEntitiesFactory:
             if key.startswith("avalon_"):
                 store_key = "avalon_attrs"
 
+            default_value = attr["default"]
+            if key in FPS_KEYS:
+                try:
+                    default_value = convert_to_fps(default_value)
+                except InvalidFpsValue:
+                    pass
+
             self.entities_dict[self.ft_project_id][store_key][key] = (
-                attr["default"]
+                default_value
             )
 
         # Add attribute ids to entities dictionary
@@ -1069,6 +1196,7 @@ class SyncEntitiesFactory:
             True
         )
 
+        invalid_fps_items = []
         avalon_hier = []
         for item in items:
             value = item["value"]
@@ -1088,12 +1216,29 @@ class SyncEntitiesFactory:
 
             entity_id = item["entity_id"]
             key = attribute_key_by_id[attr_id]
+            if key in FPS_KEYS:
+                try:
+                    value = convert_to_fps(value)
+                except InvalidFpsValue:
+                    invalid_fps_items.append((entity_id, value))
+                    continue
+
             if key.startswith("avalon_"):
                 store_key = "avalon_attrs"
                 avalon_hier.append(key)
             else:
                 store_key = "hier_attrs"
             self.entities_dict[entity_id][store_key][key] = value
+
+        if invalid_fps_items:
+            fps_msg = (
+                "These entities have invalid fps value in custom attributes"
+            )
+            items = []
+            for entity_id, value in invalid_fps_items:
+                ent_path = self.get_ent_path(entity_id)
+                items.append("{} - \"{}\"".format(ent_path, value))
+            self.report_items["error"][fps_msg] = items
 
         # Get dictionary with not None hierarchical values to pull to childs
         top_id = self.ft_project_id

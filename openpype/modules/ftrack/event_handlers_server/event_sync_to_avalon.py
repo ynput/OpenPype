@@ -20,10 +20,15 @@ from openpype_modules.ftrack.lib import (
     query_custom_attributes,
     CUST_ATTR_ID_KEY,
     CUST_ATTR_AUTO_SYNC,
+    FPS_KEYS,
 
     avalon_sync,
 
     BaseEvent
+)
+from openpype_modules.ftrack.lib.avalon_sync import (
+    convert_to_fps,
+    InvalidFpsValue
 )
 from openpype.lib import CURRENT_DOC_SCHEMAS
 
@@ -1149,11 +1154,30 @@ class SyncToAvalonEvent(BaseEvent):
                 "description": ftrack_ent["description"]
             }
         }
+        invalid_fps_items = []
         cust_attrs = self.get_cust_attr_values(ftrack_ent)
         for key, val in cust_attrs.items():
             if key.startswith("avalon_"):
                 continue
+
+            if key in FPS_KEYS:
+                try:
+                    val = convert_to_fps(val)
+                except InvalidFpsValue:
+                    invalid_fps_items.append((ftrack_ent["id"], val))
+                    continue
+
             final_entity["data"][key] = val
+
+        if invalid_fps_items:
+            fps_msg = (
+                "These entities have invalid fps value in custom attributes"
+            )
+            items = []
+            for entity_id, value in invalid_fps_items:
+                ent_path = self.get_ent_path(entity_id)
+                items.append("{} - \"{}\"".format(ent_path, value))
+            self.report_items["error"][fps_msg] = items
 
         _mongo_id_str = cust_attrs.get(CUST_ATTR_ID_KEY)
         if _mongo_id_str:
@@ -2155,11 +2179,19 @@ class SyncToAvalonEvent(BaseEvent):
             )
 
             convert_types_by_id[attr_id] = convert_type
+            default_value = attr["default"]
+            if key in FPS_KEYS:
+                try:
+                    default_value = convert_to_fps(default_value)
+                except InvalidFpsValue:
+                    pass
+
             entities_dict[ftrack_project_id]["hier_attrs"][key] = (
                 attr["default"]
             )
 
         # PREPARE DATA BEFORE THIS
+        invalid_fps_items = []
         avalon_hier = []
         for item in values:
             value = item["value"]
@@ -2173,7 +2205,24 @@ class SyncToAvalonEvent(BaseEvent):
 
             if convert_type:
                 value = convert_type(value)
+
+            if key in FPS_KEYS:
+                try:
+                    value = convert_to_fps(value)
+                except InvalidFpsValue:
+                    invalid_fps_items.append((entity_id, value))
+                    continue
             entities_dict[entity_id]["hier_attrs"][key] = value
+
+        if invalid_fps_items:
+            fps_msg = (
+                "These entities have invalid fps value in custom attributes"
+            )
+            items = []
+            for entity_id, value in invalid_fps_items:
+                ent_path = self.get_ent_path(entity_id)
+                items.append("{} - \"{}\"".format(ent_path, value))
+            self.report_items["error"][fps_msg] = items
 
         # Get dictionary with not None hierarchical values to pull to childs
         project_values = {}
