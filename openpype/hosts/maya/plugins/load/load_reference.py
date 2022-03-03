@@ -1,9 +1,11 @@
 import os
 from maya import cmds
 from avalon import api
+from avalon.pipeline import AVALON_CONTAINER_ID
 from openpype.api import get_project_settings
 from openpype.lib import get_creator_by_name
 import openpype.hosts.maya.api.plugin
+from openpype.hosts.maya.api.pipeline import AVALON_CONTAINERS
 from openpype.hosts.maya.api.lib import maintained_selection
 
 
@@ -125,6 +127,11 @@ class ReferenceLoader(openpype.hosts.maya.api.plugin.ReferenceLoader):
 
             return new_nodes
 
+    def load(self, context, name=None, namespace=None, options=None):
+        super(ReferenceLoader, self).load(context, name, namespace, options)
+        # clean containers if present to AVALON_CONTAINERS
+        self._organize_containers(self[:])
+
     def switch(self, container, representation):
         self.update(container, representation)
 
@@ -158,3 +165,17 @@ class ReferenceLoader(openpype.hosts.maya.api.plugin.ReferenceLoader):
                 options={"useSelection": True},
                 data={"dependencies": dependency}
             )
+
+    @staticmethod
+    def _organize_containers(nodes):
+        # type: (list) -> None
+        for node in nodes:
+            id_attr = "{}.id".format(node)
+            if not cmds.attributeQuery("id", node=node, exists=True):
+                print("-" * 80)
+                print("skipping {}".format(node))
+                continue
+            if cmds.getAttr(id_attr) == AVALON_CONTAINER_ID:
+                print("=" * 80)
+                print("moving {}".format(node))
+                cmds.sets(node, forceElement=AVALON_CONTAINERS)
