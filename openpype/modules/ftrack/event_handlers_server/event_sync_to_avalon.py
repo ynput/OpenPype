@@ -20,6 +20,7 @@ from openpype_modules.ftrack.lib import (
     query_custom_attributes,
     CUST_ATTR_ID_KEY,
     CUST_ATTR_AUTO_SYNC,
+    FPS_KEYS,
 
     avalon_sync,
 
@@ -27,8 +28,7 @@ from openpype_modules.ftrack.lib import (
 )
 from openpype_modules.ftrack.lib.avalon_sync import (
     convert_to_fps,
-    InvalidFpsValue,
-    FPS_KEYS
+    InvalidFpsValue
 )
 from openpype.lib import CURRENT_DOC_SCHEMAS
 

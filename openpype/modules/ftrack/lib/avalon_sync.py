@@ -17,7 +17,7 @@ from openpype.api import (
 )
 from openpype.lib import ApplicationManager
 
-from .constants import CUST_ATTR_ID_KEY
+from .constants import CUST_ATTR_ID_KEY, FPS_KEYS
 from .custom_attributes import get_openpype_attr, query_custom_attributes
 
 from bson.objectid import ObjectId
@@ -33,12 +33,6 @@ CURRENT_DOC_SCHEMAS = {
     "project": "openpype:project-3.0",
     "asset": "openpype:asset-3.0",
     "config": "openpype:config-2.0"
-}
-
-FPS_KEYS = {
-    "fps",
-    # For development purposes
-    "fps_string"
 }
 
 
