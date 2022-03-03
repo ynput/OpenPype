@@ -91,7 +91,7 @@ class BackgroundLoader(AfterEffectsLoader):
         container["namespace"] = comp_name
         container["members"] = comp.members
 
-        stub.imprint(comp, container)
+        stub.imprint(comp.id, container)
 
     def remove(self, container):
         """
@@ -100,10 +100,9 @@ class BackgroundLoader(AfterEffectsLoader):
         Args:
             container (dict): container to be removed - used to get layer_id
         """
-        print("!!!! container:: {}".format(container))
         stub = self.get_stub()
         layer = container.pop("layer")
-        stub.imprint(layer, {})
+        stub.imprint(layer.id, {})
         stub.delete_item(layer.id)
 
     def switch(self, container, representation):

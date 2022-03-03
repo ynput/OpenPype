@@ -178,7 +178,7 @@ def containerise(name,
     Arguments:
         name (str): Name of resulting assembly
         namespace (str): Namespace under which to host container
-        comp (Comp): Composition to containerise
+        comp (AEItem): Composition to containerise
         context (dict): Asset information
         loader (str, optional): Name of loader used to produce this container.
         suffix (str, optional): Suffix of container, defaults to `_CON`.
@@ -197,7 +197,7 @@ def containerise(name,
     }
 
     stub = get_stub()
-    stub.imprint(comp, data)
+    stub.imprint(comp.id, data)
 
     return comp
 
@@ -254,8 +254,8 @@ def remove_instance(instance):
 
     stub.remove_instance(inst_id)
 
-    if instance.members:
-        item = stub.get_item(instance.members[0])
+    if instance.get("members"):
+        item = stub.get_item(instance["members"][0])
         if item:
             stub.rename_item(item.id,
                              item.name.replace(stub.PUBLISH_ICON, ''))

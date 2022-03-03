@@ -111,11 +111,11 @@ class AfterEffectsServerStub():
 
         self.log.debug("Couldn't find layer metadata")
 
-    def imprint(self, item, data, all_items=None, items_meta=None):
+    def imprint(self, item_id, data, all_items=None, items_meta=None):
         """
             Save item metadata to Label field of metadata of active document
         Args:
-            item (AEItem):
+            item_id (int|str): id of FootageItem or instance_id for workfiles
             data(string): json representation for single layer
             all_items (list of item): for performance, could be
                 injected for usage in loop, if not, single call will be
@@ -134,8 +134,8 @@ class AfterEffectsServerStub():
 
         for item_meta in items_meta:
             if ((item_meta.get('members') and
-                    str(item.id) == str(item_meta.get('members')[0])) or
-                    item_meta.get("instance_id") == item.id):
+                    str(item_id) == str(item_meta.get('members')[0])) or
+                    item_meta.get("instance_id") == item_id):
                 is_new = False
                 if data:
                     item_meta.update(data)
