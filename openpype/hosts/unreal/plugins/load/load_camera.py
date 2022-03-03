@@ -208,6 +208,10 @@ class CameraLoader(api.Loader):
                 frame_ranges[i + 1][0], frame_ranges[i + 1][1])
 
         data = self._get_data(asset)
+        cam_seq.set_display_rate(
+            unreal.FrameRate(data.get("fps"), 1.0))
+        cam_seq.set_playback_start(0)
+        cam_seq.set_playback_end(data.get('clipOut') - data.get('clipIn') + 1)
         self._set_sequence_hierarchy(
                 sequences[-1], cam_seq,
                 data.get('clipIn'), data.get('clipOut'))

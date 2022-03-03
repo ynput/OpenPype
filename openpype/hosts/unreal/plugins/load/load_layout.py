@@ -608,6 +608,10 @@ class LayoutLoader(api.Loader):
                 maps_to_add)
 
         data = self._get_data(asset)
+        shot.set_display_rate(
+            unreal.FrameRate(data.get("fps"), 1.0))
+        shot.set_playback_start(0)
+        shot.set_playback_end(data.get('clipOut') - data.get('clipIn') + 1)
         self._set_sequence_hierarchy(
                 sequences[-1], shot,
                 frame_ranges[-1][1],
