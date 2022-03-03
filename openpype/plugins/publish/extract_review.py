@@ -993,8 +993,13 @@ class ExtractReview(pyblish.api.InstancePlugin):
             l_red, l_green, l_blue
         )
         line_color_alpha = float(l_alpha) / 255
-        height_letterbox = int(output_height - (output_width * (1 / ratio)))
-        if state == "letterbox":
+        test_ratio_width = int(
+            (output_height - (output_width * (1 / ratio))) / 2
+        )
+        test_ratio_height = int(
+            (output_width - (output_height * ratio)) / 2
+        )
+        if state == "letterbox" and test_ratio_width:
             if fill_color_alpha > 0:
                 top_box = (
                     "drawbox=0:0:{widht}:round("
@@ -1022,8 +1027,7 @@ class ExtractReview(pyblish.api.InstancePlugin):
                     alpha=fill_color_alpha
                 )
 
-                if height_letterbox > 0:
-                    output.extend([top_box, bottom_box])
+                output.extend([top_box, bottom_box])
 
             if line_color_alpha > 0 and line_thickness > 0:
                 top_line = (
@@ -1050,10 +1054,10 @@ class ExtractReview(pyblish.api.InstancePlugin):
                     l_color=line_color_hex,
                     l_alpha=line_color_alpha
                 )
-                if height_letterbox > 0:
-                    output.extend([top_line, bottom_line])
 
-        elif state == "pillar":
+                output.extend([top_line, bottom_line])
+
+        elif state == "pillar" and test_ratio_height:
             if fill_color_alpha > 0:
                 left_box = (
                     "drawbox=0:0:round(({widht}-({height}"
