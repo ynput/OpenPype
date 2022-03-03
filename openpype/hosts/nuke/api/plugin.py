@@ -487,6 +487,9 @@ class ExporterReviewMov(ExporterReview):
 
         # add reformat node
         if reformat_node_add:
+            # append reformated tag
+            add_tags.append("reformated")
+
             rf_node = nuke.createNode("Reformat")
             for kn_conf in reformat_node_config:
                 _type = kn_conf["type"]
