@@ -24,6 +24,7 @@ class ValidateRigOutSetNodeIds(pyblish.api.InstancePlugin):
         openpype.hosts.maya.api.action.SelectInvalidAction,
         openpype.api.RepairAction
     ]
+    allow_history_only = False
 
     def process(self, instance):
         """Process all meshes"""
@@ -51,7 +52,9 @@ class ValidateRigOutSetNodeIds(pyblish.api.InstancePlugin):
                          noIntermediate=True)
 
         for shape in shapes:
-            sibling_id = lib.get_id_from_sibling(shape, history_only=False)
+            sibling_id = \
+                lib.get_id_from_sibling(shape,
+                                        history_only=cls.allow_history_only)
             if sibling_id:
                 current_id = lib.get_id(shape)
                 if current_id != sibling_id:
@@ -64,7 +67,9 @@ class ValidateRigOutSetNodeIds(pyblish.api.InstancePlugin):
 
         for node in cls.get_invalid(instance):
             # Get the original id from sibling
-            sibling_id = lib.get_id_from_sibling(node, history_only=False)
+            sibling_id = \
+                lib.get_id_from_sibling(node,
+                                        history_only=cls.allow_history_only)
             if not sibling_id:
                 cls.log.error("Could not find ID in siblings for '%s'", node)
                 continue
