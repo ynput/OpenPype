@@ -4,7 +4,8 @@ from .create import (
     BaseCreator,
     Creator,
     AutoCreator,
-    CreatedInstance
+    CreatedInstance,
+    CreatorError
 )
 
 from .publish import (
@@ -21,6 +22,7 @@ __all__ = (
     "Creator",
     "AutoCreator",
     "CreatedInstance",
+    "CreatorError",
 
     "PublishValidationError",
     "KnownPublishError",
