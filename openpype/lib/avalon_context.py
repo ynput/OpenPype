@@ -952,7 +952,7 @@ class BuildWorkfile:
         Returns:
             (dict): preset per entered task name
         """
-        host_name = avalon.api.registered_host().__name__.rsplit(".", 1)[-1]
+        host_name = os.environ["AVALON_APP"]
         project_settings = get_project_settings(
             avalon.io.Session["AVALON_PROJECT"]
         )
