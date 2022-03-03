@@ -1757,14 +1757,16 @@ def get_id_from_sibling(node, history_only=True):
     The nodes in history must be of the exact same node type and must be
     parented under the same parent.
 
-    If no matching node is found in history, the siblings of the node
-    are checked. Additionally to having the same parent, the sibling must
-    be marked as 'intermediate object'.
+    Optionally, if no matching node is found from the history, all the
+    siblings of the node that are of the same type are checked.
+    Additionally to having the same parent, the sibling must be marked as
+    'intermediate object'.
 
     Args:
         node (str): node to retrieve the history from
-        history_only (bool): also looks in node's siblings if True
-            and if nothing found in history
+        history_only (bool): if True and if nothing found in history,
+            look for an 'intermediate object' in all the node's siblings
+            of same type
 
     Returns:
         str or None: The id from the sibling node or None when no id found
