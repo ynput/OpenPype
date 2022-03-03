@@ -1086,6 +1086,7 @@ class SyncEntitiesFactory:
             sync_ids
         )
 
+        invalid_fps_items = []
         for item in items:
             entity_id = item["entity_id"]
             attr_id = item["configuration_id"]
@@ -1098,7 +1099,23 @@ class SyncEntitiesFactory:
             value = item["value"]
             if convert_type:
                 value = convert_type(value)
+
+            if key in FPS_KEYS:
+                try:
+                    value = convert_to_fps(value)
+                except InvalidFpsValue:
+                    invalid_fps_items.append((entity_id, value))
             self.entities_dict[entity_id][store_key][key] = value
+
+        if invalid_fps_items:
+            fps_msg = (
+                "These entities have invalid fps value in custom attributes"
+            )
+            items = []
+            for entity_id, value in invalid_fps_items:
+                ent_path = self.get_ent_path(entity_id)
+                items.append("{} - \"{}\"".format(ent_path, value))
+            self.report_items["error"][fps_msg] = items
 
         # process hierarchical attributes
         self.set_hierarchical_attribute(
@@ -1132,8 +1149,15 @@ class SyncEntitiesFactory:
             if key.startswith("avalon_"):
                 store_key = "avalon_attrs"
 
+            default_value = attr["default"]
+            if key in FPS_KEYS:
+                try:
+                    default_value = convert_to_fps(default_value)
+                except InvalidFpsValue:
+                    pass
+
             self.entities_dict[self.ft_project_id][store_key][key] = (
-                attr["default"]
+                default_value
             )
 
         # Add attribute ids to entities dictionary
@@ -1175,6 +1199,7 @@ class SyncEntitiesFactory:
             True
         )
 
+        invalid_fps_items = []
         avalon_hier = []
         for item in items:
             value = item["value"]
@@ -1194,12 +1219,29 @@ class SyncEntitiesFactory:
 
             entity_id = item["entity_id"]
             key = attribute_key_by_id[attr_id]
+            if key in FPS_KEYS:
+                try:
+                    value = convert_to_fps(value)
+                except InvalidFpsValue:
+                    invalid_fps_items.append((entity_id, value))
+                    continue
+
             if key.startswith("avalon_"):
                 store_key = "avalon_attrs"
                 avalon_hier.append(key)
             else:
                 store_key = "hier_attrs"
             self.entities_dict[entity_id][store_key][key] = value
+
+        if invalid_fps_items:
+            fps_msg = (
+                "These entities have invalid fps value in custom attributes"
+            )
+            items = []
+            for entity_id, value in invalid_fps_items:
+                ent_path = self.get_ent_path(entity_id)
+                items.append("{} - \"{}\"".format(ent_path, value))
+            self.report_items["error"][fps_msg] = items
 
         # Get dictionary with not None hierarchical values to pull to childs
         top_id = self.ft_project_id
