@@ -29,15 +29,15 @@ class CreateRender(Creator):
         # Get the master sequence and the master level.
         # There should be only one sequence and one level in the directory.
         filter = unreal.ARFilter(
-            class_names = ["LevelSequence"],
-            package_paths = [f"/Game/Avalon/{self.data['asset']}"],
-            recursive_paths = False)
+            class_names=["LevelSequence"],
+            package_paths=[f"/Game/Avalon/{self.data['asset']}"],
+            recursive_paths=False)
         sequences = ar.get_assets(filter)
         ms = sequences[0].object_path
         filter = unreal.ARFilter(
-            class_names = ["World"],
-            package_paths = [f"/Game/Avalon/{self.data['asset']}"],
-            recursive_paths = False)
+            class_names=["World"],
+            package_paths=[f"/Game/Avalon/{self.data['asset']}"],
+            recursive_paths=False)
         levels = ar.get_assets(filter)
         ml = levels[0].object_path
 
