@@ -1,7 +1,8 @@
 from pathlib import Path
-import openpype.api
-from avalon import io
+
 import unreal
+
+import openpype.api
 
 
 class ExtractRender(openpype.api.Extractor):
@@ -21,7 +22,8 @@ class ExtractRender(openpype.api.Extractor):
 
         # Get the render output directory
         project_dir = unreal.Paths.project_dir()
-        render_dir = f"{project_dir}/Saved/MovieRenders/{instance.data['subset']}"
+        render_dir = (f"{project_dir}/Saved/MovieRenders/"
+                      f"{instance.data['subset']}")
 
         assert unreal.Paths.directory_exists(render_dir), \
             "Render directory does not exist"

@@ -83,8 +83,8 @@ class LayoutLoader(api.Loader):
 
         return asset_doc.get("data")
 
-    def _set_sequence_hierarchy(self, 
-        seq_i, seq_j, max_frame_i, min_frame_j, max_frame_j, map_paths
+    def _set_sequence_hierarchy(
+        self, seq_i, seq_j, max_frame_i, min_frame_j, max_frame_j, map_paths
     ):
         # Get existing sequencer tracks or create them if they don't exist
         tracks = seq_i.get_master_tracks()
@@ -93,12 +93,14 @@ class LayoutLoader(api.Loader):
         for t in tracks:
             if t.get_class() == unreal.MovieSceneSubTrack.static_class():
                 subscene_track = t
-            if t.get_class() == unreal.MovieSceneLevelVisibilityTrack.static_class():
+            if (t.get_class() ==
+                    unreal.MovieSceneLevelVisibilityTrack.static_class()):
                 visibility_track = t
         if not subscene_track:
             subscene_track = seq_i.add_master_track(unreal.MovieSceneSubTrack)
         if not visibility_track:
-            visibility_track = seq_i.add_master_track(unreal.MovieSceneLevelVisibilityTrack)
+            visibility_track = seq_i.add_master_track(
+                unreal.MovieSceneLevelVisibilityTrack)
 
         # Create the sub-scene section
         subscenes = subscene_track.get_sections()
@@ -152,7 +154,8 @@ class LayoutLoader(api.Loader):
             hid_section.set_level_names(maps)
 
     def _process_family(
-        self, assets, classname, transform, sequence, inst_name=None):
+        self, assets, classname, transform, sequence, inst_name=None
+    ):
         ar = unreal.AssetRegistryHelpers.get_asset_registry()
 
         actors = []
@@ -189,16 +192,15 @@ class LayoutLoader(api.Loader):
                 actors.append(actor)
 
                 binding = sequence.add_possessable(actor)
-                # root_component_binding = sequence.add_possessable(actor.root_component)
-                # root_component_binding.set_parent(binding)
 
                 bindings.append(binding)
 
         return actors, bindings
 
     def _import_animation(
-            self, asset_dir, path, instance_name, skeleton, actors_dict,
-            animation_file, bindings_dict, sequence):
+        self, asset_dir, path, instance_name, skeleton, actors_dict,
+        animation_file, bindings_dict, sequence
+    ):
         anim_file = Path(animation_file)
         anim_file_name = anim_file.with_suffix('')
 
@@ -389,13 +391,8 @@ class LayoutLoader(api.Loader):
 
             if animation_file and skeleton:
                 self._import_animation(
-                    asset_dir, path, instance_name, skeleton, actors_dict, 
+                    asset_dir, path, instance_name, skeleton, actors_dict,
                     animation_file, bindings_dict, sequence)
-
-            # track = sequence.add_master_track(
-            #     unreal.MovieSceneActorReferenceTrack)
-            # section = track.add_section()
-            # section.set_editor_property('sub_sequence', sequence)
 
     def _remove_family(self, assets, components, classname, propname):
         ar = unreal.AssetRegistryHelpers.get_asset_registry()
@@ -499,7 +496,7 @@ class LayoutLoader(api.Loader):
 
         EditorLevelLibrary.new_level(f"{asset_dir}/{asset}_map")
         maps.append(
-            {"map":f"{asset_dir}/{asset}_map.{asset}_map", "new": True})
+            {"map": f"{asset_dir}/{asset}_map.{asset}_map", "new": True})
 
         for i in range(0, len(maps) - 1):
             for j in range(i + 1, len(maps)):
@@ -514,7 +511,7 @@ class LayoutLoader(api.Loader):
 
         EditorLevelLibrary.load_level(maps[-1].get('map'))
 
-        # Get all the sequences in the hierarchy. It will create them, if 
+        # Get all the sequences in the hierarchy. It will create them, if
         # they don't exist.
         sequences = []
         frame_ranges = []
@@ -573,7 +570,8 @@ class LayoutLoader(api.Loader):
                 tracks = sequence.get_master_tracks()
                 track = None
                 for t in tracks:
-                    if t.get_class() == unreal.MovieSceneCameraCutTrack.static_class():
+                    if (t.get_class() ==
+                            unreal.MovieSceneCameraCutTrack.static_class()):
                         track = t
                         break
                 if not track:
@@ -613,10 +611,10 @@ class LayoutLoader(api.Loader):
         shot.set_playback_start(0)
         shot.set_playback_end(data.get('clipOut') - data.get('clipIn') + 1)
         self._set_sequence_hierarchy(
-                sequences[-1], shot,
-                frame_ranges[-1][1],
-                data.get('clipIn'), data.get('clipOut'),
-                [maps[-1].get('map')])
+            sequences[-1], shot,
+            frame_ranges[-1][1],
+            data.get('clipIn'), data.get('clipOut'),
+            [maps[-1].get('map')])
 
         EditorLevelLibrary.load_level(maps[-1].get('map'))
 

@@ -80,7 +80,8 @@ def start_rendering():
                 for ss in subscenes:
                     sequences.append({
                         "sequence": ss.get_sequence(),
-                        "output": f"{s.get('output')}/{ss.get_sequence().get_name()}",
+                        "output": (f"{s.get('output')}/"
+                                   f"{ss.get_sequence().get_name()}"),
                         "frame_range": (
                             ss.get_start_frame(), ss.get_end_frame())
                     })

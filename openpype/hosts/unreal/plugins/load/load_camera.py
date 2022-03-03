@@ -1,9 +1,12 @@
 import os
 
+import unreal
+from unreal import EditorAssetLibrary
+from unreal import EditorLevelLibrary
+
 from avalon import api, io, pipeline
 from avalon.unreal import lib
 from avalon.unreal import pipeline as unreal_pipeline
-import unreal
 
 
 class CameraLoader(api.Loader):
@@ -23,8 +26,8 @@ class CameraLoader(api.Loader):
 
         return asset_doc.get("data")
 
-    def _set_sequence_hierarchy(self,
-        seq_i, seq_j, min_frame_j, max_frame_j
+    def _set_sequence_hierarchy(
+        self, seq_i, seq_j, min_frame_j, max_frame_j
     ):
         tracks = seq_i.get_master_tracks()
         track = None
@@ -91,8 +94,8 @@ class CameraLoader(api.Loader):
 
         # Create a unique name for the camera directory
         unique_number = 1
-        if unreal.EditorAssetLibrary.does_directory_exist(f"{hierarchy_dir}/{asset}"):
-            asset_content = unreal.EditorAssetLibrary.list_assets(
+        if EditorAssetLibrary.does_directory_exist(f"{hierarchy_dir}/{asset}"):
+            asset_content = EditorAssetLibrary.list_assets(
                 f"{root}/{asset}", recursive=False, include_folder=True
             )
 
@@ -115,32 +118,32 @@ class CameraLoader(api.Loader):
 
         container_name += suffix
 
-        current_level = unreal.EditorLevelLibrary.get_editor_world().get_full_name()
-        unreal.EditorLevelLibrary.save_all_dirty_levels()
+        current_level = EditorLevelLibrary.get_editor_world().get_full_name()
+        EditorLevelLibrary.save_all_dirty_levels()
 
         ar = unreal.AssetRegistryHelpers.get_asset_registry()
         filter = unreal.ARFilter(
-            class_names = ["World"], 
-            package_paths = [f"{hierarchy_dir}/{asset}/"], 
-            recursive_paths = True)
+            class_names=["World"],
+            package_paths=[f"{hierarchy_dir}/{asset}/"],
+            recursive_paths=True)
         maps = ar.get_assets(filter)
 
         # There should be only one map in the list
-        unreal.EditorLevelLibrary.load_level(maps[0].get_full_name())
+        EditorLevelLibrary.load_level(maps[0].get_full_name())
 
-        # Get all the sequences in the hierarchy. It will create them, if 
+        # Get all the sequences in the hierarchy. It will create them, if
         # they don't exist.
         sequences = []
         frame_ranges = []
         i = 0
         for h in hierarchy_list:
-            root_content = unreal.EditorAssetLibrary.list_assets(
+            root_content = EditorAssetLibrary.list_assets(
                 h, recursive=False, include_folder=False)
 
             existing_sequences = [
-                unreal.EditorAssetLibrary.find_asset_data(asset)
+                EditorAssetLibrary.find_asset_data(asset)
                 for asset in root_content
-                if unreal.EditorAssetLibrary.find_asset_data(
+                if EditorAssetLibrary.find_asset_data(
                     asset).get_class().get_name() == 'LevelSequence'
             ]
 
@@ -192,7 +195,7 @@ class CameraLoader(api.Loader):
 
             i += 1
 
-        unreal.EditorAssetLibrary.make_directory(asset_dir)
+        EditorAssetLibrary.make_directory(asset_dir)
 
         cam_seq = tools.create_asset(
             asset_name=f"{asset}_camera",
@@ -213,15 +216,15 @@ class CameraLoader(api.Loader):
         cam_seq.set_playback_start(0)
         cam_seq.set_playback_end(data.get('clipOut') - data.get('clipIn') + 1)
         self._set_sequence_hierarchy(
-                sequences[-1], cam_seq,
-                data.get('clipIn'), data.get('clipOut'))
+            sequences[-1], cam_seq,
+            data.get('clipIn'), data.get('clipOut'))
 
         settings = unreal.MovieSceneUserImportFBXSettings()
         settings.set_editor_property('reduce_keys', False)
 
         if cam_seq:
             unreal.SequencerTools.import_fbx(
-                unreal.EditorLevelLibrary.get_editor_world(),
+                EditorLevelLibrary.get_editor_world(),
                 cam_seq,
                 cam_seq.get_bindings(),
                 settings,
@@ -246,15 +249,15 @@ class CameraLoader(api.Loader):
         unreal_pipeline.imprint(
             "{}/{}".format(asset_dir, container_name), data)
 
-        unreal.EditorLevelLibrary.save_all_dirty_levels()
-        unreal.EditorLevelLibrary.load_level(current_level)
+        EditorLevelLibrary.save_all_dirty_levels()
+        EditorLevelLibrary.load_level(current_level)
 
-        asset_content = unreal.EditorAssetLibrary.list_assets(
+        asset_content = EditorAssetLibrary.list_assets(
             asset_dir, recursive=True, include_folder=True
         )
 
         for a in asset_content:
-            unreal.EditorAssetLibrary.save_asset(a)
+            EditorAssetLibrary.save_asset(a)
 
         return asset_content
 
@@ -264,25 +267,25 @@ class CameraLoader(api.Loader):
         ar = unreal.AssetRegistryHelpers.get_asset_registry()
         tools = unreal.AssetToolsHelpers().get_asset_tools()
 
-        asset_content = unreal.EditorAssetLibrary.list_assets(
+        asset_content = EditorAssetLibrary.list_assets(
             path, recursive=False, include_folder=False
         )
         asset_name = ""
         for a in asset_content:
             asset = ar.get_asset_by_object_path(a)
             if a.endswith("_CON"):
-                loaded_asset = unreal.EditorAssetLibrary.load_asset(a)
-                unreal.EditorAssetLibrary.set_metadata_tag(
+                loaded_asset = EditorAssetLibrary.load_asset(a)
+                EditorAssetLibrary.set_metadata_tag(
                     loaded_asset, "representation", str(representation["_id"])
                 )
-                unreal.EditorAssetLibrary.set_metadata_tag(
+                EditorAssetLibrary.set_metadata_tag(
                     loaded_asset, "parent", str(representation["parent"])
                 )
-                asset_name = unreal.EditorAssetLibrary.get_metadata_tag(
+                asset_name = EditorAssetLibrary.get_metadata_tag(
                     loaded_asset, "asset_name"
                 )
             elif asset.asset_class == "LevelSequence":
-                unreal.EditorAssetLibrary.delete_asset(a)
+                EditorAssetLibrary.delete_asset(a)
 
         sequence = tools.create_asset(
             asset_name=asset_name,
@@ -308,7 +311,7 @@ class CameraLoader(api.Loader):
         settings.set_editor_property('reduce_keys', False)
 
         unreal.SequencerTools.import_fbx(
-            unreal.EditorLevelLibrary.get_editor_world(),
+            EditorLevelLibrary.get_editor_world(),
             sequence,
             sequence.get_bindings(),
             settings,
@@ -319,11 +322,11 @@ class CameraLoader(api.Loader):
         path = container["namespace"]
         parent_path = os.path.dirname(path)
 
-        unreal.EditorAssetLibrary.delete_directory(path)
+        EditorAssetLibrary.delete_directory(path)
 
-        asset_content = unreal.EditorAssetLibrary.list_assets(
+        asset_content = EditorAssetLibrary.list_assets(
             parent_path, recursive=False, include_folder=True
         )
 
         if len(asset_content) == 0:
-            unreal.EditorAssetLibrary.delete_directory(parent_path)
+            EditorAssetLibrary.delete_directory(parent_path)
