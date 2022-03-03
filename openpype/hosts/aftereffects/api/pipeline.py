@@ -27,39 +27,6 @@ CREATE_PATH = os.path.join(PLUGINS_DIR, "create")
 INVENTORY_PATH = os.path.join(PLUGINS_DIR, "inventory")
 
 
-def check_inventory():
-    if not lib.any_outdated():
-        return
-
-    host = pyblish.api.registered_host()
-    outdated_containers = []
-    for container in host.ls():
-        representation = container['representation']
-        representation_doc = io.find_one(
-            {
-                "_id": io.ObjectId(representation),
-                "type": "representation"
-            },
-            projection={"parent": True}
-        )
-        if representation_doc and not lib.is_latest(representation_doc):
-            outdated_containers.append(container)
-
-    # Warn about outdated containers.
-    print("Starting new QApplication..")
-    app = QtWidgets.QApplication(sys.argv)
-
-    message_box = QtWidgets.QMessageBox()
-    message_box.setIcon(QtWidgets.QMessageBox.Warning)
-    msg = "There are outdated containers in the scene."
-    message_box.setText(msg)
-    message_box.exec_()
-
-
-def application_launch():
-    check_inventory()
-
-
 def install():
     print("Installing Pype config...")
 
@@ -82,6 +49,11 @@ def uninstall():
     pyblish.api.deregister_plugin_path(PUBLISH_PATH)
     avalon.api.deregister_plugin_path(avalon.api.Loader, LOAD_PATH)
     avalon.api.deregister_plugin_path(avalon.api.Creator, CREATE_PATH)
+
+
+def application_launch():
+    """Triggered after start of app"""
+    check_inventory()
 
 
 def on_pyblish_instance_toggled(instance, old_value, new_value):
@@ -116,6 +88,77 @@ def get_asset_settings():
         "resolutionHeight": resolution_height,
         "duration": duration
     }
+
+
+# loaded containers section
+def ls():
+    """Yields containers from active AfterEffects document.
+
+    This is the host-equivalent of api.ls(), but instead of listing
+    assets on disk, it lists assets already loaded in AE; once loaded
+    they are called 'containers'. Used in Manage tool.
+
+    Containers could be on multiple levels, single images/videos/was as a
+    FootageItem, or multiple items - backgrounds (folder with automatically
+    created composition and all imported layers).
+
+    Yields:
+        dict: container
+
+    """
+    try:
+        stub = get_stub()  # only after AfterEffects is up
+    except lib.ConnectionNotEstablishedYet:
+        print("Not connected yet, ignoring")
+        return
+
+    layers_meta = stub.get_metadata()
+    for item in stub.get_items(comps=True,
+                               folders=True,
+                               footages=True):
+        data = stub.read(item, layers_meta)
+        # Skip non-tagged layers.
+        if not data:
+            continue
+
+        # Filter to only containers.
+        if "container" not in data["id"]:
+            continue
+
+        # Append transient data
+        data["objectName"] = item.name.replace(stub.LOADED_ICON, '')
+        data["layer"] = item
+        yield data
+
+
+def check_inventory():
+    """Checks loaded containers if they are of highest version"""
+    if not lib.any_outdated():
+        return
+
+    host = pyblish.api.registered_host()
+    outdated_containers = []
+    for container in host.ls():
+        representation = container['representation']
+        representation_doc = io.find_one(
+            {
+                "_id": io.ObjectId(representation),
+                "type": "representation"
+            },
+            projection={"parent": True}
+        )
+        if representation_doc and not lib.is_latest(representation_doc):
+            outdated_containers.append(container)
+
+    # Warn about outdated containers.
+    print("Starting new QApplication..")
+    app = QtWidgets.QApplication(sys.argv)
+
+    message_box = QtWidgets.QMessageBox()
+    message_box.setIcon(QtWidgets.QMessageBox.Warning)
+    msg = "There are outdated containers in the scene."
+    message_box.setText(msg)
+    message_box.exec_()
 
 
 def containerise(name,
@@ -159,64 +202,7 @@ def containerise(name,
     return comp
 
 
-def _get_stub():
-    """
-        Handle pulling stub from PS to run operations on host
-    Returns:
-        (AEServerStub) or None
-    """
-    try:
-        stub = get_stub()  # only after Photoshop is up
-    except lib.ConnectionNotEstablishedYet:
-        print("Not connected yet, ignoring")
-        return
-
-    if not stub.get_active_document_name():
-        return
-
-    return stub
-
-
-def ls():
-    """Yields containers from active AfterEffects document.
-
-    This is the host-equivalent of api.ls(), but instead of listing
-    assets on disk, it lists assets already loaded in AE; once loaded
-    they are called 'containers'. Used in Manage tool.
-
-    Containers could be on multiple levels, single images/videos/was as a
-    FootageItem, or multiple items - backgrounds (folder with automatically
-    created composition and all imported layers).
-
-    Yields:
-        dict: container
-
-    """
-    try:
-        stub = get_stub()  # only after AfterEffects is up
-    except lib.ConnectionNotEstablishedYet:
-        print("Not connected yet, ignoring")
-        return
-
-    layers_meta = stub.get_metadata()
-    for item in stub.get_items(comps=True,
-                               folders=True,
-                               footages=True):
-        data = stub.read(item, layers_meta)
-        # Skip non-tagged layers.
-        if not data:
-            continue
-
-        # Filter to only containers.
-        if "container" not in data["id"]:
-            continue
-
-        # Append transient data
-        data["objectName"] = item.name.replace(stub.LOADED_ICON, '')
-        data["layer"] = item
-        yield data
-
-
+# created instances section
 def list_instances():
     """
         List all created instances from current workfile which
@@ -275,6 +261,7 @@ def remove_instance(instance):
                              item.name.replace(stub.PUBLISH_ICON, ''))
 
 
+# new publisher section
 def get_context_data():
     print("get_context_data")
     return {}
@@ -287,3 +274,21 @@ def update_context_data(data, changes):
 def get_context_title():
     """Returns title for Creator window"""
     return "AfterEffects"
+
+
+def _get_stub():
+    """
+        Handle pulling stub from PS to run operations on host
+    Returns:
+        (AEServerStub) or None
+    """
+    try:
+        stub = get_stub()  # only after Photoshop is up
+    except lib.ConnectionNotEstablishedYet:
+        print("Not connected yet, ignoring")
+        return
+
+    if not stub.get_active_document_name():
+        return
+
+    return stub
