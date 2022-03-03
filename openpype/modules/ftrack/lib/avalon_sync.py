@@ -126,7 +126,10 @@ def convert_to_fps(source_value):
                     divident
                 )
             )
-        return float(divident) / float(divisor)
+        divisor_float = float(divisor)
+        if divisor_float == 0.0:
+            raise InvalidFpsValue("Can't divide by zero")
+        return float(divident) / divisor_float
 
     raise InvalidFpsValue(
         "Value can't be converted to number \"{}\"".format(source_value)
