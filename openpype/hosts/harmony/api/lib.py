@@ -361,7 +361,7 @@ def zip_and_move(source, destination):
     log.debug(f"Saved '{source}' to '{destination}'")
 
 
-def show(module_name):
+def show(tool_name):
     """Call show on "module_name".
 
     This allows to make a QApplication ahead of time and always "exec_" to
@@ -374,13 +374,6 @@ def show(module_name):
     # Requests often get doubled up when showing tools, so we wait a second for
     # requests to be received properly.
     time.sleep(1)
-
-    # Get tool name from module name
-    # TODO this is for backwards compatibility not sure if `TB_sceneOpened.js`
-    #   is automatically updated.
-    # Previous javascript sent 'module_name' which contained whole tool import
-    #   string e.g. "avalon.tools.workfiles" now it should be only "workfiles"
-    tool_name = module_name.split(".")[-1]
 
     kwargs = {}
     if tool_name == "loader":

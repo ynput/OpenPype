@@ -36,13 +36,22 @@ from .execute import (
     CREATE_NO_WINDOW
 )
 from .log import PypeLogger, timeit
+
+from .path_templates import (
+    merge_dict,
+    TemplateMissingKey,
+    TemplateUnsolved,
+    StringTemplate,
+    TemplatesDict,
+    FormatObject,
+)
+
 from .mongo import (
     get_default_components,
     validate_mongo_connection,
     OpenPypeMongoConnection
 )
 from .anatomy import (
-    merge_dict,
     Anatomy
 )
 
@@ -285,9 +294,15 @@ __all__ = [
     "get_version_from_path",
     "get_last_version_from_path",
 
+    "merge_dict",
+    "TemplateMissingKey",
+    "TemplateUnsolved",
+    "StringTemplate",
+    "TemplatesDict",
+    "FormatObject",
+
     "terminal",
 
-    "merge_dict",
     "Anatomy",
 
     "get_datetime_data",

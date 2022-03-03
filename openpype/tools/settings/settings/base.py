@@ -1,6 +1,7 @@
 import sys
 import json
 import traceback
+import functools
 
 from Qt import QtWidgets, QtGui, QtCore
 
@@ -325,7 +326,8 @@ class BaseWidget(QtWidgets.QWidget):
 
             action = QtWidgets.QAction(project_name)
             submenu.addAction(action)
-            actions_mapping[action] = lambda: self._apply_values_from_project(
+            actions_mapping[action] = functools.partial(
+                self._apply_values_from_project,
                 project_name
             )
         menu.addMenu(submenu)

@@ -30,7 +30,7 @@ class RecursiveSortFilterProxyModel(QtCore.QSortFilterProxyModel):
         regex = self.filterRegExp()
         if not regex.isEmpty() and regex.isValid():
             pattern = regex.pattern()
-            compiled_regex = re.compile(pattern)
+            compiled_regex = re.compile(pattern, re.IGNORECASE)
             source_model = self.sourceModel()
 
             # Check current index itself in all columns
@@ -75,6 +75,7 @@ class SearchEntitiesDialog(QtWidgets.QDialog):
 
         filter_changed_timer = QtCore.QTimer()
         filter_changed_timer.setInterval(200)
+        filter_changed_timer.setSingleShot(True)
 
         view.selectionModel().selectionChanged.connect(
             self._on_selection_change
