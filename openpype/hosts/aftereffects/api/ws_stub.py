@@ -28,6 +28,7 @@ class AEItem(object):
     workAreaDuration = attr.ib(default=None)
     frameRate = attr.ib(default=None)
     file_name = attr.ib(default=None)
+    instance_id = attr.ib(default=None)  # New Publisher
 
 
 class AfterEffectsServerStub():
@@ -132,8 +133,9 @@ class AfterEffectsServerStub():
         is_new = True
 
         for item_meta in items_meta:
-            if item_meta.get('members') \
-                    and str(item.id) == str(item_meta.get('members')[0]):
+            if ((item_meta.get('members') and
+                    str(item.id) == str(item_meta.get('members')[0])) or
+                    item_meta.get("instance_id") == item.id):
                 is_new = False
                 if data:
                     item_meta.update(data)
@@ -314,15 +316,12 @@ class AfterEffectsServerStub():
             Keep matching item in file though.
 
             Args:
-                instance_id(string): instance uuid
+                instance_id(string): instance id
         """
         cleaned_data = []
 
         for instance in self.get_metadata():
-            uuid_val = instance.get("uuid")
-            if not uuid_val:
-                uuid_val = instance.get("members")[0]  # legacy
-            if uuid_val != instance_id:
+            if instance.get("instance_id") != instance_id:
                 cleaned_data.append(instance)
 
         payload = json.dumps(cleaned_data, indent=4)
@@ -357,7 +356,7 @@ class AfterEffectsServerStub():
                 item_id (int):
 
             Returns:
-                (namedtuple)
+                (AEItem)
 
         """
         res = self.websocketserver.call(self.client.call
@@ -418,7 +417,7 @@ class AfterEffectsServerStub():
         """ Get render queue info for render purposes
 
             Returns:
-                (namedtuple): with 'file_name' field
+                (AEItem): with 'file_name' field
         """
         res = self.websocketserver.call(self.client.call
                                         ('AfterEffects.get_render_info'))
@@ -606,7 +605,8 @@ class AfterEffectsServerStub():
                           d.get('workAreaStart'),
                           d.get('workAreaDuration'),
                           d.get('frameRate'),
-                          d.get('file_name'))
+                          d.get('file_name'),
+                          d.get("instance_id"))
 
             ret.append(item)
         return ret

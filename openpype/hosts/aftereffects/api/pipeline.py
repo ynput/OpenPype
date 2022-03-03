@@ -10,6 +10,7 @@ from avalon import io, pipeline
 from openpype import lib
 from openpype.api import Logger
 import openpype.hosts.aftereffects
+from openpype.pipeline import BaseCreator
 
 from .launch_logic import get_stub
 
@@ -67,6 +68,7 @@ def install():
 
     avalon.api.register_plugin_path(avalon.api.Loader, LOAD_PATH)
     avalon.api.register_plugin_path(avalon.api.Creator, CREATE_PATH)
+    avalon.api.register_plugin_path(BaseCreator, CREATE_PATH)
     log.info(PUBLISH_PATH)
 
     pyblish.api.register_callback(
@@ -238,12 +240,6 @@ def list_instances():
         if instance.get("schema") and \
                 "container" in instance.get("schema"):
             continue
-
-        uuid_val = instance.get("uuid")
-        if uuid_val:
-            instance['uuid'] = uuid_val
-        else:
-            instance['uuid'] = instance.get("members")[0]  # legacy
         instances.append(instance)
     return instances
 
@@ -265,8 +261,29 @@ def remove_instance(instance):
     if not stub:
         return
 
-    stub.remove_instance(instance.get("uuid"))
-    item = stub.get_item(instance.get("uuid"))
-    if item:
-        stub.rename_item(item.id,
-                         item.name.replace(stub.PUBLISH_ICON, ''))
+    inst_id = instance.get("instance_id")
+    if not inst_id:
+        log.warning("No instance identifier for {}".format(instance))
+        return
+
+    stub.remove_instance(inst_id)
+
+    if instance.members:
+        item = stub.get_item(instance.members[0])
+        if item:
+            stub.rename_item(item.id,
+                             item.name.replace(stub.PUBLISH_ICON, ''))
+
+
+def get_context_data():
+    print("get_context_data")
+    return {}
+
+
+def update_context_data(data, changes):
+    print("update_context_data")
+
+
+def get_context_title():
+    """Returns title for Creator window"""
+    return "AfterEffects"
