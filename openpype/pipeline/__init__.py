@@ -1,5 +1,10 @@
 from .lib import attribute_definitions
 
+from .events import (
+    emit_event,
+    register_event_callback
+)
+
 from .create import (
     BaseCreator,
     Creator,
@@ -16,6 +21,9 @@ from .publish import (
 
 __all__ = (
     "attribute_definitions",
+
+    "emit_event",
+    "register_event_callback",
 
     "BaseCreator",
     "Creator",
