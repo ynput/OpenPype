@@ -3,7 +3,7 @@ import os
 import gazu
 
 from avalon.api import AvalonMongoDB
-from .credentials import load_credentials, validate_credentials
+from .credentials import validate_credentials
 from .update_op_with_zou import (
     create_op_asset,
     set_op_project,
