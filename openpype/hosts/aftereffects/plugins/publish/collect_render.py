@@ -59,7 +59,6 @@ class CollectAERender(abstract_collect_render.AbstractCollectRender):
             family = inst.data["family"]
             if family != "render":
                 continue
-            self._debug_log(inst)
 
             item_id = inst.data["members"][0]
 
@@ -127,12 +126,11 @@ class CollectAERender(abstract_collect_render.AbstractCollectRender):
 
             is_local = "renderLocal" in inst.data["families"]
             if inst.data.get("creator_attributes"):
-                is_local = inst.data["creator_attributes"].get("farm")
+                is_local = not inst.data["creator_attributes"].get("farm")
             if is_local:
                 # for local renders
                 instance = self._update_for_local(instance, project_entity)
 
-            self.log.info("New instance:: {}".format(instance))
             instances.append(instance)
             instances_to_remove.append(inst)
 
@@ -224,12 +222,3 @@ class CollectAERender(abstract_collect_render.AbstractCollectRender):
                 break
 
         return instance
-
-    def _debug_log(self, instance):
-        def _default_json(value):
-            return str(value)
-
-        import json
-        self.log.info(
-            json.dumps(instance.data, indent=4, default=_default_json)
-        )
