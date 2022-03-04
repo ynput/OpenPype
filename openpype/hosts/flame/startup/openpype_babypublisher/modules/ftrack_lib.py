@@ -360,6 +360,8 @@ class FtrackComponentCreator:
 
 
 class FtrackEntityOperator:
+    existing_tasks = []
+
     def __init__(self, session, project_entity):
         self.session = session
         self.project_entity = project_entity
@@ -392,10 +394,7 @@ class FtrackEntityOperator:
         query = '{} where name is "{}" and project_id is "{}"'.format(
             type, name, self.project_entity["id"])
 
-        try:
-            entity = session.query(query).one()
-        except Exception:
-            entity = None
+        entity = session.query(query).first()
 
         # if entity doesnt exist then create one
         if not entity:
@@ -430,10 +429,21 @@ class FtrackEntityOperator:
         return parents
 
     def create_task(self, task_type, task_types, parent):
-        existing_task = [
+        _exising_tasks = [
             child for child in parent['children']
             if child.entity_type.lower() == 'task'
-            if child['name'].lower() in task_type.lower()
+        ]
+
+        # add task into existing tasks if they are not already there
+        for _t in _exising_tasks:
+            if _t in self.existing_tasks:
+                continue
+            self.existing_tasks.append(_t)
+
+        existing_task = [
+            task for task in self.existing_tasks
+            if task['name'].lower() in task_type.lower()
+            if task['parent'] == parent
         ]
 
         if existing_task:
@@ -445,4 +455,5 @@ class FtrackEntityOperator:
         })
         task["type"] = task_types[task_type]
 
+        self.existing_tasks.append(task)
         return task

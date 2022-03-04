@@ -1,11 +1,12 @@
-import pytest
-import os
-import shutil
+import logging
 
-from tests.lib.testing_classes import PublishTest
+from tests.lib.assert_classes import DBAssert
+from tests.integration.hosts.aftereffects.lib import AfterEffectsTestClass
+
+log = logging.getLogger("test_publish_in_aftereffects")
 
 
-class TestPublishInAfterEffects(PublishTest):
+class TestPublishInAfterEffects(AfterEffectsTestClass):
     """Basic test case for publishing in AfterEffects
 
         Uses generic TestCase to prepare fixtures for test data, testing DBs,
@@ -23,7 +24,7 @@ class TestPublishInAfterEffects(PublishTest):
         Checks tmp folder if all expected files were published.
 
     """
-    PERSIST = True
+    PERSIST = False
 
     TEST_FILES = [
         ("1c8261CmHwyMgS-g7S4xL5epAp0jCBmhf",
@@ -32,70 +33,44 @@ class TestPublishInAfterEffects(PublishTest):
     ]
 
     APP = "aftereffects"
-    APP_VARIANT = "2022"
+    APP_VARIANT = ""
 
     APP_NAME = "{}/{}".format(APP, APP_VARIANT)
 
     TIMEOUT = 120  # publish timeout
 
-    @pytest.fixture(scope="module")
-    def last_workfile_path(self, download_test_data):
-        """Get last_workfile_path from source data.
-
-            Maya expects workfile in proper folder, so copy is done first.
-        """
-        src_path = os.path.join(download_test_data,
-                                "input",
-                                "workfile",
-                                "test_project_test_asset_TestTask_v001.aep")
-        dest_folder = os.path.join(download_test_data,
-                                   self.PROJECT,
-                                   self.ASSET,
-                                   "work",
-                                   self.TASK)
-        os.makedirs(dest_folder)
-        dest_path = os.path.join(dest_folder,
-                                 "test_project_test_asset_TestTask_v001.aep")
-        shutil.copy(src_path, dest_path)
-
-        yield dest_path
-
-    @pytest.fixture(scope="module")
-    def startup_scripts(self, monkeypatch_session, download_test_data):
-        """Points AfterEffects to userSetup file from input data"""
-        pass
-
     def test_db_asserts(self, dbcon, publish_finished):
         """Host and input data dependent expected results in DB."""
         print("test_db_asserts")
+        failures = []
 
-        assert 2 == dbcon.count_documents({"type": "version"}), \
-            "Not expected no of versions"
+        failures.append(DBAssert.count_of_types(dbcon, "version", 2))
 
-        assert 0 == dbcon.count_documents({"type": "version",
-                                           "name": {"$ne": 1}}), \
-            "Only versions with 1 expected"
+        failures.append(
+            DBAssert.count_of_types(dbcon, "version", 0, name={"$ne": 1}))
 
-        assert 1 == dbcon.count_documents({"type": "subset",
-                                           "name": "imageMainBackgroundcopy"
-                                           }), \
-            "modelMain subset must be present"
+        failures.append(
+            DBAssert.count_of_types(dbcon, "subset", 1,
+                                    name="imageMainBackgroundcopy"))
 
-        assert 1 == dbcon.count_documents({"type": "subset",
-                                           "name": "workfileTest_task"}), \
-            "workfileTesttask subset must be present"
+        failures.append(
+            DBAssert.count_of_types(dbcon, "subset", 1,
+                                    name="workfileTest_task"))
 
-        assert 1 == dbcon.count_documents({"type": "subset",
-                                           "name": "reviewTesttask"}), \
-            "reviewTesttask subset must be present"
+        failures.append(
+            DBAssert.count_of_types(dbcon, "subset", 1,
+                                    name="reviewTesttask"))
 
-        assert 4 == dbcon.count_documents({"type": "representation"}), \
-            "Not expected no of representations"
+        failures.append(
+            DBAssert.count_of_types(dbcon, "representation", 4))
 
-        assert 1 == dbcon.count_documents({"type": "representation",
-                                           "context.subset": "renderTestTaskDefault",  # noqa E501
-                                           "context.ext": "png"}), \
-            "Not expected no of representations with ext 'png'"
+        additional_args = {"context.subset": "renderTestTaskDefault",
+                           "context.ext": "png"}
+        failures.append(
+            DBAssert.count_of_types(dbcon, "representation", 1,
+                                    additional_args=additional_args))
+
+        assert not any(failures)
 
 
 if __name__ == "__main__":

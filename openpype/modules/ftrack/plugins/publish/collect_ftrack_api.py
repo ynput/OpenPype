@@ -1,4 +1,3 @@
-import os
 import logging
 import pyblish.api
 import avalon.api
@@ -43,37 +42,48 @@ class CollectFtrackApi(pyblish.api.ContextPlugin):
             ).format(project_name))
 
         project_entity = project_entities[0]
+
         self.log.debug("Project found: {0}".format(project_entity))
 
-        # Find asset entity
-        entity_query = (
-            'TypedContext where project_id is "{0}"'
-            ' and name is "{1}"'
-        ).format(project_entity["id"], asset_name)
-        self.log.debug("Asset entity query: < {0} >".format(entity_query))
-        asset_entities = []
-        for entity in session.query(entity_query).all():
-            # Skip tasks
-            if entity.entity_type.lower() != "task":
-                asset_entities.append(entity)
+        asset_entity = None
+        if asset_name:
+            # Find asset entity
+            entity_query = (
+                'TypedContext where project_id is "{0}"'
+                ' and name is "{1}"'
+            ).format(project_entity["id"], asset_name)
+            self.log.debug("Asset entity query: < {0} >".format(entity_query))
+            asset_entities = []
+            for entity in session.query(entity_query).all():
+                # Skip tasks
+                if entity.entity_type.lower() != "task":
+                    asset_entities.append(entity)
 
-        if len(asset_entities) == 0:
-            raise AssertionError((
-                "Entity with name \"{0}\" not found"
-                " in Ftrack project \"{1}\"."
-            ).format(asset_name, project_name))
+            if len(asset_entities) == 0:
+                raise AssertionError((
+                    "Entity with name \"{0}\" not found"
+                    " in Ftrack project \"{1}\"."
+                ).format(asset_name, project_name))
 
-        elif len(asset_entities) > 1:
-            raise AssertionError((
-                "Found more than one entity with name \"{0}\""
-                " in Ftrack project \"{1}\"."
-            ).format(asset_name, project_name))
+            elif len(asset_entities) > 1:
+                raise AssertionError((
+                    "Found more than one entity with name \"{0}\""
+                    " in Ftrack project \"{1}\"."
+                ).format(asset_name, project_name))
 
-        asset_entity = asset_entities[0]
+            asset_entity = asset_entities[0]
+
         self.log.debug("Asset found: {0}".format(asset_entity))
 
+        task_entity = None
         # Find task entity if task is set
-        if task_name:
+        if not asset_entity:
+            self.log.warning(
+                "Asset entity is not set. Skipping query of task entity."
+            )
+        elif not task_name:
+            self.log.warning("Task name is not set.")
+        else:
             task_query = (
                 'Task where name is "{0}" and parent_id is "{1}"'
             ).format(task_name, asset_entity["id"])
@@ -87,10 +97,6 @@ class CollectFtrackApi(pyblish.api.ContextPlugin):
                 )
             else:
                 self.log.debug("Task entity found: {0}".format(task_entity))
-
-        else:
-            task_entity = None
-            self.log.warning("Task name is not set.")
 
         context.data["ftrackSession"] = session
         context.data["ftrackPythonModule"] = ftrack_api

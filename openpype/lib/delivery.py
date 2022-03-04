@@ -17,7 +17,7 @@ def collect_frames(files):
         Returns:
             (dict): {'/asset/subset_v001.0001.png': '0001', ....}
     """
-    collections, remainder = clique.assemble(files)
+    collections, remainder = clique.assemble(files, minimum_items=1)
 
     sources_and_frames = {}
     if collections:

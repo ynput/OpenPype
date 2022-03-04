@@ -37,17 +37,17 @@ class ToolWindows:
 
 
 def edit_shader_definitions():
-    from avalon.tools import lib
     from Qt import QtWidgets
     from openpype.hosts.maya.api.shader_definition_editor import (
         ShaderDefinitionsEditor
     )
+    from openpype.tools.utils import qt_app_context
 
     top_level_widgets = QtWidgets.QApplication.topLevelWidgets()
     main_window = next(widget for widget in top_level_widgets
                        if widget.objectName() == "MayaWindow")
 
-    with lib.application():
+    with qt_app_context():
         window = ToolWindows.get_window("shader_definition_editor")
         if not window:
             window = ShaderDefinitionsEditor(parent=main_window)

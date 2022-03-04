@@ -122,6 +122,7 @@ class ITrayAction(ITrayModule):
 
     admin_action = False
     _admin_submenu = None
+    _action_item = None
 
     @property
     @abstractmethod
@@ -149,6 +150,7 @@ class ITrayAction(ITrayModule):
             tray_menu.addAction(action)
 
         action.triggered.connect(self.on_action_trigger)
+        self._action_item = action
 
     def tray_start(self):
         return

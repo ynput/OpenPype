@@ -320,7 +320,7 @@ class CollectLook(pyblish.api.InstancePlugin):
 
         # Collect file nodes used by shading engines (if we have any)
         files = []
-        look_sets = sets.keys()
+        look_sets = list(sets.keys())
         shader_attrs = [
             "surfaceShader",
             "volumeShader",

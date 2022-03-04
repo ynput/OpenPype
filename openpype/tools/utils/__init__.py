@@ -2,11 +2,12 @@ from .widgets import (
     PlaceholderLineEdit,
     BaseClickableFrame,
     ClickableFrame,
+    ClickableLabel,
     ExpandBtn,
     PixmapLabel,
     IconButton,
 )
-
+from .views import DeselectableTreeView
 from .error_dialog import ErrorMessageBox
 from .lib import (
     WrappedCallbackItem,
@@ -14,6 +15,7 @@ from .lib import (
     get_warning_pixmap,
     set_style_property,
     DynamicQThread,
+    qt_app_context,
 )
 
 from .models import (
@@ -24,9 +26,12 @@ __all__ = (
     "PlaceholderLineEdit",
     "BaseClickableFrame",
     "ClickableFrame",
+    "ClickableLabel",
     "ExpandBtn",
     "PixmapLabel",
     "IconButton",
+
+    "DeselectableTreeView",
 
     "ErrorMessageBox",
 
@@ -35,6 +40,7 @@ __all__ = (
     "get_warning_pixmap",
     "set_style_property",
     "DynamicQThread",
+    "qt_app_context",
 
     "RecursiveSortFilterProxyModel",
 )

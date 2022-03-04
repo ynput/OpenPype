@@ -1,3 +1,5 @@
+# -*- coding: utf-8 -*-
+"""Loader for layouts."""
 import os
 import json
 from pathlib import Path
@@ -10,11 +12,11 @@ from unreal import FBXImportType
 from unreal import MathLibrary as umath
 
 from avalon import api, pipeline
-from avalon.unreal import lib
-from avalon.unreal import pipeline as unreal_pipeline
+from openpype.hosts.unreal.api import plugin
+from openpype.hosts.unreal.api import pipeline as unreal_pipeline
 
 
-class LayoutLoader(api.Loader):
+class LayoutLoader(plugin.Loader):
     """Load Layout from a JSON file"""
 
     families = ["layout"]
@@ -23,6 +25,7 @@ class LayoutLoader(api.Loader):
     label = "Load Layout"
     icon = "code-fork"
     color = "orange"
+    ASSET_ROOT = "/Game/OpenPype/Assets"
 
     def _get_asset_containers(self, path):
         ar = unreal.AssetRegistryHelpers.get_asset_registry()
@@ -40,7 +43,8 @@ class LayoutLoader(api.Loader):
 
         return asset_containers
 
-    def _get_fbx_loader(self, loaders, family):
+    @staticmethod
+    def _get_fbx_loader(loaders, family):
         name = ""
         if family == 'rig':
             name = "SkeletalMeshFBXLoader"
@@ -58,7 +62,8 @@ class LayoutLoader(api.Loader):
 
         return None
 
-    def _get_abc_loader(self, loaders, family):
+    @staticmethod
+    def _get_abc_loader(loaders, family):
         name = ""
         if family == 'rig':
             name = "SkeletalMeshAlembicLoader"
@@ -74,14 +79,15 @@ class LayoutLoader(api.Loader):
 
         return None
 
-    def _process_family(self, assets, classname, transform, inst_name=None):
+    @staticmethod
+    def _process_family(assets, class_name, transform, inst_name=None):
         ar = unreal.AssetRegistryHelpers.get_asset_registry()
 
         actors = []
 
         for asset in assets:
             obj = ar.get_asset_by_object_path(asset).get_asset()
-            if obj.get_class().get_name() == classname:
+            if obj.get_class().get_name() == class_name:
                 actor = EditorLevelLibrary.spawn_actor_from_object(
                     obj,
                     transform.get('translation')
@@ -111,8 +117,9 @@ class LayoutLoader(api.Loader):
 
         return actors
 
+    @staticmethod
     def _import_animation(
-            self, asset_dir, path, instance_name, skeleton, actors_dict,
+            asset_dir, path, instance_name, skeleton, actors_dict,
             animation_file):
         anim_file = Path(animation_file)
         anim_file_name = anim_file.with_suffix('')
@@ -192,10 +199,10 @@ class LayoutLoader(api.Loader):
             actor.skeletal_mesh_component.animation_data.set_editor_property(
                 'anim_to_play', animation)
 
-    def _process(self, libpath, asset_dir, loaded=None):
+    def _process(self, lib_path, asset_dir, loaded=None):
         ar = unreal.AssetRegistryHelpers.get_asset_registry()
 
-        with open(libpath, "r") as fp:
+        with open(lib_path, "r") as fp:
             data = json.load(fp)
 
         all_loaders = api.discover(api.Loader)
@@ -203,7 +210,7 @@ class LayoutLoader(api.Loader):
         if not loaded:
             loaded = []
 
-        path = Path(libpath)
+        path = Path(lib_path)
 
         skeleton_dict = {}
         actors_dict = {}
@@ -292,17 +299,18 @@ class LayoutLoader(api.Loader):
                     asset_dir, path, instance_name, skeleton,
                     actors_dict, animation_file)
 
-    def _remove_family(self, assets, components, classname, propname):
+    @staticmethod
+    def _remove_family(assets, components, class_name, prop_name):
         ar = unreal.AssetRegistryHelpers.get_asset_registry()
 
         objects = []
         for a in assets:
             obj = ar.get_asset_by_object_path(a)
-            if obj.get_asset().get_class().get_name() == classname:
+            if obj.get_asset().get_class().get_name() == class_name:
                 objects.append(obj)
         for obj in objects:
             for comp in components:
-                if comp.get_editor_property(propname) == obj.get_asset():
+                if comp.get_editor_property(prop_name) == obj.get_asset():
                     comp.get_owner().destroy_actor()
 
     def _remove_actors(self, path):
@@ -334,8 +342,7 @@ class LayoutLoader(api.Loader):
                     assets, skel_meshes_comp, 'SkeletalMesh', 'skeletal_mesh')
 
     def load(self, context, name, namespace, options):
-        """
-        Load and containerise representation into Content Browser.
+        """Load and containerise representation into Content Browser.
 
         This is two step process. First, import FBX to temporary path and
         then call `containerise()` on it - this moves all content to new
@@ -349,14 +356,14 @@ class LayoutLoader(api.Loader):
                              This is not passed here, so namespace is set
                              by `containerise()` because only then we know
                              real path.
-            data (dict): Those would be data to be imprinted. This is not used
-                         now, data are imprinted by `containerise()`.
+            options (dict): Those would be data to be imprinted. This is not
+                used now, data are imprinted by `containerise()`.
 
         Returns:
             list(str): list of container content
         """
         # Create directory for asset and avalon container
-        root = "/Game/Avalon/Assets"
+        root = self.ASSET_ROOT
         asset = context.get('asset').get('name')
         suffix = "_CON"
         if asset:
@@ -375,7 +382,7 @@ class LayoutLoader(api.Loader):
         self._process(self.fname, asset_dir)
 
         # Create Asset Container
-        lib.create_avalon_container(
+        unreal_pipeline.create_container(
             container=container_name, path=asset_dir)
 
         data = {
@@ -406,7 +413,7 @@ class LayoutLoader(api.Loader):
 
         source_path = api.get_representation_path(representation)
         destination_path = container["namespace"]
-        libpath = Path(api.get_representation_path(representation))
+        lib_path = Path(api.get_representation_path(representation))
 
         self._remove_actors(destination_path)
 
@@ -502,7 +509,7 @@ class LayoutLoader(api.Loader):
 
                     if animation_file and skeleton:
                         self._import_animation(
-                            destination_path, libpath,
+                            destination_path, lib_path,
                             instance_name, skeleton,
                             actors_dict, animation_file)
 
