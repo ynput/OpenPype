@@ -10,10 +10,11 @@ class CollectWorkfile(pyblish.api.ContextPlugin):
     order = pyblish.api.CollectorOrder + 0.1
 
     def process(self, context):
+        create_instance = True
         for instance in context:
             if instance.data["family"] == "workfile":
-                self.log.debug("Workfile instance found, skipping")
-                return
+                self.log.debug("Workfile instance found, do not create new")
+                create_instance = False
 
         task = api.Session["AVALON_TASK"]
         current_file = context.data["currentFile"]
@@ -44,20 +45,24 @@ class CollectWorkfile(pyblish.api.ContextPlugin):
         # workfile instance
         family = "workfile"
         subset = family + task.capitalize()
-        # Create instance
-        instance = context.create_instance(subset)
 
-        # creating instance data
-        instance.data.update({
-            "subset": subset,
-            "label": scene_file,
-            "family": family,
-            "families": [family],
-            "representations": list()
-        })
+        if create_instance:  # old publish
+            # Create instance
+            instance = context.create_instance(subset)
 
-        # adding basic script data
-        instance.data.update(shared_instance_data)
+            # creating instance data
+            instance.data.update({
+                "subset": subset,
+                "label": scene_file,
+                "family": family,
+                "families": [family],
+                "representations": list()
+            })
+
+            # adding basic script data
+            instance.data.update(shared_instance_data)
+        else:
+            instance.data.update({"version": version})
 
         # creating representation
         representation = {
