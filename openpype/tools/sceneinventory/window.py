@@ -1,6 +1,5 @@
 import os
 import sys
-import logging
 
 from Qt import QtWidgets, QtCore
 from avalon.vendor import qtawesome
