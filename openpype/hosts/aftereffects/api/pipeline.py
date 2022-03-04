@@ -10,6 +10,7 @@ from avalon import io, pipeline
 from openpype import lib
 from openpype.api import Logger
 import openpype.hosts.aftereffects
+from openpype.pipeline import register_event_callback
 
 from .launch_logic import get_stub
 
@@ -73,7 +74,7 @@ def install():
         "instanceToggled", on_pyblish_instance_toggled
     )
 
-    avalon.api.on("application.launched", application_launch)
+    register_event_callback("application.launched", application_launch)
 
 
 def uninstall():

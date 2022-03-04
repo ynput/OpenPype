@@ -1,9 +1,10 @@
 import sys
 
 from Qt import QtWidgets, QtCore
-from avalon import api, io, pipeline
+from avalon import api, io
 
 from openpype import style
+from openpype.pipeline import register_event_callback
 from openpype.tools.utils import (
     lib,
     PlaceholderLineEdit
@@ -33,7 +34,7 @@ def on_context_task_change(*args, **kwargs):
         module.window.on_context_task_change(*args, **kwargs)
 
 
-pipeline.on("taskChanged", on_context_task_change)
+register_event_callback("taskChanged", on_context_task_change)
 
 
 class LoaderWindow(QtWidgets.QDialog):

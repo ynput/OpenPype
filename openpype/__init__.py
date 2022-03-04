@@ -10,8 +10,9 @@ from .lib import (
     Anatomy,
     filter_pyblish_plugins,
     set_plugin_attributes_from_settings,
-    change_timer_to_current_context
+    change_timer_to_current_context,
 )
+from .pipeline import register_event_callback
 
 pyblish = avalon = _original_discover = None
 
@@ -122,10 +123,10 @@ def install():
     avalon.discover = patched_discover
     pipeline.discover = patched_discover
 
-    avalon.on("taskChanged", _on_task_change)
+    register_event_callback("taskChanged", _on_task_change)
 
 
-def _on_task_change(*args):
+def _on_task_change():
     change_timer_to_current_context()
 
 
