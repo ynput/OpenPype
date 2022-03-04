@@ -150,7 +150,7 @@ def is_local_collection(collection):
         if object.library is None and object.override_library is None:
             return True
     collections_list = get_all_collections_in_collection(collection)
-    collections_list.append(collection)
+    # collections_list.append(collection)
     for collection in collections_list:
         if collection.library is None and collection.override_library is None:
             return True

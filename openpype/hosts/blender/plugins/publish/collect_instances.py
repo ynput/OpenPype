@@ -26,8 +26,8 @@ class CollectInstances(pyblish.api.ContextPlugin):
         for collection in bpy.context.scene.collection.children:
             if collection.get(AVALON_PROPERTY):
                 if (
-                        collection.get(AVALON_PROPERTY).get("id")
-                        == "pyblish.avalon.instance"
+                    collection.get(AVALON_PROPERTY).get("id")
+                    == "pyblish.avalon.instance"
                 ):
                     yield collection
 
@@ -56,19 +56,6 @@ class CollectInstances(pyblish.api.ContextPlugin):
             for obj in objects:
                 objects.extend(list(obj.children))
                 members.add(obj)
-
-            # instance[:] = list(members)
-            # self.log.debug(json.dumps(instance.data, indent=4))
-            # for obj in instance:
-            #     self.log.debug(obj)
-            #
-            # members = list(collection.objects)
-            # if family == "animation":
-            #     for obj in collection.objects:
-            #         if obj.type == 'EMPTY' and obj.get(AVALON_PROPERTY):
-            #             for child in obj.children:
-            #                 if child.type == 'ARMATURE':
-            #                     members.append(child)
 
             instance[:] = members
             self.log.debug(json.dumps(instance.data, indent=4))

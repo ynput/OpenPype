@@ -55,24 +55,19 @@ class BlendModelLoader(plugin.AssetLoader):
         # Find the loaded collection and set in variable container_collection
         container_collection = None
         instances = plugin.get_instances_list()
-        scene_collection_names_list = list()
-        for collection in plugin.get_all_collections_in_collection(scene_collection):
-            scene_collection_names_list.append(collection.name)
 
         for data_collection in instances:
-            if data_collection.name not in scene_collection_names_list:
+            if data_collection.override_library is None:
                 container_collection = data_collection
-                break
         self.original_container_name = container_collection.name
 
-        # Get namespace (container name + unique_number)
-        unique_number = plugin.get_model_unique_number(container_collection.name)
-        self.namespace = plugin.model_asset_name(
-            container_collection.name, unique_number
+        # Create a collection used to start the load collections at .001
+        increment_use_collection = bpy.data.collections.new(
+            name=self.original_container_name
         )
-        container_collection.name = self.namespace
 
         # Link the container to the scene collection
+        scene_collection.children.link(increment_use_collection)
         scene_collection.children.link(container_collection)
 
         # Get all the object of the container. The farest parents in first for override them first
@@ -91,20 +86,6 @@ class BlendModelLoader(plugin.AssetLoader):
 
         objects.reverse()
 
-        # Rename the object in the container
-        for obj in objects:
-            local_obj = plugin.prepare_data(obj, self.namespace)
-            if local_obj.type != "EMPTY":
-                plugin.prepare_data(local_obj.data, self.namespace)
-                for material_slot in local_obj.material_slots:
-                    if material_slot.material:
-                        plugin.prepare_data(material_slot.material, self.namespace)
-
-            if not obj.get(AVALON_PROPERTY):
-                obj[AVALON_PROPERTY] = dict()
-            avalon_info = obj[AVALON_PROPERTY]
-            avalon_info.update({"container_name": container_collection.name})
-
         # Clean
         bpy.data.orphans_purge(do_local_ids=False)
         plugin.deselect_all()
@@ -115,6 +96,10 @@ class BlendModelLoader(plugin.AssetLoader):
         )
         for obj in objects:
             obj.override_create(remap_local_usages=True)
+            obj.data.override_create(remap_local_usages=True)
+
+        # Remove the collection used to the increment
+        bpy.data.collections.remove(increment_use_collection)
 
         return container_overrided
 
@@ -142,26 +127,21 @@ class BlendModelLoader(plugin.AssetLoader):
         # Process the load of the model
         avalon_container = self._process(libpath)
 
-        self.log.info(
-            "Container:\nRepresentation: %s",
-            pformat(context["representation"], indent=2),
-        )
-
         # TODO check which data should be on the container custom property
-        avalon_container[AVALON_PROPERTY] = {
-            "schema": "openpype:container-2.0",
-            "id": AVALON_CONTAINER_ID,
-            "original_container_name": self.original_container_name,
-            "name": asset_name,
-            "namespace": self.namespace or "",
-            "loader": str(self.__class__.__name__),
-            "representation": str(context["representation"]["_id"]),
-            "libpath": libpath,
-            "asset_name": asset_name,
-            "parent": str(context["representation"]["parent"]),
-            "family": context["representation"]["context"]["family"],
-            "objectName": self.namespace,
-        }
+        # avalon_container[AVALON_PROPERTY] = {
+        #     "schema": "openpype:container-2.0",
+        #     "id": AVALON_CONTAINER_ID,
+        #     # "original_container_name": self.original_container_name,
+        #     "name": asset_name,
+        #     "namespace": self.namespace or "",
+        #     "loader": str(self.__class__.__name__),
+        #     "representation": str(context["representation"]["_id"]),
+        #     "libpath": libpath,
+        #     "asset_name": asset_name,
+        #     "parent": str(context["representation"]["parent"]),
+        #     "family": context["representation"]["context"]["family"],
+        #     "objectName": self.namespace,
+        # }
         objects = avalon_container.objects
         self[:] = objects
         return objects

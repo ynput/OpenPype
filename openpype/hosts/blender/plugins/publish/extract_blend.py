@@ -1,6 +1,7 @@
 import os
 
 import bpy
+from avalon import io
 
 import openpype.api
 
@@ -15,15 +16,19 @@ class ExtractBlend(openpype.api.Extractor):
 
     def process(self, instance):
         # Define extract output file path
-
         stagingdir = self.staging_dir(instance)
         filename = f"{instance.name}.blend"
         filepath = os.path.join(stagingdir, filename)
 
         # Perform extraction
         self.log.info("Performing extraction..")
+        self.log.info(dir(self))
+        self.log.info(self.hosts)
 
+        # Create data block set
         data_blocks = set()
+
+        # Get instance collection
         collection = bpy.data.collections[instance.name]
         data_blocks.add(collection)
         for obj in collection.objects:
@@ -40,8 +45,7 @@ class ExtractBlend(openpype.api.Extractor):
                                     if node.image:
                                         node.image.pack()
 
-        bpy.data.libraries.write(filepath, data_blocks)
-
+        # Create and set representation to the instance data
         if "representations" not in instance.data:
             instance.data["representations"] = []
 
@@ -51,6 +55,7 @@ class ExtractBlend(openpype.api.Extractor):
             "files": filename,
             "stagingDir": stagingdir,
         }
-        instance.data["representations"].append(representation)
 
-        self.log.info("Extracted instance '%s' to: %s", instance.name, representation)
+        instance.data["representations"].append(representation)
+        # Write the .blend library with data_blocks collected
+        bpy.data.libraries.write(filepath, data_blocks)
