@@ -644,7 +644,7 @@ def get_workdir(
     )
 
 
-def template_data_from_session(session):
+def template_data_from_session(session=None):
     """ Return dictionary with template from session keys.
 
     Args:
@@ -654,6 +654,7 @@ def template_data_from_session(session):
         dict: All available data from session.
     """
     from avalon import io
+    import avalon.api
 
     if session is None:
         session = avalon.api.Session
@@ -742,7 +743,11 @@ def compute_session_changes(
     return changes
 
 
-def get_workdir_from_session(session, template_key=None):
+def get_workdir_from_session(session=None, template_key=None):
+    import avalon.api
+
+    if session is None:
+        session = avalon.api.Session
     project_name = session["AVALON_PROJECT"]
     host_name = session["AVALON_APP"]
     anatomy = Anatomy(project_name)

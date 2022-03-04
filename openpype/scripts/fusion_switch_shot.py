@@ -46,13 +46,6 @@ def _format_version_folder(folder):
     return version_folder
 
 
-def _get_work_folder(session):
-    """Convenience function to get the work folder path of the current asset"""
-
-    # Get new filename, create path based on asset and work template
-    return get_workdir_from_session(session)
-
-
 def _get_fusion_instance():
     fusion = getattr(sys.modules["__main__"], "fusion", None)
     if fusion is None:
@@ -71,7 +64,7 @@ def _format_filepath(session):
     asset = session["AVALON_ASSET"]
 
     # Save updated slap comp
-    work_path = _get_work_folder(session)
+    work_path = get_workdir_from_session(session)
     walk_to_dir = os.path.join(work_path, "scenes", "slapcomp")
     slapcomp_dir = os.path.abspath(walk_to_dir)
 
@@ -102,7 +95,7 @@ def _update_savers(comp, session):
          None
     """
 
-    new_work = _get_work_folder(session)
+    new_work = get_workdir_from_session(session)
     renders = os.path.join(new_work, "renders")
     version_folder = _format_version_folder(renders)
     renders_version = os.path.join(renders, version_folder)

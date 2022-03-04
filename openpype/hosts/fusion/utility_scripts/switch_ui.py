@@ -124,7 +124,7 @@ class App(QtWidgets.QWidget):
 
     def _on_open_from_dir(self):
 
-        start_dir = self._get_context_directory()
+        start_dir = get_workdir_from_session()
         comp_file, _ = QtWidgets.QFileDialog.getOpenFileName(
             self, "Choose comp", start_dir)
 
@@ -157,9 +157,6 @@ class App(QtWidgets.QWidget):
 
         import colorbleed.scripts.fusion_switch_shot as switch_shot
         switch_shot.switch(asset_name=asset, filepath=file_name, new=True)
-
-    def _get_context_directory(self):
-        return get_workdir_from_session(avalon.api.Session)
 
     def collect_slap_comps(self, directory):
         items = glob.glob("{}/*.comp".format(directory))
