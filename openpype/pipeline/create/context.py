@@ -399,15 +399,6 @@ class CreatedInstance:
         self._data["active"] = data.get("active", True)
         self._data["creator_identifier"] = creator.identifier
 
-        # QUESTION handle version of instance here or in creator?
-        version = None
-        if not new:
-            version = data.get("version")
-
-        if version is None:
-            version = 1
-        self._data["version"] = version
-
         # Pop from source data all keys that are defined in `_data` before
         #   this moment and through their values away
         # - they should be the same and if are not then should not change

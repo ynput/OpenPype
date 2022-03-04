@@ -202,13 +202,10 @@ def reload_pipeline(*args):
     avalon.api.uninstall()
 
     for module in (
-            "avalon.io",
-            "avalon.lib",
-            "avalon.pipeline",
-            "avalon.tools.creator.app",
-            "avalon.tools.manager.app",
-            "avalon.api",
-            "avalon.tools",
+        "avalon.io",
+        "avalon.lib",
+        "avalon.pipeline",
+        "avalon.api",
     ):
         module = importlib.import_module(module)
         importlib.reload(module)
