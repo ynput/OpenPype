@@ -321,7 +321,8 @@ class AfterEffectsServerStub():
         cleaned_data = []
 
         for instance in self.get_metadata():
-            if instance.get("instance_id") != instance_id:
+            inst_id = instance.get("instance_id") or instance.get("uuid")
+            if inst_id != instance_id:
                 cleaned_data.append(instance)
 
         payload = json.dumps(cleaned_data, indent=4)

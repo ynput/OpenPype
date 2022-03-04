@@ -247,7 +247,7 @@ def remove_instance(instance):
     if not stub:
         return
 
-    inst_id = instance.get("instance_id")
+    inst_id = instance.get("instance_id") or instance.get("uuid")  # legacy
     if not inst_id:
         log.warning("No instance identifier for {}".format(instance))
         return
