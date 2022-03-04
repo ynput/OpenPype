@@ -6,12 +6,7 @@ from openpype.api import get_project_settings
 
 
 class CollectUnrealStaticMesh(pyblish.api.InstancePlugin):
-    """Collect Unreal Static Mesh
-
-    Ensures always only a single frame is extracted (current frame). This
-    also sets correct FBX options for later extraction.
-
-    """
+    """Collect Unreal Static Mesh."""
 
     order = pyblish.api.CollectorOrder + 0.2
     label = "Collect Unreal Static Meshes"

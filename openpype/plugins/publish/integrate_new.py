@@ -102,7 +102,8 @@ class IntegrateAssetNew(pyblish.api.InstancePlugin):
                 "xgen",
                 "hda",
                 "usd",
-                "staticMesh"
+                "staticMesh",
+                "skeletalMesh"
                 ]
     exclude_families = ["clip"]
     db_representation_context_keys = [

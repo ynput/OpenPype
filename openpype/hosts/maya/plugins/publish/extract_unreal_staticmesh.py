@@ -15,7 +15,7 @@ from openpype.hosts.maya.api import fbx
 
 
 class ExtractUnrealStaticMesh(openpype.api.Extractor):
-    """Extract FBX from Maya. """
+    """Extract Unreal Static Mesh as FBX from Maya. """
 
     order = pyblish.api.ExtractorOrder - 0.1
     label = "Extract Unreal Static Mesh"

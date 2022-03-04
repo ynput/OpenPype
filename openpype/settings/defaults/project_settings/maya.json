@@ -60,6 +60,11 @@
                 "UCX"
             ]
         },
+        "CreateUnrealSkeletalMesh": {
+            "enabled": true,
+            "defaults": [],
+            "joint_hints": "jnt_org"
+        },
         "CreateAnimation": {
             "enabled": true,
             "defaults": [

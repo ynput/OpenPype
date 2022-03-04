@@ -195,7 +195,8 @@
                 },
                 {
                     "families": [
-                        "staticMesh"
+                        "staticMesh",
+                        "skeletalMesh"
                     ],
                     "hosts": [
                         "maya"
@@ -306,6 +307,17 @@
                     "task_types": [],
                     "tasks": [],
                     "template": "S_{asset}{variant}"
+                },
+                {
+                    "families": [
+                        "skeletalMesh"
+                    ],
+                    "hosts": [
+                        "maya"
+                    ],
+                    "task_types": [],
+                    "tasks": [],
+                    "template": "SK_{asset}{variant}"
                 }
             ]
         },
