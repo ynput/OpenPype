@@ -21,8 +21,6 @@ from .model import (
 )
 from .view import SceneInventoryView
 
-from ..utils.lib import iter_model_rows
-
 log = logging.getLogger(__name__)
 
 module = sys.modules[__name__]
@@ -172,40 +170,7 @@ class SceneInventoryWindow(QtWidgets.QDialog):
         )
 
     def _on_update_all(self):
-        """Update all items that are currently 'outdated' in the view"""
-
-        # Get all items from outdated groups
-        outdated_items = []
-        for index in iter_model_rows(self._model,
-                                     column=0,
-                                     include_root=False):
-            item = index.data(self._model.ItemRole)
-
-            if not item.get("isGroupNode"):
-                continue
-
-            # Only the group nodes contain the "highest_version" data and as
-            # such we find only the groups and take its children.
-            if not self._model.outdated(item):
-                continue
-
-            # Collect all children which we want to update
-            children = item.children()
-            outdated_items.extend(children)
-
-        if not outdated_items:
-            log.info("Nothing to update.")
-            return
-
-        # Trigger update to latest
-        # Logic copied from SceneInventoryView._build_item_menu_for_selection
-        for item in outdated_items:
-            try:
-                api.update(item, -1)
-            except AssertionError:
-                self._show_version_error_dialog(None, [item])
-                log.warning("Update failed", exc_info=True)
-        self._view.data_changed.emit()
+        self._view.update_all()
 
 
 def show(root=None, debug=False, parent=None, items=None):

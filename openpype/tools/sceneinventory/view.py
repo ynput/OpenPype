@@ -796,3 +796,40 @@ class SceneInventoryView(QtWidgets.QTreeView):
         ).format(version_str)
         dialog.setText(msg)
         dialog.exec_()
+
+    def update_all(self):
+        """Update all items that are currently 'outdated' in the view"""
+        # Get the source model through the proxy model
+        model = self.model().sourceModel()
+
+        # Get all items from outdated groups
+        outdated_items = []
+        for index in iter_model_rows(model,
+                                     column=0,
+                                     include_root=False):
+            item = index.data(model.ItemRole)
+
+            if not item.get("isGroupNode"):
+                continue
+
+            # Only the group nodes contain the "highest_version" data and as
+            # such we find only the groups and take its children.
+            if not model.outdated(item):
+                continue
+
+            # Collect all children which we want to update
+            children = item.children()
+            outdated_items.extend(children)
+
+        if not outdated_items:
+            log.info("Nothing to update.")
+            return
+
+        # Trigger update to latest
+        for item in outdated_items:
+            try:
+                api.update(item, -1)
+            except AssertionError:
+                self._show_version_error_dialog(None, [item])
+                log.warning("Update failed", exc_info=True)
+        self.data_changed.emit()
