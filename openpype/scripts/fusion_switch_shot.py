@@ -4,12 +4,14 @@ import sys
 import logging
 
 # Pipeline imports
-from avalon import api, io, pipeline
+from avalon import api, io
 import avalon.fusion
 
 # Config imports
 import openpype.lib as pype
 import openpype.hosts.fusion.lib as fusion_lib
+
+from openpype.lib.avalon_context import get_workdir_from_session
 
 log = logging.getLogger("Update Slap Comp")
 
@@ -48,10 +50,7 @@ def _get_work_folder(session):
     """Convenience function to get the work folder path of the current asset"""
 
     # Get new filename, create path based on asset and work template
-    template_work = self._project["config"]["template"]["work"]
-    work_path = pipeline._format_work_template(template_work, session)
-
-    return os.path.normpath(work_path)
+    return get_workdir_from_session(session)
 
 
 def _get_fusion_instance():

@@ -5,11 +5,12 @@ import logging
 from Qt import QtWidgets, QtCore
 
 import avalon.api
-from avalon import io, pipeline
+from avalon import io
 from avalon.vendor import qtawesome as qta
 
 from openpype import style
 from openpype.hosts.fusion import api
+from openpype.lib.avalon_context import get_workdir_from_session
 
 log = logging.getLogger("Fusion Switch Shot")
 
@@ -158,15 +159,7 @@ class App(QtWidgets.QWidget):
         switch_shot.switch(asset_name=asset, filepath=file_name, new=True)
 
     def _get_context_directory(self):
-
-        project = io.find_one({"type": "project",
-                               "name": avalon.api.Session["AVALON_PROJECT"]},
-                              projection={"config": True})
-
-        template = project["config"]["template"]["work"]
-        dir = pipeline._format_work_template(template, avalon.api.Session)
-
-        return dir
+        return get_workdir_from_session(avalon.api.Session)
 
     def collect_slap_comps(self, directory):
         items = glob.glob("{}/*.comp".format(directory))
