@@ -104,6 +104,9 @@ class CollectTextures(pyblish.api.ContextPlugin):
                         self.input_naming_groups["workfile"],
                         self.color_space
                     )
+                    self.log.info("Parsed groups from workfile "
+                                  "name '{}': {}".format(repre_file,
+                                                         formatting_data))
 
                     formatting_data.update(explicit_data)
                     fill_pairs = prepare_template_data(formatting_data)
@@ -155,19 +158,24 @@ class CollectTextures(pyblish.api.ContextPlugin):
                     }
                     resource_files[workfile_subset].append(item)
 
-                formatting_data = self._get_parsed_groups(
-                    repre_file,
-                    self.input_naming_patterns["textures"],
-                    self.input_naming_groups["textures"],
-                    self.color_space
-                )
-
                 if ext in self.texture_extensions:
+                    formatting_data = self._get_parsed_groups(
+                        repre_file,
+                        self.input_naming_patterns["textures"],
+                        self.input_naming_groups["textures"],
+                        self.color_space
+                    )
+
+                    self.log.info("Parsed groups from texture "
+                                  "name '{}': {}".format(repre_file,
+                                                         formatting_data))
+
                     c_space = self._get_color_space(
                         repre_file,
                         self.color_space
                     )
 
+                    # optional value
                     channel = self._get_channel_name(
                         repre_file,
                         self.input_naming_patterns["textures"],
@@ -175,6 +183,7 @@ class CollectTextures(pyblish.api.ContextPlugin):
                         self.color_space
                     )
 
+                    # optional value
                     shader = self._get_shader_name(
                         repre_file,
                         self.input_naming_patterns["textures"],
@@ -260,6 +269,13 @@ class CollectTextures(pyblish.api.ContextPlugin):
         for asset_build, version, subset, family in asset_builds:
             if not main_version:
                 main_version = version
+
+            try:
+                version_int = int(version or main_version or 1)
+            except ValueError:
+                self.log.error("Parsed version {} is not "
+                               "an number".format(version))
+
             new_instance = context.create_instance(subset)
             new_instance.data.update(
                 {
@@ -268,7 +284,7 @@ class CollectTextures(pyblish.api.ContextPlugin):
                     "label": subset,
                     "name": subset,
                     "family": family,
-                    "version": int(version or main_version or 1),
+                    "version": version_int,
                     "asset_build": asset_build  # remove in validator
                 }
             )
@@ -393,12 +409,15 @@ class CollectTextures(pyblish.api.ContextPlugin):
             Unknown format of channel name and color spaces >> cs are known
             list - 'color_space' used as a placeholder
         """
-        found = self._parse_key(name, input_naming_patterns,
-                                input_naming_groups, color_spaces, 'shader')
-        if found:
-            return found
+        found = None
+        try:
+            found = self._parse_key(name, input_naming_patterns,
+                                    input_naming_groups, color_spaces,
+                                    'shader')
+        except ValueError:
+            self.log.warning("Didn't find shader in {}".format(name))
 
-        self.log.warning("Didn't find shader in {}".format(name))
+        return found
 
     def _get_channel_name(self, name, input_naming_patterns,
                           input_naming_groups, color_spaces):
@@ -407,12 +426,15 @@ class CollectTextures(pyblish.api.ContextPlugin):
             Unknown format of channel name and color spaces >> cs are known
             list - 'color_space' used as a placeholder
         """
-        found = self._parse_key(name, input_naming_patterns,
-                                input_naming_groups, color_spaces, 'channel')
-        if found:
-            return found
+        found = None
+        try:
+            found = self._parse_key(name, input_naming_patterns,
+                                    input_naming_groups, color_spaces,
+                                    'channel')
+        except ValueError:
+            self.log.warning("Didn't find channel in {}".format(name))
 
-        self.log.warning("Didn't find channel in {}".format(name))
+        return found
 
     def _parse_key(self, name, input_naming_patterns, input_naming_groups,
                    color_spaces, key):
@@ -437,8 +459,8 @@ class CollectTextures(pyblish.api.ContextPlugin):
         try:
             parsed_value = parsed_groups[key]
             return parsed_value
-        except IndexError:
-            msg = ("input_naming_groups must " +
+        except (IndexError, KeyError):
+            msg = ("'Textures group positions' must " +
                    "have '{}' key".format(key))
             raise ValueError(msg)
 
@@ -468,7 +490,8 @@ class CollectTextures(pyblish.api.ContextPlugin):
                         self.log.warning("No of parsed groups doesn't match "
                                          "no of group labels")
 
-        return {}
+        raise ValueError("Name '{}' cannot be parsed by any "
+                         "'{}' patterns".format(name, input_naming_patterns))
 
     def _update_representations(self, upd_representations):
         """Frames dont have sense for textures, add collected udims instead."""
