@@ -2,6 +2,8 @@ import pyblish.api
 import openpype.api
 from openpype.pipeline import PublishXmlValidationError
 import hou
+
+
 class ValidateVDBOutputNode(pyblish.api.InstancePlugin):
     """Validate that the node connected to the output node is of type VDB.
 
