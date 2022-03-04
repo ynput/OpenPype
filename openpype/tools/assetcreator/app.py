@@ -4,9 +4,11 @@ from subprocess import Popen
 
 import ftrack_api
 from Qt import QtWidgets, QtCore
+from openpype import style
 from openpype.api import get_current_project_settings
+from openpype.lib.avalon_context import update_current_task
 from openpype.tools.utils.lib import qt_app_context
-from avalon import io, api, style, schema
+from avalon import io, api, schema
 from . import widget, model
 
 module = sys.modules[__name__]
@@ -463,12 +465,12 @@ class Window(QtWidgets.QDialog):
                 return
             task_name = task_model.itemData(index)[0]
             try:
-                api.update_current_task(task=task_name, asset=asset_name)
+                update_current_task(task=task_name, asset=asset_name)
                 self.open_app()
 
             finally:
                 if origin_task is not None and origin_asset is not None:
-                    api.update_current_task(
+                    update_current_task(
                         task=origin_task, asset=origin_asset
                     )
 
