@@ -52,8 +52,8 @@ class ValidateUnrealStaticMeshName(pyblish.api.InstancePlugin):
     optional = True
     order = openpype.api.ValidateContentsOrder
     hosts = ["maya"]
-    families = ["unrealStaticMesh"]
-    label = "Unreal StaticMesh Name"
+    families = ["staticMesh"]
+    label = "Unreal Static Mesh Name"
     actions = [openpype.hosts.maya.api.action.SelectInvalidAction]
     regex_mesh = r"(?P<renderName>.*))"
     regex_collision = r"(?P<renderName>.*)"
@@ -71,7 +71,17 @@ class ValidateUnrealStaticMeshName(pyblish.api.InstancePlugin):
             ["CreateUnrealStaticMesh"]
             ["collision_prefixes"]
         )
+        static_mesh_prefix = (
+            project_settings
+            ["maya"]
+            ["create"]
+            ["CreateUnrealStaticMesh"]
+            ["static_mesh_prefix"]
+        )
 
+        to_combine = instance.data.get("membersToCombine")
+        if not to_combine:
+            raise ValueError("Missing geometry to export.")
         combined_geometry_name = instance.data.get(
             "staticMeshCombinedName", None)
         if cls.validate_mesh:
@@ -91,7 +101,7 @@ class ValidateUnrealStaticMeshName(pyblish.api.InstancePlugin):
                 cls.log.warning("No collision objects to validate.")
                 return False
 
-            regex_collision = "{}{}".format(
+            regex_collision = "{}{}_(\\d+)".format(
                 "(?P<prefix>({}))_".format(
                     "|".join("{0}".format(p) for p in collision_prefixes)
                 ) or "", cls.regex_collision
@@ -107,7 +117,7 @@ class ValidateUnrealStaticMeshName(pyblish.api.InstancePlugin):
                 else:
                     expected_collision = "{}_{}".format(
                         cl_m.group("prefix"),
-                        combined_geometry_name
+                        combined_geometry_name[len(static_mesh_prefix) + 1:]
                     )
 
                     if not obj.startswith(expected_collision):

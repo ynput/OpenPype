@@ -1,6 +1,8 @@
 # -*- coding: utf-8 -*-
 from maya import cmds
 import pyblish.api
+from avalon.api import Session
+from openpype.api import get_project_settings
 
 
 class CollectUnrealStaticMesh(pyblish.api.InstancePlugin):
@@ -13,13 +15,22 @@ class CollectUnrealStaticMesh(pyblish.api.InstancePlugin):
 
     order = pyblish.api.CollectorOrder + 0.2
     label = "Collect Unreal Static Meshes"
-    families = ["unrealStaticMesh"]
+    families = ["staticMesh"]
 
     def process(self, instance):
-        # add fbx family to trigger fbx extractor
-        instance.data["families"].append("fbx")
-        # take the name from instance (without the `S_` prefix)
-        instance.data["staticMeshCombinedName"] = instance.name[2:]
+        project_settings = get_project_settings(Session["AVALON_PROJECT"])
+        sm_prefix = (
+            project_settings
+            ["maya"]
+            ["create"]
+            ["CreateUnrealStaticMesh"]
+            ["static_mesh_prefix"]
+        )
+        # take the name from instance (without the `staticMesh_` prefix)
+        instance.data["staticMeshCombinedName"] = "{}_{}".format(
+            sm_prefix,
+            instance.name[len(instance.data.get("family")) + 1:]
+        )
 
         geometry_set = [i for i in instance if i == "geometry_SET"]
         instance.data["membersToCombine"] = cmds.sets(

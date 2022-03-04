@@ -28,9 +28,18 @@
     },
     "delivery": {},
     "unreal": {
-        "folder": "{root[work]}/{project[name]}/{hierarchy}/{asset}/publish/{family}/{subset}/{@version}",
-        "file": "{subset}_{@version}<_{output}><.{@frame}>.{ext}",
+        "folder": "{root[work]}/{project[name]}/unreal/{task[name]}",
+        "file": "{project[code]}_{asset}",
         "path": "{@folder}/{@file}"
     },
-    "others": {}
+    "others": {
+        "maya2unreal": {
+            "folder": "{root[work]}/{project[name]}/{hierarchy}/{asset}/publish/{family}",
+            "file": "{subset}_{@version}<_{output}><.{@frame}>.{ext}",
+            "path": "{@folder}/{@file}"
+        },
+        "__dynamic_keys_labels__": {
+            "maya2unreal": "Maya to Unreal"
+        }
+    }
 }

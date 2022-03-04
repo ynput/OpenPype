@@ -9,9 +9,10 @@ class ValidateUnrealUpAxis(pyblish.api.ContextPlugin):
     """Validate if Z is set as up axis in Maya"""
 
     optional = True
+    active = False
     order = openpype.api.ValidateContentsOrder
     hosts = ["maya"]
-    families = ["unrealStaticMesh"]
+    families = ["staticMesh"]
     label = "Unreal Up-Axis check"
     actions = [openpype.api.RepairAction]
 
