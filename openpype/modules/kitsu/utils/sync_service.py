@@ -383,8 +383,3 @@ def start_listeners(login: str, password: str):
     # Connect to server
     listener = Listener(login, password)
     listener.start()
-
-
-if __name__ == "__main__":
-    # TODO not sure when this can be run and if this system is reliable
-    start_listeners(load_credentials())

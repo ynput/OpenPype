@@ -105,7 +105,7 @@ def cli_main():
 @click.option(
     "--password", envvar="KITSU_PWD", help="Password for kitsu username"
 )
-def push_to_zou(login: str, password: str):
+def push_to_zou(login, password):
     """Synchronize Zou database (Kitsu backend) with openpype database.
 
     Args:
@@ -122,7 +122,7 @@ def push_to_zou(login: str, password: str):
 @click.option(
     "-p", "--password", envvar="KITSU_PWD", help="Password for kitsu username"
 )
-def sync_service(login: str, password: str):
+def sync_service(login, password):
     """Synchronize openpype database from Zou sever database.
 
     Args:
