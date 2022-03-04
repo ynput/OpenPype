@@ -116,7 +116,8 @@
                 "baking": {
                     "filter": {
                         "task_types": [],
-                        "families": []
+                        "families": [],
+                        "sebsets": []
                     },
                     "extension": "mov",
                     "viewer_process_override": "",

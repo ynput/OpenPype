@@ -195,6 +195,12 @@
                                         "label": "Families",
                                         "type": "list",
                                         "object_type": "text"
+                                    },
+                                    {
+                                        "key": "sebsets",
+                                        "label": "Subsets",
+                                        "type": "list",
+                                        "object_type": "text"
                                     }
                                 ]
                             },
