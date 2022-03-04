@@ -233,7 +233,8 @@
                             {
                                 "type": "boolean",
                                 "key": "reformat_node_add",
-                                "label": "Add Reformat Node"
+                                "label": "Add Reformat Node",
+                                "default": false
                             },
                             {
                                 "type": "collapsible-wrap",
@@ -298,6 +299,7 @@
                                                                 {
                                                                     "type": "number",
                                                                     "key": "number",
+                                                                    "default": 1,
                                                                     "decimal": 4
                                                                 }
                                                             ]
@@ -322,11 +324,13 @@
                                                                 {
                                                                     "type": "number",
                                                                     "key": "x",
+                                                                    "default": 1,
                                                                     "decimal": 4
                                                                 },
                                                                 {
                                                                     "type": "number",
                                                                     "key": "y",
+                                                                    "default": 1,
                                                                     "decimal": 4
                                                                 }
                                                             ]
