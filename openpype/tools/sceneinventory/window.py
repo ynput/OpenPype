@@ -21,7 +21,6 @@ from .model import (
 )
 from .view import SceneInventoryView
 
-log = logging.getLogger(__name__)
 
 module = sys.modules[__name__]
 module.window = None
