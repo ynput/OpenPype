@@ -51,7 +51,6 @@ class ValidateVDBOutputNode(pyblish.api.InstancePlugin):
                 key="wrongSOP",
                 formatting_data=data
             )
-            return [node.path()]
 
         invalid = self.get_invalid(instance)
 
@@ -71,7 +70,8 @@ class ValidateVDBOutputNode(pyblish.api.InstancePlugin):
         frame = instance.data.get("frameStart", 0)
         geometry = output_node.geometryAtFrame(frame)
         if geometry is None:
-            # No geometry data on this output_node, maybe the node hasn't cooked?
+            # No geometry data on this output_node
+            #   - maybe the node hasn't cooked?
             cls.log.debug(
                 "SOP node has no geometry data. "
                 "Is it cooked? %s" % output_node.path()
