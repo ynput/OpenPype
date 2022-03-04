@@ -1,12 +1,12 @@
 import pyblish.api
 
 from openpype.hosts.houdini.api import lib
-
+from openpype.pipeline import PublishXmlValidationError
 
 class ValidateFrameToken(pyblish.api.InstancePlugin):
-    """Validate if the unexpanded string contains the frame ('$F') token.
+    """Validate if the unexpanded string contains the frame ('$F') token
 
-    This validator will *only* check the output parameter of the node if
+    This validator will only check the output parameter of the node if
     the Valid Frame Range is not set to 'Render Current Frame'
 
     Rules:
@@ -28,9 +28,14 @@ class ValidateFrameToken(pyblish.api.InstancePlugin):
     def process(self, instance):
 
         invalid = self.get_invalid(instance)
+        data = {
+            "nodepath": instance
+        }
         if invalid:
-            raise RuntimeError(
-                "Output settings do no match for '%s'" % instance
+            raise PublishXmlValidationError(
+                self,
+                "Output path for '%s' is missing $F4 token" % instance,
+                formatting_data=data
             )
 
     @classmethod
@@ -47,5 +52,5 @@ class ValidateFrameToken(pyblish.api.InstancePlugin):
         unexpanded_str = output_parm.unexpandedString()
 
         if "$F" not in unexpanded_str:
-            cls.log.error("No frame token found in '%s'" % node.path())
+            # cls.log.info("No frame token found in '%s'" % node.path())
             return [instance]

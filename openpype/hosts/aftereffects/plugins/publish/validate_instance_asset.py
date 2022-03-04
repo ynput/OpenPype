@@ -1,6 +1,7 @@
 from avalon import api
 import pyblish.api
 import openpype.api
+from openpype.pipeline import PublishXmlValidationError
 from openpype.hosts.aftereffects.api import get_stub
 
 
@@ -53,9 +54,8 @@ class ValidateInstanceAsset(pyblish.api.InstancePlugin):
         current_asset = api.Session["AVALON_ASSET"]
         msg = (
             f"Instance asset {instance_asset} is not the same "
-            f"as current context {current_asset}. PLEASE DO:\n"
-            f"Repair with 'A' action to use '{current_asset}'.\n"
-            f"If that's not correct value, close workfile and "
-            f"reopen via Workfiles!"
+            f"as current context {current_asset}."
         )
-        assert instance_asset == current_asset, msg
+
+        if instance_asset != current_asset:
+            raise PublishXmlValidationError(self, msg)

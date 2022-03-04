@@ -1,0 +1,32 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<root>
+<error id="main">
+<title>Asset name not found</title>
+<description>
+## Couldn't parse asset name from a file
+
+Unable to parse asset name from '{file_name}'. File name doesn't match configured naming convention.
+
+### How to repair?
+
+Check Settings: project_settings/standalonepublisher/publish/CollectTextures for naming convention.
+</description>
+<detail>
+### __Detailed Info__ (optional)
+
+This error happens when parsing cannot figure out name of asset texture files belong under.
+</detail>
+</error>
+<error id="missing_values">
+<title>Missing keys</title>
+<description>
+## Texture file name is missing some required keys
+
+Texture '{file_name}' is missing values for {missing_str} keys.
+
+### How to repair?
+
+Fix name of texture file and Publish again.
+</description>
+</error>
+</root>

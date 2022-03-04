@@ -1,5 +1,6 @@
 import pyblish.api
 import openpype.api
+from openpype.pipeline import PublishXmlValidationError
 import hou
 
 
@@ -23,32 +24,61 @@ class ValidateVDBOutputNode(pyblish.api.InstancePlugin):
     label = "Validate Output Node (VDB)"
 
     def process(self, instance):
+
+        data = {
+            "node": instance
+        }
+
+        output_node = instance.data["output_node"]
+        if output_node is None:
+            raise PublishXmlValidationError(
+                self,
+                "SOP Output node in '{node}' does not exist. Ensure a valid "
+                "SOP output path is set.".format(**data),
+                key="noSOP",
+                formatting_data=data
+            )
+
+        # Output node must be a Sop node.
+        if not isinstance(output_node, hou.SopNode):
+            data = {
+                "nodepath": output_node.path(),
+                "categoryname": output_node.type().category().name()
+            }
+            raise PublishXmlValidationError(
+                self,
+                "Output node {nodepath} is not a SOP node. SOP Path must"
+                "point to a SOP node, instead found category"
+                "type: {categoryname}".format(**data),
+                key="wrongSOP",
+                formatting_data=data
+            )
+
         invalid = self.get_invalid(instance)
+
         if invalid:
-            raise RuntimeError(
-                "Node connected to the output node is not" " of type VDB!"
+            raise PublishXmlValidationError(
+                self,
+                "Output node(s) `{}` are incorrect. See plug-in"
+                "log for details.".format(invalid),
+                formatting_data=data
             )
 
     @classmethod
     def get_invalid(cls, instance):
 
-        node = instance.data["output_node"]
-        if node is None:
-            cls.log.error(
-                "SOP path is not correctly set on "
-                "ROP node '%s'." % instance[0].path()
-            )
-            return [instance]
+        output_node = instance.data["output_node"]
 
         frame = instance.data.get("frameStart", 0)
-        geometry = node.geometryAtFrame(frame)
+        geometry = output_node.geometryAtFrame(frame)
         if geometry is None:
-            # No geometry data on this node, maybe the node hasn't cooked?
-            cls.log.error(
+            # No geometry data on this output_node
+            #   - maybe the node hasn't cooked?
+            cls.log.debug(
                 "SOP node has no geometry data. "
-                "Is it cooked? %s" % node.path()
+                "Is it cooked? %s" % output_node.path()
             )
-            return [node]
+            return [output_node]
 
         prims = geometry.prims()
         nr_of_prims = len(prims)
@@ -57,17 +87,17 @@ class ValidateVDBOutputNode(pyblish.api.InstancePlugin):
         invalid_prim = False
         for prim in prims:
             if not isinstance(prim, hou.VDB):
-                cls.log.error("Found non-VDB primitive: %s" % prim)
+                cls.log.debug("Found non-VDB primitive: %s" % prim)
                 invalid_prim = True
         if invalid_prim:
             return [instance]
 
         nr_of_points = len(geometry.points())
         if nr_of_points != nr_of_prims:
-            cls.log.error("The number of primitives and points do not match")
+            cls.log.debug("The number of primitives and points do not match")
             return [instance]
 
         for prim in prims:
             if prim.numVertices() != 1:
-                cls.log.error("Found primitive with more than 1 vertex!")
+                cls.log.debug("Found primitive with more than 1 vertex!")
                 return [instance]
