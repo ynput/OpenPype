@@ -15,7 +15,7 @@ from avalon import io, schema
 from avalon.pipeline import AVALON_CONTAINER_ID
 
 from openpype.api import Logger
-from openpype.pipeline import (
+from openpype.lib import (
     register_event_callback,
     emit_event
 )

@@ -14,8 +14,8 @@ from avalon.pipeline import AVALON_CONTAINER_ID
 
 import openpype.hosts.maya
 from openpype.tools.utils import host_tools
-from openpype.lib import any_outdated
-from openpype.pipeline import (
+from openpype.lib import (
+    any_outdated,
     register_event_callback,
     emit_event
 )
@@ -150,15 +150,15 @@ def _on_maya_initialized(*args):
     lib.get_main_window()
 
 
-def _on_scene_new():
+def _on_scene_new(*args):
     emit_event("new")
 
 
-def _on_scene_save():
+def _on_scene_save(*args):
     emit_event("save")
 
 
-def _on_scene_open():
+def _on_scene_open(*args):
     emit_event("open")
 
 

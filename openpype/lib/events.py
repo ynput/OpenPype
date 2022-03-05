@@ -8,7 +8,7 @@ from uuid import uuid4
 try:
     from weakref import WeakMethod
 except Exception:
-    from .python_2_comp import WeakMethod
+    from openpype.lib.python_2_comp import WeakMethod
 
 
 class EventCallback(object):
@@ -83,6 +83,7 @@ class EventCallback(object):
         Args:
             event(Event): Event that was triggered.
         """
+        self.log.info("Processing event {}".format(event.topic))
         # Skip if callback is not enabled or has invalid reference
         if not self._ref_valid or not self._enabled:
             return
@@ -93,9 +94,11 @@ class EventCallback(object):
         if not callback:
             # Change state if is invalid so the callback is removed
             self._ref_valid = False
+            self.log.info("Invalid reference")
 
         elif self.topic_matches(event.topic):
             # Try execute callback
+            self.log.info("Triggering callback")
             sig = inspect.signature(callback)
             try:
                 if len(sig.parameters) == 0:
@@ -109,6 +112,8 @@ class EventCallback(object):
                     ),
                     exc_info=True
                 )
+        else:
+            self.log.info("Not matchin callback")
 
 
 # Inherit from 'object' for Python 2 hosts
@@ -172,7 +177,7 @@ class StoredCallbacks:
         elif callable(callback):
             ref = weakref.ref(callback)
         else:
-            # TODO add logs
+            print("Invalid callback")
             return
 
         function_name = callback.__name__
@@ -197,7 +202,7 @@ class StoredCallbacks:
     def emit_event(cls, event):
         invalid_callbacks = []
         for callback in cls._registered_callbacks:
-            callback.process_event()
+            callback.process_event(event)
             if not callback.is_ref_valid:
                 invalid_callbacks.append(callback)
 

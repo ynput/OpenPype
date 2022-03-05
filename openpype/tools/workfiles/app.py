@@ -12,7 +12,6 @@ from Qt import QtWidgets, QtCore
 from avalon import io, api
 
 from openpype import style
-from openpype.pipeline import emit_event
 from openpype.tools.utils.lib import (
     qt_app_context
 )
@@ -21,6 +20,7 @@ from openpype.tools.utils.assets_widget import SingleSelectAssetsWidget
 from openpype.tools.utils.tasks_widget import TasksWidget
 from openpype.tools.utils.delegates import PrettyTimeDelegate
 from openpype.lib import (
+    emit_event,
     Anatomy,
     get_workfile_doc,
     create_workfile_doc,

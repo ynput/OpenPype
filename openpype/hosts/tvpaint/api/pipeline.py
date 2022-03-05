@@ -14,7 +14,7 @@ from avalon.pipeline import AVALON_CONTAINER_ID
 
 from openpype.hosts import tvpaint
 from openpype.api import get_current_project_settings
-from openpype.pipeline import register_event_callback
+from openpype.lib import register_event_callback
 
 from .lib import (
     execute_george,

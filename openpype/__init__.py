@@ -11,8 +11,8 @@ from .lib import (
     filter_pyblish_plugins,
     set_plugin_attributes_from_settings,
     change_timer_to_current_context,
+    register_event_callback,
 )
-from .pipeline import register_event_callback
 
 pyblish = avalon = _original_discover = None
 

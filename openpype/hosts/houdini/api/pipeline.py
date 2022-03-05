@@ -11,15 +11,13 @@ import avalon.api
 from avalon.pipeline import AVALON_CONTAINER_ID
 from avalon.lib import find_submodule
 
-from openpype.pipeline import (
-    register_event_callback,
-    emit_event
-)
 import openpype.hosts.houdini
 from openpype.hosts.houdini.api import lib
 
 from openpype.lib import (
-    any_outdated
+    register_event_callback,
+    emit_event,
+    any_outdated,
 )
 
 from .lib import get_asset_fps

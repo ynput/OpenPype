@@ -4,7 +4,7 @@ from Qt import QtWidgets, QtCore
 from avalon import api, io
 
 from openpype import style
-from openpype.pipeline import register_event_callback
+from openpype.lib import register_event_callback
 from openpype.tools.utils import (
     lib,
     PlaceholderLineEdit

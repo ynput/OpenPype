@@ -9,7 +9,7 @@ import avalon.api
 from avalon.pipeline import AVALON_CONTAINER_ID
 
 from openpype import lib
-from openpype.pipeline import register_event_callback
+from openpype.lib import register_event_callback
 import openpype.hosts.harmony
 import openpype.hosts.harmony.api as harmony
 

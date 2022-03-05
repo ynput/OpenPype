@@ -16,6 +16,10 @@ sys.path.insert(0, python_version_dir)
 site.addsitedir(python_version_dir)
 
 
+from .events import (
+    emit_event,
+    register_event_callback
+)
 from .env_tools import (
     env_value_to_bool,
     get_paths_from_environ,
@@ -193,6 +197,9 @@ from .openpype_version import (
 terminal = Terminal
 
 __all__ = [
+    "emit_event",
+    "register_event_callback",
+
     "get_openpype_execute_args",
     "get_pype_execute_args",
     "get_linux_launcher_args",

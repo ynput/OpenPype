@@ -14,7 +14,7 @@ from openpype.api import (
     BuildWorkfile,
     get_current_project_settings
 )
-from openpype.pipeline import register_event_callback
+from openpype.lib import register_event_callback
 from openpype.tools.utils import host_tools
 
 from .command import viewer_update_and_undo_stop

@@ -6,7 +6,7 @@ import avalon.api
 from avalon import pipeline, io
 
 from openpype.api import Logger
-from openpype.pipeline import register_event_callback
+from openpype.lib import register_event_callback
 import openpype.hosts.photoshop
 
 from . import lib

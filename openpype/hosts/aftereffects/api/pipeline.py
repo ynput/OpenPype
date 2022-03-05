@@ -10,7 +10,7 @@ from avalon import io, pipeline
 from openpype import lib
 from openpype.api import Logger
 import openpype.hosts.aftereffects
-from openpype.pipeline import register_event_callback
+from openpype.lib import register_event_callback
 
 from .launch_logic import get_stub
 

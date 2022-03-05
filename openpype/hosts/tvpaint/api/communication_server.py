@@ -21,7 +21,7 @@ from aiohttp_json_rpc.protocol import (
 )
 from aiohttp_json_rpc.exceptions import RpcError
 
-from openpype.pipeline import emit_event
+from openpype.lib import emit_event
 from openpype.hosts.tvpaint.tvpaint_plugin import get_plugin_files_path
 
 log = logging.getLogger(__name__)
