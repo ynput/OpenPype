@@ -12,7 +12,32 @@ except Exception:
 
 
 class EventCallback(object):
-    def __init__(self, topic, func_ref, func_name, func_path):
+    """Callback registered to a topic.
+
+    The callback function is registered to a topic. Topic is a string which
+    may contain '*' that will be handled as "any characters".
+
+    # Examples:
+    - "workfile.save"   Callback will be triggered if the event topic is exactly
+                        "workfile.save" .
+    - "workfile.*"      Callback will be triggered an event topic starts with
+                        "workfile." so "workfile.save" and "workfile.open"
+                        will trigger the callback.
+    - "*"               Callback will listen to all events.
+
+    Callback can be function or method. In both cases it should expect one
+    or none arguments. When 1 argument is expected then the processed 'Event'
+    object is passed in.
+
+    The registered callbacks don't keep function in memory so it is not
+    possible to store lambda function as callback.
+
+    Args:
+        topic(str): Topic which will be listened.
+        func(func): Callback to a topic.
+    """
+    def __init__(self, topic, func):
+        self._log = None
         self._topic = topic
         # Replace '*' with any character regex and escape rest of text
         #   - when callback is registered for '*' topic it will receive all
@@ -28,13 +53,41 @@ class EventCallback(object):
         )
         topic_regex = re.compile(topic_regex_str)
         self._topic_regex = topic_regex
+
+        # Convert callback into references
+        #   - deleted functions won't cause crashes
+        if inspect.ismethod(func):
+            func_ref = WeakMethod(func)
+        elif callable(func):
+            func_ref = weakref.ref(func)
+        else:
+            func_ref = None
+            self.log.warning((
+                "Registered callback is not callable. \"{}\""
+            ).format(str(func)))
+
+        func_name = None
+        func_path = None
+        expect_args = False
+        # Collect additional data about function
+        #   - name
+        #   - path
+        #   - if expect argument or not
+        if func_ref is not None:
+            func_name = func.__name__
+            func_path = os.path.abspath(inspect.getfile(func))
+            if hasattr(inspect, "signature"):
+                sig = inspect.signature(func)
+                expect_args = len(sig.parameters) > 0
+            else:
+                expect_args = len(inspect.getargspec(func)[0]) > 0
+
         self._func_ref = func_ref
         self._func_name = func_name
         self._func_path = func_path
-        self._ref_valid = True
+        self._expect_args = expect_args
+        self._ref_valid = func_ref is not None
         self._enabled = True
-
-        self._log = None
 
     def __repr__(self):
         return "< {} - {} > {}".format(
@@ -83,7 +136,7 @@ class EventCallback(object):
         Args:
             event(Event): Event that was triggered.
         """
-        self.log.info("Processing event {}".format(event.topic))
+
         # Skip if callback is not enabled or has invalid reference
         if not self._ref_valid or not self._enabled:
             return
@@ -94,17 +147,15 @@ class EventCallback(object):
         if not callback:
             # Change state if is invalid so the callback is removed
             self._ref_valid = False
-            self.log.info("Invalid reference")
 
         elif self.topic_matches(event.topic):
             # Try execute callback
-            self.log.info("Triggering callback")
-            sig = inspect.signature(callback)
             try:
-                if len(sig.parameters) == 0:
-                    callback()
-                else:
+                if self._expect_args:
                     callback(event)
+                else:
+                    callback()
+
             except Exception:
                 self.log.warning(
                     "Failed to execute event callback {}".format(
@@ -112,8 +163,6 @@ class EventCallback(object):
                     ),
                     exc_info=True
                 )
-        else:
-            self.log.info("Not matchin callback")
 
 
 # Inherit from 'object' for Python 2 hosts
@@ -170,19 +219,7 @@ class StoredCallbacks:
 
     @classmethod
     def add_callback(cls, topic, callback):
-        # Convert callback into references
-        #   - deleted functions won't cause crashes
-        if inspect.ismethod(callback):
-            ref = WeakMethod(callback)
-        elif callable(callback):
-            ref = weakref.ref(callback)
-        else:
-            print("Invalid callback")
-            return
-
-        function_name = callback.__name__
-        function_path = os.path.abspath(inspect.getfile(callback))
-        callback = EventCallback(topic, ref, function_name, function_path)
+        callback = EventCallback(topic, callback)
         cls._registered_callbacks.append(callback)
         return callback
 
