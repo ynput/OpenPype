@@ -248,12 +248,29 @@ class StoredCallbacks:
 
 
 def register_event_callback(topic, callback):
-    """Add callback that will be executed on specific topic."""
+    """Add callback that will be executed on specific topic.
+
+    Args:
+        topic(str): Topic on which will callback be triggered.
+        callback(function): Callback that will be triggered when a topic
+            is triggered. Callback should expect none or 1 argument where
+            `Event` object is passed.
+
+    Returns:
+        EventCallback: Object wrapping the callback. It can be used to
+            enable/disable listening to a topic or remove the callback from
+            the topic completely.
+    """
     return StoredCallbacks.add_callback(topic, callback)
 
 
 def emit_event(topic, data=None, source=None):
     """Emit event with topic and data.
+
+    Arg:
+        topic(str): Event's topic.
+        data(dict): Event's additional data. Optional.
+        source(str): Who emitted the topic. Optional.
 
     Returns:
         Event: Object of event that was emitted.
