@@ -6,7 +6,6 @@ import logging
 import six
 
 from openpype.settings import get_project_settings
-from openpype.settings.lib import get_site_local_overrides
 
 from .anatomy import Anatomy
 from .profiles_filtering import filter_profiles

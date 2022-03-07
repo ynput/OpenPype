@@ -58,6 +58,7 @@ from .anatomy import (
 from .config import get_datetime_data
 
 from .vendor_bin_utils import (
+    create_hard_link,
     get_vendor_bin_path,
     get_oiio_tools_path,
     get_ffmpeg_tool_path,
@@ -208,6 +209,7 @@ __all__ = [
     "get_paths_from_environ",
     "get_global_environments",
 
+    "create_hard_link",
     "get_vendor_bin_path",
     "get_oiio_tools_path",
     "get_ffmpeg_tool_path",
