@@ -16,7 +16,7 @@ class CreateCamera(Creator):
     family = "camera"
     icon = "cubes"
 
-    root = "/Game/Avalon/Instances"
+    root = "/Game/OpenPype/Instances"
     suffix = "_INS"
 
     def __init__(self, *args, **kwargs):

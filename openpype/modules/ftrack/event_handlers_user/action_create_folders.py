@@ -97,7 +97,6 @@ class CreateFolders(BaseAction):
             all_entities = self.get_notask_children(entity)
 
         anatomy = Anatomy(project_name)
-        project_settings = get_project_settings(project_name)
 
         work_keys = ["work", "folder"]
         work_template = anatomy.templates

@@ -1,3 +1,4 @@
+# -*- coding: utf-8 -*-
 from unreal import EditorLevelLibrary as ell
 from openpype.hosts.unreal.api.plugin import Creator
 from avalon.unreal import (
@@ -6,7 +7,7 @@ from avalon.unreal import (
 
 
 class CreateLayout(Creator):
-    """Layout output for character rigs"""
+    """Layout output for character rigs."""
 
     name = "layoutMain"
     label = "Layout"

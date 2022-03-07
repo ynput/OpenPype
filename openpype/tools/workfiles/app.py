@@ -29,6 +29,10 @@ from openpype.lib import (
     create_workdir_extra_folders,
     get_system_general_anatomy_data
 )
+from openpype.lib.avalon_context import (
+    update_current_task,
+    compute_session_changes
+)
 from .model import FilesModel
 from .view import FilesView
 
@@ -667,7 +671,7 @@ class FilesWidget(QtWidgets.QWidget):
             session["AVALON_APP"],
             project_name=session["AVALON_PROJECT"]
         )
-        changes = pipeline.compute_session_changes(
+        changes = compute_session_changes(
             session,
             asset=self._get_asset_doc(),
             task=self._task_name,
@@ -681,7 +685,7 @@ class FilesWidget(QtWidgets.QWidget):
         """Enter the asset and task session currently selected"""
 
         session = api.Session.copy()
-        changes = pipeline.compute_session_changes(
+        changes = compute_session_changes(
             session,
             asset=self._get_asset_doc(),
             task=self._task_name,
@@ -692,7 +696,7 @@ class FilesWidget(QtWidgets.QWidget):
             # to avoid any unwanted Task Changed callbacks to be triggered.
             return
 
-        api.update_current_task(
+        update_current_task(
             asset=self._get_asset_doc(),
             task=self._task_name,
             template_key=self.template_key

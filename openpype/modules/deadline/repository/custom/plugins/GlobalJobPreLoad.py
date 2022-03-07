@@ -1,10 +1,11 @@
 # -*- coding: utf-8 -*-
 import os
 import tempfile
-import time
+from datetime import datetime
 import subprocess
 import json
 import platform
+import uuid
 from Deadline.Scripting import RepositoryUtils, FileUtils
 
 
@@ -36,9 +37,11 @@ def inject_openpype_environment(deadlinePlugin):
         print("--- OpenPype executable: {}".format(openpype_app))
 
         # tempfile.TemporaryFile cannot be used because of locking
-        export_url = os.path.join(tempfile.gettempdir(),
-                                  time.strftime('%Y%m%d%H%M%S'),
-                                  'env.json')  # add HHMMSS + delete later
+        temp_file_name = "{}_{}.json".format(
+            datetime.utcnow().strftime('%Y%m%d%H%M%S%f'),
+            str(uuid.uuid1())
+        )
+        export_url = os.path.join(tempfile.gettempdir(), temp_file_name)
         print(">>> Temporary path: {}".format(export_url))
 
         args = [
