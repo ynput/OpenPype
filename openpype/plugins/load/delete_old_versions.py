@@ -5,10 +5,10 @@ import uuid
 import clique
 from pymongo import UpdateOne
 import ftrack_api
+import qargparse
 from Qt import QtWidgets, QtCore
 
 from avalon import api, style
-from avalon.vendor import qargparse
 from avalon.api import AvalonMongoDB
 import avalon.pipeline
 from openpype.api import Anatomy
