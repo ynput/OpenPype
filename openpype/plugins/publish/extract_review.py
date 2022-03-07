@@ -978,7 +978,6 @@ class ExtractReview(pyblish.api.InstancePlugin):
         output = []
 
         ratio = letter_box_def["ratio"]
-        state = letter_box_def["state"]
         fill_color = letter_box_def["fill_color"]
         f_red, f_green, f_blue, f_alpha = fill_color
         fill_color_hex = "{0:0>2X}{1:0>2X}{2:0>2X}".format(
@@ -993,13 +992,13 @@ class ExtractReview(pyblish.api.InstancePlugin):
             l_red, l_green, l_blue
         )
         line_color_alpha = float(l_alpha) / 255
-        test_ratio_width = int(
-            (output_height - (output_width * (1 / ratio))) / 2
-        )
-        test_ratio_height = int(
-            (output_width - (output_height * ratio)) / 2
-        )
-        if state == "letterbox" and test_ratio_width:
+
+        # test ratios and define if pillar or letter boxes
+        output_ratio = output_width / output_height
+        pillar = output_ratio > ratio
+        need_mask = format(output_ratio, ".3f") != format(ratio, ".3f")
+
+        if need_mask and not pillar:
             if fill_color_alpha > 0:
                 top_box = (
                     "drawbox=0:0:{widht}:round("
@@ -1055,7 +1054,7 @@ class ExtractReview(pyblish.api.InstancePlugin):
                 )
                 output.extend([top_line, bottom_line])
 
-        elif state == "pillar" and test_ratio_height:
+        elif need_mask and pillar:
             if fill_color_alpha > 0:
                 left_box = (
                     "drawbox=0:0:round(({widht}-({height}"
@@ -1308,21 +1307,6 @@ class ExtractReview(pyblish.api.InstancePlugin):
             "scale_factor_by_height: `{}`".format(scale_factor_by_height)
         )
 
-        # letter_box
-        if letter_box_enabled:
-            filters.extend([
-                "scale={}x{}:flags=lanczos".format(
-                    output_width, output_height
-                ),
-                "setsar=1"
-            ])
-            filters.extend(
-                self.get_letterbox_filters(
-                    letter_box_def,
-                    output_width,
-                    output_height
-                )
-            )
 
         # scaling none square pixels and 1920 width
         if (
@@ -1361,6 +1345,22 @@ class ExtractReview(pyblish.api.InstancePlugin):
                 ),
                 "setsar=1"
             ])
+
+        # letter_box
+        if letter_box_enabled:
+            filters.extend([
+                "scale={}x{}:flags=lanczos".format(
+                    output_width, output_height
+                ),
+                "setsar=1"
+            ])
+            filters.extend(
+                self.get_letterbox_filters(
+                    letter_box_def,
+                    output_width,
+                    output_height
+                )
+            )
 
         new_repre["resolutionWidth"] = output_width
         new_repre["resolutionHeight"] = output_height
