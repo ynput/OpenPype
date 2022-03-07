@@ -2,7 +2,7 @@ import logging
 import contextlib
 import collections
 
-from avalon.vendor import qtawesome
+import qtawesome
 from Qt import QtWidgets, QtCore, QtGui
 from avalon import style, io
 

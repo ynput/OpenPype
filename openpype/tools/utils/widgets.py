@@ -2,7 +2,7 @@ import logging
 
 from Qt import QtWidgets, QtCore, QtGui
 import qargparse
-from avalon.vendor import qtawesome
+import qtawesome
 from openpype.style import (
     get_objected_colors,
     get_style_image_path
