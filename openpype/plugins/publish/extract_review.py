@@ -1124,6 +1124,9 @@ class ExtractReview(pyblish.api.InstancePlugin):
         """
         filters = []
 
+        # Get instance data
+        pixel_aspect = temp_data["pixel_aspect"]
+
         # NOTE Skipped using instance's resolution
         full_input_path_single_file = temp_data["full_input_path_single_file"]
         try:
@@ -1158,6 +1161,19 @@ class ExtractReview(pyblish.api.InstancePlugin):
         output_width = output_def.get("width") or None
         output_height = output_def.get("height") or None
 
+        # if nuke baking profile was having set reformat node
+        reformat_in_baking = bool("reformated" in new_repre["tags"])
+        self.log.debug("reformat_in_baking: `{}`".format(reformat_in_baking))
+
+        if reformat_in_baking:
+            self.log.debug((
+                "Using resolution from input. It is already "
+                "reformated from baking process"
+            ))
+            output_width = output_width or input_width
+            output_height = output_height or input_height
+            pixel_aspect = 1
+
         # Overscal color
         overscan_color_value = "black"
         overscan_color = output_def.get("overscan_color")
@@ -1189,9 +1205,6 @@ class ExtractReview(pyblish.api.InstancePlugin):
         letter_box_def = output_def["letter_box"]
         letter_box_enabled = letter_box_def["enabled"]
 
-        # Get instance data
-        pixel_aspect = temp_data["pixel_aspect"]
-
         # Make sure input width and height is not an odd number
         input_width_is_odd = bool(input_width % 2 != 0)
         input_height_is_odd = bool(input_height % 2 != 0)
@@ -1216,9 +1229,6 @@ class ExtractReview(pyblish.api.InstancePlugin):
         self.log.debug("input_width: `{}`".format(input_width))
         self.log.debug("input_height: `{}`".format(input_height))
 
-        reformat_in_baking = bool("reformated" in new_repre["tags"])
-        self.log.debug("reformat_in_baking: `{}`".format(reformat_in_baking))
-
         # Use instance resolution if output definition has not set it.
         if output_width is None or output_height is None:
             output_width = temp_data["resolution_width"]
@@ -1229,17 +1239,6 @@ class ExtractReview(pyblish.api.InstancePlugin):
             self.log.debug("Using resolution from input.")
             output_width = input_width
             output_height = input_height
-
-        if reformat_in_baking:
-            self.log.debug((
-                "Using resolution from input. It is already "
-                "reformated from baking process"
-            ))
-            output_width = input_width
-            output_height = input_height
-            pixel_aspect = 1
-            new_repre["resolutionWidth"] = input_width
-            new_repre["resolutionHeight"] = input_height
 
         output_width = int(output_width)
         output_height = int(output_height)
