@@ -11,6 +11,7 @@ from openpype_modules.ftrack.lib import (
     CUST_ATTR_TOOLS,
     CUST_ATTR_APPLICATIONS,
     CUST_ATTR_INTENT,
+    FPS_KEYS,
 
     default_custom_attributes_definition,
     app_definitions_from_app_manager,
@@ -519,20 +520,28 @@ class CustomAttributes(BaseAction):
             self.show_message(event, msg)
 
     def process_attribute(self, data):
-        existing_attrs = self.session.query(
-            "CustomAttributeConfiguration"
-        ).all()
+        existing_attrs = self.session.query((
+            "select is_hierarchical, key, type, entity_type, object_type_id"
+            " from CustomAttributeConfiguration"
+        )).all()
         matching = []
+        is_hierarchical = data.get("is_hierarchical", False)
         for attr in existing_attrs:
             if (
-                attr["key"] != data["key"] or
-                attr["type"]["name"] != data["type"]["name"]
+                is_hierarchical != attr["is_hierarchical"]
+                or attr["key"] != data["key"]
             ):
                 continue
 
-            if data.get("is_hierarchical") is True:
-                if attr["is_hierarchical"] is True:
-                    matching.append(attr)
+            if attr["type"]["name"] != data["type"]["name"]:
+                if data["key"] in FPS_KEYS and attr["type"]["name"] == "text":
+                    self.log.info("Kept 'fps' as text custom attribute.")
+                    return
+                continue
+
+            if is_hierarchical:
+                matching.append(attr)
+
             elif "object_type_id" in data:
                 if (
                     attr["entity_type"] == data["entity_type"] and

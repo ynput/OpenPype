@@ -4,7 +4,8 @@ from .constants import (
     CUST_ATTR_GROUP,
     CUST_ATTR_TOOLS,
     CUST_ATTR_APPLICATIONS,
-    CUST_ATTR_INTENT
+    CUST_ATTR_INTENT,
+    FPS_KEYS
 )
 from .settings import (
     get_ftrack_event_mongo_info
@@ -30,6 +31,8 @@ __all__ = (
     "CUST_ATTR_GROUP",
     "CUST_ATTR_TOOLS",
     "CUST_ATTR_APPLICATIONS",
+    "CUST_ATTR_INTENT",
+    "FPS_KEYS",
 
     "get_ftrack_event_mongo_info",
 

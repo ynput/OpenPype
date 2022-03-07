@@ -15,6 +15,7 @@ from .lib import (
     get_warning_pixmap,
     set_style_property,
     DynamicQThread,
+    qt_app_context,
 )
 
 from .models import (
@@ -39,6 +40,7 @@ __all__ = (
     "get_warning_pixmap",
     "set_style_property",
     "DynamicQThread",
+    "qt_app_context",
 
     "RecursiveSortFilterProxyModel",
 )

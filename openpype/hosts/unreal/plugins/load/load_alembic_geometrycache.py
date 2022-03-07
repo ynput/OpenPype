@@ -1,15 +1,16 @@
+# -*- coding: utf-8 -*-
+"""Loader for published alembics."""
 import os
 
 from avalon import api, pipeline
-from avalon.unreal import lib
-from avalon.unreal import pipeline as unreal_pipeline
-
-import unreal
-
+from openpype.hosts.unreal.api import plugin
+from openpype.hosts.unreal.api import pipeline as unreal_pipeline
 from openpype.lib import get_frame_info
 
+import unreal  # noqa
 
-class PointCacheAlembicLoader(api.Loader):
+
+class PointCacheAlembicLoader(plugin.Loader):
     """Load Point Cache from Alembic"""
 
     families = ["model", "pointcache"]
@@ -59,8 +60,7 @@ class PointCacheAlembicLoader(api.Loader):
         return task
 
     def load(self, context, name, namespace, data):
-        """
-        Load and containerise representation into Content Browser.
+        """Load and containerise representation into Content Browser.
 
         This is two step process. First, import FBX to temporary path and
         then call `containerise()` on it - this moves all content to new
@@ -79,10 +79,10 @@ class PointCacheAlembicLoader(api.Loader):
 
         Returns:
             list(str): list of container content
-        """
 
-        # Create directory for asset and avalon container
-        root = "/Game/Avalon/Assets"
+        """
+        # Create directory for asset and OpenPype container
+        root = "/Game/OpenPype/Assets"
         asset = context.get('asset').get('name')
         suffix = "_CON"
         if asset:
@@ -114,7 +114,7 @@ class PointCacheAlembicLoader(api.Loader):
         unreal.AssetToolsHelpers.get_asset_tools().import_asset_tasks([task])  # noqa: E501
 
         # Create Asset Container
-        lib.create_avalon_container(
+        unreal_pipeline.create_container(
             container=container_name, path=asset_dir)
 
         data = {
