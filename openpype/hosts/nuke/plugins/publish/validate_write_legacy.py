@@ -34,7 +34,8 @@ class ValidateWriteLegacy(pyblish.api.InstancePlugin):
         # test if render in family test knob
         # and only one item should be available
         assert len(family_test) == 1, msg + " > More avalon attributes"
-        assert "render" in node[family_test[0]].value() or "still" in node[family_test[0]].value(), msg + \
+        assert "render" in node[family_test[0]].value() \
+            or "still" in node[family_test[0]].value(), msg + \
             " > Not correct family"
         # test if `file` knob in node, this way old
         # non-group-node write could be detected
