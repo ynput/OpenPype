@@ -95,7 +95,7 @@
                                     "key": "applications"
                                 },
                                 {
-                                    "key": "handlesExtend"
+                                    "key": "additiveHandles"
                                 }
                             ]
                         }

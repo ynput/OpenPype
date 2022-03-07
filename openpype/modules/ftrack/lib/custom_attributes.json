@@ -8,8 +8,8 @@
           "label": "Library Project",
           "type": "boolean"
         },
-        "handlesExtend": {
-            "label": "Frame handles extend",
+        "additiveHandles": {
+            "label": "Additive frame handles",
             "type": "boolean",
             "default": true
         }

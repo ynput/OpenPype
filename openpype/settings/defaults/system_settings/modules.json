@@ -68,7 +68,7 @@
                         "Pypeclub"
                     ]
                 },
-                "handlesExtend": {
+                "additiveHandles": {
                     "write_security_roles": [],
                     "read_security_roles": []
                 }

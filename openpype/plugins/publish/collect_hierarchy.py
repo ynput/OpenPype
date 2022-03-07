@@ -27,9 +27,9 @@ class CollectHierarchy(pyblish.api.ContextPlugin):
 
         anatomy = context.data["anatomy"]
         # Find out if handles are extending or inclusive on project
-        handles_extend = anatomy["attributes"].get("handlesExtend")
-        if handles_extend is None:
-            handles_extend = True
+        additive_handles = anatomy["attributes"].get("additiveHandles")
+        if additive_handles is None:
+            additive_handles = True
 
         for instance in context:
             self.log.info("Processing instance: `{}` ...".format(instance))
@@ -61,7 +61,8 @@ class CollectHierarchy(pyblish.api.ContextPlugin):
             shot_data["comments"] = instance.data.get("comments", [])
 
             # Recalculate frame start/end based on anatomy value
-            #   "handlesExtend" which may change how frame start/end are stored
+            #   "additiveHandles" which may change how frame start/end are
+            #   stored
             # Create frame info based on instance data
             #   - handles should always extend during publishing
             frame_info = UnifiedFrameInfo(
@@ -72,8 +73,8 @@ class CollectHierarchy(pyblish.api.ContextPlugin):
                 True
             )
             # Change frame info calculation but keep full frame range
-            # - nothing will change if 'handles_extend' is 'True'
-            frame_info.change_handles_extend(handles_extend, True)
+            # - nothing will change if 'additive_handles' is 'True'
+            frame_info.change_handles_state(additive_handles, True)
 
             shot_data["attributes"] = {
                 "handleStart": frame_info.handle_start,

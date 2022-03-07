@@ -264,8 +264,8 @@ def get_hierarchy(asset_name=None):
 class UnifiedFrameInfo:
     """Holder of frame start/end and handles start/end.
 
-    Handles can extend or reduce a frame range. UnifiedFrameInfo always
-    works with handles as they're extending frame start/end.
+    Handles can be additive or subtractive which may affect frame range.
+    UnifiedFrameInfo always works with handles as they're additive.
 
     ## Example
     Data from asset document:
@@ -274,11 +274,11 @@ class UnifiedFrameInfo:
     - handle start: 10
     - handle end: 10
 
-    1. Project has stored that handles "Extend"
+    1. Project has stored that handles are "additive"
     - frame range with handles: 991 - 1110 (120 frames)
     - frame range without handles: 1001 - 1100 (100 frames)
 
-    2. Project has stored that handles "Reduce"
+    2. Project has stored that handles are "subtractive"
     - frame range with handles: 1001 - 1100 (100 frames)
     - frame range without handles: 1011 - 1090 (80 frames)
 
@@ -286,10 +286,10 @@ class UnifiedFrameInfo:
     Class unifies access too `frame_start`, `fram_end`, `handle_frame_start`
     and `handle_frame_end`.
 
-    Keeps tray about current state of handles if are extending of reducing
-    frame range. If you want to get data to store please set if handles
-    should be extended using `change_handles_extend` and then
-    `real_frame_start` and `real_frame_end`.
+    Keeps track about current state of handles. If you want to get data to
+    store you have to set if handles are additive or subtractive using
+    `change_handles_state` and then `real_frame_start` and `real_frame_end`
+    to get the values.
     """
 
     def __init__(
@@ -298,16 +298,16 @@ class UnifiedFrameInfo:
         frame_end,
         handle_start,
         handle_end,
-        handles_extend=None
+        additive_handles=None
     ):
-        if handles_extend is None:
-            handles_extend = True
+        if additive_handles is None:
+            additive_handles = True
         self.frame_start = frame_start
         self.frame_end = frame_end
         self.handle_start = handle_start or 0
         self.handle_end = handle_end or 0
-        self._handles_extend = True
-        self.change_handles_extend(handles_extend)
+        self._additive_handles = True
+        self.change_handles_state(additive_handles)
 
     def __str__(self):
         return "< {}: ({}) {}-{} ({}) >".format(
@@ -332,14 +332,14 @@ class UnifiedFrameInfo:
     @property
     def real_frame_start(self):
         """Frame start that would be stored in project or asset doc."""
-        if self._handles_extend:
+        if self._additive_handles:
             return self.frame_start
         return self.handle_frame_start
 
     @property
     def real_frame_end(self):
         """Frame end that would be stored in project or asset doc."""
-        if self._handles_extend:
+        if self._additive_handles:
             return self.frame_end
         return self.handle_frame_end
 
@@ -365,27 +365,27 @@ class UnifiedFrameInfo:
             return False
         return True
 
-    def change_handles_extend(
-        self, handles_extend=None, keep_frame_range=True
+    def change_handles_state(
+        self, additive_handles=None, keep_frame_range=True
     ):
-        """Change state of handles extending frame start/end.
+        """Change state of additive or subtractive handles.
 
         Args:
-            handles_extend(bool): Explicitly set if handles extend or reduce
-                frame start/end.
+            additive_handles(bool): Explicitly set if handles are additive or
+                subtractive.
             keep_frame_range(bool): Frame range will be kept so the change
                 is just for calculation of frame start/end for storing.
         """
-        if handles_extend is None:
-            handles_extend = not self._handles_extend
+        if additive_handles is None:
+            additive_handles = not self._additive_handles
 
-        elif self._handles_extend == handles_extend:
+        elif self._additive_handles == additive_handles:
             return
 
-        self._handles_extend = handles_extend
+        self._additive_handles = additive_handles
         if keep_frame_range:
             return
-        if handles_extend:
+        if additive_handles:
             self.frame_start -= self.handle_start
             self.frame_end += self.handle_end
         else:
@@ -424,12 +424,12 @@ def get_frame_info(asset_doc, anatomy=None, project_name=None):
     frame_end = asset_data.get("frameEnd")
     handle_start = asset_data.get("handleStart") or 0
     handle_end = asset_data.get("handleEnd") or 0
-    handles_extend = anatomy["attributes"].get("handlesExtend")
+    additive_handles = anatomy["attributes"].get("additiveHandles")
     if frame_start is None or frame_end is None:
         return None
 
     return UnifiedFrameInfo(
-        frame_start, frame_end, handle_start, handle_end, handles_extend
+        frame_start, frame_end, handle_start, handle_end, additive_handles
     )
 
 

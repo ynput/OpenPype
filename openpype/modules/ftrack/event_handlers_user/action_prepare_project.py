@@ -35,7 +35,7 @@ class PrepareProjectLocal(BaseAction):
         "frameEnd",
         "handleStart",
         "handleEnd",
-        "handlesExtend",
+        "additiveHandles",
         "clipIn",
         "clipOut",
         "resolutionHeight",

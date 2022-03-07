@@ -33,7 +33,7 @@ class PrepareProjectServer(ServerAction):
         "frameEnd",
         "handleStart",
         "handleEnd",
-        "handlesExtend",
+        "additiveHandles",
         "clipIn",
         "clipOut",
         "resolutionHeight",

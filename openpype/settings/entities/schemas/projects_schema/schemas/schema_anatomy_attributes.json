@@ -45,9 +45,10 @@
         },
         {
             "type": "boolean",
-            "key": "handlesExtend",
-            "label": "Handles extend",
-            "tooltip": "Handles extend frame start/end."
+            "key": "additiveHandles",
+            "label": "Additive handles",
+            "tooltip": "Handles extend frame start/end.",
+            "default": true
         },
         {
             "type": "number",
