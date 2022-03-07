@@ -1,3 +1,4 @@
+# -*- coding: utf-8 -*-
 import json
 import os
 
@@ -17,7 +18,7 @@ class ExtractLook(openpype.api.Extractor):
 
     def process(self, instance):
         # Define extract output file path
-        stagingdir = self.staging_dir(instance)
+        staging_dir = self.staging_dir(instance)
         resources_dir = instance.data["resourcesDir"]
 
         ar = unreal.AssetRegistryHelpers.get_asset_registry()
@@ -57,7 +58,7 @@ class ExtractLook(openpype.api.Extractor):
                 tga_export_task.set_editor_property('automated', True)
                 tga_export_task.set_editor_property('object', texture)
                 tga_export_task.set_editor_property(
-                    'filename', f"{stagingdir}/{tga_filename}")
+                    'filename', f"{staging_dir}/{tga_filename}")
                 tga_export_task.set_editor_property('prompt', False)
                 tga_export_task.set_editor_property('selected', False)
 
@@ -66,7 +67,7 @@ class ExtractLook(openpype.api.Extractor):
                 json_element['tga_filename'] = tga_filename
 
                 transfers.append((
-                    f"{stagingdir}/{tga_filename}",
+                    f"{staging_dir}/{tga_filename}",
                     f"{resources_dir}/{tga_filename}"))
 
             fbx_filename = f"{instance.name}_{name}.fbx"
@@ -84,7 +85,7 @@ class ExtractLook(openpype.api.Extractor):
             task.set_editor_property('automated', True)
             task.set_editor_property('object', object)
             task.set_editor_property(
-                'filename', f"{stagingdir}/{fbx_filename}")
+                'filename', f"{staging_dir}/{fbx_filename}")
             task.set_editor_property('prompt', False)
             task.set_editor_property('selected', False)
 
@@ -93,13 +94,13 @@ class ExtractLook(openpype.api.Extractor):
             json_element['fbx_filename'] = fbx_filename
 
             transfers.append((
-                f"{stagingdir}/{fbx_filename}",
+                f"{staging_dir}/{fbx_filename}",
                 f"{resources_dir}/{fbx_filename}"))
 
             json_data.append(json_element)
 
         json_filename = f"{instance.name}.json"
-        json_path = os.path.join(stagingdir, json_filename)
+        json_path = os.path.join(staging_dir, json_filename)
 
         with open(json_path, "w+") as file:
             json.dump(json_data, fp=file, indent=2)
@@ -113,7 +114,7 @@ class ExtractLook(openpype.api.Extractor):
             'name': 'json',
             'ext': 'json',
             'files': json_filename,
-            "stagingDir": stagingdir,
+            "stagingDir": staging_dir,
         }
 
         instance.data["representations"].append(json_representation)

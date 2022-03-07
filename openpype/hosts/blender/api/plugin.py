@@ -131,6 +131,8 @@ def deselect_all():
 
 class Creator(PypeCreatorMixin, avalon.api.Creator):
     """Base class for Creator plug-ins."""
+    defaults = ['Main']
+
     def process(self):
         collection = bpy.data.collections.new(name=self.data["subset"])
         bpy.context.scene.collection.children.link(collection)

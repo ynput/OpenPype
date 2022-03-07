@@ -723,7 +723,6 @@
                         }
                     ]
                 },
-
                 {
                     "type": "dict",
                     "collapsible": true,
@@ -741,6 +740,22 @@
                             "type": "raw-json",
                             "key": "ftrack_custom_attributes",
                             "label": "Custom attributes to validate"
+                        }
+                    ]
+                },
+                {
+                    "type": "dict",
+                    "key": "IntegrateFtrackInstance",
+                    "label": "IntegrateFtrackInstance",
+                    "is_group": true,
+                    "children": [
+                        {
+                            "type": "dict-modifiable",
+                            "key": "family_mapping",
+                            "label": "Family Mapping",
+                            "object_type": {
+                                "type": "text"
+                            }
                         }
                     ]
                 }

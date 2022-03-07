@@ -87,41 +87,48 @@ class CreateShotClip(opfapi.Creator):
                         "target": "tag",
                         "toolTip": "Parents folder for shot root folder, Template filled with `Hierarchy Data` section",  # noqa
                         "order": 0},
+                    "useShotName": {
+                        "value": True,
+                        "type": "QCheckBox",
+                        "label": "Use Shot Name",
+                        "target": "ui",
+                        "toolTip": "Use name form Shot name clip attribute",  # noqa
+                        "order": 1},
                     "clipRename": {
                         "value": False,
                         "type": "QCheckBox",
                         "label": "Rename clips",
                         "target": "ui",
                         "toolTip": "Renaming selected clips on fly",  # noqa
-                        "order": 1},
+                        "order": 2},
                     "clipName": {
                         "value": "{sequence}{shot}",
                         "type": "QLineEdit",
                         "label": "Clip Name Template",
                         "target": "ui",
                         "toolTip": "template for creating shot namespaused for renaming (use rename: on)",  # noqa
-                        "order": 2},
+                        "order": 3},
                     "segmentIndex": {
                         "value": True,
                         "type": "QCheckBox",
                         "label": "Segment index",
                         "target": "ui",
                         "toolTip": "Take number from segment index",  # noqa
-                        "order": 3},
+                        "order": 4},
                     "countFrom": {
                         "value": 10,
                         "type": "QSpinBox",
                         "label": "Count sequence from",
                         "target": "ui",
                         "toolTip": "Set when the sequence number stafrom",  # noqa
-                        "order": 4},
+                        "order": 5},
                     "countSteps": {
                         "value": 10,
                         "type": "QSpinBox",
                         "label": "Stepping number",
                         "target": "ui",
                         "toolTip": "What number is adding every new step",  # noqa
-                        "order": 5},
+                        "order": 6},
                 }
             },
             "hierarchyData": {

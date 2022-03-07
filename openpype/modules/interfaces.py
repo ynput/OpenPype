@@ -115,13 +115,14 @@ class ITrayAction(ITrayModule):
     Add action to tray menu which will trigger `on_action_trigger`.
     It is expected to be used for showing tools.
 
-    Methods `tray_start`, `tray_exit` and `connect_with_modules` are overriden
+    Methods `tray_start`, `tray_exit` and `connect_with_modules` are overridden
     as it's not expected that action will use them. But it is possible if
     necessary.
     """
 
     admin_action = False
     _admin_submenu = None
+    _action_item = None
 
     @property
     @abstractmethod
@@ -149,6 +150,7 @@ class ITrayAction(ITrayModule):
             tray_menu.addAction(action)
 
         action.triggered.connect(self.on_action_trigger)
+        self._action_item = action
 
     def tray_start(self):
         return

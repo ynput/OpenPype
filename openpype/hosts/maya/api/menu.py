@@ -1,58 +1,146 @@
-import sys
 import os
 import logging
 
 from Qt import QtWidgets, QtGui
 
+import maya.utils
 import maya.cmds as cmds
 
-from avalon.maya import pipeline
+import avalon.api
 
 from openpype.api import BuildWorkfile
 from openpype.settings import get_project_settings
 from openpype.tools.utils import host_tools
 from openpype.hosts.maya.api import lib
+from .lib import get_main_window, IS_HEADLESS
+from .commands import reset_frame_range
 
 
 log = logging.getLogger(__name__)
+
+MENU_NAME = "op_maya_menu"
 
 
 def _get_menu(menu_name=None):
     """Return the menu instance if it currently exists in Maya"""
     if menu_name is None:
-        menu_name = pipeline._menu
+        menu_name = MENU_NAME
 
     widgets = {w.objectName(): w for w in QtWidgets.QApplication.allWidgets()}
     return widgets.get(menu_name)
 
 
-def deferred():
-    def add_build_workfiles_item():
-        # Add build first workfile
-        cmds.menuItem(divider=True, parent=pipeline._menu)
+def install():
+    if cmds.about(batch=True):
+        log.info("Skipping openpype.menu initialization in batch mode..")
+        return
+
+    def deferred():
+        pyblish_icon = host_tools.get_pyblish_icon()
+        parent_widget = get_main_window()
+        cmds.menu(
+            MENU_NAME,
+            label=avalon.api.Session["AVALON_LABEL"],
+            tearOff=True,
+            parent="MayaWindow"
+        )
+
+        # Create context menu
+        context_label = "{}, {}".format(
+            avalon.api.Session["AVALON_ASSET"],
+            avalon.api.Session["AVALON_TASK"]
+        )
+        cmds.menuItem(
+            "currentContext",
+            label=context_label,
+            parent=MENU_NAME,
+            enable=False
+        )
+
+        cmds.setParent("..", menu=True)
+
+        cmds.menuItem(divider=True)
+
+        # Create default items
+        cmds.menuItem(
+            "Create...",
+            command=lambda *args: host_tools.show_creator(parent=parent_widget)
+        )
+
+        cmds.menuItem(
+            "Load...",
+            command=lambda *args: host_tools.show_loader(
+                parent=parent_widget,
+                use_context=True
+            )
+        )
+
+        cmds.menuItem(
+            "Publish...",
+            command=lambda *args: host_tools.show_publish(
+                parent=parent_widget
+            ),
+            image=pyblish_icon
+        )
+
+        cmds.menuItem(
+            "Manage...",
+            command=lambda *args: host_tools.show_scene_inventory(
+                parent=parent_widget
+            )
+        )
+
+        cmds.menuItem(
+            "Library...",
+            command=lambda *args: host_tools.show_library_loader(
+                parent=parent_widget
+            )
+        )
+
+        cmds.menuItem(divider=True)
+
+        cmds.menuItem(
+            "Work Files...",
+            command=lambda *args: host_tools.show_workfiles(
+                parent=parent_widget
+            ),
+        )
+
+        cmds.menuItem(
+            "Reset Frame Range",
+            command=lambda *args: reset_frame_range()
+        )
+
+        cmds.menuItem(
+            "Reset Resolution",
+            command=lambda *args: lib.reset_scene_resolution()
+        )
+
+        cmds.menuItem(
+            "Set Colorspace",
+            command=lambda *args: lib.set_colorspace(),
+        )
+        cmds.menuItem(divider=True, parent=MENU_NAME)
         cmds.menuItem(
             "Build First Workfile",
-            parent=pipeline._menu,
+            parent=MENU_NAME,
             command=lambda *args: BuildWorkfile().process()
         )
 
-    def add_look_assigner_item():
         cmds.menuItem(
-            "Look assigner",
-            parent=pipeline._menu,
+            "Look assigner...",
             command=lambda *args: host_tools.show_look_assigner(
-                pipeline._parent
+                parent_widget
             )
         )
 
-    def add_experimental_item():
         cmds.menuItem(
             "Experimental tools...",
-            parent=pipeline._menu,
             command=lambda *args: host_tools.show_experimental_tools_dialog(
-                pipeline._parent
+                parent_widget
             )
         )
+        cmds.setParent(MENU_NAME, menu=True)
 
     def add_scripts_menu():
         try:
@@ -82,124 +170,13 @@ def deferred():
         # apply configuration
         studio_menu.build_from_configuration(studio_menu, config)
 
-    def modify_workfiles():
-        # Find the pipeline menu
-        top_menu = _get_menu()
-
-        # Try to find workfile tool action in the menu
-        workfile_action = None
-        for action in top_menu.actions():
-            if action.text() == "Work Files":
-                workfile_action = action
-                break
-
-        # Add at the top of menu if "Work Files" action was not found
-        after_action = ""
-        if workfile_action:
-            # Use action's object name for `insertAfter` argument
-            after_action = workfile_action.objectName()
-
-        # Insert action to menu
-        cmds.menuItem(
-            "Work Files",
-            parent=pipeline._menu,
-            command=lambda *args: host_tools.show_workfiles(pipeline._parent),
-            insertAfter=after_action
-        )
-
-        # Remove replaced action
-        if workfile_action:
-            top_menu.removeAction(workfile_action)
-
-    def modify_resolution():
-        # Find the pipeline menu
-        top_menu = _get_menu()
-
-        # Try to find resolution tool action in the menu
-        resolution_action = None
-        for action in top_menu.actions():
-            if action.text() == "Reset Resolution":
-                resolution_action = action
-                break
-
-        # Add at the top of menu if "Work Files" action was not found
-        after_action = ""
-        if resolution_action:
-            # Use action's object name for `insertAfter` argument
-            after_action = resolution_action.objectName()
-
-        # Insert action to menu
-        cmds.menuItem(
-            "Reset Resolution",
-            parent=pipeline._menu,
-            command=lambda *args: lib.reset_scene_resolution(),
-            insertAfter=after_action
-        )
-
-        # Remove replaced action
-        if resolution_action:
-            top_menu.removeAction(resolution_action)
-
-    def remove_project_manager():
-        top_menu = _get_menu()
-
-        # Try to find "System" menu action in the menu
-        system_menu = None
-        for action in top_menu.actions():
-            if action.text() == "System":
-                system_menu = action
-                break
-
-        if system_menu is None:
-            return
-
-        # Try to find "Project manager" action in "System" menu
-        project_manager_action = None
-        for action in system_menu.menu().children():
-            if hasattr(action, "text") and action.text() == "Project Manager":
-                project_manager_action = action
-                break
-
-        # Remove "Project manager" action if was found
-        if project_manager_action is not None:
-            system_menu.menu().removeAction(project_manager_action)
-
-    def add_colorspace():
-        # Find the pipeline menu
-        top_menu = _get_menu()
-
-        # Try to find workfile tool action in the menu
-        workfile_action = None
-        for action in top_menu.actions():
-            if action.text() == "Reset Resolution":
-                workfile_action = action
-                break
-
-        # Add at the top of menu if "Work Files" action was not found
-        after_action = ""
-        if workfile_action:
-            # Use action's object name for `insertAfter` argument
-            after_action = workfile_action.objectName()
-
-        # Insert action to menu
-        cmds.menuItem(
-            "Set Colorspace",
-            parent=pipeline._menu,
-            command=lambda *args: lib.set_colorspace(),
-            insertAfter=after_action
-        )
-
-    log.info("Attempting to install scripts menu ...")
-
-    # add_scripts_menu()
-    add_build_workfiles_item()
-    add_look_assigner_item()
-    add_experimental_item()
-    modify_workfiles()
-    modify_resolution()
-    remove_project_manager()
-    add_colorspace()
-    add_scripts_menu()
+    # Allow time for uninstallation to finish.
+    # We use Maya's executeDeferred instead of QTimer.singleShot
+    # so that it only gets called after Maya UI has initialized too.
+    # This is crucial with Maya 2020+ which initializes without UI
+    # first as a QCoreApplication
+    maya.utils.executeDeferred(deferred)
+    cmds.evalDeferred(add_scripts_menu, lowestPriority=True)
 
 
 def uninstall():
@@ -214,18 +191,27 @@ def uninstall():
             log.error(e)
 
 
-def install():
-    if cmds.about(batch=True):
-        log.info("Skipping openpype.menu initialization in batch mode..")
-        return
-
-    # Allow time for uninstallation to finish.
-    cmds.evalDeferred(deferred, lowestPriority=True)
-
-
 def popup():
     """Pop-up the existing menu near the mouse cursor."""
     menu = _get_menu()
     cursor = QtGui.QCursor()
     point = cursor.pos()
     menu.exec_(point)
+
+
+def update_menu_task_label():
+    """Update the task label in Avalon menu to current session"""
+
+    if IS_HEADLESS:
+        return
+
+    object_name = "{}|currentContext".format(MENU_NAME)
+    if not cmds.menuItem(object_name, query=True, exists=True):
+        log.warning("Can't find menuItem: {}".format(object_name))
+        return
+
+    label = "{}, {}".format(
+        avalon.api.Session["AVALON_ASSET"],
+        avalon.api.Session["AVALON_TASK"]
+    )
+    cmds.menuItem(object_name, edit=True, label=label)

@@ -132,12 +132,12 @@ class Popup2(Popup):
         """
         parent_widget = self.parent()
 
-        app = QtWidgets.QApplication.instance()
+        desktop = QtWidgets.QApplication.desktop()
         if parent_widget:
-            screen = app.desktop().screenNumber(parent_widget)
+            screen = desktop.screenNumber(parent_widget)
         else:
-            screen = app.desktop().screenNumber(app.desktop().cursor().pos())
-        center_point = app.desktop().screenGeometry(screen).center()
+            screen = desktop.screenNumber(desktop.cursor().pos())
+        center_point = desktop.screenGeometry(screen).center()
 
         frame_geo = self.frameGeometry()
         frame_geo.moveCenter(center_point)

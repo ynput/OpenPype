@@ -35,18 +35,6 @@ def install():
     """
     from .. import get_resolve_module
 
-    # Disable all families except for the ones we explicitly want to see
-    family_states = [
-        "imagesequence",
-        "render2d",
-        "plate",
-        "render",
-        "mov",
-        "clip"
-    ]
-    avalon.data["familiesStateDefault"] = False
-    avalon.data["familiesStateToggled"] = family_states
-
     log.info("openpype.hosts.resolve installed")
 
     pyblish.register_host("resolve")

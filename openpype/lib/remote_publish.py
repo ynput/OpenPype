@@ -21,9 +21,6 @@ FINISHED_OK_STATUS = "finished_ok"
 
 def headless_publish(log, close_plugin_name=None, is_test=False):
     """Runs publish in a opened host with a context and closes Python process.
-
-        Host is being closed via ClosePS pyblish plugin which triggers 'exit'
-        method in ConsoleTrayApp.
     """
     if not is_test:
         dbcon = get_webpublish_conn()
@@ -88,7 +85,6 @@ def publish(log, close_plugin_name=None):
             if close_plugin:  # close host app explicitly after error
                 context = pyblish.api.Context()
                 close_plugin().process(context)
-            sys.exit(1)
 
 
 def publish_and_log(dbcon, _id, log, close_plugin_name=None, batch_id=None):
@@ -137,7 +133,7 @@ def publish_and_log(dbcon, _id, log, close_plugin_name=None, batch_id=None):
             if close_plugin:  # close host app explicitly after error
                 context = pyblish.api.Context()
                 close_plugin().process(context)
-            sys.exit(1)
+            return
         elif processed % log_every == 0:
             # pyblish returns progress in 0.0 - 2.0
             progress = min(round(result["progress"] / 2 * 100), 99)

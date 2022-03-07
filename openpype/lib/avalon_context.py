@@ -9,7 +9,10 @@ import collections
 import functools
 import getpass
 
-from openpype.settings import get_project_settings
+from openpype.settings import (
+    get_project_settings,
+    get_system_settings
+)
 from .anatomy import Anatomy
 from .profiles_filtering import filter_profiles
 
@@ -256,6 +259,18 @@ def get_hierarchy(asset_name=None):
     )
 
     return "/".join(hierarchy_items)
+
+
+def get_system_general_anatomy_data():
+    system_settings = get_system_settings()
+    studio_name = system_settings["general"]["studio_name"]
+    studio_code = system_settings["general"]["studio_code"]
+    return {
+        "studio": {
+            "name": studio_name,
+            "code": studio_code
+        }
+    }
 
 
 def get_linked_asset_ids(asset_doc):
@@ -536,6 +551,10 @@ def get_workdir_data(project_doc, asset_doc, task_name, host_name):
         "user": getpass.getuser(),
         "hierarchy": hierarchy,
     }
+
+    system_general_data = get_system_general_anatomy_data()
+    data.update(system_general_data)
+
     return data
 
 
@@ -933,7 +952,7 @@ class BuildWorkfile:
         Returns:
             (dict): preset per entered task name
         """
-        host_name = avalon.api.registered_host().__name__.rsplit(".", 1)[-1]
+        host_name = os.environ["AVALON_APP"]
         project_settings = get_project_settings(
             avalon.io.Session["AVALON_PROJECT"]
         )
@@ -1505,7 +1524,7 @@ def _get_task_context_data_for_anatomy(
         "requested task type: `{}`".format(task_type)
     )
 
-    return {
+    data = {
         "project": {
             "name": project_doc["name"],
             "code": project_doc["data"].get("code")
@@ -1517,6 +1536,11 @@ def _get_task_context_data_for_anatomy(
             "short_name": project_task_type_data["short_name"]
         }
     }
+
+    system_general_data = get_system_general_anatomy_data()
+    data.update(system_general_data)
+
+    return data
 
 
 def get_custom_workfile_template_by_context(

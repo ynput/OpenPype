@@ -4,6 +4,7 @@ Basic avalon integration
 import os
 import contextlib
 from avalon import api as avalon
+from avalon.pipeline import AVALON_CONTAINER_ID
 from pyblish import api as pyblish
 from openpype.api import Logger
 from .lib import (
@@ -28,18 +29,6 @@ log = Logger.get_logger(__name__)
 
 
 def install():
-    # Disable all families except for the ones we explicitly want to see
-    family_states = [
-        "imagesequence",
-        "render2d",
-        "plate",
-        "render",
-        "mov",
-        "clip"
-    ]
-    avalon.data["familiesStateDefault"] = False
-    avalon.data["familiesStateToggled"] = family_states
-
 
     pyblish.register_host("flame")
     pyblish.register_plugin_path(PUBLISH_PATH)
@@ -68,14 +57,31 @@ def uninstall():
     log.info("OpenPype Flame host uninstalled ...")
 
 
-def containerise(tl_segment,
+def containerise(flame_clip_segment,
                  name,
                  namespace,
                  context,
                  loader=None,
                  data=None):
-    # TODO: containerise
-    pass
+
+    data_imprint = {
+        "schema": "openpype:container-2.0",
+        "id": AVALON_CONTAINER_ID,
+        "name": str(name),
+        "namespace": str(namespace),
+        "loader": str(loader),
+        "representation": str(context["representation"]["_id"]),
+    }
+
+    if data:
+        for k, v in data.items():
+            data_imprint[k] = v
+
+    log.debug("_ data_imprint: {}".format(data_imprint))
+
+    set_segment_data_marker(flame_clip_segment, data_imprint)
+
+    return True
 
 
 def ls():

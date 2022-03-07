@@ -2,9 +2,12 @@ import os
 
 from maya import cmds
 
-import avalon.maya
 import openpype.api
-from openpype.hosts.maya.api.lib import extract_alembic
+from openpype.hosts.maya.api.lib import (
+    extract_alembic,
+    suspended_refresh,
+    maintained_selection
+)
 
 
 class ExtractAnimation(openpype.api.Extractor):
@@ -35,12 +38,8 @@ class ExtractAnimation(openpype.api.Extractor):
                                            fullPath=True) or []
 
         # Collect the start and end including handles
-        start = instance.data["frameStart"]
-        end = instance.data["frameEnd"]
-        handles = instance.data.get("handles", 0) or 0
-        if handles:
-            start -= handles
-            end += handles
+        start = instance.data["frameStartHandle"]
+        end = instance.data["frameEndHandle"]
 
         self.log.info("Extracting animation..")
         dirname = self.staging_dir(instance)
@@ -71,8 +70,8 @@ class ExtractAnimation(openpype.api.Extractor):
             # Since Maya 2017 alembic supports multiple uv sets - write them.
             options["writeUVSets"] = True
 
-        with avalon.maya.suspended_refresh():
-            with avalon.maya.maintained_selection():
+        with suspended_refresh():
+            with maintained_selection():
                 cmds.select(nodes, noExpand=True)
                 extract_alembic(file=path,
                                 startFrame=float(start),

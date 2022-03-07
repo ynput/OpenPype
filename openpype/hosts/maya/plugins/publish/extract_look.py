@@ -4,6 +4,7 @@ import os
 import sys
 import json
 import tempfile
+import platform
 import contextlib
 import subprocess
 from collections import OrderedDict
@@ -11,8 +12,7 @@ from collections import OrderedDict
 from maya import cmds  # noqa
 
 import pyblish.api
-import avalon.maya
-from avalon import io, api
+from avalon import io
 
 import openpype.api
 from openpype.hosts.maya.api import lib
@@ -63,6 +63,11 @@ def maketx(source, destination, *args):
     from openpype.lib import get_oiio_tools_path
 
     maketx_path = get_oiio_tools_path("maketx")
+
+    if platform.system().lower() == "windows":
+        # Ensure .exe extension
+        maketx_path += ".exe"
+
     if not os.path.exists(maketx_path):
         print(
             "OIIO tool not found in {}".format(maketx_path))
@@ -217,7 +222,7 @@ class ExtractLook(openpype.api.Extractor):
         self.log.info("Extract sets (%s) ..." % _scene_type)
         lookdata = instance.data["lookData"]
         relationships = lookdata["relationships"]
-        sets = relationships.keys()
+        sets = list(relationships.keys())
         if not sets:
             self.log.info("No sets found")
             return
@@ -239,7 +244,7 @@ class ExtractLook(openpype.api.Extractor):
                 # getting incorrectly remapped. (LKD-17, PLN-101)
                 with no_workspace_dir():
                     with lib.attribute_values(remap):
-                        with avalon.maya.maintained_selection():
+                        with lib.maintained_selection():
                             cmds.select(sets, noExpand=True)
                             cmds.file(
                                 maya_path,

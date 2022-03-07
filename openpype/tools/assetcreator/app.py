@@ -87,7 +87,7 @@ class Window(QtWidgets.QDialog):
         btn_layout = QtWidgets.QHBoxLayout(btns_widget)
         btn_create_asset = QtWidgets.QPushButton("Create asset")
         btn_create_asset.setToolTip(
-            "Creates all neccessary components for asset"
+            "Creates all necessary components for asset"
         )
         checkbox_app = None
         if self.context is not None:
@@ -231,7 +231,7 @@ class Window(QtWidgets.QDialog):
         test_name = name.replace(' ', '')
         error_message = None
         message = QtWidgets.QMessageBox(self)
-        message.setWindowTitle("Some errors has occured")
+        message.setWindowTitle("Some errors have occurred")
         message.setIcon(QtWidgets.QMessageBox.Critical)
         # TODO: show error messages on any error
         if self.valid_parent is not True and test_name == '':

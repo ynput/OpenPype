@@ -306,6 +306,17 @@ class LaunchManager(LaunchQtApp):
         self._window.refresh()
 
 
+class LaunchLibrary(LaunchQtApp):
+    """Launch Library Loader."""
+
+    bl_idname = "wm.library_loader"
+    bl_label = "Library..."
+    _tool_name = "libraryloader"
+
+    def before_window_show(self):
+        self._window.refresh()
+
+
 class LaunchWorkFiles(LaunchQtApp):
     """Launch Avalon Work Files."""
 
@@ -365,6 +376,7 @@ class TOPBAR_MT_avalon(bpy.types.Menu):
             icon_value=pyblish_menu_icon_id,
         )
         layout.operator(LaunchManager.bl_idname, text="Manage...")
+        layout.operator(LaunchLibrary.bl_idname, text="Library...")
         layout.separator()
         layout.operator(LaunchWorkFiles.bl_idname, text="Work Files...")
         # TODO (jasper): maybe add 'Reload Pipeline', 'Reset Frame Range' and
@@ -382,6 +394,7 @@ classes = [
     LaunchLoader,
     LaunchPublisher,
     LaunchManager,
+    LaunchLibrary,
     LaunchWorkFiles,
     TOPBAR_MT_avalon,
 ]

@@ -1,5 +1,6 @@
-import avalon.unreal.pipeline as pipeline
 import unreal
+
+from openpype.hosts.unreal.api import pipeline
 
 
 queue = None

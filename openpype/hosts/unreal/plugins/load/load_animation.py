@@ -1,3 +1,5 @@
+# -*- coding: utf-8 -*-
+"""Load FBX with animations."""
 import os
 import json
 
@@ -7,12 +9,12 @@ from unreal import MovieSceneSkeletalAnimationTrack
 from unreal import MovieSceneSkeletalAnimationSection
 
 from avalon import api, pipeline
-from avalon.unreal import lib
-from avalon.unreal import pipeline as unreal_pipeline
+from openpype.hosts.unreal.api import plugin
+from openpype.hosts.unreal.api import pipeline as unreal_pipeline
 
 
-class AnimationFBXLoader(api.Loader):
-    """Load Unreal SkeletalMesh from FBX"""
+class AnimationFBXLoader(plugin.Loader):
+    """Load Unreal SkeletalMesh from FBX."""
 
     families = ["animation"]
     label = "Import FBX Animation"
@@ -195,7 +197,7 @@ class AnimationFBXLoader(api.Loader):
                         s.params.set_editor_property('animation', animation)
 
         # Create Asset Container
-        lib.create_avalon_container(
+        unreal_pipeline.create_container(
             container=container_name, path=asset_dir)
 
         data = {
