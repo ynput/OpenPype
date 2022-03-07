@@ -2,7 +2,7 @@ import re
 import logging
 
 from Qt import QtCore, QtWidgets
-from avalon.vendor import qtawesome
+import qtawesome
 from avalon import io
 from avalon import style
 
