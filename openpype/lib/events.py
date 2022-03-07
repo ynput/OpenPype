@@ -18,8 +18,8 @@ class EventCallback(object):
     may contain '*' that will be handled as "any characters".
 
     # Examples:
-    - "workfile.save"   Callback will be triggered if the event topic is exactly
-                        "workfile.save" .
+    - "workfile.save"   Callback will be triggered if the event topic is
+                        exactly "workfile.save" .
     - "workfile.*"      Callback will be triggered an event topic starts with
                         "workfile." so "workfile.save" and "workfile.open"
                         will trigger the callback.
