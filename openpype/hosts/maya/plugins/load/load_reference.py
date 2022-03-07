@@ -5,7 +5,6 @@ from avalon.pipeline import AVALON_CONTAINER_ID
 from openpype.api import get_project_settings
 from openpype.lib import get_creator_by_name
 import openpype.hosts.maya.api.plugin
-from openpype.hosts.maya.api.pipeline import AVALON_CONTAINERS
 from openpype.hosts.maya.api.lib import maintained_selection
 
 
@@ -128,7 +127,8 @@ class ReferenceLoader(openpype.hosts.maya.api.plugin.ReferenceLoader):
             return new_nodes
 
     def load(self, context, name=None, namespace=None, options=None):
-        container = super(ReferenceLoader, self).load(context, name, namespace, options)
+        container = super(ReferenceLoader, self).load(
+            context, name, namespace, options)
         # clean containers if present to AVALON_CONTAINERS
         self._organize_containers(self[:], container[0])
 
