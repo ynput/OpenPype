@@ -12,7 +12,7 @@ class ExtractLocalRender(openpype.api.Extractor):
     order = openpype.api.Extractor.order - 0.47
     label = "Extract Local Render"
     hosts = ["aftereffects"]
-    families = ["render"]
+    families = ["renderLocal", "render.local"]
 
     def process(self, instance):
         stub = get_stub()
