@@ -367,19 +367,6 @@
                                                     "maximum": 10000
                                                 },
                                                 {
-                                                    "key": "state",
-                                                    "label": "Type",
-                                                    "type": "enum",
-                                                    "enum_items": [
-                                                        {
-                                                            "letterbox": "Letterbox"
-                                                        },
-                                                        {
-                                                            "pillar": "Pillar"
-                                                        }
-                                                    ]
-                                                },
-                                                {
                                                     "type": "color",
                                                     "label": "Fill Color",
                                                     "key": "fill_color"
