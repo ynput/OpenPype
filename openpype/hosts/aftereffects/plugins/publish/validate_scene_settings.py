@@ -5,6 +5,7 @@ import re
 
 import pyblish.api
 
+from openpype.pipeline import PublishXmlValidationError
 from openpype.hosts.aftereffects.api import get_asset_settings
 
 
@@ -99,12 +100,14 @@ class ValidateSceneSettings(pyblish.api.InstancePlugin):
         self.log.info("current_settings:: {}".format(current_settings))
 
         invalid_settings = []
+        invalid_keys = set()
         for key, value in expected_settings.items():
             if value != current_settings[key]:
                 invalid_settings.append(
                     "{} expected: {}  found: {}".format(key, value,
                                                         current_settings[key])
                 )
+                invalid_keys.add(key)
 
         if ((expected_settings.get("handleStart")
             or expected_settings.get("handleEnd"))
@@ -116,7 +119,27 @@ class ValidateSceneSettings(pyblish.api.InstancePlugin):
         msg = "Found invalid settings:\n{}".format(
             "\n".join(invalid_settings)
         )
-        assert not invalid_settings, msg
-        assert os.path.exists(instance.data.get("source")), (
-            "Scene file not found (saved under wrong name)"
-        )
+
+        if invalid_settings:
+            invalid_keys_str = ",".join(invalid_keys)
+            break_str = "<br/>"
+            invalid_setting_str = "<b>Found invalid settings:</b><br/>{}".\
+                format(break_str.join(invalid_settings))
+
+            formatting_data = {
+                "invalid_setting_str": invalid_setting_str,
+                "invalid_keys_str": invalid_keys_str
+            }
+            raise PublishXmlValidationError(self, msg,
+                                            formatting_data=formatting_data)
+
+        if not os.path.exists(instance.data.get("source")):
+            scene_url = instance.data.get("source")
+            msg = "Scene file {} not found (saved under wrong name)".format(
+                scene_url
+            )
+            formatting_data = {
+                "scene_url": scene_url
+            }
+            raise PublishXmlValidationError(self, msg, key="file_not_found",
+                                            formatting_data=formatting_data)

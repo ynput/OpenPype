@@ -1,0 +1,17 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<root>
+<error id="main">
+<title>Missing source video file</title>
+<description>
+## No attached video file found
+
+Process expects presence of source video file with same name prefix as an editorial file in same folder.
+(example `simple_editorial_setup_Layer1.edl` expects `simple_editorial_setup.mp4` in same folder)
+
+
+### How to repair?
+
+Copy source video file to the folder next to `.edl` file. (On a disk, do not put it into Standalone Publisher.)
+</description>
+</error>
+</root>
