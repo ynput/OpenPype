@@ -4,6 +4,7 @@ import abc
 import json
 import logging
 import six
+import platform
 
 from openpype.settings import get_project_settings
 
