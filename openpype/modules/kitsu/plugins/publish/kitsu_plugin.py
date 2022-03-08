@@ -39,7 +39,9 @@ class IntegrateRig(pyblish.api.InstancePlugin):
         gazu.task.add_comment(
             entity_task,
             entity_task["task_status_id"],
-            comment=f"Version {instance.data['version']} has been published!",
-        )  # TODO add comment from pyblish
+            comment=f"Version {instance.data['version']} has been published!\n"
+            "\n"  # Add written comment in Pyblish
+            f"{instance.data['versionEntity']['data']['comment']}".strip(),
+        )
 
         self.log.info("Version published to Kitsu successfully!")
