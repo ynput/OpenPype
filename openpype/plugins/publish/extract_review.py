@@ -993,7 +993,10 @@ class ExtractReview(pyblish.api.InstancePlugin):
         line_color_alpha = float(l_alpha) / 255
 
         # test ratios and define if pillar or letter boxes
-        output_ratio = output_width / output_height
+        output_ratio = float(output_width) / float(output_height)
+        self.log.debug("Output ratio: {} LetterBox ratio: {}".format(
+            output_ratio, ratio
+        ))
         pillar = output_ratio > ratio
         need_mask = format(output_ratio, ".3f") != format(ratio, ".3f")
         if not need_mask:
@@ -1002,8 +1005,8 @@ class ExtractReview(pyblish.api.InstancePlugin):
         if not pillar:
             if fill_color_alpha > 0:
                 top_box = (
-                    "drawbox=0:0:{width}:round("
-                    "({height}-({width}*(1/{ratio})))/2)"
+                    "drawbox=0:0:{width}"
+                    ":round(({height}-({width}/{ratio}))/2)"
                     ":t=fill:c={color}@{alpha}"
                 ).format(
                     width=output_width,
@@ -1014,11 +1017,11 @@ class ExtractReview(pyblish.api.InstancePlugin):
                 )
 
                 bottom_box = (
-                    "drawbox=0:{height}-round("
-                    "({height}-({width}*(1/{ratio})))/2)"
-                    ":{width}:round(({height}-({width}"
-                    "*(1/{ratio})))/2):t=fill:"
-                    "c={color}@{alpha}"
+                    "drawbox=0"
+                    ":{height}-round(({height}-({width}/{ratio}))/2)"
+                    ":{width}"
+                    ":round(({height}-({width}/{ratio}))/2)"
+                    ":t=fill:c={color}@{alpha}"
                 ).format(
                     width=output_width,
                     height=output_height,
@@ -1030,9 +1033,9 @@ class ExtractReview(pyblish.api.InstancePlugin):
 
             if line_color_alpha > 0 and line_thickness > 0:
                 top_line = (
-                    "drawbox=0:round(({height}-({width}"
-                    "*(1/{ratio})))/2)-{l_thick}:{width}:{l_thick}:"
-                    "t=fill:c={l_color}@{l_alpha}"
+                    "drawbox=0"
+                    ":round(({height}-({width}/{ratio}))/2)-{l_thick}"
+                    ":{width}:{l_thick}:t=fill:c={l_color}@{l_alpha}"
                 ).format(
                     width=output_width,
                     height=output_height,
@@ -1042,8 +1045,8 @@ class ExtractReview(pyblish.api.InstancePlugin):
                     l_alpha=line_color_alpha
                 )
                 bottom_line = (
-                    "drawbox=0:{height}-round(({height}-({width}"
-                    "*(1/{ratio})))/2)"
+                    "drawbox=0"
+                    ":{height}-round(({height}-({width}/{ratio}))/2)"
                     ":{width}:{l_thick}:t=fill:c={l_color}@{l_alpha}"
                 ).format(
                     width=output_width,
@@ -1058,8 +1061,10 @@ class ExtractReview(pyblish.api.InstancePlugin):
         else:
             if fill_color_alpha > 0:
                 left_box = (
-                    "drawbox=0:0:round(({width}-({height}"
-                    "*{ratio}))/2):{height}:t=fill:c={color}@{alpha}"
+                    "drawbox=0:0"
+                    ":round(({width}-({height}*{ratio}))/2)"
+                    ":{height}"
+                    ":t=fill:c={color}@{alpha}"
                 ).format(
                     width=output_width,
                     height=output_height,
@@ -1069,8 +1074,11 @@ class ExtractReview(pyblish.api.InstancePlugin):
                 )
 
                 right_box = (
-                    "drawbox={width}-round(({width}-({height}*{ratio}))/2))"
-                    ":0:round(({width}-({height}*{ratio}))/2):{height}"
+                    "drawbox="
+                    "{width}-round(({width}-({height}*{ratio}))/2)"
+                    ":0"
+                    ":round(({width}-({height}*{ratio}))/2)"
+                    ":{height}"
                     ":t=fill:c={color}@{alpha}"
                 ).format(
                     width=output_width,
@@ -1095,7 +1103,7 @@ class ExtractReview(pyblish.api.InstancePlugin):
                 )
 
                 right_line = (
-                    "drawbox={width}-round(({width}-({height}*{ratio}))/2))"
+                    "drawbox={width}-round(({width}-({height}*{ratio}))/2)"
                     ":0:{l_thick}:{height}:t=fill:c={l_color}@{l_alpha}"
                 ).format(
                     width=output_width,
@@ -1299,7 +1307,6 @@ class ExtractReview(pyblish.api.InstancePlugin):
         self.log.debug(
             "scale_factor_by_height: `{}`".format(scale_factor_by_height)
         )
-
 
         # scaling none square pixels and 1920 width
         if (
