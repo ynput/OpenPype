@@ -45,126 +45,67 @@ class BlendRigLoader(plugin.AssetLoader):
                 objects.extend(obj.children)
                 bpy.data.objects.remove(obj)
 
-    def _process(self, libpath, asset_group, group_name, action):
+    def _process(self, libpath):
         with bpy.data.libraries.load(libpath, link=True, relative=False) as (
             data_from,
             data_to,
         ):
             data_to.objects = data_from.objects
 
-        parent = bpy.context.scene.collection
+        scene_collection = bpy.context.scene.collection
 
-        empties = [obj for obj in data_to.objects if obj.type == "EMPTY"]
+        # Find the loaded collection and set in variable container_collection
+        container_collection = None
+        instances = plugin.get_instances_list()
+        self.log.info( "instances : %s",
+            instances
+        )
+        for data_collection in instances:
+            if data_collection.override_library is None:
+                container_collection = data_collection
+        self.original_container_name = container_collection.name
 
-        container = None
+        # Create a collection used to start the load collections at .001
+        increment_use_collection = bpy.data.collections.new(
+            name=self.original_container_name
+        )
 
-        for empty in empties:
-            if empty.get(AVALON_PROPERTY):
-                container = empty
-                break
+        # Link the container to the scene collection
+        scene_collection.children.link(increment_use_collection)
+        scene_collection.children.link(container_collection)
 
-        assert container, "No asset group found"
-
-        # Children must be linked before parents,
-        # otherwise the hierarchy will break
+        # Get all the object of the container. The farest parents in first for override them first
         objects = []
-        nodes = list(container.children)
-
-        allowed_types = ["ARMATURE", "MESH"]
-
-        for obj in nodes:
-            if obj.type in allowed_types:
-                obj.parent = asset_group
+        nodes = list(container_collection.objects)
+        children_of_the_collection = []
 
         for obj in nodes:
-            if obj.type in allowed_types:
-                objects.append(obj)
-                nodes.extend(list(obj.children))
+            if obj.parent is None:
+                children_of_the_collection.append(obj)
+
+        nodes = children_of_the_collection
+        for obj in nodes:
+            objects.append(obj)
+            nodes.extend(list(obj.children))
 
         objects.reverse()
 
-        constraints = []
-
-        armatures = [obj for obj in objects if obj.type == "ARMATURE"]
-
-        for armature in armatures:
-            for bone in armature.pose.bones:
-                for constraint in bone.constraints:
-                    if hasattr(constraint, "target"):
-                        constraints.append(constraint)
-
-        for obj in objects:
-            parent.objects.link(obj)
-
-        for obj in objects:
-            local_obj = plugin.prepare_data(obj, group_name)
-
-            if local_obj.type == "MESH":
-                plugin.prepare_data(local_obj.data, group_name)
-
-                if obj != local_obj:
-                    for constraint in constraints:
-                        if constraint.target == obj:
-                            constraint.target = local_obj
-
-                for material_slot in local_obj.material_slots:
-                    if material_slot.material:
-                        plugin.prepare_data(material_slot.material, group_name)
-            elif local_obj.type == "ARMATURE":
-                plugin.prepare_data(local_obj.data, group_name)
-
-                if action is not None:
-                    if local_obj.animation_data is None:
-                        local_obj.animation_data_create()
-                    local_obj.animation_data.action = action
-                elif (
-                    local_obj.animation_data
-                    and local_obj.animation_data.action is not None
-                ):
-                    plugin.prepare_data(local_obj.animation_data.action, group_name)
-
-                # Set link the drivers to the local object
-                if local_obj.data.animation_data:
-                    for d in local_obj.data.animation_data.drivers:
-                        for v in d.driver.variables:
-                            for t in v.targets:
-                                t.id = local_obj
-
-            if not local_obj.get(AVALON_PROPERTY):
-                local_obj[AVALON_PROPERTY] = dict()
-
-            avalon_info = local_obj[AVALON_PROPERTY]
-            avalon_info.update({"container_name": group_name})
-
-        objects.reverse()
-
-        curves = [obj for obj in data_to.objects if obj.type == "CURVE"]
-
-        for curve in curves:
-            local_obj = plugin.prepare_data(curve, group_name)
-            plugin.prepare_data(local_obj.data, group_name)
-
-            local_obj.use_fake_user = True
-
-            for mod in local_obj.modifiers:
-                mod_target_name = mod.object.name
-                mod.object = bpy.data.objects.get(f"{group_name}:{mod_target_name}")
-
-            if not local_obj.get(AVALON_PROPERTY):
-                local_obj[AVALON_PROPERTY] = dict()
-
-            avalon_info = local_obj[AVALON_PROPERTY]
-            avalon_info.update({"container_name": group_name})
-
-            local_obj.parent = asset_group
-            objects.append(local_obj)
-
-        while bpy.data.orphans_purge(do_local_ids=False):
-            pass
-
+        # Clean
+        bpy.data.orphans_purge(do_local_ids=False)
         plugin.deselect_all()
 
-        return objects
+        # Override the container and the objects
+        container_overrided = container_collection.override_create(
+            remap_local_usages=True
+        )
+        for obj in objects:
+            obj.override_create(remap_local_usages=True)
+            obj.data.override_create(remap_local_usages=True)
+
+        # Remove the collection used to the increment
+        bpy.data.collections.remove(increment_use_collection)
+
+        return container_overrided
 
     def process_asset(
         self,
@@ -184,59 +125,59 @@ class BlendRigLoader(plugin.AssetLoader):
         asset = context["asset"]["name"]
         subset = context["subset"]["name"]
 
-        asset_name = plugin.asset_name(asset, subset)
-        unique_number = plugin.get_unique_number(asset, subset)
-        group_name = plugin.asset_name(asset, subset, unique_number)
-        namespace = namespace or f"{asset}_{unique_number}"
+        # asset_name = plugin.asset_name(asset, subset)
+        # unique_number = plugin.get_unique_number(asset, subset)
+        # group_name = plugin.asset_name(asset, subset, unique_number)
+        # namespace = namespace or f"{asset}_{unique_number}"
+        #
+        # avalon_container = bpy.data.collections.get(AVALON_CONTAINERS)
+        # if not avalon_container:
+        #     avalon_container = bpy.data.collections.new(name=AVALON_CONTAINERS)
+        #     bpy.context.scene.collection.children.link(avalon_container)
+        #
+        # asset_group = bpy.data.objects.new(group_name, object_data=None)
+        # asset_group.empty_display_type = "SINGLE_ARROW"
+        # avalon_container.objects.link(asset_group)
+        #
+        # action = None
+        #
+        # plugin.deselect_all()
+        #
+        # create_animation = False
+        # anim_file = None
 
-        avalon_container = bpy.data.collections.get(AVALON_CONTAINERS)
-        if not avalon_container:
-            avalon_container = bpy.data.collections.new(name=AVALON_CONTAINERS)
-            bpy.context.scene.collection.children.link(avalon_container)
+        # if options is not None:
+        #     parent = options.get("parent")
+        #     transform = options.get("transform")
+        #     action = options.get("action")
+        #     create_animation = options.get("create_animation")
+        #     anim_file = options.get("animation_file")
+        #
+        #     if parent and transform:
+        #         location = transform.get("translation")
+        #         rotation = transform.get("rotation")
+        #         scale = transform.get("scale")
+        #
+        #         asset_group.location = (
+        #             location.get("x"),
+        #             location.get("y"),
+        #             location.get("z"),
+        #         )
+        #         asset_group.rotation_euler = (
+        #             rotation.get("x"),
+        #             rotation.get("y"),
+        #             rotation.get("z"),
+        #         )
+        #         asset_group.scale = (scale.get("x"), scale.get("y"), scale.get("z"))
+        #
+        #         bpy.context.view_layer.objects.active = parent
+        #         asset_group.select_set(True)
+        #
+        #         bpy.ops.object.parent_set(keep_transform=True)
+        #
+        #         plugin.deselect_all()
 
-        asset_group = bpy.data.objects.new(group_name, object_data=None)
-        asset_group.empty_display_type = "SINGLE_ARROW"
-        avalon_container.objects.link(asset_group)
-
-        action = None
-
-        plugin.deselect_all()
-
-        create_animation = False
-        anim_file = None
-
-        if options is not None:
-            parent = options.get("parent")
-            transform = options.get("transform")
-            action = options.get("action")
-            create_animation = options.get("create_animation")
-            anim_file = options.get("animation_file")
-
-            if parent and transform:
-                location = transform.get("translation")
-                rotation = transform.get("rotation")
-                scale = transform.get("scale")
-
-                asset_group.location = (
-                    location.get("x"),
-                    location.get("y"),
-                    location.get("z"),
-                )
-                asset_group.rotation_euler = (
-                    rotation.get("x"),
-                    rotation.get("y"),
-                    rotation.get("z"),
-                )
-                asset_group.scale = (scale.get("x"), scale.get("y"), scale.get("z"))
-
-                bpy.context.view_layer.objects.active = parent
-                asset_group.select_set(True)
-
-                bpy.ops.object.parent_set(keep_transform=True)
-
-                plugin.deselect_all()
-
-        objects = self._process(libpath, asset_group, group_name, action)
+        objects = self._process(libpath)
 
         if create_animation:
             creator_plugin = lib.get_creator_by_name("CreateAnimation")

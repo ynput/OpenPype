@@ -37,8 +37,9 @@ class UpdateAvalonProperty(pyblish.api.InstancePlugin):
         container_collection = None
         instances = plugin.get_instances_list()
         for data_collection in instances:
-            if data_collection.override_library is None:
+            if data_collection.override_library is None and data_collection.library is None:
                 container_collection = data_collection
+        self.log.info("container name %s ", container_collection.name)
 
         # Set the avalon property with the representation data
         container_collection[AVALON_PROPERTY] = {
