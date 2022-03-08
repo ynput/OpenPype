@@ -19,7 +19,6 @@ from openpype.lib import (
 
     should_convert_for_ffmpeg,
     convert_for_ffmpeg,
-    get_transcode_temp_directory,
     get_transcode_temp_directory
 )
 import speedcopy
