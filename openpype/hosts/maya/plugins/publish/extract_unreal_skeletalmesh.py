@@ -29,19 +29,25 @@ class ExtractUnrealSkeletalMesh(openpype.api.Extractor):
         filename = "{0}.fbx".format(instance.name)
         path = os.path.join(staging_dir, filename)
 
+        geo = instance.data.get("geometry")
+        joints = instance.data.get("joints")
+
+        to_extract = geo + joints
+
         # The export requires forward slashes because we need
         # to format it into a string in a mel expression
         path = path.replace('\\', '/')
 
         self.log.info("Extracting FBX to: {0}".format(path))
-        self.log.info("Members: {0}".format(instance))
+        self.log.info("Members: {0}".format(to_extract))
         self.log.info("Instance: {0}".format(instance[:]))
 
         fbx_exporter.set_options_from_instance(instance)
         with maintained_selection():
-            with root_parent(instance):
-                self.log.info("Un-parenting: {}".format(instance))
-                fbx_exporter.export(instance, path)
+            with root_parent(to_extract):
+                rooted = [i.split("|")[-1] for i in to_extract]
+                self.log.info("Un-parenting: {}".format(to_extract))
+                fbx_exporter.export(rooted, path)
 
         if "representations" not in instance.data:
             instance.data["representations"] = []
