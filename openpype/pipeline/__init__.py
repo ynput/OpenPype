@@ -4,7 +4,12 @@ from .create import (
     BaseCreator,
     Creator,
     AutoCreator,
-    CreatedInstance
+    CreatedInstance,
+
+    CreatorError,
+
+    LegacyCreator,
+    legacy_create,
 )
 
 from .publish import (
@@ -21,6 +26,12 @@ __all__ = (
     "Creator",
     "AutoCreator",
     "CreatedInstance",
+
+    "CreatorError",
+
+    # Legacy creation
+    "LegacyCreator",
+    "legacy_create",
 
     "PublishValidationError",
     "KnownPublishError",
