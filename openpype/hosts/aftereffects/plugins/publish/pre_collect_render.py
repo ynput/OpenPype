@@ -1,12 +1,14 @@
 import json
 import pyblish.api
-from openpype.hosts.aftereffects.api import get_stub, list_instances
+from openpype.hosts.aftereffects.api import list_instances
 
 
 class PreCollectRender(pyblish.api.ContextPlugin):
     """
-    Checks if render instance is of new type, adds to families to both
+    Checks if render instance is of old type, adds to families to both
     existing collectors work same way.
+
+    Could be removed in the future when no one uses old publish.
     """
 
     label = "PreCollect Render"
@@ -15,7 +17,7 @@ class PreCollectRender(pyblish.api.ContextPlugin):
 
     family_remapping = {
         "render": ("render.farm", "farm"),   # (family, label)
-        "renderLocal": ("render", "local")
+        "renderLocal": ("render.local", "local")
     }
 
     def process(self, context):
@@ -23,7 +25,6 @@ class PreCollectRender(pyblish.api.ContextPlugin):
             self.log.debug("Not applicable for New Publisher, skip")
             return
 
-        stub = get_stub()
         for inst in list_instances():
             if inst["family"] not in self.family_remapping.keys():
                 continue

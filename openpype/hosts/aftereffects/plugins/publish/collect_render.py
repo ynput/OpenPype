@@ -84,7 +84,6 @@ class CollectAERender(abstract_collect_render.AbstractCollectRender):
             subset_name = inst.data["subset"]
             instance = AERenderInstance(
                 family=family,
-                families=[family],
                 version=version,
                 time="",
                 source=current_file,
@@ -124,19 +123,20 @@ class CollectAERender(abstract_collect_render.AbstractCollectRender):
             instance.comp_name = comp.name
             instance.comp_id = item_id
 
-            is_local = "renderLocal" in inst.data["families"]
+            is_local = "renderLocal" in inst.data["families"]  # legacy
             if inst.data.get("creator_attributes"):
                 is_local = not inst.data["creator_attributes"].get("farm")
             if is_local:
                 # for local renders
                 instance = self._update_for_local(instance, project_entity)
+            else:
+                instance.families = ["render.farm"]
 
             instances.append(instance)
             instances_to_remove.append(inst)
 
         for instance in instances_to_remove:
             context.remove(instance)
-
         return instances
 
     def get_expected_files(self, render_instance):
@@ -205,10 +205,12 @@ class CollectAERender(abstract_collect_render.AbstractCollectRender):
         return base_dir
 
     def _update_for_local(self, instance, project_entity):
+        """Update old saved instances to current publishing format"""
         instance.anatomyData["version"] = instance.version
         instance.anatomyData["subset"] = instance.subset
         instance.stagingDir = tempfile.mkdtemp()
         instance.projectEntity = project_entity
+        instance.families = ["render.local"]
 
         settings = get_project_settings(os.getenv("AVALON_PROJECT"))
         reviewable_subset_filter = (settings["deadline"]
