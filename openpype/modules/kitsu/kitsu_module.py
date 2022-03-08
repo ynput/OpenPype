@@ -51,11 +51,11 @@ class KitsuModule(OpenPypeModule, IPluginPaths, ITrayAction):
             set_credentials_envs,
         )
 
-        username, password = load_credentials()
+        login, password = load_credentials()
 
         # Check credentials, ask them if needed
-        if validate_credentials(username, password):
-            set_credentials_envs(username, password)
+        if validate_credentials(login, password):
+            set_credentials_envs(login, password)
         else:
             self.show_dialog()
 
