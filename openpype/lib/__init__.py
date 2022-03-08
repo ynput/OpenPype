@@ -20,6 +20,16 @@ from .events import (
     emit_event,
     register_event_callback
 )
+
+from .vendor_bin_utils import (
+    find_executable,
+    get_vendor_bin_path,
+    get_oiio_tools_path,
+    get_ffmpeg_tool_path,
+    ffprobe_streams,
+    is_oiio_supported
+)
+
 from .env_tools import (
     env_value_to_bool,
     get_paths_from_environ,
@@ -60,14 +70,6 @@ from .anatomy import (
 )
 
 from .config import get_datetime_data
-
-from .vendor_bin_utils import (
-    get_vendor_bin_path,
-    get_oiio_tools_path,
-    get_ffmpeg_tool_path,
-    ffprobe_streams,
-    is_oiio_supported
-)
 
 from .python_module_tools import (
     import_filepath,
@@ -200,6 +202,7 @@ __all__ = [
     "emit_event",
     "register_event_callback",
 
+    "find_executable",
     "get_openpype_execute_args",
     "get_pype_execute_args",
     "get_linux_launcher_args",
