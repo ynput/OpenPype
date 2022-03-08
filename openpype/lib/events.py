@@ -169,13 +169,14 @@ class EventCallback(object):
 class Event(object):
     """Base event object.
 
-    Can be used to anything because data are not much specific. Only required
-    argument is topic which defines why event is happening and may be used for
+    Can be used for any event because is not specific. Only required argument
+    is topic which defines why event is happening and may be used for
     filtering.
 
     Arg:
         topic (str): Identifier of event.
         data (Any): Data specific for event. Dictionary is recommended.
+        source (str): Identifier of source.
     """
     _data = {}
 
