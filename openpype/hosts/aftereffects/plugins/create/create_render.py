@@ -1,4 +1,5 @@
-import json
+import avalon.api
+
 from openpype import resources
 import openpype.hosts.aftereffects.api as api
 from openpype.pipeline import (
@@ -22,7 +23,9 @@ class RenderCreator(Creator):
 
     def collect_instances(self):
         for instance_data in api.list_instances():
-            creator_id = instance_data.get("creator_identifier")
+            # legacy instances have family=='render' or 'renderLocal', use them
+            creator_id = (instance_data.get("creator_identifier") or
+                          instance_data.get("family").replace("Local", ''))
             if creator_id == self.identifier:
                 instance_data = self._handle_legacy(instance_data)
                 instance = CreatedInstance.from_existing(
@@ -32,22 +35,16 @@ class RenderCreator(Creator):
 
     def update_instances(self, update_list):
         created_inst, changes = update_list[0]
-        print("RenderCreator update_list:: {}-{}".format(created_inst, changes))
         api.get_stub().imprint(created_inst.get("instance_id"),
                                created_inst.data_to_store())
 
     def remove_instances(self, instances):
         for instance in instances:
-            print("instance:: {}".format(instance))
             api.remove_instance(instance)
             self._remove_instance_from_context(instance)
 
     def create(self, subset_name, data, pre_create_data):
-        print("Data that can be used in create:\n{}".format(
-            json.dumps(pre_create_data, indent=4)
-        ))
         stub = api.get_stub()  # only after After Effects is up
-        print("pre_create_data:: {}".format(pre_create_data))
         if pre_create_data.get("use_selection"):
             items = stub.get_selected_items(
                 comps=True, folders=False, footages=False
@@ -59,7 +56,6 @@ class RenderCreator(Creator):
             raise CreatorError(
                 "Please select only single composition at time."
             )
-        print("items:: {}".format(items))
         if not items:
             raise CreatorError((
                 "Nothing to create. Select composition "
@@ -73,7 +69,6 @@ class RenderCreator(Creator):
 
         api.get_stub().imprint(new_instance.get("instance_id"),
                                new_instance.data_to_store())
-        self.log.info(new_instance.data)
         self._add_instance_to_context(new_instance)
 
     def get_default_variants(self):
@@ -99,12 +94,20 @@ class RenderCreator(Creator):
 
     def _handle_legacy(self, instance_data):
         """Converts old instances to new format."""
+        if not instance_data.get("members"):
+            instance_data["members"] = [instance_data.get("uuid")]
+
         if instance_data.get("uuid"):
-            instance_data["item_id"] = instance_data.get("uuid")
+            # uuid not needed, replaced with unique instance_id
+            api.get_stub().remove_instance(instance_data.get("uuid"))
             instance_data.pop("uuid")
 
-        if not instance_data.get("members"):
-            instance_data["members"] = [instance_data["item_id"]]
+        if not instance_data.get("task"):
+            instance_data["task"] = avalon.api.Session.get("AVALON_TASK")
+
+        if not instance_data.get("creator_attributes"):
+            is_old_farm = instance_data["family"] != "renderLocal"
+            instance_data["creator_attributes"] = {"farm": is_old_farm}
+            instance_data["family"] = self.family
 
         return instance_data
-
