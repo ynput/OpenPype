@@ -35,7 +35,11 @@ class EventCallback(object):
     Args:
         topic(str): Topic which will be listened.
         func(func): Callback to a topic.
+
+    Raises:
+        TypeError: When passed function is not a callable object.
     """
+
     def __init__(self, topic, func):
         self._log = None
         self._topic = topic
@@ -61,26 +65,21 @@ class EventCallback(object):
         elif callable(func):
             func_ref = weakref.ref(func)
         else:
-            func_ref = None
-            self.log.warning((
+            raise TypeError((
                 "Registered callback is not callable. \"{}\""
             ).format(str(func)))
 
-        func_name = None
-        func_path = None
-        expect_args = False
         # Collect additional data about function
         #   - name
         #   - path
         #   - if expect argument or not
-        if func_ref is not None:
-            func_name = func.__name__
-            func_path = os.path.abspath(inspect.getfile(func))
-            if hasattr(inspect, "signature"):
-                sig = inspect.signature(func)
-                expect_args = len(sig.parameters) > 0
-            else:
-                expect_args = len(inspect.getargspec(func)[0]) > 0
+        func_name = func.__name__
+        func_path = os.path.abspath(inspect.getfile(func))
+        if hasattr(inspect, "signature"):
+            sig = inspect.signature(func)
+            expect_args = len(sig.parameters) > 0
+        else:
+            expect_args = len(inspect.getargspec(func)[0]) > 0
 
         self._func_ref = func_ref
         self._func_name = func_name
