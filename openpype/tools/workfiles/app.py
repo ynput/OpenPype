@@ -824,7 +824,7 @@ class FilesWidget(QtWidgets.QWidget):
 
         # Trigger before save event
         emit_event(
-            "before.workfile.save",
+            "workfile.save.before",
             {"filename": work_filename, "workdir_path": self._workdir_path},
             source="workfiles.tool"
         )
@@ -858,7 +858,7 @@ class FilesWidget(QtWidgets.QWidget):
         )
         # Trigger after save events
         emit_event(
-            "after.workfile.save",
+            "workfile.save.after",
             {"filename": work_filename, "workdir_path": self._workdir_path},
             source="workfiles.tool"
         )

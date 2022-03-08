@@ -77,7 +77,7 @@ def install():
     register_event_callback("new", on_new)
     register_event_callback("before.save", on_before_save)
     register_event_callback("taskChanged", on_task_changed)
-    register_event_callback("before.workfile.save", before_workfile_save)
+    register_event_callback("workfile.save.before", before_workfile_save)
 
 
 def _set_project():
