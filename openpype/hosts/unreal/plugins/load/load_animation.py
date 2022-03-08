@@ -134,7 +134,7 @@ class AnimationFBXLoader(plugin.Loader):
 
         # Create directory for asset and avalon container
         hierarchy = context.get('asset').get('data').get('parents')
-        root = "/Game/Avalon"
+        root = "/Game/OpenPype"
         asset = context.get('asset').get('name')
         suffix = "_CON"
         if asset:
@@ -144,7 +144,7 @@ class AnimationFBXLoader(plugin.Loader):
 
         tools = unreal.AssetToolsHelpers().get_asset_tools()
         asset_dir, container_name = tools.create_unique_asset_name(
-            f"{root}/Assets/{asset}/{name}", suffix="")
+            f"{root}/Animations/{asset}/{name}", suffix="")
 
         hierarchy_dir = root
         for h in hierarchy:
