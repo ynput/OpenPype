@@ -859,7 +859,7 @@ class FilesWidget(QtWidgets.QWidget):
         # Trigger after save events
         emit_event(
             "after.workfile.save",
-            {"filepath": filepath},
+            {"filename": work_filename, "workdir_path": self._workdir_path},
             source="workfiles.tool"
         )
 
