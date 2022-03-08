@@ -1,11 +1,11 @@
 # -*- coding: utf-8 -*-
 from abc import ABC
 
-import openpype.api
+from openpype.pipeline import LegacyCreator
 import avalon.api
 
 
-class Creator(openpype.api.Creator):
+class Creator(LegacyCreator):
     """This serves as skeleton for future OpenPype specific functionality"""
     defaults = ['Main']
 

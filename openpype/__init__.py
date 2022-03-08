@@ -5,6 +5,7 @@ import platform
 import functools
 import logging
 
+from openpype.pipeline import LegacyCreator
 from .settings import get_project_settings
 from .lib import (
     Anatomy,
@@ -113,7 +114,7 @@ def install():
 
             pyblish.register_plugin_path(path)
             avalon.register_plugin_path(avalon.Loader, path)
-            avalon.register_plugin_path(avalon.Creator, path)
+            avalon.register_plugin_path(LegacyCreator, path)
             avalon.register_plugin_path(avalon.InventoryAction, path)
 
     # apply monkey patched discover to original one

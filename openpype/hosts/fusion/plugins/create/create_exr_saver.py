@@ -1,13 +1,13 @@
 import os
 
-import openpype.api
+from openpype.pipeline import create
 from openpype.hosts.fusion.api import (
     get_current_comp,
     comp_lock_and_undo_chunk
 )
 
 
-class CreateOpenEXRSaver(openpype.api.Creator):
+class CreateOpenEXRSaver(create.LegacyCreator):
 
     name = "openexrDefault"
     label = "Create OpenEXR Saver"

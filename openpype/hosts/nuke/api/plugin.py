@@ -6,10 +6,8 @@ import nuke
 
 import avalon.api
 
-from openpype.api import (
-    get_current_project_settings,
-    PypeCreatorMixin
-)
+from openpype.api import get_current_project_settings
+from openpype.pipeline import LegacyCreator
 from .lib import (
     Knobby,
     check_subsetname_exists,
@@ -20,7 +18,7 @@ from .lib import (
 )
 
 
-class OpenPypeCreator(PypeCreatorMixin, avalon.api.Creator):
+class OpenPypeCreator(LegacyCreator):
     """Pype Nuke Creator class wrapper"""
     node_color = "0xdfea5dff"
 

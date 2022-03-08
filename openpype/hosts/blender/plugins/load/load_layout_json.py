@@ -8,7 +8,7 @@ from typing import Dict, Optional
 import bpy
 
 from avalon import api
-from openpype import lib
+from openpype.pipeline import legacy_create
 from openpype.hosts.blender.api.pipeline import (
     AVALON_INSTANCES,
     AVALON_CONTAINERS,
@@ -118,7 +118,7 @@ class JsonLayoutLoader(plugin.AssetLoader):
         #     raise ValueError("Creator plugin \"CreateCamera\" was "
         #                      "not found.")
 
-        # api.create(
+        # legacy_create(
         #     creator_plugin,
         #     name="camera",
         #     # name=f"{unique_number}_{subset}_animation",

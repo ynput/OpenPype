@@ -2,6 +2,7 @@ import re
 import uuid
 from avalon import api
 import openpype.api as pype
+from openpype.pipeline import LegacyCreator
 from openpype.hosts import resolve
 from avalon.vendor import qargparse
 from . import lib
@@ -493,7 +494,7 @@ class TimelineItemLoader(api.Loader):
         pass
 
 
-class Creator(pype.PypeCreatorMixin, api.Creator):
+class Creator(LegacyCreator):
     """Creator class wrapper
     """
     marker_color = "Purple"
