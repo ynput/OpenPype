@@ -4,7 +4,6 @@ import os
 import sys
 import json
 import tempfile
-import platform
 import contextlib
 import subprocess
 from collections import OrderedDict
@@ -63,10 +62,6 @@ def maketx(source, destination, *args):
     from openpype.lib import get_oiio_tools_path
 
     maketx_path = get_oiio_tools_path("maketx")
-
-    if platform.system().lower() == "windows":
-        # Ensure .exe extension
-        maketx_path += ".exe"
 
     if not os.path.exists(maketx_path):
         print(
