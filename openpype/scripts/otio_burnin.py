@@ -6,6 +6,7 @@ import platform
 import json
 import opentimelineio_contrib.adapters.ffmpeg_burnins as ffmpeg_burnins
 import openpype.lib
+from openpype.lib.vendor_bin_utils import get_fps
 
 
 ffmpeg_path = openpype.lib.get_ffmpeg_tool_path("ffmpeg")
@@ -48,25 +49,6 @@ def _get_ffprobe_data(source):
     if proc.returncode != 0:
         raise RuntimeError("Failed to run: %s" % command)
     return json.loads(out)
-
-
-def get_fps(str_value):
-    if str_value == "0/0":
-        print("WARNING: Source has \"r_frame_rate\" value set to \"0/0\".")
-        return "Unknown"
-
-    items = str_value.split("/")
-    if len(items) == 1:
-        fps = float(items[0])
-
-    elif len(items) == 2:
-        fps = float(items[0]) / float(items[1])
-
-    # Check if fps is integer or float number
-    if int(fps) == fps:
-        fps = int(fps)
-
-    return str(fps)
 
 
 def _prores_codec_args(stream_data, source_ffmpeg_cmd):
