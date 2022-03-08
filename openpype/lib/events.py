@@ -224,18 +224,6 @@ class StoredCallbacks:
         return callback
 
     @classmethod
-    def validate(cls):
-        invalid_callbacks = []
-        for callbacks in cls._registered_callbacks:
-            for callback in tuple(callbacks):
-                callback.validate_ref()
-                if not callback.is_ref_valid:
-                    invalid_callbacks.append(callback)
-
-        for callback in invalid_callbacks:
-            cls._registered_callbacks.remove(callback)
-
-    @classmethod
     def emit_event(cls, event):
         invalid_callbacks = []
         for callback in cls._registered_callbacks:
