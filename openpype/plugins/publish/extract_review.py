@@ -1107,8 +1107,10 @@ class ExtractReview(pyblish.api.InstancePlugin):
                 output.extend([left_line, right_line])
 
         else:
-            raise ValueError(
-                "Letterbox state \"{}\" is not recognized".format(state)
+            raise ValueError((
+                "Letterbox not working: ratio set \"{}\", "
+                "Image ratio\"{}\"").format(
+                    format(ratio, ".3f"), format(output_ratio, ".3f"))
             )
 
         return output
@@ -1124,8 +1126,19 @@ class ExtractReview(pyblish.api.InstancePlugin):
         """
         filters = []
 
+        # if reformat input video file is already reforamted from upstream
+        reformat_in_baking = bool("reformated" in new_repre["tags"])
+        self.log.debug("reformat_in_baking: `{}`".format(reformat_in_baking))
+
         # Get instance data
         pixel_aspect = temp_data["pixel_aspect"]
+
+        if reformat_in_baking:
+            self.log.debug((
+                "Using resolution from input. It is already "
+                "reformated from upstream process"
+            ))
+            pixel_aspect = 1
 
         # NOTE Skipped using instance's resolution
         full_input_path_single_file = temp_data["full_input_path_single_file"]
@@ -1161,19 +1174,6 @@ class ExtractReview(pyblish.api.InstancePlugin):
         output_width = output_def.get("width") or None
         output_height = output_def.get("height") or None
 
-        # if nuke baking profile was having set reformat node
-        reformat_in_baking = bool("reformated" in new_repre["tags"])
-        self.log.debug("reformat_in_baking: `{}`".format(reformat_in_baking))
-
-        if reformat_in_baking:
-            self.log.debug((
-                "Using resolution from input. It is already "
-                "reformated from baking process"
-            ))
-            output_width = output_width or input_width
-            output_height = output_height or input_height
-            pixel_aspect = 1
-
         # Overscal color
         overscan_color_value = "black"
         overscan_color = output_def.get("overscan_color")
@@ -1201,9 +1201,6 @@ class ExtractReview(pyblish.api.InstancePlugin):
             if output_width is None or output_height is None:
                 output_width = input_width
                 output_height = input_height
-
-        letter_box_def = output_def["letter_box"]
-        letter_box_enabled = letter_box_def["enabled"]
 
         # Make sure input width and height is not an odd number
         input_width_is_odd = bool(input_width % 2 != 0)
@@ -1262,6 +1259,9 @@ class ExtractReview(pyblish.api.InstancePlugin):
         self.log.debug(
             "Output resolution is {}x{}".format(output_width, output_height)
         )
+
+        letter_box_def = output_def["letter_box"]
+        letter_box_enabled = letter_box_def["enabled"]
 
         # Skip processing if resolution is same as input's and letterbox is
         # not set
@@ -1347,12 +1347,6 @@ class ExtractReview(pyblish.api.InstancePlugin):
 
         # letter_box
         if letter_box_enabled:
-            filters.extend([
-                "scale={}x{}:flags=lanczos".format(
-                    output_width, output_height
-                ),
-                "setsar=1"
-            ])
             filters.extend(
                 self.get_letterbox_filters(
                     letter_box_def,
