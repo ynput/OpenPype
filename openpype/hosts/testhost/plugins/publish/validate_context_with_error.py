@@ -2,7 +2,6 @@ import pyblish.api
 from openpype.pipeline import PublishValidationError
 
 
-
 class ValidateInstanceAssetRepair(pyblish.api.Action):
     """Repair the instance asset."""
 
