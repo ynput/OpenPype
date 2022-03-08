@@ -996,8 +996,10 @@ class ExtractReview(pyblish.api.InstancePlugin):
         output_ratio = output_width / output_height
         pillar = output_ratio > ratio
         need_mask = format(output_ratio, ".3f") != format(ratio, ".3f")
+        if not need_mask:
+            return []
 
-        if need_mask and not pillar:
+        if not pillar:
             if fill_color_alpha > 0:
                 top_box = (
                     "drawbox=0:0:{width}:round("
@@ -1053,7 +1055,7 @@ class ExtractReview(pyblish.api.InstancePlugin):
                 )
                 output.extend([top_line, bottom_line])
 
-        elif need_mask and pillar:
+        else:
             if fill_color_alpha > 0:
                 left_box = (
                     "drawbox=0:0:round(({width}-({height}"
@@ -1104,13 +1106,6 @@ class ExtractReview(pyblish.api.InstancePlugin):
                     l_alpha=line_color_alpha
                 )
                 output.extend([left_line, right_line])
-
-        else:
-            raise ValueError((
-                "Letterbox not working: ratio set \"{}\", "
-                "Image ratio\"{}\"").format(
-                    format(ratio, ".3f"), format(output_ratio, ".3f"))
-            )
 
         return output
 
