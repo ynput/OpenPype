@@ -7,7 +7,6 @@ import platform
 import collections
 import inspect
 import subprocess
-import distutils.spawn
 from abc import ABCMeta, abstractmethod
 
 import six
@@ -36,8 +35,10 @@ from .python_module_tools import (
     modules_from_path,
     classes_from_module
 )
-from .execute import get_linux_launcher_args
-
+from .execute import (
+    find_executable,
+    get_linux_launcher_args
+)
 
 _logger = None
 
@@ -647,7 +648,7 @@ class ApplicationExecutable:
     def _realpath(self):
         """Check if path is valid executable path."""
         # Check for executable in PATH
-        result = distutils.spawn.find_executable(self.executable_path)
+        result = find_executable(self.executable_path)
         if result is not None:
             return result
 

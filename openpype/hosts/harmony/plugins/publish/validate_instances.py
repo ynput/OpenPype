@@ -1,6 +1,5 @@
 import os
 
-from avalon import harmony
 import pyblish.api
 import openpype.api
 from openpype.pipeline import PublishXmlValidationError

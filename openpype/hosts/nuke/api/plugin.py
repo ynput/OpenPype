@@ -152,6 +152,7 @@ class ExporterReview(object):
 
     """
     data = None
+    publish_on_farm = False
 
     def __init__(self,
                  klass,
@@ -209,6 +210,9 @@ class ExporterReview(object):
 
         if self.multiple_presets:
             repre["outputName"] = self.name
+
+        if self.publish_on_farm:
+            repre["tags"].append("publish_on_farm")
 
         self.data["representations"].append(repre)
 
@@ -446,6 +450,7 @@ class ExporterReviewMov(ExporterReview):
         return path
 
     def generate_mov(self, farm=False, **kwargs):
+        self.publish_on_farm = farm
         reformat_node_add = kwargs["reformat_node_add"]
         reformat_node_config = kwargs["reformat_node_config"]
         bake_viewer_process = kwargs["bake_viewer_process"]
@@ -563,7 +568,7 @@ class ExporterReviewMov(ExporterReview):
         # ---------- end nodes creation
 
         # ---------- render or save to nk
-        if farm:
+        if self.publish_on_farm:
             nuke.scriptSave()
             path_nk = self.save_file()
             self.data.update({
@@ -573,11 +578,12 @@ class ExporterReviewMov(ExporterReview):
             })
         else:
             self.render(write_node.name())
-            # ---------- generate representation data
-            self.get_representation_data(
-                tags=["review", "delete"] + add_tags,
-                range=True
-            )
+
+        # ---------- generate representation data
+        self.get_representation_data(
+            tags=["review", "delete"] + add_tags,
+            range=True
+        )
 
         self.log.debug("Representation...   `{}`".format(self.data))
 

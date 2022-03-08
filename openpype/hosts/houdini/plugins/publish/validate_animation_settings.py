@@ -3,10 +3,10 @@ import pyblish.api
 from openpype.hosts.houdini.api import lib
 
 
-class ValidateFrameToken(pyblish.api.InstancePlugin):
-    """Validate if the unexpanded string contains the frame ('$F') token.
+class ValidateAnimationSettings(pyblish.api.InstancePlugin):
+    """Validate if the unexpanded string contains the frame ('$F') token
 
-    This validator will *only* check the output parameter of the node if
+    This validator will only check the output parameter of the node if
     the Valid Frame Range is not set to 'Render Current Frame'
 
     Rules:
@@ -22,7 +22,7 @@ class ValidateFrameToken(pyblish.api.InstancePlugin):
     """
 
     order = pyblish.api.ValidatorOrder
-    label = "Validate Frame Token"
+    label = "Validate Frame Settings"
     families = ["vdbcache"]
 
     def process(self, instance):
