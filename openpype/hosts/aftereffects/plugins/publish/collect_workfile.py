@@ -65,6 +65,7 @@ class CollectWorkfile(pyblish.api.ContextPlugin):
             instance.data.update(shared_instance_data)
         else:
             instance = existing_instance
+            instance.data["publish"] = True  # for DL
 
         # creating representation
         representation = {
