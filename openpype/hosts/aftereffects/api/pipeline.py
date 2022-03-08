@@ -152,7 +152,7 @@ def check_inventory():
 
     # Warn about outdated containers.
     print("Starting new QApplication..")
-    app = QtWidgets.QApplication(sys.argv)
+    _app = QtWidgets.QApplication(sys.argv)
 
     message_box = QtWidgets.QMessageBox()
     message_box.setIcon(QtWidgets.QMessageBox.Warning)
