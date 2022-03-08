@@ -16,6 +16,15 @@ sys.path.insert(0, python_version_dir)
 site.addsitedir(python_version_dir)
 
 
+from .vendor_bin_utils import (
+    create_hard_link,
+    find_executable,
+    get_vendor_bin_path,
+    get_oiio_tools_path,
+    get_ffmpeg_tool_path,
+    ffprobe_streams,
+    is_oiio_supported
+)
 from .env_tools import (
     env_value_to_bool,
     get_paths_from_environ,
@@ -56,15 +65,6 @@ from .anatomy import (
 )
 
 from .config import get_datetime_data
-
-from .vendor_bin_utils import (
-    create_hard_link,
-    get_vendor_bin_path,
-    get_oiio_tools_path,
-    get_ffmpeg_tool_path,
-    ffprobe_streams,
-    is_oiio_supported
-)
 
 from .python_module_tools import (
     import_filepath,
@@ -194,6 +194,7 @@ from .openpype_version import (
 terminal = Terminal
 
 __all__ = [
+    "find_executable",
     "get_openpype_execute_args",
     "get_pype_execute_args",
     "get_linux_launcher_args",
