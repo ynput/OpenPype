@@ -1000,11 +1000,11 @@ class ExtractReview(pyblish.api.InstancePlugin):
         if need_mask and not pillar:
             if fill_color_alpha > 0:
                 top_box = (
-                    "drawbox=0:0:{widht}:round("
-                    "({height}-({widht}*(1/{ratio})))/2)"
+                    "drawbox=0:0:{width}:round("
+                    "({height}-({width}*(1/{ratio})))/2)"
                     ":t=fill:c={color}@{alpha}"
                 ).format(
-                    widht=output_width,
+                    width=output_width,
                     height=output_height,
                     ratio=ratio,
                     color=fill_color_hex,
@@ -1013,12 +1013,12 @@ class ExtractReview(pyblish.api.InstancePlugin):
 
                 bottom_box = (
                     "drawbox=0:{height}-round("
-                    "({height}-({widht}*(1/{ratio})))/2)"
-                    ":{widht}:round(({height}-({widht}"
+                    "({height}-({width}*(1/{ratio})))/2)"
+                    ":{width}:round(({height}-({width}"
                     "*(1/{ratio})))/2):t=fill:"
                     "c={color}@{alpha}"
                 ).format(
-                    widht=output_width,
+                    width=output_width,
                     height=output_height,
                     ratio=ratio,
                     color=fill_color_hex,
@@ -1028,11 +1028,11 @@ class ExtractReview(pyblish.api.InstancePlugin):
 
             if line_color_alpha > 0 and line_thickness > 0:
                 top_line = (
-                    "drawbox=0:round(({height}-({widht}"
-                    "*(1/{ratio})))/2)-{l_thick}:{widht}:{l_thick}:"
+                    "drawbox=0:round(({height}-({width}"
+                    "*(1/{ratio})))/2)-{l_thick}:{width}:{l_thick}:"
                     "t=fill:c={l_color}@{l_alpha}"
                 ).format(
-                    widht=output_width,
+                    width=output_width,
                     height=output_height,
                     ratio=ratio,
                     l_thick=line_thickness,
@@ -1040,11 +1040,11 @@ class ExtractReview(pyblish.api.InstancePlugin):
                     l_alpha=line_color_alpha
                 )
                 bottom_line = (
-                    "drawbox=0:{height}-round(({height}-({widht}"
+                    "drawbox=0:{height}-round(({height}-({width}"
                     "*(1/{ratio})))/2)"
-                    ":{widht}:{l_thick}:t=fill:c={l_color}@{l_alpha}"
+                    ":{width}:{l_thick}:t=fill:c={l_color}@{l_alpha}"
                 ).format(
-                    widht=output_width,
+                    width=output_width,
                     height=output_height,
                     ratio=ratio,
                     l_thick=line_thickness,
@@ -1056,10 +1056,10 @@ class ExtractReview(pyblish.api.InstancePlugin):
         elif need_mask and pillar:
             if fill_color_alpha > 0:
                 left_box = (
-                    "drawbox=0:0:round(({widht}-({height}"
+                    "drawbox=0:0:round(({width}-({height}"
                     "*{ratio}))/2):{height}:t=fill:c={color}@{alpha}"
                 ).format(
-                    widht=output_width,
+                    width=output_width,
                     height=output_height,
                     ratio=ratio,
                     color=fill_color_hex,
@@ -1067,11 +1067,11 @@ class ExtractReview(pyblish.api.InstancePlugin):
                 )
 
                 right_box = (
-                    "drawbox={widht}-round(({widht}-({height}*{ratio}))/2))"
-                    ":0:round(({widht}-({height}*{ratio}))/2):{height}"
+                    "drawbox={width}-round(({width}-({height}*{ratio}))/2))"
+                    ":0:round(({width}-({height}*{ratio}))/2):{height}"
                     ":t=fill:c={color}@{alpha}"
                 ).format(
-                    widht=output_width,
+                    width=output_width,
                     height=output_height,
                     ratio=ratio,
                     color=fill_color_hex,
@@ -1081,10 +1081,10 @@ class ExtractReview(pyblish.api.InstancePlugin):
 
             if line_color_alpha > 0 and line_thickness > 0:
                 left_line = (
-                    "drawbox=round(({widht}-({height}*{ratio}))/2)"
+                    "drawbox=round(({width}-({height}*{ratio}))/2)"
                     ":0:{l_thick}:{height}:t=fill:c={l_color}@{l_alpha}"
                 ).format(
-                    widht=output_width,
+                    width=output_width,
                     height=output_height,
                     ratio=ratio,
                     l_thick=line_thickness,
@@ -1093,10 +1093,10 @@ class ExtractReview(pyblish.api.InstancePlugin):
                 )
 
                 right_line = (
-                    "drawbox={widht}-round(({widht}-({height}*{ratio}))/2))"
+                    "drawbox={width}-round(({width}-({height}*{ratio}))/2))"
                     ":0:{l_thick}:{height}:t=fill:c={l_color}@{l_alpha}"
                 ).format(
-                    widht=output_width,
+                    width=output_width,
                     height=output_height,
                     ratio=ratio,
                     l_thick=line_thickness,
