@@ -105,11 +105,9 @@ class ValidateSceneSettings(pyblish.api.InstancePlugin):
         invalid_keys = set()
         for key, value in expected_settings.items():
             if value != current_settings[key]:
-                invalid_settings.append({
-                    "name": key,
-                    "expected": value,
-                    "current": current_settings[key]
-                })
+                invalid_settings.append(
+                    "{} expected: {}  found: {}".format(key, value,
+                                                        current_settings[key]))
                 invalid_keys.add(key)
 
         if ((expected_settings["handleStart"]
