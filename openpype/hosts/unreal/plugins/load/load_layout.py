@@ -194,6 +194,11 @@ class LayoutLoader(plugin.Loader):
                 ), False)
                 actor.set_actor_scale3d(transform.get('scale'))
 
+                if class_name == 'SkeletalMesh':
+                    skm_comp = actor.get_editor_property(
+                        'skeletal_mesh_component')
+                    skm_comp.set_bounds_scale(10.0)
+
                 actors.append(actor)
 
                 binding = sequence.add_possessable(actor)
