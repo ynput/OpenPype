@@ -169,7 +169,10 @@ def _before_scene_save(return_code, client_data):
     # in order to block the operation.
     OpenMaya.MScriptUtil.setBool(return_code, True)
 
-    emit_event("before.save")
+    emit_event(
+        "before.save",
+        {"return_code": return_code}
+    )
 
 
 def uninstall():
