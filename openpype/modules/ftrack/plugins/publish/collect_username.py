@@ -23,8 +23,11 @@ class CollectUsername(pyblish.api.ContextPlugin):
         Expects "pype.club" user created on Ftrack and FTRACK_BOT_API_KEY env
         var set up.
 
+        Resets `context.data["user"] to correctly populate `version.author` and
+        `representation.context.username`
+
     """
-    order = pyblish.api.CollectorOrder - 0.488
+    order = pyblish.api.CollectorOrder + 0.0015
     label = "Collect ftrack username"
     hosts = ["webpublisher", "photoshop"]
     targets = ["remotepublish", "filespublish", "tvpaint_worker"]
@@ -65,3 +68,4 @@ class CollectUsername(pyblish.api.ContextPlugin):
         if '@' in burnin_name:
             burnin_name = burnin_name[:burnin_name.index('@')]
         os.environ["WEBPUBLISH_OPENPYPE_USERNAME"] = burnin_name
+        context.data["user"] = burnin_name

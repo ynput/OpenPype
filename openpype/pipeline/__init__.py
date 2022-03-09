@@ -14,6 +14,7 @@ from .create import (
 
 from .publish import (
     PublishValidationError,
+    PublishXmlValidationError,
     KnownPublishError,
     OpenPypePyblishPluginMixin
 )
@@ -34,6 +35,7 @@ __all__ = (
     "legacy_create",
 
     "PublishValidationError",
+    "PublishXmlValidationError",
     "KnownPublishError",
     "OpenPypePyblishPluginMixin"
 )

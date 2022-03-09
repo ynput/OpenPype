@@ -2,8 +2,9 @@ import os
 
 from maya import cmds
 
+import qargparse
+
 from avalon import api
-from avalon.vendor import qargparse
 from openpype.pipeline import LegacyCreator
 
 from .pipeline import containerise

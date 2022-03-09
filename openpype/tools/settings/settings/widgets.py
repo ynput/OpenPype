@@ -2,7 +2,7 @@ import os
 import copy
 import uuid
 from Qt import QtWidgets, QtCore, QtGui
-from avalon.vendor import qtawesome
+import qtawesome
 from avalon.mongodb import (
     AvalonMongoConnection,
     AvalonMongoDB

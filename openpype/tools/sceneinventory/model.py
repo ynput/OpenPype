@@ -4,9 +4,9 @@ import logging
 from collections import defaultdict
 
 from Qt import QtCore, QtGui
-from avalon import api, io, style, schema
-from avalon.vendor import qtawesome
+import qtawesome
 
+from avalon import api, io, style, schema
 from avalon.lib import HeroVersionType
 from openpype.tools.utils.models import TreeModel, Item
 

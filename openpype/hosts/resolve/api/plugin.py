@@ -1,13 +1,15 @@
 import re
 import uuid
+
+import qargparse
+from Qt import QtWidgets, QtCore
+
 from avalon import api
 import openpype.api as pype
 from openpype.pipeline import LegacyCreator
 from openpype.hosts import resolve
-from avalon.vendor import qargparse
 from . import lib
 
-from Qt import QtWidgets, QtCore
 
 
 class CreatorWidget(QtWidgets.QDialog):

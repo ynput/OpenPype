@@ -6,7 +6,7 @@ from Qt import QtWidgets, QtCore
 
 import avalon.api
 from avalon import io
-from avalon.vendor import qtawesome as qta
+import qtawesome as qta
 
 from openpype import style
 from openpype.hosts.fusion import api
