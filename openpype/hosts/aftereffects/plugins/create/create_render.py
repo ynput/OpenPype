@@ -63,6 +63,11 @@ class RenderCreator(Creator):
                 "one composition."
             ))
 
+        for inst in self.create_context.instances:
+            if subset_name == inst.subset_name:
+                raise CreatorError("{} already exists".format(
+                    inst.subset_name))
+
         data["members"] = [items[0].id]
         new_instance = CreatedInstance(self.family, subset_name, data, self)
         new_instance.creator_attributes["farm"] = pre_create_data["farm"]
