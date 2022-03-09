@@ -96,7 +96,7 @@ class BlendModelLoader(plugin.AssetLoader):
         )
         for obj in objects:
             obj.override_create(remap_local_usages=True)
-            obj.data.override_create(remap_local_usages=True)
+            # obj.data.override_create(remap_local_usages=True)
 
         # Remove the collection used to the increment
         bpy.data.collections.remove(increment_use_collection)
