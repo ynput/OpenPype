@@ -59,10 +59,15 @@ def patched_discover(superclass):
     """
     # run original discover and get plugins
     plugins = _original_discover(superclass)
+    filtered_plugins = [
+        plugin
+        for plugin in plugins
+        if issubclass(plugin, superclass)
+    ]
 
-    set_plugin_attributes_from_settings(plugins, superclass)
+    set_plugin_attributes_from_settings(filtered_plugins, superclass)
 
-    return plugins
+    return filtered_plugins
 
 
 @import_wrapper
