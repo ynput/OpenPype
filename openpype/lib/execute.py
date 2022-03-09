@@ -4,9 +4,9 @@ import subprocess
 import platform
 import json
 import tempfile
-import distutils.spawn
 
 from .log import PypeLogger as Logger
+from .vendor_bin_utils import find_executable
 
 # MSDN process creation flag (Windows only)
 CREATE_NO_WINDOW = 0x08000000
@@ -341,7 +341,7 @@ def get_linux_launcher_args(*args):
             os.path.dirname(openpype_executable),
             filename
         )
-        executable_path = distutils.spawn.find_executable(new_executable)
+        executable_path = find_executable(new_executable)
         if executable_path is None:
             return None
         launch_args = [executable_path]
