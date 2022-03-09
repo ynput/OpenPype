@@ -472,6 +472,28 @@ class AssetsField(BaseClickableFrame):
         self.set_selected_items(self._origin_value)
 
 
+class TasksComboboxProxy(QtCore.QSortFilterProxyModel):
+    def __init__(self, *args, **kwargs):
+        super(TasksComboboxProxy, self).__init__(*args, **kwargs)
+        self._filter_empty = False
+
+    def set_filter_empty(self, filter_empty):
+        if self._filter_empty is filter_empty:
+            return
+        self._filter_empty = filter_empty
+        self.invalidate()
+
+    def filterAcceptsRow(self, source_row, parent_index):
+        if self._filter_empty:
+            model = self.sourceModel()
+            source_index = model.index(
+                source_row, self.filterKeyColumn(), parent_index
+            )
+            if not source_index.data(QtCore.Qt.DisplayRole):
+                return False
+        return True
+
+
 class TasksCombobox(QtWidgets.QComboBox):
     """Combobox to show tasks for selected instances.
 
@@ -492,7 +514,7 @@ class TasksCombobox(QtWidgets.QComboBox):
         self.setItemDelegate(delegate)
 
         model = TasksModel(controller, True)
-        proxy_model = QtCore.QSortFilterProxyModel()
+        proxy_model = TasksComboboxProxy()
         proxy_model.setSourceModel(model)
         self.setModel(proxy_model)
 
@@ -510,6 +532,14 @@ class TasksCombobox(QtWidgets.QComboBox):
         self._is_valid = True
 
         self._text = None
+
+    def set_invalid_empty_task(self, invalid=True):
+        self._proxy_model.set_filter_empty(invalid)
+        if invalid:
+            self._set_is_valid(False)
+            self.set_text("< One or more subsets require Task selected >")
+        else:
+            self.set_text(None)
 
     def set_multiselection_text(self, text):
         """Change text shown when multiple different tasks are in context."""
@@ -600,7 +630,8 @@ class TasksCombobox(QtWidgets.QComboBox):
         self._ignore_index_change = True
 
         self._model.set_asset_names(asset_names)
-        self._proxy_model.invalidate()
+        self._proxy_model.set_filter_empty(False)
+        self._proxy_model.sort(0)
 
         self._ignore_index_change = False
 
@@ -646,6 +677,9 @@ class TasksCombobox(QtWidgets.QComboBox):
             asset_task_combinations (list): List of tuples. Each item in
                 the list contain asset name and task name.
         """
+        self._proxy_model.set_filter_empty(False)
+        self._proxy_model.sort(0)
+
         if asset_task_combinations is None:
             asset_task_combinations = []
 
@@ -1003,21 +1037,19 @@ class GlobalAttrsWidget(QtWidgets.QWidget):
 
         project_name = self.controller.project_name
         subset_names = set()
+        invalid_tasks = False
         for instance in self._current_instances:
-            if variant_value is not None:
-                instance["variant"] = variant_value
-
-            if asset_name is not None:
-                instance["asset"] = asset_name
-                instance.set_asset_invalid(False)
-
-            if task_name is not None:
-                instance["task"] = task_name
-                instance.set_task_invalid(False)
-
             new_variant_value = instance.get("variant")
             new_asset_name = instance.get("asset")
             new_task_name = instance.get("task")
+            if variant_value is not None:
+                new_variant_value = variant_value
+
+            if asset_name is not None:
+                new_asset_name = asset_name
+
+            if task_name is not None:
+                new_task_name = task_name
 
             asset_doc = asset_docs_by_name[new_asset_name]
 
@@ -1026,7 +1058,9 @@ class GlobalAttrsWidget(QtWidgets.QWidget):
                     new_variant_value, new_task_name, asset_doc, project_name
                 )
             except TaskNotSetError:
+                invalid_tasks = True
                 instance.set_task_invalid(True)
+                subset_names.add(instance["subset"])
                 continue
 
             subset_names.add(new_subset_name)
@@ -1043,10 +1077,13 @@ class GlobalAttrsWidget(QtWidgets.QWidget):
 
             instance["subset"] = new_subset_name
 
+        if invalid_tasks:
+            self.task_value_widget.set_invalid_empty_task()
+
         self.subset_value_widget.set_value(subset_names)
 
         self._set_btns_enabled(False)
-        self._set_btns_visible(False)
+        self._set_btns_visible(invalid_tasks)
 
         self.instance_context_changed.emit()
 
