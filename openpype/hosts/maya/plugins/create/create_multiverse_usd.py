@@ -45,12 +45,14 @@ class CreateMultiverseUsd(plugin.Creator):
         self.data["timeVaryingTopology"] = False
         self.data["customMaterialNamespace"] = ''
 
-        animation_data = lib.collect_animation_data()
-
+        # The attributes below are about animated cache.
         self.data["writeTimeRange"] = False
+        self.data["timeRangeNumTimeSamples"] = 0
+        self.data["timeRangeSamplesSpan"] = 0.0
+
+        animation_data = lib.collect_animation_data(True)
+
         self.data["timeRangeStart"] = animation_data["frameStart"]
         self.data["timeRangeEnd"] = animation_data["frameEnd"]
         self.data["timeRangeIncrement"] = animation_data["step"]
-        self.data["timeRangeNumTimeSamples"] = 0
-        self.data["timeRangeSamplesSpan"] = 0.0
-        self.data["timeRangeFramesPerSecond"] = 24.0
+        self.data["timeRangeFramesPerSecond"] = animation_data["fps"]
