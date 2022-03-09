@@ -8,7 +8,6 @@ from typing import Dict, Optional
 import bpy
 
 from avalon import api
-from openpype.pipeline import legacy_create
 from openpype.hosts.blender.api.pipeline import (
     AVALON_INSTANCES,
     AVALON_CONTAINERS,
