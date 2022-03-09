@@ -22,8 +22,6 @@ class ExtractBlend(openpype.api.Extractor):
 
         # Perform extraction
         self.log.info("Performing extraction..")
-        self.log.info(dir(self))
-        self.log.info(self.hosts)
 
         # Create data block set
         data_blocks = set()

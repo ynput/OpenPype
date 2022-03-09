@@ -1,7 +1,7 @@
 import os
 import bpy
 import platform
-
+import subprocess
 from avalon import io
 import openpype.api
 from openpype.lib import version_up
@@ -34,63 +34,76 @@ class ExtractLocalInstances(openpype.api.Extractor):
                         if is_local_collection(collection):
                             local_instances_list.append(collection)
 
-        self.log.info(
-            "Container: %s\nRepresentation: %s", collection.name, local_instances_list
-        )
-        # bpy.ops.object.make_local(type='ALL')
         for collection in local_instances_list:
 
-            # Create a temp scene
-            new_scene = bpy.data.scenes.new("temp_scene")
+            script_path = "/normaal/Documents/Dev_dimitri/OpenPype/openpype/hosts/blender/plugins/publish/extract_local_instance_standalone.py"
+            output = "/normaal/Documents/extract.blend"
+            blender_binary_path =   bpy.app.binary_path
+            command = (r"'%s' --python '%s' -- %s %s %s " % (blender_binary_path, script_path, blender_binary_path,output, collection.name))
+            print(command)
+            # command = (r"'%s' %s" % (blender_binary_path, bpy.data.filepath))
+            # command = ("%s" % (blender_binary_path))
+            p = subprocess.Popen([command], shell=True, stdout=subprocess.PIPE)
+            p.stdout.close()
+            p.wait()
 
-            # List of data blocks to extract
-            data_blocks = set()
+            raise AssertionError("Must be compatible Loader")
 
-            # Get library override
-            library_override_collection = collection.override_library.reference
-            library_override_collection_copy = library_override_collection.copy()
-            # Link the collection to the temp scene
-            new_scene.collection.children.link(library_override_collection_copy)
-
-            # Rename the collection with his original name
-
-            # Add collection to the data block to extract
-            data_blocks.add(library_override_collection_copy)
-
-            scene.name = "scene_temp"
-
-            new_scene.name = "Scene"
-
-            # Add the scene to the data block to extract
-            data_blocks.add(new_scene)
-
-            # Get the parent  (work file ) of the instance
-            metadata = collection.get(AVALON_PROPERTY)
-            parent = metadata["parent"]
-            representation = io.find_one({"_id": io.ObjectId(parent)})
-            self.log.info("Container: %s\nRepresentation: %s", "metadata", metadata)
-            # Get the file path of the work file of the instance
-            self.log.info(
-                "Container: %s\nRepresentation: %s",
-                "representation",
-                representation,
-            )
-            source = representation["data"]["source"]
-            low_platform = platform.system().lower()
-            root_work = instance.data["projectEntity"]["config"]["roots"]["work"][
-                low_platform
-            ]
-            path = source.replace("{root[work]}", root_work)
-
-            self.log.info(path)
-            # Get the version_up of the path
-            filepath = version_up(path)
-            self.log.info(filepath)
-            # Save the new work version
-            # save_file(filepath, copy=False)
-
-            # bpy.data.libraries.write(filepath, data_blocks, fake_user=True)
-
-            # Clean the scene
-        #  bpy.data.scenes.remove(new_scene)
-        #    scene.name = "Scene"
+    #     # bpy.ops.object.make_local(type='ALL')
+    #     for collection in local_instances_list:
+    #
+    #         # Create a temp scene
+    #         new_scene = bpy.data.scenes.new("temp_scene")
+    #
+    #         # List of data blocks to extract
+    #         data_blocks = set()
+    #
+    #         # Get library override
+    #         library_override_collection = collection.override_library.reference
+    #         library_override_collection_copy = library_override_collection.copy()
+    #
+    #         # Link the collection to the temp scene
+    #         new_scene.collection.children.link(library_override_collection_copy)
+    #
+    #         # Rename the collection with his original name
+    #
+    #         # Add collection to the data block to extract
+    #         data_blocks.add(library_override_collection_copy)
+    #
+    #         scene.name = "scene_temp"
+    #
+    #         new_scene.name = "Scene"
+    #
+    #         # Add the scene to the data block to extract
+    #         data_blocks.add(new_scene)
+    #
+    #         # Get the parent  (work file ) of the instance
+    #         metadata = collection.get(AVALON_PROPERTY)
+    #         parent = metadata["parent"]
+    #         representation = io.find_one({"_id": io.ObjectId(parent)})
+    #         self.log.info("Container: %s\nRepresentation: %s", "metadata", metadata)
+    #         # Get the file path of the work file of the instance
+    #         self.log.info(
+    #             "Container: %s\nRepresentation: %s",
+    #             "representation",
+    #             representation,
+    #         )
+    #         source = representation["data"]["source"]
+    #         low_platform = platform.system().lower()
+    #         root_work = instance.data["projectEntity"]["config"]["roots"]["work"][
+    #             low_platform
+    #         ]
+    #         path = source.replace("{root[work]}", root_work)
+    #
+    #         self.log.info(path)
+    #         # Get the version_up of the path
+    #         filepath = version_up(path)
+    #         self.log.info(filepath)
+    #         # Save the new work version
+    #         # save_file(filepath, copy=False)
+    #
+    #         # bpy.data.libraries.write(filepath, data_blocks, fake_user=True)
+    #
+    #         # Clean the scene
+    #     #  bpy.data.scenes.remove(new_scene)
+    #     #    scene.name = "Scene"
