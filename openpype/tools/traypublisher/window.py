@@ -70,7 +70,7 @@ class StandaloneOverlayWidget(QtWidgets.QFrame):
         main_layout = QtWidgets.QHBoxLayout(self)
         main_layout.setContentsMargins(10, 10, 10, 10)
         main_layout.addStretch(1)
-        main_layout.addWidget(middle_frame, 3)
+        main_layout.addWidget(middle_frame, 2)
         main_layout.addStretch(1)
 
         projects_view.doubleClicked.connect(self._on_double_click)
