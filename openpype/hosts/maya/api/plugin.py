@@ -5,7 +5,7 @@ from maya import cmds
 import qargparse
 
 from avalon import api
-from openpype.api import PypeCreatorMixin
+from openpype.pipeline import LegacyCreator
 
 from .pipeline import containerise
 from . import lib
@@ -78,7 +78,7 @@ def get_reference_node_parents(ref):
     return parents
 
 
-class Creator(PypeCreatorMixin, api.Creator):
+class Creator(LegacyCreator):
     defaults = ['Main']
 
     def process(self):
