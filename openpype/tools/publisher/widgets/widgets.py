@@ -1156,9 +1156,7 @@ class GlobalAttrsWidget(QtWidgets.QWidget):
             variants.add(instance.get("variant") or self.unknown_value)
             families.add(instance.get("family") or self.unknown_value)
             asset_name = instance.get("asset") or self.unknown_value
-            task_name = instance.get("task")
-            if task_name is None:
-                 task_name = self.unknown_value
+            task_name = instance.get("task") or ""
             asset_names.add(asset_name)
             asset_task_combinations.append((asset_name, task_name))
             subset_names.add(instance.get("subset") or self.unknown_value)
