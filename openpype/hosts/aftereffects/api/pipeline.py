@@ -273,7 +273,12 @@ def update_context_data(data, changes):
 
 def get_context_title():
     """Returns title for Creator window"""
-    return "AfterEffects"
+    import avalon.api
+
+    project_name = avalon.api.Session["AVALON_PROJECT"]
+    asset_name = avalon.api.Session["AVALON_ASSET"]
+    task_name = avalon.api.Session["AVALON_TASK"]
+    return "{}/{}/{}".format(project_name, asset_name, task_name)
 
 
 def _get_stub():
