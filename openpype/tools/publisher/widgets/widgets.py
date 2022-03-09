@@ -7,6 +7,7 @@ from Qt import QtWidgets, QtCore, QtGui
 
 from avalon.vendor import qtawesome
 
+from openpype.lib import TaskNotSetError
 from openpype.widgets.attribute_defs import create_widget_for_attr_def
 from openpype.tools import resources
 from openpype.tools.flickcharm import FlickCharm
@@ -490,13 +491,16 @@ class TasksCombobox(QtWidgets.QComboBox):
         delegate = QtWidgets.QStyledItemDelegate()
         self.setItemDelegate(delegate)
 
-        model = TasksModel(controller)
-        self.setModel(model)
+        model = TasksModel(controller, True)
+        proxy_model = QtCore.QSortFilterProxyModel()
+        proxy_model.setSourceModel(model)
+        self.setModel(proxy_model)
 
         self.currentIndexChanged.connect(self._on_index_change)
 
         self._delegate = delegate
         self._model = model
+        self._proxy_model = proxy_model
         self._origin_value = []
         self._origin_selection = []
         self._selected_items = []
@@ -596,6 +600,7 @@ class TasksCombobox(QtWidgets.QComboBox):
         self._ignore_index_change = True
 
         self._model.set_asset_names(asset_names)
+        self._proxy_model.invalidate()
 
         self._ignore_index_change = False
 
@@ -1016,10 +1021,26 @@ class GlobalAttrsWidget(QtWidgets.QWidget):
 
             asset_doc = asset_docs_by_name[new_asset_name]
 
-            new_subset_name = instance.creator.get_subset_name(
-                new_variant_value, new_task_name, asset_doc, project_name
-            )
+            try:
+                new_subset_name = instance.creator.get_subset_name(
+                    new_variant_value, new_task_name, asset_doc, project_name
+                )
+            except TaskNotSetError:
+                instance.set_task_invalid(True)
+                continue
+
             subset_names.add(new_subset_name)
+            if variant_value is not None:
+                instance["variant"] = variant_value
+
+            if asset_name is not None:
+                instance["asset"] = asset_name
+                instance.set_asset_invalid(False)
+
+            if task_name is not None:
+                instance["task"] = task_name
+                instance.set_task_invalid(False)
+
             instance["subset"] = new_subset_name
 
         self.subset_value_widget.set_value(subset_names)
@@ -1098,7 +1119,9 @@ class GlobalAttrsWidget(QtWidgets.QWidget):
             variants.add(instance.get("variant") or self.unknown_value)
             families.add(instance.get("family") or self.unknown_value)
             asset_name = instance.get("asset") or self.unknown_value
-            task_name = instance.get("task") or self.unknown_value
+            task_name = instance.get("task")
+            if task_name is None:
+                 task_name = self.unknown_value
             asset_names.add(asset_name)
             asset_task_combinations.append((asset_name, task_name))
             subset_names.add(instance.get("subset") or self.unknown_value)
