@@ -174,7 +174,7 @@ class LoadVDBtoVRay(api.Loader):
                 fname = files[0]
             else:
                 # Sequence
-                from avalon.vendor import clique
+                import clique
                 # todo: check support for negative frames as input
                 collections, remainder = clique.assemble(files)
                 assert len(collections) == 1, (

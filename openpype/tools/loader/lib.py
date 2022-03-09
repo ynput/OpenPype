@@ -1,7 +1,7 @@
 import inspect
 from Qt import QtGui
+import qtawesome
 
-from avalon.vendor import qtawesome
 from openpype.tools.utils.widgets import (
     OptionalAction,
     OptionDialog

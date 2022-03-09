@@ -2,7 +2,7 @@ import os
 import sys
 
 from Qt import QtWidgets, QtCore
-from avalon.vendor import qtawesome
+import qtawesome
 from avalon import io, api
 
 from openpype import style

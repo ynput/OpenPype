@@ -2,7 +2,7 @@ import re
 import os
 import hiero
 from Qt import QtWidgets, QtCore
-from avalon.vendor import qargparse
+import qargparse
 import avalon.api as avalon
 import openpype.api as openpype
 from . import lib

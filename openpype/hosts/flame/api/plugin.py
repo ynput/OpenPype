@@ -2,9 +2,9 @@ import os
 import re
 import shutil
 import sys
-from avalon.vendor import qargparse
 from xml.etree import ElementTree as ET
 import six
+import qargparse
 from Qt import QtWidgets, QtCore
 import openpype.api as openpype
 from openpype import style

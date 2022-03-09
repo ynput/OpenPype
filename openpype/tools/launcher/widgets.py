@@ -2,7 +2,7 @@ import copy
 import time
 import collections
 from Qt import QtWidgets, QtCore, QtGui
-from avalon.vendor import qtawesome
+import qtawesome
 
 from openpype.tools.flickcharm import FlickCharm
 from openpype.tools.utils.assets_widget import SingleSelectAssetsWidget

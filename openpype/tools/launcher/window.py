@@ -8,7 +8,7 @@ from avalon.api import AvalonMongoDB
 from openpype import style
 from openpype.api import resources
 
-from avalon.vendor import qtawesome
+import qtawesome
 from .models import (
     LauncherModel,
     ProjectModel

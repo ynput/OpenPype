@@ -13,12 +13,14 @@ from pymongo import DeleteOne, InsertOne
 import pyblish.api
 from avalon import io
 from avalon.api import format_template_with_optional_keys
-from avalon.vendor import filelink
 import openpype.api
 from datetime import datetime
 # from pype.modules import ModulesManager
 from openpype.lib.profiles_filtering import filter_profiles
-from openpype.lib import prepare_template_data
+from openpype.lib import (
+    prepare_template_data,
+    create_hard_link
+)
 
 # this is needed until speedcopy for linux is fixed
 if sys.platform == "win32":
@@ -730,7 +732,7 @@ class IntegrateAssetNew(pyblish.api.InstancePlugin):
                 self.log.critical("An unexpected error occurred.")
                 six.reraise(*sys.exc_info())
 
-        filelink.create(src, dst, filelink.HARDLINK)
+        create_hard_link(src, dst)
 
     def get_subset(self, asset, instance):
         subset_name = instance.data["subset"]

@@ -4,8 +4,7 @@ import re
 import copy
 import collections
 from Qt import QtWidgets, QtCore, QtGui
-
-from avalon.vendor import qtawesome
+import qtawesome
 
 from openpype.widgets.attribute_defs import create_widget_for_attr_def
 from openpype.tools import resources
