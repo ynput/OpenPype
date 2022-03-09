@@ -84,6 +84,7 @@ class CollectAERender(abstract_collect_render.AbstractCollectRender):
             subset_name = inst.data["subset"]
             instance = AERenderInstance(
                 family=family,
+                families=inst.data.get("families", []),
                 version=version,
                 time="",
                 source=current_file,
@@ -130,7 +131,9 @@ class CollectAERender(abstract_collect_render.AbstractCollectRender):
                 # for local renders
                 instance = self._update_for_local(instance, project_entity)
             else:
-                instance.families = ["render.farm"]
+                fam = "render.farm"
+                if fam not in instance.families:
+                    instance.families.append(fam)
 
             instances.append(instance)
             instances_to_remove.append(inst)
@@ -210,7 +213,9 @@ class CollectAERender(abstract_collect_render.AbstractCollectRender):
         instance.anatomyData["subset"] = instance.subset
         instance.stagingDir = tempfile.mkdtemp()
         instance.projectEntity = project_entity
-        instance.families = ["render.local"]
+        fam = "render.local"
+        if fam not in instance.families:
+            instance.families.append(fam)
 
         settings = get_project_settings(os.getenv("AVALON_PROJECT"))
         reviewable_subset_filter = (settings["deadline"]
