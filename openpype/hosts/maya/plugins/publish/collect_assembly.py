@@ -48,6 +48,9 @@ class CollectAssembly(pyblish.api.InstancePlugin):
 
             # Retrieve the hierarchy
             parent = cmds.listRelatives(root, parent=True, fullPath=True)[0]
+
+            # Retrieves children of root
+            children = cmds.listRelatives(parent, children=True, fullPath=True)[0]
             hierarchy_nodes.append(parent)
 
             # Temporary warning for GPU cache which are not supported yet
