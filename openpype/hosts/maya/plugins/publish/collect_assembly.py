@@ -52,7 +52,7 @@ class CollectAssembly(pyblish.api.InstancePlugin):
             # Retrieves children of root
             children = cmds.listRelatives(parent, children=True, fullPath=True)[0]
             hierarchy_nodes.append(parent)
-
+            hierarchy_nodes.append(children)
             # Temporary warning for GPU cache which are not supported yet
             loader = container["loader"]
             if loader == "GpuCacheLoader":
