@@ -57,7 +57,7 @@ class CollectAERender(abstract_collect_render.AbstractCollectRender):
         compositions_by_id = {item.id: item for item in compositions}
         for inst in context:
             family = inst.data["family"]
-            if family != "render":
+            if family not in ["render", "renderLocal"]:  # legacy
                 continue
 
             item_id = inst.data["members"][0]
@@ -123,7 +123,7 @@ class CollectAERender(abstract_collect_render.AbstractCollectRender):
             instance.comp_name = comp.name
             instance.comp_id = item_id
 
-            is_local = "renderLocal" in inst.data["families"]  # legacy
+            is_local = "renderLocal" in inst.data["family"]  # legacy
             if inst.data.get("creator_attributes"):
                 is_local = not inst.data["creator_attributes"].get("farm")
             if is_local:

@@ -34,7 +34,7 @@ class PreCollectRender(pyblish.api.ContextPlugin):
                                  "Please recreate instance.")
 
             instance = context.create_instance(inst["subset"])
-            inst["families"] = [self.family_remapping[inst["family"]]]
+            inst["families"] = [self.family_remapping[inst["family"]][0]]
             instance.data.update(inst)
 
             self._debug_log(instance)
