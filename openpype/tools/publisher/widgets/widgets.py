@@ -1072,7 +1072,7 @@ class GlobalAttrsWidget(QtWidgets.QWidget):
                 instance.set_asset_invalid(False)
 
             if task_name is not None:
-                instance["task"] = task_name
+                instance["task"] = task_name or None
                 instance.set_task_invalid(False)
 
             instance["subset"] = new_subset_name
