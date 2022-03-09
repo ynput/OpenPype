@@ -58,16 +58,18 @@ class BlendModelLoader(plugin.AssetLoader):
 
         for data_collection in instances:
             if data_collection.override_library is None:
-                container_collection = data_collection
+                if data_collection["avalon"].get("family") is not None:
+                    if data_collection["avalon"].get("family") == "model":
+                        container_collection = data_collection
         self.original_container_name = container_collection.name
 
         # Create a collection used to start the load collections at .001
-        increment_use_collection = bpy.data.collections.new(
-            name=self.original_container_name
-        )
+        # increment_use_collection = bpy.data.collections.new(
+        #     name=self.original_container_name
+        # )
 
         # Link the container to the scene collection
-        scene_collection.children.link(increment_use_collection)
+        # scene_collection.children.link(increment_use_collection)
         scene_collection.children.link(container_collection)
 
         # Get all the object of the container. The farest parents in first for override them first
@@ -99,7 +101,7 @@ class BlendModelLoader(plugin.AssetLoader):
             # obj.data.override_create(remap_local_usages=True)
 
         # Remove the collection used to the increment
-        bpy.data.collections.remove(increment_use_collection)
+        # bpy.data.collections.remove(increment_use_collection)
 
         return container_overrided
 

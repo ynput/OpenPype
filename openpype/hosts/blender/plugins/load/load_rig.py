@@ -50,62 +50,85 @@ class BlendRigLoader(plugin.AssetLoader):
             data_from,
             data_to,
         ):
-            data_to.objects = data_from.objects
+            data_to.collections = data_from.collections
 
         scene_collection = bpy.context.scene.collection
 
         # Find the loaded collection and set in variable container_collection
         container_collection = None
         instances = plugin.get_instances_list()
-        self.log.info( "instances : %s",
-            instances
-        )
+        self.log.info("instances : %s", instances)
         for data_collection in instances:
             if data_collection.override_library is None:
-                container_collection = data_collection
+                if data_collection["avalon"].get("family") is not None:
+                    if data_collection["avalon"].get("family") == "rig":
+                        container_collection = data_collection
         self.original_container_name = container_collection.name
 
         # Create a collection used to start the load collections at .001
-        increment_use_collection = bpy.data.collections.new(
-            name=self.original_container_name
-        )
+        # increment_use_collection = bpy.data.collections.new(
+        #     name=self.original_container_name
+        # )
 
         # Link the container to the scene collection
-        scene_collection.children.link(increment_use_collection)
+        # scene_collection.children.link(increment_use_collection)
         scene_collection.children.link(container_collection)
+
+        # Get all the collection of the container. The farest parents in first for override them first
+        collections = []
+        nodes = list(container_collection.children)
+        collections.append(container_collection)
+
+        for collection in nodes:
+            collections.append(collection)
+            nodes.extend(list(collection.children))
 
         # Get all the object of the container. The farest parents in first for override them first
         objects = []
-        nodes = list(container_collection.objects)
-        children_of_the_collection = []
 
-        for obj in nodes:
-            if obj.parent is None:
-                children_of_the_collection.append(obj)
+        for collection in collections:
+            nodes = list(collection.objects)
+            objects_of_the_collection = []
+            for obj in nodes:
+                if obj.parent is None:
+                    objects_of_the_collection.append(obj)
+            # Get all objects that aren't an armature
+            nodes = objects_of_the_collection
+            non_armatures = []
+            for obj in nodes:
+                if obj.type != "ARMATURE":
+                    non_armatures.append(obj)
+                nodes.extend(list(obj.children))
+            non_armatures.reverse()
 
-        nodes = children_of_the_collection
-        for obj in nodes:
-            objects.append(obj)
-            nodes.extend(list(obj.children))
-
-        objects.reverse()
+            # Add them in objects list
+            objects.extend(non_armatures)
+            # Get all objects that are an armature
+            nodes = objects_of_the_collection
+            armatures = []
+            for obj in nodes:
+                if obj.type == "ARMATURE":
+                    armatures.append(obj)
+                nodes.extend(list(obj.children))
+            armatures.reverse()
+            # Add them in armature list
+            objects.extend(armatures)
 
         # Clean
         bpy.data.orphans_purge(do_local_ids=False)
         plugin.deselect_all()
 
         # Override the container and the objects
-        container_overrided = container_collection.override_create(
-            remap_local_usages=True
-        )
+        for collection in collections:
+            container_overrided = collection.override_create(remap_local_usages=True)
         for obj in objects:
             obj.override_create(remap_local_usages=True)
-            obj.data.override_create(remap_local_usages=True)
+            # obj.data.override_create(remap_local_usages=True)
 
         # Remove the collection used to the increment
-        bpy.data.collections.remove(increment_use_collection)
+        # bpy.data.collections.remove(increment_use_collection)
 
-        return container_overrided
+        return objects
 
     def process_asset(
         self,
@@ -179,61 +202,61 @@ class BlendRigLoader(plugin.AssetLoader):
 
         objects = self._process(libpath)
 
-        if create_animation:
-            creator_plugin = lib.get_creator_by_name("CreateAnimation")
-            if not creator_plugin:
-                raise ValueError('Creator plugin "CreateAnimation" was ' "not found.")
-
-            asset_group.select_set(True)
-
-            animation_asset = options.get("animation_asset")
-
-            api.create(
-                creator_plugin,
-                name=namespace + "_animation",
-                # name=f"{unique_number}_{subset}_animation",
-                asset=animation_asset,
-                options={"useSelection": False, "asset_group": asset_group},
-                data={"dependencies": str(context["representation"]["_id"])},
-            )
-
-            plugin.deselect_all()
-
-        if anim_file:
-            bpy.ops.import_scene.fbx(filepath=anim_file, anim_offset=0.0)
-
-            imported = avalon_lib.get_selection()
-
-            armature = [o for o in asset_group.children if o.type == "ARMATURE"][0]
-
-            imported_group = [o for o in imported if o.type == "EMPTY"][0]
-
-            for obj in imported:
-                if obj.type == "ARMATURE":
-                    if not armature.animation_data:
-                        armature.animation_data_create()
-                    armature.animation_data.action = obj.animation_data.action
-
-            self._remove(imported_group)
-            bpy.data.objects.remove(imported_group)
-
-        bpy.context.scene.collection.objects.link(asset_group)
-
-        asset_group[AVALON_PROPERTY] = {
-            "schema": "openpype:container-2.0",
-            "id": AVALON_CONTAINER_ID,
-            "asset": asset,
-            "subset": subset,
-            "name": name,
-            "namespace": namespace or "",
-            "loader": str(self.__class__.__name__),
-            "representation": str(context["representation"]["_id"]),
-            "libpath": libpath,
-            "asset_name": asset_name,
-            "parent": str(context["representation"]["parent"]),
-            "family": context["representation"]["context"]["family"],
-            "objectName": group_name,
-        }
+        # if create_animation:
+        #     creator_plugin = lib.get_creator_by_name("CreateAnimation")
+        #     if not creator_plugin:
+        #         raise ValueError('Creator plugin "CreateAnimation" was ' "not found.")
+        #
+        #     asset_group.select_set(True)
+        #
+        #     animation_asset = options.get("animation_asset")
+        #
+        #     api.create(
+        #         creator_plugin,
+        #         name=namespace + "_animation",
+        #         # name=f"{unique_number}_{subset}_animation",
+        #         asset=animation_asset,
+        #         options={"useSelection": False, "asset_group": asset_group},
+        #         data={"dependencies": str(context["representation"]["_id"])},
+        #     )
+        #
+        #     plugin.deselect_all()
+        #
+        # if anim_file:
+        #     bpy.ops.import_scene.fbx(filepath=anim_file, anim_offset=0.0)
+        #
+        #     imported = avalon_lib.get_selection()
+        #
+        #     armature = [o for o in asset_group.children if o.type == "ARMATURE"][0]
+        #
+        #     imported_group = [o for o in imported if o.type == "EMPTY"][0]
+        #
+        #     for obj in imported:
+        #         if obj.type == "ARMATURE":
+        #             if not armature.animation_data:
+        #                 armature.animation_data_create()
+        #             armature.animation_data.action = obj.animation_data.action
+        #
+        #     self._remove(imported_group)
+        #     bpy.data.objects.remove(imported_group)
+        #
+        # bpy.context.scene.collection.objects.link(asset_group)
+        #
+        # asset_group[AVALON_PROPERTY] = {
+        #     "schema": "openpype:container-2.0",
+        #     "id": AVALON_CONTAINER_ID,
+        #     "asset": asset,
+        #     "subset": subset,
+        #     "name": name,
+        #     "namespace": namespace or "",
+        #     "loader": str(self.__class__.__name__),
+        #     "representation": str(context["representation"]["_id"]),
+        #     "libpath": libpath,
+        #     "asset_name": asset_name,
+        #     "parent": str(context["representation"]["parent"]),
+        #     "family": context["representation"]["context"]["family"],
+        #     "objectName": group_name,
+        # }
 
         self[:] = objects
         return objects
