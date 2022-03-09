@@ -937,7 +937,7 @@ class GlobalAttrsWidget(QtWidgets.QWidget):
         family_value_widget.set_value()
         subset_value_widget.set_value()
 
-        submit_btn = QtWidgets.QPushButton("Submit", self)
+        submit_btn = QtWidgets.QPushButton("Confirm", self)
         cancel_btn = QtWidgets.QPushButton("Cancel", self)
         submit_btn.setEnabled(False)
         cancel_btn.setEnabled(False)
