@@ -18,6 +18,16 @@ class RenderCreator(Creator):
 
     create_allow_context_change = False
 
+    def __init__(
+        self, create_context, system_settings, project_settings, headless=False
+    ):
+        super(RenderCreator, self).__init__(create_context, system_settings,
+                                            project_settings, headless)
+        self._default_variants = (project_settings["aftereffects"]
+                                                  ["create"]
+                                                  ["RenderCreator"]
+                                                  ["defaults"])
+
     def get_icon(self):
         return resources.get_openpype_splash_filepath()
 
@@ -79,7 +89,7 @@ class RenderCreator(Creator):
         self._add_instance_to_context(new_instance)
 
     def get_default_variants(self):
-        return ["Main"]
+        return self._default_variants
 
     def get_instance_attr_defs(self):
         return [BoolDef("farm", label="Render on farm")]
