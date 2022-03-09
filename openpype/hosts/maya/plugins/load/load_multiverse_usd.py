@@ -1,4 +1,8 @@
+# -*- coding: utf-8 -*-
 from avalon import api
+
+import maya.cmds as cmds
+
 
 class MultiverseUsdLoader(api.Loader):
     """Load the USD by Multiverse"""
@@ -10,10 +14,9 @@ class MultiverseUsdLoader(api.Loader):
     order = -10
     icon = "code-fork"
     color = "orange"
-    
+
     def load(self, context, name=None, namespace=None, options=None):
 
-        import maya.cmds as cmds
         from openpype.hosts.maya.api.pipeline import containerise
         from openpype.hosts.maya.api.lib import unique_namespace
 
@@ -36,10 +39,25 @@ class MultiverseUsdLoader(api.Loader):
         cmds.parent(shape, root)
 
     def update(self, container, representation):
-        pass
+
+        path = api.get_representation_path(representation)
+
+        # Update the shape
+        members = cmds.sets(container['objectName'], query=True)
+        shapes = cmds.ls(members, type="mvUsdPackedShape", long=True)
+
+        assert len(shapes) == 1, "This is a bug"
+
+        import multiverse
+        for shape in shapes:
+            multiverse.SetUsdCompoundAssetPaths(shape, [path])
+
+        cmds.setAttr(container["objectName"] + ".representation",
+                     str(representation["_id"]),
+                     type="string")
 
     def switch(self, container, representation):
         self.update(container, representation)
 
     def remove(self, container):
-        pass  
+        pass
