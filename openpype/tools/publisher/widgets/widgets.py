@@ -982,7 +982,7 @@ class GlobalAttrsWidget(QtWidgets.QWidget):
         btns_layout.addWidget(cancel_btn)
 
         main_layout = QtWidgets.QFormLayout(self)
-        main_layout.addRow("Name", variant_input)
+        main_layout.addRow("Variant", variant_input)
         main_layout.addRow("Asset", asset_value_widget)
         main_layout.addRow("Task", task_value_widget)
         main_layout.addRow("Family", family_value_widget)
