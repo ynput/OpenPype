@@ -108,7 +108,7 @@ def on_file_event_callback(event):
     elif event == hou.hipFileEventType.AfterSave:
         emit_event("save")
     elif event == hou.hipFileEventType.BeforeSave:
-        emit_event("before_save")
+        emit_event("before.save")
     elif event == hou.hipFileEventType.AfterClear:
         emit_event("new")
 
