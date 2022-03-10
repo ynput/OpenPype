@@ -1,7 +1,7 @@
-import avalon.api
+from avalon import api as avalon_api
 
 from openpype import resources
-import openpype.hosts.aftereffects.api as api
+from openpype.hosts.aftereffects import api
 from openpype.pipeline import (
     Creator,
     CreatedInstance,
@@ -25,7 +25,7 @@ class RenderCreator(Creator):
         for instance_data in api.list_instances():
             # legacy instances have family=='render' or 'renderLocal', use them
             creator_id = (instance_data.get("creator_identifier") or
-                          instance_data.get("family").replace("Local", ''))
+                          instance_data.get("family", '').replace("Local", ''))
             if creator_id == self.identifier:
                 instance_data = self._handle_legacy(instance_data)
                 instance = CreatedInstance.from_existing(
@@ -108,7 +108,7 @@ class RenderCreator(Creator):
             instance_data.pop("uuid")
 
         if not instance_data.get("task"):
-            instance_data["task"] = avalon.api.Session.get("AVALON_TASK")
+            instance_data["task"] = avalon_api.Session.get("AVALON_TASK")
 
         if not instance_data.get("creator_attributes"):
             is_old_farm = instance_data["family"] != "renderLocal"
