@@ -2,11 +2,12 @@ import os
 import re
 import shutil
 import sys
-from avalon.vendor import qargparse
 from xml.etree import ElementTree as ET
 import six
+import qargparse
 from Qt import QtWidgets, QtCore
 import openpype.api as openpype
+from openpype.pipeline import LegacyCreator
 from openpype import style
 import avalon.api as avalon
 from . import (
@@ -299,7 +300,7 @@ class Spacer(QtWidgets.QWidget):
         self.setLayout(layout)
 
 
-class Creator(openpype.Creator):
+class Creator(LegacyCreator):
     """Creator class wrapper
     """
     clip_color = constants.COLOR_MAP["purple"]

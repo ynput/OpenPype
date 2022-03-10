@@ -1,9 +1,9 @@
 import os
+import re
 import json
 import getpass
 
-from avalon.vendor import requests
-import re
+import requests
 import pyblish.api
 
 

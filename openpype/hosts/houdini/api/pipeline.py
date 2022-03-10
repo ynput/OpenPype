@@ -11,6 +11,7 @@ import avalon.api
 from avalon.pipeline import AVALON_CONTAINER_ID
 from avalon.lib import find_submodule
 
+from openpype.pipeline import LegacyCreator
 import openpype.hosts.houdini
 from openpype.hosts.houdini.api import lib
 
@@ -48,7 +49,7 @@ def install():
 
     pyblish.api.register_plugin_path(PUBLISH_PATH)
     avalon.api.register_plugin_path(avalon.api.Loader, LOAD_PATH)
-    avalon.api.register_plugin_path(avalon.api.Creator, CREATE_PATH)
+    avalon.api.register_plugin_path(LegacyCreator, CREATE_PATH)
 
     log.info("Installing callbacks ... ")
     # avalon.on("init", on_init)

@@ -7,7 +7,7 @@ import time
 
 import appdirs
 from Qt import QtCore, QtGui
-from avalon.vendor import qtawesome
+import qtawesome
 from avalon import api
 from openpype.lib import JSONSettingRegistry
 from openpype.lib.applications import (

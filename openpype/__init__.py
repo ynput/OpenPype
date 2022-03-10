@@ -5,6 +5,7 @@ import platform
 import functools
 import logging
 
+from openpype.pipeline import LegacyCreator
 from .settings import get_project_settings
 from .lib import (
     Anatomy,
@@ -58,10 +59,15 @@ def patched_discover(superclass):
     """
     # run original discover and get plugins
     plugins = _original_discover(superclass)
+    filtered_plugins = [
+        plugin
+        for plugin in plugins
+        if issubclass(plugin, superclass)
+    ]
 
-    set_plugin_attributes_from_settings(plugins, superclass)
+    set_plugin_attributes_from_settings(filtered_plugins, superclass)
 
-    return plugins
+    return filtered_plugins
 
 
 @import_wrapper
@@ -113,7 +119,7 @@ def install():
 
             pyblish.register_plugin_path(path)
             avalon.register_plugin_path(avalon.Loader, path)
-            avalon.register_plugin_path(avalon.Creator, path)
+            avalon.register_plugin_path(LegacyCreator, path)
             avalon.register_plugin_path(avalon.InventoryAction, path)
 
     # apply monkey patched discover to original one

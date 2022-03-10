@@ -1,9 +1,9 @@
 import contextlib
 from Qt import QtWidgets, QtCore
+import qtawesome
 
 from openpype.tools.utils import PlaceholderLineEdit
 
-from avalon.vendor import qtawesome
 from avalon import style
 
 from . import RecursiveSortFilterProxyModel, AssetModel

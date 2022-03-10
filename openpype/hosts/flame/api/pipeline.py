@@ -7,6 +7,7 @@ from avalon import api as avalon
 from avalon.pipeline import AVALON_CONTAINER_ID
 from pyblish import api as pyblish
 from openpype.api import Logger
+from openpype.pipeline import LegacyCreator
 from .lib import (
     set_segment_data_marker,
     set_publish_attribute,
@@ -33,7 +34,7 @@ def install():
     pyblish.register_host("flame")
     pyblish.register_plugin_path(PUBLISH_PATH)
     avalon.register_plugin_path(avalon.Loader, LOAD_PATH)
-    avalon.register_plugin_path(avalon.Creator, CREATE_PATH)
+    avalon.register_plugin_path(LegacyCreator, CREATE_PATH)
     avalon.register_plugin_path(avalon.InventoryAction, INVENTORY_PATH)
     log.info("OpenPype Flame plug-ins registred ...")
 
@@ -48,7 +49,7 @@ def uninstall():
     log.info("Deregistering Flame plug-ins..")
     pyblish.deregister_plugin_path(PUBLISH_PATH)
     avalon.deregister_plugin_path(avalon.Loader, LOAD_PATH)
-    avalon.deregister_plugin_path(avalon.Creator, CREATE_PATH)
+    avalon.deregister_plugin_path(LegacyCreator, CREATE_PATH)
     avalon.deregister_plugin_path(avalon.InventoryAction, INVENTORY_PATH)
 
     # register callback for switching publishable
