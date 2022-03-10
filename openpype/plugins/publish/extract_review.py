@@ -1165,6 +1165,18 @@ class ExtractReview(pyblish.api.InstancePlugin):
                 input_height = int(stream["height"])
                 break
 
+        # Get instance data
+        pixel_aspect = temp_data["pixel_aspect"]
+
+        if reformat_in_baking:
+            self.log.debug((
+                "Using resolution from input. It is already "
+                "reformated from upstream process"
+            ))
+            pixel_aspect = 1
+            output_width = input_width
+            output_height = input_height
+
         # Raise exception of any stream didn't define input resolution
         if input_width is None:
             raise AssertionError((
