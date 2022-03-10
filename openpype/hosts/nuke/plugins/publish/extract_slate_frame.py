@@ -54,7 +54,7 @@ class ExtractSlateFrame(openpype.api.Extractor):
         handle_end = instance.data["handleEnd"]
 
         frame_length = int(
-            (frame_start - frame_end + 1) + (handle_start + handle_end)
+            (frame_end - frame_start + 1) + (handle_start + handle_end)
         )
 
         temporary_nodes = []
