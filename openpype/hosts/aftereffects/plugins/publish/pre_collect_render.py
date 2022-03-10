@@ -28,7 +28,9 @@ class PreCollectRender(pyblish.api.ContextPlugin):
         for inst in list_instances():
             if inst.get("creator_attributes"):
                 raise ValueError("Instance created in New publisher, "
-                                 "cannot be published in Pyblish")
+                                 "cannot be published in Pyblish.\n"
+                                 "Please publish in New Publisher "
+                                 "or recreate instances with legacy Creators")
 
             if inst["family"] not in self.family_remapping.keys():
                 continue
