@@ -142,6 +142,16 @@ def get_asset_icon(asset_doc, has_children=False):
     return get_qta_icon_by_name_and_color(icon_name, icon_color)
 
 
+def get_task_icon():
+    """Get icon for a task.
+
+    TODO: Get task icon based on data in database.
+
+    Icon should be defined by task type which is stored on project.
+    """
+    return get_qta_icon_by_name_and_color("fa.male", style.colors.default)
+
+
 def schedule(func, time, channel="default"):
     """Run `func` at a later `time` in a dedicated `channel`
 
