@@ -1,8 +1,9 @@
 # -*- coding: utf-8 -*-
-from maya import cmds
+from maya import cmds  # noqa
 import pyblish.api
 from avalon.api import Session
 from openpype.api import get_project_settings
+from pprint import pformat
 
 
 class CollectUnrealStaticMesh(pyblish.api.InstancePlugin):
@@ -24,16 +25,24 @@ class CollectUnrealStaticMesh(pyblish.api.InstancePlugin):
         # take the name from instance (without the `staticMesh_` prefix)
         instance.data["staticMeshCombinedName"] = "{}_{}".format(
             sm_prefix,
-            instance.name[len(instance.data.get("family")) + 1:]
-        )
+            instance.data.get("subset")[len(sm_prefix) + 1:])
+
+        self.log.info("joined mesh name: {}".format(
+            instance.data.get("staticMeshCombinedName")))
 
         geometry_set = [i for i in instance if i == "geometry_SET"]
         instance.data["membersToCombine"] = cmds.sets(
             geometry_set, query=True)
 
+        self.log.info("joining meshes: {}".format(
+            pformat(instance.data.get("membersToCombine"))))
+
         collision_set = [i for i in instance if i == "collisions_SET"]
         instance.data["collisionMembers"] = cmds.sets(
             collision_set, query=True)
+
+        self.log.info("collisions: {}".format(
+            pformat(instance.data.get("collisionMembers"))))
 
         # set fbx overrides on instance
         instance.data["smoothingGroups"] = True

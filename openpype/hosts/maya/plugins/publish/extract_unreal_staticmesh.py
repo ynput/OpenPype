@@ -46,7 +46,7 @@ class ExtractUnrealStaticMesh(openpype.api.Extractor):
                 cmds.duplicate(to_combine[0], name=static_mesh_name, ic=True)
 
             delete_bin.extend([static_mesh_name])
-            delete_bin.extend(duplicates)
+            # delete_bin.extend(duplicates)
 
             members = [static_mesh_name]
             members += instance.data["collisionMembers"]

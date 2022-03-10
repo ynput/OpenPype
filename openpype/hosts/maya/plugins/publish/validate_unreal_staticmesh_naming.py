@@ -115,9 +115,12 @@ class ValidateUnrealStaticMeshName(pyblish.api.InstancePlugin):
                     cls.log.error("{} is invalid".format(obj))
                     invalid.append(obj)
                 else:
+                    un_prefixed = combined_geometry_name[
+                                  len(static_mesh_prefix) + 1:
+                                  ]
                     expected_collision = "{}_{}".format(
                         cl_m.group("prefix"),
-                        combined_geometry_name[len(static_mesh_prefix) + 1:]
+                        un_prefixed
                     )
 
                     if not obj.startswith(expected_collision):
@@ -130,7 +133,7 @@ class ValidateUnrealStaticMeshName(pyblish.api.InstancePlugin):
                             cl_m.group("prefix"),
                             cl_m.group("renderName"),
                             cl_m.group("prefix"),
-                            combined_geometry_name,
+                            un_prefixed,
                         ))
                         invalid.append(obj)
 
