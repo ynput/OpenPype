@@ -1159,6 +1159,8 @@ class ExtractReview(pyblish.api.InstancePlugin):
         # - there may be a better way (checking `codec_type`?)
         input_width = None
         input_height = None
+        output_width = None
+        output_height = None
         for stream in streams:
             if "width" in stream and "height" in stream:
                 input_width = int(stream["width"])
@@ -1185,8 +1187,8 @@ class ExtractReview(pyblish.api.InstancePlugin):
 
         # NOTE Setting only one of `width` or `heigth` is not allowed
         # - settings value can't have None but has value of 0
-        output_width = output_def.get("width") or None
-        output_height = output_def.get("height") or None
+        output_width = output_width or output_def.get("width") or None
+        output_height = output_height or output_def.get("height") or None
 
         # Overscal color
         overscan_color_value = "black"
