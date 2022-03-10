@@ -1,7 +1,7 @@
 import os
 from maya import cmds
 from avalon import api
-from avalon.pipeline import AVALON_CONTAINER_ID
+
 from openpype.api import get_project_settings
 from openpype.lib import get_creator_by_name
 import openpype.hosts.maya.api.plugin
@@ -165,13 +165,3 @@ class ReferenceLoader(openpype.hosts.maya.api.plugin.ReferenceLoader):
                 options={"useSelection": True},
                 data={"dependencies": dependency}
             )
-
-    @staticmethod
-    def _organize_containers(nodes, container):
-        # type: (list, str) -> None
-        for node in nodes:
-            id_attr = "{}.id".format(node)
-            if not cmds.attributeQuery("id", node=node, exists=True):
-                continue
-            if cmds.getAttr(id_attr) == AVALON_CONTAINER_ID:
-                cmds.sets(node, forceElement=container)
