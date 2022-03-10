@@ -2,7 +2,7 @@ import os
 import sys
 
 from Qt import QtWidgets, QtCore
-from avalon.vendor import qtawesome
+import qtawesome
 from avalon import io, api
 
 from openpype import style
@@ -18,7 +18,7 @@ from .model import (
     InventoryModel,
     FilterProxyModel
 )
-from .view import SceneInvetoryView
+from .view import SceneInventoryView
 
 
 module = sys.modules[__name__]
@@ -54,14 +54,21 @@ class SceneInventoryWindow(QtWidgets.QDialog):
         outdated_only_checkbox.setToolTip("Show outdated files only")
         outdated_only_checkbox.setChecked(False)
 
+        icon = qtawesome.icon("fa.arrow-up", color="white")
+        update_all_button = QtWidgets.QPushButton(self)
+        update_all_button.setToolTip("Update all outdated to latest version")
+        update_all_button.setIcon(icon)
+
         icon = qtawesome.icon("fa.refresh", color="white")
         refresh_button = QtWidgets.QPushButton(self)
+        update_all_button.setToolTip("Refresh")
         refresh_button.setIcon(icon)
 
         control_layout = QtWidgets.QHBoxLayout()
         control_layout.addWidget(filter_label)
         control_layout.addWidget(text_filter)
         control_layout.addWidget(outdated_only_checkbox)
+        control_layout.addWidget(update_all_button)
         control_layout.addWidget(refresh_button)
 
         # endregion control
@@ -73,7 +80,7 @@ class SceneInventoryWindow(QtWidgets.QDialog):
         proxy.setDynamicSortFilter(True)
         proxy.setFilterCaseSensitivity(QtCore.Qt.CaseInsensitive)
 
-        view = SceneInvetoryView(self)
+        view = SceneInventoryView(self)
         view.setModel(proxy)
 
         # set some nice default widths for the view
@@ -98,11 +105,13 @@ class SceneInventoryWindow(QtWidgets.QDialog):
             self._on_outdated_state_change
         )
         view.hierarchy_view_changed.connect(
-            self._on_hiearchy_view_change
+            self._on_hierarchy_view_change
         )
         view.data_changed.connect(self.refresh)
         refresh_button.clicked.connect(self.refresh)
+        update_all_button.clicked.connect(self._on_update_all)
 
+        self._update_all_button = update_all_button
         self._outdated_only_checkbox = outdated_only_checkbox
         self._view = view
         self._model = model
@@ -146,7 +155,7 @@ class SceneInventoryWindow(QtWidgets.QDialog):
                     kwargs["selected"] = self._view._selected
                 self._model.refresh(**kwargs)
 
-    def _on_hiearchy_view_change(self, enabled):
+    def _on_hierarchy_view_change(self, enabled):
         self._proxy.set_hierarchy_view(enabled)
         self._model.set_hierarchy_view(enabled)
 
@@ -157,6 +166,9 @@ class SceneInventoryWindow(QtWidgets.QDialog):
         self._proxy.set_filter_outdated(
             self._outdated_only_checkbox.isChecked()
         )
+
+    def _on_update_all(self):
+        self._view.update_all()
 
 
 def show(root=None, debug=False, parent=None, items=None):

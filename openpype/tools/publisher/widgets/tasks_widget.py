@@ -1,6 +1,7 @@
 from Qt import QtCore, QtGui
 
 from openpype.tools.utils.tasks_widget import TasksWidget, TASK_NAME_ROLE
+from openpype.tools.utils.lib import get_task_icon
 
 
 class TasksModel(QtGui.QStandardItemModel):
@@ -17,9 +18,10 @@ class TasksModel(QtGui.QStandardItemModel):
         controller (PublisherController): Controller which handles creation and
             publishing.
     """
-    def __init__(self, controller):
+    def __init__(self, controller, allow_empty_task=False):
         super(TasksModel, self).__init__()
 
+        self._allow_empty_task = allow_empty_task
         self._controller = controller
         self._items_by_name = {}
         self._asset_names = []
@@ -70,8 +72,14 @@ class TasksModel(QtGui.QStandardItemModel):
             task_name (str): Name of task which should be available in asset's
                 tasks.
         """
-        task_names = self._task_names_by_asset_name.get(asset_name)
-        if task_names and task_name in task_names:
+        if asset_name not in self._task_names_by_asset_name:
+            return False
+
+        if self._allow_empty_task and not task_name:
+            return True
+
+        task_names = self._task_names_by_asset_name[asset_name]
+        if task_name in task_names:
             return True
         return False
 
@@ -92,6 +100,8 @@ class TasksModel(QtGui.QStandardItemModel):
         new_task_names = self.get_intersection_of_tasks(
             task_names_by_asset_name
         )
+        if self._allow_empty_task:
+            new_task_names.add("")
         old_task_names = set(self._items_by_name.keys())
         if new_task_names == old_task_names:
             return
@@ -109,9 +119,13 @@ class TasksModel(QtGui.QStandardItemModel):
 
             item = QtGui.QStandardItem(task_name)
             item.setData(task_name, TASK_NAME_ROLE)
+            if task_name:
+                item.setData(get_task_icon(), QtCore.Qt.DecorationRole)
             self._items_by_name[task_name] = item
             new_items.append(item)
-        root_item.appendRows(new_items)
+
+        if new_items:
+            root_item.appendRows(new_items)
 
     def headerData(self, section, orientation, role=None):
         if role is None:

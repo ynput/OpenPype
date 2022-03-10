@@ -1,14 +1,11 @@
-import os
 import re
 
 from Qt import QtWidgets, QtCore
 from . import HelpRole, FamilyRole, ExistsRole, PluginRole, PluginKeyRole
 from . import FamilyDescriptionWidget
 
-from openpype.api import (
-    get_project_settings,
-    Creator
-)
+from openpype.api import get_project_settings
+from openpype.pipeline import LegacyCreator
 from openpype.lib import TaskNotSetError
 from openpype.pipeline.create import SUBSET_NAME_ALLOWED_SYMBOLS
 
@@ -390,7 +387,7 @@ class FamilyWidget(QtWidgets.QWidget):
         sp_settings = settings.get('standalonepublisher', {})
 
         for key, creator_data in sp_settings.get("create", {}).items():
-            creator = type(key, (Creator, ), creator_data)
+            creator = type(key, (LegacyCreator, ), creator_data)
 
             label = creator.label or creator.family
             item = QtWidgets.QListWidgetItem(label)

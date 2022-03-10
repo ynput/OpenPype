@@ -1,11 +1,11 @@
 import os
 import logging
 
-from Qt import QtCore, QtGui
+from Qt import QtCore
+import qtawesome
 
 from avalon import style
-from avalon.vendor import qtawesome
-from avalon.tools.models import TreeModel, Item
+from openpype.tools.utils.models import TreeModel, Item
 
 log = logging.getLogger(__name__)
 

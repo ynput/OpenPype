@@ -9,6 +9,7 @@ import bpy
 from avalon import api
 from avalon.blender import lib as avalon_lib
 from openpype import lib
+from openpype.pipeline import legacy_create
 from openpype.hosts.blender.api import plugin
 from openpype.hosts.blender.api.pipeline import (
     AVALON_CONTAINERS,
@@ -248,7 +249,7 @@ class BlendRigLoader(plugin.AssetLoader):
 
             animation_asset = options.get('animation_asset')
 
-            api.create(
+            legacy_create(
                 creator_plugin,
                 name=namespace + "_animation",
                 # name=f"{unique_number}_{subset}_animation",

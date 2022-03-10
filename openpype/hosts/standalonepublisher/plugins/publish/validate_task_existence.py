@@ -1,6 +1,8 @@
 import pyblish.api
 from avalon import io
 
+from openpype.pipeline import PublishXmlValidationError
+
 
 class ValidateTaskExistence(pyblish.api.ContextPlugin):
     """Validating tasks on instances are filled and existing."""
@@ -53,4 +55,9 @@ class ValidateTaskExistence(pyblish.api.ContextPlugin):
                 "Asset: \"{}\" Task: \"{}\"".format(*missing_pair)
             )
 
-        raise AssertionError(msg.format("\n".join(pair_msgs)))
+        msg = msg.format("\n".join(pair_msgs))
+
+        formatting_data = {"task_not_found": '    - {}'.join(pair_msgs)}
+        if pair_msgs:
+            raise PublishXmlValidationError(self, msg,
+                                            formatting_data=formatting_data)

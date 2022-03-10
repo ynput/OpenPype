@@ -14,6 +14,7 @@ import avalon.api
 from avalon import io, schema
 from avalon.pipeline import AVALON_CONTAINER_ID
 
+from openpype.pipeline import LegacyCreator
 from openpype.api import Logger
 import openpype.hosts.blender
 
@@ -46,7 +47,7 @@ def install():
     pyblish.api.register_plugin_path(str(PUBLISH_PATH))
 
     avalon.api.register_plugin_path(avalon.api.Loader, str(LOAD_PATH))
-    avalon.api.register_plugin_path(avalon.api.Creator, str(CREATE_PATH))
+    avalon.api.register_plugin_path(LegacyCreator, str(CREATE_PATH))
 
     lib.append_user_scripts()
 
@@ -67,7 +68,7 @@ def uninstall():
     pyblish.api.deregister_plugin_path(str(PUBLISH_PATH))
 
     avalon.api.deregister_plugin_path(avalon.api.Loader, str(LOAD_PATH))
-    avalon.api.deregister_plugin_path(avalon.api.Creator, str(CREATE_PATH))
+    avalon.api.deregister_plugin_path(LegacyCreator, str(CREATE_PATH))
 
     if not IS_HEADLESS:
         ops.unregister()
@@ -202,13 +203,10 @@ def reload_pipeline(*args):
     avalon.api.uninstall()
 
     for module in (
-            "avalon.io",
-            "avalon.lib",
-            "avalon.pipeline",
-            "avalon.tools.creator.app",
-            "avalon.tools.manager.app",
-            "avalon.api",
-            "avalon.tools",
+        "avalon.io",
+        "avalon.lib",
+        "avalon.pipeline",
+        "avalon.api",
     ):
         module = importlib.import_module(module)
         importlib.reload(module)

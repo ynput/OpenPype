@@ -19,7 +19,6 @@ from openpype.lib import (
 
     should_convert_for_ffmpeg,
     convert_for_ffmpeg,
-    get_transcode_temp_directory,
     get_transcode_temp_directory
 )
 import speedcopy
@@ -972,16 +971,12 @@ class ExtractReview(pyblish.api.InstancePlugin):
     def get_letterbox_filters(
         self,
         letter_box_def,
-        input_res_ratio,
-        output_res_ratio,
-        pixel_aspect,
-        scale_factor_by_width,
-        scale_factor_by_height
+        output_width,
+        output_height
     ):
         output = []
 
         ratio = letter_box_def["ratio"]
-        state = letter_box_def["state"]
         fill_color = letter_box_def["fill_color"]
         f_red, f_green, f_blue, f_alpha = fill_color
         fill_color_hex = "{0:0>2X}{1:0>2X}{2:0>2X}".format(
@@ -997,74 +992,128 @@ class ExtractReview(pyblish.api.InstancePlugin):
         )
         line_color_alpha = float(l_alpha) / 255
 
-        if input_res_ratio == output_res_ratio:
-            ratio /= pixel_aspect
-        elif input_res_ratio < output_res_ratio:
-            ratio /= scale_factor_by_width
-        else:
-            ratio /= scale_factor_by_height
+        # test ratios and define if pillar or letter boxes
+        output_ratio = float(output_width) / float(output_height)
+        self.log.debug("Output ratio: {} LetterBox ratio: {}".format(
+            output_ratio, ratio
+        ))
+        pillar = output_ratio > ratio
+        need_mask = format(output_ratio, ".3f") != format(ratio, ".3f")
+        if not need_mask:
+            return []
 
-        if state == "letterbox":
+        if not pillar:
             if fill_color_alpha > 0:
                 top_box = (
-                    "drawbox=0:0:iw:round((ih-(iw*(1/{})))/2):t=fill:c={}@{}"
-                ).format(ratio, fill_color_hex, fill_color_alpha)
+                    "drawbox=0:0:{width}"
+                    ":round(({height}-({width}/{ratio}))/2)"
+                    ":t=fill:c={color}@{alpha}"
+                ).format(
+                    width=output_width,
+                    height=output_height,
+                    ratio=ratio,
+                    color=fill_color_hex,
+                    alpha=fill_color_alpha
+                )
 
                 bottom_box = (
-                    "drawbox=0:ih-round((ih-(iw*(1/{0})))/2)"
-                    ":iw:round((ih-(iw*(1/{0})))/2):t=fill:c={1}@{2}"
-                ).format(ratio, fill_color_hex, fill_color_alpha)
-
+                    "drawbox=0"
+                    ":{height}-round(({height}-({width}/{ratio}))/2)"
+                    ":{width}"
+                    ":round(({height}-({width}/{ratio}))/2)"
+                    ":t=fill:c={color}@{alpha}"
+                ).format(
+                    width=output_width,
+                    height=output_height,
+                    ratio=ratio,
+                    color=fill_color_hex,
+                    alpha=fill_color_alpha
+                )
                 output.extend([top_box, bottom_box])
 
             if line_color_alpha > 0 and line_thickness > 0:
                 top_line = (
-                    "drawbox=0:round((ih-(iw*(1/{0})))/2)-{1}:iw:{1}:"
-                    "t=fill:c={2}@{3}"
+                    "drawbox=0"
+                    ":round(({height}-({width}/{ratio}))/2)-{l_thick}"
+                    ":{width}:{l_thick}:t=fill:c={l_color}@{l_alpha}"
                 ).format(
-                    ratio, line_thickness, line_color_hex, line_color_alpha
+                    width=output_width,
+                    height=output_height,
+                    ratio=ratio,
+                    l_thick=line_thickness,
+                    l_color=line_color_hex,
+                    l_alpha=line_color_alpha
                 )
                 bottom_line = (
-                    "drawbox=0:ih-round((ih-(iw*(1/{})))/2)"
-                    ":iw:{}:t=fill:c={}@{}"
+                    "drawbox=0"
+                    ":{height}-round(({height}-({width}/{ratio}))/2)"
+                    ":{width}:{l_thick}:t=fill:c={l_color}@{l_alpha}"
                 ).format(
-                    ratio, line_thickness, line_color_hex, line_color_alpha
+                    width=output_width,
+                    height=output_height,
+                    ratio=ratio,
+                    l_thick=line_thickness,
+                    l_color=line_color_hex,
+                    l_alpha=line_color_alpha
                 )
                 output.extend([top_line, bottom_line])
 
-        elif state == "pillar":
+        else:
             if fill_color_alpha > 0:
                 left_box = (
-                    "drawbox=0:0:round((iw-(ih*{}))/2):ih:t=fill:c={}@{}"
-                ).format(ratio, fill_color_hex, fill_color_alpha)
+                    "drawbox=0:0"
+                    ":round(({width}-({height}*{ratio}))/2)"
+                    ":{height}"
+                    ":t=fill:c={color}@{alpha}"
+                ).format(
+                    width=output_width,
+                    height=output_height,
+                    ratio=ratio,
+                    color=fill_color_hex,
+                    alpha=fill_color_alpha
+                )
 
                 right_box = (
-                    "drawbox=iw-round((iw-(ih*{0}))/2))"
-                    ":0:round((iw-(ih*{0}))/2):ih:t=fill:c={1}@{2}"
-                ).format(ratio, fill_color_hex, fill_color_alpha)
-
+                    "drawbox="
+                    "{width}-round(({width}-({height}*{ratio}))/2)"
+                    ":0"
+                    ":round(({width}-({height}*{ratio}))/2)"
+                    ":{height}"
+                    ":t=fill:c={color}@{alpha}"
+                ).format(
+                    width=output_width,
+                    height=output_height,
+                    ratio=ratio,
+                    color=fill_color_hex,
+                    alpha=fill_color_alpha
+                )
                 output.extend([left_box, right_box])
 
             if line_color_alpha > 0 and line_thickness > 0:
                 left_line = (
-                    "drawbox=round((iw-(ih*{}))/2):0:{}:ih:t=fill:c={}@{}"
+                    "drawbox=round(({width}-({height}*{ratio}))/2)"
+                    ":0:{l_thick}:{height}:t=fill:c={l_color}@{l_alpha}"
                 ).format(
-                    ratio, line_thickness, line_color_hex, line_color_alpha
+                    width=output_width,
+                    height=output_height,
+                    ratio=ratio,
+                    l_thick=line_thickness,
+                    l_color=line_color_hex,
+                    l_alpha=line_color_alpha
                 )
 
                 right_line = (
-                    "drawbox=iw-round((iw-(ih*{}))/2))"
-                    ":0:{}:ih:t=fill:c={}@{}"
+                    "drawbox={width}-round(({width}-({height}*{ratio}))/2)"
+                    ":0:{l_thick}:{height}:t=fill:c={l_color}@{l_alpha}"
                 ).format(
-                    ratio, line_thickness, line_color_hex, line_color_alpha
+                    width=output_width,
+                    height=output_height,
+                    ratio=ratio,
+                    l_thick=line_thickness,
+                    l_color=line_color_hex,
+                    l_alpha=line_color_alpha
                 )
-
                 output.extend([left_line, right_line])
-
-        else:
-            raise ValueError(
-                "Letterbox state \"{}\" is not recognized".format(state)
-            )
 
         return output
 
@@ -1078,6 +1127,20 @@ class ExtractReview(pyblish.api.InstancePlugin):
         set to new representation.
         """
         filters = []
+
+        # if reformat input video file is already reforamted from upstream
+        reformat_in_baking = bool("reformated" in new_repre["tags"])
+        self.log.debug("reformat_in_baking: `{}`".format(reformat_in_baking))
+
+        # Get instance data
+        pixel_aspect = temp_data["pixel_aspect"]
+
+        if reformat_in_baking:
+            self.log.debug((
+                "Using resolution from input. It is already "
+                "reformated from upstream process"
+            ))
+            pixel_aspect = 1
 
         # NOTE Skipped using instance's resolution
         full_input_path_single_file = temp_data["full_input_path_single_file"]
@@ -1096,11 +1159,25 @@ class ExtractReview(pyblish.api.InstancePlugin):
         # - there may be a better way (checking `codec_type`?)
         input_width = None
         input_height = None
+        output_width = None
+        output_height = None
         for stream in streams:
             if "width" in stream and "height" in stream:
                 input_width = int(stream["width"])
                 input_height = int(stream["height"])
                 break
+
+        # Get instance data
+        pixel_aspect = temp_data["pixel_aspect"]
+
+        if reformat_in_baking:
+            self.log.debug((
+                "Using resolution from input. It is already "
+                "reformated from upstream process"
+            ))
+            pixel_aspect = 1
+            output_width = input_width
+            output_height = input_height
 
         # Raise exception of any stream didn't define input resolution
         if input_width is None:
@@ -1110,8 +1187,8 @@ class ExtractReview(pyblish.api.InstancePlugin):
 
         # NOTE Setting only one of `width` or `heigth` is not allowed
         # - settings value can't have None but has value of 0
-        output_width = output_def.get("width") or None
-        output_height = output_def.get("height") or None
+        output_width = output_width or output_def.get("width") or None
+        output_height = output_height or output_def.get("height") or None
 
         # Overscal color
         overscan_color_value = "black"
@@ -1140,12 +1217,6 @@ class ExtractReview(pyblish.api.InstancePlugin):
             if output_width is None or output_height is None:
                 output_width = input_width
                 output_height = input_height
-
-        letter_box_def = output_def["letter_box"]
-        letter_box_enabled = letter_box_def["enabled"]
-
-        # Get instance data
-        pixel_aspect = temp_data["pixel_aspect"]
 
         # Make sure input width and height is not an odd number
         input_width_is_odd = bool(input_width % 2 != 0)
@@ -1205,6 +1276,9 @@ class ExtractReview(pyblish.api.InstancePlugin):
             "Output resolution is {}x{}".format(output_width, output_height)
         )
 
+        letter_box_def = output_def["letter_box"]
+        letter_box_enabled = letter_box_def["enabled"]
+
         # Skip processing if resolution is same as input's and letterbox is
         # not set
         if (
@@ -1248,25 +1322,6 @@ class ExtractReview(pyblish.api.InstancePlugin):
             "scale_factor_by_height: `{}`".format(scale_factor_by_height)
         )
 
-        # letter_box
-        if letter_box_enabled:
-            filters.extend([
-                "scale={}x{}:flags=lanczos".format(
-                    output_width, output_height
-                ),
-                "setsar=1"
-            ])
-            filters.extend(
-                self.get_letterbox_filters(
-                    letter_box_def,
-                    input_res_ratio,
-                    output_res_ratio,
-                    pixel_aspect,
-                    scale_factor_by_width,
-                    scale_factor_by_height
-                )
-            )
-
         # scaling none square pixels and 1920 width
         if (
             input_height != output_height
@@ -1304,6 +1359,16 @@ class ExtractReview(pyblish.api.InstancePlugin):
                 ),
                 "setsar=1"
             ])
+
+        # letter_box
+        if letter_box_enabled:
+            filters.extend(
+                self.get_letterbox_filters(
+                    letter_box_def,
+                    output_width,
+                    output_height
+                )
+            )
 
         new_repre["resolutionWidth"] = output_width
         new_repre["resolutionHeight"] = output_height

@@ -4,11 +4,11 @@ import logging
 from collections import defaultdict
 
 from Qt import QtCore, QtGui
-from avalon import api, io, style, schema
-from avalon.vendor import qtawesome
+import qtawesome
 
+from avalon import api, io, style, schema
 from avalon.lib import HeroVersionType
-from avalon.tools.models import TreeModel, Item
+from openpype.tools.utils.models import TreeModel, Item
 
 from .lib import (
     get_site_icons,

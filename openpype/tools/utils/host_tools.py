@@ -3,8 +3,9 @@
 It is possible to create `HostToolsHelper` in host implementation or
 use singleton approach with global functions (using helper anyway).
 """
-
+import os
 import avalon.api
+import pyblish.api
 from .lib import qt_app_context
 
 
@@ -196,10 +197,29 @@ class HostToolsHelper:
             library_loader_tool.refresh()
 
     def show_publish(self, parent=None):
-        """Publish UI."""
-        from avalon.tools import publish
+        """Try showing the most desirable publish GUI
 
-        publish.show(parent)
+        This function cycles through the currently registered
+        graphical user interfaces, if any, and presents it to
+        the user.
+        """
+
+        pyblish_show = self._discover_pyblish_gui()
+        return pyblish_show(parent)
+
+    def _discover_pyblish_gui(self):
+        """Return the most desirable of the currently registered GUIs"""
+        # Prefer last registered
+        guis = list(reversed(pyblish.api.registered_guis()))
+        for gui in guis:
+            try:
+                gui = __import__(gui).show
+            except (ImportError, AttributeError):
+                continue
+            else:
+                return gui
+
+        raise ImportError("No Pyblish GUI found")
 
     def get_look_assigner_tool(self, parent):
         """Create, cache and return look assigner tool window."""
@@ -394,3 +414,11 @@ def show_publish(parent=None):
 
 def show_experimental_tools_dialog(parent=None):
     _SingletonPoint.show_tool_by_name("experimental_tools", parent)
+
+
+def get_pyblish_icon():
+    pyblish_dir = os.path.abspath(os.path.dirname(pyblish.api.__file__))
+    icon_path = os.path.join(pyblish_dir, "icons", "logo-32x32.svg")
+    if os.path.exists(icon_path):
+        return icon_path
+    return None

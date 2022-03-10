@@ -2,6 +2,7 @@ import os
 
 import pyblish.api
 import openpype.api
+from openpype.pipeline import PublishXmlValidationError
 import openpype.hosts.harmony.api as harmony
 
 
@@ -45,4 +46,11 @@ class ValidateInstance(pyblish.api.InstancePlugin):
             "Instance asset is not the same as current asset:"
             f"\nInstance: {instance_asset}\nCurrent: {current_asset}"
         )
-        assert instance_asset == current_asset, msg
+
+        formatting_data = {
+            "found": instance_asset,
+            "expected": current_asset
+        }
+        if instance_asset != current_asset:
+            raise PublishXmlValidationError(self, msg,
+                                            formatting_data=formatting_data)
