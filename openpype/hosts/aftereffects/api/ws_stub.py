@@ -155,10 +155,12 @@ class AfterEffectsServerStub():
         item_ids = [int(item.id) for item in all_items]
         cleaned_data = []
         for meta in result_meta:
-            # for creation of instance OR loaded container
-            if 'instance' in meta.get('id') or \
-                    int(meta.get('members')[0]) in item_ids:
-                cleaned_data.append(meta)
+            # do not added instance with nonexistend item id
+            if meta.get("members"):
+                if int(meta["members"][0]) not in item_ids:
+                    continue
+
+            cleaned_data.append(meta)
 
         payload = json.dumps(cleaned_data, indent=4)
 

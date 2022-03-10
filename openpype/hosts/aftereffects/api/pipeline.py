@@ -9,6 +9,7 @@ from avalon import io, pipeline
 
 from openpype import lib
 from openpype.api import Logger
+from openpype.pipeline import LegacyCreator
 import openpype.hosts.aftereffects
 from openpype.pipeline import BaseCreator
 
@@ -34,7 +35,7 @@ def install():
     pyblish.api.register_plugin_path(PUBLISH_PATH)
 
     avalon.api.register_plugin_path(avalon.api.Loader, LOAD_PATH)
-    avalon.api.register_plugin_path(avalon.api.Creator, CREATE_PATH)
+    avalon.api.register_plugin_path(LegacyCreator, CREATE_PATH)
     avalon.api.register_plugin_path(BaseCreator, CREATE_PATH)
     log.info(PUBLISH_PATH)
 
@@ -48,7 +49,7 @@ def install():
 def uninstall():
     pyblish.api.deregister_plugin_path(PUBLISH_PATH)
     avalon.api.deregister_plugin_path(avalon.api.Loader, LOAD_PATH)
-    avalon.api.deregister_plugin_path(avalon.api.Creator, CREATE_PATH)
+    avalon.api.deregister_plugin_path(LegacyCreator, CREATE_PATH)
 
 
 def application_launch():
@@ -223,10 +224,8 @@ def list_instances():
     layers_meta = stub.get_metadata()
 
     for instance in layers_meta:
-        if instance.get("schema") and \
-                "container" in instance.get("schema"):
-            continue
-        instances.append(instance)
+        if instance.get("id") == "pyblish.avalon.instance":
+            instances.append(instance)
     return instances
 
 
@@ -263,12 +262,19 @@ def remove_instance(instance):
 
 # new publisher section
 def get_context_data():
-    print("get_context_data")
+    meta = _get_stub().get_metadata()
+    for item in meta:
+        if item.get("id") == "publish_context":
+            item.pop("id")
+            return item
+
     return {}
 
 
 def update_context_data(data, changes):
-    print("update_context_data")
+    item = data
+    item["id"] = "publish_context"
+    _get_stub().imprint(item["id"], item)
 
 
 def get_context_title():
