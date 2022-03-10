@@ -873,8 +873,6 @@ class PublisherController:
         """
         for idx, plugin in enumerate(self.publish_plugins):
             self._publish_progress = idx
-            # Add plugin to publish report
-            self._publish_report.add_plugin_iter(plugin, self._publish_context)
 
             # Reset current plugin validations error
             self._publish_current_plugin_validation_errors = None
@@ -901,6 +899,9 @@ class PublisherController:
                 and self._publish_validation_errors
             ):
                 yield MainThreadItem(self.stop_publish)
+
+            # Add plugin to publish report
+            self._publish_report.add_plugin_iter(plugin, self._publish_context)
 
             # Trigger callback that new plugin is going to be processed
             self._trigger_callbacks(

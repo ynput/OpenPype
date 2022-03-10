@@ -8,7 +8,7 @@ try:
 except Exception:
     commonmark = None
 from Qt import QtWidgets, QtCore, QtGui
-
+from openpype.lib import TaskNotSetError
 from openpype.pipeline.create import (
     CreatorError,
     SUBSET_NAME_ALLOWED_SYMBOLS
@@ -563,10 +563,9 @@ class CreateDialog(QtWidgets.QDialog):
         if variant_value is None:
             variant_value = self.variant_input.text()
 
-        match = self._compiled_name_pattern.match(variant_value)
-        valid = bool(match)
-        self.create_btn.setEnabled(valid)
-        if not valid:
+        self.create_btn.setEnabled(True)
+        if not self._compiled_name_pattern.match(variant_value):
+            self.create_btn.setEnabled(False)
             self._set_variant_state_property("invalid")
             self.subset_name_input.setText("< Invalid variant >")
             return
@@ -576,9 +575,16 @@ class CreateDialog(QtWidgets.QDialog):
 
         asset_doc = copy.deepcopy(self._asset_doc)
         # Calculate subset name with Creator plugin
-        subset_name = self._selected_creator.get_subset_name(
-            variant_value, task_name, asset_doc, project_name
-        )
+        try:
+            subset_name = self._selected_creator.get_subset_name(
+                variant_value, task_name, asset_doc, project_name
+            )
+        except TaskNotSetError:
+            self.create_btn.setEnabled(False)
+            self._set_variant_state_property("invalid")
+            self.subset_name_input.setText("< Missing task >")
+            return
+
         self.subset_name_input.setText(subset_name)
 
         self._validate_subset_name(subset_name, variant_value)
