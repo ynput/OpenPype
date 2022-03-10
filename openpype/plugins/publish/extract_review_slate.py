@@ -14,7 +14,7 @@ class ExtractReviewSlate(openpype.api.Extractor):
     families = ["slate", "review"]
     match = pyblish.api.Subset
 
-    hosts = ["nuke", "maya", "shell"]
+    hosts = ["nuke", "shell"]
     optional = True
 
     def process(self, instance):
@@ -59,13 +59,44 @@ class ExtractReviewSlate(openpype.api.Extractor):
             if "slate-frame" not in p_tags:
                 continue
 
+            # get repre file
+            stagingdir = repre["stagingDir"]
+            input_file = "{0}".format(repre["files"])
+            input_path = os.path.join(
+                os.path.normpath(stagingdir), repre["files"])
+            self.log.debug("__ input_path: {}".format(input_path))
+
+            video_streams = openpype.lib.ffprobe_streams(
+                input_path, self.log
+            )
+
+            # Try to find first stream with defined 'width' and 'height'
+            # - this is to avoid order of streams where audio can be as first
+            # - there may be a better way (checking `codec_type`?)
+            input_width = None
+            input_height = None
+            for stream in video_streams:
+                if "width" in stream and "height" in stream:
+                    input_width = int(stream["width"])
+                    input_height = int(stream["height"])
+                    break
+
+            # Raise exception of any stream didn't define input resolution
+            if input_width is None:
+                raise AssertionError((
+                    "FFprobe couldn't read resolution from input file: \"{}\""
+                ).format(input_path))
+
             # values are set in ExtractReview
             if use_legacy_code:
                 to_width = inst_data["reviewToWidth"]
                 to_height = inst_data["reviewToHeight"]
             else:
-                to_width = repre["resolutionWidth"]
-                to_height = repre["resolutionHeight"]
+                to_width = input_width
+                to_height = input_height
+
+            self.log.debug("to_width: `{}`".format(to_width))
+            self.log.debug("to_height: `{}`".format(to_height))
 
             # defining image ratios
             resolution_ratio = (
@@ -94,15 +125,9 @@ class ExtractReviewSlate(openpype.api.Extractor):
 
             _remove_at_end = []
 
-            stagingdir = repre["stagingDir"]
-            input_file = "{0}".format(repre["files"])
-
             ext = os.path.splitext(input_file)[1]
             output_file = input_file.replace(ext, "") + suffix + ext
 
-            input_path = os.path.join(
-                os.path.normpath(stagingdir), repre["files"])
-            self.log.debug("__ input_path: {}".format(input_path))
             _remove_at_end.append(input_path)
 
             output_path = os.path.join(
