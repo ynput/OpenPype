@@ -372,8 +372,21 @@ class ExtractReviewSlate(openpype.api.Extractor):
 
         profile_name = no_audio_stream.get("profile")
         if profile_name:
-            profile_name = profile_name.replace(" ", "_").lower()
-            codec_args.append("-profile:v {}".format(profile_name))
+            # Rest of arguments is prores_kw specific
+            if codec_name == "prores_ks":
+                codec_tag_to_profile_map = {
+                    "apco": "proxy",
+                    "apcs": "lt",
+                    "apcn": "standard",
+                    "apch": "hq",
+                    "ap4h": "4444",
+                    "ap4x": "4444xq"
+                }
+                codec_tag_str = no_audio_stream.get("codec_tag_string")
+                if codec_tag_str:
+                    profile = codec_tag_to_profile_map.get(codec_tag_str)
+                    if profile:
+                        codec_args.extend(["-profile:v", profile])
 
         pix_fmt = no_audio_stream.get("pix_fmt")
         if pix_fmt:
