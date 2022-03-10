@@ -12,3 +12,9 @@ CUST_ATTR_APPLICATIONS = "applications"
 CUST_ATTR_TOOLS = "tools_env"
 # Intent custom attribute name
 CUST_ATTR_INTENT = "intent"
+
+FPS_KEYS = {
+    "fps",
+    # For development purposes
+    "fps_string"
+}

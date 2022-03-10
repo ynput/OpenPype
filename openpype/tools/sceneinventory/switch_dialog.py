@@ -1,9 +1,9 @@
 import collections
 import logging
 from Qt import QtWidgets, QtCore
+import qtawesome
 
 from avalon import io, api, pipeline
-from avalon.vendor import qtawesome
 
 from .widgets import (
     ButtonWithMenu,

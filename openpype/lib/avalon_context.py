@@ -644,6 +644,166 @@ def get_workdir(
     )
 
 
+def template_data_from_session(session=None):
+    """ Return dictionary with template from session keys.
+
+    Args:
+        session (dict, Optional): The Session to use. If not provided use the
+            currently active global Session.
+    Returns:
+        dict: All available data from session.
+    """
+    from avalon import io
+    import avalon.api
+
+    if session is None:
+        session = avalon.api.Session
+
+    project_name = session["AVALON_PROJECT"]
+    project_doc = io._database[project_name].find_one({"type": "project"})
+    asset_doc = io._database[project_name].find_one({
+        "type": "asset",
+        "name": session["AVALON_ASSET"]
+    })
+    task_name = session["AVALON_TASK"]
+    host_name = session["AVALON_APP"]
+    return get_workdir_data(project_doc, asset_doc, task_name, host_name)
+
+
+def compute_session_changes(
+    session, task=None, asset=None, app=None, template_key=None
+):
+    """Compute the changes for a Session object on asset, task or app switch
+
+    This does *NOT* update the Session object, but returns the changes
+    required for a valid update of the Session.
+
+    Args:
+        session (dict): The initial session to compute changes to.
+            This is required for computing the full Work Directory, as that
+            also depends on the values that haven't changed.
+        task (str, Optional): Name of task to switch to.
+        asset (str or dict, Optional): Name of asset to switch to.
+            You can also directly provide the Asset dictionary as returned
+            from the database to avoid an additional query. (optimization)
+        app (str, Optional): Name of app to switch to.
+
+    Returns:
+        dict: The required changes in the Session dictionary.
+
+    """
+    changes = dict()
+
+    # If no changes, return directly
+    if not any([task, asset, app]):
+        return changes
+
+    # Get asset document and asset
+    asset_document = None
+    asset_tasks = None
+    if isinstance(asset, dict):
+        # Assume asset database document
+        asset_document = asset
+        asset_tasks = asset_document.get("data", {}).get("tasks")
+        asset = asset["name"]
+
+    if not asset_document or not asset_tasks:
+        from avalon import io
+
+        # Assume asset name
+        asset_document = io.find_one(
+            {
+                "name": asset,
+                "type": "asset"
+            },
+            {"data.tasks": True}
+        )
+        assert asset_document, "Asset must exist"
+
+    # Detect any changes compared session
+    mapping = {
+        "AVALON_ASSET": asset,
+        "AVALON_TASK": task,
+        "AVALON_APP": app,
+    }
+    changes = {
+        key: value
+        for key, value in mapping.items()
+        if value and value != session.get(key)
+    }
+    if not changes:
+        return changes
+
+    # Compute work directory (with the temporary changed session so far)
+    _session = session.copy()
+    _session.update(changes)
+
+    changes["AVALON_WORKDIR"] = get_workdir_from_session(_session)
+
+    return changes
+
+
+def get_workdir_from_session(session=None, template_key=None):
+    import avalon.api
+
+    if session is None:
+        session = avalon.api.Session
+    project_name = session["AVALON_PROJECT"]
+    host_name = session["AVALON_APP"]
+    anatomy = Anatomy(project_name)
+    template_data = template_data_from_session(session)
+    anatomy_filled = anatomy.format(template_data)
+
+    if not template_key:
+        task_type = template_data["task"]["type"]
+        template_key = get_workfile_template_key(
+            task_type,
+            host_name,
+            project_name=project_name
+        )
+    return anatomy_filled[template_key]["folder"]
+
+
+def update_current_task(task=None, asset=None, app=None, template_key=None):
+    """Update active Session to a new task work area.
+
+    This updates the live Session to a different `asset`, `task` or `app`.
+
+    Args:
+        task (str): The task to set.
+        asset (str): The asset to set.
+        app (str): The app to set.
+
+    Returns:
+        dict: The changed key, values in the current Session.
+
+    """
+    import avalon.api
+    from avalon.pipeline import emit
+
+    changes = compute_session_changes(
+        avalon.api.Session,
+        task=task,
+        asset=asset,
+        app=app,
+        template_key=template_key
+    )
+
+    # Update the Session and environments. Pop from environments all keys with
+    # value set to None.
+    for key, value in changes.items():
+        avalon.api.Session[key] = value
+        if value is None:
+            os.environ.pop(key, None)
+        else:
+            os.environ[key] = value
+
+    # Emit session change
+    emit("taskChanged", changes.copy())
+
+    return changes
+
+
 @with_avalon
 def get_workfile_doc(asset_id, task_name, filename, dbcon=None):
     """Return workfile document for entered context.
@@ -952,7 +1112,7 @@ class BuildWorkfile:
         Returns:
             (dict): preset per entered task name
         """
-        host_name = avalon.api.registered_host().__name__.rsplit(".", 1)[-1]
+        host_name = os.environ["AVALON_APP"]
         project_settings = get_project_settings(
             avalon.io.Session["AVALON_PROJECT"]
         )

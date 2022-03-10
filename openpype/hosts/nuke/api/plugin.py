@@ -6,10 +6,8 @@ import nuke
 
 import avalon.api
 
-from openpype.api import (
-    get_current_project_settings,
-    PypeCreatorMixin
-)
+from openpype.api import get_current_project_settings
+from openpype.pipeline import LegacyCreator
 from .lib import (
     Knobby,
     check_subsetname_exists,
@@ -20,7 +18,7 @@ from .lib import (
 )
 
 
-class OpenPypeCreator(PypeCreatorMixin, avalon.api.Creator):
+class OpenPypeCreator(LegacyCreator):
     """Pype Nuke Creator class wrapper"""
     node_color = "0xdfea5dff"
 
@@ -152,6 +150,7 @@ class ExporterReview(object):
 
     """
     data = None
+    publish_on_farm = False
 
     def __init__(self,
                  klass,
@@ -209,6 +208,9 @@ class ExporterReview(object):
 
         if self.multiple_presets:
             repre["outputName"] = self.name
+
+        if self.publish_on_farm:
+            repre["tags"].append("publish_on_farm")
 
         self.data["representations"].append(repre)
 
@@ -446,6 +448,9 @@ class ExporterReviewMov(ExporterReview):
         return path
 
     def generate_mov(self, farm=False, **kwargs):
+        self.publish_on_farm = farm
+        reformat_node_add = kwargs["reformat_node_add"]
+        reformat_node_config = kwargs["reformat_node_config"]
         bake_viewer_process = kwargs["bake_viewer_process"]
         bake_viewer_input_process_node = kwargs[
             "bake_viewer_input_process"]
@@ -482,6 +487,30 @@ class ExporterReviewMov(ExporterReview):
         self._temp_nodes[subset].append(r_node)
         self.previous_node = r_node
         self.log.debug("Read...   `{}`".format(self._temp_nodes[subset]))
+
+        # add reformat node
+        if reformat_node_add:
+            # append reformated tag
+            add_tags.append("reformated")
+
+            rf_node = nuke.createNode("Reformat")
+            for kn_conf in reformat_node_config:
+                _type = kn_conf["type"]
+                k_name = str(kn_conf["name"])
+                k_value = kn_conf["value"]
+
+                # to remove unicode as nuke doesn't like it
+                if _type == "string":
+                    k_value = str(kn_conf["value"])
+
+                rf_node[k_name].setValue(k_value)
+
+            # connect
+            rf_node.setInput(0, self.previous_node)
+            self._temp_nodes[subset].append(rf_node)
+            self.previous_node = rf_node
+            self.log.debug(
+                "Reformat...   `{}`".format(self._temp_nodes[subset]))
 
         # only create colorspace baking if toggled on
         if bake_viewer_process:
@@ -537,7 +566,7 @@ class ExporterReviewMov(ExporterReview):
         # ---------- end nodes creation
 
         # ---------- render or save to nk
-        if farm:
+        if self.publish_on_farm:
             nuke.scriptSave()
             path_nk = self.save_file()
             self.data.update({
@@ -547,11 +576,12 @@ class ExporterReviewMov(ExporterReview):
             })
         else:
             self.render(write_node.name())
-            # ---------- generate representation data
-            self.get_representation_data(
-                tags=["review", "delete"] + add_tags,
-                range=True
-            )
+
+        # ---------- generate representation data
+        self.get_representation_data(
+            tags=["review", "delete"] + add_tags,
+            range=True
+        )
 
         self.log.debug("Representation...   `{}`".format(self.data))
 

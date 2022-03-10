@@ -8,6 +8,7 @@ import bpy
 
 from avalon import api
 from openpype import lib
+from openpype.pipeline import legacy_create
 from openpype.hosts.blender.api import plugin
 from openpype.hosts.blender.api.pipeline import (
     AVALON_CONTAINERS,
@@ -159,7 +160,7 @@ class BlendLayoutLoader(plugin.AssetLoader):
                     raise ValueError("Creator plugin \"CreateAnimation\" was "
                                      "not found.")
 
-                api.create(
+                legacy_create(
                     creator_plugin,
                     name=local_obj.name.split(':')[-1] + "_animation",
                     asset=asset,

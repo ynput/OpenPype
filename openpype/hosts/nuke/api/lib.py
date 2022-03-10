@@ -1,6 +1,5 @@
 import os
 import re
-import sys
 import six
 import platform
 import contextlib
@@ -679,10 +678,10 @@ def get_render_path(node):
     }
 
     nuke_imageio_writes = get_created_node_imageio_setting(**data_preset)
+    host_name = os.environ.get("AVALON_APP")
 
-    application = lib.get_application(os.environ["AVALON_APP_NAME"])
     data.update({
-        "application": application,
+        "app": host_name,
         "nuke_imageio_writes": nuke_imageio_writes
     })
 
@@ -805,18 +804,14 @@ def create_write_node(name, data, input=None, prenodes=None,
     '''
 
     imageio_writes = get_created_node_imageio_setting(**data)
-    app_manager = ApplicationManager()
-    app_name = os.environ.get("AVALON_APP_NAME")
-    if app_name:
-        app = app_manager.applications.get(app_name)
-
     for knob in imageio_writes["knobs"]:
         if knob["name"] == "file_type":
             representation = knob["value"]
 
+    host_name = os.environ.get("AVALON_APP")
     try:
         data.update({
-            "app": app.host_name,
+            "app": host_name,
             "imageio_writes": imageio_writes,
             "representation": representation,
         })
