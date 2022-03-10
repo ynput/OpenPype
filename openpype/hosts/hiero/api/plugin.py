@@ -1,12 +1,15 @@
-import re
 import os
+import re
+from copy import deepcopy
+
 import hiero
+
 from Qt import QtWidgets, QtCore
-from avalon.vendor import qargparse
+import qargparse
 import avalon.api as avalon
 import openpype.api as openpype
+from openpype.pipeline import LegacyCreator
 from . import lib
-from copy import deepcopy
 
 log = openpype.Logger().get_logger(__name__)
 
@@ -589,7 +592,7 @@ class ClipLoader:
         return track_item
 
 
-class Creator(openpype.Creator):
+class Creator(LegacyCreator):
     """Creator class wrapper
     """
     clip_color = "Purple"

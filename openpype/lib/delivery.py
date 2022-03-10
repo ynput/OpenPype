@@ -71,15 +71,14 @@ def path_from_representation(representation, anatomy):
 
 def copy_file(src_path, dst_path):
     """Hardlink file if possible(to save space), copy if not"""
-    from avalon.vendor import filelink  # safer importing
+    from openpype.lib import create_hard_link  # safer importing
 
     if os.path.exists(dst_path):
         return
     try:
-        filelink.create(
+        create_hard_link(
             src_path,
-            dst_path,
-            filelink.HARDLINK
+            dst_path
         )
     except OSError:
         shutil.copyfile(src_path, dst_path)

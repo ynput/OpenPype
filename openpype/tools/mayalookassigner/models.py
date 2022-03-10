@@ -1,8 +1,8 @@
 from collections import defaultdict
 
 from Qt import QtCore
+import qtawesome
 
-from avalon.vendor import qtawesome
 from avalon.style import colors
 from openpype.tools.utils import models
 

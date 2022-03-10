@@ -8,8 +8,8 @@ from avalon import (
     schema
 )
 from Qt import QtCore, QtGui
+import qtawesome
 
-from avalon.vendor import qtawesome
 from avalon.lib import HeroVersionType
 
 from openpype.tools.utils.models import TreeModel, Item

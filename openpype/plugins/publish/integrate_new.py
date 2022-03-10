@@ -13,12 +13,14 @@ from pymongo import DeleteOne, InsertOne
 import pyblish.api
 from avalon import io
 from avalon.api import format_template_with_optional_keys
-from avalon.vendor import filelink
 import openpype.api
 from datetime import datetime
 # from pype.modules import ModulesManager
 from openpype.lib.profiles_filtering import filter_profiles
-from openpype.lib import prepare_template_data
+from openpype.lib import (
+    prepare_template_data,
+    create_hard_link
+)
 
 # this is needed until speedcopy for linux is fixed
 if sys.platform == "win32":
@@ -196,10 +198,14 @@ class IntegrateAssetNew(pyblish.api.InstancePlugin):
                 "short": task_code
             }
 
-        else:
+        elif "task" in anatomy_data:
             # Just set 'task_name' variable to context task
             task_name = anatomy_data["task"]["name"]
             task_type = anatomy_data["task"]["type"]
+
+        else:
+            task_name = None
+            task_type = None
 
         # Fill family in anatomy data
         anatomy_data["family"] = instance.data.get("family")
@@ -737,7 +743,7 @@ class IntegrateAssetNew(pyblish.api.InstancePlugin):
                 self.log.critical("An unexpected error occurred.")
                 six.reraise(*sys.exc_info())
 
-        filelink.create(src, dst, filelink.HARDLINK)
+        create_hard_link(src, dst)
 
     def get_subset(self, asset, instance):
         subset_name = instance.data["subset"]
@@ -823,8 +829,12 @@ class IntegrateAssetNew(pyblish.api.InstancePlugin):
         #   - is there a chance that task name is not filled in anatomy
         #       data?
         #   - should we use context task in that case?
-        task_name = instance.data["anatomyData"]["task"]["name"]
-        task_type = instance.data["anatomyData"]["task"]["type"]
+        anatomy_data = instance.data["anatomyData"]
+        task_name = None
+        task_type = None
+        if "task" in anatomy_data:
+            task_name = anatomy_data["task"]["name"]
+            task_type = anatomy_data["task"]["type"]
         filtering_criteria = {
             "families": instance.data["family"],
             "hosts": instance.context.data["hostName"],

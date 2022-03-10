@@ -4,9 +4,9 @@ import re
 import copy
 import collections
 from Qt import QtWidgets, QtCore, QtGui
+import qtawesome
 
-from avalon.vendor import qtawesome
-
+from openpype.lib import TaskNotSetError
 from openpype.widgets.attribute_defs import create_widget_for_attr_def
 from openpype.tools import resources
 from openpype.tools.flickcharm import FlickCharm
@@ -471,6 +471,28 @@ class AssetsField(BaseClickableFrame):
         self.set_selected_items(self._origin_value)
 
 
+class TasksComboboxProxy(QtCore.QSortFilterProxyModel):
+    def __init__(self, *args, **kwargs):
+        super(TasksComboboxProxy, self).__init__(*args, **kwargs)
+        self._filter_empty = False
+
+    def set_filter_empty(self, filter_empty):
+        if self._filter_empty is filter_empty:
+            return
+        self._filter_empty = filter_empty
+        self.invalidate()
+
+    def filterAcceptsRow(self, source_row, parent_index):
+        if self._filter_empty:
+            model = self.sourceModel()
+            source_index = model.index(
+                source_row, self.filterKeyColumn(), parent_index
+            )
+            if not source_index.data(QtCore.Qt.DisplayRole):
+                return False
+        return True
+
+
 class TasksCombobox(QtWidgets.QComboBox):
     """Combobox to show tasks for selected instances.
 
@@ -490,13 +512,16 @@ class TasksCombobox(QtWidgets.QComboBox):
         delegate = QtWidgets.QStyledItemDelegate()
         self.setItemDelegate(delegate)
 
-        model = TasksModel(controller)
-        self.setModel(model)
+        model = TasksModel(controller, True)
+        proxy_model = TasksComboboxProxy()
+        proxy_model.setSourceModel(model)
+        self.setModel(proxy_model)
 
         self.currentIndexChanged.connect(self._on_index_change)
 
         self._delegate = delegate
         self._model = model
+        self._proxy_model = proxy_model
         self._origin_value = []
         self._origin_selection = []
         self._selected_items = []
@@ -506,6 +531,14 @@ class TasksCombobox(QtWidgets.QComboBox):
         self._is_valid = True
 
         self._text = None
+
+    def set_invalid_empty_task(self, invalid=True):
+        self._proxy_model.set_filter_empty(invalid)
+        if invalid:
+            self._set_is_valid(False)
+            self.set_text("< One or more subsets require Task selected >")
+        else:
+            self.set_text(None)
 
     def set_multiselection_text(self, text):
         """Change text shown when multiple different tasks are in context."""
@@ -596,6 +629,8 @@ class TasksCombobox(QtWidgets.QComboBox):
         self._ignore_index_change = True
 
         self._model.set_asset_names(asset_names)
+        self._proxy_model.set_filter_empty(False)
+        self._proxy_model.sort(0)
 
         self._ignore_index_change = False
 
@@ -641,6 +676,9 @@ class TasksCombobox(QtWidgets.QComboBox):
             asset_task_combinations (list): List of tuples. Each item in
                 the list contain asset name and task name.
         """
+        self._proxy_model.set_filter_empty(False)
+        self._proxy_model.sort(0)
+
         if asset_task_combinations is None:
             asset_task_combinations = []
 
@@ -932,7 +970,7 @@ class GlobalAttrsWidget(QtWidgets.QWidget):
         family_value_widget.set_value()
         subset_value_widget.set_value()
 
-        submit_btn = QtWidgets.QPushButton("Submit", self)
+        submit_btn = QtWidgets.QPushButton("Confirm", self)
         cancel_btn = QtWidgets.QPushButton("Cancel", self)
         submit_btn.setEnabled(False)
         cancel_btn.setEnabled(False)
@@ -998,7 +1036,33 @@ class GlobalAttrsWidget(QtWidgets.QWidget):
 
         project_name = self.controller.project_name
         subset_names = set()
+        invalid_tasks = False
         for instance in self._current_instances:
+            new_variant_value = instance.get("variant")
+            new_asset_name = instance.get("asset")
+            new_task_name = instance.get("task")
+            if variant_value is not None:
+                new_variant_value = variant_value
+
+            if asset_name is not None:
+                new_asset_name = asset_name
+
+            if task_name is not None:
+                new_task_name = task_name
+
+            asset_doc = asset_docs_by_name[new_asset_name]
+
+            try:
+                new_subset_name = instance.creator.get_subset_name(
+                    new_variant_value, new_task_name, asset_doc, project_name
+                )
+            except TaskNotSetError:
+                invalid_tasks = True
+                instance.set_task_invalid(True)
+                subset_names.add(instance["subset"])
+                continue
+
+            subset_names.add(new_subset_name)
             if variant_value is not None:
                 instance["variant"] = variant_value
 
@@ -1007,25 +1071,18 @@ class GlobalAttrsWidget(QtWidgets.QWidget):
                 instance.set_asset_invalid(False)
 
             if task_name is not None:
-                instance["task"] = task_name
+                instance["task"] = task_name or None
                 instance.set_task_invalid(False)
 
-            new_variant_value = instance.get("variant")
-            new_asset_name = instance.get("asset")
-            new_task_name = instance.get("task")
-
-            asset_doc = asset_docs_by_name[new_asset_name]
-
-            new_subset_name = instance.creator.get_subset_name(
-                new_variant_value, new_task_name, asset_doc, project_name
-            )
-            subset_names.add(new_subset_name)
             instance["subset"] = new_subset_name
+
+        if invalid_tasks:
+            self.task_value_widget.set_invalid_empty_task()
 
         self.subset_value_widget.set_value(subset_names)
 
         self._set_btns_enabled(False)
-        self._set_btns_visible(False)
+        self._set_btns_visible(invalid_tasks)
 
         self.instance_context_changed.emit()
 
@@ -1098,7 +1155,7 @@ class GlobalAttrsWidget(QtWidgets.QWidget):
             variants.add(instance.get("variant") or self.unknown_value)
             families.add(instance.get("family") or self.unknown_value)
             asset_name = instance.get("asset") or self.unknown_value
-            task_name = instance.get("task") or self.unknown_value
+            task_name = instance.get("task") or ""
             asset_names.add(asset_name)
             asset_task_combinations.append((asset_name, task_name))
             subset_names.add(instance.get("subset") or self.unknown_value)
