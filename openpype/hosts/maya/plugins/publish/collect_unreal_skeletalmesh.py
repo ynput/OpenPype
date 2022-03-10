@@ -13,11 +13,6 @@ class CollectUnrealSkeletalMesh(pyblish.api.InstancePlugin):
     families = ["skeletalMesh"]
 
     def process(self, instance):
-        # set fbx overrides on instance
-        instance.data["smoothingGroups"] = True
-        instance.data["smoothMesh"] = True
-        instance.data["triangulate"] = True
-
         frame = cmds.currentTime(query=True)
         instance.data["frameStart"] = frame
         instance.data["frameEnd"] = frame

@@ -44,11 +44,6 @@ class CollectUnrealStaticMesh(pyblish.api.InstancePlugin):
         self.log.info("collisions: {}".format(
             pformat(instance.data.get("collisionMembers"))))
 
-        # set fbx overrides on instance
-        instance.data["smoothingGroups"] = True
-        instance.data["smoothMesh"] = True
-        instance.data["triangulate"] = True
-
         frame = cmds.currentTime(query=True)
         instance.data["frameStart"] = frame
         instance.data["frameEnd"] = frame

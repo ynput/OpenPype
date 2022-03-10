@@ -84,10 +84,10 @@ class FBXExtractor:
 
         return {
             "cameras": False,
-            "smoothingGroups": False,
+            "smoothingGroups": True,
             "hardEdges": False,
             "tangents": False,
-            "smoothMesh": False,
+            "smoothMesh": True,
             "instances": False,
             "bakeComplexAnimation": True,
             "bakeComplexStart": start_frame,
@@ -101,7 +101,7 @@ class FBXExtractor:
             "skins": True,
             "constraints": False,
             "lights": True,
-            "embeddedTextures": True,
+            "embeddedTextures": False,
             "inputConnections": True,
             "upAxis": "y",
             "triangulate": False
