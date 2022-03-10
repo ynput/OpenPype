@@ -3,77 +3,10 @@ import os
 import pyblish.api
 import avalon.api
 
-from openpype.lib import get_subset_name
-
 ValidatePipelineOrder = pyblish.api.ValidatorOrder + 0.05
 ValidateContentsOrder = pyblish.api.ValidatorOrder + 0.1
 ValidateSceneOrder = pyblish.api.ValidatorOrder + 0.2
 ValidateMeshOrder = pyblish.api.ValidatorOrder + 0.3
-
-
-class PypeCreatorMixin:
-    """Helper to override avalon's default class methods.
-
-    Mixin class must be used as first in inheritance order to override methods.
-    """
-    dynamic_subset_keys = []
-
-    @classmethod
-    def get_dynamic_data(
-        cls, variant, task_name, asset_id, project_name, host_name
-    ):
-        """Return dynamic data for current Creator plugin.
-
-        By default return keys from `dynamic_subset_keys` attribute as mapping
-        to keep formatted template unchanged.
-
-        ```
-        dynamic_subset_keys = ["my_key"]
-        ---
-        output = {
-            "my_key": "{my_key}"
-        }
-        ```
-
-        Dynamic keys may override default Creator keys (family, task, asset,
-        ...) but do it wisely if you need.
-
-        All of keys will be converted into 3 variants unchanged, capitalized
-        and all upper letters. Because of that are all keys lowered.
-
-        This method can be modified to prefill some values just keep in mind it
-        is class method.
-
-        Returns:
-            dict: Fill data for subset name template.
-        """
-        dynamic_data = {}
-        for key in cls.dynamic_subset_keys:
-            key = key.lower()
-            dynamic_data[key] = "{" + key + "}"
-        return dynamic_data
-
-    @classmethod
-    def get_subset_name(
-        cls, variant, task_name, asset_id, project_name, host_name=None
-    ):
-        dynamic_data = cls.get_dynamic_data(
-            variant, task_name, asset_id, project_name, host_name
-        )
-
-        return get_subset_name(
-            cls.family,
-            variant,
-            task_name,
-            asset_id,
-            project_name,
-            host_name,
-            dynamic_data=dynamic_data
-        )
-
-
-class Creator(PypeCreatorMixin, avalon.api.Creator):
-    pass
 
 
 class ContextPlugin(pyblish.api.ContextPlugin):

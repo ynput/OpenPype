@@ -15,6 +15,7 @@ from openpype.api import (
     get_current_project_settings
 )
 from openpype.lib import register_event_callback
+from openpype.pipeline import LegacyCreator
 from openpype.tools.utils import host_tools
 
 from .command import viewer_update_and_undo_stop
@@ -99,7 +100,7 @@ def install():
     log.info("Registering Nuke plug-ins..")
     pyblish.api.register_plugin_path(PUBLISH_PATH)
     avalon.api.register_plugin_path(avalon.api.Loader, LOAD_PATH)
-    avalon.api.register_plugin_path(avalon.api.Creator, CREATE_PATH)
+    avalon.api.register_plugin_path(LegacyCreator, CREATE_PATH)
     avalon.api.register_plugin_path(avalon.api.InventoryAction, INVENTORY_PATH)
 
     # Register Avalon event for workfiles loading.
@@ -125,7 +126,7 @@ def uninstall():
     pyblish.deregister_host("nuke")
     pyblish.api.deregister_plugin_path(PUBLISH_PATH)
     avalon.api.deregister_plugin_path(avalon.api.Loader, LOAD_PATH)
-    avalon.api.deregister_plugin_path(avalon.api.Creator, CREATE_PATH)
+    avalon.api.deregister_plugin_path(LegacyCreator, CREATE_PATH)
 
     pyblish.api.deregister_callback(
         "instanceToggled", on_pyblish_instance_toggled)

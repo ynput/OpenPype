@@ -39,7 +39,7 @@ jobs:
       uses: heinrichreimer/github-changelog-generator-action@v2.2
       with:
         token: ${{ secrets.ADMIN_TOKEN }}
-        addSections: '{"tests":{"prefix":"### ✅ Testing","labels":["tests"]},"feature":{"prefix":"**🆕 New features**", "labels":["type: feature"]},"breaking":{"prefix":"**💥 Breaking**", "labels":["breaking"]},"enhancements":{"prefix":"**🚀 Enhancements**", "labels":["type: enhancement"]},"bugs":{"prefix":"**🐛 Bug fixes**", "labels":["type: bug"]},"deprecated":{"prefix":"**⚠️ Deprecations**", "labels":["depreciated"]},"documentation":{"prefix":"### 📖 Documentation","labels":["type: documentation"]}}'
+        addSections: '{"documentation":{"prefix":"### 📖 Documentation","labels":["type: documentation"]},"tests":{"prefix":"### ✅ Testing","labels":["tests"]},"feature":{"prefix":"**🆕 New features**", "labels":["type: feature"]},"breaking":{"prefix":"**💥 Breaking**", "labels":["breaking"]},"enhancements":{"prefix":"**🚀 Enhancements**", "labels":["type: enhancement"]},"bugs":{"prefix":"**🐛 Bug fixes**", "labels":["type: bug"]},"deprecated":{"prefix":"**⚠️ Deprecations**", "labels":["depreciated"]}, "refactor":{"prefix":"**🔀 Refactored code**", "labels":["refactor"]}}'
         issues: false
         issuesWoLabels: false
         sinceTag: "3.0.0"
@@ -81,7 +81,7 @@ jobs:
       uses: heinrichreimer/github-changelog-generator-action@v2.2
       with:
         token: ${{ secrets.ADMIN_TOKEN }}
-        addSections: '{"documentation":{"prefix":"### 📖 Documentation","labels":["type: documentation"]},"tests":{"prefix":"### ✅ Testing","labels":["tests"]},"feature":{"prefix":"**🆕 New features**", "labels":["type: feature"]},"breaking":{"prefix":"**💥 Breaking**", "labels":["breaking"]},"enhancements":{"prefix":"**🚀 Enhancements**", "labels":["type: enhancement"]},"bugs":{"prefix":"**🐛 Bug fixes**", "labels":["type: bug"]},"deprecated":{"prefix":"**⚠️ Deprecations**", "labels":["depreciated"]}}'
+        addSections: '{"documentation":{"prefix":"### 📖 Documentation","labels":["type: documentation"]},"tests":{"prefix":"### ✅ Testing","labels":["tests"]},"feature":{"prefix":"**🆕 New features**", "labels":["type: feature"]},"breaking":{"prefix":"**💥 Breaking**", "labels":["breaking"]},"enhancements":{"prefix":"**🚀 Enhancements**", "labels":["type: enhancement"]},"bugs":{"prefix":"**🐛 Bug fixes**", "labels":["type: bug"]},"deprecated":{"prefix":"**⚠️ Deprecations**", "labels":["depreciated"]}, "refactor":{"prefix":"**🔀 Refactored code**", "labels":["refactor"]}}'
         issues: false
         issuesWoLabels: false
         sinceTag: ${{ steps.version.outputs.last_release }}

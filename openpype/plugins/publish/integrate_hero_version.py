@@ -7,7 +7,7 @@ import shutil
 from pymongo import InsertOne, ReplaceOne
 import pyblish.api
 from avalon import api, io, schema
-from avalon.vendor import filelink
+from openpype.lib import create_hard_link
 
 
 class IntegrateHeroVersion(pyblish.api.InstancePlugin):
@@ -518,7 +518,7 @@ class IntegrateHeroVersion(pyblish.api.InstancePlugin):
 
         # First try hardlink and copy if paths are cross drive
         try:
-            filelink.create(src_path, dst_path, filelink.HARDLINK)
+            create_hard_link(src_path, dst_path)
             # Return when successful
             return
 

@@ -165,6 +165,7 @@ from .plugin_tools import (
 )
 
 from .path_tools import (
+    create_hard_link,
     version_up,
     get_version_from_path,
     get_last_version_from_path,
@@ -300,6 +301,7 @@ __all__ = [
     "get_unique_layer_name",
     "get_background_layers",
 
+    "create_hard_link",
     "version_up",
     "get_version_from_path",
     "get_last_version_from_path",

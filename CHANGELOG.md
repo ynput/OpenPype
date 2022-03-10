@@ -1,11 +1,12 @@
 # Changelog
 
-## [3.9.0-nightly.6](https://github.com/pypeclub/OpenPype/tree/HEAD)
+## [3.9.0-nightly.7](https://github.com/pypeclub/OpenPype/tree/HEAD)
 
 [Full Changelog](https://github.com/pypeclub/OpenPype/compare/3.8.2...HEAD)
 
 **Deprecated:**
 
+- AssetCreator: Remove the tool [\#2845](https://github.com/pypeclub/OpenPype/pull/2845)
 - Houdini: Remove unused code [\#2779](https://github.com/pypeclub/OpenPype/pull/2779)
 
 ### 📖 Documentation
@@ -16,21 +17,23 @@
 
 **🚀 Enhancements**
 
+- New: Validation exceptions [\#2841](https://github.com/pypeclub/OpenPype/pull/2841)
 - Ftrack: Can sync fps as string [\#2836](https://github.com/pypeclub/OpenPype/pull/2836)
+- General: Custom function for find executable [\#2822](https://github.com/pypeclub/OpenPype/pull/2822)
 - General: Color dialog UI fixes [\#2817](https://github.com/pypeclub/OpenPype/pull/2817)
+- global: letter box calculated on output as last process [\#2812](https://github.com/pypeclub/OpenPype/pull/2812)
 - Nuke: adding Reformat to baking mov plugin  [\#2811](https://github.com/pypeclub/OpenPype/pull/2811)
 - Manager: Update all to latest button [\#2805](https://github.com/pypeclub/OpenPype/pull/2805)
 - General: Set context environments for non host applications [\#2803](https://github.com/pypeclub/OpenPype/pull/2803)
-- Houdini: Remove duplicate ValidateOutputNode plug-in [\#2780](https://github.com/pypeclub/OpenPype/pull/2780)
 - Tray publisher: New Tray Publisher host \(beta\) [\#2778](https://github.com/pypeclub/OpenPype/pull/2778)
-- Slack: Added regex for filtering on subset names [\#2775](https://github.com/pypeclub/OpenPype/pull/2775)
-- Houdini: Implement Reset Frame Range [\#2770](https://github.com/pypeclub/OpenPype/pull/2770)
 - Flame: use Shot Name on segment for asset name [\#2751](https://github.com/pypeclub/OpenPype/pull/2751)
-- Houdini: Move Houdini Save Current File to beginning of ExtractorOrder [\#2747](https://github.com/pypeclub/OpenPype/pull/2747)
-- RoyalRender: Minor enhancements [\#2700](https://github.com/pypeclub/OpenPype/pull/2700)
 
 **🐛 Bug fixes**
 
+- WebPublisher: Fix username stored in DB [\#2852](https://github.com/pypeclub/OpenPype/pull/2852)
+- WebPublisher: Fix wrong number of frames for video file [\#2851](https://github.com/pypeclub/OpenPype/pull/2851)
+- Nuke: fix multiple baking profile farm publishing [\#2842](https://github.com/pypeclub/OpenPype/pull/2842)
+- Blender: Fixed parameters for FBX export of the camera [\#2840](https://github.com/pypeclub/OpenPype/pull/2840)
 - Maya: Stop creation of reviews for Cryptomattes [\#2832](https://github.com/pypeclub/OpenPype/pull/2832)
 - Deadline: Remove recreated event [\#2828](https://github.com/pypeclub/OpenPype/pull/2828)
 - Deadline: Added missing events folder [\#2827](https://github.com/pypeclub/OpenPype/pull/2827)
@@ -46,10 +49,6 @@
 - Ftrack: Unset task ids from asset versions before tasks are removed [\#2800](https://github.com/pypeclub/OpenPype/pull/2800)
 - Slack: fail gracefully if slack exception [\#2798](https://github.com/pypeclub/OpenPype/pull/2798)
 - Flame: Fix version string in default settings [\#2783](https://github.com/pypeclub/OpenPype/pull/2783)
-- Houdini: Fix open last workfile [\#2767](https://github.com/pypeclub/OpenPype/pull/2767)
-- Maya: Fix `unique\_namespace` when in an namespace that is empty [\#2759](https://github.com/pypeclub/OpenPype/pull/2759)
-- Maya: Remove some unused code [\#2709](https://github.com/pypeclub/OpenPype/pull/2709)
-- Multiple hosts: unify menu style across hosts [\#2693](https://github.com/pypeclub/OpenPype/pull/2693)
 
 **Merged pull requests:**
 

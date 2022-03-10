@@ -19,9 +19,9 @@ from openpype.api import (
     get_project_settings,
     get_asset)
 from openpype.modules import ModulesManager
+from openpype.pipeline import CreatorError
 
 from avalon.api import Session
-from avalon.api import CreatorError
 
 
 class CreateRender(plugin.Creator):

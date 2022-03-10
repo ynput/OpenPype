@@ -28,38 +28,50 @@ class StandaloneOverlayWidget(QtWidgets.QFrame):
         super(StandaloneOverlayWidget, self).__init__(publisher_window)
         self.setObjectName("OverlayFrame")
 
+        middle_frame = QtWidgets.QFrame(self)
+        middle_frame.setObjectName("ChooseProjectFrame")
+
+        content_widget = QtWidgets.QWidget(middle_frame)
+
         # Create db connection for projects model
         dbcon = AvalonMongoDB()
         dbcon.install()
 
-        header_label = QtWidgets.QLabel("Choose project", self)
+        header_label = QtWidgets.QLabel("Choose project", content_widget)
         header_label.setObjectName("ChooseProjectLabel")
         # Create project models and view
         projects_model = ProjectModel(dbcon)
         projects_proxy = ProjectSortFilterProxy()
         projects_proxy.setSourceModel(projects_model)
 
-        projects_view = QtWidgets.QListView(self)
+        projects_view = QtWidgets.QListView(content_widget)
+        projects_view.setObjectName("ChooseProjectView")
         projects_view.setModel(projects_proxy)
         projects_view.setEditTriggers(
             QtWidgets.QAbstractItemView.NoEditTriggers
         )
 
-        confirm_btn = QtWidgets.QPushButton("Choose", self)
+        confirm_btn = QtWidgets.QPushButton("Confirm", content_widget)
         btns_layout = QtWidgets.QHBoxLayout()
         btns_layout.addStretch(1)
         btns_layout.addWidget(confirm_btn, 0)
 
-        layout = QtWidgets.QGridLayout(self)
-        layout.addWidget(header_label, 0, 1, alignment=QtCore.Qt.AlignCenter)
-        layout.addWidget(projects_view, 1, 1)
-        layout.addLayout(btns_layout, 2, 1)
-        layout.setColumnStretch(0, 1)
-        layout.setColumnStretch(1, 0)
-        layout.setColumnStretch(2, 1)
-        layout.setRowStretch(0, 0)
-        layout.setRowStretch(1, 1)
-        layout.setRowStretch(2, 0)
+        content_layout = QtWidgets.QVBoxLayout(content_widget)
+        content_layout.setContentsMargins(0, 0, 0, 0)
+        content_layout.setSpacing(20)
+        content_layout.addWidget(header_label, 0)
+        content_layout.addWidget(projects_view, 1)
+        content_layout.addLayout(btns_layout, 0)
+
+        middle_layout = QtWidgets.QHBoxLayout(middle_frame)
+        middle_layout.setContentsMargins(30, 30, 10, 10)
+        middle_layout.addWidget(content_widget)
+
+        main_layout = QtWidgets.QHBoxLayout(self)
+        main_layout.setContentsMargins(10, 10, 10, 10)
+        main_layout.addStretch(1)
+        main_layout.addWidget(middle_frame, 2)
+        main_layout.addStretch(1)
 
         projects_view.doubleClicked.connect(self._on_double_click)
         confirm_btn.clicked.connect(self._on_confirm_click)

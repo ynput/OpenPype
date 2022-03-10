@@ -61,6 +61,7 @@ class _ModuleClass(object):
     def __init__(self, name):
         # Call setattr on super class
         super(_ModuleClass, self).__setattr__("name", name)
+        super(_ModuleClass, self).__setattr__("__name__", name)
 
         # Where modules and interfaces are stored
         super(_ModuleClass, self).__setattr__("__attributes__", dict())
@@ -72,7 +73,7 @@ class _ModuleClass(object):
         if attr_name not in self.__attributes__:
             if attr_name in ("__path__", "__file__"):
                 return None
-            raise ImportError("No module named {}.{}".format(
+            raise AttributeError("'{}' has not attribute '{}'".format(
                 self.name, attr_name
             ))
         return self.__attributes__[attr_name]

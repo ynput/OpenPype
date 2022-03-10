@@ -1266,6 +1266,12 @@ QScrollBar::add-page:vertical, QScrollBar::sub-page:vertical {
     font-size: 15pt;
     font-weight: 750;
 }
+#ChooseProjectFrame {
+    border-radius: 10px;
+}
+#ChooseProjectView {
+    background: transparent;
+}
 
 /* Globally used names */
 #Separator {

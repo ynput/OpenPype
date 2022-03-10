@@ -3,9 +3,9 @@ import collections
 
 import Qt
 from Qt import QtWidgets, QtCore, QtGui
+import qtawesome
 
 from avalon import style
-from avalon.vendor import qtawesome
 
 from openpype.style import get_objected_colors
 from openpype.tools.flickcharm import FlickCharm
