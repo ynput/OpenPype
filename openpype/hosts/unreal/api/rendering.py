@@ -37,7 +37,7 @@ def start_rendering():
     # instances = pipeline.ls_inst()
     instances = [
         a for a in assets
-        if a.get_class().get_name() == "AvalonPublishInstance"]
+        if a.get_class().get_name() == "OpenPypePublishInstance"]
 
     inst_data = []
 
