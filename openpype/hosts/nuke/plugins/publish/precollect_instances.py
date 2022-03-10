@@ -80,7 +80,7 @@ class PreCollectNukeInstances(pyblish.api.ContextPlugin):
             # Add all nodes in group instances.
             if node.Class() == "Group":
                 # only alter families for render family
-                if "write" in families_ak.lower():
+                if families_ak and "write" in families_ak.lower():
                     target = node["render"].value()
                     if target == "Use existing frames":
                         # Local rendering
