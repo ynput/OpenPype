@@ -59,10 +59,9 @@ class ExtractMayaSceneRaw(openpype.api.Extractor):
             members = instance[:]
 
         loaded_containers = None
-        if {f.lower() for f in self.add_for_families}.intersection(
-            {f.lower() for f in instance.data.get("families")},
-            {instance.data.get("family").lower()},
-        ):
+        if set(self.add_for_families).intersection(
+                set(instance.data.get("families")),
+                set(instance.data.get("family").lower())):
             loaded_containers = self._add_loaded_containers(members)
 
         selection = members
