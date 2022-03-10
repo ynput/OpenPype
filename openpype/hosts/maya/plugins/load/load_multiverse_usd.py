@@ -30,13 +30,24 @@ class MultiverseUsdLoader(api.Loader):
         cmds.loadPlugin("MultiverseForMaya", quiet=True)
 
         # Root group
-        label = "{}:{}".format(namespace, name)
-        root = cmds.group(name=label, empty=True)
+        rootName = "{}:{}".format(namespace, name)
+        root = cmds.group(name=rootName, empty=True)
 
-        # Create shape and move it under root
+        # Create shape with transform and move it under root
         import multiverse
-        shape = multiverse.CreateUsdCompound(self.fname)
-        cmds.parent(shape, root)
+        transform = multiverse.CreateUsdCompound(self.fname)
+        cmds.parent(transform, root)
+
+        # Rename transform
+        nodes = [root, transform]
+        self[:] = nodes
+
+        return containerise(
+            name=name,
+            namespace=namespace,
+            nodes=nodes,
+            context=context,
+            loader=self.__class__.__name__)
 
     def update(self, container, representation):
 
@@ -44,7 +55,7 @@ class MultiverseUsdLoader(api.Loader):
 
         # Update the shape
         members = cmds.sets(container['objectName'], query=True)
-        shapes = cmds.ls(members, type="mvUsdPackedShape", long=True)
+        shapes = cmds.ls(members, type="mvUsdCompoundShape", long=True)
 
         assert len(shapes) == 1, "This is a bug"
 
