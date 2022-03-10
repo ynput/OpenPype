@@ -107,67 +107,100 @@ class CreatorDescriptionWidget(QtWidgets.QWidget):
     def __init__(self, parent=None):
         super(CreatorDescriptionWidget, self).__init__(parent=parent)
 
-        icon_widget = IconValuePixmapLabel(None, self)
+        # --- Short description widget ---
+        short_desc_widget = QtWidgets.QWidget(self)
+
+        icon_widget = IconValuePixmapLabel(None, short_desc_widget)
         icon_widget.setObjectName("FamilyIconLabel")
 
-        family_label = QtWidgets.QLabel("family")
+        # --- Short description inputs ---
+        short_desc_input_widget = QtWidgets.QWidget(short_desc_widget)
+
+        family_label = QtWidgets.QLabel(short_desc_input_widget)
         family_label.setAlignment(
             QtCore.Qt.AlignBottom | QtCore.Qt.AlignLeft
         )
 
-        description_label = QtWidgets.QLabel("description")
+        description_label = QtWidgets.QLabel(short_desc_input_widget)
         description_label.setAlignment(
             QtCore.Qt.AlignTop | QtCore.Qt.AlignLeft
         )
 
-        detail_description_widget = QtWidgets.QTextEdit(self)
+        short_desc_input_layout = QtWidgets.QVBoxLayout(
+            short_desc_input_widget
+        )
+        short_desc_input_layout.setSpacing(0)
+        short_desc_input_layout.addWidget(family_label)
+        short_desc_input_layout.addWidget(description_label)
+        # --------------------------------
+
+        short_desc_layout = QtWidgets.QHBoxLayout(short_desc_widget)
+        short_desc_layout.setContentsMargins(0, 0, 0, 0)
+        short_desc_layout.addWidget(icon_widget, 0)
+        short_desc_layout.addWidget(short_desc_input_widget, 1)
+        # --------------------------------
+
+        separator_widget = QtWidgets.QWidget(self)
+        separator_widget.setObjectName("Separator")
+        separator_widget.setMinimumHeight(2)
+        separator_widget.setMaximumHeight(2)
+
+        # --- Bottom part ----------------
+        bottom_widget = QtWidgets.QWidget(self)
+
+        # Precreate attributes widget
+        pre_create_widget = PreCreateWidget(bottom_widget)
+
+        # Detailed description of creator
+        detail_description_widget = QtWidgets.QTextEdit(bottom_widget)
         detail_description_widget.setObjectName("InfoText")
         detail_description_widget.setTextInteractionFlags(
             QtCore.Qt.TextBrowserInteraction
         )
+        # TODO add HELP button
+        detail_description_widget.setVisible(False)
 
-        label_layout = QtWidgets.QVBoxLayout()
-        label_layout.setSpacing(0)
-        label_layout.addWidget(family_label)
-        label_layout.addWidget(description_label)
-
-        top_layout = QtWidgets.QHBoxLayout()
-        top_layout.setContentsMargins(0, 0, 0, 0)
-        top_layout.addWidget(icon_widget, 0)
-        top_layout.addLayout(label_layout, 1)
+        bottom_layout = QtWidgets.QHBoxLayout(bottom_widget)
+        bottom_layout.setContentsMargins(0, 0, 0, 0)
+        bottom_layout.addWidget(pre_create_widget, 1)
+        bottom_layout.addWidget(detail_description_widget, 1)
 
         layout = QtWidgets.QVBoxLayout(self)
         layout.setContentsMargins(0, 0, 0, 0)
-        layout.addLayout(top_layout, 0)
-        layout.addWidget(detail_description_widget, 1)
+        layout.addWidget(short_desc_widget, 0)
+        layout.addWidget(separator_widget, 0)
+        layout.addWidget(bottom_widget, 1)
 
-        self.icon_widget = icon_widget
-        self.family_label = family_label
-        self.description_label = description_label
-        self.detail_description_widget = detail_description_widget
+        self._icon_widget = icon_widget
+        self._family_label = family_label
+        self._description_label = description_label
+        self._detail_description_widget = detail_description_widget
+        self._pre_create_widget = pre_create_widget
 
     def set_plugin(self, plugin=None):
         if not plugin:
-            self.icon_widget.set_icon_def(None)
-            self.family_label.setText("")
-            self.description_label.setText("")
-            self.detail_description_widget.setPlainText("")
+            self._icon_widget.set_icon_def(None)
+            self._family_label.setText("")
+            self._description_label.setText("")
+            self._detail_description_widget.setPlainText("")
+            self._pre_create_widget.set_plugin(plugin)
             return
 
         plugin_icon = plugin.get_icon()
         description = plugin.get_description() or ""
         detailed_description = plugin.get_detail_description() or ""
 
-        self.icon_widget.set_icon_def(plugin_icon)
-        self.family_label.setText("<b>{}</b>".format(plugin.family))
-        self.family_label.setTextInteractionFlags(QtCore.Qt.NoTextInteraction)
-        self.description_label.setText(description)
+        self._icon_widget.set_icon_def(plugin_icon)
+        self._family_label.setText("<b>{}</b>".format(plugin.family))
+        self._family_label.setTextInteractionFlags(QtCore.Qt.NoTextInteraction)
+        self._description_label.setText(description)
 
         if commonmark:
             html = commonmark.commonmark(detailed_description)
-            self.detail_description_widget.setHtml(html)
+            self._detail_description_widget.setHtml(html)
         else:
-            self.detail_description_widget.setMarkdown(detailed_description)
+            self._detail_description_widget.setMarkdown(detailed_description)
+        self._pre_create_widget.set_plugin(plugin)
 
 
 class CreateDialog(QtWidgets.QDialog):
@@ -215,12 +248,7 @@ class CreateDialog(QtWidgets.QDialog):
         context_layout.addWidget(assets_widget, 2)
         context_layout.addWidget(tasks_widget, 1)
 
-        # Precreate attributes widgets
-        pre_create_widget = PreCreateWidget(self)
-
-        # TODO add HELP button
         creator_description_widget = CreatorDescriptionWidget(self)
-        creator_description_widget.setVisible(False)
 
         creators_view = QtWidgets.QListView(self)
         creators_model = QtGui.QStandardItemModel()
@@ -264,7 +292,7 @@ class CreateDialog(QtWidgets.QDialog):
         splitter_widget = QtWidgets.QSplitter(self)
         splitter_widget.addWidget(context_widget)
         splitter_widget.addWidget(mid_widget)
-        splitter_widget.addWidget(pre_create_widget)
+        splitter_widget.addWidget(creator_description_widget)
         splitter_widget.setStretchFactor(0, 1)
         splitter_widget.setStretchFactor(1, 1)
         splitter_widget.setStretchFactor(2, 1)
@@ -294,8 +322,6 @@ class CreateDialog(QtWidgets.QDialog):
         controller.add_plugins_refresh_callback(self._on_plugins_refresh)
 
         self._splitter_widget = splitter_widget
-
-        self._pre_create_widget = pre_create_widget
 
         self._context_widget = context_widget
         self._assets_widget = assets_widget
@@ -510,7 +536,6 @@ class CreateDialog(QtWidgets.QDialog):
         creator = self.controller.manual_creators.get(identifier)
 
         self.creator_description_widget.set_plugin(creator)
-        self._pre_create_widget.set_plugin(creator)
 
         self._selected_creator = creator
 
