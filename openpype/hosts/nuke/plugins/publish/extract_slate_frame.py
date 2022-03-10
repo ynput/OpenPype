@@ -48,8 +48,13 @@ class ExtractSlateFrame(openpype.api.Extractor):
         self.log.info(
             "StagingDir `{0}`...".format(instance.data["stagingDir"]))
 
+        frame_start = instance.data["frameStart"]
+        frame_end = instance.data["frameEnd"]
+        handle_start = instance.data["handleStart"]
+        handle_end = instance.data["handleEnd"]
+
         frame_length = int(
-            instance.data["frameEnd"] - instance.data["frameStart"] + 1
+            (frame_start - frame_end + 1) + (handle_start + handle_end)
         )
 
         temporary_nodes = []
