@@ -138,7 +138,9 @@ class AbstractCollectRender(pyblish.api.ContextPlugin):
             try:
                 if "workfile" in instance.data["families"]:
                     instance.data["publish"] = True
-                if "renderFarm" in instance.data["families"]:
+                # TODO merge renderFarm and render.farm
+                if ("renderFarm" in instance.data["families"] or
+                        "render.farm" in instance.data["families"]):
                     instance.data["remove"] = True
             except KeyError:
                 # be tolerant if 'families' is missing.

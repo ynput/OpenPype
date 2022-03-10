@@ -2,9 +2,9 @@ import os
 import sys
 
 from Qt import QtWidgets, QtCore
+import qtawesome
 
 from avalon import api
-from avalon.vendor import qtawesome
 
 from openpype import style
 from openpype.tools.utils import PlaceholderLineEdit

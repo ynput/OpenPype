@@ -4,10 +4,10 @@ import contextlib
 import collections
 
 from Qt import QtWidgets, QtCore, QtGui
+import qtawesome
 
 import avalon.api
 from avalon import style
-from avalon.vendor import qtawesome
 
 from openpype.api import (
     get_project_settings,

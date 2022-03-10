@@ -1,5 +1,5 @@
 import nuke
-from avalon.vendor import qargparse
+import qargparse
 from avalon import api, io
 
 from openpype.hosts.nuke.api.lib import (

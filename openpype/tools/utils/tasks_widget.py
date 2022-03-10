@@ -1,7 +1,7 @@
 from Qt import QtWidgets, QtCore, QtGui
+import qtawesome
 
 from avalon import style
-from avalon.vendor import qtawesome
 
 from .views import DeselectableTreeView
 
@@ -14,6 +14,7 @@ TASK_ASSIGNEE_ROLE = QtCore.Qt.UserRole + 4
 
 class TasksModel(QtGui.QStandardItemModel):
     """A model listing the tasks combined for a list of assets"""
+
     def __init__(self, dbcon, parent=None):
         super(TasksModel, self).__init__(parent=parent)
         self.dbcon = dbcon

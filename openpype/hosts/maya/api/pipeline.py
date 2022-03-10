@@ -2,7 +2,6 @@ import os
 import sys
 import errno
 import logging
-import contextlib
 
 from maya import utils, cmds, OpenMaya
 import maya.api.OpenMaya as om
@@ -17,6 +16,7 @@ import openpype.hosts.maya
 from openpype.tools.utils import host_tools
 from openpype.lib import any_outdated
 from openpype.lib.path_tools import HostDirmap
+from openpype.pipeline import LegacyCreator
 from openpype.hosts.maya.lib import copy_workspace_mel
 from . import menu, lib
 
@@ -50,7 +50,7 @@ def install():
     pyblish.api.register_host("maya")
 
     avalon.api.register_plugin_path(avalon.api.Loader, LOAD_PATH)
-    avalon.api.register_plugin_path(avalon.api.Creator, CREATE_PATH)
+    avalon.api.register_plugin_path(LegacyCreator, CREATE_PATH)
     avalon.api.register_plugin_path(avalon.api.InventoryAction, INVENTORY_PATH)
     log.info(PUBLISH_PATH)
 
@@ -176,7 +176,7 @@ def uninstall():
     pyblish.api.deregister_host("maya")
 
     avalon.api.deregister_plugin_path(avalon.api.Loader, LOAD_PATH)
-    avalon.api.deregister_plugin_path(avalon.api.Creator, CREATE_PATH)
+    avalon.api.deregister_plugin_path(LegacyCreator, CREATE_PATH)
     avalon.api.deregister_plugin_path(
         avalon.api.InventoryAction, INVENTORY_PATH
     )

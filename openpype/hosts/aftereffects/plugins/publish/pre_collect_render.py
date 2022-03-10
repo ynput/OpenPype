@@ -26,6 +26,12 @@ class PreCollectRender(pyblish.api.ContextPlugin):
             return
 
         for inst in list_instances():
+            if inst.get("creator_attributes"):
+                raise ValueError("Instance created in New publisher, "
+                                 "cannot be published in Pyblish.\n"
+                                 "Please publish in New Publisher "
+                                 "or recreate instances with legacy Creators")
+
             if inst["family"] not in self.family_remapping.keys():
                 continue
 
@@ -34,7 +40,7 @@ class PreCollectRender(pyblish.api.ContextPlugin):
                                  "Please recreate instance.")
 
             instance = context.create_instance(inst["subset"])
-            inst["families"] = [self.family_remapping[inst["family"]]]
+            inst["families"] = [self.family_remapping[inst["family"]][0]]
             instance.data.update(inst)
 
             self._debug_log(instance)

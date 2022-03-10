@@ -57,7 +57,7 @@ class CollectAERender(abstract_collect_render.AbstractCollectRender):
         compositions_by_id = {item.id: item for item in compositions}
         for inst in context:
             family = inst.data["family"]
-            if family != "render":
+            if family not in ["render", "renderLocal"]:  # legacy
                 continue
 
             item_id = inst.data["members"][0]
@@ -84,6 +84,7 @@ class CollectAERender(abstract_collect_render.AbstractCollectRender):
             subset_name = inst.data["subset"]
             instance = AERenderInstance(
                 family=family,
+                families=inst.data.get("families", []),
                 version=version,
                 time="",
                 source=current_file,
@@ -123,14 +124,16 @@ class CollectAERender(abstract_collect_render.AbstractCollectRender):
             instance.comp_name = comp.name
             instance.comp_id = item_id
 
-            is_local = "renderLocal" in inst.data["families"]  # legacy
+            is_local = "renderLocal" in inst.data["family"]  # legacy
             if inst.data.get("creator_attributes"):
                 is_local = not inst.data["creator_attributes"].get("farm")
             if is_local:
                 # for local renders
                 instance = self._update_for_local(instance, project_entity)
             else:
-                instance.families = ["render.farm"]
+                fam = "render.farm"
+                if fam not in instance.families:
+                    instance.families.append(fam)
 
             instances.append(instance)
             instances_to_remove.append(inst)
@@ -210,7 +213,9 @@ class CollectAERender(abstract_collect_render.AbstractCollectRender):
         instance.anatomyData["subset"] = instance.subset
         instance.stagingDir = tempfile.mkdtemp()
         instance.projectEntity = project_entity
-        instance.families = ["render.local"]
+        fam = "render.local"
+        if fam not in instance.families:
+            instance.families.append(fam)
 
         settings = get_project_settings(os.getenv("AVALON_PROJECT"))
         reviewable_subset_filter = (settings["deadline"]
