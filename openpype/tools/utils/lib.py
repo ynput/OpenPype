@@ -98,6 +98,58 @@ application = qt_app_context
 
 class SharedObjects:
     jobs = {}
+    icons = {}
+
+
+def get_qta_icon_by_name_and_color(icon_name, icon_color):
+    if not icon_name or not icon_color:
+        return None
+
+    full_icon_name = "{0}-{1}".format(icon_name, icon_color)
+    if full_icon_name in SharedObjects.icons:
+        return SharedObjects.icons[full_icon_name]
+
+    variants = [icon_name]
+    qta_instance = qtawesome._instance()
+    for key in qta_instance.charmap.keys():
+        variants.append("{0}.{1}".format(key, icon_name))
+
+    icon = None
+    for variant in variants:
+        try:
+            icon = qtawesome.icon(variant, color=icon_color)
+            break
+        except Exception:
+            pass
+
+    SharedObjects.icons[full_icon_name] = icon
+    return icon
+
+
+def get_asset_icon(asset_doc, has_children=False):
+    asset_data = asset_doc.get("data") or {}
+    icon_color = asset_data.get("color") or style.colors.default
+    icon_name = asset_data.get("icon")
+    if not icon_name:
+        # Use default icons if no custom one is specified.
+        # If it has children show a full folder, otherwise
+        # show an open folder
+        if has_children:
+            icon_name = "folder"
+        else:
+            icon_name = "folder-o"
+
+    return get_qta_icon_by_name_and_color(icon_name, icon_color)
+
+
+def get_task_icon():
+    """Get icon for a task.
+
+    TODO: Get task icon based on data in database.
+
+    Icon should be defined by task type which is stored on project.
+    """
+    return get_qta_icon_by_name_and_color("fa.male", style.colors.default)
 
 
 def schedule(func, time, channel="default"):

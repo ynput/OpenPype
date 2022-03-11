@@ -16,6 +16,7 @@ from .lib import (
     set_style_property,
     DynamicQThread,
     qt_app_context,
+    get_asset_icon,
 )
 
 from .models import (

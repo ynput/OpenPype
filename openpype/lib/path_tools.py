@@ -43,6 +43,7 @@ def create_hard_link(src_path, dst_path):
         res = CreateHardLink(dst_path, src_path, None)
         if res == 0:
             raise ctypes.WinError()
+        return
     # Raises not implemented error if gets here
     raise NotImplementedError(
         "Implementation of hardlink for current environment is missing."

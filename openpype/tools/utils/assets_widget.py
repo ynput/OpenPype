@@ -16,7 +16,10 @@ from .views import (
 )
 from .widgets import PlaceholderLineEdit
 from .models import RecursiveSortFilterProxyModel
-from .lib import DynamicQThread
+from .lib import (
+    DynamicQThread,
+    get_asset_icon
+)
 
 if Qt.__binding__ == "PySide":
     from PySide.QtGui import QStyleOptionViewItemV4
@@ -508,25 +511,9 @@ class AssetModel(QtGui.QStandardItemModel):
                 item.setData(asset_label, QtCore.Qt.DisplayRole)
                 item.setData(asset_label, ASSET_LABEL_ROLE)
 
-            icon_color = asset_data.get("color") or style.colors.default
-            icon_name = asset_data.get("icon")
-            if not icon_name:
-                # Use default icons if no custom one is specified.
-                # If it has children show a full folder, otherwise
-                # show an open folder
-                if item.rowCount() > 0:
-                    icon_name = "folder"
-                else:
-                    icon_name = "folder-o"
-
-            try:
-                # font-awesome key
-                full_icon_name = "fa.{0}".format(icon_name)
-                icon = qtawesome.icon(full_icon_name, color=icon_color)
-                item.setData(icon, QtCore.Qt.DecorationRole)
-
-            except Exception:
-                pass
+            has_children = item.rowCount() > 0
+            icon = get_asset_icon(asset_data, has_children)
+            item.setData(icon, QtCore.Qt.DecorationRole)
 
     def _threaded_fetch(self):
         asset_docs = self._fetch_asset_docs()
