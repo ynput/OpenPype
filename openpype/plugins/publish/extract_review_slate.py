@@ -1,7 +1,11 @@
 import os
 import openpype.api
-import openpype.lib
 import pyblish
+from openpype.lib import (
+    path_to_subprocess_arg,
+    get_ffmpeg_tool_path,
+    get_ffprobe_streams,
+)
 
 
 class ExtractReviewSlate(openpype.api.Extractor):
@@ -24,9 +28,9 @@ class ExtractReviewSlate(openpype.api.Extractor):
 
         suffix = "_slate"
         slate_path = inst_data.get("slateFrame")
-        ffmpeg_path = openpype.lib.get_ffmpeg_tool_path("ffmpeg")
+        ffmpeg_path = get_ffmpeg_tool_path("ffmpeg")
 
-        slate_streams = openpype.lib.ffprobe_streams(slate_path, self.log)
+        slate_streams = get_ffprobe_streams(slate_path, self.log)
         # Try to find first stream with defined 'width' and 'height'
         # - this is to avoid order of streams where audio can be as first
         # - there may be a better way (checking `codec_type`?)+
@@ -66,7 +70,7 @@ class ExtractReviewSlate(openpype.api.Extractor):
                 os.path.normpath(stagingdir), repre["files"])
             self.log.debug("__ input_path: {}".format(input_path))
 
-            video_streams = openpype.lib.ffprobe_streams(
+            video_streams = get_ffprobe_streams(
                 input_path, self.log
             )
 
@@ -143,7 +147,7 @@ class ExtractReviewSlate(openpype.api.Extractor):
             else:
                 input_args.extend(repre["outputDef"].get('input', []))
             input_args.append("-loop 1 -i {}".format(
-                openpype.lib.path_to_subprocess_arg(slate_path)
+                path_to_subprocess_arg(slate_path)
             ))
             input_args.extend([
                 "-r {}".format(fps),
@@ -216,12 +220,12 @@ class ExtractReviewSlate(openpype.api.Extractor):
 
             slate_v_path = slate_path.replace(".png", ext)
             output_args.append(
-                openpype.lib.path_to_subprocess_arg(slate_v_path)
+                path_to_subprocess_arg(slate_v_path)
             )
             _remove_at_end.append(slate_v_path)
 
             slate_args = [
-                openpype.lib.path_to_subprocess_arg(ffmpeg_path),
+                path_to_subprocess_arg(ffmpeg_path),
                 " ".join(input_args),
                 " ".join(output_args)
             ]
@@ -345,7 +349,7 @@ class ExtractReviewSlate(openpype.api.Extractor):
 
         try:
             # Get information about input file via ffprobe tool
-            streams = openpype.lib.ffprobe_streams(full_input_path, self.log)
+            streams = get_ffprobe_streams(full_input_path, self.log)
         except Exception:
             self.log.warning(
                 "Could not get codec data from input.",

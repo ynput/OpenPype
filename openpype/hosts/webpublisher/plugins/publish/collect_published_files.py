@@ -14,7 +14,11 @@ import math
 
 from avalon import io
 import pyblish.api
-from openpype.lib import prepare_template_data, get_asset, ffprobe_streams
+from openpype.lib import (
+    prepare_template_data,
+    get_asset,
+    get_ffprobe_streams
+)
 from openpype.lib.vendor_bin_utils import get_fps
 from openpype.lib.plugin_tools import (
     parse_json,
@@ -265,7 +269,7 @@ class CollectPublishedFiles(pyblish.api.ContextPlugin):
     def _get_number_of_frames(self, file_url):
         """Return duration in frames"""
         try:
-            streams = ffprobe_streams(file_url, self.log)
+            streams = get_ffprobe_streams(file_url, self.log)
         except Exception as exc:
             raise AssertionError((
                 "FFprobe couldn't read information about input file: \"{}\"."

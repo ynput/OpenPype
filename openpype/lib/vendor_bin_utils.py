@@ -1,8 +1,6 @@
 import os
 import logging
-import json
 import platform
-import subprocess
 
 log = logging.getLogger("Vendor utils")
 
@@ -136,56 +134,6 @@ def get_ffmpeg_tool_path(tool="ffmpeg"):
     if platform.system().lower() == "windows":
         ffmpeg_dir = os.path.join(ffmpeg_dir, "bin")
     return find_executable(os.path.join(ffmpeg_dir, tool))
-
-
-def ffprobe_streams(path_to_file, logger=None):
-    """Load streams from entered filepath via ffprobe.
-
-    Args:
-        path_to_file (str): absolute path
-        logger (logging.getLogger): injected logger, if empty new is created
-
-    """
-    if not logger:
-        logger = log
-    logger.info(
-        "Getting information about input \"{}\".".format(path_to_file)
-    )
-    args = [
-        get_ffmpeg_tool_path("ffprobe"),
-        "-hide_banner",
-        "-loglevel", "fatal",
-        "-show_error",
-        "-show_format",
-        "-show_streams",
-        "-show_programs",
-        "-show_chapters",
-        "-show_private_data",
-        "-print_format", "json",
-        path_to_file
-    ]
-
-    logger.debug("FFprobe command: {}".format(
-        subprocess.list2cmdline(args)
-    ))
-    popen = subprocess.Popen(
-        args,
-        stdout=subprocess.PIPE,
-        stderr=subprocess.PIPE
-    )
-
-    popen_stdout, popen_stderr = popen.communicate()
-    if popen_stdout:
-        logger.debug("FFprobe stdout:\n{}".format(
-            popen_stdout.decode("utf-8")
-        ))
-
-    if popen_stderr:
-        logger.warning("FFprobe stderr:\n{}".format(
-            popen_stderr.decode("utf-8")
-        ))
-
-    return json.loads(popen_stdout)["streams"]
 
 
 def is_oiio_supported():

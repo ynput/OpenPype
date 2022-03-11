@@ -13,7 +13,7 @@ import pyblish.api
 import openpype.api
 from openpype.lib import (
     get_ffmpeg_tool_path,
-    ffprobe_streams,
+    get_ffprobe_streams,
 
     path_to_subprocess_arg,
 
@@ -1146,7 +1146,7 @@ class ExtractReview(pyblish.api.InstancePlugin):
         # NOTE Skipped using instance's resolution
         full_input_path_single_file = temp_data["full_input_path_single_file"]
         try:
-            streams = ffprobe_streams(
+            streams = get_ffprobe_streams(
                 full_input_path_single_file, self.log
             )
         except Exception as exc:
