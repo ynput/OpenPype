@@ -54,4 +54,3 @@ def test_collect_frames_single_file():
     print(ret)
     assert ret == expected, "Not matching"
 
-
