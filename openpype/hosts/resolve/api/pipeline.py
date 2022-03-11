@@ -9,6 +9,7 @@ from avalon import schema
 from avalon.pipeline import AVALON_CONTAINER_ID
 from pyblish import api as pyblish
 from openpype.api import Logger
+from openpype.pipeline import LegacyCreator
 from . import lib
 from . import PLUGINS_DIR
 from openpype.tools.utils import host_tools
@@ -42,7 +43,7 @@ def install():
     log.info("Registering DaVinci Resovle plug-ins..")
 
     avalon.register_plugin_path(avalon.Loader, LOAD_PATH)
-    avalon.register_plugin_path(avalon.Creator, CREATE_PATH)
+    avalon.register_plugin_path(LegacyCreator, CREATE_PATH)
     avalon.register_plugin_path(avalon.InventoryAction, INVENTORY_PATH)
 
     # register callback for switching publishable
@@ -67,7 +68,7 @@ def uninstall():
     log.info("Deregistering DaVinci Resovle plug-ins..")
 
     avalon.deregister_plugin_path(avalon.Loader, LOAD_PATH)
-    avalon.deregister_plugin_path(avalon.Creator, CREATE_PATH)
+    avalon.deregister_plugin_path(LegacyCreator, CREATE_PATH)
     avalon.deregister_plugin_path(avalon.InventoryAction, INVENTORY_PATH)
 
     # register callback for switching publishable

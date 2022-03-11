@@ -3,9 +3,9 @@ import logging
 from functools import partial
 
 from Qt import QtWidgets, QtCore
+import qtawesome
 
 from avalon import io, api, style
-from avalon.vendor import qtawesome
 from avalon.lib import HeroVersionType
 
 from openpype.modules import ModulesManager

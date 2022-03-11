@@ -1,8 +1,10 @@
 import os
 from maya import cmds
 from avalon import api
+
 from openpype.api import get_project_settings
 from openpype.lib import get_creator_by_name
+from openpype.pipeline import legacy_create
 import openpype.hosts.maya.api.plugin
 from openpype.hosts.maya.api.lib import maintained_selection
 
@@ -125,6 +127,12 @@ class ReferenceLoader(openpype.hosts.maya.api.plugin.ReferenceLoader):
 
             return new_nodes
 
+    def load(self, context, name=None, namespace=None, options=None):
+        container = super(ReferenceLoader, self).load(
+            context, name, namespace, options)
+        # clean containers if present to AVALON_CONTAINERS
+        self._organize_containers(self[:], container[0])
+
     def switch(self, container, representation):
         self.update(container, representation)
 
@@ -151,7 +159,7 @@ class ReferenceLoader(openpype.hosts.maya.api.plugin.ReferenceLoader):
         creator_plugin = get_creator_by_name(self.animation_creator_name)
         with maintained_selection():
             cmds.select([output, controls] + roots, noExpand=True)
-            api.create(
+            legacy_create(
                 creator_plugin,
                 name=namespace,
                 asset=asset,

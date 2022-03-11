@@ -2,9 +2,11 @@ import os
 
 from maya import cmds
 
+import qargparse
+
 from avalon import api
-from avalon.vendor import qargparse
-from openpype.api import PypeCreatorMixin
+from avalon.pipeline import AVALON_CONTAINER_ID
+from openpype.pipeline import LegacyCreator
 
 from .pipeline import containerise
 from . import lib
@@ -77,7 +79,7 @@ def get_reference_node_parents(ref):
     return parents
 
 
-class Creator(PypeCreatorMixin, api.Creator):
+class Creator(LegacyCreator):
     defaults = ['Main']
 
     def process(self):
@@ -168,16 +170,18 @@ class ReferenceLoader(Loader):
                 return
 
             ref_node = get_reference_node(nodes, self.log)
-            loaded_containers.append(containerise(
+            container = containerise(
                 name=name,
                 namespace=namespace,
                 nodes=[ref_node],
                 context=context,
                 loader=self.__class__.__name__
-            ))
-
+            )
+            loaded_containers.append(container)
+            self._organize_containers([ref_node], container)
             c += 1
             namespace = None
+
         return loaded_containers
 
     def process_reference(self, context, name, namespace, data):
@@ -310,3 +314,13 @@ class ReferenceLoader(Loader):
                            deleteNamespaceContent=True)
         except RuntimeError:
             pass
+
+    @staticmethod
+    def _organize_containers(nodes, container):
+        # type: (list, str) -> None
+        for node in nodes:
+            id_attr = "{}.id".format(node)
+            if not cmds.attributeQuery("id", node=node, exists=True):
+                continue
+            if cmds.getAttr(id_attr) == AVALON_CONTAINER_ID:
+                cmds.sets(node, forceElement=container)
