@@ -1,8 +1,6 @@
 # -*- coding: utf-8 -*-
 from maya import cmds  # noqa
 import pyblish.api
-from avalon.api import Session
-from openpype.api import get_project_settings
 from pprint import pformat
 
 
@@ -14,28 +12,12 @@ class CollectUnrealStaticMesh(pyblish.api.InstancePlugin):
     families = ["staticMesh"]
 
     def process(self, instance):
-        project_settings = get_project_settings(Session["AVALON_PROJECT"])
-        sm_prefix = (
-            project_settings
-            ["maya"]
-            ["create"]
-            ["CreateUnrealStaticMesh"]
-            ["static_mesh_prefix"]
-        )
-        # take the name from instance (without the `staticMesh_` prefix)
-        instance.data["staticMeshCombinedName"] = "{}_{}".format(
-            sm_prefix,
-            instance.data.get("subset")[len(sm_prefix) + 1:])
-
-        self.log.info("joined mesh name: {}".format(
-            instance.data.get("staticMeshCombinedName")))
-
         geometry_set = [i for i in instance if i == "geometry_SET"]
-        instance.data["membersToCombine"] = cmds.sets(
+        instance.data["geometryMembers"] = cmds.sets(
             geometry_set, query=True)
 
-        self.log.info("joining meshes: {}".format(
-            pformat(instance.data.get("membersToCombine"))))
+        self.log.info("geometry: {}".format(
+            pformat(instance.data.get("geometryMembers"))))
 
         collision_set = [i for i in instance if i == "collisions_SET"]
         instance.data["collisionMembers"] = cmds.sets(

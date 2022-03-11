@@ -79,18 +79,13 @@ class ValidateUnrealStaticMeshName(pyblish.api.InstancePlugin):
             ["static_mesh_prefix"]
         )
 
-        to_combine = instance.data.get("membersToCombine")
-        if not to_combine:
-            raise ValueError("Missing geometry to export.")
-        combined_geometry_name = instance.data.get(
-            "staticMeshCombinedName", None)
         if cls.validate_mesh:
             # compile regex for testing names
             regex_mesh = "{}{}".format(
                 ("_" + cls.static_mesh_prefix) or "", cls.regex_mesh
             )
             sm_r = re.compile(regex_mesh)
-            if not sm_r.match(combined_geometry_name):
+            if not sm_r.match(instance.data.get("subset")):
                 cls.log.error("Mesh doesn't comply with name validation.")
                 return True
 
@@ -115,12 +110,9 @@ class ValidateUnrealStaticMeshName(pyblish.api.InstancePlugin):
                     cls.log.error("{} is invalid".format(obj))
                     invalid.append(obj)
                 else:
-                    un_prefixed = combined_geometry_name[
-                                  len(static_mesh_prefix) + 1:
-                                  ]
                     expected_collision = "{}_{}".format(
                         cl_m.group("prefix"),
-                        un_prefixed
+                        instance.data.get("subset")
                     )
 
                     if not obj.startswith(expected_collision):
@@ -133,7 +125,7 @@ class ValidateUnrealStaticMeshName(pyblish.api.InstancePlugin):
                             cl_m.group("prefix"),
                             cl_m.group("renderName"),
                             cl_m.group("prefix"),
-                            un_prefixed,
+                            instance.data.get("subset"),
                         ))
                         invalid.append(obj)
 

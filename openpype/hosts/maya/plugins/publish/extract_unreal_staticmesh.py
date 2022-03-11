@@ -22,56 +22,30 @@ class ExtractUnrealStaticMesh(openpype.api.Extractor):
     families = ["staticMesh"]
 
     def process(self, instance):
-        to_combine = instance.data.get("membersToCombine")
-        static_mesh_name = instance.data.get("staticMeshCombinedName")
-        duplicates = []
+        geo = instance.data.get("geometryMembers", [])
+        members = geo + instance.data.get("collisionMembers", [])
 
-        # delete created temporary nodes after extraction
-        with delete_after() as delete_bin:
-            # if we have more objects, combine them into one
-            # or just duplicate the single one
-            if len(to_combine) > 1:
-                self.log.info(
-                    "merging {} into {}".format(
-                        " + ".join(to_combine), static_mesh_name))
-                duplicates = cmds.duplicate(to_combine, ic=True)
-                cmds.polyUnite(
-                    *duplicates,
-                    n=static_mesh_name, ch=False)
-            else:
-                self.log.info(
-                    "duplicating {} to {} for export".format(
-                        to_combine[0], static_mesh_name)
-                )
-                cmds.duplicate(to_combine[0], name=static_mesh_name, ic=True)
+        fbx_exporter = fbx.FBXExtractor(log=self.log)
 
-            delete_bin.extend([static_mesh_name])
-            # delete_bin.extend(duplicates)
+        # Define output path
+        staging_dir = self.staging_dir(instance)
+        filename = "{0}.fbx".format(instance.name)
+        path = os.path.join(staging_dir, filename)
 
-            members = [static_mesh_name]
-            members += instance.data["collisionMembers"]
+        # The export requires forward slashes because we need
+        # to format it into a string in a mel expression
+        path = path.replace('\\', '/')
 
-            fbx_exporter = fbx.FBXExtractor(log=self.log)
+        self.log.info("Extracting FBX to: {0}".format(path))
+        self.log.info("Members: {0}".format(members))
+        self.log.info("Instance: {0}".format(instance[:]))
 
-            # Define output path
-            staging_dir = self.staging_dir(instance)
-            filename = "{0}.fbx".format(instance.name)
-            path = os.path.join(staging_dir, filename)
+        fbx_exporter.set_options_from_instance(instance)
 
-            # The export requires forward slashes because we need
-            # to format it into a string in a mel expression
-            path = path.replace('\\', '/')
-
-            self.log.info("Extracting FBX to: {0}".format(path))
-            self.log.info("Members: {0}".format(members))
-            self.log.info("Instance: {0}".format(instance[:]))
-
-            fbx_exporter.set_options_from_instance(instance)
-
-            with maintained_selection():
-                with root_parent(members):
-                    self.log.info("Un-parenting: {}".format(members))
-                    fbx_exporter.export(members, path)
+        with maintained_selection():
+            with root_parent(members):
+                self.log.info("Un-parenting: {}".format(members))
+                fbx_exporter.export(members, path)
 
         if "representations" not in instance.data:
             instance.data["representations"] = []
