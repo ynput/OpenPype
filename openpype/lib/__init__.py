@@ -86,6 +86,8 @@ from .transcoding import (
     convert_for_ffmpeg,
     get_ffprobe_data,
     get_ffprobe_streams,
+    get_ffmpeg_codec_args,
+    get_ffmpeg_format_args,
 )
 from .avalon_context import (
     CURRENT_DOC_SCHEMAS,
@@ -230,6 +232,8 @@ __all__ = [
     "convert_for_ffmpeg",
     "get_ffprobe_data",
     "get_ffprobe_streams",
+    "get_ffmpeg_codec_args",
+    "get_ffmpeg_format_args",
 
     "CURRENT_DOC_SCHEMAS",
     "PROJECT_NAME_ALLOWED_SYMBOLS",
