@@ -8,7 +8,7 @@ import logging
 import attr
 
 from wsrpc_aiohttp import WebSocketAsync
-from avalon.tools.webserver.app import WebServerTool
+from openpype.tools.adobe_webserver.app import WebServerTool
 
 
 @attr.s
