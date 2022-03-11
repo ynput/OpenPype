@@ -599,6 +599,7 @@ class ProcessSubmittedJobOnFarm(pyblish.api.InstancePlugin):
                 "files": os.path.basename(remainder),
                 "stagingDir": os.path.dirname(remainder),
             }
+            representations.append(rep)
             if "render" in instance.get("families"):
                 rep.update({
                     "fps": instance.get("fps"),
