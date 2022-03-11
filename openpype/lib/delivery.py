@@ -13,17 +13,29 @@ def collect_frames(files):
         Uses clique as most precise solution
 
         Args:
-            files(list): list of source paths
+            files(list) or (set with single value): list of source paths
         Returns:
             (dict): {'/asset/subset_v001.0001.png': '0001', ....}
     """
     collections, remainder = clique.assemble(files, minimum_items=1)
+
+    real_file_name = None
+    if len(files) == 1:
+        real_file_name = list(files)[0]
 
     sources_and_frames = {}
     if collections:
         for collection in collections:
             src_head = collection.head
             src_tail = collection.tail
+
+            if src_head.endswith("_v"):
+                # print("Collection gathered incorrectly, not a sequence "
+                #       "just a version found in {}".format(files))
+                if len(collections) > 1:
+                    continue
+                else:
+                    return {real_file_name: None}
 
             for index in collection.indexes:
                 src_frame = collection.format("{padding}") % index
@@ -71,14 +83,15 @@ def path_from_representation(representation, anatomy):
 
 def copy_file(src_path, dst_path):
     """Hardlink file if possible(to save space), copy if not"""
-    from openpype.lib import create_hard_link  # safer importing
+    from avalon.vendor import filelink  # safer importing
 
     if os.path.exists(dst_path):
         return
     try:
-        create_hard_link(
+        filelink.create(
             src_path,
-            dst_path
+            dst_path,
+            filelink.HARDLINK
         )
     except OSError:
         shutil.copyfile(src_path, dst_path)
