@@ -94,13 +94,13 @@ class ExtractMayaSceneRaw(openpype.api.Extractor):
     @staticmethod
     def _get_loaded_containers(members):
         # type: (list) -> list
-        refs_to_include = [
-            cmds.referenceQuery(ref, referenceNode=True)
-            for ref in members
-            if cmds.referenceQuery(ref, isNodeReferenced=True)
-        ]
+        refs_to_include = {
+            cmds.referenceQuery(node, referenceNode=True)
+            for node in members
+            if cmds.referenceQuery(node, isNodeReferenced=True)
+        }
 
-        members_with_refs = set(refs_to_include).union(members)
+        members_with_refs = refs_to_include.union(members)
 
         obj_sets = cmds.ls("*.id", long=True, type="objectSet", recursive=True,
                            objectsOnly=True)

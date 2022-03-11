@@ -247,10 +247,7 @@ class ReferenceLoader(Loader):
 
             self.log.warning("Ignoring file read error:\n%s", exc)
 
-        shapes = cmds.ls(content, shapes=True, long=True)
-        new_nodes = (list(set(content) - set(shapes)))
-
-        self._organize_containers(new_nodes, container["objectName"])
+        self._organize_containers(content, container["objectName"])
 
         # Reapply alembic settings.
         if representation["name"] == "abc" and alembic_data:
@@ -289,7 +286,6 @@ class ReferenceLoader(Loader):
                 to remove from scene.
 
         """
-
         from maya import cmds
 
         node = container["objectName"]
