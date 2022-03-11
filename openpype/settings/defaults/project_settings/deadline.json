@@ -46,7 +46,7 @@
             "enabled": true,
             "optional": false,
             "active": true,
-            "tile_assembler_plugin": "oiio",
+            "tile_assembler_plugin": "OpenPypeTileAssembler",
             "use_published": true,
             "asset_dependencies": true,
             "group": "none",
