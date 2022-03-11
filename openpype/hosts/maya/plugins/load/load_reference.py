@@ -1,6 +1,7 @@
 import os
 from maya import cmds
 from avalon import api
+
 from openpype.api import get_project_settings
 from openpype.lib import get_creator_by_name
 from openpype.pipeline import legacy_create
@@ -125,6 +126,12 @@ class ReferenceLoader(openpype.hosts.maya.api.plugin.ReferenceLoader):
                     cmds.setAttr(group_name + ".t", *options["translate"])
 
             return new_nodes
+
+    def load(self, context, name=None, namespace=None, options=None):
+        container = super(ReferenceLoader, self).load(
+            context, name, namespace, options)
+        # clean containers if present to AVALON_CONTAINERS
+        self._organize_containers(self[:], container[0])
 
     def switch(self, container, representation):
         self.update(container, representation)
