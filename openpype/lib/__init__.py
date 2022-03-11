@@ -63,7 +63,10 @@ from .anatomy import (
     Anatomy
 )
 
-from .config import get_datetime_data
+from .config import (
+    get_datetime_data,
+    get_formatted_current_time
+)
 
 from .python_module_tools import (
     import_filepath,
@@ -309,6 +312,7 @@ __all__ = [
     "Anatomy",
 
     "get_datetime_data",
+    "get_formatted_current_time",
 
     "PypeLogger",
     "get_default_components",
