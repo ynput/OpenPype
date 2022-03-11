@@ -123,8 +123,6 @@ class ReferenceLoader(openpype.hosts.maya.api.plugin.ReferenceLoader):
             else:
                 if "translate" in options:
                     cmds.setAttr(group_name + ".t", *options["translate"])
-
-            print(new_nodes)
             return new_nodes
 
     def switch(self, container, representation):

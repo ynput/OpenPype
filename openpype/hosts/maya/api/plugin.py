@@ -247,6 +247,11 @@ class ReferenceLoader(Loader):
 
             self.log.warning("Ignoring file read error:\n%s", exc)
 
+        shapes = cmds.ls(content, shapes=True, long=True)
+        new_nodes = (list(set(content) - set(shapes)))
+
+        self._organize_containers(new_nodes, container["objectName"])
+
         # Reapply alembic settings.
         if representation["name"] == "abc" and alembic_data:
             alembic_nodes = cmds.ls(

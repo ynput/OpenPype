@@ -60,10 +60,9 @@ class ExtractMayaSceneRaw(openpype.api.Extractor):
 
         selection = members
         if set(self.add_for_families).intersection(
-                set(instance.data.get("families"))) or \
+                set(instance.data.get("families", []))) or \
                 instance.data.get("family") in self.add_for_families:
-            selection += self._add_loaded_containers(members)
-            self.log.info(selection)
+            selection += self._get_loaded_containers(members)
 
         # Perform extraction
         self.log.info("Performing extraction ...")
@@ -93,7 +92,7 @@ class ExtractMayaSceneRaw(openpype.api.Extractor):
         self.log.info("Extracted instance '%s' to: %s" % (instance.name, path))
 
     @staticmethod
-    def _add_loaded_containers(members):
+    def _get_loaded_containers(members):
         # type: (list) -> list
         refs_to_include = [
             cmds.referenceQuery(ref, referenceNode=True)
