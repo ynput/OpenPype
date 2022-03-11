@@ -4,7 +4,7 @@ from openpype.hosts.maya.api import plugin, lib
 class CreateMultiverseUsd(plugin.Creator):
     """Multiverse USD data"""
 
-    name = "usd"
+    name = "usdMain"
     label = "Multiverse USD"
     family = "usd"
     icon = "cubes"
@@ -46,7 +46,7 @@ class CreateMultiverseUsd(plugin.Creator):
         self.data["customMaterialNamespace"] = ''
 
         # The attributes below are about animated cache.
-        self.data["writeTimeRange"] = False
+        self.data["writeTimeRange"] = True
         self.data["timeRangeNumTimeSamples"] = 0
         self.data["timeRangeSamplesSpan"] = 0.0
 
