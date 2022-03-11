@@ -1005,12 +1005,14 @@ class CreateContext:
         if not instances:
             return
 
-        task_names_by_asset_name = collections.defaultdict(set)
+        task_names_by_asset_name = {}
         for instance in instances:
             task_name = instance.get("task")
             asset_name = instance.get("asset")
-            if asset_name and task_name:
-                task_names_by_asset_name[asset_name].add(task_name)
+            if asset_name:
+                task_names_by_asset_name[asset_name] = set()
+                if task_name:
+                    task_names_by_asset_name[asset_name].add(task_name)
 
         asset_names = [
             asset_name
