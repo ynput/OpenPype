@@ -22,6 +22,7 @@ class ExtractSubsetResources(openpype.api.Extractor):
             "ext": "jpg",
             "xml_preset_file": "Jpeg (8-bit).xml",
             "xml_preset_dir": "",
+            "export_type": "File Sequence",
             "colorspace_out": "Output - sRGB",
             "representation_add_range": False,
             "representation_tags": ["thumbnail"]
@@ -30,6 +31,7 @@ class ExtractSubsetResources(openpype.api.Extractor):
             "ext": "mov",
             "xml_preset_file": "Apple iPad (1920x1080).xml",
             "xml_preset_dir": "",
+            "export_type": "Movie",
             "colorspace_out": "Output - Rec.709",
             "representation_add_range": True,
             "representation_tags": [
@@ -84,6 +86,7 @@ class ExtractSubsetResources(openpype.api.Extractor):
                 kwargs = {}
                 preset_file = preset_config["xml_preset_file"]
                 preset_dir = preset_config["xml_preset_dir"]
+                export_type = preset_config["export_type"]
                 repre_tags = preset_config["representation_tags"]
                 color_out = preset_config["colorspace_out"]
 
