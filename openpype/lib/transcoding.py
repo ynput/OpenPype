@@ -90,7 +90,7 @@ class RationalToInt:
         if len(parts) != 1:
             bottom = float(parts[1])
 
-        self._value = top / bottom
+        self._value = float(top) / float(bottom)
         self._string_value = string_value
 
     @property
@@ -169,6 +169,23 @@ def convert_value_by_type_name(value_type, value, logger=None):
 
     if value_type == "rational2i":
         return RationalToInt(value)
+
+    if value_type == "vector":
+        parts = [part.strip() for part in value.split(",")]
+        output = []
+        for part in parts:
+            if part == "-nan":
+                output.append(None)
+                continue
+            try:
+                part = float(part)
+            except ValueError:
+                pass
+            output.append(part)
+        return output
+
+    if value_type == "timecode":
+        return value
 
     # Array of other types is converted to list
     re_result = ARRAY_TYPE_REGEX.findall(value_type)
