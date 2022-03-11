@@ -14,6 +14,7 @@ from openpype.api import (
     BuildWorkfile,
     get_current_project_settings
 )
+from openpype.lib import register_event_callback
 from openpype.pipeline import LegacyCreator
 from openpype.tools.utils import host_tools
 
@@ -103,8 +104,8 @@ def install():
     avalon.api.register_plugin_path(avalon.api.InventoryAction, INVENTORY_PATH)
 
     # Register Avalon event for workfiles loading.
-    avalon.api.on("workio.open_file", check_inventory_versions)
-    avalon.api.on("taskChanged", change_context_label)
+    register_event_callback("workio.open_file", check_inventory_versions)
+    register_event_callback("taskChanged", change_context_label)
 
     pyblish.api.register_callback(
         "instanceToggled", on_pyblish_instance_toggled)
@@ -227,7 +228,7 @@ def _uninstall_menu():
         menu.removeItem(item.name())
 
 
-def change_context_label(*args):
+def change_context_label():
     menubar = nuke.menu("Nuke")
     menu = menubar.findItem(MENU_LABEL)
 
