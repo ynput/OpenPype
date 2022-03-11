@@ -103,7 +103,8 @@ class IntegrateAssetNew(pyblish.api.InstancePlugin):
                 "effect",
                 "xgen",
                 "hda",
-                "usd"
+                "usd",
+                "usd_override"
                 ]
     exclude_families = ["clip"]
     db_representation_context_keys = [
