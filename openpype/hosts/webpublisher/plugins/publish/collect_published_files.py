@@ -17,9 +17,9 @@ import pyblish.api
 from openpype.lib import (
     prepare_template_data,
     get_asset,
-    get_ffprobe_streams
+    get_ffprobe_streams,
+    convert_ffprobe_fps_value,
 )
-from openpype.lib.vendor_bin_utils import get_fps
 from openpype.lib.plugin_tools import (
     parse_json,
     get_subset_name_with_asset_doc
@@ -292,7 +292,9 @@ class CollectPublishedFiles(pyblish.api.ContextPlugin):
                         "nb_frames {} not convertible".format(nb_frames))
 
                     duration = stream.get("duration")
-                    frame_rate = get_fps(stream.get("r_frame_rate", '0/0'))
+                    frame_rate = convert_ffprobe_fps_value(
+                        stream.get("r_frame_rate", '0/0')
+                    )
                     self.log.debug("duration:: {} frame_rate:: {}".format(
                         duration, frame_rate))
                     try:

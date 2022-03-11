@@ -4,7 +4,10 @@ import pyblish
 from openpype.lib import (
     path_to_subprocess_arg,
     get_ffmpeg_tool_path,
+    get_ffprobe_data,
     get_ffprobe_streams,
+    get_ffmpeg_codec_args,
+    get_ffmpeg_format_args,
 )
 
 
@@ -161,7 +164,7 @@ class ExtractReviewSlate(openpype.api.Extractor):
                 output_args.extend(repre["_profile"].get('output', []))
             else:
                 # Codecs are copied from source for whole input
-                codec_args = self.codec_args(repre)
+                codec_args = self._get_codec_args(repre)
                 output_args.extend(codec_args)
 
             # make sure colors are correct
@@ -335,7 +338,7 @@ class ExtractReviewSlate(openpype.api.Extractor):
 
         return vf_back
 
-    def codec_args(self, repre):
+    def _get_codec_args(self, repre):
         """Detect possible codec arguments from representation."""
         codec_args = []
 
@@ -349,7 +352,7 @@ class ExtractReviewSlate(openpype.api.Extractor):
 
         try:
             # Get information about input file via ffprobe tool
-            streams = get_ffprobe_streams(full_input_path, self.log)
+            ffprobe_data = get_ffprobe_data(full_input_path, self.log)
         except Exception:
             self.log.warning(
                 "Could not get codec data from input.",
@@ -357,42 +360,11 @@ class ExtractReviewSlate(openpype.api.Extractor):
             )
             return codec_args
 
-        # Try to find first stream that is not an audio
-        no_audio_stream = None
-        for stream in streams:
-            if stream.get("codec_type") != "audio":
-                no_audio_stream = stream
-                break
+        codec_args.extend(
+            get_ffmpeg_format_args(ffprobe_data)
+        )
+        codec_args.extend(
+            get_ffmpeg_codec_args(ffprobe_data, logger=self.log)
+        )
 
-        if no_audio_stream is None:
-            self.log.warning((
-                "Couldn't find stream that is not an audio from file \"{}\""
-            ).format(full_input_path))
-            return codec_args
-
-        codec_name = no_audio_stream.get("codec_name")
-        if codec_name:
-            codec_args.append("-codec:v {}".format(codec_name))
-
-        profile_name = no_audio_stream.get("profile")
-        if profile_name:
-            # Rest of arguments is prores_kw specific
-            if codec_name == "prores_ks":
-                codec_tag_to_profile_map = {
-                    "apco": "proxy",
-                    "apcs": "lt",
-                    "apcn": "standard",
-                    "apch": "hq",
-                    "ap4h": "4444",
-                    "ap4x": "4444xq"
-                }
-                codec_tag_str = no_audio_stream.get("codec_tag_string")
-                if codec_tag_str:
-                    profile = codec_tag_to_profile_map.get(codec_tag_str)
-                    if profile:
-                        codec_args.extend(["-profile:v", profile])
-
-        pix_fmt = no_audio_stream.get("pix_fmt")
-        if pix_fmt:
-            codec_args.append("-pix_fmt {}".format(pix_fmt))
         return codec_args
