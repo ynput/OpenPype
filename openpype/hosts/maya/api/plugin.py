@@ -178,7 +178,7 @@ class ReferenceLoader(Loader):
                 loader=self.__class__.__name__
             )
             loaded_containers.append(container)
-            self._organize_containers([ref_node], container)
+            self._organize_containers(nodes, container)
             c += 1
             namespace = None
 
@@ -318,6 +318,7 @@ class ReferenceLoader(Loader):
     @staticmethod
     def _organize_containers(nodes, container):
         # type: (list, str) -> None
+        """Put containers in loaded data to correct hierarchy."""
         for node in nodes:
             id_attr = "{}.id".format(node)
             if not cmds.attributeQuery("id", node=node, exists=True):

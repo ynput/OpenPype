@@ -58,16 +58,12 @@ class ExtractMayaSceneRaw(openpype.api.Extractor):
         else:
             members = instance[:]
 
-        loaded_containers = None
-        if set(self.add_for_families).intersection(
-                set(instance.data.get("families")),
-                set(instance.data.get("family").lower())):
-            loaded_containers = self._add_loaded_containers(members)
-
         selection = members
-        if loaded_containers:
-            self.log.info(loaded_containers)
-            selection += loaded_containers
+        if set(self.add_for_families).intersection(
+                set(instance.data.get("families"))) or \
+                instance.data.get("family") in self.add_for_families:
+            selection += self._add_loaded_containers(members)
+            self.log.info(selection)
 
         # Perform extraction
         self.log.info("Performing extraction ...")
@@ -105,7 +101,7 @@ class ExtractMayaSceneRaw(openpype.api.Extractor):
             if cmds.referenceQuery(ref, isNodeReferenced=True)
         ]
 
-        refs_to_include = set(refs_to_include)
+        members_with_refs = set(refs_to_include).union(members)
 
         obj_sets = cmds.ls("*.id", long=True, type="objectSet", recursive=True,
                            objectsOnly=True)
@@ -121,7 +117,7 @@ class ExtractMayaSceneRaw(openpype.api.Extractor):
                 continue
 
             set_content = set(cmds.sets(obj_set, query=True))
-            if set_content.intersection(refs_to_include):
+            if set_content.intersection(members_with_refs):
                 loaded_containers.append(obj_set)
 
         return loaded_containers
