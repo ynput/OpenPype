@@ -9,10 +9,9 @@ import datetime
 
 import Qt
 from Qt import QtWidgets, QtCore
-from avalon import io, api, pipeline
+from avalon import io, api
 
 from openpype import style
-from openpype.pipeline.lib import BeforeWorkfileSave
 from openpype.tools.utils.lib import (
     qt_app_context
 )
@@ -21,6 +20,7 @@ from openpype.tools.utils.assets_widget import SingleSelectAssetsWidget
 from openpype.tools.utils.tasks_widget import TasksWidget
 from openpype.tools.utils.delegates import PrettyTimeDelegate
 from openpype.lib import (
+    emit_event,
     Anatomy,
     get_workfile_doc,
     create_workfile_doc,
@@ -823,7 +823,11 @@ class FilesWidget(QtWidgets.QWidget):
             return
 
         # Trigger before save event
-        BeforeWorkfileSave.emit(work_filename, self._workdir_path)
+        emit_event(
+            "workfile.save.before",
+            {"filename": work_filename, "workdir_path": self._workdir_path},
+            source="workfiles.tool"
+        )
 
         # Make sure workfiles root is updated
         # - this triggers 'workio.work_root(...)' which may change value of
@@ -853,7 +857,11 @@ class FilesWidget(QtWidgets.QWidget):
             api.Session["AVALON_PROJECT"]
         )
         # Trigger after save events
-        pipeline.emit("after.workfile.save", [filepath])
+        emit_event(
+            "workfile.save.after",
+            {"filename": work_filename, "workdir_path": self._workdir_path},
+            source="workfiles.tool"
+        )
 
         self.workfile_created.emit(filepath)
         # Refresh files model
