@@ -42,6 +42,9 @@ class LoadClip(plugin.NukeLoader):
     icon = "file-video-o"
     color = "white"
 
+    # Loaded from settings
+    _representations = []
+
     script_start = int(nuke.root()["first_frame"].value())
 
     # option gui

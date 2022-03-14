@@ -36,6 +36,9 @@ class LoadImage(load.LoaderPlugin):
     icon = "image"
     color = "white"
 
+    # Loaded from settings
+    _representations = []
+
     node_name_template = "{class_name}_{ext}"
 
     options = [
