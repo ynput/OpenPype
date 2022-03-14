@@ -6,7 +6,7 @@ class CreateMultiverseUsdOver(plugin.Creator):
 
     name = "usdOverrideMain"
     label = "Multiverse USD Override"
-    family = "usd_override"
+    family = "usdOverride"
     icon = "cubes"
 
     def __init__(self, *args, **kwargs):

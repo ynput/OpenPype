@@ -11,7 +11,7 @@ class ExtractMultiverseUsdOverride(openpype.api.Extractor):
 
     label = "Extract Multiverse USD Override"
     hosts = ["maya"]
-    families = ["usd_override"]
+    families = ["usdOverride"]
 
     @property
     def options(self):
