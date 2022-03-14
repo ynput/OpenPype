@@ -7,7 +7,7 @@ import maya.cmds as cmds
 class MultiverseUsdLoader(api.Loader):
     """Load the USD by Multiverse"""
 
-    families = ["usd"]
+    families = ["model", "usd", "usdComposition", "usd_override"]
     representations = ["usd", "usda", "usdc", "usdz", "abc"]
 
     label = "Read USD by Multiverse"
