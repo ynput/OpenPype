@@ -3,7 +3,8 @@ from collections import OrderedDict
 
 import nuke
 
-from avalon import api, style, io
+from avalon import api, io
+
 from openpype.hosts.nuke.api import lib
 from openpype.hosts.nuke.api import (
     containerise,
@@ -21,7 +22,7 @@ class LoadEffectsInputProcess(api.Loader):
     label = "Load Effects - Input Process"
     order = 0
     icon = "eye"
-    color = style.colors.alert
+    color = "#cc0000"
     ignore_attr = ["useLifetime"]
 
     def load(self, context, name, namespace, data):
