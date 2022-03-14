@@ -7,11 +7,28 @@ from openpype import resources
 
 from .color_defs import parse_color
 
-
-_STYLESHEET_CACHE = None
-_FONT_IDS = None
-
 current_dir = os.path.dirname(os.path.abspath(__file__))
+
+
+# Default colors
+# - default color used in tool icons
+_TOOLS_ICON_COLOR = "#ffffff"
+# - entities icon color - use 'get_default_asset_icon_color'
+_DEFAULT_ENTITY_ICON_COLOR = "#fb9c15"
+# - disabled entitie
+_DISABLED_ENTITY_ICON_ICON_COLOR = "#808080"
+# - deprecated entity font color
+_DEPRECATED_ENTITY_FONT_COLOR = "#666666"
+
+
+class _Cache:
+    stylesheet = None
+    font_ids = None
+
+    tools_icon_color = None
+    default_entity_icon_color = None
+    disabled_entity_icon_color = None
+    deprecated_entity_font_color = None
 
 
 def get_style_image_path(image_name):
@@ -125,21 +142,19 @@ def _load_font():
     """Load and register fonts into Qt application."""
     from Qt import QtGui
 
-    global _FONT_IDS
-
     # Check if font ids are still loaded
-    if _FONT_IDS is not None:
-        for font_id in tuple(_FONT_IDS):
+    if _Cache.font_ids is not None:
+        for font_id in tuple(_Cache.font_ids):
             font_families = QtGui.QFontDatabase.applicationFontFamilies(
                 font_id
             )
             # Reset font if font id is not available
             if not font_families:
-                _FONT_IDS = None
+                _Cache.font_ids = None
                 break
 
-    if _FONT_IDS is None:
-        _FONT_IDS = []
+    if _Cache.font_ids is None:
+        _Cache.font_ids = []
         fonts_dirpath = os.path.join(current_dir, "fonts")
         font_dirs = []
         font_dirs.append(os.path.join(fonts_dirpath, "Noto_Sans"))
@@ -157,7 +172,7 @@ def _load_font():
                     continue
                 full_path = os.path.join(font_dir, filename)
                 font_id = QtGui.QFontDatabase.addApplicationFont(full_path)
-                _FONT_IDS.append(font_id)
+                _Cache.font_ids.append(font_id)
                 font_families = QtGui.QFontDatabase.applicationFontFamilies(
                     font_id
                 )
@@ -167,11 +182,11 @@ def _load_font():
 
 def load_stylesheet():
     """Load and return OpenPype Qt stylesheet."""
-    global _STYLESHEET_CACHE
-    if _STYLESHEET_CACHE is None:
-        _STYLESHEET_CACHE = _load_stylesheet()
+
+    if _Cache.stylesheet is None:
+        _Cache.stylesheet = _load_stylesheet()
     _load_font()
-    return _STYLESHEET_CACHE
+    return _Cache.stylesheet
 
 
 def get_app_icon_path():
@@ -182,3 +197,39 @@ def get_app_icon_path():
 def app_icon_path():
     # Backwards compatibility
     return get_app_icon_path()
+
+
+def get_default_tools_icon_color():
+    if _Cache.tools_icon_color is None:
+        color_data = get_colors_data()
+        color = color_data.get("icon-tools")
+        _Cache.tools_icon_color = color or _TOOLS_ICON_COLOR
+    return _Cache.tools_icon_color
+
+
+def get_default_entity_icon_color():
+    if _Cache.default_entity_icon_color is None:
+        color_data = get_colors_data()
+        color = color_data.get("icon-entity-default")
+        _Cache.default_entity_icon_color = color or _DEFAULT_ENTITY_ICON_COLOR
+    return _Cache.default_entity_icon_color
+
+
+def get_disabled_entity_icon_color():
+    if _Cache.disabled_entity_icon_color is None:
+        color_data = get_colors_data()
+        color = color_data.get("icon-entity-disabled")
+        _Cache.disabled_entity_icon_color = (
+            color or _DISABLED_ENTITY_ICON_ICON_COLOR
+        )
+    return _Cache.disabled_entity_icon_color
+
+
+def get_deprecated_entity_font_color():
+    if _Cache.deprecated_entity_font_color is None:
+        color_data = get_colors_data()
+        color = color_data.get("font-entity-deprecated")
+        _Cache.deprecated_entity_font_color = (
+            color or _DEPRECATED_ENTITY_FONT_COLOR
+        )
+    return _Cache.deprecated_entity_font_color

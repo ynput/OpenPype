@@ -56,6 +56,12 @@
         "delete-btn-bg": "rgb(201, 54, 54)",
         "delete-btn-bg-disabled": "rgba(201, 54, 54, 64)",
 
+        "icon-tools": "#ffffff",
+        "icon-alert-tools": "#AA5050",
+        "icon-entity-default": "#fb9c15",
+        "icon-entity-disabled": "#808080",
+        "font-entity-deprecated": "#666666",
+
         "tab-widget": {
             "bg": "#21252B",
             "bg-selected": "#434a56",
