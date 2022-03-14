@@ -122,18 +122,42 @@ def get_qta_icon_by_name_and_color(icon_name, icon_color):
     return icon
 
 
+def get_project_icon(project_doc):
+    if project_doc:
+        icon_name = project_doc.get("data", {}).get("icon")
+        icon = get_qta_icon_by_name_and_color(icon_name, "white")
+        if icon:
+            return icon
+
+    return get_qta_icon_by_name_and_color(
+        "fa.map", get_default_entity_icon_color()
+    )
+
+
+def get_asset_icon_name(asset_doc, has_children=True):
+    if asset_doc:
+        asset_data = asset_doc.get("data") or {}
+        icon_name = asset_data.get("icon")
+        if icon_name:
+            return icon_name
+
+    if has_children:
+        return "folder"
+    return "folder-o"
+
+
+def get_asset_icon_color(asset_doc):
+    if asset_doc:
+        asset_data = asset_doc.get("data") or {}
+        icon_color = asset_data.get("color")
+        if icon_color:
+            return icon_color
+    return get_default_entity_icon_color()
+
+
 def get_asset_icon(asset_doc, has_children=False):
-    asset_data = asset_doc.get("data") or {}
-    icon_color = asset_data.get("color") or get_default_entity_icon_color()
-    icon_name = asset_data.get("icon")
-    if not icon_name:
-        # Use default icons if no custom one is specified.
-        # If it has children show a full folder, otherwise
-        # show an open folder
-        if has_children:
-            icon_name = "folder"
-        else:
-            icon_name = "folder-o"
+    icon_name = get_asset_icon_name(asset_doc, has_children)
+    icon_color = get_asset_icon_color(asset_doc)
 
     return get_qta_icon_by_name_and_color(icon_name, icon_color)
 
