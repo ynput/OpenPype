@@ -106,6 +106,9 @@ class CollectTimelineInstances(pyblish.api.ContextPlugin):
                 # add resolution
                 self._get_resolution_to_data(inst_data, context)
 
+                # add comment attributes if any
+                inst_data.update(comment_attributes)
+
                 # create instance
                 instance = context.create_instance(**inst_data)
 
@@ -163,11 +166,13 @@ class CollectTimelineInstances(pyblish.api.ContextPlugin):
                 # 1920x1080x1.5
                 aspect = res_goup[2] if len(res_goup) > 2 else 1
 
-                attributes["resolution"] = {
-                    "width": int(res_goup[0]),
-                    "height": int(res_goup[1]),
+                attributes.update({
+                    "resolutionWidth": int(res_goup[0]),
+                    "resolutionHeight": int(res_goup[1]),
                     "pixelAspect": float(aspect)
-                }
+                })
+
+        return attributes
 
     def _get_head_tail(self, clip_data, first_frame):
         # calculate head and tail with forward compatibility
