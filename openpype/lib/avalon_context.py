@@ -980,6 +980,8 @@ class BuildWorkfile:
             ...
         }]
         """
+        from openpype.pipeline import discover_loader_plugins
+
         # Get current asset name and entity
         current_asset_name = avalon.io.Session["AVALON_ASSET"]
         current_asset_entity = avalon.io.find_one({
@@ -996,7 +998,7 @@ class BuildWorkfile:
 
         # Prepare available loaders
         loaders_by_name = {}
-        for loader in avalon.api.discover(avalon.api.Loader):
+        for loader in discover_loader_plugins():
             loader_name = loader.__name__
             if loader_name in loaders_by_name:
                 raise KeyError(
@@ -1390,6 +1392,11 @@ class BuildWorkfile:
         Returns:
             (list) Objects of loaded containers.
         """
+        from openpype.pipeline import (
+            IncompatibleLoaderError,
+            load_representation,
+        )
+
         loaded_containers = []
 
         # Get subset id order from build presets.
@@ -1451,7 +1458,7 @@ class BuildWorkfile:
                     if not loader:
                         continue
                     try:
-                        container = avalon.api.load(
+                        container = load_representation(
                             loader,
                             repre["_id"],
                             name=subset_name
@@ -1460,7 +1467,7 @@ class BuildWorkfile:
                         is_loaded = True
 
                     except Exception as exc:
-                        if exc == avalon.pipeline.IncompatibleLoaderError:
+                        if exc == IncompatibleLoaderError:
                             self.log.info((
                                 "Loader `{}` is not compatible with"
                                 " representation `{}`"

@@ -1,8 +1,12 @@
 import nuke
 
 import qargparse
-from avalon import api, io
+from avalon import io
 
+from openpype.pipeline import (
+    load,
+    get_representation_path,
+)
 from openpype.hosts.nuke.api.lib import (
     get_imageio_input_colorspace
 )
@@ -13,7 +17,7 @@ from openpype.hosts.nuke.api import (
 )
 
 
-class LoadImage(api.Loader):
+class LoadImage(load.LoaderPlugin):
     """Load still image into Nuke"""
 
     families = [
@@ -161,7 +165,7 @@ class LoadImage(api.Loader):
 
         repr_cont = representation["context"]
 
-        file = api.get_representation_path(representation)
+        file = get_representation_path(representation)
 
         if not file:
             repr_id = representation["_id"]

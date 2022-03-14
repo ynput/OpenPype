@@ -14,7 +14,11 @@ import avalon.api
 from avalon import io, schema
 from avalon.pipeline import AVALON_CONTAINER_ID
 
-from openpype.pipeline import LegacyCreator
+from openpype.pipeline import (
+    LegacyCreator,
+    register_loader_plugins_path,
+    deregister_loader_plugins_path,
+)
 from openpype.api import Logger
 import openpype.hosts.blender
 
@@ -46,7 +50,7 @@ def install():
     pyblish.api.register_host("blender")
     pyblish.api.register_plugin_path(str(PUBLISH_PATH))
 
-    avalon.api.register_plugin_path(avalon.api.Loader, str(LOAD_PATH))
+    register_loader_plugins_path(str(LOAD_PATH))
     avalon.api.register_plugin_path(LegacyCreator, str(CREATE_PATH))
 
     lib.append_user_scripts()
@@ -67,7 +71,7 @@ def uninstall():
     pyblish.api.deregister_host("blender")
     pyblish.api.deregister_plugin_path(str(PUBLISH_PATH))
 
-    avalon.api.deregister_plugin_path(avalon.api.Loader, str(LOAD_PATH))
+    deregister_loader_plugins_path(str(LOAD_PATH))
     avalon.api.deregister_plugin_path(LegacyCreator, str(CREATE_PATH))
 
     if not IS_HEADLESS:

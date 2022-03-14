@@ -7,16 +7,15 @@ from Qt import QtCore, QtGui
 import qtawesome
 
 from avalon import api, io, style, schema
-from avalon.lib import HeroVersionType
+from openpype.pipeline import HeroVersionType
 from openpype.tools.utils.models import TreeModel, Item
+from openpype.modules import ModulesManager
 
 from .lib import (
     get_site_icons,
     walk_hierarchy,
     get_progress_for_repre
 )
-
-from openpype.modules import ModulesManager
 
 
 class InventoryModel(TreeModel):

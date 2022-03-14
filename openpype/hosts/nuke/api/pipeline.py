@@ -14,7 +14,11 @@ from openpype.api import (
     BuildWorkfile,
     get_current_project_settings
 )
-from openpype.pipeline import LegacyCreator
+from openpype.pipeline import (
+    LegacyCreator,
+    register_loader_plugins_path,
+    deregister_loader_plugins_path,
+)
 from openpype.tools.utils import host_tools
 
 from .command import viewer_update_and_undo_stop
@@ -98,7 +102,7 @@ def install():
 
     log.info("Registering Nuke plug-ins..")
     pyblish.api.register_plugin_path(PUBLISH_PATH)
-    avalon.api.register_plugin_path(avalon.api.Loader, LOAD_PATH)
+    register_loader_plugins_path(LOAD_PATH)
     avalon.api.register_plugin_path(LegacyCreator, CREATE_PATH)
     avalon.api.register_plugin_path(avalon.api.InventoryAction, INVENTORY_PATH)
 
@@ -124,7 +128,7 @@ def uninstall():
     log.info("Deregistering Nuke plug-ins..")
     pyblish.deregister_host("nuke")
     pyblish.api.deregister_plugin_path(PUBLISH_PATH)
-    avalon.api.deregister_plugin_path(avalon.api.Loader, LOAD_PATH)
+    deregister_loader_plugins_path(LOAD_PATH)
     avalon.api.deregister_plugin_path(LegacyCreator, CREATE_PATH)
 
     pyblish.api.deregister_callback(

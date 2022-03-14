@@ -1,5 +1,9 @@
 import nuke
-from avalon import api, style, io
+from avalon import style, io
+from openpype.pipeline import (
+    load,
+    get_representation_path,
+)
 from openpype.hosts.nuke.api.lib import (
     maintained_selection,
     get_avalon_knob_data,
@@ -12,7 +16,7 @@ from openpype.hosts.nuke.api import (
 )
 
 
-class LoadGizmo(api.Loader):
+class LoadGizmo(load.LoaderPlugin):
     """Loading nuke Gizmo"""
 
     representations = ["gizmo"]
@@ -103,7 +107,7 @@ class LoadGizmo(api.Loader):
         # get corresponding node
         GN = nuke.toNode(container['objectName'])
 
-        file = api.get_representation_path(representation).replace("\\", "/")
+        file = get_representation_path(representation).replace("\\", "/")
         name = container['name']
         version_data = version.get("data", {})
         vname = version.get("name", None)

@@ -5,7 +5,12 @@ import platform
 import functools
 import logging
 
-from openpype.pipeline import LegacyCreator
+from openpype.pipeline import (
+    LegacyCreator,
+    register_loader_plugins_path,
+    deregister_loader_plugins_path,
+)
+
 from .settings import get_project_settings
 from .lib import (
     Anatomy,
@@ -90,7 +95,7 @@ def install():
     log.info("Registering global plug-ins..")
     pyblish.register_plugin_path(PUBLISH_PATH)
     pyblish.register_discovery_filter(filter_pyblish_plugins)
-    avalon.register_plugin_path(avalon.Loader, LOAD_PATH)
+    register_loader_plugins_path(LOAD_PATH)
 
     project_name = os.environ.get("AVALON_PROJECT")
 
@@ -118,7 +123,7 @@ def install():
                 continue
 
             pyblish.register_plugin_path(path)
-            avalon.register_plugin_path(avalon.Loader, path)
+            register_loader_plugins_path(path)
             avalon.register_plugin_path(LegacyCreator, path)
             avalon.register_plugin_path(avalon.InventoryAction, path)
 
@@ -141,7 +146,7 @@ def uninstall():
     log.info("Deregistering global plug-ins..")
     pyblish.deregister_plugin_path(PUBLISH_PATH)
     pyblish.deregister_discovery_filter(filter_pyblish_plugins)
-    avalon.deregister_plugin_path(avalon.Loader, LOAD_PATH)
+    deregister_loader_plugins_path(LOAD_PATH)
     log.info("Global plug-ins unregistred")
 
     # restore original discover

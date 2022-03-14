@@ -7,9 +7,11 @@ import six
 import qargparse
 from Qt import QtWidgets, QtCore
 import openpype.api as openpype
-from openpype.pipeline import LegacyCreator
+from openpype.pipeline import (
+    LegacyCreator,
+    LoaderPlugin,
+)
 from openpype import style
-import avalon.api as avalon
 from . import (
     lib as flib,
     pipeline as fpipeline,
@@ -660,7 +662,7 @@ class PublishableClip:
 # Publishing plugin functions
 # Loader plugin functions
 
-class ClipLoader(avalon.Loader):
+class ClipLoader(LoaderPlugin):
     """A basic clip loader for Flame
 
     This will implement the basic behavior for a loader to inherit from that

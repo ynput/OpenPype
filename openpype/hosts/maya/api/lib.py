@@ -17,10 +17,16 @@ import bson
 from maya import cmds, mel
 import maya.api.OpenMaya as om
 
-from avalon import api, io, pipeline
+from avalon import api, io
 
 from openpype import lib
 from openpype.api import get_anatomy_settings
+from openpype.pipeline import (
+    discover_loader_plugins,
+    loaders_from_representation,
+    get_representation_path,
+    load_representation,
+)
 from .commands import reset_frame_range
 
 
@@ -1580,21 +1586,21 @@ def assign_look_by_version(nodes, version_id):
         log.info("Using look for the first time ..")
 
         # Load file
-        loaders = api.loaders_from_representation(api.discover(api.Loader),
-                                                  representation_id)
+        _loaders = discover_loader_plugins()
+        loaders = loaders_from_representation(_loaders, representation_id)
         Loader = next((i for i in loaders if i.__name__ == "LookLoader"), None)
         if Loader is None:
             raise RuntimeError("Could not find LookLoader, this is a bug")
 
         # Reference the look file
         with maintained_selection():
-            container_node = pipeline.load(Loader, look_representation)
+            container_node = load_representation(Loader, look_representation)
 
     # Get container members
     shader_nodes = get_container_members(container_node)
 
     # Load relationships
-    shader_relation = api.get_representation_path(json_representation)
+    shader_relation = get_representation_path(json_representation)
     with open(shader_relation, "r") as f:
         relationships = json.load(f)
 

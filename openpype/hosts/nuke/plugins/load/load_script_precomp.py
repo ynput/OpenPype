@@ -1,5 +1,9 @@
 import nuke
-from avalon import api, style, io
+from avalon import style, io
+from openpype.pipeline import (
+    load,
+    get_representation_path,
+)
 from openpype.hosts.nuke.api.lib import get_avalon_knob_data
 from openpype.hosts.nuke.api import (
     containerise,
@@ -8,7 +12,7 @@ from openpype.hosts.nuke.api import (
 )
 
 
-class LinkAsGroup(api.Loader):
+class LinkAsGroup(load.LoaderPlugin):
     """Copy the published file to be pasted at the desired location"""
 
     representations = ["nk"]
@@ -108,7 +112,7 @@ class LinkAsGroup(api.Loader):
         """
         node = nuke.toNode(container['objectName'])
 
-        root = api.get_representation_path(representation).replace("\\", "/")
+        root = get_representation_path(representation).replace("\\", "/")
 
         # Get start frame from version data
         version = io.find_one({
