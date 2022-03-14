@@ -1,3 +1,4 @@
+import re
 import pyblish
 import openpype
 import openpype.hosts.flame.api as opfapi
@@ -16,9 +17,6 @@ class CollectTimelineInstances(pyblish.api.ContextPlugin):
 
     audio_track_items = []
 
-    def _get_comment_attributes(self, segment):
-        comment = segment.comment.get_value()
-
     def process(self, context):
         project = context.data["flameProject"]
         sequence = context.data["flameSequence"]
@@ -30,6 +28,9 @@ class CollectTimelineInstances(pyblish.api.ContextPlugin):
         with opfapi.maintained_segment_selection(sequence) as segments:
             for segment in segments:
                 comment_attributes = self._get_comment_attributes(segment)
+                self.log.debug("_ comment_attributes: {}".format(
+                    pformat(comment_attributes)))
+
                 clip_data = opfapi.get_segment_attributes(segment)
                 clip_name = clip_data["segment_name"]
                 self.log.debug("clip_name: {}".format(clip_name))
@@ -129,6 +130,44 @@ class CollectTimelineInstances(pyblish.api.ContextPlugin):
                 # if reviewTrack is on
                 if marker_data.get("reviewTrack") is not None:
                     instance.data["reviewAudio"] = True
+
+    def _get_comment_attributes(self, segment):
+        comment = segment.comment.get_value()
+
+        # first split comment by comma
+        split_comments = []
+        if "," in comment:
+            split_comments.extend(iter(comment.split(",")))
+        elif ";" in comment:
+            split_comments.extend(iter(comment.split(";")))
+        else:
+            split_comments.append(comment)
+
+        # try to find attributes
+        attributes = {}
+        # search for `:`
+        for split in split_comments:
+            # make sure we ignore if not `:` in key
+            if ":" not in split:
+                continue
+
+            # split to key and value
+            key, value = split.split(":")
+
+            # condition for resolution in key
+            if "resolution" in key.lower():
+                patern = re.compile(r"([0-9]+)")
+                res_goup = patern.findall(value)
+
+                # check if axpect was also defined
+                # 1920x1080x1.5
+                aspect = res_goup[2] if len(res_goup) > 2 else 1
+
+                attributes["resolution"] = {
+                    "width": int(res_goup[0]),
+                    "height": int(res_goup[1]),
+                    "pixelAspect": float(aspect)
+                }
 
     def _get_head_tail(self, clip_data, first_frame):
         # calculate head and tail with forward compatibility
