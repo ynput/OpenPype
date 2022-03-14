@@ -5,8 +5,8 @@ class CreateMultiverseUsdComp(plugin.Creator):
     """Create Multiverse USD Composition"""
 
     name = "usdOverrideMain"
-    label = "Multiverse USD Override"
-    family = "usd_override"
+    label = "Multiverse USD Composition"
+    family = "usdComposition"
     icon = "cubes"
 
     def __init__(self, *args, **kwargs):
