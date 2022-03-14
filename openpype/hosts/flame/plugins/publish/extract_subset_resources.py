@@ -217,7 +217,11 @@ class ExtractSubsetResources(openpype.api.Extractor):
                 # add files to represetation but add
                 # imagesequence as list
                 if (
-                    "movie_file" in preset_path
+                    # first check if path in files is not mov extension
+                    next([
+                        f for f in files if ".mov" in os.path.splitext(f)[-1]
+                    ], None)
+                    # then try if thumbnail is not in unique name
                     or unique_name == "thumbnail"
                 ):
                     representation_data["files"] = files.pop()
