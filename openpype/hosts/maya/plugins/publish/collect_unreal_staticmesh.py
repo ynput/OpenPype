@@ -12,14 +12,20 @@ class CollectUnrealStaticMesh(pyblish.api.InstancePlugin):
     families = ["staticMesh"]
 
     def process(self, instance):
-        geometry_set = [i for i in instance if i == "geometry_SET"]
+        geometry_set = [
+            i for i in instance
+            if i.startswith("geometry_SET")
+        ]
         instance.data["geometryMembers"] = cmds.sets(
             geometry_set, query=True)
 
         self.log.info("geometry: {}".format(
             pformat(instance.data.get("geometryMembers"))))
 
-        collision_set = [i for i in instance if i == "collisions_SET"]
+        collision_set = [
+            i for i in instance
+            if i.startswith("collisions_SET")
+        ]
         instance.data["collisionMembers"] = cmds.sets(
             collision_set, query=True)
 
