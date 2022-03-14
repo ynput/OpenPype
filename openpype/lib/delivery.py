@@ -4,13 +4,18 @@ import shutil
 import glob
 import clique
 import collections
+import re
 
 
 def collect_frames(files):
     """
         Returns dict of source path and its frame, if from sequence
 
-        Uses clique as most precise solution
+        Uses clique as most precise solution, used when anatomy template that
+        created files is not known.
+
+        Depends that version substring starts with 'v' with any number of
+        numeric characters after.
 
         Args:
             files(list) or (set with single value): list of source paths
@@ -29,9 +34,8 @@ def collect_frames(files):
             src_head = collection.head
             src_tail = collection.tail
 
-            if src_head.endswith("_v"):
-                # print("Collection gathered incorrectly, not a sequence "
-                #       "just a version found in {}".format(files))
+            # version recognized as a collection
+            if re.match(".*([^a-zA-Z0-9]v%[0-9]+d).*", collection.format()):
                 if len(collections) > 1:
                     continue
                 else:

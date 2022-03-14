@@ -19,12 +19,52 @@ def test_collect_frames_multi_sequence():
     assert ret == expected, "Not matching"
 
 
+def test_collect_frames_multi_sequence_different_format():
+    files = ["Asset.v001.renderCompositingMain.0000.png",
+             "Asset.v001.renderCompositingMain.0001.png",
+             "Asset.v001.renderCompositingMain.0002.png"]
+    ret = collect_frames(files)
+
+    expected = {
+        "Asset.v001.renderCompositingMain.0000.png": "0000",
+        "Asset.v001.renderCompositingMain.0001.png": "0001",
+        "Asset.v001.renderCompositingMain.0002.png": "0002"
+    }
+
+    print(ret)
+    assert ret == expected, "Not matching"
+
+
 def test_collect_frames_single_sequence():
     files = ["Asset_renderCompositingMain_v001.0000.png"]
     ret = collect_frames(files)
 
     expected = {
         "Asset_renderCompositingMain_v001.0000.png": "0000"
+    }
+
+    print(ret)
+    assert ret == expected, "Not matching"
+
+
+def test_collect_frames_single_sequence_different_format():
+    files = ["Asset.v001.renderCompositingMain_0000.png"]
+    ret = collect_frames(files)
+
+    expected = {
+        "Asset.v001.renderCompositingMain_0000.png": "0000"
+    }
+
+    print(ret)
+    assert ret == expected, "Not matching"
+
+
+def test_collect_frames_single_sequence_withhout_version():
+    files = ["pngv001.renderCompositingMain_0000.png"]
+    ret = collect_frames(files)
+
+    expected = {
+        "pngv001.renderCompositingMain_0000.png": "0000"
     }
 
     print(ret)
