@@ -5,7 +5,6 @@ import platform
 import functools
 import logging
 
-from openpype.pipeline import LegacyCreator
 from .settings import get_project_settings
 from .lib import (
     Anatomy,
@@ -76,6 +75,7 @@ def install():
     """Install Pype to Avalon."""
     from pyblish.lib import MessageHandler
     from openpype.modules import load_modules
+    from openpype.pipeline import LegacyCreator
     from avalon import pipeline
 
     # Make sure modules are loaded
