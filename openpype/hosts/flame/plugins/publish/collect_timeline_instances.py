@@ -159,7 +159,7 @@ class CollectTimelineInstances(pyblish.api.ContextPlugin):
 
             # condition for resolution in key
             if "resolution" in key.lower():
-                patern = re.compile(r"([0-9]+)")
+                patern = re.compile(r"([0-9\.]+)")
                 res_goup = patern.findall(value)
 
                 # check if axpect was also defined
