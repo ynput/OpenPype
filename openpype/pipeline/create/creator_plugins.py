@@ -69,7 +69,9 @@ class BaseCreator:
     @property
     def log(self):
         if self._log is None:
-            self._log = logging.getLogger(self.__class__.__name__)
+            from openpype.api import Logger
+
+            self._log = Logger.get_logger(self.__class__.__name__)
         return self._log
 
     def _add_instance_to_context(self, instance):
