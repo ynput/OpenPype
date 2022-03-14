@@ -27,6 +27,7 @@ class PSItem(object):
     members = attr.ib(factory=list)
     long_name = attr.ib(default=None)
     color_code = attr.ib(default=None)  # color code of layer
+    instance_id = attr.ib(default=None)
 
 
 class PhotoshopServerStub:
@@ -82,7 +83,7 @@ class PhotoshopServerStub:
 
         return layers_meta.get(str(layer.id))
 
-    def imprint(self, layer, data, all_layers=None, layers_meta=None):
+    def imprint(self, item_id, data, all_layers=None, items_meta=None):
         """Save layer metadata to Headline field of active document
 
         Stores metadata in format:
@@ -108,28 +109,29 @@ class PhotoshopServerStub:
         }] - for loaded instances
 
         Args:
-            layer (PSItem):
+            item_id (str):
             data(string): json representation for single layer
             all_layers (list of PSItem): for performance, could be
                 injected for usage in loop, if not, single call will be
                 triggered
-            layers_meta(string): json representation from Headline
+            items_meta(string): json representation from Headline
                            (for performance - provide only if imprint is in
                            loop - value should be same)
         Returns: None
         """
-        if not layers_meta:
-            layers_meta = self.get_layers_metadata()
+        if not items_meta:
+            items_meta = self.get_layers_metadata()
 
         # json.dumps writes integer values in a dictionary to string, so
         # anticipating it here.
-        if str(layer.id) in layers_meta and layers_meta[str(layer.id)]:
+        item_id = str(item_id)
+        if item_id in items_meta.keys():
             if data:
-                layers_meta[str(layer.id)].update(data)
+                items_meta[item_id].update(data)
             else:
-                layers_meta.pop(str(layer.id))
+                items_meta.pop(item_id)
         else:
-            layers_meta[str(layer.id)] = data
+            items_meta[item_id] = data
 
         # Ensure only valid ids are stored.
         if not all_layers:
@@ -137,12 +139,14 @@ class PhotoshopServerStub:
         layer_ids = [layer.id for layer in all_layers]
         cleaned_data = []
 
-        for layer_id in layers_meta:
-            if int(layer_id) in layer_ids:
-                cleaned_data.append(layers_meta[layer_id])
+        for item in items_meta.values():
+            if item.get("members"):
+                if int(item["members"][0]) not in layer_ids:
+                    continue
+
+            cleaned_data.append(item)
 
         payload = json.dumps(cleaned_data, indent=4)
-
         self.websocketserver.call(
             self.client.call('Photoshop.imprint', payload=payload)
         )
@@ -528,6 +532,7 @@ class PhotoshopServerStub:
                 d.get('type'),
                 d.get('members'),
                 d.get('long_name'),
-                d.get("color_code")
+                d.get("color_code"),
+                d.get("instance_id")
             ))
         return ret
