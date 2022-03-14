@@ -1,13 +1,5 @@
 import logging
 
-from avalon.api import (
-    discover,
-    register_plugin,
-    deregister_plugin,
-    register_plugin_path,
-    deregister_plugin_path,
-)
-
 from .utils import get_representation_path_from_context
 
 
@@ -110,20 +102,29 @@ class SubsetLoaderPlugin(LoaderPlugin):
 
 
 def discover_loader_plugins():
-    return discover(LoaderPlugin)
+    import avalon.api
+
+    return avalon.api.discover(LoaderPlugin)
 
 
 def register_loader_plugin(plugin):
-    return register_plugin(LoaderPlugin, plugin)
+    import avalon.api
+
+    return avalon.api.register_plugin(LoaderPlugin, plugin)
 
 
 def deregister_loader_plugins_path(path):
-    deregister_plugin_path(LoaderPlugin, path)
+    import avalon.api
+
+    avalon.api.deregister_plugin_path(LoaderPlugin, path)
 
 
 def register_loader_plugins_path(path):
-    return register_plugin_path(LoaderPlugin, path)
+    import avalon.api
+
+    return avalon.apiregister_plugin_path(LoaderPlugin, path)
 
 
 def deregister_loader_plugin(plugin):
-    deregister_plugin(LoaderPlugin, plugin)
+    import avalon.api
+    avalon.api.deregister_plugin(LoaderPlugin, plugin)
