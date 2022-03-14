@@ -1,7 +1,10 @@
 from Qt import QtWidgets, QtCore, QtGui
 import qtawesome
 
-from avalon import style
+from openpype.style import (
+    get_default_entity_icon_color,
+    get_disabled_entity_icon_color,
+)
 
 from .views import DeselectableTreeView
 
@@ -21,13 +24,14 @@ class TasksModel(QtGui.QStandardItemModel):
         self.setHeaderData(
             0, QtCore.Qt.Horizontal, "Tasks", QtCore.Qt.DisplayRole
         )
+        default_color = get_default_entity_icon_color()
+        self._default_color = default_color
         self._default_icon = qtawesome.icon(
-            "fa.male",
-            color=style.colors.default
+            "fa.male", color=default_color
         )
         self._no_tasks_icon = qtawesome.icon(
             "fa.exclamation-circle",
-            color=style.colors.mid
+            color=get_disabled_entity_icon_color()
         )
         self._cached_icons = {}
         self._project_task_types = {}
@@ -62,7 +66,7 @@ class TasksModel(QtGui.QStandardItemModel):
             try:
                 icon = qtawesome.icon(
                     "fa.{}".format(icon_name),
-                    color=style.colors.default
+                    color=self._default_color
                 )
 
             except Exception:

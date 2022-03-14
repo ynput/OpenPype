@@ -7,8 +7,8 @@ from Qt import QtWidgets, QtCore, QtGui
 import qtawesome
 
 import avalon.api
-from avalon import style
 
+from openpype.style import get_default_entity_icon_color
 from openpype.api import (
     get_project_settings,
     Logger
@@ -128,7 +128,7 @@ def get_qta_icon_by_name_and_color(icon_name, icon_color):
 
 def get_asset_icon(asset_doc, has_children=False):
     asset_data = asset_doc.get("data") or {}
-    icon_color = asset_data.get("color") or style.colors.default
+    icon_color = asset_data.get("color") or get_default_entity_icon_color()
     icon_name = asset_data.get("icon")
     if not icon_name:
         # Use default icons if no custom one is specified.
@@ -149,7 +149,9 @@ def get_task_icon():
 
     Icon should be defined by task type which is stored on project.
     """
-    return get_qta_icon_by_name_and_color("fa.male", style.colors.default)
+    return get_qta_icon_by_name_and_color(
+        "fa.male", get_default_entity_icon_color()
+    )
 
 
 def schedule(func, time, channel="default"):
@@ -412,6 +414,7 @@ class GroupsConfig:
     def __init__(self, dbcon):
         self.dbcon = dbcon
         self.groups = {}
+        self._default_group_color = get_default_entity_icon_color()
 
     @classmethod
     def default_group_config(cls):
@@ -419,7 +422,7 @@ class GroupsConfig:
             cls._default_group_config = {
                 "icon": qtawesome.icon(
                     "fa.object-group",
-                    color=style.colors.default
+                    color=get_default_entity_icon_color()
                 ),
                 "order": 0
             }
@@ -453,7 +456,7 @@ class GroupsConfig:
         for config in group_configs:
             name = config["name"]
             icon = "fa." + config.get("icon", "object-group")
-            color = config.get("color", style.colors.default)
+            color = config.get("color", self._default_group_color)
             order = float(config.get("order", 0))
 
             self.groups[name] = {

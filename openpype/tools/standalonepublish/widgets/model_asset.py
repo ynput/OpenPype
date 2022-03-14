@@ -1,10 +1,15 @@
 import logging
 import collections
+
 from Qt import QtCore, QtGui
 import qtawesome
-from . import TreeModel, Node
-from avalon import style
 
+from openpype.style import (
+    get_default_entity_icon_color,
+    get_deprecated_entity_font_color,
+)
+
+from . import TreeModel, Node
 
 log = logging.getLogger(__name__)
 
@@ -49,6 +54,14 @@ class AssetModel(TreeModel):
     def __init__(self, dbcon, parent=None):
         super(AssetModel, self).__init__(parent=parent)
         self.dbcon = dbcon
+
+        self._default_asset_icon_color = QtGui.QColor(
+            get_default_entity_icon_color()
+        )
+        self._deprecated_asset_font_color = QtGui.QColor(
+            get_deprecated_entity_font_color()
+        )
+
         self.refresh()
 
     def _add_hierarchy(self, assets, parent=None, silos=None):
@@ -163,7 +176,7 @@ class AssetModel(TreeModel):
                 icon = data.get("icon", None)
                 if icon is None and node.get("type") == "silo":
                     icon = "database"
-                color = data.get("color", style.colors.default)
+                color = data.get("color", self._default_asset_icon_color)
 
                 if icon is None:
                     # Use default icons if no custom one is specified.
@@ -188,8 +201,8 @@ class AssetModel(TreeModel):
                 return
 
         if role == QtCore.Qt.ForegroundRole:        # font color
-            if "deprecated" in node.get("tags", []):
-                return QtGui.QColor(style.colors.light).darker(250)
+            # if "deprecated" in node.get("tags", []):
+            return QtGui.QColor(self._deprecated_asset_font_color)
 
         if role == self.ObjectIdRole:
             return node.get("_id", None)

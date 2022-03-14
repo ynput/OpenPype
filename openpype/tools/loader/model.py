@@ -3,15 +3,13 @@ import re
 import math
 from uuid import uuid4
 
-from avalon import (
-    style,
-    schema
-)
 from Qt import QtCore, QtGui
 import qtawesome
 
+from avalon import schema
 from avalon.lib import HeroVersionType
 
+from openpype.style import get_default_entity_icon_color
 from openpype.tools.utils.models import TreeModel, Item
 from openpype.tools.utils import lib
 
@@ -180,7 +178,10 @@ class SubsetsModel(TreeModel, BaseRepresentationModel):
         self._sorter = None
         self._grouping = grouping
         self._icons = {
-            "subset": qtawesome.icon("fa.file-o", color=style.colors.default)
+            "subset": qtawesome.icon(
+                "fa.file-o",
+                color=get_default_entity_icon_color()
+            )
         }
         self._items_by_id = {}
 
@@ -1066,8 +1067,10 @@ class RepresentationModel(TreeModel, BaseRepresentationModel):
 
         self._docs = {}
         self._icons = lib.get_repre_icons()
-        self._icons["repre"] = qtawesome.icon("fa.file-o",
-                                              color=style.colors.default)
+        self._icons["repre"] = qtawesome.icon(
+            "fa.file-o",
+            color=get_default_entity_icon_color()
+        )
         self._items_by_id = {}
 
     def set_version_ids(self, version_ids):
@@ -1165,7 +1168,7 @@ class RepresentationModel(TreeModel, BaseRepresentationModel):
                         "remote_site_name": self.remote_site,
                         "icon": qtawesome.icon(
                             "fa.folder",
-                            color=style.colors.default
+                            color=get_default_entity_icon_color()
                         )
                     })
                     self._items_by_id[item_id] = group_item
