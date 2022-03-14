@@ -14,6 +14,7 @@ from avalon.pipeline import AVALON_CONTAINER_ID
 
 from openpype.hosts import tvpaint
 from openpype.api import get_current_project_settings
+from openpype.lib import register_event_callback
 from openpype.pipeline import (
     LegacyCreator,
     register_loader_plugins_path,
@@ -89,8 +90,8 @@ def install():
     if on_instance_toggle not in registered_callbacks:
         pyblish.api.register_callback("instanceToggled", on_instance_toggle)
 
-    avalon.api.on("application.launched", initial_launch)
-    avalon.api.on("application.exit", application_exit)
+    register_event_callback("application.launched", initial_launch)
+    register_event_callback("application.exit", application_exit)
 
 
 def uninstall():

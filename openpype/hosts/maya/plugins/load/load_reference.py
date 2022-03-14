@@ -121,17 +121,9 @@ class ReferenceLoader(openpype.hosts.maya.api.plugin.ReferenceLoader):
             if family == "rig":
                 self._post_process_rig(name, namespace, context, options)
             else:
-
                 if "translate" in options:
                     cmds.setAttr(group_name + ".t", *options["translate"])
-
             return new_nodes
-
-    def load(self, context, name=None, namespace=None, options=None):
-        container = super(ReferenceLoader, self).load(
-            context, name, namespace, options)
-        # clean containers if present to AVALON_CONTAINERS
-        self._organize_containers(self[:], container[0])
 
     def switch(self, container, representation):
         self.update(container, representation)

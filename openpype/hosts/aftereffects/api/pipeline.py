@@ -15,6 +15,7 @@ from openpype.pipeline import (
     deregister_loader_plugins_path,
 )
 import openpype.hosts.aftereffects
+from openpype.lib import register_event_callback
 
 from .launch_logic import get_stub
 
@@ -78,7 +79,7 @@ def install():
         "instanceToggled", on_pyblish_instance_toggled
     )
 
-    avalon.api.on("application.launched", application_launch)
+    register_event_callback("application.launched", application_launch)
 
 
 def uninstall():

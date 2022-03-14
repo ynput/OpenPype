@@ -50,6 +50,7 @@ import maya.app.renderSetup.model.renderSetup as renderSetup
 import pyblish.api
 
 from avalon import api
+from openpype.lib import get_formatted_current_time
 from openpype.hosts.maya.api.lib_renderproducts import get as get_layer_render_products  # noqa: E501
 from openpype.hosts.maya.api import lib
 
@@ -328,7 +329,7 @@ class CollectMayaRender(pyblish.api.ContextPlugin):
                 "family": "renderlayer",
                 "families": ["renderlayer"],
                 "asset": asset,
-                "time": api.time(),
+                "time": get_formatted_current_time(),
                 "author": context.data["user"],
                 # Add source to allow tracing back to the scene from
                 # which was submitted originally

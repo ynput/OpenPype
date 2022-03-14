@@ -14,10 +14,6 @@ PLUGINS_DIR = os.path.join(HOST_DIR, "plugins")
 PUBLISH_PATH = os.path.join(PLUGINS_DIR, "publish")
 
 
-def application_launch():
-    pass
-
-
 def install():
     print("Installing Pype config...")
 
@@ -25,7 +21,6 @@ def install():
     log.info(PUBLISH_PATH)
 
     io.install()
-    avalon.on("application.launched", application_launch)
 
 
 def uninstall():

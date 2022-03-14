@@ -15,6 +15,7 @@ from openpype.settings import (
 )
 from .anatomy import Anatomy
 from .profiles_filtering import filter_profiles
+from .events import emit_event
 
 # avalon module is not imported at the top
 # - may not be in path at the time of pype.lib initialization
@@ -779,7 +780,6 @@ def update_current_task(task=None, asset=None, app=None, template_key=None):
 
     """
     import avalon.api
-    from avalon.pipeline import emit
 
     changes = compute_session_changes(
         avalon.api.Session,
@@ -799,7 +799,7 @@ def update_current_task(task=None, asset=None, app=None, template_key=None):
             os.environ[key] = value
 
     # Emit session change
-    emit("taskChanged", changes.copy())
+    emit_event("taskChanged", changes.copy())
 
     return changes
 

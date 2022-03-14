@@ -5,18 +5,13 @@ import platform
 import functools
 import logging
 
-from openpype.pipeline import (
-    LegacyCreator,
-    register_loader_plugins_path,
-    deregister_loader_plugins_path,
-)
-
 from .settings import get_project_settings
 from .lib import (
     Anatomy,
     filter_pyblish_plugins,
     set_plugin_attributes_from_settings,
-    change_timer_to_current_context
+    change_timer_to_current_context,
+    register_event_callback,
 )
 
 pyblish = avalon = _original_discover = None
@@ -80,6 +75,10 @@ def install():
     """Install Pype to Avalon."""
     from pyblish.lib import MessageHandler
     from openpype.modules import load_modules
+    from openpype.pipeline import (
+        LegacyCreator,
+        register_loader_plugins_path,
+    )
     from avalon import pipeline
 
     # Make sure modules are loaded
@@ -133,16 +132,18 @@ def install():
     avalon.discover = patched_discover
     pipeline.discover = patched_discover
 
-    avalon.on("taskChanged", _on_task_change)
+    register_event_callback("taskChanged", _on_task_change)
 
 
-def _on_task_change(*args):
+def _on_task_change():
     change_timer_to_current_context()
 
 
 @import_wrapper
 def uninstall():
     """Uninstall Pype from Avalon."""
+    from openpype.pipeline import deregister_loader_plugins_path
+
     log.info("Deregistering global plug-ins..")
     pyblish.deregister_plugin_path(PUBLISH_PATH)
     pyblish.deregister_discovery_filter(filter_pyblish_plugins)
