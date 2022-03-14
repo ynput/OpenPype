@@ -7,7 +7,7 @@ from maya import cmds  # noqa
 import pyblish.api
 import openpype.api
 from openpype.hosts.maya.api.lib import (
-    root_parent,
+    parent_nodes,
     maintained_selection,
     delete_after
 )
@@ -43,7 +43,7 @@ class ExtractUnrealStaticMesh(openpype.api.Extractor):
         fbx_exporter.set_options_from_instance(instance)
 
         with maintained_selection():
-            with root_parent(members):
+            with parent_nodes(members):
                 self.log.info("Un-parenting: {}".format(members))
                 fbx_exporter.export(members, path)
 

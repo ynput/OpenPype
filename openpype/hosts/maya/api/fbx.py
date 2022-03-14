@@ -198,5 +198,5 @@ class FBXExtractor:
             path (str): Path to use for export.
 
         """
-        cmds.select(members, r=1, noExpand=True)
+        cmds.select(members, r=True, noExpand=True)
         mel.eval('FBXExport -f "{}" -s'.format(path))

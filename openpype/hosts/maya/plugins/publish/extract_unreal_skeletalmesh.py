@@ -7,9 +7,8 @@ from maya import cmds  # noqa
 import pyblish.api
 import openpype.api
 from openpype.hosts.maya.api.lib import (
-    root_parent,
-    maintained_selection,
-    delete_after
+    parent_nodes,
+    maintained_selection
 )
 from openpype.hosts.maya.api import fbx
 
@@ -43,10 +42,18 @@ class ExtractUnrealSkeletalMesh(openpype.api.Extractor):
         self.log.info("Instance: {0}".format(instance[:]))
 
         fbx_exporter.set_options_from_instance(instance)
+
+        parent = "{}{}".format(
+            instance.data["asset"],
+            instance.data.get("variant", "")
+        )
         with maintained_selection():
-            with root_parent(to_extract):
-                rooted = [i.split("|")[-1] for i in to_extract]
-                self.log.info("Un-parenting: {}".format(to_extract))
+            with parent_nodes(to_extract, parent=parent):
+                rooted = [
+                    "{}|{}".format(parent, i.split("|")[-1])
+                    for i in to_extract
+                ]
+                self.log.info("Un-parenting: {}".format(rooted, path))
                 fbx_exporter.export(rooted, path)
 
         if "representations" not in instance.data:
