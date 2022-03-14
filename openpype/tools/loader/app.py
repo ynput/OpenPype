@@ -1,9 +1,10 @@
 import sys
 
 from Qt import QtWidgets, QtCore
-from avalon import api, io, pipeline
+from avalon import api, io
 
 from openpype import style
+from openpype.lib import register_event_callback
 from openpype.tools.utils import (
     lib,
     PlaceholderLineEdit
@@ -23,17 +24,6 @@ from openpype.modules import ModulesManager
 
 module = sys.modules[__name__]
 module.window = None
-
-
-# Register callback on task change
-# - callback can't be defined in Window as it is weak reference callback
-#   so `WeakSet` will remove it immediately
-def on_context_task_change(*args, **kwargs):
-    if module.window:
-        module.window.on_context_task_change(*args, **kwargs)
-
-
-pipeline.on("taskChanged", on_context_task_change)
 
 
 class LoaderWindow(QtWidgets.QDialog):
@@ -193,6 +183,8 @@ class LoaderWindow(QtWidgets.QDialog):
         self._assetschanged()
 
         self._first_show = True
+
+        register_event_callback("taskChanged", self.on_context_task_change)
 
     def resizeEvent(self, event):
         super(LoaderWindow, self).resizeEvent(event)

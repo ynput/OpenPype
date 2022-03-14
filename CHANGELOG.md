@@ -1,16 +1,16 @@
 # Changelog
 
-## [3.9.0-nightly.8](https://github.com/pypeclub/OpenPype/tree/HEAD)
+## [3.9.0-nightly.9](https://github.com/pypeclub/OpenPype/tree/HEAD)
 
 [Full Changelog](https://github.com/pypeclub/OpenPype/compare/3.8.2...HEAD)
 
 **Deprecated:**
 
 - AssetCreator: Remove the tool [\#2845](https://github.com/pypeclub/OpenPype/pull/2845)
-- Houdini: Remove unused code [\#2779](https://github.com/pypeclub/OpenPype/pull/2779)
 
 **🚀 Enhancements**
 
+- General: Subset name filtering in ExtractReview outpus [\#2872](https://github.com/pypeclub/OpenPype/pull/2872)
 - NewPublisher: Descriptions and Icons in creator dialog [\#2867](https://github.com/pypeclub/OpenPype/pull/2867)
 - NewPublisher: Changing task on publishing instance [\#2863](https://github.com/pypeclub/OpenPype/pull/2863)
 - TrayPublisher: Choose project widget is more clear [\#2859](https://github.com/pypeclub/OpenPype/pull/2859)
@@ -22,10 +22,10 @@
 - global: letter box calculated on output as last process [\#2812](https://github.com/pypeclub/OpenPype/pull/2812)
 - Nuke: adding Reformat to baking mov plugin  [\#2811](https://github.com/pypeclub/OpenPype/pull/2811)
 - Manager: Update all to latest button [\#2805](https://github.com/pypeclub/OpenPype/pull/2805)
-- General: Set context environments for non host applications [\#2803](https://github.com/pypeclub/OpenPype/pull/2803)
 
 **🐛 Bug fixes**
 
+- General: Missing time function [\#2877](https://github.com/pypeclub/OpenPype/pull/2877)
 - Deadline: Fix plugin name for tile assemble [\#2868](https://github.com/pypeclub/OpenPype/pull/2868)
 - General: Fix hardlink for windows [\#2864](https://github.com/pypeclub/OpenPype/pull/2864)
 - General: ffmpeg was crashing on slate merge [\#2860](https://github.com/pypeclub/OpenPype/pull/2860)
@@ -47,13 +47,13 @@
 - Ftrack: Job killer with missing user [\#2819](https://github.com/pypeclub/OpenPype/pull/2819)
 - Nuke: Use AVALON\_APP to get value for "app" key [\#2818](https://github.com/pypeclub/OpenPype/pull/2818)
 - StandalonePublisher: use dynamic groups in subset names [\#2816](https://github.com/pypeclub/OpenPype/pull/2816)
-- Settings UI: Search case sensitivity [\#2810](https://github.com/pypeclub/OpenPype/pull/2810)
-- Flame Babypublisher optimalization [\#2806](https://github.com/pypeclub/OpenPype/pull/2806)
 
 **🔀 Refactored code**
 
+- Refactor: move webserver tool to openpype [\#2876](https://github.com/pypeclub/OpenPype/pull/2876)
 - General: Move create logic from avalon to OpenPype [\#2854](https://github.com/pypeclub/OpenPype/pull/2854)
 - General: Add vendors from avalon [\#2848](https://github.com/pypeclub/OpenPype/pull/2848)
+- General: Basic event system [\#2846](https://github.com/pypeclub/OpenPype/pull/2846)
 - General: Move change context functions [\#2839](https://github.com/pypeclub/OpenPype/pull/2839)
 - Tools: Don't use avalon tools code [\#2829](https://github.com/pypeclub/OpenPype/pull/2829)
 - Move Unreal Implementation to OpenPype [\#2823](https://github.com/pypeclub/OpenPype/pull/2823)

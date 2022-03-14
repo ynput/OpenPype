@@ -87,7 +87,8 @@
                                     "render",
                                     "review",
                                     "ftrack"
-                                ]
+                                ],
+                                "subsets": []
                             },
                             "overscan_crop": "",
                             "overscan_color": [

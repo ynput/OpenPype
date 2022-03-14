@@ -6,6 +6,8 @@ import avalon.api
 from avalon import pipeline, io
 
 from openpype.api import Logger
+
+from openpype.lib import register_event_callback
 from openpype.pipeline import LegacyCreator
 import openpype.hosts.photoshop
 
@@ -75,7 +77,7 @@ def install():
         "instanceToggled", on_pyblish_instance_toggled
     )
 
-    avalon.api.on("application.launched", on_application_launch)
+    register_event_callback("application.launched", on_application_launch)
 
 
 def uninstall():
