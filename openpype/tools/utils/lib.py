@@ -92,10 +92,6 @@ def qt_app_context():
         yield app
 
 
-# Backwards compatibility
-application = qt_app_context
-
-
 class SharedObjects:
     jobs = {}
     icons = {}
