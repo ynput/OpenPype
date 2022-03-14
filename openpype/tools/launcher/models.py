@@ -14,7 +14,10 @@ from openpype.lib.applications import (
     CUSTOM_LAUNCH_APP_GROUPS,
     ApplicationManager
 )
-from openpype.tools.utils.lib import DynamicQThread
+from openpype.tools.utils.lib import (
+    DynamicQThread,
+    get_qta_icon_by_name_and_color,
+)
 from openpype.tools.utils.assets_widget import (
     AssetModel,
     ASSET_NAME_ROLE
@@ -400,6 +403,7 @@ class LauncherModel(QtCore.QObject):
         self._dbcon = dbcon
         # Available project names
         self._project_names = set()
+        self._project_icons_by_name = {}
 
         # Context data
         self._asset_docs = []
@@ -460,6 +464,9 @@ class LauncherModel(QtCore.QObject):
         """Available project names."""
         return self._project_names
 
+    def get_icon_for_project(self, project_name):
+        return self._project_icons_by_name.get(project_name)
+
     @property
     def asset_filter_data_by_id(self):
         """Prepared filter data by asset id."""
@@ -516,9 +523,15 @@ class LauncherModel(QtCore.QObject):
         """Refresh projects."""
         current_project = self.project_name
         project_names = set()
+        project_icons_by_name = {}
         for project_doc in self._dbcon.projects(only_active=True):
-            project_names.add(project_doc["name"])
+            project_name = project_doc["name"]
+            project_names.add(project_name)
+            project_icons_by_name[project_name] = (
+                project_doc.get("data", {}).get("icon")
+            )
 
+        self._project_icons_by_name = project_icons_by_name
         self._project_names = project_names
         self.projects_refreshed.emit()
         if (
@@ -718,7 +731,6 @@ class AssetRecursiveSortFilterModel(QtCore.QSortFilterProxyModel):
         self._assignee_filter = self._launcher_model.assignee_filters
         self.invalidateFilter()
 
-    """Filters to the regex if any of the children matches allow parent"""
     def filterAcceptsRow(self, row, parent):
         if (
             not self._name_filter
@@ -863,7 +875,14 @@ class ProjectModel(QtGui.QStandardItemModel):
         for row in reversed(sorted(row_counts.keys())):
             items = []
             for project_name in row_counts[row]:
-                item = QtGui.QStandardItem(self.project_icon, project_name)
+                icon_name = self._launcher_model.get_icon_for_project(
+                    project_name
+                )
+                icon = get_qta_icon_by_name_and_color(icon_name, "white")
+                if not icon:
+                    icon = self.project_icon
+
+                item = QtGui.QStandardItem(icon, project_name)
                 items.append(item)
 
             self.invisibleRootItem().insertRows(row, items)
