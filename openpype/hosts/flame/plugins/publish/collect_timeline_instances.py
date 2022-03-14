@@ -16,6 +16,9 @@ class CollectTimelineInstances(pyblish.api.ContextPlugin):
 
     audio_track_items = []
 
+    def _get_comment_attributes(self, segment):
+        comment = segment.comment.get_value()
+
     def process(self, context):
         project = context.data["flameProject"]
         sequence = context.data["flameSequence"]
@@ -26,6 +29,7 @@ class CollectTimelineInstances(pyblish.api.ContextPlugin):
         # process all sellected
         with opfapi.maintained_segment_selection(sequence) as segments:
             for segment in segments:
+                comment_attributes = self._get_comment_attributes(segment)
                 clip_data = opfapi.get_segment_attributes(segment)
                 clip_name = clip_data["segment_name"]
                 self.log.debug("clip_name: {}".format(clip_name))
