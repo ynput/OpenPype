@@ -63,7 +63,7 @@ class FlamePrelaunch(PreLaunchHook):
         _db_p_data = project_doc["data"]
         width = _db_p_data["resolutionWidth"]
         height = _db_p_data["resolutionHeight"]
-        fps = float(_db_p_data["fps_string"])
+        fps = float(_db_p_data["fps"])
 
         project_data = {
             "Name": project_doc["name"],
