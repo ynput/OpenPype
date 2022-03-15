@@ -104,6 +104,9 @@ class ValidateUnrealStaticMeshName(pyblish.api.InstancePlugin):
 
             cl_r = re.compile(regex_collision)
 
+            mesh_name = "{}{}".format(instance.data["asset"],
+                                      instance.data.get("variant", []))
+
             for obj in collision_set:
                 cl_m = cl_r.match(obj)
                 if not cl_m:
@@ -112,7 +115,7 @@ class ValidateUnrealStaticMeshName(pyblish.api.InstancePlugin):
                 else:
                     expected_collision = "{}_{}".format(
                         cl_m.group("prefix"),
-                        instance.data.get("subset")
+                        mesh_name
                     )
 
                     if not obj.startswith(expected_collision):
@@ -121,11 +124,11 @@ class ValidateUnrealStaticMeshName(pyblish.api.InstancePlugin):
                             "Collision object name doesn't match "
                             "static mesh name"
                         )
-                        cls.log.error("{}_{} != {}_{}".format(
+                        cls.log.error("{}_{} != {}_{}*".format(
                             cl_m.group("prefix"),
                             cl_m.group("renderName"),
                             cl_m.group("prefix"),
-                            instance.data.get("subset"),
+                            mesh_name,
                         ))
                         invalid.append(obj)
 
