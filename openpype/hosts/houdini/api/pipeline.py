@@ -13,7 +13,7 @@ from avalon.lib import find_submodule
 
 from openpype.pipeline import (
     LegacyCreator,
-    register_loader_plugin_path,
+    register_loader_plugins_path,
 )
 import openpype.hosts.houdini
 from openpype.hosts.houdini.api import lib
@@ -53,7 +53,7 @@ def install():
     pyblish.api.register_host("hpython")
 
     pyblish.api.register_plugin_path(PUBLISH_PATH)
-    register_loader_plugin_path(LOAD_PATH)
+    register_loader_plugins_path(LOAD_PATH)
     avalon.api.register_plugin_path(LegacyCreator, CREATE_PATH)
 
     log.info("Installing callbacks ... ")
