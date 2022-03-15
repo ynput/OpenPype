@@ -705,6 +705,11 @@ class LauncherTaskModel(TasksModel):
         self._launcher_model = launcher_model
         super(LauncherTaskModel, self).__init__(*args, **kwargs)
 
+    def _refresh_project_doc(self):
+        self._project_doc = self._launcher_model.get_project_doc(
+            self._launcher_model.project_name
+        )
+
     def set_asset_id(self, asset_id):
         asset_doc = None
         if self._context_is_valid():

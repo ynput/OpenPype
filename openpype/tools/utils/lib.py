@@ -162,16 +162,43 @@ def get_asset_icon(asset_doc, has_children=False):
     return get_qta_icon_by_name_and_color(icon_name, icon_color)
 
 
-def get_task_icon():
-    """Get icon for a task.
+def get_default_task_icon(color=None):
+    if color is None:
+        color = get_default_entity_icon_color()
+    return get_qta_icon_by_name_and_color("fa.male", color)
 
-    TODO: Get task icon based on data in database.
+
+def get_task_icon(project_doc, asset_doc, task_name):
+    """Get icon for a task.
 
     Icon should be defined by task type which is stored on project.
     """
-    return get_qta_icon_by_name_and_color(
-        "fa.male", get_default_entity_icon_color()
-    )
+
+    color = get_default_entity_icon_color()
+
+    tasks_info = asset_doc.get("data", {}).get("tasks") or {}
+    task_info = tasks_info.get(task_name) or {}
+    task_icon = task_info.get("icon")
+    if task_icon:
+        icon = get_qta_icon_by_name_and_color(task_icon, color)
+        if icon is not None:
+            return icon
+
+    task_type = task_info.get("type")
+    if "config" not in project_doc:
+        print(10*"*")
+        print(project_doc)
+        task_types = {}
+    else:
+        task_types = project_doc["config"].get("tasks") or {}
+
+    task_type_info = task_types.get(task_type) or {}
+    task_type_icon = task_type_info.get("icon")
+    if task_type_icon:
+        icon = get_qta_icon_by_name_and_color(task_icon, color)
+        if icon is not None:
+            return icon
+    return get_default_task_icon(color)
 
 
 def schedule(func, time, channel="default"):
