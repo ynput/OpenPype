@@ -7,6 +7,10 @@ from openpype.hosts.flame.otio import flame_export
 # # developer reload modules
 from pprint import pformat
 
+# constatns
+NUM_PATERN = re.compile(r"([0-9\.]+)")
+TXT_PATERN = re.compile(r"([a-zA-Z]+)")
+
 
 class CollectTimelineInstances(pyblish.api.ContextPlugin):
     """Collect all Timeline segment selection."""
@@ -16,6 +20,16 @@ class CollectTimelineInstances(pyblish.api.ContextPlugin):
     hosts = ["flame"]
 
     audio_track_items = []
+
+    # TODO: add to settings
+    # settings
+    xml_preset_attrs_from_comments = {
+        "width": "number",
+        "height": "number",
+        "pixelRatio": "number",
+        "resizeType": "string",
+        "resizeFilter": "string"
+    }
 
     def process(self, context):
         project = context.data["flameProject"]
@@ -137,42 +151,77 @@ class CollectTimelineInstances(pyblish.api.ContextPlugin):
     def _get_comment_attributes(self, segment):
         comment = segment.comment.get_value()
 
-        # first split comment by comma
-        split_comments = []
-        if "," in comment:
-            split_comments.extend(iter(comment.split(",")))
-        elif ";" in comment:
-            split_comments.extend(iter(comment.split(";")))
-        else:
-            split_comments.append(comment)
-
         # try to find attributes
-        attributes = {}
+        attributes = {
+            "pixelRatio": 1.00
+        }
         # search for `:`
-        for split in split_comments:
+        for split in self._split_comments(comment):
             # make sure we ignore if not `:` in key
             if ":" not in split:
                 continue
 
-            # split to key and value
-            key, value = split.split(":")
+            self._get_xml_preset_attrs(
+                attributes, split)
 
-            # condition for resolution in key
-            if "resolution" in key.lower():
-                patern = re.compile(r"([0-9\.]+)")
-                res_goup = patern.findall(value)
-
-                # check if axpect was also defined
-                # 1920x1080x1.5
-                aspect = res_goup[2] if len(res_goup) > 2 else 1
-
-                attributes.update({
-                    "resolutionWidth": int(res_goup[0]),
-                    "resolutionHeight": int(res_goup[1]),
-                    "pixelAspect": float(aspect)
-                })
+        if attributes.get("width"):
+            attributes["resolution"] = {
+                "resolutionWidth": attributes["width"],
+                "resolutionHeight": attributes["height"],
+                "pixelAspect": attributes["pixelRatio"]
+            }
 
         return attributes
+
+    def _get_xml_preset_attrs(self, attributes, split):
+
+        # split to key and value
+        key, value = split.split(":")
+
+        for a_name, a_type in self.xml_preset_attrs_from_comments.items():
+            # exclude all not related attributes
+            if a_name.lower() not in key:
+                continue
+
+            # get pattern defined by type
+            pattern = TXT_PATERN if "string" in a_type else NUM_PATERN
+            res_goup = pattern.findall(value)
+
+            # raise if nothing is found as it is not correctly defined
+            if not res_goup:
+                raise ValueError((
+                    "Value for `{}` attribute is not "
+                    "set correctly: `{}`").format(a_name, split))
+
+            attributes[a_name] = res_goup[0]
+
+        # condition for resolution in key
+        if "resolution" in key.lower():
+            res_goup = NUM_PATERN.findall(value)
+            # check if axpect was also defined
+            # 1920x1080x1.5
+            aspect = res_goup[2] if len(res_goup) > 2 else 1
+
+            width = int(res_goup[0])
+            height = int(res_goup[1])
+            pixel_ratio = float(aspect)
+            attributes.update({
+                "width": width,
+                "height": height,
+                "pixelRatio": pixel_ratio
+            })
+
+    def _split_comments(self, comment_string):
+        # first split comment by comma
+        split_comments = []
+        if "," in comment_string:
+            split_comments.extend(iter(comment_string.split(",")))
+        elif ";" in comment_string:
+            split_comments.extend(iter(comment_string.split(";")))
+        else:
+            split_comments.append(comment_string)
+
+        return split_comments
 
     def _get_head_tail(self, clip_data, first_frame):
         # calculate head and tail with forward compatibility
