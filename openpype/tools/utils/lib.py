@@ -135,11 +135,9 @@ def get_project_icon(project_doc):
 
 
 def get_asset_icon_name(asset_doc, has_children=True):
-    if asset_doc:
-        asset_data = asset_doc.get("data") or {}
-        icon_name = asset_data.get("icon")
-        if icon_name:
-            return icon_name
+    icon_name = asset_doc["data"].get("icon")
+    if icon_name:
+        return icon_name
 
     if has_children:
         return "folder"
@@ -147,11 +145,9 @@ def get_asset_icon_name(asset_doc, has_children=True):
 
 
 def get_asset_icon_color(asset_doc):
-    if asset_doc:
-        asset_data = asset_doc.get("data") or {}
-        icon_color = asset_data.get("color")
-        if icon_color:
-            return icon_color
+    icon_color = asset_doc["data"].get("color")
+    if icon_color:
+        return icon_color
     return get_default_entity_icon_color()
 
 

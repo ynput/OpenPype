@@ -513,7 +513,7 @@ class AssetModel(QtGui.QStandardItemModel):
                 item.setData(asset_label, ASSET_LABEL_ROLE)
 
             has_children = item.rowCount() > 0
-            icon = get_asset_icon(asset_data, has_children)
+            icon = get_asset_icon(asset_doc, has_children)
             item.setData(icon, QtCore.Qt.DecorationRole)
 
     def _threaded_fetch(self):
