@@ -201,8 +201,8 @@ class AssetModel(TreeModel):
                 return
 
         if role == QtCore.Qt.ForegroundRole:        # font color
-            # if "deprecated" in node.get("tags", []):
-            return QtGui.QColor(self._deprecated_asset_font_color)
+            if "deprecated" in node.get("tags", []):
+                return QtGui.QColor(self._deprecated_asset_font_color)
 
         if role == self.ObjectIdRole:
             return node.get("_id", None)
