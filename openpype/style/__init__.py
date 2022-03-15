@@ -10,17 +10,6 @@ from .color_defs import parse_color
 current_dir = os.path.dirname(os.path.abspath(__file__))
 
 
-# Default colors
-# - default color used in tool icons
-_TOOLS_ICON_COLOR = "#ffffff"
-# - entities icon color - use 'get_default_asset_icon_color'
-_DEFAULT_ENTITY_ICON_COLOR = "#fb9c15"
-# - disabled entitie
-_DISABLED_ENTITY_ICON_ICON_COLOR = "#808080"
-# - deprecated entity font color
-_DEPRECATED_ENTITY_FONT_COLOR = "#666666"
-
-
 class _Cache:
     stylesheet = None
     font_ids = None
@@ -200,36 +189,60 @@ def app_icon_path():
 
 
 def get_default_tools_icon_color():
+    """Default color used in tool icons.
+
+    Color must be possible to parse using QColor.
+
+    Returns:
+        str: Color as a string.
+    """
     if _Cache.tools_icon_color is None:
         color_data = get_colors_data()
-        color = color_data.get("icon-tools")
-        _Cache.tools_icon_color = color or _TOOLS_ICON_COLOR
+        _Cache.tools_icon_color = color_data["icon-tools"]
     return _Cache.tools_icon_color
 
 
 def get_default_entity_icon_color():
+    """Default color of entities icons.
+
+    Color must be possible to parse using QColor.
+
+    Returns:
+        str: Color as a string.
+    """
     if _Cache.default_entity_icon_color is None:
         color_data = get_colors_data()
-        color = color_data.get("icon-entity-default")
-        _Cache.default_entity_icon_color = color or _DEFAULT_ENTITY_ICON_COLOR
+        _Cache.default_entity_icon_color = color_data["icon-entity-default"]
     return _Cache.default_entity_icon_color
 
 
 def get_disabled_entity_icon_color():
+    """Default color of entities icons.
+
+    TODO: Find more suitable function name.
+
+    Color must be possible to parse using QColor.
+
+    Returns:
+        str: Color as a string.
+    """
     if _Cache.disabled_entity_icon_color is None:
         color_data = get_colors_data()
-        color = color_data.get("icon-entity-disabled")
-        _Cache.disabled_entity_icon_color = (
-            color or _DISABLED_ENTITY_ICON_ICON_COLOR
-        )
+        _Cache.disabled_entity_icon_color = color_data["icon-entity-disabled"]
     return _Cache.disabled_entity_icon_color
 
 
 def get_deprecated_entity_font_color():
+    """Font color for deprecated entities.
+
+    Color must be possible to parse using QColor.
+
+    Returns:
+        str: Color as a string.
+    """
     if _Cache.deprecated_entity_font_color is None:
         color_data = get_colors_data()
-        color = color_data.get("font-entity-deprecated")
         _Cache.deprecated_entity_font_color = (
-            color or _DEPRECATED_ENTITY_FONT_COLOR
+            color_data["font-entity-deprecated"]
         )
     return _Cache.deprecated_entity_font_color
