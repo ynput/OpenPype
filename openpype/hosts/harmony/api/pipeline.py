@@ -12,8 +12,8 @@ from openpype import lib
 from openpype.lib import register_event_callback
 from openpype.pipeline import (
     LegacyCreator,
-    register_loader_plugins_path,
-    deregister_loader_plugins_path,
+    register_loader_plugin_path,
+    deregister_loader_plugin_path,
 )
 import openpype.hosts.harmony
 import openpype.hosts.harmony.api as harmony
@@ -184,7 +184,7 @@ def install():
 
     pyblish.api.register_host("harmony")
     pyblish.api.register_plugin_path(PUBLISH_PATH)
-    register_loader_plugins_path(LOAD_PATH)
+    register_loader_plugin_path(LOAD_PATH)
     avalon.api.register_plugin_path(LegacyCreator, CREATE_PATH)
     log.info(PUBLISH_PATH)
 
@@ -198,7 +198,7 @@ def install():
 
 def uninstall():
     pyblish.api.deregister_plugin_path(PUBLISH_PATH)
-    deregister_loader_plugins_path(LOAD_PATH)
+    deregister_loader_plugin_path(LOAD_PATH)
     avalon.api.deregister_plugin_path(LegacyCreator, CREATE_PATH)
 
 

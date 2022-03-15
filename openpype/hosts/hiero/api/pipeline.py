@@ -11,8 +11,8 @@ from pyblish import api as pyblish
 from openpype.api import Logger
 from openpype.pipeline import (
     LegacyCreator,
-    register_loader_plugins_path,
-    deregister_loader_plugins_path,
+    register_loader_plugin_path,
+    deregister_loader_plugin_path,
 )
 from openpype.tools.utils import host_tools
 from . import lib, menu, events
@@ -49,7 +49,7 @@ def install():
     log.info("Registering Hiero plug-ins..")
     pyblish.register_host("hiero")
     pyblish.register_plugin_path(PUBLISH_PATH)
-    register_loader_plugins_path(LOAD_PATH)
+    register_loader_plugin_path(LOAD_PATH)
     avalon.register_plugin_path(LegacyCreator, CREATE_PATH)
     avalon.register_plugin_path(avalon.InventoryAction, INVENTORY_PATH)
 
@@ -71,7 +71,7 @@ def uninstall():
     log.info("Deregistering Hiero plug-ins..")
     pyblish.deregister_host("hiero")
     pyblish.deregister_plugin_path(PUBLISH_PATH)
-    deregister_loader_plugins_path(LOAD_PATH)
+    deregister_loader_plugin_path(LOAD_PATH)
     avalon.deregister_plugin_path(LegacyCreator, CREATE_PATH)
 
     # register callback for switching publishable

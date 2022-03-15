@@ -32,8 +32,8 @@ from .plugins import (
 
     discover_loader_plugins,
     register_loader_plugin,
-    deregister_loader_plugins_path,
-    register_loader_plugins_path,
+    deregister_loader_plugin_path,
+    register_loader_plugin_path,
     deregister_loader_plugin,
 )
 
@@ -72,7 +72,7 @@ __all__ = (
 
     "discover_loader_plugins",
     "register_loader_plugin",
-    "deregister_loader_plugins_path",
-    "register_loader_plugins_path",
+    "deregister_loader_plugin_path",
+    "register_loader_plugin_path",
     "deregister_loader_plugin",
 )

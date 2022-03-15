@@ -113,13 +113,13 @@ def register_loader_plugin(plugin):
     return avalon.api.register_plugin(LoaderPlugin, plugin)
 
 
-def deregister_loader_plugins_path(path):
+def deregister_loader_plugin_path(path):
     import avalon.api
 
     avalon.api.deregister_plugin_path(LoaderPlugin, path)
 
 
-def register_loader_plugins_path(path):
+def register_loader_plugin_path(path):
     import avalon.api
 
     return avalon.api.register_plugin_path(LoaderPlugin, path)
