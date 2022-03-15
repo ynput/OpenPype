@@ -1,5 +1,7 @@
 import nuke
-from avalon import style, io
+
+from avalon import io
+
 from openpype.pipeline import (
     load,
     get_representation_path,
@@ -21,7 +23,7 @@ class LinkAsGroup(load.LoaderPlugin):
     label = "Load Precomp"
     order = 0
     icon = "file"
-    color = style.colors.alert
+    color = "#cc0000"
 
     def load(self, context, name, namespace, data):
         # for k, v in context.items():

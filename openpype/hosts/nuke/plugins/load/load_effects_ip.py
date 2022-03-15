@@ -3,7 +3,8 @@ from collections import OrderedDict
 
 import nuke
 
-from avalon import style, io
+from avalon import io
+
 from openpype.pipeline import (
     load,
     get_representation_path,
@@ -25,7 +26,7 @@ class LoadEffectsInputProcess(load.LoaderPlugin):
     label = "Load Effects - Input Process"
     order = 0
     icon = "eye"
-    color = style.colors.alert
+    color = "#cc0000"
     ignore_attr = ["useLifetime"]
 
     def load(self, context, name, namespace, data):

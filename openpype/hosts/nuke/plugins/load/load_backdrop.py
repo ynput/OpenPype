@@ -1,4 +1,4 @@
-from avalon import style, io
+from avalon import io
 import nuke
 import nukescripts
 
@@ -27,7 +27,7 @@ class LoadBackdropNodes(load.LoaderPlugin):
     label = "Iport Nuke Nodes"
     order = 0
     icon = "eye"
-    color = style.colors.light
+    color = "white"
     node_color = "0x7533c1ff"
 
     def load(self, context, name, namespace, data):

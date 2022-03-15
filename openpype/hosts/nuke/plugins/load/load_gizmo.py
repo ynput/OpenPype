@@ -1,5 +1,7 @@
 import nuke
-from avalon import style, io
+
+from avalon import io
+
 from openpype.pipeline import (
     load,
     get_representation_path,
@@ -25,7 +27,7 @@ class LoadGizmo(load.LoaderPlugin):
     label = "Load Gizmo"
     order = 0
     icon = "dropbox"
-    color = style.colors.light
+    color = "white"
     node_color = "0x75338eff"
 
     def load(self, context, name, namespace, data):

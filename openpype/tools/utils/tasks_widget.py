@@ -1,7 +1,8 @@
 from Qt import QtWidgets, QtCore, QtGui
 import qtawesome
 
-from avalon import style
+from openpype.style import get_disabled_entity_icon_color
+from openpype.tools.utils.lib import get_task_icon
 
 from .views import DeselectableTreeView
 
@@ -21,53 +22,35 @@ class TasksModel(QtGui.QStandardItemModel):
         self.setHeaderData(
             0, QtCore.Qt.Horizontal, "Tasks", QtCore.Qt.DisplayRole
         )
-        self._default_icon = qtawesome.icon(
-            "fa.male",
-            color=style.colors.default
-        )
+
         self._no_tasks_icon = qtawesome.icon(
             "fa.exclamation-circle",
-            color=style.colors.mid
+            color=get_disabled_entity_icon_color()
         )
         self._cached_icons = {}
-        self._project_task_types = {}
+        self._project_doc = {}
 
         self._empty_tasks_item = None
         self._last_asset_id = None
         self._loaded_project_name = None
 
     def _context_is_valid(self):
-        if self.dbcon.Session.get("AVALON_PROJECT"):
+        if self._get_current_project():
             return True
         return False
 
     def refresh(self):
-        self._refresh_task_types()
+        self._refresh_project_doc()
         self.set_asset_id(self._last_asset_id)
 
-    def _refresh_task_types(self):
+    def _refresh_project_doc(self):
         # Get the project configured icons from database
-        task_types = {}
+        project_doc = {}
         if self._context_is_valid():
-            project = self.dbcon.find_one(
-                {"type": "project"},
-                {"config.tasks"}
-            )
-            task_types = project["config"].get("tasks") or task_types
-        self._project_task_types = task_types
+            project_doc = self.dbcon.find_one({"type": "project"})
 
-    def _try_get_awesome_icon(self, icon_name):
-        icon = None
-        if icon_name:
-            try:
-                icon = qtawesome.icon(
-                    "fa.{}".format(icon_name),
-                    color=style.colors.default
-                )
-
-            except Exception:
-                pass
-        return icon
+        self._loaded_project_name = self._get_current_project()
+        self._project_doc = project_doc
 
     def headerData(self, section, orientation, role=None):
         if role is None:
@@ -82,28 +65,8 @@ class TasksModel(QtGui.QStandardItemModel):
 
         return super(TasksModel, self).headerData(section, orientation, role)
 
-    def _get_icon(self, task_icon, task_type_icon):
-        if task_icon in self._cached_icons:
-            return self._cached_icons[task_icon]
-
-        icon = self._try_get_awesome_icon(task_icon)
-        if icon is not None:
-            self._cached_icons[task_icon] = icon
-            return icon
-
-        if task_type_icon in self._cached_icons:
-            icon = self._cached_icons[task_type_icon]
-            self._cached_icons[task_icon] = icon
-            return icon
-
-        icon = self._try_get_awesome_icon(task_type_icon)
-        if icon is None:
-            icon = self._default_icon
-
-        self._cached_icons[task_icon] = icon
-        self._cached_icons[task_type_icon] = icon
-
-        return icon
+    def _get_current_project(self):
+        return self.dbcon.Session.get("AVALON_PROJECT")
 
     def set_asset_id(self, asset_id):
         asset_doc = None
@@ -128,6 +91,9 @@ class TasksModel(QtGui.QStandardItemModel):
         Arguments:
             asset_doc (dict): Asset document from MongoDB.
         """
+        if self._loaded_project_name != self._get_current_project():
+            self._refresh_project_doc()
+
         asset_tasks = {}
         self._last_asset_id = None
         if asset_doc:
@@ -138,13 +104,11 @@ class TasksModel(QtGui.QStandardItemModel):
         root_item.removeRows(0, root_item.rowCount())
 
         items = []
+
         for task_name, task_info in asset_tasks.items():
-            task_icon = task_info.get("icon")
             task_type = task_info.get("type")
             task_order = task_info.get("order")
-            task_type_info = self._project_task_types.get(task_type) or {}
-            task_type_icon = task_type_info.get("icon")
-            icon = self._get_icon(task_icon, task_type_icon)
+            icon = get_task_icon(self._project_doc, asset_doc, task_name)
 
             task_assignees = set()
             assignees_data = task_info.get("assignees") or []

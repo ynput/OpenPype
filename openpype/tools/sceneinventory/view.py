@@ -5,8 +5,9 @@ from functools import partial
 from Qt import QtWidgets, QtCore
 import qtawesome
 
-from avalon import io, api, style
+from avalon import io, api
 
+from openpype import style
 from openpype.pipeline import (
     HeroVersionType,
     update_container,

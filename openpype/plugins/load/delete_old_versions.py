@@ -8,8 +8,8 @@ import ftrack_api
 import qargparse
 from Qt import QtWidgets, QtCore
 
-from avalon import style
 from avalon.api import AvalonMongoDB
+from openpype import style
 from openpype.pipeline import load
 from openpype.lib import StringTemplate
 from openpype.api import Anatomy

@@ -1,7 +1,9 @@
 import json
 from collections import OrderedDict
 import nuke
-from avalon import style, io
+
+from avalon import io
+
 from openpype.pipeline import (
     load,
     get_representation_path,
@@ -22,7 +24,7 @@ class LoadEffects(load.LoaderPlugin):
     label = "Load Effects - nodes"
     order = 0
     icon = "cc"
-    color = style.colors.light
+    color = "white"
     ignore_attr = ["useLifetime"]
 
 
