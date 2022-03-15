@@ -279,7 +279,6 @@ def show():
 
     with qt_app_context():
         window = MayaLookAssignerWindow(parent=mainwindow)
-        window.setStyleSheet(style.load_stylesheet())
         window.show()
 
         module.window = window
