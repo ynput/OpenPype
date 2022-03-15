@@ -24,7 +24,7 @@ from .load import (
     register_loader_plugins_path,
     deregister_loader_plugin,
 
-    load_representation,
+    load_container,
     remove_container,
     update_container,
     switch_container,
@@ -68,7 +68,7 @@ __all__ = (
     "register_loader_plugins_path",
     "deregister_loader_plugin",
 
-    "load_representation",
+    "load_container",
     "remove_container",
     "update_container",
     "switch_container",

@@ -15,7 +15,7 @@ from avalon.pipeline import AVALON_CONTAINER_ID
 from openpype.pipeline import (
     discover_loader_plugins,
     loaders_from_representation,
-    load_representation,
+    load_container,
     get_representation_path,
 )
 from openpype.hosts.unreal.api import plugin
@@ -258,7 +258,7 @@ class LayoutLoader(plugin.Loader):
                     "asset_dir": asset_dir
                 }
 
-                assets = load_representation(
+                assets = load_container(
                     loader,
                     reference,
                     namespace=instance_name,

@@ -13,7 +13,7 @@ from maya import cmds
 from avalon import io, api
 
 from openpype.pipeline import (
-    load_representation,
+    load_container,
     loaders_from_representation,
     discover_loader_plugins,
     get_representation_path,
@@ -208,7 +208,7 @@ def load_look(version_id):
 
         # Reference the look file
         with lib.maintained_selection():
-            container_node = load_representation(loader, look_representation)
+            container_node = load_container(loader, look_representation)
 
     # Get container members
     shader_nodes = lib.get_container_members(container_node)

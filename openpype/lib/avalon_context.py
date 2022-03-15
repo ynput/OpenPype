@@ -1394,7 +1394,7 @@ class BuildWorkfile:
         """
         from openpype.pipeline import (
             IncompatibleLoaderError,
-            load_representation,
+            load_container,
         )
 
         loaded_containers = []
@@ -1458,7 +1458,7 @@ class BuildWorkfile:
                     if not loader:
                         continue
                     try:
-                        container = load_representation(
+                        container = load_container(
                             loader,
                             repre["_id"],
                             name=subset_name

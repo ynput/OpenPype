@@ -10,7 +10,7 @@ from .utils import (
     load_with_subset_context,
     load_with_subset_contexts,
 
-    load_representation,
+    load_container,
     remove_container,
     update_container,
     switch_container,
@@ -51,7 +51,7 @@ __all__ = (
     "load_with_subset_context",
     "load_with_subset_contexts",
 
-    "load_representation",
+    "load_container",
     "remove_container",
     "update_container",
     "switch_container",

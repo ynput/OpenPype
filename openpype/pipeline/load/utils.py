@@ -333,7 +333,7 @@ def load_with_subset_contexts(
     return loader.load(subset_contexts, name, namespace, options)
 
 
-def load_representation(
+def load_container(
     Loader, representation, namespace=None, name=None, options=None, **kwargs
 ):
     """Use Loader to load a representation.

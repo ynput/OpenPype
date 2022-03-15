@@ -12,7 +12,7 @@ from avalon import io
 from openpype.pipeline import (
     discover_loader_plugins,
     loaders_from_representation,
-    load_representation,
+    load_container,
     update_container,
     remove_container,
     get_representation_path,
@@ -189,7 +189,7 @@ def _add(instance, representation_id, loaders, namespace, root="|"):
                         instance['loader'], instance)
             raise RuntimeError("Loader is missing.")
 
-        container = load_representation(
+        container = load_container(
             Loader,
             representation_id,
             namespace=instance['namespace']

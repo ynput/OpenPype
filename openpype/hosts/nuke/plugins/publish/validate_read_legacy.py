@@ -8,7 +8,7 @@ from bson.objectid import ObjectId
 
 from openpype.pipeline import (
     discover_loader_plugins,
-    load_representation,
+    load_container,
 )
 
 
@@ -59,7 +59,7 @@ class RepairReadLegacyAction(pyblish.api.Action):
 
                 loader_plugin = Loader
 
-            load_representation(
+            load_container(
                 Loader=loader_plugin,
                 representation=ObjectId(data["representation"])
             )

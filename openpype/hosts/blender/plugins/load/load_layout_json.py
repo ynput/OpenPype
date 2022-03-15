@@ -10,7 +10,7 @@ import bpy
 from openpype.pipeline import (
     discover_loader_plugins,
     remove_container,
-    load_representation,
+    load_container,
     get_representation_path,
     loaders_from_representation,
 )
@@ -108,7 +108,7 @@ class JsonLayoutLoader(plugin.AssetLoader):
             # at this time it will not return anything. The assets will be
             # loaded in the next Blender cycle, so we use the options to
             # set the transform, parent and assign the action, if there is one.
-            load_representation(
+            load_container(
                 loader,
                 reference,
                 namespace=instance_name,

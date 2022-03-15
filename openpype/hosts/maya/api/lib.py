@@ -25,7 +25,7 @@ from openpype.pipeline import (
     discover_loader_plugins,
     loaders_from_representation,
     get_representation_path,
-    load_representation,
+    load_container,
 )
 from .commands import reset_frame_range
 
@@ -1594,7 +1594,7 @@ def assign_look_by_version(nodes, version_id):
 
         # Reference the look file
         with maintained_selection():
-            container_node = load_representation(Loader, look_representation)
+            container_node = load_container(Loader, look_representation)
 
     # Get container members
     shader_nodes = get_container_members(container_node)
