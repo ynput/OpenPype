@@ -181,12 +181,7 @@ def get_task_icon(project_doc, asset_doc, task_name):
             return icon
 
     task_type = task_info.get("type")
-    if "config" not in project_doc:
-        print(10*"*")
-        print(project_doc)
-        task_types = {}
-    else:
-        task_types = project_doc["config"].get("tasks") or {}
+    task_types = project_doc["config"]["tasks"]
 
     task_type_info = task_types.get(task_type) or {}
     task_type_icon = task_type_info.get("icon")
