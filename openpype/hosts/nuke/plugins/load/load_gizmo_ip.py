@@ -1,5 +1,6 @@
-from avalon import api, style, io
+from avalon import api, io
 import nuke
+
 from openpype.hosts.nuke.api.lib import (
     maintained_selection,
     create_backdrop,
@@ -22,7 +23,7 @@ class LoadGizmoInputProcess(api.Loader):
     label = "Load Gizmo - Input Process"
     order = 0
     icon = "eye"
-    color = style.colors.alert
+    color = "#cc0000"
     node_color = "0x7533c1ff"
 
     def load(self, context, name, namespace, data):

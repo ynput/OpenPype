@@ -1,5 +1,6 @@
 import nuke
-from avalon import api, style, io
+from avalon import api, io
+
 from openpype.hosts.nuke.api.lib import get_avalon_knob_data
 from openpype.hosts.nuke.api import (
     containerise,
@@ -17,7 +18,7 @@ class LinkAsGroup(api.Loader):
     label = "Load Precomp"
     order = 0
     icon = "file"
-    color = style.colors.alert
+    color = "#cc0000"
 
     def load(self, context, name, namespace, data):
         # for k, v in context.items():
