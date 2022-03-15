@@ -153,7 +153,8 @@ class CollectTimelineInstances(pyblish.api.ContextPlugin):
 
         # try to find attributes
         attributes = {
-            "pixelRatio": 1.00
+            "xml_overrides": {
+                "pixelRatio": 1.00}
         }
         # search for `:`
         for split in self._split_comments(comment):
@@ -164,12 +165,14 @@ class CollectTimelineInstances(pyblish.api.ContextPlugin):
             self._get_xml_preset_attrs(
                 attributes, split)
 
-        if attributes.get("width"):
-            attributes["resolution"] = {
-                "resolutionWidth": attributes["width"],
-                "resolutionHeight": attributes["height"],
-                "pixelAspect": attributes["pixelRatio"]
-            }
+        # add xml overides resolution to instance data
+        xml_overrides = attributes["xml_overrides"]
+        if xml_overrides.get("width"):
+            attributes.update({
+                "resolutionWidth": xml_overrides["width"],
+                "resolutionHeight": xml_overrides["height"],
+                "pixelAspect": xml_overrides["pixelRatio"]
+            })
 
         return attributes
 
@@ -193,7 +196,7 @@ class CollectTimelineInstances(pyblish.api.ContextPlugin):
                     "Value for `{}` attribute is not "
                     "set correctly: `{}`").format(a_name, split))
 
-            attributes[a_name] = res_goup[0]
+            attributes["xml_overrides"][a_name] = res_goup[0]
 
         # condition for resolution in key
         if "resolution" in key.lower():
@@ -205,7 +208,7 @@ class CollectTimelineInstances(pyblish.api.ContextPlugin):
             width = int(res_goup[0])
             height = int(res_goup[1])
             pixel_ratio = float(aspect)
-            attributes.update({
+            attributes["xml_overrides"].update({
                 "width": width,
                 "height": height,
                 "pixelRatio": pixel_ratio
