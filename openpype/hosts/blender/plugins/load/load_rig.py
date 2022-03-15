@@ -45,12 +45,14 @@ class BlendRigLoader(plugin.AssetLoader):
                 objects.extend(obj.children)
                 bpy.data.objects.remove(obj)
 
-    def _process(self, libpath):
+    def _process(self, libpath, asset_name):
         with bpy.data.libraries.load(libpath, link=True, relative=False) as (
             data_from,
             data_to,
         ):
-            data_to.collections = data_from.collections
+            for data_from_collection in data_from.collections:
+                if data_from_collection == asset_name:
+                    data_to.collections.append(data_from_collection)
 
         scene_collection = bpy.context.scene.collection
 
@@ -60,8 +62,8 @@ class BlendRigLoader(plugin.AssetLoader):
         self.log.info("instances : %s", instances)
         for data_collection in instances:
             if data_collection.override_library is None:
-                if data_collection["avalon"].get("family") is not None:
-                    if data_collection["avalon"].get("family") == "rig":
+                if data_collection[AVALON_PROPERTY].get("family") is not None:
+                    if data_collection[AVALON_PROPERTY].get("family") == "rig":
                         container_collection = data_collection
         self.original_container_name = container_collection.name
 
@@ -85,7 +87,8 @@ class BlendRigLoader(plugin.AssetLoader):
 
         # Get all the object of the container. The farest parents in first for override them first
         objects = []
-
+        armatures = []
+        non_armatures = []
         for collection in collections:
             nodes = list(collection.objects)
             objects_of_the_collection = []
@@ -102,17 +105,16 @@ class BlendRigLoader(plugin.AssetLoader):
             non_armatures.reverse()
 
             # Add them in objects list
-            objects.extend(non_armatures)
+
             # Get all objects that are an armature
             nodes = objects_of_the_collection
-            armatures = []
+
             for obj in nodes:
                 if obj.type == "ARMATURE":
                     armatures.append(obj)
                 nodes.extend(list(obj.children))
             armatures.reverse()
             # Add them in armature list
-            objects.extend(armatures)
 
         # Clean
         bpy.data.orphans_purge(do_local_ids=False)
@@ -121,9 +123,11 @@ class BlendRigLoader(plugin.AssetLoader):
         # Override the container and the objects
         for collection in collections:
             container_overrided = collection.override_create(remap_local_usages=True)
-        for obj in objects:
+        for obj in non_armatures:
             obj.override_create(remap_local_usages=True)
-            # obj.data.override_create(remap_local_usages=True)
+        for armature in armatures:
+            armature.override_create(remap_local_usages=True)
+        # obj.data.override_create(remap_local_usages=True)
 
         # Remove the collection used to the increment
         # bpy.data.collections.remove(increment_use_collection)
@@ -147,7 +151,7 @@ class BlendRigLoader(plugin.AssetLoader):
         libpath = self.fname
         asset = context["asset"]["name"]
         subset = context["subset"]["name"]
-
+        asset_name = plugin.asset_name(asset, subset)
         # asset_name = plugin.asset_name(asset, subset)
         # unique_number = plugin.get_unique_number(asset, subset)
         # group_name = plugin.asset_name(asset, subset, unique_number)
@@ -200,7 +204,7 @@ class BlendRigLoader(plugin.AssetLoader):
         #
         #         plugin.deselect_all()
 
-        objects = self._process(libpath)
+        objects = self._process(libpath, asset_name)
 
         # if create_animation:
         #     creator_plugin = lib.get_creator_by_name("CreateAnimation")
@@ -361,3 +365,35 @@ class BlendRigLoader(plugin.AssetLoader):
             bpy.data.libraries.remove(library)
 
         return True
+
+    def update_avalon_property(self, representation: Dict):
+
+        container_collection = None
+        instances = plugin.get_instances_list()
+        for data_collection in instances:
+            if (
+                data_collection.override_library is None
+                and data_collection.library is None
+            ):
+                container_collection = data_collection
+        self.log.info("container name %s ", container_collection.name)
+
+        # Set the avalon property with the representation data
+
+        asset = str(representation["context"]["asset"])
+        subset = str(representation["context"]["subset"])
+        asset_name = plugin.asset_name(asset, subset)
+
+        container_collection[AVALON_PROPERTY] = {
+            "schema": "openpype:container-2.0",
+            "id": AVALON_CONTAINER_ID,
+            "name": asset,
+            "namespace": container_collection.name,
+            "loader": str(self.__class__.__name__),
+            "representation": str(representation["_id"]),
+            "libpath": str(representation["data"]["path"]),
+            "asset_name": asset_name,
+            "parent": str(representation["parent"]),
+            "family": str(representation["context"]["family"]),
+            "objectName": container_collection.name,
+        }

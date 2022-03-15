@@ -28,19 +28,48 @@ class BlendModelLoader(plugin.AssetLoader):
     icon = "code-fork"
     color = "orange"
     namespace = ""
-    original_container_name = ""
 
-    def _remove(self, asset_group):
-        objects = list(asset_group.children)
+    def _get_armature_modifier_parameters(self, container):
+        modifiers_dict = dict()
+        object_names_list = plugin.get_all_objects_in_collection(container)
+        print("--------------------------------------------------------------")
+        print(object_names_list)
+        for object_name in object_names_list:
+            object = py.data.objects.get(object_name)
+            if object:
+                modifier = object.modifiers.get("Armature")
+                if modifier:
+                    armature = modifier.object
+                    modifiers_dict[object.name] = armature.name
+        return modifiers_dict
 
+    def _set_armature_modifier_parameters(self, container, modifiers_dict):
+
+        object_names_list = plugin.get_all_objects_in_collection(container)
+        print("--------------------------------------------------------------")
+
+        print(object_names_list)
+        for object_name in object_names_list:
+            object = py.data.objects.get(object_name)
+            if object:
+                modifier = object.modifiers.get("Armature")
+                if modifier:
+                    print("object.name")
+                    modifier.object = modifiers_dict[object.name]
+
+    def _remove(self, container):
+        objects = list(container.objects)
         for obj in objects:
             if obj.type == "MESH":
                 for material_slot in list(obj.material_slots):
-                    bpy.data.materials.remove(material_slot.material)
+                    if material_slot.material != None:
+                        bpy.data.materials.remove(material_slot.material)
                 bpy.data.meshes.remove(obj.data)
             elif obj.type == "EMPTY":
-                objects.extend(obj.children)
+                objects.extend(obj.objects)
                 bpy.data.objects.remove(obj)
+
+        bpy.data.collections.remove(container)
 
     def _process(self, libpath):
         """Load the blend library file"""
@@ -58,10 +87,12 @@ class BlendModelLoader(plugin.AssetLoader):
 
         for data_collection in instances:
             if data_collection.override_library is None:
-                if data_collection["avalon"].get("family") is not None:
-                    if data_collection["avalon"].get("family") == "model":
+                if data_collection[AVALON_PROPERTY].get("family") is not None:
+                    if (
+                        data_collection[AVALON_PROPERTY].get("family")
+                        == "model"
+                    ):
                         container_collection = data_collection
-        self.original_container_name = container_collection.name
 
         # Create a collection used to start the load collections at .001
         # increment_use_collection = bpy.data.collections.new(
@@ -129,21 +160,6 @@ class BlendModelLoader(plugin.AssetLoader):
         # Process the load of the model
         avalon_container = self._process(libpath)
 
-        # TODO check which data should be on the container custom property
-        # avalon_container[AVALON_PROPERTY] = {
-        #     "schema": "openpype:container-2.0",
-        #     "id": AVALON_CONTAINER_ID,
-        #     # "original_container_name": self.original_container_name,
-        #     "name": asset_name,
-        #     "namespace": self.namespace or "",
-        #     "loader": str(self.__class__.__name__),
-        #     "representation": str(context["representation"]["_id"]),
-        #     "libpath": libpath,
-        #     "asset_name": asset_name,
-        #     "parent": str(context["representation"]["parent"]),
-        #     "family": context["representation"]["context"]["family"],
-        #     "objectName": self.namespace,
-        # }
         objects = avalon_container.objects
         self[:] = objects
         return objects
@@ -158,58 +174,78 @@ class BlendModelLoader(plugin.AssetLoader):
         case though.
         """
         object_name = container["objectName"]
-        asset_group = bpy.data.objects.get(object_name)
+        container = bpy.data.collections.get(object_name)
         libpath = Path(api.get_representation_path(representation))
-        extension = libpath.suffix.lower()
 
-        self.log.info(
-            "Container: %s\nRepresentation: %s",
-            pformat(container, indent=2),
-            pformat(representation, indent=2),
-        )
-
-        assert asset_group, f"The asset is not loaded: {container['objectName']}"
-        assert libpath, "No existing library file found for {container['objectName']}"
+        assert container, f"The asset is not loaded: {container['objectName']}"
+        assert (
+            libpath
+        ), "No existing library file found for {container['objectName']}"
         assert libpath.is_file(), f"The file doesn't exist: {libpath}"
-        assert extension in plugin.VALID_EXTENSIONS, f"Unsupported file: {libpath}"
 
-        metadata = asset_group.get(AVALON_PROPERTY)
-        group_libpath = metadata["libpath"]
+        metadata = container.get(AVALON_PROPERTY)
+        container_libpath = metadata["libpath"]
 
-        normalized_group_libpath = str(Path(bpy.path.abspath(group_libpath)).resolve())
-        normalized_libpath = str(Path(bpy.path.abspath(str(libpath))).resolve())
+        normalized_container_libpath = str(
+            Path(bpy.path.abspath(container_libpath)).resolve()
+        )
+        normalized_libpath = str(
+            Path(bpy.path.abspath(str(libpath))).resolve()
+        )
         self.log.debug(
             "normalized_group_libpath:\n  %s\nnormalized_libpath:\n  %s",
-            normalized_group_libpath,
+            normalized_container_libpath,
             normalized_libpath,
         )
-        if normalized_group_libpath == normalized_libpath:
+        if normalized_container_libpath == normalized_libpath:
             self.log.info("Library already loaded, not updating...")
             return
 
         # Check how many assets use the same library
         count = 0
-        for obj in bpy.data.collections.get(AVALON_CONTAINERS).objects:
-            if obj.get(AVALON_PROPERTY).get("libpath") == group_libpath:
-                count += 1
-
-        mat = asset_group.matrix_basis.copy()
-
-        self._remove(asset_group)
+        for collection in bpy.data.collections:
+            if collection.get(AVALON_PROPERTY) is not None:
+                if (
+                    collection.override_library is not None
+                    and collection.library is None
+                ) or (
+                    collection.override_library is None
+                    and collection.library is None
+                ):
+                    container_item = collection
+                    if (
+                        container_item[AVALON_PROPERTY].get("libpath")
+                        == container_libpath
+                    ):
+                        count += 1
+        parent_collections = plugin.get_parent_collections(container)
+        armature_modifiers_dict = self._get_armature_modifier_parameters(
+            container
+        )
+        if container.override_library is not None:
+            self._remove(container.override_library.reference)
+        self._remove(container)
 
         # If it is the last object to use that library, remove it
+        print(container_libpath)
+        print(bpy.path.basename(container_libpath))
+        print(count)
         if count == 1:
-            library = bpy.data.libraries.get(bpy.path.basename(group_libpath))
+            library = bpy.data.libraries.get(
+                bpy.path.basename(container_libpath)
+            )
             if library:
                 bpy.data.libraries.remove(library)
 
-        self._process(str(libpath), asset_group, object_name)
+        container_override = self._process(str(libpath))
 
-        asset_group.matrix_basis = mat
+        bpy.context.scene.collection.children.unlink(container_override)
+        for parent_collection in parent_collections:
+            parent_collection.children.link(container_override)
 
-        metadata["libpath"] = str(libpath)
-        metadata["representation"] = str(representation["_id"])
-        metadata["parent"] = str(representation["parent"])
+        self._set_armature_modifier_parameters(
+            container_override, armature_modifiers_dict
+        )
 
     def exec_remove(self, container: Dict) -> bool:
         """Remove an existing container from a Blender scene.
@@ -222,25 +258,88 @@ class BlendModelLoader(plugin.AssetLoader):
             bool: Whether the container was deleted.
         """
         object_name = container["objectName"]
-        asset_group = bpy.data.objects.get(object_name)
-        libpath = asset_group.get(AVALON_PROPERTY).get("libpath")
+        input_container = bpy.data.collections.get(object_name)
+        metadata = input_container.get(AVALON_PROPERTY)
+        libpath = metadata["libpath"]
+
+        metadata = input_container.get(AVALON_PROPERTY)
+        container_libpath = metadata["libpath"]
+
+        normalized_container_libpath = str(
+            Path(bpy.path.abspath(container_libpath)).resolve()
+        )
+        normalized_libpath = str(
+            Path(bpy.path.abspath(str(libpath))).resolve()
+        )
+        self.log.debug(
+            "normalized_group_libpath:\n  %s\nnormalized_libpath:\n  %s",
+            normalized_container_libpath,
+            normalized_libpath,
+        )
 
         # Check how many assets use the same library
         count = 0
-        for obj in bpy.data.collections.get(AVALON_CONTAINERS).objects:
-            if obj.get(AVALON_PROPERTY).get("libpath") == libpath:
-                count += 1
+        for collection in bpy.data.collections:
+            if collection.get(AVALON_PROPERTY) is not None:
+                if (
+                    collection.override_library is not None
+                    and collection.library is None
+                ) or (
+                    collection.override_library is None
+                    and collection.library is None
+                ):
+                    container_item = collection
+                    if (
+                        container_item[AVALON_PROPERTY].get("libpath")
+                        == container_libpath
+                    ):
+                        count += 1
 
-        if not asset_group:
-            return False
-
-        self._remove(asset_group)
-
-        bpy.data.objects.remove(asset_group)
+        if input_container.override_library is not None:
+            self._remove(input_container.override_library.reference)
+        self._remove(input_container)
 
         # If it is the last object to use that library, remove it
+        print(container_libpath)
+        print(bpy.path.basename(container_libpath))
+        print(count)
         if count == 1:
-            library = bpy.data.libraries.get(bpy.path.basename(libpath))
-            bpy.data.libraries.remove(library)
+            library = bpy.data.libraries.get(
+                bpy.path.basename(container_libpath)
+            )
+            if library:
+                bpy.data.libraries.remove(library)
 
         return True
+
+    def update_avalon_property(self, representation: Dict):
+
+        container_collection = None
+        instances = plugin.get_instances_list()
+        for data_collection in instances:
+            if (
+                data_collection.override_library is None
+                and data_collection.library is None
+            ):
+                container_collection = data_collection
+        self.log.info("container name %s ", container_collection.name)
+
+        # Set the avalon property with the representation data
+
+        asset = str(representation["context"]["asset"])
+        subset = str(representation["context"]["subset"])
+        asset_name = plugin.asset_name(asset, subset)
+
+        container_collection[AVALON_PROPERTY] = {
+            "schema": "openpype:container-2.0",
+            "id": AVALON_CONTAINER_ID,
+            "name": asset,
+            "namespace": container_collection.name,
+            "loader": str(self.__class__.__name__),
+            "representation": str(representation["_id"]),
+            "libpath": str(representation["data"]["path"]),
+            "asset_name": asset_name,
+            "parent": str(representation["parent"]),
+            "family": str(representation["context"]["family"]),
+            "objectName": container_collection.name,
+        }

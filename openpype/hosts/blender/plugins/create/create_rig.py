@@ -37,9 +37,9 @@ class CreateRig(plugin.Creator):
         # get info from data and create name value
         asset = self.data["asset"]
         subset = self.data["subset"]
-        # name = plugin.asset_name(asset, subset)
+        name = plugin.asset_name(asset, subset)
 
-        name = RIG_TASK_NAME
+        # name = RIG_TASK_NAME
         containers = bpy.context.scene.collection.children
 
         # Get Instance Container or create it if it does not exist

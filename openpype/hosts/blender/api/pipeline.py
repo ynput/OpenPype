@@ -358,7 +358,9 @@ def containerise_existing(
     return container
 
 
-def parse_container(container: bpy.types.Collection, validate: bool = True) -> Dict:
+def parse_container(
+    container: bpy.types.Collection, validate: bool = True
+) -> Dict:
     """Return the container node's full container data.
 
     Args:
@@ -390,7 +392,10 @@ def ls() -> Iterator:
     """
 
     for container in lib.lsattr("id", AVALON_CONTAINER_ID):
-        yield parse_container(container)
+        if (container.library and container.library) or (
+            container.library == None and container.override_library == None
+        ):
+            yield parse_container(container)
 
 
 def update_hierarchy(containers):
@@ -410,7 +415,9 @@ def update_hierarchy(containers):
         # FIXME (jasperge): re-evaluate this. How would it be possible
         # to 'nest' assets?  Collections can have several parents, for
         # now assume it has only 1 parent
-        parent = [coll for coll in bpy.data.collections if container in coll.children]
+        parent = [
+            coll for coll in bpy.data.collections if container in coll.children
+        ]
         for node in parent:
             if node in all_containers:
                 container["parent"] = node

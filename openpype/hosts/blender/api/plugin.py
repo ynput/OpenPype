@@ -31,6 +31,14 @@ def model_asset_name(model_name: str, namespace: Optional[str] = None) -> str:
     return name
 
 
+def get_parent_collections(collection):
+    collections = list()
+    for parent_collection in bpy.data.collections:
+        if collection in parent_collection.children.values():
+            collections.append(parent_collection)
+    return collections
+
+
 def get_container_collections() -> list:
     """Return all 'model' collections.
 
@@ -131,6 +139,23 @@ def get_all_collections_in_collection(collection):
         check_list.extend(c.children)
 
     return check_list
+
+
+def get_all_objects_in_collection(collection_input):
+    """get_all_collections_in_collection"""
+    collection_list = collection_input.children.values()
+
+    objects_list = list()
+    for collection in collection_list:
+        collection_list.extend(collection.children)
+
+    for collection in collection_list:
+        nodes = collection.objects.values()
+        for object in nodes:
+            if not object.name in objects_list:
+                objects_list.append(object.name)
+            nodes.extend(object.children)
+    return objects_list
 
 
 def get_parent_collection(collection):

@@ -25,9 +25,9 @@ class CreateModel(plugin.Creator):
         # Get info from data and create name value
         asset = self.data["asset"]
         subset = self.data["subset"]
-        # name = plugin.asset_name(asset, subset)
+        name = plugin.asset_name(asset, subset)
 
-        name = MODEL_TASK_NAME
+        # name = MODEL_TASK_NAME
         # Get Instance Container or create it if it does not exist
         instance = bpy.data.collections.get(name)
         if not instance:
@@ -38,7 +38,7 @@ class CreateModel(plugin.Creator):
         self.data["task"] = api.Session.get("AVALON_TASK")
 
         lib.imprint(instance, self.data)
-        instance.property_overridable_library_set('["avalon"]', True)
+
         # Add selected objects to instance
         if (self.options or {}).get("useSelection"):
             selected = lib.get_selection()

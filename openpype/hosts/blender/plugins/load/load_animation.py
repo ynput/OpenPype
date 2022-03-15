@@ -24,8 +24,11 @@ class BlendAnimationLoader(plugin.AssetLoader):
     color = "orange"
 
     def process_asset(
-        self, context: dict, name: str, namespace: Optional[str] = None,
-        options: Optional[Dict] = None
+        self,
+        context: dict,
+        name: str,
+        namespace: Optional[str] = None,
+        options: Optional[Dict] = None,
     ) -> Optional[List]:
         """
         Arguments:
@@ -36,9 +39,10 @@ class BlendAnimationLoader(plugin.AssetLoader):
         """
         libpath = self.fname
 
-        with bpy.data.libraries.load(
-            libpath, link=True, relative=False
-        ) as (data_from, data_to):
+        with bpy.data.libraries.load(libpath, link=True, relative=False) as (
+            data_from,
+            data_to,
+        ):
             data_to.objects = data_from.objects
             data_to.actions = data_from.actions
 
@@ -46,13 +50,16 @@ class BlendAnimationLoader(plugin.AssetLoader):
 
         assert container, "No asset group found"
 
-        target_namespace = container.get(AVALON_PROPERTY).get('namespace')
+        target_namespace = container.get(AVALON_PROPERTY).get("namespace")
 
         action = data_to.actions[0].make_local().copy()
 
         for obj in bpy.data.objects:
-            if obj.get(AVALON_PROPERTY) and obj.get(AVALON_PROPERTY).get(
-                    'namespace') == target_namespace:
+            if (
+                obj.get(AVALON_PROPERTY)
+                and obj.get(AVALON_PROPERTY).get("namespace")
+                == target_namespace
+            ):
                 if obj.children[0]:
                     if not obj.children[0].animation_data:
                         obj.children[0].animation_data_create()

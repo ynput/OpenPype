@@ -12,7 +12,7 @@ from openpype.hosts.blender.api import plugin
 from openpype.hosts.blender.api.pipeline import (
     AVALON_CONTAINERS,
     AVALON_PROPERTY,
-    AVALON_CONTAINER_ID
+    AVALON_CONTAINER_ID,
 )
 
 
@@ -30,27 +30,27 @@ class BlendLayoutLoader(plugin.AssetLoader):
         objects = list(asset_group.children)
 
         for obj in objects:
-            if obj.type == 'MESH':
+            if obj.type == "MESH":
                 for material_slot in list(obj.material_slots):
                     if material_slot.material:
                         bpy.data.materials.remove(material_slot.material)
                 bpy.data.meshes.remove(obj.data)
-            elif obj.type == 'ARMATURE':
+            elif obj.type == "ARMATURE":
                 objects.extend(obj.children)
                 bpy.data.armatures.remove(obj.data)
-            elif obj.type == 'CURVE':
+            elif obj.type == "CURVE":
                 bpy.data.curves.remove(obj.data)
-            elif obj.type == 'EMPTY':
+            elif obj.type == "EMPTY":
                 objects.extend(obj.children)
                 bpy.data.objects.remove(obj)
 
     def _remove_asset_and_library(self, asset_group):
-        libpath = asset_group.get(AVALON_PROPERTY).get('libpath')
+        libpath = asset_group.get(AVALON_PROPERTY).get("libpath")
 
         # Check how many assets use the same library
         count = 0
         for obj in bpy.data.collections.get(AVALON_CONTAINERS).all_objects:
-            if obj.get(AVALON_PROPERTY).get('libpath') == libpath:
+            if obj.get(AVALON_PROPERTY).get("libpath") == libpath:
                 count += 1
 
         self._remove(asset_group)
@@ -65,20 +65,23 @@ class BlendLayoutLoader(plugin.AssetLoader):
     def _process(
         self, libpath, asset_group, group_name, asset, representation, actions
     ):
-        with bpy.data.libraries.load(
-            libpath, link=True, relative=False
-        ) as (data_from, data_to):
+        with bpy.data.libraries.load(libpath, link=True, relative=False) as (
+            data_from,
+            data_to,
+        ):
             data_to.objects = data_from.objects
 
         parent = bpy.context.scene.collection
 
-        empties = [obj for obj in data_to.objects if obj.type == 'EMPTY']
+        empties = [obj for obj in data_to.objects if obj.type == "EMPTY"]
 
         container = None
 
         for empty in empties:
-            if (empty.get(AVALON_PROPERTY) and
-                    empty.get(AVALON_PROPERTY).get('family') == 'layout'):
+            if (
+                empty.get(AVALON_PROPERTY)
+                and empty.get(AVALON_PROPERTY).get("family") == "layout"
+            ):
                 container = empty
                 break
 
@@ -89,7 +92,7 @@ class BlendLayoutLoader(plugin.AssetLoader):
         objects = []
         nodes = list(container.children)
 
-        allowed_types = ['ARMATURE', 'MESH', 'EMPTY']
+        allowed_types = ["ARMATURE", "MESH", "EMPTY"]
 
         for obj in nodes:
             if obj.type in allowed_types:
@@ -104,12 +107,12 @@ class BlendLayoutLoader(plugin.AssetLoader):
 
         constraints = []
 
-        armatures = [obj for obj in objects if obj.type == 'ARMATURE']
+        armatures = [obj for obj in objects if obj.type == "ARMATURE"]
 
         for armature in armatures:
             for bone in armature.pose.bones:
                 for constraint in bone.constraints:
-                    if hasattr(constraint, 'target'):
+                    if hasattr(constraint, "target"):
                         constraints.append(constraint)
 
         for obj in objects:
@@ -123,7 +126,7 @@ class BlendLayoutLoader(plugin.AssetLoader):
             if actions:
                 action = actions.get(local_obj.name, None)
 
-            if local_obj.type == 'MESH':
+            if local_obj.type == "MESH":
                 plugin.prepare_data(local_obj.data)
 
                 if obj != local_obj:
@@ -134,17 +137,18 @@ class BlendLayoutLoader(plugin.AssetLoader):
                 for material_slot in local_obj.material_slots:
                     if material_slot.material:
                         plugin.prepare_data(material_slot.material)
-            elif local_obj.type == 'ARMATURE':
+            elif local_obj.type == "ARMATURE":
                 plugin.prepare_data(local_obj.data)
 
                 if action is not None:
                     if local_obj.animation_data is None:
                         local_obj.animation_data_create()
                     local_obj.animation_data.action = action
-                elif (local_obj.animation_data and
-                      local_obj.animation_data.action is not None):
-                    plugin.prepare_data(
-                        local_obj.animation_data.action)
+                elif (
+                    local_obj.animation_data
+                    and local_obj.animation_data.action is not None
+                ):
+                    plugin.prepare_data(local_obj.animation_data.action)
 
                 # Set link the drivers to the local object
                 if local_obj.data.animation_data:
@@ -153,19 +157,19 @@ class BlendLayoutLoader(plugin.AssetLoader):
                             for t in v.targets:
                                 t.id = local_obj
 
-            elif local_obj.type == 'EMPTY':
+            elif local_obj.type == "EMPTY":
                 creator_plugin = lib.get_creator_by_name("CreateAnimation")
                 if not creator_plugin:
-                    raise ValueError("Creator plugin \"CreateAnimation\" was "
-                                     "not found.")
+                    raise ValueError(
+                        'Creator plugin "CreateAnimation" was ' "not found."
+                    )
 
                 api.create(
                     creator_plugin,
-                    name=local_obj.name.split(':')[-1] + "_animation",
+                    name=local_obj.name.split(":")[-1] + "_animation",
                     asset=asset,
-                    options={"useSelection": False,
-                             "asset_group": local_obj},
-                    data={"dependencies": representation}
+                    options={"useSelection": False, "asset_group": local_obj},
+                    data={"dependencies": representation},
                 )
 
             if not local_obj.get(AVALON_PROPERTY):
@@ -177,8 +181,10 @@ class BlendLayoutLoader(plugin.AssetLoader):
         objects.reverse()
 
         armatures = [
-            obj for obj in bpy.data.objects
-            if obj.type == 'ARMATURE' and obj.library is None]
+            obj
+            for obj in bpy.data.objects
+            if obj.type == "ARMATURE" and obj.library is None
+        ]
         arm_act = {}
 
         # The armatures with an animation need to be at the center of the
@@ -192,10 +198,10 @@ class BlendLayoutLoader(plugin.AssetLoader):
                     bone.location = (0.0, 0.0, 0.0)
                     bone.rotation_euler = (0.0, 0.0, 0.0)
 
-        curves = [obj for obj in data_to.objects if obj.type == 'CURVE']
+        curves = [obj for obj in data_to.objects if obj.type == "CURVE"]
 
         for curve in curves:
-            curve_name = curve.name.split(':')[0]
+            curve_name = curve.name.split(":")[0]
             curve_obj = bpy.data.objects.get(curve_name)
 
             local_obj = plugin.prepare_data(curve)
@@ -208,9 +214,9 @@ class BlendLayoutLoader(plugin.AssetLoader):
             local_obj.select_set(True)
             bpy.context.view_layer.objects.active = local_obj
             if local_obj.library is None:
-                bpy.ops.object.mode_set(mode='EDIT')
+                bpy.ops.object.mode_set(mode="EDIT")
                 bpy.ops.object.hook_reset()
-                bpy.ops.object.mode_set(mode='OBJECT')
+                bpy.ops.object.mode_set(mode="OBJECT")
             parent.objects.unlink(local_obj)
 
             local_obj.use_fake_user = True
@@ -239,8 +245,11 @@ class BlendLayoutLoader(plugin.AssetLoader):
         return objects
 
     def process_asset(
-        self, context: dict, name: str, namespace: Optional[str] = None,
-        options: Optional[Dict] = None
+        self,
+        context: dict,
+        name: str,
+        namespace: Optional[str] = None,
+        options: Optional[Dict] = None,
     ) -> Optional[List]:
         """
         Arguments:
@@ -265,11 +274,12 @@ class BlendLayoutLoader(plugin.AssetLoader):
             bpy.context.scene.collection.children.link(avalon_container)
 
         asset_group = bpy.data.objects.new(group_name, object_data=None)
-        asset_group.empty_display_type = 'SINGLE_ARROW'
+        asset_group.empty_display_type = "SINGLE_ARROW"
         avalon_container.objects.link(asset_group)
 
         objects = self._process(
-            libpath, asset_group, group_name, asset, representation, None)
+            libpath, asset_group, group_name, asset, representation, None
+        )
 
         for child in asset_group.children:
             if child.get(AVALON_PROPERTY):
@@ -281,14 +291,14 @@ class BlendLayoutLoader(plugin.AssetLoader):
             "schema": "openpype:container-2.0",
             "id": AVALON_CONTAINER_ID,
             "name": name,
-            "namespace": namespace or '',
+            "namespace": namespace or "",
             "loader": str(self.__class__.__name__),
             "representation": str(context["representation"]["_id"]),
             "libpath": libpath,
             "asset_name": asset_name,
             "parent": str(context["representation"]["parent"]),
             "family": context["representation"]["context"]["family"],
-            "objectName": group_name
+            "objectName": group_name,
         }
 
         self[:] = objects
@@ -317,28 +327,16 @@ class BlendLayoutLoader(plugin.AssetLoader):
             pformat(representation, indent=2),
         )
 
-        assert asset_group, (
-            f"The asset is not loaded: {container['objectName']}"
-        )
-        assert libpath, (
-            "No existing library file found for {container['objectName']}"
-        )
-        assert libpath.is_file(), (
-            f"The file doesn't exist: {libpath}"
-        )
-        assert extension in plugin.VALID_EXTENSIONS, (
-            f"Unsupported file: {libpath}"
-        )
+        assert asset_group, f"The asset is not loaded: {container['objectName']}"
+        assert libpath, "No existing library file found for {container['objectName']}"
+        assert libpath.is_file(), f"The file doesn't exist: {libpath}"
+        assert extension in plugin.VALID_EXTENSIONS, f"Unsupported file: {libpath}"
 
         metadata = asset_group.get(AVALON_PROPERTY)
         group_libpath = metadata["libpath"]
 
-        normalized_group_libpath = (
-            str(Path(bpy.path.abspath(group_libpath)).resolve())
-        )
-        normalized_libpath = (
-            str(Path(bpy.path.abspath(str(libpath))).resolve())
-        )
+        normalized_group_libpath = str(Path(bpy.path.abspath(group_libpath)).resolve())
+        normalized_libpath = str(Path(bpy.path.abspath(str(libpath))).resolve())
         self.log.debug(
             "normalized_group_libpath:\n  %s\nnormalized_libpath:\n  %s",
             normalized_group_libpath,
@@ -352,16 +350,16 @@ class BlendLayoutLoader(plugin.AssetLoader):
 
         for obj in asset_group.children:
             obj_meta = obj.get(AVALON_PROPERTY)
-            if obj_meta.get('family') == 'rig':
+            if obj_meta.get("family") == "rig":
                 rig = None
                 for child in obj.children:
-                    if child.type == 'ARMATURE':
+                    if child.type == "ARMATURE":
                         rig = child
                         break
                 if not rig:
                     raise Exception("No armature in the rig asset group.")
                 if rig.animation_data and rig.animation_data.action:
-                    instance_name = obj_meta.get('instance_name')
+                    instance_name = obj_meta.get("instance_name")
                     actions[instance_name] = rig.animation_data.action
 
         mat = asset_group.matrix_basis.copy()
@@ -373,7 +371,7 @@ class BlendLayoutLoader(plugin.AssetLoader):
         # Check how many assets use the same library
         count = 0
         for obj in bpy.data.collections.get(AVALON_CONTAINERS).objects:
-            if obj.get(AVALON_PROPERTY).get('libpath') == group_libpath:
+            if obj.get(AVALON_PROPERTY).get("libpath") == group_libpath:
                 count += 1
 
         self._remove(asset_group)
@@ -421,3 +419,35 @@ class BlendLayoutLoader(plugin.AssetLoader):
         self._remove_asset_and_library(asset_group)
 
         return True
+
+    def update_avalon_property(self, representation: Dict):
+
+        container_collection = None
+        instances = plugin.get_instances_list()
+        for data_collection in instances:
+            if (
+                data_collection.override_library is None
+                and data_collection.library is None
+            ):
+                container_collection = data_collection
+        self.log.info("container name %s ", container_collection.name)
+
+        # Set the avalon property with the representation data
+
+        asset = str(representation["context"]["asset"])
+        subset = str(representation["context"]["subset"])
+        asset_name = plugin.asset_name(asset, subset)
+
+        container_collection[AVALON_PROPERTY] = {
+            "schema": "openpype:container-2.0",
+            "id": AVALON_CONTAINER_ID,
+            "name": asset,
+            "namespace": container_collection.name,
+            "loader": str(self.__class__.__name__),
+            "representation": str(representation["_id"]),
+            "libpath": str(representation["data"]["path"]),
+            "asset_name": asset_name,
+            "parent": str(representation["parent"]),
+            "family": str(representation["context"]["family"]),
+            "objectName": container_collection.name,
+        }
