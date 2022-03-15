@@ -145,14 +145,15 @@ def write_project_to_op(project: dict, dbcon: AvalonMongoDB) -> UpdateOne:
     project_data = project["data"] or {}
 
     # Update data
-    project_data.update(
-        {
-            "code": project["code"],
-            "fps": project["fps"],
-            "resolutionWidth": project["resolution"].split("x")[0],
-            "resolutionHeight": project["resolution"].split("x")[1],
-        }
-    )
+    if project_data:
+        project_data.update(
+            {
+                "code": project["code"],
+                "fps": project["fps"],
+                "resolutionWidth": project["resolution"].split("x")[0],
+                "resolutionHeight": project["resolution"].split("x")[1],
+            }
+        )
 
     return UpdateOne(
         {"_id": project_doc["_id"]},
@@ -211,10 +212,6 @@ def sync_project_from_kitsu(
         project = gazu.project.get_project_by_name(project_name)
     project_code = project_name
 
-    # Try to find project document
-    project_col = dbcon.database[project_code]
-    project_doc = project_col.find_one({"type": "project"})
-
     print(f"Synchronizing {project_name}...")
 
     # Get all assets from zou
@@ -222,14 +219,14 @@ def sync_project_from_kitsu(
     all_episodes = gazu.shot.all_episodes_for_project(project)
     all_seqs = gazu.shot.all_sequences_for_project(project)
     all_shots = gazu.shot.all_shots_for_project(project)
-    all_entities = [
-        e
-        for e in all_assets + all_episodes + all_seqs + all_shots
-        if e["data"] and not e["data"].get("is_substitute")
-    ]
+    all_entities = all_assets + all_episodes + all_seqs + all_shots
 
     # Sync project. Create if doesn't exist
     bulk_writes.append(write_project_to_op(project, dbcon))
+
+    # Try to find project document
+    project_col = dbcon.database[project_code]
+    project_doc = project_col.find_one({"type": "project"})
 
     # Query all assets of the local project
     zou_ids_and_asset_docs = {
