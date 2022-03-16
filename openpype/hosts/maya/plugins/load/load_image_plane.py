@@ -1,6 +1,10 @@
 from Qt import QtWidgets, QtCore
 
-from avalon import api, io
+from avalon import io
+from openpype.pipeline import (
+    load,
+    get_representation_path
+)
 from openpype.hosts.maya.api.pipeline import containerise
 from openpype.hosts.maya.api.lib import unique_namespace
 
@@ -74,7 +78,7 @@ class CameraWindow(QtWidgets.QDialog):
         self.close()
 
 
-class ImagePlaneLoader(api.Loader):
+class ImagePlaneLoader(load.LoaderPlugin):
     """Specific loader of plate for image planes on selected camera."""
 
     families = ["image", "plate", "render"]
@@ -203,7 +207,7 @@ class ImagePlaneLoader(api.Loader):
 
         assert image_plane_shape is not None, "Image plane not found."
 
-        path = api.get_representation_path(representation)
+        path = get_representation_path(representation)
         image_plane_shape.imageName.set(path)
         cmds.setAttr(
             container["objectName"] + ".representation",

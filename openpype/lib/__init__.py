@@ -26,7 +26,6 @@ from .vendor_bin_utils import (
     get_vendor_bin_path,
     get_oiio_tools_path,
     get_ffmpeg_tool_path,
-    ffprobe_streams,
     is_oiio_supported
 )
 
@@ -90,7 +89,12 @@ from .profiles_filtering import (
 from .transcoding import (
     get_transcode_temp_directory,
     should_convert_for_ffmpeg,
-    convert_for_ffmpeg
+    convert_for_ffmpeg,
+    get_ffprobe_data,
+    get_ffprobe_streams,
+    get_ffmpeg_codec_args,
+    get_ffmpeg_format_args,
+    convert_ffprobe_fps_value,
 )
 from .avalon_context import (
     CURRENT_DOC_SCHEMAS,
@@ -225,7 +229,6 @@ __all__ = [
     "get_vendor_bin_path",
     "get_oiio_tools_path",
     "get_ffmpeg_tool_path",
-    "ffprobe_streams",
     "is_oiio_supported",
 
     "import_filepath",
@@ -237,6 +240,11 @@ __all__ = [
     "get_transcode_temp_directory",
     "should_convert_for_ffmpeg",
     "convert_for_ffmpeg",
+    "get_ffprobe_data",
+    "get_ffprobe_streams",
+    "get_ffmpeg_codec_args",
+    "get_ffmpeg_format_args",
+    "convert_ffprobe_fps_value",
 
     "CURRENT_DOC_SCHEMAS",
     "PROJECT_NAME_ALLOWED_SYMBOLS",

@@ -7,13 +7,17 @@ from pprint import pprint
 
 from maya import cmds
 
-from avalon import api, io
+from avalon import io
 from openpype.api import get_project_settings
+from openpype.pipeline import (
+    load,
+    get_representation_path
+)
 from openpype.hosts.maya.api import lib
 from openpype.hosts.maya.api.pipeline import containerise
 
 
-class YetiCacheLoader(api.Loader):
+class YetiCacheLoader(load.LoaderPlugin):
 
     families = ["yeticache", "yetiRig"]
     representations = ["fur"]
@@ -121,8 +125,8 @@ class YetiCacheLoader(api.Loader):
             "cannot find fursettings representation"
         )
 
-        settings_fname = api.get_representation_path(fur_settings)
-        path = api.get_representation_path(representation)
+        settings_fname = get_representation_path(fur_settings)
+        path = get_representation_path(representation)
         # Get all node data
         with open(settings_fname, "r") as fp:
             settings = json.load(fp)

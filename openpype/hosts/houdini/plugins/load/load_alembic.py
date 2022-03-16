@@ -1,10 +1,12 @@
 import os
-from avalon import api
-
+from openpype.pipeline import (
+    load,
+    get_representation_path,
+)
 from openpype.hosts.houdini.api import pipeline
 
 
-class AbcLoader(api.Loader):
+class AbcLoader(load.LoaderPlugin):
     """Specific loader of Alembic for the avalon.animation family"""
 
     families = ["model", "animation", "pointcache", "gpuCache"]
@@ -90,7 +92,7 @@ class AbcLoader(api.Loader):
             return
 
         # Update the file path
-        file_path = api.get_representation_path(representation)
+        file_path = get_representation_path(representation)
         file_path = file_path.replace("\\", "/")
 
         alembic_node.setParms({"fileName": file_path})

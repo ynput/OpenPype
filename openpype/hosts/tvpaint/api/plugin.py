@@ -1,9 +1,10 @@
 import re
 import uuid
 
-import avalon.api
-
-from openpype.pipeline import LegacyCreator
+from openpype.pipeline import (
+    LegacyCreator,
+    LoaderPlugin,
+)
 from openpype.hosts.tvpaint.api import (
     pipeline,
     lib
@@ -74,7 +75,7 @@ class Creator(LegacyCreator):
         self.write_instances(data)
 
 
-class Loader(avalon.api.Loader):
+class Loader(LoaderPlugin):
     hosts = ["tvpaint"]
 
     @staticmethod

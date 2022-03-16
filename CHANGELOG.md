@@ -1,8 +1,23 @@
 # Changelog
 
+## [3.9.1-nightly.1](https://github.com/pypeclub/OpenPype/tree/HEAD)
+
+[Full Changelog](https://github.com/pypeclub/OpenPype/compare/3.9.0...HEAD)
+
+**🐛 Bug fixes**
+
+- Harmony - fixed creator issue [\#2891](https://github.com/pypeclub/OpenPype/pull/2891)
+- General: Remove forgotten use of avalon Creator [\#2885](https://github.com/pypeclub/OpenPype/pull/2885)
+- General: Avoid circular import [\#2884](https://github.com/pypeclub/OpenPype/pull/2884)
+- Fixes for attaching loaded containers \(\#2837\) [\#2874](https://github.com/pypeclub/OpenPype/pull/2874)
+
+**🔀 Refactored code**
+
+- General: Reduce style usage to OpenPype repository [\#2889](https://github.com/pypeclub/OpenPype/pull/2889)
+
 ## [3.9.0](https://github.com/pypeclub/OpenPype/tree/3.9.0) (2022-03-14)
 
-[Full Changelog](https://github.com/pypeclub/OpenPype/compare/3.8.2...3.9.0)
+[Full Changelog](https://github.com/pypeclub/OpenPype/compare/CI/3.9.0-nightly.9...3.9.0)
 
 **Deprecated:**
 

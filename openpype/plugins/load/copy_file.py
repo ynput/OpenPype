@@ -1,8 +1,8 @@
-from avalon import api
 from openpype.style import get_default_entity_icon_color
+from openpype.pipeline import load
 
 
-class CopyFile(api.Loader):
+class CopyFile(load.LoaderPlugin):
     """Copy the published file to be pasted at the desired location"""
 
     representations = ["*"]

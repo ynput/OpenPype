@@ -4,12 +4,13 @@ import uuid
 import qargparse
 from Qt import QtWidgets, QtCore
 
-from avalon import api
 import openpype.api as pype
-from openpype.pipeline import LegacyCreator
+from openpype.pipeline import (
+    LegacyCreator,
+    LoaderPlugin,
+)
 from openpype.hosts import resolve
 from . import lib
-
 
 
 class CreatorWidget(QtWidgets.QDialog):
@@ -292,7 +293,7 @@ class ClipLoader:
         """ Initialize object
 
         Arguments:
-            cls (avalon.api.Loader): plugin object
+            cls (openpype.pipeline.load.LoaderPlugin): plugin object
             context (dict): loader plugin context
             options (dict)[optional]: possible keys:
                 projectBinPath: "path/to/binItem"
@@ -448,7 +449,7 @@ class ClipLoader:
         return timeline_item
 
 
-class TimelineItemLoader(api.Loader):
+class TimelineItemLoader(LoaderPlugin):
     """A basic SequenceLoader for Resolve
 
     This will implement the basic behavior for a loader to inherit from that
