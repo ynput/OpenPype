@@ -228,9 +228,9 @@ class CollectTimelineInstances(pyblish.api.ContextPlugin):
         # first split comment by comma
         split_comments = []
         if "," in comment_string:
-            split_comments.extend(iter(comment_string.split(",")))
+            split_comments.extend(comment_string.split(","))
         elif ";" in comment_string:
-            split_comments.extend(iter(comment_string.split(";")))
+            split_comments.extend(comment_string.split(";"))
         else:
             split_comments.append(comment_string)
 

@@ -5,7 +5,6 @@ from copy import deepcopy
 import pyblish.api
 import openpype.api
 from openpype.hosts.flame import api as opfapi
-from pprint import pformat
 
 
 class ExtractSubsetResources(openpype.api.Extractor):
