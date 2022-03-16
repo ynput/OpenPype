@@ -139,6 +139,11 @@ const studios = [
       title: "Overmind Studios",
       image: "/img/OMS_logo_black_color.png",
       infoLink: "https://www.overmind-studios.de/",
+  },
+  {
+      title: "Ember Light",
+      image: "/img/EmberLight_black.png",
+      infoLink: "https://emberlight.se/",
   }
 ];
 
@@ -433,7 +438,7 @@ function Home() {
         {studios && studios.length && (
           <section className={styles.gallery}>
             <div className="container">
-              <h2>Studios using openPYPE</h2>
+              <h2>Studios using openPype</h2>
               <div className="showcase">
                 {studios.map((props, idx) => (
                   <Client key={idx} {...props} />
