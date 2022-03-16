@@ -25,6 +25,7 @@ class ExtractSubsetResources(openpype.api.Extractor):
             "xml_preset_file": "Jpeg (8-bit).xml",
             "xml_preset_dir": "",
             "export_type": "File Sequence",
+            "ignore_comment_attrs": True,
             "colorspace_out": "Output - sRGB",
             "representation_add_range": False,
             "representation_tags": ["thumbnail"]
@@ -34,6 +35,7 @@ class ExtractSubsetResources(openpype.api.Extractor):
             "xml_preset_file": "Apple iPad (1920x1080).xml",
             "xml_preset_dir": "",
             "export_type": "Movie",
+            "ignore_comment_attrs": True,
             "colorspace_out": "Output - Rec.709",
             "representation_add_range": True,
             "representation_tags": [
@@ -104,6 +106,7 @@ class ExtractSubsetResources(openpype.api.Extractor):
             preset_dir = preset_config["xml_preset_dir"]
             export_type = preset_config["export_type"]
             repre_tags = preset_config["representation_tags"]
+            ignore_comment_attrs = preset_config["ignore_comment_attrs"]
             color_out = preset_config["colorspace_out"]
 
             # get frame range with handles for representation range
@@ -133,11 +136,12 @@ class ExtractSubsetResources(openpype.api.Extractor):
                     "startFrame": frame_start
                 })
 
-                # add any xml overrides collected form segment.comment
-                modify_xml_data.update(instance.data["xml_overrides"])
-                self.log.debug("__ modify_xml_data: {}".format(pformat(
-                    modify_xml_data
-                )))
+                if not ignore_comment_attrs:
+                    # add any xml overrides collected form segment.comment
+                    modify_xml_data.update(instance.data["xml_overrides"])
+                    self.log.debug("__ modify_xml_data: {}".format(pformat(
+                        modify_xml_data
+                    )))
 
             # with maintained duplication loop all presets
             with opfapi.maintained_object_duplication(
