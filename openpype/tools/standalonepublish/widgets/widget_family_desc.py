@@ -1,7 +1,7 @@
-from Qt import QtWidgets, QtCore, QtGui
-from . import FamilyRole, PluginRole
-from avalon.vendor import qtawesome
 import six
+from Qt import QtWidgets, QtCore, QtGui
+import qtawesome
+from . import FamilyRole, PluginRole
 
 
 class FamilyDescriptionWidget(QtWidgets.QWidget):

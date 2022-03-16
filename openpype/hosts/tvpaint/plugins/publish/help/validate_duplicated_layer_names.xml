@@ -1,0 +1,22 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<root>
+<error id="main">
+<title>Layer names</title>
+<description>## Duplicated layer names
+
+Can't determine which layers should be published because there are duplicated layer names in the scene.
+
+### Duplicated layer names
+
+{layer_names}
+
+*Check layer names for all subsets in list on left side.*
+
+### How to repair?
+
+Hide/rename/remove layers that should not be published.
+
+If all of them should be published then you have duplicated subset names in the scene. In that case you have to recrete them and use different variant name.
+</description>
+</error>
+</root>

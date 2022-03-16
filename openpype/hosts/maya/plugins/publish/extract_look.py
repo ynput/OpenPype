@@ -62,6 +62,7 @@ def maketx(source, destination, *args):
     from openpype.lib import get_oiio_tools_path
 
     maketx_path = get_oiio_tools_path("maketx")
+
     if not os.path.exists(maketx_path):
         print(
             "OIIO tool not found in {}".format(maketx_path))
@@ -216,7 +217,7 @@ class ExtractLook(openpype.api.Extractor):
         self.log.info("Extract sets (%s) ..." % _scene_type)
         lookdata = instance.data["lookData"]
         relationships = lookdata["relationships"]
-        sets = relationships.keys()
+        sets = list(relationships.keys())
         if not sets:
             self.log.info("No sets found")
             return

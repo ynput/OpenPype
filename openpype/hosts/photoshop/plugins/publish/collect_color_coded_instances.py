@@ -38,10 +38,15 @@ class CollectColorCodedInstances(pyblish.api.ContextPlugin):
 
     def process(self, context):
         self.log.info("CollectColorCodedInstances")
-        self.log.debug("mapping:: {}".format(self.color_code_mapping))
+        batch_dir = os.environ.get("OPENPYPE_PUBLISH_DATA")
+        if (os.environ.get("IS_TEST") and
+                (not batch_dir or not os.path.exists(batch_dir))):
+            self.log.debug("Automatic testing, no batch data, skipping")
+            return
 
         existing_subset_names = self._get_existing_subset_names(context)
-        asset_name, task_name, variant = self._parse_batch()
+
+        asset_name, task_name, variant = self._parse_batch(batch_dir)
 
         stub = photoshop.stub()
         layers = stub.get_layers()
@@ -125,9 +130,8 @@ class CollectColorCodedInstances(pyblish.api.ContextPlugin):
 
         return existing_subset_names
 
-    def _parse_batch(self):
+    def _parse_batch(self, batch_dir):
         """Parses asset_name, task_name, variant from batch manifest."""
-        batch_dir = os.environ.get("OPENPYPE_PUBLISH_DATA")
         task_data = None
         if batch_dir and os.path.exists(batch_dir):
             task_data = parse_json(os.path.join(batch_dir,

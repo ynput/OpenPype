@@ -14,7 +14,7 @@ from openpype.api import Logger
 from openpype.tools.utils import host_tools
 
 from avalon import api
-from avalon.tools.webserver.app import WebServerTool
+from openpype.tools.adobe_webserver.app import WebServerTool
 
 from .ws_stub import PhotoshopServerStub
 
@@ -175,7 +175,7 @@ class ProcessLauncher(QtCore.QObject):
     def start(self):
         if self._started:
             return
-        self.log.info("Started launch logic of AfterEffects")
+        self.log.info("Started launch logic of Photoshop")
         self._started = True
         self._start_process_timer.start()
 

@@ -1,12 +1,14 @@
+# -*- coding: utf-8 -*-
+"""Load camera from FBX."""
 import os
 
-from avalon import api, io, pipeline
-from avalon.unreal import lib
-from avalon.unreal import pipeline as unreal_pipeline
-import unreal
+from avalon import io, pipeline
+from openpype.hosts.unreal.api import plugin
+from openpype.hosts.unreal.api import pipeline as unreal_pipeline
+import unreal  # noqa
 
 
-class CameraLoader(api.Loader):
+class CameraLoader(plugin.Loader):
     """Load Unreal StaticMesh from FBX"""
 
     families = ["camera"]
@@ -38,8 +40,8 @@ class CameraLoader(api.Loader):
             list(str): list of container content
         """
 
-        # Create directory for asset and avalon container
-        root = "/Game/Avalon/Assets"
+        # Create directory for asset and OpenPype container
+        root = "/Game/OpenPype/Assets"
         asset = context.get('asset').get('name')
         suffix = "_CON"
         if asset:
@@ -109,7 +111,8 @@ class CameraLoader(api.Loader):
         )
 
         # Create Asset Container
-        lib.create_avalon_container(container=container_name, path=asset_dir)
+        unreal_pipeline.create_container(
+            container=container_name, path=asset_dir)
 
         data = {
             "schema": "openpype:container-2.0",

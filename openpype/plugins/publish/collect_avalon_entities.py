@@ -33,6 +33,11 @@ class CollectAvalonEntities(pyblish.api.ContextPlugin):
         ).format(project_name)
         self.log.debug("Collected Project \"{}\"".format(project_entity))
 
+        context.data["projectEntity"] = project_entity
+
+        if not asset_name:
+            self.log.info("Context is not set. Can't collect global data.")
+            return
         asset_entity = io.find_one({
             "type": "asset",
             "name": asset_name,
@@ -44,7 +49,6 @@ class CollectAvalonEntities(pyblish.api.ContextPlugin):
 
         self.log.debug("Collected Asset \"{}\"".format(asset_entity))
 
-        context.data["projectEntity"] = project_entity
         context.data["assetEntity"] = asset_entity
 
         data = asset_entity['data']

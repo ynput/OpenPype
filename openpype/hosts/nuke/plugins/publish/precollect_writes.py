@@ -3,8 +3,9 @@ import re
 from pprint import pformat
 import nuke
 import pyblish.api
+from avalon import io
 import openpype.api as pype
-from avalon import io, api
+from openpype.pipeline import get_representation_path
 
 
 @pyblish.api.log
@@ -182,7 +183,7 @@ class CollectNukeWrites(pyblish.api.InstancePlugin):
         if repre_doc:
             instance.data["audio"] = [{
                 "offset": 0,
-                "filename": api.get_representation_path(repre_doc)
+                "filename": get_representation_path(repre_doc)
             }]
 
         self.log.debug("instance.data: {}".format(pformat(instance.data)))

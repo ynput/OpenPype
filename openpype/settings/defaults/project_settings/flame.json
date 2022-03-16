@@ -2,7 +2,8 @@
     "create": {
         "CreateShotClip": {
             "hierarchy": "{folder}/{sequence}",
-            "clipRename": true,
+            "useShotName": true,
+            "clipRename": false,
             "clipName": "{sequence}{shot}",
             "segmentIndex": true,
             "countFrom": 10,
@@ -26,6 +27,7 @@
                     "ext": "exr",
                     "xml_preset_file": "OpenEXR (16-bit fp DWAA).xml",
                     "xml_preset_dir": "",
+                    "export_type": "File Sequence",
                     "colorspace_out": "ACES - ACEScg",
                     "representation_add_range": true,
                     "representation_tags": []

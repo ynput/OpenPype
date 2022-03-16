@@ -14,6 +14,11 @@ from .context import (
     CreateContext
 )
 
+from .legacy_create import (
+    LegacyCreator,
+    legacy_create,
+)
+
 
 __all__ = (
     "SUBSET_NAME_ALLOWED_SYMBOLS",
@@ -25,5 +30,8 @@ __all__ = (
     "AutoCreator",
 
     "CreatedInstance",
-    "CreateContext"
+    "CreateContext",
+
+    "LegacyCreator",
+    "legacy_create",
 )

@@ -4,11 +4,11 @@ import contextlib
 import collections
 
 from Qt import QtWidgets, QtCore, QtGui
+import qtawesome
 
 import avalon.api
-from avalon import style
-from avalon.vendor import qtawesome
 
+from openpype.style import get_default_entity_icon_color
 from openpype.api import (
     get_project_settings,
     Logger
@@ -92,12 +92,104 @@ def qt_app_context():
         yield app
 
 
-# Backwards compatibility
-application = qt_app_context
-
-
 class SharedObjects:
     jobs = {}
+    icons = {}
+
+
+def get_qta_icon_by_name_and_color(icon_name, icon_color):
+    if not icon_name or not icon_color:
+        return None
+
+    full_icon_name = "{0}-{1}".format(icon_name, icon_color)
+    if full_icon_name in SharedObjects.icons:
+        return SharedObjects.icons[full_icon_name]
+
+    variants = [icon_name]
+    qta_instance = qtawesome._instance()
+    for key in qta_instance.charmap.keys():
+        variants.append("{0}.{1}".format(key, icon_name))
+
+    icon = None
+    for variant in variants:
+        try:
+            icon = qtawesome.icon(variant, color=icon_color)
+            break
+        except Exception:
+            pass
+
+    SharedObjects.icons[full_icon_name] = icon
+    return icon
+
+
+def get_project_icon(project_doc):
+    if project_doc:
+        icon_name = project_doc.get("data", {}).get("icon")
+        icon = get_qta_icon_by_name_and_color(icon_name, "white")
+        if icon:
+            return icon
+
+    return get_qta_icon_by_name_and_color(
+        "fa.map", get_default_entity_icon_color()
+    )
+
+
+def get_asset_icon_name(asset_doc, has_children=True):
+    icon_name = asset_doc["data"].get("icon")
+    if icon_name:
+        return icon_name
+
+    if has_children:
+        return "folder"
+    return "folder-o"
+
+
+def get_asset_icon_color(asset_doc):
+    icon_color = asset_doc["data"].get("color")
+    if icon_color:
+        return icon_color
+    return get_default_entity_icon_color()
+
+
+def get_asset_icon(asset_doc, has_children=False):
+    icon_name = get_asset_icon_name(asset_doc, has_children)
+    icon_color = get_asset_icon_color(asset_doc)
+
+    return get_qta_icon_by_name_and_color(icon_name, icon_color)
+
+
+def get_default_task_icon(color=None):
+    if color is None:
+        color = get_default_entity_icon_color()
+    return get_qta_icon_by_name_and_color("fa.male", color)
+
+
+def get_task_icon(project_doc, asset_doc, task_name):
+    """Get icon for a task.
+
+    Icon should be defined by task type which is stored on project.
+    """
+
+    color = get_default_entity_icon_color()
+
+    tasks_info = asset_doc.get("data", {}).get("tasks") or {}
+    task_info = tasks_info.get(task_name) or {}
+    task_icon = task_info.get("icon")
+    if task_icon:
+        icon = get_qta_icon_by_name_and_color(task_icon, color)
+        if icon is not None:
+            return icon
+
+    task_type = task_info.get("type")
+    task_types = project_doc["config"]["tasks"]
+
+    task_type_info = task_types.get(task_type) or {}
+    task_type_icon = task_type_info.get("icon")
+    if task_type_icon:
+        icon = get_qta_icon_by_name_and_color(task_icon, color)
+        if icon is not None:
+            return icon
+    return get_default_task_icon(color)
 
 
 def schedule(func, time, channel="default"):
@@ -360,6 +452,7 @@ class GroupsConfig:
     def __init__(self, dbcon):
         self.dbcon = dbcon
         self.groups = {}
+        self._default_group_color = get_default_entity_icon_color()
 
     @classmethod
     def default_group_config(cls):
@@ -367,7 +460,7 @@ class GroupsConfig:
             cls._default_group_config = {
                 "icon": qtawesome.icon(
                     "fa.object-group",
-                    color=style.colors.default
+                    color=get_default_entity_icon_color()
                 ),
                 "order": 0
             }
@@ -401,7 +494,7 @@ class GroupsConfig:
         for config in group_configs:
             name = config["name"]
             icon = "fa." + config.get("icon", "object-group")
-            color = config.get("color", style.colors.default)
+            color = config.get("color", self._default_group_color)
             order = float(config.get("order", 0))
 
             self.groups[name] = {

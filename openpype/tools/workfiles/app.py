@@ -9,10 +9,9 @@ import datetime
 
 import Qt
 from Qt import QtWidgets, QtCore
-from avalon import io, api, pipeline
+from avalon import io, api
 
 from openpype import style
-from openpype.pipeline.lib import BeforeWorkfileSave
 from openpype.tools.utils.lib import (
     qt_app_context
 )
@@ -21,6 +20,7 @@ from openpype.tools.utils.assets_widget import SingleSelectAssetsWidget
 from openpype.tools.utils.tasks_widget import TasksWidget
 from openpype.tools.utils.delegates import PrettyTimeDelegate
 from openpype.lib import (
+    emit_event,
     Anatomy,
     get_workfile_doc,
     create_workfile_doc,
@@ -28,6 +28,10 @@ from openpype.lib import (
     get_workfile_template_key,
     create_workdir_extra_folders,
     get_system_general_anatomy_data
+)
+from openpype.lib.avalon_context import (
+    update_current_task,
+    compute_session_changes
 )
 from .model import FilesModel
 from .view import FilesView
@@ -667,7 +671,7 @@ class FilesWidget(QtWidgets.QWidget):
             session["AVALON_APP"],
             project_name=session["AVALON_PROJECT"]
         )
-        changes = pipeline.compute_session_changes(
+        changes = compute_session_changes(
             session,
             asset=self._get_asset_doc(),
             task=self._task_name,
@@ -681,7 +685,7 @@ class FilesWidget(QtWidgets.QWidget):
         """Enter the asset and task session currently selected"""
 
         session = api.Session.copy()
-        changes = pipeline.compute_session_changes(
+        changes = compute_session_changes(
             session,
             asset=self._get_asset_doc(),
             task=self._task_name,
@@ -692,7 +696,7 @@ class FilesWidget(QtWidgets.QWidget):
             # to avoid any unwanted Task Changed callbacks to be triggered.
             return
 
-        api.update_current_task(
+        update_current_task(
             asset=self._get_asset_doc(),
             task=self._task_name,
             template_key=self.template_key
@@ -726,9 +730,9 @@ class FilesWidget(QtWidgets.QWidget):
         self.file_opened.emit()
 
     def save_changes_prompt(self):
-        self._messagebox = messagebox = QtWidgets.QMessageBox()
-
-        messagebox.setWindowFlags(QtCore.Qt.FramelessWindowHint)
+        self._messagebox = messagebox = QtWidgets.QMessageBox(parent=self)
+        messagebox.setWindowFlags(messagebox.windowFlags() |
+                                  QtCore.Qt.FramelessWindowHint)
         messagebox.setIcon(messagebox.Warning)
         messagebox.setWindowTitle("Unsaved Changes!")
         messagebox.setText(
@@ -738,10 +742,6 @@ class FilesWidget(QtWidgets.QWidget):
         messagebox.setStandardButtons(
             messagebox.Yes | messagebox.No | messagebox.Cancel
         )
-
-        # Parenting the QMessageBox to the Widget seems to crash
-        # so we skip parenting and explicitly apply the stylesheet.
-        messagebox.setStyle(self.style())
 
         result = messagebox.exec_()
         if result == messagebox.Yes:
@@ -823,7 +823,11 @@ class FilesWidget(QtWidgets.QWidget):
             return
 
         # Trigger before save event
-        BeforeWorkfileSave.emit(work_filename, self._workdir_path)
+        emit_event(
+            "workfile.save.before",
+            {"filename": work_filename, "workdir_path": self._workdir_path},
+            source="workfiles.tool"
+        )
 
         # Make sure workfiles root is updated
         # - this triggers 'workio.work_root(...)' which may change value of
@@ -853,7 +857,11 @@ class FilesWidget(QtWidgets.QWidget):
             api.Session["AVALON_PROJECT"]
         )
         # Trigger after save events
-        pipeline.emit("after.workfile.save", [filepath])
+        emit_event(
+            "workfile.save.after",
+            {"filename": work_filename, "workdir_path": self._workdir_path},
+            source="workfiles.tool"
+        )
 
         self.workfile_created.emit(filepath)
         # Refresh files model

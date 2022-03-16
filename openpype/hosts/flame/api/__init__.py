@@ -68,7 +68,8 @@ from .workio import (
 )
 from .render_utils import (
     export_clip,
-    get_preset_path_by_xml_name
+    get_preset_path_by_xml_name,
+    modify_preset_file
 )
 from .batch_utils import (
     create_batch
@@ -144,6 +145,8 @@ __all__ = [
     # render utils
     "export_clip",
     "get_preset_path_by_xml_name",
+    "modify_preset_file",
+    
 
     # batch utils
     "create_batch"

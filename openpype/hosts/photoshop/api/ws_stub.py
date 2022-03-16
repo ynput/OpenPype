@@ -2,12 +2,11 @@
     Stub handling connection from server to client.
     Used anywhere solution is calling client methods.
 """
-import sys
 import json
 import attr
 from wsrpc_aiohttp import WebSocketAsync
 
-from avalon.tools.webserver.app import WebServerTool
+from openpype.tools.adobe_webserver.app import WebServerTool
 
 
 @attr.s
@@ -343,6 +342,28 @@ class PhotoshopServerStub:
                 visibility=visibility
             )
         )
+
+    def hide_all_others_layers(self, layers):
+        """hides all layers that are not part of the list or that are not
+        children of this list
+
+        Args:
+            layers (list): list of PSItem - highest hierarchy
+        """
+        extract_ids = set([ll.id for ll in self.get_layers_in_layers(layers)])
+
+        self.hide_all_others_layers_ids(extract_ids)
+
+    def hide_all_others_layers_ids(self, extract_ids):
+        """hides all layers that are not part of the list or that are not
+        children of this list
+
+        Args:
+            extract_ids (list): list of integer that should be visible
+        """
+        for layer in self.get_layers():
+            if layer.visible and layer.id not in extract_ids:
+                self.set_visible(layer.id, False)
 
     def get_layers_metadata(self):
         """Reads layers metadata from Headline from active document in PS.

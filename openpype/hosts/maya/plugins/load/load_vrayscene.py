@@ -1,7 +1,11 @@
+# -*- coding: utf-8 -*-
 import os
-import maya.cmds as cmds
-from avalon import api
+import maya.cmds as cmds  # noqa
 from openpype.api import get_project_settings
+from openpype.pipeline import (
+    load,
+    get_representation_path
+)
 from openpype.hosts.maya.api.lib import (
     maintained_selection,
     namespaced,
@@ -10,7 +14,7 @@ from openpype.hosts.maya.api.lib import (
 from openpype.hosts.maya.api.pipeline import containerise
 
 
-class VRaySceneLoader(api.Loader):
+class VRaySceneLoader(load.LoaderPlugin):
     """Load Vray scene"""
 
     families = ["vrayscene_layer"]
@@ -42,20 +46,20 @@ class VRaySceneLoader(api.Loader):
         with maintained_selection():
             cmds.namespace(addNamespace=namespace)
             with namespaced(namespace, new=False):
-                nodes, group_node = self.create_vray_scene(name,
-                                                           filename=self.fname)
+                nodes, root_node = self.create_vray_scene(name,
+                                                          filename=self.fname)
 
         self[:] = nodes
         if not nodes:
             return
 
         # colour the group node
-        presets = get_project_settings(os.environ['AVALON_PROJECT'])
-        colors = presets['maya']['load']['colors']
+        settings = get_project_settings(os.environ['AVALON_PROJECT'])
+        colors = settings['maya']['load']['colors']
         c = colors.get(family)
         if c is not None:
-            cmds.setAttr("{0}.useOutlinerColor".format(group_node), 1)
-            cmds.setAttr("{0}.outlinerColor".format(group_node),
+            cmds.setAttr("{0}.useOutlinerColor".format(root_node), 1)
+            cmds.setAttr("{0}.outlinerColor".format(root_node),
                 (float(c[0])/255),
                 (float(c[1])/255),
                 (float(c[2])/255)
@@ -77,7 +81,7 @@ class VRaySceneLoader(api.Loader):
         vraymeshes = cmds.ls(members, type="VRayScene")
         assert vraymeshes, "Cannot find VRayScene in container"
 
-        filename = api.get_representation_path(representation)
+        filename = get_representation_path(representation)
 
         for vray_mesh in vraymeshes:
             cmds.setAttr("{}.FilePath".format(vray_mesh),
@@ -123,16 +127,20 @@ class VRaySceneLoader(api.Loader):
         mesh_node_name = "VRayScene_{}".format(name)
 
         trans = cmds.createNode(
-            "transform", name="{}".format(mesh_node_name))
-        mesh = cmds.createNode(
-            "mesh", name="{}_Shape".format(mesh_node_name), parent=trans)
+            "transform", name=mesh_node_name)
         vray_scene = cmds.createNode(
             "VRayScene", name="{}_VRSCN".format(mesh_node_name), parent=trans)
+        mesh = cmds.createNode(
+            "mesh", name="{}_Shape".format(mesh_node_name), parent=trans)
 
         cmds.connectAttr(
             "{}.outMesh".format(vray_scene), "{}.inMesh".format(mesh))
 
         cmds.setAttr("{}.FilePath".format(vray_scene), filename, type="string")
+
+        # Lock the shape nodes so the user cannot delete these
+        cmds.lockNode(mesh, lock=True)
+        cmds.lockNode(vray_scene, lock=True)
 
         # Create important connections
         cmds.connectAttr("time1.outTime",
@@ -141,11 +149,9 @@ class VRaySceneLoader(api.Loader):
         # Connect mesh to initialShadingGroup
         cmds.sets([mesh], forceElement="initialShadingGroup")
 
-        group_node = cmds.group(empty=True, name="{}_GRP".format(name))
-        cmds.parent(trans, group_node)
-        nodes = [trans, vray_scene, mesh, group_node]
+        nodes = [trans, vray_scene, mesh]
 
         # Fix: Force refresh so the mesh shows correctly after creation
         cmds.refresh()
 
-        return nodes, group_node
+        return nodes, trans

@@ -1,8 +1,8 @@
-from avalon import api
 from openpype.modules import ModulesManager
+from openpype.pipeline import load
 
 
-class AddSyncSite(api.Loader):
+class AddSyncSite(load.LoaderPlugin):
     """Add sync site to representation"""
     representations = ["*"]
     families = ["*"]

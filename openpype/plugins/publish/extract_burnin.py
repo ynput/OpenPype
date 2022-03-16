@@ -478,6 +478,12 @@ class ExtractBurnin(openpype.api.Extractor):
             "frame_end_handle": frame_end_handle
         }
 
+        # use explicit username for webpublishes as rewriting
+        # OPENPYPE_USERNAME might have side effects
+        webpublish_user_name = os.environ.get("WEBPUBLISH_OPENPYPE_USERNAME")
+        if webpublish_user_name:
+            burnin_data["username"] = webpublish_user_name
+
         self.log.debug(
             "Basic burnin_data: {}".format(json.dumps(burnin_data, indent=4))
         )

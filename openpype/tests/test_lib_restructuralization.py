@@ -24,7 +24,7 @@ def test_backward_compatibility(printer):
         from openpype.lib import get_hierarchy
         from openpype.lib import get_linked_assets
         from openpype.lib import get_latest_version
-        from openpype.lib import ffprobe_streams
+        from openpype.lib import get_ffprobe_streams
 
         from openpype.hosts.fusion.lib import switch_item
 

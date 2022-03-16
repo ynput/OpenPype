@@ -8,41 +8,55 @@ class AlphaSlider(QtWidgets.QSlider):
     def __init__(self, *args, **kwargs):
         super(AlphaSlider, self).__init__(*args, **kwargs)
         self._mouse_clicked = False
+        self._handle_size = 0
+
         self.setSingleStep(1)
         self.setMinimum(0)
         self.setMaximum(255)
         self.setValue(255)
 
-        self._checkerboard = None
-
-    def checkerboard(self):
-        if self._checkerboard is None:
-            self._checkerboard = draw_checkerboard_tile(
-                3, QtGui.QColor(173, 173, 173), QtGui.QColor(27, 27, 27)
-            )
-        return self._checkerboard
+        self._handle_brush = QtGui.QBrush(QtGui.QColor(127, 127, 127))
 
     def mousePressEvent(self, event):
         self._mouse_clicked = True
         if event.button() == QtCore.Qt.LeftButton:
-            self._set_value_to_pos(event.pos().x())
+            self._set_value_to_pos(event.pos())
             return event.accept()
         return super(AlphaSlider, self).mousePressEvent(event)
 
-    def _set_value_to_pos(self, pos_x):
-        value = (
-            self.maximum() - self.minimum()
-        ) * pos_x / self.width() + self.minimum()
-        self.setValue(value)
-
     def mouseMoveEvent(self, event):
         if self._mouse_clicked:
-            self._set_value_to_pos(event.pos().x())
+            self._set_value_to_pos(event.pos())
+
         super(AlphaSlider, self).mouseMoveEvent(event)
 
     def mouseReleaseEvent(self, event):
         self._mouse_clicked = True
         super(AlphaSlider, self).mouseReleaseEvent(event)
+
+    def _set_value_to_pos(self, pos):
+        if self.orientation() == QtCore.Qt.Horizontal:
+            self._set_value_to_pos_x(pos.x())
+        else:
+            self._set_value_to_pos_y(pos.y())
+
+    def _set_value_to_pos_x(self, pos_x):
+        _range = self.maximum() - self.minimum()
+        handle_size = self._handle_size
+        half_handle = handle_size / 2
+        pos_x -= half_handle
+        width = self.width() - handle_size
+        value = ((_range * pos_x) / width) + self.minimum()
+        self.setValue(value)
+
+    def _set_value_to_pos_y(self, pos_y):
+        _range = self.maximum() - self.minimum()
+        handle_size = self._handle_size
+        half_handle = handle_size / 2
+        pos_y = self.height() - pos_y - half_handle
+        height = self.height() - handle_size
+        value = (_range * pos_y / height) + self.minimum()
+        self.setValue(value)
 
     def paintEvent(self, event):
         painter = QtGui.QPainter(self)
@@ -52,64 +66,82 @@ class AlphaSlider(QtWidgets.QSlider):
         painter.fillRect(event.rect(), QtCore.Qt.transparent)
 
         painter.setRenderHint(QtGui.QPainter.HighQualityAntialiasing)
+
+        horizontal = self.orientation() == QtCore.Qt.Horizontal
+
         rect = self.style().subControlRect(
             QtWidgets.QStyle.CC_Slider,
             opt,
             QtWidgets.QStyle.SC_SliderGroove,
             self
         )
-        final_height = 9
-        offset_top = 0
-        if rect.height() > final_height:
-            offset_top = int((rect.height() - final_height) / 2)
-            rect = QtCore.QRect(
-                rect.x(),
-                offset_top,
-                rect.width(),
-                final_height
-            )
 
-        pix_rect = QtCore.QRect(event.rect())
-        pix_rect.setX(rect.x())
-        pix_rect.setWidth(rect.width() - (2 * rect.x()))
-        pix = QtGui.QPixmap(pix_rect.width(), pix_rect.height())
-        pix_painter = QtGui.QPainter(pix)
-        pix_painter.drawTiledPixmap(pix_rect, self.checkerboard())
+        _range = self.maximum() - self.minimum()
+        _offset = self.value() - self.minimum()
+        if horizontal:
+            _handle_half = rect.height() / 2
+            _handle_size = _handle_half * 2
+            width = rect.width() - _handle_size
+            pos_x = ((width / _range) * _offset)
+            pos_y = rect.center().y() - _handle_half + 1
+        else:
+            _handle_half = rect.width() / 2
+            _handle_size = _handle_half * 2
+            height = rect.height() - _handle_size
+            pos_x = rect.center().x() - _handle_half + 1
+            pos_y = height - ((height / _range) * _offset)
+
+        handle_rect = QtCore.QRect(
+            pos_x, pos_y, _handle_size, _handle_size
+        )
+
+        self._handle_size = _handle_size
+        _offset = 2
+        _size = _handle_size - _offset
+        if horizontal:
+            if rect.height() > _size:
+                new_rect = QtCore.QRect(0, 0, rect.width(), _size)
+                center_point = QtCore.QPoint(
+                    rect.center().x(), handle_rect.center().y()
+                )
+                new_rect.moveCenter(center_point)
+                rect = new_rect
+
+            ratio = rect.height() / 2
+
+        else:
+            if rect.width() > _size:
+                new_rect = QtCore.QRect(0, 0, _size, rect.height())
+                center_point = QtCore.QPoint(
+                    handle_rect.center().x(), rect.center().y()
+                )
+                new_rect.moveCenter(center_point)
+                rect = new_rect
+
+            ratio = rect.width() / 2
+
+        painter.save()
+        clip_path = QtGui.QPainterPath()
+        clip_path.addRoundedRect(rect, ratio, ratio)
+        painter.setClipPath(clip_path)
+        checker_size = int(_handle_size / 3)
+        if checker_size == 0:
+            checker_size = 1
+        checkerboard = draw_checkerboard_tile(
+            checker_size, QtGui.QColor(173, 173, 173), QtGui.QColor(27, 27, 27)
+        )
+        painter.drawTiledPixmap(rect, checkerboard)
         gradient = QtGui.QLinearGradient(rect.topLeft(), rect.bottomRight())
         gradient.setColorAt(0, QtCore.Qt.transparent)
         gradient.setColorAt(1, QtCore.Qt.white)
-        pix_painter.fillRect(pix_rect, gradient)
-        pix_painter.end()
-
-        brush = QtGui.QBrush(pix)
-        painter.save()
         painter.setPen(QtCore.Qt.NoPen)
-        painter.setBrush(brush)
-        ratio = rect.height() / 2
-        painter.drawRoundedRect(rect, ratio, ratio)
+        painter.fillRect(rect, gradient)
         painter.restore()
 
-        _handle_rect = self.style().subControlRect(
-            QtWidgets.QStyle.CC_Slider,
-            opt,
-            QtWidgets.QStyle.SC_SliderHandle,
-            self
-        )
-
-        handle_rect = QtCore.QRect(rect)
-        if offset_top > 1:
-            height = handle_rect.height()
-            handle_rect.setY(handle_rect.y() - 1)
-            handle_rect.setHeight(height + 2)
-        handle_rect.setX(_handle_rect.x())
-        handle_rect.setWidth(handle_rect.height())
-
         painter.save()
-
         painter.setPen(QtCore.Qt.NoPen)
-        painter.setBrush(QtGui.QColor(127, 127, 127))
+        painter.setBrush(self._handle_brush)
         painter.drawEllipse(handle_rect)
-
         painter.restore()
 
 
