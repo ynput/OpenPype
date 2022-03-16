@@ -1989,7 +1989,6 @@ def get_id_from_sibling(node, history_only=True):
         # Exclude itself
         similar_nodes = [x for x in similar_nodes if x != node]
 
-
         # Get all unique ids from siblings in order since
         # we consistently take the first one found
         sibling_ids = OrderedDict()
@@ -2015,7 +2014,6 @@ def get_id_from_sibling(node, history_only=True):
                 log.warning(("Found more than 1 intermediate shape with"
                              " unique id for '{}'. Using id of first"
                              " found: '{}'".format(node, found_nodes[0])))
-                break
 
             return first_id
 
