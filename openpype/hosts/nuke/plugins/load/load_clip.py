@@ -97,7 +97,7 @@ class LoadClip(plugin.NukeLoader):
         last += self.handle_end
 
         if not is_sequence:
-            duration = last - first + 1
+            duration = last - first
             first = 1
             last = first + duration
         elif "#" not in file:
@@ -212,7 +212,7 @@ class LoadClip(plugin.NukeLoader):
         last += self.handle_end
 
         if not is_sequence:
-            duration = last - first + 1
+            duration = last - first
             first = 1
             last = first + duration
         elif "#" not in file:
