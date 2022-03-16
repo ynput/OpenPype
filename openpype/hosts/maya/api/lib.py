@@ -1809,12 +1809,22 @@ def get_id_from_sibling(node, history_only=True):
         # Exclude itself
         similar_nodes = [x for x in similar_nodes if x != node]
 
+        first_id = None
         for similar_node in similar_nodes:
             # Check if "intermediate object"
             if cmds.getAttr(similar_node + ".intermediateObject"):
                 _id = get_id(similar_node)
                 if _id:
-                    return _id
+                    # Check if already found an id
+                    if first_id:
+                        log.warning(("Found more than 1 matching intermediate"
+                                     " shape for '{}'. Using id of first"
+                                     " found: '{}'".format(node, found_node)))
+                        break
+                    first_id = _id
+                    found_node = similar_node
+
+        return first_id
 
 
 
