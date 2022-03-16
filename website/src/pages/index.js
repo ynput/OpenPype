@@ -134,6 +134,11 @@ const studios = [
       title: "Lumine Studio",
       image: "/img/LUMINE_LogoMaster_black_2k.png",
       infoLink: "https://www.luminestudio.com/",
+  },
+  {
+      title: "Overmind Studios",
+      image: "/img/OMS_logo_black_color.png",
+      infoLink: "https://www.overmind-studios.de/",
   }
 ];
 
