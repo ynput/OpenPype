@@ -81,7 +81,11 @@ class PhotoshopServerStub:
         if layers_meta is None:
             layers_meta = self.get_layers_metadata()
 
-        return layers_meta.get(str(layer.id))
+        for layer_meta in layers_meta:
+            if layer_meta.get("members"):
+                if layer.id == layer_meta["members"][0]:
+                    return layer
+        print("Unable to find layer metadata for {}".format(layer.id))
 
     def imprint(self, item_id, data, all_layers=None, items_meta=None):
         """Save layer metadata to Headline field of active document
@@ -125,13 +129,21 @@ class PhotoshopServerStub:
         # json.dumps writes integer values in a dictionary to string, so
         # anticipating it here.
         item_id = str(item_id)
-        if item_id in items_meta.keys():
-            if data:
-                items_meta[item_id].update(data)
+        is_new = True
+        result_meta = []
+        for item_meta in items_meta:
+            if ((item_meta.get('members') and
+                 item_id == str(item_meta.get('members')[0])) or
+                    item_meta.get("instance_id") == item_id):
+                is_new = False
+                if data:
+                    item_meta.update(data)
+                    result_meta.append(item_meta)
             else:
-                items_meta.pop(item_id)
-        else:
-            items_meta[item_id] = data
+                result_meta.append(item_meta)
+
+        if is_new:
+            result_meta.append(data)
 
         # Ensure only valid ids are stored.
         if not all_layers:
@@ -139,7 +151,7 @@ class PhotoshopServerStub:
         layer_ids = [layer.id for layer in all_layers]
         cleaned_data = []
 
-        for item in items_meta.values():
+        for item in result_meta:
             if item.get("members"):
                 if int(item["members"][0]) not in layer_ids:
                     continue
@@ -374,38 +386,27 @@ class PhotoshopServerStub:
         (Headline accessible by File > File Info)
 
         Returns:
-            (string): - json documents
+            (list)
             example:
                 {"8":{"active":true,"subset":"imageBG",
                       "family":"image","id":"pyblish.avalon.instance",
                       "asset":"Town"}}
                 8 is layer(group) id - used for deletion, update etc.
         """
-        layers_data = {}
         res = self.websocketserver.call(self.client.call('Photoshop.read'))
+        layers_data = []
         try:
-            layers_data = json.loads(res)
+            if res:
+                layers_data = json.loads(res)
         except json.decoder.JSONDecodeError:
             pass
         # format of metadata changed from {} to [] because of standardization
         # keep current implementation logic as its working
-        if not isinstance(layers_data, dict):
-            temp_layers_meta = {}
-            for layer_meta in layers_data:
-                layer_id = layer_meta.get("uuid")
-                if not layer_id:
-                    layer_id = layer_meta.get("members")[0]
-
-                temp_layers_meta[layer_id] = layer_meta
-            layers_data = temp_layers_meta
-        else:
-            # legacy version of metadata
+        if isinstance(layers_data, dict):
             for layer_id, layer_meta in layers_data.items():
                 if layer_meta.get("schema") != "openpype:container-2.0":
-                    layer_meta["uuid"] = str(layer_id)
-                else:
                     layer_meta["members"] = [str(layer_id)]
-
+            layers_data = list(layers_data.values())
         return layers_data
 
     def import_smart_object(self, path, layer_name, as_reference=False):
@@ -476,11 +477,12 @@ class PhotoshopServerStub:
         )
 
     def remove_instance(self, instance_id):
-        cleaned_data = {}
+        cleaned_data = []
 
-        for key, instance in self.get_layers_metadata().items():
-            if key != instance_id:
-                cleaned_data[key] = instance
+        for item in self.get_layers_metadata():
+            inst_id = item.get("instance_id") or item.get("uuid")
+            if inst_id != instance_id:
+                cleaned_data.append(inst_id)
 
         payload = json.dumps(cleaned_data, indent=4)
 

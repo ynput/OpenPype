@@ -144,9 +144,8 @@ def list_instances():
     instances = []
     layers_meta = stub.get_layers_metadata()
     if layers_meta:
-        for key, instance in layers_meta.items():
+        for instance in layers_meta:
             if instance.get("id") == "pyblish.avalon.instance":  # TODO only this way?
-                instance['uuid'] = key
                 instances.append(instance)
 
     return instances
