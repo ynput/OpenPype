@@ -390,9 +390,18 @@ def ls() -> Iterator:
     """
 
     for container in lib.lsattr("id", AVALON_CONTAINER_ID):
-        if (container.library and container.library) or (
-            container.library is None and container.override_library is None
-        ):
+        is_not_override_override_of_override = True
+        is_not_linked = container.library is None and container.override_library is None
+        is_override = container.library is None and container.override_library
+
+        if is_override:
+            if (
+                container.override_library.reference.library
+                and container.override_library.reference.override_library
+            ):
+                is_not_override_override_of_override = False
+
+        if (is_override and is_not_override_override_of_override) or (is_not_linked):
             yield parse_container(container)
 
 

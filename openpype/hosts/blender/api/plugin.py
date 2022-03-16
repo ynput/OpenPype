@@ -144,7 +144,7 @@ def get_all_collections_in_collection(collection):
 def get_all_objects_in_collection(collection_input):
     """get_all_objects_in_collection"""
     collection_list = collection_input.children.values()
-
+    collection_list.append(collection_input)
     objects_list = list()
     for collection in collection_list:
         collection_list.extend(collection.children)

@@ -2,11 +2,12 @@ import os
 import bpy
 import platform
 import subprocess
-from avalon import io
+from avalon import io, api
 import openpype.api
+
 from openpype.lib import version_up
 from openpype.hosts.blender.api.workio import save_file
-from openpype.hosts.blender.api.pipeline import AVALON_PROPERTY
+from openpype.hosts.blender.api.pipeline import AVALON_PROPERTY, AVALON_CONTAINER_ID
 from openpype.hosts.blender.api.plugin import is_local_collection
 import pyblish.api
 import openpype.hosts.blender.api.action
@@ -28,10 +29,10 @@ class ExtractAndPublishNotLinked(pyblish.api.Action):
         for collection in bpy.data.collections:
             if True or collection.override_library is not None:
 
-                if collection.get("avalon"):
-                    avalon_dict = collection.get("avalon")
+                if collection.get(AVALON_PROPERTY):
+                    avalon_dict = collection.get(AVALON_PROPERTY)
                     if (
-                        avalon_dict.get("id") == "pyblish.avalon.container"
+                        avalon_dict.get("id") == AVALON_CONTAINER_ID
                         and avalon_dict.get("family") == "model"
                     ):
                         if is_local_collection(collection):
@@ -64,6 +65,7 @@ class ExtractAndPublishNotLinked(pyblish.api.Action):
             self.log.info(p)
             p.stdout.close()
             p.wait()
+            api.update(collection[AVALON_PROPERTY], -1)
 
 
 class ValidateObjectLinked(pyblish.api.InstancePlugin):
@@ -91,7 +93,7 @@ class ValidateObjectLinked(pyblish.api.InstancePlugin):
                 if collection.get("avalon"):
                     avalon_dict = collection.get("avalon")
                     if (
-                        avalon_dict.get("id") == "pyblish.avalon.container"
+                        avalon_dict.get("id") == AVALON_CONTAINER_ID
                         and avalon_dict.get("family") == "model"
                     ):
                         if is_local_collection(collection):

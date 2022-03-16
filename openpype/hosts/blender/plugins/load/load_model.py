@@ -13,6 +13,7 @@ from openpype.hosts.blender.api.pipeline import (
     AVALON_PROPERTY,
     AVALON_CONTAINER_ID,
 )
+from openpype.hosts.blender.api import pipeline
 
 
 class BlendModelLoader(plugin.AssetLoader):
@@ -31,32 +32,28 @@ class BlendModelLoader(plugin.AssetLoader):
 
     def _get_armature_modifier_parameters(self, container):
         modifiers_dict = dict()
-        print(container)
         object_names_list = plugin.get_all_objects_in_collection(container)
-        print("--------------------------------------------------------------")
-        print(object_names_list)
         for object_name in object_names_list:
             object = bpy.data.objects.get(object_name)
             if object:
                 modifier = object.modifiers.get("Armature")
                 if modifier:
                     armature = modifier.object
-                    modifiers_dict[object.name] = armature.name
+                    if armature:
+                        modifiers_dict[object.name] = armature
         return modifiers_dict
 
     def _set_armature_modifier_parameters(self, container, modifiers_dict):
-
         object_names_list = plugin.get_all_objects_in_collection(container)
-        print("--------------------------------------------------------------")
-
-        print(object_names_list)
         for object_name in object_names_list:
             object = bpy.data.objects.get(object_name)
             if object:
                 modifier = object.modifiers.get("Armature")
                 if modifier:
-                    print("object.name")
-                    modifier.object = modifiers_dict[object.name]
+                    if modifiers_dict.get(object.name):
+                        armature = modifiers_dict[object.name]
+                        if armature:
+                            modifier.object = armature
 
     def _remove(self, container):
         objects = list(container.objects)
@@ -64,12 +61,17 @@ class BlendModelLoader(plugin.AssetLoader):
             if obj.type == "MESH":
                 for material_slot in list(obj.material_slots):
                     if material_slot.material is not None:
-                        bpy.data.materials.remove(material_slot.material)
-                bpy.data.meshes.remove(obj.data)
+                        if (
+                            material_slot.material.library is None
+                            and material_slot.material.override_library is None
+                        ):
+                            bpy.data.materials.remove(material_slot.material)
+                if obj.data.library is None and obj.data.override_library is None:
+                    bpy.data.meshes.remove(obj.data)
             elif obj.type == "EMPTY":
                 objects.extend(obj.objects)
-                bpy.data.objects.remove(obj)
-
+                if obj.library is None and obj.override_library is None:
+                    bpy.data.objects.remove(obj)
         bpy.data.collections.remove(container)
 
     def _process(self, libpath):
@@ -172,14 +174,14 @@ class BlendModelLoader(plugin.AssetLoader):
         case though.
         """
         object_name = container["objectName"]
-        container = bpy.data.collections.get(object_name)
+        avalon_container = bpy.data.collections.get(object_name)
         libpath = Path(api.get_representation_path(representation))
 
         assert container, f"The asset is not loaded: {container['objectName']}"
         assert libpath, "No existing library file found for {container['objectName']}"
         assert libpath.is_file(), f"The file doesn't exist: {libpath}"
 
-        metadata = container.get(AVALON_PROPERTY)
+        metadata = avalon_container.get(AVALON_PROPERTY)
         container_libpath = metadata["libpath"]
 
         normalized_container_libpath = str(
@@ -211,11 +213,18 @@ class BlendModelLoader(plugin.AssetLoader):
                         == container_libpath
                     ):
                         count += 1
-        parent_collections = plugin.get_parent_collections(container)
-        armature_modifiers_dict = self._get_armature_modifier_parameters(container)
-        if container.override_library is not None:
-            self._remove(container.override_library.reference)
-        self._remove(container)
+
+        parent_collections = plugin.get_parent_collections(avalon_container)
+
+        armature_modifiers_dict = self._get_armature_modifier_parameters(
+            avalon_container
+        )
+        print("*********************************************")
+
+        print(armature_modifiers_dict)
+        if avalon_container.override_library is not None:
+            self._remove(avalon_container.override_library.reference)
+        self._remove(avalon_container)
 
         # If it is the last object to use that library, remove it
         print(container_libpath)
@@ -228,13 +237,16 @@ class BlendModelLoader(plugin.AssetLoader):
 
         container_override = self._process(str(libpath))
 
-        bpy.context.scene.collection.children.unlink(container_override)
-        for parent_collection in parent_collections:
-            parent_collection.children.link(container_override)
+        if parent_collections:
+            bpy.context.scene.collection.children.unlink(container_override)
+            for parent_collection in parent_collections:
+                parent_collection.children.link(container_override)
 
         self._set_armature_modifier_parameters(
             container_override, armature_modifiers_dict
         )
+        print("*********************************************")
+        print(armature_modifiers_dict)
 
     def exec_remove(self, container: Dict) -> bool:
         """Remove an existing container from a Blender scene.
