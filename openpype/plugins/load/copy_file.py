@@ -1,4 +1,5 @@
-from avalon import api, style
+from avalon import api
+from openpype.style import get_default_entity_icon_color
 
 
 class CopyFile(api.Loader):
@@ -10,7 +11,7 @@ class CopyFile(api.Loader):
     label = "Copy File"
     order = 10
     icon = "copy"
-    color = style.colors.default
+    color = get_default_entity_icon_color()
 
     def load(self, context, name=None, namespace=None, data=None):
         self.log.info("Added copy to clipboard: {0}".format(self.fname))

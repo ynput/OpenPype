@@ -4,7 +4,7 @@ import qtawesome
 
 from openpype.tools.utils import PlaceholderLineEdit
 
-from avalon import style
+from openpype.style import get_default_tools_icon_color
 
 from . import RecursiveSortFilterProxyModel, AssetModel
 from . import TasksTemplateModel, DeselectableTreeView
@@ -165,7 +165,9 @@ class AssetWidget(QtWidgets.QWidget):
         # Header
         header = QtWidgets.QHBoxLayout()
 
-        icon = qtawesome.icon("fa.refresh", color=style.colors.light)
+        icon = qtawesome.icon(
+            "fa.refresh", color=get_default_tools_icon_color()
+        )
         refresh = QtWidgets.QPushButton(icon, "")
         refresh.setToolTip("Refresh items")
 

@@ -1,7 +1,7 @@
 from Qt import QtCore, QtGui
 
 from openpype.tools.utils.tasks_widget import TasksWidget, TASK_NAME_ROLE
-from openpype.tools.utils.lib import get_task_icon
+from openpype.tools.utils.lib import get_default_task_icon
 
 
 class TasksModel(QtGui.QStandardItemModel):
@@ -120,7 +120,7 @@ class TasksModel(QtGui.QStandardItemModel):
             item = QtGui.QStandardItem(task_name)
             item.setData(task_name, TASK_NAME_ROLE)
             if task_name:
-                item.setData(get_task_icon(), QtCore.Qt.DecorationRole)
+                item.setData(get_default_task_icon(), QtCore.Qt.DecorationRole)
             self._items_by_name[task_name] = item
             new_items.append(item)
 

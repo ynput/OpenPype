@@ -5,9 +5,10 @@ from functools import partial
 from Qt import QtWidgets, QtCore
 import qtawesome
 
-from avalon import io, api, style
+from avalon import io, api
 from avalon.lib import HeroVersionType
 
+from openpype import style
 from openpype.modules import ModulesManager
 from openpype.tools.utils.lib import (
     get_progress_for_repre,

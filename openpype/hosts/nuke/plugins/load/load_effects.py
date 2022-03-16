@@ -1,7 +1,8 @@
 import json
 from collections import OrderedDict
 import nuke
-from avalon import api, style, io
+from avalon import api, io
+
 from openpype.hosts.nuke.api import (
     containerise,
     update_container,
@@ -18,7 +19,7 @@ class LoadEffects(api.Loader):
     label = "Load Effects - nodes"
     order = 0
     icon = "cc"
-    color = style.colors.light
+    color = "white"
     ignore_attr = ["useLifetime"]
 
 
