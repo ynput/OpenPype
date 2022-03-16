@@ -61,7 +61,7 @@ class SceneInventoryWindow(QtWidgets.QDialog):
 
         icon = qtawesome.icon("fa.refresh", color="white")
         refresh_button = QtWidgets.QPushButton(self)
-        update_all_button.setToolTip("Refresh")
+        refresh_button.setToolTip("Refresh")
         refresh_button.setIcon(icon)
 
         control_layout = QtWidgets.QHBoxLayout()
