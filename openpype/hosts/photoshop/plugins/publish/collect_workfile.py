@@ -10,6 +10,13 @@ class CollectWorkfile(pyblish.api.ContextPlugin):
     hosts = ["photoshop"]
 
     def process(self, context):
+        existing_instance = None
+        for instance in context:
+            if instance.data["family"] == "workfile":
+                self.log.debug("Workfile instance found, won't create new")
+                existing_instance = instance
+                break
+
         family = "workfile"
         task = os.getenv("AVALON_TASK", None)
         subset = family + task.capitalize()
@@ -19,16 +26,19 @@ class CollectWorkfile(pyblish.api.ContextPlugin):
         base_name = os.path.basename(file_path)
 
         # Create instance
-        instance = context.create_instance(subset)
-        instance.data.update({
-            "subset": subset,
-            "label": base_name,
-            "name": base_name,
-            "family": family,
-            "families": [],
-            "representations": [],
-            "asset": os.environ["AVALON_ASSET"]
-        })
+        if existing_instance is None:
+            instance = context.create_instance(subset)
+            instance.data.update({
+                "subset": subset,
+                "label": base_name,
+                "name": base_name,
+                "family": family,
+                "families": [],
+                "representations": [],
+                "asset": os.environ["AVALON_ASSET"]
+            })
+        else:
+            instance = existing_instance
 
         # creating representation
         _, ext = os.path.splitext(file_path)

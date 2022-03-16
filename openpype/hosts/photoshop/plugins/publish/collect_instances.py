@@ -21,6 +21,10 @@ class CollectInstances(pyblish.api.ContextPlugin):
     }
 
     def process(self, context):
+        if context.data.get("newPublishing"):
+            self.log.debug("Not applicable for New Publisher, skip")
+            return
+
         stub = photoshop.stub()
         layers = stub.get_layers()
         layers_meta = stub.get_layers_metadata()

@@ -15,6 +15,7 @@ class PSWorkfileCreator(AutoCreator):
         return []
 
     def collect_instances(self):
+        print("coll::{}".format(api.list_instances()))
         for instance_data in api.list_instances():
             creator_id = instance_data.get("creator_identifier")
             if creator_id == self.identifier:
@@ -29,6 +30,7 @@ class PSWorkfileCreator(AutoCreator):
         pass
 
     def create(self, options=None):
+        print("create")
         existing_instance = None
         for instance in self.create_context.instances:
             if instance.family == self.family:
