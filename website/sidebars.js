@@ -139,7 +139,7 @@ module.exports = {
         "dev_contribute",
         {
             type: "category",
-            label: "Hosts development",
+            label: "Hosts integrations",
             items: [
                 "dev_publishing"
             ]
