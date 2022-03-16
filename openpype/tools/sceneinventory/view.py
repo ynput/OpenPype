@@ -6,9 +6,13 @@ from Qt import QtWidgets, QtCore
 import qtawesome
 
 from avalon import io, api
-from avalon.lib import HeroVersionType
 
 from openpype import style
+from openpype.pipeline import (
+    HeroVersionType,
+    update_container,
+    remove_container,
+)
 from openpype.modules import ModulesManager
 from openpype.tools.utils.lib import (
     get_progress_for_repre,
@@ -196,7 +200,7 @@ class SceneInventoryView(QtWidgets.QTreeView):
                     version_name = version_name_by_id.get(version_id)
                     if version_name is not None:
                         try:
-                            api.update(item, version_name)
+                            update_container(item, version_name)
                         except AssertionError:
                             self._show_version_error_dialog(
                                 version_name, [item]
@@ -224,7 +228,7 @@ class SceneInventoryView(QtWidgets.QTreeView):
             def _on_update_to_latest(items):
                 for item in items:
                     try:
-                        api.update(item, -1)
+                        update_container(item, -1)
                     except AssertionError:
                         self._show_version_error_dialog(None, [item])
                         log.warning("Update failed", exc_info=True)
@@ -249,7 +253,7 @@ class SceneInventoryView(QtWidgets.QTreeView):
             def _on_update_to_hero(items):
                 for item in items:
                     try:
-                        api.update(item, HeroVersionType(-1))
+                        update_container(item, HeroVersionType(-1))
                     except AssertionError:
                         self._show_version_error_dialog('hero', [item])
                         log.warning("Update failed", exc_info=True)
@@ -728,7 +732,7 @@ class SceneInventoryView(QtWidgets.QTreeView):
             version = versions_by_label[label]
             for item in items:
                 try:
-                    api.update(item, version)
+                    update_container(item, version)
                 except AssertionError:
                     self._show_version_error_dialog(version, [item])
                     log.warning("Update failed", exc_info=True)
@@ -759,7 +763,7 @@ class SceneInventoryView(QtWidgets.QTreeView):
             return
 
         for item in items:
-            api.remove(item)
+            remove_container(item)
         self.data_changed.emit()
 
     def _show_version_error_dialog(self, version, items):
@@ -829,7 +833,7 @@ class SceneInventoryView(QtWidgets.QTreeView):
         # Trigger update to latest
         for item in outdated_items:
             try:
-                api.update(item, -1)
+                update_container(item, -1)
             except AssertionError:
                 self._show_version_error_dialog(None, [item])
                 log.warning("Update failed", exc_info=True)

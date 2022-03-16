@@ -1,8 +1,8 @@
 import re
 
-import avalon.api
 from openpype import lib
 
+from openpype.pipeline import get_representation_path
 from openpype.hosts.aftereffects.api import (
     AfterEffectsLoader,
     containerise
@@ -92,7 +92,7 @@ class FileLoader(AfterEffectsLoader):
                 "{}_{}".format(context["asset"], context["subset"]))
         else:  # switching version - keep same name
             layer_name = container["namespace"]
-        path = avalon.api.get_representation_path(representation)
+        path = get_representation_path(representation)
         # with aftereffects.maintained_selection():  # TODO
         stub.replace_item(layer.id, path, stub.LOADED_ICON + layer_name)
         stub.imprint(

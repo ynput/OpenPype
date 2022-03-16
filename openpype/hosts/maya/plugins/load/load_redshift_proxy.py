@@ -5,8 +5,11 @@ import clique
 
 import maya.cmds as cmds
 
-from avalon import api
 from openpype.api import get_project_settings
+from openpype.pipeline import (
+    load,
+    get_representation_path
+)
 from openpype.hosts.maya.api.lib import (
     namespaced,
     maintained_selection,
@@ -15,7 +18,7 @@ from openpype.hosts.maya.api.lib import (
 from openpype.hosts.maya.api.pipeline import containerise
 
 
-class RedshiftProxyLoader(api.Loader):
+class RedshiftProxyLoader(load.LoaderPlugin):
     """Load Redshift proxy"""
 
     families = ["redshiftproxy"]
@@ -78,7 +81,7 @@ class RedshiftProxyLoader(api.Loader):
         rs_meshes = cmds.ls(members, type="RedshiftProxyMesh")
         assert rs_meshes, "Cannot find RedshiftProxyMesh in container"
 
-        filename = api.get_representation_path(representation)
+        filename = get_representation_path(representation)
 
         for rs_mesh in rs_meshes:
             cmds.setAttr("{}.fileName".format(rs_mesh),

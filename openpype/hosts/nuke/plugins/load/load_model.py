@@ -1,5 +1,9 @@
 import nuke
-from avalon import api, io
+from avalon import io
+from openpype.pipeline import (
+    load,
+    get_representation_path,
+)
 from openpype.hosts.nuke.api.lib import maintained_selection
 from openpype.hosts.nuke.api import (
     containerise,
@@ -8,7 +12,7 @@ from openpype.hosts.nuke.api import (
 )
 
 
-class AlembicModelLoader(api.Loader):
+class AlembicModelLoader(load.LoaderPlugin):
     """
     This will load alembic model into script.
     """
@@ -124,7 +128,7 @@ class AlembicModelLoader(api.Loader):
             data_imprint.update({k: version_data[k]})
 
         # getting file path
-        file = api.get_representation_path(representation).replace("\\", "/")
+        file = get_representation_path(representation).replace("\\", "/")
 
         with maintained_selection():
             model_node = nuke.toNode(object_name)

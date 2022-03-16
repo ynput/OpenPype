@@ -2,7 +2,8 @@
 """Loader for published alembics."""
 import os
 
-from avalon import api, pipeline
+from avalon import pipeline
+from openpype.pipeline import get_representation_path
 from openpype.hosts.unreal.api import plugin
 from openpype.hosts.unreal.api import pipeline as unreal_pipeline
 
@@ -140,7 +141,7 @@ class PointCacheAlembicLoader(plugin.Loader):
 
     def update(self, container, representation):
         name = container["asset_name"]
-        source_path = api.get_representation_path(representation)
+        source_path = get_representation_path(representation)
         destination_path = container["namespace"]
 
         task = self.get_task(source_path, destination_path, name, True)

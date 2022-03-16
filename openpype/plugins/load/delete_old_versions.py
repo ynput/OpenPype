@@ -8,14 +8,14 @@ import ftrack_api
 import qargparse
 from Qt import QtWidgets, QtCore
 
-from avalon import api
 from avalon.api import AvalonMongoDB
-import avalon.pipeline
 from openpype import style
+from openpype.pipeline import load
+from openpype.lib import StringTemplate
 from openpype.api import Anatomy
 
 
-class DeleteOldVersions(api.SubsetLoader):
+class DeleteOldVersions(load.SubsetLoaderPlugin):
     """Deletes specific number of old version"""
 
     is_multiple_contexts_compatible = True
@@ -90,16 +90,12 @@ class DeleteOldVersions(api.SubsetLoader):
         try:
             context = representation["context"]
             context["root"] = anatomy.roots
-            path = avalon.pipeline.format_template_with_optional_keys(
-                context, template
-            )
+            path = str(StringTemplate.format_template(template, context))
             if "frame" in context:
                 context["frame"] = self.sequence_splitter
-                sequence_path = os.path.normpath(
-                    avalon.pipeline.format_template_with_optional_keys(
-                        context, template
-                    )
-                )
+                sequence_path = os.path.normpath(str(
+                    StringTemplate.format_template(template, context)
+                ))
 
         except KeyError:
             # Template references unavailable data

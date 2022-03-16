@@ -575,7 +575,7 @@ replace_files = """function %s_replace_files(args)
 """ % (signature, signature)
 
 
-class ImageSequenceLoader(api.Loader):
+class ImageSequenceLoader(load.LoaderPlugin):
     """Load images
     Stores the imported asset in a container named after the asset.
     """
