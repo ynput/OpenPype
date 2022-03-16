@@ -385,6 +385,10 @@
             "optional": true,
             "active": true
         },
+        "ValidateRigOutSetNodeIds": {
+            "enabled": true,
+            "allow_history_only": false
+        },
         "ValidateCameraAttributes": {
             "enabled": false,
             "optional": true,
