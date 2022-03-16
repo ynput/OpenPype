@@ -1,11 +1,15 @@
 import os
 import logging
 
-from Qt import QtCore, QtGui
+from Qt import QtCore
+import qtawesome
 
-from avalon import style
-from avalon.vendor import qtawesome
-from avalon.tools.models import TreeModel, Item
+from openpype.style import (
+    get_default_entity_icon_color,
+    get_disabled_entity_icon_color,
+)
+
+from openpype.tools.utils.models import TreeModel, Item
 
 log = logging.getLogger(__name__)
 
@@ -25,7 +29,10 @@ class FilesModel(TreeModel):
         self._root = None
         self._file_extensions = file_extensions
         self._icons = {
-            "file": qtawesome.icon("fa.file-o", color=style.colors.default)
+            "file": qtawesome.icon(
+                "fa.file-o",
+                color=get_default_entity_icon_color()
+            )
         }
 
     def set_root(self, root):
@@ -64,7 +71,10 @@ class FilesModel(TreeModel):
                 "date": None,
                 "filepath": None,
                 "enabled": False,
-                "icon": qtawesome.icon("fa.times", color=style.colors.mid)
+                "icon": qtawesome.icon(
+                    "fa.times",
+                    color=get_disabled_entity_icon_color()
+                )
             })
             self.add_child(item)
             self.endResetModel()

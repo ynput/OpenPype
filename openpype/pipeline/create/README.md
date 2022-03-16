@@ -14,7 +14,7 @@ Except creating and removing instances are all changes not automatically propaga
 
 
 ## CreatedInstance
-Product of creation is "instance" which holds basic data defying it. Core data are `creator_identifier`, `family` and `subset`. Other data can be keys used to fill subset name or metadata modifying publishing process of the instance (more described later). All instances have `id` which holds constant `pyblish.avalon.instance` and `uuid` which is identifier of the instance.
+Product of creation is "instance" which holds basic data defying it. Core data are `creator_identifier`, `family` and `subset`. Other data can be keys used to fill subset name or metadata modifying publishing process of the instance (more described later). All instances have `id` which holds constant `pyblish.avalon.instance` and `instance_id` which is identifier of the instance.
 Family tells how should be instance processed and subset what name will published item have.
 - There are cases when subset is not fully filled during creation and may change during publishing. That is in most of cases caused because instance is related to other instance or instance data do not represent final product.
 
@@ -26,7 +26,7 @@ Family tells how should be instance processed and subset what name will publishe
     ## Identifier that this data represents instance for publishing (automatically assigned)
     "id": "pyblish.avalon.instance",
     ## Identifier of this specific instance (automatically assigned)
-    "uuid": <uuid4>,
+    "instance_id": <uuid4>,
     ## Instance family (used from Creator)
     "family": <family>,
 

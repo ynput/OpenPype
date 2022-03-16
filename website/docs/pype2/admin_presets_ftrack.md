@@ -61,7 +61,7 @@ Key specifies the resulting status and value is a list of statuses from which we
 ```json
 {
     "status_update": {
-        "_ignore_": ["in progress", "ommited", "on hold"],
+        "_ignore_": ["in progress", "omitted", "on hold"],
         "Ready": ["not ready"],
         "In Progress" : ["_any_"]
     }

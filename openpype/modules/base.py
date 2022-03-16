@@ -33,16 +33,21 @@ DEFAULT_OPENPYPE_MODULES = (
     "avalon_apps",
     "clockify",
     "log_viewer",
+    "deadline",
     "muster",
+    "royalrender",
     "python_console_interpreter",
+    "ftrack",
     "slack",
     "webserver",
     "launcher_action",
     "project_manager_action",
     "settings_action",
     "standalonepublish_action",
+    "traypublish_action",
     "job_queue",
     "timers_manager",
+    "sync_server",
 )
 
 
@@ -56,6 +61,7 @@ class _ModuleClass(object):
     def __init__(self, name):
         # Call setattr on super class
         super(_ModuleClass, self).__setattr__("name", name)
+        super(_ModuleClass, self).__setattr__("__name__", name)
 
         # Where modules and interfaces are stored
         super(_ModuleClass, self).__setattr__("__attributes__", dict())
@@ -67,7 +73,7 @@ class _ModuleClass(object):
         if attr_name not in self.__attributes__:
             if attr_name in ("__path__", "__file__"):
                 return None
-            raise ImportError("No module named {}.{}".format(
+            raise AttributeError("'{}' has not attribute '{}'".format(
                 self.name, attr_name
             ))
         return self.__attributes__[attr_name]
@@ -218,8 +224,6 @@ def load_interfaces(force=False):
 
 def _load_interfaces():
     # Key under which will be modules imported in `sys.modules`
-    from openpype.lib import import_filepath
-
     modules_key = "openpype_interfaces"
 
     sys.modules[modules_key] = openpype_interfaces = (
@@ -844,6 +848,7 @@ class TrayModulesManager(ModulesManager):
         "avalon",
         "clockify",
         "standalonepublish_tool",
+        "traypublish_tool",
         "log_viewer",
         "local_settings",
         "settings"

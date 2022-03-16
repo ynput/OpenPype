@@ -38,13 +38,21 @@ class AbtractAttrDef:
         key(str): Under which key will be attribute value stored.
         label(str): Attribute label.
         tooltip(str): Attribute tooltip.
+        is_label_horizontal(bool): UI specific argument. Specify if label is
+            next to value input or ahead.
     """
+    is_value_def = True
 
-    def __init__(self, key, default, label=None, tooltip=None):
+    def __init__(
+        self, key, default, label=None, tooltip=None, is_label_horizontal=None
+    ):
+        if is_label_horizontal is None:
+            is_label_horizontal = True
         self.key = key
         self.label = label
         self.tooltip = tooltip
         self.default = default
+        self.is_label_horizontal = is_label_horizontal
         self._id = uuid.uuid4()
 
         self.__init__class__ = AbtractAttrDef
@@ -68,8 +76,39 @@ class AbtractAttrDef:
         pass
 
 
+# -----------------------------------------
+# UI attribute definitoins won't hold value
+# -----------------------------------------
+
+class UIDef(AbtractAttrDef):
+    is_value_def = False
+
+    def __init__(self, key=None, default=None, *args, **kwargs):
+        super(UIDef, self).__init__(key, default, *args, **kwargs)
+
+    def convert_value(self, value):
+        return value
+
+
+class UISeparatorDef(UIDef):
+    pass
+
+
+class UILabelDef(UIDef):
+    def __init__(self, label):
+        super(UILabelDef, self).__init__(label=label)
+
+
+# ---------------------------------------
+# Attribute defintioins should hold value
+# ---------------------------------------
+
 class UnknownDef(AbtractAttrDef):
-    """Definition is not known because definition is not available."""
+    """Definition is not known because definition is not available.
+
+    This attribute can be used to keep existing data unchanged but does not
+    have known definition of type.
+    """
     def __init__(self, key, default=None, **kwargs):
         kwargs["default"] = default
         super(UnknownDef, self).__init__(key, **kwargs)
@@ -261,3 +300,90 @@ class BoolDef(AbtractAttrDef):
         if isinstance(value, bool):
             return value
         return self.default
+
+
+class FileDef(AbtractAttrDef):
+    """File definition.
+    It is possible to define filters of allowed file extensions and if supports
+    folders.
+    Args:
+        multipath(bool): Allow multiple path.
+        folders(bool): Allow folder paths.
+        extensions(list<str>): Allow files with extensions. Empty list will
+            allow all extensions and None will disable files completely.
+        default(str, list<str>): Defautl value.
+    """
+
+    def __init__(
+        self, key, multipath=False, folders=None, extensions=None,
+        default=None, **kwargs
+    ):
+        if folders is None and extensions is None:
+            folders = True
+            extensions = []
+
+        if default is None:
+            if multipath:
+                default = []
+            else:
+                default = ""
+        else:
+            if multipath:
+                if not isinstance(default, (tuple, list, set)):
+                    raise TypeError((
+                        "'default' argument must be 'list', 'tuple' or 'set'"
+                        ", not '{}'"
+                    ).format(type(default)))
+
+            else:
+                if not isinstance(default, six.string_types):
+                    raise TypeError((
+                        "'default' argument must be 'str' not '{}'"
+                    ).format(type(default)))
+                default = default.strip()
+
+        # Change horizontal label
+        is_label_horizontal = kwargs.get("is_label_horizontal")
+        if is_label_horizontal is None:
+            is_label_horizontal = True
+            if multipath:
+                is_label_horizontal = False
+            kwargs["is_label_horizontal"] = is_label_horizontal
+
+        self.multipath = multipath
+        self.folders = folders
+        self.extensions = extensions
+        super(FileDef, self).__init__(key, default=default, **kwargs)
+
+    def __eq__(self, other):
+        if not super(FileDef, self).__eq__(other):
+            return False
+
+        return (
+            self.multipath == other.multipath
+            and self.folders == other.folders
+            and self.extensions == other.extensions
+        )
+
+    def convert_value(self, value):
+        if isinstance(value, six.string_types):
+            if self.multipath:
+                value = [value.strip()]
+            else:
+                value = value.strip()
+            return value
+
+        if isinstance(value, (tuple, list, set)):
+            _value = []
+            for item in value:
+                if isinstance(item, six.string_types):
+                    _value.append(item.strip())
+
+            if self.multipath:
+                return _value
+
+            if not _value:
+                return self.default
+            return _value[0].strip()
+
+        return str(value).strip()

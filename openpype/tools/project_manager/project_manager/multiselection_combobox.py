@@ -1,4 +1,4 @@
-from Qt import QtCore, QtGui, QtWidgets
+from Qt import QtCore, QtWidgets
 
 
 class ComboItemDelegate(QtWidgets.QStyledItemDelegate):
@@ -110,7 +110,7 @@ class MultiSelectionComboBox(QtWidgets.QComboBox):
         elif event.type() == QtCore.QEvent.KeyPress:
             # TODO: handle QtCore.Qt.Key_Enter, Key_Return?
             if event.key() == QtCore.Qt.Key_Space:
-                # toogle the current items check state
+                # toggle the current items check state
                 if (
                     index_flags & QtCore.Qt.ItemIsUserCheckable
                     and index_flags & QtCore.Qt.ItemIsTristate

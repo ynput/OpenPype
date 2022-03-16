@@ -4,16 +4,18 @@ import contextlib
 import collections
 
 from Qt import QtWidgets, QtCore, QtGui
+import qtawesome
 
 import avalon.api
-from avalon import style
-from avalon.vendor import qtawesome
 
+from openpype.style import get_default_entity_icon_color
 from openpype.api import (
     get_project_settings,
     Logger
 )
 from openpype.lib import filter_profiles
+from openpype.style import get_objected_colors
+from openpype.resources import get_image_path
 
 
 def center_window(window):
@@ -26,6 +28,18 @@ def center_window(window):
     if geo.y() < screen_geo.y():
         geo.setY(screen_geo.y())
     window.move(geo.topLeft())
+
+
+def set_style_property(widget, property_name, property_value):
+    """Set widget's property that may affect style.
+
+    If current property value is different then style of widget is polished.
+    """
+    cur_value = widget.property(property_name)
+    if cur_value == property_value:
+        return
+    widget.setProperty(property_name, property_value)
+    widget.style().polish(widget)
 
 
 def paint_image_with_color(image, color):
@@ -78,12 +92,104 @@ def qt_app_context():
         yield app
 
 
-# Backwards compatibility
-application = qt_app_context
-
-
 class SharedObjects:
     jobs = {}
+    icons = {}
+
+
+def get_qta_icon_by_name_and_color(icon_name, icon_color):
+    if not icon_name or not icon_color:
+        return None
+
+    full_icon_name = "{0}-{1}".format(icon_name, icon_color)
+    if full_icon_name in SharedObjects.icons:
+        return SharedObjects.icons[full_icon_name]
+
+    variants = [icon_name]
+    qta_instance = qtawesome._instance()
+    for key in qta_instance.charmap.keys():
+        variants.append("{0}.{1}".format(key, icon_name))
+
+    icon = None
+    for variant in variants:
+        try:
+            icon = qtawesome.icon(variant, color=icon_color)
+            break
+        except Exception:
+            pass
+
+    SharedObjects.icons[full_icon_name] = icon
+    return icon
+
+
+def get_project_icon(project_doc):
+    if project_doc:
+        icon_name = project_doc.get("data", {}).get("icon")
+        icon = get_qta_icon_by_name_and_color(icon_name, "white")
+        if icon:
+            return icon
+
+    return get_qta_icon_by_name_and_color(
+        "fa.map", get_default_entity_icon_color()
+    )
+
+
+def get_asset_icon_name(asset_doc, has_children=True):
+    icon_name = asset_doc["data"].get("icon")
+    if icon_name:
+        return icon_name
+
+    if has_children:
+        return "folder"
+    return "folder-o"
+
+
+def get_asset_icon_color(asset_doc):
+    icon_color = asset_doc["data"].get("color")
+    if icon_color:
+        return icon_color
+    return get_default_entity_icon_color()
+
+
+def get_asset_icon(asset_doc, has_children=False):
+    icon_name = get_asset_icon_name(asset_doc, has_children)
+    icon_color = get_asset_icon_color(asset_doc)
+
+    return get_qta_icon_by_name_and_color(icon_name, icon_color)
+
+
+def get_default_task_icon(color=None):
+    if color is None:
+        color = get_default_entity_icon_color()
+    return get_qta_icon_by_name_and_color("fa.male", color)
+
+
+def get_task_icon(project_doc, asset_doc, task_name):
+    """Get icon for a task.
+
+    Icon should be defined by task type which is stored on project.
+    """
+
+    color = get_default_entity_icon_color()
+
+    tasks_info = asset_doc.get("data", {}).get("tasks") or {}
+    task_info = tasks_info.get(task_name) or {}
+    task_icon = task_info.get("icon")
+    if task_icon:
+        icon = get_qta_icon_by_name_and_color(task_icon, color)
+        if icon is not None:
+            return icon
+
+    task_type = task_info.get("type")
+    task_types = project_doc["config"]["tasks"]
+
+    task_type_info = task_types.get(task_type) or {}
+    task_type_icon = task_type_info.get("icon")
+    if task_type_icon:
+        icon = get_qta_icon_by_name_and_color(task_icon, color)
+        if icon is not None:
+            return icon
+    return get_default_task_icon(color)
 
 
 def schedule(func, time, channel="default"):
@@ -132,7 +238,7 @@ def preserve_expanded_rows(tree_view, column=0, role=None):
 
     This function is created to maintain the expand vs collapse status of
     the model items. When refresh is triggered the items which are expanded
-    will stay expanded and vise versa.
+    will stay expanded and vice versa.
 
     Arguments:
         tree_view (QWidgets.QTreeView): the tree view which is
@@ -176,7 +282,7 @@ def preserve_selection(tree_view, column=0, role=None, current_index=True):
 
     This function is created to maintain the selection status of
     the model items. When refresh is triggered the items which are expanded
-    will stay expanded and vise versa.
+    will stay expanded and vice versa.
 
         tree_view (QWidgets.QTreeView): the tree view nested in the application
         column (int): the column to retrieve the data from
@@ -231,6 +337,7 @@ class FamilyConfigCache:
         self.dbcon = dbcon
         self.family_configs = {}
         self._family_filters_set = False
+        self._family_filters_is_include = True
         self._require_refresh = True
 
     @classmethod
@@ -252,7 +359,7 @@ class FamilyConfigCache:
                 "icon": self.default_icon()
             }
             if self._family_filters_set:
-                item["state"] = False
+                item["state"] = not self._family_filters_is_include
         return item
 
     def refresh(self, force=False):
@@ -316,20 +423,23 @@ class FamilyConfigCache:
             matching_item = filter_profiles(profiles, profiles_filter)
 
         families = []
+        is_include = True
         if matching_item:
             families = matching_item["filter_families"]
+            is_include = matching_item["is_include"]
 
         if not families:
             return
 
         self._family_filters_set = True
+        self._family_filters_is_include = is_include
 
         # Replace icons with a Qt icon we can use in the user interfaces
         for family in families:
             family_info = {
                 "name": family,
                 "icon": self.default_icon(),
-                "state": True
+                "state": is_include
             }
 
             self.family_configs[family] = family_info
@@ -342,6 +452,7 @@ class GroupsConfig:
     def __init__(self, dbcon):
         self.dbcon = dbcon
         self.groups = {}
+        self._default_group_color = get_default_entity_icon_color()
 
     @classmethod
     def default_group_config(cls):
@@ -349,7 +460,7 @@ class GroupsConfig:
             cls._default_group_config = {
                 "icon": qtawesome.icon(
                     "fa.object-group",
-                    color=style.colors.default
+                    color=get_default_entity_icon_color()
                 ),
                 "order": 0
             }
@@ -368,7 +479,7 @@ class GroupsConfig:
         group_configs = []
         project_name = self.dbcon.Session.get("AVALON_PROJECT")
         if project_name:
-            # Get pre-defined group name and apperance from project config
+            # Get pre-defined group name and appearance from project config
             project_doc = self.dbcon.find_one(
                 {"type": "project"},
                 projection={"config.groups": True}
@@ -383,7 +494,7 @@ class GroupsConfig:
         for config in group_configs:
             name = config["name"]
             icon = "fa." + config.get("icon", "object-group")
-            color = config.get("color", style.colors.default)
+            color = config.get("color", self._default_group_color)
             order = float(config.get("order", 0))
 
             self.groups[name] = {
@@ -666,3 +777,19 @@ class WrappedCallbackItem:
 
         finally:
             self._done = True
+
+
+def get_warning_pixmap(color=None):
+    """Warning icon as QPixmap.
+
+    Args:
+        color(QtGui.QColor): Color that will be used to paint warning icon.
+    """
+    src_image_path = get_image_path("warning.png")
+    src_image = QtGui.QImage(src_image_path)
+    if color is None:
+        colors = get_objected_colors()
+        color_value = colors["delete-btn-bg"]
+        color = color_value.get_qcolor()
+
+    return paint_image_with_color(src_image, color)

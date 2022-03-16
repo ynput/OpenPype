@@ -1,4 +1,5 @@
 import pyblish.api
+from openpype.pipeline import PublishXmlValidationError
 
 
 class ValidateMissingLayers(pyblish.api.InstancePlugin):
@@ -30,13 +31,25 @@ class ValidateMissingLayers(pyblish.api.InstancePlugin):
             "\"{}\"".format(layer_name)
             for layer_name in missing_layer_names
         ])
+        instance_label = (
+            instance.data.get("label") or instance.data["name"]
+        )
+        description_layer_names = "<br/>".join([
+            "- {}".format(layer_name)
+            for layer_name in missing_layer_names
+        ])
 
         # Raise an error
-        raise AssertionError(
+        raise PublishXmlValidationError(
+            self,
             (
                 "Layers were not found by name for instance \"{}\"."
                 # Description what's wrong
                 " Layer names marked for publishing are not available"
                 " in layers list. Missing layer names: {}"
-            ).format(instance.data["label"], layers_msg)
+            ).format(instance.data["label"], layers_msg),
+            formatting_data={
+                "instance_name": instance_label,
+                "layer_names": description_layer_names
+            }
         )

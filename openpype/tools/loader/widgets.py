@@ -34,7 +34,8 @@ from .model import (
     SubsetFilterProxyModel,
     FamiliesFilterProxyModel,
     RepresentationModel,
-    RepresentationSortProxyModel
+    RepresentationSortProxyModel,
+    ITEM_ID_ROLE
 )
 from . import lib
 
@@ -351,6 +352,59 @@ class SubsetWidget(QtWidgets.QWidget):
 
         lib.change_visibility(self.model, self.view, "repre_info", enabled)
 
+    def get_selected_items(self):
+        selection_model = self.view.selectionModel()
+        indexes = selection_model.selectedIndexes()
+
+        item_ids = set()
+        for index in indexes:
+            item_id = index.data(ITEM_ID_ROLE)
+            if item_id is not None:
+                item_ids.add(item_id)
+
+        output = []
+        for item_id in item_ids:
+            item = self.model.get_item_by_id(item_id)
+            if item is not None:
+                output.append(item)
+        return output
+
+    def get_selected_merge_items(self):
+        output = []
+        items = collections.deque(self.get_selected_items())
+
+        item_ids = set()
+        while items:
+            item = items.popleft()
+            if item.get("isGroup"):
+                for child in item.children():
+                    items.appendleft(child)
+
+            elif item.get("isMerged"):
+                item_id = item["id"]
+                if item_id not in item_ids:
+                    item_ids.add(item_id)
+                    output.append(item)
+
+        return output
+
+    def get_selected_subsets(self):
+        output = []
+        items = collections.deque(self.get_selected_items())
+
+        item_ids = set()
+        while items:
+            item = items.popleft()
+            if item.get("isGroup") or item.get("isMerged"):
+                for child in item.children():
+                    items.appendleft(child)
+            else:
+                item_id = item["id"]
+                if item_id not in item_ids:
+                    item_ids.add(item_id)
+                    output.append(item)
+        return output
+
     def on_context_menu(self, point):
         """Shows menu with loader actions on Right-click.
 
@@ -367,10 +421,7 @@ class SubsetWidget(QtWidgets.QWidget):
             return
 
         # Get selected subsets without groups
-        selection = self.view.selectionModel()
-        rows = selection.selectedRows(column=0)
-
-        items = lib.get_selected_items(rows, self.model.ItemRole)
+        items = self.get_selected_subsets()
 
         # Get all representation->loader combinations available for the
         # index under the cursor, so we can list the user the options.
@@ -538,35 +589,6 @@ class SubsetWidget(QtWidgets.QWidget):
         if error_info:
             box = LoadErrorMessageBox(error_info, self)
             box.show()
-
-    def selected_subsets(self, _groups=False, _merged=False, _other=True):
-        selection = self.view.selectionModel()
-        rows = selection.selectedRows(column=0)
-
-        subsets = list()
-        if not any([_groups, _merged, _other]):
-            self.echo((
-                "This is a BUG: Selected_subsets args must contain"
-                " at least one value set to True"
-            ))
-            return subsets
-
-        for row in rows:
-            item = row.data(self.model.ItemRole)
-            if item.get("isGroup"):
-                if not _groups:
-                    continue
-
-            elif item.get("isMerged"):
-                if not _merged:
-                    continue
-            else:
-                if not _other:
-                    continue
-
-            subsets.append(item)
-
-        return subsets
 
     def group_subsets(self, name, asset_ids, items):
         field = "data.subsetGroup"
@@ -1261,6 +1283,40 @@ class RepresentationWidget(QtWidgets.QWidget):
             }
         return repre_context_by_id
 
+    def get_selected_items(self):
+        selection_model = self.tree_view.selectionModel()
+        indexes = selection_model.selectedIndexes()
+
+        item_ids = set()
+        for index in indexes:
+            item_id = index.data(ITEM_ID_ROLE)
+            if item_id is not None:
+                item_ids.add(item_id)
+
+        output = []
+        for item_id in item_ids:
+            item = self.model.get_item_by_id(item_id)
+            if item is not None:
+                output.append(item)
+        return output
+
+    def get_selected_repre_items(self):
+        output = []
+        items = collections.deque(self.get_selected_items())
+
+        item_ids = set()
+        while items:
+            item = items.popleft()
+            if item.get("isGroup") or item.get("isMerged"):
+                for child in item.children():
+                    items.appendleft(child)
+            else:
+                item_id = item["id"]
+                if item_id not in item_ids:
+                    item_ids.add(item_id)
+                    output.append(item)
+        return output
+
     def on_context_menu(self, point):
         """Shows menu with loader actions on Right-click.
 
@@ -1279,10 +1335,8 @@ class RepresentationWidget(QtWidgets.QWidget):
         selection = self.tree_view.selectionModel()
         rows = selection.selectedRows(column=0)
 
-        items = lib.get_selected_items(rows, self.model.ItemRole)
-
+        items = self.get_selected_repre_items()
         selected_side = self._get_selected_side(point_index, rows)
-
         # Get all representation->loader combinations available for the
         # index under the cursor, so we can list the user the options.
         available_loaders = api.discover(api.Loader)

@@ -1,13 +1,15 @@
+# -*- coding: utf-8 -*-
+"""Load Skeletal Meshes form FBX."""
 import os
 
 from avalon import api, pipeline
-from avalon.unreal import lib
-from avalon.unreal import pipeline as unreal_pipeline
-import unreal
+from openpype.hosts.unreal.api import plugin
+from openpype.hosts.unreal.api import pipeline as unreal_pipeline
+import unreal  # noqa
 
 
-class SkeletalMeshFBXLoader(api.Loader):
-    """Load Unreal SkeletalMesh from FBX"""
+class SkeletalMeshFBXLoader(plugin.Loader):
+    """Load Unreal SkeletalMesh from FBX."""
 
     families = ["rig"]
     label = "Import FBX Skeletal Mesh"
@@ -15,9 +17,8 @@ class SkeletalMeshFBXLoader(api.Loader):
     icon = "cube"
     color = "orange"
 
-    def load(self, context, name, namespace, data):
-        """
-        Load and containerise representation into Content Browser.
+    def load(self, context, name, namespace, options):
+        """Load and containerise representation into Content Browser.
 
         This is two step process. First, import FBX to temporary path and
         then call `containerise()` on it - this moves all content to new
@@ -31,15 +32,17 @@ class SkeletalMeshFBXLoader(api.Loader):
                              This is not passed here, so namespace is set
                              by `containerise()` because only then we know
                              real path.
-            data (dict): Those would be data to be imprinted. This is not used
-                         now, data are imprinted by `containerise()`.
+            options (dict): Those would be data to be imprinted. This is not
+                used now, data are imprinted by `containerise()`.
 
         Returns:
             list(str): list of container content
-        """
 
-        # Create directory for asset and avalon container
-        root = "/Game/Avalon/Assets"
+        """
+        # Create directory for asset and OpenPype container
+        root = "/Game/OpenPype/Assets"
+        if options and options.get("asset_dir"):
+            root = options["asset_dir"]
         asset = context.get('asset').get('name')
         suffix = "_CON"
         if asset:
@@ -92,7 +95,7 @@ class SkeletalMeshFBXLoader(api.Loader):
         unreal.AssetToolsHelpers.get_asset_tools().import_asset_tasks([task])  # noqa: E501
 
         # Create Asset Container
-        lib.create_avalon_container(
+        unreal_pipeline.create_container(
             container=container_name, path=asset_dir)
 
         data = {

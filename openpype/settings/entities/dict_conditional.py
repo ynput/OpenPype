@@ -6,7 +6,7 @@ from .lib import (
 )
 from openpype.settings.constants import (
     METADATA_KEYS,
-    M_OVERRIDEN_KEY,
+    M_OVERRIDDEN_KEY,
     KEY_REGEX
 )
 from . import (
@@ -119,7 +119,7 @@ class DictConditionalEntity(ItemEntity):
 
         # `current_metadata` are still when schema is loaded
         # - only metadata stored with dict item are gorup overrides in
-        #   M_OVERRIDEN_KEY
+        #   M_OVERRIDDEN_KEY
         self._current_metadata = {}
         self._metadata_are_modified = False
 
@@ -377,9 +377,9 @@ class DictConditionalEntity(ItemEntity):
             ):
                 continue
 
-            if M_OVERRIDEN_KEY not in current_metadata:
-                current_metadata[M_OVERRIDEN_KEY] = []
-            current_metadata[M_OVERRIDEN_KEY].append(key)
+            if M_OVERRIDDEN_KEY not in current_metadata:
+                current_metadata[M_OVERRIDDEN_KEY] = []
+            current_metadata[M_OVERRIDDEN_KEY].append(key)
 
         # Define if current metadata are avaialble for current override state
         metadata = NOT_SET
@@ -535,7 +535,7 @@ class DictConditionalEntity(ItemEntity):
 
         enum_value = value.get(self.enum_key)
 
-        old_metadata = metadata.get(M_OVERRIDEN_KEY)
+        old_metadata = metadata.get(M_OVERRIDDEN_KEY)
         if old_metadata:
             old_metadata_set = set(old_metadata)
             new_metadata = []
@@ -547,7 +547,7 @@ class DictConditionalEntity(ItemEntity):
 
             for key in old_metadata_set:
                 new_metadata.append(key)
-            metadata[M_OVERRIDEN_KEY] = new_metadata
+            metadata[M_OVERRIDDEN_KEY] = new_metadata
 
         return value, metadata
 
@@ -584,8 +584,9 @@ class DictConditionalEntity(ItemEntity):
 
         self.enum_entity.update_default_value(enum_value)
         for children_by_key in self.non_gui_children.values():
+            value_copy = copy.deepcopy(value)
             for key, child_obj in children_by_key.items():
-                child_value = value.get(key, NOT_SET)
+                child_value = value_copy.get(key, NOT_SET)
                 child_obj.update_default_value(child_value)
 
     def update_studio_value(self, value):
@@ -620,8 +621,9 @@ class DictConditionalEntity(ItemEntity):
 
         self.enum_entity.update_studio_value(enum_value)
         for children_by_key in self.non_gui_children.values():
+            value_copy = copy.deepcopy(value)
             for key, child_obj in children_by_key.items():
-                child_value = value.get(key, NOT_SET)
+                child_value = value_copy.get(key, NOT_SET)
                 child_obj.update_studio_value(child_value)
 
     def update_project_value(self, value):
@@ -656,8 +658,9 @@ class DictConditionalEntity(ItemEntity):
 
         self.enum_entity.update_project_value(enum_value)
         for children_by_key in self.non_gui_children.values():
+            value_copy = copy.deepcopy(value)
             for key, child_obj in children_by_key.items():
-                child_value = value.get(key, NOT_SET)
+                child_value = value_copy.get(key, NOT_SET)
                 child_obj.update_project_value(child_value)
 
     def _discard_changes(self, on_change_trigger):

@@ -94,6 +94,7 @@ class AttributeValues:
         attr_defs_by_key = {
             attr_def.key: attr_def
             for attr_def in attr_defs
+            if attr_def.is_value_def
         }
         for key, value in values.items():
             if key not in attr_defs_by_key:
@@ -306,8 +307,6 @@ class PublishAttributes:
         self._plugin_names_order = []
         self._missing_plugins = []
         self.attr_plugins = attr_plugins or []
-        if not attr_plugins:
-            return
 
         origin_data = self._origin_data
         data = self._data
@@ -362,7 +361,7 @@ class CreatedInstance:
     #   their individual children but not on their own
     __immutable_keys = (
         "id",
-        "uuid",
+        "instance_id",
         "family",
         "creator_identifier",
         "creator_attributes",
@@ -400,15 +399,6 @@ class CreatedInstance:
         self._data["active"] = data.get("active", True)
         self._data["creator_identifier"] = creator.identifier
 
-        # QUESTION handle version of instance here or in creator?
-        version = None
-        if not new:
-            version = data.get("version")
-
-        if version is None:
-            version = 1
-        self._data["version"] = version
-
         # Pop from source data all keys that are defined in `_data` before
         #   this moment and through their values away
         # - they should be the same and if are not then should not change
@@ -420,7 +410,7 @@ class CreatedInstance:
         # Stored creator specific attribute values
         # {key: value}
         creator_values = copy.deepcopy(orig_creator_attributes)
-        creator_attr_defs = creator.get_attribute_defs()
+        creator_attr_defs = creator.get_instance_attr_defs()
 
         self._data["creator_attributes"] = CreatorAttributeValues(
             self, creator_attr_defs, creator_values, orig_creator_attributes
@@ -435,8 +425,8 @@ class CreatedInstance:
         if data:
             self._data.update(data)
 
-        if not self._data.get("uuid"):
-            self._data["uuid"] = str(uuid4())
+        if not self._data.get("instance_id"):
+            self._data["instance_id"] = str(uuid4())
 
         self._asset_is_valid = self.has_set_asset
         self._task_is_valid = self.has_set_task
@@ -552,7 +542,7 @@ class CreatedInstance:
     @property
     def id(self):
         """Instance identifier."""
-        return self._data["uuid"]
+        return self._data["instance_id"]
 
     @property
     def data(self):
@@ -1015,12 +1005,14 @@ class CreateContext:
         if not instances:
             return
 
-        task_names_by_asset_name = collections.defaultdict(set)
+        task_names_by_asset_name = {}
         for instance in instances:
             task_name = instance.get("task")
             asset_name = instance.get("asset")
-            if asset_name and task_name:
-                task_names_by_asset_name[asset_name].add(task_name)
+            if asset_name:
+                task_names_by_asset_name[asset_name] = set()
+                if task_name:
+                    task_names_by_asset_name[asset_name].add(task_name)
 
         asset_names = [
             asset_name

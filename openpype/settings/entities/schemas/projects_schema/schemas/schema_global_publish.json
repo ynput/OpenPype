@@ -21,6 +21,27 @@
         {
             "type": "dict",
             "collapsible": true,
+            "key": "CollectSceneVersion",
+            "label": "Collect Version from Workfile",
+            "is_group": true,
+            "children": [
+                {
+                    "key": "hosts",
+                    "label": "Host names",
+                    "type": "hosts-enum",
+                    "multiselection": true
+                },
+                {
+                    "key": "skip_hosts_headless_publish",
+                    "label": "Skip for host if headless publish",
+                    "type": "hosts-enum",
+                    "multiselection": true
+                }
+            ]
+        },
+        {
+            "type": "dict",
+            "collapsible": true,
             "checkbox_key": "enabled",
             "key": "ValidateEditorialAssetName",
             "label": "Validate Editorial Asset Name",
@@ -270,6 +291,15 @@
                                                     "label": "Families",
                                                     "type": "list",
                                                     "object_type": "text"
+                                                },
+                                                {
+                                                    "type": "separator"
+                                                },
+                                                {
+                                                    "key": "subsets",
+                                                    "label": "Subsets",
+                                                    "type": "list",
+                                                    "object_type": "text"
                                                 }
                                             ]
                                         },
@@ -344,19 +374,6 @@
                                                     "default": 0,
                                                     "minimum": 0,
                                                     "maximum": 10000
-                                                },
-                                                {
-                                                    "key": "state",
-                                                    "label": "Type",
-                                                    "type": "enum",
-                                                    "enum_items": [
-                                                        {
-                                                            "letterbox": "Letterbox"
-                                                        },
-                                                        {
-                                                            "pillar": "Pillar"
-                                                        }
-                                                    ]
                                                 },
                                                 {
                                                     "type": "color",
@@ -656,8 +673,22 @@
                     "label": "Remove Temp renders",
                     "default": false
                 }
-
             ]
+        },
+        {
+          "type": "dict",
+          "collapsible": false,
+          "key": "CleanUpFarm",
+          "label": "Clean Up Farm",
+          "is_group": true,
+          "checkbox_key": "enabled",
+          "children": [
+              {
+                  "type": "boolean",
+                  "key": "enabled",
+                  "label": "Enabled"
+              }
+          ]
         }
     ]
 }

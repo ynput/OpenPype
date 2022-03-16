@@ -1,6 +1,6 @@
 [tool.poetry]
 name = "OpenPype"
-version = "3.8.0-nightly.6" # OpenPype
+version = "3.9.1-nightly.1" # OpenPype
 description = "Open VFX and Animation pipeline with support."
 authors = ["OpenPype Team <info@openpype.io>"]
 license = "MIT License"
@@ -41,15 +41,17 @@ Click = "^7"
 dnspython = "^2.1.0"
 ftrack-python-api = "2.0.*"
 google-api-python-client = "^1.12.8" # sync server google support (should be separate?)
-jsonschema = "^3.2.0"
+jsonschema = "^2.6.0"
 keyring = "^22.0.1"
 log4mongo = "^1.7"
 pathlib2= "^2.3.5" # deadline submit publish job only (single place, maybe not needed?)
-Pillow = "^8.3" # only used for slates prototype
+Pillow = "^9.0" # used in TVPaint and for slates
 pyblish-base = "^1.8.8"
 pynput = "^1.7.2" # idle manager in tray
 pymongo = "^3.11.2"
 "Qt.py" = "^1.3.3"
+qtpy = "^1.11.3"
+qtawesome = "0.7.3"
 speedcopy = "^2.1"
 six = "^1.15"
 semver = "^2.13.0" # for version resolution
@@ -71,7 +73,7 @@ dropbox = "^11.20.0"
 flake8 = "^3.7"
 autopep8 = "^1.4"
 coverage = "*"
-cx_freeze = { version = "6.7", source = "openpype" }
+cx_freeze = "~6.9"
 GitPython = "^3.1.17"
 jedi = "^0.13"
 Jinja2 = "^2.11"
@@ -97,6 +99,7 @@ toml = "^0.10.2" # for parsing pyproject.toml
 [[tool.poetry.source]]
 name = "openpype"
 url = "https://distribute.openpype.io/wheels/"
+secondary = true
 
 [build-system]
 requires = ["poetry-core>=1.0.0"]

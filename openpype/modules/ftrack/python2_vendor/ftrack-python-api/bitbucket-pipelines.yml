@@ -1,0 +1,24 @@
+# Test configuration for bitbucket pipelines.
+options:
+  max-time: 20
+definitions:
+  services:
+    ftrack:
+      image:
+        name: ftrackdocker/test-server:latest
+        username: $DOCKER_HUB_USERNAME
+        password: $DOCKER_HUB_PASSWORD
+        email: $DOCKER_HUB_EMAIL
+pipelines:
+  default:
+    - parallel:  
+      - step:
+          name: run tests against python 2.7.x
+          image: python:2.7
+          caches:
+            - pip
+          services:
+            - ftrack
+          script:
+            - bash -c 'while [[ "$(curl -s -o /dev/null -w ''%{http_code}'' $FTRACK_SERVER)" != "200" ]]; do sleep 1; done'
+            - python setup.py test

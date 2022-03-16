@@ -10,10 +10,16 @@ Provides:
 import os
 import clique
 import tempfile
+import math
+
 from avalon import io
 import pyblish.api
-from openpype.lib import prepare_template_data
-from openpype.lib.plugin_tools import parse_json
+from openpype.lib import prepare_template_data, get_asset, ffprobe_streams
+from openpype.lib.vendor_bin_utils import get_fps
+from openpype.lib.plugin_tools import (
+    parse_json,
+    get_subset_name_with_asset_doc
+)
 
 
 class CollectPublishedFiles(pyblish.api.ContextPlugin):
@@ -34,7 +40,7 @@ class CollectPublishedFiles(pyblish.api.ContextPlugin):
     targets = ["filespublish"]
 
     # from Settings
-    task_type_to_family = {}
+    task_type_to_family = []
 
     def process(self, context):
         batch_dir = context.data["batchDir"]
@@ -47,8 +53,10 @@ class CollectPublishedFiles(pyblish.api.ContextPlugin):
         self.log.info("task_sub:: {}".format(task_subfolders))
 
         asset_name = context.data["asset"]
+        asset_doc = get_asset()
         task_name = context.data["task"]
         task_type = context.data["taskType"]
+        project_name = context.data["project_name"]
         for task_dir in task_subfolders:
             task_data = parse_json(os.path.join(task_dir,
                                                 "manifest.json"))
@@ -57,20 +65,21 @@ class CollectPublishedFiles(pyblish.api.ContextPlugin):
             is_sequence = len(task_data["files"]) > 1
 
             _, extension = os.path.splitext(task_data["files"][0])
-            family, families, subset_template, tags = self._get_family(
+            family, families, tags = self._get_family(
                 self.task_type_to_family,
                 task_type,
                 is_sequence,
                 extension.replace(".", ''))
 
-            subset = self._get_subset_name(
-                family, subset_template, task_name, task_data["variant"]
+            subset_name = get_subset_name_with_asset_doc(
+                family, task_data["variant"], task_name, asset_doc,
+                project_name=project_name, host_name="webpublisher"
             )
-            version = self._get_last_version(asset_name, subset) + 1
+            version = self._get_last_version(asset_name, subset_name) + 1
 
-            instance = context.create_instance(subset)
+            instance = context.create_instance(subset_name)
             instance.data["asset"] = asset_name
-            instance.data["subset"] = subset
+            instance.data["subset"] = subset_name
             instance.data["family"] = family
             instance.data["families"] = families
             instance.data["version"] = version
@@ -89,11 +98,27 @@ class CollectPublishedFiles(pyblish.api.ContextPlugin):
                 instance.data["frameEnd"] = \
                     instance.data["representations"][0]["frameEnd"]
             else:
-                instance.data["frameStart"] = 0
-                instance.data["frameEnd"] = 1
+                frame_start = asset_doc["data"]["frameStart"]
+                instance.data["frameStart"] = frame_start
+                instance.data["frameEnd"] = asset_doc["data"]["frameEnd"]
                 instance.data["representations"] = self._get_single_repre(
                     task_dir, task_data["files"], tags
                 )
+                file_url = os.path.join(task_dir, task_data["files"][0])
+                no_of_frames = self._get_number_of_frames(file_url)
+                if no_of_frames:
+                    try:
+                        frame_end = int(frame_start) + math.ceil(no_of_frames)
+                        instance.data["frameEnd"] = math.ceil(frame_end) - 1
+                        self.log.debug("frameEnd:: {}".format(
+                            instance.data["frameEnd"]))
+                    except ValueError:
+                        self.log.warning("Unable to count frames "
+                                         "duration {}".format(no_of_frames))
+
+            # raise ValueError("STOP")
+            instance.data["handleStart"] = asset_doc["data"]["handleStart"]
+            instance.data["handleEnd"] = asset_doc["data"]["handleEnd"]
 
             self.log.info("instance.data:: {}".format(instance.data))
 
@@ -119,7 +144,7 @@ class CollectPublishedFiles(pyblish.api.ContextPlugin):
         return [repre_data]
 
     def _process_sequence(self, files, task_dir, tags):
-        """Prepare reprentations for sequence of files."""
+        """Prepare representation for sequence of files."""
         collections, remainder = clique.assemble(files)
         assert len(collections) == 1, \
             "Too many collections in {}".format(files)
@@ -149,7 +174,7 @@ class CollectPublishedFiles(pyblish.api.ContextPlugin):
                 extension (str): without '.'
 
             Returns:
-                (family, [families], subset_template_name, tags) tuple
+                (family, [families], tags) tuple
                 AssertionError if not matching family found
         """
         task_type = task_type.lower()
@@ -160,23 +185,32 @@ class CollectPublishedFiles(pyblish.api.ContextPlugin):
         assert task_obj, "No family configuration for '{}'".format(task_type)
 
         found_family = None
-        for family, content in task_obj.items():
-            if is_sequence != content["is_sequence"]:
+        families_config = []
+        # backward compatibility, should be removed pretty soon
+        if isinstance(task_obj, dict):
+            for family, config in task_obj:
+                config["result_family"] = family
+                families_config.append(config)
+        else:
+            families_config = task_obj
+
+        for config in families_config:
+            if is_sequence != config["is_sequence"]:
                 continue
-            if extension in content["extensions"] or \
-                    '' in content["extensions"]:  # all extensions setting
-                found_family = family
+            if (extension in config["extensions"] or
+                    '' in config["extensions"]):  # all extensions setting
+                found_family = config["result_family"]
                 break
 
         msg = "No family found for combination of " +\
               "task_type: {}, is_sequence:{}, extension: {}".format(
                   task_type, is_sequence, extension)
+        found_family = "render"
         assert found_family, msg
 
-        return found_family, \
-            content["families"], \
-            content["subset_template_name"], \
-            content["tags"]
+        return (found_family,
+                config["families"],
+                config["tags"])
 
     def _get_last_version(self, asset_name, subset_name):
         """Returns version number or 0 for 'asset' and 'subset'"""
@@ -227,3 +261,41 @@ class CollectPublishedFiles(pyblish.api.ContextPlugin):
             return version[0].get("version") or 0
         else:
             return 0
+
+    def _get_number_of_frames(self, file_url):
+        """Return duration in frames"""
+        try:
+            streams = ffprobe_streams(file_url, self.log)
+        except Exception as exc:
+            raise AssertionError((
+                "FFprobe couldn't read information about input file: \"{}\"."
+                " Error message: {}"
+            ).format(file_url, str(exc)))
+
+        first_video_stream = None
+        for stream in streams:
+            if "width" in stream and "height" in stream:
+                first_video_stream = stream
+                break
+
+        if first_video_stream:
+            nb_frames = stream.get("nb_frames")
+            if nb_frames:
+                try:
+                    return int(nb_frames)
+                except ValueError:
+                    self.log.warning(
+                        "nb_frames {} not convertible".format(nb_frames))
+
+                    duration = stream.get("duration")
+                    frame_rate = get_fps(stream.get("r_frame_rate", '0/0'))
+                    self.log.debug("duration:: {} frame_rate:: {}".format(
+                        duration, frame_rate))
+                    try:
+                        return float(duration) * float(frame_rate)
+                    except ValueError:
+                        self.log.warning(
+                            "{} or {} cannot be converted".format(duration,
+                                                                  frame_rate))
+
+        self.log.warning("Cannot get number of frames")

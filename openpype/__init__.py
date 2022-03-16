@@ -10,7 +10,8 @@ from .lib import (
     Anatomy,
     filter_pyblish_plugins,
     set_plugin_attributes_from_settings,
-    change_timer_to_current_context
+    change_timer_to_current_context,
+    register_event_callback,
 )
 
 pyblish = avalon = _original_discover = None
@@ -58,10 +59,15 @@ def patched_discover(superclass):
     """
     # run original discover and get plugins
     plugins = _original_discover(superclass)
+    filtered_plugins = [
+        plugin
+        for plugin in plugins
+        if issubclass(plugin, superclass)
+    ]
 
-    set_plugin_attributes_from_settings(plugins, superclass)
+    set_plugin_attributes_from_settings(filtered_plugins, superclass)
 
-    return plugins
+    return filtered_plugins
 
 
 @import_wrapper
@@ -69,6 +75,7 @@ def install():
     """Install Pype to Avalon."""
     from pyblish.lib import MessageHandler
     from openpype.modules import load_modules
+    from openpype.pipeline import LegacyCreator
     from avalon import pipeline
 
     # Make sure modules are loaded
@@ -113,7 +120,7 @@ def install():
 
             pyblish.register_plugin_path(path)
             avalon.register_plugin_path(avalon.Loader, path)
-            avalon.register_plugin_path(avalon.Creator, path)
+            avalon.register_plugin_path(LegacyCreator, path)
             avalon.register_plugin_path(avalon.InventoryAction, path)
 
     # apply monkey patched discover to original one
@@ -122,10 +129,10 @@ def install():
     avalon.discover = patched_discover
     pipeline.discover = patched_discover
 
-    avalon.on("taskChanged", _on_task_change)
+    register_event_callback("taskChanged", _on_task_change)
 
 
-def _on_task_change(*args):
+def _on_task_change():
     change_timer_to_current_context()
 
 

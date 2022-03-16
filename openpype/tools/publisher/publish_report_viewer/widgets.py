@@ -1,10 +1,8 @@
-import copy
-import uuid
-
-from Qt import QtWidgets, QtCore
+from Qt import QtWidgets, QtCore, QtGui
 
 from openpype.widgets.nice_checkbox import NiceCheckbox
 
+# from openpype.tools.utils import DeselectableTreeView
 from .constants import (
     ITEM_ID_ROLE,
     ITEM_IS_GROUP_ROLE
@@ -16,98 +14,127 @@ from .model import (
     PluginsModel,
     PluginProxyModel
 )
+from .report_items import PublishReport
+
+FILEPATH_ROLE = QtCore.Qt.UserRole + 1
+TRACEBACK_ROLE = QtCore.Qt.UserRole + 2
+IS_DETAIL_ITEM_ROLE = QtCore.Qt.UserRole + 3
 
 
-class PluginItem:
-    def __init__(self, plugin_data):
-        self._id = uuid.uuid4()
+class PluginLoadReportModel(QtGui.QStandardItemModel):
+    def set_report(self, report):
+        parent = self.invisibleRootItem()
+        parent.removeRows(0, parent.rowCount())
 
-        self.name = plugin_data["name"]
-        self.label = plugin_data["label"]
-        self.order = plugin_data["order"]
-        self.skipped = plugin_data["skipped"]
-        self.passed = plugin_data["passed"]
+        new_items = []
+        new_items_by_filepath = {}
+        for filepath in report.crashed_plugin_paths.keys():
+            item = QtGui.QStandardItem(filepath)
+            new_items.append(item)
+            new_items_by_filepath[filepath] = item
 
-        logs = []
-        errored = False
-        for instance_data in plugin_data["instances_data"]:
-            for log_item in instance_data["logs"]:
-                if not errored:
-                    errored = log_item["type"] == "error"
-                logs.append(copy.deepcopy(log_item))
+        if not new_items:
+            return
 
-        self.errored = errored
-        self.logs = logs
-
-    @property
-    def id(self):
-        return self._id
-
-
-class InstanceItem:
-    def __init__(self, instance_id, instance_data, report_data):
-        self._id = instance_id
-        self.label = instance_data.get("label") or instance_data.get("name")
-        self.family = instance_data.get("family")
-        self.removed = not instance_data.get("exists", True)
-
-        logs = []
-        for plugin_data in report_data["plugins_data"]:
-            for instance_data_item in plugin_data["instances_data"]:
-                if instance_data_item["id"] == self._id:
-                    logs.extend(copy.deepcopy(instance_data_item["logs"]))
-
-        errored = False
-        for log in logs:
-            if log["type"] == "error":
-                errored = True
-                break
-
-        self.errored = errored
-        self.logs = logs
-
-    @property
-    def id(self):
-        return self._id
+        parent.appendRows(new_items)
+        for filepath, item in new_items_by_filepath.items():
+            traceback_txt = report.crashed_plugin_paths[filepath]
+            detail_item = QtGui.QStandardItem()
+            detail_item.setData(filepath, FILEPATH_ROLE)
+            detail_item.setData(traceback_txt, TRACEBACK_ROLE)
+            detail_item.setData(True, IS_DETAIL_ITEM_ROLE)
+            item.appendRow(detail_item)
 
 
-class PublishReport:
-    def __init__(self, report_data):
-        data = copy.deepcopy(report_data)
+class DetailWidget(QtWidgets.QTextEdit):
+    def __init__(self, text, *args, **kwargs):
+        super(DetailWidget, self).__init__(*args, **kwargs)
 
-        context_data = data["context"]
-        context_data["name"] = "context"
-        context_data["label"] = context_data["label"] or "Context"
+        self.setReadOnly(True)
+        self.setHtml(text)
+        self.setTextInteractionFlags(QtCore.Qt.TextBrowserInteraction)
+        self.setWordWrapMode(
+            QtGui.QTextOption.WrapAtWordBoundaryOrAnywhere
+        )
 
-        instance_items_by_id = {}
-        instance_items_by_family = {}
-        context_item = InstanceItem(None, context_data, data)
-        instance_items_by_id[context_item.id] = context_item
-        instance_items_by_family[context_item.family] = [context_item]
+    def sizeHint(self):
+        content_margins = (
+            self.contentsMargins().top()
+            + self.contentsMargins().bottom()
+        )
+        size = self.document().documentLayout().documentSize().toSize()
+        size.setHeight(size.height() + content_margins)
+        return size
 
-        for instance_id, instance_data in data["instances"].items():
-            item = InstanceItem(instance_id, instance_data, data)
-            instance_items_by_id[item.id] = item
-            if item.family not in instance_items_by_family:
-                instance_items_by_family[item.family] = []
-            instance_items_by_family[item.family].append(item)
 
-        all_logs = []
-        plugins_items_by_id = {}
-        plugins_id_order = []
-        for plugin_data in data["plugins_data"]:
-            item = PluginItem(plugin_data)
-            plugins_id_order.append(item.id)
-            plugins_items_by_id[item.id] = item
-            all_logs.extend(copy.deepcopy(item.logs))
+class PluginLoadReportWidget(QtWidgets.QWidget):
+    def __init__(self, parent):
+        super(PluginLoadReportWidget, self).__init__(parent)
 
-        self.instance_items_by_id = instance_items_by_id
-        self.instance_items_by_family = instance_items_by_family
+        view = QtWidgets.QTreeView(self)
+        view.setEditTriggers(view.NoEditTriggers)
+        view.setTextElideMode(QtCore.Qt.ElideLeft)
+        view.setHeaderHidden(True)
+        view.setAlternatingRowColors(True)
+        view.setVerticalScrollMode(view.ScrollPerPixel)
 
-        self.plugins_id_order = plugins_id_order
-        self.plugins_items_by_id = plugins_items_by_id
+        model = PluginLoadReportModel()
+        view.setModel(model)
 
-        self.logs = all_logs
+        layout = QtWidgets.QHBoxLayout(self)
+        layout.setContentsMargins(0, 0, 0, 0)
+        layout.addWidget(view, 1)
+
+        view.expanded.connect(self._on_expand)
+
+        self._view = view
+        self._model = model
+        self._widgets_by_filepath = {}
+
+    def _on_expand(self, index):
+        for row in range(self._model.rowCount(index)):
+            child_index = self._model.index(row, index.column(), index)
+            self._create_widget(child_index)
+
+    def showEvent(self, event):
+        super(PluginLoadReportWidget, self).showEvent(event)
+        self._update_widgets_size_hints()
+
+    def resizeEvent(self, event):
+        super(PluginLoadReportWidget, self).resizeEvent(event)
+        self._update_widgets_size_hints()
+
+    def _update_widgets_size_hints(self):
+        for item in self._widgets_by_filepath.values():
+            widget, index = item
+            if not widget.isVisible():
+                continue
+            self._model.setData(
+                index, widget.sizeHint(), QtCore.Qt.SizeHintRole
+            )
+
+    def _create_widget(self, index):
+        if not index.data(IS_DETAIL_ITEM_ROLE):
+            return
+
+        filepath = index.data(FILEPATH_ROLE)
+        if filepath in self._widgets_by_filepath:
+            return
+
+        traceback_txt = index.data(TRACEBACK_ROLE)
+        detail_text = (
+            "<b>Filepath:</b><br/>"
+            "{}<br/><br/>"
+            "<b>Traceback:</b><br/>"
+            "{}"
+        ).format(filepath, traceback_txt.replace("\n", "<br/>"))
+        widget = DetailWidget(detail_text, self)
+        self._view.setIndexWidget(index, widget)
+        self._widgets_by_filepath[filepath] = (widget, index)
+
+    def set_report(self, report):
+        self._widgets_by_filepath = {}
+        self._model.set_report(report)
 
 
 class DetailsWidget(QtWidgets.QWidget):
@@ -123,11 +150,50 @@ class DetailsWidget(QtWidgets.QWidget):
         layout.addWidget(output_widget)
 
         self._output_widget = output_widget
+        self._report_item = None
+        self._instance_filter = set()
+        self._plugin_filter = set()
 
     def clear(self):
         self._output_widget.setPlainText("")
 
-    def set_logs(self, logs):
+    def set_report(self, report):
+        self._report_item = report
+        self._plugin_filter = set()
+        self._instance_filter = set()
+        self._update_logs()
+
+    def set_plugin_filter(self, plugin_filter):
+        self._plugin_filter = plugin_filter
+        self._update_logs()
+
+    def set_instance_filter(self, instance_filter):
+        self._instance_filter = instance_filter
+        self._update_logs()
+
+    def _update_logs(self):
+        if not self._report_item:
+            self._output_widget.setPlainText("")
+            return
+
+        filtered_logs = []
+        for log in self._report_item.logs:
+            if (
+                self._instance_filter
+                and log.instance_id not in self._instance_filter
+            ):
+                continue
+
+            if (
+                self._plugin_filter
+                and log.plugin_id not in self._plugin_filter
+            ):
+                continue
+            filtered_logs.append(log)
+
+        self._set_logs(filtered_logs)
+
+    def _set_logs(self, logs):
         lines = []
         for log in logs:
             if log["type"] == "record":
@@ -146,6 +212,60 @@ class DetailsWidget(QtWidgets.QWidget):
 
         text = "\n".join(lines)
         self._output_widget.setPlainText(text)
+
+
+class DeselectableTreeView(QtWidgets.QTreeView):
+    """A tree view that deselects on clicking on an empty area in the view"""
+
+    def mousePressEvent(self, event):
+        index = self.indexAt(event.pos())
+        clear_selection = False
+        if not index.isValid():
+            modifiers = QtWidgets.QApplication.keyboardModifiers()
+            if modifiers == QtCore.Qt.ShiftModifier:
+                return
+            elif modifiers == QtCore.Qt.ControlModifier:
+                return
+            clear_selection = True
+        else:
+            indexes = self.selectedIndexes()
+            if len(indexes) == 1 and index in indexes:
+                clear_selection = True
+
+        if clear_selection:
+            # clear the selection
+            self.clearSelection()
+            # clear the current index
+            self.setCurrentIndex(QtCore.QModelIndex())
+            event.accept()
+            return
+
+        QtWidgets.QTreeView.mousePressEvent(self, event)
+
+
+class DetailsPopup(QtWidgets.QDialog):
+    closed = QtCore.Signal()
+
+    def __init__(self, parent, center_widget):
+        super(DetailsPopup, self).__init__(parent)
+        self.setWindowTitle("Report Details")
+        layout = QtWidgets.QHBoxLayout(self)
+
+        self._center_widget = center_widget
+        self._first_show = True
+        self._layout = layout
+
+    def showEvent(self, event):
+        layout = self.layout()
+        layout.insertWidget(0, self._center_widget)
+        super(DetailsPopup, self).showEvent(event)
+        if self._first_show:
+            self._first_show = False
+            self.resize(700, 400)
+
+    def closeEvent(self, event):
+        super(DetailsPopup, self).closeEvent(event)
+        self.closed.emit()
 
 
 class PublishReportViewerWidget(QtWidgets.QWidget):
@@ -171,12 +291,13 @@ class PublishReportViewerWidget(QtWidgets.QWidget):
         removed_instances_layout.addWidget(removed_instances_check, 0)
         removed_instances_layout.addWidget(removed_instances_label, 1)
 
-        instances_view = QtWidgets.QTreeView(self)
+        instances_view = DeselectableTreeView(self)
         instances_view.setObjectName("PublishDetailViews")
         instances_view.setModel(instances_proxy)
         instances_view.setIndentation(0)
         instances_view.setHeaderHidden(True)
         instances_view.setEditTriggers(QtWidgets.QTreeView.NoEditTriggers)
+        instances_view.setSelectionMode(QtWidgets.QTreeView.ExtendedSelection)
         instances_view.setExpandsOnDoubleClick(False)
 
         instances_delegate = GroupItemDelegate(instances_view)
@@ -191,29 +312,49 @@ class PublishReportViewerWidget(QtWidgets.QWidget):
         skipped_plugins_layout.addWidget(skipped_plugins_check, 0)
         skipped_plugins_layout.addWidget(skipped_plugins_label, 1)
 
-        plugins_view = QtWidgets.QTreeView(self)
+        plugins_view = DeselectableTreeView(self)
         plugins_view.setObjectName("PublishDetailViews")
         plugins_view.setModel(plugins_proxy)
         plugins_view.setIndentation(0)
         plugins_view.setHeaderHidden(True)
+        plugins_view.setSelectionMode(QtWidgets.QTreeView.ExtendedSelection)
         plugins_view.setEditTriggers(QtWidgets.QTreeView.NoEditTriggers)
         plugins_view.setExpandsOnDoubleClick(False)
 
         plugins_delegate = GroupItemDelegate(plugins_view)
         plugins_view.setItemDelegate(plugins_delegate)
 
-        details_widget = DetailsWidget(self)
+        details_widget = QtWidgets.QWidget(self)
+        details_tab_widget = QtWidgets.QTabWidget(details_widget)
+        details_popup_btn = QtWidgets.QPushButton("PopUp", details_widget)
 
-        layout = QtWidgets.QGridLayout(self)
+        details_layout = QtWidgets.QVBoxLayout(details_widget)
+        details_layout.setContentsMargins(0, 0, 0, 0)
+        details_layout.addWidget(details_tab_widget, 1)
+        details_layout.addWidget(details_popup_btn, 0)
+
+        details_popup = DetailsPopup(self, details_tab_widget)
+
+        logs_text_widget = DetailsWidget(details_tab_widget)
+        plugin_load_report_widget = PluginLoadReportWidget(details_tab_widget)
+
+        details_tab_widget.addTab(logs_text_widget, "Logs")
+        details_tab_widget.addTab(plugin_load_report_widget, "Crashed plugins")
+
+        middle_widget = QtWidgets.QWidget(self)
+        middle_layout = QtWidgets.QGridLayout(middle_widget)
+        middle_layout.setContentsMargins(0, 0, 0, 0)
         # Row 1
-        layout.addLayout(removed_instances_layout, 0, 0)
-        layout.addLayout(skipped_plugins_layout, 0, 1)
+        middle_layout.addLayout(removed_instances_layout, 0, 0)
+        middle_layout.addLayout(skipped_plugins_layout, 0, 1)
         # Row 2
-        layout.addWidget(instances_view, 1, 0)
-        layout.addWidget(plugins_view, 1, 1)
-        layout.addWidget(details_widget, 1, 2)
+        middle_layout.addWidget(instances_view, 1, 0)
+        middle_layout.addWidget(plugins_view, 1, 1)
 
-        layout.setColumnStretch(2, 1)
+        layout = QtWidgets.QHBoxLayout(self)
+        layout.setContentsMargins(0, 0, 0, 0)
+        layout.addWidget(middle_widget, 0)
+        layout.addWidget(details_widget, 1)
 
         instances_view.selectionModel().selectionChanged.connect(
             self._on_instance_change
@@ -230,10 +371,13 @@ class PublishReportViewerWidget(QtWidgets.QWidget):
         removed_instances_check.stateChanged.connect(
             self._on_removed_instances_check
         )
+        details_popup_btn.clicked.connect(self._on_details_popup)
+        details_popup.closed.connect(self._on_popup_close)
 
         self._ignore_selection_changes = False
         self._report_item = None
-        self._details_widget = details_widget
+        self._logs_text_widget = logs_text_widget
+        self._plugin_load_report_widget = plugin_load_report_widget
 
         self._removed_instances_check = removed_instances_check
         self._instances_view = instances_view
@@ -247,6 +391,10 @@ class PublishReportViewerWidget(QtWidgets.QWidget):
         self._plugins_view = plugins_view
         self._plugins_model = plugins_model
         self._plugins_proxy = plugins_proxy
+
+        self._details_widget = details_widget
+        self._details_tab_widget = details_tab_widget
+        self._details_popup = details_popup
 
     def _on_instance_view_clicked(self, index):
         if not index.isValid() or not index.data(ITEM_IS_GROUP_ROLE):
@@ -266,62 +414,46 @@ class PublishReportViewerWidget(QtWidgets.QWidget):
         else:
             self._plugins_view.expand(index)
 
-    def set_report(self, report_data):
+    def set_report_data(self, report_data):
+        report = PublishReport(report_data)
+        self.set_report(report)
+
+    def set_report(self, report):
         self._ignore_selection_changes = True
 
-        report_item = PublishReport(report_data)
-        self._report_item = report_item
+        self._report_item = report
 
-        self._instances_model.set_report(report_item)
-        self._plugins_model.set_report(report_item)
-        self._details_widget.set_logs(report_item.logs)
+        self._instances_model.set_report(report)
+        self._plugins_model.set_report(report)
+        self._logs_text_widget.set_report(report)
+        self._plugin_load_report_widget.set_report(report)
 
         self._ignore_selection_changes = False
+
+        self._instances_view.expandAll()
+        self._plugins_view.expandAll()
 
     def _on_instance_change(self, *_args):
         if self._ignore_selection_changes:
             return
 
-        valid_index = None
+        instance_ids = set()
         for index in self._instances_view.selectedIndexes():
             if index.isValid():
-                valid_index = index
-                break
+                instance_ids.add(index.data(ITEM_ID_ROLE))
 
-        if valid_index is None:
-            return
-
-        if self._plugins_view.selectedIndexes():
-            self._ignore_selection_changes = True
-            self._plugins_view.selectionModel().clearSelection()
-            self._ignore_selection_changes = False
-
-        plugin_id = valid_index.data(ITEM_ID_ROLE)
-        instance_item = self._report_item.instance_items_by_id[plugin_id]
-        self._details_widget.set_logs(instance_item.logs)
+        self._logs_text_widget.set_instance_filter(instance_ids)
 
     def _on_plugin_change(self, *_args):
         if self._ignore_selection_changes:
             return
 
-        valid_index = None
+        plugin_ids = set()
         for index in self._plugins_view.selectedIndexes():
             if index.isValid():
-                valid_index = index
-                break
+                plugin_ids.add(index.data(ITEM_ID_ROLE))
 
-        if valid_index is None:
-            self._details_widget.set_logs(self._report_item.logs)
-            return
-
-        if self._instances_view.selectedIndexes():
-            self._ignore_selection_changes = True
-            self._instances_view.selectionModel().clearSelection()
-            self._ignore_selection_changes = False
-
-        plugin_id = valid_index.data(ITEM_ID_ROLE)
-        plugin_item = self._report_item.plugins_items_by_id[plugin_id]
-        self._details_widget.set_logs(plugin_item.logs)
+        self._logs_text_widget.set_plugin_filter(plugin_ids)
 
     def _on_skipped_plugin_check(self):
         self._plugins_proxy.set_ignore_skipped(
@@ -332,3 +464,16 @@ class PublishReportViewerWidget(QtWidgets.QWidget):
         self._instances_proxy.set_ignore_removed(
             self._removed_instances_check.isChecked()
         )
+
+    def _on_details_popup(self):
+        self._details_widget.setVisible(False)
+        self._details_popup.show()
+
+    def _on_popup_close(self):
+        self._details_widget.setVisible(True)
+        layout = self._details_widget.layout()
+        layout.insertWidget(0, self._details_tab_widget)
+
+    def close_details_popup(self):
+        if self._details_popup.isVisible():
+            self._details_popup.close()

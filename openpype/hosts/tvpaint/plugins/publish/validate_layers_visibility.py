@@ -1,6 +1,8 @@
 import pyblish.api
+from openpype.pipeline import PublishXmlValidationError
 
 
+# TODO @iLLiCiTiT add repair action to disable instances?
 class ValidateLayersVisiblity(pyblish.api.InstancePlugin):
     """Validate existence of renderPass layers."""
 
@@ -9,8 +11,26 @@ class ValidateLayersVisiblity(pyblish.api.InstancePlugin):
     families = ["review", "renderPass", "renderLayer"]
 
     def process(self, instance):
+        layer_names = set()
         for layer in instance.data["layers"]:
+            layer_names.add(layer["name"])
             if layer["visible"]:
                 return
 
-        raise AssertionError("All layers of instance are not visible.")
+        instance_label = (
+            instance.data.get("label") or instance.data["name"]
+        )
+
+        raise PublishXmlValidationError(
+            self,
+            "All layers of instance \"{}\" are not visible.".format(
+                instance_label
+            ),
+            formatting_data={
+                "instance_name": instance_label,
+                "layer_names": "<br/>".join([
+                    "- {}".format(layer_name)
+                    for layer_name in layer_names
+                ])
+            }
+        )

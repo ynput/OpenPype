@@ -1,6 +1,9 @@
 {
     "deadline_servers": [],
     "publish": {
+        "CollectDefaultDeadlineServer": {
+            "pass_mongo_url": false
+        },
         "ValidateExpectedFiles": {
             "enabled": true,
             "active": true,
@@ -33,6 +36,9 @@
                 ],
                 "celaction": [
                     ".*"
+                ],
+                "harmony": [
+                    ".*"
                 ]
             }
         },
@@ -40,7 +46,7 @@
             "enabled": true,
             "optional": false,
             "active": true,
-            "tile_assembler_plugin": "oiio",
+            "tile_assembler_plugin": "OpenPypeTileAssembler",
             "use_published": true,
             "asset_dependencies": true,
             "group": "none",
@@ -87,7 +93,8 @@
             "primary_pool": "",
             "secondary_pool": "",
             "group": "",
-            "department": ""
+            "department": "",
+            "multiprocess": true
         }
     }
 }

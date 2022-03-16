@@ -3,9 +3,11 @@
 from pathlib import Path
 
 import attr
-from avalon import harmony, api
+from avalon import api
 
+from openpype.lib import get_formatted_current_time
 import openpype.lib.abstract_collect_render
+import openpype.hosts.harmony.api as harmony
 from openpype.lib.abstract_collect_render import RenderInstance
 import openpype.lib
 
@@ -137,7 +139,7 @@ class CollectFarmRender(openpype.lib.abstract_collect_render.
 
             render_instance = HarmonyRenderInstance(
                 version=version,
-                time=api.time(),
+                time=get_formatted_current_time(),
                 source=context.data["currentFile"],
                 label=node.split("/")[1],
                 subset=subset_name,
@@ -176,6 +178,7 @@ class CollectFarmRender(openpype.lib.abstract_collect_render.
                 ignoreFrameHandleCheck=True
 
             )
+            render_instance.context = context
             self.log.debug(render_instance)
             instances.append(render_instance)
 

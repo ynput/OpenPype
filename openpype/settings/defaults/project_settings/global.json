@@ -3,6 +3,23 @@
         "CollectAnatomyInstanceData": {
             "follow_workfile_version": false
         },
+        "CollectSceneVersion": {
+            "hosts": [
+                "aftereffects",
+                "blender",
+                "celaction",
+                "fusion",
+                "harmony",
+                "hiero",
+                "houdini",
+                "maya",
+                "nuke",
+                "photoshop",
+                "resolve",
+                "tvpaint"
+            ],
+            "skip_hosts_headless_publish": []
+        },
         "ValidateEditorialAssetName": {
             "enabled": true,
             "optional": false
@@ -70,7 +87,8 @@
                                     "render",
                                     "review",
                                     "ftrack"
-                                ]
+                                ],
+                                "subsets": []
                             },
                             "overscan_crop": "",
                             "overscan_color": [
@@ -90,7 +108,6 @@
                             "letter_box": {
                                 "enabled": false,
                                 "ratio": 0.0,
-                                "state": "letterbox",
                                 "fill_color": [
                                     0,
                                     0,
@@ -190,6 +207,9 @@
         "CleanUp": {
             "paterns": [],
             "remove_temp_renders": false
+        },
+        "CleanUpFarm": {
+            "enabled": false
         }
     },
     "tools": {
@@ -219,7 +239,7 @@
                     "hosts": [],
                     "task_types": [],
                     "tasks": [],
-                    "template": "{family}{Variant}"
+                    "template": "{family}{variant}"
                 },
                 {
                     "families": [
@@ -264,6 +284,17 @@
                     "task_types": [],
                     "tasks": [],
                     "template": "render{Task}{Variant}"
+                },
+                {
+                    "families": [
+                        "unrealStaticMesh"
+                    ],
+                    "hosts": [
+                        "maya"
+                    ],
+                    "task_types": [],
+                    "tasks": [],
+                    "template": "S_{asset}{variant}"
                 }
             ]
         },
@@ -298,6 +329,7 @@
                 {
                     "hosts": [],
                     "task_types": [],
+                    "is_include": true,
                     "filter_families": []
                 }
             ]

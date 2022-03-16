@@ -101,7 +101,7 @@ class DropDataFrame(QtWidgets.QFrame):
         return paths
 
     def _add_item(self, data, actions=[]):
-        # Assign to self so garbage collector wont remove the component
+        # Assign to self so garbage collector won't remove the component
         # during initialization
         new_component = ComponentItem(self.components_list, self)
         new_component.set_context(data)

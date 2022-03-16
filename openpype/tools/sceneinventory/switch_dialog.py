@@ -1,9 +1,9 @@
 import collections
 import logging
 from Qt import QtWidgets, QtCore
+import qtawesome
 
 from avalon import io, api, pipeline
-from avalon.vendor import qtawesome
 
 from .widgets import (
     ButtonWithMenu,
@@ -558,7 +558,7 @@ class SwitchAssetDialog(QtWidgets.QDialog):
 
         repre_docs = io.find(
             {
-                "type": "rerpesentation",
+                "type": "representation",
                 "parent": subset_doc["_id"],
                 "name": {"$in": list(repre_names)}
             },

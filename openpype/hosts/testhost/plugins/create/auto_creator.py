@@ -11,7 +11,7 @@ class MyAutoCreator(AutoCreator):
     identifier = "workfile"
     family = "workfile"
 
-    def get_attribute_defs(self):
+    def get_instance_attr_defs(self):
         output = [
             lib.NumberDef("number_key", label="Number")
         ]

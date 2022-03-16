@@ -81,6 +81,11 @@ class PypeCommands:
         standalonepublish.main()
 
     @staticmethod
+    def launch_traypublisher():
+        from openpype.tools import traypublisher
+        traypublisher.main()
+
+    @staticmethod
     def publish(paths, targets=None, gui=False):
         """Start headless publishing.
 
@@ -134,7 +139,7 @@ class PypeCommands:
                 print(f"setting target: {target}")
                 pyblish.api.register_target(target)
         else:
-            pyblish.api.register_target("filesequence")
+            pyblish.api.register_target("farm")
 
         os.environ["OPENPYPE_PUBLISH_DATA"] = os.pathsep.join(paths)
 
@@ -251,7 +256,10 @@ class PypeCommands:
 
         data = {
             "last_workfile_path": workfile_path,
-            "start_last_workfile": True
+            "start_last_workfile": True,
+            "project_name": project,
+            "asset_name": asset,
+            "task_name": task_name
         }
 
         launched_app = application_manager.launch(app_name, **data)
@@ -360,7 +368,7 @@ class PypeCommands:
         pass
 
     def run_tests(self, folder, mark, pyargs,
-                  test_data_folder, persist, app_variant):
+                  test_data_folder, persist, app_variant, timeout):
         """
             Runs tests from 'folder'
 
@@ -398,6 +406,9 @@ class PypeCommands:
         if app_variant:
             args.extend(["--app_variant", app_variant])
 
+        if timeout:
+            args.extend(["--timeout", timeout])
+
         print("run_tests args: {}".format(args))
         import pytest
         pytest.main(args)
@@ -433,3 +444,13 @@ class PypeCommands:
 
         version_packer = VersionRepacker(directory)
         version_packer.process()
+
+    def pack_project(self, project_name, dirpath):
+        from openpype.lib.project_backpack import pack_project
+
+        pack_project(project_name, dirpath)
+
+    def unpack_project(self, zip_filepath, new_root):
+        from openpype.lib.project_backpack import unpack_project
+
+        unpack_project(zip_filepath, new_root)

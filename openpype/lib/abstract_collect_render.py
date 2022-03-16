@@ -26,7 +26,7 @@ class RenderInstance(object):
 
     # metadata
     version = attr.ib()  # instance version
-    time = attr.ib()  # time of instance creation (avalon.api.time())
+    time = attr.ib()  # time of instance creation (get_formatted_current_time)
     source = attr.ib()  # path to source scene file
     label = attr.ib()  # label to show in GUI
     subset = attr.ib()  # subset name
@@ -76,6 +76,7 @@ class RenderInstance(object):
     deadlineSubmissionJob = attr.ib(default=None)
     anatomyData = attr.ib(default=None)
     outputDir = attr.ib(default=None)
+    context = attr.ib(default=None)
 
     @frameStart.validator
     def check_frame_start(self, _, value):

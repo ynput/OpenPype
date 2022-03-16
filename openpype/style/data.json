@@ -56,6 +56,12 @@
         "delete-btn-bg": "rgb(201, 54, 54)",
         "delete-btn-bg-disabled": "rgba(201, 54, 54, 64)",
 
+        "icon-tools": "#ffffff",
+        "icon-alert-tools": "#AA5050",
+        "icon-entity-default": "#bfccd6",
+        "icon-entity-disabled": "#808080",
+        "font-entity-deprecated": "#666666",
+
         "tab-widget": {
             "bg": "#21252B",
             "bg-selected": "#434a56",
@@ -66,7 +72,7 @@
         },
         "nice-checkbox": {
             "bg-checked": "#56a06f",
-            "bg-unchecked": "#434b56",
+            "bg-unchecked": "#21252B",
             "bg-checker": "#D3D8DE",
             "bg-checker-hover": "#F0F2F5"
         },
@@ -112,13 +118,16 @@
             "breadcrumbs-btn-bg": "rgba(127, 127, 127, 60)",
             "breadcrumbs-btn-bg-hover": "rgba(127, 127, 127, 90)",
 
-            "content-hightlighted": "rgba(19, 26, 32, 15)",
+            "content-highlighted": "rgba(19, 26, 32, 15)",
             "focus-border": "#839caf",
             "image-btn": "#bfccd6",
             "image-btn-hover": "#189aea",
             "image-btn-disabled": "#bfccd6",
             "version-exists": "#458056",
-            "version-not-found": "#ffc671"
+            "version-not-found": "#ffc671",
+
+            "source-version": "#D3D8DE",
+            "source-version-outdated": "#ffc671"
         }
     }
 }

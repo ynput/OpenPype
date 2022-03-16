@@ -9,6 +9,7 @@ from avalon import api as avalon
 from avalon import schema
 from pyblish import api as pyblish
 from openpype.api import Logger
+from openpype.pipeline import LegacyCreator
 from openpype.tools.utils import host_tools
 from . import lib, menu, events
 
@@ -45,21 +46,11 @@ def install():
     pyblish.register_host("hiero")
     pyblish.register_plugin_path(PUBLISH_PATH)
     avalon.register_plugin_path(avalon.Loader, LOAD_PATH)
-    avalon.register_plugin_path(avalon.Creator, CREATE_PATH)
+    avalon.register_plugin_path(LegacyCreator, CREATE_PATH)
     avalon.register_plugin_path(avalon.InventoryAction, INVENTORY_PATH)
 
     # register callback for switching publishable
     pyblish.register_callback("instanceToggled", on_pyblish_instance_toggled)
-
-    # Disable all families except for the ones we explicitly want to see
-    family_states = [
-        "write",
-        "review",
-        "plate"
-    ]
-
-    avalon.data["familiesStateDefault"] = False
-    avalon.data["familiesStateToggled"] = family_states
 
     # install menu
     menu.menu_install()
@@ -77,7 +68,7 @@ def uninstall():
     pyblish.deregister_host("hiero")
     pyblish.deregister_plugin_path(PUBLISH_PATH)
     avalon.deregister_plugin_path(avalon.Loader, LOAD_PATH)
-    avalon.deregister_plugin_path(avalon.Creator, CREATE_PATH)
+    avalon.deregister_plugin_path(LegacyCreator, CREATE_PATH)
 
     # register callback for switching publishable
     pyblish.deregister_callback("instanceToggled", on_pyblish_instance_toggled)

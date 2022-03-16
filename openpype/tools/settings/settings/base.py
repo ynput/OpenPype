@@ -1,6 +1,7 @@
 import sys
 import json
 import traceback
+import functools
 
 from Qt import QtWidgets, QtGui, QtCore
 
@@ -93,7 +94,7 @@ class BaseWidget(QtWidgets.QWidget):
         if is_modified:
             return "modified"
         if has_project_override:
-            return "overriden"
+            return "overridden"
         if has_studio_override:
             return "studio"
         return ""
@@ -168,7 +169,7 @@ class BaseWidget(QtWidgets.QWidget):
             with self.category_widget.working_state_context():
                 self.entity.add_to_project_override
 
-        action = QtWidgets.QAction("Add to project project override")
+        action = QtWidgets.QAction("Add to project override")
         actions_mapping[action] = add_to_project_override
         menu.addAction(action)
 
@@ -289,7 +290,7 @@ class BaseWidget(QtWidgets.QWidget):
         action = QtWidgets.QAction("Paste", menu)
         output.append((action, paste_value))
 
-        # Paste value to matchin entity
+        # Paste value to matching entity
         def paste_value_to_path():
             with self.category_widget.working_state_context():
                 _set_entity_value(matching_entity, value)
@@ -325,7 +326,8 @@ class BaseWidget(QtWidgets.QWidget):
 
             action = QtWidgets.QAction(project_name)
             submenu.addAction(action)
-            actions_mapping[action] = lambda: self._apply_values_from_project(
+            actions_mapping[action] = functools.partial(
+                self._apply_values_from_project,
                 project_name
             )
         menu.addMenu(submenu)

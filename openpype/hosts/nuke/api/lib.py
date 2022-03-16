@@ -1,6 +1,5 @@
 import os
 import re
-import sys
 import six
 import platform
 import contextlib
@@ -679,10 +678,10 @@ def get_render_path(node):
     }
 
     nuke_imageio_writes = get_created_node_imageio_setting(**data_preset)
+    host_name = os.environ.get("AVALON_APP")
 
-    application = lib.get_application(os.environ["AVALON_APP_NAME"])
     data.update({
-        "application": application,
+        "app": host_name,
         "nuke_imageio_writes": nuke_imageio_writes
     })
 
@@ -753,11 +752,20 @@ def script_name():
 
 def add_button_write_to_read(node):
     name = "createReadNode"
-    label = "Create Read From Rendered"
+    label = "Read From Rendered"
     value = "import write_to_read;\
         write_to_read.write_to_read(nuke.thisNode(), allow_relative=False)"
     knob = nuke.PyScript_Knob(name, label, value)
     knob.clearFlag(nuke.STARTLINE)
+    node.addKnob(knob)
+
+
+def add_button_clear_rendered(node, path):
+    name = "clearRendered"
+    label = "Clear Rendered"
+    value = "import clear_rendered;\
+        clear_rendered.clear_rendered(\"{}\")".format(path)
+    knob = nuke.PyScript_Knob(name, label, value)
     node.addKnob(knob)
 
 
@@ -796,18 +804,14 @@ def create_write_node(name, data, input=None, prenodes=None,
     '''
 
     imageio_writes = get_created_node_imageio_setting(**data)
-    app_manager = ApplicationManager()
-    app_name = os.environ.get("AVALON_APP_NAME")
-    if app_name:
-        app = app_manager.applications.get(app_name)
-
     for knob in imageio_writes["knobs"]:
         if knob["name"] == "file_type":
             representation = knob["value"]
 
+    host_name = os.environ.get("AVALON_APP")
     try:
         data.update({
-            "app": app.host_name,
+            "app": host_name,
             "imageio_writes": imageio_writes,
             "representation": representation,
         })
@@ -987,6 +991,9 @@ def create_write_node(name, data, input=None, prenodes=None,
 
     # adding write to read button
     add_button_write_to_read(GN)
+
+    # adding write to read button
+    add_button_clear_rendered(GN, os.path.dirname(fpath))
 
     # Deadline tab.
     add_deadline_tab(GN)

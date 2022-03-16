@@ -20,6 +20,19 @@
                 {
                     "type": "dict",
                     "collapsible": true,
+                    "key": "CollectDefaultDeadlineServer",
+                    "label": "Default Deadline Webservice",
+                    "children": [
+                        {
+                            "type": "boolean",
+                            "key": "pass_mongo_url",
+                            "label": "Pass Mongo url to job"
+                        }
+                    ]
+                },
+                {
+                    "type": "dict",
+                    "collapsible": true,
                     "key": "ValidateExpectedFiles",
                     "label": "Validate Expected Files",
                     "checkbox_key": "enabled",
@@ -61,103 +74,8 @@
                 {
                     "type": "dict",
                     "collapsible": true,
-                    "key": "ProcessSubmittedJobOnFarm",
-                    "label": "ProcessSubmittedJobOnFarm",
-                    "checkbox_key": "enabled",
-                    "is_group": true,
-                    "children": [
-                        {
-                            "type": "boolean",
-                            "key": "enabled",
-                            "label": "Enabled"
-                        },
-                        {
-                            "type": "text",
-                            "key": "deadline_department",
-                            "label": "Deadline department"
-                        },
-                        {
-                            "type": "text",
-                            "key": "deadline_pool",
-                            "label": "Deadline Pool"
-                        },
-                        {
-                            "type": "text",
-                            "key": "deadline_group",
-                            "label": "Deadline Group"
-                        },
-                        {
-                            "type": "number",
-                            "key": "deadline_chunk_size",
-                            "label": "Deadline Chunk Size"
-                        },
-                        {
-                            "type": "number",
-                            "key": "deadline_priority",
-                            "label": "Deadline Priotity"
-                        },
-                        {
-                            "type": "splitter"
-                        },
-                        {
-                            "type": "text",
-                            "key": "publishing_script",
-                            "label": "Publishing script path"
-                        },
-                        {
-                            "type": "list",
-                            "key": "skip_integration_repre_list",
-                            "label": "Skip integration of representation with ext",
-                            "object_type": {
-                                "type": "text"
-                            }
-                        },
-                        {
-                            "type": "dict",
-                            "key": "aov_filter",
-                            "label": "Reviewable subsets filter",
-                            "children": [
-                                {
-                                    "type": "list",
-                                    "key": "maya",
-                                    "label": "Maya",
-                                    "object_type": {
-                                        "type": "text"
-                                    }
-                                },
-                                {
-                                    "type": "list",
-                                    "key": "nuke",
-                                    "label": "Nuke",
-                                    "object_type": {
-                                        "type": "text"
-                                    }
-                                },
-                                {
-                                    "type": "list",
-                                    "key": "aftereffects",
-                                    "label": "After Effects",
-                                    "object_type": {
-                                        "type": "text"
-                                    }
-                                },
-                                {
-                                    "type": "list",
-                                    "key": "celaction",
-                                    "label": "Celaction",
-                                    "object_type": {
-                                        "type": "text"
-                                    }
-                                }
-                            ]
-                        }
-                    ]
-                },
-                {
-                    "type": "dict",
-                    "collapsible": true,
                     "key": "MayaSubmitDeadline",
-                    "label": "Submit Maya job to Deadline",
+                    "label": "Maya Submit to Deadline",
                     "checkbox_key": "enabled",
                     "children": [
                         {
@@ -185,7 +103,7 @@
                                     "DraftTileAssembler": "Draft Tile Assembler"
                                 },
                                 {
-                                    "oiio": "Open Image IO"
+                                    "OpenPypeTileAssembler": "Open Image IO"
                                 }
                             ]
                         },
@@ -449,6 +367,77 @@
                             "type": "text",
                             "key": "department",
                             "label": "Department"
+                        },
+                        {
+                            "type": "boolean",
+                            "key": "multiprocess",
+                            "label": "Multiprocess"
+                        }
+                    ]
+                },
+                {
+                    "type": "dict",
+                    "collapsible": true,
+                    "key": "ProcessSubmittedJobOnFarm",
+                    "label": "ProcessSubmittedJobOnFarm",
+                    "checkbox_key": "enabled",
+                    "is_group": true,
+                    "children": [
+                        {
+                            "type": "boolean",
+                            "key": "enabled",
+                            "label": "Enabled"
+                        },
+                        {
+                            "type": "text",
+                            "key": "deadline_department",
+                            "label": "Deadline department"
+                        },
+                        {
+                            "type": "text",
+                            "key": "deadline_pool",
+                            "label": "Deadline Pool"
+                        },
+                        {
+                            "type": "text",
+                            "key": "deadline_group",
+                            "label": "Deadline Group"
+                        },
+                        {
+                            "type": "number",
+                            "key": "deadline_chunk_size",
+                            "label": "Deadline Chunk Size"
+                        },
+                        {
+                            "type": "number",
+                            "key": "deadline_priority",
+                            "label": "Deadline Priotity"
+                        },
+                        {
+                            "type": "splitter"
+                        },
+                        {
+                            "type": "text",
+                            "key": "publishing_script",
+                            "label": "Publishing script path"
+                        },
+                        {
+                            "type": "list",
+                            "key": "skip_integration_repre_list",
+                            "label": "Skip integration of representation with ext",
+                            "object_type": {
+                                "type": "text"
+                            }
+                        },
+                        {
+                            "type": "dict-modifiable",
+                            "docstring": "Regular expression to filter for which subset review should be created in publish job.",
+                            "key": "aov_filter",
+                            "label": "Reviewable subsets filter",
+                            "object_type": {
+                                "type": "list",
+                                "object_type": "text"
+                            }
                         }
                     ]
                 }

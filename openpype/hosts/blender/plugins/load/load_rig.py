@@ -7,11 +7,15 @@ from typing import Dict, List, Optional
 import bpy
 
 from avalon import api
-from avalon.blender.pipeline import AVALON_CONTAINERS
-from avalon.blender.pipeline import AVALON_CONTAINER_ID
-from avalon.blender.pipeline import AVALON_PROPERTY
+from avalon.blender import lib as avalon_lib
 from openpype import lib
+from openpype.pipeline import legacy_create
 from openpype.hosts.blender.api import plugin
+from openpype.hosts.blender.api.pipeline import (
+    AVALON_CONTAINERS,
+    AVALON_PROPERTY,
+    AVALON_CONTAINER_ID
+)
 
 
 class BlendRigLoader(plugin.AssetLoader):
@@ -110,6 +114,8 @@ class BlendRigLoader(plugin.AssetLoader):
                 plugin.prepare_data(local_obj.data, group_name)
 
                 if action is not None:
+                    if local_obj.animation_data is None:
+                        local_obj.animation_data_create()
                     local_obj.animation_data.action = action
                 elif (local_obj.animation_data and
                       local_obj.animation_data.action is not None):
@@ -194,12 +200,14 @@ class BlendRigLoader(plugin.AssetLoader):
         plugin.deselect_all()
 
         create_animation = False
+        anim_file = None
 
         if options is not None:
             parent = options.get('parent')
             transform = options.get('transform')
             action = options.get('action')
             create_animation = options.get('create_animation')
+            anim_file = options.get('animation_file')
 
             if parent and transform:
                 location = transform.get('translation')
@@ -241,7 +249,7 @@ class BlendRigLoader(plugin.AssetLoader):
 
             animation_asset = options.get('animation_asset')
 
-            api.create(
+            legacy_create(
                 creator_plugin,
                 name=namespace + "_animation",
                 # name=f"{unique_number}_{subset}_animation",
@@ -251,6 +259,26 @@ class BlendRigLoader(plugin.AssetLoader):
             )
 
             plugin.deselect_all()
+
+        if anim_file:
+            bpy.ops.import_scene.fbx(filepath=anim_file, anim_offset=0.0)
+
+            imported = avalon_lib.get_selection()
+
+            armature = [
+                o for o in asset_group.children if o.type == 'ARMATURE'][0]
+
+            imported_group = [
+                o for o in imported if o.type == 'EMPTY'][0]
+
+            for obj in imported:
+                if obj.type == 'ARMATURE':
+                    if not armature.animation_data:
+                        armature.animation_data_create()
+                    armature.animation_data.action = obj.animation_data.action
+
+            self._remove(imported_group)
+            bpy.data.objects.remove(imported_group)
 
         bpy.context.scene.collection.objects.link(asset_group)
 
@@ -348,6 +376,7 @@ class BlendRigLoader(plugin.AssetLoader):
 
         metadata["libpath"] = str(libpath)
         metadata["representation"] = str(representation["_id"])
+        metadata["parent"] = str(representation["parent"])
 
     def exec_remove(self, container: Dict) -> bool:
         """Remove an existing asset group from a Blender scene.

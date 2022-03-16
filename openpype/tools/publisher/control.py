@@ -42,18 +42,23 @@ class MainThreadProcess(QtCore.QObject):
     This approach gives ability to update UI meanwhile plugin is in progress.
     """
 
-    timer_interval = 3
+    count_timeout = 2
 
     def __init__(self):
         super(MainThreadProcess, self).__init__()
         self._items_to_process = collections.deque()
 
         timer = QtCore.QTimer()
-        timer.setInterval(self.timer_interval)
+        timer.setInterval(0)
 
         timer.timeout.connect(self._execute)
 
         self._timer = timer
+        self._switch_counter = self.count_timeout
+
+    def process(self, func, *args, **kwargs):
+        item = MainThreadItem(func, *args, **kwargs)
+        self.add_item(item)
 
     def add_item(self, item):
         self._items_to_process.append(item)
@@ -61,6 +66,12 @@ class MainThreadProcess(QtCore.QObject):
     def _execute(self):
         if not self._items_to_process:
             return
+
+        if self._switch_counter > 0:
+            self._switch_counter -= 1
+            return
+
+        self._switch_counter = self.count_timeout
 
         item = self._items_to_process.popleft()
         item.process()
@@ -173,11 +184,21 @@ class PublishReport:
 
         self._stored_plugins.append(plugin)
 
+        plugin_data_item = self._create_plugin_data_item(plugin)
+
+        self._plugin_data_with_plugin.append({
+            "plugin": plugin,
+            "data": plugin_data_item
+        })
+        self._plugin_data.append(plugin_data_item)
+        return plugin_data_item
+
+    def _create_plugin_data_item(self, plugin):
         label = None
         if hasattr(plugin, "label"):
             label = plugin.label
 
-        plugin_data_item = {
+        return {
             "name": plugin.__name__,
             "label": label,
             "order": plugin.order,
@@ -186,12 +207,6 @@ class PublishReport:
             "skipped": False,
             "passed": False
         }
-        self._plugin_data_with_plugin.append({
-            "plugin": plugin,
-            "data": plugin_data_item
-        })
-        self._plugin_data.append(plugin_data_item)
-        return plugin_data_item
 
     def set_plugin_skipped(self):
         """Set that current plugin has been skipped."""
@@ -241,7 +256,7 @@ class PublishReport:
         if publish_plugins:
             for plugin in publish_plugins:
                 if plugin not in self._stored_plugins:
-                    plugins_data.append(self._add_plugin_data_item(plugin))
+                    plugins_data.append(self._create_plugin_data_item(plugin))
 
         crashed_file_paths = {}
         if self._publish_discover_result is not None:
@@ -555,7 +570,7 @@ class PublisherController:
         self.create_context.reset_avalon_context()
 
         self._reset_plugins()
-        # Publish part must be resetted after plugins
+        # Publish part must be reset after plugins
         self._reset_publish()
         self._reset_instances()
 
@@ -605,7 +620,9 @@ class PublisherController:
                         found_idx = idx
                         break
 
-                value = instance.creator_attributes[attr_def.key]
+                value = None
+                if attr_def.is_value_def:
+                    value = instance.creator_attributes[attr_def.key]
                 if found_idx is None:
                     idx = len(output)
                     output.append((attr_def, [instance], [value]))
@@ -690,7 +707,7 @@ class PublisherController:
 
     def remove_instances(self, instances):
         """"""
-        # QUESTION Expect that instaces are really removed? In that case save
+        # QUESTION Expect that instances are really removed? In that case save
         #   reset is not required and save changes too.
         self.save_changes()
 
@@ -856,8 +873,6 @@ class PublisherController:
         """
         for idx, plugin in enumerate(self.publish_plugins):
             self._publish_progress = idx
-            # Add plugin to publish report
-            self._publish_report.add_plugin_iter(plugin, self._publish_context)
 
             # Reset current plugin validations error
             self._publish_current_plugin_validation_errors = None
@@ -884,6 +899,9 @@ class PublisherController:
                 and self._publish_validation_errors
             ):
                 yield MainThreadItem(self.stop_publish)
+
+            # Add plugin to publish report
+            self._publish_report.add_plugin_iter(plugin, self._publish_context)
 
             # Trigger callback that new plugin is going to be processed
             self._trigger_callbacks(
@@ -968,6 +986,9 @@ class PublisherController:
                 self._publish_error = exception
 
         self._publish_next_process()
+
+    def reset_project_data_cache(self):
+        self._asset_docs_cache.reset()
 
 
 def collect_families_from_instances(instances, only_active=False):

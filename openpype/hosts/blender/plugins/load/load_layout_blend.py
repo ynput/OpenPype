@@ -7,10 +7,14 @@ from typing import Dict, List, Optional
 import bpy
 
 from avalon import api
-from avalon.blender.pipeline import AVALON_CONTAINERS
-from avalon.blender.pipeline import AVALON_CONTAINER_ID
-from avalon.blender.pipeline import AVALON_PROPERTY
+from openpype import lib
+from openpype.pipeline import legacy_create
 from openpype.hosts.blender.api import plugin
+from openpype.hosts.blender.api.pipeline import (
+    AVALON_CONTAINERS,
+    AVALON_PROPERTY,
+    AVALON_CONTAINER_ID
+)
 
 
 class BlendLayoutLoader(plugin.AssetLoader):
@@ -59,7 +63,9 @@ class BlendLayoutLoader(plugin.AssetLoader):
             library = bpy.data.libraries.get(bpy.path.basename(libpath))
             bpy.data.libraries.remove(library)
 
-    def _process(self, libpath, asset_group, group_name, actions):
+    def _process(
+        self, libpath, asset_group, group_name, asset, representation, actions
+    ):
         with bpy.data.libraries.load(
             libpath, link=True, relative=False
         ) as (data_from, data_to):
@@ -72,7 +78,8 @@ class BlendLayoutLoader(plugin.AssetLoader):
         container = None
 
         for empty in empties:
-            if empty.get(AVALON_PROPERTY):
+            if (empty.get(AVALON_PROPERTY) and
+                    empty.get(AVALON_PROPERTY).get('family') == 'layout'):
                 container = empty
                 break
 
@@ -83,12 +90,16 @@ class BlendLayoutLoader(plugin.AssetLoader):
         objects = []
         nodes = list(container.children)
 
-        for obj in nodes:
-            obj.parent = asset_group
+        allowed_types = ['ARMATURE', 'MESH', 'EMPTY']
 
         for obj in nodes:
-            objects.append(obj)
-            nodes.extend(list(obj.children))
+            if obj.type in allowed_types:
+                obj.parent = asset_group
+
+        for obj in nodes:
+            if obj.type in allowed_types:
+                objects.append(obj)
+                nodes.extend(list(obj.children))
 
         objects.reverse()
 
@@ -106,7 +117,7 @@ class BlendLayoutLoader(plugin.AssetLoader):
             parent.objects.link(obj)
 
         for obj in objects:
-            local_obj = plugin.prepare_data(obj, group_name)
+            local_obj = plugin.prepare_data(obj)
 
             action = None
 
@@ -114,7 +125,7 @@ class BlendLayoutLoader(plugin.AssetLoader):
                 action = actions.get(local_obj.name, None)
 
             if local_obj.type == 'MESH':
-                plugin.prepare_data(local_obj.data, group_name)
+                plugin.prepare_data(local_obj.data)
 
                 if obj != local_obj:
                     for constraint in constraints:
@@ -123,15 +134,18 @@ class BlendLayoutLoader(plugin.AssetLoader):
 
                 for material_slot in local_obj.material_slots:
                     if material_slot.material:
-                        plugin.prepare_data(material_slot.material, group_name)
+                        plugin.prepare_data(material_slot.material)
             elif local_obj.type == 'ARMATURE':
-                plugin.prepare_data(local_obj.data, group_name)
+                plugin.prepare_data(local_obj.data)
 
                 if action is not None:
+                    if local_obj.animation_data is None:
+                        local_obj.animation_data_create()
                     local_obj.animation_data.action = action
-                elif local_obj.animation_data.action is not None:
+                elif (local_obj.animation_data and
+                      local_obj.animation_data.action is not None):
                     plugin.prepare_data(
-                        local_obj.animation_data.action, group_name)
+                        local_obj.animation_data.action)
 
                 # Set link the drivers to the local object
                 if local_obj.data.animation_data:
@@ -139,6 +153,21 @@ class BlendLayoutLoader(plugin.AssetLoader):
                         for v in d.driver.variables:
                             for t in v.targets:
                                 t.id = local_obj
+
+            elif local_obj.type == 'EMPTY':
+                creator_plugin = lib.get_creator_by_name("CreateAnimation")
+                if not creator_plugin:
+                    raise ValueError("Creator plugin \"CreateAnimation\" was "
+                                     "not found.")
+
+                legacy_create(
+                    creator_plugin,
+                    name=local_obj.name.split(':')[-1] + "_animation",
+                    asset=asset,
+                    options={"useSelection": False,
+                             "asset_group": local_obj},
+                    data={"dependencies": representation}
+                )
 
             if not local_obj.get(AVALON_PROPERTY):
                 local_obj[AVALON_PROPERTY] = dict()
@@ -148,7 +177,63 @@ class BlendLayoutLoader(plugin.AssetLoader):
 
         objects.reverse()
 
-        bpy.data.orphans_purge(do_local_ids=False)
+        armatures = [
+            obj for obj in bpy.data.objects
+            if obj.type == 'ARMATURE' and obj.library is None]
+        arm_act = {}
+
+        # The armatures with an animation need to be at the center of the
+        # scene to be hooked correctly by the curves modifiers.
+        for armature in armatures:
+            if armature.animation_data and armature.animation_data.action:
+                arm_act[armature] = armature.animation_data.action
+                armature.animation_data.action = None
+                armature.location = (0.0, 0.0, 0.0)
+                for bone in armature.pose.bones:
+                    bone.location = (0.0, 0.0, 0.0)
+                    bone.rotation_euler = (0.0, 0.0, 0.0)
+
+        curves = [obj for obj in data_to.objects if obj.type == 'CURVE']
+
+        for curve in curves:
+            curve_name = curve.name.split(':')[0]
+            curve_obj = bpy.data.objects.get(curve_name)
+
+            local_obj = plugin.prepare_data(curve)
+            plugin.prepare_data(local_obj.data)
+
+            # Curves need to reset the hook, but to do that they need to be
+            # in the view layer.
+            parent.objects.link(local_obj)
+            plugin.deselect_all()
+            local_obj.select_set(True)
+            bpy.context.view_layer.objects.active = local_obj
+            if local_obj.library is None:
+                bpy.ops.object.mode_set(mode='EDIT')
+                bpy.ops.object.hook_reset()
+                bpy.ops.object.mode_set(mode='OBJECT')
+            parent.objects.unlink(local_obj)
+
+            local_obj.use_fake_user = True
+
+            for mod in local_obj.modifiers:
+                mod.object = bpy.data.objects.get(f"{mod.object.name}")
+
+            if not local_obj.get(AVALON_PROPERTY):
+                local_obj[AVALON_PROPERTY] = dict()
+
+            avalon_info = local_obj[AVALON_PROPERTY]
+            avalon_info.update({"container_name": group_name})
+
+            local_obj.parent = curve_obj
+            objects.append(local_obj)
+
+        for armature in armatures:
+            if arm_act.get(armature):
+                armature.animation_data.action = arm_act[armature]
+
+        while bpy.data.orphans_purge(do_local_ids=False):
+            pass
 
         plugin.deselect_all()
 
@@ -168,6 +253,7 @@ class BlendLayoutLoader(plugin.AssetLoader):
         libpath = self.fname
         asset = context["asset"]["name"]
         subset = context["subset"]["name"]
+        representation = str(context["representation"]["_id"])
 
         asset_name = plugin.asset_name(asset, subset)
         unique_number = plugin.get_unique_number(asset, subset)
@@ -183,7 +269,8 @@ class BlendLayoutLoader(plugin.AssetLoader):
         asset_group.empty_display_type = 'SINGLE_ARROW'
         avalon_container.objects.link(asset_group)
 
-        objects = self._process(libpath, asset_group, group_name, None)
+        objects = self._process(
+            libpath, asset_group, group_name, asset, representation, None)
 
         for child in asset_group.children:
             if child.get(AVALON_PROPERTY):
