@@ -31,6 +31,7 @@ from .load import (
 
     loaders_from_representation,
     get_representation_path,
+    get_repres_contexts,
 )
 
 from .publish import (
@@ -75,6 +76,7 @@ __all__ = (
 
     "loaders_from_representation",
     "get_representation_path",
+    "get_repres_contexts",
 
     # --- Publish ---
     "PublishValidationError",
