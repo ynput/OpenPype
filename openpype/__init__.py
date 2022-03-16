@@ -10,7 +10,8 @@ from .lib import (
     Anatomy,
     filter_pyblish_plugins,
     set_plugin_attributes_from_settings,
-    change_timer_to_current_context
+    change_timer_to_current_context,
+    register_event_callback,
 )
 
 pyblish = avalon = _original_discover = None
@@ -58,10 +59,15 @@ def patched_discover(superclass):
     """
     # run original discover and get plugins
     plugins = _original_discover(superclass)
+    filtered_plugins = [
+        plugin
+        for plugin in plugins
+        if issubclass(plugin, superclass)
+    ]
 
-    set_plugin_attributes_from_settings(plugins, superclass)
+    set_plugin_attributes_from_settings(filtered_plugins, superclass)
 
-    return plugins
+    return filtered_plugins
 
 
 @import_wrapper
@@ -69,6 +75,10 @@ def install():
     """Install Pype to Avalon."""
     from pyblish.lib import MessageHandler
     from openpype.modules import load_modules
+    from openpype.pipeline import (
+        LegacyCreator,
+        register_loader_plugin_path,
+    )
     from avalon import pipeline
 
     # Make sure modules are loaded
@@ -84,7 +94,7 @@ def install():
     log.info("Registering global plug-ins..")
     pyblish.register_plugin_path(PUBLISH_PATH)
     pyblish.register_discovery_filter(filter_pyblish_plugins)
-    avalon.register_plugin_path(avalon.Loader, LOAD_PATH)
+    register_loader_plugin_path(LOAD_PATH)
 
     project_name = os.environ.get("AVALON_PROJECT")
 
@@ -112,8 +122,8 @@ def install():
                 continue
 
             pyblish.register_plugin_path(path)
-            avalon.register_plugin_path(avalon.Loader, path)
-            avalon.register_plugin_path(avalon.Creator, path)
+            register_loader_plugin_path(path)
+            avalon.register_plugin_path(LegacyCreator, path)
             avalon.register_plugin_path(avalon.InventoryAction, path)
 
     # apply monkey patched discover to original one
@@ -122,20 +132,22 @@ def install():
     avalon.discover = patched_discover
     pipeline.discover = patched_discover
 
-    avalon.on("taskChanged", _on_task_change)
+    register_event_callback("taskChanged", _on_task_change)
 
 
-def _on_task_change(*args):
+def _on_task_change():
     change_timer_to_current_context()
 
 
 @import_wrapper
 def uninstall():
     """Uninstall Pype from Avalon."""
+    from openpype.pipeline import deregister_loader_plugin_path
+
     log.info("Deregistering global plug-ins..")
     pyblish.deregister_plugin_path(PUBLISH_PATH)
     pyblish.deregister_discovery_filter(filter_pyblish_plugins)
-    avalon.deregister_plugin_path(avalon.Loader, LOAD_PATH)
+    deregister_loader_plugin_path(LOAD_PATH)
     log.info("Global plug-ins unregistred")
 
     # restore original discover

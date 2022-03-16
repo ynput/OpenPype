@@ -1,0 +1,23 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<root>
+<error id="main">
+<title>No secondary workfile</title>
+<description>
+## No secondary workfile found
+
+Current process expects that primary workfile (for example with a extension '{extension}') will contain also 'secondary' workfile.
+
+Secondary workfile for '{file_name}' wasn't found.
+
+### How to repair?
+
+Attach secondary workfile or disable this validator and Publish again.
+</description>
+<detail>
+### __Detailed Info__ (optional)
+
+This process was implemented for a possible use case of first workfile coming from Mari, secondary workfile for textures from Substance.
+Publish should contain both if primary workfile is present.
+</detail>
+</error>
+</root>

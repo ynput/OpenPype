@@ -1,5 +1,5 @@
 from Qt import QtCore, QtWidgets
-from avalon.vendor import qtawesome
+import qtawesome
 from .models import LogModel, LogsFilterProxy
 
 

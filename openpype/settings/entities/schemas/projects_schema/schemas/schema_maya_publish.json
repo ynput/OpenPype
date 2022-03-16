@@ -550,6 +550,30 @@
         {
             "type": "dict",
             "collapsible": true,
+            "key": "ExtractMayaSceneRaw",
+            "label": "Maya Scene (Raw)",
+            "checkbox_key": "enabled",
+            "children": [
+                {
+                    "type": "boolean",
+                    "key": "enabled",
+                    "label": "Enabled"
+                },
+                {
+                    "type": "label",
+                    "label": "Add loaded instances to those published families:"
+                },
+                {
+                    "key": "add_for_families",
+                    "label": "Families",
+                    "type": "list",
+                    "object_type": "text"
+                }
+            ]
+        },
+        {
+            "type": "dict",
+            "collapsible": true,
             "key": "ExtractCameraAlembic",
             "label": "Extract camera to Alembic",
             "checkbox_key": "enabled",

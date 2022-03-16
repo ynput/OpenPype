@@ -74,3 +74,9 @@ def get_datetime_data(datetime_obj=None):
         "S": str(int(seconds)),
         "SS": str(seconds),
     }
+
+
+def get_formatted_current_time():
+    return datetime.datetime.now().strftime(
+        "%Y%m%dT%H%M%SZ"
+    )

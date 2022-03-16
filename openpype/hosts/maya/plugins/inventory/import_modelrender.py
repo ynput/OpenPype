@@ -1,5 +1,9 @@
 import json
-from avalon import api, io, pipeline
+from avalon import api, io
+from openpype.pipeline import (
+    get_representation_context,
+    get_representation_path_from_context,
+)
 from openpype.hosts.maya.api.lib import (
     maintained_selection,
     apply_shaders
@@ -73,11 +77,11 @@ class ImportModelRender(api.InventoryAction):
             "name": self.look_data_type,
         })
 
-        context = pipeline.get_representation_context(look_repr["_id"])
-        maya_file = pipeline.get_representation_path_from_context(context)
+        context = get_representation_context(look_repr["_id"])
+        maya_file = get_representation_path_from_context(context)
 
-        context = pipeline.get_representation_context(json_repr["_id"])
-        json_file = pipeline.get_representation_path_from_context(context)
+        context = get_representation_context(json_repr["_id"])
+        json_file = get_representation_path_from_context(context)
 
         # Import the look file
         with maintained_selection():

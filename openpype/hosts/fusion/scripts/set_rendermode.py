@@ -1,5 +1,5 @@
 from Qt import QtWidgets
-from avalon.vendor import qtawesome
+import qtawesome
 from openpype.hosts.fusion.api import get_current_comp
 
 

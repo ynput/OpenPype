@@ -674,7 +674,7 @@ ansicon = {version = "*", markers = "platform_system == \"Windows\""}
 
 [[package]]
 name = "jsonschema"
-version = "3.2.0"
+version = "2.6.0"
 description = "An implementation of JSON Schema validation for Python"
 category = "main"
 optional = false
@@ -1218,6 +1218,26 @@ description = "Python 2 & 3 compatibility wrapper around all Qt bindings - PySid
 category = "main"
 optional = false
 python-versions = "*"
+
+[[package]]
+name = "qtawesome"
+version = "0.7.3"
+description = "FontAwesome icons in PyQt and PySide applications"
+category = "main"
+optional = false
+python-versions = "*"
+
+[package.dependencies]
+qtpy = "*"
+six = "*"
+
+[[package]]
+name = "qtpy"
+version = "1.11.3"
+description = "Provides an abstraction layer on top of the various Qt bindings (PyQt5, PyQt4 and PySide) and additional custom QWidgets."
+category = "main"
+optional = false
+python-versions = ">=2.7,!=3.0.*,!=3.1.*,!=3.2.*,!=3.3.*,!=3.4.*,!=3.5.*"
 
 [[package]]
 name = "recommonmark"
@@ -2101,8 +2121,8 @@ jinxed = [
     {file = "jinxed-1.1.0.tar.gz", hash = "sha256:d8f1731f134e9e6b04d95095845ae6c10eb15cb223a5f0cabdea87d4a279c305"},
 ]
 jsonschema = [
-    {file = "jsonschema-3.2.0-py2.py3-none-any.whl", hash = "sha256:4e5b3cf8216f577bee9ce139cbe72eca3ea4f292ec60928ff24758ce626cd163"},
-    {file = "jsonschema-3.2.0.tar.gz", hash = "sha256:c8a85b28d377cc7737e46e2d9f2b4f44ee3c0e1deac6bf46ddefc7187d30797a"},
+    {file = "jsonschema-2.6.0-py2.py3-none-any.whl", hash = "sha256:000e68abd33c972a5248544925a0cae7d1125f9bf6c58280d37546b946769a08"},
+    {file = "jsonschema-2.6.0.tar.gz", hash = "sha256:6ff5f3180870836cae40f06fa10419f557208175f13ad7bc26caa77beb1f6e02"},
 ]
 keyring = [
     {file = "keyring-22.4.0-py3-none-any.whl", hash = "sha256:d6c531f6d12f3304db6029af1d19894bd446ecbbadd22465fa0f096b3e12d258"},
@@ -2650,6 +2670,14 @@ pywin32-ctypes = [
 "qt.py" = [
     {file = "Qt.py-1.3.6-py2.py3-none-any.whl", hash = "sha256:7edf6048d07a6924707506b5ba34a6e05d66dde9a3f4e3a62f9996ccab0b91c7"},
     {file = "Qt.py-1.3.6.tar.gz", hash = "sha256:0d78656a2f814602eee304521c7bf5da0cec414818b3833712c77524294c404a"},
+]
+qtawesome = [
+    {file = "QtAwesome-0.7.3-py2.py3-none-any.whl", hash = "sha256:ddf4530b4af71cec13b24b88a4cdb56ec85b1e44c43c42d0698804c7137b09b0"},
+    {file = "QtAwesome-0.7.3.tar.gz", hash = "sha256:b98b9038d19190e83ab26d91c4d8fc3a36591ee2bc7f5016d4438b8240d097bd"},
+]
+qtpy = [
+    {file = "QtPy-1.11.3-py2.py3-none-any.whl", hash = "sha256:e121fbee8e95645af29c5a4aceba8d657991551fc1aa3b6b6012faf4725a1d20"},
+    {file = "QtPy-1.11.3.tar.gz", hash = "sha256:d427addd37386a8d786db81864a5536700861d95bf085cb31d1bea855d699557"},
 ]
 recommonmark = [
     {file = "recommonmark-0.7.1-py2.py3-none-any.whl", hash = "sha256:1b1db69af0231efce3fa21b94ff627ea33dee7079a01dd0a7f8482c3da148b3f"},

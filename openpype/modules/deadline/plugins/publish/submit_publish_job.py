@@ -13,6 +13,8 @@ from avalon import api, io
 
 import pyblish.api
 
+from openpype.pipeline import get_representation_path
+
 
 def get_resources(version, extension=None):
     """Get the files from the specific version."""
@@ -23,7 +25,7 @@ def get_resources(version, extension=None):
     representation = io.find_one(query)
     assert representation, "This is a bug"
 
-    directory = api.get_representation_path(representation)
+    directory = get_representation_path(representation)
     print("Source: ", directory)
     resources = sorted(
         [
@@ -523,7 +525,6 @@ class ProcessSubmittedJobOnFarm(pyblish.api.InstancePlugin):
         """
         representations = []
         collections, remainders = clique.assemble(exp_files)
-        bake_renders = instance.get("bakingNukeScripts", [])
 
         # create representation for every collected sequento ce
         for collection in collections:
@@ -540,9 +541,6 @@ class ProcessSubmittedJobOnFarm(pyblish.api.InstancePlugin):
                         ):
                             preview = True
                             break
-
-            if bake_renders:
-                preview = False
 
             # toggle preview on if multipart is on
             if instance.get("multipartExr", False):
@@ -616,16 +614,6 @@ class ProcessSubmittedJobOnFarm(pyblish.api.InstancePlugin):
                     "tags": ["review"]
                 })
                 self._solve_families(instance, True)
-
-            if (bake_renders
-                    and remainder in bake_renders[0]["bakeRenderPath"]):
-                rep.update({
-                    "fps": instance.get("fps"),
-                    "tags": ["review", "delete"]
-                })
-                # solve families with `preview` attributes
-                self._solve_families(instance, True)
-            representations.append(rep)
 
         return representations
 

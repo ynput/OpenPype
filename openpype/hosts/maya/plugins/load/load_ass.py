@@ -1,13 +1,16 @@
 import os
 import clique
 
-from avalon import api
 from openpype.api import get_project_settings
+from openpype.pipeline import (
+    load,
+    get_representation_path
+)
 from openpype.hosts.maya.api.lib import unique_namespace
 from openpype.hosts.maya.api.pipeline import containerise
 
 
-class AssStandinLoader(api.Loader):
+class AssStandinLoader(load.LoaderPlugin):
     """Load .ASS file as standin"""
 
     families = ["ass"]
@@ -83,7 +86,7 @@ class AssStandinLoader(api.Loader):
 
         import pymel.core as pm
 
-        path = api.get_representation_path(representation)
+        path = get_representation_path(representation)
 
         files_in_path = os.listdir(os.path.split(path)[0])
         sequence = 0

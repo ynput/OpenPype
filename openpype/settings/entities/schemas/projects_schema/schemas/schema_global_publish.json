@@ -291,6 +291,15 @@
                                                     "label": "Families",
                                                     "type": "list",
                                                     "object_type": "text"
+                                                },
+                                                {
+                                                    "type": "separator"
+                                                },
+                                                {
+                                                    "key": "subsets",
+                                                    "label": "Subsets",
+                                                    "type": "list",
+                                                    "object_type": "text"
                                                 }
                                             ]
                                         },
@@ -365,19 +374,6 @@
                                                     "default": 0,
                                                     "minimum": 0,
                                                     "maximum": 10000
-                                                },
-                                                {
-                                                    "key": "state",
-                                                    "label": "Type",
-                                                    "type": "enum",
-                                                    "enum_items": [
-                                                        {
-                                                            "letterbox": "Letterbox"
-                                                        },
-                                                        {
-                                                            "pillar": "Pillar"
-                                                        }
-                                                    ]
                                                 },
                                                 {
                                                     "type": "color",

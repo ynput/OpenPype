@@ -1,0 +1,15 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<root>
+<error id="main">
+<title>Invalid frame range</title>
+<description>
+## Invalid frame range
+
+Expected duration or '{duration}' frames set in database, workfile contains only '{found}' frames.
+
+### How to repair?
+
+Modify configuration in the database or tweak frame range in the workfile.
+</description>
+</error>
+</root>

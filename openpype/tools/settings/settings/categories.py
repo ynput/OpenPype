@@ -1,9 +1,9 @@
-import os
 import sys
 import traceback
 import contextlib
 from enum import Enum
 from Qt import QtWidgets, QtCore
+import qtawesome
 
 from openpype.lib import get_openpype_version
 from openpype.tools.utils import set_style_property
@@ -63,7 +63,6 @@ from .item_widgets import (
     PathInputWidget
 )
 from .color_widget import ColorWidget
-from avalon.vendor import qtawesome
 
 
 class CategoryState(Enum):

@@ -7,14 +7,17 @@ import time
 
 import appdirs
 from Qt import QtCore, QtGui
-from avalon.vendor import qtawesome
+import qtawesome
 from avalon import api
 from openpype.lib import JSONSettingRegistry
 from openpype.lib.applications import (
     CUSTOM_LAUNCH_APP_GROUPS,
     ApplicationManager
 )
-from openpype.tools.utils.lib import DynamicQThread
+from openpype.tools.utils.lib import (
+    DynamicQThread,
+    get_project_icon,
+)
 from openpype.tools.utils.assets_widget import (
     AssetModel,
     ASSET_NAME_ROLE
@@ -400,6 +403,7 @@ class LauncherModel(QtCore.QObject):
         self._dbcon = dbcon
         # Available project names
         self._project_names = set()
+        self._project_docs_by_name = {}
 
         # Context data
         self._asset_docs = []
@@ -460,6 +464,9 @@ class LauncherModel(QtCore.QObject):
         """Available project names."""
         return self._project_names
 
+    def get_project_doc(self, project_name):
+        return self._project_docs_by_name.get(project_name)
+
     @property
     def asset_filter_data_by_id(self):
         """Prepared filter data by asset id."""
@@ -516,9 +523,13 @@ class LauncherModel(QtCore.QObject):
         """Refresh projects."""
         current_project = self.project_name
         project_names = set()
+        project_docs_by_name = {}
         for project_doc in self._dbcon.projects(only_active=True):
-            project_names.add(project_doc["name"])
+            project_name = project_doc["name"]
+            project_names.add(project_name)
+            project_docs_by_name[project_name] = project_doc
 
+        self._project_docs_by_name = project_docs_by_name
         self._project_names = project_names
         self.projects_refreshed.emit()
         if (
@@ -694,6 +705,11 @@ class LauncherTaskModel(TasksModel):
         self._launcher_model = launcher_model
         super(LauncherTaskModel, self).__init__(*args, **kwargs)
 
+    def _refresh_project_doc(self):
+        self._project_doc = self._launcher_model.get_project_doc(
+            self._launcher_model.project_name
+        )
+
     def set_asset_id(self, asset_id):
         asset_doc = None
         if self._context_is_valid():
@@ -718,7 +734,6 @@ class AssetRecursiveSortFilterModel(QtCore.QSortFilterProxyModel):
         self._assignee_filter = self._launcher_model.assignee_filters
         self.invalidateFilter()
 
-    """Filters to the regex if any of the children matches allow parent"""
     def filterAcceptsRow(self, row, parent):
         if (
             not self._name_filter
@@ -818,7 +833,6 @@ class ProjectModel(QtGui.QStandardItemModel):
         super(ProjectModel, self).__init__(parent=parent)
 
         self._launcher_model = launcher_model
-        self.project_icon = qtawesome.icon("fa.map", color="white")
         self._project_names = set()
 
         launcher_model.projects_refreshed.connect(self._on_refresh)
@@ -863,7 +877,11 @@ class ProjectModel(QtGui.QStandardItemModel):
         for row in reversed(sorted(row_counts.keys())):
             items = []
             for project_name in row_counts[row]:
-                item = QtGui.QStandardItem(self.project_icon, project_name)
+                project_doc = self._launcher_model.get_project_doc(
+                    project_name
+                )
+                icon = get_project_icon(project_doc)
+                item = QtGui.QStandardItem(icon, project_name)
                 items.append(item)
 
             self.invisibleRootItem().insertRows(row, items)

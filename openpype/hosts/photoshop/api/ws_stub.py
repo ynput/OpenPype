@@ -2,12 +2,11 @@
     Stub handling connection from server to client.
     Used anywhere solution is calling client methods.
 """
-import sys
 import json
 import attr
 from wsrpc_aiohttp import WebSocketAsync
 
-from avalon.tools.webserver.app import WebServerTool
+from openpype.tools.adobe_webserver.app import WebServerTool
 
 
 @attr.s
