@@ -236,14 +236,21 @@ def containerise(
 
 
 def get_context_data():
-    pass
+    """Get stored values for context (validation enable/disable etc)"""
+    meta = _get_stub().get_layers_metadata()
+    for item in meta:
+        if item.get("id") == "publish_context":
+            item.pop("id")
+            return item
+
+    return {}
 
 
 def update_context_data(data, changes):
-    # item = data
-    # item["id"] = "publish_context"
-    # _get_stub().imprint(item["id"], item)
-    pass
+    """Store value needed for context"""
+    item = data
+    item["id"] = "publish_context"
+    _get_stub().imprint(item["id"], item)
 
 
 def get_context_title():
