@@ -105,17 +105,18 @@ class CollectPublishedFiles(pyblish.api.ContextPlugin):
                     task_dir, task_data["files"], tags
                 )
                 file_url = os.path.join(task_dir, task_data["files"][0])
-                duration = self._get_duration(file_url)
-                if duration:
+                no_of_frames = self._get_number_of_frames(file_url)
+                if no_of_frames:
                     try:
-                        frame_end = int(frame_start) + math.ceil(duration)
-                        instance.data["frameEnd"] = math.ceil(frame_end)
+                        frame_end = int(frame_start) + math.ceil(no_of_frames)
+                        instance.data["frameEnd"] = math.ceil(frame_end) - 1
                         self.log.debug("frameEnd:: {}".format(
                             instance.data["frameEnd"]))
                     except ValueError:
                         self.log.warning("Unable to count frames "
-                                         "duration {}".format(duration))
+                                         "duration {}".format(no_of_frames))
 
+            # raise ValueError("STOP")
             instance.data["handleStart"] = asset_doc["data"]["handleStart"]
             instance.data["handleEnd"] = asset_doc["data"]["handleEnd"]
 
@@ -261,7 +262,7 @@ class CollectPublishedFiles(pyblish.api.ContextPlugin):
         else:
             return 0
 
-    def _get_duration(self, file_url):
+    def _get_number_of_frames(self, file_url):
         """Return duration in frames"""
         try:
             streams = ffprobe_streams(file_url, self.log)
@@ -288,7 +289,7 @@ class CollectPublishedFiles(pyblish.api.ContextPlugin):
 
                     duration = stream.get("duration")
                     frame_rate = get_fps(stream.get("r_frame_rate", '0/0'))
-                    self.log.debu("duration:: {} frame_rate:: {}".format(
+                    self.log.debug("duration:: {} frame_rate:: {}".format(
                         duration, frame_rate))
                     try:
                         return float(duration) * float(frame_rate)

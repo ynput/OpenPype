@@ -42,6 +42,7 @@ __all__ = (
     "set_style_property",
     "DynamicQThread",
     "qt_app_context",
+    "get_asset_icon",
 
     "RecursiveSortFilterProxyModel",
 )

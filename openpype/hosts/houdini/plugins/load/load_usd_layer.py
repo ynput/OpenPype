@@ -1,8 +1,11 @@
-from avalon import api
+from openpype.pipeline import (
+    load,
+    get_representation_path,
+)
 from openpype.hosts.houdini.api import lib, pipeline
 
 
-class USDSublayerLoader(api.Loader):
+class USDSublayerLoader(load.LoaderPlugin):
     """Sublayer USD file in Solaris"""
 
     families = [
@@ -57,7 +60,7 @@ class USDSublayerLoader(api.Loader):
         node = container["node"]
 
         # Update the file path
-        file_path = api.get_representation_path(representation)
+        file_path = get_representation_path(representation)
         file_path = file_path.replace("\\", "/")
 
         # Update attributes

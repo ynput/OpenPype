@@ -3,9 +3,10 @@ import subprocess
 import traceback
 import json
 
-from openpype_modules.ftrack.lib import BaseAction, statics_icon
 import ftrack_api
 from avalon import io, api
+from openpype.pipeline import get_representation_path
+from openpype_modules.ftrack.lib import BaseAction, statics_icon
 
 
 class RVAction(BaseAction):
@@ -307,7 +308,7 @@ class RVAction(BaseAction):
                         "name": "preview"
                     }
                 )
-            paths.append(api.get_representation_path(representation))
+            paths.append(get_representation_path(representation))
 
         return paths
 

@@ -3,11 +3,14 @@ import zipfile
 import os
 import shutil
 
-from avalon import api
+from openpype.pipeline import (
+    load,
+    get_representation_path,
+)
 import openpype.hosts.harmony.api as harmony
 
 
-class ImportTemplateLoader(api.Loader):
+class ImportTemplateLoader(load.LoaderPlugin):
     """Import templates."""
 
     families = ["harmony.template", "workfile"]
@@ -17,7 +20,7 @@ class ImportTemplateLoader(api.Loader):
     def load(self, context, name=None, namespace=None, data=None):
         # Import template.
         temp_dir = tempfile.mkdtemp()
-        zip_file = api.get_representation_path(context["representation"])
+        zip_file = get_representation_path(context["representation"])
         template_path = os.path.join(temp_dir, "temp.tpl")
         with zipfile.ZipFile(zip_file, "r") as zip_ref:
             zip_ref.extractall(template_path)

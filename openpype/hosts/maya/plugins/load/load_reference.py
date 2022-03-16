@@ -1,6 +1,7 @@
 import os
 from maya import cmds
 from avalon import api
+
 from openpype.api import get_project_settings
 from openpype.lib import get_creator_by_name
 from openpype.pipeline import legacy_create
@@ -120,10 +121,8 @@ class ReferenceLoader(openpype.hosts.maya.api.plugin.ReferenceLoader):
             if family == "rig":
                 self._post_process_rig(name, namespace, context, options)
             else:
-
                 if "translate" in options:
                     cmds.setAttr(group_name + ".t", *options["translate"])
-
             return new_nodes
 
     def switch(self, container, representation):

@@ -15,6 +15,7 @@ from openpype.settings import (
 )
 from .anatomy import Anatomy
 from .profiles_filtering import filter_profiles
+from .events import emit_event
 
 # avalon module is not imported at the top
 # - may not be in path at the time of pype.lib initialization
@@ -779,7 +780,6 @@ def update_current_task(task=None, asset=None, app=None, template_key=None):
 
     """
     import avalon.api
-    from avalon.pipeline import emit
 
     changes = compute_session_changes(
         avalon.api.Session,
@@ -799,7 +799,7 @@ def update_current_task(task=None, asset=None, app=None, template_key=None):
             os.environ[key] = value
 
     # Emit session change
-    emit("taskChanged", changes.copy())
+    emit_event("taskChanged", changes.copy())
 
     return changes
 
@@ -980,6 +980,8 @@ class BuildWorkfile:
             ...
         }]
         """
+        from openpype.pipeline import discover_loader_plugins
+
         # Get current asset name and entity
         current_asset_name = avalon.io.Session["AVALON_ASSET"]
         current_asset_entity = avalon.io.find_one({
@@ -996,7 +998,7 @@ class BuildWorkfile:
 
         # Prepare available loaders
         loaders_by_name = {}
-        for loader in avalon.api.discover(avalon.api.Loader):
+        for loader in discover_loader_plugins():
             loader_name = loader.__name__
             if loader_name in loaders_by_name:
                 raise KeyError(
@@ -1390,6 +1392,11 @@ class BuildWorkfile:
         Returns:
             (list) Objects of loaded containers.
         """
+        from openpype.pipeline import (
+            IncompatibleLoaderError,
+            load_container,
+        )
+
         loaded_containers = []
 
         # Get subset id order from build presets.
@@ -1451,7 +1458,7 @@ class BuildWorkfile:
                     if not loader:
                         continue
                     try:
-                        container = avalon.api.load(
+                        container = load_container(
                             loader,
                             repre["_id"],
                             name=subset_name
@@ -1460,7 +1467,7 @@ class BuildWorkfile:
                         is_loaded = True
 
                     except Exception as exc:
-                        if exc == avalon.pipeline.IncompatibleLoaderError:
+                        if exc == IncompatibleLoaderError:
                             self.log.info((
                                 "Loader `{}` is not compatible with"
                                 " representation `{}`"
@@ -1594,11 +1601,13 @@ def get_creator_by_name(creator_name, case_sensitive=False):
     Returns:
         Creator: Return first matching plugin or `None`.
     """
+    from openpype.pipeline import LegacyCreator
+
     # Lower input creator name if is not case sensitive
     if not case_sensitive:
         creator_name = creator_name.lower()
 
-    for creator_plugin in avalon.api.discover(avalon.api.Creator):
+    for creator_plugin in avalon.api.discover(LegacyCreator):
         _creator_name = creator_plugin.__name__
 
         # Lower creator plugin name if is not case sensitive
