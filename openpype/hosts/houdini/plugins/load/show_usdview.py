@@ -1,7 +1,7 @@
-from avalon import api
+from openpype.pipeline import load
 
 
-class ShowInUsdview(api.Loader):
+class ShowInUsdview(load.LoaderPlugin):
     """Open USD file in usdview"""
 
     families = ["colorbleed.usd"]

@@ -1,8 +1,8 @@
 import os
 
 import qargparse
-from avalon.pipeline import get_representation_path_from_context
 
+from openpype.pipeline import get_representation_path_from_context
 from openpype.hosts.photoshop import api as photoshop
 from openpype.hosts.photoshop.api import get_unique_layer_name
 

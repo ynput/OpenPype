@@ -7,7 +7,11 @@ import pyblish.api
 from avalon.pipeline import AVALON_CONTAINER_ID
 from avalon import api
 
-from openpype.pipeline import LegacyCreator
+from openpype.pipeline import (
+    LegacyCreator,
+    register_loader_plugin_path,
+    deregister_loader_plugin_path,
+)
 from openpype.tools.utils import host_tools
 import openpype.hosts.unreal
 
@@ -44,7 +48,7 @@ def install():
     print("-=" * 40)
     logger.info("installing OpenPype for Unreal")
     pyblish.api.register_plugin_path(str(PUBLISH_PATH))
-    api.register_plugin_path(api.Loader, str(LOAD_PATH))
+    register_loader_plugin_path(str(LOAD_PATH))
     api.register_plugin_path(LegacyCreator, str(CREATE_PATH))
     _register_callbacks()
     _register_events()
@@ -53,7 +57,7 @@ def install():
 def uninstall():
     """Uninstall Unreal configuration for Avalon."""
     pyblish.api.deregister_plugin_path(str(PUBLISH_PATH))
-    api.deregister_plugin_path(api.Loader, str(LOAD_PATH))
+    deregister_loader_plugin_path(str(LOAD_PATH))
     api.deregister_plugin_path(LegacyCreator, str(CREATE_PATH))
 
 
