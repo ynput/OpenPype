@@ -46,6 +46,11 @@ class BaseCreator:
     # - may not be used if `get_icon` is reimplemented
     icon = None
 
+    # Instance attribute definitions that can be changed per instance
+    # - returns list of attribute definitions from
+    #       `openpype.pipeline.attribute_definitions`
+    instance_attr_defs = []
+
     def __init__(
         self, create_context, system_settings, project_settings, headless=False
     ):
@@ -56,10 +61,13 @@ class BaseCreator:
         # - we may use UI inside processing this attribute should be checked
         self.headless = headless
 
-    @abstractproperty
+    @property
     def identifier(self):
-        """Identifier of creator (must be unique)."""
-        pass
+        """Identifier of creator (must be unique).
+
+        Default implementation returns plugin's family.
+        """
+        return self.family
 
     @abstractproperty
     def family(self):
@@ -90,11 +98,39 @@ class BaseCreator:
         pass
 
     @abstractmethod
-    def collect_instances(self, attr_plugins=None):
+    def collect_instances(self):
+        """Collect existing instances related to this creator plugin.
+
+        The implementation differs on host abilities. The creator has to
+        collect metadata about instance and create 'CreatedInstance' object
+        which should be added to 'CreateContext'.
+
+        Example:
+        ```python
+        def collect_instances(self):
+            # Getting existing instances is different per host implementation
+            for instance_data in pipeline.list_instances():
+                # Process only instances that were created by this creator
+                creator_id = instance_data.get("creator_identifier")
+                if creator_id == self.identifier:
+                    # Create instance object from existing data
+                    instance = CreatedInstance.from_existing(
+                        instance_data, self
+                    )
+                    # Add instance to create context
+                    self._add_instance_to_context(instance)
+        ```
+        """
         pass
 
     @abstractmethod
     def update_instances(self, update_list):
+        """Store changes of existing instances so they can be recollected.
+
+        Args:
+            update_list(list<UpdateData>): Gets list of tuples. Each item
+                contain changed instance and it's changes.
+        """
         pass
 
     @abstractmethod
@@ -178,7 +214,7 @@ class BaseCreator:
             list<AbtractAttrDef>: Attribute definitions that can be tweaked for
                 created instance.
         """
-        return []
+        return self.instance_attr_defs
 
 
 class Creator(BaseCreator):
@@ -190,6 +226,9 @@ class Creator(BaseCreator):
     # GUI Purposes
     # - default_variants may not be used if `get_default_variants` is overriden
     default_variants = []
+
+    # Default variant used in 'get_default_variant'
+    default_variant = None
 
     # Short description of family
     # - may not be used if `get_description` is overriden
@@ -203,6 +242,10 @@ class Creator(BaseCreator):
     # - in some cases it may confuse artists because it would not be used
     #      e.g. for buld creators
     create_allow_context_change = True
+
+    # Precreate attribute definitions showed before creation
+    # - similar to instance attribute definitions
+    pre_create_attr_defs = []
 
     @abstractmethod
     def create(self, subset_name, instance_data, pre_create_data):
@@ -263,7 +306,7 @@ class Creator(BaseCreator):
         `get_default_variants` should be used.
         """
 
-        return None
+        return self.default_variant
 
     def get_pre_create_attr_defs(self):
         """Plugin attribute definitions needed for creation.
@@ -276,7 +319,7 @@ class Creator(BaseCreator):
             list<AbtractAttrDef>: Attribute definitions that can be tweaked for
                 created instance.
         """
-        return []
+        return self.pre_create_attr_defs
 
 
 class AutoCreator(BaseCreator):
