@@ -1810,6 +1810,7 @@ def get_id_from_sibling(node, history_only=True):
         similar_nodes = [x for x in similar_nodes if x != node]
 
         first_id = None
+        found_node = None
         for similar_node in similar_nodes:
             # Check if "intermediate object"
             if cmds.getAttr(similar_node + ".intermediateObject"):
