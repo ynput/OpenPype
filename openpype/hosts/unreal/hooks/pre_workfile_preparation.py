@@ -10,7 +10,7 @@ from openpype.lib import (
     get_workdir_data,
     get_workfile_template_key
 )
-from openpype.hosts.unreal.api import lib as unreal_lib
+import openpype.hosts.unreal.lib as unreal_lib
 
 
 class UnrealPrelaunchHook(PreLaunchHook):
@@ -136,9 +136,9 @@ class UnrealPrelaunchHook(PreLaunchHook):
                 f"{self.signature} creating unreal "
                 f"project [ {unreal_project_name} ]"
             ))
-            # Set "AVALON_UNREAL_PLUGIN" to current process environment for
+            # Set "OPENPYPE_UNREAL_PLUGIN" to current process environment for
             # execution of `create_unreal_project`
-            env_key = "AVALON_UNREAL_PLUGIN"
+            env_key = "OPENPYPE_UNREAL_PLUGIN"
             if self.launch_context.env.get(env_key):
                 os.environ[env_key] = self.launch_context.env[env_key]
 

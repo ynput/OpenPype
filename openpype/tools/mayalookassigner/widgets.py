@@ -3,9 +3,11 @@ from collections import defaultdict
 
 from Qt import QtWidgets, QtCore
 
-# TODO: expose this better in avalon core
-from avalon.tools import lib
-from avalon.tools.models import TreeModel
+from openpype.tools.utils.models import TreeModel
+from openpype.tools.utils.lib import (
+    preserve_expanded_rows,
+    preserve_selection,
+)
 
 from .models import (
     AssetModel,
@@ -88,8 +90,8 @@ class AssetOutliner(QtWidgets.QWidget):
         """Add all items from the current scene"""
 
         items = []
-        with lib.preserve_expanded_rows(self.view):
-            with lib.preserve_selection(self.view):
+        with preserve_expanded_rows(self.view):
+            with preserve_selection(self.view):
                 self.clear()
                 nodes = commands.get_all_asset_nodes()
                 items = commands.create_items_from_nodes(nodes)
@@ -100,8 +102,8 @@ class AssetOutliner(QtWidgets.QWidget):
     def get_selected_assets(self):
         """Add all selected items from the current scene"""
 
-        with lib.preserve_expanded_rows(self.view):
-            with lib.preserve_selection(self.view):
+        with preserve_expanded_rows(self.view):
+            with preserve_selection(self.view):
                 self.clear()
                 nodes = commands.get_selected_nodes()
                 items = commands.create_items_from_nodes(nodes)

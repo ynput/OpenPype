@@ -7,9 +7,13 @@ from Qt import QtWidgets, QtCore
 from avalon import io, api, style
 from avalon.vendor import qtawesome
 from avalon.lib import HeroVersionType
-from avalon.tools import lib as tools_lib
 
 from openpype.modules import ModulesManager
+from openpype.tools.utils.lib import (
+    get_progress_for_repre,
+    iter_model_rows,
+    format_version
+)
 
 from .switch_dialog import SwitchAssetDialog
 from .model import InventoryModel
@@ -373,7 +377,7 @@ class SceneInvetoryView(QtWidgets.QTreeView):
             if not repre_doc:
                 continue
 
-            progress = tools_lib.get_progress_for_repre(
+            progress = get_progress_for_repre(
                 repre_doc,
                 active_site,
                 remote_site
@@ -544,7 +548,7 @@ class SceneInvetoryView(QtWidgets.QTreeView):
             "toggle": selection_model.Toggle,
         }[options.get("mode", "select")]
 
-        for item in tools_lib.iter_model_rows(model, 0):
+        for item in iter_model_rows(model, 0):
             item = item.data(InventoryModel.ItemRole)
             if item.get("isGroupNode"):
                 continue
@@ -704,7 +708,7 @@ class SceneInvetoryView(QtWidgets.QTreeView):
         labels = []
         for version in all_versions:
             is_hero = version["type"] == "hero_version"
-            label = tools_lib.format_version(version["name"], is_hero)
+            label = format_version(version["name"], is_hero)
             labels.append(label)
             versions_by_label[label] = version["name"]
 

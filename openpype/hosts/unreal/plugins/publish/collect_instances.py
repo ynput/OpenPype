@@ -1,12 +1,14 @@
+# -*- coding: utf-8 -*-
+"""Collect publishable instances in Unreal."""
 import ast
-import unreal
+import unreal  # noqa
 import pyblish.api
 
 
 class CollectInstances(pyblish.api.ContextPlugin):
-    """Gather instances by AvalonPublishInstance class
+    """Gather instances by OpenPypePublishInstance class
 
-    This collector finds all paths containing `AvalonPublishInstance` class
+    This collector finds all paths containing `OpenPypePublishInstance` class
     asset
 
     Identifier:
@@ -22,7 +24,7 @@ class CollectInstances(pyblish.api.ContextPlugin):
 
         ar = unreal.AssetRegistryHelpers.get_asset_registry()
         instance_containers = ar.get_assets_by_class(
-            "AvalonPublishInstance", True)
+            "OpenPypePublishInstance", True)
 
         for container_data in instance_containers:
             asset = container_data.get_asset()
