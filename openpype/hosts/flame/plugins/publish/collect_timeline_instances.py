@@ -26,7 +26,7 @@ class CollectTimelineInstances(pyblish.api.ContextPlugin):
     xml_preset_attrs_from_comments = {
         "width": "number",
         "height": "number",
-        "pixelRatio": "number",
+        "pixelRatio": "float",
         "resizeType": "string",
         "resizeFilter": "string"
     }
@@ -183,11 +183,14 @@ class CollectTimelineInstances(pyblish.api.ContextPlugin):
 
         for a_name, a_type in self.xml_preset_attrs_from_comments.items():
             # exclude all not related attributes
-            if a_name.lower() not in key:
+            if a_name.lower() not in key.lower():
                 continue
 
             # get pattern defined by type
-            pattern = TXT_PATERN if "string" in a_type else NUM_PATERN
+            pattern = TXT_PATERN
+            if "number" in a_type or "float" in a_type:
+                pattern = NUM_PATERN
+
             res_goup = pattern.findall(value)
 
             # raise if nothing is found as it is not correctly defined
@@ -196,7 +199,14 @@ class CollectTimelineInstances(pyblish.api.ContextPlugin):
                     "Value for `{}` attribute is not "
                     "set correctly: `{}`").format(a_name, split))
 
-            attributes["xml_overrides"][a_name] = res_goup[0]
+            if "string" in a_type:
+                _value = res_goup[0]
+            if "float" in a_type:
+                _value = float(res_goup[0])
+            if "number" in a_type:
+                _value = int(res_goup[0])
+
+            attributes["xml_overrides"][a_name] = _value
 
         # condition for resolution in key
         if "resolution" in key.lower():
