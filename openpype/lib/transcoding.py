@@ -705,6 +705,12 @@ def _ffmpeg_dnxhd_codec_args(stream_data, source_ffmpeg_cmd):
     profile = stream_data.get("profile") or ""
     # Lower profile and replace space with underscore
     cleaned_profile = profile.lower().replace(" ", "_")
+
+    # TODO validate this statement
+    # Looks like using 'dnxhd' profile must have set bit rate and in that case
+    #   should be used bitrate from source.
+    # - related attributes 'bit_rate_defined', 'bit_rate_must_be_defined'
+    bit_rate_must_be_defined = True
     dnx_profiles = {
         "dnxhd",
         "dnxhr_lb",
@@ -714,6 +720,8 @@ def _ffmpeg_dnxhd_codec_args(stream_data, source_ffmpeg_cmd):
         "dnxhr_444"
     }
     if cleaned_profile in dnx_profiles:
+        if cleaned_profile != "dnxhd":
+            bit_rate_must_be_defined = False
         output.extend(["-profile:v", cleaned_profile])
 
     pix_fmt = stream_data.get("pix_fmt")
@@ -721,14 +729,27 @@ def _ffmpeg_dnxhd_codec_args(stream_data, source_ffmpeg_cmd):
         output.extend(["-pix_fmt", pix_fmt])
 
     # Use arguments from source if are available source arguments
+    bit_rate_defined = False
     if source_ffmpeg_cmd:
-        copy_args = (
-            "-b:v", "-vb",
-        )
+        # Define bitrate arguments
+        bit_rate_args = ("-b:v", "-vb",)
+        # Seprate the two variables in case something else should be copied
+        #   from source command
+        copy_args = []
+        copy_args.extend(bit_rate_args)
+
         args = source_ffmpeg_cmd.split(" ")
         for idx, arg in enumerate(args):
             if arg in copy_args:
+                if arg in bit_rate_args:
+                    bit_rate_defined = True
                 output.extend([arg, args[idx + 1]])
+
+    # Add bitrate if needed
+    if bit_rate_must_be_defined and not bit_rate_defined:
+        src_bit_rate = stream_data.get("bit_rate")
+        if src_bit_rate:
+            output.extend(["-b:v", src_bit_rate])
 
     output.extend(["-g", "1"])
     return output
