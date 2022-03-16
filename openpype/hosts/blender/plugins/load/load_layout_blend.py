@@ -6,8 +6,11 @@ from typing import Dict, List, Optional
 
 import bpy
 
-from avalon import api
 from openpype import lib
+from openpype.pipeline import (
+    legacy_create,
+    get_representation_path,
+)
 from openpype.hosts.blender.api import plugin
 from openpype.hosts.blender.api.pipeline import (
     AVALON_CONTAINERS,
@@ -159,7 +162,7 @@ class BlendLayoutLoader(plugin.AssetLoader):
                     raise ValueError("Creator plugin \"CreateAnimation\" was "
                                      "not found.")
 
-                api.create(
+                legacy_create(
                     creator_plugin,
                     name=local_obj.name.split(':')[-1] + "_animation",
                     asset=asset,
@@ -308,7 +311,7 @@ class BlendLayoutLoader(plugin.AssetLoader):
         """
         object_name = container["objectName"]
         asset_group = bpy.data.objects.get(object_name)
-        libpath = Path(api.get_representation_path(representation))
+        libpath = Path(get_representation_path(representation))
         extension = libpath.suffix.lower()
 
         self.log.info(

@@ -93,7 +93,7 @@
                 }
             },
             "__dynamic_keys_labels__": {
-                "2022": "2022 (Testing Only)"
+                "2022": "2022"
             }
         }
     },
@@ -121,7 +121,7 @@
                         "/opt/Autodesk/flame_2021/bin/flame.app/Contents/MacOS/startApp"
                     ],
                     "linux": [
-                        "/opt/Autodesk/flame_2021/bin/flame"
+                        "/opt/Autodesk/flame_2021/bin/startApplication"
                     ]
                 },
                 "arguments": {
@@ -135,8 +135,31 @@
                     "OPENPYPE_WIRETAP_TOOLS": "/opt/Autodesk/wiretap/tools/2021"
                 }
             },
+            "2021_1": {
+                "use_python_2": true,
+                "executables": {
+                    "windows": [],
+                    "darwin": [
+                        "/opt/Autodesk/flame_2021.1/bin/flame.app/Contents/MacOS/startApp"
+                    ],
+                    "linux": [
+                        "/opt/Autodesk/flame_2021.1/bin/startApplication"
+                    ]
+                },
+                "arguments": {
+                    "windows": [],
+                    "darwin": [],
+                    "linux": []
+                },
+                "environment": {
+                    "OPENPYPE_FLAME_PYTHON_EXEC": "/opt/Autodesk/python/2021.1/bin/python2.7",
+                    "OPENPYPE_FLAME_PYTHONPATH": "/opt/Autodesk/flame_2021.1/python",
+                    "OPENPYPE_WIRETAP_TOOLS": "/opt/Autodesk/wiretap/tools/2021.1"
+                }
+            },
             "__dynamic_keys_labels__": {
-                "2021": "2021 (Testing Only)"
+                "2021": "2021",
+                "2021_1": "2021.1"
             }
         }
     },
@@ -690,12 +713,26 @@
             "OPENPYPE_LOG_NO_COLORS": "Yes"
         },
         "variants": {
-            "16": {
-                "enabled": true,
-                "variant_label": "16",
-                "use_python_2": false,
+            "17": {
                 "executables": {
+                    "windows": [
+                        "C:\\Program Files\\Blackmagic Design\\Fusion 17\\Fusion.exe"
+                    ],
+                    "darwin": [],
+                    "linux": []
+                },
+                "arguments": {
                     "windows": [],
+                    "darwin": [],
+                    "linux": []
+                },
+                "environment": {}
+            },
+            "16": {
+                "executables": {
+                    "windows": [
+                        "C:\\Program Files\\Blackmagic Design\\Fusion 16\\Fusion.exe"
+                    ],
                     "darwin": [],
                     "linux": []
                 },
@@ -707,9 +744,6 @@
                 "environment": {}
             },
             "9": {
-                "enabled": true,
-                "variant_label": "9",
-                "use_python_2": false,
                 "executables": {
                     "windows": [
                         "C:\\Program Files\\Blackmagic Design\\Fusion 9\\Fusion.exe"
@@ -938,8 +972,12 @@
                 "enabled": true,
                 "variant_label": "21",
                 "executables": {
-                    "windows": ["c:\\Program Files (x86)\\Toon Boom Animation\\Toon Boom Harmony 21 Premium\\win64\\bin\\HarmonyPremium.exe"],
-                    "darwin": ["/Applications/Toon Boom Harmony 21 Premium/Harmony Premium.app/Contents/MacOS/Harmony Premium"],
+                    "windows": [
+                        "c:\\Program Files (x86)\\Toon Boom Animation\\Toon Boom Harmony 21 Premium\\win64\\bin\\HarmonyPremium.exe"
+                    ],
+                    "darwin": [
+                        "/Applications/Toon Boom Harmony 21 Premium/Harmony Premium.app/Contents/MacOS/Harmony Premium"
+                    ],
                     "linux": []
                 },
                 "arguments": {
@@ -953,8 +991,12 @@
                 "enabled": true,
                 "variant_label": "20",
                 "executables": {
-                    "windows": ["c:\\Program Files (x86)\\Toon Boom Animation\\Toon Boom Harmony 20 Premium\\win64\\bin\\HarmonyPremium.exe"],
-                    "darwin": ["/Applications/Toon Boom Harmony 20 Premium/Harmony Premium.app/Contents/MacOS/Harmony Premium"],
+                    "windows": [
+                        "c:\\Program Files (x86)\\Toon Boom Animation\\Toon Boom Harmony 20 Premium\\win64\\bin\\HarmonyPremium.exe"
+                    ],
+                    "darwin": [
+                        "/Applications/Toon Boom Harmony 20 Premium/Harmony Premium.app/Contents/MacOS/Harmony Premium"
+                    ],
                     "linux": []
                 },
                 "arguments": {
@@ -968,7 +1010,9 @@
                 "enabled": true,
                 "variant_label": "17",
                 "executables": {
-                    "windows": ["c:\\Program Files (x86)\\Toon Boom Animation\\Toon Boom Harmony 17 Premium\\win64\\bin\\HarmonyPremium.exe"],
+                    "windows": [
+                        "c:\\Program Files (x86)\\Toon Boom Animation\\Toon Boom Harmony 17 Premium\\win64\\bin\\HarmonyPremium.exe"
+                    ],
                     "darwin": [
                         "/Applications/Toon Boom Harmony 17 Premium/Harmony Premium.app/Contents/MacOS/Harmony Premium"
                     ],
@@ -1142,7 +1186,9 @@
                     "darwin": [],
                     "linux": []
                 },
-                "environment": {}
+                "environment": {
+                    "MULTIPROCESS": "No"
+                }
             }
         }
     },

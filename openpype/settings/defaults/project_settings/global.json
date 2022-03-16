@@ -87,7 +87,8 @@
                                     "render",
                                     "review",
                                     "ftrack"
-                                ]
+                                ],
+                                "subsets": []
                             },
                             "overscan_crop": "",
                             "overscan_color": [
@@ -107,7 +108,6 @@
                             "letter_box": {
                                 "enabled": false,
                                 "ratio": 0.0,
-                                "state": "letterbox",
                                 "fill_color": [
                                     0,
                                     0,

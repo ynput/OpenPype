@@ -1,0 +1,15 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<root>
+<error id="main">
+<title>Duplicate shots</title>
+<description>
+## Duplicate shot names
+
+Process contains duplicated shot names '{duplicates_str}'.
+
+### How to repair?
+
+Remove shot duplicates.
+</description>
+</error>
+</root>

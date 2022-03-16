@@ -4,17 +4,24 @@ import logging
 import contextlib
 
 import hou
+import hdefereval
 
 import pyblish.api
 import avalon.api
 from avalon.pipeline import AVALON_CONTAINER_ID
 from avalon.lib import find_submodule
 
+from openpype.pipeline import (
+    LegacyCreator,
+    register_loader_plugin_path,
+)
 import openpype.hosts.houdini
 from openpype.hosts.houdini.api import lib
 
 from openpype.lib import (
-    any_outdated
+    register_event_callback,
+    emit_event,
+    any_outdated,
 )
 
 from .lib import get_asset_fps
@@ -46,15 +53,15 @@ def install():
     pyblish.api.register_host("hpython")
 
     pyblish.api.register_plugin_path(PUBLISH_PATH)
-    avalon.api.register_plugin_path(avalon.api.Loader, LOAD_PATH)
-    avalon.api.register_plugin_path(avalon.api.Creator, CREATE_PATH)
+    register_loader_plugin_path(LOAD_PATH)
+    avalon.api.register_plugin_path(LegacyCreator, CREATE_PATH)
 
     log.info("Installing callbacks ... ")
-    # avalon.on("init", on_init)
-    avalon.api.before("save", before_save)
-    avalon.api.on("save", on_save)
-    avalon.api.on("open", on_open)
-    avalon.api.on("new", on_new)
+    # register_event_callback("init", on_init)
+    register_event_callback("before.save", before_save)
+    register_event_callback("save", on_save)
+    register_event_callback("open", on_open)
+    register_event_callback("new", on_new)
 
     pyblish.api.register_callback(
         "instanceToggled", on_pyblish_instance_toggled
@@ -66,9 +73,10 @@ def install():
 
     sys.path.append(hou_pythonpath)
 
-    # Set asset FPS for the empty scene directly after launch of Houdini
-    # so it initializes into the correct scene FPS
-    _set_asset_fps()
+    # Set asset settings for the empty scene directly after launch of Houdini
+    # so it initializes into the correct scene FPS, Frame Range, etc.
+    # todo: make sure this doesn't trigger when opening with last workfile
+    _set_context_settings()
 
 
 def uninstall():
@@ -99,13 +107,13 @@ def _register_callbacks():
 
 def on_file_event_callback(event):
     if event == hou.hipFileEventType.AfterLoad:
-        avalon.api.emit("open", [event])
+        emit_event("open")
     elif event == hou.hipFileEventType.AfterSave:
-        avalon.api.emit("save", [event])
+        emit_event("save")
     elif event == hou.hipFileEventType.BeforeSave:
-        avalon.api.emit("before_save", [event])
+        emit_event("before.save")
     elif event == hou.hipFileEventType.AfterClear:
-        avalon.api.emit("new", [event])
+        emit_event("new")
 
 
 def get_main_window():
@@ -227,11 +235,11 @@ def ls():
         yield data
 
 
-def before_save(*args):
+def before_save():
     return lib.validate_fps()
 
 
-def on_save(*args):
+def on_save():
 
     log.info("Running callback on save..")
 
@@ -240,7 +248,7 @@ def on_save(*args):
         lib.set_id(node, new_id, overwrite=False)
 
 
-def on_open(*args):
+def on_open():
 
     if not hou.isUIAvailable():
         log.debug("Batch mode detected, ignoring `on_open` callbacks..")
@@ -277,19 +285,50 @@ def on_open(*args):
             dialog.show()
 
 
-def on_new(_):
+def on_new():
     """Set project resolution and fps when create a new file"""
+
+    if hou.hipFile.isLoadingHipFile():
+        # This event also triggers when Houdini opens a file due to the
+        # new event being registered to 'afterClear'. As such we can skip
+        # 'new' logic if the user is opening a file anyway
+        log.debug("Skipping on new callback due to scene being opened.")
+        return
+
     log.info("Running callback on new..")
-    _set_asset_fps()
+    _set_context_settings()
+
+    # It seems that the current frame always gets reset to frame 1 on
+    # new scene. So we enforce current frame to be at the start of the playbar
+    # with execute deferred
+    def _enforce_start_frame():
+        start = hou.playbar.playbackRange()[0]
+        hou.setFrame(start)
+
+    hdefereval.executeDeferred(_enforce_start_frame)
 
 
-def _set_asset_fps():
-    """Set Houdini scene FPS to the default required for current asset"""
+def _set_context_settings():
+    """Apply the project settings from the project definition
+
+    Settings can be overwritten by an asset if the asset.data contains
+    any information regarding those settings.
+
+    Examples of settings:
+        fps
+        resolution
+        renderer
+
+    Returns:
+        None
+    """
 
     # Set new scene fps
     fps = get_asset_fps()
     print("Setting scene FPS to %i" % fps)
     lib.set_scene_fps(fps)
+
+    lib.reset_framerange()
 
 
 def on_pyblish_instance_toggled(instance, new_value, old_value):

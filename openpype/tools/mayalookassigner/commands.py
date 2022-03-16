@@ -4,9 +4,10 @@ import os
 
 import maya.cmds as cmds
 
-from openpype.hosts.maya.api import lib
-
 from avalon import io, api
+
+from openpype.pipeline import remove_container
+from openpype.hosts.maya.api import lib
 
 from .vray_proxies import get_alembic_ids_cache
 
@@ -87,7 +88,7 @@ def get_all_asset_nodes():
 
         # Gather all information
         container_name = container["objectName"]
-        nodes += cmds.sets(container_name, query=True, nodesOnly=True) or []
+        nodes += lib.get_container_members(container_name)
 
     nodes = list(set(nodes))
     return nodes
@@ -195,7 +196,7 @@ def remove_unused_looks():
     unused = []
     for container in host.ls():
         if container['loader'] == "LookLoader":
-            members = cmds.sets(container['objectName'], query=True)
+            members = lib.get_container_members(container['objectName'])
             look_sets = cmds.ls(members, type="objectSet")
             for look_set in look_sets:
                 # If the set is used than we consider this look *in use*
@@ -206,6 +207,6 @@ def remove_unused_looks():
 
     for container in unused:
         log.info("Removing unused look container: %s", container['objectName'])
-        api.remove(container)
+        remove_container(container)
 
     log.info("Finished removing unused looks. (see log for details)")

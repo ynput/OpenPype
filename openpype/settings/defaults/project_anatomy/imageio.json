@@ -177,6 +177,17 @@
         }
     },
     "maya": {
+        "colorManagementPreference_v2": {
+            "enabled": true,
+            "configFilePath": {
+                "windows": [],
+                "darwin": [],
+                "linux": []
+            },
+            "renderSpace": "ACEScg",
+            "viewName": "ACES 1.0 SDR-video",
+            "displayName": "sRGB"
+        },
         "colorManagementPreference": {
             "configFilePath": {
                 "windows": [],
@@ -185,6 +196,25 @@
             },
             "renderSpace": "scene-linear Rec 709/sRGB",
             "viewTransform": "sRGB gamma"
+        }
+    },
+    "flame": {
+        "project": {
+            "colourPolicy": "ACES 1.1",
+            "frameDepth": "16-bit fp",
+            "fieldDominance": "PROGRESSIVE"
+        },
+        "profilesMapping": {
+            "inputs": [
+                {
+                    "flameName": "ACEScg",
+                    "ocioName": "ACES - ACEScg"
+                },
+                {
+                    "flameName": "Rec.709 video",
+                    "ocioName": "Output - Rec.709"
+                }
+            ]
         }
     }
 }

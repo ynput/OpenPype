@@ -43,6 +43,12 @@ def standalonepublisher():
 
 
 @main.command()
+def traypublisher():
+    """Show new OpenPype Standalone publisher UI."""
+    PypeCommands().launch_traypublisher()
+
+
+@main.command()
 @click.option("-d", "--debug",
               is_flag=True, help=("Run pype tray in debug mode"))
 def tray(debug=False):
@@ -371,10 +377,15 @@ def run(script):
               "--app_variant",
               help="Provide specific app variant for test, empty for latest",
               default=None)
-def runtests(folder, mark, pyargs, test_data_folder, persist, app_variant):
+@click.option("-t",
+              "--timeout",
+              help="Provide specific timeout value for test case",
+              default=None)
+def runtests(folder, mark, pyargs, test_data_folder, persist, app_variant,
+             timeout):
     """Run all automatic tests after proper initialization via start.py"""
     PypeCommands().run_tests(folder, mark, pyargs, test_data_folder,
-                             persist, app_variant)
+                             persist, app_variant, timeout)
 
 
 @main.command()

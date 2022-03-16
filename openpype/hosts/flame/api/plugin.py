@@ -1,6 +1,16 @@
+import os
 import re
+import shutil
+import sys
+from xml.etree import ElementTree as ET
+import six
+import qargparse
 from Qt import QtWidgets, QtCore
 import openpype.api as openpype
+from openpype.pipeline import (
+    LegacyCreator,
+    LoaderPlugin,
+)
 from openpype import style
 from . import (
     lib as flib,
@@ -292,7 +302,7 @@ class Spacer(QtWidgets.QWidget):
         self.setLayout(layout)
 
 
-class Creator(openpype.Creator):
+class Creator(LegacyCreator):
     """Creator class wrapper
     """
     clip_color = constants.COLOR_MAP["purple"]
@@ -354,6 +364,7 @@ class PublishableClip:
     vertical_sync_default = False
     driving_layer_default = ""
     index_from_segment_default = False
+    use_shot_name_default = False
 
     def __init__(self, segment, **kwargs):
         self.rename_index = kwargs["rename_index"]
@@ -369,6 +380,7 @@ class PublishableClip:
         # segment (clip) main attributes
         self.cs_name = self.clip_data["segment_name"]
         self.cs_index = int(self.clip_data["segment"])
+        self.shot_name = self.clip_data["shot_name"]
 
         # get track name and index
         self.track_index = int(self.clip_data["track"])
@@ -412,18 +424,21 @@ class PublishableClip:
         # deal with clip name
         new_name = self.marker_data.pop("newClipName")
 
-        if self.rename:
+        if self.rename and not self.use_shot_name:
             # rename segment
             self.current_segment.name = str(new_name)
             self.marker_data["asset"] = str(new_name)
+        elif self.use_shot_name:
+            self.marker_data["asset"] = self.shot_name
+            self.marker_data["hierarchyData"]["shot"] = self.shot_name
         else:
             self.marker_data["asset"] = self.cs_name
             self.marker_data["hierarchyData"]["shot"] = self.cs_name
 
         if self.marker_data["heroTrack"] and self.review_layer:
-            self.marker_data.update({"reviewTrack": self.review_layer})
+            self.marker_data["reviewTrack"] = self.review_layer
         else:
-            self.marker_data.update({"reviewTrack": None})
+            self.marker_data["reviewTrack"] = None
 
         # create pype tag on track_item and add data
         fpipeline.imprint(self.current_segment, self.marker_data)
@@ -456,6 +471,8 @@ class PublishableClip:
         # ui_inputs data or default values if gui was not used
         self.rename = self.ui_inputs.get(
             "clipRename", {}).get("value") or self.rename_default
+        self.use_shot_name = self.ui_inputs.get(
+            "useShotName", {}).get("value") or self.use_shot_name_default
         self.clip_name = self.ui_inputs.get(
             "clipName", {}).get("value") or self.clip_name_default
         self.hierarchy = self.ui_inputs.get(
@@ -644,3 +661,274 @@ class PublishableClip:
 
 # Publishing plugin functions
 # Loader plugin functions
+
+class ClipLoader(LoaderPlugin):
+    """A basic clip loader for Flame
+
+    This will implement the basic behavior for a loader to inherit from that
+    will containerize the reference and will implement the `remove` and
+    `update` logic.
+
+    """
+
+    options = [
+        qargparse.Boolean(
+            "handles",
+            label="Set handles",
+            default=0,
+            help="Also set handles to clip as In/Out marks"
+        )
+    ]
+
+
+class OpenClipSolver:
+    media_script_path = "/opt/Autodesk/mio/current/dl_get_media_info"
+    tmp_name = "_tmp.clip"
+    tmp_file = None
+    create_new_clip = False
+
+    out_feed_nb_ticks = None
+    out_feed_fps = None
+    out_feed_drop_mode = None
+
+    log = log
+
+    def __init__(self, openclip_file_path, feed_data):
+        # test if media script paht exists
+        self._validate_media_script_path()
+
+        # new feed variables:
+        feed_path = feed_data["path"]
+        self.feed_version_name = feed_data["version"]
+        self.feed_colorspace = feed_data.get("colorspace")
+
+        if feed_data.get("logger"):
+            self.log = feed_data["logger"]
+
+        # derivate other feed variables
+        self.feed_basename = os.path.basename(feed_path)
+        self.feed_dir = os.path.dirname(feed_path)
+        self.feed_ext = os.path.splitext(self.feed_basename)[1][1:].lower()
+
+        if not os.path.isfile(openclip_file_path):
+            # openclip does not exist yet and will be created
+            self.tmp_file = self.out_file = openclip_file_path
+            self.create_new_clip = True
+
+        else:
+            # output a temp file
+            self.out_file = openclip_file_path
+            self.tmp_file = os.path.join(self.feed_dir, self.tmp_name)
+            self._clear_tmp_file()
+
+        self.log.info("Temp File: {}".format(self.tmp_file))
+
+    def make(self):
+        self._generate_media_info_file()
+
+        if self.create_new_clip:
+            # New openClip
+            self._create_new_open_clip()
+        else:
+            self._update_open_clip()
+
+    def _validate_media_script_path(self):
+        if not os.path.isfile(self.media_script_path):
+            raise IOError("Media Scirpt does not exist: `{}`".format(
+                self.media_script_path))
+
+    def _generate_media_info_file(self):
+        # Create cmd arguments for gettig xml file info file
+        cmd_args = [
+            self.media_script_path,
+            "-e", self.feed_ext,
+            "-o", self.tmp_file,
+            self.feed_dir
+        ]
+
+        # execute creation of clip xml template data
+        try:
+            openpype.run_subprocess(cmd_args)
+        except TypeError:
+            self.log.error("Error creating self.tmp_file")
+            six.reraise(*sys.exc_info())
+
+    def _clear_tmp_file(self):
+        if os.path.isfile(self.tmp_file):
+            os.remove(self.tmp_file)
+
+    def _clear_handler(self, xml_object):
+        for handler in xml_object.findall("./handler"):
+            self.log.debug("Handler found")
+            xml_object.remove(handler)
+
+    def _create_new_open_clip(self):
+        self.log.info("Building new openClip")
+
+        tmp_xml = ET.parse(self.tmp_file)
+
+        tmp_xml_feeds = tmp_xml.find('tracks/track/feeds')
+        tmp_xml_feeds.set('currentVersion', self.feed_version_name)
+        for tmp_feed in tmp_xml_feeds:
+            tmp_feed.set('vuid', self.feed_version_name)
+
+            # add colorspace if any is set
+            if self.feed_colorspace:
+                self._add_colorspace(tmp_feed, self.feed_colorspace)
+
+            self._clear_handler(tmp_feed)
+
+        tmp_xml_versions_obj = tmp_xml.find('versions')
+        tmp_xml_versions_obj.set('currentVersion', self.feed_version_name)
+        for xml_new_version in tmp_xml_versions_obj:
+            xml_new_version.set('uid', self.feed_version_name)
+            xml_new_version.set('type', 'version')
+
+        xml_data = self._fix_xml_data(tmp_xml)
+        self.log.info("Adding feed version: {}".format(self.feed_basename))
+
+        self._write_result_xml_to_file(xml_data)
+
+        self.log.info("openClip Updated: {}".format(self.tmp_file))
+
+    def _update_open_clip(self):
+        self.log.info("Updating openClip ..")
+
+        out_xml = ET.parse(self.out_file)
+        tmp_xml = ET.parse(self.tmp_file)
+
+        self.log.debug(">> out_xml: {}".format(out_xml))
+        self.log.debug(">> tmp_xml: {}".format(tmp_xml))
+
+        # Get new feed from tmp file
+        tmp_xml_feed = tmp_xml.find('tracks/track/feeds/feed')
+
+        self._clear_handler(tmp_xml_feed)
+        self._get_time_info_from_origin(out_xml)
+
+        if self.out_feed_fps:
+            tmp_feed_fps_obj = tmp_xml_feed.find(
+                "startTimecode/rate")
+            tmp_feed_fps_obj.text = self.out_feed_fps
+        if self.out_feed_nb_ticks:
+            tmp_feed_nb_ticks_obj = tmp_xml_feed.find(
+                "startTimecode/nbTicks")
+            tmp_feed_nb_ticks_obj.text = self.out_feed_nb_ticks
+        if self.out_feed_drop_mode:
+            tmp_feed_drop_mode_obj = tmp_xml_feed.find(
+                "startTimecode/dropMode")
+            tmp_feed_drop_mode_obj.text = self.out_feed_drop_mode
+
+        new_path_obj = tmp_xml_feed.find(
+            "spans/span/path")
+        new_path = new_path_obj.text
+
+        feed_added = False
+        if not self._feed_exists(out_xml, new_path):
+            tmp_xml_feed.set('vuid', self.feed_version_name)
+            # Append new temp file feed to .clip source out xml
+            out_track = out_xml.find("tracks/track")
+            # add colorspace if any is set
+            if self.feed_colorspace:
+                self._add_colorspace(tmp_xml_feed, self.feed_colorspace)
+
+            out_feeds = out_track.find('feeds')
+            out_feeds.set('currentVersion', self.feed_version_name)
+            out_feeds.append(tmp_xml_feed)
+
+            self.log.info(
+                "Appending new feed: {}".format(
+                    self.feed_version_name))
+            feed_added = True
+
+        if feed_added:
+            # Append vUID to versions
+            out_xml_versions_obj = out_xml.find('versions')
+            out_xml_versions_obj.set(
+                'currentVersion', self.feed_version_name)
+            new_version_obj = ET.Element(
+                "version", {"type": "version", "uid": self.feed_version_name})
+            out_xml_versions_obj.insert(0, new_version_obj)
+
+            xml_data = self._fix_xml_data(out_xml)
+
+            # fist create backup
+            self._create_openclip_backup_file(self.out_file)
+
+            self.log.info("Adding feed version: {}".format(
+                self.feed_version_name))
+
+            self._write_result_xml_to_file(xml_data)
+
+            self.log.info("openClip Updated: {}".format(self.out_file))
+
+        self._clear_tmp_file()
+
+    def _get_time_info_from_origin(self, xml_data):
+        try:
+            for out_track in xml_data.iter('track'):
+                for out_feed in out_track.iter('feed'):
+                    out_feed_nb_ticks_obj = out_feed.find(
+                        'startTimecode/nbTicks')
+                    self.out_feed_nb_ticks = out_feed_nb_ticks_obj.text
+                    out_feed_fps_obj = out_feed.find(
+                        'startTimecode/rate')
+                    self.out_feed_fps = out_feed_fps_obj.text
+                    out_feed_drop_mode_obj = out_feed.find(
+                        'startTimecode/dropMode')
+                    self.out_feed_drop_mode = out_feed_drop_mode_obj.text
+                    break
+                else:
+                    continue
+        except Exception as msg:
+            self.log.warning(msg)
+
+    def _feed_exists(self, xml_data, path):
+        # loop all available feed paths and check if
+        # the path is not already in file
+        for src_path in xml_data.iter('path'):
+            if path == src_path.text:
+                self.log.warning(
+                    "Not appending file as it already is in .clip file")
+                return True
+
+    def _fix_xml_data(self, xml_data):
+        xml_root = xml_data.getroot()
+        self._clear_handler(xml_root)
+        return ET.tostring(xml_root).decode('utf-8')
+
+    def _write_result_xml_to_file(self, xml_data):
+        with open(self.out_file, "w") as f:
+            f.write(xml_data)
+
+    def _create_openclip_backup_file(self, file):
+        bck_file = "{}.bak".format(file)
+        # if backup does not exist
+        if not os.path.isfile(bck_file):
+            shutil.copy2(file, bck_file)
+        else:
+            # in case it exists and is already multiplied
+            created = False
+            for _i in range(1, 99):
+                bck_file = "{name}.bak.{idx:0>2}".format(
+                    name=file,
+                    idx=_i)
+                # create numbered backup file
+                if not os.path.isfile(bck_file):
+                    shutil.copy2(file, bck_file)
+                    created = True
+                    break
+            # in case numbered does not exists
+            if not created:
+                bck_file = "{}.bak.last".format(file)
+                shutil.copy2(file, bck_file)
+
+    def _add_colorspace(self, feed_obj, profile_name):
+        feed_storage_obj = feed_obj.find("storageFormat")
+        feed_clr_obj = feed_storage_obj.find("colourSpace")
+        if feed_clr_obj is not None:
+            feed_clr_obj = ET.Element(
+                "colourSpace", {"type": "string"})
+            feed_storage_obj.append(feed_clr_obj)
+
+        feed_clr_obj.text = profile_name

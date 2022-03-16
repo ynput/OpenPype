@@ -2,7 +2,6 @@ import os
 import sys
 import errno
 import logging
-import contextlib
 
 from maya import utils, cmds, OpenMaya
 import maya.api.OpenMaya as om
@@ -15,8 +14,17 @@ from avalon.pipeline import AVALON_CONTAINER_ID
 
 import openpype.hosts.maya
 from openpype.tools.utils import host_tools
-from openpype.lib import any_outdated
+from openpype.lib import (
+    any_outdated,
+    register_event_callback,
+    emit_event
+)
 from openpype.lib.path_tools import HostDirmap
+from openpype.pipeline import (
+    LegacyCreator,
+    register_loader_plugin_path,
+    deregister_loader_plugin_path,
+)
 from openpype.hosts.maya.lib import copy_workspace_mel
 from . import menu, lib
 
@@ -49,13 +57,13 @@ def install():
     pyblish.api.register_host("mayapy")
     pyblish.api.register_host("maya")
 
-    avalon.api.register_plugin_path(avalon.api.Loader, LOAD_PATH)
-    avalon.api.register_plugin_path(avalon.api.Creator, CREATE_PATH)
+    register_loader_plugin_path(LOAD_PATH)
+    avalon.api.register_plugin_path(LegacyCreator, CREATE_PATH)
     avalon.api.register_plugin_path(avalon.api.InventoryAction, INVENTORY_PATH)
     log.info(PUBLISH_PATH)
 
     log.info("Installing callbacks ... ")
-    avalon.api.on("init", on_init)
+    register_event_callback("init", on_init)
 
     # Callbacks below are not required for headless mode, the `init` however
     # is important to load referenced Alembics correctly at rendertime.
@@ -69,12 +77,12 @@ def install():
 
     menu.install()
 
-    avalon.api.on("save", on_save)
-    avalon.api.on("open", on_open)
-    avalon.api.on("new", on_new)
-    avalon.api.before("save", on_before_save)
-    avalon.api.on("taskChanged", on_task_changed)
-    avalon.api.on("before.workfile.save", before_workfile_save)
+    register_event_callback("save", on_save)
+    register_event_callback("open", on_open)
+    register_event_callback("new", on_new)
+    register_event_callback("before.save", on_before_save)
+    register_event_callback("taskChanged", on_task_changed)
+    register_event_callback("workfile.save.before", before_workfile_save)
 
 
 def _set_project():
@@ -137,7 +145,7 @@ def _register_callbacks():
 
 
 def _on_maya_initialized(*args):
-    avalon.api.emit("init", args)
+    emit_event("init")
 
     if cmds.about(batch=True):
         log.warning("Running batch mode ...")
@@ -148,15 +156,15 @@ def _on_maya_initialized(*args):
 
 
 def _on_scene_new(*args):
-    avalon.api.emit("new", args)
+    emit_event("new")
 
 
 def _on_scene_save(*args):
-    avalon.api.emit("save", args)
+    emit_event("save")
 
 
 def _on_scene_open(*args):
-    avalon.api.emit("open", args)
+    emit_event("open")
 
 
 def _before_scene_save(return_code, client_data):
@@ -166,7 +174,10 @@ def _before_scene_save(return_code, client_data):
     # in order to block the operation.
     OpenMaya.MScriptUtil.setBool(return_code, True)
 
-    avalon.api.emit("before_save", [return_code, client_data])
+    emit_event(
+        "before.save",
+        {"return_code": return_code}
+    )
 
 
 def uninstall():
@@ -175,83 +186,13 @@ def uninstall():
     pyblish.api.deregister_host("mayapy")
     pyblish.api.deregister_host("maya")
 
-    avalon.api.deregister_plugin_path(avalon.api.Loader, LOAD_PATH)
-    avalon.api.deregister_plugin_path(avalon.api.Creator, CREATE_PATH)
+    deregister_loader_plugin_path(LOAD_PATH)
+    avalon.api.deregister_plugin_path(LegacyCreator, CREATE_PATH)
     avalon.api.deregister_plugin_path(
         avalon.api.InventoryAction, INVENTORY_PATH
     )
 
     menu.uninstall()
-
-
-def lock():
-    """Lock scene
-
-    Add an invisible node to your Maya scene with the name of the
-    current file, indicating that this file is "locked" and cannot
-    be modified any further.
-
-    """
-
-    if not cmds.objExists("lock"):
-        with lib.maintained_selection():
-            cmds.createNode("objectSet", name="lock")
-            cmds.addAttr("lock", ln="basename", dataType="string")
-
-            # Permanently hide from outliner
-            cmds.setAttr("lock.verticesOnlySet", True)
-
-    fname = cmds.file(query=True, sceneName=True)
-    basename = os.path.basename(fname)
-    cmds.setAttr("lock.basename", basename, type="string")
-
-
-def unlock():
-    """Permanently unlock a locked scene
-
-    Doesn't throw an error if scene is already unlocked.
-
-    """
-
-    try:
-        cmds.delete("lock")
-    except ValueError:
-        pass
-
-
-def is_locked():
-    """Query whether current scene is locked"""
-    fname = cmds.file(query=True, sceneName=True)
-    basename = os.path.basename(fname)
-
-    if self._ignore_lock:
-        return False
-
-    try:
-        return cmds.getAttr("lock.basename") == basename
-    except ValueError:
-        return False
-
-
-@contextlib.contextmanager
-def lock_ignored():
-    """Context manager for temporarily ignoring the lock of a scene
-
-    The purpose of this function is to enable locking a scene and
-    saving it with the lock still in place.
-
-    Example:
-        >>> with lock_ignored():
-        ...   pass  # Do things without lock
-
-    """
-
-    self._ignore_lock = True
-
-    try:
-        yield
-    finally:
-        self._ignore_lock = False
 
 
 def parse_container(container):
@@ -413,7 +354,7 @@ def containerise(name,
     return container
 
 
-def on_init(_):
+def on_init():
     log.info("Running callback on init..")
 
     def safe_deferred(fn):
@@ -454,12 +395,12 @@ def on_init(_):
         safe_deferred(override_toolbox_ui)
 
 
-def on_before_save(return_code, _):
+def on_before_save():
     """Run validation for scene's FPS prior to saving"""
     return lib.validate_fps()
 
 
-def on_save(_):
+def on_save():
     """Automatically add IDs to new nodes
 
     Any transform of a mesh, without an existing ID, is given one
@@ -477,7 +418,7 @@ def on_save(_):
         lib.set_id(node, new_id, overwrite=False)
 
 
-def on_open(_):
+def on_open():
     """On scene open let's assume the containers have changed."""
 
     from Qt import QtWidgets
@@ -525,7 +466,7 @@ def on_open(_):
             dialog.show()
 
 
-def on_new(_):
+def on_new():
     """Set project resolution and fps when create a new file"""
     log.info("Running callback on new..")
     with lib.suspended_refresh():
@@ -541,7 +482,7 @@ def on_new(_):
         lib.set_context_settings()
 
 
-def on_task_changed(*args):
+def on_task_changed():
     """Wrapped function of app initialize and maya's on task changed"""
     # Run
     menu.update_menu_task_label()
@@ -579,7 +520,7 @@ def on_task_changed(*args):
 
 
 def before_workfile_save(event):
-    workdir_path = event.workdir_path
+    workdir_path = event["workdir_path"]
     if workdir_path:
         copy_workspace_mel(workdir_path)
 

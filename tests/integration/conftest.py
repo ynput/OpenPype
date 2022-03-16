@@ -19,6 +19,11 @@ def pytest_addoption(parser):
         help="Keep empty to locate latest installed variant or explicit"
     )
 
+    parser.addoption(
+        "--timeout", action="store", default=None,
+        help="Overwrite default timeout"
+    )
+
 
 @pytest.fixture(scope="module")
 def test_data_folder(request):
@@ -33,3 +38,8 @@ def persist(request):
 @pytest.fixture(scope="module")
 def app_variant(request):
     return request.config.getoption("--app_variant")
+
+
+@pytest.fixture(scope="module")
+def timeout(request):
+    return request.config.getoption("--timeout")

@@ -30,6 +30,11 @@
                             },
                             {
                                 "type": "boolean",
+                                "key": "useShotName",
+                                "label": "Use Shot Name"
+                            },
+                            {
+                                "type": "boolean",
                                 "key": "clipRename",
                                 "label": "Rename clips"
                             },
@@ -167,6 +172,29 @@
                                         "type": "text"
                                     },
                                     {
+                                        "key": "export_type",
+                                        "label": "Eport clip type",
+                                        "type": "enum",
+                                        "default": "File Sequence",
+                                        "enum_items": [
+                                            {
+                                                "Movie": "Movie"
+                                            },
+                                            {
+                                                "File Sequence": "File Sequence"
+                                            },
+                                            {
+                                                "Sequence Publish": "Sequence Publish"
+                                            }
+                                        ]
+
+                                    },
+                                    {
+                                        "key": "colorspace_out",
+                                        "label": "Output color (imageio)",
+                                        "type": "text"
+                                    },
+                                    {
                                         "type": "separator"
                                     },
                                     {
@@ -185,6 +213,61 @@
                                     }
                                 ]
                             }
+                        }
+                    ]
+                }
+            ]
+        },
+        {
+            "type": "dict",
+            "collapsible": true,
+            "key": "load",
+            "label": "Loader plugins",
+            "children": [
+                {
+                    "type": "dict",
+                    "collapsible": true,
+                    "key": "LoadClip",
+                    "label": "Load Clip",
+                    "checkbox_key": "enabled",
+                    "children": [
+                        {
+                            "type": "boolean",
+                            "key": "enabled",
+                            "label": "Enabled"
+                        },
+                        {
+                            "type": "list",
+                            "key": "families",
+                            "label": "Families",
+                            "object_type": "text"
+                        },
+                        {
+                            "type": "list",
+                            "key": "representations",
+                            "label": "Representations",
+                            "object_type": "text"
+                        },
+                        {
+                            "type": "separator"
+                        },
+                        {
+                            "type": "text",
+                            "key": "reel_group_name",
+                            "label": "Reel group name"
+                        },
+                        {
+                            "type": "text",
+                            "key": "reel_name",
+                            "label": "Reel name"
+                        },
+                        {
+                            "type": "separator"
+                        },
+                        {
+                            "type": "text",
+                            "key": "clip_name_template",
+                            "label": "Clip name template"
                         }
                     ]
                 }

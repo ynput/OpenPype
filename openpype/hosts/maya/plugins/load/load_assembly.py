@@ -1,7 +1,10 @@
-from avalon import api
+from openpype.pipeline import (
+    load,
+    remove_container
+)
 
 
-class AssemblyLoader(api.Loader):
+class AssemblyLoader(load.LoaderPlugin):
 
     families = ["assembly"]
     representations = ["json"]
@@ -48,13 +51,11 @@ class AssemblyLoader(api.Loader):
     def update(self, container, representation):
 
         from openpype import setdress
-        return setdress.update_package(container,
-                                           representation)
+        return setdress.update_package(container, representation)
 
     def remove(self, container):
         """Remove all sub containers"""
 
-        from avalon import api
         from openpype import setdress
         import maya.cmds as cmds
 
@@ -63,7 +64,7 @@ class AssemblyLoader(api.Loader):
         for member_container in member_containers:
             self.log.info("Removing container %s",
                           member_container['objectName'])
-            api.remove(member_container)
+            remove_container(member_container)
 
         # Remove alembic hierarchy reference
         # TODO: Check whether removing all contained references is safe enough

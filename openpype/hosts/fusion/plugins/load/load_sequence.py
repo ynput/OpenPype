@@ -1,12 +1,19 @@
 import os
 import contextlib
 
-from avalon import api
-import avalon.io as io
+from avalon import io
 
-from avalon import fusion
+from openpype.pipeline import (
+    load,
+    get_representation_path,
+)
+from openpype.hosts.fusion.api import (
+    imprint_container,
+    get_current_comp,
+    comp_lock_and_undo_chunk
+)
 
-comp = fusion.get_current_comp()
+comp = get_current_comp()
 
 
 @contextlib.contextmanager
@@ -114,10 +121,10 @@ def loader_shift(loader, frame, relative=True):
     return int(shift)
 
 
-class FusionLoadSequence(api.Loader):
+class FusionLoadSequence(load.LoaderPlugin):
     """Load image sequence into Fusion"""
 
-    families = ["imagesequence", "review"]
+    families = ["imagesequence", "review", "render"]
     representations = ["*"]
 
     label = "Load sequence"
@@ -126,13 +133,6 @@ class FusionLoadSequence(api.Loader):
     color = "orange"
 
     def load(self, context, name, namespace, data):
-
-        from avalon.fusion import (
-            imprint_container,
-            get_current_comp,
-            comp_lock_and_undo_chunk
-        )
-
         # Fallback to asset name when namespace is None
         if namespace is None:
             namespace = context['asset']['name']
@@ -204,13 +204,11 @@ class FusionLoadSequence(api.Loader):
 
         """
 
-        from avalon.fusion import comp_lock_and_undo_chunk
-
         tool = container["_tool"]
         assert tool.ID == "Loader", "Must be Loader"
         comp = tool.Comp()
 
-        root = api.get_representation_path(representation)
+        root = os.path.dirname(get_representation_path(representation))
         path = self._get_first_image(root)
 
         # Get start frame from version data
@@ -247,9 +245,6 @@ class FusionLoadSequence(api.Loader):
             tool.SetData("avalon.representation", str(representation["_id"]))
 
     def remove(self, container):
-
-        from avalon.fusion import comp_lock_and_undo_chunk
-
         tool = container["_tool"]
         assert tool.ID == "Loader", "Must be Loader"
         comp = tool.Comp()

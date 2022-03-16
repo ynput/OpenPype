@@ -14,7 +14,7 @@ self = sys.modules[__name__]
 self._change_context_menu = None
 
 
-def update_menu_task_label(*args):
+def update_menu_task_label():
     """Update the task label in Avalon menu to current session"""
 
     object_name = self._change_context_menu

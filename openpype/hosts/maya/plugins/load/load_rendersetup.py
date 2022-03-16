@@ -7,10 +7,13 @@ instance.
 """
 
 import json
-import six
 import sys
+import six
 
-from avalon import api
+from openpype.pipeline import (
+    load,
+    get_representation_path
+)
 from openpype.hosts.maya.api import lib
 from openpype.hosts.maya.api.pipeline import containerise
 
@@ -18,7 +21,7 @@ from maya import cmds
 import maya.app.renderSetup.model.renderSetup as renderSetup
 
 
-class RenderSetupLoader(api.Loader):
+class RenderSetupLoader(load.LoaderPlugin):
     """Load json preset for RenderSetup overwriting current one."""
 
     families = ["rendersetup"]
@@ -87,7 +90,7 @@ class RenderSetupLoader(api.Loader):
             "Render setup setting will be overwritten by new version. All "
             "setting specified by user not included in loaded version "
             "will be lost.")
-        path = api.get_representation_path(representation)
+        path = get_representation_path(representation)
         with open(path, "r") as file:
             try:
                 renderSetup.instance().decode(

@@ -1,7 +1,8 @@
 import nuke
-from avalon.vendor import qargparse
-from avalon import api, io
+import qargparse
+from avalon import io
 
+from openpype.pipeline import get_representation_path
 from openpype.hosts.nuke.api.lib import (
     get_imageio_input_colorspace,
     maintained_selection
@@ -40,6 +41,9 @@ class LoadClip(plugin.NukeLoader):
     order = -20
     icon = "file-video-o"
     color = "white"
+
+    # Loaded from settings
+    _representations = []
 
     script_start = int(nuke.root()["first_frame"].value())
 
@@ -186,7 +190,7 @@ class LoadClip(plugin.NukeLoader):
         is_sequence = len(representation["files"]) > 1
 
         read_node = nuke.toNode(container['objectName'])
-        file = api.get_representation_path(representation).replace("\\", "/")
+        file = get_representation_path(representation).replace("\\", "/")
 
         start_at_workfile = bool("start at" in read_node['frame_mode'].value())
 

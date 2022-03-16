@@ -2,6 +2,9 @@ import os
 import pyblish.api
 import openpype.api
 
+from openpype.lib import (
+    get_ffmpeg_tool_path,
+)
 from pprint import pformat
 
 
@@ -27,7 +30,7 @@ class ExtractTrimVideoAudio(openpype.api.Extractor):
             instance.data["representations"] = list()
 
         # get ffmpet path
-        ffmpeg_path = openpype.lib.get_ffmpeg_tool_path("ffmpeg")
+        ffmpeg_path = get_ffmpeg_tool_path("ffmpeg")
 
         # get staging dir
         staging_dir = self.staging_dir(instance)
@@ -44,7 +47,7 @@ class ExtractTrimVideoAudio(openpype.api.Extractor):
             clip_trimed_path = os.path.join(
                 staging_dir, instance.data["name"] + ext)
             # # check video file metadata
-            # input_data = plib.ffprobe_streams(video_file_path)[0]
+            # input_data = plib.get_ffprobe_streams(video_file_path)[0]
             # self.log.debug(f"__ input_data: `{input_data}`")
 
             start = float(instance.data["clipInH"])

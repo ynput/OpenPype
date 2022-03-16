@@ -39,7 +39,7 @@ module.exports = {
     announcementBar: {
       id: 'help_with_docs', // Any value that will identify this message.
       content:
-      'Help us make it better., <b><a href="https://github.com/pypeclub/OpenPype/tree/develop/website"></a></b>.',
+      'Help us make this documentation better. <b><a href="https://github.com/pypeclub/OpenPype/tree/develop/website">Edit on github.</a></b>.',
       backgroundColor: '#fff', // Defaults to `#fff`.
       textColor: '#000', // Defaults to `#000`.
     },
@@ -58,9 +58,15 @@ module.exports = {
           to: 'docs/artist_getting_started',
           label: 'User Docs',
           position: 'left'
-        }, {
+        },
+        {
           to: 'docs/system_introduction',
           label: 'Admin Docs',
+          position: 'left'
+        },
+        {
+          to: 'docs/dev_introduction',
+          label: 'Dev Docs',
           position: 'left'
         },
           {

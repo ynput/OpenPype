@@ -1,10 +1,14 @@
 from maya import cmds, mel
-from avalon import api, io
+from avalon import io
+from openpype.pipeline import (
+    load,
+    get_representation_path
+)
 from openpype.hosts.maya.api.pipeline import containerise
 from openpype.hosts.maya.api.lib import unique_namespace
 
 
-class AudioLoader(api.Loader):
+class AudioLoader(load.LoaderPlugin):
     """Specific loader of audio."""
 
     families = ["audio"]
@@ -51,7 +55,7 @@ class AudioLoader(api.Loader):
 
         assert audio_node is not None, "Audio node not found."
 
-        path = api.get_representation_path(representation)
+        path = get_representation_path(representation)
         audio_node.filename.set(path)
         cmds.setAttr(
             container["objectName"] + ".representation",

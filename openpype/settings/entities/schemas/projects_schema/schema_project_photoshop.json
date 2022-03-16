@@ -165,6 +165,11 @@
                     "label": "Extract Review",
                     "children": [
                         {
+                            "type": "boolean",
+                            "key": "make_image_sequence",
+                            "label": "Makes an image sequence instead of a flatten image"
+                        },
+                        {
                             "type": "dict",
                             "collapsible": false,
                             "key": "jpg_options",

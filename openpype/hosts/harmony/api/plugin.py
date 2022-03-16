@@ -1,9 +1,8 @@
-import avalon.api
-from openpype.api import PypeCreatorMixin
+from openpype.pipeline import LegacyCreator
 import openpype.hosts.harmony.api as harmony
 
 
-class Creator(PypeCreatorMixin, avalon.api.Creator):
+class Creator(LegacyCreator):
     """Creator plugin to create instances in Harmony.
 
     By default a Composite node is created to support any number of nodes in
@@ -12,6 +11,7 @@ class Creator(PypeCreatorMixin, avalon.api.Creator):
     created node.
     """
 
+    defaults = ["Main"]
     node_type = "COMPOSITE"
 
     def setup_node(self, node):

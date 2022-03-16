@@ -1,0 +1,16 @@
+@import "css/theme.css";
+
+.domain-summary li {
+    float: left;
+    min-width: 12em;
+}
+
+.domain-summary ul:before, ul:after {
+    content: '';
+    clear: both;
+    display:block;
+}
+
+.rst-content table.docutils td:last-child {
+    white-space: normal;
+}

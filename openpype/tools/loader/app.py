@@ -1,9 +1,10 @@
 import sys
 
 from Qt import QtWidgets, QtCore
-from avalon import api, io, pipeline
+from avalon import api, io
 
 from openpype import style
+from openpype.lib import register_event_callback
 from openpype.tools.utils import (
     lib,
     PlaceholderLineEdit
@@ -23,17 +24,6 @@ from openpype.modules import ModulesManager
 
 module = sys.modules[__name__]
 module.window = None
-
-
-# Register callback on task change
-# - callback can't be defined in Window as it is weak reference callback
-#   so `WeakSet` will remove it immediately
-def on_context_task_change(*args, **kwargs):
-    if module.window:
-        module.window.on_context_task_change(*args, **kwargs)
-
-
-pipeline.on("taskChanged", on_context_task_change)
 
 
 class LoaderWindow(QtWidgets.QDialog):
@@ -194,6 +184,8 @@ class LoaderWindow(QtWidgets.QDialog):
 
         self._first_show = True
 
+        register_event_callback("taskChanged", self.on_context_task_change)
+
     def resizeEvent(self, event):
         super(LoaderWindow, self).resizeEvent(event)
         self._overlay_frame.resize(self.size())
@@ -287,9 +279,7 @@ class LoaderWindow(QtWidgets.QDialog):
         on selection change so they match current selection.
         """
         # TODO do not touch inner attributes of asset widget
-        last_asset_ids = self.data["state"]["assetIds"]
-        if last_asset_ids:
-            self._assets_widget.clear_underlines()
+        self._assets_widget.clear_underlines()
 
     def _assetschanged(self):
         """Selected assets have changed"""
@@ -328,12 +318,11 @@ class LoaderWindow(QtWidgets.QDialog):
         asset_ids = self.data["state"]["assetIds"]
         # Skip setting colors if not asset multiselection
         if not asset_ids or len(asset_ids) < 2:
+            self.clear_assets_underlines()
             self._versionschanged()
             return
 
-        selected_subsets = self._subsets_widget.selected_subsets(
-            _merged=True, _other=False
-        )
+        selected_subsets = self._subsets_widget.get_selected_merge_items()
 
         asset_colors = {}
         asset_ids = []
@@ -358,37 +347,16 @@ class LoaderWindow(QtWidgets.QDialog):
         self._versionschanged()
 
     def _versionschanged(self):
-        subsets = self._subsets_widget
-        selection = subsets.view.selectionModel()
-
-        # Active must be in the selected rows otherwise we
-        # assume it's not actually an "active" current index.
+        items = self._subsets_widget.get_selected_subsets()
         version_doc = None
-        active = selection.currentIndex()
-        rows = selection.selectedRows(column=active.column())
-        if active:
-            if active in rows:
-                item = active.data(subsets.model.ItemRole)
-                if (
-                    item is not None and
-                    not (item.get("isGroup") or item.get("isMerged"))
-                ):
-                    version_doc = item["version_document"]
-        self._version_info_widget.set_version(version_doc)
-
         version_docs = []
-        if rows:
-            for index in rows:
-                if not index or not index.isValid():
-                    continue
-                item = index.data(subsets.model.ItemRole)
-                if item is None:
-                    continue
-                if item.get("isGroup") or item.get("isMerged"):
-                    for child in item.children():
-                        version_docs.append(child["version_document"])
-                else:
-                    version_docs.append(item["version_document"])
+        for item in items:
+            doc = item["version_document"]
+            version_docs.append(doc)
+            if version_doc is None:
+                version_doc = doc
+
+        self._version_info_widget.set_version(version_doc)
 
         thumbnail_src_ids = [
             version_doc["_id"]
@@ -480,18 +448,7 @@ class LoaderWindow(QtWidgets.QDialog):
             self.echo("Grouping not enabled.")
             return
 
-        selected = []
-        merged_items = []
-        for item in subsets.selected_subsets(_merged=True):
-            if item.get("isMerged"):
-                merged_items.append(item)
-            else:
-                selected.append(item)
-
-        for merged_item in merged_items:
-            for child_item in merged_item.children():
-                selected.append(child_item)
-
+        selected = self._subsets_widget.get_selected_subsets()
         if not selected:
             self.echo("No selected subset.")
             return
