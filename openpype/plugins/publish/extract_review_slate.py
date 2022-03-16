@@ -360,11 +360,14 @@ class ExtractReviewSlate(openpype.api.Extractor):
             )
             return codec_args
 
+        source_ffmpeg_cmd = repre.get("ffmpeg_cmd")
         codec_args.extend(
-            get_ffmpeg_format_args(ffprobe_data)
+            get_ffmpeg_format_args(ffprobe_data, source_ffmpeg_cmd)
         )
         codec_args.extend(
-            get_ffmpeg_codec_args(ffprobe_data, logger=self.log)
+            get_ffmpeg_codec_args(
+                ffprobe_data, source_ffmpeg_cmd, logger=self.log
+            )
         )
 
         return codec_args
