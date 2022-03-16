@@ -11,10 +11,10 @@ Publishing workflow consist of 2 parts:
 OpenPype is using [pyblish](https://pyblish.com/) for publishing process. OpenPype a little bit extend and modify few functions mainly for reports and UI purposes. The main differences are that OpenPype's publish UI allows to enable/disable instances or plugins during creation part instead of in publishing part and has limited plugin actions only for failed validation plugins.
 
 # Creation
-Concept of creation does not have to "create" anything but prepare and store metadata about an "instance". Created instance always has `family` which defines what kind of data will be published, best example is `workfile` family. Storing of metadata is host specific and may be even a Creator plugin specific. In most of hosts are metadata stored to workfile (Maya scene, Nuke script, etc.) to an item or a node the same way so consistency of host implementation is kept, but some features may require different approach. Storing data to workfile gives ability to keep values so artist does not have to do create instances over and over.
+Concept of creation does not have to "create" anything but prepare and store metadata about an "instance" (becomes a subset after publish process). Created instance always has `family` which defines what kind of data will be published, best example is `workfile` family. Storing of metadata is host specific and may be even a Creator plugin specific. In most of hosts are metadata stored to workfile (Maya scene, Nuke script, etc.) to an item or a node the same way so consistency of host implementation is kept, but some features may require different approach that is the reason why it is creator plugin responsibility. Storing the metadata to workfile gives ability to keep values so artist does not have to do create and set what should be published and how over and over.
 
 ## Created instance
-Objected representation of created instance metadata defined by class **CreatedInstance**. Has access to **CreateContext** and **BaseCreator** that initialized the object. Is dictionary like object with few immutable keys (maked with start `*`) that are defined by creator plugin or create context on initialization. Can have more arbitrary data but keep in mind that some keys are reserved.
+Objected representation of created instance metadata defined by class **CreatedInstance**. Has access to **CreateContext** and **BaseCreator** that initialized the object. Is dictionary like object with few immutable keys (marked with start `*` in table). The immutable keys are set by creator plugin or create context on initialization and thei values can't change. Instance can have more arbitrary data, for example ids of nodes in scene but keep in mind that some keys are reserved.
 
 | Key | Type | Description |
 |---|---|---|
@@ -25,7 +25,7 @@ Objected representation of created instance metadata defined by class **CreatedI
 | *creator_attributes | dict | Dictionary of attributes that are defined by creator plugin (`get_instance_attr_defs`). |
 | *publish_attributes | dict | Dictionary of attributes that are defined by publish plugins. |
 | variant | str | Variant is entered by artist on creation and may affect **subset**. |
-| subset | str | Name of instance. This name will be used as subset name during publishing. |
+| subset | str | Name of instance. This name will be used as subset name during publishing. Can be changed on context change or variant change. |
 | active | bool | Is instance active and will be published or not. |
 | asset | str | Name of asset in which context was created. |
 | task | str | Name of task in which context was created. Can be set to `None`. |
@@ -48,7 +48,7 @@ Host implementation **must** have implemented **get_context_data** and **update_
 
 There are also few optional functions. For UI purposes it is possible to implement **get_context_title** which can return string showed in UI as a title. Output string may contain html tags. It is recommended to return context path (it will be created function this purposes) in this order `"{project name}/{asset hierarchy}/<b>{asset name}</b>/{task name}"`.
 
-Another optional function is **get_current_context**. This function is handy in hosts where is possible to open multiple workfiles in one process so using global context variables are not relevant because artist can switch between opened workfiles without being acknowledged. When function is not implemented or won't return right keys the global
+Another optional function is **get_current_context**. This function is handy in hosts where is possible to open multiple workfiles in one process so using global context variables is not relevant because artist can switch between opened workfiles without being acknowledged. When function is not implemented or won't return right keys the global context is used.
 ```json
 # Expected keys in output
 {
@@ -59,7 +59,7 @@ Another optional function is **get_current_context**. This function is handy in 
 ```
 
 ## Create plugin
-Main responsibility of create plugin is to create, update, collect and remove instance metadata and propagate changes to create context. Has access to **CreateContext** (`self.create_context`) that discovered the plugin so has also access to other creators and instances.
+Main responsibility of create plugin is to create, update, collect and remove instance metadata and propagate changes to create context. Has access to **CreateContext** (`self.create_context`) that discovered the plugin so has also access to other creators and instances. Create plugins have a lot of responsibility so it is recommended to implement common code per host.
 
 ### BaseCreator
 Base implementation of creator plugin. It is not recommended to use this class as base for production plugins but rather use one of **AutoCreator** and **Creator** variants.
