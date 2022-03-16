@@ -25,10 +25,11 @@ def collect_frames(files):
     collections, remainder = clique.assemble(files, minimum_items=1)
 
     real_file_name = None
+    sources_and_frames = {}
     if len(files) == 1:
         real_file_name = list(files)[0]
+        sources_and_frames[real_file_name] = None
 
-    sources_and_frames = {}
     if collections:
         for collection in collections:
             src_head = collection.head
@@ -36,10 +37,7 @@ def collect_frames(files):
 
             # version recognized as a collection
             if re.match(".*([^a-zA-Z0-9]v%[0-9]+d).*", collection.format()):
-                if len(collections) > 1:
-                    continue
-                else:
-                    return {real_file_name: None}
+                continue
 
             for index in collection.indexes:
                 src_frame = collection.format("{padding}") % index

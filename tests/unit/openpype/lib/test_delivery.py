@@ -47,6 +47,18 @@ def test_collect_frames_single_sequence():
     assert ret == expected, "Not matching"
 
 
+def test_collect_frames_single_sequence_full_path():
+    files = ['C:/test_project/assets/locations/Town/work/compositing\\renders\\aftereffects\\test_project_TestAsset_compositing_v001\\TestAsset_renderCompositingMain_v001.mov']  # noqa: E501
+    ret = collect_frames(files)
+
+    expected = {
+        'C:/test_project/assets/locations/Town/work/compositing\\renders\\aftereffects\\test_project_TestAsset_compositing_v001\\TestAsset_renderCompositingMain_v001.mov': None  # noqa: E501
+    }
+
+    print(ret)
+    assert ret == expected, "Not matching"
+
+
 def test_collect_frames_single_sequence_different_format():
     files = ["Asset.v001.renderCompositingMain_0000.png"]
     ret = collect_frames(files)
