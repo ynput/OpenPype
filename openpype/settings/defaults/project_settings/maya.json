@@ -502,6 +502,12 @@
                 }
             }
         },
+        "ExtractMayaSceneRaw": {
+            "enabled": true,
+            "add_for_families": [
+                "layout"
+            ]
+        },
         "ExtractCameraAlembic": {
             "enabled": true,
             "optional": true,

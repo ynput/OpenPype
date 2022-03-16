@@ -14,7 +14,7 @@ from openpype.api import Logger
 from openpype.tools.utils import host_tools
 
 from avalon import api
-from avalon.tools.webserver.app import WebServerTool
+from openpype.tools.adobe_webserver.app import WebServerTool
 
 from .ws_stub import PhotoshopServerStub
 

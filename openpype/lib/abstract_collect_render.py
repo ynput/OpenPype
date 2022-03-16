@@ -26,7 +26,7 @@ class RenderInstance(object):
 
     # metadata
     version = attr.ib()  # instance version
-    time = attr.ib()  # time of instance creation (avalon.api.time())
+    time = attr.ib()  # time of instance creation (get_formatted_current_time)
     source = attr.ib()  # path to source scene file
     label = attr.ib()  # label to show in GUI
     subset = attr.ib()  # subset name

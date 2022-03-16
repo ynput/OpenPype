@@ -1,8 +1,10 @@
 # -*- coding: utf-8 -*-
 from abc import ABC
 
-from openpype.pipeline import LegacyCreator
-import avalon.api
+from openpype.pipeline import (
+    LegacyCreator,
+    LoaderPlugin,
+)
 
 
 class Creator(LegacyCreator):
@@ -10,6 +12,6 @@ class Creator(LegacyCreator):
     defaults = ['Main']
 
 
-class Loader(avalon.api.Loader, ABC):
+class Loader(LoaderPlugin, ABC):
     """This serves as skeleton for future OpenPype specific functionality"""
     pass

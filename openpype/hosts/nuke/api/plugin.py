@@ -4,10 +4,11 @@ import string
 
 import nuke
 
-import avalon.api
-
 from openpype.api import get_current_project_settings
-from openpype.pipeline import LegacyCreator
+from openpype.pipeline import (
+    LegacyCreator,
+    LoaderPlugin,
+)
 from .lib import (
     Knobby,
     check_subsetname_exists,
@@ -85,7 +86,7 @@ def get_review_presets_config():
     return [str(name) for name, _prop in outputs.items()]
 
 
-class NukeLoader(avalon.api.Loader):
+class NukeLoader(LoaderPlugin):
     container_id_knob = "containerId"
     container_id = None
 
