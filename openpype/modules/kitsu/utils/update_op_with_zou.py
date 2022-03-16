@@ -144,11 +144,20 @@ def write_project_to_op(project: dict, dbcon: AvalonMongoDB) -> UpdateOne:
     # Project data and tasks
     project_data = project["data"] or {}
 
+    # Build project code and update Kitsu
+    project_code = project.get("code")
+    if not project_code:
+        project_code = project["name"].replace(" ", "_").lower()
+        project["code"] = project_code
+
+        # Update Zou
+        gazu.project.update_project(project)
+
     # Update data
     if project_data:
         project_data.update(
             {
-                "code": project["code"],
+                "code": project_code,
                 "fps": project["fps"],
                 "resolutionWidth": project["resolution"].split("x")[0],
                 "resolutionHeight": project["resolution"].split("x")[1],
