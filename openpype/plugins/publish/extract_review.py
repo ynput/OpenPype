@@ -13,7 +13,7 @@ import pyblish.api
 import openpype.api
 from openpype.lib import (
     get_ffmpeg_tool_path,
-    ffprobe_streams,
+    get_ffprobe_streams,
 
     path_to_subprocess_arg,
 
@@ -1146,7 +1146,7 @@ class ExtractReview(pyblish.api.InstancePlugin):
         # NOTE Skipped using instance's resolution
         full_input_path_single_file = temp_data["full_input_path_single_file"]
         try:
-            streams = ffprobe_streams(
+            streams = get_ffprobe_streams(
                 full_input_path_single_file, self.log
             )
         except Exception as exc:
@@ -1188,8 +1188,8 @@ class ExtractReview(pyblish.api.InstancePlugin):
 
         # NOTE Setting only one of `width` or `heigth` is not allowed
         # - settings value can't have None but has value of 0
-        output_width = output_width or output_def.get("width") or None
-        output_height = output_height or output_def.get("height") or None
+        output_width = output_def.get("width") or output_width or None
+        output_height = output_def.get("height") or output_height or None
 
         # Overscal color
         overscan_color_value = "black"
