@@ -1,5 +1,4 @@
-from avalon.api import CreatorError
-
+from openpype.pipeline import CreatorError
 from openpype.lib import prepare_template_data
 from openpype.hosts.tvpaint.api import (
     plugin,

@@ -19,10 +19,10 @@ from openpype.api import (
     get_project_settings
 )
 
+from openpype.pipeline import CreatorError
 from openpype.modules import ModulesManager
 
 from avalon.api import Session
-from avalon.api import CreatorError
 
 
 class CreateVRayScene(plugin.Creator):

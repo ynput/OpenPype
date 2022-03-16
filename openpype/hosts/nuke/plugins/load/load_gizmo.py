@@ -1,5 +1,6 @@
 import nuke
-from avalon import api, style, io
+from avalon import api, io
+
 from openpype.hosts.nuke.api.lib import (
     maintained_selection,
     get_avalon_knob_data,
@@ -21,7 +22,7 @@ class LoadGizmo(api.Loader):
     label = "Load Gizmo"
     order = 0
     icon = "dropbox"
-    color = style.colors.light
+    color = "white"
     node_color = "0x75338eff"
 
     def load(self, context, name, namespace, data):

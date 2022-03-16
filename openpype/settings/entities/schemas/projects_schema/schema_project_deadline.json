@@ -103,7 +103,7 @@
                                     "DraftTileAssembler": "Draft Tile Assembler"
                                 },
                                 {
-                                    "oiio": "Open Image IO"
+                                    "OpenPypeTileAssembler": "Open Image IO"
                                 }
                             ]
                         },
@@ -367,6 +367,11 @@
                             "type": "text",
                             "key": "department",
                             "label": "Department"
+                        },
+                        {
+                            "type": "boolean",
+                            "key": "multiprocess",
+                            "label": "Multiprocess"
                         }
                     ]
                 },

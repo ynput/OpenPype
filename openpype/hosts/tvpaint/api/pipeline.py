@@ -14,6 +14,8 @@ from avalon.pipeline import AVALON_CONTAINER_ID
 
 from openpype.hosts import tvpaint
 from openpype.api import get_current_project_settings
+from openpype.lib import register_event_callback
+from openpype.pipeline import LegacyCreator
 
 from .lib import (
     execute_george,
@@ -76,7 +78,7 @@ def install():
     pyblish.api.register_host("tvpaint")
     pyblish.api.register_plugin_path(PUBLISH_PATH)
     avalon.api.register_plugin_path(avalon.api.Loader, LOAD_PATH)
-    avalon.api.register_plugin_path(avalon.api.Creator, CREATE_PATH)
+    avalon.api.register_plugin_path(LegacyCreator, CREATE_PATH)
 
     registered_callbacks = (
         pyblish.api.registered_callbacks().get("instanceToggled") or []
@@ -84,8 +86,8 @@ def install():
     if on_instance_toggle not in registered_callbacks:
         pyblish.api.register_callback("instanceToggled", on_instance_toggle)
 
-    avalon.api.on("application.launched", initial_launch)
-    avalon.api.on("application.exit", application_exit)
+    register_event_callback("application.launched", initial_launch)
+    register_event_callback("application.exit", application_exit)
 
 
 def uninstall():
@@ -98,7 +100,7 @@ def uninstall():
     pyblish.api.deregister_host("tvpaint")
     pyblish.api.deregister_plugin_path(PUBLISH_PATH)
     avalon.api.deregister_plugin_path(avalon.api.Loader, LOAD_PATH)
-    avalon.api.deregister_plugin_path(avalon.api.Creator, CREATE_PATH)
+    avalon.api.deregister_plugin_path(LegacyCreator, CREATE_PATH)
 
 
 def containerise(

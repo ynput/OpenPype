@@ -19,7 +19,10 @@ def get_release_type_github(Log, github_token):
         match = re.search("pull request #(\d+)", line)
         if match:
             pr_number = match.group(1)
-            pr = repo.get_pull(int(pr_number))
+            try:
+                pr = repo.get_pull(int(pr_number))
+            except:
+                continue
             for label in pr.labels:
                 labels.add(label.name)
 

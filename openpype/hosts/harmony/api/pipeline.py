@@ -9,6 +9,8 @@ import avalon.api
 from avalon.pipeline import AVALON_CONTAINER_ID
 
 from openpype import lib
+from openpype.lib import register_event_callback
+from openpype.pipeline import LegacyCreator
 import openpype.hosts.harmony
 import openpype.hosts.harmony.api as harmony
 
@@ -129,7 +131,7 @@ def check_inventory():
     harmony.send({"function": "PypeHarmony.message", "args": msg})
 
 
-def application_launch():
+def application_launch(event):
     """Event that is executed after Harmony is launched."""
     # FIXME: This is breaking server <-> client communication.
     # It is now moved so it it manually called.
@@ -179,7 +181,7 @@ def install():
     pyblish.api.register_host("harmony")
     pyblish.api.register_plugin_path(PUBLISH_PATH)
     avalon.api.register_plugin_path(avalon.api.Loader, LOAD_PATH)
-    avalon.api.register_plugin_path(avalon.api.Creator, CREATE_PATH)
+    avalon.api.register_plugin_path(LegacyCreator, CREATE_PATH)
     log.info(PUBLISH_PATH)
 
     # Register callbacks.
@@ -187,13 +189,13 @@ def install():
         "instanceToggled", on_pyblish_instance_toggled
     )
 
-    avalon.api.on("application.launched", application_launch)
+    register_event_callback("application.launched", application_launch)
 
 
 def uninstall():
     pyblish.api.deregister_plugin_path(PUBLISH_PATH)
     avalon.api.deregister_plugin_path(avalon.api.Loader, LOAD_PATH)
-    avalon.api.deregister_plugin_path(avalon.api.Creator, CREATE_PATH)
+    avalon.api.deregister_plugin_path(LegacyCreator, CREATE_PATH)
 
 
 def on_pyblish_instance_toggled(instance, old_value, new_value):

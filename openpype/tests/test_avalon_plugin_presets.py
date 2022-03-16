@@ -1,8 +1,9 @@
 import avalon.api as api
 import openpype
+from openpype.pipeline import LegacyCreator
 
 
-class MyTestCreator(api.Creator):
+class MyTestCreator(LegacyCreator):
 
     my_test_property = "A"
 
@@ -26,8 +27,8 @@ def test_avalon_plugin_presets(monkeypatch, printer):
 
     openpype.install()
     api.register_host(Test())
-    api.register_plugin(api.Creator, MyTestCreator)
-    plugins = api.discover(api.Creator)
+    api.register_plugin(LegacyCreator, MyTestCreator)
+    plugins = api.discover(LegacyCreator)
     printer("Test if we got our test plugin")
     assert MyTestCreator in plugins
     for p in plugins:

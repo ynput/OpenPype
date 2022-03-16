@@ -694,7 +694,7 @@ class MongoSettingsHandler(SettingsHandler):
         return self.collection.find_one(
             {"type": self._version_order_key},
             projection
-        )
+        ) or {}
 
     def _check_version_order(self):
         """This method will work only in OpenPype process.

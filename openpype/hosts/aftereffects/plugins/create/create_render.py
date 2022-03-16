@@ -1,13 +1,12 @@
-from avalon.api import CreatorError
-
-import openpype.api
+from openpype.pipeline import create
+from openpype.pipeline import CreatorError
 from openpype.hosts.aftereffects.api import (
     get_stub,
     list_instances
 )
 
 
-class CreateRender(openpype.api.Creator):
+class CreateRender(create.LegacyCreator):
     """Render folder for publish.
 
         Creates subsets in format 'familyTaskSubsetname',
@@ -19,6 +18,7 @@ class CreateRender(openpype.api.Creator):
     name = "renderDefault"
     label = "Render on Farm"
     family = "render"
+    defaults = ["Main"]
 
     def process(self):
         stub = get_stub()  # only after After Effects is up

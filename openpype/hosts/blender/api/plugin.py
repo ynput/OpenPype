@@ -6,7 +6,7 @@ from typing import Dict, List, Optional
 import bpy
 
 import avalon.api
-from openpype.api import PypeCreatorMixin
+from openpype.pipeline import LegacyCreator
 from .pipeline import AVALON_CONTAINERS
 from .ops import (
     MainThreadItem,
@@ -129,8 +129,10 @@ def deselect_all():
     bpy.context.view_layer.objects.active = active
 
 
-class Creator(PypeCreatorMixin, avalon.api.Creator):
+class Creator(LegacyCreator):
     """Base class for Creator plug-ins."""
+    defaults = ['Main']
+
     def process(self):
         collection = bpy.data.collections.new(name=self.data["subset"])
         bpy.context.scene.collection.children.link(collection)

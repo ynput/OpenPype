@@ -19,7 +19,7 @@ class CopyTemplateWorkfile(PreLaunchHook):
 
     # Before `AddLastWorkfileToLaunchArgs`
     order = 0
-    app_groups = ["blender", "photoshop", "tvpaint", "afftereffects"]
+    app_groups = ["blender", "photoshop", "tvpaint", "aftereffects"]
 
     def execute(self):
         """Check if can copy template for context and do it if possible.
@@ -44,7 +44,7 @@ class CopyTemplateWorkfile(PreLaunchHook):
             return
 
         if os.path.exists(last_workfile):
-            self.log.debug("Last workfile exits. Skipping {} process.".format(
+            self.log.debug("Last workfile exists. Skipping {} process.".format(
                 self.__class__.__name__
             ))
             return
@@ -120,7 +120,7 @@ class CopyTemplateWorkfile(PreLaunchHook):
             f"Creating workfile from template: \"{template_path}\""
         )
 
-        # Copy template workfile to new destinantion
+        # Copy template workfile to new destination
         shutil.copy2(
             os.path.normpath(template_path),
             os.path.normpath(last_workfile)

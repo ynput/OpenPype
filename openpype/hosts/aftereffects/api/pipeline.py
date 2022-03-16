@@ -9,7 +9,9 @@ from avalon import io, pipeline
 
 from openpype import lib
 from openpype.api import Logger
+from openpype.pipeline import LegacyCreator
 import openpype.hosts.aftereffects
+from openpype.lib import register_event_callback
 
 from .launch_logic import get_stub
 
@@ -66,20 +68,20 @@ def install():
     pyblish.api.register_plugin_path(PUBLISH_PATH)
 
     avalon.api.register_plugin_path(avalon.api.Loader, LOAD_PATH)
-    avalon.api.register_plugin_path(avalon.api.Creator, CREATE_PATH)
+    avalon.api.register_plugin_path(LegacyCreator, CREATE_PATH)
     log.info(PUBLISH_PATH)
 
     pyblish.api.register_callback(
         "instanceToggled", on_pyblish_instance_toggled
     )
 
-    avalon.api.on("application.launched", application_launch)
+    register_event_callback("application.launched", application_launch)
 
 
 def uninstall():
     pyblish.api.deregister_plugin_path(PUBLISH_PATH)
     avalon.api.deregister_plugin_path(avalon.api.Loader, LOAD_PATH)
-    avalon.api.deregister_plugin_path(avalon.api.Creator, CREATE_PATH)
+    avalon.api.deregister_plugin_path(LegacyCreator, CREATE_PATH)
 
 
 def on_pyblish_instance_toggled(instance, old_value, new_value):

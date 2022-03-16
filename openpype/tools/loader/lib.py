@@ -1,7 +1,7 @@
 import inspect
 from Qt import QtGui
+import qtawesome
 
-from avalon.vendor import qtawesome
 from openpype.tools.utils.widgets import (
     OptionalAction,
     OptionDialog
@@ -16,26 +16,6 @@ def change_visibility(model, view, column_name, visible):
     """
     index = model.Columns.index(column_name)
     view.setColumnHidden(index, not visible)
-
-
-def get_selected_items(rows, item_role):
-    items = []
-    for row_index in rows:
-        item = row_index.data(item_role)
-        if item.get("isGroup"):
-            continue
-
-        elif item.get("isMerged"):
-            for idx in range(row_index.model().rowCount(row_index)):
-                child_index = row_index.child(idx, 0)
-                item = child_index.data(item_role)
-                if item not in items:
-                    items.append(item)
-
-        else:
-            if item not in items:
-                items.append(item)
-    return items
 
 
 def get_options(action, loader, parent, repre_contexts):

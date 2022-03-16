@@ -293,7 +293,7 @@ def set_plugin_attributes_from_settings(
     plugin_type = None
     if superclass.__name__.split(".")[-1] in ("Loader", "SubsetLoader"):
         plugin_type = "load"
-    elif superclass.__name__.split(".")[-1] == "Creator":
+    elif superclass.__name__.split(".")[-1] in ("Creator", "LegacyCreator"):
         plugin_type = "create"
 
     if not host_name or not project_name or plugin_type is None:

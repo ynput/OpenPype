@@ -2,8 +2,9 @@ import os
 import json
 import getpass
 
+import requests
+
 from avalon import api
-from avalon.vendor import requests
 
 import pyblish.api
 
@@ -30,7 +31,7 @@ class FusionSubmitDeadline(pyblish.api.InstancePlugin):
         else:
             context.data[key] = True
 
-        from avalon.fusion.lib import get_frame_path
+        from openpype.hosts.fusion.api.lib import get_frame_path
 
         deadline_url = (
             context.data["system_settings"]

@@ -467,12 +467,22 @@ class InstanceListView(AbstractInstanceView):
         else:
             active = False
 
+        group_names = set()
         for instance_id in selected_instance_ids:
             widget = self._widgets_by_id.get(instance_id)
-            if widget is not None:
-                widget.set_active(active)
+            if widget is None:
+                continue
+
+            widget.set_active(active)
+            group_name = self._group_by_instance_id.get(instance_id)
+            if group_name is not None:
+                group_names.add(group_name)
+
+        for group_name in group_names:
+            self._update_group_checkstate(group_name)
 
     def _update_group_checkstate(self, group_name):
+        """Update checkstate of one group."""
         widget = self._group_widgets.get(group_name)
         if widget is None:
             return

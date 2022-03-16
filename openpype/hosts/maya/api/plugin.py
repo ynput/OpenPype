@@ -2,9 +2,11 @@ import os
 
 from maya import cmds
 
+import qargparse
+
 from avalon import api
-from avalon.vendor import qargparse
-from openpype.api import PypeCreatorMixin
+from avalon.pipeline import AVALON_CONTAINER_ID
+from openpype.pipeline import LegacyCreator
 
 from .pipeline import containerise
 from . import lib
@@ -77,7 +79,9 @@ def get_reference_node_parents(ref):
     return parents
 
 
-class Creator(PypeCreatorMixin, api.Creator):
+class Creator(LegacyCreator):
+    defaults = ['Main']
+
     def process(self):
         nodes = list()
 
@@ -164,44 +168,38 @@ class ReferenceLoader(Loader):
             nodes = self[:]
             if not nodes:
                 return
-            # FIXME: there is probably better way to do this for looks.
-            if "look" in self.families:
-                loaded_containers.append(containerise(
-                    name=name,
-                    namespace=namespace,
-                    nodes=nodes,
-                    context=context,
-                    loader=self.__class__.__name__
-                ))
-            else:
-                ref_node = get_reference_node(nodes, self.log)
-                loaded_containers.append(containerise(
-                    name=name,
-                    namespace=namespace,
-                    nodes=[ref_node],
-                    context=context,
-                    loader=self.__class__.__name__
-                ))
 
+            ref_node = get_reference_node(nodes, self.log)
+            container = containerise(
+                name=name,
+                namespace=namespace,
+                nodes=[ref_node],
+                context=context,
+                loader=self.__class__.__name__
+            )
+            loaded_containers.append(container)
+            self._organize_containers(nodes, container)
             c += 1
             namespace = None
+
         return loaded_containers
 
     def process_reference(self, context, name, namespace, data):
         """To be implemented by subclass"""
         raise NotImplementedError("Must be implemented by subclass")
 
-
     def update(self, container, representation):
         from maya import cmds
+        from openpype.hosts.maya.api.lib import get_container_members
 
         node = container["objectName"]
 
         path = api.get_representation_path(representation)
 
         # Get reference node from container members
-        members = cmds.sets(node, query=True, nodesOnly=True)
+        members = get_container_members(node)
         reference_node = get_reference_node(members, self.log)
+        namespace = cmds.referenceQuery(reference_node, namespace=True)
 
         file_type = {
             "ma": "mayaAscii",
@@ -219,18 +217,14 @@ class ReferenceLoader(Loader):
         alembic_data = {}
         if representation["name"] == "abc":
             alembic_nodes = cmds.ls(
-                "{}:*".format(members[0].split(":")[0]), type="AlembicNode"
+                "{}:*".format(namespace), type="AlembicNode"
             )
             if alembic_nodes:
                 for attr in alembic_attrs:
                     node_attr = "{}.{}".format(alembic_nodes[0], attr)
                     alembic_data[attr] = cmds.getAttr(node_attr)
             else:
-                cmds.warning(
-                    "No alembic nodes found in {}".format(
-                        cmds.ls("{}:*".format(members[0].split(":")[0]))
-                    )
-                )
+                self.log.debug("No alembic nodes found in {}".format(members))
 
         try:
             content = cmds.file(path,
@@ -253,10 +247,12 @@ class ReferenceLoader(Loader):
 
             self.log.warning("Ignoring file read error:\n%s", exc)
 
+        self._organize_containers(content, container["objectName"])
+
         # Reapply alembic settings.
-        if representation["name"] == "abc":
+        if representation["name"] == "abc" and alembic_data:
             alembic_nodes = cmds.ls(
-                "{}:*".format(members[0].split(":")[0]), type="AlembicNode"
+                "{}:*".format(namespace), type="AlembicNode"
             )
             if alembic_nodes:
                 for attr, value in alembic_data.items():
@@ -290,7 +286,6 @@ class ReferenceLoader(Loader):
                 to remove from scene.
 
         """
-
         from maya import cmds
 
         node = container["objectName"]
@@ -320,3 +315,14 @@ class ReferenceLoader(Loader):
                            deleteNamespaceContent=True)
         except RuntimeError:
             pass
+
+    @staticmethod
+    def _organize_containers(nodes, container):
+        # type: (list, str) -> None
+        """Put containers in loaded data to correct hierarchy."""
+        for node in nodes:
+            id_attr = "{}.id".format(node)
+            if not cmds.attributeQuery("id", node=node, exists=True):
+                continue
+            if cmds.getAttr(id_attr) == AVALON_CONTAINER_ID:
+                cmds.sets(node, forceElement=container)

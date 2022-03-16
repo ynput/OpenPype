@@ -36,7 +36,7 @@ def install():
         return
 
     def deferred():
-        from avalon.tools import publish
+        pyblish_icon = host_tools.get_pyblish_icon()
         parent_widget = get_main_window()
         cmds.menu(
             MENU_NAME,
@@ -80,7 +80,7 @@ def install():
             command=lambda *args: host_tools.show_publish(
                 parent=parent_widget
             ),
-            image=publish.ICON
+            image=pyblish_icon
         )
 
         cmds.menuItem(

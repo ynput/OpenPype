@@ -22,7 +22,7 @@ We use simple colour coding to show you any changes to the settings:
 - **Orange**: [Project Override](#project-overrides)
 - **Blue**: Changed and unsaved value
 
-![Colour coding](assets\settings\settings_colour_coding.png)
+![Colour coding](assets/settings/settings_colour_coding.png)
 
 You'll find that settings are split into categories:
 

@@ -99,65 +99,6 @@ def get_id_required_nodes():
     return list(nodes)
 
 
-def get_additional_data(container):
-    """Not implemented yet!"""
-    return container
-
-
-def set_parameter_callback(node, parameter, language, callback):
-    """Link a callback to a parameter of a node
-
-    Args:
-        node(hou.Node): instance of the nodee
-        parameter(str): name of the parameter
-        language(str): name of the language, e.g.: python
-        callback(str): command which needs to be triggered
-
-    Returns:
-        None
-
-    """
-
-    template_grp = node.parmTemplateGroup()
-    template = template_grp.find(parameter)
-    if not template:
-        return
-
-    script_language = (hou.scriptLanguage.Python if language == "python" else
-                       hou.scriptLanguage.Hscript)
-
-    template.setScriptCallbackLanguage(script_language)
-    template.setScriptCallback(callback)
-
-    template.setTags({"script_callback": callback,
-                      "script_callback_language": language.lower()})
-
-    # Replace the existing template with the adjusted one
-    template_grp.replace(parameter, template)
-
-    node.setParmTemplateGroup(template_grp)
-
-
-def set_parameter_callbacks(node, parameter_callbacks):
-    """Set callbacks for multiple parameters of a node
-
-    Args:
-        node(hou.Node): instance of a hou.Node
-        parameter_callbacks(dict): collection of parameter and callback data
-            example:  {"active" :
-                        {"language": "python",
-                         "callback": "print('hello world)'"}
-                     }
-    Returns:
-        None
-    """
-    for parameter, data in parameter_callbacks.items():
-        language = data["language"]
-        callback = data["callback"]
-
-        set_parameter_callback(node, parameter, language, callback)
-
-
 def get_output_parameter(node):
     """Return the render output parameter name of the given node
 
@@ -187,19 +128,6 @@ def get_output_parameter(node):
             return node.parm("ar_ass_file")
 
     raise TypeError("Node type '%s' not supported" % node_type)
-
-
-@contextmanager
-def attribute_values(node, data):
-
-    previous_attrs = {key: node.parm(key).eval() for key in data.keys()}
-    try:
-        node.setParms(data)
-        yield
-    except Exception as exc:
-        pass
-    finally:
-        node.setParms(previous_attrs)
 
 
 def set_scene_fps(fps):
@@ -349,10 +277,6 @@ def render_rop(ropnode):
         raise RuntimeError("Render failed: {0}".format(exc))
 
 
-def children_as_string(node):
-    return [c.name() for c in node.children()]
-
-
 def imprint(node, data):
     """Store attributes with value on a node
 
@@ -406,31 +330,46 @@ def imprint(node, data):
     node.setParmTemplateGroup(parm_group)
 
 
-def lsattr(attr, value=None):
+def lsattr(attr, value=None, root="/"):
+    """Return nodes that have `attr`
+     When `value` is not None it will only return nodes matching that value
+     for the given attribute.
+     Args:
+         attr (str): Name of the attribute (hou.Parm)
+         value (object, Optional): The value to compare the attribute too.
+            When the default None is provided the value check is skipped.
+        root (str): The root path in Houdini to search in.
+    Returns:
+        list: Matching nodes that have attribute with value.
+    """
     if value is None:
-        nodes = list(hou.node("/obj").allNodes())
+        # Use allSubChildren() as allNodes() errors on nodes without
+        # permission to enter without a means to continue of querying
+        # the rest
+        nodes = hou.node(root).allSubChildren()
         return [n for n in nodes if n.parm(attr)]
     return lsattrs({attr: value})
 
 
-def lsattrs(attrs):
+def lsattrs(attrs, root="/"):
     """Return nodes matching `key` and `value`
-
     Arguments:
         attrs (dict): collection of attribute: value
-
+        root (str): The root path in Houdini to search in.
     Example:
         >> lsattrs({"id": "myId"})
         ["myNode"]
         >> lsattr("id")
         ["myNode", "myOtherNode"]
-
     Returns:
-        list
+        list: Matching nodes that have attribute with value.
     """
 
     matches = set()
-    nodes = list(hou.node("/obj").allNodes())  # returns generator object
+    # Use allSubChildren() as allNodes() errors on nodes without
+    # permission to enter without a means to continue of querying
+    # the rest
+    nodes = hou.node(root).allSubChildren()
     for node in nodes:
         for attr in attrs:
             if not node.parm(attr):
@@ -458,53 +397,6 @@ def read(node):
             parameter in node.spareParms()}
 
 
-def unique_name(name, format="%03d", namespace="", prefix="", suffix="",
-                separator="_"):
-    """Return unique `name`
-
-    The function takes into consideration an optional `namespace`
-    and `suffix`. The suffix is included in evaluating whether a
-    name exists - such as `name` + "_GRP" - but isn't included
-    in the returned value.
-
-    If a namespace is provided, only names within that namespace
-    are considered when evaluating whether the name is unique.
-
-    Arguments:
-        format (str, optional): The `name` is given a number, this determines
-            how this number is formatted. Defaults to a padding of 2.
-            E.g. my_name01, my_name02.
-        namespace (str, optional): Only consider names within this namespace.
-        suffix (str, optional): Only consider names with this suffix.
-
-    Example:
-        >>> name = hou.node("/obj").createNode("geo", name="MyName")
-        >>> assert hou.node("/obj/MyName")
-        True
-        >>> unique = unique_name(name)
-        >>> assert hou.node("/obj/{}".format(unique))
-        False
-
-    """
-
-    iteration = 1
-
-    parts = [prefix, name, format % iteration, suffix]
-    if namespace:
-        parts.insert(0, namespace)
-
-    unique = separator.join(parts)
-    children = children_as_string(hou.node("/obj"))
-    while unique in children:
-        iteration += 1
-        unique = separator.join(parts)
-
-    if suffix:
-        return unique[:-len(suffix)]
-
-    return unique
-
-
 @contextmanager
 def maintained_selection():
     """Maintain selection during context
@@ -527,3 +419,37 @@ def maintained_selection():
         if previous_selection:
             for node in previous_selection:
                 node.setSelected(on=True)
+
+
+def reset_framerange():
+    """Set frame range to current asset"""
+
+    asset_name = api.Session["AVALON_ASSET"]
+    asset = io.find_one({"name": asset_name, "type": "asset"})
+
+    frame_start = asset["data"].get("frameStart")
+    frame_end = asset["data"].get("frameEnd")
+    # Backwards compatibility
+    if frame_start is None or frame_end is None:
+        frame_start = asset["data"].get("edit_in")
+        frame_end = asset["data"].get("edit_out")
+
+    if frame_start is None or frame_end is None:
+        log.warning("No edit information found for %s" % asset_name)
+        return
+
+    handles = asset["data"].get("handles") or 0
+    handle_start = asset["data"].get("handleStart")
+    if handle_start is None:
+        handle_start = handles
+
+    handle_end = asset["data"].get("handleEnd")
+    if handle_end is None:
+        handle_end = handles
+
+    frame_start -= int(handle_start)
+    frame_end += int(handle_end)
+
+    hou.playbar.setFrameRange(frame_start, frame_end)
+    hou.playbar.setPlaybackRange(frame_start, frame_end)
+    hou.setFrame(frame_start)

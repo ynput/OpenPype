@@ -2,11 +2,12 @@
 """Houdini specific Avalon/Pyblish plugin definitions."""
 import sys
 import six
-import avalon.api
-from avalon.api import CreatorError
 
 import hou
-from openpype.api import PypeCreatorMixin
+from openpype.pipeline import (
+    CreatorError,
+    LegacyCreator
+)
 from .lib import imprint
 
 
@@ -14,7 +15,7 @@ class OpenPypeCreatorError(CreatorError):
     pass
 
 
-class Creator(PypeCreatorMixin, avalon.api.Creator):
+class Creator(LegacyCreator):
     """Creator plugin to create instances in Houdini
 
     To support the wide range of node types for render output (Alembic, VDB,
@@ -30,6 +31,7 @@ class Creator(PypeCreatorMixin, avalon.api.Creator):
     the node.
 
     """
+    defaults = ['Main']
 
     def __init__(self, *args, **kwargs):
         super(Creator, self).__init__(*args, **kwargs)

@@ -81,6 +81,11 @@ class PypeCommands:
         standalonepublish.main()
 
     @staticmethod
+    def launch_traypublisher():
+        from openpype.tools import traypublisher
+        traypublisher.main()
+
+    @staticmethod
     def publish(paths, targets=None, gui=False):
         """Start headless publishing.
 
@@ -363,7 +368,7 @@ class PypeCommands:
         pass
 
     def run_tests(self, folder, mark, pyargs,
-                  test_data_folder, persist, app_variant):
+                  test_data_folder, persist, app_variant, timeout):
         """
             Runs tests from 'folder'
 
@@ -400,6 +405,9 @@ class PypeCommands:
 
         if app_variant:
             args.extend(["--app_variant", app_variant])
+
+        if timeout:
+            args.extend(["--timeout", timeout])
 
         print("run_tests args: {}".format(args))
         import pytest

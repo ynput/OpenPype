@@ -9,6 +9,7 @@ from .widgets import (
     RestartDialog,
     SettingsTabWidget
 )
+from .search_dialog import SearchEntitiesDialog
 from openpype import style
 
 from openpype.lib import is_admin_password_required
@@ -58,8 +59,13 @@ class MainWidget(QtWidgets.QWidget):
 
         self.setLayout(layout)
 
+        search_dialog = SearchEntitiesDialog(self)
+
         self._shadow_widget = ShadowWidget("Working...", self)
         self._shadow_widget.setVisible(False)
+
+        header_tab_widget.currentChanged.connect(self._on_tab_changed)
+        search_dialog.path_clicked.connect(self._on_search_path_clicked)
 
         for tab_widget in tab_widgets:
             tab_widget.saved.connect(self._on_tab_save)
@@ -67,6 +73,8 @@ class MainWidget(QtWidgets.QWidget):
             tab_widget.restart_required_trigger.connect(
                 self._on_restart_required
             )
+            tab_widget.reset_started.connect(self._on_reset_started)
+            tab_widget.reset_started.connect(self._on_reset_finished)
             tab_widget.full_path_requested.connect(self._on_full_path_request)
 
         header_tab_widget.context_menu_requested.connect(
@@ -75,6 +83,7 @@ class MainWidget(QtWidgets.QWidget):
 
         self._header_tab_widget = header_tab_widget
         self.tab_widgets = tab_widgets
+        self._search_dialog = search_dialog
 
     def _on_tab_save(self, source_widget):
         for tab_widget in self.tab_widgets:
@@ -170,6 +179,21 @@ class MainWidget(QtWidgets.QWidget):
         for tab_widget in self.tab_widgets:
             tab_widget.reset()
 
+    def _update_search_dialog(self, clear=False):
+        if self._search_dialog.isVisible():
+            entity = None
+            if not clear:
+                widget = self._header_tab_widget.currentWidget()
+                entity = widget.entity
+            self._search_dialog.set_root_entity(entity)
+
+    def _on_tab_changed(self):
+        self._update_search_dialog()
+
+    def _on_search_path_clicked(self, path):
+        widget = self._header_tab_widget.currentWidget()
+        widget.change_path(path)
+
     def _on_restart_required(self):
         # Don't show dialog if there are not registered slots for
         #   `trigger_restart` signal.
@@ -184,3 +208,26 @@ class MainWidget(QtWidgets.QWidget):
         result = dialog.exec_()
         if result == 1:
             self.trigger_restart.emit()
+
+    def _on_reset_started(self):
+        widget = self.sender()
+        current_widget = self._header_tab_widget.currentWidget()
+        if current_widget is widget:
+            self._update_search_dialog(True)
+
+    def _on_reset_finished(self):
+        widget = self.sender()
+        current_widget = self._header_tab_widget.currentWidget()
+        if current_widget is widget:
+            self._update_search_dialog()
+
+    def keyPressEvent(self, event):
+        if event.matches(QtGui.QKeySequence.Find):
+            # todo: search in all widgets (or in active)?
+            widget = self._header_tab_widget.currentWidget()
+            self._search_dialog.show()
+            self._search_dialog.set_root_entity(widget.entity)
+            event.accept()
+            return
+
+        return super(MainWidget, self).keyPressEvent(event)

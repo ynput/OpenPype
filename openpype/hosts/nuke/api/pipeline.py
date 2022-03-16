@@ -14,6 +14,8 @@ from openpype.api import (
     BuildWorkfile,
     get_current_project_settings
 )
+from openpype.lib import register_event_callback
+from openpype.pipeline import LegacyCreator
 from openpype.tools.utils import host_tools
 
 from .command import viewer_update_and_undo_stop
@@ -98,12 +100,12 @@ def install():
     log.info("Registering Nuke plug-ins..")
     pyblish.api.register_plugin_path(PUBLISH_PATH)
     avalon.api.register_plugin_path(avalon.api.Loader, LOAD_PATH)
-    avalon.api.register_plugin_path(avalon.api.Creator, CREATE_PATH)
+    avalon.api.register_plugin_path(LegacyCreator, CREATE_PATH)
     avalon.api.register_plugin_path(avalon.api.InventoryAction, INVENTORY_PATH)
 
     # Register Avalon event for workfiles loading.
-    avalon.api.on("workio.open_file", check_inventory_versions)
-    avalon.api.on("taskChanged", change_context_label)
+    register_event_callback("workio.open_file", check_inventory_versions)
+    register_event_callback("taskChanged", change_context_label)
 
     pyblish.api.register_callback(
         "instanceToggled", on_pyblish_instance_toggled)
@@ -124,7 +126,7 @@ def uninstall():
     pyblish.deregister_host("nuke")
     pyblish.api.deregister_plugin_path(PUBLISH_PATH)
     avalon.api.deregister_plugin_path(avalon.api.Loader, LOAD_PATH)
-    avalon.api.deregister_plugin_path(avalon.api.Creator, CREATE_PATH)
+    avalon.api.deregister_plugin_path(LegacyCreator, CREATE_PATH)
 
     pyblish.api.deregister_callback(
         "instanceToggled", on_pyblish_instance_toggled)
@@ -226,7 +228,7 @@ def _uninstall_menu():
         menu.removeItem(item.name())
 
 
-def change_context_label(*args):
+def change_context_label():
     menubar = nuke.menu("Nuke")
     menu = menubar.findItem(MENU_LABEL)
 

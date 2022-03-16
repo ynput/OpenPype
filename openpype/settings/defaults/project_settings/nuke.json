@@ -116,13 +116,42 @@
                 "baking": {
                     "filter": {
                         "task_types": [],
-                        "families": []
+                        "families": [],
+                        "sebsets": []
                     },
                     "extension": "mov",
                     "viewer_process_override": "",
                     "bake_viewer_process": true,
                     "bake_viewer_input_process": true,
-                    "add_tags": []
+                    "add_tags": [],
+                    "reformat_node_add": false,
+                    "reformat_node_config": [
+                        {
+                            "type": "string",
+                            "name": "type",
+                            "value": "to format"
+                        },
+                        {
+                            "type": "string",
+                            "name": "format",
+                            "value": "HD_1080"
+                        },
+                        {
+                            "type": "string",
+                            "name": "filter",
+                            "value": "Lanczos6"
+                        },
+                        {
+                            "type": "bool",
+                            "name": "black_outside",
+                            "value": true
+                        },
+                        {
+                            "type": "bool",
+                            "name": "pbb",
+                            "value": false
+                        }
+                    ]
                 }
             }
         },

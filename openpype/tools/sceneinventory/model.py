@@ -4,11 +4,12 @@ import logging
 from collections import defaultdict
 
 from Qt import QtCore, QtGui
-from avalon import api, io, style, schema
-from avalon.vendor import qtawesome
+import qtawesome
 
+from avalon import api, io, schema
 from avalon.lib import HeroVersionType
-from avalon.tools.models import TreeModel, Item
+from openpype.style import get_default_entity_icon_color
+from openpype.tools.utils.models import TreeModel, Item
 
 from .lib import (
     get_site_icons,
@@ -37,6 +38,8 @@ class InventoryModel(TreeModel):
         self.family_config_cache = family_config_cache
 
         self._hierarchy_view = False
+
+        self._default_icon_color = get_default_entity_icon_color()
 
         manager = ModulesManager()
         sync_server = manager.modules_by_name["sync_server"]
@@ -131,7 +134,7 @@ class InventoryModel(TreeModel):
         if role == QtCore.Qt.DecorationRole:
             if index.column() == 0:
                 # Override color
-                color = item.get("color", style.colors.default)
+                color = item.get("color", self._default_icon_color)
                 if item.get("isGroupNode"):  # group-item
                     return qtawesome.icon("fa.folder", color=color)
                 if item.get("isNotSet"):
