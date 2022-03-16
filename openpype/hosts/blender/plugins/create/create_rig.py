@@ -4,7 +4,6 @@ import bpy
 
 from avalon import api
 from openpype.hosts.blender.api import plugin, lib, ops
-from openpype.hosts.blender.api.pipeline import AVALON_INSTANCES, RIG_TASK_NAME
 
 
 class CreateRig(plugin.Creator):

@@ -31,11 +31,12 @@ class BlendModelLoader(plugin.AssetLoader):
 
     def _get_armature_modifier_parameters(self, container):
         modifiers_dict = dict()
+        print(container)
         object_names_list = plugin.get_all_objects_in_collection(container)
         print("--------------------------------------------------------------")
         print(object_names_list)
         for object_name in object_names_list:
-            object = py.data.objects.get(object_name)
+            object = bpy.data.objects.get(object_name)
             if object:
                 modifier = object.modifiers.get("Armature")
                 if modifier:
@@ -50,7 +51,7 @@ class BlendModelLoader(plugin.AssetLoader):
 
         print(object_names_list)
         for object_name in object_names_list:
-            object = py.data.objects.get(object_name)
+            object = bpy.data.objects.get(object_name)
             if object:
                 modifier = object.modifiers.get("Armature")
                 if modifier:
@@ -62,7 +63,7 @@ class BlendModelLoader(plugin.AssetLoader):
         for obj in objects:
             if obj.type == "MESH":
                 for material_slot in list(obj.material_slots):
-                    if material_slot.material != None:
+                    if material_slot.material is not None:
                         bpy.data.materials.remove(material_slot.material)
                 bpy.data.meshes.remove(obj.data)
             elif obj.type == "EMPTY":
@@ -88,10 +89,7 @@ class BlendModelLoader(plugin.AssetLoader):
         for data_collection in instances:
             if data_collection.override_library is None:
                 if data_collection[AVALON_PROPERTY].get("family") is not None:
-                    if (
-                        data_collection[AVALON_PROPERTY].get("family")
-                        == "model"
-                    ):
+                    if data_collection[AVALON_PROPERTY].get("family") == "model":
                         container_collection = data_collection
 
         # Create a collection used to start the load collections at .001
@@ -178,9 +176,7 @@ class BlendModelLoader(plugin.AssetLoader):
         libpath = Path(api.get_representation_path(representation))
 
         assert container, f"The asset is not loaded: {container['objectName']}"
-        assert (
-            libpath
-        ), "No existing library file found for {container['objectName']}"
+        assert libpath, "No existing library file found for {container['objectName']}"
         assert libpath.is_file(), f"The file doesn't exist: {libpath}"
 
         metadata = container.get(AVALON_PROPERTY)
@@ -189,9 +185,7 @@ class BlendModelLoader(plugin.AssetLoader):
         normalized_container_libpath = str(
             Path(bpy.path.abspath(container_libpath)).resolve()
         )
-        normalized_libpath = str(
-            Path(bpy.path.abspath(str(libpath))).resolve()
-        )
+        normalized_libpath = str(Path(bpy.path.abspath(str(libpath))).resolve())
         self.log.debug(
             "normalized_group_libpath:\n  %s\nnormalized_libpath:\n  %s",
             normalized_container_libpath,
@@ -209,8 +203,7 @@ class BlendModelLoader(plugin.AssetLoader):
                     collection.override_library is not None
                     and collection.library is None
                 ) or (
-                    collection.override_library is None
-                    and collection.library is None
+                    collection.override_library is None and collection.library is None
                 ):
                     container_item = collection
                     if (
@@ -219,9 +212,7 @@ class BlendModelLoader(plugin.AssetLoader):
                     ):
                         count += 1
         parent_collections = plugin.get_parent_collections(container)
-        armature_modifiers_dict = self._get_armature_modifier_parameters(
-            container
-        )
+        armature_modifiers_dict = self._get_armature_modifier_parameters(container)
         if container.override_library is not None:
             self._remove(container.override_library.reference)
         self._remove(container)
@@ -231,9 +222,7 @@ class BlendModelLoader(plugin.AssetLoader):
         print(bpy.path.basename(container_libpath))
         print(count)
         if count == 1:
-            library = bpy.data.libraries.get(
-                bpy.path.basename(container_libpath)
-            )
+            library = bpy.data.libraries.get(bpy.path.basename(container_libpath))
             if library:
                 bpy.data.libraries.remove(library)
 
@@ -268,9 +257,7 @@ class BlendModelLoader(plugin.AssetLoader):
         normalized_container_libpath = str(
             Path(bpy.path.abspath(container_libpath)).resolve()
         )
-        normalized_libpath = str(
-            Path(bpy.path.abspath(str(libpath))).resolve()
-        )
+        normalized_libpath = str(Path(bpy.path.abspath(str(libpath))).resolve())
         self.log.debug(
             "normalized_group_libpath:\n  %s\nnormalized_libpath:\n  %s",
             normalized_container_libpath,
@@ -285,8 +272,7 @@ class BlendModelLoader(plugin.AssetLoader):
                     collection.override_library is not None
                     and collection.library is None
                 ) or (
-                    collection.override_library is None
-                    and collection.library is None
+                    collection.override_library is None and collection.library is None
                 ):
                     container_item = collection
                     if (
@@ -304,9 +290,7 @@ class BlendModelLoader(plugin.AssetLoader):
         print(bpy.path.basename(container_libpath))
         print(count)
         if count == 1:
-            library = bpy.data.libraries.get(
-                bpy.path.basename(container_libpath)
-            )
+            library = bpy.data.libraries.get(bpy.path.basename(container_libpath))
             if library:
                 bpy.data.libraries.remove(library)
 

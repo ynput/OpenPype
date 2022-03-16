@@ -327,16 +327,26 @@ class BlendLayoutLoader(plugin.AssetLoader):
             pformat(representation, indent=2),
         )
 
-        assert asset_group, f"The asset is not loaded: {container['objectName']}"
-        assert libpath, "No existing library file found for {container['objectName']}"
+        assert (
+            asset_group
+        ), f"The asset is not loaded: {container['objectName']}"
+        assert (
+            libpath
+        ), "No existing library file found for {container['objectName']}"
         assert libpath.is_file(), f"The file doesn't exist: {libpath}"
-        assert extension in plugin.VALID_EXTENSIONS, f"Unsupported file: {libpath}"
+        assert (
+            extension in plugin.VALID_EXTENSIONS
+        ), f"Unsupported file: {libpath}"
 
         metadata = asset_group.get(AVALON_PROPERTY)
         group_libpath = metadata["libpath"]
 
-        normalized_group_libpath = str(Path(bpy.path.abspath(group_libpath)).resolve())
-        normalized_libpath = str(Path(bpy.path.abspath(str(libpath))).resolve())
+        normalized_group_libpath = str(
+            Path(bpy.path.abspath(group_libpath)).resolve()
+        )
+        normalized_libpath = str(
+            Path(bpy.path.abspath(str(libpath))).resolve()
+        )
         self.log.debug(
             "normalized_group_libpath:\n  %s\nnormalized_libpath:\n  %s",
             normalized_group_libpath,

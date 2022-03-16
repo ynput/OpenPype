@@ -142,7 +142,7 @@ def get_all_collections_in_collection(collection):
 
 
 def get_all_objects_in_collection(collection_input):
-    """get_all_collections_in_collection"""
+    """get_all_objects_in_collection"""
     collection_list = collection_input.children.values()
 
     objects_list = list()
@@ -152,7 +152,7 @@ def get_all_objects_in_collection(collection_input):
     for collection in collection_list:
         nodes = collection.objects.values()
         for object in nodes:
-            if not object.name in objects_list:
+            if object.name not in objects_list:
                 objects_list.append(object.name)
             nodes.extend(object.children)
     return objects_list

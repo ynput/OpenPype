@@ -5,7 +5,6 @@ from openpype.hosts.blender.api.workio import save_file
 import pyblish.api
 from avalon import io
 import pyblish.util
-from openpype.hosts.blender.api import lib
 from openpype.hosts.blender.api.pipeline import AVALON_PROPERTY
 
 
@@ -23,7 +22,9 @@ def extract(file_to_open, filepath, collection_name):
     collection = bpy.data.collections.get(collection_name)
     bpy.context.scene.collection.children.link(collection)
     bpy.ops.object.make_local(type="ALL")
-    bpy.data.orphans_purge(do_recursive=True, do_local_ids=True, do_linked_ids=True)
+    bpy.data.orphans_purge(
+        do_recursive=True, do_local_ids=True, do_linked_ids=True
+    )
 
     representation = io.find_one(
         {"_id": io.ObjectId(collection[AVALON_PROPERTY]["representation"])}
@@ -45,7 +46,9 @@ def extract(file_to_open, filepath, collection_name):
     }
     collection[AVALON_PROPERTY] = data
     bpy.ops.object.make_local(type="ALL")
-    bpy.data.orphans_purge(do_recursive=True, do_local_ids=True, do_linked_ids=True)
+    bpy.data.orphans_purge(
+        do_recursive=True, do_local_ids=True, do_linked_ids=True
+    )
     save_file(filepath, copy=False)
     print("save")
     pyblish.util.publish()
