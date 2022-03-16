@@ -1,15 +1,18 @@
 import os
 import re
 import logging
+import json
 import collections
 import tempfile
+import subprocess
 
 import xml.etree.ElementTree
 
 from .execute import run_subprocess
 from .vendor_bin_utils import (
+    get_ffmpeg_tool_path,
     get_oiio_tools_path,
-    is_oiio_supported
+    is_oiio_supported,
 )
 
 # Max length of string that is supported by ffmpeg
@@ -483,3 +486,290 @@ def convert_for_ffmpeg(
 
     logger.debug("Conversion command: {}".format(" ".join(oiio_cmd)))
     run_subprocess(oiio_cmd, logger=logger)
+
+
+# FFMPEG functions
+def get_ffprobe_data(path_to_file, logger=None):
+    """Load data about entered filepath via ffprobe.
+
+    Args:
+        path_to_file (str): absolute path
+        logger (logging.Logger): injected logger, if empty new is created
+    """
+    if not logger:
+        logger = logging.getLogger(__name__)
+    logger.info(
+        "Getting information about input \"{}\".".format(path_to_file)
+    )
+    args = [
+        get_ffmpeg_tool_path("ffprobe"),
+        "-hide_banner",
+        "-loglevel", "fatal",
+        "-show_error",
+        "-show_format",
+        "-show_streams",
+        "-show_programs",
+        "-show_chapters",
+        "-show_private_data",
+        "-print_format", "json",
+        path_to_file
+    ]
+
+    logger.debug("FFprobe command: {}".format(
+        subprocess.list2cmdline(args)
+    ))
+    popen = subprocess.Popen(
+        args,
+        stdout=subprocess.PIPE,
+        stderr=subprocess.PIPE
+    )
+
+    popen_stdout, popen_stderr = popen.communicate()
+    if popen_stdout:
+        logger.debug("FFprobe stdout:\n{}".format(
+            popen_stdout.decode("utf-8")
+        ))
+
+    if popen_stderr:
+        logger.warning("FFprobe stderr:\n{}".format(
+            popen_stderr.decode("utf-8")
+        ))
+
+    return json.loads(popen_stdout)
+
+
+def get_ffprobe_streams(path_to_file, logger=None):
+    """Load streams from entered filepath via ffprobe.
+
+    Args:
+        path_to_file (str): absolute path
+        logger (logging.Logger): injected logger, if empty new is created
+    """
+    return get_ffprobe_data(path_to_file, logger)["streams"]
+
+
+def get_ffmpeg_format_args(ffprobe_data, source_ffmpeg_cmd=None):
+    """Copy format from input metadata for output.
+
+    Args:
+        ffprobe_data(dict): Data received from ffprobe.
+        source_ffmpeg_cmd(str): Command that created input if available.
+    """
+    input_format = ffprobe_data.get("format") or {}
+    if input_format.get("format_name") == "mxf":
+        return _ffmpeg_mxf_format_args(ffprobe_data, source_ffmpeg_cmd)
+    return []
+
+
+def _ffmpeg_mxf_format_args(ffprobe_data, source_ffmpeg_cmd):
+    input_format = ffprobe_data["format"]
+    format_tags = input_format.get("tags") or {}
+    product_name = format_tags.get("product_name") or ""
+    output = []
+    if "opatom" in product_name.lower():
+        output.extend(["-f", "mxf_opatom"])
+    return output
+
+
+def get_ffmpeg_codec_args(ffprobe_data, source_ffmpeg_cmd=None, logger=None):
+    """Copy codec from input metadata for output.
+
+    Args:
+        ffprobe_data(dict): Data received from ffprobe.
+        source_ffmpeg_cmd(str): Command that created input if available.
+    """
+    if logger is None:
+        logger = logging.getLogger(__name__)
+
+    video_stream = None
+    no_audio_stream = None
+    for stream in ffprobe_data["streams"]:
+        codec_type = stream["codec_type"]
+        if codec_type == "video":
+            video_stream = stream
+            break
+        elif no_audio_stream is None and codec_type != "audio":
+            no_audio_stream = stream
+
+    if video_stream is None:
+        if no_audio_stream is None:
+            logger.warning(
+                "Couldn't find stream that is not an audio file."
+            )
+            return []
+        logger.info(
+            "Didn't find video stream. Using first non audio stream."
+        )
+        video_stream = no_audio_stream
+
+    codec_name = video_stream.get("codec_name")
+    # Codec "prores"
+    if codec_name == "prores":
+        return _ffmpeg_prores_codec_args(video_stream, source_ffmpeg_cmd)
+
+    # Codec "h264"
+    if codec_name == "h264":
+        return _ffmpeg_h264_codec_args(video_stream, source_ffmpeg_cmd)
+
+    # Coded DNxHD
+    if codec_name == "dnxhd":
+        return _ffmpeg_dnxhd_codec_args(video_stream, source_ffmpeg_cmd)
+
+    output = []
+    if codec_name:
+        output.extend(["-codec:v", codec_name])
+
+    bit_rate = video_stream.get("bit_rate")
+    if bit_rate:
+        output.extend(["-b:v", bit_rate])
+
+    pix_fmt = video_stream.get("pix_fmt")
+    if pix_fmt:
+        output.extend(["-pix_fmt", pix_fmt])
+
+    output.extend(["-g", "1"])
+
+    return output
+
+
+def _ffmpeg_prores_codec_args(stream_data, source_ffmpeg_cmd):
+    output = []
+
+    tags = stream_data.get("tags") or {}
+    encoder = tags.get("encoder") or ""
+    if encoder.endswith("prores_ks"):
+        codec_name = "prores_ks"
+
+    elif encoder.endswith("prores_aw"):
+        codec_name = "prores_aw"
+
+    else:
+        codec_name = "prores"
+
+    output.extend(["-codec:v", codec_name])
+
+    pix_fmt = stream_data.get("pix_fmt")
+    if pix_fmt:
+        output.extend(["-pix_fmt", pix_fmt])
+
+    # Rest of arguments is prores_kw specific
+    if codec_name == "prores_ks":
+        codec_tag_to_profile_map = {
+            "apco": "proxy",
+            "apcs": "lt",
+            "apcn": "standard",
+            "apch": "hq",
+            "ap4h": "4444",
+            "ap4x": "4444xq"
+        }
+        codec_tag_str = stream_data.get("codec_tag_string")
+        if codec_tag_str:
+            profile = codec_tag_to_profile_map.get(codec_tag_str)
+            if profile:
+                output.extend(["-profile:v", profile])
+
+    return output
+
+
+def _ffmpeg_h264_codec_args(stream_data, source_ffmpeg_cmd):
+    output = ["-codec:v", "h264"]
+
+    # Use arguments from source if are available source arguments
+    if source_ffmpeg_cmd:
+        copy_args = (
+            "-crf",
+            "-b:v", "-vb",
+            "-minrate", "-minrate:",
+            "-maxrate", "-maxrate:",
+            "-bufsize", "-bufsize:"
+        )
+        args = source_ffmpeg_cmd.split(" ")
+        for idx, arg in enumerate(args):
+            if arg in copy_args:
+                output.extend([arg, args[idx + 1]])
+
+    pix_fmt = stream_data.get("pix_fmt")
+    if pix_fmt:
+        output.extend(["-pix_fmt", pix_fmt])
+
+    output.extend(["-intra"])
+    output.extend(["-g", "1"])
+
+    return output
+
+
+def _ffmpeg_dnxhd_codec_args(stream_data, source_ffmpeg_cmd):
+    output = ["-codec:v", "dnxhd"]
+
+    # Use source profile (profiles in metadata are not usable in args directly)
+    profile = stream_data.get("profile") or ""
+    # Lower profile and replace space with underscore
+    cleaned_profile = profile.lower().replace(" ", "_")
+
+    # TODO validate this statement
+    # Looks like using 'dnxhd' profile must have set bit rate and in that case
+    #   should be used bitrate from source.
+    # - related attributes 'bit_rate_defined', 'bit_rate_must_be_defined'
+    bit_rate_must_be_defined = True
+    dnx_profiles = {
+        "dnxhd",
+        "dnxhr_lb",
+        "dnxhr_sq",
+        "dnxhr_hq",
+        "dnxhr_hqx",
+        "dnxhr_444"
+    }
+    if cleaned_profile in dnx_profiles:
+        if cleaned_profile != "dnxhd":
+            bit_rate_must_be_defined = False
+        output.extend(["-profile:v", cleaned_profile])
+
+    pix_fmt = stream_data.get("pix_fmt")
+    if pix_fmt:
+        output.extend(["-pix_fmt", pix_fmt])
+
+    # Use arguments from source if are available source arguments
+    bit_rate_defined = False
+    if source_ffmpeg_cmd:
+        # Define bitrate arguments
+        bit_rate_args = ("-b:v", "-vb",)
+        # Seprate the two variables in case something else should be copied
+        #   from source command
+        copy_args = []
+        copy_args.extend(bit_rate_args)
+
+        args = source_ffmpeg_cmd.split(" ")
+        for idx, arg in enumerate(args):
+            if arg in copy_args:
+                if arg in bit_rate_args:
+                    bit_rate_defined = True
+                output.extend([arg, args[idx + 1]])
+
+    # Add bitrate if needed
+    if bit_rate_must_be_defined and not bit_rate_defined:
+        src_bit_rate = stream_data.get("bit_rate")
+        if src_bit_rate:
+            output.extend(["-b:v", src_bit_rate])
+
+    output.extend(["-g", "1"])
+    return output
+
+
+def convert_ffprobe_fps_value(str_value):
+    """Returns (str) value of fps from ffprobe frame format (120/1)"""
+    if str_value == "0/0":
+        print("WARNING: Source has \"r_frame_rate\" value set to \"0/0\".")
+        return "Unknown"
+
+    items = str_value.split("/")
+    if len(items) == 1:
+        fps = float(items[0])
+
+    elif len(items) == 2:
+        fps = float(items[0]) / float(items[1])
+
+    # Check if fps is integer or float number
+    if int(fps) == fps:
+        fps = int(fps)
+
+    return str(fps)

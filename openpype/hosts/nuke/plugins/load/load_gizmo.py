@@ -1,5 +1,11 @@
 import nuke
-from avalon import api, style, io
+
+from avalon import io
+
+from openpype.pipeline import (
+    load,
+    get_representation_path,
+)
 from openpype.hosts.nuke.api.lib import (
     maintained_selection,
     get_avalon_knob_data,
@@ -12,7 +18,7 @@ from openpype.hosts.nuke.api import (
 )
 
 
-class LoadGizmo(api.Loader):
+class LoadGizmo(load.LoaderPlugin):
     """Loading nuke Gizmo"""
 
     representations = ["gizmo"]
@@ -21,7 +27,7 @@ class LoadGizmo(api.Loader):
     label = "Load Gizmo"
     order = 0
     icon = "dropbox"
-    color = style.colors.light
+    color = "white"
     node_color = "0x75338eff"
 
     def load(self, context, name, namespace, data):
@@ -103,7 +109,7 @@ class LoadGizmo(api.Loader):
         # get corresponding node
         GN = nuke.toNode(container['objectName'])
 
-        file = api.get_representation_path(representation).replace("\\", "/")
+        file = get_representation_path(representation).replace("\\", "/")
         name = container['name']
         version_data = version.get("data", {})
         vname = version.get("name", None)

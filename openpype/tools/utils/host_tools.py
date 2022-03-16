@@ -224,20 +224,18 @@ class HostToolsHelper:
     def get_look_assigner_tool(self, parent):
         """Create, cache and return look assigner tool window."""
         if self._look_assigner_tool is None:
-            import mayalookassigner
+            from openpype.tools.mayalookassigner import MayaLookAssignerWindow
 
-            mayalookassigner_window = mayalookassigner.App(parent)
+            mayalookassigner_window = MayaLookAssignerWindow(parent)
             self._look_assigner_tool = mayalookassigner_window
         return self._look_assigner_tool
 
     def show_look_assigner(self, parent=None):
         """Look manager is Maya specific tool for look management."""
-        from avalon import style
 
         with qt_app_context():
             look_assigner_tool = self.get_look_assigner_tool(parent)
             look_assigner_tool.show()
-            look_assigner_tool.setStyleSheet(style.load_stylesheet())
 
     def get_experimental_tools_dialog(self, parent=None):
         """Dialog of experimental tools.

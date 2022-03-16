@@ -6,7 +6,12 @@ import avalon.api
 from avalon import pipeline, io
 
 from openpype.api import Logger
-from openpype.pipeline import LegacyCreator
+from openpype.lib import register_event_callback
+from openpype.pipeline import (
+    LegacyCreator,
+    register_loader_plugin_path,
+    deregister_loader_plugin_path,
+)
 import openpype.hosts.photoshop
 
 from . import lib
@@ -67,7 +72,7 @@ def install():
     pyblish.api.register_host("photoshop")
 
     pyblish.api.register_plugin_path(PUBLISH_PATH)
-    avalon.api.register_plugin_path(avalon.api.Loader, LOAD_PATH)
+    register_loader_plugin_path(LOAD_PATH)
     avalon.api.register_plugin_path(LegacyCreator, CREATE_PATH)
     log.info(PUBLISH_PATH)
 
@@ -75,12 +80,12 @@ def install():
         "instanceToggled", on_pyblish_instance_toggled
     )
 
-    avalon.api.on("application.launched", on_application_launch)
+    register_event_callback("application.launched", on_application_launch)
 
 
 def uninstall():
     pyblish.api.deregister_plugin_path(PUBLISH_PATH)
-    avalon.api.deregister_plugin_path(avalon.api.Loader, LOAD_PATH)
+    deregister_loader_plugin_path(LOAD_PATH)
     avalon.api.deregister_plugin_path(LegacyCreator, CREATE_PATH)
 
 

@@ -1,11 +1,15 @@
 import os
 
-from avalon import api
-from avalon.houdini import pipeline
 import clique
+from openpype.pipeline import (
+    load,
+    get_representation_path,
+)
+
+from openpype.hosts.houdini.api import pipeline
 
 
-class AssLoader(api.Loader):
+class AssLoader(load.LoaderPlugin):
     """Load .ass with Arnold Procedural"""
 
     families = ["ass"]
@@ -88,7 +92,7 @@ class AssLoader(api.Loader):
     def update(self, container, representation):
 
         # Update the file path
-        file_path = api.get_representation_path(representation)
+        file_path = get_representation_path(representation)
         file_path = file_path.replace("\\", "/")
 
         procedural = container["node"]

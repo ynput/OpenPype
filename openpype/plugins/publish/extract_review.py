@@ -13,7 +13,7 @@ import pyblish.api
 import openpype.api
 from openpype.lib import (
     get_ffmpeg_tool_path,
-    ffprobe_streams,
+    get_ffprobe_streams,
 
     path_to_subprocess_arg,
 
@@ -103,9 +103,10 @@ class ExtractReview(pyblish.api.InstancePlugin):
 
         self.log.debug("Matching profile: \"{}\"".format(json.dumps(profile)))
 
+        subset_name = instance.data.get("subset")
         instance_families = self.families_from_instance(instance)
-        filtered_outputs = self.filter_outputs_by_families(
-            profile, instance_families
+        filtered_outputs = self.filter_output_defs(
+            profile, subset_name, instance_families
         )
         # Store `filename_suffix` to save arguments
         profile_outputs = []
@@ -1145,7 +1146,7 @@ class ExtractReview(pyblish.api.InstancePlugin):
         # NOTE Skipped using instance's resolution
         full_input_path_single_file = temp_data["full_input_path_single_file"]
         try:
-            streams = ffprobe_streams(
+            streams = get_ffprobe_streams(
                 full_input_path_single_file, self.log
             )
         except Exception as exc:
@@ -1187,8 +1188,8 @@ class ExtractReview(pyblish.api.InstancePlugin):
 
         # NOTE Setting only one of `width` or `heigth` is not allowed
         # - settings value can't have None but has value of 0
-        output_width = output_width or output_def.get("width") or None
-        output_height = output_height or output_def.get("height") or None
+        output_width = output_def.get("width") or output_width or None
+        output_height = output_def.get("height") or output_height or None
 
         # Overscal color
         overscan_color_value = "black"
@@ -1651,7 +1652,7 @@ class ExtractReview(pyblish.api.InstancePlugin):
                 return True
         return False
 
-    def filter_outputs_by_families(self, profile, families):
+    def filter_output_defs(self, profile, subset_name, families):
         """Return outputs matching input instance families.
 
         Output definitions without families filter are marked as valid.
@@ -1683,6 +1684,24 @@ class ExtractReview(pyblish.api.InstancePlugin):
             families_filters = output_filters.get("families")
             if not self.families_filter_validation(families, families_filters):
                 continue
+
+            # Subsets name filters
+            subset_filters = [
+                subset_filter
+                for subset_filter in output_filters.get("subsets", [])
+                # Skip empty strings
+                if subset_filter
+            ]
+            if subset_name and subset_filters:
+                match = False
+                for subset_filter in subset_filters:
+                    compiled = re.compile(subset_filter)
+                    if compiled.search(subset_name):
+                        match = True
+                        break
+
+                if not match:
+                    continue
 
             filtered_outputs[filename_suffix] = output_def
 

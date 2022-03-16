@@ -1,11 +1,10 @@
 import re
 
-import avalon.api
-
 from openpype.lib import (
     get_background_layers,
     get_unique_layer_name
 )
+from openpype.pipeline import get_representation_path
 from openpype.hosts.aftereffects.api import (
     AfterEffectsLoader,
     containerise
@@ -78,7 +77,7 @@ class BackgroundLoader(AfterEffectsLoader):
         else:  # switching version - keep same name
             comp_name = container["namespace"]
 
-        path = avalon.api.get_representation_path(representation)
+        path = get_representation_path(representation)
 
         layers = get_background_layers(path)
         comp = stub.reload_background(container["members"][1],

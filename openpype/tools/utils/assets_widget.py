@@ -5,9 +5,10 @@ import Qt
 from Qt import QtWidgets, QtCore, QtGui
 import qtawesome
 
-from avalon import style
-
-from openpype.style import get_objected_colors
+from openpype.style import (
+    get_objected_colors,
+    get_default_tools_icon_color,
+)
 from openpype.tools.flickcharm import FlickCharm
 
 from .views import (
@@ -512,7 +513,7 @@ class AssetModel(QtGui.QStandardItemModel):
                 item.setData(asset_label, ASSET_LABEL_ROLE)
 
             has_children = item.rowCount() > 0
-            icon = get_asset_icon(asset_data, has_children)
+            icon = get_asset_icon(asset_doc, has_children)
             item.setData(icon, QtCore.Qt.DecorationRole)
 
     def _threaded_fetch(self):
@@ -589,7 +590,7 @@ class AssetsWidget(QtWidgets.QWidget):
         view.setModel(proxy)
 
         current_asset_icon = qtawesome.icon(
-            "fa.arrow-down", color=style.colors.light
+            "fa.arrow-down", color=get_default_tools_icon_color()
         )
         current_asset_btn = QtWidgets.QPushButton(self)
         current_asset_btn.setIcon(current_asset_icon)
@@ -597,7 +598,9 @@ class AssetsWidget(QtWidgets.QWidget):
         # Hide by default
         current_asset_btn.setVisible(False)
 
-        refresh_icon = qtawesome.icon("fa.refresh", color=style.colors.light)
+        refresh_icon = qtawesome.icon(
+            "fa.refresh", color=get_default_tools_icon_color()
+        )
         refresh_btn = QtWidgets.QPushButton(self)
         refresh_btn.setIcon(refresh_icon)
         refresh_btn.setToolTip("Refresh items")

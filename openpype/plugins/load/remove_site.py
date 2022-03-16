@@ -1,8 +1,8 @@
-from avalon import api
 from openpype.modules import ModulesManager
+from openpype.pipeline import load
 
 
-class RemoveSyncSite(api.Loader):
+class RemoveSyncSite(load.LoaderPlugin):
     """Remove sync site and its files on representation"""
     representations = ["*"]
     families = ["*"]

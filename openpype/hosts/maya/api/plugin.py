@@ -4,9 +4,12 @@ from maya import cmds
 
 import qargparse
 
-from avalon import api
 from avalon.pipeline import AVALON_CONTAINER_ID
-from openpype.pipeline import LegacyCreator
+from openpype.pipeline import (
+    LegacyCreator,
+    LoaderPlugin,
+    get_representation_path,
+)
 
 from .pipeline import containerise
 from . import lib
@@ -95,7 +98,7 @@ class Creator(LegacyCreator):
         return instance
 
 
-class Loader(api.Loader):
+class Loader(LoaderPlugin):
     hosts = ["maya"]
 
 
@@ -178,7 +181,7 @@ class ReferenceLoader(Loader):
                 loader=self.__class__.__name__
             )
             loaded_containers.append(container)
-            self._organize_containers([ref_node], container)
+            self._organize_containers(nodes, container)
             c += 1
             namespace = None
 
@@ -194,7 +197,7 @@ class ReferenceLoader(Loader):
 
         node = container["objectName"]
 
-        path = api.get_representation_path(representation)
+        path = get_representation_path(representation)
 
         # Get reference node from container members
         members = get_container_members(node)
@@ -247,6 +250,8 @@ class ReferenceLoader(Loader):
 
             self.log.warning("Ignoring file read error:\n%s", exc)
 
+        self._organize_containers(content, container["objectName"])
+
         # Reapply alembic settings.
         if representation["name"] == "abc" and alembic_data:
             alembic_nodes = cmds.ls(
@@ -284,7 +289,6 @@ class ReferenceLoader(Loader):
                 to remove from scene.
 
         """
-
         from maya import cmds
 
         node = container["objectName"]
@@ -318,6 +322,7 @@ class ReferenceLoader(Loader):
     @staticmethod
     def _organize_containers(nodes, container):
         # type: (list, str) -> None
+        """Put containers in loaded data to correct hierarchy."""
         for node in nodes:
             id_attr = "{}.id".format(node)
             if not cmds.attributeQuery("id", node=node, exists=True):

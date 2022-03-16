@@ -226,16 +226,10 @@ class ExtractSubsetResources(openpype.api.Extractor):
                 # imagesequence as list
                 if (
                     # first check if path in files is not mov extension
-                    next(
-                        # iter all paths in files
-                        # return only .mov positive test
-                        iter([
-                            f for f in files
-                            if ".mov" in os.path.splitext(f)[-1]
-                        ]),
-                        # if nothing return default
-                        None
-                    )
+                    [
+                        f for f in files
+                        if os.path.splitext(f)[-1] == ".mov"
+                    ]
                     # then try if thumbnail is not in unique name
                     or unique_name == "thumbnail"
                 ):
