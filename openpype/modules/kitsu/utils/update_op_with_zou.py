@@ -1,4 +1,5 @@
 """Functions to update OpenPype data using Kitsu DB (a.k.a Zou)."""
+from copy import deepcopy
 from typing import Dict, List
 
 from pymongo import DeleteOne, UpdateOne
@@ -54,8 +55,13 @@ def update_op_assets(
     for item in entities_list:
         # Update asset
         item_doc = asset_doc_ids[item["id"]]
-        item_data = item_doc["data"].copy()
+        item_data = deepcopy(item_doc["data"])
+        item_data.update(item.get("data") or {})
         item_data["zou"] = item
+
+        # Asset settings
+        item_data["frameStart"] = item_data.get("frame_in")
+        item_data["frameEnd"] = item_data.get("frame_out")
 
         # Tasks
         tasks_list = []
@@ -103,9 +109,7 @@ def update_op_assets(
 
         # Update 'data' different in zou DB
         updated_data = {
-            k: item_data[k]
-            for k in item_data.keys()
-            if item_doc["data"].get(k) != item_data[k]
+            k: v for k, v in item_data.items() if item_doc["data"].get(k) != v
         }
         if updated_data or not item_doc.get("parent"):
             assets_with_update.append(
