@@ -1188,8 +1188,8 @@ class ExtractReview(pyblish.api.InstancePlugin):
 
         # NOTE Setting only one of `width` or `heigth` is not allowed
         # - settings value can't have None but has value of 0
-        output_width = output_width or output_def.get("width") or None
-        output_height = output_height or output_def.get("height") or None
+        output_width = output_def.get("width") or output_width or None
+        output_height = output_def.get("height") or output_height or None
 
         # Overscal color
         overscan_color_value = "black"
