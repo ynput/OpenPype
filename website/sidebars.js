@@ -136,6 +136,13 @@ module.exports = {
         "dev_requirements",
         "dev_build",
         "dev_testing",
-        "dev_contribute"
+        "dev_contribute",
+        {
+            type: "category",
+            label: "Hosts development",
+            items: [
+                "dev_publishing"
+            ]
+        }
      ]
 };
