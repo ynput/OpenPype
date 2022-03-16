@@ -139,9 +139,10 @@ class ExtractSubsetResources(openpype.api.Extractor):
                 if not ignore_comment_attrs:
                     # add any xml overrides collected form segment.comment
                     modify_xml_data.update(instance.data["xml_overrides"])
-                    self.log.debug("__ modify_xml_data: {}".format(pformat(
-                        modify_xml_data
-                    )))
+
+                self.log.debug("__ modify_xml_data: {}".format(pformat(
+                    modify_xml_data
+                )))
 
             # with maintained duplication loop all presets
             with opfapi.maintained_object_duplication(
