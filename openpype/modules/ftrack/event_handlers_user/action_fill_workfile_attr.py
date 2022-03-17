@@ -274,7 +274,7 @@ class FillWorkfileAttributeAction(BaseAction):
         session.commit()
 
         # Keep placeholders in the template unfilled
-        host_name = "{host}"
+        host_name = "{app}"
         extension = "{ext}"
         project_doc = dbcon.find_one({"type": "project"})
         project_settings = get_project_settings(project_name)
