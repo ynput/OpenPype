@@ -1,16 +1,21 @@
 # Changelog
 
-## [3.9.1-nightly.2](https://github.com/pypeclub/OpenPype/tree/HEAD)
+## [3.9.1-nightly.3](https://github.com/pypeclub/OpenPype/tree/HEAD)
 
 [Full Changelog](https://github.com/pypeclub/OpenPype/compare/3.9.0...HEAD)
 
 **🚀 Enhancements**
 
+- General: Change how OPENPYPE\_DEBUG value is handled [\#2907](https://github.com/pypeclub/OpenPype/pull/2907)
+- nuke: imageio adding ocio config version 1.2 [\#2897](https://github.com/pypeclub/OpenPype/pull/2897)
+- Flame: support for comment with xml attribute overrides [\#2892](https://github.com/pypeclub/OpenPype/pull/2892)
 - Nuke: ExtractReviewSlate can handle more codes and profiles [\#2879](https://github.com/pypeclub/OpenPype/pull/2879)
 - Flame: sequence used for reference video [\#2869](https://github.com/pypeclub/OpenPype/pull/2869)
 
 **🐛 Bug fixes**
 
+- General: Fix use of Anatomy roots [\#2904](https://github.com/pypeclub/OpenPype/pull/2904)
+- Fixing gap detection in extract review [\#2902](https://github.com/pypeclub/OpenPype/pull/2902)
 - Pyblish Pype - ensure current state is correct when entering new group order [\#2899](https://github.com/pypeclub/OpenPype/pull/2899)
 - SceneInventory: Fix import of load function [\#2894](https://github.com/pypeclub/OpenPype/pull/2894)
 - Harmony - fixed creator issue [\#2891](https://github.com/pypeclub/OpenPype/pull/2891)
@@ -31,6 +36,10 @@
 **Deprecated:**
 
 - AssetCreator: Remove the tool [\#2845](https://github.com/pypeclub/OpenPype/pull/2845)
+
+### 📖 Documentation
+
+- Documentation: Change Photoshop & AfterEffects plugin path [\#2878](https://github.com/pypeclub/OpenPype/pull/2878)
 
 **🚀 Enhancements**
 
