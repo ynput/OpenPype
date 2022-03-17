@@ -68,10 +68,19 @@ def update_op_assets(
         item_data.update(item.get("data") or {})
         item_data["zou"] = item
 
-        # Asset settings
-        item_data["frameStart"] = item_data.get("frame_in")
-        item_data["frameEnd"] = item_data.get("frame_out")
-        # Sentinel for fps, fallback to project's value when entity fps is deleted
+        # == Asset settings ==
+        # Frame in, fallback on 0
+        frame_in = int(item_data.get("frame_in") or 0)
+        item_data["frameStart"] = frame_in
+        # Frame out, fallback on frame_in + duration
+        frames_duration = int(item.get("nb_frames") or 1)
+        frame_out = (
+            item_data["frame_out"]
+            if item_data.get("frame_out")
+            else frame_in + frames_duration
+        )
+        item_data["frameEnd"] = int(frame_out)
+        # Fps, fallback to project's value when entity fps is deleted
         if not item_data.get("fps") and item_doc["data"].get("fps"):
             project_doc = project_col.find_one({"type": "project"})
             item_data["fps"] = project_doc["data"]["fps"]
