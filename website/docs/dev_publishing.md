@@ -2,18 +2,21 @@
 id: dev_publishing
 title: Publishing
 sidebar_label: Publishing
+toc_max_heading_level: 4
 ---
 
 Publishing workflow consist of 2 parts:
-- Creation - Mark what will be published and how.
-- Publishing - Use data from creation to go through pyblish process.
+- Creating - Mark what will be published and how.
+- Publishing - Use data from Creating to go through pyblish process.
 
-OpenPype is using [pyblish](https://pyblish.com/) for publishing process. OpenPype a little bit extend and modify few functions mainly for reports and UI purposes. The main differences are that OpenPype's publish UI allows to enable/disable instances or plugins during creation part instead of in publishing part and has limited plugin actions only for failed validation plugins.
+OpenPype is using [pyblish](https://pyblish.com/) for publishing process. OpenPype a little bit extend and modify few functions mainly for reports and UI purposes. The main differences are that OpenPype's publish UI allows to enable/disable instances or plugins during Creating part instead of in publishing part and has limited plugin actions only for failed validation plugins.
 
-# Creation
-Concept of creation does not have to "create" anything but prepare and store metadata about an "instance" (becomes a subset after publish process). Created instance always has `family` which defines what kind of data will be published, best example is `workfile` family. Storing of metadata is host specific and may be even a Creator plugin specific. In most of hosts are metadata stored to workfile (Maya scene, Nuke script, etc.) to an item or a node the same way so consistency of host implementation is kept, but some features may require different approach that is the reason why it is creator plugin responsibility. Storing the metadata to workfile gives ability to keep values so artist does not have to do create and set what should be published and how over and over.
+## **Creating**
 
-## Created instance
+Concept of Creating does not have to "create" anything but prepare and store metadata about an "instance" (becomes a subset after publish process). Created instance always has `family` which defines what kind of data will be published, best example is `workfile` family. Storing of metadata is host specific and may be even a Creator plugin specific. In most of hosts are metadata stored to workfile (Maya scene, Nuke script, etc.) to an item or a node the same way so consistency of host implementation is kept, but some features may require different approach that is the reason why it is creator plugin responsibility. Storing the metadata to workfile gives ability to keep values so artist does not have to do create and set what should be published and how over and over.
+
+### Created instance
+
 Objected representation of created instance metadata defined by class **CreatedInstance**. Has access to **CreateContext** and **BaseCreator** that initialized the object. Is dictionary like object with few immutable keys (marked with start `*` in table). The immutable keys are set by creator plugin or create context on initialization and thei values can't change. Instance can have more arbitrary data, for example ids of nodes in scene but keep in mind that some keys are reserved.
 
 | Key | Type | Description |
@@ -36,15 +39,16 @@ Task should not be required until subset name template expect it.
 
 object of **CreatedInstance** has method **data_to_store** which returns dictionary that can be parsed to json string. This method will return all data related to instance so can be re-created using `CreatedInstance.from_existing(data)`.
 
-## Create context
-Controller and wrapper around creation is `CreateContext` which cares about loading of plugins needed for creation. And validates required functions in host implementation.
+#### *Create context* {#category-doc-link}
 
-Context discovers creator and publish plugins. Trigger collections of existing instances on creators and trigger creation itself. Also keeps in mind instance objects by their ids.
+Controller and wrapper around Creating is `CreateContext` which cares about loading of plugins needed for Creating. And validates required functions in host implementation.
+
+Context discovers creator and publish plugins. Trigger collections of existing instances on creators and trigger Creating itself. Also keeps in mind instance objects by their ids.
 
 Creator plugins can call **creator_adds_instance** or **creator_removed_instance** to add/remove instance but these methods are not meant to be called directly out of creator. The reason is that is creator's responsibility to remove metadata or decide if should remove the instance.
 
-### Required functions in host implementation
-Host implementation **must** have implemented **get_context_data** and **update_context_data**. These two functions are needed to store metadata that are not related to any instane but are needed for creation and publishing process. Right now are there stored data about enabled/disabled optional publish plugins. When data are not stored and loaded properly reset of publishing will cause that they will be set to default value. Similar to instance data can be context data also parsed to json string.
+#### Required functions in host implementation
+Host implementation **must** have implemented **get_context_data** and **update_context_data**. These two functions are needed to store metadata that are not related to any instance but are needed for Creating and publishing process. Right now are there stored data about enabled/disabled optional publish plugins. When data are not stored and loaded properly reset of publishing will cause that they will be set to default value. Similar to instance data can be context data also parsed to json string.
 
 There are also few optional functions. For UI purposes it is possible to implement **get_context_title** which can return string showed in UI as a title. Output string may contain html tags. It is recommended to return context path (it will be created function this purposes) in this order `"{project name}/{asset hierarchy}/<b>{asset name}</b>/{task name}"`.
 
@@ -58,10 +62,10 @@ Another optional function is **get_current_context**. This function is handy in 
 }
 ```
 
-## Create plugin
+### Create plugin
 Main responsibility of create plugin is to create, update, collect and remove instance metadata and propagate changes to create context. Has access to **CreateContext** (`self.create_context`) that discovered the plugin so has also access to other creators and instances. Create plugins have a lot of responsibility so it is recommended to implement common code per host.
 
-### BaseCreator
+#### *BaseCreator*
 Base implementation of creator plugin. It is not recommended to use this class as base for production plugins but rather use one of **AutoCreator** and **Creator** variants.
 
 **Abstractions**
@@ -88,7 +92,7 @@ def collect_instances(self):
             self._add_instance_to_context(instance)
 ```
 
-- **`create`** (method) - Create new object of **CreatedInstance** store it's metadata to workfile and add the instance into create context. Failed creation should raise **CreatorError** if happens error that can artist fix or give him some useful information. Trigger and implementation differs for **Creator** and **AutoCreator**.
+- **`create`** (method) - Create new object of **CreatedInstance** store it's metadata to workfile and add the instance into create context. Failed Creating should raise **CreatorError** if happens error that can artist fix or give him some useful information. Trigger and implementation differs for **Creator** and **AutoCreator**.
 
 - **`update_instances`** (method) - Update data of instances. Receives tuple with **instance** and **changes**.
 ```python
@@ -195,7 +199,7 @@ class RenderLayerCreator(Creator):
 - **`get_dynamic_data`** (method) - Can be used to extend data for subset template which may be required in some cases.
 
 
-### AutoCreator
+#### *AutoCreator*
 Creator that is triggered on reset of create context. Can be used for families that are expected to be created automatically without artist interaction (e.g. **workfile**). Method `create` is triggered after collecting of all creators.
 
 :::important
@@ -268,14 +272,11 @@ def create(self):
         existing_instance["task"] = task_name
 ```
 
-### Creator
+#### *Creator*
 Implementation of creator plugin that is triggered manually by artist in UI (or by code). Has extended options for UI purposes than **AutoCreator** and **create** method expect more arguments.
 
-**Abstractions**
-- **`create`** (method) - Code where creation of metadata
-
 **Optional implementations**
-- **`create_allow_context_change`** (class attr) - Allow to set context in UI before creation. Some creator may not allow it or their logic would not use the context selection (e.g. bulk creators). Is set to `True` but default.
+- **`create_allow_context_change`** (class attr) - Allow to set context in UI before Creating. Some creator may not allow it or their logic would not use the context selection (e.g. bulk creators). Is set to `True` but default.
 ```python
 class BulkRenderCreator(Creator):
     create_allow_context_change = False
@@ -391,11 +392,11 @@ class CreateRender(Creator):
         self._add_instance_to_context(new_instance)
 ```
 
-# Publish
-## Exceptions
+## **Publish**
+### Exceptions
 OpenPype define few specific exceptions that should be used in publish plugins.
 
-### Validation exception
+#### *Validation exception*
 Validation plugins should raise `PublishValidationError` to show to an artist what's wrong and give him actions to fix it. The exception says that error happened in plugin can be fixed by artist himself (with or without action on plugin). Any other errors will stop publishing immediately. Exception `PublishValidationError` raised after validation order has same effect as any other exception.
 
 Exception `PublishValidationError` expects 4 arguments:
@@ -449,10 +450,10 @@ or the scene file was copy pasted from different context.
 </root>
 ```
 
-### Known errors
+#### *Known errors*
 When there is a known error that can't be fixed by user (e.g. can't connect to deadline service, etc.) `KnownPublishError` should be raise. The only difference is that it's message is shown in UI to artist otherwise a neutral message without context is shown.
 
-## Plugin extension
+### Plugin extension
 Publish plugins can be extended by additional logic when inherits from `OpenPypePyblishPluginMixin` which can be used as mixin (additional inheritance of class). Publish plugins that inherit from this mixin can define attributes that will be shown in **CreatedInstance**. One of most important usages is to be able turn on/off optional plugins.
 
 Attributes are defined by return value of `get_attribute_defs` method. Attribute definitions are for families defined in plugin's `families` attribute if it's instance plugin or for whole context if it's context plugin. To convert existing values (or to remove legacy values) can be re-implemented `convert_attribute_values`. Default implementation just converts the values to right types.
@@ -463,18 +464,22 @@ Values of publish attributes from created instance are never removed automatical
 
 Possible attribute definitions can be found in `openpype/pipeline/lib/attribute_definitions.py`.
 
-```python
-import pyblish.api
-from openpype.pipeline import (
+<details>
+  <summary>Toggle me!</summary>
+
+    ``` python
+
+    import pyblish.api
+    from openpype.pipeline import (
     OpenPypePyblishPluginMixin,
     attribute_definitions,
-)
+    )
 
 
-# Example context plugin
-class MyExtendedPlugin(
+    # Example context plugin
+    class MyExtendedPlugin(
     pyblish.api.ContextPlugin, OpenPypePyblishPluginMixin
-):
+    ):
     optional = True
     active = True
 
@@ -514,4 +519,7 @@ class MyExtendedPlugin(
             return
         # Do plugin logic
         ...
-```
+    ```
+</details>
+
+
