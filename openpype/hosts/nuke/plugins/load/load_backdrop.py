@@ -1,7 +1,11 @@
-from avalon import api, style, io
+from avalon import io
 import nuke
 import nukescripts
 
+from openpype.pipeline import (
+    load,
+    get_representation_path,
+)
 from openpype.hosts.nuke.api.lib import (
     find_free_space_to_paste_nodes,
     maintained_selection,
@@ -14,7 +18,7 @@ from openpype.hosts.nuke.api.commands import viewer_update_and_undo_stop
 from openpype.hosts.nuke.api import containerise, update_container
 
 
-class LoadBackdropNodes(api.Loader):
+class LoadBackdropNodes(load.LoaderPlugin):
     """Loading Published Backdrop nodes (workfile, nukenodes)"""
 
     representations = ["nk"]
@@ -23,7 +27,7 @@ class LoadBackdropNodes(api.Loader):
     label = "Iport Nuke Nodes"
     order = 0
     icon = "eye"
-    color = style.colors.light
+    color = "white"
     node_color = "0x7533c1ff"
 
     def load(self, context, name, namespace, data):
@@ -191,7 +195,7 @@ class LoadBackdropNodes(api.Loader):
         # get corresponding node
         GN = nuke.toNode(container['objectName'])
 
-        file = api.get_representation_path(representation).replace("\\", "/")
+        file = get_representation_path(representation).replace("\\", "/")
         context = representation["context"]
         name = container['name']
         version_data = version.get("data", {})

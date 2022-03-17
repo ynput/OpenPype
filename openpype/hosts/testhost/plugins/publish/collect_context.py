@@ -19,7 +19,7 @@ class CollectContextDataTestHost(
     hosts = ["testhost"]
 
     @classmethod
-    def get_instance_attr_defs(cls):
+    def get_attribute_defs(cls):
         return [
             attribute_definitions.BoolDef(
                 "test_bool",

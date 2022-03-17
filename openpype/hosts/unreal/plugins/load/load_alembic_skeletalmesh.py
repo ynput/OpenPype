@@ -1,12 +1,15 @@
+# -*- coding: utf-8 -*-
+"""Load Skeletal Mesh alembics."""
 import os
 
-from avalon import api, pipeline
-from avalon.unreal import lib
-from avalon.unreal import pipeline as unreal_pipeline
-import unreal
+from avalon import pipeline
+from openpype.pipeline import get_representation_path
+from openpype.hosts.unreal.api import plugin
+from openpype.hosts.unreal.api import pipeline as unreal_pipeline
+import unreal  # noqa
 
 
-class SkeletalMeshAlembicLoader(api.Loader):
+class SkeletalMeshAlembicLoader(plugin.Loader):
     """Load Unreal SkeletalMesh from Alembic"""
 
     families = ["pointcache"]
@@ -16,8 +19,7 @@ class SkeletalMeshAlembicLoader(api.Loader):
     color = "orange"
 
     def load(self, context, name, namespace, data):
-        """
-        Load and containerise representation into Content Browser.
+        """Load and containerise representation into Content Browser.
 
         This is two step process. First, import FBX to temporary path and
         then call `containerise()` on it - this moves all content to new
@@ -38,8 +40,8 @@ class SkeletalMeshAlembicLoader(api.Loader):
             list(str): list of container content
         """
 
-        # Create directory for asset and avalon container
-        root = "/Game/Avalon/Assets"
+        # Create directory for asset and openpype container
+        root = "/Game/OpenPype/Assets"
         asset = context.get('asset').get('name')
         suffix = "_CON"
         if asset:
@@ -74,7 +76,7 @@ class SkeletalMeshAlembicLoader(api.Loader):
         unreal.AssetToolsHelpers.get_asset_tools().import_asset_tasks([task])  # noqa: E501
 
         # Create Asset Container
-        lib.create_avalon_container(
+        unreal_pipeline.create_container(
             container=container_name, path=asset_dir)
 
         data = {
@@ -103,7 +105,7 @@ class SkeletalMeshAlembicLoader(api.Loader):
 
     def update(self, container, representation):
         name = container["asset_name"]
-        source_path = api.get_representation_path(representation)
+        source_path = get_representation_path(representation)
         destination_path = container["namespace"]
 
         task = unreal.AssetImportTask()

@@ -15,7 +15,7 @@ sidebar_label: AfterEffects
 
 ## Setup
 
-To install the extension, download, install [Anastasyi's Extension Manager](https://install.anastasiy.com/). Open Anastasyi's Extension Manager and select AfterEffects in menu. Then go to `{path to pype}/repos/avalon-core/avalon/aftereffects/extension.zxp`. 
+To install the extension, download, install [Anastasyi's Extension Manager](https://install.anastasiy.com/). Open Anastasyi's Extension Manager and select AfterEffects in menu. Then go to `{path to pype}hosts/aftereffects/api/extension.zxp`. 
 
 Drag extension.zxp and drop it to Anastasyi's Extension Manager. The extension will install itself. 
 

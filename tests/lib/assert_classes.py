@@ -1,5 +1,6 @@
 """Classed and methods for comparing expected and published items in DBs"""
 
+
 class DBAssert:
 
     @classmethod
@@ -41,5 +42,7 @@ class DBAssert:
         print("Comparing count of {}{} {}".format(queried_type,
                                                   detail_str,
                                                   status))
+        if msg:
+            print(msg)
 
         return msg

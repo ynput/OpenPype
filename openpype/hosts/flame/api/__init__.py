@@ -68,7 +68,8 @@ from .workio import (
 )
 from .render_utils import (
     export_clip,
-    get_preset_path_by_xml_name
+    get_preset_path_by_xml_name,
+    modify_preset_file
 )
 
 __all__ = [
@@ -140,5 +141,6 @@ __all__ = [
 
     # render utils
     "export_clip",
-    "get_preset_path_by_xml_name"
+    "get_preset_path_by_xml_name",
+    "modify_preset_file"
 ]

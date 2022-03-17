@@ -30,6 +30,11 @@
                             },
                             {
                                 "type": "boolean",
+                                "key": "useShotName",
+                                "label": "Use Shot Name"
+                            },
+                            {
+                                "type": "boolean",
                                 "key": "clipRename",
                                 "label": "Rename clips"
                             },
@@ -165,6 +170,24 @@
                                         "key": "xml_preset_dir",
                                         "label": "XML preset folder (optional)",
                                         "type": "text"
+                                    },
+                                    {
+                                        "key": "export_type",
+                                        "label": "Eport clip type",
+                                        "type": "enum",
+                                        "default": "File Sequence",
+                                        "enum_items": [
+                                            {
+                                                "Movie": "Movie"
+                                            },
+                                            {
+                                                "File Sequence": "File Sequence"
+                                            },
+                                            {
+                                                "Sequence Publish": "Sequence Publish"
+                                            }
+                                        ]
+
                                     },
                                     {
                                         "key": "colorspace_out",

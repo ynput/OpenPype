@@ -1,8 +1,11 @@
 import os
 import clique
 
-from avalon import api
 from openpype.api import get_project_settings
+from openpype.pipeline import (
+    load,
+    get_representation_path
+)
 import openpype.hosts.maya.api.plugin
 from openpype.hosts.maya.api.plugin import get_reference_node
 from openpype.hosts.maya.api.lib import (
@@ -106,7 +109,7 @@ class AssProxyLoader(openpype.hosts.maya.api.plugin.ReferenceLoader):
         node = container["objectName"]
 
         representation["context"].pop("frame", None)
-        path = api.get_representation_path(representation)
+        path = get_representation_path(representation)
         print(path)
         # path = self.fname
         print(self.fname)
@@ -164,7 +167,7 @@ class AssProxyLoader(openpype.hosts.maya.api.plugin.ReferenceLoader):
                      type="string")
 
 
-class AssStandinLoader(api.Loader):
+class AssStandinLoader(load.LoaderPlugin):
     """Load .ASS file as standin"""
 
     families = ["ass"]
@@ -240,7 +243,7 @@ class AssStandinLoader(api.Loader):
 
         import pymel.core as pm
 
-        path = api.get_representation_path(representation)
+        path = get_representation_path(representation)
 
         files_in_path = os.listdir(os.path.split(path)[0])
         sequence = 0

@@ -502,6 +502,12 @@
                 }
             }
         },
+        "ExtractMayaSceneRaw": {
+            "enabled": true,
+            "add_for_families": [
+                "layout"
+            ]
+        },
         "ExtractCameraAlembic": {
             "enabled": true,
             "optional": true,
@@ -584,6 +590,12 @@
                 255
             ],
             "vrayproxy": [
+                255,
+                150,
+                12,
+                255
+            ],
+            "vrayscene_layer": [
                 255,
                 150,
                 12,

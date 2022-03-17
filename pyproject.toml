@@ -1,6 +1,6 @@
 [tool.poetry]
 name = "OpenPype"
-version = "3.9.0-nightly.3" # OpenPype
+version = "3.9.1-nightly.1" # OpenPype
 description = "Open VFX and Animation pipeline with support."
 authors = ["OpenPype Team <info@openpype.io>"]
 license = "MIT License"
@@ -41,7 +41,7 @@ Click = "^7"
 dnspython = "^2.1.0"
 ftrack-python-api = "2.0.*"
 google-api-python-client = "^1.12.8" # sync server google support (should be separate?)
-jsonschema = "^3.2.0"
+jsonschema = "^2.6.0"
 keyring = "^22.0.1"
 log4mongo = "^1.7"
 pathlib2= "^2.3.5" # deadline submit publish job only (single place, maybe not needed?)
@@ -50,6 +50,8 @@ pyblish-base = "^1.8.8"
 pynput = "^1.7.2" # idle manager in tray
 pymongo = "^3.11.2"
 "Qt.py" = "^1.3.3"
+qtpy = "^1.11.3"
+qtawesome = "0.7.3"
 speedcopy = "^2.1"
 six = "^1.15"
 semver = "^2.13.0" # for version resolution

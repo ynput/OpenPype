@@ -7,6 +7,7 @@ from collections import deque
 import pyblish.api
 import openpype.api
 
+from openpype.pipeline import get_representation_path
 import openpype.hosts.houdini.api.usd as hou_usdlib
 from openpype.hosts.houdini.api.lib import render_rop
 
@@ -308,7 +309,7 @@ class ExtractUSDLayered(openpype.api.Extractor):
             self.log.debug("No existing representation..")
             return False
 
-        old_file = api.get_representation_path(representation)
+        old_file = get_representation_path(representation)
         if not os.path.exists(old_file):
             return False
 

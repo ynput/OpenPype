@@ -177,6 +177,17 @@
         }
     },
     "maya": {
+        "colorManagementPreference_v2": {
+            "enabled": true,
+            "configFilePath": {
+                "windows": [],
+                "darwin": [],
+                "linux": []
+            },
+            "renderSpace": "ACEScg",
+            "viewName": "ACES 1.0 SDR-video",
+            "displayName": "sRGB"
+        },
         "colorManagementPreference": {
             "configFilePath": {
                 "windows": [],

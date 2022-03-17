@@ -361,7 +361,7 @@ class CreatedInstance:
     #   their individual children but not on their own
     __immutable_keys = (
         "id",
-        "uuid",
+        "instance_id",
         "family",
         "creator_identifier",
         "creator_attributes",
@@ -399,15 +399,6 @@ class CreatedInstance:
         self._data["active"] = data.get("active", True)
         self._data["creator_identifier"] = creator.identifier
 
-        # QUESTION handle version of instance here or in creator?
-        version = None
-        if not new:
-            version = data.get("version")
-
-        if version is None:
-            version = 1
-        self._data["version"] = version
-
         # Pop from source data all keys that are defined in `_data` before
         #   this moment and through their values away
         # - they should be the same and if are not then should not change
@@ -434,8 +425,8 @@ class CreatedInstance:
         if data:
             self._data.update(data)
 
-        if not self._data.get("uuid"):
-            self._data["uuid"] = str(uuid4())
+        if not self._data.get("instance_id"):
+            self._data["instance_id"] = str(uuid4())
 
         self._asset_is_valid = self.has_set_asset
         self._task_is_valid = self.has_set_task
@@ -551,7 +542,7 @@ class CreatedInstance:
     @property
     def id(self):
         """Instance identifier."""
-        return self._data["uuid"]
+        return self._data["instance_id"]
 
     @property
     def data(self):
@@ -1014,12 +1005,14 @@ class CreateContext:
         if not instances:
             return
 
-        task_names_by_asset_name = collections.defaultdict(set)
+        task_names_by_asset_name = {}
         for instance in instances:
             task_name = instance.get("task")
             asset_name = instance.get("asset")
-            if asset_name and task_name:
-                task_names_by_asset_name[asset_name].add(task_name)
+            if asset_name:
+                task_names_by_asset_name[asset_name] = set()
+                if task_name:
+                    task_names_by_asset_name[asset_name].add(task_name)
 
         asset_names = [
             asset_name

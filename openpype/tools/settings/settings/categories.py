@@ -1,9 +1,9 @@
-import os
 import sys
 import traceback
 import contextlib
 from enum import Enum
 from Qt import QtWidgets, QtCore
+import qtawesome
 
 from openpype.lib import get_openpype_version
 from openpype.tools.utils import set_style_property
@@ -63,7 +63,6 @@ from .item_widgets import (
     PathInputWidget
 )
 from .color_widget import ColorWidget
-from avalon.vendor import qtawesome
 
 
 class CategoryState(Enum):
@@ -91,6 +90,8 @@ class SettingsCategoryWidget(QtWidgets.QWidget):
     state_changed = QtCore.Signal()
     saved = QtCore.Signal(QtWidgets.QWidget)
     restart_required_trigger = QtCore.Signal()
+    reset_started = QtCore.Signal()
+    reset_finished = QtCore.Signal()
     full_path_requested = QtCore.Signal(str, str)
 
     require_restart_label_text = (
@@ -379,7 +380,12 @@ class SettingsCategoryWidget(QtWidgets.QWidget):
         """Change path of widget based on category full path."""
         pass
 
+    def change_path(self, path):
+        """Change path and go to widget."""
+        self.breadcrumbs_bar.change_path(path)
+
     def set_path(self, path):
+        """Called from clicked widget."""
         self.breadcrumbs_bar.set_path(path)
 
     def _add_developer_ui(self, footer_layout, footer_widget):
@@ -492,6 +498,7 @@ class SettingsCategoryWidget(QtWidgets.QWidget):
         self._update_labels_visibility()
 
     def reset(self):
+        self.reset_started.emit()
         self.set_state(CategoryState.Working)
 
         self._on_reset_start()
@@ -596,6 +603,7 @@ class SettingsCategoryWidget(QtWidgets.QWidget):
             self._on_reset_crash()
         else:
             self._on_reset_success()
+        self.reset_finished.emit()
 
     def _on_source_version_change(self, version):
         if self._updating_root:
@@ -706,7 +714,12 @@ class SettingsCategoryWidget(QtWidgets.QWidget):
             self._outdated_version_label,
             self._require_restart_label,
         }
-        if self.entity.require_restart:
+        if self.is_modifying_defaults or self.entity is None:
+            require_restart = False
+        else:
+            require_restart = self.entity.require_restart
+
+        if require_restart:
             visible_label = self._require_restart_label
         elif self._is_loaded_version_outdated:
             visible_label = self._outdated_version_label

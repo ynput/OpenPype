@@ -2,14 +2,14 @@
 
 """
 
-from avalon import api
+from openpype.pipeline import load
 from openpype.hosts.maya.api.lib import (
     maintained_selection,
     unique_namespace
 )
 
 
-class SetFrameRangeLoader(api.Loader):
+class SetFrameRangeLoader(load.LoaderPlugin):
     """Specific loader of Alembic for the avalon.animation family"""
 
     families = ["animation",
@@ -43,7 +43,7 @@ class SetFrameRangeLoader(api.Loader):
                              animationEndTime=end)
 
 
-class SetFrameRangeWithHandlesLoader(api.Loader):
+class SetFrameRangeWithHandlesLoader(load.LoaderPlugin):
     """Specific loader of Alembic for the avalon.animation family"""
 
     families = ["animation",
@@ -72,9 +72,8 @@ class SetFrameRangeWithHandlesLoader(api.Loader):
             return
 
         # Include handles
-        handles = version_data.get("handles", 0)
-        start -= handles
-        end += handles
+        start -= version_data.get("handleStart", 0)
+        end += version_data.get("handleEnd", 0)
 
         cmds.playbackOptions(minTime=start,
                              maxTime=end,
@@ -82,7 +81,7 @@ class SetFrameRangeWithHandlesLoader(api.Loader):
                              animationEndTime=end)
 
 
-class ImportMayaLoader(api.Loader):
+class ImportMayaLoader(load.LoaderPlugin):
     """Import action for Maya (unmanaged)
 
     Warning:

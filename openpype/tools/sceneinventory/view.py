@@ -3,13 +3,22 @@ import logging
 from functools import partial
 
 from Qt import QtWidgets, QtCore
+import qtawesome
 
-from avalon import io, api, style
-from avalon.vendor import qtawesome
-from avalon.lib import HeroVersionType
-from avalon.tools import lib as tools_lib
+from avalon import io, api
 
+from openpype import style
+from openpype.pipeline import (
+    HeroVersionType,
+    update_container,
+    remove_container,
+)
 from openpype.modules import ModulesManager
+from openpype.tools.utils.lib import (
+    get_progress_for_repre,
+    iter_model_rows,
+    format_version
+)
 
 from .switch_dialog import SwitchAssetDialog
 from .model import InventoryModel
@@ -20,12 +29,12 @@ DEFAULT_COLOR = "#fb9c15"
 log = logging.getLogger("SceneInventory")
 
 
-class SceneInvetoryView(QtWidgets.QTreeView):
+class SceneInventoryView(QtWidgets.QTreeView):
     data_changed = QtCore.Signal()
     hierarchy_view_changed = QtCore.Signal(bool)
 
     def __init__(self, parent=None):
-        super(SceneInvetoryView, self).__init__(parent=parent)
+        super(SceneInventoryView, self).__init__(parent=parent)
 
         # view settings
         self.setIndentation(12)
@@ -191,7 +200,7 @@ class SceneInvetoryView(QtWidgets.QTreeView):
                     version_name = version_name_by_id.get(version_id)
                     if version_name is not None:
                         try:
-                            api.update(item, version_name)
+                            update_container(item, version_name)
                         except AssertionError:
                             self._show_version_error_dialog(
                                 version_name, [item]
@@ -219,7 +228,7 @@ class SceneInvetoryView(QtWidgets.QTreeView):
             def _on_update_to_latest(items):
                 for item in items:
                     try:
-                        api.update(item, -1)
+                        update_container(item, -1)
                     except AssertionError:
                         self._show_version_error_dialog(None, [item])
                         log.warning("Update failed", exc_info=True)
@@ -244,7 +253,7 @@ class SceneInvetoryView(QtWidgets.QTreeView):
             def _on_update_to_hero(items):
                 for item in items:
                     try:
-                        api.update(item, HeroVersionType(-1))
+                        update_container(item, HeroVersionType(-1))
                     except AssertionError:
                         self._show_version_error_dialog('hero', [item])
                         log.warning("Update failed", exc_info=True)
@@ -373,7 +382,7 @@ class SceneInvetoryView(QtWidgets.QTreeView):
             if not repre_doc:
                 continue
 
-            progress = tools_lib.get_progress_for_repre(
+            progress = get_progress_for_repre(
                 repre_doc,
                 active_site,
                 remote_site
@@ -544,7 +553,7 @@ class SceneInvetoryView(QtWidgets.QTreeView):
             "toggle": selection_model.Toggle,
         }[options.get("mode", "select")]
 
-        for item in tools_lib.iter_model_rows(model, 0):
+        for item in iter_model_rows(model, 0):
             item = item.data(InventoryModel.ItemRole)
             if item.get("isGroupNode"):
                 continue
@@ -704,7 +713,7 @@ class SceneInvetoryView(QtWidgets.QTreeView):
         labels = []
         for version in all_versions:
             is_hero = version["type"] == "hero_version"
-            label = tools_lib.format_version(version["name"], is_hero)
+            label = format_version(version["name"], is_hero)
             labels.append(label)
             versions_by_label[label] = version["name"]
 
@@ -723,7 +732,7 @@ class SceneInvetoryView(QtWidgets.QTreeView):
             version = versions_by_label[label]
             for item in items:
                 try:
-                    api.update(item, version)
+                    update_container(item, version)
                 except AssertionError:
                     self._show_version_error_dialog(version, [item])
                     log.warning("Update failed", exc_info=True)
@@ -754,7 +763,7 @@ class SceneInvetoryView(QtWidgets.QTreeView):
             return
 
         for item in items:
-            api.remove(item)
+            remove_container(item)
         self.data_changed.emit()
 
     def _show_version_error_dialog(self, version, items):
@@ -792,3 +801,40 @@ class SceneInvetoryView(QtWidgets.QTreeView):
         ).format(version_str)
         dialog.setText(msg)
         dialog.exec_()
+
+    def update_all(self):
+        """Update all items that are currently 'outdated' in the view"""
+        # Get the source model through the proxy model
+        model = self.model().sourceModel()
+
+        # Get all items from outdated groups
+        outdated_items = []
+        for index in iter_model_rows(model,
+                                     column=0,
+                                     include_root=False):
+            item = index.data(model.ItemRole)
+
+            if not item.get("isGroupNode"):
+                continue
+
+            # Only the group nodes contain the "highest_version" data and as
+            # such we find only the groups and take its children.
+            if not model.outdated(item):
+                continue
+
+            # Collect all children which we want to update
+            children = item.children()
+            outdated_items.extend(children)
+
+        if not outdated_items:
+            log.info("Nothing to update.")
+            return
+
+        # Trigger update to latest
+        for item in outdated_items:
+            try:
+                update_container(item, -1)
+            except AssertionError:
+                self._show_version_error_dialog(None, [item])
+                log.warning("Update failed", exc_info=True)
+        self.data_changed.emit()

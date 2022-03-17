@@ -378,10 +378,46 @@
             "label": "Maya",
             "children": [
                 {
+                    "key": "colorManagementPreference_v2",
+                    "type": "dict",
+                    "label": "Color Management Preference v2 (Maya 2022+)",
+                    "collapsible": true,
+                    "checkbox_key": "enabled",
+                    "children": [
+                        {
+                            "type": "boolean",
+                            "key": "enabled",
+                            "label": "Use Color Management Preference v2"
+                        },
+                        {
+                            "type": "path",
+                            "key": "configFilePath",
+                            "label": "OCIO Config File Path",
+                            "multiplatform": true,
+                            "multipath": true
+                        },
+                        {
+                            "type": "text",
+                            "key": "renderSpace",
+                            "label": "Rendering Space"
+                        },
+                        {
+                            "type": "text",
+                            "key": "displayName",
+                            "label": "Display"
+                        },
+                        {
+                            "type": "text",
+                            "key": "viewName",
+                            "label": "View"
+                        }
+                    ]
+                },
+                {
                     "key": "colorManagementPreference",
                     "type": "dict",
-                    "label": "Color Managment Preference",
-                    "collapsible": false,
+                    "label": "Color Management Preference (legacy)",
+                    "collapsible": true,
                     "children": [
                         {
                             "type": "path",
@@ -401,7 +437,7 @@
                             "label": "Viewer Transform"
                         }
                     ]
-            }
+                }
             ]
         },
         {
@@ -421,7 +457,7 @@
                                 {
                                     "type": "text",
                                     "key": "colourPolicy",
-                                    "label": "Colour Policy"
+                                    "label": "Colour Policy (name or path)"
                                 },
                                 {
                                     "type": "text",

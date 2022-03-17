@@ -17,12 +17,13 @@ class AddLastWorkfileToLaunchArgs(PreLaunchHook):
         "nuke",
         "nukex",
         "hiero",
+        "houdini",
         "nukestudio",
         "fusion",
         "blender",
         "photoshop",
         "tvpaint",
-        "afftereffects"
+        "aftereffects"
     ]
 
     def execute(self):

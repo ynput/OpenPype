@@ -5,8 +5,8 @@ import contextlib
 
 from Qt import QtGui
 
-import avalon.api
 from avalon import io
+from openpype.pipeline import switch_container
 from .pipeline import get_current_comp, comp_lock_and_undo_chunk
 from openpype.api import (
     get_asset
@@ -167,7 +167,7 @@ def switch_item(container,
     assert representation, ("Could not find representation in the database "
                             "with the name '%s'" % representation_name)
 
-    avalon.api.switch(container, representation)
+    switch_container(container, representation)
 
     return representation
 
