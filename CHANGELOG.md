@@ -1,19 +1,28 @@
 # Changelog
 
-## [3.9.1-nightly.1](https://github.com/pypeclub/OpenPype/tree/HEAD)
+## [3.9.1-nightly.2](https://github.com/pypeclub/OpenPype/tree/HEAD)
 
 [Full Changelog](https://github.com/pypeclub/OpenPype/compare/3.9.0...HEAD)
 
+**🚀 Enhancements**
+
+- Nuke: ExtractReviewSlate can handle more codes and profiles [\#2879](https://github.com/pypeclub/OpenPype/pull/2879)
+- Flame: sequence used for reference video [\#2869](https://github.com/pypeclub/OpenPype/pull/2869)
+
 **🐛 Bug fixes**
 
+- Pyblish Pype - ensure current state is correct when entering new group order [\#2899](https://github.com/pypeclub/OpenPype/pull/2899)
+- SceneInventory: Fix import of load function [\#2894](https://github.com/pypeclub/OpenPype/pull/2894)
 - Harmony - fixed creator issue [\#2891](https://github.com/pypeclub/OpenPype/pull/2891)
 - General: Remove forgotten use of avalon Creator [\#2885](https://github.com/pypeclub/OpenPype/pull/2885)
 - General: Avoid circular import [\#2884](https://github.com/pypeclub/OpenPype/pull/2884)
 - Fixes for attaching loaded containers \(\#2837\) [\#2874](https://github.com/pypeclub/OpenPype/pull/2874)
+- Maya: Deformer node ids validation plugin [\#2826](https://github.com/pypeclub/OpenPype/pull/2826)
 
 **🔀 Refactored code**
 
 - General: Reduce style usage to OpenPype repository [\#2889](https://github.com/pypeclub/OpenPype/pull/2889)
+- General: Move loader logic from avalon to openpype [\#2886](https://github.com/pypeclub/OpenPype/pull/2886)
 
 ## [3.9.0](https://github.com/pypeclub/OpenPype/tree/3.9.0) (2022-03-14)
 

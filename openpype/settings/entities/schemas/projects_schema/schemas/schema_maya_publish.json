@@ -514,6 +514,26 @@
                             "label": "Validate Rig Controllers"
                         }
                     ]
+                },
+                {
+                    "type": "dict",
+                    "collapsible": true,
+                    "checkbox_key": "enabled",
+                    "key": "ValidateRigOutSetNodeIds",
+                    "label": "Validate Rig Out Set Node Ids",
+                    "is_group": true,
+                    "children": [
+                        {
+                            "type": "boolean",
+                            "key": "enabled",
+                            "label": "Enabled"
+                        },
+                        {
+                            "type": "boolean",
+                            "key": "allow_history_only",
+                            "label": "Allow history only"
+                        }
+                    ]
                 }
             ]
         },
