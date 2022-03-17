@@ -457,7 +457,7 @@
                                 {
                                     "type": "text",
                                     "key": "colourPolicy",
-                                    "label": "Colour Policy"
+                                    "label": "Colour Policy (name or path)"
                                 },
                                 {
                                     "type": "text",
