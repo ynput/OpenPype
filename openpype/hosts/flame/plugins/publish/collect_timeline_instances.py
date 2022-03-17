@@ -188,7 +188,7 @@ class CollectTimelineInstances(pyblish.api.ContextPlugin):
 
             # get pattern defined by type
             pattern = TXT_PATERN
-            if "number" in a_type or "float" in a_type:
+            if a_type in ("number" , "float"):
                 pattern = NUM_PATERN
 
             res_goup = pattern.findall(value)
