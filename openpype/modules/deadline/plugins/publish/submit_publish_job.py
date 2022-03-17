@@ -13,6 +13,8 @@ from avalon import api, io
 
 import pyblish.api
 
+from openpype.pipeline import get_representation_path
+
 
 def get_resources(version, extension=None):
     """Get the files from the specific version."""
@@ -23,7 +25,7 @@ def get_resources(version, extension=None):
     representation = io.find_one(query)
     assert representation, "This is a bug"
 
-    directory = api.get_representation_path(representation)
+    directory = get_representation_path(representation)
     print("Source: ", directory)
     resources = sorted(
         [

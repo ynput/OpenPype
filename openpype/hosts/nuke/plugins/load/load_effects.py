@@ -1,8 +1,13 @@
 import json
 from collections import OrderedDict
 import nuke
-from avalon import api, io
 
+from avalon import io
+
+from openpype.pipeline import (
+    load,
+    get_representation_path,
+)
 from openpype.hosts.nuke.api import (
     containerise,
     update_container,
@@ -10,7 +15,7 @@ from openpype.hosts.nuke.api import (
 )
 
 
-class LoadEffects(api.Loader):
+class LoadEffects(load.LoaderPlugin):
     """Loading colorspace soft effect exported from nukestudio"""
 
     representations = ["effectJson"]
@@ -150,7 +155,7 @@ class LoadEffects(api.Loader):
         # get corresponding node
         GN = nuke.toNode(container['objectName'])
 
-        file = api.get_representation_path(representation).replace("\\", "/")
+        file = get_representation_path(representation).replace("\\", "/")
         name = container['name']
         version_data = version.get("data", {})
         vname = version.get("name", None)

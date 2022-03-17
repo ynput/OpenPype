@@ -1,9 +1,10 @@
 import os
-from avalon import api
+
 from openpype.api import get_project_settings
+from openpype.pipeline import load
 
 
-class LoadVDBtoRedShift(api.Loader):
+class LoadVDBtoRedShift(load.LoaderPlugin):
     """Load OpenVDB in a Redshift Volume Shape"""
 
     families = ["vdbcache"]

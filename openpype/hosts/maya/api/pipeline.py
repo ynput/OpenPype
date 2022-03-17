@@ -20,7 +20,11 @@ from openpype.lib import (
     emit_event
 )
 from openpype.lib.path_tools import HostDirmap
-from openpype.pipeline import LegacyCreator
+from openpype.pipeline import (
+    LegacyCreator,
+    register_loader_plugin_path,
+    deregister_loader_plugin_path,
+)
 from openpype.hosts.maya.lib import copy_workspace_mel
 from . import menu, lib
 
@@ -53,7 +57,7 @@ def install():
     pyblish.api.register_host("mayapy")
     pyblish.api.register_host("maya")
 
-    avalon.api.register_plugin_path(avalon.api.Loader, LOAD_PATH)
+    register_loader_plugin_path(LOAD_PATH)
     avalon.api.register_plugin_path(LegacyCreator, CREATE_PATH)
     avalon.api.register_plugin_path(avalon.api.InventoryAction, INVENTORY_PATH)
     log.info(PUBLISH_PATH)
@@ -182,7 +186,7 @@ def uninstall():
     pyblish.api.deregister_host("mayapy")
     pyblish.api.deregister_host("maya")
 
-    avalon.api.deregister_plugin_path(avalon.api.Loader, LOAD_PATH)
+    deregister_loader_plugin_path(LOAD_PATH)
     avalon.api.deregister_plugin_path(LegacyCreator, CREATE_PATH)
     avalon.api.deregister_plugin_path(
         avalon.api.InventoryAction, INVENTORY_PATH

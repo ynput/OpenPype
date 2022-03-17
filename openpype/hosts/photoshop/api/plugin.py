@@ -1,6 +1,6 @@
 import re
 
-import avalon.api
+from openpype.pipeline import LoaderPlugin
 from .launch_logic import stub
 
 
@@ -29,7 +29,7 @@ def get_unique_layer_name(layers, asset_name, subset_name):
     return "{}_{:0>3d}".format(name, occurrences + 1)
 
 
-class PhotoshopLoader(avalon.api.Loader):
+class PhotoshopLoader(LoaderPlugin):
     @staticmethod
     def get_stub():
         return stub()

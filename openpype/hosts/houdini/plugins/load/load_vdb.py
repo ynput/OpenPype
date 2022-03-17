@@ -1,11 +1,14 @@
 import os
 import re
-from avalon import api
 
+from openpype.pipeline import (
+    load,
+    get_representation_path,
+)
 from openpype.hosts.houdini.api import pipeline
 
 
-class VdbLoader(api.Loader):
+class VdbLoader(load.LoaderPlugin):
     """Specific loader of Alembic for the avalon.animation family"""
 
     families = ["vdbcache"]
@@ -96,7 +99,7 @@ class VdbLoader(api.Loader):
             return
 
         # Update the file path
-        file_path = api.get_representation_path(representation)
+        file_path = get_representation_path(representation)
         file_path = self.format_path(file_path)
 
         file_node.setParms({"fileName": file_path})

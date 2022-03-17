@@ -1,9 +1,13 @@
 import os
-from avalon import api
+
+from openpype.pipeline import (
+    load,
+    get_representation_path
+)
 from openpype.api import get_project_settings
 
 
-class GpuCacheLoader(api.Loader):
+class GpuCacheLoader(load.LoaderPlugin):
     """Load model Alembic as gpuCache"""
 
     families = ["model"]
@@ -73,7 +77,7 @@ class GpuCacheLoader(api.Loader):
 
         import maya.cmds as cmds
 
-        path = api.get_representation_path(representation)
+        path = get_representation_path(representation)
 
         # Update the cache
         members = cmds.sets(container['objectName'], query=True)

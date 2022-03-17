@@ -420,13 +420,20 @@ class WireTapCom(object):
             RuntimeError: Not able to set colorspace policy
         """
         color_policy = color_policy or "Legacy"
+
+        # check if the colour policy in custom dir
+        if not os.path.exists(color_policy):
+            color_policy = "/syncolor/policies/Autodesk/{}".format(
+                color_policy)
+
+        # create arguments
         project_colorspace_cmd = [
             os.path.join(
                 self.wiretap_tools_dir,
                 "wiretap_duplicate_node"
             ),
             "-s",
-            "/syncolor/policies/Autodesk/{}".format(color_policy),
+            color_policy,
             "-n",
             "/projects/{}/syncolor".format(project_name)
         ]

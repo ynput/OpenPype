@@ -15,7 +15,11 @@ from avalon.pipeline import AVALON_CONTAINER_ID
 from openpype.hosts import tvpaint
 from openpype.api import get_current_project_settings
 from openpype.lib import register_event_callback
-from openpype.pipeline import LegacyCreator
+from openpype.pipeline import (
+    LegacyCreator,
+    register_loader_plugin_path,
+    deregister_loader_plugin_path,
+)
 
 from .lib import (
     execute_george,
@@ -77,7 +81,7 @@ def install():
 
     pyblish.api.register_host("tvpaint")
     pyblish.api.register_plugin_path(PUBLISH_PATH)
-    avalon.api.register_plugin_path(avalon.api.Loader, LOAD_PATH)
+    register_loader_plugin_path(LOAD_PATH)
     avalon.api.register_plugin_path(LegacyCreator, CREATE_PATH)
 
     registered_callbacks = (
@@ -99,7 +103,7 @@ def uninstall():
     log.info("OpenPype - Uninstalling TVPaint integration")
     pyblish.api.deregister_host("tvpaint")
     pyblish.api.deregister_plugin_path(PUBLISH_PATH)
-    avalon.api.deregister_plugin_path(avalon.api.Loader, LOAD_PATH)
+    deregister_loader_plugin_path(LOAD_PATH)
     avalon.api.deregister_plugin_path(LegacyCreator, CREATE_PATH)
 
 

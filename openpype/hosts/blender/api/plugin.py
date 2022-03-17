@@ -5,8 +5,10 @@ from typing import Dict, List, Optional
 
 import bpy
 
-import avalon.api
-from openpype.pipeline import LegacyCreator
+from openpype.pipeline import (
+    LegacyCreator,
+    LoaderPlugin,
+)
 from .pipeline import AVALON_CONTAINERS
 from .ops import (
     MainThreadItem,
@@ -145,13 +147,13 @@ class Creator(LegacyCreator):
         return collection
 
 
-class Loader(avalon.api.Loader):
+class Loader(LoaderPlugin):
     """Base class for Loader plug-ins."""
 
     hosts = ["blender"]
 
 
-class AssetLoader(avalon.api.Loader):
+class AssetLoader(LoaderPlugin):
     """A basic AssetLoader for Blender
 
     This will implement the basic logic for linking/appending assets

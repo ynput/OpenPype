@@ -172,6 +172,24 @@
                                         "type": "text"
                                     },
                                     {
+                                        "key": "export_type",
+                                        "label": "Eport clip type",
+                                        "type": "enum",
+                                        "default": "File Sequence",
+                                        "enum_items": [
+                                            {
+                                                "Movie": "Movie"
+                                            },
+                                            {
+                                                "File Sequence": "File Sequence"
+                                            },
+                                            {
+                                                "Sequence Publish": "Sequence Publish"
+                                            }
+                                        ]
+
+                                    },
+                                    {
                                         "key": "colorspace_out",
                                         "label": "Output color (imageio)",
                                         "type": "text"

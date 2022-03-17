@@ -6,9 +6,9 @@ import hiero
 
 from Qt import QtWidgets, QtCore
 import qargparse
-import avalon.api as avalon
+
 import openpype.api as openpype
-from openpype.pipeline import LegacyCreator
+from openpype.pipeline import LoaderPlugin, LegacyCreator
 from . import lib
 
 log = openpype.Logger().get_logger(__name__)
@@ -306,7 +306,7 @@ def get_reference_node_parents(ref):
     return parents
 
 
-class SequenceLoader(avalon.Loader):
+class SequenceLoader(LoaderPlugin):
     """A basic SequenceLoader for Resolve
 
     This will implement the basic behavior for a loader to inherit from that

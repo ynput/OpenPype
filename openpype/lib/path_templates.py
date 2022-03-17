@@ -187,6 +187,16 @@ class StringTemplate(object):
         result.validate()
         return result
 
+    @classmethod
+    def format_template(cls, template, data):
+        objected_template = cls(template)
+        return objected_template.format(data)
+
+    @classmethod
+    def format_strict_template(cls, template, data):
+        objected_template = cls(template)
+        return objected_template.format_strict(data)
+
     @staticmethod
     def find_optional_parts(parts):
         new_parts = []
