@@ -126,7 +126,8 @@ class FileTransaction(object):
                 self.log.debug("Copying file ... {} -> {}".format(src, dst))
                 copyfile(src, dst)
             elif opts["mode"] == self.MODE_HARDLINK:
-                self.log.debug("Hardlinking file ... {} -> {}".format(src, dst))
+                self.log.debug("Hardlinking file ... {} -> {}".format(src,
+                                                                      dst))
                 create_hard_link(src, dst)
 
             self._transferred.append(dst)
@@ -160,7 +161,7 @@ class FileTransaction(object):
             try:
                 os.rename(backup, original)
             except OSError:
-                errors +=1
+                errors += 1
                 self.log.error("Failed to restore original file: "
                                "{} -> {}".format(backup, original),
                                exc_info=True)
