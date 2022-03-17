@@ -47,6 +47,30 @@ def test_collect_frames_single_sequence():
     assert ret == expected, "Not matching"
 
 
+def test_collect_frames_single_sequence_shot():
+    files = ["testing_sh010_workfileCompositing_v001.aep"]
+    ret = collect_frames(files)
+
+    expected = {
+        "testing_sh010_workfileCompositing_v001.aep": None
+    }
+
+    print(ret)
+    assert ret == expected, "Not matching"
+
+
+def test_collect_frames_single_sequence_shot_with_frame():
+    files = ["testing_sh010_workfileCompositing_000_v001.aep"]
+    ret = collect_frames(files)
+
+    expected = {
+        "testing_sh010_workfileCompositing_000_v001.aep": "000"
+    }
+
+    print(ret)
+    assert ret == expected, "Not matching"
+
+
 def test_collect_frames_single_sequence_full_path():
     files = ['C:/test_project/assets/locations/Town/work/compositing\\renders\\aftereffects\\test_project_TestAsset_compositing_v001\\TestAsset_renderCompositingMain_v001.mov']  # noqa: E501
     ret = collect_frames(files)

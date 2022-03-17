@@ -36,7 +36,7 @@ def collect_frames(files):
             src_tail = collection.tail
 
             # version recognized as a collection
-            if re.match(".*([^a-zA-Z0-9]v%[0-9]+d).*", collection.format()):
+            if re.match(".*([a-zA-Z0-9]%[0-9]+d).*", collection.format()):
                 continue
 
             for index in collection.indexes:
