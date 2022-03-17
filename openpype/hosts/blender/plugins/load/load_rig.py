@@ -32,13 +32,16 @@ class BlendRigLoader(plugin.AssetLoader):
         for obj in objects:
             if obj.type == "MESH":
                 for material_slot in list(obj.material_slots):
-                    if material_slot.material is not None:
+                    if material_slot.material:
                         if (
                             material_slot.material.library is None
                             and material_slot.material.override_library is None
                         ):
                             bpy.data.materials.remove(material_slot.material)
-                if obj.data.library is None and obj.data.override_library is None:
+                if (
+                    obj.data.library is None
+                    and obj.data.override_library is None
+                ):
                     bpy.data.meshes.remove(obj.data)
             elif obj.type == "EMPTY":
                 objects.extend(obj.objects)
@@ -46,12 +49,14 @@ class BlendRigLoader(plugin.AssetLoader):
                     bpy.data.objects.remove(obj)
         bpy.data.collections.remove(container)
 
-    def _process(self, libpath):
+    def _process(self, libpath, asset_name):
         with bpy.data.libraries.load(libpath, link=True, relative=False) as (
             data_from,
             data_to,
         ):
-            data_to.collections = data_from.collections
+            for data_from_collection in data_from.collections:
+                if data_from_collection == asset_name:
+                    data_to.collections.append(data_from_collection)
 
         scene_collection = bpy.context.scene.collection
 
@@ -61,9 +66,13 @@ class BlendRigLoader(plugin.AssetLoader):
         self.log.info("instances : %s", instances)
         for data_collection in instances:
             if data_collection.override_library is None:
-                if data_collection[AVALON_PROPERTY].get("family") is not None:
+                if data_collection[AVALON_PROPERTY].get("family"):
                     if data_collection[AVALON_PROPERTY].get("family") == "rig":
-                        container_collection = data_collection
+                        if (
+                            data_collection[AVALON_PROPERTY].get("asset_name")
+                            == asset_name
+                        ):
+                            container_collection = data_collection
         self.original_container_name = container_collection.name
 
         # Create a collection used to start the load collections at .001
@@ -118,10 +127,14 @@ class BlendRigLoader(plugin.AssetLoader):
         # Clean
         bpy.data.orphans_purge(do_local_ids=False)
         plugin.deselect_all()
-
         # Override the container and the objects
+        container_overrided = container_collection.override_create(
+            remap_local_usages=True
+        )
+        collections.remove(container_collection)
         for collection in collections:
-            container_overrided = collection.override_create(remap_local_usages=True)
+            collection.override_create(remap_local_usages=True)
+
         for obj in non_armatures:
             obj.override_create(remap_local_usages=True)
         for armature in armatures:
@@ -131,7 +144,7 @@ class BlendRigLoader(plugin.AssetLoader):
         # Remove the collection used to the increment
         # bpy.data.collections.remove(increment_use_collection)
 
-        return objects
+        return container_overrided
 
     def process_asset(
         self,
@@ -152,8 +165,8 @@ class BlendRigLoader(plugin.AssetLoader):
         subset = context["subset"]["name"]
         asset_name = plugin.asset_name(asset, subset)
 
-        objects = self._process(libpath, asset_name)
-
+        avalon_container = self._process(libpath, asset_name)
+        objects = avalon_container.objects
         self[:] = objects
         return objects
 
@@ -163,12 +176,18 @@ class BlendRigLoader(plugin.AssetLoader):
         This will remove all children of the asset group, load the new ones
         and add them as children of the group.
         """
+
         object_name = container["objectName"]
+        asset_name = container["asset_name"]
+
         avalon_container = bpy.data.collections.get(object_name)
+
         libpath = Path(api.get_representation_path(representation))
 
         assert container, f"The asset is not loaded: {container['objectName']}"
-        assert libpath, "No existing library file found for {container['objectName']}"
+        assert (
+            libpath
+        ), "No existing library file found for {container['objectName']}"
         assert libpath.is_file(), f"The file doesn't exist: {libpath}"
 
         metadata = avalon_container.get(AVALON_PROPERTY)
@@ -177,7 +196,9 @@ class BlendRigLoader(plugin.AssetLoader):
         normalized_container_libpath = str(
             Path(bpy.path.abspath(container_libpath)).resolve()
         )
-        normalized_libpath = str(Path(bpy.path.abspath(str(libpath))).resolve())
+        normalized_libpath = str(
+            Path(bpy.path.abspath(str(libpath))).resolve()
+        )
         self.log.debug(
             "normalized_group_libpath:\n  %s\nnormalized_libpath:\n  %s",
             normalized_container_libpath,
@@ -195,7 +216,8 @@ class BlendRigLoader(plugin.AssetLoader):
                     collection.override_library is not None
                     and collection.library is None
                 ) or (
-                    collection.override_library is None and collection.library is None
+                    collection.override_library is None
+                    and collection.library is None
                 ):
                     container_item = collection
                     if (
@@ -205,26 +227,36 @@ class BlendRigLoader(plugin.AssetLoader):
                         count += 1
 
         parent_collections = plugin.get_parent_collections(avalon_container)
+        collections_in_container = plugin.get_all_collections_in_collection(
+            avalon_container
+        )
 
-        if avalon_container.override_library is not None:
-            self._remove(avalon_container.override_library.reference)
+        # for collection in collections_in_container:
+        #     self._remove(collection)
+        # if avalon_container.override_library:
+        #     self._remove(avalon_container.override_library.reference)
         self._remove(avalon_container)
+        plugin.clean_datablock()
+        plugin.clean_datablock()
 
         # If it is the last object to use that library, remove it
         print(container_libpath)
         print(bpy.path.basename(container_libpath))
         print(count)
         if count == 1:
-            library = bpy.data.libraries.get(bpy.path.basename(container_libpath))
+            library = bpy.data.libraries.get(
+                bpy.path.basename(container_libpath)
+            )
             if library:
                 bpy.data.libraries.remove(library)
 
-        container_override = self._process(str(libpath))
-
-        if parent_collections is not None:
+        container_override = self._process(str(libpath), asset_name)
+        print(parent_collections)
+        if parent_collections:
             bpy.context.scene.collection.children.unlink(container_override)
             for parent_collection in parent_collections:
                 parent_collection.children.link(container_override)
+        plugin.clean_datablock()
 
     def exec_remove(self, container: Dict) -> bool:
         """Remove an existing asset group from a Blender scene.
@@ -237,17 +269,19 @@ class BlendRigLoader(plugin.AssetLoader):
             bool: Whether the asset group was deleted.
         """
         object_name = container["objectName"]
-        input_container = bpy.data.collections.get(object_name)
-        metadata = input_container.get(AVALON_PROPERTY)
+        avalon_container = bpy.data.collections.get(object_name)
+        metadata = avalon_container.get(AVALON_PROPERTY)
         libpath = metadata["libpath"]
 
-        metadata = input_container.get(AVALON_PROPERTY)
+        metadata = avalon_container.get(AVALON_PROPERTY)
         container_libpath = metadata["libpath"]
 
         normalized_container_libpath = str(
             Path(bpy.path.abspath(container_libpath)).resolve()
         )
-        normalized_libpath = str(Path(bpy.path.abspath(str(libpath))).resolve())
+        normalized_libpath = str(
+            Path(bpy.path.abspath(str(libpath))).resolve()
+        )
         self.log.debug(
             "normalized_group_libpath:\n  %s\nnormalized_libpath:\n  %s",
             normalized_container_libpath,
@@ -262,7 +296,8 @@ class BlendRigLoader(plugin.AssetLoader):
                     collection.override_library is not None
                     and collection.library is None
                 ) or (
-                    collection.override_library is None and collection.library is None
+                    collection.override_library is None
+                    and collection.library is None
                 ):
                     container_item = collection
                     if (
@@ -271,16 +306,23 @@ class BlendRigLoader(plugin.AssetLoader):
                     ):
                         count += 1
 
-        if input_container.override_library is not None:
-            self._remove(input_container.override_library.reference)
-        self._remove(input_container)
+        parent_collections = plugin.get_parent_collections(avalon_container)
 
+        collections_in_container = plugin.get_all_collections_in_collection(
+            avalon_container
+        )
+
+        self._remove(avalon_container)
+        plugin.clean_datablock()
+        plugin.clean_datablock()
         # If it is the last object to use that library, remove it
         print(container_libpath)
         print(bpy.path.basename(container_libpath))
         print(count)
         if count == 1:
-            library = bpy.data.libraries.get(bpy.path.basename(container_libpath))
+            library = bpy.data.libraries.get(
+                bpy.path.basename(container_libpath)
+            )
             if library:
                 bpy.data.libraries.remove(library)
 

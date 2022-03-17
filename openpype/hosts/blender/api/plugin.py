@@ -14,13 +14,56 @@ from .lib import imprint, get_selection
 VALID_EXTENSIONS = [".blend", ".json", ".abc", ".fbx"]
 
 
-def asset_name(asset: str, subset: str, namespace: Optional[str] = None) -> str:
+def asset_name(
+    asset: str, subset: str, namespace: Optional[str] = None
+) -> str:
     """Return a consistent name for an asset."""
     name = f"{asset}"
     if namespace:
         name = f"{name}_{namespace}"
     name = f"{name}_{subset}"
     return name
+
+
+def clean_datablock():
+    orphan_block_users_find = True
+    while orphan_block_users_find:
+        orphan_block_users_find = False
+
+        for block in bpy.data.collections:
+            if block.users == 0:
+                orphan_block_users_find = True
+                bpy.data.collections.remove(block)
+
+        for block in bpy.data.objects:
+            if block.users == 0:
+                orphan_block_users_find = True
+                bpy.data.objects.remove(block)
+
+        for block in bpy.data.meshes:
+            if block.users == 0:
+                orphan_block_users_find = True
+                bpy.data.meshes.remove(block)
+
+        for block in bpy.data.materials:
+            if block.users == 0:
+                orphan_block_users_find = True
+                bpy.data.materials.remove(block)
+
+        for block in bpy.data.textures:
+            if block.users == 0:
+                orphan_block_users_find = True
+                bpy.data.textures.remove(block)
+
+        for block in bpy.data.images:
+            if block.users == 0:
+                orphan_block_users_find = True
+                bpy.data.images.remove(block)
+
+        for block in bpy.data.libraries:
+            if block.users == 0:
+                orphan_block_users_find = True
+                bpy.data.libraries.remove(block)
 
 
 def model_asset_name(model_name: str, namespace: Optional[str] = None) -> str:
@@ -56,7 +99,9 @@ def get_container_collections() -> list:
 def get_unique_number(asset: str, subset: str) -> str:
     """Return a unique number based on the asset name."""
     data_collections = bpy.data.collections
-    container_names = [c.name for c in data_collections if c.get(AVALON_PROPERTY)]
+    container_names = [
+        c.name for c in data_collections if c.get(AVALON_PROPERTY)
+    ]
     if container_names == []:
         return "01"
     count = 1
@@ -70,7 +115,9 @@ def get_unique_number(asset: str, subset: str) -> str:
 def get_model_unique_number(current_container_name: str) -> str:
     """Return a unique number based on the asset name."""
     data_collections = bpy.data.collections
-    container_names = [c.name for c in data_collections if c.get(AVALON_PROPERTY)]
+    container_names = [
+        c.name for c in data_collections if c.get(AVALON_PROPERTY)
+    ]
     if container_names == []:
         return "001"
     count = 1
@@ -134,7 +181,6 @@ def get_instances_list():
 def get_all_collections_in_collection(collection):
     """get_all_collections_in_collection"""
     check_list = collection.children.values()
-
     for c in check_list:
         check_list.extend(c.children)
 

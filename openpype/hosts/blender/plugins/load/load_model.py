@@ -66,7 +66,10 @@ class BlendModelLoader(plugin.AssetLoader):
                             and material_slot.material.override_library is None
                         ):
                             bpy.data.materials.remove(material_slot.material)
-                if obj.data.library is None and obj.data.override_library is None:
+                if (
+                    obj.data.library is None
+                    and obj.data.override_library is None
+                ):
                     bpy.data.meshes.remove(obj.data)
             elif obj.type == "EMPTY":
                 objects.extend(obj.objects)
@@ -74,7 +77,7 @@ class BlendModelLoader(plugin.AssetLoader):
                     bpy.data.objects.remove(obj)
         bpy.data.collections.remove(container)
 
-    def _process(self, libpath):
+    def _process(self, libpath, asset_name):
         """Load the blend library file"""
         with bpy.data.libraries.load(libpath, link=True, relative=False) as (
             data_from,
@@ -91,8 +94,15 @@ class BlendModelLoader(plugin.AssetLoader):
         for data_collection in instances:
             if data_collection.override_library is None:
                 if data_collection[AVALON_PROPERTY].get("family") is not None:
-                    if data_collection[AVALON_PROPERTY].get("family") == "model":
-                        container_collection = data_collection
+                    if (
+                        data_collection[AVALON_PROPERTY].get("family")
+                        == "model"
+                    ):
+                        if (
+                            data_collection[AVALON_PROPERTY].get("asset_name")
+                            == asset_name
+                        ):
+                            container_collection = data_collection
 
         # Create a collection used to start the load collections at .001
         # increment_use_collection = bpy.data.collections.new(
@@ -158,7 +168,7 @@ class BlendModelLoader(plugin.AssetLoader):
         asset_name = plugin.asset_name(asset, subset)
 
         # Process the load of the model
-        avalon_container = self._process(libpath)
+        avalon_container = self._process(libpath, asset_name)
 
         objects = avalon_container.objects
         self[:] = objects
@@ -174,11 +184,14 @@ class BlendModelLoader(plugin.AssetLoader):
         case though.
         """
         object_name = container["objectName"]
+        asset_name = container["asset_name"]
         avalon_container = bpy.data.collections.get(object_name)
         libpath = Path(api.get_representation_path(representation))
 
         assert container, f"The asset is not loaded: {container['objectName']}"
-        assert libpath, "No existing library file found for {container['objectName']}"
+        assert (
+            libpath
+        ), "No existing library file found for {container['objectName']}"
         assert libpath.is_file(), f"The file doesn't exist: {libpath}"
 
         metadata = avalon_container.get(AVALON_PROPERTY)
@@ -187,7 +200,9 @@ class BlendModelLoader(plugin.AssetLoader):
         normalized_container_libpath = str(
             Path(bpy.path.abspath(container_libpath)).resolve()
         )
-        normalized_libpath = str(Path(bpy.path.abspath(str(libpath))).resolve())
+        normalized_libpath = str(
+            Path(bpy.path.abspath(str(libpath))).resolve()
+        )
         self.log.debug(
             "normalized_group_libpath:\n  %s\nnormalized_libpath:\n  %s",
             normalized_container_libpath,
@@ -205,7 +220,8 @@ class BlendModelLoader(plugin.AssetLoader):
                     collection.override_library is not None
                     and collection.library is None
                 ) or (
-                    collection.override_library is None and collection.library is None
+                    collection.override_library is None
+                    and collection.library is None
                 ):
                     container_item = collection
                     if (
@@ -219,23 +235,21 @@ class BlendModelLoader(plugin.AssetLoader):
         armature_modifiers_dict = self._get_armature_modifier_parameters(
             avalon_container
         )
-        print("*********************************************")
 
-        print(armature_modifiers_dict)
         if avalon_container.override_library is not None:
             self._remove(avalon_container.override_library.reference)
         self._remove(avalon_container)
-
+        plugin.clean_datablock()
         # If it is the last object to use that library, remove it
-        print(container_libpath)
-        print(bpy.path.basename(container_libpath))
-        print(count)
+
         if count == 1:
-            library = bpy.data.libraries.get(bpy.path.basename(container_libpath))
+            library = bpy.data.libraries.get(
+                bpy.path.basename(container_libpath)
+            )
             if library:
                 bpy.data.libraries.remove(library)
 
-        container_override = self._process(str(libpath))
+        container_override = self._process(str(libpath), asset_name)
 
         if parent_collections:
             bpy.context.scene.collection.children.unlink(container_override)
@@ -247,6 +261,7 @@ class BlendModelLoader(plugin.AssetLoader):
         )
         print("*********************************************")
         print(armature_modifiers_dict)
+        plugin.clean_datablock()
 
     def exec_remove(self, container: Dict) -> bool:
         """Remove an existing container from a Blender scene.
@@ -259,17 +274,19 @@ class BlendModelLoader(plugin.AssetLoader):
             bool: Whether the container was deleted.
         """
         object_name = container["objectName"]
-        input_container = bpy.data.collections.get(object_name)
-        metadata = input_container.get(AVALON_PROPERTY)
+        avalon_container = bpy.data.collections.get(object_name)
+        metadata = avalon_container.get(AVALON_PROPERTY)
         libpath = metadata["libpath"]
 
-        metadata = input_container.get(AVALON_PROPERTY)
+        metadata = avalon_container.get(AVALON_PROPERTY)
         container_libpath = metadata["libpath"]
 
         normalized_container_libpath = str(
             Path(bpy.path.abspath(container_libpath)).resolve()
         )
-        normalized_libpath = str(Path(bpy.path.abspath(str(libpath))).resolve())
+        normalized_libpath = str(
+            Path(bpy.path.abspath(str(libpath))).resolve()
+        )
         self.log.debug(
             "normalized_group_libpath:\n  %s\nnormalized_libpath:\n  %s",
             normalized_container_libpath,
@@ -284,7 +301,8 @@ class BlendModelLoader(plugin.AssetLoader):
                     collection.override_library is not None
                     and collection.library is None
                 ) or (
-                    collection.override_library is None and collection.library is None
+                    collection.override_library is None
+                    and collection.library is None
                 ):
                     container_item = collection
                     if (
@@ -293,16 +311,18 @@ class BlendModelLoader(plugin.AssetLoader):
                     ):
                         count += 1
 
-        if input_container.override_library is not None:
-            self._remove(input_container.override_library.reference)
-        self._remove(input_container)
-
+        if avalon_container.override_library is not None:
+            self._remove(avalon_container.override_library.reference)
+        self._remove(avalon_container)
+        plugin.clean_datablock()
         # If it is the last object to use that library, remove it
         print(container_libpath)
         print(bpy.path.basename(container_libpath))
         print(count)
         if count == 1:
-            library = bpy.data.libraries.get(bpy.path.basename(container_libpath))
+            library = bpy.data.libraries.get(
+                bpy.path.basename(container_libpath)
+            )
             if library:
                 bpy.data.libraries.remove(library)
 
