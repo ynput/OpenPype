@@ -1,4 +1,8 @@
 {
+    "entities_root": {
+        "assets": "Assets",
+        "shots": "Shots"
+    },
     "entities_naming_pattern": {
         "episode": "E##",
         "sequence": "SQ##",

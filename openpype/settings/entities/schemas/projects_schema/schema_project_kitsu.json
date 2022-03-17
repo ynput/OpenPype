@@ -7,6 +7,23 @@
     "children": [
         {
             "type": "dict",
+            "key": "entities_root",
+            "label": "Entities root folder",
+            "children": [
+                {
+                    "type": "text",
+                    "key": "assets",
+                    "label": "Assets:"
+                },
+                {
+                    "type": "text",
+                    "key": "shots",
+                    "label": "Shots (includes Episodes & Sequences if any):"
+                }
+            ]
+        },
+        {
+            "type": "dict",
             "key": "entities_naming_pattern",
             "label": "Entities naming pattern",
             "children": [

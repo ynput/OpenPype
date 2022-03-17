@@ -11,6 +11,7 @@ from gazu.task import (
 )
 
 from avalon.api import AvalonMongoDB
+from openpype.api import get_project_settings
 from openpype.lib import create_project
 from openpype.modules.kitsu.utils.credentials import validate_credentials
 
@@ -42,15 +43,23 @@ def set_op_project(dbcon, project_id) -> Collection:
 
 
 def update_op_assets(
-    entities_list: List[dict], asset_doc_ids: Dict[str, dict]
+    project_col: Collection,
+    entities_list: List[dict],
+    asset_doc_ids: Dict[str, dict],
 ) -> List[Dict[str, dict]]:
     """Update OpenPype assets.
     Set 'data' and 'parent' fields.
 
-    :param entities_list: List of zou entities to update
-    :param asset_doc_ids: Dicts of [{zou_id: asset_doc}, ...]
-    :return: List of (doc_id, update_dict) tuples
+    Args:
+        project_col (Collection): Mongo project collection to sync
+        entities_list (List[dict]): List of zou entities to update
+        asset_doc_ids (Dict[str, dict]): Dicts of [{zou_id: asset_doc}, ...]
+
+    Returns:
+        List[Dict[str, dict]]: List of (doc_id, update_dict) tuples
     """
+    project_name = project_col.name
+
     assets_with_update = []
     for item in entities_list:
         # Update asset
@@ -65,9 +74,10 @@ def update_op_assets(
 
         # Tasks
         tasks_list = []
-        if item["type"] == "Asset":
+        item_type = item["type"]
+        if item_type == "Asset":
             tasks_list = all_tasks_for_asset(item)
-        elif item["type"] == "Shot":
+        elif item_type == "Shot":
             tasks_list = all_tasks_for_shot(item)
             # TODO frame in and out
         item_data["tasks"] = {
@@ -91,10 +101,39 @@ def update_op_assets(
                 or item.get("source_id")
             )  # TODO check consistency
 
-        # Visual parent for hierarchy
+        # Substitute Episode and Sequence by Shot
+        project_module_settings = get_project_settings(project_name)["kitsu"]
+        substitute_item_type = (
+            "shots"
+            if item_type in ["Episode", "Sequence"]
+            else f"{item_type.lower()}s"
+        )
+        entity_parent_folders = [
+            f
+            for f in project_module_settings["entities_root"]
+            .get(substitute_item_type)
+            .split("/")
+            if f
+        ]
+
+        # Root parent folder if exist
         visual_parent_doc_id = (
             asset_doc_ids[parent_zou_id]["_id"] if parent_zou_id else None
         )
+        if visual_parent_doc_id is None:
+            # Find root folder doc
+            root_folder_doc = project_col.find_one(
+                {
+                    "type": "asset",
+                    "name": entity_parent_folders[-1],
+                    "data.root_of": substitute_item_type,
+                },
+                ["_id"],
+            )
+            if root_folder_doc:
+                visual_parent_doc_id = root_folder_doc["_id"]
+
+        # Visual parent for hierarchy
         item_data["visualParent"] = visual_parent_doc_id
 
         # Add parents for hierarchy
@@ -106,6 +145,9 @@ def update_op_assets(
             # Get parent entity
             parent_entity = parent_doc["data"]["zou"]
             parent_zou_id = parent_entity["parent_id"]
+
+        # Set root folders parents
+        item_data["parents"] = entity_parent_folders + item_data["parents"]
 
         # Update 'data' different in zou DB
         updated_data = {
@@ -248,6 +290,30 @@ def sync_project_from_kitsu(
     }
     zou_ids_and_asset_docs[project["id"]] = project_doc
 
+    # Create entities root folders
+    project_module_settings = get_project_settings(project_name)["kitsu"]
+    for entity_type, root in project_module_settings["entities_root"].items():
+        parent_folders = root.split("/")
+        direct_parent_doc = None
+        for i, folder in enumerate(parent_folders, 1):
+            parent_doc = project_col.find_one(
+                {"type": "asset", "name": folder, "data.root_of": entity_type}
+            )
+            if not parent_doc:
+                direct_parent_doc = project_col.insert_one(
+                    {
+                        "name": folder,
+                        "type": "asset",
+                        "schema": "openpype:asset-3.0",
+                        "data": {
+                            "root_of": entity_type,
+                            "parents": parent_folders[:i],
+                            "visualParent": direct_parent_doc,
+                            "tasks": {},
+                        },
+                    }
+                )
+
     # Create
     to_insert = []
     to_insert.extend(
@@ -275,7 +341,7 @@ def sync_project_from_kitsu(
         [
             UpdateOne({"_id": id}, update)
             for id, update in update_op_assets(
-                all_entities, zou_ids_and_asset_docs
+                project_col, all_entities, zou_ids_and_asset_docs
             )
         ]
     )

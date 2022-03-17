@@ -167,7 +167,7 @@ class Listener:
 
         # Update
         asset_doc_id, asset_update = update_op_assets(
-            [asset], zou_ids_and_asset_docs
+            project_col[asset], zou_ids_and_asset_docs
         )[0]
         project_col.update_one({"_id": asset_doc_id}, asset_update)
 
@@ -214,7 +214,7 @@ class Listener:
 
         # Update
         asset_doc_id, asset_update = update_op_assets(
-            [episode], zou_ids_and_asset_docs
+            project_col, [episode], zou_ids_and_asset_docs
         )[0]
         project_col.update_one({"_id": asset_doc_id}, asset_update)
 
@@ -262,7 +262,7 @@ class Listener:
 
         # Update
         asset_doc_id, asset_update = update_op_assets(
-            [sequence], zou_ids_and_asset_docs
+            project_col, [sequence], zou_ids_and_asset_docs
         )[0]
         project_col.update_one({"_id": asset_doc_id}, asset_update)
 
@@ -310,7 +310,7 @@ class Listener:
 
         # Update
         asset_doc_id, asset_update = update_op_assets(
-            [shot], zou_ids_and_asset_docs
+            project_col, [shot], zou_ids_and_asset_docs
         )[0]
         project_col.update_one({"_id": asset_doc_id}, asset_update)
 
