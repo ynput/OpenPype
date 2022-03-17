@@ -601,13 +601,22 @@ class ProcessSubmittedJobOnFarm(pyblish.api.InstancePlugin):
                 "files": os.path.basename(remainder),
                 "stagingDir": os.path.dirname(remainder),
             }
-            representations.append(rep)
             if "render" in instance.get("families"):
                 rep.update({
                     "fps": instance.get("fps"),
                     "tags": ["review"]
                 })
-                self._solve_families(instance, True)
+            self._solve_families(instance, True)
+
+            already_there = False
+            for repre in instance.get("representations", []):
+                # might be added explicitly before by publish_on_farm
+                already_there = repre.get("files") == rep["files"]
+                if already_there:
+                    break
+            self.log.debug("repre {} already_there".format(repre))
+            if not already_there:
+                representations.append(rep)
 
         return representations
 
