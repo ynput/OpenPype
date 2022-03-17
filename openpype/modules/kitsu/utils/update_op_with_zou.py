@@ -71,6 +71,10 @@ def update_op_assets(
         # Asset settings
         item_data["frameStart"] = item_data.get("frame_in")
         item_data["frameEnd"] = item_data.get("frame_out")
+        # Sentinel for fps, fallback to project's value when entity fps is deleted
+        if not item_data.get("fps") and item_doc["data"].get("fps"):
+            project_doc = project_col.find_one({"type": "project"})
+            item_data["fps"] = project_doc["data"]["fps"]
 
         # Tasks
         tasks_list = []
