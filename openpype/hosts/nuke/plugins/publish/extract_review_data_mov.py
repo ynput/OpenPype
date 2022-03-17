@@ -51,39 +51,18 @@ class ExtractReviewDataMov(openpype.api.Extractor):
                 f_subsets = o_data["filter"]["sebsets"]
 
                 # test if family found in context
-                test_families = any([
-                    # first if exact family set is matching
-                    # make sure only interesetion of list is correct
-                    bool(set(families).intersection(f_families)),
-                    # and if famiies are set at all
-                    # if not then return True because we want this preset
-                    # to be active if nothig is set
-                    bool(not f_families)
-                ])
+                # using intersection to make sure all defined
+                # families are present in combinantion
+                test_families = not f_families or any(
+                    set(families).intersection(f_families))
 
                 # test task types from filter
-                test_task_types = any([
-                    # check if actual task type is defined in task types
-                    # set in preset's filter
-                    bool(task_type in f_task_types),
-                    # and if taskTypes are defined in preset filter
-                    # if not then return True, because we want this filter
-                    # to be active if no taskType is set
-                    bool(not f_task_types)
-                ])
+                test_task_types = not f_task_types or any(
+                    task_type in f_task_types)
 
                 # test subsets from filter
-                test_subsets = any([
-                    # check if any of subset filter inputs
-                    # converted to regex patern is not found in subset
-                    # we keep strict case sensitivity
-                    bool(next((
-                        s for s in f_subsets
-                        if re.search(re.compile(s), subset)
-                    ), None)),
-                    # but if no subsets were set then make this acuntable too
-                    bool(not f_subsets)
-                ])
+                test_subsets = not f_subsets or any(
+                    re.search(s, subset) for s in f_subsets)
 
                 # we need all filters to be positive for this
                 # preset to be activated
