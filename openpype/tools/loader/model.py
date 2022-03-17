@@ -7,7 +7,7 @@ from Qt import QtCore, QtGui
 import qtawesome
 
 from avalon import schema
-from avalon.lib import HeroVersionType
+from openpype.pipeline import HeroVersionType
 
 from openpype.style import get_default_entity_icon_color
 from openpype.tools.utils.models import TreeModel, Item

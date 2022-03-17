@@ -1,6 +1,11 @@
-from avalon import api, io
 import nuke
 
+from avalon import io
+
+from openpype.pipeline import (
+    load,
+    get_representation_path,
+)
 from openpype.hosts.nuke.api.lib import (
     maintained_selection,
     create_backdrop,
@@ -14,7 +19,7 @@ from openpype.hosts.nuke.api import (
 )
 
 
-class LoadGizmoInputProcess(api.Loader):
+class LoadGizmoInputProcess(load.LoaderPlugin):
     """Loading colorspace soft effect exported from nukestudio"""
 
     representations = ["gizmo"]
@@ -110,7 +115,7 @@ class LoadGizmoInputProcess(api.Loader):
         # get corresponding node
         GN = nuke.toNode(container['objectName'])
 
-        file = api.get_representation_path(representation).replace("\\", "/")
+        file = get_representation_path(representation).replace("\\", "/")
         name = container['name']
         version_data = version.get("data", {})
         vname = version.get("name", None)

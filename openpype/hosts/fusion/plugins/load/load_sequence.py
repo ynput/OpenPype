@@ -1,8 +1,12 @@
 import os
 import contextlib
 
-from avalon import api, io
+from avalon import io
 
+from openpype.pipeline import (
+    load,
+    get_representation_path,
+)
 from openpype.hosts.fusion.api import (
     imprint_container,
     get_current_comp,
@@ -117,7 +121,7 @@ def loader_shift(loader, frame, relative=True):
     return int(shift)
 
 
-class FusionLoadSequence(api.Loader):
+class FusionLoadSequence(load.LoaderPlugin):
     """Load image sequence into Fusion"""
 
     families = ["imagesequence", "review", "render"]
@@ -204,7 +208,7 @@ class FusionLoadSequence(api.Loader):
         assert tool.ID == "Loader", "Must be Loader"
         comp = tool.Comp()
 
-        root = os.path.dirname(api.get_representation_path(representation))
+        root = os.path.dirname(get_representation_path(representation))
         path = self._get_first_image(root)
 
         # Get start frame from version data

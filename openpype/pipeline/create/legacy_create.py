@@ -21,6 +21,7 @@ class LegacyCreator(object):
     dynamic_subset_keys = []
 
     log = logging.getLogger("LegacyCreator")
+    log.propagate = True
 
     def __init__(self, name, asset, options=None, data=None):
         self.name = name  # For backwards compatibility
