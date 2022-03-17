@@ -502,7 +502,7 @@ def get_representation_path_from_context(context):
     session_project = Session.get("AVALON_PROJECT")
     if project_doc and project_doc["name"] != session_project:
         anatomy = Anatomy(project_doc["name"])
-        root = anatomy.roots_obj
+        root = anatomy.roots
 
     return get_representation_path(representation, root)
 
