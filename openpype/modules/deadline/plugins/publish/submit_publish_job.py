@@ -613,8 +613,9 @@ class ProcessSubmittedJobOnFarm(pyblish.api.InstancePlugin):
                 # might be added explicitly before by publish_on_farm
                 already_there = repre.get("files") == rep["files"]
                 if already_there:
+                    self.log.debug("repre {} already_there".format(repre))
                     break
-            self.log.debug("repre {} already_there".format(repre))
+
             if not already_there:
                 representations.append(rep)
 
