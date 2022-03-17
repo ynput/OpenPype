@@ -28,6 +28,7 @@
                     "xml_preset_file": "OpenEXR (16-bit fp DWAA).xml",
                     "xml_preset_dir": "",
                     "export_type": "File Sequence",
+                    "ignore_comment_attrs": false,
                     "colorspace_out": "ACES - ACEScg",
                     "representation_add_range": true,
                     "representation_tags": []
