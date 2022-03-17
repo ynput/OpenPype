@@ -1,8 +1,8 @@
 # Changelog
 
-## [3.9.1-nightly.3](https://github.com/pypeclub/OpenPype/tree/HEAD)
+## [3.9.1](https://github.com/pypeclub/OpenPype/tree/3.9.1) (2022-03-17)
 
-[Full Changelog](https://github.com/pypeclub/OpenPype/compare/3.9.0...HEAD)
+[Full Changelog](https://github.com/pypeclub/OpenPype/compare/3.9.0...3.9.1)
 
 **🚀 Enhancements**
 
