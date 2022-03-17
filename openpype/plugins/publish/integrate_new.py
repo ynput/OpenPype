@@ -101,7 +101,10 @@ class FileTransaction(object):
                                "in queue: {} -> {}".format(src, dst))
                 return
             else:
-                self.log.warning("File transfer in queue overwritten")
+                self.log.warning("File transfer in queue replaced..")
+                self.log.debug("Removed from queue: "
+                               "{} -> {}".format(queued_src, dst))
+                self.log.debug("Added to queue: {} -> {}".format(src, dst))
 
         self._transfers[dst] = (src, opts)
 
@@ -298,7 +301,7 @@ class IntegrateAssetNew(pyblish.api.InstancePlugin):
             self.log.critical("Error when registering", exc_info=True)
             six.reraise(*sys.exc_info())
 
-        # Finalizing can't be rollbacked safely so no use for moving it to
+        # Finalizing can't rollback safely so no use for moving it to
         # the try, except.
         file_transactions.finalize()
 
@@ -426,11 +429,9 @@ class IntegrateAssetNew(pyblish.api.InstancePlugin):
             "type": "archived_representation"
         }))
 
-        # Find the representations to transfer amongst the files
-        # Each should be a single representation (as such, a single extension)
+        # Prepare all representations
         template_name, anatomy_data = self.prepare_anatomy(instance)
-        published_representations = {}
-        representations = []
+        prepared_representations = []
         for repre in instance.data["representations"]:
 
             if "delete" in repre.get("tags", []):
@@ -438,6 +439,7 @@ class IntegrateAssetNew(pyblish.api.InstancePlugin):
                                "{}".format(repre))
                 continue
 
+            # todo: reduce/simplify what is returned from this function
             prepared = self.prepare_representation(repre,
                                                    anatomy_data,
                                                    template_name,
@@ -445,23 +447,23 @@ class IntegrateAssetNew(pyblish.api.InstancePlugin):
                                                    version,
                                                    instance_stagingdir,
                                                    instance)
-            representation = prepared["representation"]
 
-            # todo: register the file transfers correctly
-            for src, dst in representation["transfers"]:
-                file_transactions.add(src, dst,
-                                      mode=file_transactions.MODE_COPY)
-            for src, dst in representation["hardlinks"]:
-                file_transactions.add(src, dst,
-                                      mode=file_transactions.MODE_HARDLINK)
+            for src, dst in prepared["transfers"]:
+                # todo: add support for hardlink transfers
+                file_transactions.add(src, dst)
 
-            # todo: simplify this?
-            representations.append(representation)
-            published_representations[representation["_id"]] = prepared
+            prepared_representations.append(prepared)
 
-        # could throw exception, will be caught in 'process'
-        # all integration to DB is being done together lower,
-        # so no rollback needed
+        # Each instance can also have pre-defined transfers not explicitly
+        # part of a representation - like texture resources used by a
+        # .ma representation. Those destination paths are pre-defined, etc.
+        # todo: should we move or simplify this logic?
+        for src, dst in instance.data.get("transfers", []):
+            file_transactions.add(src, dst, mode=FileTransaction.MODE_COPY)
+        for src, dst in instance.data.get("hardlinks", []):
+            file_transactions.add(src, dst, mode=FileTransaction.MODE_HARDLINK)
+
+        # Process all file transfers of all integrations now
         self.log.debug("Integrating source files to destination ...")
         file_transactions.process()
         self.log.debug("Backup files "
@@ -469,17 +471,21 @@ class IntegrateAssetNew(pyblish.api.InstancePlugin):
         self.log.debug("Integrated files "
                        "{}".format(file_transactions.transferred))
 
-        # todo: fix get file info for transferred files per representation
-        #       currently it'd set all files for all representations
-        # get 'files' info for representation and all attached resources
-        integrated_files = file_transactions.transferred
-        self.log.debug("Preparing files information ...")
-        representation["files"] = self.get_files_info(
-            instance,
-            integrated_files
-        )
+        # Finalize the representations now the published files are integrated
+        # Get 'files' info for representations and its attached resources
+        self.log.debug("Retrieving Representation files information ...")
+        sites = self.compute_resource_sync_sites(instance)
+        anatomy = instance.context.data["anatomy"]
+        representations = []
+        for prepared in prepared_representations:
+            transfers = prepared["transfers"]
+            representation = prepared["representation"]
+            representation["files"] = self.get_files_info(
+                transfers, sites, anatomy
+            )
+            representations.append(representation)
 
-        # Remove old representations if there are any (before insertion of new)
+        # Remove all archived representations
         if archived_repres:
             repre_ids_to_remove = [repre["_id"] for repre in archived_repres]
             io.delete_many({"_id": {"$in": repre_ids_to_remove}})
@@ -487,7 +493,11 @@ class IntegrateAssetNew(pyblish.api.InstancePlugin):
         # Write the new representations to the database
         io.insert_many(representations)
 
-        instance.data["published_representations"] = published_representations
+        # Backwards compatibility
+        # todo: can we avoid the need to store this?
+        instance.data["published_representations"] = {
+            p["representation"]["_id"]: p for p in prepared_representations
+        }
 
         self.log.info("Registered {} representations"
                       "".format(len(representations)))
@@ -495,7 +505,7 @@ class IntegrateAssetNew(pyblish.api.InstancePlugin):
     def register_version(self, instance, subset):
 
         version_number = instance.data["version"]
-        self.log.debug("Next version: v{}".format(version_number))
+        self.log.debug("Version: v{0:03d}".format(version_number))
 
         version_data = self.create_version_data(instance)
         version_data_instance = instance.data.get('versionData')
@@ -565,6 +575,9 @@ class IntegrateAssetNew(pyblish.api.InstancePlugin):
                 )
 
         version = io.find_one({"_id": version_id})
+
+        self.log.info("Registered version: v{0:03d}".format(version["name"]))
+
         return version
 
     def prepare_representation(self, repre,
@@ -585,7 +598,8 @@ class IntegrateAssetNew(pyblish.api.InstancePlugin):
 
         if repre.get("transfers"):
             raise ValueError("Representation is not allowed to have transfers"
-                             "data before integration. "
+                             "data before integration. They are computed in "
+                             "the integrator"
                              "Got: {}".format(repre["transfers"]))
 
         # required representation keys
@@ -698,18 +712,11 @@ class IntegrateAssetNew(pyblish.api.InstancePlugin):
             dst_collection.padding = destination_padding
             assert len(src_collection) == len(dst_collection), "This is a bug"
 
+            # Multiple file transfers
             transfers = []
             for src_file_name, dst in zip(src_collection, dst_collection):
                 src = os.path.join(stagingdir, src_file_name)
-                self.log.debug("source: {}".format(src))
-                self.log.debug("destination: `{}`".format(dst))
-                transfers.append(src, dst)
-
-            # Store first frame as published path
-            # todo: remove `published_path` since it can be retrieved from
-            #       `transfers` by taking the first destination transfers[0][1]
-            repre['published_path'] = next(iter(dst_collection))
-            repre["transfers"].extend(transfers)
+                transfers.append((src, dst))
 
         else:
             # Single file
@@ -728,11 +735,7 @@ class IntegrateAssetNew(pyblish.api.InstancePlugin):
             dst = os.path.normpath(template_filled)
 
             # Single file transfer
-            self.log.debug("source: {}".format(src))
-            self.log.debug("destination: `{}`".format(dst))
-            repre["transfers"] = [src, dst]
-
-            repre['published_path'] = dst
+            transfers = [(src, dst)]
 
         if repre.get("udim"):
             repre_context["udim"] = repre.get("udim")  # store list
@@ -753,11 +756,16 @@ class IntegrateAssetNew(pyblish.api.InstancePlugin):
                 repre_id = _archived_repres["orig_id"]
                 break
 
+        # Backwards compatibility:
+        # Store first transferred destination as published path data
+        # todo: can we remove this?
+        published_path = transfers[0][1]
+
         # todo: `repre` is not the actual `representation` entity
         #       we should simplify/clarify difference between data above
         #       and the actual representation entity for the database
         data = repre.get("data") or {}
-        data.update({'path': repre["published_path"], 'template': template})
+        data.update({'path': published_path, 'template': template})
         representation = {
             "_id": repre_id,
             "schema": "openpype:representation-2.0",
@@ -782,9 +790,10 @@ class IntegrateAssetNew(pyblish.api.InstancePlugin):
         return {
             "representation": representation,
             "anatomy_data": template_data,
-            # todo: avoid the need for 'published_files'?
+            "transfers": transfers,
+            # todo: avoid the need for 'published_files' used by Integrate Hero
             # backwards compatibility
-            "published_files": [transfer[1] for transfer in repre["transfers"]]
+            "published_files": [transfer[1] for transfer in transfers]
         }
 
     def _get_instance_families(self, instance):
@@ -805,6 +814,8 @@ class IntegrateAssetNew(pyblish.api.InstancePlugin):
         # todo: rely less on self.prepare_anatomy to create this value
         asset = instance.data.get("assetEntity")  # stored by prepare_anatomy
         subset_name = instance.data["subset"]
+        self.log.debug("Subset: {}".format(subset_name))
+
         subset = io.find_one({
             "type": "subset",
             "parent": asset["_id"],
@@ -837,6 +848,8 @@ class IntegrateAssetNew(pyblish.api.InstancePlugin):
             {"type": "subset", "_id": io.ObjectId(subset["_id"])},
             {"$set": {"data.families": families}}
         )
+
+        self.log.info("Registered subset: {}".format(subset_name))
 
         return subset
 
@@ -871,9 +884,9 @@ class IntegrateAssetNew(pyblish.api.InstancePlugin):
         if not self.subset_grouping_profiles:
             return None
 
+        # TODO: Resolve below questions
         # QUESTION
-        #   - is there a chance that task name is not filled in anatomy
-        #       data?
+        #   - is there a chance that task name is not filled in anatomy data?
         #   - should we use context task in that case?
         anatomy_data = instance.data["anatomyData"]
         task_name = None
@@ -1002,7 +1015,7 @@ class IntegrateAssetNew(pyblish.api.InstancePlugin):
             ).format(path))
         return path
 
-    def get_files_info(self, instance):
+    def get_files_info(self, transfers, sites, anatomy):
         """ Prepare 'files' portion for attached resources and main asset.
             Combining records from 'transfers' and 'hardlinks' parts from
             instance.
@@ -1017,21 +1030,12 @@ class IntegrateAssetNew(pyblish.api.InstancePlugin):
             output_resources: array of dictionaries to be added to 'files' key
             in representation
         """
-        # todo: refactor to use transfers/hardlinks of representations
-        #       currently broken logic
-        resources = list(instance.data.get("transfers", []))
-        resources.extend(list(instance.data.get("hardlinks", [])))
-        self.log.debug("get_files_info.resources:{}".format(resources))
-
-        sites = self.compute_resource_sync_sites(instance)
-
-        output_resources = []
-        anatomy = instance.context.data["anatomy"]
-        for _src, dest in resources:
+        file_infos = []
+        for _src, dest in transfers:
             file_info = self.prepare_file_info(dest, anatomy, sites=sites)
-            output_resources.append(file_info)
+            file_infos.append(file_info)
 
-        return output_resources
+        return file_infos
 
     def prepare_file_info(self, path, anatomy, sites):
         """ Prepare information for one file (asset or resource)
