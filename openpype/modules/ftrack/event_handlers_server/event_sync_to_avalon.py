@@ -212,6 +212,9 @@ class SyncToAvalonEvent(BaseEvent):
         return self._avalon_ents_by_ftrack_id
 
     def handle_missing_ftrack_id(self, doc):
+        # TODO handling of missing ftrack id is primarily issue of editorial
+        #   publishing it would be better to find out what causes that
+        #   ftrack id is removed during the publishing
         ftrack_id = doc["data"].get("ftrackId")
         if ftrack_id is not None:
             return
@@ -221,10 +224,17 @@ class SyncToAvalonEvent(BaseEvent):
 
             self.dbcon.update_one(
                 {"type": "project"},
-                {"$set": {"data.ftrackId": ftrack_id}}
+                {"$set": {
+                    "data.ftrackId": ftrack_id,
+                    "data.entityType": self.cur_project.entity_type
+                }}
             )
 
             doc["data"]["ftrackId"] = ftrack_id
+            doc["data"]["entityType"] = self.cur_project.entity_type
+            self.log.info("Updated ftrack id of project \"{}\"".format(
+                self.cur_project["full_name"]
+            ))
             return
 
         if doc["type"] != "asset":
@@ -238,6 +248,7 @@ class SyncToAvalonEvent(BaseEvent):
             "select id, link from TypedContext"
             " where project_id is \"{}\" and name is \"{}\""
         ).format(self.cur_project["id"], doc["name"])).all()
+        self.log.info("Entities: {}".format(str(entities)))
         matching_entity = None
         for entity in entities:
             parents = []
@@ -257,9 +268,20 @@ class SyncToAvalonEvent(BaseEvent):
         ftrack_id = matching_entity["id"]
         self.dbcon.update_one(
             {"_id": doc["_id"]},
-            {"$set": {"data.ftrackId": ftrack_id}}
+            {"$set": {
+                "data.ftrackId": ftrack_id,
+                "data.entityType": matching_entity.entity_type
+            }}
         )
+        doc["data"]["ftrackId"] = ftrack_id
+        doc["data"]["entityType"] = matching_entity.entity_type
 
+        entity_path_items = []
+        for item in entity["link"]:
+            entity_path_items.append(item["name"])
+        self.log.info("Updated ftrack id of entity \"{}\"".format(
+            "/".join(entity_path_items)
+        ))
         self._avalon_ents_by_ftrack_id[ftrack_id] = doc
 
     @property
