@@ -1893,7 +1893,9 @@ def get_last_workfile_with_version(
     # Replace `{version}` with group regex
     file_template = re.sub(r"{version.*?}", r"([0-9]+)", file_template)
     file_template = re.sub(r"{comment.*?}", r".+?", file_template)
-    filename = StringTemplate.format_strict_template(file_template, fill_data)
+    file_template = StringTemplate.format_strict_template(
+        file_template, fill_data
+    )
 
     # Match with ignore case on Windows due to the Windows
     # OS not being case-sensitive. This avoids later running
