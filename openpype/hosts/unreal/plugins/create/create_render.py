@@ -16,9 +16,6 @@ class CreateRender(Creator):
     root = "/Game/OpenPype/PublishInstances"
     suffix = "_INS"
 
-    def __init__(self, *args, **kwargs):
-        super(CreateRender, self).__init__(*args, **kwargs)
-
     def process(self):
         subset = self.data["subset"]
 
