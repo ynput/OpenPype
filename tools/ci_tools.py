@@ -35,7 +35,7 @@ def get_release_type_github(Log, github_token):
     else:
         return "patch"
 
-    #TODO: if all is working fine, this part can be cleaned up eventually 
+    # TODO: if all is working fine, this part can be cleaned up eventually 
     # if any(label in labels for label in patch_labels):
     #     return "patch"
             
