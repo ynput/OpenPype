@@ -422,7 +422,7 @@ class WireTapCom(object):
         color_policy = color_policy or "Legacy"
 
         # check if the colour policy in custom dir
-        if not os.path.exists(color_policy):
+        if "/" not in color_policy:
             color_policy = "/syncolor/policies/Autodesk/{}".format(
                 color_policy)
 
