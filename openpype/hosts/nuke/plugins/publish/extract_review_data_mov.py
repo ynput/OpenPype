@@ -66,7 +66,7 @@ class ExtractReviewDataMov(openpype.api.Extractor):
 
                 # test if family found in context
                 # using intersection to make sure all defined
-                # families are present in combinantion
+                # families are present in combination
                 if f_families and not any(
                         set(families).intersection(f_families)):
                     continue
