@@ -43,6 +43,96 @@
             "type": "dict",
             "collapsible": true,
             "checkbox_key": "enabled",
+            "key": "CollectReviewFamily",
+            "label": "Collect Review Family",
+            "is_group": true,
+            "children": [
+                {
+                    "type": "boolean",
+                    "key": "enabled",
+                    "label": "Enabled"
+                },
+                {
+                    "type": "list",
+                    "collapsible": true,
+                    "key": "profiles",
+                    "label": "Profiles",
+                    "use_label_wrap": true,
+                    "object_type": {
+                        "type": "dict",
+                        "children": [
+                            {
+                                "key": "hosts",
+                                "label": "Host names",
+                                "type": "hosts-enum",
+                                "multiselection": true
+                            },
+                            {
+                                "key": "families",
+                                "label": "Families",
+                                "type": "list",
+                                "object_type": "text"
+                            },
+                            {
+                                "key": "task_types",
+                                "label": "Task types",
+                                "type": "task-types-enum"
+                            },
+                            {
+                                "key": "tasks",
+                                "label": "Task names",
+                                "type": "list",
+                                "object_type": "text"
+                            },
+                            {
+                                "key": "subsets",
+                                "label": "Subset names",
+                                "type": "list",
+                                "object_type": "text"
+                            },
+                            {
+                                "type": "separator"
+                            },
+                            {
+                                "key": "add_review_family",
+                                "label": "Add Review Family",
+                                "type": "boolean"
+                            },
+                            {
+                                "type": "list",
+                                "collapsible": true,
+                                "key": "advanced_filtering",
+                                "label": "Advanced adding if additional families present",
+                                "use_label_wrap": true,
+                                "object_type": {
+                                    "type": "dict",
+                                    "children": [
+                                        {
+                                            "key": "families",
+                                            "label": "Additional Families",
+                                            "type": "list",
+                                            "object_type": "text"
+                                        },
+                                        {
+                                            "key": "add_review_family",
+                                            "label": "Add Review Family",
+                                            "type": "boolean"
+                                        }
+                                    ]
+                                }
+                            }
+                        ]
+                    }
+                }
+            ]
+        },
+        {
+            "type": "separator"
+        },
+        {
+            "type": "dict",
+            "collapsible": true,
+            "checkbox_key": "enabled",
             "key": "ValidateEditorialAssetName",
             "label": "Validate Editorial Asset Name",
             "is_group": true,

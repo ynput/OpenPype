@@ -20,6 +20,10 @@
             ],
             "skip_hosts_headless_publish": []
         },
+        "CollectReviewFamily": {
+            "enabled": true,
+            "profiles": []
+        },
         "ValidateEditorialAssetName": {
             "enabled": true,
             "optional": false
