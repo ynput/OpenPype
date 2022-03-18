@@ -127,5 +127,5 @@ def get_login():
     reg = OpenPypeSettingsRegistry()
     try:
         return str(reg.get_item("shotgrid_login"))
-    except Exception as _:
+    except Exception:
         return None
