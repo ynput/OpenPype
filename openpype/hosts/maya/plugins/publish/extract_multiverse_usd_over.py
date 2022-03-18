@@ -118,7 +118,7 @@ class ExtractMultiverseUsdOverride(openpype.api.Extractor):
 
             over_write_opts = multiverse.OverridesWriteOptions()
             options_items = getattr(options, "iteritems", options.items)
-            for (k, v) in options_items:
+            for (k, v) in options_items():
                 if k == "writeTimeRange" or k.startswith("timeRange"):
                     continue
                 setattr(over_write_opts, k, v)

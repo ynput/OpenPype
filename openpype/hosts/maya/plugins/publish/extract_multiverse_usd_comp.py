@@ -108,7 +108,7 @@ class ExtractMultiverseUsdComposition(openpype.api.Extractor):
 
             comp_write_opts = multiverse.CompositionWriteOptions()
             options_items = getattr(options, "iteritems", options.items)
-            for (k, v) in options_items:
+            for (k, v) in options_items():
                 if k == "writeTimeRange" or k.startswith("timeRange"):
                     continue
                 setattr(comp_write_opts, k, v)
