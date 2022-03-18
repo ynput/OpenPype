@@ -1,4 +1,5 @@
 from pathlib import Path
+import clique
 
 import unreal
 
@@ -20,19 +21,17 @@ class ValidateSequenceFrames(pyblish.api.InstancePlugin):
     optional = True
 
     def process(self, instance):
-        self.log.debug(instance.data)
-
         representations = instance.data.get("representations")
         for repr in representations:
-            frames = []
-            for x in repr.get("files"):
-                # Get frame number. The last one contains the file extension,
-                # while the one before that is the frame number.
-                # `lstrip` removes any leading zeros. `or "0"` is to tackle
-                # the case where the frame number is "00".
-                frame = int(str(x).split('.')[-2])
-                frames.append(frame)
-            frames.sort()
+            patterns = [clique.PATTERNS["frames"]]
+            collections, remainder = clique.assemble(
+                repr["files"], minimum_items=1, patterns=patterns)
+
+            assert not remainder, "Must not have remainder"
+            assert len(collections) == 1, "Must detect single collection"
+            collection = collections[0]
+            frames = list(collection.indexes)
+
             current_range = (frames[0], frames[-1])
             required_range = (instance.data["frameStart"],
                               instance.data["frameEnd"])
@@ -41,5 +40,5 @@ class ValidateSequenceFrames(pyblish.api.InstancePlugin):
                 raise ValueError(f"Invalid frame range: {current_range} - "
                                  f"expected: {required_range}")
 
-            assert len(frames) == int(frames[-1]) - int(frames[0]) + 1, \
-                "Missing frames"
+            missing = collection.holes().indexes
+            assert not missing, "Missing frames: %s" % (missing,)
