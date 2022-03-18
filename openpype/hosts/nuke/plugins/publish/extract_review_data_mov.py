@@ -25,6 +25,8 @@ class ExtractReviewDataMov(openpype.api.Extractor):
 
     def process(self, instance):
         families = instance.data["families"]
+        families.append(instance.data["family"])
+
         task_type = instance.context.data["taskType"]
         subset = instance.data["subset"]
         self.log.info("Creating staging dir...")
@@ -50,6 +52,18 @@ class ExtractReviewDataMov(openpype.api.Extractor):
                 f_task_types = o_data["filter"]["task_types"]
                 f_subsets = o_data["filter"]["sebsets"]
 
+                self.log.debug(
+                    "f_families `{}` > families: {}".format(
+                        f_families, families))
+
+                self.log.debug(
+                    "f_task_types `{}` > task_type: {}".format(
+                        f_task_types, task_type))
+
+                self.log.debug(
+                    "f_subsets `{}` > subset: {}".format(
+                        f_subsets, subset))
+
                 # test if family found in context
                 # using intersection to make sure all defined
                 # families are present in combinantion
@@ -58,7 +72,7 @@ class ExtractReviewDataMov(openpype.api.Extractor):
                     continue
 
                 # test task types from filter
-                if f_task_types and not any(
+                if f_task_types and not bool(
                         task_type in f_task_types):
                     continue
 
