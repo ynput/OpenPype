@@ -5,6 +5,11 @@ import glob
 import clique
 import collections
 
+from .path_templates import (
+    StringTemplate,
+    TemplateUnsolved,
+)
+
 
 def collect_frames(files):
     """
@@ -52,8 +57,6 @@ def sizeof_fmt(num, suffix='B'):
 
 
 def path_from_representation(representation, anatomy):
-    from avalon import pipeline  # safer importing
-
     try:
         template = representation["data"]["template"]
 
@@ -63,12 +66,10 @@ def path_from_representation(representation, anatomy):
     try:
         context = representation["context"]
         context["root"] = anatomy.roots
-        path = pipeline.format_template_with_optional_keys(
-            context, template
-        )
-        path = os.path.normpath(path.replace("/", "\\"))
+        path = StringTemplate.format_strict_template(template, context)
+        return os.path.normpath(path)
 
-    except KeyError:
+    except TemplateUnsolved:
         # Template references unavailable data
         return None
 
