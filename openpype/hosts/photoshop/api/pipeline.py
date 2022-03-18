@@ -3,7 +3,7 @@ from Qt import QtWidgets
 
 import pyblish.api
 import avalon.api
-from avalon import pipeline, io
+from avalon import io
 
 from openpype.api import Logger
 from openpype.lib import register_event_callback
@@ -11,6 +11,7 @@ from openpype.pipeline import (
     LegacyCreator,
     register_loader_plugin_path,
     deregister_loader_plugin_path,
+    AVALON_CONTAINER_ID,
 )
 import openpype.hosts.photoshop
 
@@ -221,7 +222,7 @@ def containerise(
 
     data = {
         "schema": "openpype:container-2.0",
-        "id": pipeline.AVALON_CONTAINER_ID,
+        "id": AVALON_CONTAINER_ID,
         "name": name,
         "namespace": namespace,
         "loader": str(loader),

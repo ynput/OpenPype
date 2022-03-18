@@ -1,3 +1,7 @@
+from .constants import (
+    AVALON_CONTAINER_ID,
+)
+
 from .lib import attribute_definitions
 
 from .create import (
@@ -43,6 +47,8 @@ from .publish import (
 
 
 __all__ = (
+    "AVALON_CONTAINER_ID",
+
     "attribute_definitions",
 
     # --- Create ---

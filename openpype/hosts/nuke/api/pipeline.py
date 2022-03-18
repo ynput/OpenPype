@@ -6,7 +6,6 @@ import nuke
 
 import pyblish.api
 import avalon.api
-from avalon import pipeline
 
 import openpype
 from openpype.api import (
@@ -19,6 +18,7 @@ from openpype.pipeline import (
     LegacyCreator,
     register_loader_plugin_path,
     deregister_loader_plugin_path,
+    AVALON_CONTAINER_ID,
 )
 from openpype.tools.utils import host_tools
 
@@ -330,7 +330,7 @@ def containerise(node,
     data = OrderedDict(
         [
             ("schema", "openpype:container-2.0"),
-            ("id", pipeline.AVALON_CONTAINER_ID),
+            ("id", AVALON_CONTAINER_ID),
             ("name", name),
             ("namespace", namespace),
             ("loader", str(loader)),

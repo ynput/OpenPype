@@ -6,7 +6,6 @@ import pyblish.api
 
 from avalon import io
 import avalon.api
-from avalon.pipeline import AVALON_CONTAINER_ID
 
 from openpype import lib
 from openpype.lib import register_event_callback
@@ -14,6 +13,7 @@ from openpype.pipeline import (
     LegacyCreator,
     register_loader_plugin_path,
     deregister_loader_plugin_path,
+    AVALON_CONTAINER_ID,
 )
 import openpype.hosts.harmony
 import openpype.hosts.harmony.api as harmony

@@ -8,13 +8,13 @@ import contextlib
 
 import pyblish.api
 import avalon.api
-from avalon.pipeline import AVALON_CONTAINER_ID
 
 from openpype.api import Logger
 from openpype.pipeline import (
     LegacyCreator,
     register_loader_plugin_path,
     deregister_loader_plugin_path,
+    AVALON_CONTAINER_ID,
 )
 import openpype.hosts.fusion
 
