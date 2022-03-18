@@ -2,20 +2,21 @@
 import os
 import shutil
 
+from openpype.pipeline import HOST_WORKFILE_EXTENSIONS
+
 from .lib import (
     ProcessContext,
     get_local_harmony_path,
     zip_and_move,
     launch_zip_file
 )
-from avalon import api
 
 # used to lock saving until previous save is done.
 save_disabled = False
 
 
 def file_extensions():
-    return api.HOST_WORKFILE_EXTENSIONS["harmony"]
+    return HOST_WORKFILE_EXTENSIONS["harmony"]
 
 
 def has_unsaved_changes():
