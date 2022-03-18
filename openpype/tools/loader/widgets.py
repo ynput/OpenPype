@@ -10,7 +10,7 @@ from Qt import QtWidgets, QtCore, QtGui
 from avalon import api
 
 from openpype.pipeline import HeroVersionType
-from openpype.pipeline.thumbnails import get_thumbnail_binary
+from openpype.pipeline.thumbnail import get_thumbnail_binary
 from openpype.pipeline.load import (
     discover_loader_plugins,
     SubsetLoaderPlugin,
