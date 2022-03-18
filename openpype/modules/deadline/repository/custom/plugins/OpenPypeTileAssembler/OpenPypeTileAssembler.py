@@ -5,8 +5,9 @@ Todo:
     Currently we support only EXRs with their data window set.
 """
 import os
+import re
 import subprocess
-from xml.dom import minidom
+import xml.etree.ElementTree
 
 from System.IO import Path
 
@@ -15,15 +16,218 @@ from Deadline.Scripting import (
     FileUtils, RepositoryUtils, SystemUtils)
 
 
-INT_KEYS = {
-    "x", "y", "height", "width", "full_x", "full_y",
-    "full_width", "full_height", "full_depth", "full_z",
-    "tile_width", "tile_height", "tile_depth", "deep", "depth",
-    "nchannels", "z_channel", "alpha_channel", "subimages"
+STRING_TAGS = {
+    "format"
 }
-LIST_KEYS = {
-    "channelnames"
+INT_TAGS = {
+    "x", "y", "z",
+    "width", "height", "depth",
+    "full_x", "full_y", "full_z",
+    "full_width", "full_height", "full_depth",
+    "tile_width", "tile_height", "tile_depth",
+    "nchannels",
+    "alpha_channel",
+    "z_channel",
+    "deep",
+    "subimages",
 }
+
+
+XML_CHAR_REF_REGEX_HEX = re.compile(r"&#x?[0-9a-fA-F]+;")
+
+# Regex to parse array attributes
+ARRAY_TYPE_REGEX = re.compile(r"^(int|float|string)\[\d+\]$")
+
+
+def convert_value_by_type_name(value_type, value):
+    """Convert value to proper type based on type name.
+
+    In some cases value types have custom python class.
+    """
+
+    # Simple types
+    if value_type == "string":
+        return value
+
+    if value_type == "int":
+        return int(value)
+
+    if value_type == "float":
+        return float(value)
+
+    # Vectors will probably have more types
+    if value_type == "vec2f":
+        return [float(item) for item in value.split(",")]
+
+    # Matrix should be always have square size of element 3x3, 4x4
+    # - are returned as list of lists
+    if value_type == "matrix":
+        output = []
+        current_index = -1
+        parts = value.split(",")
+        parts_len = len(parts)
+        if parts_len == 1:
+            divisor = 1
+        elif parts_len == 4:
+            divisor = 2
+        elif parts_len == 9:
+            divisor == 3
+        elif parts_len == 16:
+            divisor = 4
+        else:
+            print("Unknown matrix resolution {}. Value: \"{}\"".format(
+                parts_len, value
+            ))
+            for part in parts:
+                output.append(float(part))
+            return output
+
+        for idx, item in enumerate(parts):
+            list_index = idx % divisor
+            if list_index > current_index:
+                current_index = list_index
+                output.append([])
+            output[list_index].append(float(item))
+        return output
+
+    if value_type == "rational2i":
+        parts = value.split("/")
+        top = float(parts[0])
+        bottom = 1.0
+        if len(parts) != 1:
+            bottom = float(parts[1])
+        return float(top) / float(bottom)
+
+    if value_type == "vector":
+        parts = [part.strip() for part in value.split(",")]
+        output = []
+        for part in parts:
+            if part == "-nan":
+                output.append(None)
+                continue
+            try:
+                part = float(part)
+            except ValueError:
+                pass
+            output.append(part)
+        return output
+
+    if value_type == "timecode":
+        return value
+
+    # Array of other types is converted to list
+    re_result = ARRAY_TYPE_REGEX.findall(value_type)
+    if re_result:
+        array_type = re_result[0]
+        output = []
+        for item in value.split(","):
+            output.append(
+                convert_value_by_type_name(array_type, item)
+            )
+        return output
+
+    print((
+        "MISSING IMPLEMENTATION:"
+        " Unknown attrib type \"{}\". Value: {}"
+    ).format(value_type, value))
+    return value
+
+
+def parse_oiio_xml_output(xml_string):
+    """Parse xml output from OIIO info command."""
+    output = {}
+    if not xml_string:
+        return output
+
+    # Fix values with ampresand (lazy fix)
+    # - oiiotool exports invalid xml which ElementTree can't handle
+    #   e.g. "&#01;"
+    # WARNING: this will affect even valid character entities. If you need
+    #   those values correctly, this must take care of valid character ranges.
+    #   See https://github.com/pypeclub/OpenPype/pull/2729
+    matches = XML_CHAR_REF_REGEX_HEX.findall(xml_string)
+    for match in matches:
+        new_value = match.replace("&", "&amp;")
+        xml_string = xml_string.replace(match, new_value)
+
+    tree = xml.etree.ElementTree.fromstring(xml_string)
+    attribs = {}
+    output["attribs"] = attribs
+    for child in tree:
+        tag_name = child.tag
+        if tag_name == "attrib":
+            attrib_def = child.attrib
+            value = convert_value_by_type_name(
+                attrib_def["type"], child.text
+            )
+
+            attribs[attrib_def["name"]] = value
+            continue
+
+        # Channels are stored as tex on each child
+        if tag_name == "channelnames":
+            value = []
+            for channel in child:
+                value.append(channel.text)
+
+        # Convert known integer type tags to int
+        elif tag_name in INT_TAGS:
+            value = int(child.text)
+
+        # Keep value of known string tags
+        elif tag_name in STRING_TAGS:
+            value = child.text
+
+        # Keep value as text for unknown tags
+        # - feel free to add more tags
+        else:
+            value = child.text
+            print((
+                "MISSING IMPLEMENTATION:"
+                " Unknown tag \"{}\". Value \"{}\""
+            ).format(tag_name, value))
+
+        output[child.tag] = value
+
+    return output
+
+
+def info_about_input(oiiotool_path, filepath):
+    args = [
+        oiiotool_path,
+        "--info",
+        "-v",
+        "-i:infoformat=xml",
+        filepath
+    ]
+    popen = subprocess.Popen(args, stdout=subprocess.PIPE)
+    _stdout, _stderr = popen.communicate()
+    output = ""
+    if _stdout:
+        output += _stdout.decode("utf-8")
+
+    if _stderr:
+        output += _stderr.decode("utf-8")
+
+    output = output.replace("\r\n", "\n")
+    xml_started = False
+    lines = []
+    for line in output.split("\n"):
+        if not xml_started:
+            if not line.startswith("<"):
+                continue
+            xml_started = True
+        if xml_started:
+            lines.append(line)
+
+    if not xml_started:
+        raise ValueError(
+            "Failed to read input file \"{}\".\nOutput:\n{}".format(
+                filepath, output
+            )
+        )
+    xml_text = "\n".join(lines)
+    return parse_oiio_xml_output(xml_text)
 
 
 def GetDeadlinePlugin():  # noqa: N802
@@ -218,8 +422,9 @@ class OpenPypeTileAssembler(DeadlinePlugin):
 
         # Create new image with output resolution, and with same type and
         # channels as input
+        oiiotool_path = self.render_executable()
         first_tile_path = tile_info[0]["filepath"]
-        first_tile_info = self.info_about_input(first_tile_path)
+        first_tile_info = info_about_input(oiiotool_path, first_tile_path)
         create_arg_template = "--create{} {}x{} {}"
 
         image_type = ""
@@ -236,7 +441,7 @@ class OpenPypeTileAssembler(DeadlinePlugin):
         for tile in tile_info:
             path = tile["filepath"]
             pos_x = tile["pos_x"]
-            tile_height = self.info_about_input(path)["height"]
+            tile_height = info_about_input(oiiotool_path, path)["height"]
             if self.renderer == "vray":
                 pos_y = tile["pos_y"]
             else:
@@ -326,47 +531,3 @@ class OpenPypeTileAssembler(DeadlinePlugin):
         ffmpeg_args.append("\"{}\"".format(output_path))
 
         return ffmpeg_args
-
-    def info_about_input(self, input_path):
-        args = [self.render_executable(), "--info:format=xml", input_path]
-        popen = subprocess.Popen(
-            " ".join(args),
-            shell=True,
-            stdout=subprocess.PIPE
-        )
-        popen_output = popen.communicate()[0].replace(b"\r\n", b"")
-
-        xmldoc = minidom.parseString(popen_output)
-        image_spec = None
-        for main_child in xmldoc.childNodes:
-            if main_child.nodeName.lower() == "imagespec":
-                image_spec = main_child
-                break
-
-        info = {}
-        if not image_spec:
-            return info
-
-        def child_check(node):
-            if len(node.childNodes) != 1:
-                self.FailRender((
-                    "Implementation BUG. Node {} has more children than 1"
-                ).format(node.nodeName))
-
-        for child in image_spec.childNodes:
-            if child.nodeName in LIST_KEYS:
-                values = []
-                for node in child.childNodes:
-                    child_check(node)
-                    values.append(node.childNodes[0].nodeValue)
-
-                info[child.nodeName] = values
-
-            elif child.nodeName in INT_KEYS:
-                child_check(child)
-                info[child.nodeName] = int(child.childNodes[0].nodeValue)
-
-            else:
-                child_check(child)
-                info[child.nodeName] = child.childNodes[0].nodeValue
-        return info

@@ -1,7 +1,10 @@
 import os
 import json
 
-from avalon import api
+from openpype.pipeline import (
+    load,
+    get_representation_path,
+)
 import openpype.hosts.harmony.api as harmony
 import openpype.lib
 
@@ -226,7 +229,7 @@ replace_files
 """
 
 
-class BackgroundLoader(api.Loader):
+class BackgroundLoader(load.LoaderPlugin):
     """Load images
     Stores the imported asset in a container named after the asset.
     """
@@ -278,7 +281,7 @@ class BackgroundLoader(api.Loader):
 
     def update(self, container, representation):
 
-        path = api.get_representation_path(representation)
+        path = get_representation_path(representation)
 
         with open(path) as json_file:
             data = json.load(json_file)
@@ -297,7 +300,7 @@ class BackgroundLoader(api.Loader):
 
         bg_folder = os.path.dirname(path)
 
-        path = api.get_representation_path(representation)
+        path = get_representation_path(representation)
 
         print(container)
 

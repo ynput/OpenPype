@@ -514,6 +514,26 @@
                             "label": "Validate Rig Controllers"
                         }
                     ]
+                },
+                {
+                    "type": "dict",
+                    "collapsible": true,
+                    "checkbox_key": "enabled",
+                    "key": "ValidateRigOutSetNodeIds",
+                    "label": "Validate Rig Out Set Node Ids",
+                    "is_group": true,
+                    "children": [
+                        {
+                            "type": "boolean",
+                            "key": "enabled",
+                            "label": "Enabled"
+                        },
+                        {
+                            "type": "boolean",
+                            "key": "allow_history_only",
+                            "label": "Allow history only"
+                        }
+                    ]
                 }
             ]
         },
@@ -546,6 +566,30 @@
         {
             "type": "schema",
             "name": "schema_maya_capture"
+        },
+        {
+            "type": "dict",
+            "collapsible": true,
+            "key": "ExtractMayaSceneRaw",
+            "label": "Maya Scene (Raw)",
+            "checkbox_key": "enabled",
+            "children": [
+                {
+                    "type": "boolean",
+                    "key": "enabled",
+                    "label": "Enabled"
+                },
+                {
+                    "type": "label",
+                    "label": "Add loaded instances to those published families:"
+                },
+                {
+                    "key": "add_for_families",
+                    "label": "Families",
+                    "type": "list",
+                    "object_type": "text"
+                }
+            ]
         },
         {
             "type": "dict",

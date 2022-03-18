@@ -172,7 +172,7 @@ class LoadClip(opfapi.ClipLoader):
     #     version_name = version.get("name", None)
     #     colorspace = version_data.get("colorspace", None)
     #     object_name = "{}_{}".format(name, namespace)
-    #     file = api.get_representation_path(representation).replace("\\", "/")
+    #     file = get_representation_path(representation).replace("\\", "/")
     #     clip = track_item.source()
 
     #     # reconnect media to new path

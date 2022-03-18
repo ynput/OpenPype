@@ -1,4 +1,4 @@
-from avalon.vendor import qargparse
+import qargparse
 from openpype.hosts.tvpaint.api import lib, plugin
 
 

@@ -12,7 +12,13 @@ from unreal import AssetToolsHelpers
 from unreal import FBXImportType
 from unreal import MathLibrary as umath
 
-from avalon import api, io, pipeline
+from avalon.pipeline import AVALON_CONTAINER_ID
+from openpype.pipeline import (
+    discover_loader_plugins,
+    loaders_from_representation,
+    load_container,
+    get_representation_path,
+)
 from openpype.hosts.unreal.api import plugin
 from openpype.hosts.unreal.api import pipeline as unreal_pipeline
 
@@ -308,7 +314,7 @@ class LayoutLoader(plugin.Loader):
         with open(lib_path, "r") as fp:
             data = json.load(fp)
 
-        all_loaders = api.discover(api.Loader)
+        all_loaders = discover_loader_plugins()
 
         if not loaded:
             loaded = []
@@ -339,7 +345,7 @@ class LayoutLoader(plugin.Loader):
                 loaded.append(reference)
 
                 family = element.get('family')
-                loaders = api.loaders_from_representation(
+                loaders = loaders_from_representation(
                     all_loaders, reference)
 
                 loader = None
@@ -356,7 +362,7 @@ class LayoutLoader(plugin.Loader):
                     "asset_dir": asset_dir
                 }
 
-                assets = api.load(
+                assets = load_container(
                     loader,
                     reference,
                     namespace=instance_name,
@@ -641,7 +647,7 @@ class LayoutLoader(plugin.Loader):
 
         data = {
             "schema": "openpype:container-2.0",
-            "id": pipeline.AVALON_CONTAINER_ID,
+            "id": AVALON_CONTAINER_ID,
             "asset": asset,
             "namespace": asset_dir,
             "container_name": container_name,
@@ -667,9 +673,9 @@ class LayoutLoader(plugin.Loader):
     def update(self, container, representation):
         ar = unreal.AssetRegistryHelpers.get_asset_registry()
 
-        source_path = api.get_representation_path(representation)
+        source_path = get_representation_path(representation)
         destination_path = container["namespace"]
-        lib_path = Path(api.get_representation_path(representation))
+        lib_path = Path(get_representation_path(representation))
 
         self._remove_actors(destination_path)
 

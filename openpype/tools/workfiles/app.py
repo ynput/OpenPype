@@ -2,17 +2,15 @@ import sys
 import os
 import re
 import copy
-import getpass
 import shutil
 import logging
 import datetime
 
 import Qt
 from Qt import QtWidgets, QtCore
-from avalon import io, api, pipeline
+from avalon import io, api
 
 from openpype import style
-from openpype.pipeline.lib import BeforeWorkfileSave
 from openpype.tools.utils.lib import (
     qt_app_context
 )
@@ -21,13 +19,19 @@ from openpype.tools.utils.assets_widget import SingleSelectAssetsWidget
 from openpype.tools.utils.tasks_widget import TasksWidget
 from openpype.tools.utils.delegates import PrettyTimeDelegate
 from openpype.lib import (
+    emit_event,
     Anatomy,
     get_workfile_doc,
     create_workfile_doc,
     save_workfile_data_to_doc,
     get_workfile_template_key,
     create_workdir_extra_folders,
-    get_system_general_anatomy_data
+    get_workdir_data,
+    get_last_workfile_with_version
+)
+from openpype.lib.avalon_context import (
+    update_current_task,
+    compute_session_changes
 )
 from .model import FilesModel
 from .view import FilesView
@@ -44,6 +48,7 @@ def build_workfile_data(session):
     # Set work file data for template formatting
     asset_name = session["AVALON_ASSET"]
     task_name = session["AVALON_TASK"]
+    host_name = session["AVALON_APP"]
     project_doc = io.find_one(
         {"type": "project"},
         {
@@ -59,42 +64,17 @@ def build_workfile_data(session):
             "name": asset_name
         },
         {
+            "name": True,
             "data.tasks": True,
             "data.parents": True
         }
     )
-
-    task_type = asset_doc["data"]["tasks"].get(task_name, {}).get("type")
-
-    project_task_types = project_doc["config"]["tasks"]
-    task_short = project_task_types.get(task_type, {}).get("short_name")
-
-    asset_parents = asset_doc["data"]["parents"]
-    parent_name = project_doc["name"]
-    if asset_parents:
-        parent_name = asset_parents[-1]
-
-    data = {
-        "project": {
-            "name": project_doc["name"],
-            "code": project_doc["data"].get("code")
-        },
-        "asset": asset_name,
-        "task": {
-            "name": task_name,
-            "type": task_type,
-            "short": task_short,
-        },
-        "parent": parent_name,
+    data = get_workdir_data(project_doc, asset_doc, task_name, host_name)
+    data.update({
         "version": 1,
-        "user": getpass.getuser(),
         "comment": "",
         "ext": None
-    }
-
-    # add system general settings anatomy data
-    system_general_data = get_system_general_anatomy_data()
-    data.update(system_general_data)
+    })
 
     return data
 
@@ -461,7 +441,7 @@ class NameWindow(QtWidgets.QDialog):
 
             data["ext"] = data["ext"][1:]
 
-            version = api.last_workfile_with_version(
+            version = get_last_workfile_with_version(
                 self.root, template, data, extensions
             )[1]
 
@@ -489,7 +469,7 @@ class NameWindow(QtWidgets.QDialog):
                 # Log warning
                 if idx == 0:
                     log.warning((
-                        "BUG: Function `last_workfile_with_version` "
+                        "BUG: Function `get_last_workfile_with_version` "
                         "didn't return last version."
                     ))
             # Raise exception if even 100 version fallback didn't help
@@ -667,7 +647,7 @@ class FilesWidget(QtWidgets.QWidget):
             session["AVALON_APP"],
             project_name=session["AVALON_PROJECT"]
         )
-        changes = pipeline.compute_session_changes(
+        changes = compute_session_changes(
             session,
             asset=self._get_asset_doc(),
             task=self._task_name,
@@ -681,7 +661,7 @@ class FilesWidget(QtWidgets.QWidget):
         """Enter the asset and task session currently selected"""
 
         session = api.Session.copy()
-        changes = pipeline.compute_session_changes(
+        changes = compute_session_changes(
             session,
             asset=self._get_asset_doc(),
             task=self._task_name,
@@ -692,7 +672,7 @@ class FilesWidget(QtWidgets.QWidget):
             # to avoid any unwanted Task Changed callbacks to be triggered.
             return
 
-        api.update_current_task(
+        update_current_task(
             asset=self._get_asset_doc(),
             task=self._task_name,
             template_key=self.template_key
@@ -819,7 +799,11 @@ class FilesWidget(QtWidgets.QWidget):
             return
 
         # Trigger before save event
-        BeforeWorkfileSave.emit(work_filename, self._workdir_path)
+        emit_event(
+            "workfile.save.before",
+            {"filename": work_filename, "workdir_path": self._workdir_path},
+            source="workfiles.tool"
+        )
 
         # Make sure workfiles root is updated
         # - this triggers 'workio.work_root(...)' which may change value of
@@ -849,7 +833,11 @@ class FilesWidget(QtWidgets.QWidget):
             api.Session["AVALON_PROJECT"]
         )
         # Trigger after save events
-        pipeline.emit("after.workfile.save", [filepath])
+        emit_event(
+            "workfile.save.after",
+            {"filename": work_filename, "workdir_path": self._workdir_path},
+            source="workfiles.tool"
+        )
 
         self.workfile_created.emit(filepath)
         # Refresh files model

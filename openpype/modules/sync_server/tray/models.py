@@ -4,9 +4,9 @@ from bson.objectid import ObjectId
 
 from Qt import QtCore
 from Qt.QtCore import Qt
+import qtawesome
 
 from openpype.tools.utils.delegates import pretty_timestamp
-from avalon.vendor import qtawesome
 
 from openpype.lib import PypeLogger
 from openpype.api import get_local_site_id

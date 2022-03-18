@@ -6,6 +6,7 @@ import pyblish.api
 from avalon import api
 
 from openpype.lib import env_value_to_bool
+from openpype.lib.delivery import collect_frames
 from openpype_modules.deadline import abstract_submit_deadline
 from openpype_modules.deadline.abstract_submit_deadline import DeadlineJobInfo
 
@@ -102,24 +103,18 @@ class AfterEffectsSubmitDeadline(
 
     def get_plugin_info(self):
         deadline_plugin_info = DeadlinePluginInfo()
-        context = self._instance.context
-        script_path = context.data["currentFile"]
 
         render_path = self._instance.data["expectedFiles"][0]
 
-        if len(self._instance.data["expectedFiles"]) > 1:
+        file_name, frame = list(collect_frames([render_path]).items())[0]
+        if frame:
             # replace frame ('000001') with Deadline's required '[#######]'
             # expects filename in format project_asset_subset_version.FRAME.ext
             render_dir = os.path.dirname(render_path)
             file_name = os.path.basename(render_path)
-            arr = file_name.split('.')
-            assert len(arr) == 3, \
-                "Unable to parse frames from {}".format(file_name)
-            hashed = '[{}]'.format(len(arr[1]) * "#")
-
-            render_path = os.path.join(render_dir,
-                                       '{}.{}.{}'.format(arr[0], hashed,
-                                                         arr[2]))
+            hashed = '[{}]'.format(len(frame) * "#")
+            file_name = file_name.replace(frame, hashed)
+            render_path = os.path.join(render_dir, file_name)
 
         deadline_plugin_info.Comp = self._instance.data["comp_name"]
         deadline_plugin_info.Version = self._instance.data["app_version"]

@@ -9,7 +9,12 @@ from avalon import api, io
 from openpype import style
 from openpype.api import get_current_project_settings
 from openpype.tools.utils.lib import qt_app_context
-from openpype.pipeline.create import SUBSET_NAME_ALLOWED_SYMBOLS
+from openpype.pipeline.create import (
+    SUBSET_NAME_ALLOWED_SYMBOLS,
+    legacy_create,
+    CreatorError,
+    LegacyCreator,
+)
 
 from .model import CreatorsModel
 from .widgets import (
@@ -422,7 +427,7 @@ class CreatorWindow(QtWidgets.QDialog):
 
         error_info = None
         try:
-            api.create(
+            legacy_create(
                 creator_plugin,
                 subset_name,
                 asset_name,
@@ -430,7 +435,7 @@ class CreatorWindow(QtWidgets.QDialog):
                 data={"variant": variant}
             )
 
-        except api.CreatorError as exc:
+        except CreatorError as exc:
             self.echo("Creator error: {}".format(str(exc)))
             error_info = (str(exc), None)
 
@@ -486,7 +491,7 @@ def show(debug=False, parent=None):
     if debug:
         from avalon import mock
         for creator in mock.creators:
-            api.register_plugin(api.Creator, creator)
+            api.register_plugin(LegacyCreator, creator)
 
         import traceback
         sys.excepthook = lambda typ, val, tb: traceback.print_last()

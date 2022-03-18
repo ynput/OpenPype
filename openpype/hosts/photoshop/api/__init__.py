@@ -16,7 +16,6 @@ from .pipeline import (
 )
 from .plugin import (
     PhotoshopLoader,
-    Creator,
     get_unique_layer_name
 )
 from .workio import (
@@ -42,11 +41,11 @@ __all__ = [
     "list_instances",
     "remove_instance",
     "install",
+    "uninstall",
     "containerise",
 
     # Plugin
     "PhotoshopLoader",
-    "Creator",
     "get_unique_layer_name",
 
     # workfiles

@@ -14,7 +14,7 @@ from .models import (
     LookModel
 )
 from . import commands
-from . import views
+from .views import View
 
 from maya import cmds
 
@@ -24,25 +24,28 @@ class AssetOutliner(QtWidgets.QWidget):
     selection_changed = QtCore.Signal()
 
     def __init__(self, parent=None):
-        QtWidgets.QWidget.__init__(self, parent)
+        super(AssetOutliner, self).__init__(parent)
 
-        layout = QtWidgets.QVBoxLayout()
-
-        title = QtWidgets.QLabel("Assets")
+        title = QtWidgets.QLabel("Assets", self)
         title.setAlignment(QtCore.Qt.AlignCenter)
         title.setStyleSheet("font-weight: bold; font-size: 12px")
 
         model = AssetModel()
-        view = views.View()
+        view = View(self)
         view.setModel(model)
         view.customContextMenuRequested.connect(self.right_mouse_menu)
         view.setSortingEnabled(False)
         view.setHeaderHidden(True)
         view.setIndentation(10)
 
-        from_all_asset_btn = QtWidgets.QPushButton("Get All Assets")
-        from_selection_btn = QtWidgets.QPushButton("Get Assets From Selection")
+        from_all_asset_btn = QtWidgets.QPushButton(
+            "Get All Assets", self
+        )
+        from_selection_btn = QtWidgets.QPushButton(
+            "Get Assets From Selection", self
+        )
 
+        layout = QtWidgets.QVBoxLayout(self)
         layout.addWidget(title)
         layout.addWidget(from_all_asset_btn)
         layout.addWidget(from_selection_btn)
@@ -57,8 +60,6 @@ class AssetOutliner(QtWidgets.QWidget):
 
         self.view = view
         self.model = model
-
-        self.setLayout(layout)
 
         self.log = logging.getLogger(__name__)
 
@@ -188,15 +189,10 @@ class LookOutliner(QtWidgets.QWidget):
     menu_apply_action = QtCore.Signal()
 
     def __init__(self, parent=None):
-        QtWidgets.QWidget.__init__(self, parent)
-
-        # look manager layout
-        layout = QtWidgets.QVBoxLayout(self)
-        layout.setContentsMargins(0, 0, 0, 0)
-        layout.setSpacing(10)
+        super(LookOutliner, self).__init__(parent)
 
         # Looks from database
-        title = QtWidgets.QLabel("Looks")
+        title = QtWidgets.QLabel("Looks", self)
         title.setAlignment(QtCore.Qt.AlignCenter)
         title.setStyleSheet("font-weight: bold; font-size: 12px")
         title.setAlignment(QtCore.Qt.AlignCenter)
@@ -207,13 +203,17 @@ class LookOutliner(QtWidgets.QWidget):
         proxy = QtCore.QSortFilterProxyModel()
         proxy.setSourceModel(model)
 
-        view = views.View()
+        view = View(self)
         view.setModel(proxy)
         view.setMinimumHeight(180)
         view.setToolTip("Use right mouse button menu for direct actions")
         view.customContextMenuRequested.connect(self.right_mouse_menu)
         view.sortByColumn(0, QtCore.Qt.AscendingOrder)
 
+        # look manager layout
+        layout = QtWidgets.QVBoxLayout(self)
+        layout.setContentsMargins(0, 0, 0, 0)
+        layout.setSpacing(10)
         layout.addWidget(title)
         layout.addWidget(view)
 

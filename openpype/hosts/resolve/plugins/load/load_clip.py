@@ -1,10 +1,13 @@
-from avalon import io, api
-from openpype.hosts import resolve
 from copy import deepcopy
 from importlib import reload
+
+from avalon import io
+from openpype.hosts import resolve
+from openpype.pipeline import get_representation_path
 from openpype.hosts.resolve.api import lib, plugin
 reload(plugin)
 reload(lib)
+
 
 class LoadClip(resolve.TimelineItemLoader):
     """Load a subset to timeline as clip
@@ -99,7 +102,7 @@ class LoadClip(resolve.TimelineItemLoader):
         version_name = version.get("name", None)
         colorspace = version_data.get("colorspace", None)
         object_name = "{}_{}".format(name, namespace)
-        self.fname = api.get_representation_path(representation)
+        self.fname = get_representation_path(representation)
         context["version"] = {"data": version_data}
 
         loader = resolve.ClipLoader(self, context)

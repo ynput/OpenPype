@@ -836,6 +836,19 @@ QScrollBar::add-page:vertical, QScrollBar::sub-page:vertical {
 }
 
 /* New Create/Publish UI */
+#CreateDialogHelpButton {
+    background: rgba(255, 255, 255, 31);
+    border-top-right-radius: 0;
+    border-bottom-right-radius: 0;
+    font-size: 10pt;
+    font-weight: bold;
+    padding: 3px 3px 3px 3px;
+}
+
+#CreateDialogHelpButton:hover {
+    background: rgba(255, 255, 255, 63);
+}
+
 #PublishLogConsole {
     font-family: "Noto Sans Mono";
 }
@@ -1265,6 +1278,12 @@ QScrollBar::add-page:vertical, QScrollBar::sub-page:vertical {
 #ChooseProjectLabel {
     font-size: 15pt;
     font-weight: 750;
+}
+#ChooseProjectFrame {
+    border-radius: 10px;
+}
+#ChooseProjectView {
+    background: transparent;
 }
 
 /* Globally used names */

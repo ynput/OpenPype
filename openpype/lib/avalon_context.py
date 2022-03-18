@@ -15,6 +15,8 @@ from openpype.settings import (
 )
 from .anatomy import Anatomy
 from .profiles_filtering import filter_profiles
+from .events import emit_event
+from .path_templates import StringTemplate
 
 # avalon module is not imported at the top
 # - may not be in path at the time of pype.lib initialization
@@ -644,6 +646,165 @@ def get_workdir(
     )
 
 
+def template_data_from_session(session=None):
+    """ Return dictionary with template from session keys.
+
+    Args:
+        session (dict, Optional): The Session to use. If not provided use the
+            currently active global Session.
+    Returns:
+        dict: All available data from session.
+    """
+    from avalon import io
+    import avalon.api
+
+    if session is None:
+        session = avalon.api.Session
+
+    project_name = session["AVALON_PROJECT"]
+    project_doc = io._database[project_name].find_one({"type": "project"})
+    asset_doc = io._database[project_name].find_one({
+        "type": "asset",
+        "name": session["AVALON_ASSET"]
+    })
+    task_name = session["AVALON_TASK"]
+    host_name = session["AVALON_APP"]
+    return get_workdir_data(project_doc, asset_doc, task_name, host_name)
+
+
+def compute_session_changes(
+    session, task=None, asset=None, app=None, template_key=None
+):
+    """Compute the changes for a Session object on asset, task or app switch
+
+    This does *NOT* update the Session object, but returns the changes
+    required for a valid update of the Session.
+
+    Args:
+        session (dict): The initial session to compute changes to.
+            This is required for computing the full Work Directory, as that
+            also depends on the values that haven't changed.
+        task (str, Optional): Name of task to switch to.
+        asset (str or dict, Optional): Name of asset to switch to.
+            You can also directly provide the Asset dictionary as returned
+            from the database to avoid an additional query. (optimization)
+        app (str, Optional): Name of app to switch to.
+
+    Returns:
+        dict: The required changes in the Session dictionary.
+
+    """
+    changes = dict()
+
+    # If no changes, return directly
+    if not any([task, asset, app]):
+        return changes
+
+    # Get asset document and asset
+    asset_document = None
+    asset_tasks = None
+    if isinstance(asset, dict):
+        # Assume asset database document
+        asset_document = asset
+        asset_tasks = asset_document.get("data", {}).get("tasks")
+        asset = asset["name"]
+
+    if not asset_document or not asset_tasks:
+        from avalon import io
+
+        # Assume asset name
+        asset_document = io.find_one(
+            {
+                "name": asset,
+                "type": "asset"
+            },
+            {"data.tasks": True}
+        )
+        assert asset_document, "Asset must exist"
+
+    # Detect any changes compared session
+    mapping = {
+        "AVALON_ASSET": asset,
+        "AVALON_TASK": task,
+        "AVALON_APP": app,
+    }
+    changes = {
+        key: value
+        for key, value in mapping.items()
+        if value and value != session.get(key)
+    }
+    if not changes:
+        return changes
+
+    # Compute work directory (with the temporary changed session so far)
+    _session = session.copy()
+    _session.update(changes)
+
+    changes["AVALON_WORKDIR"] = get_workdir_from_session(_session)
+
+    return changes
+
+
+def get_workdir_from_session(session=None, template_key=None):
+    import avalon.api
+
+    if session is None:
+        session = avalon.api.Session
+    project_name = session["AVALON_PROJECT"]
+    host_name = session["AVALON_APP"]
+    anatomy = Anatomy(project_name)
+    template_data = template_data_from_session(session)
+    anatomy_filled = anatomy.format(template_data)
+
+    if not template_key:
+        task_type = template_data["task"]["type"]
+        template_key = get_workfile_template_key(
+            task_type,
+            host_name,
+            project_name=project_name
+        )
+    return anatomy_filled[template_key]["folder"]
+
+
+def update_current_task(task=None, asset=None, app=None, template_key=None):
+    """Update active Session to a new task work area.
+
+    This updates the live Session to a different `asset`, `task` or `app`.
+
+    Args:
+        task (str): The task to set.
+        asset (str): The asset to set.
+        app (str): The app to set.
+
+    Returns:
+        dict: The changed key, values in the current Session.
+
+    """
+    import avalon.api
+
+    changes = compute_session_changes(
+        avalon.api.Session,
+        task=task,
+        asset=asset,
+        app=app,
+        template_key=template_key
+    )
+
+    # Update the Session and environments. Pop from environments all keys with
+    # value set to None.
+    for key, value in changes.items():
+        avalon.api.Session[key] = value
+        if value is None:
+            os.environ.pop(key, None)
+        else:
+            os.environ[key] = value
+
+    # Emit session change
+    emit_event("taskChanged", changes.copy())
+
+    return changes
+
+
 @with_avalon
 def get_workfile_doc(asset_id, task_name, filename, dbcon=None):
     """Return workfile document for entered context.
@@ -820,6 +981,8 @@ class BuildWorkfile:
             ...
         }]
         """
+        from openpype.pipeline import discover_loader_plugins
+
         # Get current asset name and entity
         current_asset_name = avalon.io.Session["AVALON_ASSET"]
         current_asset_entity = avalon.io.find_one({
@@ -836,7 +999,7 @@ class BuildWorkfile:
 
         # Prepare available loaders
         loaders_by_name = {}
-        for loader in avalon.api.discover(avalon.api.Loader):
+        for loader in discover_loader_plugins():
             loader_name = loader.__name__
             if loader_name in loaders_by_name:
                 raise KeyError(
@@ -1230,6 +1393,11 @@ class BuildWorkfile:
         Returns:
             (list) Objects of loaded containers.
         """
+        from openpype.pipeline import (
+            IncompatibleLoaderError,
+            load_container,
+        )
+
         loaded_containers = []
 
         # Get subset id order from build presets.
@@ -1291,7 +1459,7 @@ class BuildWorkfile:
                     if not loader:
                         continue
                     try:
-                        container = avalon.api.load(
+                        container = load_container(
                             loader,
                             repre["_id"],
                             name=subset_name
@@ -1300,7 +1468,7 @@ class BuildWorkfile:
                         is_loaded = True
 
                     except Exception as exc:
-                        if exc == avalon.pipeline.IncompatibleLoaderError:
+                        if exc == IncompatibleLoaderError:
                             self.log.info((
                                 "Loader `{}` is not compatible with"
                                 " representation `{}`"
@@ -1434,11 +1602,13 @@ def get_creator_by_name(creator_name, case_sensitive=False):
     Returns:
         Creator: Return first matching plugin or `None`.
     """
+    from openpype.pipeline import LegacyCreator
+
     # Lower input creator name if is not case sensitive
     if not case_sensitive:
         creator_name = creator_name.lower()
 
-    for creator_plugin in avalon.api.discover(avalon.api.Creator):
+    for creator_plugin in avalon.api.discover(LegacyCreator):
         _creator_name = creator_plugin.__name__
 
         # Lower creator plugin name if is not case sensitive
@@ -1566,8 +1736,6 @@ def get_custom_workfile_template_by_context(
             context. (Existence of formatted path is not validated.)
     """
 
-    from openpype.lib import filter_profiles
-
     if anatomy is None:
         anatomy = Anatomy(project_doc["name"])
 
@@ -1590,7 +1758,9 @@ def get_custom_workfile_template_by_context(
     # there are some anatomy template strings
     if matching_item:
         template = matching_item["path"][platform.system().lower()]
-        return template.format(**anatomy_context_data)
+        return StringTemplate.format_strict_template(
+            template, anatomy_context_data
+        )
 
     return None
 
@@ -1678,3 +1848,124 @@ def get_custom_workfile_template(template_profiles):
         io.Session["AVALON_TASK"],
         io
     )
+
+
+def get_last_workfile_with_version(
+    workdir, file_template, fill_data, extensions
+):
+    """Return last workfile version.
+
+    Args:
+        workdir(str): Path to dir where workfiles are stored.
+        file_template(str): Template of file name.
+        fill_data(dict): Data for filling template.
+        extensions(list, tuple): All allowed file extensions of workfile.
+
+    Returns:
+        tuple: Last workfile<str> with version<int> if there is any otherwise
+            returns (None, None).
+    """
+    if not os.path.exists(workdir):
+        return None, None
+
+    # Fast match on extension
+    filenames = [
+        filename
+        for filename in os.listdir(workdir)
+        if os.path.splitext(filename)[1] in extensions
+    ]
+
+    # Build template without optionals, version to digits only regex
+    # and comment to any definable value.
+    _ext = []
+    for ext in extensions:
+        if not ext.startswith("."):
+            ext = "." + ext
+        # Escape dot for regex
+        ext = "\\" + ext
+        _ext.append(ext)
+    ext_expression = "(?:" + "|".join(_ext) + ")"
+
+    # Replace `.{ext}` with `{ext}` so we are sure there is not dot at the end
+    file_template = re.sub(r"\.?{ext}", ext_expression, file_template)
+    # Replace optional keys with optional content regex
+    file_template = re.sub(r"<.*?>", r".*?", file_template)
+    # Replace `{version}` with group regex
+    file_template = re.sub(r"{version.*?}", r"([0-9]+)", file_template)
+    file_template = re.sub(r"{comment.*?}", r".+?", file_template)
+    file_template = StringTemplate.format_strict_template(
+        file_template, fill_data
+    )
+
+    # Match with ignore case on Windows due to the Windows
+    # OS not being case-sensitive. This avoids later running
+    # into the error that the file did exist if it existed
+    # with a different upper/lower-case.
+    kwargs = {}
+    if platform.system().lower() == "windows":
+        kwargs["flags"] = re.IGNORECASE
+
+    # Get highest version among existing matching files
+    version = None
+    output_filenames = []
+    for filename in sorted(filenames):
+        match = re.match(file_template, filename, **kwargs)
+        if not match:
+            continue
+
+        file_version = int(match.group(1))
+        if version is None or file_version > version:
+            output_filenames[:] = []
+            version = file_version
+
+        if file_version == version:
+            output_filenames.append(filename)
+
+    output_filename = None
+    if output_filenames:
+        if len(output_filenames) == 1:
+            output_filename = output_filenames[0]
+        else:
+            last_time = None
+            for _output_filename in output_filenames:
+                full_path = os.path.join(workdir, _output_filename)
+                mod_time = os.path.getmtime(full_path)
+                if last_time is None or last_time < mod_time:
+                    output_filename = _output_filename
+                    last_time = mod_time
+
+    return output_filename, version
+
+
+def get_last_workfile(
+    workdir, file_template, fill_data, extensions, full_path=False
+):
+    """Return last workfile filename.
+
+    Returns file with version 1 if there is not workfile yet.
+
+    Args:
+        workdir(str): Path to dir where workfiles are stored.
+        file_template(str): Template of file name.
+        fill_data(dict): Data for filling template.
+        extensions(list, tuple): All allowed file extensions of workfile.
+        full_path(bool): Full path to file is returned if set to True.
+
+    Returns:
+        str: Last or first workfile as filename of full path to filename.
+    """
+    filename, version = get_last_workfile_with_version(
+        workdir, file_template, fill_data, extensions
+    )
+    if filename is None:
+        data = copy.deepcopy(fill_data)
+        data["version"] = 1
+        data.pop("comment", None)
+        if not data.get("ext"):
+            data["ext"] = extensions[0]
+        filename = StringTemplate.format_strict_template(file_template, data)
+
+    if full_path:
+        return os.path.normpath(os.path.join(workdir, filename))
+
+    return filename

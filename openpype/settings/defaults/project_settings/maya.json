@@ -385,6 +385,10 @@
             "optional": true,
             "active": true
         },
+        "ValidateRigOutSetNodeIds": {
+            "enabled": true,
+            "allow_history_only": false
+        },
         "ValidateCameraAttributes": {
             "enabled": false,
             "optional": true,
@@ -501,6 +505,12 @@
                     "overscan": 1.0
                 }
             }
+        },
+        "ExtractMayaSceneRaw": {
+            "enabled": true,
+            "add_for_families": [
+                "layout"
+            ]
         },
         "ExtractCameraAlembic": {
             "enabled": true,

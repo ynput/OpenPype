@@ -5,11 +5,12 @@ import logging
 from Qt import QtWidgets, QtCore
 
 import avalon.api
-from avalon import io, pipeline
-from avalon.vendor import qtawesome as qta
+from avalon import io
+import qtawesome as qta
 
 from openpype import style
 from openpype.hosts.fusion import api
+from openpype.lib.avalon_context import get_workdir_from_session
 
 log = logging.getLogger("Fusion Switch Shot")
 
@@ -123,7 +124,7 @@ class App(QtWidgets.QWidget):
 
     def _on_open_from_dir(self):
 
-        start_dir = self._get_context_directory()
+        start_dir = get_workdir_from_session()
         comp_file, _ = QtWidgets.QFileDialog.getOpenFileName(
             self, "Choose comp", start_dir)
 
@@ -156,17 +157,6 @@ class App(QtWidgets.QWidget):
 
         import colorbleed.scripts.fusion_switch_shot as switch_shot
         switch_shot.switch(asset_name=asset, filepath=file_name, new=True)
-
-    def _get_context_directory(self):
-
-        project = io.find_one({"type": "project",
-                               "name": avalon.api.Session["AVALON_PROJECT"]},
-                              projection={"config": True})
-
-        template = project["config"]["template"]["work"]
-        dir = pipeline._format_work_template(template, avalon.api.Session)
-
-        return dir
 
     def collect_slap_comps(self, directory):
         items = glob.glob("{}/*.comp".format(directory))

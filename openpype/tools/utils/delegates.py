@@ -6,7 +6,7 @@ import numbers
 import Qt
 from Qt import QtWidgets, QtGui, QtCore
 
-from avalon.lib import HeroVersionType
+from openpype.pipeline import HeroVersionType
 from .models import TreeModel
 from . import lib
 
