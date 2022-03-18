@@ -1,11 +1,11 @@
-import getpass
 import os
 
 from avalon import api, io
 from openpype.lib import (
+    StringTemplate,
     get_workfile_template_key_from_context,
     get_workdir_data,
-    StringTemplate,
+    get_last_workfile_with_version,
 )
 from openpype.api import Anatomy
 from openpype.hosts.tvpaint.api import lib, pipeline, plugin
@@ -68,7 +68,6 @@ class LoadWorkfile(plugin.Loader):
 
         data = get_workdir_data(project_doc, asset_doc, task_name, host_name)
         data["root"] = anatomy.roots
-        data["user"] = getpass.getuser()
 
         file_template = anatomy.templates[template_key]["file"]
 
@@ -86,7 +85,7 @@ class LoadWorkfile(plugin.Loader):
         work_root = StringTemplate.format_strict_template(
             folder_template, data
         )
-        version = api.last_workfile_with_version(
+        version = get_last_workfile_with_version(
             work_root, file_template, data, host.file_extensions()
         )[1]
 
