@@ -16,18 +16,13 @@ class ImageCreator(Creator):
     description = "Image creator"
 
     def collect_instances(self):
-        import json
-        self.log.info("ImageCreator: api.list_instances():: {}".format(
-            json.dumps(api.list_instances(), indent=4)))
         for instance_data in api.list_instances():
             # legacy instances have family=='image'
             creator_id = (instance_data.get("creator_identifier") or
                           instance_data.get("family"))
 
-            self.log.info("ImageCreator: instance_data:: {}".format(json.dumps(instance_data, indent=4)))
             if creator_id == self.identifier:
                 instance_data = self._handle_legacy(instance_data)
-
                 layer = api.stub().get_layer(instance_data["members"][0])
                 instance_data["layer"] = layer
                 instance = CreatedInstance.from_existing(
@@ -106,9 +101,10 @@ class ImageCreator(Creator):
                 stub.rename_layer(group.id, stub.PUBLISH_ICON + group.name)
 
     def update_instances(self, update_list):
-        self.log.info("update_list:: {}".format(update_list))
+        self.log.debug("update_list:: {}".format(update_list))
         created_inst, changes = update_list[0]
-        created_inst.pop("layer")  # not storing PSItem layer to metadata
+        if created_inst.get("layer"):
+            created_inst.pop("layer")  # not storing PSItem layer to metadata
         api.stub().imprint(created_inst.get("instance_id"),
                            created_inst.data_to_store())
 
@@ -146,6 +142,9 @@ class ImageCreator(Creator):
 
         if not instance_data.get("task"):
             instance_data["task"] = avalon_api.Session.get("AVALON_TASK")
+
+        if not instance_data.get("variant"):
+            instance_data["variant"] = ''
 
         return instance_data
 
