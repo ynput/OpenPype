@@ -10,14 +10,20 @@ def collect_frames(files):
     """
         Returns dict of source path and its frame, if from sequence
 
-        Uses clique as most precise solution
+        Uses clique as most precise solution, used when anatomy template that
+        created files is not known.
+
+        Assumption is that frames are separated by '.', negative frames are not
+        allowed.
 
         Args:
-            files(list): list of source paths
+            files(list) or (set with single value): list of source paths
         Returns:
             (dict): {'/asset/subset_v001.0001.png': '0001', ....}
     """
-    collections, remainder = clique.assemble(files, minimum_items=1)
+    patterns = [clique.PATTERNS["frames"]]
+    collections, remainder = clique.assemble(files, minimum_items=1,
+                                             patterns=patterns)
 
     sources_and_frames = {}
     if collections:
