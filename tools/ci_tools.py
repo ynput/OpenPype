@@ -8,8 +8,12 @@ import os
 
 def get_release_type_github(Log, github_token):
     # print(Log)
-    minor_labels = ["type: feature", "type: deprecated"]
-    patch_labels = ["type: enhancement", "type: bug"]
+    minor_labels = ["Bump Minor"]
+    # patch_labels = [
+    #     "type: enhancement",
+    #     "type: bug",
+    #     "type: deprecated",
+    #     "type: Feature"]
 
     g = Github(github_token)
     repo = g.get_repo("pypeclub/OpenPype")
@@ -28,9 +32,12 @@ def get_release_type_github(Log, github_token):
 
     if any(label in labels for label in minor_labels):
         return "minor"
-
-    if any(label in labels for label in patch_labels):
+    else
         return "patch"
+
+    #TODO: if all is working fine, this part can be cleaned up eventually 
+    # if any(label in labels for label in patch_labels):
+    #     return "patch"
             
     return None
     
