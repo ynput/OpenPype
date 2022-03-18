@@ -1,7 +1,4 @@
-from pathlib import Path
 import clique
-
-import unreal
 
 import pyblish.api
 
