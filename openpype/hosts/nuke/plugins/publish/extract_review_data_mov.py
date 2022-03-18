@@ -53,27 +53,18 @@ class ExtractReviewDataMov(openpype.api.Extractor):
                 # test if family found in context
                 # using intersection to make sure all defined
                 # families are present in combinantion
-                test_families = not f_families or any(
-                    set(families).intersection(f_families))
+                if f_families and not any(
+                        set(families).intersection(f_families)):
+                    continue
 
                 # test task types from filter
-                test_task_types = not f_task_types or any(
-                    task_type in f_task_types)
+                if f_task_types and not any(
+                        task_type in f_task_types):
+                    continue
 
                 # test subsets from filter
-                test_subsets = not f_subsets or any(
-                    re.search(s, subset) for s in f_subsets)
-
-                # we need all filters to be positive for this
-                # preset to be activated
-                test_all = all([
-                    test_families,
-                    test_task_types,
-                    test_subsets
-                ])
-
-                # if it is not positive then skip this preset
-                if not test_all:
+                if f_subsets and not any(
+                        re.search(s, subset) for s in f_subsets):
                     continue
 
                 self.log.info(
