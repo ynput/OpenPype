@@ -1,0 +1,98 @@
+{
+    "type": "dict",
+    "key": "shotgrid",
+    "label": "Shotgrid",
+    "collapsible": true,
+    "is_file": true,
+    "children": [
+        {
+            "type": "number",
+            "key": "shotgrid_project_id",
+            "label": "Shotgrid project id"
+        },
+        {
+            "type": "shotgrid_url-enum",
+            "key": "shotgrid_server",
+            "label": "Shotgrid Server"
+        },
+        {
+            "type": "dict",
+            "key": "event",
+            "label": "Event Handler",
+            "collapsible": true,
+            "checkbox_key": "enabled",
+            "children": [
+                {
+                    "type": "boolean",
+                    "key": "enabled",
+                    "label": "Enabled"
+                }
+            ]
+        },
+        {
+            "type": "dict",
+            "key": "fields",
+            "label": "Fields Template",
+            "collapsible": true,
+            "children": [
+                {
+                    "type": "dict",
+                    "key": "asset",
+                    "label": "Asset",
+                    "collapsible": true,
+                    "children": [
+                        {
+                            "type": "text",
+                            "key": "type",
+                            "label": "Asset Type"
+                        }
+                    ]
+                },
+                {
+                    "type": "dict",
+                    "key": "sequence",
+                    "label": "Sequence",
+                    "collapsible": true,
+                    "children": [
+                        {
+                            "type": "text",
+                            "key": "episode_link",
+                            "label": "Episode link"
+                        }
+                    ]
+                },
+                {
+                    "type": "dict",
+                    "key": "shot",
+                    "label": "Shot",
+                    "collapsible": true,
+                    "children": [
+                        {
+                            "type": "text",
+                            "key": "episode_link",
+                            "label": "Episode link"
+                        },
+                        {
+                            "type": "text",
+                            "key": "sequence_link",
+                            "label": "Sequence link"
+                        }
+                    ]
+                },
+                {
+                    "type": "dict",
+                    "key": "task",
+                    "label": "Task",
+                    "collapsible": true,
+                    "children": [
+                        {
+                            "type": "text",
+                            "key": "step",
+                            "label": "Step link"
+                        }
+                    ]
+                }
+            ]
+        }
+    ]
+}

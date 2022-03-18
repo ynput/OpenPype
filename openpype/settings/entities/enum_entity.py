@@ -1,10 +1,7 @@
 import copy
 from .input_entities import InputEntity
 from .exceptions import EntitySchemaError
-from .lib import (
-    NOT_SET,
-    STRING_TYPE
-)
+from .lib import NOT_SET, STRING_TYPE
 
 
 class BaseEnumEntity(InputEntity):
@@ -26,15 +23,13 @@ class BaseEnumEntity(InputEntity):
         for item in self.enum_items:
             key = tuple(item.keys())[0]
             if key in enum_keys:
-                reason = "Key \"{}\" is more than once in enum items.".format(
-                    key
-                )
+                reason = 'Key "{}" is more than once in enum items.'.format(key)
                 raise EntitySchemaError(self, reason)
 
             enum_keys.add(key)
 
             if not isinstance(key, STRING_TYPE):
-                reason = "Key \"{}\" has invalid type {}, expected {}.".format(
+                reason = 'Key "{}" has invalid type {}, expected {}.'.format(
                     key, type(key), STRING_TYPE
                 )
                 raise EntitySchemaError(self, reason)
@@ -59,7 +54,7 @@ class BaseEnumEntity(InputEntity):
         for item in check_values:
             if item not in self.valid_keys:
                 raise ValueError(
-                    "{} Invalid value \"{}\". Expected one of: {}".format(
+                    '{} Invalid value "{}". Expected one of: {}'.format(
                         self.path, item, self.valid_keys
                     )
                 )
@@ -84,7 +79,7 @@ class EnumEntity(BaseEnumEntity):
         self.valid_keys = set(all_keys)
 
         if self.multiselection:
-            self.valid_value_types = (list, )
+            self.valid_value_types = (list,)
             value_on_not_set = []
             if enum_default:
                 if not isinstance(enum_default, list):
@@ -109,7 +104,7 @@ class EnumEntity(BaseEnumEntity):
                         self.value_on_not_set = key
                         break
 
-            self.valid_value_types = (STRING_TYPE, )
+            self.valid_value_types = (STRING_TYPE,)
 
         # GUI attribute
         self.placeholder = self.schema_data.get("placeholder")
@@ -152,6 +147,7 @@ class HostsEnumEntity(BaseEnumEntity):
     Host name is not the same as application name. Host name defines
     implementation instead of application name.
     """
+
     schema_types = ["hosts-enum"]
     all_host_names = [
         "aftereffects",
@@ -169,7 +165,7 @@ class HostsEnumEntity(BaseEnumEntity):
         "tvpaint",
         "unreal",
         "standalonepublisher",
-        "webpublisher"
+        "webpublisher",
     ]
 
     def _item_initialization(self):
@@ -210,7 +206,7 @@ class HostsEnumEntity(BaseEnumEntity):
         self.valid_keys = valid_keys
 
         if self.multiselection:
-            self.valid_value_types = (list, )
+            self.valid_value_types = (list,)
             self.value_on_not_set = []
         else:
             for key in valid_keys:
@@ -218,7 +214,7 @@ class HostsEnumEntity(BaseEnumEntity):
                     self.value_on_not_set = key
                     break
 
-            self.valid_value_types = (STRING_TYPE, )
+            self.valid_value_types = (STRING_TYPE,)
 
         # GUI attribute
         self.placeholder = self.schema_data.get("placeholder")
@@ -226,14 +222,10 @@ class HostsEnumEntity(BaseEnumEntity):
     def schema_validations(self):
         if self.hosts_filter:
             enum_len = len(self.enum_items)
-            if (
-                enum_len == 0
-                or (enum_len == 1 and self.use_empty_value)
-            ):
-                joined_filters = ", ".join([
-                    '"{}"'.format(item)
-                    for item in self.hosts_filter
-                ])
+            if enum_len == 0 or (enum_len == 1 and self.use_empty_value):
+                joined_filters = ", ".join(
+                    ['"{}"'.format(item) for item in self.hosts_filter]
+                )
                 reason = (
                     "All host names were removed after applying"
                     " host filters. {}"
@@ -246,24 +238,25 @@ class HostsEnumEntity(BaseEnumEntity):
                     invalid_filters.add(item)
 
             if invalid_filters:
-                joined_filters = ", ".join([
-                    '"{}"'.format(item)
-                    for item in self.hosts_filter
-                ])
-                expected_hosts = ", ".join([
-                    '"{}"'.format(item)
-                    for item in self.all_host_names
-                ])
-                self.log.warning((
-                    "Host filters containt invalid host names:"
-                    " \"{}\" Expected values are {}"
-                ).format(joined_filters, expected_hosts))
+                joined_filters = ", ".join(
+                    ['"{}"'.format(item) for item in self.hosts_filter]
+                )
+                expected_hosts = ", ".join(
+                    ['"{}"'.format(item) for item in self.all_host_names]
+                )
+                self.log.warning(
+                    (
+                        "Host filters containt invalid host names:"
+                        ' "{}" Expected values are {}'
+                    ).format(joined_filters, expected_hosts)
+                )
 
         super(HostsEnumEntity, self).schema_validations()
 
 
 class AppsEnumEntity(BaseEnumEntity):
     """Enum of applications for project anatomy attributes."""
+
     schema_types = ["apps-enum"]
 
     def _item_initialization(self):
@@ -271,7 +264,7 @@ class AppsEnumEntity(BaseEnumEntity):
         self.value_on_not_set = []
         self.enum_items = []
         self.valid_keys = set()
-        self.valid_value_types = (list, )
+        self.valid_value_types = (list,)
         self.placeholder = None
 
     def _get_enum_values(self):
@@ -352,7 +345,7 @@ class ToolsEnumEntity(BaseEnumEntity):
         self.value_on_not_set = []
         self.enum_items = []
         self.valid_keys = set()
-        self.valid_value_types = (list, )
+        self.valid_value_types = (list,)
         self.placeholder = None
 
     def _get_enum_values(self):
@@ -409,10 +402,10 @@ class TaskTypeEnumEntity(BaseEnumEntity):
     def _item_initialization(self):
         self.multiselection = self.schema_data.get("multiselection", True)
         if self.multiselection:
-            self.valid_value_types = (list, )
+            self.valid_value_types = (list,)
             self.value_on_not_set = []
         else:
-            self.valid_value_types = (STRING_TYPE, )
+            self.valid_value_types = (STRING_TYPE,)
             self.value_on_not_set = ""
 
         self.enum_items = []
@@ -507,7 +500,8 @@ class DeadlineUrlEnumEntity(BaseEnumEntity):
         enum_items_list = []
         for server_name, url_entity in deadline_urls_entity.items():
             enum_items_list.append(
-                {server_name: "{}: {}".format(server_name, url_entity.value)})
+                {server_name: "{}: {}".format(server_name, url_entity.value)}
+            )
             valid_keys.add(server_name)
         return enum_items_list, valid_keys
 
@@ -528,6 +522,50 @@ class DeadlineUrlEnumEntity(BaseEnumEntity):
 
             elif self._current_value not in self.valid_keys:
                 self._current_value = tuple(self.valid_keys)[0]
+
+
+class ShotgridUrlEnumEntity(BaseEnumEntity):
+    schema_types = ["shotgrid_url-enum"]
+
+    def _item_initialization(self):
+        self.multiselection = False
+
+        self.enum_items = []
+        self.valid_keys = set()
+
+        self.valid_value_types = (STRING_TYPE,)
+        self.value_on_not_set = ""
+
+        # GUI attribute
+        self.placeholder = self.schema_data.get("placeholder")
+
+    def _get_enum_values(self):
+        shotgrid_settings = self.get_entity_from_path(
+            "system_settings/modules/shotgrid/shotgrid_settings"
+        )
+
+        valid_keys = set()
+        enum_items_list = []
+        for server_name, settings in shotgrid_settings.items():
+            enum_items_list.append(
+                {
+                    server_name: "{}: {}".format(
+                        server_name, settings["shotgrid_url"].value
+                    )
+                }
+            )
+            valid_keys.add(server_name)
+        return enum_items_list, valid_keys
+
+    def set_override_state(self, *args, **kwargs):
+        super(ShotgridUrlEnumEntity, self).set_override_state(*args, **kwargs)
+
+        self.enum_items, self.valid_keys = self._get_enum_values()
+        if not self.valid_keys:
+            self._current_value = ""
+
+        elif self._current_value not in self.valid_keys:
+            self._current_value = tuple(self.valid_keys)[0]
 
 
 class AnatomyTemplatesEnumEntity(BaseEnumEntity):

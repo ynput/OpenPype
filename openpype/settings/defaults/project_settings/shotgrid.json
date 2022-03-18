@@ -1,0 +1,22 @@
+{
+    "shotgrid_project_id": 0,
+    "shotgrid_server": "",
+    "event": {
+        "enabled": false
+    },
+    "fields": {
+        "asset": {
+            "type": "sg_asset_type"
+        },
+        "sequence": {
+            "episode_link": "episode"
+        },
+        "shot": {
+            "episode_link": "sg_episode",
+            "sequence_link": "sg_sequence"
+        },
+        "task": {
+            "step": "step"
+        }
+    }
+}

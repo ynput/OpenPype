@@ -64,6 +64,10 @@
                 },
                 {
                     "type": "schema",
+                    "name": "schema_project_shotgrid"
+                },
+                {
+                    "type": "schema",
                     "name": "schema_project_deadline"
                 },
                 {

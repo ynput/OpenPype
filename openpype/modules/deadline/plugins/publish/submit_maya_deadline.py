@@ -476,6 +476,7 @@ class MayaSubmitDeadline(pyblish.api.InstancePlugin):
             "FTRACK_API_KEY",
             "FTRACK_API_USER",
             "FTRACK_SERVER",
+            "OPENPYPE_SG_USER",
             "AVALON_PROJECT",
             "AVALON_ASSET",
             "AVALON_TASK",

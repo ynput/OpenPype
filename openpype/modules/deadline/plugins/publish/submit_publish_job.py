@@ -113,6 +113,7 @@ class ProcessSubmittedJobOnFarm(pyblish.api.InstancePlugin):
                   "celaction": [r".*"]}
 
     enviro_filter = [
+        "OPENPYPE_SG_USER",
         "FTRACK_API_USER",
         "FTRACK_API_KEY",
         "FTRACK_SERVER",

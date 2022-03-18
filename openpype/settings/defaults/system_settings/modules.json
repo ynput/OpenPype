@@ -137,6 +137,13 @@
             }
         }
     },
+    "shotgrid": {
+        "enabled": true,
+        "filter_projects_by_login": true,
+        "leecher_manager_url": "http://127.0.0.1:3000",
+        "leecher_backend_url": "http://127.0.0.1:8090",
+        "shotgrid_settings": {}
+    },
     "timers_manager": {
         "enabled": true,
         "auto_stop": true,
