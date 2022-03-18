@@ -236,6 +236,7 @@ class ProcessSubmittedJobOnFarm(pyblish.api.InstancePlugin):
                 environment["OPENPYPE_MONGO"] = mongo_url
 
         args = [
+            "--headless",
             'publish',
             roothless_metadata_path,
             "--targets", "deadline",
