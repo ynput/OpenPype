@@ -100,7 +100,7 @@ __all__ = (
     "KnownPublishError",
     "OpenPypePyblishPluginMixin",
 
-    # --- Plugins ---
+    # --- Actions ---
     "LauncherAction",
     "InventoryAction",
 
