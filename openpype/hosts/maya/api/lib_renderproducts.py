@@ -1107,6 +1107,81 @@ class RenderProductsRenderman(ARenderProducts):
         return new_files
 
 
+class RenderProducts3Delight(ARenderProducts):
+    """Expected files for Renderman renderer.
+
+    Warning:
+        This is very rudimentary and needs more love and testing.
+    """
+
+    renderer = "_3delight"
+
+    def get_render_products(self):
+        """Get all AOVs.
+
+        See Also:
+            :func:`ARenderProducts.get_render_products()`
+
+        """
+        cameras = [
+            self.sanitize_camera_name(c)
+            for c in self.get_renderable_cameras()
+        ]
+
+        if not cameras:
+            cameras = [
+                self.sanitize_camera_name(
+                    self.get_renderable_cameras()[0])
+            ]
+        products = []
+
+        default_ext = "exr"
+
+        nodes = cmds.listConnections('dlRenderGlobals1')
+        assert len(nodes) == 1
+        node = nodes[0]
+
+        num_layers = cmds.getAttr(
+            '{}.layerOutput'.format(node),
+            size=True)
+        for i in range(num_layers):
+            output = cmds.getAttr(
+                '{}.layerOutput[{}]'.format(node, i))
+            if not output:
+                continue
+
+            output_var = cmds.getAttr(
+                '{}.layerOutputVariables[{}]'.format(node, i))
+            output_var_tokens = layerOutputVariable.split('|')
+            name = output_var_tokens[4]
+
+            for camera in cameras:
+                product = RenderProduct(productName=name,
+                                        ext=default_ext,
+                                        camera=camera)
+                products.append(product)
+
+        return products
+
+    def get_files(self, product, camera):
+        """Get expected files.
+
+        See Also:
+            :func:`ARenderProducts.get_files()`
+        """
+        files = super(RenderProducts3Delight, self).get_files(product, camera)
+
+        layer_data = self.layer_data
+        new_files = []
+        for file in files:
+            new_file = "{}/{}/{}".format(
+                layer_data["sceneName"], layer_data["layerName"], file
+            )
+            new_files.append(new_file)
+
+        return new_files
+
+
 class AOVError(Exception):
     """Custom exception for determining AOVs."""
 
