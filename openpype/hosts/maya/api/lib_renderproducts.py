@@ -77,6 +77,7 @@ IMAGE_PREFIXES = {
     "arnold": "defaultRenderGlobals.imageFilePrefix",
     "renderman": "rmanGlobals.imageFileFormat",
     "redshift": "defaultRenderGlobals.imageFilePrefix",
+    "_3delight": "defaultRenderGlobals.imageFilePrefix",
 }
 
 
@@ -154,7 +155,8 @@ def get(layer, render_instance=None):
         "arnold": RenderProductsArnold,
         "vray": RenderProductsVray,
         "redshift": RenderProductsRedshift,
-        "renderman": RenderProductsRenderman
+        "renderman": RenderProductsRenderman,
+        "_3delight": RenderProducts3Delight
     }.get(renderer_name.lower(), None)
     if renderer is None:
         raise UnsupportedRendererException(
@@ -1137,13 +1139,16 @@ class RenderProducts3Delight(ARenderProducts):
 
         default_ext = "exr"
 
-        nodes = cmds.listConnections('dlRenderGlobals1')
+        nodes = cmds.listConnections(
+            'dlRenderGlobals1',
+            type='dlRenderSettings')
         assert len(nodes) == 1
         node = nodes[0]
 
         num_layers = cmds.getAttr(
-            '{}.layerOutput'.format(node),
+            '{}.layerOutputVariables'.format(node),
             size=True)
+        assert num_layers > 0
         for i in range(num_layers):
             output = cmds.getAttr(
                 '{}.layerOutput[{}]'.format(node, i))
@@ -1152,34 +1157,16 @@ class RenderProducts3Delight(ARenderProducts):
 
             output_var = cmds.getAttr(
                 '{}.layerOutputVariables[{}]'.format(node, i))
-            output_var_tokens = layerOutputVariable.split('|')
-            name = output_var_tokens[4]
+            output_var_tokens = output_var.split('|')
+            aov_name = output_var_tokens[4]
 
             for camera in cameras:
-                product = RenderProduct(productName=name,
+                product = RenderProduct(productName=aov_name,
                                         ext=default_ext,
                                         camera=camera)
                 products.append(product)
 
         return products
-
-    def get_files(self, product, camera):
-        """Get expected files.
-
-        See Also:
-            :func:`ARenderProducts.get_files()`
-        """
-        files = super(RenderProducts3Delight, self).get_files(product, camera)
-
-        layer_data = self.layer_data
-        new_files = []
-        for file in files:
-            new_file = "{}/{}/{}".format(
-                layer_data["sceneName"], layer_data["layerName"], file
-            )
-            new_files.append(new_file)
-
-        return new_files
 
 
 class AOVError(Exception):
