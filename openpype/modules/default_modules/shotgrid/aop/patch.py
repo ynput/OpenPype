@@ -22,10 +22,12 @@ def _patched_projects(
         or not settings.filter_projects_by_login()
     ):
         return all_projects
-
-    linked_names = _fetch_linked_project_names()
-    result = [x for x in all_projects if _upper(x["name"]) in linked_names]
-    return result
+    try:
+        linked_names = _fetch_linked_project_names() or set()
+        return [x for x in all_projects if _upper(x["name"]) in linked_names]
+    except Exception as e:
+        print(e)
+        return all_projects
 
 
 def _upper(x: Any) -> str:
