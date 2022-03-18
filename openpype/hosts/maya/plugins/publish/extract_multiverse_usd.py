@@ -163,7 +163,8 @@ class ExtractMultiverseUsd(openpype.api.Extractor):
                 time_opts.framePerSecond = options["timeRangeFramesPerSecond"]
 
             asset_write_opts = multiverse.AssetWriteOptions(time_opts)
-            for (k, v) in options.iteritems():
+            options_items = getattr(options, "iteritems", options.items)
+            for (k, v) in options_items:
                 if k == "writeTimeRange" or k.startswith("timeRange"):
                     continue
                 setattr(asset_write_opts, k, v)

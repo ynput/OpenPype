@@ -117,7 +117,8 @@ class ExtractMultiverseUsdOverride(openpype.api.Extractor):
                 time_opts.framePerSecond = options["timeRangeFramesPerSecond"]
 
             over_write_opts = multiverse.OverridesWriteOptions()
-            for (k, v) in options.iteritems():
+            options_items = getattr(options, "iteritems", options.items)
+            for (k, v) in options_items:
                 if k == "writeTimeRange" or k.startswith("timeRange"):
                     continue
                 setattr(over_write_opts, k, v)
