@@ -6,6 +6,8 @@ import contextlib
 import copy
 
 import six
+from bson.objectid import ObjectId
+
 from maya import cmds
 
 from avalon import io
@@ -282,7 +284,7 @@ def update_package_version(container, version):
 
     # Versioning (from `core.maya.pipeline`)
     current_representation = io.find_one({
-        "_id": io.ObjectId(container["representation"])
+        "_id": ObjectId(container["representation"])
     })
 
     assert current_representation is not None, "This is a bug"
@@ -327,7 +329,7 @@ def update_package(set_container, representation):
 
     # Load the original package data
     current_representation = io.find_one({
-        "_id": io.ObjectId(set_container['representation']),
+        "_id": ObjectId(set_container['representation']),
         "type": "representation"
     })
 
@@ -478,10 +480,10 @@ def update_scene(set_container, containers, current_data, new_data, new_file):
                 # They *must* use the same asset, subset and Loader for
                 # `update_container` to make sense.
                 old = io.find_one({
-                    "_id": io.ObjectId(representation_current)
+                    "_id": ObjectId(representation_current)
                 })
                 new = io.find_one({
-                    "_id": io.ObjectId(representation_new)
+                    "_id": ObjectId(representation_new)
                 })
                 is_valid = compare_representations(old=old, new=new)
                 if not is_valid:

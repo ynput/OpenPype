@@ -1,5 +1,6 @@
 import os
 from Qt import QtWidgets
+from bson.objectid import ObjectId
 
 import pyblish.api
 import avalon.api
@@ -37,7 +38,7 @@ def check_inventory():
         representation = container['representation']
         representation_doc = io.find_one(
             {
-                "_id": io.ObjectId(representation),
+                "_id": ObjectId(representation),
                 "type": "representation"
             },
             projection={"parent": True}
