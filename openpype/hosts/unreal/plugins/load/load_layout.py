@@ -12,6 +12,7 @@ from unreal import AssetToolsHelpers
 from unreal import FBXImportType
 from unreal import MathLibrary as umath
 
+from avalon import io
 from avalon.pipeline import AVALON_CONTAINER_ID
 from openpype.pipeline import (
     discover_loader_plugins,

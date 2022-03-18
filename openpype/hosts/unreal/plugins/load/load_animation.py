@@ -3,6 +3,11 @@
 import os
 import json
 
+import unreal
+from unreal import EditorAssetLibrary
+from unreal import MovieSceneSkeletalAnimationTrack
+from unreal import MovieSceneSkeletalAnimationSection
+
 from avalon import pipeline
 from openpype.pipeline import get_representation_path
 from openpype.hosts.unreal.api import plugin
@@ -82,14 +87,14 @@ class AnimationFBXLoader(plugin.Loader):
 
         unreal.AssetToolsHelpers.get_asset_tools().import_asset_tasks([task])
 
-        asset_content = unreal.EditorAssetLibrary.list_assets(
+        asset_content = EditorAssetLibrary.list_assets(
             asset_dir, recursive=True, include_folder=True
         )
 
         animation = None
 
         for a in asset_content:
-            imported_asset_data = unreal.EditorAssetLibrary.find_asset_data(a)
+            imported_asset_data = EditorAssetLibrary.find_asset_data(a)
             imported_asset = unreal.AssetRegistryHelpers.get_asset(
                 imported_asset_data)
             if imported_asset.__class__ == unreal.AnimSequence:
@@ -149,7 +154,7 @@ class AnimationFBXLoader(plugin.Loader):
 
         container_name += suffix
 
-        unreal.EditorAssetLibrary.make_directory(asset_dir)
+        EditorAssetLibrary.make_directory(asset_dir)
 
         libpath = self.fname.replace("fbx", "json")
 
@@ -160,7 +165,7 @@ class AnimationFBXLoader(plugin.Loader):
 
         animation = self._process(asset_dir, container_name, instance_name)
 
-        asset_content = unreal.EditorAssetLibrary.list_assets(
+        asset_content = EditorAssetLibrary.list_assets(
             hierarchy_dir, recursive=True, include_folder=False)
 
         # Get the sequence for the layout, excluding the camera one.
@@ -211,11 +216,11 @@ class AnimationFBXLoader(plugin.Loader):
         unreal_pipeline.imprint(
             "{}/{}".format(asset_dir, container_name), data)
 
-        imported_content = unreal.EditorAssetLibrary.list_assets(
+        imported_content = EditorAssetLibrary.list_assets(
             asset_dir, recursive=True, include_folder=False)
 
         for a in imported_content:
-            unreal.EditorAssetLibrary.save_asset(a)
+            EditorAssetLibrary.save_asset(a)
 
     def update(self, container, representation):
         name = container["asset_name"]
@@ -261,7 +266,7 @@ class AnimationFBXLoader(plugin.Loader):
         task.options.anim_sequence_import_data.set_editor_property(
             'convert_scene', True)
 
-        skeletal_mesh = unreal.EditorAssetLibrary.load_asset(
+        skeletal_mesh = EditorAssetLibrary.load_asset(
             container.get('namespace') + "/" + container.get('asset_name'))
         skeleton = skeletal_mesh.get_editor_property('skeleton')
         task.options.set_editor_property('skeleton', skeleton)
@@ -278,22 +283,22 @@ class AnimationFBXLoader(plugin.Loader):
                 "parent": str(representation["parent"])
             })
 
-        asset_content = unreal.EditorAssetLibrary.list_assets(
+        asset_content = EditorAssetLibrary.list_assets(
             destination_path, recursive=True, include_folder=True
         )
 
         for a in asset_content:
-            unreal.EditorAssetLibrary.save_asset(a)
+            EditorAssetLibrary.save_asset(a)
 
     def remove(self, container):
         path = container["namespace"]
         parent_path = os.path.dirname(path)
 
-        unreal.EditorAssetLibrary.delete_directory(path)
+        EditorAssetLibrary.delete_directory(path)
 
-        asset_content = unreal.EditorAssetLibrary.list_assets(
+        asset_content = EditorAssetLibrary.list_assets(
             parent_path, recursive=False, include_folder=True
         )
 
         if len(asset_content) == 0:
-            unreal.EditorAssetLibrary.delete_directory(parent_path)
+            EditorAssetLibrary.delete_directory(parent_path)
