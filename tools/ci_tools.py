@@ -32,7 +32,7 @@ def get_release_type_github(Log, github_token):
 
     if any(label in labels for label in minor_labels):
         return "minor"
-    else
+    else:
         return "patch"
 
     #TODO: if all is working fine, this part can be cleaned up eventually 
