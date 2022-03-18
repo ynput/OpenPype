@@ -4,7 +4,6 @@ import shutil
 import glob
 import clique
 import collections
-import re
 
 
 def collect_frames(files):
@@ -14,30 +13,23 @@ def collect_frames(files):
         Uses clique as most precise solution, used when anatomy template that
         created files is not known.
 
-        Depends that version substring starts with 'v' with any number of
-        numeric characters after.
+        Assumption is that frames are separated by '.', negative frames are not
+        allowed.
 
         Args:
             files(list) or (set with single value): list of source paths
         Returns:
             (dict): {'/asset/subset_v001.0001.png': '0001', ....}
     """
-    collections, remainder = clique.assemble(files, minimum_items=1)
+    patterns = [clique.PATTERNS["frames"]]
+    collections, remainder = clique.assemble(files, minimum_items=1,
+                                             patterns=patterns)
 
-    real_file_name = None
     sources_and_frames = {}
-    if len(files) == 1:
-        real_file_name = list(files)[0]
-        sources_and_frames[real_file_name] = None
-
     if collections:
         for collection in collections:
             src_head = collection.head
             src_tail = collection.tail
-
-            # version recognized as a collection
-            if re.match(".*([a-zA-Z0-9]%[0-9]+d).*", collection.format()):
-                continue
 
             for index in collection.indexes:
                 src_frame = collection.format("{padding}") % index

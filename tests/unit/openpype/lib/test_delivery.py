@@ -47,6 +47,18 @@ def test_collect_frames_single_sequence():
     assert ret == expected, "Not matching"
 
 
+def test_collect_frames_single_sequence_negative():
+    files = ["Asset_renderCompositingMain_v001.-0000.png"]
+    ret = collect_frames(files)
+
+    expected = {
+        "Asset_renderCompositingMain_v001.-0000.png": None
+    }
+
+    print(ret)
+    assert ret == expected, "Not matching"
+
+
 def test_collect_frames_single_sequence_shot():
     files = ["testing_sh010_workfileCompositing_v001.aep"]
     ret = collect_frames(files)
@@ -59,12 +71,24 @@ def test_collect_frames_single_sequence_shot():
     assert ret == expected, "Not matching"
 
 
+def test_collect_frames_single_sequence_numbers():
+    files = ["PRJ_204_430_0005_renderLayoutMain_v001.0001.exr"]
+    ret = collect_frames(files)
+
+    expected = {
+        "PRJ_204_430_0005_renderLayoutMain_v001.0001.exr": "0001"
+    }
+
+    print(ret)
+    assert ret == expected, "Not matching"
+
+
 def test_collect_frames_single_sequence_shot_with_frame():
     files = ["testing_sh010_workfileCompositing_000_v001.aep"]
     ret = collect_frames(files)
 
     expected = {
-        "testing_sh010_workfileCompositing_000_v001.aep": "000"
+        "testing_sh010_workfileCompositing_000_v001.aep": None
     }
 
     print(ret)
@@ -88,7 +112,7 @@ def test_collect_frames_single_sequence_different_format():
     ret = collect_frames(files)
 
     expected = {
-        "Asset.v001.renderCompositingMain_0000.png": "0000"
+        "Asset.v001.renderCompositingMain_0000.png": None
     }
 
     print(ret)
@@ -100,7 +124,7 @@ def test_collect_frames_single_sequence_withhout_version():
     ret = collect_frames(files)
 
     expected = {
-        "pngv001.renderCompositingMain_0000.png": "0000"
+        "pngv001.renderCompositingMain_0000.png": None
     }
 
     print(ret)
