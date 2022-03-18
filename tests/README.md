@@ -21,3 +21,27 @@ Specific location could be provided to this command as an argument, either as ab
 (eg. `python ${OPENPYPE_ROOT}/start.py start.py runtests ../tests/integration`) will trigger only tests in `integration` folder.
 
 See `${OPENPYPE_ROOT}/cli.py:runtests` for other arguments.
+
+Run in IDE:
+-----------
+If you would prefer to run/debug single file dirrectly in IDE of your choice, you might encounter issues with imports.
+It would manifest like `KeyError: 'OPENPYPE_DATABASE_NAME'`. That means you are importing module that depends on OP to be running, eg. all expected variables are set.
+
+In some cases your tests might be so localized, that you don't care about all env vars to be set properly.
+In that case you might add this dummy configuration BEFORE any imports in your test file
+```
+import os
+os.environ["AVALON_MONGO"] = "mongodb://localhost:27017"
+os.environ["OPENPYPE_MONGO"] = "mongodb://localhost:27017"
+os.environ["AVALON_DB"] = "avalon"
+os.environ["OPENPYPE_DATABASE_NAME"] = "openpype"
+os.environ["AVALON_TIMEOUT"] = '3000'
+os.environ["OPENPYPE_DEBUG"] = "3"
+os.environ["AVALON_CONFIG"] = "pype"
+os.environ["AVALON_ASSET"] = "Asset"
+os.environ["AVALON_PROJECT"] = "test_project"
+```
+(AVALON_ASSET and AVALON_PROJECT values should exist in your environment)
+
+This might be enough to run your test file separately. Do not commit this skeleton though.
+Use only when you know what you are doing!
