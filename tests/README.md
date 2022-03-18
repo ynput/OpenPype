@@ -24,7 +24,7 @@ See `${OPENPYPE_ROOT}/cli.py:runtests` for other arguments.
 
 Run in IDE:
 -----------
-If you would prefer to run/debug single file dirrectly in IDE of your choice, you might encounter issues with imports.
+If you prefer to run/debug single file directly in IDE of your choice, you might encounter issues with imports.
 It would manifest like `KeyError: 'OPENPYPE_DATABASE_NAME'`. That means you are importing module that depends on OP to be running, eg. all expected variables are set.
 
 In some cases your tests might be so localized, that you don't care about all env vars to be set properly.
