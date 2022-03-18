@@ -23,7 +23,9 @@ class BaseEnumEntity(InputEntity):
         for item in self.enum_items:
             key = tuple(item.keys())[0]
             if key in enum_keys:
-                reason = 'Key "{}" is more than once in enum items.'.format(key)
+                reason = 'Key "{}" is more than once in enum items.'.format(
+                    key
+                )
                 raise EntitySchemaError(self, reason)
 
             enum_keys.add(key)

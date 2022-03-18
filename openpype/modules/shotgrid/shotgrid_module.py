@@ -43,7 +43,9 @@ class ShotgridModule(
 
     def get_plugin_paths(self) -> Dict[str, Any]:
         return {
-            "publish": [os.path.join(SHOTGRID_MODULE_DIR, "plugins", "publish")]
+            "publish": [
+                os.path.join(SHOTGRID_MODULE_DIR, "plugins", "publish")
+            ]
         }
 
     def get_launch_hook_paths(self) -> str:

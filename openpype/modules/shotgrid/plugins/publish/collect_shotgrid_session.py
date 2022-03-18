@@ -1,5 +1,4 @@
 import os
-import sys
 import pyblish.api
 import shotgun_api3
 from shotgun_api3.shotgun import AuthenticationFault
@@ -128,5 +127,5 @@ def get_login():
     reg = OpenPypeSettingsRegistry()
     try:
         return str(reg.get_item("shotgrid_login"))
-    except Exception as e:
+    except Exception as _:
         return None
