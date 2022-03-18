@@ -77,7 +77,8 @@ class CreateRender(plugin.Creator):
         'vray': 'vraySettings.fileNamePrefix',
         'arnold': 'defaultRenderGlobals.imageFilePrefix',
         'renderman': 'defaultRenderGlobals.imageFilePrefix',
-        'redshift': 'defaultRenderGlobals.imageFilePrefix'
+        'redshift': 'defaultRenderGlobals.imageFilePrefix',
+        '_3delight': 'defaultRenderGlobals.imageFilePrefix'
     }
 
     _image_prefixes = {
@@ -85,7 +86,8 @@ class CreateRender(plugin.Creator):
         'vray': 'maya/<scene>/<Layer>/<Layer>',
         'arnold': 'maya/<Scene>/<RenderLayer>/<RenderLayer>{aov_separator}<RenderPass>',  # noqa
         'renderman': 'maya/<Scene>/<layer>/<layer>{aov_separator}<aov>',
-        'redshift': 'maya/<Scene>/<RenderLayer>/<RenderLayer>'  # noqa
+        'redshift': 'maya/<Scene>/<RenderLayer>/<RenderLayer>',  # noqa
+        '_3delight': 'maya/<Scene>/<RenderLayer>/<RenderLayer>'  # noqa
     }
 
     _aov_chars = {
@@ -462,6 +464,8 @@ class CreateRender(plugin.Creator):
                 asset["data"].get("resolutionHeight"))
 
             self._set_global_output_settings()
+        if renderer == "_3delight":
+            self._set_3delight_settings(asset)
 
     def _set_vray_settings(self, asset):
         # type: (dict) -> None
@@ -505,6 +509,38 @@ class CreateRender(plugin.Creator):
             asset["data"].get("resolutionWidth"))
         cmds.setAttr(
             "{}.height".format(node),
+            asset["data"].get("resolutionHeight"))
+
+    def _set_3delight_settings(self, asset):
+        # type: (dict) -> None
+        """Sets important settings for 3Delight."""
+        nodes = cmds.listConnections(
+            'dlRenderGlobals1',
+            type='dlRenderSettings')
+        assert len(nodes) == 1
+        node = nodes[0]
+
+        # frame range
+        start_frame = int(cmds.playbackOptions(query=True,
+                                               animationStartTime=True))
+        end_frame = int(cmds.playbackOptions(query=True,
+                                             animationEndTime=True))
+
+        cmds.setAttr(
+            "{}.startFrame".format(node), start_frame)
+        cmds.setAttr(
+            "{}.endFrame".format(node), end_frame)
+
+        # outputOptionsDefault
+        cmds.setAttr(
+            "{}.outputOptionsDefault".format(node), 2)
+
+        # resolution
+        cmds.setAttr(
+            "defaultResolution.width",
+            asset["data"].get("resolutionWidth"))
+        cmds.setAttr(
+            "defaultResolution.height",
             asset["data"].get("resolutionHeight"))
 
     @staticmethod
