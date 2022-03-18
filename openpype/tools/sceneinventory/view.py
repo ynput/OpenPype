@@ -5,13 +5,14 @@ from functools import partial
 from Qt import QtWidgets, QtCore
 import qtawesome
 
-from avalon import io, api
+from avalon import io
 
 from openpype import style
 from openpype.pipeline import (
     HeroVersionType,
     update_container,
     remove_container,
+    discover_inventory_actions,
 )
 from openpype.modules import ModulesManager
 from openpype.tools.utils.lib import (
@@ -487,7 +488,7 @@ class SceneInventoryView(QtWidgets.QTreeView):
         containers = containers or [dict()]
 
         # Check which action will be available in the menu
-        Plugins = api.discover(api.InventoryAction)
+        Plugins = discover_inventory_actions()
         compatible = [p() for p in Plugins if
                       any(p.is_compatible(c) for c in containers)]
 

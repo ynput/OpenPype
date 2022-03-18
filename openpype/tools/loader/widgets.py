@@ -7,9 +7,10 @@ import collections
 
 from Qt import QtWidgets, QtCore, QtGui
 
-from avalon import api, pipeline
+from avalon import api
 
 from openpype.pipeline import HeroVersionType
+from openpype.pipeline.thumbnails import get_thumbnail_binary
 from openpype.pipeline.load import (
     discover_loader_plugins,
     SubsetLoaderPlugin,
@@ -863,7 +864,7 @@ class ThumbnailWidget(QtWidgets.QLabel):
         if not thumbnail_ent:
             return
 
-        thumbnail_bin = pipeline.get_thumbnail_binary(
+        thumbnail_bin = get_thumbnail_binary(
             thumbnail_ent, "thumbnail", self.dbcon
         )
         if not thumbnail_bin:
