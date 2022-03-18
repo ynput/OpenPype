@@ -77,14 +77,28 @@ class PhotoshopServerStub:
             layer: (PSItem)
             layers_meta: full list from Headline (for performance in loops)
         Returns:
+            (dict) of layer metadata stored in PS file
+
+        Example:
+            {
+                'id': 'pyblish.avalon.container',
+                'loader': 'ImageLoader',
+                'members': ['64'],
+                'name': 'imageMainMiddle',
+                'namespace': 'Hero_imageMainMiddle_001',
+                'representation': '6203dc91e80934d9f6ee7d96',
+                'schema': 'openpype:container-2.0'
+            }
         """
         if layers_meta is None:
             layers_meta = self.get_layers_metadata()
 
         for layer_meta in layers_meta:
+            layer_id = layer_meta.get("uuid")  # legacy
             if layer_meta.get("members"):
-                if layer.id == layer_meta["members"][0]:
-                    return layer
+                layer_id = layer_meta["members"][0]
+            if str(layer.id) == str(layer_id):
+                return layer_meta
         print("Unable to find layer metadata for {}".format(layer.id))
 
     def imprint(self, item_id, data, all_layers=None, items_meta=None):
@@ -399,7 +413,7 @@ class PhotoshopServerStub:
             if res:
                 layers_data = json.loads(res)
         except json.decoder.JSONDecodeError:
-            pass
+            raise ValueError("{} cannot be parsed, recreate meta".format(res))
         # format of metadata changed from {} to [] because of standardization
         # keep current implementation logic as its working
         if isinstance(layers_data, dict):
@@ -482,7 +496,7 @@ class PhotoshopServerStub:
         for item in self.get_layers_metadata():
             inst_id = item.get("instance_id") or item.get("uuid")
             if inst_id != instance_id:
-                cleaned_data.append(inst_id)
+                cleaned_data.append(item)
 
         payload = json.dumps(cleaned_data, indent=4)
 
