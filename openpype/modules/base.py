@@ -146,9 +146,16 @@ class _LoadCache:
 
 def get_default_modules_dir():
     """Path to default OpenPype modules."""
+
     current_dir = os.path.abspath(os.path.dirname(__file__))
 
-    return os.path.join(current_dir, "default_modules")
+    output = []
+    for folder_name in ("default_modules", ):
+        path = os.path.join(current_dir, folder_name)
+        if os.path.exists(path) and os.path.isdir(path):
+            output.append(path)
+
+    return output
 
 
 def get_dynamic_modules_dirs():
@@ -186,7 +193,7 @@ def get_dynamic_modules_dirs():
 def get_module_dirs():
     """List of paths where OpenPype modules can be found."""
     _dirpaths = []
-    _dirpaths.append(get_default_modules_dir())
+    _dirpaths.extend(get_default_modules_dir())
     _dirpaths.extend(get_dynamic_modules_dirs())
 
     dirpaths = []
