@@ -519,6 +519,8 @@ class FilesWidget(QtWidgets.QWidget):
         item = self._temp_publish_files.add_file(filepath)
         self.host.open_file(item.filepath)
         self.publish_file_viewed.emit()
+        # Change state back to workarea
+        self._published_checkbox.setChecked(False)
 
     def on_file_select(self):
         self.file_selected.emit(self._get_selected_filepath())
