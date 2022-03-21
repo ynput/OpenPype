@@ -142,7 +142,9 @@ class TempPublishFiles(object):
         data = self._get_data()
         now = time.time()
         remove_ids = set()
+        all_ids = set()
         for item_id, item_data in data.items():
+            all_ids.add(item_id)
             if check_expiration and now < item_data["expiration"]:
                 continue
 
@@ -156,6 +158,23 @@ class TempPublishFiles(object):
                     "Failed to remove temp publish item \"{}\"".format(
                         item_id
                     ),
+                    exc_info=True
+                )
+
+        # Remove unknown folders/files
+        for filename in os.listdir(self._root_dir):
+            if filename in all_ids:
+                continue
+
+            full_path = os.path.join(self._root_dir, filename)
+            if full_path in (self._metadata_path, self._lock_path):
+                continue
+
+            try:
+                shutil.rmtree(full_path)
+            except Exception:
+                self.log.warning(
+                    "Couldn't remove arbitrary path \"{}\"".format(full_path),
                     exc_info=True
                 )
 
