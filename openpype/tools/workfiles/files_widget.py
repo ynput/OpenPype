@@ -188,6 +188,9 @@ class FilesWidget(QtWidgets.QWidget):
         workarea_files_view.selectionModel().selectionChanged.connect(
             self.on_file_select
         )
+        publish_files_view.doubleClickedLeft.connect(
+            self._on_view_published_pressed
+        )
 
         btn_open.pressed.connect(self._on_workarea_open_pressed)
         btn_browse.pressed.connect(self.on_browse_pressed)
@@ -511,6 +514,8 @@ class FilesWidget(QtWidgets.QWidget):
 
     def _on_view_published_pressed(self):
         filepath = self._get_selected_filepath()
+        if not filepath or not os.path.exists(filepath):
+            return
         item = self._temp_publish_files.add_file(filepath)
         self.host.open_file(item.filepath)
         self.publish_file_viewed.emit()

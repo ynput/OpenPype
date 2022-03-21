@@ -99,7 +99,7 @@ class SidePanelWidget(QtWidgets.QWidget):
         text = self.published_workfile_message.format(
             file_size_to_string(temp_publish_files.size)
         )
-        self.publish_temp_info_label.setText(text)
+        self._publish_temp_info_label.setText(text)
 
     def _on_clear_temp_click(self):
         temp_publish_files = TempPublishFiles()
