@@ -452,7 +452,7 @@ class ProcessSubmittedJobOnFarm(pyblish.api.InstancePlugin):
                     # In order to match the AOV name
                     # we must compare against the render filename string 
                     # We are grabbing the render filename string
-                    # from the collection that we have grabbed from expected files (exp_files) 
+                    # from the collection that we have grabbed from exp_files 
                     render_file_name = os.path.basename(col[0])
                     if re.match(aov_pattern, render_file_name):
                         preview = True
