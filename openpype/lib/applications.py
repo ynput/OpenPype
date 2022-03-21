@@ -7,7 +7,6 @@ import platform
 import collections
 import inspect
 import subprocess
-import distutils.spawn
 from abc import ABCMeta, abstractmethod
 
 import six
@@ -29,15 +28,18 @@ from .local_settings import get_openpype_username
 from .avalon_context import (
     get_workdir_data,
     get_workdir_with_workdir_data,
-    get_workfile_template_key
+    get_workfile_template_key,
+    get_last_workfile
 )
 
 from .python_module_tools import (
     modules_from_path,
     classes_from_module
 )
-from .execute import get_linux_launcher_args
-
+from .execute import (
+    find_executable,
+    get_linux_launcher_args
+)
 
 _logger = None
 
@@ -647,7 +649,7 @@ class ApplicationExecutable:
     def _realpath(self):
         """Check if path is valid executable path."""
         # Check for executable in PATH
-        result = distutils.spawn.find_executable(self.executable_path)
+        result = find_executable(self.executable_path)
         if result is not None:
             return result
 
@@ -1608,7 +1610,7 @@ def _prepare_last_workfile(data, workdir):
                 "ext": extensions[0]
             })
 
-            last_workfile_path = avalon.api.last_workfile(
+            last_workfile_path = get_last_workfile(
                 workdir, file_template, workdir_data, extensions, True
             )
 

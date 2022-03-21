@@ -3,7 +3,8 @@ import collections
 from Qt import QtWidgets, QtCore, QtGui
 from openpype.tools.utils import (
     PlaceholderLineEdit,
-    RecursiveSortFilterProxyModel
+    RecursiveSortFilterProxyModel,
+    get_asset_icon,
 )
 from openpype.tools.utils.assets_widget import (
     SingleSelectAssetsWidget,
@@ -102,11 +103,15 @@ class AssetsHierarchyModel(QtGui.QStandardItemModel):
             for name in sorted(children_by_name.keys()):
                 child = children_by_name[name]
                 child_id = child["_id"]
+                has_children = bool(assets_by_parent_id.get(child_id))
+                icon = get_asset_icon(child, has_children)
+
                 item = QtGui.QStandardItem(name)
                 item.setFlags(
                     QtCore.Qt.ItemIsEnabled
                     | QtCore.Qt.ItemIsSelectable
                 )
+                item.setData(icon, QtCore.Qt.DecorationRole)
                 item.setData(child_id, ASSET_ID_ROLE)
                 item.setData(name, ASSET_NAME_ROLE)
 

@@ -1,0 +1,14 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<root>
+<error id="main">
+<title>Render pass group</title>
+<description>## Invalid group of Render Pass layers
+
+Layers of Render Pass {instance_name} belong to Render Group which is defined by TVPaint color group {expected_group}. But the layers are not in the group.
+
+### How to repair?
+
+Change the color group to {expected_group} on layers {layer_names}.
+</description>
+</error>
+</root>

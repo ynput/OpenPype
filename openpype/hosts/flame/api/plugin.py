@@ -2,13 +2,16 @@ import os
 import re
 import shutil
 import sys
-from avalon.vendor import qargparse
 from xml.etree import ElementTree as ET
 import six
+import qargparse
 from Qt import QtWidgets, QtCore
 import openpype.api as openpype
+from openpype.pipeline import (
+    LegacyCreator,
+    LoaderPlugin,
+)
 from openpype import style
-import avalon.api as avalon
 from . import (
     lib as flib,
     pipeline as fpipeline,
@@ -299,7 +302,7 @@ class Spacer(QtWidgets.QWidget):
         self.setLayout(layout)
 
 
-class Creator(openpype.Creator):
+class Creator(LegacyCreator):
     """Creator class wrapper
     """
     clip_color = constants.COLOR_MAP["purple"]
@@ -659,7 +662,7 @@ class PublishableClip:
 # Publishing plugin functions
 # Loader plugin functions
 
-class ClipLoader(avalon.Loader):
+class ClipLoader(LoaderPlugin):
     """A basic clip loader for Flame
 
     This will implement the basic behavior for a loader to inherit from that

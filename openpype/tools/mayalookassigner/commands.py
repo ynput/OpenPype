@@ -4,9 +4,10 @@ import os
 
 import maya.cmds as cmds
 
-from openpype.hosts.maya.api import lib
-
 from avalon import io, api
+
+from openpype.pipeline import remove_container
+from openpype.hosts.maya.api import lib
 
 from .vray_proxies import get_alembic_ids_cache
 
@@ -206,6 +207,6 @@ def remove_unused_looks():
 
     for container in unused:
         log.info("Removing unused look container: %s", container['objectName'])
-        api.remove(container)
+        remove_container(container)
 
     log.info("Finished removing unused looks. (see log for details)")

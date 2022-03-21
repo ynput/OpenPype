@@ -7,7 +7,7 @@ from typing import Dict, List, Optional
 
 import bpy
 
-from avalon import api
+from openpype.pipeline import get_representation_path
 from openpype.hosts.blender.api import plugin
 from openpype.hosts.blender.api.pipeline import (
     AVALON_CONTAINERS,
@@ -155,7 +155,7 @@ class BlendCameraLoader(plugin.AssetLoader):
         """
         object_name = container["objectName"]
         asset_group = bpy.data.objects.get(object_name)
-        libpath = Path(api.get_representation_path(representation))
+        libpath = Path(get_representation_path(representation))
         extension = libpath.suffix.lower()
 
         self.log.info(

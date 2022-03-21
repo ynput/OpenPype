@@ -3,7 +3,12 @@ from collections import OrderedDict
 
 import nuke
 
-from avalon import api, style, io
+from avalon import io
+
+from openpype.pipeline import (
+    load,
+    get_representation_path,
+)
 from openpype.hosts.nuke.api import lib
 from openpype.hosts.nuke.api import (
     containerise,
@@ -12,7 +17,7 @@ from openpype.hosts.nuke.api import (
 )
 
 
-class LoadEffectsInputProcess(api.Loader):
+class LoadEffectsInputProcess(load.LoaderPlugin):
     """Loading colorspace soft effect exported from nukestudio"""
 
     representations = ["effectJson"]
@@ -21,7 +26,7 @@ class LoadEffectsInputProcess(api.Loader):
     label = "Load Effects - Input Process"
     order = 0
     icon = "eye"
-    color = style.colors.alert
+    color = "#cc0000"
     ignore_attr = ["useLifetime"]
 
     def load(self, context, name, namespace, data):
@@ -156,7 +161,7 @@ class LoadEffectsInputProcess(api.Loader):
         # get corresponding node
         GN = nuke.toNode(container['objectName'])
 
-        file = api.get_representation_path(representation).replace("\\", "/")
+        file = get_representation_path(representation).replace("\\", "/")
         name = container['name']
         version_data = version.get("data", {})
         vname = version.get("name", None)

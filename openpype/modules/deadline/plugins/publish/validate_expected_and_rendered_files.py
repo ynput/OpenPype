@@ -107,6 +107,10 @@ class ValidateExpectedFiles(pyblish.api.InstancePlugin):
         explicitly and manually changed the frame list on the Deadline job.
 
         """
+        # no frames in file name at all, eg 'renderCompositingMain.withLut.mov'
+        if not frame_placeholder:
+            return set([file_name_template])
+
         real_expected_rendered = set()
         src_padding_exp = "%0{}d".format(len(frame_placeholder))
         for frames in frame_list:
@@ -130,14 +134,13 @@ class ValidateExpectedFiles(pyblish.api.InstancePlugin):
 
             # There might be cases where clique was unable to collect
             # collections in `collect_frames` - thus we capture that case
-            if frame is None:
-                self.log.warning("Unable to detect frame from filename: "
-                                 "{}".format(file_name))
-                continue
+            if frame is not None:
+                frame_placeholder = "#" * len(frame)
 
-            frame_placeholder = "#" * len(frame)
-            file_name_template = os.path.basename(
-                file_name.replace(frame, frame_placeholder))
+                file_name_template = os.path.basename(
+                    file_name.replace(frame, frame_placeholder))
+            else:
+                file_name_template = file_name
             break
 
         return file_name_template, frame_placeholder

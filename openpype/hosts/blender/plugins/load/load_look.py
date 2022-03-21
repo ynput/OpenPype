@@ -8,7 +8,7 @@ import os
 import json
 import bpy
 
-from avalon import api
+from openpype.pipeline import get_representation_path
 from openpype.hosts.blender.api import plugin
 from openpype.hosts.blender.api.pipeline import (
     containerise_existing,
@@ -140,7 +140,7 @@ class BlendLookLoader(plugin.AssetLoader):
 
     def update(self, container: Dict, representation: Dict):
         collection = bpy.data.collections.get(container["objectName"])
-        libpath = Path(api.get_representation_path(representation))
+        libpath = Path(get_representation_path(representation))
         extension = libpath.suffix.lower()
 
         self.log.info(

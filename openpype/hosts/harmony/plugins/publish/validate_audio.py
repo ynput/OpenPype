@@ -4,6 +4,8 @@ import pyblish.api
 
 import openpype.hosts.harmony.api as harmony
 
+from openpype.pipeline import PublishXmlValidationError
+
 
 class ValidateAudio(pyblish.api.InstancePlugin):
     """Ensures that there is an audio file in the scene.
@@ -42,4 +44,9 @@ class ValidateAudio(pyblish.api.InstancePlugin):
 
         msg = "You are missing audio file:\n{}".format(audio_path)
 
-        assert os.path.isfile(audio_path), msg
+        formatting_data = {
+            "audio_url": audio_path
+        }
+        if os.path.isfile(audio_path):
+            raise PublishXmlValidationError(self, msg,
+                                            formatting_data=formatting_data)

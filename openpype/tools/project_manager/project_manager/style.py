@@ -1,7 +1,7 @@
 import os
-from Qt import QtCore, QtGui
+from Qt import QtGui
 
-from avalon.vendor import qtawesome
+import qtawesome
 from openpype.tools.utils import paint_image_with_color
 
 

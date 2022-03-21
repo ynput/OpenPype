@@ -17,10 +17,16 @@ import bson
 from maya import cmds, mel
 import maya.api.OpenMaya as om
 
-from avalon import api, io, pipeline
+from avalon import api, io
 
 from openpype import lib
 from openpype.api import get_anatomy_settings
+from openpype.pipeline import (
+    discover_loader_plugins,
+    loaders_from_representation,
+    get_representation_path,
+    load_container,
+)
 from .commands import reset_frame_range
 
 
@@ -1580,21 +1586,21 @@ def assign_look_by_version(nodes, version_id):
         log.info("Using look for the first time ..")
 
         # Load file
-        loaders = api.loaders_from_representation(api.discover(api.Loader),
-                                                  representation_id)
+        _loaders = discover_loader_plugins()
+        loaders = loaders_from_representation(_loaders, representation_id)
         Loader = next((i for i in loaders if i.__name__ == "LookLoader"), None)
         if Loader is None:
             raise RuntimeError("Could not find LookLoader, this is a bug")
 
         # Reference the look file
         with maintained_selection():
-            container_node = pipeline.load(Loader, look_representation)
+            container_node = load_container(Loader, look_representation)
 
     # Get container members
     shader_nodes = get_container_members(container_node)
 
     # Load relationships
-    shader_relation = api.get_representation_path(json_representation)
+    shader_relation = get_representation_path(json_representation)
     with open(shader_relation, "r") as f:
         relationships = json.load(f)
 
@@ -1931,18 +1937,26 @@ def remove_other_uv_sets(mesh):
             cmds.removeMultiInstance(attr, b=True)
 
 
-def get_id_from_history(node):
+def get_id_from_sibling(node, history_only=True):
     """Return first node id in the history chain that matches this node.
 
     The nodes in history must be of the exact same node type and must be
     parented under the same parent.
 
+    Optionally, if no matching node is found from the history, all the
+    siblings of the node that are of the same type are checked.
+    Additionally to having the same parent, the sibling must be marked as
+    'intermediate object'.
+
     Args:
-        node (str): node to retrieve the
+        node (str): node to retrieve the history from
+        history_only (bool): if True and if nothing found in history,
+            look for an 'intermediate object' in all the node's siblings
+            of same type
 
     Returns:
-        str or None: The id from the node in history or None when no id found
-            on any valid nodes in the history.
+        str or None: The id from the sibling node or None when no id found
+            on any valid nodes in the history or siblings.
 
     """
 
@@ -1970,6 +1984,45 @@ def get_id_from_history(node):
         _id = get_id(similar_node)
         if _id:
             return _id
+
+    if not history_only:
+        # Get siblings of same type
+        similar_nodes = cmds.listRelatives(parent,
+                                           type=node_type,
+                                           fullPath=True)
+        similar_nodes = cmds.ls(similar_nodes, exactType=node_type, long=True)
+
+        # Exclude itself
+        similar_nodes = [x for x in similar_nodes if x != node]
+
+        # Get all unique ids from siblings in order since
+        # we consistently take the first one found
+        sibling_ids = OrderedDict()
+        for similar_node in similar_nodes:
+            # Check if "intermediate object"
+            if not cmds.getAttr(similar_node + ".intermediateObject"):
+                continue
+
+            _id = get_id(similar_node)
+            if not _id:
+                continue
+
+            if _id in sibling_ids:
+                sibling_ids[_id].append(similar_node)
+            else:
+                sibling_ids[_id] = [similar_node]
+
+        if sibling_ids:
+            first_id, found_nodes = next(iter(sibling_ids.items()))
+
+            # Log a warning if we've found multiple unique ids
+            if len(sibling_ids) > 1:
+                log.warning(("Found more than 1 intermediate shape with"
+                             " unique id for '{}'. Using id of first"
+                             " found: '{}'".format(node, found_nodes[0])))
+
+            return first_id
+
 
 
 # Project settings

@@ -103,7 +103,7 @@
                                     "DraftTileAssembler": "Draft Tile Assembler"
                                 },
                                 {
-                                    "oiio": "Open Image IO"
+                                    "OpenPypeTileAssembler": "Open Image IO"
                                 }
                             ]
                         },

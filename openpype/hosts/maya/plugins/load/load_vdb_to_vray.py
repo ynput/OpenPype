@@ -1,6 +1,10 @@
 import os
-from avalon import api
+
 from openpype.api import get_project_settings
+from openpype.pipeline import (
+    load,
+    get_representation_path
+)
 
 from maya import cmds
 
@@ -69,7 +73,7 @@ def _fix_duplicate_vvg_callbacks():
                     matched.add(callback)
 
 
-class LoadVDBtoVRay(api.Loader):
+class LoadVDBtoVRay(load.LoaderPlugin):
 
     families = ["vdbcache"]
     representations = ["vdb"]
@@ -174,7 +178,7 @@ class LoadVDBtoVRay(api.Loader):
                 fname = files[0]
             else:
                 # Sequence
-                from avalon.vendor import clique
+                import clique
                 # todo: check support for negative frames as input
                 collections, remainder = clique.assemble(files)
                 assert len(collections) == 1, (
@@ -252,7 +256,7 @@ class LoadVDBtoVRay(api.Loader):
 
     def update(self, container, representation):
 
-        path = api.get_representation_path(representation)
+        path = get_representation_path(representation)
 
         # Find VRayVolumeGrid
         members = cmds.sets(container['objectName'], query=True)
