@@ -286,7 +286,12 @@ class PublishFilesModel(QtGui.QStandardItemModel):
                 "context.ext": {"$in": extensions}
             }
         )
+        filtered_repre_docs = []
         for repre_doc in repre_docs:
+            if self._task_name is None:
+                filtered_repre_docs.append(repre_doc)
+                continue
+
             task_info = repre_doc["context"].get("task")
             if not task_info:
                 print("Not task info")
@@ -298,15 +303,18 @@ class PublishFilesModel(QtGui.QStandardItemModel):
                 task_name = task_info
 
             if task_name == self._task_name:
-                path = get_representation_path(
-                    repre_doc, root=self._anatomy.roots
-                )
-                output.append((path, repre_doc["_id"]))
+                filtered_repre_docs.append(repre_doc)
+
+        for repre_doc in filtered_repre_docs:
+            path = get_representation_path(
+                repre_doc, root=self._anatomy.roots
+            )
+            output.append((path, repre_doc["_id"]))
         return output
 
     def refresh(self):
         root_item = self.invisibleRootItem()
-        if not self._asset_id or not self._task_name:
+        if not self._asset_id:
             self._clear()
             # Add Work Area does not exist placeholder
             item = self._get_invalid_context_item()
