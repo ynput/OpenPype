@@ -51,7 +51,7 @@ class WorkAreaFilesModel(QtGui.QStandardItemModel):
 
     def _get_empty_root_item(self):
         if self._empty_root_item is None:
-            message = "Work Area does not exist. Use Save As to create it."
+            message = "Work Area is empty."
             item = QtGui.QStandardItem(message)
             icon = qtawesome.icon(
                 "fa.times",
@@ -198,7 +198,7 @@ class PublishFilesModel(QtGui.QStandardItemModel):
 
     def _get_invalid_context_item(self):
         if self._invalid_context_item is None:
-            message = "Selected context is not vald."
+            message = "Selected context is not valid."
             item = QtGui.QStandardItem(message)
             icon = qtawesome.icon(
                 "fa.times",
@@ -242,10 +242,17 @@ class PublishFilesModel(QtGui.QStandardItemModel):
 
     def _get_workfie_representations(self):
         output = []
-        subset_docs = self._dbcon.find({
-            "type": "subset",
-            "parent": self._asset_id
-        })
+        subset_docs = self._dbcon.find(
+            {
+                "type": "subset",
+                "parent": self._asset_id
+            },
+            {
+                "_id": True,
+                "data.families": True,
+                "name": True
+            }
+        )
         filtered_subsets = []
         for subset_doc in subset_docs:
             data = subset_doc.get("data") or {}
@@ -257,10 +264,16 @@ class PublishFilesModel(QtGui.QStandardItemModel):
         if not subset_ids:
             return output
 
-        version_docs = self._dbcon.find({
-            "type": "version",
-            "parent": {"$in": subset_ids}
-        })
+        version_docs = self._dbcon.find(
+            {
+                "type": "version",
+                "parent": {"$in": subset_ids}
+            },
+            {
+                "_id": True,
+                "parent": True
+            }
+        )
         version_ids = [version_doc["_id"] for version_doc in version_docs]
         if not version_ids:
             return output
@@ -296,7 +309,7 @@ class PublishFilesModel(QtGui.QStandardItemModel):
         if not self._asset_id or not self._task_name:
             self._clear()
             # Add Work Area does not exist placeholder
-            item = self._get_invalid_path_item()
+            item = self._get_invalid_context_item()
             root_item.appendRow(item)
             self._invalid_item_visible = True
             return

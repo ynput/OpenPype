@@ -42,11 +42,17 @@ class SidePanelWidget(QtWidgets.QWidget):
         btn_note_save.clicked.connect(self.on_save_click)
 
         self.details_input = details_input
+        self.note_label = note_label
         self.note_input = note_input
         self.btn_note_save = btn_note_save
 
         self._orig_note = ""
         self._workfile_doc = None
+
+    def set_published_visible(self, published_visible):
+        self.note_label.setVisible(not published_visible)
+        self.note_input.setVisible(not published_visible)
+        self.btn_note_save.setVisible(not published_visible)
 
     def on_note_change(self):
         text = self.note_input.toPlainText()
@@ -178,6 +184,9 @@ class Window(QtWidgets.QMainWindow):
         files_widget.file_selected.connect(self.on_file_select)
         files_widget.workfile_created.connect(self.on_workfile_create)
         files_widget.file_opened.connect(self._on_file_opened)
+        files_widget.published_visible_changed.connect(
+            self._on_published_change
+        )
         side_panel.save_clicked.connect(self.on_side_panel_save)
 
         self._set_context_timer = set_context_timer
@@ -192,7 +201,7 @@ class Window(QtWidgets.QMainWindow):
         self.side_panel = side_panel
 
         # Force focus on the open button by default, required for Houdini.
-        files_widget.btn_open.setFocus()
+        files_widget.setFocus()
 
         self.resize(1200, 600)
 
@@ -217,7 +226,7 @@ class Window(QtWidgets.QMainWindow):
         """
 
     def set_save_enabled(self, enabled):
-        self.files_widget.btn_save.setEnabled(enabled)
+        self.files_widget.set_save_enabled(enabled)
 
     def on_file_select(self, filepath):
         asset_id = self.assets_widget.get_selected_asset_id()
@@ -238,6 +247,9 @@ class Window(QtWidgets.QMainWindow):
 
     def _on_file_opened(self):
         self.close()
+
+    def _on_published_change(self, visible):
+        self.side_panel.set_published_visible(visible)
 
     def on_side_panel_save(self):
         workfile_doc, data = self.side_panel.get_workfile_data()

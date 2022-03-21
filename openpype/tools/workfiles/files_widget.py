@@ -47,11 +47,12 @@ class FilesView(QtWidgets.QTreeView):
 class FilesWidget(QtWidgets.QWidget):
     """A widget displaying files that allows to save and open files."""
     file_selected = QtCore.Signal(str)
-    workfile_created = QtCore.Signal(str)
     file_opened = QtCore.Signal()
+    workfile_created = QtCore.Signal(str)
+    published_visible_changed = QtCore.Signal(bool)
 
-    def __init__(self, parent=None):
-        super(FilesWidget, self).__init__(parent=parent)
+    def __init__(self, parent):
+        super(FilesWidget, self).__init__(parent)
 
         # Setup
         self._asset_id = None
@@ -141,9 +142,6 @@ class FilesWidget(QtWidgets.QWidget):
         # about and the date modified is relatively small anyway.
         publish_files_view.setColumnWidth(0, 330)
 
-        # Hide publish view first
-        publish_files_view.setVisible(False)
-
         views_layout = QtWidgets.QHBoxLayout(views_widget)
         views_layout.setContentsMargins(0, 0, 0, 0)
         views_layout.addWidget(workarea_files_view, 1)
@@ -156,11 +154,14 @@ class FilesWidget(QtWidgets.QWidget):
         btn_browse = QtWidgets.QPushButton("Browse", btns_widget)
         btn_open = QtWidgets.QPushButton("Open", btns_widget)
 
+        btn_view_published = QtWidgets.QPushButton("View", btns_widget)
+
         btns_layout = QtWidgets.QHBoxLayout(btns_widget)
         btns_layout.setContentsMargins(0, 0, 0, 0)
-        btns_layout.addWidget(btn_open)
-        btns_layout.addWidget(btn_browse)
-        btns_layout.addWidget(btn_save)
+        btns_layout.addWidget(btn_open, 1)
+        btns_layout.addWidget(btn_browse, 1)
+        btns_layout.addWidget(btn_save, 1)
+        btns_layout.addWidget(btn_view_published, 1)
 
         # Build files widgets for home page
         main_layout = QtWidgets.QVBoxLayout(self)
@@ -186,6 +187,7 @@ class FilesWidget(QtWidgets.QWidget):
         btn_open.pressed.connect(self._on_workarea_open_pressed)
         btn_browse.pressed.connect(self.on_browse_pressed)
         btn_save.pressed.connect(self.on_save_as_pressed)
+        btn_view_published.pressed.connect(self._on_view_published_pressed)
 
         # Store attributes
         self._published_checkbox = published_checkbox
@@ -201,32 +203,51 @@ class FilesWidget(QtWidgets.QWidget):
         self._publish_files_model = publish_files_model
         self._publish_proxy_model = publish_proxy_model
 
-        self.btns_widget = btns_widget
-        self.btn_open = btn_open
-        self.btn_browse = btn_browse
-        self.btn_save = btn_save
+        self._btns_widget = btns_widget
+        self._btn_open = btn_open
+        self._btn_browse = btn_browse
+        self._btn_save = btn_save
+        self._btn_view_published = btn_view_published
 
-        self._workarea_visible = True
+        # Create a proxy widget for files widget
+        self.setFocusProxy(btn_open)
+
+        # Hide publish files widgets
+        publish_files_view.setVisible(False)
+        btn_view_published.setVisible(False)
+
+    @property
+    def published_enabled(self):
+        return self._published_checkbox.isChecked()
 
     def _on_published_change(self):
-        workarea_visible = not self._published_checkbox.isChecked()
+        published_enabled = self.published_enabled
 
-        self._workarea_files_view.setVisible(workarea_visible)
-        self._publish_files_view.setVisible(not workarea_visible)
+        self._workarea_files_view.setVisible(not published_enabled)
+        self._btn_open.setVisible(not published_enabled)
+        self._btn_browse.setVisible(not published_enabled)
+        self._btn_save.setVisible(not published_enabled)
 
-        self._workarea_visible = workarea_visible
+        self._publish_files_view.setVisible(published_enabled)
+        self._btn_view_published.setVisible(published_enabled)
+
         self._update_filtering()
         self._update_asset_task()
+
+        self.published_visible_changed.emit(published_enabled)
 
     def _on_filter_text_change(self):
         self._update_filtering()
 
     def _update_filtering(self):
         text = self._filter_input.text()
-        if self._workarea_visible:
-            self._workarea_proxy_model.setFilterFixedString(text)
-        else:
+        if self.published_enabled:
             self._publish_proxy_model.setFilterFixedString(text)
+        else:
+            self._workarea_proxy_model.setFilterFixedString(text)
+
+    def set_save_enabled(self, enabled):
+        self._btn_save.setEnabled(enabled)
 
     def set_asset_task(self, asset_id, task_name, task_type):
         if asset_id != self._asset_id:
@@ -237,7 +258,13 @@ class FilesWidget(QtWidgets.QWidget):
         self._update_asset_task()
 
     def _update_asset_task(self):
-        if self._workarea_visible:
+        if self.published_enabled:
+            self._publish_files_model.set_context(
+                self._asset_id, self._task_name
+            )
+            has_valid_items = self._publish_files_model.has_valid_items()
+            self._btn_view_published.setEnabled(has_valid_items)
+        else:
             # Define a custom session so we can query the work root
             # for a "Work area" that is not our current Session.
             # This way we can browse it even before we enter it.
@@ -252,16 +279,11 @@ class FilesWidget(QtWidgets.QWidget):
 
             # Disable/Enable buttons based on available files in model
             has_valid_items = self._workarea_files_model.has_valid_items()
-            self.btn_browse.setEnabled(has_valid_items)
-            self.btn_open.setEnabled(has_valid_items)
-            if not has_valid_items:
-                # Manually trigger file selection
-                self.on_file_select()
-        else:
-            self._publish_files_model.set_context(
-                self._asset_id, self._task_name
-            )
-            has_valid_items = self._publish_files_model.has_valid_items()
+            self._btn_browse.setEnabled(has_valid_items)
+            self._btn_open.setEnabled(has_valid_items)
+        # Manually trigger file selection
+        if not has_valid_items:
+            self.on_file_select()
 
     def _get_asset_doc(self):
         if self._asset_id is None:
@@ -394,10 +416,10 @@ class FilesWidget(QtWidgets.QWidget):
 
     def _get_selected_filepath(self):
         """Return current filepath selected in view"""
-        if self._workarea_visible:
-            source_view = self._workarea_files_view
-        else:
+        if self.published_enabled:
             source_view = self._publish_files_view
+        else:
+            source_view = self._workarea_files_view
         selection = source_view.selectionModel()
         index = selection.currentIndex()
         if not index.isValid():
@@ -480,12 +502,19 @@ class FilesWidget(QtWidgets.QWidget):
         # Refresh files model
         self.refresh()
 
+    def _on_view_published_pressed(self):
+        print("View of published workfile triggered")
+
     def on_file_select(self):
         self.file_selected.emit(self._get_selected_filepath())
 
     def refresh(self):
         """Refresh listed files for current selection in the interface"""
-        self._workarea_files_model.refresh()
+        if self.published_enabled:
+            self._publish_files_model.refresh()
+        else:
+            self._workarea_files_model.refresh()
+
 
         if self.auto_select_latest_modified:
             self._select_last_modified_file()
@@ -516,7 +545,11 @@ class FilesWidget(QtWidgets.QWidget):
 
     def _select_last_modified_file(self):
         """Utility function to select the file with latest date modified"""
-        model = self._workarea_files_view.model()
+        if self.published_enabled:
+            source_view = self._publish_files_view
+        else:
+            source_view = self._workarea_files_view
+        model = source_view.model()
 
         highest_index = None
         highest = 0
@@ -531,4 +564,4 @@ class FilesWidget(QtWidgets.QWidget):
                 highest = modified
 
         if highest_index:
-            self._workarea_files_view.setCurrentIndex(highest_index)
+            source_view.setCurrentIndex(highest_index)
