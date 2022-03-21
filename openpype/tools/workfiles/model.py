@@ -1,7 +1,7 @@
 import os
 import logging
 
-from Qt import QtCore
+from Qt import QtCore, QtGui
 import qtawesome
 
 from openpype.style import (
@@ -9,145 +9,152 @@ from openpype.style import (
     get_disabled_entity_icon_color,
 )
 
-from openpype.tools.utils.models import TreeModel, Item
 
 log = logging.getLogger(__name__)
 
+FILEPATH_ROLE = QtCore.Qt.UserRole + 2
+DATE_MODIFIED_ROLE = QtCore.Qt.UserRole + 3
+ITEM_ID_ROLE = QtCore.Qt.UserRole + 4
 
-class FilesModel(TreeModel):
-    """Model listing files with specified extensions in a root folder"""
-    Columns = ["filename", "date"]
 
-    FileNameRole = QtCore.Qt.UserRole + 2
-    DateModifiedRole = QtCore.Qt.UserRole + 3
-    FilePathRole = QtCore.Qt.UserRole + 4
-    IsEnabled = QtCore.Qt.UserRole + 5
+class WorkAreaFilesModel(QtGui.QStandardItemModel):
+    def __init__(self, extensions, *args, **kwargs):
+        super(WorkAreaFilesModel, self).__init__(*args, **kwargs)
 
-    def __init__(self, file_extensions, parent=None):
-        super(FilesModel, self).__init__(parent=parent)
+        self.setColumnCount(2)
 
         self._root = None
-        self._file_extensions = file_extensions
-        self._icons = {
-            "file": qtawesome.icon(
-                "fa.file-o",
-                color=get_default_entity_icon_color()
+        self._file_extensions = extensions
+        self._invalid_path_item = None
+        self._empty_root_item = None
+        self._file_icon = qtawesome.icon(
+            "fa.file-o",
+            color=get_default_entity_icon_color()
+        )
+        self._invalid_item_visible = False
+        self._items_by_filename = {}
+
+    def _get_invalid_path_item(self):
+        if self._invalid_path_item is None:
+            message = "Work Area does not exist. Use Save As to create it."
+            item = QtGui.QStandardItem(message)
+            icon = qtawesome.icon(
+                "fa.times",
+                color=get_disabled_entity_icon_color()
             )
-        }
+            item.setData(icon, QtCore.Qt.DecorationRole)
+            item.setFlags(QtCore.Qt.NoItemFlags)
+            item.setColumnCount(self.columnCount())
+            self._invalid_path_item = item
+        return self._invalid_path_item
+
+    def _get_empty_root_item(self):
+        if self._empty_root_item is None:
+            message = "Work Area does not exist. Use Save As to create it."
+            item = QtGui.QStandardItem(message)
+            icon = qtawesome.icon(
+                "fa.times",
+                color=get_disabled_entity_icon_color()
+            )
+            item.setData(icon, QtCore.Qt.DecorationRole)
+            item.setFlags(QtCore.Qt.NoItemFlags)
+            item.setColumnCount(self.columnCount())
+            self._empty_root_item = item
+        return self._empty_root_item
 
     def set_root(self, root):
         self._root = root
+        if root and not os.path.exists(root):
+            log.debug("Work Area does not exist: {}".format(root))
         self.refresh()
 
-    def _add_empty(self):
-        item = Item()
-        item.update({
-            # Put a display message in 'filename'
-            "filename": "No files found.",
-            # Not-selectable
-            "enabled": False,
-            "date": None,
-            "filepath": None
-        })
-
-        self.add_child(item)
+    def _clear(self):
+        root_item = self.invisibleRootItem()
+        rows = root_item.rowCount()
+        if rows > 0:
+            if self._invalid_item_visible:
+                for row in range(rows):
+                    root_item.takeRow(row)
+            else:
+                root_item.removeRows(0, rows)
+        self._items_by_filename = {}
 
     def refresh(self):
-        self.clear()
-        self.beginResetModel()
-
-        root = self._root
-
-        if not root:
-            self.endResetModel()
-            return
-
-        if not os.path.exists(root):
+        root_item = self.invisibleRootItem()
+        if not self._root or not os.path.exists(self._root):
+            self._clear()
             # Add Work Area does not exist placeholder
-            log.debug("Work Area does not exist: %s", root)
-            message = "Work Area does not exist. Use Save As to create it."
-            item = Item({
-                "filename": message,
-                "date": None,
-                "filepath": None,
-                "enabled": False,
-                "icon": qtawesome.icon(
-                    "fa.times",
-                    color=get_disabled_entity_icon_color()
-                )
-            })
-            self.add_child(item)
-            self.endResetModel()
+            item = self._get_invalid_path_item()
+            root_item.appendRow(item)
+            self._invalid_item_visible = True
             return
 
-        extensions = self._file_extensions
+        if self._invalid_item_visible:
+            self._clear()
 
-        for filename in os.listdir(root):
-            path = os.path.join(root, filename)
-            if os.path.isdir(path):
+        new_items = []
+        items_to_remove = set(self._items_by_filename.keys())
+        for filename in os.listdir(self._root):
+            filepath = os.path.join(self._root, filename)
+            if os.path.isdir(filepath):
                 continue
 
             ext = os.path.splitext(filename)[1]
-            if extensions and ext not in extensions:
+            if ext not in self._file_extensions:
                 continue
 
-            modified = os.path.getmtime(path)
+            modified = os.path.getmtime(filepath)
 
-            item = Item({
-                "filename": filename,
-                "date": modified,
-                "filepath": path
-            })
+            if filename in items_to_remove:
+                items_to_remove.remove(filename)
+                item = self._items_by_filename[filename]
+            else:
+                item = QtGui.QStandardItem(filename)
+                item.setColumnCount(self.columnCount())
+                item.setFlags(
+                    QtCore.Qt.ItemIsEnabled | QtCore.Qt.ItemIsSelectable
+                )
+                item.setData(self._file_icon, QtCore.Qt.DecorationRole)
+                new_items.append(item)
+                self._items_by_filename[filename] = item
+            item.setData(filepath, FILEPATH_ROLE)
+            item.setData(modified, DATE_MODIFIED_ROLE)
 
-            self.add_child(item)
+        if new_items:
+            root_item.appendRows(new_items)
 
-        if self.rowCount() == 0:
-            self._add_empty()
+        for filename in items_to_remove:
+            item = self._items_by_filename.pop(filename)
+            root_item.removeRow(item.row())
 
-        self.endResetModel()
-
-    def has_filenames(self):
-        for item in self._root_item.children():
-            if item.get("enabled", True):
-                return True
-        return False
-
-    def rowCount(self, parent=None):
-        if parent is None or not parent.isValid():
-            parent_item = self._root_item
+        if root_item.rowCount() > 0:
+            self._invalid_item_visible = False
         else:
-            parent_item = parent.internalPointer()
-        return parent_item.childCount()
+            self._invalid_item_visible = True
+            item = self._get_empty_root_item()
+            root_item.appendRow(item)
 
-    def data(self, index, role):
-        if not index.isValid():
-            return
+    def has_valid_items(self):
+        return not self._invalid_item_visible
 
-        if role == QtCore.Qt.DecorationRole:
-            # Add icon to filename column
-            item = index.internalPointer()
-            if index.column() == 0:
-                if item["filepath"]:
-                    return self._icons["file"]
-                return item.get("icon", None)
+    def flags(self, index):
+        if index.column() != 0:
+            index = self.index(index.row(), 0, index.parent())
+        return super(WorkAreaFilesModel, self).flags(index)
 
-        if role == self.FileNameRole:
-            item = index.internalPointer()
-            return item["filename"]
+    def data(self, index, role=None):
+        if role is None:
+            role = QtCore.Qt.DisplayRole
 
-        if role == self.DateModifiedRole:
-            item = index.internalPointer()
-            return item["date"]
+        if index.column() == 1:
+            if role == QtCore.Qt.DecorationRole:
+                return None
 
-        if role == self.FilePathRole:
-            item = index.internalPointer()
-            return item["filepath"]
+            if role in (QtCore.Qt.DisplayRole, QtCore.Qt.EditRole):
+                role = DATE_MODIFIED_ROLE
+            index = self.index(index.row(), 0, index.parent())
 
-        if role == self.IsEnabled:
-            item = index.internalPointer()
-            return item.get("enabled", True)
-
-        return super(FilesModel, self).data(index, role)
+        return super(WorkAreaFilesModel, self).data(index, role)
 
     def headerData(self, section, orientation, role):
         # Show nice labels in the header
@@ -160,4 +167,6 @@ class FilesModel(TreeModel):
             elif section == 1:
                 return "Date modified"
 
-        return super(FilesModel, self).headerData(section, orientation, role)
+        return super(WorkAreaFilesModel, self).headerData(
+            section, orientation, role
+        )

@@ -29,7 +29,11 @@ from openpype.lib.avalon_context import (
     update_current_task,
     compute_session_changes
 )
-from .model import FilesModel
+from .model import (
+    WorkAreaFilesModel,
+    FILEPATH_ROLE,
+    DATE_MODIFIED_ROLE,
+)
 from .save_as_dialog import SaveAsDialog
 from .view import FilesView
 
@@ -76,7 +80,7 @@ class FilesWidget(QtWidgets.QWidget):
 
         # Create the Files model
         extensions = set(self.host.file_extensions())
-        files_model = FilesModel(file_extensions=extensions)
+        files_model = WorkAreaFilesModel(extensions)
 
         # Create proxy model for files to be able sort and filter
         proxy_model = QtCore.QSortFilterProxyModel()
@@ -167,10 +171,10 @@ class FilesWidget(QtWidgets.QWidget):
             self.files_model.set_root(None)
 
         # Disable/Enable buttons based on available files in model
-        has_filenames = self.files_model.has_filenames()
-        self.btn_browse.setEnabled(has_filenames)
-        self.btn_open.setEnabled(has_filenames)
-        if not has_filenames:
+        has_valid_items = self.files_model.has_valid_items()
+        self.btn_browse.setEnabled(has_valid_items)
+        self.btn_open.setEnabled(has_valid_items)
+        if not has_valid_items:
             # Manually trigger file selection
             self.on_file_select()
 
@@ -310,7 +314,7 @@ class FilesWidget(QtWidgets.QWidget):
         if not index.isValid():
             return
 
-        return index.data(self.files_model.FilePathRole)
+        return index.data(FILEPATH_ROLE)
 
     def on_open_pressed(self):
         path = self._get_selected_filepath()
@@ -398,12 +402,11 @@ class FilesWidget(QtWidgets.QWidget):
             self._select_last_modified_file()
 
     def on_context_menu(self, point):
-        index = self.files_view.indexAt(point)
+        index = self._workarea_files_view.indexAt(point)
         if not index.isValid():
             return
 
-        is_enabled = index.data(FilesModel.IsEnabled)
-        if not is_enabled:
+        if not index.flags() & QtCore.Qt.ItemIsEnabled:
             return
 
         menu = QtWidgets.QMenu(self)
@@ -424,7 +427,6 @@ class FilesWidget(QtWidgets.QWidget):
 
     def _select_last_modified_file(self):
         """Utility function to select the file with latest date modified"""
-        role = self.files_model.DateModifiedRole
         model = self.files_view.model()
 
         highest_index = None
@@ -434,7 +436,7 @@ class FilesWidget(QtWidgets.QWidget):
             if not index.isValid():
                 continue
 
-            modified = index.data(role)
+            modified = index.data(DATE_MODIFIED_ROLE)
             if modified is not None and modified > highest:
                 highest_index = index
                 highest = modified
