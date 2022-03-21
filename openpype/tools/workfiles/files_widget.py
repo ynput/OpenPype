@@ -1,15 +1,10 @@
 import os
 import logging
 import shutil
-import json
-import time
-import uuid
 
 import Qt
 from Qt import QtWidgets, QtCore
 from avalon import io, api
-
-import appdirs
 
 from openpype.tools.utils import PlaceholderLineEdit
 from openpype.tools.utils.delegates import PrettyTimeDelegate
@@ -31,136 +26,9 @@ from .model import (
     DATE_MODIFIED_ROLE,
 )
 from .save_as_dialog import SaveAsDialog
+from .lib import TempPublishFiles
 
 log = logging.getLogger(__name__)
-
-
-class TempPublishFilesItem(object):
-    """Object representing on subfolder in app temp files.
-
-    Args:
-        item_id (str): Id of item used as subfolder.
-        data (dict): Metadata about temp files.
-        directory (str): Path to directory where files are copied to.
-    """
-
-    def __init__(self, item_id, data, directory):
-        self._id = item_id
-        self._directory = directory
-        self._filepath = os.path.join(directory, data["filename"])
-
-    @property
-    def directory(self):
-        return self._directory
-
-    @property
-    def filepath(self):
-        return self._filepath
-
-    @property
-    def id(self):
-        return self._id
-
-
-class TempPublishFiles(object):
-    """Directory where """
-    minute_in_seconds = 60
-    hour_in_seconds = 60 * minute_in_seconds
-    day_in_seconds = 24 * hour_in_seconds
-
-    def __init__(self):
-        root_dir = appdirs.user_data_dir(
-            "published_workfiles_temp", "openpype"
-        )
-        if not os.path.exists(root_dir):
-            os.makedirs(root_dir)
-
-        metadata_path = os.path.join(root_dir, "metadata.json")
-
-        self._root_dir = root_dir
-        self._metadata_path = metadata_path
-
-        if not os.path.exists(metadata_path):
-            self._store_data({})
-
-    @property
-    def life_time(self):
-        return int(self.hour_in_seconds)
-
-    def add_file(self, src_path):
-        filename = os.path.basename(src_path)
-
-        item_id = str(uuid.uuid4())
-        dst_dirpath = os.path.join(self._root_dir, item_id)
-        if not os.path.exists(dst_dirpath):
-            os.makedirs(dst_dirpath)
-
-        dst_path = os.path.join(dst_dirpath, filename)
-        shutil.copy(src_path, dst_path)
-
-        now = time.time()
-        item_data = {
-            "filename": filename,
-            "expiration": now + self.life_time,
-            "created": now
-        }
-        data = self._get_data()
-        data[item_id] = item_data
-        self._store_data(data)
-        return TempPublishFilesItem(item_id, item_data, dst_dirpath)
-
-    def _store_data(self, data):
-        with open(self._metadata_path, "w") as stream:
-            json.dump(data, stream)
-
-    def _get_data(self):
-        if not os.path.exists(self._metadata_path):
-            return {}
-
-        with open(self._metadata_path, "r") as stream:
-            output = json.load(stream)
-        return output
-
-    def cleanup(self, check_expiration=True):
-        data = self._get_data()
-        now = time.time()
-        remove_ids = set()
-        for item_id, item_data in data.items():
-            if check_expiration and now < item_data["expiration"]:
-                continue
-
-            remove_ids.add(item_id)
-
-        for item_id in remove_ids:
-            try:
-                self.remove_id(item_id)
-            except Exception:
-                log.warning(
-                    "Failed to remove temp publish item \"{}\"".format(
-                        item_id
-                    ),
-                    exc_info=True
-                )
-
-    def clear(self):
-        self.cleanup(False)
-
-    def get_items(self):
-        output = []
-        for item_id, item_data in self._get_data():
-            item_path = os.path.join(self._root_dir, item_id)
-            output.append(TempPublishFiles(item_id, item_data, item_path))
-        return output
-
-    def remove_id(self, item_id):
-        filepath = os.path.join(self._root_dir, item_id)
-        if os.path.exists(filepath):
-            shutil.rmtree(filepath)
-
-        data = self._get_data()
-        if item_id in data:
-            data.pop(item_id)
-            self._store_data(data)
 
 
 class FilesView(QtWidgets.QTreeView):
@@ -181,6 +49,7 @@ class FilesWidget(QtWidgets.QWidget):
     """A widget displaying files that allows to save and open files."""
     file_selected = QtCore.Signal(str)
     file_opened = QtCore.Signal()
+    publish_file_viewed = QtCore.Signal()
     workfile_created = QtCore.Signal(str)
     published_visible_changed = QtCore.Signal(bool)
 
@@ -371,6 +240,8 @@ class FilesWidget(QtWidgets.QWidget):
         self._update_asset_task()
 
         self.published_visible_changed.emit(published_enabled)
+
+        self._select_last_modified_file()
 
     def _on_filter_text_change(self):
         self._update_filtering()
@@ -642,6 +513,7 @@ class FilesWidget(QtWidgets.QWidget):
         filepath = self._get_selected_filepath()
         item = self._temp_publish_files.add_file(filepath)
         self.host.open_file(item.filepath)
+        self.publish_file_viewed.emit()
 
     def on_file_select(self):
         self.file_selected.emit(self._get_selected_filepath())

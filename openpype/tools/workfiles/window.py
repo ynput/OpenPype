@@ -14,10 +14,15 @@ from openpype.tools.utils.assets_widget import SingleSelectAssetsWidget
 from openpype.tools.utils.tasks_widget import TasksWidget
 
 from .files_widget import FilesWidget
+from .lib import TempPublishFiles, file_size_to_string
 
 
 class SidePanelWidget(QtWidgets.QWidget):
     save_clicked = QtCore.Signal()
+    published_workfile_message = (
+        "<b>INFO</b>: Published workfiles you'll opened will be stored in"
+        " temp directory on your machine. Current temp size: <b>{}</b>."
+    )
 
     def __init__(self, parent=None):
         super(SidePanelWidget, self).__init__(parent)
@@ -26,41 +31,88 @@ class SidePanelWidget(QtWidgets.QWidget):
         details_input = QtWidgets.QPlainTextEdit(self)
         details_input.setReadOnly(True)
 
-        note_label = QtWidgets.QLabel("Artist note", self)
-        note_input = QtWidgets.QPlainTextEdit(self)
-        btn_note_save = QtWidgets.QPushButton("Save note", self)
+        artist_note_widget = QtWidgets.QWidget(self)
+        note_label = QtWidgets.QLabel("Artist note", artist_note_widget)
+        note_input = QtWidgets.QPlainTextEdit(artist_note_widget)
+        btn_note_save = QtWidgets.QPushButton("Save note", artist_note_widget)
+
+        artist_note_layout = QtWidgets.QVBoxLayout(artist_note_widget)
+        artist_note_layout.setContentsMargins(0, 0, 0, 0)
+        artist_note_layout.addWidget(note_label, 0)
+        artist_note_layout.addWidget(note_input, 1)
+        artist_note_layout.addWidget(
+            btn_note_save, 0, alignment=QtCore.Qt.AlignRight
+        )
+
+        publish_temp_widget = QtWidgets.QWidget(self)
+        publish_temp_info_label = QtWidgets.QLabel(
+            self.published_workfile_message.format(
+                file_size_to_string(0)
+            ),
+            publish_temp_widget
+        )
+        publish_temp_info_label.setWordWrap(True)
+
+        btn_clear_temp = QtWidgets.QPushButton(
+            "Clear temp", publish_temp_widget
+        )
+
+        publish_temp_layout = QtWidgets.QVBoxLayout(publish_temp_widget)
+        publish_temp_layout.setContentsMargins(0, 0, 0, 0)
+        publish_temp_layout.addWidget(publish_temp_info_label, 0)
+        publish_temp_layout.addWidget(
+            btn_clear_temp, 0, alignment=QtCore.Qt.AlignRight
+        )
 
         main_layout = QtWidgets.QVBoxLayout(self)
         main_layout.setContentsMargins(0, 0, 0, 0)
         main_layout.addWidget(details_label, 0)
-        main_layout.addWidget(details_input, 0)
-        main_layout.addWidget(note_label, 0)
-        main_layout.addWidget(note_input, 1)
-        main_layout.addWidget(btn_note_save, alignment=QtCore.Qt.AlignRight)
+        main_layout.addWidget(details_input, 1)
+        main_layout.addWidget(artist_note_widget, 1)
+        main_layout.addWidget(publish_temp_widget, 0)
 
-        note_input.textChanged.connect(self.on_note_change)
-        btn_note_save.clicked.connect(self.on_save_click)
+        note_input.textChanged.connect(self._on_note_change)
+        btn_note_save.clicked.connect(self._on_save_click)
+        btn_clear_temp.clicked.connect(self._on_clear_temp_click)
 
-        self.details_input = details_input
-        self.note_label = note_label
-        self.note_input = note_input
-        self.btn_note_save = btn_note_save
+        self._details_input = details_input
+        self._artist_note_widget = artist_note_widget
+        self._note_input = note_input
+        self._btn_note_save = btn_note_save
+
+        self._publish_temp_info_label = publish_temp_info_label
+        self._publish_temp_widget = publish_temp_widget
 
         self._orig_note = ""
         self._workfile_doc = None
 
+        publish_temp_widget.setVisible(False)
+
     def set_published_visible(self, published_visible):
-        self.note_label.setVisible(not published_visible)
-        self.note_input.setVisible(not published_visible)
-        self.btn_note_save.setVisible(not published_visible)
+        self._artist_note_widget.setVisible(not published_visible)
+        self._publish_temp_widget.setVisible(published_visible)
+        if published_visible:
+            self.refresh_publish_temp_sizes()
 
-    def on_note_change(self):
-        text = self.note_input.toPlainText()
-        self.btn_note_save.setEnabled(self._orig_note != text)
+    def refresh_publish_temp_sizes(self):
+        temp_publish_files = TempPublishFiles()
+        text = self.published_workfile_message.format(
+            file_size_to_string(temp_publish_files.size)
+        )
+        self.publish_temp_info_label.setText(text)
 
-    def on_save_click(self):
-        self._orig_note = self.note_input.toPlainText()
-        self.on_note_change()
+    def _on_clear_temp_click(self):
+        temp_publish_files = TempPublishFiles()
+        temp_publish_files.clear()
+        self.refresh_publish_temp_sizes()
+
+    def _on_note_change(self):
+        text = self._note_input.toPlainText()
+        self._btn_note_save.setEnabled(self._orig_note != text)
+
+    def _on_save_click(self):
+        self._orig_note = self._note_input.toPlainText()
+        self._on_note_change()
         self.save_clicked.emit()
 
     def set_context(self, asset_id, task_name, filepath, workfile_doc):
@@ -68,17 +120,17 @@ class SidePanelWidget(QtWidgets.QWidget):
         # NOTE workfile document is not requirement
         enabled = bool(asset_id) and bool(task_name) and bool(filepath)
 
-        self.details_input.setEnabled(enabled)
-        self.note_input.setEnabled(enabled)
-        self.btn_note_save.setEnabled(enabled)
+        self._details_input.setEnabled(enabled)
+        self._note_input.setEnabled(enabled)
+        self._btn_note_save.setEnabled(enabled)
 
         # Make sure workfile doc is overridden
         self._workfile_doc = workfile_doc
         # Disable inputs and remove texts if any required arguments are missing
         if not enabled:
             self._orig_note = ""
-            self.details_input.setPlainText("")
-            self.note_input.setPlainText("")
+            self._details_input.setPlainText("")
+            self._note_input.setPlainText("")
             return
 
         orig_note = ""
@@ -86,23 +138,12 @@ class SidePanelWidget(QtWidgets.QWidget):
             orig_note = workfile_doc["data"].get("note") or orig_note
 
         self._orig_note = orig_note
-        self.note_input.setPlainText(orig_note)
+        self._note_input.setPlainText(orig_note)
         # Set as empty string
-        self.details_input.setPlainText("")
+        self._details_input.setPlainText("")
 
         filestat = os.stat(filepath)
-        size_ending_mapping = {
-            "KB": 1024 ** 1,
-            "MB": 1024 ** 2,
-            "GB": 1024 ** 3
-        }
-        size = filestat.st_size
-        ending = "B"
-        for _ending, _size in size_ending_mapping.items():
-            if filestat.st_size < _size:
-                break
-            size = filestat.st_size / _size
-            ending = _ending
+        size_value = file_size_to_string(filestat.st_size)
 
         # Append html string
         datetime_format = "%b %d %Y %H:%M:%S"
@@ -110,17 +151,17 @@ class SidePanelWidget(QtWidgets.QWidget):
         modification_time = datetime.datetime.fromtimestamp(filestat.st_mtime)
         lines = (
             "<b>Size:</b>",
-            "{:.2f} {}".format(size, ending),
+            size_value,
             "<b>Created:</b>",
             creation_time.strftime(datetime_format),
             "<b>Modified:</b>",
             modification_time.strftime(datetime_format)
         )
-        self.details_input.appendHtml("<br>".join(lines))
+        self._details_input.appendHtml("<br>".join(lines))
 
     def get_workfile_data(self):
         data = {
-            "note": self.note_input.toPlainText()
+            "note": self._note_input.toPlainText()
         }
         return self._workfile_doc, data
 
@@ -184,6 +225,9 @@ class Window(QtWidgets.QMainWindow):
         files_widget.file_selected.connect(self.on_file_select)
         files_widget.workfile_created.connect(self.on_workfile_create)
         files_widget.file_opened.connect(self._on_file_opened)
+        files_widget.publish_file_viewed.connect(
+            self._on_publish_file_viewed
+        )
         files_widget.published_visible_changed.connect(
             self._on_published_change
         )
@@ -247,6 +291,9 @@ class Window(QtWidgets.QMainWindow):
 
     def _on_file_opened(self):
         self.close()
+
+    def _on_publish_file_viewed(self):
+        self.side_panel.refresh_publish_temp_sizes()
 
     def _on_published_change(self, visible):
         self.side_panel.set_published_visible(visible)

@@ -107,25 +107,39 @@ class CommentMatcher(object):
 
 class SubversionLineEdit(QtWidgets.QWidget):
     """QLineEdit with QPushButton for drop down selection of list of strings"""
-    def __init__(self, parent=None):
-        super(SubversionLineEdit, self).__init__(parent=parent)
+
+    text_changed = QtCore.Signal(str)
+
+    def __init__(self, *args, **kwargs):
+        super(SubversionLineEdit, self).__init__(*args, **kwargs)
+
+        input_field = PlaceholderLineEdit(self)
+        menu_btn = QtWidgets.QPushButton(self)
+        menu_btn.setFixedWidth(18)
+
+        menu = QtWidgets.QMenu(self)
+        menu_btn.setMenu(menu)
 
         layout = QtWidgets.QHBoxLayout(self)
         layout.setContentsMargins(0, 0, 0, 0)
         layout.setSpacing(3)
 
-        self._input = PlaceholderLineEdit()
-        self._button = QtWidgets.QPushButton("")
-        self._button.setFixedWidth(18)
-        self._menu = QtWidgets.QMenu(self)
-        self._button.setMenu(self._menu)
+        layout.addWidget(input_field, 1)
+        layout.addWidget(menu_btn, 0)
 
-        layout.addWidget(self._input)
-        layout.addWidget(self._button)
+        input_field.textChanged.connect(self.text_changed)
 
-    @property
-    def input(self):
-        return self._input
+        self.setFocusProxy(input_field)
+
+        self._input_field = input_field
+        self._menu_btn = menu_btn
+        self._menu = menu
+
+    def set_placeholder(self, placeholder):
+        self._input_field.setPlaceholderText(placeholder)
+
+    def set_text(self, text):
+        self._input_field.setText(text)
 
     def set_values(self, values):
         self._update(values)
@@ -134,7 +148,7 @@ class SubversionLineEdit(QtWidgets.QWidget):
         self._menu.exec_()
 
     def _on_action_clicked(self, action):
-        self._input.setText(action.text())
+        self._input_field.setText(action.text())
 
     def _update(self, values):
         """Create optional predefined subset names
@@ -147,7 +161,7 @@ class SubversionLineEdit(QtWidgets.QWidget):
         """
 
         menu = self._menu
-        button = self._button
+        button = self._menu_btn
 
         state = any(values)
         button.setEnabled(state)
@@ -236,7 +250,7 @@ class SaveAsDialog(QtWidgets.QDialog):
 
         # Subversion input
         subversion = SubversionLineEdit(inputs_widget)
-        subversion.input.setPlaceholderText("Will be part of filename.")
+        subversion.set_placeholder("Will be part of filename.")
 
         # Extensions combobox
         ext_combo = QtWidgets.QComboBox(inputs_widget)
@@ -271,7 +285,7 @@ class SaveAsDialog(QtWidgets.QDialog):
                 if comment:
                     log.info("Detected subversion comment: {}".format(comment))
                     self.data["comment"] = comment
-                    subversion.input.setText(comment)
+                    subversion.set_text(comment)
 
             existing_comments = self.get_existing_comments()
             subversion.set_values(existing_comments)
@@ -292,7 +306,7 @@ class SaveAsDialog(QtWidgets.QDialog):
             self.on_version_checkbox_changed
         )
 
-        subversion.input.textChanged.connect(self.on_comment_changed)
+        subversion.text_changed.connect(self.on_comment_changed)
         ext_combo.currentIndexChanged.connect(self.on_extension_changed)
 
         btn_ok.pressed.connect(self.on_ok_pressed)
@@ -303,7 +317,7 @@ class SaveAsDialog(QtWidgets.QDialog):
 
         # Force default focus to comment, some hosts didn't automatically
         # apply focus to this line edit (e.g. Houdini)
-        subversion.input.setFocus()
+        subversion.setFocus()
 
         # Store widgets
         self.btn_ok = btn_ok
