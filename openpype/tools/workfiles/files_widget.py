@@ -20,6 +20,7 @@ from openpype.lib.avalon_context import (
 )
 from .model import (
     WorkAreaFilesModel,
+    PublishFilesModel,
 
     FILEPATH_ROLE,
     DATE_MODIFIED_ROLE,
@@ -76,36 +77,77 @@ class FilesWidget(QtWidgets.QWidget):
         # (setting parent doesn't work as it hides the message box)
         self._messagebox = None
 
-        files_view = FilesView(self)
+        # Filtering input
+        filter_widget = QtWidgets.QWidget(self)
 
-        # Create the Files model
+        published_checkbox = QtWidgets.QCheckBox("Published", filter_widget)
+
+        filter_input = PlaceholderLineEdit(filter_widget)
+        filter_input.setPlaceholderText("Filter files..")
+
+        filter_layout = QtWidgets.QHBoxLayout(filter_widget)
+        filter_layout.setContentsMargins(0, 0, 0, 0)
+        filter_layout.addWidget(published_checkbox, 0)
+        filter_layout.addWidget(filter_input, 1)
+
+        # Create the Files models
         extensions = set(self.host.file_extensions())
-        files_model = WorkAreaFilesModel(extensions)
+
+        views_widget = QtWidgets.QWidget(self)
+        # Workarea view
+        workarea_files_model = WorkAreaFilesModel(extensions)
 
         # Create proxy model for files to be able sort and filter
-        proxy_model = QtCore.QSortFilterProxyModel()
-        proxy_model.setSourceModel(files_model)
-        proxy_model.setDynamicSortFilter(True)
-        proxy_model.setSortCaseSensitivity(QtCore.Qt.CaseInsensitive)
+        workarea_proxy_model = QtCore.QSortFilterProxyModel()
+        workarea_proxy_model.setSourceModel(workarea_files_model)
+        workarea_proxy_model.setDynamicSortFilter(True)
+        workarea_proxy_model.setSortCaseSensitivity(QtCore.Qt.CaseInsensitive)
 
         # Set up the file list tree view
-        files_view.setModel(proxy_model)
-        files_view.setSortingEnabled(True)
-        files_view.setContextMenuPolicy(QtCore.Qt.CustomContextMenu)
+        workarea_files_view = FilesView(views_widget)
+        workarea_files_view.setModel(workarea_proxy_model)
+        workarea_files_view.setSortingEnabled(True)
+        workarea_files_view.setContextMenuPolicy(QtCore.Qt.CustomContextMenu)
 
         # Date modified delegate
-        time_delegate = PrettyTimeDelegate()
-        files_view.setItemDelegateForColumn(1, time_delegate)
-        files_view.setIndentation(3)   # smaller indentation
+        workarea_time_delegate = PrettyTimeDelegate()
+        workarea_files_view.setItemDelegateForColumn(1, workarea_time_delegate)
+        workarea_files_view.setIndentation(3)   # smaller indentation
 
         # Default to a wider first filename column it is what we mostly care
         # about and the date modified is relatively small anyway.
-        files_view.setColumnWidth(0, 330)
+        workarea_files_view.setColumnWidth(0, 330)
 
-        # Filtering input
-        filter_input = PlaceholderLineEdit(self)
-        filter_input.setPlaceholderText("Filter files..")
-        filter_input.textChanged.connect(proxy_model.setFilterFixedString)
+        # Publish files view
+        publish_files_model = PublishFilesModel(extensions, io, self.anatomy)
+
+        publish_proxy_model = QtCore.QSortFilterProxyModel()
+        publish_proxy_model.setSourceModel(publish_files_model)
+        publish_proxy_model.setDynamicSortFilter(True)
+        publish_proxy_model.setSortCaseSensitivity(QtCore.Qt.CaseInsensitive)
+
+        publish_files_view = FilesView(views_widget)
+        publish_files_view.setModel(publish_proxy_model)
+
+        publish_files_view.setSortingEnabled(True)
+        publish_files_view.setContextMenuPolicy(QtCore.Qt.CustomContextMenu)
+
+        # Date modified delegate
+        publish_time_delegate = PrettyTimeDelegate()
+        publish_files_view.setItemDelegateForColumn(1, publish_time_delegate)
+        publish_files_view.setIndentation(3)   # smaller indentation
+
+        # Default to a wider first filename column it is what we mostly care
+        # about and the date modified is relatively small anyway.
+        publish_files_view.setColumnWidth(0, 330)
+
+        # Hide publish view first
+        publish_files_view.setVisible(False)
+
+        views_layout = QtWidgets.QHBoxLayout(views_widget)
+        views_layout.setContentsMargins(0, 0, 0, 0)
+        views_layout.addWidget(workarea_files_view, 1)
+        views_layout.addWidget(publish_files_view, 1)
 
         # Home Page
         # Build buttons widget for files widget
@@ -123,33 +165,68 @@ class FilesWidget(QtWidgets.QWidget):
         # Build files widgets for home page
         main_layout = QtWidgets.QVBoxLayout(self)
         main_layout.setContentsMargins(0, 0, 0, 0)
-        main_layout.addWidget(filter_input)
-        main_layout.addWidget(files_view)
-        main_layout.addWidget(btns_widget)
+        main_layout.addWidget(filter_widget, 0)
+        main_layout.addWidget(views_widget, 1)
+        main_layout.addWidget(btns_widget, 0)
 
         # Register signal callbacks
-        files_view.doubleClickedLeft.connect(self.on_open_pressed)
-        files_view.customContextMenuRequested.connect(self.on_context_menu)
-        files_view.selectionModel().selectionChanged.connect(
+        published_checkbox.stateChanged.connect(self._on_published_change)
+        filter_input.textChanged.connect(self._on_filter_text_change)
+
+        workarea_files_view.doubleClickedLeft.connect(
+            self._on_workarea_open_pressed
+        )
+        workarea_files_view.customContextMenuRequested.connect(
+            self._on_workarea_context_menu
+        )
+        workarea_files_view.selectionModel().selectionChanged.connect(
             self.on_file_select
         )
 
-        btn_open.pressed.connect(self.on_open_pressed)
+        btn_open.pressed.connect(self._on_workarea_open_pressed)
         btn_browse.pressed.connect(self.on_browse_pressed)
         btn_save.pressed.connect(self.on_save_as_pressed)
 
         # Store attributes
-        self.time_delegate = time_delegate
+        self._published_checkbox = published_checkbox
+        self._filter_input = filter_input
 
-        self.filter_input = filter_input
+        self._workarea_time_delegate = workarea_time_delegate
+        self._workarea_files_view = workarea_files_view
+        self._workarea_files_model = workarea_files_model
+        self._workarea_proxy_model = workarea_proxy_model
 
-        self.files_view = files_view
-        self.files_model = files_model
+        self._publish_time_delegate = publish_time_delegate
+        self._publish_files_view = publish_files_view
+        self._publish_files_model = publish_files_model
+        self._publish_proxy_model = publish_proxy_model
 
         self.btns_widget = btns_widget
         self.btn_open = btn_open
         self.btn_browse = btn_browse
         self.btn_save = btn_save
+
+        self._workarea_visible = True
+
+    def _on_published_change(self):
+        workarea_visible = not self._published_checkbox.isChecked()
+
+        self._workarea_files_view.setVisible(workarea_visible)
+        self._publish_files_view.setVisible(not workarea_visible)
+
+        self._workarea_visible = workarea_visible
+        self._update_filtering()
+        self._update_asset_task()
+
+    def _on_filter_text_change(self):
+        self._update_filtering()
+
+    def _update_filtering(self):
+        text = self._filter_input.text()
+        if self._workarea_visible:
+            self._workarea_proxy_model.setFilterFixedString(text)
+        else:
+            self._publish_proxy_model.setFilterFixedString(text)
 
     def set_asset_task(self, asset_id, task_name, task_type):
         if asset_id != self._asset_id:
@@ -157,26 +234,34 @@ class FilesWidget(QtWidgets.QWidget):
         self._asset_id = asset_id
         self._task_name = task_name
         self._task_type = task_type
+        self._update_asset_task()
 
-        # Define a custom session so we can query the work root
-        # for a "Work area" that is not our current Session.
-        # This way we can browse it even before we enter it.
-        if self._asset_id and self._task_name and self._task_type:
-            session = self._get_session()
-            self._workdir_path = session["AVALON_WORKDIR"]
-            self._workfiles_root = self.host.work_root(session)
-            self.files_model.set_root(self._workfiles_root)
+    def _update_asset_task(self):
+        if self._workarea_visible:
+            # Define a custom session so we can query the work root
+            # for a "Work area" that is not our current Session.
+            # This way we can browse it even before we enter it.
+            if self._asset_id and self._task_name and self._task_type:
+                session = self._get_session()
+                self._workdir_path = session["AVALON_WORKDIR"]
+                self._workfiles_root = self.host.work_root(session)
+                self._workarea_files_model.set_root(self._workfiles_root)
 
+            else:
+                self._workarea_files_model.set_root(None)
+
+            # Disable/Enable buttons based on available files in model
+            has_valid_items = self._workarea_files_model.has_valid_items()
+            self.btn_browse.setEnabled(has_valid_items)
+            self.btn_open.setEnabled(has_valid_items)
+            if not has_valid_items:
+                # Manually trigger file selection
+                self.on_file_select()
         else:
-            self.files_model.set_root(None)
-
-        # Disable/Enable buttons based on available files in model
-        has_valid_items = self.files_model.has_valid_items()
-        self.btn_browse.setEnabled(has_valid_items)
-        self.btn_open.setEnabled(has_valid_items)
-        if not has_valid_items:
-            # Manually trigger file selection
-            self.on_file_select()
+            self._publish_files_model.set_context(
+                self._asset_id, self._task_name
+            )
+            has_valid_items = self._publish_files_model.has_valid_items()
 
     def _get_asset_doc(self):
         if self._asset_id is None:
@@ -309,14 +394,18 @@ class FilesWidget(QtWidgets.QWidget):
 
     def _get_selected_filepath(self):
         """Return current filepath selected in view"""
-        selection = self.files_view.selectionModel()
+        if self._workarea_visible:
+            source_view = self._workarea_files_view
+        else:
+            source_view = self._publish_files_view
+        selection = source_view.selectionModel()
         index = selection.currentIndex()
         if not index.isValid():
             return
 
         return index.data(FILEPATH_ROLE)
 
-    def on_open_pressed(self):
+    def _on_workarea_open_pressed(self):
         path = self._get_selected_filepath()
         if not path:
             print("No file selected to open..")
@@ -396,12 +485,12 @@ class FilesWidget(QtWidgets.QWidget):
 
     def refresh(self):
         """Refresh listed files for current selection in the interface"""
-        self.files_model.refresh()
+        self._workarea_files_model.refresh()
 
         if self.auto_select_latest_modified:
             self._select_last_modified_file()
 
-    def on_context_menu(self, point):
+    def _on_workarea_context_menu(self, point):
         index = self._workarea_files_view.indexAt(point)
         if not index.isValid():
             return
@@ -420,14 +509,14 @@ class FilesWidget(QtWidgets.QWidget):
         menu.addAction(action)
 
         # Show the context action menu
-        global_point = self.files_view.mapToGlobal(point)
+        global_point = self._workarea_files_view.mapToGlobal(point)
         action = menu.exec_(global_point)
         if not action:
             return
 
     def _select_last_modified_file(self):
         """Utility function to select the file with latest date modified"""
-        model = self.files_view.model()
+        model = self._workarea_files_view.model()
 
         highest_index = None
         highest = 0
@@ -442,4 +531,4 @@ class FilesWidget(QtWidgets.QWidget):
                 highest = modified
 
         if highest_index:
-            self.files_view.setCurrentIndex(highest_index)
+            self._workarea_files_view.setCurrentIndex(highest_index)
