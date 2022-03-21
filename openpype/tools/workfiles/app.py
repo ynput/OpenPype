@@ -2,7 +2,6 @@ import sys
 import os
 import re
 import copy
-import getpass
 import shutil
 import logging
 import datetime
@@ -27,7 +26,8 @@ from openpype.lib import (
     save_workfile_data_to_doc,
     get_workfile_template_key,
     create_workdir_extra_folders,
-    get_workdir_data
+    get_workdir_data,
+    get_last_workfile_with_version
 )
 from openpype.lib.avalon_context import (
     update_current_task,
@@ -441,7 +441,7 @@ class NameWindow(QtWidgets.QDialog):
 
             data["ext"] = data["ext"][1:]
 
-            version = api.last_workfile_with_version(
+            version = get_last_workfile_with_version(
                 self.root, template, data, extensions
             )[1]
 
@@ -469,7 +469,7 @@ class NameWindow(QtWidgets.QDialog):
                 # Log warning
                 if idx == 0:
                     log.warning((
-                        "BUG: Function `last_workfile_with_version` "
+                        "BUG: Function `get_last_workfile_with_version` "
                         "didn't return last version."
                     ))
             # Raise exception if even 100 version fallback didn't help

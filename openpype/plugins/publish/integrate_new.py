@@ -13,14 +13,15 @@ from bson.objectid import ObjectId
 from pymongo import DeleteOne, InsertOne
 import pyblish.api
 from avalon import io
-from avalon.api import format_template_with_optional_keys
 import openpype.api
 from datetime import datetime
 # from pype.modules import ModulesManager
 from openpype.lib.profiles_filtering import filter_profiles
 from openpype.lib import (
     prepare_template_data,
-    create_hard_link
+    create_hard_link,
+    StringTemplate,
+    TemplateUnsolved
 )
 
 # this is needed until speedcopy for linux is fixed
@@ -855,9 +856,10 @@ class IntegrateAssetNew(pyblish.api.InstancePlugin):
         fill_pairs = prepare_template_data(fill_pairs)
 
         try:
-            filled_template = \
-                format_template_with_optional_keys(fill_pairs, template)
-        except KeyError:
+            filled_template = StringTemplate.format_strict_template(
+                template, fill_pairs
+            )
+        except (KeyError, TemplateUnsolved):
             keys = []
             if fill_pairs:
                 keys = fill_pairs.keys()
