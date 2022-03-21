@@ -24,8 +24,10 @@ class ExtractReviewDataMov(openpype.api.Extractor):
     outputs = {}
 
     def process(self, instance):
-        families = instance.data["families"]
-        families.append(instance.data["family"])
+        families = set(instance.data["families"])
+
+        # add main family to make sure all families are compared
+        families.add(instance.data["family"])
 
         task_type = instance.context.data["taskType"]
         subset = instance.data["subset"]
@@ -67,13 +69,11 @@ class ExtractReviewDataMov(openpype.api.Extractor):
                 # test if family found in context
                 # using intersection to make sure all defined
                 # families are present in combination
-                if f_families and not any(
-                        set(families).intersection(f_families)):
+                if f_families and not families.intersection(f_families):
                     continue
 
                 # test task types from filter
-                if f_task_types and not bool(
-                        task_type in f_task_types):
+                if f_task_types and task_type not in f_task_types:
                     continue
 
                 # test subsets from filter
