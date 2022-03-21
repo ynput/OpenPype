@@ -80,7 +80,7 @@
             "skip_integration_repre_list": [],
             "aov_filter": {
                 "maya": [
-                    ".*(?:[\\._-])*([Bb]eauty)(?:[\\.|_])*.*"
+                    ".*([Bb]eauty).*"
                 ],
                 "nuke": [
                     ".*"
