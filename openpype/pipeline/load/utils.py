@@ -525,7 +525,7 @@ def get_representation_path(representation, root=None, dbcon=None):
 
     """
 
-    from openpype.lib import StringTemplate
+    from openpype.lib import StringTemplate, TemplateUnsolved
 
     if dbcon is None:
         dbcon = io
@@ -542,13 +542,14 @@ def get_representation_path(representation, root=None, dbcon=None):
         try:
             context = representation["context"]
             context["root"] = root
-            template_obj = StringTemplate(template)
-            path = str(template_obj.format(context))
+            path = StringTemplate.format_strict_template(
+                template, context
+            )
             # Force replacing backslashes with forward slashed if not on
             #   windows
             if platform.system().lower() != "windows":
                 path = path.replace("\\", "/")
-        except KeyError:
+        except (TemplateUnsolved, KeyError):
             # Template references unavailable data
             return None
 

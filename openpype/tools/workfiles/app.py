@@ -2,7 +2,6 @@ import sys
 import os
 import re
 import copy
-import getpass
 import shutil
 import logging
 import datetime
@@ -27,7 +26,8 @@ from openpype.lib import (
     save_workfile_data_to_doc,
     get_workfile_template_key,
     create_workdir_extra_folders,
-    get_system_general_anatomy_data
+    get_workdir_data,
+    get_last_workfile_with_version
 )
 from openpype.lib.avalon_context import (
     update_current_task,
@@ -48,6 +48,7 @@ def build_workfile_data(session):
     # Set work file data for template formatting
     asset_name = session["AVALON_ASSET"]
     task_name = session["AVALON_TASK"]
+    host_name = session["AVALON_APP"]
     project_doc = io.find_one(
         {"type": "project"},
         {
@@ -63,42 +64,17 @@ def build_workfile_data(session):
             "name": asset_name
         },
         {
+            "name": True,
             "data.tasks": True,
             "data.parents": True
         }
     )
-
-    task_type = asset_doc["data"]["tasks"].get(task_name, {}).get("type")
-
-    project_task_types = project_doc["config"]["tasks"]
-    task_short = project_task_types.get(task_type, {}).get("short_name")
-
-    asset_parents = asset_doc["data"]["parents"]
-    parent_name = project_doc["name"]
-    if asset_parents:
-        parent_name = asset_parents[-1]
-
-    data = {
-        "project": {
-            "name": project_doc["name"],
-            "code": project_doc["data"].get("code")
-        },
-        "asset": asset_name,
-        "task": {
-            "name": task_name,
-            "type": task_type,
-            "short": task_short,
-        },
-        "parent": parent_name,
+    data = get_workdir_data(project_doc, asset_doc, task_name, host_name)
+    data.update({
         "version": 1,
-        "user": getpass.getuser(),
         "comment": "",
         "ext": None
-    }
-
-    # add system general settings anatomy data
-    system_general_data = get_system_general_anatomy_data()
-    data.update(system_general_data)
+    })
 
     return data
 
@@ -465,7 +441,7 @@ class NameWindow(QtWidgets.QDialog):
 
             data["ext"] = data["ext"][1:]
 
-            version = api.last_workfile_with_version(
+            version = get_last_workfile_with_version(
                 self.root, template, data, extensions
             )[1]
 
@@ -493,7 +469,7 @@ class NameWindow(QtWidgets.QDialog):
                 # Log warning
                 if idx == 0:
                     log.warning((
-                        "BUG: Function `last_workfile_with_version` "
+                        "BUG: Function `get_last_workfile_with_version` "
                         "didn't return last version."
                     ))
             # Raise exception if even 100 version fallback didn't help

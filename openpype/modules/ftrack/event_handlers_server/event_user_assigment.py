@@ -87,8 +87,8 @@ class UserAssigmentEvent(BaseEvent):
         if not user_id:
             return None, None
 
-        task = session.query('Task where id is "{}"'.format(task_id)).one()
-        user = session.query('User where id is "{}"'.format(user_id)).one()
+        task = session.query('Task where id is "{}"'.format(task_id)).first()
+        user = session.query('User where id is "{}"'.format(user_id)).first()
 
         return task, user
 

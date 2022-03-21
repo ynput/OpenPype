@@ -1,8 +1,28 @@
 # Changelog
 
-## [3.9.1](https://github.com/pypeclub/OpenPype/tree/3.9.1) (2022-03-17)
+## [3.9.2-nightly.1](https://github.com/pypeclub/OpenPype/tree/HEAD)
 
-[Full Changelog](https://github.com/pypeclub/OpenPype/compare/3.9.0...3.9.1)
+[Full Changelog](https://github.com/pypeclub/OpenPype/compare/3.9.1...HEAD)
+
+**🚀 Enhancements**
+
+- CI: change the version bump logic [\#2919](https://github.com/pypeclub/OpenPype/pull/2919)
+- Deadline: Add headless argument [\#2916](https://github.com/pypeclub/OpenPype/pull/2916)
+- Ftrack: Fill workfile in custom attribute [\#2906](https://github.com/pypeclub/OpenPype/pull/2906)
+- Settings UI: Add simple tooltips for settings entities [\#2901](https://github.com/pypeclub/OpenPype/pull/2901)
+
+**🐛 Bug fixes**
+
+- Ftrack: Missing Ftrack id after editorial publish [\#2905](https://github.com/pypeclub/OpenPype/pull/2905)
+- AfterEffects: Fix rendering for single frame in DL [\#2875](https://github.com/pypeclub/OpenPype/pull/2875)
+
+**🔀 Refactored code**
+
+- General: Move formatting and workfile functions [\#2914](https://github.com/pypeclub/OpenPype/pull/2914)
+
+## [3.9.1](https://github.com/pypeclub/OpenPype/tree/3.9.1) (2022-03-18)
+
+[Full Changelog](https://github.com/pypeclub/OpenPype/compare/CI/3.9.1-nightly.3...3.9.1)
 
 **🚀 Enhancements**
 
@@ -22,7 +42,6 @@
 - General: Remove forgotten use of avalon Creator [\#2885](https://github.com/pypeclub/OpenPype/pull/2885)
 - General: Avoid circular import [\#2884](https://github.com/pypeclub/OpenPype/pull/2884)
 - Fixes for attaching loaded containers \(\#2837\) [\#2874](https://github.com/pypeclub/OpenPype/pull/2874)
-- Maya: Deformer node ids validation plugin [\#2826](https://github.com/pypeclub/OpenPype/pull/2826)
 
 **🔀 Refactored code**
 
@@ -75,6 +94,7 @@
 - Maya: Stop creation of reviews for Cryptomattes [\#2832](https://github.com/pypeclub/OpenPype/pull/2832)
 - Deadline: Remove recreated event [\#2828](https://github.com/pypeclub/OpenPype/pull/2828)
 - Deadline: Added missing events folder [\#2827](https://github.com/pypeclub/OpenPype/pull/2827)
+- Maya: Deformer node ids validation plugin [\#2826](https://github.com/pypeclub/OpenPype/pull/2826)
 - Settings: Missing document with OP versions may break start of OpenPype [\#2825](https://github.com/pypeclub/OpenPype/pull/2825)
 - Deadline: more detailed temp file name for environment json [\#2824](https://github.com/pypeclub/OpenPype/pull/2824)
 - General: Host name was formed from obsolete code [\#2821](https://github.com/pypeclub/OpenPype/pull/2821)
@@ -92,7 +112,6 @@
 - General: Move change context functions [\#2839](https://github.com/pypeclub/OpenPype/pull/2839)
 - Tools: Don't use avalon tools code [\#2829](https://github.com/pypeclub/OpenPype/pull/2829)
 - Move Unreal Implementation to OpenPype [\#2823](https://github.com/pypeclub/OpenPype/pull/2823)
-- General: Extract template formatting from anatomy [\#2766](https://github.com/pypeclub/OpenPype/pull/2766)
 
 ## [3.8.2](https://github.com/pypeclub/OpenPype/tree/3.8.2) (2022-02-07)
 

@@ -236,6 +236,7 @@ class ProcessSubmittedJobOnFarm(pyblish.api.InstancePlugin):
                 environment["OPENPYPE_MONGO"] = mongo_url
 
         args = [
+            "--headless",
             'publish',
             roothless_metadata_path,
             "--targets", "deadline",
@@ -606,7 +607,18 @@ class ProcessSubmittedJobOnFarm(pyblish.api.InstancePlugin):
                     "fps": instance.get("fps"),
                     "tags": ["review"]
                 })
-                self._solve_families(instance, True)
+            self._solve_families(instance, True)
+
+            already_there = False
+            for repre in instance.get("representations", []):
+                # might be added explicitly before by publish_on_farm
+                already_there = repre.get("files") == rep["files"]
+                if already_there:
+                    self.log.debug("repre {} already_there".format(repre))
+                    break
+
+            if not already_there:
+                representations.append(rep)
 
         return representations
 
