@@ -73,9 +73,9 @@ class ExtractMultiverseUsd(openpype.api.Extractor):
             "flattenParentXforms": False,
             "writeSparseOverrides": False,
             "useMetaPrimPath": False,
-            "customRootPath": '',
-            "customAttributes": '',
-            "nodeTypesToIgnore": '',
+            "customRootPath": u'',
+            "customAttributes": u'',
+            "nodeTypesToIgnore": u'',
             "writeMeshes": True,
             "writeCurves": True,
             "writeParticles": True,
@@ -98,7 +98,7 @@ class ExtractMultiverseUsd(openpype.api.Extractor):
             "writeTransformMatrix": True,
             "writeUsdAttributes": False,
             "timeVaryingTopology": False,
-            "customMaterialNamespace": '',
+            "customMaterialNamespace": u'',
             "numTimeSamples": 1,
             "timeSamplesSpan": 0.0
         }
@@ -112,8 +112,6 @@ class ExtractMultiverseUsd(openpype.api.Extractor):
 
             # Ensure the data is of correct type
             value = instance.data[key]
-            if isinstance(value, str):
-                value = unicode(value, "utf-8")
             if not isinstance(value, self.options[key]):
                 self.log.warning(
                     "Overridden attribute {key} was of "
