@@ -55,7 +55,7 @@ class TempPublishFiles(object):
     Metadata file can be in theory opened and modified by multiple processes,
     threads at one time. For those cases is created simple lock file which
     is created before modification begins and is removed when modification
-    ends. Existince of the file means that it should not be modified by
+    ends. Existence of the file means that it should not be modified by
     any other process at the same time.
 
     Metadata example:
