@@ -55,20 +55,22 @@ class MultiverseUsdLoader(api.Loader):
             loader=self.__class__.__name__)
 
     def update(self, container, representation):
+        # type: (dict, dict) -> None
+        """Update container with specified representation."""
+        node = container['objectName']
+        assert cmds.objExists(node), "Missing container"
+
+        members = cmds.sets(node, query=True) or []
+        shapes = cmds.ls(members, type="mvUsdCompoundShape")
+        assert shapes, "Cannot find mvUsdCompoundShape in container"
 
         path = api.get_representation_path(representation)
-
-        # Update the shape
-        members = cmds.sets(container['objectName'], query=True)
-        shapes = cmds.ls(members, type="mvUsdCompoundShape", long=True)
-
-        assert len(shapes) == 1, "This is a bug"
 
         import multiverse
         for shape in shapes:
             multiverse.SetUsdCompoundAssetPaths(shape, [path])
 
-        cmds.setAttr(container["objectName"] + ".representation",
+        cmds.setAttr("{}.representation".format(node),
                      str(representation["_id"]),
                      type="string")
 
@@ -76,4 +78,19 @@ class MultiverseUsdLoader(api.Loader):
         self.update(container, representation)
 
     def remove(self, container):
-        pass
+        # type: (dict) -> None
+        """Remove loaded container."""
+        # Delete container and its contents
+        if cmds.objExists(container['objectName']):
+            members = cmds.sets(container['objectName'], query=True) or []
+            cmds.delete([container['objectName']] + members)
+
+        # Remove the namespace, if empty
+        namespace = container['namespace']
+        if cmds.namespace(exists=namespace):
+            members = cmds.namespaceInfo(namespace, listNamespace=True)
+            if not members:
+                cmds.namespace(removeNamespace=namespace)
+            else:
+                self.log.warning("Namespace not deleted because it "
+                                 "still has members: %s", namespace)
