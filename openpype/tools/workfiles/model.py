@@ -223,6 +223,10 @@ class PublishFilesModel(QtGui.QStandardItemModel):
             "fa.file-o",
             color=get_default_entity_icon_color()
         )
+        self._invalid_icon = qtawesome.icon(
+            "fa.times",
+            color=get_disabled_entity_icon_color()
+        )
         self._invalid_item_visible = False
 
         self._items_by_id = {}
@@ -230,31 +234,29 @@ class PublishFilesModel(QtGui.QStandardItemModel):
         self._asset_id = None
         self._task_name = None
 
+    def _set_item_invalid(self, item):
+        item.setFlags(QtCore.Qt.NoItemFlags)
+        item.setData(self._invalid_icon, QtCore.Qt.DecorationRole)
+
+    def _set_item_valid(self, item):
+        item.setFlags(
+            QtCore.Qt.ItemIsEnabled | QtCore.Qt.ItemIsSelectable
+        )
+        item.setData(self._file_icon, QtCore.Qt.DecorationRole)
+
     def _get_invalid_context_item(self):
         if self._invalid_context_item is None:
-            message = "Selected context is not valid."
-            item = QtGui.QStandardItem(message)
-            icon = qtawesome.icon(
-                "fa.times",
-                color=get_disabled_entity_icon_color()
-            )
-            item.setData(icon, QtCore.Qt.DecorationRole)
-            item.setFlags(QtCore.Qt.NoItemFlags)
+            item = QtGui.QStandardItem("Selected context is not valid.")
             item.setColumnCount(self.columnCount())
+            self._set_item_invalid(item)
             self._invalid_context_item = item
         return self._invalid_context_item
 
     def _get_empty_root_item(self):
         if self._empty_root_item is None:
-            message = "Didn't find any published workfiles."
-            item = QtGui.QStandardItem(message)
-            icon = qtawesome.icon(
-                "fa.times",
-                color=get_disabled_entity_icon_color()
-            )
-            item.setData(icon, QtCore.Qt.DecorationRole)
-            item.setFlags(QtCore.Qt.NoItemFlags)
+            item = QtGui.QStandardItem("Didn't find any published workfiles.")
             item.setColumnCount(self.columnCount())
+            self._set_item_invalid(item)
             self._empty_root_item = item
         return self._empty_root_item
 
@@ -290,21 +292,15 @@ class PublishFilesModel(QtGui.QStandardItemModel):
             },
             {
                 "_id": True,
-                "data.families": True,
                 "name": True
             }
         )
-        filtered_subsets = []
-        for subset_doc in subset_docs:
-            data = subset_doc.get("data") or {}
-            families = data.get("families") or []
-            if "workfile" in families:
-                filtered_subsets.append(subset_doc)
 
-        subset_ids = [subset_doc["_id"] for subset_doc in filtered_subsets]
+        subset_ids = [subset_doc["_id"] for subset_doc in subset_docs]
         if not subset_ids:
             return output
 
+        # Get version docs of subsets with their families
         version_docs = self._dbcon.find(
             {
                 "type": "version",
@@ -312,13 +308,24 @@ class PublishFilesModel(QtGui.QStandardItemModel):
             },
             {
                 "_id": True,
+                "data.families": True,
                 "parent": True
             }
         )
-        version_ids = [version_doc["_id"] for version_doc in version_docs]
+        # Filter versions if they contain 'workfile' family
+        filtered_versions = []
+        for version_doc in version_docs:
+            data = version_doc.get("data") or {}
+            families = data.get("families") or []
+            if "workfile" in families:
+                filtered_versions.append(version_doc)
+
+        version_ids = [version_doc["_id"] for version_doc in filtered_versions]
         if not version_ids:
             return output
 
+        # Query representations of filtered versions and add filter for
+        #   extension
         extensions = [ext.replace(".", "") for ext in self._file_extensions]
         repre_docs = self._dbcon.find(
             {
@@ -372,7 +379,6 @@ class PublishFilesModel(QtGui.QStandardItemModel):
         items_to_remove = set(self._items_by_id.keys())
         for item in self._get_workfie_representations():
             filepath, repre_id = item
-            modified = os.path.getmtime(filepath)
             filename = os.path.basename(filepath)
 
             if repre_id in items_to_remove:
@@ -381,12 +387,19 @@ class PublishFilesModel(QtGui.QStandardItemModel):
             else:
                 item = QtGui.QStandardItem(filename)
                 item.setColumnCount(self.columnCount())
-                item.setFlags(
-                    QtCore.Qt.ItemIsEnabled | QtCore.Qt.ItemIsSelectable
-                )
-                item.setData(self._file_icon, QtCore.Qt.DecorationRole)
                 new_items.append(item)
                 self._items_by_id[repre_id] = item
+
+            if os.path.exists(filepath):
+                modified = os.path.getmtime(filepath)
+                tooltip = None
+                self._set_item_valid(item)
+            else:
+                modified = None
+                tooltip = "File is not available from this machine"
+                self._set_item_invalid(item)
+
+            item.setData(tooltip, QtCore.Qt.ToolTipRole)
             item.setData(filepath, FILEPATH_ROLE)
             item.setData(modified, DATE_MODIFIED_ROLE)
             item.setData(repre_id, ITEM_ID_ROLE)
