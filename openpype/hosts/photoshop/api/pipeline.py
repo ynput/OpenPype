@@ -179,10 +179,10 @@ def remove_instance(instance):
     stub.remove_instance(inst_id)
 
     if instance.get("members"):
-        item = stub.get_item(instance["members"][0])
+        item = stub.get_layer(instance["members"][0])
         if item:
-            stub.rename_item(item.id,
-                             item.name.replace(stub.PUBLISH_ICON, ''))
+            stub.rename_layer(item.id,
+                              item.name.replace(stub.PUBLISH_ICON, ''))
 
 
 def _get_stub():
