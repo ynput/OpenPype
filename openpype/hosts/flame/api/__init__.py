@@ -146,7 +146,6 @@ __all__ = [
     "export_clip",
     "get_preset_path_by_xml_name",
     "modify_preset_file",
-    
 
     # batch utils
     "create_batch"
