@@ -13,6 +13,7 @@ from openpype.hosts.maya.api.lib import (
 )
 from openpype.hosts.maya.api import fbx
 
+
 @contextmanager
 def renamed(original_name, renamed_name):
     # type: (str, str) -> None
@@ -21,7 +22,6 @@ def renamed(original_name, renamed_name):
         yield
     finally:
         cmds.rename(renamed_name, original_name)
-        yield
 
 
 class ExtractUnrealSkeletalMesh(openpype.api.Extractor):
@@ -42,6 +42,8 @@ class ExtractUnrealSkeletalMesh(openpype.api.Extractor):
         geo = instance.data.get("geometry")
         joints = instance.data.get("joints")
 
+        joints_parent = cmds.listRelatives(joints, p=True)
+
         to_extract = geo + joints
 
         # The export requires forward slashes because we need
@@ -54,19 +56,30 @@ class ExtractUnrealSkeletalMesh(openpype.api.Extractor):
 
         fbx_exporter.set_options_from_instance(instance)
 
+        # This magic is done for variants. To let Unreal merge correctly
+        # existing data, top node must have the same name. So for every
+        # variant we extract we need to rename top node of the rig correctly.
+        # It is finally done in context manager so it won't affect current
+        # scene.
         parent = "{}{}".format(
             instance.data["asset"],
             instance.data.get("variant", "")
         )
-        with maintained_selection():
-            with renamed()
-                with parent_nodes(to_extract, parent=parent):
-                    rooted = [
-                        "{}|{}".format(parent, i.split("|")[-1])
-                        for i in to_extract
-                    ]
-                    self.log.info("Un-parenting: {}".format(rooted, path))
-                    fbx_exporter.export(rooted, path)
+
+        renamed_to_extract = []
+        for node in to_extract:
+            node_path = node.split("|")
+            node_path[1] = parent
+            renamed_to_extract.append("|".join(node_path))
+
+        with renamed(joints_parent, parent):
+            with parent_nodes(renamed_to_extract, parent=parent):
+                rooted = [
+                    "{}|{}".format(parent, i.split("|")[-1])
+                    for i in renamed_to_extract
+                ]
+                self.log.info("Un-parenting: {}".format(rooted, path))
+                fbx_exporter.export(rooted, path)
 
         if "representations" not in instance.data:
             instance.data["representations"] = []
