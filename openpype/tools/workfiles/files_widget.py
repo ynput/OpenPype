@@ -155,18 +155,33 @@ class FilesWidget(QtWidgets.QWidget):
         # Home Page
         # Build buttons widget for files widget
         btns_widget = QtWidgets.QWidget(self)
-        btn_save = QtWidgets.QPushButton("Save As", btns_widget)
-        btn_browse = QtWidgets.QPushButton("Browse", btns_widget)
-        btn_open = QtWidgets.QPushButton("Open", btns_widget)
 
-        btn_view_published = QtWidgets.QPushButton("View", btns_widget)
+        workarea_btns_widget = QtWidgets.QWidget(btns_widget)
+        btn_save = QtWidgets.QPushButton("Save As", workarea_btns_widget)
+        btn_browse = QtWidgets.QPushButton("Browse", workarea_btns_widget)
+        btn_open = QtWidgets.QPushButton("Open", workarea_btns_widget)
+
+        workarea_btns_layout = QtWidgets.QHBoxLayout(workarea_btns_widget)
+        workarea_btns_layout.setContentsMargins(0, 0, 0, 0)
+        workarea_btns_layout.addWidget(btn_open, 1)
+        workarea_btns_layout.addWidget(btn_browse, 1)
+        workarea_btns_layout.addWidget(btn_save, 1)
+
+        publish_btns_widget = QtWidgets.QWidget(btns_widget)
+        btn_view_published = QtWidgets.QPushButton("View", publish_btns_widget)
+        btn_save_as_published = QtWidgets.QPushButton(
+            "Save As", publish_btns_widget
+        )
+
+        publish_btns_layout = QtWidgets.QHBoxLayout(publish_btns_widget)
+        publish_btns_layout.setContentsMargins(0, 0, 0, 0)
+        publish_btns_layout.addWidget(btn_view_published, 1)
+        publish_btns_layout.addWidget(btn_save_as_published, 1)
 
         btns_layout = QtWidgets.QHBoxLayout(btns_widget)
         btns_layout.setContentsMargins(0, 0, 0, 0)
-        btns_layout.addWidget(btn_open, 1)
-        btns_layout.addWidget(btn_browse, 1)
-        btns_layout.addWidget(btn_save, 1)
-        btns_layout.addWidget(btn_view_published, 1)
+        btns_layout.addWidget(workarea_btns_widget, 1)
+        btns_layout.addWidget(publish_btns_widget, 1)
 
         # Build files widgets for home page
         main_layout = QtWidgets.QVBoxLayout(self)
@@ -189,13 +204,16 @@ class FilesWidget(QtWidgets.QWidget):
             self.on_file_select
         )
         publish_files_view.doubleClickedLeft.connect(
-            self._on_view_published_pressed
+            self._on_published_view_pressed
         )
 
         btn_open.pressed.connect(self._on_workarea_open_pressed)
         btn_browse.pressed.connect(self.on_browse_pressed)
-        btn_save.pressed.connect(self.on_save_as_pressed)
-        btn_view_published.pressed.connect(self._on_view_published_pressed)
+        btn_save.pressed.connect(self._on_save_as_pressed)
+        btn_view_published.pressed.connect(self._on_published_view_pressed)
+        btn_save_as_published.pressed.connect(
+            self._on_published_save_as_pressed
+        )
 
         # Store attributes
         self._published_checkbox = published_checkbox
@@ -211,7 +229,8 @@ class FilesWidget(QtWidgets.QWidget):
         self._publish_files_model = publish_files_model
         self._publish_proxy_model = publish_proxy_model
 
-        self._btns_widget = btns_widget
+        self._workarea_btns_widget = workarea_btns_widget
+        self._publish_btns_widget = publish_btns_widget
         self._btn_open = btn_open
         self._btn_browse = btn_browse
         self._btn_save = btn_save
@@ -222,7 +241,7 @@ class FilesWidget(QtWidgets.QWidget):
 
         # Hide publish files widgets
         publish_files_view.setVisible(False)
-        btn_view_published.setVisible(False)
+        publish_btns_widget.setVisible(False)
 
     @property
     def published_enabled(self):
@@ -232,12 +251,10 @@ class FilesWidget(QtWidgets.QWidget):
         published_enabled = self.published_enabled
 
         self._workarea_files_view.setVisible(not published_enabled)
-        self._btn_open.setVisible(not published_enabled)
-        self._btn_browse.setVisible(not published_enabled)
-        self._btn_save.setVisible(not published_enabled)
+        self._workarea_btns_widget.setVisible(not published_enabled)
 
         self._publish_files_view.setVisible(published_enabled)
-        self._btn_view_published.setVisible(published_enabled)
+        self._publish_btns_widget.setVisible(published_enabled)
 
         self._update_filtering()
         self._update_asset_task()
@@ -462,10 +479,15 @@ class FilesWidget(QtWidgets.QWidget):
         if work_file:
             self.open_file(work_file)
 
-    def on_save_as_pressed(self):
+    def _on_save_as_pressed(self):
+        self._save_as_with_dialog()
+
+    def _save_as_with_dialog(self):
         work_filename = self.get_filename()
         if not work_filename:
             return
+
+        src_path = self._get_selected_filepath()
 
         # Trigger before save event
         emit_event(
@@ -486,13 +508,20 @@ class FilesWidget(QtWidgets.QWidget):
             log.debug("Initializing Work Directory: %s", self._workfiles_root)
             os.makedirs(self._workfiles_root)
 
-        # Update session if context has changed
-        self._enter_session()
         # Prepare full path to workfile and save it
         filepath = os.path.join(
             os.path.normpath(self._workfiles_root), work_filename
         )
-        self.host.save_file(filepath)
+
+        # Update session if context has changed
+        self._enter_session()
+
+        if not self.published_enabled:
+            self.host.save_file(filepath)
+        else:
+            shutil.copy(src_path, filepath)
+            self.host.open_file(filepath)
+
         # Create extra folders
         create_workdir_extra_folders(
             self._workdir_path,
@@ -510,9 +539,12 @@ class FilesWidget(QtWidgets.QWidget):
 
         self.workfile_created.emit(filepath)
         # Refresh files model
-        self.refresh()
+        if self.published_enabled:
+            self._published_checkbox.setChecked(False)
+        else:
+            self.refresh()
 
-    def _on_view_published_pressed(self):
+    def _on_published_view_pressed(self):
         filepath = self._get_selected_filepath()
         if not filepath or not os.path.exists(filepath):
             return
@@ -521,6 +553,10 @@ class FilesWidget(QtWidgets.QWidget):
         self.publish_file_viewed.emit()
         # Change state back to workarea
         self._published_checkbox.setChecked(False)
+
+    def _on_published_save_as_pressed(self):
+        self._save_as_with_dialog()
+
 
     def on_file_select(self):
         self.file_selected.emit(self._get_selected_filepath())
