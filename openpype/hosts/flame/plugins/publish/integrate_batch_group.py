@@ -1,3 +1,4 @@
+import os
 import pyblish
 import openpype.hosts.flame.api as opfapi
 
@@ -32,9 +33,12 @@ class IntegrateBatchGroup(pyblish.api.InstancePlugin):
         opfapi.create_batch(asset_name, frame_start, frame_end, batch_data)
 
     def _get_write_prefs(self, instance):
+        shot_path = instance.data[""]
+        render_dir_path = os.path.join(
+            shot_path, "work", task, "render", "flame")
         # The path attribute where the rendered clip is exported
         # /path/to/file.[0001-0010].exr
-        media_path = "{render_path}".format()
+        media_path = render_dir_path
         # name of file represented by tokens
         media_path_pattern = "<name>_v<iteration###>.<frame><ext>"
         # The Create Open Clip attribute of the Write File node. \
@@ -46,17 +50,33 @@ class IntegrateBatchGroup(pyblish.api.InstancePlugin):
         # The path attribute where the Open Clip file is exported by
         # the Write File node.
         create_clip_path = "<name>"
-        include_setup_path = None
+        # The path attribute where the Batch setup file
+        # is exported by the Write File node.
+        include_setup_path = "./<name>_v<iteration###>"
         # The file type for the files written by the Write File node.
         # Setting this attribute also overwrites format_extension,
         # bit_depth and compress_mode to match the defaults for
         # this file type.
         file_type = "OpenEXR"
+        # The file extension for the files written by the Write File node.
+        # This attribute resets to match file_type whenever file_type
+        # is set. If you require a specific extension, you must
+        # set format_extension after setting file_type.
+        format_extension = "exr"
         # The bit depth for the files written by the Write File node.
         # This attribute resets to match file_type whenever file_type is set.
         bit_depth = "16"
-        frame_index_mode = None
-        frame_padding = 0
+        # The compressing attribute for the files exported by the Write
+        # File node. Only relevant when file_type in 'OpenEXR', 'Sgi', 'Tiff'
+        compress = True
+        # The compression format attribute for the specific File Types
+        # export by the Write File node. You must set compress_mode
+        # after setting file_type.
+        compress_mode = "DWAB"
+        # The frame index mode attribute of the Write File node.
+        # Value range: `Use Timecode` or `Use Start Frame`
+        frame_index_mode = "Use Start Frame"
+        frame_padding = 6
         # The versioning mode of the Open Clip exported by the Write File node.
         # Only available if create_clip = True.
         version_mode = "Follow Iteration"
@@ -70,7 +90,10 @@ class IntegrateBatchGroup(pyblish.api.InstancePlugin):
             "create_clip_path": create_clip_path,
             "include_setup_path": include_setup_path,
             "file_type": file_type,
+            "format_extension": format_extension,
             "bit_depth": bit_depth,
+            "compress": compress,
+            "compress_mode": compress_mode,
             "frame_index_mode": frame_index_mode,
             "frame_padding": frame_padding,
             "version_mode": version_mode,
