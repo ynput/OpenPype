@@ -1,6 +1,7 @@
 # -*- coding: utf-8 -*-
 """Create Unreal Skeletal Mesh data to be extracted as FBX."""
 import os
+from contextlib import contextmanager
 
 from maya import cmds  # noqa
 
@@ -11,6 +12,16 @@ from openpype.hosts.maya.api.lib import (
     maintained_selection
 )
 from openpype.hosts.maya.api import fbx
+
+@contextmanager
+def renamed(original_name, renamed_name):
+    # type: (str, str) -> None
+    try:
+        cmds.rename(original_name, renamed_name)
+        yield
+    finally:
+        cmds.rename(renamed_name, original_name)
+        yield
 
 
 class ExtractUnrealSkeletalMesh(openpype.api.Extractor):
@@ -48,13 +59,14 @@ class ExtractUnrealSkeletalMesh(openpype.api.Extractor):
             instance.data.get("variant", "")
         )
         with maintained_selection():
-            with parent_nodes(to_extract, parent=parent):
-                rooted = [
-                    "{}|{}".format(parent, i.split("|")[-1])
-                    for i in to_extract
-                ]
-                self.log.info("Un-parenting: {}".format(rooted, path))
-                fbx_exporter.export(rooted, path)
+            with renamed()
+                with parent_nodes(to_extract, parent=parent):
+                    rooted = [
+                        "{}|{}".format(parent, i.split("|")[-1])
+                        for i in to_extract
+                    ]
+                    self.log.info("Un-parenting: {}".format(rooted, path))
+                    fbx_exporter.export(rooted, path)
 
         if "representations" not in instance.data:
             instance.data["representations"] = []
