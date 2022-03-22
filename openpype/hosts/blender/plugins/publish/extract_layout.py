@@ -1,6 +1,8 @@
 import os
 import json
 
+from bson.objectid import ObjectId
+
 import bpy
 import bpy_extras
 import bpy_extras.anim_utils
@@ -140,7 +142,7 @@ class ExtractLayout(openpype.api.Extractor):
             blend = io.find_one(
                 {
                     "type": "representation",
-                    "parent": io.ObjectId(parent),
+                    "parent": ObjectId(parent),
                     "name": "blend"
                 },
                 projection={"_id": True})
@@ -151,7 +153,7 @@ class ExtractLayout(openpype.api.Extractor):
             fbx = io.find_one(
                 {
                     "type": "representation",
-                    "parent": io.ObjectId(parent),
+                    "parent": ObjectId(parent),
                     "name": "fbx"
                 },
                 projection={"_id": True})
@@ -162,7 +164,7 @@ class ExtractLayout(openpype.api.Extractor):
             abc = io.find_one(
                 {
                     "type": "representation",
-                    "parent": io.ObjectId(parent),
+                    "parent": ObjectId(parent),
                     "name": "abc"
                 },
                 projection={"_id": True})

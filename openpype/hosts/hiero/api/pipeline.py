@@ -4,7 +4,7 @@ Basic avalon integration
 import os
 import contextlib
 from collections import OrderedDict
-from avalon.pipeline import AVALON_CONTAINER_ID
+
 from avalon import api as avalon
 from avalon import schema
 from pyblish import api as pyblish
@@ -13,6 +13,7 @@ from openpype.pipeline import (
     LegacyCreator,
     register_loader_plugin_path,
     deregister_loader_plugin_path,
+    AVALON_CONTAINER_ID,
 )
 from openpype.tools.utils import host_tools
 from . import lib, menu, events

@@ -10,7 +10,6 @@ import pyblish.api
 import avalon.api
 
 from avalon.lib import find_submodule
-from avalon.pipeline import AVALON_CONTAINER_ID
 
 import openpype.hosts.maya
 from openpype.tools.utils import host_tools
@@ -24,6 +23,7 @@ from openpype.pipeline import (
     LegacyCreator,
     register_loader_plugin_path,
     deregister_loader_plugin_path,
+    AVALON_CONTAINER_ID,
 )
 from openpype.hosts.maya.lib import copy_workspace_mel
 from . import menu, lib

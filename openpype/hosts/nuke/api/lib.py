@@ -6,10 +6,11 @@ import contextlib
 from collections import OrderedDict
 
 import clique
+from bson.objectid import ObjectId
 
 import nuke
 
-from avalon import api, io, lib
+from avalon import api, io
 
 from openpype.api import (
     Logger,
@@ -20,7 +21,6 @@ from openpype.api import (
     get_workdir_data,
     get_asset,
     get_current_project_settings,
-    ApplicationManager
 )
 from openpype.tools.utils import host_tools
 from openpype.lib.path_tools import HostDirmap
@@ -570,7 +570,7 @@ def check_inventory_versions():
             # get representation from io
             representation = io.find_one({
                 "type": "representation",
-                "_id": io.ObjectId(avalon_knob_data["representation"])
+                "_id": ObjectId(avalon_knob_data["representation"])
             })
 
             # Failsafe for not finding the representation.

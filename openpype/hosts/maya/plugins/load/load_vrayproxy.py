@@ -7,6 +7,8 @@ loader will use them instead of native vray vrmesh format.
 """
 import os
 
+from bson.objectid import ObjectId
+
 import maya.cmds as cmds
 
 from avalon import io
@@ -186,7 +188,7 @@ class VRayProxyLoader(load.LoaderPlugin):
         abc_rep = io.find_one(
             {
                 "type": "representation",
-                "parent": io.ObjectId(version_id),
+                "parent": ObjectId(version_id),
                 "name": "abc"
             })
 
