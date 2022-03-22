@@ -189,13 +189,13 @@ def get_all_collections_in_collection(collection):
     return check_list
 
 
-def get_all_object_names_in_collection(collection_input):
+def get_all_objects_in_collection(collection_input):
     """get all object names of the collection's object"""
 
     # Get the collections in the the collection_input
     collection_list = collection_input.children.values()
     collection_list.append(collection_input)
-    object_names_list = list()
+    objects_list = list()
 
     # Get all recursively the collections in the collectin_input
     for collection in collection_list:
@@ -205,10 +205,10 @@ def get_all_object_names_in_collection(collection_input):
     for collection in collection_list:
         nodes = collection.objects.values()
         for object in nodes:
-            if object.name not in object_names_list:
-                object_names_list.append(object.name)
+            if object not in objects_list:
+                objects_list.append(object)
             nodes.extend(object.children)
-    return object_names_list
+    return objects_list
 
 
 def get_parent_collection(collection):

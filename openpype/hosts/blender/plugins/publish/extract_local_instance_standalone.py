@@ -1,6 +1,4 @@
-import os
 import bpy
-import platform
 from openpype.hosts.blender.api.workio import save_file
 import pyblish.api
 from avalon import io
@@ -23,6 +21,13 @@ def extract(file_to_open, filepath, collection_name):
     collection = bpy.data.collections.get(collection_name)
     # And link them to the scene colection
     bpy.context.scene.collection.children.link(collection)
+    bpy.ops.object.make_local(type="ALL")
+
+    objects_List = plugin.get_all_objects_in_collection(collection)
+    for object in objects_List:
+        if object.modifiers:
+            object.modifiers.clear()
+
     plugin.remove_orphan_datablocks()
 
     # Get container data from the data base
@@ -47,6 +52,7 @@ def extract(file_to_open, filepath, collection_name):
     }
     # Store the data in the avalon custom property
     collection[AVALON_PROPERTY] = data
+    bpy.ops.object.make_local(type="ALL")
     plugin.remove_orphan_datablocks()
 
     # Save a work version
@@ -59,10 +65,10 @@ def extract(file_to_open, filepath, collection_name):
 
 import sys
 
-argv = sys.argv
-argv = argv[argv.index("--") + 1 :]
-file_to_open = argv[0]
-filepath = argv[1]
-collection_name = argv[2]
-extract(file_to_open, filepath, collection_name)
-print(argv)
+if __name__ == "__main__":
+    argv = sys.argv
+    argv = argv[argv.index("--") + 1 :]
+    file_to_open = argv[0]
+    filepath = argv[1]
+    collection_name = argv[2]
+    extract(file_to_open, filepath, collection_name)

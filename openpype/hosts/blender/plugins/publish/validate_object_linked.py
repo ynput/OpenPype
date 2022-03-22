@@ -1,23 +1,20 @@
-import os
 import bpy
-import platform
 import subprocess
 from avalon import io, api
-import openpype.api
-
+import os
+import platform
 from openpype.lib import version_up
-from openpype.hosts.blender.api.workio import save_file
 from openpype.hosts.blender.api.pipeline import (
     AVALON_PROPERTY,
     AVALON_CONTAINER_ID,
 )
 from openpype.hosts.blender.api.plugin import is_local_collection
-
+from openpype.hosts.blender.plugins.publish import (
+    extract_local_instance_standalone,
+)
 
 import pyblish.api
-import openpype.hosts.blender.api.action
 from typing import List
-from openpype.api import get_errored_instances_from_context
 
 
 class ExtractAndPublishNotLinked(pyblish.api.Action):
@@ -31,6 +28,7 @@ class ExtractAndPublishNotLinked(pyblish.api.Action):
         scene = bpy.data.scenes["Scene"]
         # Get the local instances
         local_instances_list = list()
+        system = platform.system().lower()
         for collection in bpy.data.collections:
             if True or collection.override_library is not None:
 
@@ -42,7 +40,6 @@ class ExtractAndPublishNotLinked(pyblish.api.Action):
                     ):
                         if is_local_collection(collection):
                             local_instances_list.append(collection)
-
         for collection in local_instances_list:
             representation = io.find_one(
                 {"_id": io.ObjectId(collection[AVALON_PROPERTY]["parent"])}
@@ -50,23 +47,19 @@ class ExtractAndPublishNotLinked(pyblish.api.Action):
 
             work_path = context.data["projectEntity"]["config"]["roots"][
                 "work"
-            ]["windows"]
-            # script_path = os.path.abspath(
-            #     openpype.hosts.blender.plugins.publish.extract_local_instance_standalone.__file__
-            # )
-            script_path = "D:/Users/Dimitri/Documents/Dev_dimitri/OpenPype/openpype/hosts/blender/plugins/publish/extract_local_instance_standalone.py"
+            ][system]
+            script_path = os.path.abspath(
+                extract_local_instance_standalone.__file__
+            )
+
             filepath = str(representation["data"]["source"]).replace(
                 "{root[work]}", work_path
             )
+            self.log.info(filepath)
             output = version_up(filepath)
             blender_binary_path = bpy.app.binary_path
-            command = r'"%s" --python "%s" -- %s %s %s ' % (
-                blender_binary_path,
-                script_path,
-                bpy.data.filepath,
-                output,
-                collection.name,
-            )
+            command = f"'{blender_binary_path}' --python '{script_path}' -- '{bpy.data.filepath}' '{output}' '{collection.name}'"
+
             self.log.info(command)
             p = subprocess.Popen(command, shell=True, stdout=subprocess.PIPE)
             self.log.info(p)
