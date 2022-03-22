@@ -30,51 +30,159 @@ class BlendModelLoader(plugin.AssetLoader):
     color = "orange"
     namespace = ""
 
-    def _get_armature_modifier_parameters(self, container):
-        modifiers_dict = dict()
-        object_names_list = plugin.get_all_objects_in_collection(container)
-        for object_name in object_names_list:
-            object = bpy.data.objects.get(object_name)
-            if object:
-                modifier = object.modifiers.get("Armature")
-                if modifier:
-                    armature = modifier.object
-                    if armature:
-                        modifiers_dict[object.name] = armature
-        return modifiers_dict
+    def _get_drivers_target(self, container):
+        """Get the driver targets list in the container"""
 
-    def _set_armature_modifier_parameters(self, container, modifiers_dict):
-        object_names_list = plugin.get_all_objects_in_collection(container)
+        object_driver_targets = list()
+        object_names_list = plugin.get_all_object_names_in_collection(
+            container
+        )
         for object_name in object_names_list:
             object = bpy.data.objects.get(object_name)
             if object:
-                modifier = object.modifiers.get("Armature")
-                if modifier:
-                    if modifiers_dict.get(object.name):
-                        armature = modifiers_dict[object.name]
-                        if armature:
-                            modifier.object = armature
+                if object.animation_data:
+                    drivers = object.animation_data.drivers
+                    for driver in drivers:
+                        variables = driver.driver.variables
+                        for variable in variables:
+                            targets = variable.targets
+                            for target in targets:
+                                object_driver_targets.append(target.id)
+        return object_driver_targets
+
+    def _set_drivers_target(self, container, object_driver_target_list):
+        """Set the driver targets list in the container"""
+
+        object_names_list = plugin.get_all_object_names_in_collection(
+            container
+        )
+        index = 0
+        for object_name in object_names_list:
+            object = bpy.data.objects.get(object_name)
+            if object:
+                if object.animation_data:
+                    drivers = object.animation_data.drivers
+                    for driver in drivers:
+                        variables = driver.driver.variables
+                        for variable in variables:
+                            variable_name = variable.name
+                            targets = variable.targets
+                            for target in targets:
+                                target.id = object_driver_target_list[index]
+                                index = index + 1
+
+    def _get_modifier_parameters(self, container):
+        """Get all modifier parameters of the container's objects in a dict"""
+
+        object_names_list = plugin.get_all_object_names_in_collection(
+            container
+        )
+        object_modifier_dict = dict()
+        # Find the modifier properties of an object
+        for object_name in object_names_list:
+            object = bpy.data.objects.get(object_name)
+            if object:
+                modifiers_dict = dict()
+                for modifier in object.modifiers:
+                    modifier_name = modifier.name
+                    if modifier:
+                        property_dict = dict()
+                        for property in dir(modifier):
+                            # filter the property
+                            if property not in [
+                                "__doc__",
+                                "__module__",
+                                "__slots__",
+                                "bl_rna",
+                                "is_active",
+                                "is_override_data",
+                                "rna_type",
+                                "show_expanded",
+                                "show_in_editmode",
+                                "show_on_cage",
+                                "show_render",
+                                "show_viewport",
+                                "type",
+                                "use_apply_on_spline",
+                                "use_bone_envelopes",
+                                "use_deform_preserve_volume",
+                                "use_multi_modifier",
+                                "use_vertex_groups",
+                            ]:
+                                property_dict[property] = getattr(
+                                    modifier, property
+                                )
+                        # the modifier properties of an object in a dict
+                        modifiers_dict[modifier_name] = property_dict
+                object_modifier_dict[object.name] = modifiers_dict
+        return object_modifier_dict
+
+    def _set_modifier_parameters(self, container, object_modifier_dict):
+        """Set all modifier parameters of the container's objects"""
+
+        object_names_list = plugin.get_all_object_names_in_collection(
+            container
+        )
+
+        for object_name in object_names_list:
+            bpy.context.view_layer.update()
+            object = bpy.data.objects.get(object_name)
+            if object:
+                if object_modifier_dict.get(object.name):
+                    for modifier in object.modifiers:
+                        modifier_name = modifier.name
+                        if modifier:
+                            if object_modifier_dict[object.name].get(
+                                modifier_name
+                            ):
+                                for property in dir(modifier):
+                                    if object_modifier_dict[object.name][
+                                        modifier_name
+                                    ].get(property):
+                                        if not (
+                                            modifier.is_property_readonly(
+                                                property
+                                            )
+                                        ):
+                                            setattr(
+                                                modifier,
+                                                property,
+                                                object_modifier_dict[
+                                                    object.name
+                                                ][modifier_name][property],
+                                            )
 
     def _remove(self, container):
+        """Remove the container and used data"""
         objects = list(container.objects)
-        for obj in objects:
-            if obj.type == "MESH":
-                for material_slot in list(obj.material_slots):
-                    if material_slot.material is not None:
+        for object in objects:
+            # Check if the object type is mesh
+            if object.type == "MESH":
+                for material_slot in list(object.material_slots):
+                    if material_slot.material:
+                        # Check if the material is local
                         if (
                             material_slot.material.library is None
                             and material_slot.material.override_library is None
                         ):
+                            # Remove the material
                             bpy.data.materials.remove(material_slot.material)
+                # Check if the mesh is local
                 if (
-                    obj.data.library is None
-                    and obj.data.override_library is None
+                    object.data.library is None
+                    and object.data.override_library is None
                 ):
-                    bpy.data.meshes.remove(obj.data)
-            elif obj.type == "EMPTY":
-                objects.extend(obj.objects)
-                if obj.library is None and obj.override_library is None:
-                    bpy.data.objects.remove(obj)
+                    # Remove the mesh
+                    bpy.data.meshes.remove(object.data)
+            # Check if the object type is Empty
+            elif object.type == "EMPTY":
+                # Add object childre to the loop
+                objects.extend(object.objects)
+                # Check if the object is local
+                if object.library is None and object.override_library is None:
+                    # Remove the object
+                    bpy.data.objects.remove(object)
+        # Remove the container
         bpy.data.collections.remove(container)
 
     def _process(self, libpath, asset_name):
@@ -85,49 +193,53 @@ class BlendModelLoader(plugin.AssetLoader):
         ):
             data_to.collections = data_from.collections
 
+        # Get the scene collection
         scene_collection = bpy.context.scene.collection
 
         # Find the loaded collection and set in variable container_collection
         container_collection = None
-        instances = plugin.get_instances_list()
 
-        for data_collection in instances:
-            if data_collection.override_library is None:
-                if data_collection[AVALON_PROPERTY].get("family") is not None:
-                    if (
-                        data_collection[AVALON_PROPERTY].get("family")
-                        == "model"
-                    ):
-                        if (
-                            data_collection[AVALON_PROPERTY].get("asset_name")
-                            == asset_name
-                        ):
-                            container_collection = data_collection
+        # Get all the containers in the data
+        containers = plugin.get_containers_list()
 
-        # Create a collection used to start the load collections at .001
-        # increment_use_collection = bpy.data.collections.new(
-        #     name=self.original_container_name
-        # )
+        # Get the container with the good asset name and the good family
+        for container in containers:
+            if container.override_library is None:
+                if container[AVALON_PROPERTY].get("family"):
+                    if container[AVALON_PROPERTY]["family"] == "model":
+                        if container[AVALON_PROPERTY].get("asset_name"):
+                            if (
+                                container[AVALON_PROPERTY]["asset_name"]
+                                == asset_name
+                            ):
+                                container_collection = container
 
-        # Link the container to the scene collection
-        # scene_collection.children.link(increment_use_collection)
+        # Link the container collection to the scene collection
         scene_collection.children.link(container_collection)
 
         # Get all the object of the container. The farest parents in first for override them first
+        collections = []
+        nodes = list(container_collection.children)
+        collections.append(container_collection)
+
+        for collection in nodes:
+            collections.append(collection)
+            nodes.extend(list(collection.children))
+
+        # Get all the object of the container. The farest parents in first for override them first
         objects = []
-        nodes = list(container_collection.objects)
-        children_of_the_collection = []
 
-        for obj in nodes:
-            if obj.parent is None:
-                children_of_the_collection.append(obj)
-
-        nodes = children_of_the_collection
-        for obj in nodes:
-            objects.append(obj)
-            nodes.extend(list(obj.children))
-
-        objects.reverse()
+        for collection in collections:
+            nodes = list(collection.objects)
+            for obj in nodes:
+                if obj.parent is None:
+                    objects.append(obj)
+            # Get all objects that aren't an armature
+            for obj in nodes:
+                if obj.type != "ARMATURE":
+                    objects.append(obj)
+                nodes.extend(list(obj.children))
+            objects.reverse()
 
         # Clean
         bpy.data.orphans_purge(do_local_ids=False)
@@ -137,12 +249,11 @@ class BlendModelLoader(plugin.AssetLoader):
         container_overrided = container_collection.override_create(
             remap_local_usages=True
         )
+        collections.remove(container_collection)
+        for collection in collections:
+            collection.override_create(remap_local_usages=True)
         for obj in objects:
             obj.override_create(remap_local_usages=True)
-            # obj.data.override_create(remap_local_usages=True)
-
-        # Remove the collection used to the increment
-        # bpy.data.collections.remove(increment_use_collection)
 
         return container_overrided
 
@@ -167,7 +278,7 @@ class BlendModelLoader(plugin.AssetLoader):
         subset = context["subset"]["name"]
         asset_name = plugin.asset_name(asset, subset)
 
-        # Process the load of the model
+        # Process the load of the container
         avalon_container = self._process(libpath, asset_name)
 
         objects = avalon_container.objects
@@ -183,9 +294,13 @@ class BlendModelLoader(plugin.AssetLoader):
         will not be removed, only unlinked. Normally this should not be the
         case though.
         """
+
+        # Setup variable to construct names
         object_name = container["objectName"]
         asset_name = container["asset_name"]
+        # Get the avalon_container with the object name
         avalon_container = bpy.data.collections.get(object_name)
+        # Find the library path
         libpath = Path(api.get_representation_path(representation))
 
         assert container, f"The asset is not loaded: {container['objectName']}"
@@ -194,7 +309,9 @@ class BlendModelLoader(plugin.AssetLoader):
         ), "No existing library file found for {container['objectName']}"
         assert libpath.is_file(), f"The file doesn't exist: {libpath}"
 
+        # Get the metadata in the container
         metadata = avalon_container.get(AVALON_PROPERTY)
+        # Get the library path store in the metadata
         container_libpath = metadata["libpath"]
 
         normalized_container_libpath = str(
@@ -208,6 +325,7 @@ class BlendModelLoader(plugin.AssetLoader):
             normalized_container_libpath,
             normalized_libpath,
         )
+        # If library exits do nothing
         if normalized_container_libpath == normalized_libpath:
             self.log.info("Library already loaded, not updating...")
             return
@@ -215,13 +333,9 @@ class BlendModelLoader(plugin.AssetLoader):
         # Check how many assets use the same library
         count = 0
         for collection in bpy.data.collections:
-            if collection.get(AVALON_PROPERTY) is not None:
-                if (
-                    collection.override_library is not None
-                    and collection.library is None
-                ) or (
-                    collection.override_library is None
-                    and collection.library is None
+            if collection.get(AVALON_PROPERTY):
+                if (collection.override_library and collection.library) or (
+                    collection.override_library and collection.library
                 ):
                     container_item = collection
                     if (
@@ -230,18 +344,23 @@ class BlendModelLoader(plugin.AssetLoader):
                     ):
                         count += 1
 
+        # Get the parent collections of the container to relink after update
         parent_collections = plugin.get_parent_collections(avalon_container)
 
-        armature_modifiers_dict = self._get_armature_modifier_parameters(
-            avalon_container
-        )
+        # Get a dictionary of the modifier parameters to reset them after the update
+        modifiers_dict = self._get_modifier_parameters(avalon_container)
+        # Get a list of the driver targets to reset them after the update
+        object_driver_target_list = self._get_drivers_target(avalon_container)
 
-        if avalon_container.override_library is not None:
+        # If the container is override remove his reference
+        if avalon_container.override_library:
             self._remove(avalon_container.override_library.reference)
+        # Remove the container
         self._remove(avalon_container)
-        plugin.clean_datablock()
-        # If it is the last object to use that library, remove it
 
+        plugin.remove_orphan_datablocks()
+
+        # If it is the last object to use that library, remove it
         if count == 1:
             library = bpy.data.libraries.get(
                 bpy.path.basename(container_libpath)
@@ -249,19 +368,21 @@ class BlendModelLoader(plugin.AssetLoader):
             if library:
                 bpy.data.libraries.remove(library)
 
+        # Update of the container
         container_override = self._process(str(libpath), asset_name)
 
+        # relink the updated container to his parent collection
         if parent_collections:
             bpy.context.scene.collection.children.unlink(container_override)
             for parent_collection in parent_collections:
                 parent_collection.children.link(container_override)
 
-        self._set_armature_modifier_parameters(
-            container_override, armature_modifiers_dict
-        )
-        print("*********************************************")
-        print(armature_modifiers_dict)
-        plugin.clean_datablock()
+        # Reset the modifier parameters and the driver targets
+        self._set_modifier_parameters(container_override, modifiers_dict)
+        self._set_drivers_target(container_override, object_driver_target_list)
+
+        bpy.context.view_layer.update()
+        plugin.remove_orphan_datablocks()
 
     def exec_remove(self, container: Dict) -> bool:
         """Remove an existing container from a Blender scene.
@@ -273,33 +394,21 @@ class BlendModelLoader(plugin.AssetLoader):
         Returns:
             bool: Whether the container was deleted.
         """
+        # Setup variable to construct names
         object_name = container["objectName"]
+        # Get the avalon_container with the object name
         avalon_container = bpy.data.collections.get(object_name)
+        # Get the metadata in the container
         metadata = avalon_container.get(AVALON_PROPERTY)
-        libpath = metadata["libpath"]
-
-        metadata = avalon_container.get(AVALON_PROPERTY)
+        # Find the library path
         container_libpath = metadata["libpath"]
-
-        normalized_container_libpath = str(
-            Path(bpy.path.abspath(container_libpath)).resolve()
-        )
-        normalized_libpath = str(
-            Path(bpy.path.abspath(str(libpath))).resolve()
-        )
-        self.log.debug(
-            "normalized_group_libpath:\n  %s\nnormalized_libpath:\n  %s",
-            normalized_container_libpath,
-            normalized_libpath,
-        )
 
         # Check how many assets use the same library
         count = 0
         for collection in bpy.data.collections:
-            if collection.get(AVALON_PROPERTY) is not None:
+            if collection.get(AVALON_PROPERTY):
                 if (
-                    collection.override_library is not None
-                    and collection.library is None
+                    collection.override_library and collection.library is None
                 ) or (
                     collection.override_library is None
                     and collection.library is None
@@ -311,10 +420,13 @@ class BlendModelLoader(plugin.AssetLoader):
                     ):
                         count += 1
 
-        if avalon_container.override_library is not None:
+        # If the container is override remove his reference
+        if avalon_container.override_library:
             self._remove(avalon_container.override_library.reference)
+        # Remove the container
         self._remove(avalon_container)
-        plugin.clean_datablock()
+
+        plugin.remove_orphan_datablocks()
         # If it is the last object to use that library, remove it
         print(container_libpath)
         print(bpy.path.basename(container_libpath))
@@ -331,17 +443,21 @@ class BlendModelLoader(plugin.AssetLoader):
     def update_avalon_property(self, representation: Dict):
 
         container_collection = None
-        instances = plugin.get_instances_list()
-        for data_collection in instances:
+        # Get all the cotainer in the scene
+        containers = plugin.get_containers_list()
+        for container in containers:
+            # Check if the container is local
             if (
-                data_collection.override_library is None
-                and data_collection.library is None
+                container.override_library is None
+                and container.library is None
             ):
-                container_collection = data_collection
+                # Check if the container isn't publish
+                if container["avalon"].get("id") == "pyblish.avalon.instance":
+                    container_collection = container
+
         self.log.info("container name %s ", container_collection.name)
 
         # Set the avalon property with the representation data
-
         asset = str(representation["context"]["asset"])
         subset = str(representation["context"]["subset"])
         asset_name = plugin.asset_name(asset, subset)

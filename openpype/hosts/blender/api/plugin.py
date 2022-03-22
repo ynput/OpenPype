@@ -25,7 +25,8 @@ def asset_name(
     return name
 
 
-def clean_datablock():
+def remove_orphan_datablocks():
+    """Remove the data_blocks without users"""
     orphan_block_users_find = True
     while orphan_block_users_find:
         orphan_block_users_find = False
@@ -75,6 +76,7 @@ def model_asset_name(model_name: str, namespace: Optional[str] = None) -> str:
 
 
 def get_parent_collections(collection):
+    """Return the parent collection of a collection"""
     collections = list()
     for parent_collection in bpy.data.collections:
         if collection in parent_collection.children.values():
@@ -167,8 +169,8 @@ def create_blender_context(
     raise Exception("Could not create a custom Blender context.")
 
 
-def get_instances_list():
-    """Get all the data collections"""
+def get_containers_list():
+    """Get all the containers"""
     instances = []
     nodes = bpy.data.collections
 
@@ -187,27 +189,31 @@ def get_all_collections_in_collection(collection):
     return check_list
 
 
-def get_all_objects_in_collection(collection_input):
-    """get_all_objects_in_collection"""
+def get_all_object_names_in_collection(collection_input):
+    """get all object names of the collection's object"""
+
+    # Get the collections in the the collection_input
     collection_list = collection_input.children.values()
     collection_list.append(collection_input)
-    objects_list = list()
+    object_names_list = list()
+
+    # Get all recursively the collections in the collectin_input
     for collection in collection_list:
         collection_list.extend(collection.children)
 
+    # Get all recursively the objects in the collectin_input
     for collection in collection_list:
         nodes = collection.objects.values()
         for object in nodes:
-            if object.name not in objects_list:
-                objects_list.append(object.name)
+            if object.name not in object_names_list:
+                object_names_list.append(object.name)
             nodes.extend(object.children)
-    return objects_list
+    return object_names_list
 
 
 def get_parent_collection(collection):
     """Get the parent of the input collection"""
     check_list = [bpy.context.scene.collection]
-
     for c in check_list:
         if collection.name in c.children.keys():
             return c
@@ -229,6 +235,7 @@ def is_local_collection(collection):
 
 
 def get_local_collection_with_name(name):
+    """Get collection without library"""
     for collection in bpy.data.collections:
         if collection.name == name and collection.library is None:
             return collection

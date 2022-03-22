@@ -79,7 +79,7 @@ class BlendLayoutLoader(plugin.AssetLoader):
 
         # Find the loaded collection and set in variable container_collection
         container_collection = None
-        instances = plugin.get_instances_list()
+        instances = plugin.get_containers_list()
         self.log.info("instances : %s", instances)
         for data_collection in instances:
             if data_collection.override_library is None:
@@ -248,14 +248,32 @@ class BlendLayoutLoader(plugin.AssetLoader):
         collections_in_container = plugin.get_all_collections_in_collection(
             avalon_container
         )
+        # Get the armature of the rig
+
+        sub_avalon_containers = plugin.get_containers_list()
+        for sub_avalon_container in sub_avalon_containers:
+            if sub_avalon_container.get(AVALON_PROPERTY):
+                if sub_avalon_container.get("family") == "rig":
+                    objects = sub_avalon_container.objects
+                    armature = [
+                        obj for obj in objects if obj.type == "ARMATURE"
+                    ][0]
+                    action = None
+                    if (
+                        armature.animation_data
+                        and armature.animation_data.action
+                    ):
+                        action[
+                            sub_avalon_container.name
+                        ] = armature.animation_data.action
 
         # for collection in collections_in_container:
         #     self._remove(collection)
         # if avalon_container.override_library:
         #     self._remove(avalon_container.override_library.reference)
         self._remove(avalon_container)
-        plugin.clean_datablock()
-        plugin.clean_datablock()
+        plugin.remove_orphan_datablocks()
+        plugin.remove_orphan_datablocks()
 
         # If it is the last object to use that library, remove it
         print(container_libpath)
@@ -274,7 +292,24 @@ class BlendLayoutLoader(plugin.AssetLoader):
             bpy.context.scene.collection.children.unlink(container_override)
             for parent_collection in parent_collections:
                 parent_collection.children.link(container_override)
-        plugin.clean_datablock()
+        plugin.remove_orphan_datablocks()
+
+        # Set the armature of the rig
+        sub_avalon_containers = plugin.get_containers_list()
+        for sub_avalon_container in sub_avalon_containers:
+            if sub_avalon_container.get(AVALON_PROPERTY):
+                if sub_avalon_container.get("family") == "rig":
+                    objects = sub_avalon_container.objects
+                    armature = [
+                        obj for obj in objects if obj.type == "ARMATURE"
+                    ][0]
+                    if armature.animation_data is None:
+                        armature.animation_data_create()
+
+                    if armature.animation_data:
+                        armature.animation_data.action = action[
+                            sub_avalon_container.name
+                        ]
 
     def exec_remove(self, container: Dict) -> bool:
         """Remove an existing container from a Blender scene.
@@ -306,7 +341,7 @@ class BlendLayoutLoader(plugin.AssetLoader):
     def update_avalon_property(self, representation: Dict):
 
         container_collection = None
-        instances = plugin.get_instances_list()
+        instances = plugin.get_containers_list()
         for data_collection in instances:
             if (
                 data_collection.override_library is None

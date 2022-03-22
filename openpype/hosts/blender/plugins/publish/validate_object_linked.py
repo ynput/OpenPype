@@ -7,8 +7,13 @@ import openpype.api
 
 from openpype.lib import version_up
 from openpype.hosts.blender.api.workio import save_file
-from openpype.hosts.blender.api.pipeline import AVALON_PROPERTY, AVALON_CONTAINER_ID
+from openpype.hosts.blender.api.pipeline import (
+    AVALON_PROPERTY,
+    AVALON_CONTAINER_ID,
+)
 from openpype.hosts.blender.api.plugin import is_local_collection
+
+
 import pyblish.api
 import openpype.hosts.blender.api.action
 from typing import List
@@ -43,10 +48,12 @@ class ExtractAndPublishNotLinked(pyblish.api.Action):
                 {"_id": io.ObjectId(collection[AVALON_PROPERTY]["parent"])}
             )
 
-            work_path = context.data["projectEntity"]["config"]["roots"]["work"][
-                "windows"
-            ]
-
+            work_path = context.data["projectEntity"]["config"]["roots"][
+                "work"
+            ]["windows"]
+            # script_path = os.path.abspath(
+            #     openpype.hosts.blender.plugins.publish.extract_local_instance_standalone.__file__
+            # )
             script_path = "D:/Users/Dimitri/Documents/Dev_dimitri/OpenPype/openpype/hosts/blender/plugins/publish/extract_local_instance_standalone.py"
             filepath = str(representation["data"]["source"]).replace(
                 "{root[work]}", work_path
@@ -73,7 +80,7 @@ class ValidateObjectLinked(pyblish.api.InstancePlugin):
 
     order = pyblish.api.ValidatorOrder - 0.01
     hosts = ["blender"]
-    families = ["rig", "layout"]
+    families = ["rig"]
     category = "geometry"
     label = "Validate Object Link"
     actions = [ExtractAndPublishNotLinked]
@@ -104,4 +111,6 @@ class ValidateObjectLinked(pyblish.api.InstancePlugin):
     def process(self, instance):
         invalid = self.get_invalid(instance)
         if invalid:
-            raise RuntimeError(f"Container found in instance is not linked: {invalid}")
+            raise RuntimeError(
+                f"Container found in instance is not linked: {invalid}"
+            )

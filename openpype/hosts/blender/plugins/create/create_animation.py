@@ -16,36 +16,50 @@ class CreateAnimation(plugin.Creator):
     icon = "male"
 
     def process(self):
-        """ Run the creator on Blender main thread"""
+        """Run the creator on Blender main thread"""
         mti = ops.MainThreadItem(self._process)
         ops.execute_in_main_thread(mti)
 
     def _process(self):
         # Get Instance Container or create it if it does not exist
-        instances = bpy.data.collections.get(AVALON_INSTANCES)
-        if not instances:
-            instances = bpy.data.collections.new(name=AVALON_INSTANCES)
-            bpy.context.scene.collection.children.link(instances)
-
-        # Create instance object
-        # name = self.name
-        # if not name:
+        # Get info from data and create name value
         asset = self.data["asset"]
         subset = self.data["subset"]
         name = plugin.asset_name(asset, subset)
-        # asset_group = bpy.data.objects.new(name=name, object_data=None)
-        # asset_group.empty_display_type = 'SINGLE_ARROW'
-        asset_group = bpy.data.collections.new(name=name)
-        instances.children.link(asset_group)
-        self.data['task'] = api.Session.get('AVALON_TASK')
-        lib.imprint(asset_group, self.data)
 
+        # Get the scene collection and all the collection in the scene
+        scene_collection = bpy.context.scene.collection
+        collections = scene_collection.children
+
+        # Get Instance Container or create it if it does not exist
+        container = bpy.data.collections.get(name)
+        if not container:
+            container = bpy.data.collections.new(name=name)
+            scene_collection.children.link(container)
+
+        # Add custom property on the instance container with the data
+        self.data["task"] = api.Session.get("AVALON_TASK")
+        lib.imprint(container, self.data)
+
+        # Link the collections in the scene to the container
+        for collection in collections:
+            if (
+                container.children.get(collection.name) is None
+                and container != collection
+            ):
+                scene_collection.children.unlink(collection)
+                container.children.link(collection)
+
+        # Add selected objects to instance
+        objects_to_link = list()
         if (self.options or {}).get("useSelection"):
-            selected = lib.get_selection()
-            for obj in selected:
-                asset_group.objects.link(obj)
-        elif (self.options or {}).get("asset_group"):
-            obj = (self.options or {}).get("asset_group")
-            asset_group.objects.link(obj)
+            objects_to_link = self.get_selection_hierarchie()
+        else:
+            objects_to_link = scene_collection.objects
 
-        return asset_group
+        for object in objects_to_link:
+            if container.get(object.name) is None:
+                container.objects.link(object)
+            if scene_collection.objects.get(object.name) is not None:
+                scene_collection.objects.unlink(object)
+        return container

@@ -2,7 +2,9 @@ import pyblish.api
 import bpy
 from openpype.hosts.blender.plugins.load.load_model import BlendModelLoader
 from openpype.hosts.blender.plugins.load.load_rig import BlendRigLoader
-from openpype.hosts.blender.plugins.load.load_layout_blend import BlendLayoutLoader
+from openpype.hosts.blender.plugins.load.load_layout_blend import (
+    BlendLayoutLoader,
+)
 
 from openpype.hosts.blender.api import plugin
 
@@ -30,6 +32,7 @@ class UpdateAvalonProperty(
 
         from openpype.lib import version_up
 
+        # Get info from data and create name , version value
         asset = instance.data["anatomyData"]["asset"]
         family = instance.data["anatomyData"]["family"]
         version = int(instance.data["anatomyData"]["version"])
@@ -43,16 +46,25 @@ class UpdateAvalonProperty(
                 "context.ext": "blend",
             }
         )
+
+        # Create context for the loader object
         context = {"representation": representation}
+        # Use the good update property update function with the family
         if family == "model":
             blend_model_loader = BlendModelLoader(context=context)
-            blend_model_loader.update_avalon_property(representation=representation)
-        elif "rig":
+            blend_model_loader.update_avalon_property(
+                representation=representation
+            )
+        elif family == "rig":
             blend_rig_loader = BlendRigLoader(context=context)
-            blend_rig_loader.update_avalon_property(representation=representation)
-        elif "layout":
+            blend_rig_loader.update_avalon_property(
+                representation=representation
+            )
+        elif family == "layout":
             blend_layout_loader = BlendLayoutLoader(context=context)
-            blend_layout_loader.update_avalon_property(representation=representation)
+            blend_layout_loader.update_avalon_property(
+                representation=representation
+            )
 
         # Get the filepath of the publish
         filepath = str(representation["data"]["path"])

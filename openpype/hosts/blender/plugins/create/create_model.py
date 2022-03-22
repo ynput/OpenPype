@@ -20,34 +20,34 @@ class CreateModel(plugin.Creator):
         ops.execute_in_main_thread(mti)
 
     def _process(self):
-
         # Get info from data and create name value
         asset = self.data["asset"]
         subset = self.data["subset"]
         name = plugin.asset_name(asset, subset)
 
-        # name = MODEL_TASK_NAME
+        # Get the scene collection and all the collection in the scene
+        scene_collection = bpy.context.scene.collection
+
         # Get Instance Container or create it if it does not exist
-        instance = bpy.data.collections.get(name)
-        if not instance:
-            instance = bpy.data.collections.new(name=name)
-            bpy.context.scene.collection.children.link(instance)
+        container = bpy.data.collections.get(name)
+        if not container:
+            container = bpy.data.collections.new(name=name)
+            scene_collection.children.link(container)
 
-        # Add custom property on the instance with the data
+        # Add custom property on the instance container with the data
         self.data["task"] = api.Session.get("AVALON_TASK")
+        lib.imprint(container, self.data)
 
-        lib.imprint(instance, self.data)
-
-        # Add selected objects to instance
+        # Add selected objects to instance container
         if (self.options or {}).get("useSelection"):
             selected = lib.get_selection()
-            for obj in selected:
-                instance.objects.link(obj)
-                bpy.context.scene.collection.objects.unlink(obj)
+            for object in selected:
+                container.objects.link(object)
+                scene_collection.objects.unlink(object)
         else:
-            objects = bpy.context.scene.collection.objects
-            for obj in objects:
-                instance.objects.link(obj)
-                bpy.context.scene.collection.objects.unlink(obj)
+            objects = scene_collection.objects
+            for object in objects:
+                container.objects.link(object)
+                scene_collection.objects.unlink(object)
 
-        return instance
+        return container

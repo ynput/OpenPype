@@ -16,7 +16,6 @@ class CreateRig(plugin.Creator):
 
     def get_selection_hierarchie(self):
         nodes = bpy.context.selected_objects
-        children_of_the_object = list()
         objects = list()
 
         for obj in nodes:
@@ -33,38 +32,44 @@ class CreateRig(plugin.Creator):
         ops.execute_in_main_thread(mti)
 
     def _process(self):
-        # get info from data and create name value
+        # Get info from data and create name value
         asset = self.data["asset"]
         subset = self.data["subset"]
         name = plugin.asset_name(asset, subset)
 
-        # name = RIG_TASK_NAME
-        containers = bpy.context.scene.collection.children
+        # Get the scene collection and all the collection in the scene
+        scene_collection = bpy.context.scene.collection
+        collections = scene_collection.children
 
         # Get Instance Container or create it if it does not exist
-        instance = bpy.data.collections.get(name)
-        if not instance:
-            instance = bpy.data.collections.new(name=name)
-            bpy.context.scene.collection.children.link(instance)
+        container = bpy.data.collections.get(name)
+        if not container:
+            container = bpy.data.collections.new(name=name)
+            scene_collection.children.link(container)
 
+        # Add custom property on the instance container with the data
         self.data["task"] = api.Session.get("AVALON_TASK")
-        lib.imprint(instance, self.data)
+        lib.imprint(container, self.data)
 
-        for container in containers:
-            if instance.children.get(container.name) is None and instance != container:
-                bpy.context.scene.collection.children.unlink(container)
-                instance.children.link(container)
+        # Link the collections in the scene to the container
+        for collection in collections:
+            if (
+                container.children.get(collection.name) is None
+                and container != collection
+            ):
+                scene_collection.children.unlink(collection)
+                container.children.link(collection)
 
-        # Add selected objects to instance
+        # Add selected objects to container
         objects_to_link = list()
         if (self.options or {}).get("useSelection"):
             objects_to_link = self.get_selection_hierarchie()
         else:
-            objects_to_link = bpy.context.scene.collection.objects
+            objects_to_link = scene_collection.objects
 
-        for obj in objects_to_link:
-            if instance.get(obj.name) is None:
-                instance.objects.link(obj)
-            if bpy.context.scene.collection.objects.get(obj.name) is not None:
-                bpy.context.scene.collection.objects.unlink(obj)
-        return instance
+        for object in objects_to_link:
+            if container.get(object.name) is None:
+                container.objects.link(object)
+            if scene_collection.objects.get(object.name) is not None:
+                scene_collection.objects.unlink(object)
+        return container

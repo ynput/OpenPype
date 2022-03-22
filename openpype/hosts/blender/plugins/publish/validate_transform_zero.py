@@ -22,13 +22,15 @@ class ValidateTransformZero(pyblish.api.InstancePlugin):
     version = (0, 1, 0)
     label = "Transform Zero"
     actions = [openpype.hosts.blender.api.action.SelectInvalidAction]
-
+    optional = True
+    active = False
     _identity = mathutils.Matrix()
 
     @classmethod
     def get_invalid(cls, instance) -> List:
         invalid = []
         for obj in [obj for obj in instance]:
+
             if obj.matrix_basis != cls._identity:
                 invalid.append(obj)
         return invalid

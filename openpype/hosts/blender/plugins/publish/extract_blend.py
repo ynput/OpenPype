@@ -4,6 +4,7 @@ import bpy
 from avalon import io
 
 import openpype.api
+from openpype.hosts.blender.api import plugin
 
 
 class ExtractBlend(openpype.api.Extractor):
@@ -22,7 +23,8 @@ class ExtractBlend(openpype.api.Extractor):
 
         # Perform extraction
         self.log.info("Performing extraction..")
-
+        plugin.remove_orphan_datablocks()
+        plugin.remove_orphan_datablocks()
         # Create data block set
         data_blocks = set()
 
