@@ -95,15 +95,18 @@ class ExtractReviewSlate(openpype.api.Extractor):
                         if stream["tags"]["timecode"]:
                             # get timecode of the first frame
                             input_timecode = stream["tags"]["timecode"]
-                            self.log.debug("__Video Timecode : {}".format(input_timecode))
+                            self.log.debug("__Video Timecode : {}".format(
+                                input_timecode))
                         if "width" in stream and "height" in stream:
                             input_width = int(stream["width"])
                             input_height = int(stream["height"])
                         if "r_frame_rate" in stream:
-                            # get frame rate in a form of x/y, like 24000/1001 for 23.976
+                            # get frame rate in a form of
+                            # x/y, like 24000/1001 for 23.976
                             input_frame_rate = str(stream["r_frame_rate"])
                     if stream["codec_type"] == "audio":
-                        # get audio details for generating silent audio track for slate
+                        # get audio details 
+                        # for generating silent audio track for slate
                         if stream["channels"]:
                             audio_channels = str(stream["channels"])
                         if stream["sample_rate"]:
@@ -112,8 +115,10 @@ class ExtractReviewSlate(openpype.api.Extractor):
                             audio_channel_layout = stream["channel_layout"]
             # calculate duration of one frame in seconds
             if input_frame_rate:
-                # it is divided by two to make sure audio will be shorter then video
-                one_frame_duration = str( float(1.0 / eval(input_frame_rate)) / 2 )
+                # it is halved to make sure audio will be shorter then video
+                one_frame_duration = str(
+                    float(1.0 / eval(input_frame_rate)) / 2 
+                )
             else:
                 # same sane default (1 frame @ 25 fps)
                 one_frame_duration = 0.04
@@ -436,7 +441,7 @@ class ExtractReviewSlate(openpype.api.Extractor):
 
         return codec_args
 
-    def _tc_offset(self, timecode='00:00:00:00', framerate=24.0, frame_offset=-1):
+    def _tc_offset(self, timecode, framerate=24.0, frame_offset=-1):
         """Offsets timecode by frame"""
         def _seconds(value, framerate):
             if isinstance(value, str):
@@ -456,15 +461,19 @@ class ExtractReviewSlate(openpype.api.Extractor):
 
         def _timecode(seconds, framerate):
             return '{h:02d}:{m:02d}:{s:02d}:{f:02d}' \
-                    .format(h=int(seconds/3600),
-                            m=int(seconds/60%60),
-                            s=int(seconds%60),
-                            f=int(round((seconds-int(seconds))*framerate)))
+                    .format(h=int(seconds / 3600),
+                            m=int(seconds / 60 % 60),
+                            s=int(seconds % 60),
+                            f=int(round((seconds -int(seconds)) * framerate)))
         drop = False
         if ';' in timecode:
             timecode = timecode.replace(';', ':')
             drop = True
-        frames = _frames(_seconds(timecode, framerate), framerate, frame_offset)
+        frames = _frames(
+            _seconds(timecode, framerate),
+            framerate,
+            frame_offset
+        )
         tc = _timecode(_seconds(frames, framerate), framerate)
         if drop:
             tc = ';'.join(tc.rsplit(':', 1))
