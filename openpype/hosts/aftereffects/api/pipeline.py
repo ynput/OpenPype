@@ -2,10 +2,11 @@ import os
 import sys
 
 from Qt import QtWidgets
+from bson.objectid import ObjectId
 
 import pyblish.api
 import avalon.api
-from avalon import io, pipeline
+from avalon import io
 
 from openpype import lib
 from openpype.api import Logger
@@ -13,6 +14,7 @@ from openpype.pipeline import (
     LegacyCreator,
     register_loader_plugin_path,
     deregister_loader_plugin_path,
+    AVALON_CONTAINER_ID,
 )
 import openpype.hosts.aftereffects
 from openpype.lib import register_event_callback
@@ -41,7 +43,7 @@ def check_inventory():
         representation = container['representation']
         representation_doc = io.find_one(
             {
-                "_id": io.ObjectId(representation),
+                "_id": ObjectId(representation),
                 "type": "representation"
             },
             projection={"parent": True}
@@ -148,7 +150,7 @@ def containerise(name,
     """
     data = {
         "schema": "openpype:container-2.0",
-        "id": pipeline.AVALON_CONTAINER_ID,
+        "id": AVALON_CONTAINER_ID,
         "name": name,
         "namespace": namespace,
         "loader": str(loader),

@@ -4,13 +4,14 @@ Basic avalon integration
 import os
 import contextlib
 from avalon import api as avalon
-from avalon.pipeline import AVALON_CONTAINER_ID
 from pyblish import api as pyblish
+
 from openpype.api import Logger
 from openpype.pipeline import (
     LegacyCreator,
     register_loader_plugin_path,
     deregister_loader_plugin_path,
+    AVALON_CONTAINER_ID,
 )
 from .lib import (
     set_segment_data_marker,

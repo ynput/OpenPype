@@ -1,3 +1,8 @@
+from .constants import (
+    AVALON_CONTAINER_ID,
+    HOST_WORKFILE_EXTENSIONS,
+)
+
 from .lib import attribute_definitions
 
 from .create import (
@@ -59,6 +64,9 @@ from .actions import (
 
 
 __all__ = (
+    "AVALON_CONTAINER_ID",
+    "HOST_WORKFILE_EXTENSIONS",
+
     "attribute_definitions",
 
     # --- Create ---

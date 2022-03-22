@@ -7,8 +7,7 @@ import collections
 
 from Qt import QtWidgets, QtCore, QtGui
 
-from avalon import api
-
+from openpype.api import Anatomy
 from openpype.pipeline import HeroVersionType
 from openpype.pipeline.thumbnail import get_thumbnail_binary
 from openpype.pipeline.load import (
@@ -641,6 +640,7 @@ class VersionTextEdit(QtWidgets.QTextEdit):
             "source": None,
             "raw": None
         }
+        self._anatomy = None
 
         # Reset
         self.set_version(None)
@@ -731,20 +731,20 @@ class VersionTextEdit(QtWidgets.QTextEdit):
         # Add additional actions when any text so we can assume
         # the version is set.
         if self.toPlainText().strip():
-
             menu.addSeparator()
-            action = QtWidgets.QAction("Copy source path to clipboard",
-                                       menu)
+            action = QtWidgets.QAction(
+                "Copy source path to clipboard", menu
+            )
             action.triggered.connect(self.on_copy_source)
             menu.addAction(action)
 
-            action = QtWidgets.QAction("Copy raw data to clipboard",
-                                       menu)
+            action = QtWidgets.QAction(
+                "Copy raw data to clipboard", menu
+            )
             action.triggered.connect(self.on_copy_raw)
             menu.addAction(action)
 
         menu.exec_(event.globalPos())
-        del menu
 
     def on_copy_source(self):
         """Copy formatted source path to clipboard"""
@@ -752,7 +752,11 @@ class VersionTextEdit(QtWidgets.QTextEdit):
         if not source:
             return
 
-        path = source.format(root=api.registered_root())
+        project_name = self.dbcon.Session["AVALON_PROJECT"]
+        if self._anatomy is None or self._anatomy.project_name != project_name:
+            self._anatomy = Anatomy(project_name)
+
+        path = source.format(root=self._anatomy.roots)
         clipboard = QtWidgets.QApplication.clipboard()
         clipboard.setText(path)
 
@@ -772,7 +776,6 @@ class VersionTextEdit(QtWidgets.QTextEdit):
 
 
 class ThumbnailWidget(QtWidgets.QLabel):
-
     aspect_ratio = (16, 9)
     max_width = 300
 

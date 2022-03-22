@@ -6,13 +6,13 @@ import contextlib
 from collections import OrderedDict
 from avalon import api as avalon
 from avalon import schema
-from avalon.pipeline import AVALON_CONTAINER_ID
 from pyblish import api as pyblish
 from openpype.api import Logger
 from openpype.pipeline import (
     LegacyCreator,
     register_loader_plugin_path,
     deregister_loader_plugin_path,
+    AVALON_CONTAINER_ID,
 )
 from . import lib
 from . import PLUGINS_DIR

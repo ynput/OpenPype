@@ -4,6 +4,7 @@ from functools import partial
 
 from Qt import QtWidgets, QtCore
 import qtawesome
+from bson.objectid import ObjectId
 
 from avalon import io
 
@@ -79,7 +80,7 @@ class SceneInventoryView(QtWidgets.QTreeView):
 
         repre_ids = []
         for item in items:
-            item_id = io.ObjectId(item["representation"])
+            item_id = ObjectId(item["representation"])
             if item_id not in repre_ids:
                 repre_ids.append(item_id)
 
@@ -146,7 +147,7 @@ class SceneInventoryView(QtWidgets.QTreeView):
             def _on_switch_to_versioned(items):
                 repre_ids = []
                 for item in items:
-                    item_id = io.ObjectId(item["representation"])
+                    item_id = ObjectId(item["representation"])
                     if item_id not in repre_ids:
                         repre_ids.append(item_id)
 
@@ -196,7 +197,7 @@ class SceneInventoryView(QtWidgets.QTreeView):
                         version_doc["name"]
 
                 for item in items:
-                    repre_id = io.ObjectId(item["representation"])
+                    repre_id = ObjectId(item["representation"])
                     version_id = version_id_by_repre_id.get(repre_id)
                     version_name = version_name_by_id.get(version_id)
                     if version_name is not None:
@@ -659,7 +660,7 @@ class SceneInventoryView(QtWidgets.QTreeView):
         active = items[-1]
 
         # Get available versions for active representation
-        representation_id = io.ObjectId(active["representation"])
+        representation_id = ObjectId(active["representation"])
         representation = io.find_one({"_id": representation_id})
         version = io.find_one({
             "_id": representation["parent"]

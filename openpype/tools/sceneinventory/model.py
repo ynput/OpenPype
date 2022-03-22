@@ -5,6 +5,7 @@ from collections import defaultdict
 
 from Qt import QtCore, QtGui
 import qtawesome
+from bson.objectid import ObjectId
 
 from avalon import api, io, schema
 from openpype.pipeline import HeroVersionType
@@ -299,7 +300,7 @@ class InventoryModel(TreeModel):
         for repre_id, group_dict in sorted(grouped.items()):
             group_items = group_dict["items"]
             # Get parenthood per group
-            representation = io.find_one({"_id": io.ObjectId(repre_id)})
+            representation = io.find_one({"_id": ObjectId(repre_id)})
             if not representation:
                 not_found["representation"].append(group_items)
                 not_found_ids.append(repre_id)

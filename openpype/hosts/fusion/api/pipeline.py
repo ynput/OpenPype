@@ -8,7 +8,6 @@ import contextlib
 
 import pyblish.api
 import avalon.api
-from avalon.pipeline import AVALON_CONTAINER_ID
 
 from openpype.api import Logger
 from openpype.pipeline import (
@@ -17,6 +16,7 @@ from openpype.pipeline import (
     deregister_loader_plugin_path,
     register_inventory_action_path,
     deregister_inventory_action_path,
+    AVALON_CONTAINER_ID,
 )
 import openpype.hosts.fusion
 
