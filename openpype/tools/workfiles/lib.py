@@ -10,7 +10,7 @@ import appdirs
 
 
 class TempPublishFilesItem(object):
-    """Object representing copied workfile in app temp folfer.
+    """Object representing copied workfile in app temp folder.
 
     Args:
         item_id (str): Id of item used as subfolder.
