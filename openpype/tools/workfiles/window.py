@@ -20,7 +20,7 @@ from .lib import TempPublishFiles, file_size_to_string
 class SidePanelWidget(QtWidgets.QWidget):
     save_clicked = QtCore.Signal()
     published_workfile_message = (
-        "<b>INFO</b>: Published workfiles you'll opened will be stored in"
+        "<b>INFO</b>: Opened published workfiles will be stored in"
         " temp directory on your machine. Current temp size: <b>{}</b>."
     )
 
