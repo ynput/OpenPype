@@ -102,11 +102,11 @@ class ImageCreator(Creator):
 
     def update_instances(self, update_list):
         self.log.debug("update_list:: {}".format(update_list))
-        created_inst, changes = update_list[0]
-        if created_inst.get("layer"):
-            created_inst.pop("layer")  # not storing PSItem layer to metadata
-        api.stub().imprint(created_inst.get("instance_id"),
-                           created_inst.data_to_store())
+        for created_inst, _changes in update_list:
+            if created_inst.get("layer"):
+                created_inst.pop("layer")  # not storing PSItem layer to metadata
+            api.stub().imprint(created_inst.get("instance_id"),
+                               created_inst.data_to_store())
 
     def remove_instances(self, instances):
         for instance in instances:
