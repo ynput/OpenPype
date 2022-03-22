@@ -1,7 +1,8 @@
 import json
-from avalon import api, io
+from avalon import io
 from bson.objectid import ObjectId
 from openpype.pipeline import (
+    InventoryAction,
     get_representation_context,
     get_representation_path_from_context,
 )
@@ -11,7 +12,7 @@ from openpype.hosts.maya.api.lib import (
 )
 
 
-class ImportModelRender(api.InventoryAction):
+class ImportModelRender(InventoryAction):
 
     label = "Import Model Render Sets"
     icon = "industry"

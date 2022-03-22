@@ -22,7 +22,9 @@ from openpype.lib.path_tools import HostDirmap
 from openpype.pipeline import (
     LegacyCreator,
     register_loader_plugin_path,
+    register_inventory_action_path,
     deregister_loader_plugin_path,
+    deregister_inventory_action_path,
     AVALON_CONTAINER_ID,
 )
 from openpype.hosts.maya.lib import copy_workspace_mel
@@ -59,7 +61,7 @@ def install():
 
     register_loader_plugin_path(LOAD_PATH)
     avalon.api.register_plugin_path(LegacyCreator, CREATE_PATH)
-    avalon.api.register_plugin_path(avalon.api.InventoryAction, INVENTORY_PATH)
+    register_inventory_action_path(INVENTORY_PATH)
     log.info(PUBLISH_PATH)
 
     log.info("Installing callbacks ... ")
@@ -188,9 +190,7 @@ def uninstall():
 
     deregister_loader_plugin_path(LOAD_PATH)
     avalon.api.deregister_plugin_path(LegacyCreator, CREATE_PATH)
-    avalon.api.deregister_plugin_path(
-        avalon.api.InventoryAction, INVENTORY_PATH
-    )
+    deregister_inventory_action_path(INVENTORY_PATH)
 
     menu.uninstall()
 
