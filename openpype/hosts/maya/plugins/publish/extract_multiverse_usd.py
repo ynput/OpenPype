@@ -112,6 +112,8 @@ class ExtractMultiverseUsd(openpype.api.Extractor):
 
             # Ensure the data is of correct type
             value = instance.data[key]
+            if isinstance(value, str):
+                value = unicode(value, "utf-8")
             if not isinstance(value, self.options[key]):
                 self.log.warning(
                     "Overridden attribute {key} was of "
