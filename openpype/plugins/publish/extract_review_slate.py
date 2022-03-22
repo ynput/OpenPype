@@ -10,7 +10,6 @@ from openpype.lib import (
     get_ffmpeg_format_args,
 )
 
-
 class ExtractReviewSlate(openpype.api.Extractor):
     """
     Will add slate frame at the start of the video files
@@ -58,6 +57,7 @@ class ExtractReviewSlate(openpype.api.Extractor):
 
         pixel_aspect = inst_data.get("pixelAspect", 1)
         fps = inst_data.get("fps")
+        self.log.debug("fps {} ".format(fps))
 
         for idx, repre in enumerate(inst_data["representations"]):
             self.log.debug("repre ({}): `{}`".format(idx + 1, repre))
@@ -82,12 +82,55 @@ class ExtractReviewSlate(openpype.api.Extractor):
             # - there may be a better way (checking `codec_type`?)
             input_width = None
             input_height = None
+            input_timecode = None
+            input_frame_rate = None
+            input_audio = False
+            audio_channels = None
+            audio_sample_rate = None
+            audio_channel_layout = None
             for stream in video_streams:
-                if "width" in stream and "height" in stream:
-                    input_width = int(stream["width"])
-                    input_height = int(stream["height"])
-                    break
-
+                self.log.debug("__ ffprobe: {}".format(stream))
+                if "codec_type" in stream:
+                    if stream["codec_type"] == "video":
+                        if stream["tags"]["timecode"]:
+                            # get timecode of the first frame
+                            input_timecode = stream["tags"]["timecode"]
+                            self.log.debug("__Video Timecode : {}".format(input_timecode))
+                        if "width" in stream and "height" in stream:
+                            input_width = int(stream["width"])
+                            input_height = int(stream["height"])
+                        if "r_frame_rate" in stream:
+                            # get frame rate in a form of x/y, like 24000/1001 for 23.976
+                            input_frame_rate = str(stream["r_frame_rate"])
+                    if stream["codec_type"] == "audio":
+                        # get audio details for generating silent audio track for slate
+                        if stream["channels"]:
+                            audio_channels = str(stream["channels"])
+                        if stream["sample_rate"]:
+                            audio_sample_rate = stream["sample_rate"]
+                        if stream["channel_layout"]:
+                            audio_channel_layout = stream["channel_layout"]
+            # calculate duration of one frame in seconds
+            if input_frame_rate:
+                # it is divided by two to make sure audio will be shorter then video
+                one_frame_duration = str( float(1.0 / eval(input_frame_rate)) / 2 )
+            else:
+                # same sane default (1 frame @ 25 fps)
+                one_frame_duration = 0.04
+            self.log.debug(
+                "One frame duration is {} sec".format(one_frame_duration))
+            # confirm we gathered all needed audio parameters
+            if audio_channel_layout:
+                if audio_sample_rate:
+                    if audio_channels:
+                        input_audio = True
+                        self.log.debug("__Audio : channels {}".format(
+                            audio_channels))
+                        self.log.debug("__Audio : sample_rate {}".format(
+                            audio_sample_rate))
+                        self.log.debug("__Audio : channel_layout {}".format(
+                            audio_channel_layout))
+            
             # Raise exception of any stream didn't define input resolution
             if input_width is None:
                 raise AssertionError((
@@ -144,18 +187,34 @@ class ExtractReviewSlate(openpype.api.Extractor):
             input_args = []
             output_args = []
 
+            # if input has audio, add silent audio to the slate
+            if input_audio:
+                input_args.extend(
+                    ["-f lavfi -i anullsrc=r={}:cl={}:d={}".format(
+                        audio_sample_rate,
+                        audio_channel_layout,
+                        one_frame_duration
+                    )]
+                )
             # preset's input data
             if use_legacy_code:
                 input_args.extend(repre["_profile"].get('input', []))
             else:
                 input_args.extend(repre["outputDef"].get('input', []))
-            input_args.append("-loop 1 -i {}".format(
+            # enforce framerate before -i
+            input_args.append("-framerate {} -i {}".format(
+                input_frame_rate,
                 path_to_subprocess_arg(slate_path)
             ))
-            input_args.extend([
-                "-r {}".format(fps),
-                "-t 0.04"
-            ])
+            # add timecode from source to the slate, substract one frame
+            if input_timecode:
+                offset_timecode = self._tc_offset(
+                    str(input_timecode),
+                    framerate=fps,
+                    frame_offset=-1
+                )
+                self.log.debug("Timecode: `{}`".format(offset_timecode))
+                input_args.extend(["-timecode {}".format(offset_timecode)])
 
             if use_legacy_code:
                 codec_args = repre["_profile"].get('codec', [])
@@ -213,10 +272,15 @@ class ExtractReviewSlate(openpype.api.Extractor):
                     width_scale, height_scale, to_width, to_height,
                     width_half_pad, height_half_pad
                 )
-
+            # add output frame rate as a filter, just in case
+            scaling_arg += ",fps={}".format(input_frame_rate)
             vf_back = self.add_video_filter_args(output_args, scaling_arg)
             # add it to output_args
             output_args.insert(0, vf_back)
+
+            # use video duration for silent audio duration
+            if input_audio:
+                output_args.append("-shortest")
 
             # overrides output file
             output_args.append("-y")
@@ -371,3 +435,37 @@ class ExtractReviewSlate(openpype.api.Extractor):
         )
 
         return codec_args
+
+    def _tc_offset(self, timecode='00:00:00:00', framerate=24.0, frame_offset=-1):
+        """Offsets timecode by frame"""
+        def _seconds(value, framerate):
+            if isinstance(value, str):
+                _zip_ft = zip((3600, 60, 1, 1/framerate), value.split(':'))
+                _s = sum(f * float(t) for f,t in _zip_ft)
+            elif isinstance(value, (int, float)):
+                _s = value / framerate
+            else:
+                _s = 0
+            return _s
+
+        def _frames(seconds, framerate, frame_offset):
+            _f = seconds * framerate + frame_offset
+            if _f < 0:
+                _f = framerate * 60 * 60 * 24 + _f
+            return _f
+
+        def _timecode(seconds, framerate):
+            return '{h:02d}:{m:02d}:{s:02d}:{f:02d}' \
+                    .format(h=int(seconds/3600),
+                            m=int(seconds/60%60),
+                            s=int(seconds%60),
+                            f=int(round((seconds-int(seconds))*framerate)))
+        drop = False
+        if ';' in timecode:
+            timecode = timecode.replace(';', ':')
+            drop = True
+        frames = _frames(_seconds(timecode, framerate), framerate, frame_offset)
+        tc = _timecode(_seconds(frames, framerate), framerate)
+        if drop:
+            tc = ';'.join(tc.rsplit(':', 1))
+        return tc
