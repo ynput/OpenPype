@@ -18,6 +18,8 @@ from openpype.api import (
     get_project_settings
 )
 
+UpdateData = collections.namedtuple("UpdateData", ["instance", "changes"])
+
 
 class ImmutableKeyError(TypeError):
     """Accessed key is immutable so does not allow changes or removements."""
@@ -1080,7 +1082,7 @@ class CreateContext:
             for instance in cretor_instances:
                 instance_changes = instance.changes()
                 if instance_changes:
-                    update_list.append((instance, instance_changes))
+                    update_list.append(UpdateData(instance, instance_changes))
 
             creator = self.creators[identifier]
             if update_list:
