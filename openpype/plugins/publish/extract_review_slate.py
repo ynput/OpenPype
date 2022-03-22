@@ -105,7 +105,7 @@ class ExtractReviewSlate(openpype.api.Extractor):
                             # x/y, like 24000/1001 for 23.976
                             input_frame_rate = str(stream["r_frame_rate"])
                     if stream["codec_type"] == "audio":
-                        # get audio details 
+                        # get audio details
                         # for generating silent audio track for slate
                         if stream["channels"]:
                             audio_channels = str(stream["channels"])
@@ -117,7 +117,7 @@ class ExtractReviewSlate(openpype.api.Extractor):
             if input_frame_rate:
                 # it is halved to make sure audio will be shorter then video
                 one_frame_duration = str(
-                    float(1.0 / eval(input_frame_rate)) / 2 
+                    float(1.0 / eval(input_frame_rate)) / 2
                 )
             else:
                 # same sane default (1 frame @ 25 fps)
@@ -460,11 +460,11 @@ class ExtractReviewSlate(openpype.api.Extractor):
             return _f
 
         def _timecode(seconds, framerate):
-            return '{h:02d}:{m:02d}:{s:02d}:{f:02d}' \
-                    .format(h=int(seconds / 3600),
-                            m=int(seconds / 60 % 60),
-                            s=int(seconds % 60),
-                            f=int(round((seconds -int(seconds)) * framerate)))
+            return '{h:02d}:{m:02d}:{s:02d}:{f:02d}'.format(
+                h = int(seconds / 3600),
+                m = int(seconds / 60 % 60),
+                s = int(seconds % 60),
+                f = int(round((seconds - int(seconds)) * framerate)))
         drop = False
         if ';' in timecode:
             timecode = timecode.replace(';', ':')
