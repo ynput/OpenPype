@@ -70,9 +70,11 @@ class RenderCreator(Creator):
 
         data["members"] = [items[0].id]
         new_instance = CreatedInstance(self.family, subset_name, data, self)
-        new_instance.creator_attributes["farm"] = pre_create_data["farm"]
+        if "farm" in pre_create_data:
+            use_farm = pre_create_data["farm"]
+            new_instance.creator_attributes["farm"] = use_farm
 
-        api.get_stub().imprint(new_instance.get("instance_id"),
+        api.get_stub().imprint(new_instance.id,
                                new_instance.data_to_store())
         self._add_instance_to_context(new_instance)
 
