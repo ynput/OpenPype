@@ -593,7 +593,6 @@ def get_representation_path(representation, root=None, dbcon=None):
                 "code": project.get("data", {}).get("code")
             },
             "asset": asset["name"],
-            "silo": asset.get("silo"),
             "hierarchy": hierarchy,
             "subset": subset["name"],
             "version": version_["name"],

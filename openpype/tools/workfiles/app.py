@@ -1266,7 +1266,6 @@ def show(root=None, debug=False, parent=None, use_context=True, save=True):
         if use_context:
             context = {
                 "asset": api.Session["AVALON_ASSET"],
-                "silo": api.Session["AVALON_SILO"],
                 "task": api.Session["AVALON_TASK"]
             }
             window.set_context(context)
