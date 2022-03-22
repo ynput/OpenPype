@@ -34,9 +34,9 @@ class RenderCreator(Creator):
                 self._add_instance_to_context(instance)
 
     def update_instances(self, update_list):
-        created_inst, changes = update_list[0]
-        api.get_stub().imprint(created_inst.get("instance_id"),
-                               created_inst.data_to_store())
+        for created_inst, _changes in update_list:
+            api.get_stub().imprint(created_inst.get("instance_id"),
+                                   created_inst.data_to_store())
 
     def remove_instances(self, instances):
         for instance in instances:
