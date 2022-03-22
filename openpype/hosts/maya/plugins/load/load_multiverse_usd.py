@@ -1,7 +1,15 @@
 # -*- coding: utf-8 -*-
+import maya.cmds as cmds
+import maya.mel as mel
+
 from avalon import api
 
-import maya.cmds as cmds
+from openpype.hosts.maya.api.lib import (
+    maintained_selection,
+    namespaced,
+    unique_namespace
+)
+from openpype.hosts.maya.api.pipeline import containerise
 
 
 class MultiverseUsdLoader(api.Loader):
@@ -17,9 +25,6 @@ class MultiverseUsdLoader(api.Loader):
 
     def load(self, context, name=None, namespace=None, options=None):
 
-        from openpype.hosts.maya.api.pipeline import containerise
-        from openpype.hosts.maya.api.lib import unique_namespace
-
         asset = context['asset']['name']
         namespace = namespace or unique_namespace(
             asset + "_",
@@ -27,19 +32,19 @@ class MultiverseUsdLoader(api.Loader):
             suffix="_",
         )
 
+        # Create the shape
         cmds.loadPlugin("MultiverseForMaya", quiet=True)
 
-        # Root group
-        rootName = "{}:{}".format(namespace, name)
-        root = cmds.group(name=rootName, empty=True)
+        shape = None
+        transform = None
+        with maintained_selection():
+            cmds.namespace(addNamespace=namespace)
+            with namespaced(namespace, new=False):
+                import multiverse
+                shape = multiverse.CreateUsdCompound(self.fname)
+                transform = mel.eval('firstParentOf "{}"'.format(shape))
 
-        # Create shape with transform and move it under root
-        import multiverse
-        transform = multiverse.CreateUsdCompound(self.fname)
-        cmds.parent(transform, root)
-
-        # Rename transform
-        nodes = [root, transform]
+        nodes = [transform, shape]
         self[:] = nodes
 
         return containerise(
