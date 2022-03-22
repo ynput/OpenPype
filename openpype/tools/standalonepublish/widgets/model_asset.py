@@ -146,7 +146,7 @@ class AssetModel(TreeModel):
 
                 # Allow a custom icon and custom icon color to be defined
                 data = node.get("_document", {}).get("data", {})
-                icon = data.get("icon", None)    
+                icon = data.get("icon", None)
                 color = data.get("color", self._default_asset_icon_color)
 
                 if icon is None:
