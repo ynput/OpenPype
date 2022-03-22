@@ -13,7 +13,7 @@ class CollectInstances(pyblish.api.ContextPlugin):
         id (str): "pyblish.avalon.instance"
     """
 
-    label = "Instances"
+    label = "Collect Instances"
     order = pyblish.api.CollectorOrder
     hosts = ["photoshop"]
     families_mapping = {
