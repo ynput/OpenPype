@@ -308,7 +308,6 @@ class ContextDialog(QtWidgets.QDialog):
         self._validate_strict()
 
     def _set_asset_to_tasks_widget(self):
-        # filter None docs they are silo
         asset_id = self._assets_widget.get_selected_asset_id()
 
         self._tasks_widget.set_asset_id(asset_id)

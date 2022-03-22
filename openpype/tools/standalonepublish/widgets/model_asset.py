@@ -35,7 +35,7 @@ def _iter_model_rows(model,
 
 
 class AssetModel(TreeModel):
-    """A model listing assets in the silo in the active project.
+    """A model listing assets in the active project.
 
     The assets are displayed in a treeview, they are visually parented by
     a `visualParent` field in the database containing an `_id` to a parent
@@ -64,7 +64,7 @@ class AssetModel(TreeModel):
 
         self.refresh()
 
-    def _add_hierarchy(self, assets, parent=None, silos=None):
+    def _add_hierarchy(self, assets, parent=None):
         """Add the assets that are related to the parent as children items.
 
         This method does *not* query the database. These instead are queried
@@ -72,27 +72,8 @@ class AssetModel(TreeModel):
         queries. Resulting in up to 10x speed increase.
 
         Args:
-            assets (dict): All assets in the currently active silo stored
-                by key/value
-
-        Returns:
-            None
-
+            assets (dict): All assets from current project.
         """
-        if silos:
-            # WARNING: Silo item "_id" is set to silo value
-            # mainly because GUI issue with preserve selection and expanded row
-            # and because of easier hierarchy parenting (in "assets")
-            for silo in silos:
-                node = Node({
-                    "_id": silo,
-                    "name": silo,
-                    "label": silo,
-                    "type": "silo"
-                })
-                self.add_child(node, parent=parent)
-                self._add_hierarchy(assets, parent=node)
-
         parent_id = parent["_id"] if parent else None
         current_assets = assets.get(parent_id, list())
 
@@ -132,27 +113,19 @@ class AssetModel(TreeModel):
 
         self.beginResetModel()
 
-        # Get all assets in current silo sorted by name
+        # Get all assets in current project sorted by name
         db_assets = self.dbcon.find({"type": "asset"}).sort("name", 1)
-        silos = db_assets.distinct("silo") or None
-        # if any silo is set to None then it's expected it should not be used
-        if silos and None in silos:
-            silos = None
 
         # Group the assets by their visual parent's id
         assets_by_parent = collections.defaultdict(list)
         for asset in db_assets:
-            parent_id = (
-                asset.get("data", {}).get("visualParent") or
-                asset.get("silo")
-            )
+            parent_id = asset.get("data", {}).get("visualParent")
             assets_by_parent[parent_id].append(asset)
 
         # Build the hierarchical tree items recursively
         self._add_hierarchy(
             assets_by_parent,
-            parent=None,
-            silos=silos
+            parent=None
         )
 
         self.endResetModel()
@@ -173,9 +146,7 @@ class AssetModel(TreeModel):
 
                 # Allow a custom icon and custom icon color to be defined
                 data = node.get("_document", {}).get("data", {})
-                icon = data.get("icon", None)
-                if icon is None and node.get("type") == "silo":
-                    icon = "database"
+                icon = data.get("icon", None)    
                 color = data.get("color", self._default_asset_icon_color)
 
                 if icon is None:
