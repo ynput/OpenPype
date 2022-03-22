@@ -172,11 +172,23 @@ class FilesWidget(QtWidgets.QWidget):
         btn_save_as_published = QtWidgets.QPushButton(
             "Save As", publish_btns_widget
         )
+        btn_save_as_to_published = QtWidgets.QPushButton(
+            "Save As (to context)", publish_btns_widget
+        )
+        btn_select_context_published = QtWidgets.QPushButton(
+            "Select context", publish_btns_widget
+        )
+        btn_cancel_published = QtWidgets.QPushButton(
+            "Cancel", publish_btns_widget
+        )
 
         publish_btns_layout = QtWidgets.QHBoxLayout(publish_btns_widget)
         publish_btns_layout.setContentsMargins(0, 0, 0, 0)
         publish_btns_layout.addWidget(btn_view_published, 1)
         publish_btns_layout.addWidget(btn_save_as_published, 1)
+        publish_btns_layout.addWidget(btn_save_as_to_published, 1)
+        publish_btns_layout.addWidget(btn_cancel_published, 1)
+        publish_btns_layout.addWidget(btn_select_context_published, 1)
 
         btns_layout = QtWidgets.QHBoxLayout(btns_widget)
         btns_layout.setContentsMargins(0, 0, 0, 0)
@@ -214,6 +226,15 @@ class FilesWidget(QtWidgets.QWidget):
         btn_save_as_published.pressed.connect(
             self._on_published_save_as_pressed
         )
+        btn_save_as_to_published.pressed.connect(
+            self._on_publish_save_as_to_pressed
+        )
+        btn_select_context_published.pressed.connect(
+            self._on_publish_select_context_pressed
+        )
+        btn_cancel_published.pressed.connect(
+            self._on_publish_cancel_pressed
+        )
 
         # Store attributes
         self._published_checkbox = published_checkbox
@@ -234,7 +255,12 @@ class FilesWidget(QtWidgets.QWidget):
         self._btn_open = btn_open
         self._btn_browse = btn_browse
         self._btn_save = btn_save
+
         self._btn_view_published = btn_view_published
+        self._btn_save_as_published = btn_save_as_published
+        self._btn_save_as_to_published = btn_save_as_to_published
+        self._btn_select_context_published = btn_select_context_published
+        self._btn_cancel_published = btn_cancel_published
 
         # Create a proxy widget for files widget
         self.setFocusProxy(btn_open)
@@ -242,6 +268,10 @@ class FilesWidget(QtWidgets.QWidget):
         # Hide publish files widgets
         publish_files_view.setVisible(False)
         publish_btns_widget.setVisible(False)
+        btn_select_context_published.setVisible(False)
+        btn_cancel_published.setVisible(False)
+
+        self._publish_context_select_mode = False
 
     @property
     def published_enabled(self):
@@ -285,12 +315,15 @@ class FilesWidget(QtWidgets.QWidget):
         self._update_asset_task()
 
     def _update_asset_task(self):
-        if self.published_enabled:
+        if self.published_enabled and not self._publish_context_select_mode:
             self._publish_files_model.set_context(
                 self._asset_id, self._task_name
             )
             has_valid_items = self._publish_files_model.has_valid_items()
             self._btn_view_published.setEnabled(has_valid_items)
+            self._btn_save_as_published.setEnabled(has_valid_items)
+            self._btn_save_as_to_published.setEnabled(has_valid_items)
+
         else:
             # Define a custom session so we can query the work root
             # for a "Work area" that is not our current Session.
@@ -308,6 +341,13 @@ class FilesWidget(QtWidgets.QWidget):
             has_valid_items = self._workarea_files_model.has_valid_items()
             self._btn_browse.setEnabled(has_valid_items)
             self._btn_open.setEnabled(has_valid_items)
+
+            if self._publish_context_select_mode:
+                self._btn_select_context_published.setEnabled(
+                    bool(self._asset_id) and bool(self._task_name)
+                )
+                return
+
         # Manually trigger file selection
         if not has_valid_items:
             self.on_file_select()
@@ -557,6 +597,45 @@ class FilesWidget(QtWidgets.QWidget):
     def _on_published_save_as_pressed(self):
         self._save_as_with_dialog()
 
+    def _set_publish_context_select_mode(self, enabled):
+        self._publish_context_select_mode = enabled
+
+        # Show buttons related to context selection
+        self._btn_cancel_published.setVisible(enabled)
+        self._btn_select_context_published.setVisible(enabled)
+        # Change enabled state based on select context
+        self._btn_select_context_published.setEnabled(
+            bool(self._asset_id) and bool(self._task_name)
+        )
+
+        self._btn_view_published.setVisible(not enabled)
+        self._btn_save_as_published.setVisible(not enabled)
+        self._btn_save_as_to_published.setVisible(not enabled)
+
+        # Change views and disable workarea view if enabled
+        self._workarea_files_view.setEnabled(not enabled)
+        if self.published_enabled:
+            self._workarea_files_view.setVisible(enabled)
+            self._publish_files_view.setVisible(not enabled)
+        else:
+            self._workarea_files_view.setVisible(True)
+            self._publish_files_view.setVisible(False)
+
+        # Disable filter widgets
+        self._published_checkbox.setEnabled(not enabled)
+        self._filter_input.setEnabled(not enabled)
+
+    def _on_publish_save_as_to_pressed(self):
+        self._set_publish_context_select_mode(True)
+
+    def _on_publish_select_context_pressed(self):
+        self._save_as_with_dialog()
+        self._set_publish_context_select_mode(False)
+        self._update_asset_task()
+
+    def _on_publish_cancel_pressed(self):
+        self._set_publish_context_select_mode(False)
+        self._update_asset_task()
 
     def on_file_select(self):
         self.file_selected.emit(self._get_selected_filepath())
