@@ -32,9 +32,9 @@ class ExtractMultiverseUsd(openpype.api.Extractor):
             "flattenParentXforms": bool,
             "writeSparseOverrides": bool,
             "useMetaPrimPath": bool,
-            "customRootPath": str,
-            "customAttributes": str,
-            "nodeTypesToIgnore": str,
+            "customRootPath": unicode,
+            "customAttributes": unicode,
+            "nodeTypesToIgnore": unicode,
             "writeMeshes": bool,
             "writeCurves": bool,
             "writeParticles": bool,
@@ -57,7 +57,7 @@ class ExtractMultiverseUsd(openpype.api.Extractor):
             "writeTransformMatrix": bool,
             "writeUsdAttributes": bool,
             "timeVaryingTopology": bool,
-            "customMaterialNamespace": str,
+            "customMaterialNamespace": unicode,
             "numTimeSamples": int,
             "timeSamplesSpan": float
         }
@@ -103,6 +103,29 @@ class ExtractMultiverseUsd(openpype.api.Extractor):
             "timeSamplesSpan": 0.0
         }
 
+    def parse_overrides(self, instance, options):
+        """Inspect data of instance to determine overridden options"""
+
+        for key in instance.data:
+            if key not in self.options:
+                continue
+
+            # Ensure the data is of correct type
+            value = instance.data[key]
+            if not isinstance(value, self.options[key]):
+                self.log.warning(
+                    "Overridden attribute {key} was of "
+                    "the wrong type: {invalid_type} "
+                    "- should have been {valid_type}".format(
+                        key=key,
+                        invalid_type=type(value).__name__,
+                        valid_type=self.options[key].__name__))
+                continue
+
+            options[key] = value
+
+        return options
+
     def process(self, instance):
         # Load plugin firstly
         cmds.loadPlugin("MultiverseForMaya", quiet=True)
@@ -115,8 +138,8 @@ class ExtractMultiverseUsd(openpype.api.Extractor):
 
         # Parse export options
         options = self.default_options
+        options = self.parse_overrides(instance, options)
         self.log.info("Export options: {0}".format(options))
-        self.log.info("Export instance data: {0}".format(instance.data))
 
         # Perform extraction
         self.log.info("Performing extraction ...")
