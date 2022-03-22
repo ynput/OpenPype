@@ -10,7 +10,7 @@ import appdirs
 
 
 class TempPublishFilesItem(object):
-    """Object representing on subfolder in app temp files.
+    """Object representing copied workfile in app temp folfer.
 
     Args:
         item_id (str): Id of item used as subfolder.
@@ -44,7 +44,39 @@ class TempPublishFilesItem(object):
 
 
 class TempPublishFiles(object):
-    """Directory where """
+    """Directory where published workfiles are copied when opened.
+
+    Directory is located in appdirs on the machine. Folder contains file
+    with metadata about stored files. Each item in metadata has id, filename
+    and expiration time. When expiration time is higher then current time the
+    item is removed from metadata and it's files are deleted. Files of items
+    are stored in subfolder named by item's id.
+
+    Metadata file can be in theory opened and modified by multiple processes,
+    threads at one time. For those cases is created simple lock file which
+    is created before modification begins and is removed when modification
+    ends. Existince of the file means that it should not be modified by
+    any other process at the same time.
+
+    Metadata example:
+    ```
+    {
+        "96050b4a-8974-4fca-8179-7c446c478d54": {
+            "created": 1647880725.555,
+            "expiration": 1647884325.555,
+            "filename": "cg_pigeon_workfileModeling_v025.ma"
+        },
+        ...
+    }
+    ```
+
+    ## Why is this needed
+    Combination of more issues. Temp files are not automatically removed by
+    OS on windows so using tempfiles in TEMP would lead to kill disk space of
+    machine. There are also cases when someone wants to open multiple files
+    in short period of time and want to manually remove those files so keeping
+    track of temporary copied files in pre-defined structure is needed.
+    """
     minute_in_seconds = 60
     hour_in_seconds = 60 * minute_in_seconds
     day_in_seconds = 24 * hour_in_seconds
@@ -72,16 +104,26 @@ class TempPublishFiles(object):
 
     @property
     def life_time(self):
+        """How long will be new item kept in temp in seconds.
+
+        Returns:
+            int: Lifetime of temp item.
+        """
         return int(self.hour_in_seconds)
 
     @property
     def size(self):
+        """File size of existing items."""
         size = 0
         for item in self.get_items():
             size += item.size
         return size
 
     def add_file(self, src_path):
+        """Add workfile to temp directory.
+
+        This will create new item and source path is copied to it's directory.
+        """
         filename = os.path.basename(src_path)
 
         item_id = str(uuid.uuid4())
@@ -105,6 +147,7 @@ class TempPublishFiles(object):
 
     @contextlib.contextmanager
     def _modify_data(self):
+        """Create lock file when data in metadata file are modified."""
         start_time = time.time()
         timeout = 3
         while os.path.exists(self._lock_path):
@@ -139,6 +182,15 @@ class TempPublishFiles(object):
         return output
 
     def cleanup(self, check_expiration=True):
+        """Cleanup files based on metadata.
+
+        Items that passed expiration are removed when this is called. Or all
+        files are removed when `check_expiration` is set to False.
+
+        Args:
+            check_expiration (bool): All items and files are removed when set
+                to True.
+        """
         data = self._get_data()
         now = time.time()
         remove_ids = set()
@@ -182,6 +234,11 @@ class TempPublishFiles(object):
         self.cleanup(False)
 
     def get_items(self):
+        """Receive all items from metadata file.
+
+        Returns:
+            list<TempPublishFilesItem>: Info about each item in metadata.
+        """
         output = []
         data = self._get_data()
         for item_id, item_data in data.items():
@@ -190,6 +247,7 @@ class TempPublishFiles(object):
         return output
 
     def remove_id(self, item_id):
+        """Remove files of item and then remove the item from metadata."""
         filepath = os.path.join(self._root_dir, item_id)
         if os.path.exists(filepath):
             shutil.rmtree(filepath)

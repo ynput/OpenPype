@@ -19,6 +19,8 @@ ITEM_ID_ROLE = QtCore.Qt.UserRole + 4
 
 
 class WorkAreaFilesModel(QtGui.QStandardItemModel):
+    """Model is looking into one folder for files with extension."""
+
     def __init__(self, extensions, *args, **kwargs):
         super(WorkAreaFilesModel, self).__init__(*args, **kwargs)
 
@@ -64,6 +66,7 @@ class WorkAreaFilesModel(QtGui.QStandardItemModel):
         return self._empty_root_item
 
     def set_root(self, root):
+        """Change directory where to look for file."""
         self._root = root
         if root and not os.path.exists(root):
             log.debug("Work Area does not exist: {}".format(root))
@@ -81,7 +84,9 @@ class WorkAreaFilesModel(QtGui.QStandardItemModel):
         self._items_by_filename = {}
 
     def refresh(self):
+        """Refresh and update model items."""
         root_item = self.invisibleRootItem()
+        # If path is not set or does not exist then add invalid path item
         if not self._root or not os.path.exists(self._root):
             self._clear()
             # Add Work Area does not exist placeholder
@@ -90,9 +95,14 @@ class WorkAreaFilesModel(QtGui.QStandardItemModel):
             self._invalid_item_visible = True
             return
 
+        # Clear items if previous refresh set '_invalid_item_visible' to True
+        # - Invalid items are not stored to '_items_by_filename' so they would
+        #   not be removed
         if self._invalid_item_visible:
             self._clear()
 
+        # Check for new items that should be added and items that should be
+        #   removed
         new_items = []
         items_to_remove = set(self._items_by_filename.keys())
         for filename in os.listdir(self._root):
@@ -106,6 +116,7 @@ class WorkAreaFilesModel(QtGui.QStandardItemModel):
 
             modified = os.path.getmtime(filepath)
 
+            # Use existing item or create new one
             if filename in items_to_remove:
                 items_to_remove.remove(filename)
                 item = self._items_by_filename[filename]
@@ -118,16 +129,20 @@ class WorkAreaFilesModel(QtGui.QStandardItemModel):
                 item.setData(self._file_icon, QtCore.Qt.DecorationRole)
                 new_items.append(item)
                 self._items_by_filename[filename] = item
+            # Update data that may be different
             item.setData(filepath, FILEPATH_ROLE)
             item.setData(modified, DATE_MODIFIED_ROLE)
 
+        # Add new items if there are any
         if new_items:
             root_item.appendRows(new_items)
 
+        # Remove items that are no longer available
         for filename in items_to_remove:
             item = self._items_by_filename.pop(filename)
             root_item.removeRow(item.row())
 
+        # Add empty root item if there are not filenames that could be shown
         if root_item.rowCount() > 0:
             self._invalid_item_visible = False
         else:
@@ -136,9 +151,11 @@ class WorkAreaFilesModel(QtGui.QStandardItemModel):
             root_item.appendRow(item)
 
     def has_valid_items(self):
+        """Directory has files that are listed in items."""
         return not self._invalid_item_visible
 
     def flags(self, index):
+        # Use flags of first column for all columns
         if index.column() != 0:
             index = self.index(index.row(), 0, index.parent())
         return super(WorkAreaFilesModel, self).flags(index)
@@ -147,6 +164,7 @@ class WorkAreaFilesModel(QtGui.QStandardItemModel):
         if role is None:
             role = QtCore.Qt.DisplayRole
 
+        # Handle roles for first column
         if index.column() == 1:
             if role == QtCore.Qt.DecorationRole:
                 return None
@@ -174,6 +192,22 @@ class WorkAreaFilesModel(QtGui.QStandardItemModel):
 
 
 class PublishFilesModel(QtGui.QStandardItemModel):
+    """Model filling files with published files calculated from representation.
+
+    This model looks for workfile family representations based on selected
+    asset and task.
+
+    Asset must set to be able look for representations that could be used.
+    Task is used to filter representations by task.
+    Model has few filter criteria for filling.
+    - First criteria is that version document must have "workfile" in
+        "data.families".
+    - Second cirteria is that representation must have extension same as
+        defined extensions
+    - If task is set then representation must have 'task["name"]' with same
+        name.
+    """
+
     def __init__(self, extensions, dbcon, anatomy, *args, **kwargs):
         super(PublishFilesModel, self).__init__(*args, **kwargs)
 
@@ -225,6 +259,12 @@ class PublishFilesModel(QtGui.QStandardItemModel):
         return self._empty_root_item
 
     def set_context(self, asset_id, task_name):
+        """Change context to asset and task.
+
+        Args:
+            asset_id (ObjectId): Id of selected asset.
+            task_name (str): Name of selected task.
+        """
         self._asset_id = asset_id
         self._task_name = task_name
         self.refresh()
@@ -242,6 +282,7 @@ class PublishFilesModel(QtGui.QStandardItemModel):
 
     def _get_workfie_representations(self):
         output = []
+        # Get subset docs of asset
         subset_docs = self._dbcon.find(
             {
                 "type": "subset",
@@ -286,6 +327,7 @@ class PublishFilesModel(QtGui.QStandardItemModel):
                 "context.ext": {"$in": extensions}
             }
         )
+        # Filter queried representations by task name if task is set
         filtered_repre_docs = []
         for repre_doc in repre_docs:
             if self._task_name is None:
@@ -305,6 +347,7 @@ class PublishFilesModel(QtGui.QStandardItemModel):
             if task_name == self._task_name:
                 filtered_repre_docs.append(repre_doc)
 
+        # Collect paths of representations
         for repre_doc in filtered_repre_docs:
             path = get_representation_path(
                 repre_doc, root=self._anatomy.roots
