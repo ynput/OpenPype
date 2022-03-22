@@ -379,6 +379,9 @@ class PublishFilesModel(QtGui.QStandardItemModel):
         items_to_remove = set(self._items_by_id.keys())
         for item in self._get_workfie_representations():
             filepath, repre_id = item
+            # TODO handle empty filepaths
+            if not filepath:
+                continue
             filename = os.path.basename(filepath)
 
             if repre_id in items_to_remove:
