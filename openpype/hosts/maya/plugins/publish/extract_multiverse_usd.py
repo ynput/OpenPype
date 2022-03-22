@@ -160,7 +160,7 @@ class ExtractMultiverseUsd(openpype.api.Extractor):
                 'step',
                 'fps'
             ]
-            for key, value in options_items():
+            for key, _value in options_items():
                 if key in options_discard_keys:
                     continue
                 setattr(asset_write_opts, key, instance.data[key])
