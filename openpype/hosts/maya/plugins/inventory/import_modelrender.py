@@ -1,5 +1,6 @@
 import json
 from avalon import api, io
+from bson.objectid import ObjectId
 from openpype.pipeline import (
     get_representation_context,
     get_representation_path_from_context,
@@ -39,7 +40,7 @@ class ImportModelRender(api.InventoryAction):
                     nodes.append(n)
 
             repr_doc = io.find_one({
-                "_id": io.ObjectId(container["representation"]),
+                "_id": ObjectId(container["representation"]),
             })
             version_id = repr_doc["parent"]
 

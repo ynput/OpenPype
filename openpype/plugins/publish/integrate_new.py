@@ -9,17 +9,19 @@ import six
 import re
 import shutil
 
+from bson.objectid import ObjectId
 from pymongo import DeleteOne, InsertOne
 import pyblish.api
 from avalon import io
-from avalon.api import format_template_with_optional_keys
 import openpype.api
 from datetime import datetime
 # from pype.modules import ModulesManager
 from openpype.lib.profiles_filtering import filter_profiles
 from openpype.lib import (
     prepare_template_data,
-    create_hard_link
+    create_hard_link,
+    StringTemplate,
+    TemplateUnsolved
 )
 
 # this is needed until speedcopy for linux is fixed
@@ -293,7 +295,7 @@ class IntegrateAssetNew(pyblish.api.InstancePlugin):
                 bulk_writes.append(DeleteOne({"_id": repre_id}))
 
                 repre["orig_id"] = repre_id
-                repre["_id"] = io.ObjectId()
+                repre["_id"] = ObjectId()
                 repre["type"] = "archived_representation"
                 bulk_writes.append(InsertOne(repre))
 
@@ -572,7 +574,7 @@ class IntegrateAssetNew(pyblish.api.InstancePlugin):
 
             # Create new id if existing representations does not match
             if repre_id is None:
-                repre_id = io.ObjectId()
+                repre_id = ObjectId()
 
             data = repre.get("data") or {}
             data.update({'path': dst, 'template': template})
@@ -781,7 +783,7 @@ class IntegrateAssetNew(pyblish.api.InstancePlugin):
         families = [instance.data["family"]]
         families.extend(instance.data.get("families", []))
         io.update_many(
-            {"type": "subset", "_id": io.ObjectId(subset["_id"])},
+            {"type": "subset", "_id": ObjectId(subset["_id"])},
             {"$set": {"data.families": families}}
         )
 
@@ -806,7 +808,7 @@ class IntegrateAssetNew(pyblish.api.InstancePlugin):
         if subset_group:
             io.update_many({
                 'type': 'subset',
-                '_id': io.ObjectId(subset_id)
+                '_id': ObjectId(subset_id)
             }, {'$set': {'data.subsetGroup': subset_group}})
 
     def _get_subset_group(self, instance):
@@ -854,9 +856,10 @@ class IntegrateAssetNew(pyblish.api.InstancePlugin):
         fill_pairs = prepare_template_data(fill_pairs)
 
         try:
-            filled_template = \
-                format_template_with_optional_keys(fill_pairs, template)
-        except KeyError:
+            filled_template = StringTemplate.format_strict_template(
+                template, fill_pairs
+            )
+        except (KeyError, TemplateUnsolved):
             keys = []
             if fill_pairs:
                 keys = fill_pairs.keys()
@@ -1052,7 +1055,7 @@ class IntegrateAssetNew(pyblish.api.InstancePlugin):
         sync_project_presets = None
 
         rec = {
-            "_id": io.ObjectId(),
+            "_id": ObjectId(),
             "path": path
         }
         if size:

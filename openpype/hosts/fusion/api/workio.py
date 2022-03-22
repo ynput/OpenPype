@@ -1,12 +1,14 @@
 """Host API required Work Files tool"""
 import sys
 import os
-from avalon import api
+
+from openpype.pipeline import HOST_WORKFILE_EXTENSIONS
+
 from .pipeline import get_current_comp
 
 
 def file_extensions():
-    return api.HOST_WORKFILE_EXTENSIONS["fusion"]
+    return HOST_WORKFILE_EXTENSIONS["fusion"]
 
 
 def has_unsaved_changes():

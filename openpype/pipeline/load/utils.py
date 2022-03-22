@@ -7,6 +7,7 @@ import inspect
 import numbers
 
 import six
+from bson.objectid import ObjectId
 
 from avalon import io, schema
 from avalon.api import Session, registered_root
@@ -67,7 +68,7 @@ def get_repres_contexts(representation_ids, dbcon=None):
     _representation_ids = []
     for repre_id in representation_ids:
         if isinstance(repre_id, six.string_types):
-            repre_id = io.ObjectId(repre_id)
+            repre_id = ObjectId(repre_id)
         _representation_ids.append(repre_id)
 
     repre_docs = dbcon.find({
@@ -174,7 +175,7 @@ def get_subset_contexts(subset_ids, dbcon=None):
     _subset_ids = set()
     for subset_id in subset_ids:
         if isinstance(subset_id, six.string_types):
-            subset_id = io.ObjectId(subset_id)
+            subset_id = ObjectId(subset_id)
         _subset_ids.add(subset_id)
 
     subset_docs = dbcon.find({
@@ -217,7 +218,7 @@ def get_representation_context(representation):
     """Return parenthood context for representation.
 
     Args:
-        representation (str or io.ObjectId or dict): The representation id
+        representation (str or ObjectId or dict): The representation id
             or full representation as returned by the database.
 
     Returns:
@@ -227,9 +228,9 @@ def get_representation_context(representation):
 
     assert representation is not None, "This is a bug"
 
-    if isinstance(representation, (six.string_types, io.ObjectId)):
+    if isinstance(representation, (six.string_types, ObjectId)):
         representation = io.find_one(
-            {"_id": io.ObjectId(str(representation))})
+            {"_id": ObjectId(str(representation))})
 
     version, subset, asset, project = io.parenthood(representation)
 
@@ -340,7 +341,7 @@ def load_container(
 
     Args:
         Loader (Loader): The loader class to trigger.
-        representation (str or io.ObjectId or dict): The representation id
+        representation (str or ObjectId or dict): The representation id
             or full representation as returned by the database.
         namespace (str, Optional): The namespace to assign. Defaults to None.
         name (str, Optional): The name to assign. Defaults to subset name.
@@ -404,7 +405,7 @@ def update_container(container, version=-1):
 
     # Compute the different version from 'representation'
     current_representation = io.find_one({
-        "_id": io.ObjectId(container["representation"])
+        "_id": ObjectId(container["representation"])
     })
 
     assert current_representation is not None, "This is a bug"
@@ -525,7 +526,7 @@ def get_representation_path(representation, root=None, dbcon=None):
 
     """
 
-    from openpype.lib import StringTemplate
+    from openpype.lib import StringTemplate, TemplateUnsolved
 
     if dbcon is None:
         dbcon = io
@@ -542,13 +543,14 @@ def get_representation_path(representation, root=None, dbcon=None):
         try:
             context = representation["context"]
             context["root"] = root
-            template_obj = StringTemplate(template)
-            path = str(template_obj.format(context))
+            path = StringTemplate.format_strict_template(
+                template, context
+            )
             # Force replacing backslashes with forward slashed if not on
             #   windows
             if platform.system().lower() != "windows":
                 path = path.replace("\\", "/")
-        except KeyError:
+        except (TemplateUnsolved, KeyError):
             # Template references unavailable data
             return None
 
@@ -592,7 +594,6 @@ def get_representation_path(representation, root=None, dbcon=None):
                 "code": project.get("data", {}).get("code")
             },
             "asset": asset["name"],
-            "silo": asset.get("silo"),
             "hierarchy": hierarchy,
             "subset": subset["name"],
             "version": version_["name"],
