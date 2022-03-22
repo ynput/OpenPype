@@ -78,6 +78,7 @@ def install():
     from openpype.pipeline import (
         LegacyCreator,
         register_loader_plugin_path,
+        register_inventory_action,
     )
     from avalon import pipeline
 
@@ -124,7 +125,7 @@ def install():
             pyblish.register_plugin_path(path)
             register_loader_plugin_path(path)
             avalon.register_plugin_path(LegacyCreator, path)
-            avalon.register_plugin_path(avalon.InventoryAction, path)
+            register_inventory_action(path)
 
     # apply monkey patched discover to original one
     log.info("Patching discovery")

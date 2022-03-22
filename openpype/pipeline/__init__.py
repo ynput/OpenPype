@@ -46,6 +46,22 @@ from .publish import (
     OpenPypePyblishPluginMixin
 )
 
+from .actions import (
+    LauncherAction,
+
+    InventoryAction,
+
+    discover_launcher_actions,
+    register_launcher_action,
+    register_launcher_action_path,
+
+    discover_inventory_actions,
+    register_inventory_action,
+    register_inventory_action_path,
+    deregister_inventory_action,
+    deregister_inventory_action_path,
+)
+
 
 __all__ = (
     "AVALON_CONTAINER_ID",
@@ -90,5 +106,19 @@ __all__ = (
     "PublishValidationError",
     "PublishXmlValidationError",
     "KnownPublishError",
-    "OpenPypePyblishPluginMixin"
+    "OpenPypePyblishPluginMixin",
+
+    # --- Actions ---
+    "LauncherAction",
+    "InventoryAction",
+
+    "discover_launcher_actions",
+    "register_launcher_action",
+    "register_launcher_action_path",
+
+    "discover_inventory_actions",
+    "register_inventory_action",
+    "register_inventory_action_path",
+    "deregister_inventory_action",
+    "deregister_inventory_action_path",
 )
