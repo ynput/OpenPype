@@ -28,7 +28,8 @@ from .local_settings import get_openpype_username
 from .avalon_context import (
     get_workdir_data,
     get_workdir_with_workdir_data,
-    get_workfile_template_key
+    get_workfile_template_key,
+    get_last_workfile
 )
 
 from .python_module_tools import (
@@ -1609,7 +1610,7 @@ def _prepare_last_workfile(data, workdir):
                 "ext": extensions[0]
             })
 
-            last_workfile_path = avalon.api.last_workfile(
+            last_workfile_path = get_last_workfile(
                 workdir, file_template, workdir_data, extensions, True
             )
 

@@ -747,10 +747,14 @@ class ExtractReview(pyblish.api.InstancePlugin):
         collections = clique.assemble(files)[0]
         assert len(collections) == 1, "Multiple collections found."
         col = collections[0]
-        # do nothing if sequence is complete
-        if list(col.indexes)[0] == start_frame and \
-                list(col.indexes)[-1] == end_frame and \
-                col.is_contiguous():
+
+        # do nothing if no gap is found in input range
+        not_gap = True
+        for fr in range(start_frame, end_frame + 1):
+            if fr not in col.indexes:
+                not_gap = False
+
+        if not_gap:
             return []
 
         holes = col.holes()

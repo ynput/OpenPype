@@ -28,6 +28,10 @@ class BaseEntity:
 
     def __init__(self, schema_data, *args, **kwargs):
         self.schema_data = schema_data
+        tooltip = None
+        if schema_data:
+            tooltip = schema_data.get("tooltip")
+        self.tooltip = tooltip
 
         # Entity id
         self._id = uuid4()
