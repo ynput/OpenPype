@@ -821,6 +821,8 @@ class IntegrateAssetNew(pyblish.api.InstancePlugin):
 
         Attribute 'subset_grouping_profiles' is defined by OpenPype settings.
         """
+        # TODO: This logic is better suited for a Collector to just store
+        #       instance.data["subsetGroup"]
         # Skip if 'subset_grouping_profiles' is empty
         if not self.subset_grouping_profiles:
             return None
