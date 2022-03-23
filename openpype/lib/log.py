@@ -23,7 +23,6 @@ import time
 import traceback
 import threading
 import copy
-import json
 
 from . import Terminal
 from .mongo import (
