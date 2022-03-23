@@ -286,10 +286,7 @@ class IntegrateAssetNew(pyblish.api.InstancePlugin):
     def process(self, instance):
 
         # Exclude instances that also contain families from exclude families
-        families = set(
-            # Consider family and families data
-            [instance.data["family"]] + instance.data.get("families", [])
-        )
+        families = set(self._get_instance_families(instance))
         if families & set(self.exclude_families):
             return
 
