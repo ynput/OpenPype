@@ -37,8 +37,12 @@ def create_batch(name, frame_start, frame_end, **kwargs):
 
     comp_node = flame.batch.create_node("Comp")
 
+    # TODO: convert this to iterational processing,
+    #       so it could be driven from `imageio` settigns
     # create write node
     write_node = flame.batch.create_node('Write File')
+    # assign attrs
+    write_node.name = write_pref["name"]
     write_node.media_path = write_pref["media_path"]
     write_node.media_path_pattern = write_pref["media_path_pattern"]
     write_node.create_clip = write_pref["create_clip"]
@@ -46,11 +50,15 @@ def create_batch(name, frame_start, frame_end, **kwargs):
     write_node.create_clip_path = write_pref["create_clip_path"]
     write_node.include_setup_path = write_pref["include_setup_path"]
     write_node.file_type = write_pref["file_type"]
+    write_node.format_extension = write_pref["format_extension"]
     write_node.bit_depth = write_pref["bit_depth"]
+    write_node.compress = write_pref["compress"]
+    write_node.compress_mode = write_pref["compress_mode"]
     write_node.frame_index_mode = write_pref["frame_index_mode"]
-    write_node.frame_padding = int(write_pref["frame_padding"])
+    write_node.frame_padding = write_pref["frame_padding"]
+    write_node.version_mode = write_pref["version_mode"]
+    write_node.version_name = write_pref["version_name"]
 
-    # connect nodes
     flame.batch.connect_nodes(comp_node, "Result", write_node, "Front")
 
     # sort batch nodes

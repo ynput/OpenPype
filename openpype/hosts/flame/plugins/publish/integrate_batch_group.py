@@ -1,5 +1,7 @@
 import os
+from pprint import pformat
 import pyblish
+from openpype.lib import get_workdir
 import openpype.hosts.flame.api as opfapi
 
 
@@ -17,25 +19,52 @@ class IntegrateBatchGroup(pyblish.api.InstancePlugin):
         frame_end = instance.data["frameEnd"]
         handle_start = instance.data["handleStart"]
         handle_end = instance.data["handleEnd"]
-
         asset_name = instance.data["asset"]
-        write_pref_data = self._get_write_prefs(instance)
+        add_tasks = instance.data["flameAddTasks"]
 
-        batch_data = {
-            "shematic_reels": [
-                "OP_LoadedReel"
-            ],
-            "write_pref": write_pref_data,
-            "handleStart": handle_start,
-            "handleEnd": handle_end
-        }
+        # iterate all tasks from settings
+        for task_data in add_tasks:
+            # exclude batch group
+            if not task_data["create_batch_group"]:
+                continue
+            task_name = task_data["name"]
+            batchgroup_name = "{}_{}".format(asset_name, task_name)
+            write_pref_data = self._get_write_prefs(instance, task_data)
 
-        opfapi.create_batch(asset_name, frame_start, frame_end, batch_data)
+            batch_data = {
+                "shematic_reels": [
+                    "OP_LoadedReel"
+                ],
+                "write_pref": write_pref_data,
+                "handleStart": handle_start,
+                "handleEnd": handle_end
+            }
+            self.log.debug(
+                "__ batch_data: {}".format(pformat(batch_data)))
 
-    def _get_write_prefs(self, instance):
-        shot_path = instance.data[""]
+            # create batch with utils
+            opfapi.create_batch(
+                batchgroup_name,
+                frame_start,
+                frame_end,
+                batch_data
+            )
+
+    def _get_write_prefs(self, instance, task_data):
+        anatomy_data = instance.data["anatomyData"]
+
+        task_workfile_path = self._get_shot_task_dir_path(instance, task_data)
+        self.log.debug("__ task_workfile_path: {}".format(task_workfile_path))
+
+        # TODO: this might be done with template in settings
         render_dir_path = os.path.join(
-            shot_path, "work", task, "render", "flame")
+            task_workfile_path, "render", "flame")
+
+        # TODO: add most of these to `imageio/flame/batch/write_node`
+        name = "{project[code]}_{asset}_{task[name]}".format(
+            **anatomy_data
+        )
+
         # The path attribute where the rendered clip is exported
         # /path/to/file.[0001-0010].exr
         media_path = render_dir_path
@@ -83,6 +112,7 @@ class IntegrateBatchGroup(pyblish.api.InstancePlugin):
         version_name = "v<version>"
 
         return {
+            "name": name,
             "media_path": media_path,
             "media_path_pattern": media_path_pattern,
             "create_clip": create_clip,
@@ -99,3 +129,10 @@ class IntegrateBatchGroup(pyblish.api.InstancePlugin):
             "version_mode": version_mode,
             "version_name": version_name
         }
+
+    def _get_shot_task_dir_path(self, instance, task_data):
+        project_doc = instance.data["projectEntity"]
+        asset_entity = instance.data["assetEntity"]
+
+        return get_workdir(
+            project_doc, asset_entity, task_data["name"], "flame")
