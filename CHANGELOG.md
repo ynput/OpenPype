@@ -1,23 +1,47 @@
 # Changelog
 
-## [3.9.1-nightly.2](https://github.com/pypeclub/OpenPype/tree/HEAD)
+## [3.9.2-nightly.1](https://github.com/pypeclub/OpenPype/tree/HEAD)
 
-[Full Changelog](https://github.com/pypeclub/OpenPype/compare/3.9.0...HEAD)
+[Full Changelog](https://github.com/pypeclub/OpenPype/compare/3.9.1...HEAD)
 
 **🚀 Enhancements**
 
+- CI: change the version bump logic [\#2919](https://github.com/pypeclub/OpenPype/pull/2919)
+- Deadline: Add headless argument [\#2916](https://github.com/pypeclub/OpenPype/pull/2916)
+- Ftrack: Fill workfile in custom attribute [\#2906](https://github.com/pypeclub/OpenPype/pull/2906)
+- Settings UI: Add simple tooltips for settings entities [\#2901](https://github.com/pypeclub/OpenPype/pull/2901)
+
+**🐛 Bug fixes**
+
+- Ftrack: Missing Ftrack id after editorial publish [\#2905](https://github.com/pypeclub/OpenPype/pull/2905)
+- AfterEffects: Fix rendering for single frame in DL [\#2875](https://github.com/pypeclub/OpenPype/pull/2875)
+
+**🔀 Refactored code**
+
+- General: Move formatting and workfile functions [\#2914](https://github.com/pypeclub/OpenPype/pull/2914)
+
+## [3.9.1](https://github.com/pypeclub/OpenPype/tree/3.9.1) (2022-03-18)
+
+[Full Changelog](https://github.com/pypeclub/OpenPype/compare/CI/3.9.1-nightly.3...3.9.1)
+
+**🚀 Enhancements**
+
+- General: Change how OPENPYPE\_DEBUG value is handled [\#2907](https://github.com/pypeclub/OpenPype/pull/2907)
+- nuke: imageio adding ocio config version 1.2 [\#2897](https://github.com/pypeclub/OpenPype/pull/2897)
+- Flame: support for comment with xml attribute overrides [\#2892](https://github.com/pypeclub/OpenPype/pull/2892)
 - Nuke: ExtractReviewSlate can handle more codes and profiles [\#2879](https://github.com/pypeclub/OpenPype/pull/2879)
 - Flame: sequence used for reference video [\#2869](https://github.com/pypeclub/OpenPype/pull/2869)
 
 **🐛 Bug fixes**
 
+- General: Fix use of Anatomy roots [\#2904](https://github.com/pypeclub/OpenPype/pull/2904)
+- Fixing gap detection in extract review [\#2902](https://github.com/pypeclub/OpenPype/pull/2902)
 - Pyblish Pype - ensure current state is correct when entering new group order [\#2899](https://github.com/pypeclub/OpenPype/pull/2899)
 - SceneInventory: Fix import of load function [\#2894](https://github.com/pypeclub/OpenPype/pull/2894)
 - Harmony - fixed creator issue [\#2891](https://github.com/pypeclub/OpenPype/pull/2891)
 - General: Remove forgotten use of avalon Creator [\#2885](https://github.com/pypeclub/OpenPype/pull/2885)
 - General: Avoid circular import [\#2884](https://github.com/pypeclub/OpenPype/pull/2884)
 - Fixes for attaching loaded containers \(\#2837\) [\#2874](https://github.com/pypeclub/OpenPype/pull/2874)
-- Maya: Deformer node ids validation plugin [\#2826](https://github.com/pypeclub/OpenPype/pull/2826)
 
 **🔀 Refactored code**
 
@@ -31,6 +55,10 @@
 **Deprecated:**
 
 - AssetCreator: Remove the tool [\#2845](https://github.com/pypeclub/OpenPype/pull/2845)
+
+### 📖 Documentation
+
+- Documentation: Change Photoshop & AfterEffects plugin path [\#2878](https://github.com/pypeclub/OpenPype/pull/2878)
 
 **🚀 Enhancements**
 
@@ -66,6 +94,7 @@
 - Maya: Stop creation of reviews for Cryptomattes [\#2832](https://github.com/pypeclub/OpenPype/pull/2832)
 - Deadline: Remove recreated event [\#2828](https://github.com/pypeclub/OpenPype/pull/2828)
 - Deadline: Added missing events folder [\#2827](https://github.com/pypeclub/OpenPype/pull/2827)
+- Maya: Deformer node ids validation plugin [\#2826](https://github.com/pypeclub/OpenPype/pull/2826)
 - Settings: Missing document with OP versions may break start of OpenPype [\#2825](https://github.com/pypeclub/OpenPype/pull/2825)
 - Deadline: more detailed temp file name for environment json [\#2824](https://github.com/pypeclub/OpenPype/pull/2824)
 - General: Host name was formed from obsolete code [\#2821](https://github.com/pypeclub/OpenPype/pull/2821)
@@ -83,7 +112,6 @@
 - General: Move change context functions [\#2839](https://github.com/pypeclub/OpenPype/pull/2839)
 - Tools: Don't use avalon tools code [\#2829](https://github.com/pypeclub/OpenPype/pull/2829)
 - Move Unreal Implementation to OpenPype [\#2823](https://github.com/pypeclub/OpenPype/pull/2823)
-- General: Extract template formatting from anatomy [\#2766](https://github.com/pypeclub/OpenPype/pull/2766)
 
 ## [3.8.2](https://github.com/pypeclub/OpenPype/tree/3.8.2) (2022-02-07)
 

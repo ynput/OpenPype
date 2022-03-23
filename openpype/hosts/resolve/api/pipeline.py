@@ -6,13 +6,13 @@ import contextlib
 from collections import OrderedDict
 from avalon import api as avalon
 from avalon import schema
-from avalon.pipeline import AVALON_CONTAINER_ID
 from pyblish import api as pyblish
 from openpype.api import Logger
 from openpype.pipeline import (
     LegacyCreator,
     register_loader_plugin_path,
     deregister_loader_plugin_path,
+    AVALON_CONTAINER_ID,
 )
 from . import lib
 from . import PLUGINS_DIR
@@ -22,7 +22,6 @@ log = Logger().get_logger(__name__)
 PUBLISH_PATH = os.path.join(PLUGINS_DIR, "publish")
 LOAD_PATH = os.path.join(PLUGINS_DIR, "load")
 CREATE_PATH = os.path.join(PLUGINS_DIR, "create")
-INVENTORY_PATH = os.path.join(PLUGINS_DIR, "inventory")
 
 AVALON_CONTAINERS = ":AVALON_CONTAINERS"
 
@@ -48,7 +47,6 @@ def install():
 
     register_loader_plugin_path(LOAD_PATH)
     avalon.register_plugin_path(LegacyCreator, CREATE_PATH)
-    avalon.register_plugin_path(avalon.InventoryAction, INVENTORY_PATH)
 
     # register callback for switching publishable
     pyblish.register_callback("instanceToggled", on_pyblish_instance_toggled)
@@ -73,7 +71,6 @@ def uninstall():
 
     deregister_loader_plugin_path(LOAD_PATH)
     avalon.deregister_plugin_path(LegacyCreator, CREATE_PATH)
-    avalon.deregister_plugin_path(avalon.InventoryAction, INVENTORY_PATH)
 
     # register callback for switching publishable
     pyblish.deregister_callback("instanceToggled", on_pyblish_instance_toggled)

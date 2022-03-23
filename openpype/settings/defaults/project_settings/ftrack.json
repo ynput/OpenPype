@@ -193,6 +193,11 @@
                 "Administrator"
             ]
         },
+        "fill_workfile_attribute": {
+            "enabled": false,
+            "custom_attribute_key": "",
+            "role_list": []
+        },
         "seed_project": {
             "enabled": true,
             "role_list": [

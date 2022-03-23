@@ -98,6 +98,10 @@ class PypeStreamHandler(logging.StreamHandler):
             self.flush()
         except (KeyboardInterrupt, SystemExit):
             raise
+
+        except OSError:
+            self.handleError(record)
+
         except Exception:
             print(repr(record))
             self.handleError(record)
@@ -227,7 +231,7 @@ class PypeLogger:
 
         logger = logging.getLogger(name or "__main__")
 
-        if cls.pype_debug > 1:
+        if cls.pype_debug > 0:
             logger.setLevel(logging.DEBUG)
         else:
             logger.setLevel(logging.INFO)

@@ -290,7 +290,6 @@ class LoaderWindow(QtWidgets.QDialog):
         subsets_model.clear()
         self.clear_assets_underlines()
 
-        # filter None docs they are silo
         asset_ids = self._assets_widget.get_selected_asset_ids()
         # Start loading
         subsets_widget.set_loading_state(
@@ -381,17 +380,9 @@ class LoaderWindow(QtWidgets.QDialog):
 
         The context must contain `asset` data by name.
 
-        Note: Prior to setting context ensure `refresh` is triggered so that
-              the "silos" are listed correctly, aside from that setting the
-              context will force a refresh further down because it changes
-              the active silo and asset.
-
         Args:
             context (dict): The context to apply.
-
-        Returns:
-            None
-
+            refrest (bool): Trigger refresh on context set.
         """
 
         asset = context.get("asset", None)
@@ -399,12 +390,6 @@ class LoaderWindow(QtWidgets.QDialog):
             return
 
         if refresh:
-            # Workaround:
-            # Force a direct (non-scheduled) refresh prior to setting the
-            # asset widget's silo and asset selection to ensure it's correctly
-            # displaying the silo tabs. Calling `window.refresh()` and directly
-            # `window.set_context()` the `set_context()` seems to override the
-            # scheduled refresh and the silo tabs are not shown.
             self._refresh()
 
         self._assets_widget.select_asset_by_name(asset)
