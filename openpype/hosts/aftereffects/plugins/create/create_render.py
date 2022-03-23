@@ -1,11 +1,11 @@
 from avalon import api as avalon_api
 
 from openpype import resources
+from openpype.lib import BoolDef, UISeparatorDef
 from openpype.hosts.aftereffects import api
 from openpype.pipeline import (
     Creator,
     CreatedInstance,
-    lib,
     CreatorError
 )
 
@@ -86,13 +86,13 @@ class RenderCreator(Creator):
         ]
 
     def get_instance_attr_defs(self):
-        return [lib.BoolDef("farm", label="Render on farm")]
+        return [BoolDef("farm", label="Render on farm")]
 
     def get_pre_create_attr_defs(self):
         output = [
-            lib.BoolDef("use_selection", default=True, label="Use selection"),
-            lib.UISeparatorDef(),
-            lib.BoolDef("farm", label="Render on farm")
+            BoolDef("use_selection", default=True, label="Use selection"),
+            UISeparatorDef(),
+            BoolDef("farm", label="Render on farm")
         ]
         return output
 
