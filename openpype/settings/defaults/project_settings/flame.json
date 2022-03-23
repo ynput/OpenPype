@@ -20,6 +20,37 @@
         }
     },
     "publish": {
+        "CollectTimelineInstances": {
+            "xml_preset_attrs_from_comments": [
+                {
+                    "name": "width",
+                    "type": "number"
+                },
+                {
+                    "name": "height",
+                    "type": "number"
+                },
+                {
+                    "name": "pixelRatio",
+                    "type": "float"
+                },
+                {
+                    "name": "resizeType",
+                    "type": "string"
+                },
+                {
+                    "name": "resizeFilter",
+                    "type": "string"
+                }
+            ],
+            "add_tasks": [
+                {
+                    "name": "compositing",
+                    "type": "Compositing",
+                    "create_batch_group": true
+                }
+            ]
+        },
         "ExtractSubsetResources": {
             "keep_original_representation": false,
             "export_presets_mapping": {

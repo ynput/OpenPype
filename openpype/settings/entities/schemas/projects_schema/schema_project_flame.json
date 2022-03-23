@@ -139,6 +139,87 @@
                 {
                     "type": "dict",
                     "collapsible": true,
+                    "key": "CollectTimelineInstances",
+                    "label": "Collect Timeline Instances",
+                    "is_group": true,
+                    "children": [
+                        {
+                            "type": "collapsible-wrap",
+                            "label": "XML presets attributes parsable from segment comments",
+                            "collapsible": true,
+                            "collapsed": true,
+                            "children": [
+                                {
+                                    "type": "list",
+                                    "key": "xml_preset_attrs_from_comments",
+                                    "object_type": {
+                                        "type": "dict",
+                                        "children": [
+                                            {
+                                                "type": "text",
+                                                "key": "name",
+                                                "label": "Attribute name"
+                                            },
+                                            {
+                                                "key": "type",
+                                                "label": "Attribute type",
+                                                "type": "enum",
+                                                "default": "number",
+                                                "enum_items": [
+                                                    {
+                                                        "number": "number"
+                                                    },
+                                                    {
+                                                        "float": "float"
+                                                    },
+                                                    {
+                                                        "string": "string"
+                                                    }
+                                                ]
+                                            }
+                                        ]
+                                    }
+                                }
+                            ]
+                        },
+                        {
+                            "type": "collapsible-wrap",
+                            "label": "Add tasks",
+                            "collapsible": true,
+                            "collapsed": true,
+                            "children": [
+                                {
+                                    "type": "list",
+                                    "key": "add_tasks",
+                                    "object_type": {
+                                        "type": "dict",
+                                        "children": [
+                                            {
+                                                "type": "text",
+                                                "key": "name",
+                                                "label": "Task name"
+                                            },
+                                            {
+                                                "key": "type",
+                                                "label": "Task type",
+                                                "multiselection": false,
+                                                "type": "task-types-enum"
+                                            },
+                                            {
+                                                "type": "boolean",
+                                                "key": "create_batch_group",
+                                                "label": "Create batch group"
+                                            }
+                                        ]
+                                    }
+                                }
+                            ]
+                        }
+                    ]
+                },
+                {
+                    "type": "dict",
+                    "collapsible": true,
                     "key": "ExtractSubsetResources",
                     "label": "Extract Subset Resources",
                     "is_group": true,
