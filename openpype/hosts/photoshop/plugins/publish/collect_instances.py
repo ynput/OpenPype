@@ -1,3 +1,4 @@
+import pprint
 import pyblish.api
 
 from openpype.hosts.photoshop import api as photoshop
@@ -21,9 +22,10 @@ class CollectInstances(pyblish.api.ContextPlugin):
     }
 
     def process(self, context):
-        if context.data.get("newPublishing"):
-            self.log.debug("Not applicable for New Publisher, skip")
-            return
+        instance_by_layer_id = {}
+        for instance in context:
+            if instance.data["family"] == "image" and instance.data.get("members"):
+                instance_by_layer_id[str(instance.data["members"][0])] = instance
 
         stub = photoshop.stub()
         layers = stub.get_layers()
@@ -40,13 +42,10 @@ class CollectInstances(pyblish.api.ContextPlugin):
             if "container" in layer_data["id"]:
                 continue
 
-            # child_layers = [*layer.Layers]
-            # self.log.debug("child_layers {}".format(child_layers))
-            # if not child_layers:
-            #     self.log.info("%s skipped, it was empty." % layer.Name)
-            #     continue
+            instance = instance_by_layer_id.get(str(layer.id))
+            if instance is None:
+                instance = context.create_instance(layer_data["subset"])
 
-            instance = context.create_instance(layer_data["subset"])
             instance.data["layer"] = layer
             instance.data.update(layer_data)
             instance.data["families"] = self.families_mapping[
@@ -58,7 +57,7 @@ class CollectInstances(pyblish.api.ContextPlugin):
             # Produce diagnostic message for any graphical
             # user interface interested in visualising it.
             self.log.info("Found: \"%s\" " % instance.data["name"])
-            self.log.info("instance: {} ".format(instance.data))
+            self.log.info("instance: {} ".format(pprint.pformat(instance.data, indent=4)))
 
         if len(instance_names) != len(set(instance_names)):
             self.log.warning("Duplicate instances found. " +
