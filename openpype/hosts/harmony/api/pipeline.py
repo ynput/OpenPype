@@ -6,7 +6,6 @@ from bson.objectid import ObjectId
 import pyblish.api
 
 from avalon import io
-import avalon.api
 
 from openpype import lib
 from openpype.lib import register_event_callback
@@ -109,9 +108,8 @@ def check_inventory():
     if not lib.any_outdated():
         return
 
-    host = avalon.api.registered_host()
     outdated_containers = []
-    for container in host.ls():
+    for container in ls():
         representation = container['representation']
         representation_doc = io.find_one(
             {
