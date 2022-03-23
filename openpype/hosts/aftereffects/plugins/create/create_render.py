@@ -79,11 +79,7 @@ class RenderCreator(Creator):
         self._add_instance_to_context(new_instance)
 
     def get_default_variants(self):
-        return [
-            "myVariant",
-            "variantTwo",
-            "different_variant"
-        ]
+        return ["Main"]
 
     def get_instance_attr_defs(self):
         return [BoolDef("farm", label="Render on farm")]
