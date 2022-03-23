@@ -1,14 +1,14 @@
 import os
 import hiero
-from avalon import api
+
 from openpype.api import Logger
+from openpype.pipeline import HOST_WORKFILE_EXTENSIONS
 
-
-log = Logger().get_logger(__name__)
+log = Logger.get_logger(__name__)
 
 
 def file_extensions():
-    return api.HOST_WORKFILE_EXTENSIONS["hiero"]
+    return HOST_WORKFILE_EXTENSIONS["hiero"]
 
 
 def has_unsaved_changes():

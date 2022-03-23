@@ -4,6 +4,7 @@
 """
 
 from avalon import api
+from openpype.pipeline import HOST_WORKFILE_EXTENSIONS
 from .lib import (
     execute_george,
     execute_george_through_file
@@ -47,7 +48,7 @@ def has_unsaved_changes():
 
 def file_extensions():
     """Return the supported file extensions for Blender scene files."""
-    return api.HOST_WORKFILE_EXTENSIONS["tvpaint"]
+    return HOST_WORKFILE_EXTENSIONS["tvpaint"]
 
 
 def work_root(session):
