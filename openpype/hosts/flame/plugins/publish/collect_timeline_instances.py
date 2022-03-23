@@ -21,15 +21,9 @@ class CollectTimelineInstances(pyblish.api.ContextPlugin):
 
     audio_track_items = []
 
-    # TODO: add to settings
     # settings
-    xml_preset_attrs_from_comments = {
-        "width": "number",
-        "height": "number",
-        "pixelRatio": "float",
-        "resizeType": "string",
-        "resizeFilter": "string"
-    }
+    xml_preset_attrs_from_comments = []
+    add_tasks = []
 
     def process(self, context):
         project = context.data["flameProject"]
@@ -106,7 +100,11 @@ class CollectTimelineInstances(pyblish.api.ContextPlugin):
                     "fps": self.fps,
                     "flameSourceClip": source_clip,
                     "sourceFirstFrame": int(first_frame),
-                    "path": file_path
+                    "path": file_path,
+                    "flameAddTasks": self.add_tasks,
+                    "tasks": {
+                        task["name"]: {"type": task["type"]}
+                        for task in self.add_tasks}
                 })
 
                 # get otio clip data
@@ -181,14 +179,17 @@ class CollectTimelineInstances(pyblish.api.ContextPlugin):
         # split to key and value
         key, value = split.split(":")
 
-        for a_name, a_type in self.xml_preset_attrs_from_comments.items():
+        for attr_data in self.xml_preset_attrs_from_comments:
+            a_name = attr_data["name"]
+            a_type = attr_data["type"]
+
             # exclude all not related attributes
             if a_name.lower() not in key.lower():
                 continue
 
             # get pattern defined by type
             pattern = TXT_PATERN
-            if a_type in ("number" , "float"):
+            if a_type in ("number", "float"):
                 pattern = NUM_PATERN
 
             res_goup = pattern.findall(value)
