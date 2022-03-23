@@ -1,9 +1,9 @@
 import os
 
-import avalon.maya
-import openpype.api
-
 from maya import cmds
+
+import openpype.api
+from openpype.hosts.maya.api.lib import maintained_selection
 
 
 class ExtractMultiverseUsd(openpype.api.Extractor):
@@ -144,7 +144,7 @@ class ExtractMultiverseUsd(openpype.api.Extractor):
         # Perform extraction
         self.log.info("Performing extraction ...")
 
-        with avalon.maya.maintained_selection():
+        with maintained_selection():
             members = instance.data("setMembers")
             members = cmds.ls(members,
                               dag=True,
