@@ -85,9 +85,7 @@ def inject_openpype_environment(deadlinePlugin):
         with open(export_url) as fp:
             contents = json.load(fp)
             for key, value in contents.items():
-                print("key:: {}".format(key))
-                if key != 'NUMBER_OF_PROCESSORS':
-                    deadlinePlugin.SetProcessEnvironmentVariable(key, value)
+                deadlinePlugin.SetProcessEnvironmentVariable(key, value)
 
         print(">>> Removing temporary file")
         os.remove(export_url)
