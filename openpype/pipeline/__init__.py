@@ -3,8 +3,6 @@ from .constants import (
     HOST_WORKFILE_EXTENSIONS,
 )
 
-from .lib import attribute_definitions
-
 from .create import (
     BaseCreator,
     Creator,
