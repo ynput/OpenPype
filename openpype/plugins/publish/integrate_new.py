@@ -293,6 +293,10 @@ class IntegrateAssetNew(pyblish.api.InstancePlugin):
         if families & set(self.exclude_families):
             return
 
+        # TODO: Avoid the need to do any adjustments to anatomy data
+        #       Best case scenario that's all handled by collectors
+        self.prepare_anatomy(instance)
+
         file_transactions = FileTransaction(log=self.log)
         try:
             self.register(instance, file_transactions)
@@ -309,24 +313,12 @@ class IntegrateAssetNew(pyblish.api.InstancePlugin):
 
     def prepare_anatomy(self, instance):
         """Prepare anatomy data used to define representation destinations"""
-
-        anatomy_data = instance.data["anatomyData"]
-
         # TODO: This logic should move to CollectAnatomyContextData
         intent_value = instance.context.data.get("intent")
         if intent_value and isinstance(intent_value, dict):
             intent_value = intent_value.get("value")
-
-        if intent_value:
-            anatomy_data["intent"] = intent_value
-
-        profile, _ = self.resolve_profile(self.template_name_profiles,
-                                          instance)
-        template_name = "publish"
-        if profile:
-            template_name = profile["template_name"]
-
-        return template_name, anatomy_data
+            if intent_value:
+                instance.data["anatomyData"]["intent"] = intent_value
 
     def resolve_profile(self, profiles, instance):
         """Resolve profile by family, task name, host name and task type"""
@@ -382,6 +374,13 @@ class IntegrateAssetNew(pyblish.api.InstancePlugin):
             )
         )
 
+        # Define publish template name from profiles
+        profile, _ = self.resolve_profile(self.template_name_profiles,
+                                          instance)
+        template_name = "publish"
+        if profile:
+            template_name = profile["template_name"]
+
         subset = self.register_subset(instance)
 
         version = self.register_version(instance, subset)
@@ -393,7 +392,6 @@ class IntegrateAssetNew(pyblish.api.InstancePlugin):
         }))
 
         # Prepare all representations
-        template_name, anatomy_data = self.prepare_anatomy(instance)
         prepared_representations = []
         for repre in instance.data["representations"]:
 
@@ -404,7 +402,6 @@ class IntegrateAssetNew(pyblish.api.InstancePlugin):
 
             # todo: reduce/simplify what is returned from this function
             prepared = self.prepare_representation(repre,
-                                                   anatomy_data,
                                                    template_name,
                                                    archived_repres,
                                                    version,
@@ -544,15 +541,11 @@ class IntegrateAssetNew(pyblish.api.InstancePlugin):
         return version
 
     def prepare_representation(self, repre,
-                               anatomy_data,
                                template_name,
                                archived_repres,
                                version,
                                instance_stagingdir,
                                instance):
-
-        # create template data for Anatomy
-        template_data = copy.deepcopy(anatomy_data)
 
         # pre-flight validations
         if repre["ext"].startswith("."):
@@ -564,6 +557,9 @@ class IntegrateAssetNew(pyblish.api.InstancePlugin):
                              "data before integration. They are computed in "
                              "the integrator"
                              "Got: {}".format(repre["transfers"]))
+
+        # create template data for Anatomy
+        template_data = copy.deepcopy(instance.data["anatomyData"])
 
         # required representation keys
         files = repre['files']
