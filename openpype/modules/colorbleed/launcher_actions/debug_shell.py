@@ -42,9 +42,14 @@ class DebugShell(LauncherAction):
             print(f"Appending to PATH: {folder}")
             env["PATH"] += os.pathsep + folder
 
+        cwd = env.get("AVALON_WORKDIR")
+        if cwd:
+            print(f"Setting Work Directory: {cwd}")
+
         print(f"Launch cmd in environment of {app_name}..")
         subprocess.Popen("cmd",
                          env=env,
+                         cwd=cwd,
                          creationflags=subprocess.CREATE_NEW_CONSOLE)
 
     def choose_app(self, applications):
