@@ -1,9 +1,9 @@
 from avalon import api as avalon_api
 from openpype.hosts.photoshop import api
+from openpype.lib import BoolDef
 from openpype.pipeline import (
     Creator,
-    CreatedInstance,
-    lib
+    CreatedInstance
 )
 
 
@@ -111,9 +111,9 @@ class ImageCreator(Creator):
 
     def get_pre_create_attr_defs(self):
         output = [
-            lib.BoolDef("use_selection", default=True,
+            BoolDef("use_selection", default=True,
                         label="Create only for selected"),
-            lib.BoolDef("create_multiple",
+            BoolDef("create_multiple",
                         default=True,
                         label="Create separate instance for each selected")
         ]
