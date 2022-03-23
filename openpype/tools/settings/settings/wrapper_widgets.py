@@ -92,7 +92,8 @@ class CollapsibleWrapper(WrapperWidget):
         self.content_layout = content_layout
 
         if self.collapsible:
-            body_widget.toggle_content(self.collapsed)
+            if not self.entity.collapsed:
+                body_widget.toggle_content()
         else:
             body_widget.hide_toolbox(hide_content=False)
 
