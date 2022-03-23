@@ -133,8 +133,6 @@ def classes_from_module(superclass, module):
         if not inspect.isclass(obj) or obj is superclass:
             continue
 
-        # Use string comparison rather than `issubclass`
-        # in order to support reloading of this module.
         if issubclass(obj, superclass):
             classes.append(obj)
 

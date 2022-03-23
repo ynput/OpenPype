@@ -110,7 +110,7 @@ class SubsetLoaderPlugin(LoaderPlugin):
 
 
 def discover_loader_plugins():
-    plugins = discover(LoaderPlugin).plugins
+    plugins = discover(LoaderPlugin)
     set_plugin_attributes_from_settings(plugins, LoaderPlugin)
     return plugins
 

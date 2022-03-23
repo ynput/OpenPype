@@ -303,11 +303,11 @@ class AutoCreator(BaseCreator):
 
 
 def discover_creator_plugins():
-    return discover(BaseCreator).plugins
+    return discover(BaseCreator)
 
 
 def discover_legacy_creator_plugins():
-    plugins = discover(LegacyCreator).plugins
+    plugins = discover(LegacyCreator)
     set_plugin_attributes_from_settings(plugins, LegacyCreator)
     return plugins
 

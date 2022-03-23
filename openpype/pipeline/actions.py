@@ -97,7 +97,7 @@ class InventoryAction(object):
 
 # Launcher action
 def discover_launcher_actions():
-    return discover(LauncherAction).plugins
+    return discover(LauncherAction)
 
 
 def register_launcher_action(plugin):
@@ -110,7 +110,7 @@ def register_launcher_action_path(path):
 
 # Inventory action
 def discover_inventory_actions():
-    actions = discover(InventoryAction).plugins
+    actions = discover(InventoryAction)
     filtered_actions = []
     for action in actions:
         if action is not InventoryAction:
