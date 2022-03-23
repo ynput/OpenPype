@@ -169,6 +169,14 @@ class ExporterReview(object):
             "representations": list()
         })
 
+        self.instance_length = int(
+            (
+                instance.data["frameEnd"] - instance.data["frameStart"] + 1
+            ) + (
+                instance.data["handleStart"] + instance.data["handleEnd"]
+            )
+        )
+
     def get_file_info(self):
         if self.collection:
             self.log.debug("Collection: `{}`".format(self.collection))
@@ -180,7 +188,9 @@ class ExporterReview(object):
             # get first and last frame
             self.first_frame = min(self.collection.indexes)
             self.last_frame = max(self.collection.indexes)
-            if "slate" in self.instance.data["families"]:
+            self.frame_length = int(len(self.collection.indexes))
+            if "slate" in self.instance.data["families"] and \
+                    self.frame_length > self.instance_length:
                 self.first_frame += 1
         else:
             self.fname = os.path.basename(self.path_in)
