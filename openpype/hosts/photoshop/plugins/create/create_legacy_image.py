@@ -91,6 +91,7 @@ class CreateImage(create.LegacyCreator):
                     long_names.append(name)
 
             self.data.update({"subset": subset_name})
+            self.data.update({"uuid": str(group.id)})
             self.data.update({"members": [str(group.id)]})
             self.data.update({"long_name": "_".join(long_names)})
             stub.imprint(group, self.data)
