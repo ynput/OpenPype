@@ -11,12 +11,12 @@ from openpype import lib
 from openpype.api import Logger
 from openpype.pipeline import (
     LegacyCreator,
+    BaseCreator,
     register_loader_plugin_path,
     deregister_loader_plugin_path,
     AVALON_CONTAINER_ID,
 )
 import openpype.hosts.aftereffects
-from openpype.pipeline import BaseCreator
 from openpype.lib import register_event_callback
 
 from .launch_logic import get_stub
