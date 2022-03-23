@@ -96,7 +96,7 @@ class DebugShell(LauncherAction):
             {"config.apps": True}
         )
         if not project_doc:
-            return actions
+            return {}
 
         applications = {}
         for app_def in project_doc["config"]["apps"]:
