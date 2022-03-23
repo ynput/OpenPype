@@ -32,8 +32,8 @@ class ValidateOutRelatedNodeIds(pyblish.api.InstancePlugin):
         # if a deformer has been created on the shape
         invalid = self.get_invalid(instance)
         if invalid:
-            raise RuntimeError("Nodes found with non-related "
-                               "asset IDs: {0}".format(invalid))
+            raise RuntimeError("Nodes found with mismatching "
+                               "IDs: {0}".format(invalid))
 
     @classmethod
     def get_invalid(cls, instance):

@@ -591,6 +591,34 @@
                 },
                 {
                     "type": "dict",
+                    "key": "fill_workfile_attribute",
+                    "label": "Fill workfile Custom attribute",
+                    "checkbox_key": "enabled",
+                    "children": [
+                        {
+                            "type": "boolean",
+                            "key": "enabled",
+                            "label": "Enabled"
+                        },
+                        {
+                            "type": "label",
+                            "label": "Custom attribute must be <b>Text</b> type added to <b>Task</b> entity type"
+                        },
+                        {
+                            "type": "text",
+                            "key": "custom_attribute_key",
+                            "label": "Custom attribute key"
+                        },
+                        {
+                            "type": "list",
+                            "key": "role_list",
+                            "label": "Roles",
+                            "object_type": "text"
+                        }
+                    ]
+                },
+                {
+                    "type": "dict",
                     "key": "seed_project",
                     "label": "Seed Debug Project",
                     "checkbox_key": "enabled",

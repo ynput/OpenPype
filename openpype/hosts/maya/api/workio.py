@@ -1,11 +1,12 @@
 """Host API required Work Files tool"""
 import os
 from maya import cmds
-from avalon import api
+
+from openpype.pipeline import HOST_WORKFILE_EXTENSIONS
 
 
 def file_extensions():
-    return api.HOST_WORKFILE_EXTENSIONS["maya"]
+    return HOST_WORKFILE_EXTENSIONS["maya"]
 
 
 def has_unsaved_changes():

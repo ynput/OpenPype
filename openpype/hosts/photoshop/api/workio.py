@@ -1,8 +1,7 @@
 """Host API required Work Files tool"""
 import os
 
-import avalon.api
-
+from openpype.pipeline import HOST_WORKFILE_EXTENSIONS
 from . import lib
 
 
@@ -15,7 +14,7 @@ def _active_document():
 
 
 def file_extensions():
-    return avalon.api.HOST_WORKFILE_EXTENSIONS["photoshop"]
+    return HOST_WORKFILE_EXTENSIONS["photoshop"]
 
 
 def has_unsaved_changes():

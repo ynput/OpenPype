@@ -8,12 +8,13 @@ import time
 import appdirs
 from Qt import QtCore, QtGui
 import qtawesome
-from avalon import api
+
 from openpype.lib import JSONSettingRegistry
 from openpype.lib.applications import (
     CUSTOM_LAUNCH_APP_GROUPS,
     ApplicationManager
 )
+from openpype.pipeline import discover_launcher_actions
 from openpype.tools.utils.lib import (
     DynamicQThread,
     get_project_icon,
@@ -68,7 +69,7 @@ class ActionModel(QtGui.QStandardItemModel):
     def discover(self):
         """Set up Actions cache. Run this for each new project."""
         # Discover all registered actions
-        actions = api.discover(api.Action)
+        actions = discover_launcher_actions()
 
         # Get available project actions and the application actions
         app_actions = self.get_application_actions()
