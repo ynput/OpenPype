@@ -112,10 +112,10 @@ class ImageCreator(Creator):
     def get_pre_create_attr_defs(self):
         output = [
             BoolDef("use_selection", default=True,
-                        label="Create only for selected"),
+                    label="Create only for selected"),
             BoolDef("create_multiple",
-                        default=True,
-                        label="Create separate instance for each selected")
+                    default=True,
+                    label="Create separate instance for each selected")
         ]
         return output
 
