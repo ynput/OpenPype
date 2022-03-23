@@ -1,12 +1,12 @@
 import os
 import getpass
 
-from avalon import api
+from openpype.pipeline import LauncherAction
 
 STUB = "<<NULL>>"
 
 
-class ExploreToCurrent(api.Action):
+class ExploreToCurrent(LauncherAction):
     name = "exploretocurrent"
     label = "Explore Here"
     icon = "external-link"

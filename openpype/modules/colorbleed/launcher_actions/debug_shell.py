@@ -1,10 +1,10 @@
 import os
 import subprocess
 
-from avalon import api
+from openpype.pipeline import LauncherAction
 
 
-class DebugShell(api.Action):
+class DebugShell(LauncherAction):
     """Run any host environment in command line."""
     name = "debugshell"
     label = "Shell"
