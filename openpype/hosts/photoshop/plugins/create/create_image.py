@@ -39,7 +39,9 @@ class ImageCreator(Creator):
         if pre_create_data.get("use_selection"):
             only_single_item_selected = len(top_level_selected_items) == 1
             for selected_item in top_level_selected_items:
-                if only_single_item_selected or pre_create_data.get("create_multiple"):
+                if (
+                        only_single_item_selected or
+                        pre_create_data.get("create_multiple")):
                     if selected_item.group:
                         groups_to_create.append(selected_item)
                     else:
@@ -85,13 +87,15 @@ class ImageCreator(Creator):
             self._add_instance_to_context(new_instance)
             # reusing existing group, need to rename afterwards
             if not create_empty_group:
-                stub.rename_layer(group.id, stub.PUBLISH_ICON + created_group_name)
+                stub.rename_layer(group.id,
+                                  stub.PUBLISH_ICON + created_group_name)
 
     def update_instances(self, update_list):
         self.log.debug("update_list:: {}".format(update_list))
         for created_inst, _changes in update_list:
             if created_inst.get("layer"):
-                created_inst.pop("layer")  # not storing PSItem layer to metadata
+                # not storing PSItem layer to metadata
+                created_inst.pop("layer")
             api.stub().imprint(created_inst.get("instance_id"),
                                created_inst.data_to_store())
 
@@ -107,7 +111,8 @@ class ImageCreator(Creator):
 
     def get_pre_create_attr_defs(self):
         output = [
-            lib.BoolDef("use_selection", default=True, label="Create only for selected"),
+            lib.BoolDef("use_selection", default=True,
+                        label="Create only for selected"),
             lib.BoolDef("create_multiple",
                         default=True,
                         label="Create separate instance for each selected")
@@ -138,5 +143,3 @@ class ImageCreator(Creator):
     def _clean_highlights(self, stub, item):
         return item.replace(stub.PUBLISH_ICON, '').replace(stub.LOADED_ICON,
                                                            '')
-
-

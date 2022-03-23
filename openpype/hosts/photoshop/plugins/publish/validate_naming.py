@@ -31,10 +31,11 @@ class ValidateNamingRepair(pyblish.api.Action):
         for instance in instances:
             self.log.debug("validate_naming instance {}".format(instance))
             current_layer_state = stub.get_layer(instance.data["layer"].id)
-            self.log.debug("current_layer_state instance {}".format(current_layer_state))
+            self.log.debug("current_layer{}".format(current_layer_state))
 
             layer_meta = stub.read(current_layer_state)
-            instance_id = layer_meta.get("instance_id") or layer_meta.get("uuid")
+            instance_id = (layer_meta.get("instance_id") or
+                           layer_meta.get("uuid"))
             if not instance_id:
                 self.log.warning("Unable to repair, cannot find layer")
                 continue

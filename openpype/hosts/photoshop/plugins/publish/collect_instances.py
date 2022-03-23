@@ -45,7 +45,8 @@ class CollectInstances(pyblish.api.ContextPlugin):
             if "container" in layer_meta_data["id"]:
                 continue
 
-            if not layer_meta_data.get("active", True):  # active might not be in legacy meta
+            # active might not be in legacy meta
+            if not layer_meta_data.get("active", True):
                 continue
 
             instance = instance_by_layer_id.get(str(layer_item.id))
