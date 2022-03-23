@@ -2,8 +2,6 @@ import os
 from avalon import api
 import pyblish.api
 
-from openpype.lib import debug_log_instance
-
 
 class CollectWorkfile(pyblish.api.ContextPlugin):
     """ Adds the AE render instances """
@@ -76,5 +74,3 @@ class CollectWorkfile(pyblish.api.ContextPlugin):
         }
 
         instance.data["representations"].append(representation)
-
-        debug_log_instance(self.log, "Workfile instance", instance)

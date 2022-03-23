@@ -498,14 +498,3 @@ def timeit(method):
             print('%r  %2.2f ms' % (method.__name__, (te - ts) * 1000))
         return result
     return timed
-
-
-def debug_log_instance(logger, msg, instance):
-    """Helper function to write instance.data as json"""
-    def _default_json(value):
-        return str(value)
-
-    logger.debug(msg)
-    logger.debug(
-        json.dumps(instance.data, indent=4, default=_default_json)
-    )
