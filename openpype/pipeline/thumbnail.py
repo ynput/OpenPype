@@ -2,6 +2,11 @@ import os
 import copy
 import logging
 
+from .plugin_discover import (
+    discover,
+    register_plugin,
+    register_plugin_path,
+)
 log = logging.getLogger(__name__)
 
 
@@ -126,21 +131,15 @@ class BinaryThumbnail(ThumbnailResolver):
 
 # Thumbnail resolvers
 def discover_thumbnail_resolvers():
-    import avalon.api
-
-    return avalon.api.discover(ThumbnailResolver)
+    return discover(ThumbnailResolver).plugins
 
 
 def register_thumbnail_resolver(plugin):
-    import avalon.api
-
-    return avalon.api.register_plugin(ThumbnailResolver, plugin)
+    register_plugin(ThumbnailResolver, plugin)
 
 
 def register_thumbnail_resolver_path(path):
-    import avalon.api
-
-    return avalon.api.register_plugin_path(ThumbnailResolver, path)
+    register_plugin_path(ThumbnailResolver, path)
 
 
 register_thumbnail_resolver(TemplateResolver)
