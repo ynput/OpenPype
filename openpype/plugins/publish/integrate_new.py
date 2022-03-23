@@ -320,35 +320,21 @@ class IntegrateAssetNew(pyblish.api.InstancePlugin):
             if intent_value:
                 instance.data["anatomyData"]["intent"] = intent_value
 
-    def resolve_profile(self, profiles, instance):
-        """Resolve profile by family, task name, host name and task type"""
-
-        # Anatomy data is pre-filled by Collectors and `self.prepare_anatomy`
+    def get_profile_filter_criteria(self, instance):
+        """Return filter criteria for `filter_profiles`"""
+        # Anatomy data is pre-filled by Collectors
         anatomy_data = instance.data["anatomyData"]
 
-        # TODO: Resolve below questions
-        # QUESTION
-        #   - is there a chance that task name is not filled in anatomy data?
-        #   - should we use context task in that case?
         # Task can be optional in anatomy data
         task = anatomy_data.get("task", {})
 
-        filter_criteria = {
+        # Return filter criteria
+        return {
             "families": anatomy_data["family"],
             "tasks": task.get("name"),
             "hosts": anatomy_data["host"],
             "task_types": task.get("type")
         }
-        # Get profile
-        profile = filter_profiles(
-            profiles,
-            filter_criteria,
-            logger=self.log
-        )
-
-        # TODO: See if we can simplify to avoid needing to return filter
-        #       criteria used in `self._get_subset_group`
-        return profile, filter_criteria
 
     def register(self, instance, file_transactions):
 
@@ -375,8 +361,10 @@ class IntegrateAssetNew(pyblish.api.InstancePlugin):
         )
 
         # Define publish template name from profiles
-        profile, _ = self.resolve_profile(self.template_name_profiles,
-                                          instance)
+        filter_criteria = self.get_profile_filter_criteria(instance)
+        profile = filter_profiles(self.template_name_profiles,
+                                  filter_criteria,
+                                  logger=self.log)
         template_name = "publish"
         if profile:
             template_name = profile["template_name"]
@@ -844,17 +832,19 @@ class IntegrateAssetNew(pyblish.api.InstancePlugin):
             return None
 
         # Skip if there is no matching profile
-        profile, criteria = self.resolve_profile(self.subset_grouping_profiles,
-                                                 instance)
+        filter_criteria = self.get_profile_filter_criteria(instance)
+        profile = filter_profiles(self.subset_grouping_profiles,
+                                  filter_criteria,
+                                  logger=self.log)
         if not profile:
             return None
 
         template = profile["template"]
 
         fill_pairs = prepare_template_data({
-            "family": criteria["families"],
-            "task": criteria["tasks"],
-            "host": criteria["hosts"],
+            "family": filter_criteria["families"],
+            "task": filter_criteria["tasks"],
+            "host": filter_criteria["hosts"],
             "subset": instance.data["subset"],
             "renderlayer": instance.data.get("renderlayer")
         })
