@@ -3,8 +3,7 @@ from openpype.hosts.photoshop import api
 from openpype.pipeline import (
     Creator,
     CreatedInstance,
-    lib,
-    CreatorError
+    lib
 )
 
 
@@ -30,65 +29,53 @@ class ImageCreator(Creator):
                 )
                 self._add_instance_to_context(instance)
 
-    def create(self, subset_name, data, pre_create_data):
-        groups = []
-        layers = []
-        create_group = False
+    def create(self, subset_name_from_ui, data, pre_create_data):
+        groups_to_create = []
+        top_layers_to_wrap = []
+        create_empty_group = False
 
         stub = api.stub()  # only after PS is up
-        multiple_instances = pre_create_data.get("create_multiple")
-        selection = stub.get_selected_layers()
+        top_level_selected_items = stub.get_selected_layers()
         if pre_create_data.get("use_selection"):
-            if len(selection) > 1:
-                if multiple_instances:
-                    for item in selection:
-                        if item.group:
-                            groups.append(item)
-                        else:
-                            layers.append(item)
+            only_single_item_selected = len(top_level_selected_items) == 1
+            for selected_item in top_level_selected_items:
+                if only_single_item_selected or pre_create_data.get("create_multiple"):
+                    if selected_item.group:
+                        groups_to_create.append(selected_item)
+                    else:
+                        top_layers_to_wrap.append(selected_item)
                 else:
-                    group = stub.group_selected_layers(subset_name)
-                    groups.append(group)
-            elif len(selection) == 1:
-                # One selected item. Use group if its a LayerSet (group), else
-                # create a new group.
-                selected_item = selection[0]
-                if selected_item.group:
-                    groups.append(selected_item)
-                else:
-                    layers.append(selected_item)
-            elif len(selection) == 0:
-                # No selection creates an empty group.
-                create_group = True
-        else:
-            group = stub.create_group(subset_name)
-            groups.append(group)
+                    group = stub.group_selected_layers(subset_name_from_ui)
+                    groups_to_create.append(group)
 
-        if create_group:
-            group = stub.create_group(subset_name)
-            groups.append(group)
+        if not groups_to_create and not top_layers_to_wrap:
+            group = stub.create_group(subset_name_from_ui)
+            groups_to_create.append(group)
 
-        for layer in layers:
+        # wrap each top level layer into separate new group
+        for layer in top_layers_to_wrap:
             stub.select_layers([layer])
             group = stub.group_selected_layers(layer.name)
-            groups.append(group)
+            groups_to_create.append(group)
 
-        for group in groups:
-            long_names = []
-            group.name = self._clean_highlights(stub, group.name)
+        creating_multiple_groups = len(groups_to_create) > 1
+        for group in groups_to_create:
+            subset_name = subset_name_from_ui  # reset to name from creator UI
+            layer_names_in_hierarchy = []
+            created_group_name = self._clean_highlights(stub, group.name)
 
-            if len(groups) > 1:
+            if creating_multiple_groups:
+                # concatenate with layer name to differentiate subsets
                 subset_name += group.name.title().replace(" ", "")
 
             if group.long_name:
                 for directory in group.long_name[::-1]:
                     name = self._clean_highlights(stub, directory)
-                    long_names.append(name)
+                    layer_names_in_hierarchy.append(name)
 
             data.update({"subset": subset_name})
-            data.update({"layer": group})
             data.update({"members": [str(group.id)]})
-            data.update({"long_name": "_".join(long_names)})
+            data.update({"long_name": "_".join(layer_names_in_hierarchy)})
 
             new_instance = CreatedInstance(self.family, subset_name, data,
                                            self)
@@ -97,16 +84,16 @@ class ImageCreator(Creator):
                          new_instance.data_to_store())
             self._add_instance_to_context(new_instance)
             # reusing existing group, need to rename afterwards
-            if not create_group:
-                stub.rename_layer(group.id, stub.PUBLISH_ICON + group.name)
+            if not create_empty_group:
+                stub.rename_layer(group.id, stub.PUBLISH_ICON + created_group_name)
 
     def update_instances(self, update_list):
         self.log.debug("update_list:: {}".format(update_list))
-        created_inst, changes = update_list[0]
-        if created_inst.get("layer"):
-            created_inst.pop("layer")  # not storing PSItem layer to metadata
-        api.stub().imprint(created_inst.get("instance_id"),
-                           created_inst.data_to_store())
+        for created_inst, _changes in update_list:
+            if created_inst.get("layer"):
+                created_inst.pop("layer")  # not storing PSItem layer to metadata
+            api.stub().imprint(created_inst.get("instance_id"),
+                               created_inst.data_to_store())
 
     def remove_instances(self, instances):
         for instance in instances:
@@ -120,7 +107,7 @@ class ImageCreator(Creator):
 
     def get_pre_create_attr_defs(self):
         output = [
-            lib.BoolDef("use_selection", default=True, label="Use selection"),
+            lib.BoolDef("use_selection", default=True, label="Create only for selected"),
             lib.BoolDef("create_multiple",
                         default=True,
                         label="Create separate instance for each selected")
