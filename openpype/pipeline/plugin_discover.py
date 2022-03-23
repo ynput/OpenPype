@@ -1,5 +1,7 @@
 import os
 import inspect
+import traceback
+
 from openpype.lib.python_module_tools import (
     modules_from_path,
     classes_from_module,
@@ -29,6 +31,59 @@ class DiscoverResult:
 
     def __setitem__(self, item, value):
         self.plugins[item] = value
+
+    def get_report(self, only_errors=True, exc_info=True, full_report=False):
+        lines = []
+        if not only_errors:
+            # Successfully discovered plugins
+            if self.plugins or full_report:
+                lines.append(
+                    "*** Discovered {} plugins".format(len(self.plugins))
+                )
+                for cls in self.plugins:
+                    lines.append("- {}".format(cls.__class__.__name__))
+
+            # Plugin that were defined to be ignored
+            if self.ignored_plugins or full_report:
+                lines.append("*** Ignored plugins {}".format(len(
+                    self.ignored_plugins
+                )))
+                for cls in self.ignored_plugins:
+                    lines.append("- {}".format(cls.__class__.__name__))
+
+        # Abstract classes
+        if self.abstract_plugins or full_report:
+            lines.append("*** Discovered {} abstract plugins".format(len(
+                self.abstract_plugins
+            )))
+            for cls in self.abstract_plugins:
+                lines.append("- {}".format(cls.__class__.__name__))
+
+        # Abstract classes
+        if self.duplicated_plugins or full_report:
+            lines.append("*** There were {} duplicated plugins".format(len(
+                self.duplicated_plugins
+            )))
+            for cls in self.duplicated_plugins:
+                lines.append("- {}".format(cls.__class__.__name__))
+
+        if self.crashed_file_paths or full_report:
+            lines.append("*** Failed to load {} files".format(len(
+                self.crashed_file_paths
+            )))
+            for path, exc_info_args in self.crashed_file_paths.items():
+                lines.append("- {}".format(path))
+                if exc_info:
+                    lines.append(10 * "*")
+                    lines.extend(traceback.format_exception(*exc_info_args))
+                    lines.append(10 * "*")
+
+        return "\n".join(lines)
+
+    def print_report(self, only_errors=True, exc_info=True):
+        report = self.get_report(only_errors, exc_info)
+        if report:
+            print(report)
 
 
 class PluginDiscoverContext(object):
@@ -117,6 +172,7 @@ class PluginDiscoverContext(object):
         self._last_discovered_plugins[superclass] = list(
             result.plugins
         )
+        result.print_report()
         return result
 
     def register_plugin(self, superclass, cls):
