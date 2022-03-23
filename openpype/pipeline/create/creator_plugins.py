@@ -8,7 +8,19 @@ from abc import (
 )
 import six
 
-from openpype.lib import get_subset_name_with_asset_doc
+from openpype.lib import (
+    get_subset_name_with_asset_doc,
+    set_plugin_attributes_from_settings,
+)
+from openpype.pipeline.plugin_discover import (
+    discover,
+    register_plugin,
+    register_plugin_path,
+    deregister_plugin,
+    deregister_plugin_path
+)
+
+from .legacy_create import LegacyCreator
 
 
 class CreatorError(Exception):
@@ -284,6 +296,43 @@ class AutoCreator(BaseCreator):
 
     Can be used e.g. for `workfile`.
     """
+
     def remove_instances(self, instances):
         """Skip removement."""
         pass
+
+
+def discover_creator_plugins():
+    return discover(BaseCreator).plugins
+
+
+def discover_legacy_creator_plugins():
+    plugins = discover(LegacyCreator).plugins
+    set_plugin_attributes_from_settings(plugins, LegacyCreator)
+    return plugins
+
+
+def register_creator_plugin(plugin):
+    if issubclass(plugin, BaseCreator):
+        register_plugin(BaseCreator, plugin)
+
+    elif issubclass(plugin, LegacyCreator):
+        register_plugin(LegacyCreator, plugin)
+
+
+def deregister_creator_plugin(plugin):
+    if issubclass(plugin, BaseCreator):
+        deregister_plugin(BaseCreator, plugin)
+
+    elif issubclass(plugin, LegacyCreator):
+        deregister_plugin(LegacyCreator, plugin)
+
+
+def register_creator_plugin_path(path):
+    register_plugin_path(BaseCreator, path)
+    register_plugin_path(LegacyCreator, path)
+
+
+def deregister_creator_plugin_path(path):
+    deregister_plugin_path(BaseCreator, path)
+    deregister_plugin_path(LegacyCreator, path)
