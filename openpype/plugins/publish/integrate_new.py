@@ -755,8 +755,7 @@ class IntegrateAssetNew(pyblish.api.InstancePlugin):
         return families
 
     def register_subset(self, instance):
-        # todo: rely less on self.prepare_anatomy to create this value
-        asset = instance.data.get("assetEntity")  # stored by prepare_anatomy
+        asset = instance.data.get("assetEntity")
         subset_name = instance.data["subset"]
         self.log.debug("Subset: {}".format(subset_name))
 
@@ -766,9 +765,9 @@ class IntegrateAssetNew(pyblish.api.InstancePlugin):
             "name": subset_name
         })
 
+        families = self._get_instance_families(instance)
         if subset is None:
             self.log.info("Subset '%s' not found, creating ..." % subset_name)
-            families = self._get_instance_families(instance)
 
             _id = io.insert_one({
                 "schema": "openpype:subset-3.0",
@@ -786,8 +785,6 @@ class IntegrateAssetNew(pyblish.api.InstancePlugin):
         self._set_subset_group(instance, subset["_id"])
 
         # Update families on subset.
-        families = [instance.data["family"]]
-        families.extend(instance.data.get("families", []))
         io.update_many(
             {"type": "subset", "_id": ObjectId(subset["_id"])},
             {"$set": {"data.families": families}}
