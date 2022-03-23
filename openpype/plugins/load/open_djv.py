@@ -1,6 +1,6 @@
 import os
-from avalon import api
 from openpype.api import ApplicationManager
+from openpype.pipeline import load
 
 
 def existing_djv_path():
@@ -13,7 +13,8 @@ def existing_djv_path():
 
     return djv_list
 
-class OpenInDJV(api.Loader):
+
+class OpenInDJV(load.LoaderPlugin):
     """Open Image Sequence with system default"""
 
     djv_list = existing_djv_path()

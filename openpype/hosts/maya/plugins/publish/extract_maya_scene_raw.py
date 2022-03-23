@@ -6,7 +6,7 @@ from maya import cmds
 
 import openpype.api
 from openpype.hosts.maya.api.lib import maintained_selection
-from avalon.pipeline import AVALON_CONTAINER_ID
+from openpype.pipeline import AVALON_CONTAINER_ID
 
 
 class ExtractMayaSceneRaw(openpype.api.Extractor):
@@ -58,16 +58,11 @@ class ExtractMayaSceneRaw(openpype.api.Extractor):
         else:
             members = instance[:]
 
-        loaded_containers = None
-        if set(self.add_for_families).intersection(
-                set(instance.data.get("families")),
-                set(instance.data.get("family").lower())):
-            loaded_containers = self._add_loaded_containers(members)
-
         selection = members
-        if loaded_containers:
-            self.log.info(loaded_containers)
-            selection += loaded_containers
+        if set(self.add_for_families).intersection(
+                set(instance.data.get("families", []))) or \
+                instance.data.get("family") in self.add_for_families:
+            selection += self._get_loaded_containers(members)
 
         # Perform extraction
         self.log.info("Performing extraction ...")
@@ -97,15 +92,15 @@ class ExtractMayaSceneRaw(openpype.api.Extractor):
         self.log.info("Extracted instance '%s' to: %s" % (instance.name, path))
 
     @staticmethod
-    def _add_loaded_containers(members):
+    def _get_loaded_containers(members):
         # type: (list) -> list
-        refs_to_include = [
-            cmds.referenceQuery(ref, referenceNode=True)
-            for ref in members
-            if cmds.referenceQuery(ref, isNodeReferenced=True)
-        ]
+        refs_to_include = {
+            cmds.referenceQuery(node, referenceNode=True)
+            for node in members
+            if cmds.referenceQuery(node, isNodeReferenced=True)
+        }
 
-        refs_to_include = set(refs_to_include)
+        members_with_refs = refs_to_include.union(members)
 
         obj_sets = cmds.ls("*.id", long=True, type="objectSet", recursive=True,
                            objectsOnly=True)
@@ -121,7 +116,7 @@ class ExtractMayaSceneRaw(openpype.api.Extractor):
                 continue
 
             set_content = set(cmds.sets(obj_set, query=True))
-            if set_content.intersection(refs_to_include):
+            if set_content.intersection(members_with_refs):
                 loaded_containers.append(obj_set)
 
         return loaded_containers

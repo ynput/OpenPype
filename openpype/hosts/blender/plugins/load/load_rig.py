@@ -6,15 +6,19 @@ from typing import Dict, List, Optional
 
 import bpy
 
-from avalon import api
-from avalon.blender import lib as avalon_lib
 from openpype import lib
-from openpype.pipeline import legacy_create
-from openpype.hosts.blender.api import plugin
+from openpype.pipeline import (
+    legacy_create,
+    get_representation_path,
+    AVALON_CONTAINER_ID,
+)
+from openpype.hosts.blender.api import (
+    plugin,
+    get_selection,
+)
 from openpype.hosts.blender.api.pipeline import (
     AVALON_CONTAINERS,
     AVALON_PROPERTY,
-    AVALON_CONTAINER_ID
 )
 
 
@@ -263,7 +267,7 @@ class BlendRigLoader(plugin.AssetLoader):
         if anim_file:
             bpy.ops.import_scene.fbx(filepath=anim_file, anim_offset=0.0)
 
-            imported = avalon_lib.get_selection()
+            imported = get_selection()
 
             armature = [
                 o for o in asset_group.children if o.type == 'ARMATURE'][0]
@@ -307,7 +311,7 @@ class BlendRigLoader(plugin.AssetLoader):
         """
         object_name = container["objectName"]
         asset_group = bpy.data.objects.get(object_name)
-        libpath = Path(api.get_representation_path(representation))
+        libpath = Path(get_representation_path(representation))
         extension = libpath.suffix.lower()
 
         self.log.info(

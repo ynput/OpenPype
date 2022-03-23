@@ -2,10 +2,10 @@
 
 """
 
-from avalon import api
+from openpype.pipeline import load
 
 
-class SetFrameRangeLoader(api.Loader):
+class SetFrameRangeLoader(load.LoaderPlugin):
     """Set Houdini frame range"""
 
     families = [
@@ -43,7 +43,7 @@ class SetFrameRangeLoader(api.Loader):
         hou.playbar.setPlaybackRange(start, end)
 
 
-class SetFrameRangeWithHandlesLoader(api.Loader):
+class SetFrameRangeWithHandlesLoader(load.LoaderPlugin):
     """Set Maya frame range including pre- and post-handles"""
 
     families = [

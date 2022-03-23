@@ -1,9 +1,9 @@
 from .app import (
-    App,
+    MayaLookAssignerWindow,
     show
 )
 
 
 __all__ = [
-    "App",
+    "MayaLookAssignerWindow",
     "show"]

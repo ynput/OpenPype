@@ -4,6 +4,7 @@ import clique
 import errno
 import shutil
 
+from bson.objectid import ObjectId
 from pymongo import InsertOne, ReplaceOne
 import pyblish.api
 from avalon import api, io, schema
@@ -161,7 +162,7 @@ class IntegrateHeroVersion(pyblish.api.InstancePlugin):
         if old_version:
             new_version_id = old_version["_id"]
         else:
-            new_version_id = io.ObjectId()
+            new_version_id = ObjectId()
 
         new_hero_version = {
             "_id": new_version_id,
@@ -384,7 +385,7 @@ class IntegrateHeroVersion(pyblish.api.InstancePlugin):
 
                 # Create representation
                 else:
-                    repre["_id"] = io.ObjectId()
+                    repre["_id"] = ObjectId()
                     bulk_writes.append(
                         InsertOne(repre)
                     )
@@ -420,7 +421,7 @@ class IntegrateHeroVersion(pyblish.api.InstancePlugin):
 
                 else:
                     repre["old_id"] = repre["_id"]
-                    repre["_id"] = io.ObjectId()
+                    repre["_id"] = ObjectId()
                     repre["type"] = "archived_representation"
                     bulk_writes.append(
                         InsertOne(repre)

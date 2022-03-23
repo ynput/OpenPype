@@ -4,12 +4,17 @@ Basic avalon integration
 import os
 import contextlib
 from collections import OrderedDict
-from avalon.pipeline import AVALON_CONTAINER_ID
+
 from avalon import api as avalon
 from avalon import schema
 from pyblish import api as pyblish
 from openpype.api import Logger
-from openpype.pipeline import LegacyCreator
+from openpype.pipeline import (
+    LegacyCreator,
+    register_loader_plugin_path,
+    deregister_loader_plugin_path,
+    AVALON_CONTAINER_ID,
+)
 from openpype.tools.utils import host_tools
 from . import lib, menu, events
 
@@ -24,7 +29,6 @@ PLUGINS_DIR = os.path.join(HOST_DIR, "plugins")
 PUBLISH_PATH = os.path.join(PLUGINS_DIR, "publish").replace("\\", "/")
 LOAD_PATH = os.path.join(PLUGINS_DIR, "load").replace("\\", "/")
 CREATE_PATH = os.path.join(PLUGINS_DIR, "create").replace("\\", "/")
-INVENTORY_PATH = os.path.join(PLUGINS_DIR, "inventory").replace("\\", "/")
 
 AVALON_CONTAINERS = ":AVALON_CONTAINERS"
 
@@ -45,9 +49,8 @@ def install():
     log.info("Registering Hiero plug-ins..")
     pyblish.register_host("hiero")
     pyblish.register_plugin_path(PUBLISH_PATH)
-    avalon.register_plugin_path(avalon.Loader, LOAD_PATH)
+    register_loader_plugin_path(LOAD_PATH)
     avalon.register_plugin_path(LegacyCreator, CREATE_PATH)
-    avalon.register_plugin_path(avalon.InventoryAction, INVENTORY_PATH)
 
     # register callback for switching publishable
     pyblish.register_callback("instanceToggled", on_pyblish_instance_toggled)
@@ -67,7 +70,7 @@ def uninstall():
     log.info("Deregistering Hiero plug-ins..")
     pyblish.deregister_host("hiero")
     pyblish.deregister_plugin_path(PUBLISH_PATH)
-    avalon.deregister_plugin_path(avalon.Loader, LOAD_PATH)
+    deregister_loader_plugin_path(LOAD_PATH)
     avalon.deregister_plugin_path(LegacyCreator, CREATE_PATH)
 
     # register callback for switching publishable

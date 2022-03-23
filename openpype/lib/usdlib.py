@@ -315,7 +315,7 @@ def get_usd_master_path(asset, subset, representation):
     )
     template = project["config"]["template"]["publish"]
 
-    if isinstance(asset, dict) and "silo" in asset and "name" in asset:
+    if isinstance(asset, dict) and "name" in asset:
         # Allow explicitly passing asset document
         asset_doc = asset
     else:
@@ -325,7 +325,6 @@ def get_usd_master_path(asset, subset, representation):
         **{
             "root": api.registered_root(),
             "project": api.Session["AVALON_PROJECT"],
-            "silo": asset_doc["silo"],
             "asset": asset_doc["name"],
             "subset": subset,
             "representation": representation,

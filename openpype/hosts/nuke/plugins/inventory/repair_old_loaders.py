@@ -1,13 +1,13 @@
-from avalon import api, style
 from openpype.api import Logger
+from openpype.pipeline import InventoryAction
 from openpype.hosts.nuke.api.lib import set_avalon_knob_data
 
 
-class RepairOldLoaders(api.InventoryAction):
+class RepairOldLoaders(InventoryAction):
 
     label = "Repair Old Loaders"
     icon = "gears"
-    color = style.colors.alert
+    color = "#cc0000"
 
     log = Logger.get_logger(__name__)
 

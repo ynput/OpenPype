@@ -64,7 +64,7 @@ class ExtractHierarchyToAvalon(pyblish.api.ContextPlugin):
                     data["tasks"] = tasks
                 parents = []
                 visualParent = None
-                # do not store project"s id as visualParent (silo asset)
+                # do not store project"s id as visualParent
                 if self.project is not None:
                     if self.project["_id"] != parent["_id"]:
                         visualParent = parent["_id"]
