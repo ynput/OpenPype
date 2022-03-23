@@ -5,37 +5,36 @@ import glob
 import clique
 import collections
 
+from .path_templates import (
+    StringTemplate,
+    TemplateUnsolved,
+)
+
 
 def collect_frames(files):
     """
         Returns dict of source path and its frame, if from sequence
 
-        Uses clique as most precise solution
+        Uses clique as most precise solution, used when anatomy template that
+        created files is not known.
+
+        Assumption is that frames are separated by '.', negative frames are not
+        allowed.
 
         Args:
             files(list) or (set with single value): list of source paths
         Returns:
             (dict): {'/asset/subset_v001.0001.png': '0001', ....}
     """
-    collections, remainder = clique.assemble(files, minimum_items=1)
-
-    real_file_name = None
-    if len(files) == 1:
-        real_file_name = list(files)[0]
+    patterns = [clique.PATTERNS["frames"]]
+    collections, remainder = clique.assemble(files, minimum_items=1,
+                                             patterns=patterns)
 
     sources_and_frames = {}
     if collections:
         for collection in collections:
             src_head = collection.head
             src_tail = collection.tail
-
-            if src_head.endswith("_v"):
-                # print("Collection gathered incorrectly, not a sequence "
-                #       "just a version found in {}".format(files))
-                if len(collections) > 1:
-                    continue
-                else:
-                    return {real_file_name: None}
 
             for index in collection.indexes:
                 src_frame = collection.format("{padding}") % index
@@ -58,8 +57,6 @@ def sizeof_fmt(num, suffix='B'):
 
 
 def path_from_representation(representation, anatomy):
-    from avalon import pipeline  # safer importing
-
     try:
         template = representation["data"]["template"]
 
@@ -69,12 +66,10 @@ def path_from_representation(representation, anatomy):
     try:
         context = representation["context"]
         context["root"] = anatomy.roots
-        path = pipeline.format_template_with_optional_keys(
-            context, template
-        )
-        path = os.path.normpath(path.replace("/", "\\"))
+        path = StringTemplate.format_strict_template(template, context)
+        return os.path.normpath(path)
 
-    except KeyError:
+    except TemplateUnsolved:
         # Template references unavailable data
         return None
 
@@ -83,15 +78,14 @@ def path_from_representation(representation, anatomy):
 
 def copy_file(src_path, dst_path):
     """Hardlink file if possible(to save space), copy if not"""
-    from avalon.vendor import filelink  # safer importing
+    from openpype.lib import create_hard_link  # safer importing
 
     if os.path.exists(dst_path):
         return
     try:
-        filelink.create(
+        create_hard_link(
             src_path,
-            dst_path,
-            filelink.HARDLINK
+            dst_path
         )
     except OSError:
         shutil.copyfile(src_path, dst_path)

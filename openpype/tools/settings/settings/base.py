@@ -30,6 +30,9 @@ class BaseWidget(QtWidgets.QWidget):
         if not self.entity.gui_type:
             self.entity.on_change_callbacks.append(self._on_entity_change)
 
+        if self.entity.tooltip:
+            self.setToolTip(self.entity.tooltip)
+
         self.label_widget = None
         self.create_ui()
 

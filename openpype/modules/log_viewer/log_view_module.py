@@ -8,7 +8,7 @@ class LogViewModule(OpenPypeModule, ITrayModule):
 
     def initialize(self, modules_settings):
         logging_settings = modules_settings[self.name]
-        self.enabled = logging_settings["enabled"]
+        self.enabled = False  # logging_settings["enabled"]
 
         # Tray attributes
         self.window = None

@@ -1,7 +1,9 @@
-
 from collections import OrderedDict
-from avalon import io
+
+from bson.objectid import ObjectId
 import pyblish.api
+
+from avalon import io
 
 
 class IntegrateInputLinks(pyblish.api.ContextPlugin):
@@ -104,7 +106,7 @@ class IntegrateInputLinks(pyblish.api.ContextPlugin):
         # future.
         link = OrderedDict()
         link["type"] = link_type
-        link["id"] = io.ObjectId(input_id)
+        link["id"] = ObjectId(input_id)
         link["linkedBy"] = "publish"
 
         if "inputLinks" not in version_doc["data"]:

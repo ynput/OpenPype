@@ -1,10 +1,10 @@
+from avalon import io
+from openpype.lib import NumberDef
 from openpype.hosts.testhost.api import pipeline
 from openpype.pipeline import (
     AutoCreator,
     CreatedInstance,
-    lib
 )
-from avalon import io
 
 
 class MyAutoCreator(AutoCreator):
@@ -13,7 +13,7 @@ class MyAutoCreator(AutoCreator):
 
     def get_instance_attr_defs(self):
         output = [
-            lib.NumberDef("number_key", label="Number")
+            NumberDef("number_key", label="Number")
         ]
         return output
 

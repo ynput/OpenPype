@@ -389,6 +389,9 @@ class Controller(QtCore.QObject):
                     new_current_group_order
                 )
 
+                # Force update to the current state
+                self._set_state_by_order()
+
                 if self.collect_state == 0:
                     self.collect_state = 1
                     self._current_state = (

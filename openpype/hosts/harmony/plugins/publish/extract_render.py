@@ -41,6 +41,7 @@ class ExtractRender(pyblish.api.InstancePlugin):
         func = """function %s(args)
         {
             node.setTextAttr(args[0], "DRAWING_NAME", 1, args[1]);
+            node.setTextAttr(args[0], 'MOVIE_PATH', 1, args[1]);
         }
         %s
         """ % (sig, sig)

@@ -46,6 +46,7 @@ def inject_openpype_environment(deadlinePlugin):
 
         args = [
             openpype_app,
+            "--headless",
             'extractenvironments',
             export_url
         ]
