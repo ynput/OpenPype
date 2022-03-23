@@ -190,7 +190,7 @@ class PluginDiscoverContext(object):
             self._registered_plugins[superclass].append(cls)
 
     def register_plugin_path(self, superclass, path):
-        """Register a directory of one or more plug-ins
+        """Register a directory containing plug-ins of type `superclass`
 
         Arguments:
             superclass (type): Superclass of plug-ins to look for during discovery
