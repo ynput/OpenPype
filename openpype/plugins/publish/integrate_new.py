@@ -359,17 +359,8 @@ class IntegrateAssetNew(pyblish.api.InstancePlugin):
                 "short": task_code
             }
 
-        elif "task" in anatomy_data:
-            # Just set 'task_name' variable to context task
-            task_name = anatomy_data["task"]["name"]
-            task_type = anatomy_data["task"]["type"]
-
-        else:
-            task_name = None
-            task_type = None
-
         # Fill family in anatomy data
-        anatomy_data["family"] = instance.data.get("family")
+        anatomy_data["family"] = self.main_family_from_instance(instance)
 
         intent_value = instance.context.data.get("intent")
         if intent_value and isinstance(intent_value, dict):
@@ -378,24 +369,43 @@ class IntegrateAssetNew(pyblish.api.InstancePlugin):
         if intent_value:
             anatomy_data["intent"] = intent_value
 
-        # Get profile
-        key_values = {
-            "families": self.main_family_from_instance(instance),
-            "tasks": task_name,
-            "hosts": instance.context.data["hostName"],
-            "task_types": task_type
-        }
-        profile = filter_profiles(
-            self.template_name_profiles,
-            key_values,
-            logger=self.log
-        )
-
+        profile, _ = self.resolve_profile(self.template_name_profiles,
+                                          instance)
         template_name = "publish"
         if profile:
             template_name = profile["template_name"]
 
         return template_name, anatomy_data
+
+    def resolve_profile(self, profiles, instance):
+        """Resolve profile by family, task name, host name and task type"""
+
+        # Anatomy data is pre-filled by Collectors and `self.prepare_anatomy`
+        anatomy_data = instance.data["anatomyData"]
+
+        # TODO: Resolve below questions
+        # QUESTION
+        #   - is there a chance that task name is not filled in anatomy data?
+        #   - should we use context task in that case?
+        # Task can be optional in anatomy data
+        task = anatomy_data.get("task", {})
+
+        filter_criteria = {
+            "families": anatomy_data["family"],
+            "tasks": task.get("name"),
+            "hosts": anatomy_data["host"],
+            "task_types": task.get("type")
+        }
+        # Get profile
+        profile = filter_profiles(
+            profiles,
+            filter_criteria,
+            logger=self.log
+        )
+
+        # TODO: See if we can simplify to avoid needing to return filter
+        #       criteria used in `self._get_subset_group`
+        return profile, filter_criteria
 
     def register(self, instance, file_transactions):
 
@@ -886,50 +896,29 @@ class IntegrateAssetNew(pyblish.api.InstancePlugin):
         if not self.subset_grouping_profiles:
             return None
 
-        # TODO: Resolve below questions
-        # QUESTION
-        #   - is there a chance that task name is not filled in anatomy data?
-        #   - should we use context task in that case?
-        anatomy_data = instance.data["anatomyData"]
-        task_name = None
-        task_type = None
-        if "task" in anatomy_data:
-            task_name = anatomy_data["task"]["name"]
-            task_type = anatomy_data["task"]["type"]
-        filtering_criteria = {
-            "families": instance.data["family"],
-            "hosts": instance.context.data["hostName"],
-            "tasks": task_name,
-            "task_types": task_type
-        }
-        matching_profile = filter_profiles(
-            self.subset_grouping_profiles,
-            filtering_criteria
-        )
-        # Skip if there is not matching profile
-        if not matching_profile:
+        # Skip if there is no matching profile
+        profile, criteria = self.resolve_profile(self.subset_grouping_profiles,
+                                                 instance)
+        if not profile:
             return None
 
-        filled_template = None
-        template = matching_profile["template"]
-        fill_pairs = (
-            ("family", filtering_criteria["families"]),
-            ("task", filtering_criteria["tasks"]),
-            ("host", filtering_criteria["hosts"]),
-            ("subset", instance.data["subset"]),
-            ("renderlayer", instance.data.get("renderlayer"))
-        )
-        fill_pairs = prepare_template_data(fill_pairs)
+        template = profile["template"]
 
+        fill_pairs = prepare_template_data({
+            "family": criteria["families"],
+            "task": criteria["tasks"],
+            "host": criteria["hosts"],
+            "subset": instance.data["subset"],
+            "renderlayer": instance.data.get("renderlayer")
+        })
+
+        filled_template = None
         try:
             filled_template = StringTemplate.format_strict_template(
                 template, fill_pairs
             )
         except (KeyError, TemplateUnsolved):
-            keys = []
-            if fill_pairs:
-                keys = fill_pairs.keys()
-
+            keys = fill_pairs.keys()
             msg = "Subset grouping failed. " \
                   "Only {} are expected in Settings".format(','.join(keys))
             self.log.warning(msg)
