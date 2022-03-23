@@ -310,58 +310,9 @@ class IntegrateAssetNew(pyblish.api.InstancePlugin):
     def prepare_anatomy(self, instance):
         """Prepare anatomy data used to define representation destinations"""
 
-        context = instance.context
-
         anatomy_data = instance.data["anatomyData"]
-        project_entity = instance.data["projectEntity"]
 
-        context_asset_name = None
-        context_asset_doc = context.data.get("assetEntity")
-        if context_asset_doc:
-            context_asset_name = context_asset_doc["name"]
-
-        asset_name = instance.data["asset"]
-        asset_entity = instance.data.get("assetEntity")
-        if not asset_entity or asset_entity["name"] != context_asset_name:
-            asset_entity = io.find_one({
-                "type": "asset",
-                "name": asset_name,
-                "parent": project_entity["_id"]
-            })
-            assert asset_entity, (
-                "No asset found by the name \"{0}\" in project \"{1}\""
-            ).format(asset_name, project_entity["name"])
-
-            instance.data["assetEntity"] = asset_entity
-
-            # update anatomy data with asset specific keys
-            # - name should already been set
-            hierarchy = ""
-            parents = asset_entity["data"]["parents"]
-            if parents:
-                hierarchy = "/".join(parents)
-            anatomy_data["hierarchy"] = hierarchy
-
-        # Make sure task name in anatomy data is same as on instance.data
-        asset_tasks = (
-            asset_entity.get("data", {}).get("tasks")
-        ) or {}
-        task_name = instance.data.get("task")
-        if task_name:
-            task_info = asset_tasks.get(task_name) or {}
-            task_type = task_info.get("type")
-
-            project_task_types = project_entity["config"]["tasks"]
-            task_code = project_task_types.get(task_type, {}).get("short_name")
-            anatomy_data["task"] = {
-                "name": task_name,
-                "type": task_type,
-                "short": task_code
-            }
-
-        # Fill family in anatomy data
-        anatomy_data["family"] = self.main_family_from_instance(instance)
-
+        # TODO: This logic should move to CollectAnatomyContextData
         intent_value = instance.context.data.get("intent")
         if intent_value and isinstance(intent_value, dict):
             intent_value = intent_value.get("value")
