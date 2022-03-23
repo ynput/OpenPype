@@ -171,7 +171,7 @@ class AfterEffectsServerStub():
 
     def get_active_document_full_name(self):
         """
-            Returns just a name of active document via ws call
+            Returns absolute path of active document via ws call
         Returns(string): file name
         """
         res = self.websocketserver.call(self.client.call(
