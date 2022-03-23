@@ -1,6 +1,7 @@
 import os
 from pprint import pformat
 from copy import deepcopy
+
 import pyblish.api
 import openpype.api
 from openpype.hosts.flame import api as opfapi
@@ -22,6 +23,8 @@ class ExtractSubsetResources(openpype.api.Extractor):
             "ext": "jpg",
             "xml_preset_file": "Jpeg (8-bit).xml",
             "xml_preset_dir": "",
+            "export_type": "File Sequence",
+            "ignore_comment_attrs": True,
             "colorspace_out": "Output - sRGB",
             "representation_add_range": False,
             "representation_tags": ["thumbnail"]
@@ -30,6 +33,8 @@ class ExtractSubsetResources(openpype.api.Extractor):
             "ext": "mov",
             "xml_preset_file": "Apple iPad (1920x1080).xml",
             "xml_preset_dir": "",
+            "export_type": "Movie",
+            "ignore_comment_attrs": True,
             "colorspace_out": "Output - Rec.709",
             "representation_add_range": True,
             "representation_tags": [
@@ -54,21 +59,35 @@ class ExtractSubsetResources(openpype.api.Extractor):
         ):
             instance.data["representations"] = []
 
-        frame_start = instance.data["frameStart"]
-        handle_start = instance.data["handleStart"]
-        frame_start_handle = frame_start - handle_start
-        source_first_frame = instance.data["sourceFirstFrame"]
-        source_start_handles = instance.data["sourceStartH"]
-        source_end_handles = instance.data["sourceEndH"]
-        source_duration_handles = (
-            source_end_handles - source_start_handles) + 1
-
+        # flame objects
+        segment = instance.data["item"]
+        sequence_clip = instance.context.data["flameSequence"]
         clip_data = instance.data["flameSourceClip"]
         clip = clip_data["PyClip"]
 
-        in_mark = (source_start_handles - source_first_frame) + 1
-        out_mark = in_mark + source_duration_handles
+        # segment's parent track name
+        s_track_name = segment.parent.name.get_value()
 
+        # get configured workfile frame start/end (handles excluded)
+        frame_start = instance.data["frameStart"]
+        # get media source first frame
+        source_first_frame = instance.data["sourceFirstFrame"]
+
+        # get timeline in/out of segment
+        clip_in = instance.data["clipIn"]
+        clip_out = instance.data["clipOut"]
+
+        # get handles value - take only the max from both
+        handle_start = instance.data["handleStart"]
+        handle_end = instance.data["handleStart"]
+        handles = max(handle_start, handle_end)
+
+        # get media source range with handles
+        source_end_handles = instance.data["sourceEndH"]
+        source_start_handles = instance.data["sourceStartH"]
+        source_end_handles = instance.data["sourceEndH"]
+
+        # create staging dir path
         staging_dir = self.staging_dir(instance)
 
         # add default preset type for thumbnail and reviewable video
@@ -77,15 +96,61 @@ class ExtractSubsetResources(openpype.api.Extractor):
         export_presets = deepcopy(self.default_presets)
         export_presets.update(self.export_presets_mapping)
 
-        # with maintained duplication loop all presets
-        with opfapi.maintained_object_duplication(clip) as duplclip:
-            # loop all preset names and
-            for unique_name, preset_config in export_presets.items():
+        # loop all preset names and
+        for unique_name, preset_config in export_presets.items():
+            modify_xml_data = {}
+
+            # get all presets attributes
+            preset_file = preset_config["xml_preset_file"]
+            preset_dir = preset_config["xml_preset_dir"]
+            export_type = preset_config["export_type"]
+            repre_tags = preset_config["representation_tags"]
+            ignore_comment_attrs = preset_config["ignore_comment_attrs"]
+            color_out = preset_config["colorspace_out"]
+
+            # get frame range with handles for representation range
+            frame_start_handle = frame_start - handle_start
+            source_duration_handles = (
+                source_end_handles - source_start_handles) + 1
+
+            # define in/out marks
+            in_mark = (source_start_handles - source_first_frame) + 1
+            out_mark = in_mark + source_duration_handles
+
+            # by default export source clips
+            exporting_clip = clip
+
+            if export_type == "Sequence Publish":
+                # change export clip to sequence
+                exporting_clip = sequence_clip
+
+                # change in/out marks to timeline in/out
+                in_mark = clip_in
+                out_mark = clip_out
+
+                # add xml tags modifications
+                modify_xml_data.update({
+                    "exportHandles": True,
+                    "nbHandles": handles,
+                    "startFrame": frame_start
+                })
+
+                if not ignore_comment_attrs:
+                    # add any xml overrides collected form segment.comment
+                    modify_xml_data.update(instance.data["xml_overrides"])
+
+                self.log.debug("__ modify_xml_data: {}".format(pformat(
+                    modify_xml_data
+                )))
+
+            # with maintained duplication loop all presets
+            with opfapi.maintained_object_duplication(
+                    exporting_clip) as duplclip:
                 kwargs = {}
-                preset_file = preset_config["xml_preset_file"]
-                preset_dir = preset_config["xml_preset_dir"]
-                repre_tags = preset_config["representation_tags"]
-                color_out = preset_config["colorspace_out"]
+
+                if export_type == "Sequence Publish":
+                    # only keep visible layer where instance segment is child
+                    self.hide_other_tracks(duplclip, s_track_name)
 
                 # validate xml preset file is filled
                 if preset_file == "":
@@ -108,9 +173,12 @@ class ExtractSubsetResources(openpype.api.Extractor):
                         )
 
                 # create preset path
-                preset_path = str(os.path.join(
+                preset_orig_xml_path = str(os.path.join(
                     preset_dir, preset_file
                 ))
+
+                preset_path = opfapi.modify_preset_file(
+                    preset_orig_xml_path, staging_dir, modify_xml_data)
 
                 # define kwargs based on preset type
                 if "thumbnail" in unique_name:
@@ -122,6 +190,7 @@ class ExtractSubsetResources(openpype.api.Extractor):
                         "out_mark": out_mark
                     })
 
+                # get and make export dir paths
                 export_dir_path = str(os.path.join(
                     staging_dir, unique_name
                 ))
@@ -132,6 +201,7 @@ class ExtractSubsetResources(openpype.api.Extractor):
                     export_dir_path, duplclip, preset_path, **kwargs)
 
                 extension = preset_config["ext"]
+
                 # create representation data
                 representation_data = {
                     "name": unique_name,
@@ -159,7 +229,12 @@ class ExtractSubsetResources(openpype.api.Extractor):
                 # add files to represetation but add
                 # imagesequence as list
                 if (
-                    "movie_file" in preset_path
+                    # first check if path in files is not mov extension
+                    [
+                        f for f in files
+                        if os.path.splitext(f)[-1] == ".mov"
+                    ]
+                    # then try if thumbnail is not in unique name
                     or unique_name == "thumbnail"
                 ):
                     representation_data["files"] = files.pop()
@@ -246,3 +321,19 @@ class ExtractSubsetResources(openpype.api.Extractor):
             )
 
         return new_stage_dir, new_files_list
+
+    def hide_other_tracks(self, sequence_clip, track_name):
+        """Helper method used only if sequence clip is used
+
+        Args:
+            sequence_clip (flame.Clip): sequence clip
+            track_name (str): track name
+        """
+        # create otio tracks and clips
+        for ver in sequence_clip.versions:
+            for track in ver.tracks:
+                if len(track.segments) == 0 and track.hidden:
+                    continue
+
+                if track.name.get_value() != track_name:
+                    track.hidden = True

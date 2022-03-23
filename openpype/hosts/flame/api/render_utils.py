@@ -1,4 +1,5 @@
 import os
+from xml.etree import ElementTree as ET
 
 
 def export_clip(export_path, clip, preset_path, **kwargs):
@@ -123,3 +124,29 @@ def get_preset_path_by_xml_name(xml_preset_name):
 
     # if nothing found then return False
     return False
+
+
+def modify_preset_file(xml_path, staging_dir, data):
+    """Modify xml preset with input data
+
+    Args:
+        xml_path (str ): path for input xml preset
+        staging_dir (str): staging dir path
+        data (dict): data where key is xmlTag and value as string
+
+    Returns:
+        str: _description_
+    """
+    # create temp path
+    dirname, basename = os.path.split(xml_path)
+    temp_path = os.path.join(staging_dir, basename)
+
+    # change xml following data keys
+    with open(xml_path, "r") as datafile:
+        tree = ET.parse(datafile)
+        for key, value in data.items():
+            for element in tree.findall(".//{}".format(key)):
+                element.text = str(value)
+        tree.write(temp_path)
+
+    return temp_path

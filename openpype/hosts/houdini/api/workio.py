@@ -2,11 +2,11 @@
 import os
 
 import hou
-from avalon import api
+from openpype.pipeline import HOST_WORKFILE_EXTENSIONS
 
 
 def file_extensions():
-    return api.HOST_WORKFILE_EXTENSIONS["houdini"]
+    return HOST_WORKFILE_EXTENSIONS["houdini"]
 
 
 def has_unsaved_changes():

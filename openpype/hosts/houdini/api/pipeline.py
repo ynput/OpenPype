@@ -8,12 +8,12 @@ import hdefereval
 
 import pyblish.api
 import avalon.api
-from avalon.pipeline import AVALON_CONTAINER_ID
 from avalon.lib import find_submodule
 
 from openpype.pipeline import (
     LegacyCreator,
     register_loader_plugin_path,
+    AVALON_CONTAINER_ID,
 )
 import openpype.hosts.houdini
 from openpype.hosts.houdini.api import lib

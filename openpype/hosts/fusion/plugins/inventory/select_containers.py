@@ -1,7 +1,7 @@
-from avalon import api
+from openpype.pipeline import InventoryAction
 
 
-class FusionSelectContainers(api.InventoryAction):
+class FusionSelectContainers(InventoryAction):
 
     label = "Select Containers"
     icon = "mouse-pointer"
