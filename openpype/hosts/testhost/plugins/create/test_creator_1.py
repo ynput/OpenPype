@@ -1,10 +1,16 @@
 import json
 from openpype import resources
 from openpype.hosts.testhost.api import pipeline
+from openpype.lib import (
+    UISeparatorDef,
+    UILabelDef,
+    BoolDef,
+    NumberDef,
+    FileDef,
+)
 from openpype.pipeline import (
     Creator,
     CreatedInstance,
-    lib
 )
 
 
@@ -54,17 +60,17 @@ class TestCreatorOne(Creator):
 
     def get_instance_attr_defs(self):
         output = [
-            lib.NumberDef("number_key", label="Number"),
+            NumberDef("number_key", label="Number"),
         ]
         return output
 
     def get_pre_create_attr_defs(self):
         output = [
-            lib.BoolDef("use_selection", label="Use selection"),
-            lib.UISeparatorDef(),
-            lib.UILabelDef("Testing label"),
-            lib.FileDef("filepath", folders=True, label="Filepath"),
-            lib.FileDef(
+            BoolDef("use_selection", label="Use selection"),
+            UISeparatorDef(),
+            UILabelDef("Testing label"),
+            FileDef("filepath", folders=True, label="Filepath"),
+            FileDef(
                 "filepath_2", multipath=True, folders=True, label="Filepath 2"
             )
         ]

@@ -8,7 +8,10 @@ import platform
 import ast
 import shutil
 import hiero
+
 from Qt import QtWidgets
+from bson.objectid import ObjectId
+
 import avalon.api as avalon
 import avalon.io
 from openpype.api import (Logger, Anatomy, get_anatomy_settings)
@@ -1006,7 +1009,7 @@ def check_inventory_versions():
             # get representation from io
             representation = io.find_one({
                 "type": "representation",
-                "_id": io.ObjectId(container["representation"])
+                "_id": ObjectId(container["representation"])
             })
 
             # Get start frame from version data

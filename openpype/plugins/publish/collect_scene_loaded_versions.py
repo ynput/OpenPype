@@ -1,3 +1,4 @@
+from bson.objectid import ObjectId
 
 import pyblish.api
 from avalon import api, io
@@ -35,7 +36,7 @@ class CollectSceneLoadedVersions(pyblish.api.ContextPlugin):
 
         loaded_versions = []
         _containers = list(host.ls())
-        _repr_ids = [io.ObjectId(c["representation"]) for c in _containers]
+        _repr_ids = [ObjectId(c["representation"]) for c in _containers]
         version_by_repr = {
             str(doc["_id"]): doc["parent"] for doc in
             io.find({"_id": {"$in": _repr_ids}}, projection={"parent": 1})
@@ -46,7 +47,7 @@ class CollectSceneLoadedVersions(pyblish.api.ContextPlugin):
             # may have more then one representation that are same version
             version = {
                 "subsetName": con["name"],
-                "representation": io.ObjectId(con["representation"]),
+                "representation": ObjectId(con["representation"]),
                 "version": version_by_repr[con["representation"]],  # _id
             }
             loaded_versions.append(version)

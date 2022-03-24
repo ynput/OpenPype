@@ -29,6 +29,21 @@ from .vendor_bin_utils import (
     is_oiio_supported
 )
 
+from .attribute_definitions import (
+    AbtractAttrDef,
+
+    UIDef,
+    UISeparatorDef,
+    UILabelDef,
+
+    UnknownDef,
+    NumberDef,
+    TextDef,
+    EnumDef,
+    BoolDef,
+    FileDef,
+)
+
 from .env_tools import (
     env_value_to_bool,
     get_paths_from_environ,
@@ -114,6 +129,8 @@ from .avalon_context import (
     get_workdir_data,
     get_workdir,
     get_workdir_with_workdir_data,
+    get_last_workfile_with_version,
+    get_last_workfile,
 
     create_workfile_doc,
     save_workfile_data_to_doc,
@@ -231,6 +248,19 @@ __all__ = [
     "get_ffmpeg_tool_path",
     "is_oiio_supported",
 
+    "AbtractAttrDef",
+
+    "UIDef",
+    "UISeparatorDef",
+    "UILabelDef",
+
+    "UnknownDef",
+    "NumberDef",
+    "TextDef",
+    "EnumDef",
+    "BoolDef",
+    "FileDef",
+
     "import_filepath",
     "modules_from_path",
     "recursive_bases_from_class",
@@ -263,6 +293,8 @@ __all__ = [
     "get_workdir_data",
     "get_workdir",
     "get_workdir_with_workdir_data",
+    "get_last_workfile_with_version",
+    "get_last_workfile",
 
     "create_workfile_doc",
     "save_workfile_data_to_doc",
