@@ -108,6 +108,18 @@ class ExtractSubsetResources(openpype.api.Extractor):
             ignore_comment_attrs = preset_config["ignore_comment_attrs"]
             color_out = preset_config["colorspace_out"]
 
+            # get attribures related loading in integrate_batch_group
+            load_to_batch_group = preset_config.get(
+                "load_to_batch_group")
+            batch_group_loader_name = preset_config.get(
+                "batch_group_loader_name")
+
+            # convert to None if empty string
+            if batch_group_loader_name:
+                batch_group_loader_name = str(batch_group_loader_name)
+                if batch_group_loader_name == "":
+                    batch_group_loader_name = None
+
             # get frame range with handles for representation range
             frame_start_handle = frame_start - handle_start
             source_duration_handles = (
@@ -212,10 +224,8 @@ class ExtractSubsetResources(openpype.api.Extractor):
                     "data": {
                         "colorspace": color_out
                     },
-                    "load_to_batch_group": preset_config.get(
-                        "load_to_batch_group"),
-                    "batch_group_loader_name": preset_config.get(
-                        "batch_group_loader_name")
+                    "load_to_batch_group": load_to_batch_group,
+                    "batch_group_loader_name": batch_group_loader_name
                 }
 
                 # collect all available content of export dir
