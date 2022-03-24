@@ -116,7 +116,7 @@ class ExtractMultiverseUsdOverride(openpype.api.Extractor):
                 "step",
                 "fps"
             }
-            for key, value in  options.items():
+            for key, value in options.items():
                 if key in options_discard_keys:
                     continue
                 setattr(over_write_opts, key, value)
