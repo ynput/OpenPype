@@ -1,7 +1,7 @@
 import flame
 
 
-def create_batch(name, frame_start, frame_end, **kwargs):
+def create_batch(name, frame_start, frame_duration, **kwargs):
     """Create Batch Group in active project's Desktop
 
     Args:
@@ -13,20 +13,18 @@ def create_batch(name, frame_start, frame_end, **kwargs):
     shelf_reels = kwargs.get("shelf_reels") or ['ShelfReel1']
 
     write_pref = kwargs["write_pref"]
-    handle_start = kwargs.get("handleStart")
-    handle_end = kwargs.get("handleEnd")
+    handle_start = kwargs.get("handleStart") or 0
+    handle_end = kwargs.get("handleEnd") or 0
 
-    if handle_start:
-        frame_start -= handle_start
-    if handle_end:
-        frame_end += handle_end
+    frame_start -= handle_start
+    frame_duration += handle_start + handle_end
 
     # Create batch group with name, start_frame value, duration value,
     # set of schematic reel names, set of shelf reel names
     flame.batch.create_batch_group(
         name,
         start_frame=frame_start,
-        duration=frame_end,
+        duration=frame_duration,
         reels=schematic_reels,
         shelf_reels=shelf_reels
     )

@@ -19,6 +19,7 @@ class IntegrateBatchGroup(pyblish.api.InstancePlugin):
         frame_end = instance.data["frameEnd"]
         handle_start = instance.data["handleStart"]
         handle_end = instance.data["handleEnd"]
+        frame_duration = (frame_end - frame_start) + 1
         asset_name = instance.data["asset"]
         add_tasks = instance.data["flameAddTasks"]
 
@@ -46,8 +47,8 @@ class IntegrateBatchGroup(pyblish.api.InstancePlugin):
             opfapi.create_batch(
                 batchgroup_name,
                 frame_start,
-                frame_end,
-                batch_data
+                frame_duration,
+                **batch_data
             )
 
     def _get_write_prefs(self, instance, task_data):
