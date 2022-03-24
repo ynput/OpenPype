@@ -178,7 +178,6 @@ class ExtractMultiverseUsd(openpype.api.Extractor):
                 time_opts.framePerSecond = fps
 
             asset_write_opts = multiverse.AssetWriteOptions(time_opts)
-            options_items = getattr(options, "iteritems", options.items)
             options_discard_keys = [
                 'numTimeSamples',
                 'timeSamplesSpan',
@@ -189,7 +188,7 @@ class ExtractMultiverseUsd(openpype.api.Extractor):
                 'step',
                 'fps'
             ]
-            for key, value in options_items():
+            for key, value in options.items():
                 if key in options_discard_keys:
                     continue
                 setattr(asset_write_opts, key, value)
