@@ -460,9 +460,6 @@ class IntegrateAssetNew(pyblish.api.InstancePlugin):
             "data": self.create_version_data(instance)
         }
 
-        repres = instance.data.get("representations", [])
-        new_repre_names_low = [_repre["name"].lower() for _repre in repres]
-
         existing_version = io.find_one({
             'type': 'version',
             'parent': subset["_id"],
@@ -488,6 +485,8 @@ class IntegrateAssetNew(pyblish.api.InstancePlugin):
             }))
 
             # Find representations of existing version and archive them
+            repres = instance.data.get("representations", [])
+            new_repre_names_low = [_repre["name"].lower() for _repre in repres]
             current_repres = io.find({
                 "type": "representation",
                 "parent": version_id
