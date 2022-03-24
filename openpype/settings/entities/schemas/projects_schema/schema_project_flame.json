@@ -302,6 +302,20 @@
                                             "type": "text",
                                             "multiline": false
                                         }
+                                    },
+                                    {
+                                        "type": "separator"
+                                    },
+                                    {
+                                        "type": "boolean",
+                                        "key": "load_to_batch_group",
+                                        "label": "Load to batch group reel",
+                                        "default": false
+                                    },
+                                    {
+                                        "type": "text",
+                                        "key": "batch_group_loader_name",
+                                        "label": "Use loader name"
                                     }
                                 ]
                             }

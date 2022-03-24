@@ -62,7 +62,9 @@
                     "ignore_comment_attrs": false,
                     "colorspace_out": "ACES - ACEScg",
                     "representation_add_range": true,
-                    "representation_tags": []
+                    "representation_tags": [],
+                    "load_to_batch_group": true,
+                    "batch_group_loader_name": "LoadClip"
                 }
             }
         }
