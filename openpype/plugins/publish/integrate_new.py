@@ -645,16 +645,20 @@ class IntegrateAssetNew(pyblish.api.InstancePlugin):
             repre_context = template_filled.used_values
             self.log.debug("Template filled: {}".format(str(template_filled)))
             dst_collections, _remainder = clique.assemble(
-                [os.path.normpath(template_filled)], minimum_items=1
+                [os.path.normpath(template_filled)],
+                minimum_items=1,
+                patterns=[clique.PATTERNS["frames"]]
             )
             assert not _remainder, "This is a bug"
             assert len(dst_collections) == 1, "This is a bug"
             dst_collection = dst_collections[0]
 
             # Update the destination indexes and padding
-            dst_collection.indexes = destination_indexes
+            dst_collection.indexes.clear()
+            dst_collection.indexes.update(set(destination_indexes))
             dst_collection.padding = destination_padding
-            assert len(src_collection) == len(dst_collection), "This is a bug"
+            assert len(src_collection.indexes) == \
+                   len(dst_collection.indexes), "This is a bug"
 
             # Multiple file transfers
             transfers = []
