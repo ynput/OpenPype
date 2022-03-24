@@ -4,11 +4,12 @@ from Qt import QtWidgets, QtCore
 import qtawesome
 from bson.objectid import ObjectId
 
-from avalon import io, pipeline
-from openpype.pipeline import (
+from avalon import io
+from openpype.pipeline.load import (
     discover_loader_plugins,
     switch_container,
     get_repres_contexts,
+    loaders_from_repre_context,
 )
 
 from .widgets import (
@@ -370,7 +371,7 @@ class SwitchAssetDialog(QtWidgets.QDialog):
 
         loaders = None
         for repre_context in repre_contexts.values():
-            _loaders = set(pipeline.loaders_from_repre_context(
+            _loaders = set(loaders_from_repre_context(
                 available_loaders, repre_context
             ))
             if loaders is None:
