@@ -30,7 +30,7 @@ class MyAutoCreator(AutoCreator):
     def update_instances(self, update_list):
         pipeline.update_instances(update_list)
 
-    def create(self, options=None):
+    def create(self):
         existing_instance = None
         for instance in self.create_context.instances:
             if instance.family == self.family:
