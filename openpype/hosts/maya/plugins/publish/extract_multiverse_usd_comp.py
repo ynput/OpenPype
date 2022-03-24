@@ -119,7 +119,7 @@ class ExtractMultiverseUsdComposition(openpype.api.Extractor):
                 time_opts.framePerSecond = fps
 
             comp_write_opts = multiverse.CompositionWriteOptions()
-            options_discard_keys = [
+            options_discard_keys = {
                 'numTimeSamples',
                 'timeSamplesSpan',
                 'frameStart',
@@ -128,7 +128,7 @@ class ExtractMultiverseUsdComposition(openpype.api.Extractor):
                 'handleEnd',
                 'step',
                 'fps'
-            ]
+            }
             for key, value in options.items():
                 if key in options_discard_keys:
                     continue
