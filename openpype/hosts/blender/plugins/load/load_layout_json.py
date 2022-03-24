@@ -13,12 +13,12 @@ from openpype.pipeline import (
     load_container,
     get_representation_path,
     loaders_from_representation,
+    AVALON_CONTAINER_ID,
 )
 from openpype.hosts.blender.api.pipeline import (
     AVALON_INSTANCES,
     AVALON_CONTAINERS,
     AVALON_PROPERTY,
-    AVALON_CONTAINER_ID
 )
 from openpype.hosts.blender.api import plugin
 

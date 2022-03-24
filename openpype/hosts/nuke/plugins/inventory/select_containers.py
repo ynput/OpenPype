@@ -1,8 +1,8 @@
-from avalon import api
+from openpype.pipeline import InventoryAction
 from openpype.hosts.nuke.api.commands import viewer_update_and_undo_stop
 
 
-class SelectContainers(api.InventoryAction):
+class SelectContainers(InventoryAction):
 
     label = "Select Containers"
     icon = "mouse-pointer"

@@ -6,6 +6,7 @@ import logging
 import json
 
 import six
+from bson.objectid import ObjectId
 
 import alembic.Abc
 from maya import cmds
@@ -231,7 +232,7 @@ def get_latest_version(asset_id, subset):
 
     """
     subset = io.find_one({"name": subset,
-                          "parent": io.ObjectId(asset_id),
+                          "parent": ObjectId(asset_id),
                           "type": "subset"})
     if not subset:
         raise RuntimeError("Subset does not exist: %s" % subset)

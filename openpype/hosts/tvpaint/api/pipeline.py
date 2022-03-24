@@ -10,7 +10,6 @@ import pyblish.api
 import avalon.api
 
 from avalon import io
-from avalon.pipeline import AVALON_CONTAINER_ID
 
 from openpype.hosts import tvpaint
 from openpype.api import get_current_project_settings
@@ -19,6 +18,7 @@ from openpype.pipeline import (
     LegacyCreator,
     register_loader_plugin_path,
     deregister_loader_plugin_path,
+    AVALON_CONTAINER_ID,
 )
 
 from .lib import (
