@@ -2,8 +2,10 @@
 import maya.cmds as cmds
 import maya.mel as mel
 
-from avalon import api
-
+from openpype.pipeline import (
+    load,
+    get_representation_path
+)
 from openpype.hosts.maya.api.lib import (
     maintained_selection,
     namespaced,
@@ -12,7 +14,7 @@ from openpype.hosts.maya.api.lib import (
 from openpype.hosts.maya.api.pipeline import containerise
 
 
-class MultiverseUsdLoader(api.Loader):
+class MultiverseUsdLoader(load.LoaderPlugin):
     """Load the USD by Multiverse"""
 
     families = ["model", "usd", "usdComposition", "usdOverride"]
@@ -64,7 +66,7 @@ class MultiverseUsdLoader(api.Loader):
         shapes = cmds.ls(members, type="mvUsdCompoundShape")
         assert shapes, "Cannot find mvUsdCompoundShape in container"
 
-        path = api.get_representation_path(representation)
+        path = get_representation_path(representation)
 
         import multiverse
         for shape in shapes:
