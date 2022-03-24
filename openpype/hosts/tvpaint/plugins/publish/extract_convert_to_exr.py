@@ -22,10 +22,12 @@ class ExtractConvertToEXR(pyblish.api.InstancePlugin):
     hosts = ["tvpaint"]
     families = ["render"]
 
-    active = False
+    enabled = False
 
+    # Replace source PNG files or just add
     replace_pngs = True
-    exr_compression = "DWAA"
+    # EXR compression
+    exr_compression = "ZIP"
 
     def process(self, instance):
         repres = instance.data.get("representations")
