@@ -103,7 +103,14 @@ class IntegrateBatchGroup(pyblish.api.InstancePlugin):
                 except op_pipeline.load.IncompatibleLoaderError as msg:
                     self.log.error(
                         "Check allowed representations for Loader `{}` "
-                        "in settings > error: {}".format(Loader.__name__, msg))
+                        "in settings > error: {}".format(
+                            Loader.__name__, msg))
+                    self.log.error(
+                        "Representaton context >>{}<< is not compatible "
+                        "with loader `{}`".format(
+                            pformat(repre_context), Loader.__name__
+                        )
+                    )
             else:
                 self.log.warning(
                     "Something got wrong and there is not Loader found for "
