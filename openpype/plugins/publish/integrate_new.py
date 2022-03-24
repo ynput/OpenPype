@@ -766,62 +766,52 @@ class IntegrateAssetNew(pyblish.api.InstancePlugin):
         subset_name = instance.data["subset"]
         self.log.debug("Subset: {}".format(subset_name))
 
+        # Get existing subset if it exists
         subset = io.find_one({
             "type": "subset",
             "parent": asset["_id"],
             "name": subset_name
         })
 
-        families = self._get_instance_families(instance)
-        if subset is None:
-            self.log.info("Subset '%s' not found, creating ..." % subset_name)
+        # Define subset data
+        data = {
+            "families": self._get_instance_families(instance)
+        }
 
-            _id = io.insert_one({
+        subset_group = instance.data.get("subsetGroup")
+        if not subset_group:
+            # todo: move _get_subset_group fallback to its own collector
+            subset_group = self._get_subset_group(instance)
+        if subset_group:
+            data["subsetGroup"] = subset_group
+
+        if subset is None:
+            # Create a new subset
+            self.log.info("Subset '%s' not found, creating ..." % subset_name)
+            subset = {
+                "_id": ObjectId(),
                 "schema": "openpype:subset-3.0",
                 "type": "subset",
                 "name": subset_name,
-                "data": {
-                    "families": families
-                },
+                "data": data,
                 "parent": asset["_id"]
-            }).inserted_id
+            }
+            io.insert_one(subset)
 
-            subset = io.find_one({"_id": _id})
-
-        # Update subset group
-        self._set_subset_group(instance, subset["_id"])
-
-        # Update families on subset.
-        io.update_many(
-            {"type": "subset", "_id": ObjectId(subset["_id"])},
-            {"$set": {"data.families": families}}
-        )
+        else:
+            # Update existing subset data with new data and set in database.
+            # We also change the found subset  in-place so we don't need to
+            # re-query the subset afterwards
+            subset["data"].update(data)
+            io.update_many(
+                {"type": "subset", "_id": subset["_id"]},
+                {"$set": {
+                    "data": subset["data"]
+                }}
+            )
 
         self.log.info("Registered subset: {}".format(subset_name))
-
         return subset
-
-    def _set_subset_group(self, instance, subset_id):
-        """
-            Mark subset as belonging to group in DB.
-
-            Uses Settings > Global > Publish plugins > IntegrateAssetNew
-
-            Args:
-                instance (dict): processed instance
-                subset_id (str): DB's subset _id
-
-        """
-        # Fist look into instance data
-        subset_group = instance.data.get("subsetGroup")
-        if not subset_group:
-            subset_group = self._get_subset_group(instance)
-
-        if subset_group:
-            io.update_many({
-                'type': 'subset',
-                '_id': ObjectId(subset_id)
-            }, {'$set': {'data.subsetGroup': subset_group}})
 
     def _get_subset_group(self, instance):
         """Look into subset group profiles set by settings.
