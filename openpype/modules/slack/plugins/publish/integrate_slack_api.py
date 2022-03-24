@@ -210,6 +210,9 @@ class IntegrateSlackAPI(pyblish.api.InstancePlugin):
             # You will get a SlackApiError if "ok" is False
             error_str = self._enrich_error(str(e.response["error"]), channel)
             self.log.warning("Error happened {}".format(error_str))
+        except Exception as e:
+            error_str = self._enrich_error(str(e), channel)
+            self.log.warning("Not SlackAPI error: {}".format(error_str))
 
         return None, []
 
