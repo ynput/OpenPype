@@ -452,17 +452,12 @@ class IntegrateAssetNew(pyblish.api.InstancePlugin):
         version_number = instance.data["version"]
         self.log.debug("Version: v{0:03d}".format(version_number))
 
-        version_data = self.create_version_data(instance)
-        version_data_instance = instance.data.get('versionData')
-        if version_data_instance:
-            version_data.update(version_data_instance)
-
         version = {
             "schema": "openpype:version-3.0",
             "type": "version",
             "parent": subset["_id"],
             "name": version_number,
-            "data": version_data
+            "data": self.create_version_data(instance)
         }
 
         repres = instance.data.get("representations", [])
@@ -908,6 +903,11 @@ class IntegrateAssetNew(pyblish.api.InstancePlugin):
         for key in optionals:
             if key in instance.data:
                 version_data[key] = instance.data[key]
+
+        # Include instance.data[versionData] directly
+        version_data_instance = instance.data.get('versionData')
+        if version_data_instance:
+            version_data.update(version_data_instance)
 
         return version_data
 
