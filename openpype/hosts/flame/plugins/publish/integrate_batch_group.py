@@ -1,4 +1,5 @@
 import os
+import copy
 from pprint import pformat
 import pyblish
 from openpype.lib import get_workdir
@@ -63,10 +64,28 @@ class IntegrateBatchGroup(pyblish.api.InstancePlugin):
                 bgroup.start_frame = frame_start
                 bgroup.duration = frame_duration
 
-    def _get_write_prefs(self, instance, task_data):
-        anatomy_data = instance.data["anatomyData"]
+    def _get_anamoty_data_with_current_task(self, instance, task_data):
+        anatomy_data = copy.deepcopy(instance.data["anatomyData"])
+        task_name = task_data["name"]
+        task_type = task_data["type"]
+        anatomy_obj = instance.context.data["anatomy"]
+
         # update task data in anatomy data
-        anatomy_data.update(task_data)
+        project_task_types = anatomy_obj["tasks"]
+        task_code = project_task_types.get(task_type, {}).get("short_name")
+        anatomy_data.update({
+            "task": {
+                "name": task_name,
+                "type": task_type,
+                "short": task_code
+            }
+        })
+        return anatomy_data
+
+    def _get_write_prefs(self, instance, task_data):
+        # update task in anatomy data
+        anatomy_data = self._get_anamoty_data_with_current_task(
+            instance, task_data)
 
         task_workfile_path = self._get_shot_task_dir_path(instance, task_data)
         self.log.debug("__ task_workfile_path: {}".format(task_workfile_path))
