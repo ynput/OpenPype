@@ -1,167 +1,168 @@
 {
     "addon_paths": {
-        "windows": [],
         "darwin": [],
-        "linux": []
+        "linux": [],
+        "windows": []
     },
     "avalon": {
-        "AVALON_TIMEOUT": 1000,
         "AVALON_THUMBNAIL_ROOT": {
-            "windows": "",
             "darwin": "",
-            "linux": ""
-        }
-    },
-    "ftrack": {
-        "enabled": false,
-        "ftrack_server": "",
-        "ftrack_actions_path": {
-            "windows": [],
-            "darwin": [],
-            "linux": []
+            "linux": "",
+            "windows": ""
         },
-        "ftrack_events_path": {
-            "windows": [],
-            "darwin": [],
-            "linux": []
-        },
-        "intent": {
-            "items": {
-                "-": "-",
-                "wip": "WIP",
-                "final": "Final",
-                "test": "Test"
-            },
-            "default": "-"
-        },
-        "custom_attributes": {
-            "show": {
-                "avalon_auto_sync": {
-                    "write_security_roles": [
-                        "API",
-                        "Administrator"
-                    ],
-                    "read_security_roles": [
-                        "API",
-                        "Administrator"
-                    ]
-                },
-                "library_project": {
-                    "write_security_roles": [
-                        "API",
-                        "Administrator"
-                    ],
-                    "read_security_roles": [
-                        "API",
-                        "Administrator"
-                    ]
-                },
-                "applications": {
-                    "write_security_roles": [
-                        "API",
-                        "Administrator",
-                        "Pypeclub"
-                    ],
-                    "read_security_roles": [
-                        "API",
-                        "Administrator",
-                        "Pypeclub"
-                    ]
-                }
-            },
-            "is_hierarchical": {
-                "tools_env": {
-                    "write_security_roles": [
-                        "API",
-                        "Administrator",
-                        "Pypeclub"
-                    ],
-                    "read_security_roles": [
-                        "API",
-                        "Administrator",
-                        "Pypeclub"
-                    ]
-                },
-                "avalon_mongo_id": {
-                    "write_security_roles": [
-                        "API",
-                        "Administrator",
-                        "Pypeclub"
-                    ],
-                    "read_security_roles": [
-                        "API",
-                        "Administrator",
-                        "Pypeclub"
-                    ]
-                },
-                "fps": {
-                    "write_security_roles": [],
-                    "read_security_roles": []
-                },
-                "frameStart": {
-                    "write_security_roles": [],
-                    "read_security_roles": []
-                },
-                "frameEnd": {
-                    "write_security_roles": [],
-                    "read_security_roles": []
-                },
-                "clipIn": {
-                    "write_security_roles": [],
-                    "read_security_roles": []
-                },
-                "clipOut": {
-                    "write_security_roles": [],
-                    "read_security_roles": []
-                },
-                "handleStart": {
-                    "write_security_roles": [],
-                    "read_security_roles": []
-                },
-                "handleEnd": {
-                    "write_security_roles": [],
-                    "read_security_roles": []
-                },
-                "resolutionWidth": {
-                    "write_security_roles": [],
-                    "read_security_roles": []
-                },
-                "resolutionHeight": {
-                    "write_security_roles": [],
-                    "read_security_roles": []
-                },
-                "pixelAspect": {
-                    "write_security_roles": [],
-                    "read_security_roles": []
-                }
-            }
-        }
-    },
-    "timers_manager": {
-        "enabled": true,
-        "auto_stop": true,
-        "full_time": 15.0,
-        "message_time": 0.5,
-        "disregard_publishing": false
+        "AVALON_TIMEOUT": 1000
     },
     "clockify": {
         "enabled": false,
         "workspace_name": ""
     },
-    "sync_server": {
-        "enabled": false,
-        "sites": {}
-    },
     "deadline": {
-        "enabled": true,
         "deadline_urls": {
             "default": "http://127.0.0.1:8082"
+        },
+        "enabled": true
+    },
+    "ftrack": {
+        "custom_attributes": {
+            "is_hierarchical": {
+                "avalon_mongo_id": {
+                    "read_security_roles": [
+                        "API",
+                        "Administrator",
+                        "Pypeclub"
+                    ],
+                    "write_security_roles": [
+                        "API",
+                        "Administrator",
+                        "Pypeclub"
+                    ]
+                },
+                "clipIn": {
+                    "read_security_roles": [],
+                    "write_security_roles": []
+                },
+                "clipOut": {
+                    "read_security_roles": [],
+                    "write_security_roles": []
+                },
+                "fps": {
+                    "read_security_roles": [],
+                    "write_security_roles": []
+                },
+                "frameEnd": {
+                    "read_security_roles": [],
+                    "write_security_roles": []
+                },
+                "frameStart": {
+                    "read_security_roles": [],
+                    "write_security_roles": []
+                },
+                "handleEnd": {
+                    "read_security_roles": [],
+                    "write_security_roles": []
+                },
+                "handleStart": {
+                    "read_security_roles": [],
+                    "write_security_roles": []
+                },
+                "pixelAspect": {
+                    "read_security_roles": [],
+                    "write_security_roles": []
+                },
+                "resolutionHeight": {
+                    "read_security_roles": [],
+                    "write_security_roles": []
+                },
+                "resolutionWidth": {
+                    "read_security_roles": [],
+                    "write_security_roles": []
+                },
+                "tools_env": {
+                    "read_security_roles": [
+                        "API",
+                        "Administrator",
+                        "Pypeclub"
+                    ],
+                    "write_security_roles": [
+                        "API",
+                        "Administrator",
+                        "Pypeclub"
+                    ]
+                }
+            },
+            "show": {
+                "applications": {
+                    "read_security_roles": [
+                        "API",
+                        "Administrator",
+                        "Pypeclub"
+                    ],
+                    "write_security_roles": [
+                        "API",
+                        "Administrator",
+                        "Pypeclub"
+                    ]
+                },
+                "avalon_auto_sync": {
+                    "read_security_roles": [
+                        "API",
+                        "Administrator"
+                    ],
+                    "write_security_roles": [
+                        "API",
+                        "Administrator"
+                    ]
+                },
+                "library_project": {
+                    "read_security_roles": [
+                        "API",
+                        "Administrator"
+                    ],
+                    "write_security_roles": [
+                        "API",
+                        "Administrator"
+                    ]
+                }
+            }
+        },
+        "enabled": false,
+        "ftrack_actions_path": {
+            "darwin": [],
+            "linux": [],
+            "windows": []
+        },
+        "ftrack_events_path": {
+            "darwin": [],
+            "linux": [],
+            "windows": []
+        },
+        "ftrack_server": "",
+        "intent": {
+            "default": "-",
+            "items": {
+                "-": "-",
+                "final": "Final",
+                "test": "Test",
+                "wip": "WIP"
+            }
         }
     },
+    "job_queue": {
+        "jobs_root": {
+            "darwin": "",
+            "linux": "",
+            "windows": ""
+        },
+        "server_url": ""
+    },
+    "log_viewer": {
+        "enabled": true
+    },
     "muster": {
-        "enabled": false,
         "MUSTER_REST_URL": "http://127.0.0.1:9890",
+        "enabled": false,
         "templates_mapping": {
+            "ffmpeg": 48,
             "file_layers": 7,
             "mentalray": 2,
             "mentalray_sf": 6,
@@ -171,38 +172,37 @@
             "software_sf": 5,
             "turtle": 10,
             "vector": 4,
-            "vray": 37,
-            "ffmpeg": 48
+            "vray": 37
         }
+    },
+    "project_manager": {
+        "enabled": true
     },
     "royalrender": {
         "enabled": false,
         "rr_paths": {
             "default": {
-                "windows": "",
                 "darwin": "",
-                "linux": ""
+                "linux": "",
+                "windows": ""
             }
         }
-    },
-    "log_viewer": {
-        "enabled": true
-    },
-    "standalonepublish_tool": {
-        "enabled": true
-    },
-    "project_manager": {
-        "enabled": true
     },
     "slack": {
         "enabled": false
     },
-    "job_queue": {
-        "server_url": "",
-        "jobs_root": {
-            "windows": "",
-            "darwin": "",
-            "linux": ""
-        }
+    "standalonepublish_tool": {
+        "enabled": true
+    },
+    "sync_server": {
+        "enabled": false,
+        "sites": {}
+    },
+    "timers_manager": {
+        "auto_stop": true,
+        "disregard_publishing": false,
+        "enabled": true,
+        "full_time": 15.0,
+        "message_time": 0.5
     }
 }

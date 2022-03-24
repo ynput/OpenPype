@@ -1,5 +1,19 @@
 {
+    "project_environments": {},
+    "project_folder_structure": "{\"__project_root__\": {\"prod\": {}, \"resources\": {\"footage\": {\"plates\": {}, \"offline\": {}}, \"audio\": {}, \"art_dept\": {}}, \"editorial\": {}, \"assets[ftrack.Library]\": {\"characters[ftrack]\": {}, \"locations[ftrack]\": {}}, \"shots[ftrack.Sequence]\": {\"scripts\": {}, \"editorial[ftrack.Folder]\": {}}}}",
+    "project_plugins": {
+        "darwin": [],
+        "linux": [],
+        "windows": []
+    },
     "publish": {
+        "CleanUp": {
+            "paterns": [],
+            "remove_temp_renders": false
+        },
+        "CleanUpFarm": {
+            "enabled": false
+        },
         "CollectAnatomyInstanceData": {
             "follow_workfile_version": false
         },
@@ -20,31 +34,50 @@
             ],
             "skip_hosts_headless_publish": []
         },
-        "ValidateEditorialAssetName": {
+        "ExtractBurnin": {
             "enabled": true,
-            "optional": false
-        },
-        "ValidateVersion": {
-            "enabled": true,
-            "optional": false,
-            "active": true
-        },
-        "ValidateIntent": {
-            "enabled": false,
-            "profiles": []
-        },
-        "IntegrateHeroVersion": {
-            "enabled": true,
-            "optional": true,
-            "families": [
-                "model",
-                "rig",
-                "look",
-                "pointcache",
-                "animation",
-                "setdress",
-                "layout",
-                "mayaScene"
+            "options": {
+                "bg_color": [
+                    0,
+                    0,
+                    0,
+                    127
+                ],
+                "bg_padding": 5,
+                "font_color": [
+                    255,
+                    255,
+                    255,
+                    255
+                ],
+                "font_filepath": {
+                    "darwin": "",
+                    "linux": "",
+                    "windows": ""
+                },
+                "font_size": 42,
+                "x_offset": 5,
+                "y_offset": 5
+            },
+            "profiles": [
+                {
+                    "burnins": {
+                        "burnin": {
+                            "BOTTOM_CENTERED": "{asset}",
+                            "BOTTOM_LEFT": "{username}",
+                            "BOTTOM_RIGHT": "{frame_start}-{current_frame}-{frame_end}",
+                            "TOP_CENTERED": "",
+                            "TOP_LEFT": "{yy}-{mm}-{dd}",
+                            "TOP_RIGHT": "{anatomy[version]}",
+                            "filter": {
+                                "families": [],
+                                "tags": []
+                            }
+                        }
+                    },
+                    "families": [],
+                    "hosts": []
+                }
             ]
         },
         "ExtractJpegEXR": {
@@ -64,14 +97,15 @@
                     "hosts": [],
                     "outputs": {
                         "h264": {
-                            "ext": "mp4",
-                            "tags": [
-                                "burnin",
-                                "ftrackreview"
+                            "bg_color": [
+                                0,
+                                0,
+                                0,
+                                0
                             ],
                             "burnins": [],
+                            "ext": "mp4",
                             "ffmpeg_args": {
-                                "video_filters": [],
                                 "audio_filters": [],
                                 "input": [
                                     "-apply_trc gamma22"
@@ -80,7 +114,8 @@
                                     "-pix_fmt yuv420p",
                                     "-crf 18",
                                     "-intra"
-                                ]
+                                ],
+                                "video_filters": []
                             },
                             "filter": {
                                 "families": [
@@ -90,90 +125,51 @@
                                 ],
                                 "subsets": []
                             },
-                            "overscan_crop": "",
-                            "overscan_color": [
-                                0,
-                                0,
-                                0,
-                                255
-                            ],
-                            "width": 0,
                             "height": 0,
-                            "bg_color": [
-                                0,
-                                0,
-                                0,
-                                0
-                            ],
                             "letter_box": {
                                 "enabled": false,
-                                "ratio": 0.0,
                                 "fill_color": [
                                     0,
                                     0,
                                     0,
                                     255
                                 ],
-                                "line_thickness": 0,
                                 "line_color": [
                                     255,
                                     0,
                                     0,
                                     255
-                                ]
-                            }
-                        }
-                    }
-                }
-            ]
-        },
-        "ExtractBurnin": {
-            "enabled": true,
-            "options": {
-                "font_size": 42,
-                "font_color": [
-                    255,
-                    255,
-                    255,
-                    255
-                ],
-                "bg_color": [
-                    0,
-                    0,
-                    0,
-                    127
-                ],
-                "x_offset": 5,
-                "y_offset": 5,
-                "bg_padding": 5,
-                "font_filepath": {
-                    "windows": "",
-                    "darwin": "",
-                    "linux": ""
-                }
-            },
-            "profiles": [
-                {
-                    "families": [],
-                    "hosts": [],
-                    "burnins": {
-                        "burnin": {
-                            "TOP_LEFT": "{yy}-{mm}-{dd}",
-                            "TOP_CENTERED": "",
-                            "TOP_RIGHT": "{anatomy[version]}",
-                            "BOTTOM_LEFT": "{username}",
-                            "BOTTOM_CENTERED": "{asset}",
-                            "BOTTOM_RIGHT": "{frame_start}-{current_frame}-{frame_end}",
-                            "filter": {
-                                "families": [],
-                                "tags": []
-                            }
+                                ],
+                                "line_thickness": 0,
+                                "ratio": 0.0
+                            },
+                            "overscan_color": [
+                                0,
+                                0,
+                                0,
+                                255
+                            ],
+                            "overscan_crop": "",
+                            "tags": [
+                                "burnin",
+                                "ftrackreview"
+                            ],
+                            "width": 0
                         }
                     }
                 }
             ]
         },
         "IntegrateAssetNew": {
+            "subset_grouping_profiles": [
+                {
+                    "families": [],
+                    "hosts": [],
+                    "task_types": [],
+                    "tasks": [],
+                    "template": ""
+                }
+            ],
             "template_name_profiles": [
                 {
                     "families": [],
@@ -193,40 +189,88 @@
                     "tasks": [],
                     "template_name": "render"
                 }
+            ]
+        },
+        "IntegrateHeroVersion": {
+            "enabled": true,
+            "families": [
+                "model",
+                "rig",
+                "look",
+                "pointcache",
+                "animation",
+                "setdress",
+                "layout",
+                "mayaScene"
             ],
-            "subset_grouping_profiles": [
+            "optional": true
+        },
+        "ValidateEditorialAssetName": {
+            "enabled": true,
+            "optional": false
+        },
+        "ValidateIntent": {
+            "enabled": false,
+            "profiles": []
+        },
+        "ValidateVersion": {
+            "active": true,
+            "enabled": true,
+            "optional": false
+        }
+    },
+    "sync_server": {
+        "config": {
+            "active_site": "studio",
+            "always_accessible_on": [],
+            "loop_delay": "60",
+            "remote_site": "studio",
+            "retry_cnt": "3"
+        },
+        "enabled": false,
+        "sites": {}
+    },
+    "tools": {
+        "Workfiles": {
+            "extra_folders": [],
+            "last_workfile_on_startup": [
                 {
-                    "families": [],
+                    "enabled": true,
                     "hosts": [],
                     "task_types": [],
-                    "tasks": [],
-                    "template": ""
+                    "tasks": []
+                }
+            ],
+            "open_workfile_tool_on_startup": [
+                {
+                    "enabled": false,
+                    "hosts": [],
+                    "task_types": [],
+                    "tasks": []
+                }
+            ],
+            "workfile_template_profiles": [
+                {
+                    "hosts": [],
+                    "task_types": [],
+                    "workfile_template": "work"
                 }
             ]
         },
-        "CleanUp": {
-            "paterns": [],
-            "remove_temp_renders": false
-        },
-        "CleanUpFarm": {
-            "enabled": false
-        }
-    },
-    "tools": {
         "creator": {
             "families_smart_select": {
-                "Render": [
-                    "light",
-                    "render"
-                ],
-                "Model": [
-                    "model"
-                ],
                 "Layout": [
                     "layout"
                 ],
                 "Look": [
                     "look"
+                ],
+                "Model": [
+                    "model"
+                ],
+                "Render": [
+                    "light",
+                    "render"
                 ],
                 "Rig": [
                     "rigging",
@@ -298,59 +342,15 @@
                 }
             ]
         },
-        "Workfiles": {
-            "workfile_template_profiles": [
-                {
-                    "task_types": [],
-                    "hosts": [],
-                    "workfile_template": "work"
-                }
-            ],
-            "last_workfile_on_startup": [
-                {
-                    "hosts": [],
-                    "task_types": [],
-                    "tasks": [],
-                    "enabled": true
-                }
-            ],
-            "open_workfile_tool_on_startup": [
-                {
-                    "hosts": [],
-                    "task_types": [],
-                    "tasks": [],
-                    "enabled": false
-                }
-            ],
-            "extra_folders": []
-        },
         "loader": {
             "family_filter_profiles": [
                 {
+                    "filter_families": [],
                     "hosts": [],
-                    "task_types": [],
                     "is_include": true,
-                    "filter_families": []
+                    "task_types": []
                 }
             ]
         }
-    },
-    "project_folder_structure": "{\"__project_root__\": {\"prod\": {}, \"resources\": {\"footage\": {\"plates\": {}, \"offline\": {}}, \"audio\": {}, \"art_dept\": {}}, \"editorial\": {}, \"assets[ftrack.Library]\": {\"characters[ftrack]\": {}, \"locations[ftrack]\": {}}, \"shots[ftrack.Sequence]\": {\"scripts\": {}, \"editorial[ftrack.Folder]\": {}}}}",
-    "sync_server": {
-        "enabled": false,
-        "config": {
-            "retry_cnt": "3",
-            "loop_delay": "60",
-            "always_accessible_on": [],
-            "active_site": "studio",
-            "remote_site": "studio"
-        },
-        "sites": {}
-    },
-    "project_plugins": {
-        "windows": [],
-        "darwin": [],
-        "linux": []
-    },
-    "project_environments": {}
+    }
 }

@@ -1,24 +1,26 @@
 {
     "create": {
         "CreateShotClip": {
-            "hierarchy": "{folder}/{sequence}",
-            "clipRename": true,
             "clipName": "{track}{sequence}{shot}",
+            "clipRename": true,
             "countFrom": 10,
             "countSteps": 10,
-            "folder": "shots",
             "episode": "ep01",
-            "sequence": "sq01",
-            "track": "{_track_}",
-            "shot": "sh###",
-            "vSyncOn": false,
-            "workfileFrameStart": 1001,
+            "folder": "shots",
+            "handleEnd": 10,
             "handleStart": 10,
-            "handleEnd": 10
+            "hierarchy": "{folder}/{sequence}",
+            "sequence": "sq01",
+            "shot": "sh###",
+            "track": "{_track_}",
+            "vSyncOn": false,
+            "workfileFrameStart": 1001
         }
     },
+    "filters": {},
     "load": {
         "LoadClip": {
+            "clip_name_template": "{asset}_{subset}_{representation}",
             "enabled": true,
             "families": [
                 "render2d",
@@ -36,8 +38,7 @@
                 "h264",
                 "mov",
                 "mp4"
-            ],
-            "clip_name_template": "{asset}_{subset}_{representation}"
+            ]
         }
     },
     "publish": {
@@ -50,6 +51,5 @@
                 "review"
             ]
         }
-    },
-    "filters": {}
+    }
 }

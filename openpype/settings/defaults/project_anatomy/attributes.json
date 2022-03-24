@@ -1,14 +1,5 @@
 {
-    "fps": 25.0,
-    "frameStart": 1001,
-    "frameEnd": 1001,
-    "clipIn": 1,
-    "clipOut": 1,
-    "handleStart": 0,
-    "handleEnd": 0,
-    "resolutionWidth": 1920,
-    "resolutionHeight": 1080,
-    "pixelAspect": 1.0,
+    "active": true,
     "applications": [
         "maya/2020",
         "nuke/12-2",
@@ -22,6 +13,15 @@
         "aftereffects/2021",
         "unreal/4-26"
     ],
-    "tools_env": [],
-    "active": true
+    "clipIn": 1,
+    "clipOut": 1,
+    "fps": 25.0,
+    "frameEnd": 1001,
+    "frameStart": 1001,
+    "handleEnd": 0,
+    "handleStart": 0,
+    "pixelAspect": 1.0,
+    "resolutionHeight": 1080,
+    "resolutionWidth": 1920,
+    "tools_env": []
 }

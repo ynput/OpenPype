@@ -1,36 +1,36 @@
 {
     "defaults": {
-        "version_padding": 3,
-        "version": "v{version:0>{@version_padding}}",
+        "frame": "{frame:0>{@frame_padding}}",
         "frame_padding": 4,
-        "frame": "{frame:0>{@frame_padding}}"
+        "version": "v{version:0>{@version_padding}}",
+        "version_padding": 3
     },
-    "work": {
-        "folder": "{root[work]}/{project[name]}/{hierarchy}/{asset}/work/{task[name]}",
-        "file": "{project[code]}_{asset}_{task[name]}_{@version}<_{comment}>.{ext}",
+    "delivery": {},
+    "hero": {
+        "file": "{project[code]}_{asset}_{subset}_hero<_{output}><.{frame}>.{ext}",
+        "folder": "{root[work]}/{project[name]}/{hierarchy}/{asset}/publish/{family}/{subset}/hero",
         "path": "{@folder}/{@file}"
     },
-    "render": {
-        "folder": "{root[work]}/{project[name]}/{hierarchy}/{asset}/publish/{family}/{subset}/{@version}",
-        "file": "{project[code]}_{asset}_{subset}_{@version}<_{output}><.{@frame}>.{ext}",
-        "path": "{@folder}/{@file}"
-    },
+    "others": {},
     "publish": {
-        "folder": "{root[work]}/{project[name]}/{hierarchy}/{asset}/publish/{family}/{subset}/{@version}",
         "file": "{project[code]}_{asset}_{subset}_{@version}<_{output}><.{@frame}><_{udim}>.{ext}",
+        "folder": "{root[work]}/{project[name]}/{hierarchy}/{asset}/publish/{family}/{subset}/{@version}",
         "path": "{@folder}/{@file}",
         "thumbnail": "{thumbnail_root}/{project[name]}/{_id}_{thumbnail_type}.{ext}"
     },
-    "hero": {
-        "folder": "{root[work]}/{project[name]}/{hierarchy}/{asset}/publish/{family}/{subset}/hero",
-        "file": "{project[code]}_{asset}_{subset}_hero<_{output}><.{frame}>.{ext}",
-        "path": "{@folder}/{@file}"
-    },
-    "delivery": {},
-    "unreal": {
+    "render": {
+        "file": "{project[code]}_{asset}_{subset}_{@version}<_{output}><.{@frame}>.{ext}",
         "folder": "{root[work]}/{project[name]}/{hierarchy}/{asset}/publish/{family}/{subset}/{@version}",
-        "file": "{subset}_{@version}<_{output}><.{@frame}>.{ext}",
         "path": "{@folder}/{@file}"
     },
-    "others": {}
+    "unreal": {
+        "file": "{subset}_{@version}<_{output}><.{@frame}>.{ext}",
+        "folder": "{root[work]}/{project[name]}/{hierarchy}/{asset}/publish/{family}/{subset}/{@version}",
+        "path": "{@folder}/{@file}"
+    },
+    "work": {
+        "file": "{project[code]}_{asset}_{task[name]}_{@version}<_{comment}>.{ext}",
+        "folder": "{root[work]}/{project[name]}/{hierarchy}/{asset}/work/{task[name]}",
+        "path": "{@folder}/{@file}"
+    }
 }

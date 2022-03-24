@@ -1,23 +1,23 @@
 {
-    "studio_name": "Studio name",
-    "studio_code": "stu",
     "admin_password": "",
+    "disk_mapping": {
+        "darwin": [],
+        "linux": [],
+        "windows": []
+    },
     "environment": {
         "__environment_keys__": {
             "global": []
         }
     },
-    "disk_mapping": {
-        "windows": [],
-        "linux": [],
-        "darwin": []
-    },
     "openpype_path": {
-        "windows": [],
         "darwin": [],
-        "linux": []
+        "linux": [],
+        "windows": []
     },
     "production_version": "",
     "staging_version": "",
+    "studio_code": "stu",
+    "studio_name": "Studio name",
     "version_check_interval": 5
 }

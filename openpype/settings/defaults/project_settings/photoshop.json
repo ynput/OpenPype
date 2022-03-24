@@ -8,18 +8,9 @@
     },
     "publish": {
         "CollectColorCodedInstances": {
+            "color_code_mapping": [],
             "create_flatten_image": false,
-            "flatten_subset_template": "",
-            "color_code_mapping": []
-        },
-        "ValidateContainers": {
-            "enabled": true,
-            "optional": true,
-            "active": true
-        },
-        "ValidateNaming": {
-            "invalid_chars": "[ \\\\/+\\*\\?\\(\\)\\[\\]\\{\\}:,]",
-            "replace_char": "_"
+            "flatten_subset_template": ""
         },
         "ExtractImage": {
             "formats": [
@@ -28,16 +19,25 @@
             ]
         },
         "ExtractReview": {
-            "make_image_sequence": false,
             "jpg_options": {
                 "tags": []
             },
+            "make_image_sequence": false,
             "mov_options": {
                 "tags": [
                     "review",
                     "ftrackreview"
                 ]
             }
+        },
+        "ValidateContainers": {
+            "active": true,
+            "enabled": true,
+            "optional": true
+        },
+        "ValidateNaming": {
+            "invalid_chars": "[ \\\\/+\\*\\?\\(\\)\\[\\]\\{\\}:,]",
+            "replace_char": "_"
         }
     },
     "workfile_builder": {

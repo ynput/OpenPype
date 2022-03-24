@@ -1,56 +1,56 @@
 {
     "create": {
-        "CreateArnoldAss": {
-            "enabled": true,
+        "CreateAlembicCamera": {
             "defaults": [],
+            "enabled": true
+        },
+        "CreateArnoldAss": {
+            "defaults": [],
+            "enabled": true,
             "ext": ".ass"
         },
-        "CreateAlembicCamera": {
-            "enabled": true,
-            "defaults": []
-        },
         "CreateCompositeSequence": {
-            "enabled": true,
-            "defaults": []
+            "defaults": [],
+            "enabled": true
         },
         "CreatePointCache": {
-            "enabled": true,
-            "defaults": []
+            "defaults": [],
+            "enabled": true
         },
         "CreateRedshiftROP": {
-            "enabled": true,
-            "defaults": []
+            "defaults": [],
+            "enabled": true
         },
         "CreateRemotePublish": {
-            "enabled": true,
-            "defaults": []
-        },
-        "CreateVDBCache": {
-            "enabled": true,
-            "defaults": []
+            "defaults": [],
+            "enabled": true
         },
         "CreateUSD": {
-            "enabled": false,
-            "defaults": []
+            "defaults": [],
+            "enabled": false
         },
         "CreateUSDModel": {
-            "enabled": false,
-            "defaults": []
-        },
-        "USDCreateShadingWorkspace": {
-            "enabled": false,
-            "defaults": []
+            "defaults": [],
+            "enabled": false
         },
         "CreateUSDRender": {
-            "enabled": false,
-            "defaults": []
+            "defaults": [],
+            "enabled": false
+        },
+        "CreateVDBCache": {
+            "defaults": [],
+            "enabled": true
+        },
+        "USDCreateShadingWorkspace": {
+            "defaults": [],
+            "enabled": false
         }
     },
     "publish": {
         "ValidateContainers": {
+            "active": true,
             "enabled": true,
-            "optional": true,
-            "active": true
+            "optional": true
         }
     }
 }

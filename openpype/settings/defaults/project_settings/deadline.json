@@ -1,36 +1,65 @@
 {
     "deadline_servers": [],
     "publish": {
+        "AfterEffectsSubmitDeadline": {
+            "active": true,
+            "chunk_size": 10000,
+            "department": "",
+            "enabled": true,
+            "group": "",
+            "multiprocess": true,
+            "optional": false,
+            "primary_pool": "",
+            "priority": 50,
+            "secondary_pool": "",
+            "use_published": true
+        },
         "CollectDefaultDeadlineServer": {
             "pass_mongo_url": false
         },
-        "ValidateExpectedFiles": {
-            "enabled": true,
+        "HarmonySubmitDeadline": {
             "active": true,
-            "allow_user_override": true,
-            "families": [
-                "render"
-            ],
-            "targets": [
-                "deadline"
-            ]
+            "chunk_size": 10000,
+            "department": "",
+            "enabled": true,
+            "group": "",
+            "optional": false,
+            "primary_pool": "",
+            "priority": 50,
+            "secondary_pool": "",
+            "use_published": true
+        },
+        "MayaSubmitDeadline": {
+            "active": true,
+            "asset_dependencies": true,
+            "enabled": true,
+            "group": "none",
+            "jobInfo": {},
+            "limit": [],
+            "optional": false,
+            "pluginInfo": {},
+            "scene_patches": [],
+            "tile_assembler_plugin": "OpenPypeTileAssembler",
+            "use_published": true
+        },
+        "NukeSubmitDeadline": {
+            "active": true,
+            "chunk_size": 10,
+            "department": "",
+            "enabled": true,
+            "env_allowed_keys": [],
+            "env_search_replace_values": {},
+            "group": "",
+            "limit_groups": {},
+            "optional": false,
+            "primary_pool": "",
+            "priority": 50,
+            "secondary_pool": "",
+            "use_gpu": true,
+            "use_published": true
         },
         "ProcessSubmittedJobOnFarm": {
-            "enabled": true,
-            "deadline_department": "",
-            "deadline_pool": "",
-            "deadline_group": "",
-            "deadline_chunk_size": 1,
-            "deadline_priority": 50,
-            "publishing_script": "",
-            "skip_integration_repre_list": [],
             "aov_filter": {
-                "maya": [
-                    ".+(?:\\.|_)([Bb]eauty)(?:\\.|_).*"
-                ],
-                "nuke": [
-                    ".*"
-                ],
                 "aftereffects": [
                     ".*"
                 ],
@@ -39,62 +68,33 @@
                 ],
                 "harmony": [
                     ".*"
+                ],
+                "maya": [
+                    ".+(?:\\.|_)([Bb]eauty)(?:\\.|_).*"
+                ],
+                "nuke": [
+                    ".*"
                 ]
-            }
-        },
-        "MayaSubmitDeadline": {
+            },
+            "deadline_chunk_size": 1,
+            "deadline_department": "",
+            "deadline_group": "",
+            "deadline_pool": "",
+            "deadline_priority": 50,
             "enabled": true,
-            "optional": false,
-            "active": true,
-            "tile_assembler_plugin": "OpenPypeTileAssembler",
-            "use_published": true,
-            "asset_dependencies": true,
-            "group": "none",
-            "limit": [],
-            "jobInfo": {},
-            "pluginInfo": {},
-            "scene_patches": []
+            "publishing_script": "",
+            "skip_integration_repre_list": []
         },
-        "NukeSubmitDeadline": {
-            "enabled": true,
-            "optional": false,
+        "ValidateExpectedFiles": {
             "active": true,
-            "use_published": true,
-            "priority": 50,
-            "chunk_size": 10,
-            "primary_pool": "",
-            "secondary_pool": "",
-            "group": "",
-            "department": "",
-            "use_gpu": true,
-            "env_allowed_keys": [],
-            "env_search_replace_values": {},
-            "limit_groups": {}
-        },
-        "HarmonySubmitDeadline": {
+            "allow_user_override": true,
             "enabled": true,
-            "optional": false,
-            "active": true,
-            "use_published": true,
-            "priority": 50,
-            "chunk_size": 10000,
-            "primary_pool": "",
-            "secondary_pool": "",
-            "group": "",
-            "department": ""
-        },
-        "AfterEffectsSubmitDeadline": {
-            "enabled": true,
-            "optional": false,
-            "active": true,
-            "use_published": true,
-            "priority": 50,
-            "chunk_size": 10000,
-            "primary_pool": "",
-            "secondary_pool": "",
-            "group": "",
-            "department": "",
-            "multiprocess": true
+            "families": [
+                "render"
+            ],
+            "targets": [
+                "deadline"
+            ]
         }
     }
 }

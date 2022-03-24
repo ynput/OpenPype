@@ -1,9 +1,9 @@
 {
     "publish": {
         "ValidateSceneSettings": {
+            "active": true,
             "enabled": true,
             "optional": true,
-            "active": true,
             "skip_resolution_check": [
                 ".*"
             ],

@@ -1,44 +1,44 @@
 {
-    "Generic": {
-        "short_name": "gener"
+    "Animation": {
+        "short_name": "anim"
     },
     "Art": {
         "short_name": "art"
     },
-    "Modeling": {
-        "short_name": "mdl"
-    },
-    "Texture": {
-        "short_name": "tex"
-    },
-    "Lookdev": {
-        "short_name": "look"
-    },
-    "Rigging": {
-        "short_name": "rig"
+    "Compositing": {
+        "short_name": "comp"
     },
     "Edit": {
         "short_name": "edit"
     },
-    "Layout": {
-        "short_name": "lay"
-    },
-    "Setdress": {
-        "short_name": "dress"
-    },
-    "Animation": {
-        "short_name": "anim"
-    },
     "FX": {
         "short_name": "fx"
+    },
+    "Generic": {
+        "short_name": "gener"
+    },
+    "Layout": {
+        "short_name": "lay"
     },
     "Lighting": {
         "short_name": "lgt"
     },
+    "Lookdev": {
+        "short_name": "look"
+    },
+    "Modeling": {
+        "short_name": "mdl"
+    },
     "Paint": {
         "short_name": "paint"
     },
-    "Compositing": {
-        "short_name": "comp"
+    "Rigging": {
+        "short_name": "rig"
+    },
+    "Setdress": {
+        "short_name": "dress"
+    },
+    "Texture": {
+        "short_name": "tex"
     }
 }

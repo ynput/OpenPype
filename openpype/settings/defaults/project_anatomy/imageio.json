@@ -1,58 +1,78 @@
 {
-    "hiero": {
-        "workfile": {
-            "ocioConfigName": "nuke-default",
-            "ocioconfigpath": {
-                "windows": [],
-                "darwin": [],
-                "linux": []
-            },
-            "workingSpace": "linear",
-            "sixteenBitLut": "sRGB",
-            "eightBitLut": "sRGB",
-            "floatLut": "linear",
-            "logLut": "Cineon",
-            "viewerLut": "sRGB",
-            "thumbnailLut": "sRGB"
+    "flame": {
+        "profilesMapping": {
+            "inputs": [
+                {
+                    "flameName": "ACEScg",
+                    "ocioName": "ACES - ACEScg"
+                },
+                {
+                    "flameName": "Rec.709 video",
+                    "ocioName": "Output - Rec.709"
+                }
+            ]
         },
+        "project": {
+            "colourPolicy": "ACES 1.1",
+            "fieldDominance": "PROGRESSIVE",
+            "frameDepth": "16-bit fp"
+        }
+    },
+    "hiero": {
         "regexInputs": {
             "inputs": [
                 {
-                    "regex": "[^-a-zA-Z0-9](plateRef).*(?=mp4)",
-                    "colorspace": "sRGB"
+                    "colorspace": "sRGB",
+                    "regex": "[^-a-zA-Z0-9](plateRef).*(?=mp4)"
                 }
             ]
+        },
+        "workfile": {
+            "eightBitLut": "sRGB",
+            "floatLut": "linear",
+            "logLut": "Cineon",
+            "ocioConfigName": "nuke-default",
+            "ocioconfigpath": {
+                "darwin": [],
+                "linux": [],
+                "windows": []
+            },
+            "sixteenBitLut": "sRGB",
+            "thumbnailLut": "sRGB",
+            "viewerLut": "sRGB",
+            "workingSpace": "linear"
+        }
+    },
+    "maya": {
+        "colorManagementPreference": {
+            "configFilePath": {
+                "darwin": [],
+                "linux": [],
+                "windows": []
+            },
+            "renderSpace": "scene-linear Rec 709/sRGB",
+            "viewTransform": "sRGB gamma"
+        },
+        "colorManagementPreference_v2": {
+            "configFilePath": {
+                "darwin": [],
+                "linux": [],
+                "windows": []
+            },
+            "displayName": "sRGB",
+            "enabled": true,
+            "renderSpace": "ACEScg",
+            "viewName": "ACES 1.0 SDR-video"
         }
     },
     "nuke": {
-        "viewer": {
-            "viewerProcess": "sRGB"
-        },
         "baking": {
             "viewerProcess": "rec709"
         },
-        "workfile": {
-            "colorManagement": "Nuke",
-            "OCIO_config": "nuke-default",
-            "customOCIOConfigPath": {
-                "windows": [],
-                "darwin": [],
-                "linux": []
-            },
-            "workingSpaceLUT": "linear",
-            "monitorLut": "sRGB",
-            "int8Lut": "sRGB",
-            "int16Lut": "sRGB",
-            "logLut": "Cineon",
-            "floatLut": "linear"
-        },
         "nodes": {
+            "customNodes": [],
             "requiredNodes": [
                 {
-                    "plugins": [
-                        "CreateWriteRender"
-                    ],
-                    "nukeNodeClass": "Write",
                     "knobs": [
                         {
                             "name": "file_type",
@@ -86,13 +106,13 @@
                             "name": "create_directories",
                             "value": "True"
                         }
+                    ],
+                    "nukeNodeClass": "Write",
+                    "plugins": [
+                        "CreateWriteRender"
                     ]
                 },
                 {
-                    "plugins": [
-                        "CreateWritePrerender"
-                    ],
-                    "nukeNodeClass": "Write",
                     "knobs": [
                         {
                             "name": "file_type",
@@ -126,13 +146,13 @@
                             "name": "create_directories",
                             "value": "True"
                         }
+                    ],
+                    "nukeNodeClass": "Write",
+                    "plugins": [
+                        "CreateWritePrerender"
                     ]
                 },
                 {
-                    "plugins": [
-                        "CreateWriteStill"
-                    ],
-                    "nukeNodeClass": "Write",
                     "knobs": [
                         {
                             "name": "file_type",
@@ -162,59 +182,39 @@
                             "name": "create_directories",
                             "value": "True"
                         }
+                    ],
+                    "nukeNodeClass": "Write",
+                    "plugins": [
+                        "CreateWriteStill"
                     ]
                 }
-            ],
-            "customNodes": []
+            ]
         },
         "regexInputs": {
             "inputs": [
                 {
-                    "regex": "[^-a-zA-Z0-9]beauty[^-a-zA-Z0-9]",
-                    "colorspace": "linear"
+                    "colorspace": "linear",
+                    "regex": "[^-a-zA-Z0-9]beauty[^-a-zA-Z0-9]"
                 }
             ]
-        }
-    },
-    "maya": {
-        "colorManagementPreference_v2": {
-            "enabled": true,
-            "configFilePath": {
-                "windows": [],
-                "darwin": [],
-                "linux": []
-            },
-            "renderSpace": "ACEScg",
-            "viewName": "ACES 1.0 SDR-video",
-            "displayName": "sRGB"
         },
-        "colorManagementPreference": {
-            "configFilePath": {
-                "windows": [],
-                "darwin": [],
-                "linux": []
-            },
-            "renderSpace": "scene-linear Rec 709/sRGB",
-            "viewTransform": "sRGB gamma"
-        }
-    },
-    "flame": {
-        "project": {
-            "colourPolicy": "ACES 1.1",
-            "frameDepth": "16-bit fp",
-            "fieldDominance": "PROGRESSIVE"
+        "viewer": {
+            "viewerProcess": "sRGB"
         },
-        "profilesMapping": {
-            "inputs": [
-                {
-                    "flameName": "ACEScg",
-                    "ocioName": "ACES - ACEScg"
-                },
-                {
-                    "flameName": "Rec.709 video",
-                    "ocioName": "Output - Rec.709"
-                }
-            ]
+        "workfile": {
+            "OCIO_config": "nuke-default",
+            "colorManagement": "Nuke",
+            "customOCIOConfigPath": {
+                "darwin": [],
+                "linux": [],
+                "windows": []
+            },
+            "floatLut": "linear",
+            "int16Lut": "sRGB",
+            "int8Lut": "sRGB",
+            "logLut": "Cineon",
+            "monitorLut": "sRGB",
+            "workingSpaceLUT": "linear"
         }
     }
 }

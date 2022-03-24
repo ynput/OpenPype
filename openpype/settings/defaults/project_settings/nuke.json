@@ -1,31 +1,6 @@
 {
-    "general": {
-        "menu": {
-            "create": "ctrl+shift+alt+c",
-            "publish": "ctrl+alt+p",
-            "load": "ctrl+alt+l",
-            "manage": "ctrl+alt+m",
-            "build_workfile": "ctrl+alt+b"
-        }
-    },
-    "nuke-dirmap": {
-        "enabled": false,
-        "paths": {
-            "source-path": [],
-            "destination-path": []
-        }
-    },
     "create": {
-        "CreateWriteRender": {
-            "fpath_template": "{work}/renders/nuke/{subset}/{subset}.{frame}.{ext}",
-            "defaults": [
-                "Main",
-                "Mask"
-            ]
-        },
         "CreateWritePrerender": {
-            "fpath_template": "{work}/prerenders/nuke/{subset}/{subset}.{frame}.{ext}",
-            "use_range_limit": true,
             "defaults": [
                 "Key01",
                 "Bg01",
@@ -33,51 +8,107 @@
                 "Branch01",
                 "Part01"
             ],
-            "reviewable": false
+            "fpath_template": "{work}/prerenders/nuke/{subset}/{subset}.{frame}.{ext}",
+            "reviewable": false,
+            "use_range_limit": true
+        },
+        "CreateWriteRender": {
+            "defaults": [
+                "Main",
+                "Mask"
+            ],
+            "fpath_template": "{work}/renders/nuke/{subset}/{subset}.{frame}.{ext}"
+        }
+    },
+    "filters": {},
+    "general": {
+        "menu": {
+            "build_workfile": "ctrl+alt+b",
+            "create": "ctrl+shift+alt+c",
+            "load": "ctrl+alt+l",
+            "manage": "ctrl+alt+m",
+            "publish": "ctrl+alt+p"
+        }
+    },
+    "load": {
+        "LoadClip": {
+            "_representations": [],
+            "enabled": true,
+            "node_name_template": "{class_name}_{ext}"
+        },
+        "LoadImage": {
+            "_representations": [
+                "exr",
+                "dpx",
+                "jpg",
+                "jpeg",
+                "png",
+                "psd",
+                "tiff"
+            ],
+            "enabled": true,
+            "node_name_template": "{class_name}_{ext}"
+        }
+    },
+    "nuke-dirmap": {
+        "enabled": false,
+        "paths": {
+            "destination-path": [],
+            "source-path": []
         }
     },
     "publish": {
-        "PreCollectNukeInstances": {
-            "sync_workfile_version_on_families": [
-                "nukenodes",
-                "camera",
-                "gizmo",
-                "source",
-                "render"
-            ]
+        "ExtractReviewDataLut": {
+            "enabled": false
         },
-        "ValidateInstanceInContext": {
+        "ExtractReviewDataMov": {
             "enabled": true,
-            "optional": true,
-            "active": true
-        },
-        "ValidateContainers": {
-            "enabled": true,
-            "optional": true,
-            "active": true
-        },
-        "ValidateKnobs": {
-            "enabled": false,
-            "knobs": {
-                "render": {
-                    "review": true
+            "outputs": {
+                "baking": {
+                    "add_tags": [],
+                    "bake_viewer_input_process": true,
+                    "bake_viewer_process": true,
+                    "extension": "mov",
+                    "filter": {
+                        "families": [],
+                        "sebsets": [],
+                        "task_types": []
+                    },
+                    "reformat_node_add": false,
+                    "reformat_node_config": [
+                        {
+                            "name": "type",
+                            "type": "string",
+                            "value": "to format"
+                        },
+                        {
+                            "name": "format",
+                            "type": "string",
+                            "value": "HD_1080"
+                        },
+                        {
+                            "name": "filter",
+                            "type": "string",
+                            "value": "Lanczos6"
+                        },
+                        {
+                            "name": "black_outside",
+                            "type": "bool",
+                            "value": true
+                        },
+                        {
+                            "name": "pbb",
+                            "type": "bool",
+                            "value": false
+                        }
+                    ],
+                    "viewer_process_override": ""
                 }
-            }
+            },
+            "viewer_lut_raw": false
         },
-        "ValidateOutputResolution": {
-            "enabled": true,
-            "optional": true,
-            "active": true
-        },
-        "ValidateGizmo": {
-            "enabled": true,
-            "optional": true,
-            "active": true
-        },
-        "ValidateScript": {
-            "enabled": true,
-            "optional": true,
-            "active": true
+        "ExtractSlateFrame": {
+            "viewer_lut_raw": false
         },
         "ExtractThumbnail": {
             "enabled": true,
@@ -106,113 +137,82 @@
                 ]
             }
         },
-        "ExtractReviewDataLut": {
-            "enabled": false
-        },
-        "ExtractReviewDataMov": {
+        "IncrementScriptVersion": {
+            "active": true,
             "enabled": true,
-            "viewer_lut_raw": false,
-            "outputs": {
-                "baking": {
-                    "filter": {
-                        "task_types": [],
-                        "families": [],
-                        "sebsets": []
-                    },
-                    "extension": "mov",
-                    "viewer_process_override": "",
-                    "bake_viewer_process": true,
-                    "bake_viewer_input_process": true,
-                    "add_tags": [],
-                    "reformat_node_add": false,
-                    "reformat_node_config": [
-                        {
-                            "type": "string",
-                            "name": "type",
-                            "value": "to format"
-                        },
-                        {
-                            "type": "string",
-                            "name": "format",
-                            "value": "HD_1080"
-                        },
-                        {
-                            "type": "string",
-                            "name": "filter",
-                            "value": "Lanczos6"
-                        },
-                        {
-                            "type": "bool",
-                            "name": "black_outside",
-                            "value": true
-                        },
-                        {
-                            "type": "bool",
-                            "name": "pbb",
-                            "value": false
-                        }
-                    ]
+            "optional": true
+        },
+        "PreCollectNukeInstances": {
+            "sync_workfile_version_on_families": [
+                "nukenodes",
+                "camera",
+                "gizmo",
+                "source",
+                "render"
+            ]
+        },
+        "ValidateContainers": {
+            "active": true,
+            "enabled": true,
+            "optional": true
+        },
+        "ValidateGizmo": {
+            "active": true,
+            "enabled": true,
+            "optional": true
+        },
+        "ValidateInstanceInContext": {
+            "active": true,
+            "enabled": true,
+            "optional": true
+        },
+        "ValidateKnobs": {
+            "enabled": false,
+            "knobs": {
+                "render": {
+                    "review": true
                 }
             }
         },
-        "ExtractSlateFrame": {
-            "viewer_lut_raw": false
+        "ValidateOutputResolution": {
+            "active": true,
+            "enabled": true,
+            "optional": true
         },
-        "IncrementScriptVersion": {
+        "ValidateScript": {
+            "active": true,
             "enabled": true,
-            "optional": true,
-            "active": true
-        }
-    },
-    "load": {
-        "LoadImage": {
-            "enabled": true,
-            "_representations": [
-                "exr",
-                "dpx",
-                "jpg",
-                "jpeg",
-                "png",
-                "psd",
-                "tiff"
-            ],
-            "node_name_template": "{class_name}_{ext}"
-        },
-        "LoadClip": {
-            "enabled": true,
-            "_representations": [],
-            "node_name_template": "{class_name}_{ext}"
+            "optional": true
         }
     },
     "workfile_builder": {
+        "builder_on_start": false,
         "create_first_version": false,
         "custom_templates": [],
-        "builder_on_start": false,
         "profiles": [
             {
-                "task_types": [],
-                "tasks": [],
                 "current_context": [
                     {
-                        "subset_name_filters": [],
                         "families": [
                             "render",
                             "plate"
+                        ],
+                        "loaders": [
+                            "LoadSequence",
+                            "LoadMov"
                         ],
                         "repre_names": [
                             "exr",
                             "dpx",
                             "mov"
                         ],
-                        "loaders": [
-                            "LoadSequence",
-                            "LoadMov"
-                        ]
+                        "subset_name_filters": []
                     }
                 ],
-                "linked_assets": []
+                "linked_assets": [],
+                "task_types": [],
+                "tasks": []
             }
         ]
-    },
-    "filters": {}
+    }
 }

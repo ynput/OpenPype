@@ -4,16 +4,15 @@
             "task_type_to_family": {
                 "Animation": [
                     {
-                        "is_sequence": false,
                         "extensions": [
                             "tvp"
                         ],
                         "families": [],
-                        "tags": [],
-                        "result_family": "workfile"
+                        "is_sequence": false,
+                        "result_family": "workfile",
+                        "tags": []
                     },
                     {
-                        "is_sequence": true,
                         "extensions": [
                             "png",
                             "exr",
@@ -23,24 +22,24 @@
                         "families": [
                             "review"
                         ],
+                        "is_sequence": true,
+                        "result_family": "render",
                         "tags": [
                             "review"
-                        ],
-                        "result_family": "render"
+                        ]
                     }
                 ],
                 "Compositing": [
                     {
-                        "is_sequence": false,
                         "extensions": [
                             "aep"
                         ],
                         "families": [],
-                        "tags": [],
-                        "result_family": "workfile"
+                        "is_sequence": false,
+                        "result_family": "workfile",
+                        "tags": []
                     },
                     {
-                        "is_sequence": true,
                         "extensions": [
                             "png",
                             "exr",
@@ -50,24 +49,24 @@
                         "families": [
                             "review"
                         ],
+                        "is_sequence": true,
+                        "result_family": "render",
                         "tags": [
                             "review"
-                        ],
-                        "result_family": "render"
+                        ]
                     }
                 ],
                 "Layout": [
                     {
-                        "is_sequence": false,
                         "extensions": [
                             "psd"
                         ],
                         "families": [],
-                        "tags": [],
-                        "result_family": "workfile"
+                        "is_sequence": false,
+                        "result_family": "workfile",
+                        "tags": []
                     },
                     {
-                        "is_sequence": false,
                         "extensions": [
                             "png",
                             "jpg",
@@ -78,25 +77,28 @@
                         "families": [
                             "review"
                         ],
+                        "is_sequence": false,
+                        "result_family": "image",
                         "tags": [
                             "review"
-                        ],
-                        "result_family": "image"
+                        ]
                     }
                 ],
+                "__dynamic_keys_labels__": {
+                    "default_task_type": "Default task type"
+                },
                 "default_task_type": [
                     {
-                        "is_sequence": false,
                         "extensions": [
                             "tvp",
                             "psd"
                         ],
                         "families": [],
-                        "tags": [],
-                        "result_family": "workfile"
+                        "is_sequence": false,
+                        "result_family": "workfile",
+                        "tags": []
                     },
                     {
-                        "is_sequence": true,
                         "extensions": [
                             "png",
                             "exr",
@@ -106,15 +108,13 @@
                         "families": [
                             "review"
                         ],
+                        "is_sequence": true,
+                        "result_family": "render",
                         "tags": [
                             "review"
-                        ],
-                        "result_family": "render"
+                        ]
                     }
-                ],
-                "__dynamic_keys_labels__": {
-                    "default_task_type": "Default task type"
-                }
+                ]
             }
         },
         "CollectTVPaintInstances": {

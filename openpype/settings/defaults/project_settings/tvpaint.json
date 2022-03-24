@@ -1,5 +1,21 @@
 {
-    "stop_timer_on_application_exit": false,
+    "filters": {},
+    "load": {
+        "ImportImage": {
+            "defaults": {
+                "preload": true,
+                "stretch": true,
+                "timestretch": true
+            }
+        },
+        "LoadImage": {
+            "defaults": {
+                "preload": true,
+                "stretch": true,
+                "timestretch": true
+            }
+        }
+    },
     "publish": {
         "ExtractSequence": {
             "review_bg": [
@@ -9,46 +25,30 @@
                 255
             ]
         },
-        "ValidateProjectSettings": {
+        "ValidateAssetName": {
+            "active": true,
             "enabled": true,
-            "optional": true,
-            "active": true
+            "optional": true
         },
         "ValidateMarks": {
+            "active": true,
             "enabled": true,
-            "optional": true,
-            "active": true
+            "optional": true
+        },
+        "ValidateProjectSettings": {
+            "active": true,
+            "enabled": true,
+            "optional": true
         },
         "ValidateStartFrame": {
+            "active": true,
             "enabled": false,
-            "optional": true,
-            "active": true
-        },
-        "ValidateAssetName": {
-            "enabled": true,
-            "optional": true,
-            "active": true
+            "optional": true
         }
     },
-    "load": {
-        "LoadImage": {
-            "defaults": {
-                "stretch": true,
-                "timestretch": true,
-                "preload": true
-            }
-        },
-        "ImportImage": {
-            "defaults": {
-                "stretch": true,
-                "timestretch": true,
-                "preload": true
-            }
-        }
-    },
+    "stop_timer_on_application_exit": false,
     "workfile_builder": {
         "create_first_version": false,
         "custom_templates": []
-    },
-    "filters": {}
+    }
 }

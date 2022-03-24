@@ -6,20 +6,20 @@
             ]
         },
         "ValidateAudio": {
+            "active": true,
             "enabled": true,
-            "optional": true,
-            "active": true
+            "optional": true
         },
         "ValidateContainers": {
+            "active": true,
             "enabled": true,
-            "optional": true,
-            "active": true
+            "optional": true
         },
         "ValidateSceneSettings": {
-            "enabled": true,
-            "optional": true,
             "active": true,
+            "enabled": true,
             "frame_check_filter": [],
+            "optional": true,
             "skip_resolution_check": [],
             "skip_timelines_check": []
         }

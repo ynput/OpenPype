@@ -1,411 +1,283 @@
 {
-    "ext_mapping": {
-        "model": "ma",
-        "mayaAscii": "ma",
-        "camera": "ma",
-        "rig": "ma",
-        "workfile": "ma",
-        "yetiRig": "ma"
-    },
-    "maya-dirmap": {
-        "enabled": false,
-        "paths": {
-            "source-path": [],
-            "destination-path": []
-        }
-    },
-    "scriptsmenu": {
-        "name": "OpenPype Tools",
-        "definition": [
-            {
-                "type": "action",
-                "command": "import openpype.hosts.maya.api.commands as op_cmds; op_cmds.edit_shader_definitions()",
-                "sourcetype": "python",
-                "title": "Edit shader name definitions",
-                "tooltip": "Edit shader name definitions used in validation and renaming.",
-                "tags": [
-                    "pipeline",
-                    "shader"
-                ]
-            }
-        ]
-    },
     "create": {
-        "CreateLook": {
-            "enabled": true,
-            "make_tx": true,
+        "CreateAnimation": {
             "defaults": [
                 "Main"
-            ]
+            ],
+            "enabled": true
+        },
+        "CreateAss": {
+            "defaults": [
+                "Main"
+            ],
+            "enabled": true
+        },
+        "CreateAssembly": {
+            "defaults": [
+                "Main"
+            ],
+            "enabled": true
+        },
+        "CreateCamera": {
+            "defaults": [
+                "Main"
+            ],
+            "enabled": true
+        },
+        "CreateLayout": {
+            "defaults": [
+                "Main"
+            ],
+            "enabled": true
+        },
+        "CreateLook": {
+            "defaults": [
+                "Main"
+            ],
+            "enabled": true,
+            "make_tx": true
+        },
+        "CreateMayaScene": {
+            "defaults": [
+                "Main"
+            ],
+            "enabled": true
+        },
+        "CreateModel": {
+            "defaults": [
+                "Main",
+                "Proxy",
+                "Sculpt"
+            ],
+            "enabled": true
+        },
+        "CreatePointCache": {
+            "defaults": [
+                "Main"
+            ],
+            "enabled": true
         },
         "CreateRender": {
-            "enabled": true,
+            "aov_separator": "underscore",
+            "default_render_image_folder": "renders",
             "defaults": [
                 "Main"
             ],
-            "aov_separator": "underscore",
-            "default_render_image_folder": "renders"
+            "enabled": true
+        },
+        "CreateRenderSetup": {
+            "defaults": [
+                "Main"
+            ],
+            "enabled": true
+        },
+        "CreateReview": {
+            "defaults": [
+                "Main"
+            ],
+            "enabled": true
+        },
+        "CreateRig": {
+            "defaults": [
+                "Main",
+                "Sim",
+                "Cloth"
+            ],
+            "enabled": true
+        },
+        "CreateSetDress": {
+            "defaults": [
+                "Main",
+                "Anim"
+            ],
+            "enabled": true
         },
         "CreateUnrealStaticMesh": {
-            "enabled": true,
-            "defaults": [
-                "",
-                "_Main"
-            ],
-            "static_mesh_prefix": "S_",
             "collision_prefixes": [
                 "UBX",
                 "UCP",
                 "USP",
                 "UCX"
-            ]
-        },
-        "CreateAnimation": {
-            "enabled": true,
+            ],
             "defaults": [
-                "Main"
-            ]
-        },
-        "CreateAss": {
+                "",
+                "_Main"
+            ],
             "enabled": true,
-            "defaults": [
-                "Main"
-            ]
-        },
-        "CreateAssembly": {
-            "enabled": true,
-            "defaults": [
-                "Main"
-            ]
-        },
-        "CreateCamera": {
-            "enabled": true,
-            "defaults": [
-                "Main"
-            ]
-        },
-        "CreateLayout": {
-            "enabled": true,
-            "defaults": [
-                "Main"
-            ]
-        },
-        "CreateMayaScene": {
-            "enabled": true,
-            "defaults": [
-                "Main"
-            ]
-        },
-        "CreateModel": {
-            "enabled": true,
-            "defaults": [
-                "Main",
-                "Proxy",
-                "Sculpt"
-            ]
-        },
-        "CreatePointCache": {
-            "enabled": true,
-            "defaults": [
-                "Main"
-            ]
-        },
-        "CreateRenderSetup": {
-            "enabled": true,
-            "defaults": [
-                "Main"
-            ]
-        },
-        "CreateReview": {
-            "enabled": true,
-            "defaults": [
-                "Main"
-            ]
-        },
-        "CreateRig": {
-            "enabled": true,
-            "defaults": [
-                "Main",
-                "Sim",
-                "Cloth"
-            ]
-        },
-        "CreateSetDress": {
-            "enabled": true,
-            "defaults": [
-                "Main",
-                "Anim"
-            ]
-        },
-        "CreateVrayProxy": {
-            "enabled": true,
-            "defaults": [
-                "Main"
-            ]
+            "static_mesh_prefix": "S_"
         },
         "CreateVRayScene": {
-            "enabled": true,
             "defaults": [
                 "Main"
-            ]
+            ],
+            "enabled": true
+        },
+        "CreateVrayProxy": {
+            "defaults": [
+                "Main"
+            ],
+            "enabled": true
         },
         "CreateYetiRig": {
-            "enabled": true,
             "defaults": [
                 "Main"
+            ],
+            "enabled": true
+        }
+    },
+    "ext_mapping": {
+        "camera": "ma",
+        "mayaAscii": "ma",
+        "model": "ma",
+        "rig": "ma",
+        "workfile": "ma",
+        "yetiRig": "ma"
+    },
+    "filters": {
+        "preset 1": {
+            "ValidateNoAnimation": false,
+            "ValidateShapeDefaultNames": false
+        },
+        "preset 2": {
+            "ValidateNoAnimation": false
+        }
+    },
+    "load": {
+        "colors": {
+            "animation": [
+                94,
+                209,
+                30,
+                255
+            ],
+            "ass": [
+                249,
+                135,
+                53,
+                255
+            ],
+            "camera": [
+                136,
+                114,
+                244,
+                255
+            ],
+            "fbx": [
+                215,
+                166,
+                255,
+                255
+            ],
+            "layout": [
+                255,
+                250,
+                90,
+                255
+            ],
+            "mayaAscii": [
+                67,
+                174,
+                255,
+                255
+            ],
+            "mayaScene": [
+                67,
+                174,
+                255,
+                255
+            ],
+            "model": [
+                209,
+                132,
+                30,
+                255
+            ],
+            "pointcache": [
+                94,
+                209,
+                30,
+                255
+            ],
+            "rig": [
+                59,
+                226,
+                235,
+                255
+            ],
+            "setdress": [
+                255,
+                250,
+                90,
+                255
+            ],
+            "vdbcache": [
+                249,
+                54,
+                0,
+                255
+            ],
+            "vrayproxy": [
+                255,
+                150,
+                12,
+                255
+            ],
+            "vrayscene_layer": [
+                255,
+                150,
+                12,
+                255
+            ],
+            "yetiRig": [
+                0,
+                205,
+                125,
+                255
+            ],
+            "yeticache": [
+                99,
+                206,
+                220,
+                255
             ]
+        }
+    },
+    "maya-dirmap": {
+        "enabled": false,
+        "paths": {
+            "destination-path": [],
+            "source-path": []
         }
     },
     "publish": {
         "CollectMayaRender": {
             "sync_workfile_version": false
         },
-        "ValidateInstanceInContext": {
+        "ExtractCameraAlembic": {
+            "active": true,
+            "bake_attributes": [],
             "enabled": true,
-            "optional": true,
-            "active": true
+            "optional": true
         },
-        "ValidateContainers": {
-            "enabled": true,
-            "optional": true,
-            "active": true
-        },
-        "ValidateFrameRange": {
-            "enabled": true,
-            "optional": true,
-            "active": true
-        },
-        "ValidateShaderName": {
-            "enabled": false,
-            "regex": "(?P<asset>.*)_(.*)_SHD"
-        },
-        "ValidateShadingEngine": {
-            "enabled": true,
-            "optional": true,
-            "active": true
-        },
-        "ValidateAttributes": {
-            "enabled": false,
-            "attributes": {}
-        },
-        "ValidateLoadedPlugin": {
-            "enabled": false,
-            "whitelist_native_plugins": false,
-            "authorized_plugins": []
-        },
-        "ValidateMayaUnits": {
-            "enabled": true,
-            "optional": false,
-            "validate_linear_units": true,
-            "linear_units": "cm",
-            "validate_angular_units": true,
-            "angular_units": "deg",
-            "validate_fps": true
-        },
-        "ValidateUnrealStaticMeshName": {
-            "enabled": true,
-            "validate_mesh": false,
-            "validate_collision": true
-        },
-        "ValidateCycleError": {
-            "enabled": true,
-            "optional": false,
-            "families": [
-                "rig"
-            ]
-        },
-        "ValidateRenderSettings": {
-            "arnold_render_attributes": [],
-            "vray_render_attributes": [],
-            "redshift_render_attributes": [],
-            "renderman_render_attributes": []
-        },
-        "ValidateModelName": {
-            "enabled": false,
-            "database": true,
-            "material_file": {
-                "windows": "",
-                "darwin": "",
-                "linux": ""
-            },
-            "regex": "(.*)_(\\d)*_(?P<shader>.*)_(GEO)",
-            "top_level_regex": ".*_GRP"
-        },
-        "ValidateModelContent": {
-            "enabled": true,
-            "optional": false,
-            "validate_top_group": true
-        },
-        "ValidateTransformNamingSuffix": {
-            "enabled": true,
-            "SUFFIX_NAMING_TABLE": {
-                "mesh": [
-                    "_GEO",
-                    "_GES",
-                    "_GEP",
-                    "_OSD"
-                ],
-                "nurbsCurve": [
-                    "_CRV"
-                ],
-                "nurbsSurface": [
-                    "_NRB"
-                ],
-                "locator": [
-                    "_LOC"
-                ],
-                "group": [
-                    "_GRP"
-                ]
-            },
-            "ALLOW_IF_NOT_IN_SUFFIX_TABLE": true
-        },
-        "ValidateColorSets": {
-            "enabled": false,
-            "optional": true,
-            "active": true
-        },
-        "ValidateMeshHasOverlappingUVs": {
-            "enabled": false,
-            "optional": true,
-            "active": true
-        },
-        "ValidateMeshArnoldAttributes": {
-            "enabled": false,
-            "optional": true,
-            "active": true
-        },
-        "ValidateMeshShaderConnections": {
-            "enabled": true,
-            "optional": true,
-            "active": true
-        },
-        "ValidateMeshSingleUVSet": {
-            "enabled": false,
-            "optional": true,
-            "active": true
-        },
-        "ValidateMeshHasUVs": {
-            "enabled": true,
-            "optional": true,
-            "active": true
-        },
-        "ValidateMeshLaminaFaces": {
-            "enabled": false,
-            "optional": true,
-            "active": true
-        },
-        "ValidateMeshNgons": {
-            "enabled": false,
-            "optional": true,
-            "active": true
-        },
-        "ValidateMeshNonManifold": {
-            "enabled": false,
-            "optional": true,
-            "active": true
-        },
-        "ValidateMeshNormalsUnlocked": {
-            "enabled": false,
-            "optional": true,
-            "active": true
-        },
-        "ValidateMeshUVSetMap1": {
-            "enabled": false,
-            "optional": true,
-            "active": true
-        },
-        "ValidateMeshVerticesHaveEdges": {
-            "enabled": true,
-            "optional": true,
-            "active": true
-        },
-        "ValidateNoAnimation": {
-            "enabled": false,
-            "optional": true,
-            "active": true
-        },
-        "ValidateNoNamespace": {
-            "enabled": true,
-            "optional": true,
-            "active": true
-        },
-        "ValidateNoNullTransforms": {
-            "enabled": true,
-            "optional": true,
-            "active": true
-        },
-        "ValidateNoUnknownNodes": {
-            "enabled": true,
-            "optional": true,
-            "active": true
-        },
-        "ValidateNodeNoGhosting": {
-            "enabled": false,
-            "optional": true,
-            "active": true
-        },
-        "ValidateShapeDefaultNames": {
-            "enabled": false,
-            "optional": true,
-            "active": true
-        },
-        "ValidateShapeRenderStats": {
-            "enabled": false,
-            "optional": true,
-            "active": true
-        },
-        "ValidateShapeZero": {
-            "enabled": false,
-            "optional": true,
-            "active": true
-        },
-        "ValidateTransformZero": {
-            "enabled": false,
-            "optional": true,
-            "active": true
-        },
-        "ValidateUniqueNames": {
-            "enabled": false,
-            "optional": true,
-            "active": true
-        },
-        "ValidateRigContents": {
-            "enabled": false,
-            "optional": true,
-            "active": true
-        },
-        "ValidateRigJointsHidden": {
-            "enabled": false,
-            "optional": true,
-            "active": true
-        },
-        "ValidateRigControllers": {
-            "enabled": false,
-            "optional": true,
-            "active": true
-        },
-        "ValidateRigOutSetNodeIds": {
-            "enabled": true,
-            "allow_history_only": false
-        },
-        "ValidateCameraAttributes": {
-            "enabled": false,
-            "optional": true,
-            "active": true
-        },
-        "ValidateAssemblyName": {
-            "enabled": true,
-            "optional": true,
-            "active": true
-        },
-        "ValidateAssRelativePaths": {
-            "enabled": true,
-            "optional": true,
-            "active": true
+        "ExtractMayaSceneRaw": {
+            "add_for_families": [
+                "layout"
+            ],
+            "enabled": true
         },
         "ExtractPlayblast": {
             "capture_preset": {
+                "Camera Options": {
+                    "displayFieldChart": false,
+                    "displayFilmGate": false,
+                    "displayFilmOrigin": false,
+                    "displayFilmPivot": false,
+                    "displayGateMask": false,
+                    "displayResolution": false,
+                    "displaySafeAction": false,
+                    "displaySafeTitle": false,
+                    "overscan": 1.0
+                },
                 "Codec": {
                     "compression": "jpg",
                     "format": "image",
@@ -443,25 +315,18 @@
                     "rendererName": "vp2Renderer"
                 },
                 "Resolution": {
-                    "width": 1920,
                     "height": 1080,
+                    "mode": "Custom",
                     "percent": 1.0,
-                    "mode": "Custom"
+                    "width": 1920
                 },
                 "Viewport Options": {
-                    "override_viewport_options": true,
-                    "displayLights": "default",
-                    "textureMaxResolution": 1024,
-                    "multiSample": 4,
-                    "shadows": true,
-                    "textures": true,
-                    "twoSidedLighting": true,
-                    "ssaoEnable": true,
                     "cameras": false,
                     "clipGhosts": false,
                     "controlVertices": false,
                     "deformers": false,
                     "dimensions": false,
+                    "displayLights": "default",
                     "dynamicConstraints": false,
                     "dynamics": false,
                     "fluids": false,
@@ -480,242 +345,377 @@
                     "locators": false,
                     "manipulators": false,
                     "motionTrails": false,
+                    "multiSample": 4,
                     "nCloths": false,
                     "nParticles": false,
                     "nRigids": false,
                     "nurbsCurves": false,
                     "nurbsSurfaces": false,
+                    "override_viewport_options": true,
                     "particleInstancers": false,
                     "pivots": false,
                     "planes": false,
                     "pluginShapes": false,
                     "polymeshes": true,
+                    "shadows": true,
+                    "ssaoEnable": true,
                     "strokes": false,
-                    "subdivSurfaces": false
-                },
-                "Camera Options": {
-                    "displayGateMask": false,
-                    "displayResolution": false,
-                    "displayFilmGate": false,
-                    "displayFieldChart": false,
-                    "displaySafeAction": false,
-                    "displaySafeTitle": false,
-                    "displayFilmPivot": false,
-                    "displayFilmOrigin": false,
-                    "overscan": 1.0
+                    "subdivSurfaces": false,
+                    "textureMaxResolution": 1024,
+                    "textures": true,
+                    "twoSidedLighting": true
                 }
             }
         },
-        "ExtractMayaSceneRaw": {
-            "enabled": true,
-            "add_for_families": [
-                "layout"
-            ]
-        },
-        "ExtractCameraAlembic": {
-            "enabled": true,
-            "optional": true,
+        "ValidateAssRelativePaths": {
             "active": true,
-            "bake_attributes": []
+            "enabled": true,
+            "optional": true
+        },
+        "ValidateAssemblyName": {
+            "active": true,
+            "enabled": true,
+            "optional": true
+        },
+        "ValidateAttributes": {
+            "attributes": {},
+            "enabled": false
+        },
+        "ValidateCameraAttributes": {
+            "active": true,
+            "enabled": false,
+            "optional": true
+        },
+        "ValidateColorSets": {
+            "active": true,
+            "enabled": false,
+            "optional": true
+        },
+        "ValidateContainers": {
+            "active": true,
+            "enabled": true,
+            "optional": true
+        },
+        "ValidateCycleError": {
+            "enabled": true,
+            "families": [
+                "rig"
+            ],
+            "optional": false
+        },
+        "ValidateFrameRange": {
+            "active": true,
+            "enabled": true,
+            "optional": true
+        },
+        "ValidateInstanceInContext": {
+            "active": true,
+            "enabled": true,
+            "optional": true
+        },
+        "ValidateLoadedPlugin": {
+            "authorized_plugins": [],
+            "enabled": false,
+            "whitelist_native_plugins": false
+        },
+        "ValidateMayaUnits": {
+            "angular_units": "deg",
+            "enabled": true,
+            "linear_units": "cm",
+            "optional": false,
+            "validate_angular_units": true,
+            "validate_fps": true,
+            "validate_linear_units": true
+        },
+        "ValidateMeshArnoldAttributes": {
+            "active": true,
+            "enabled": false,
+            "optional": true
+        },
+        "ValidateMeshHasOverlappingUVs": {
+            "active": true,
+            "enabled": false,
+            "optional": true
+        },
+        "ValidateMeshHasUVs": {
+            "active": true,
+            "enabled": true,
+            "optional": true
+        },
+        "ValidateMeshLaminaFaces": {
+            "active": true,
+            "enabled": false,
+            "optional": true
+        },
+        "ValidateMeshNgons": {
+            "active": true,
+            "enabled": false,
+            "optional": true
+        },
+        "ValidateMeshNonManifold": {
+            "active": true,
+            "enabled": false,
+            "optional": true
+        },
+        "ValidateMeshNormalsUnlocked": {
+            "active": true,
+            "enabled": false,
+            "optional": true
+        },
+        "ValidateMeshShaderConnections": {
+            "active": true,
+            "enabled": true,
+            "optional": true
+        },
+        "ValidateMeshSingleUVSet": {
+            "active": true,
+            "enabled": false,
+            "optional": true
+        },
+        "ValidateMeshUVSetMap1": {
+            "active": true,
+            "enabled": false,
+            "optional": true
+        },
+        "ValidateMeshVerticesHaveEdges": {
+            "active": true,
+            "enabled": true,
+            "optional": true
+        },
+        "ValidateModelContent": {
+            "enabled": true,
+            "optional": false,
+            "validate_top_group": true
+        },
+        "ValidateModelName": {
+            "database": true,
+            "enabled": false,
+            "material_file": {
+                "darwin": "",
+                "linux": "",
+                "windows": ""
+            },
+            "regex": "(.*)_(\\d)*_(?P<shader>.*)_(GEO)",
+            "top_level_regex": ".*_GRP"
+        },
+        "ValidateNoAnimation": {
+            "active": true,
+            "enabled": false,
+            "optional": true
+        },
+        "ValidateNoNamespace": {
+            "active": true,
+            "enabled": true,
+            "optional": true
+        },
+        "ValidateNoNullTransforms": {
+            "active": true,
+            "enabled": true,
+            "optional": true
+        },
+        "ValidateNoUnknownNodes": {
+            "active": true,
+            "enabled": true,
+            "optional": true
+        },
+        "ValidateNodeNoGhosting": {
+            "active": true,
+            "enabled": false,
+            "optional": true
+        },
+        "ValidateRenderSettings": {
+            "arnold_render_attributes": [],
+            "redshift_render_attributes": [],
+            "renderman_render_attributes": [],
+            "vray_render_attributes": []
+        },
+        "ValidateRigContents": {
+            "active": true,
+            "enabled": false,
+            "optional": true
+        },
+        "ValidateRigControllers": {
+            "active": true,
+            "enabled": false,
+            "optional": true
+        },
+        "ValidateRigJointsHidden": {
+            "active": true,
+            "enabled": false,
+            "optional": true
+        },
+        "ValidateRigOutSetNodeIds": {
+            "allow_history_only": false,
+            "enabled": true
+        },
+        "ValidateShaderName": {
+            "enabled": false,
+            "regex": "(?P<asset>.*)_(.*)_SHD"
+        },
+        "ValidateShadingEngine": {
+            "active": true,
+            "enabled": true,
+            "optional": true
+        },
+        "ValidateShapeDefaultNames": {
+            "active": true,
+            "enabled": false,
+            "optional": true
+        },
+        "ValidateShapeRenderStats": {
+            "active": true,
+            "enabled": false,
+            "optional": true
+        },
+        "ValidateShapeZero": {
+            "active": true,
+            "enabled": false,
+            "optional": true
+        },
+        "ValidateTransformNamingSuffix": {
+            "ALLOW_IF_NOT_IN_SUFFIX_TABLE": true,
+            "SUFFIX_NAMING_TABLE": {
+                "group": [
+                    "_GRP"
+                ],
+                "locator": [
+                    "_LOC"
+                ],
+                "mesh": [
+                    "_GEO",
+                    "_GES",
+                    "_GEP",
+                    "_OSD"
+                ],
+                "nurbsCurve": [
+                    "_CRV"
+                ],
+                "nurbsSurface": [
+                    "_NRB"
+                ]
+            },
+            "enabled": true
+        },
+        "ValidateTransformZero": {
+            "active": true,
+            "enabled": false,
+            "optional": true
+        },
+        "ValidateUniqueNames": {
+            "active": true,
+            "enabled": false,
+            "optional": true
+        },
+        "ValidateUnrealStaticMeshName": {
+            "enabled": true,
+            "validate_collision": true,
+            "validate_mesh": false
         }
     },
-    "load": {
-        "colors": {
-            "model": [
-                209,
-                132,
-                30,
-                255
-            ],
-            "rig": [
-                59,
-                226,
-                235,
-                255
-            ],
-            "pointcache": [
-                94,
-                209,
-                30,
-                255
-            ],
-            "animation": [
-                94,
-                209,
-                30,
-                255
-            ],
-            "ass": [
-                249,
-                135,
-                53,
-                255
-            ],
-            "camera": [
-                136,
-                114,
-                244,
-                255
-            ],
-            "fbx": [
-                215,
-                166,
-                255,
-                255
-            ],
-            "mayaAscii": [
-                67,
-                174,
-                255,
-                255
-            ],
-            "mayaScene": [
-                67,
-                174,
-                255,
-                255
-            ],
-            "setdress": [
-                255,
-                250,
-                90,
-                255
-            ],
-            "layout": [
-                255,
-                250,
-                90,
-                255
-            ],
-            "vdbcache": [
-                249,
-                54,
-                0,
-                255
-            ],
-            "vrayproxy": [
-                255,
-                150,
-                12,
-                255
-            ],
-            "vrayscene_layer": [
-                255,
-                150,
-                12,
-                255
-            ],
-            "yeticache": [
-                99,
-                206,
-                220,
-                255
-            ],
-            "yetiRig": [
-                0,
-                205,
-                125,
-                255
-            ]
-        }
+    "scriptsmenu": {
+        "definition": [
+            {
+                "command": "import openpype.hosts.maya.api.commands as op_cmds; op_cmds.edit_shader_definitions()",
+                "sourcetype": "python",
+                "tags": [
+                    "pipeline",
+                    "shader"
+                ],
+                "title": "Edit shader name definitions",
+                "tooltip": "Edit shader name definitions used in validation and renaming.",
+                "type": "action"
+            }
+        ],
+        "name": "OpenPype Tools"
     },
     "workfile_build": {
         "profiles": [
             {
-                "task_types": [],
-                "tasks": [
-                    "Lighting"
-                ],
                 "current_context": [
                     {
-                        "subset_name_filters": [
-                            "\".+[Mm]ain\""
-                        ],
                         "families": [
                             "model"
+                        ],
+                        "loaders": [
+                            "ReferenceLoader"
                         ],
                         "repre_names": [
                             "abc",
                             "ma"
                         ],
-                        "loaders": [
-                            "ReferenceLoader"
+                        "subset_name_filters": [
+                            "\".+[Mm]ain\""
                         ]
                     },
                     {
-                        "subset_name_filters": [],
                         "families": [
                             "animation",
                             "pointcache"
                         ],
+                        "loaders": [
+                            "ReferenceLoader"
+                        ],
                         "repre_names": [
                             "abc"
                         ],
-                        "loaders": [
-                            "ReferenceLoader"
-                        ]
+                        "subset_name_filters": []
                     },
                     {
-                        "subset_name_filters": [],
                         "families": [
                             "rendersetup"
+                        ],
+                        "loaders": [
+                            "RenderSetupLoader"
                         ],
                         "repre_names": [
                             "json"
                         ],
-                        "loaders": [
-                            "RenderSetupLoader"
-                        ]
+                        "subset_name_filters": []
                     },
                     {
-                        "subset_name_filters": [],
                         "families": [
                             "camera"
+                        ],
+                        "loaders": [
+                            "ReferenceLoader"
                         ],
                         "repre_names": [
                             "abc"
                         ],
-                        "loaders": [
-                            "ReferenceLoader"
-                        ]
+                        "subset_name_filters": []
                     }
                 ],
                 "linked_assets": [
                     {
-                        "subset_name_filters": [],
                         "families": [
                             "sedress"
+                        ],
+                        "loaders": [
+                            "ReferenceLoader"
                         ],
                         "repre_names": [
                             "ma"
                         ],
-                        "loaders": [
-                            "ReferenceLoader"
-                        ]
+                        "subset_name_filters": []
                     },
                     {
-                        "subset_name_filters": [],
                         "families": [
                             "ArnoldStandin"
+                        ],
+                        "loaders": [
+                            "assLoader"
                         ],
                         "repre_names": [
                             "ass"
                         ],
-                        "loaders": [
-                            "assLoader"
-                        ]
+                        "subset_name_filters": []
                     }
+                ],
+                "task_types": [],
+                "tasks": [
+                    "Lighting"
                 ]
             }
         ]
-    },
-    "filters": {
-        "preset 1": {
-            "ValidateNoAnimation": false,
-            "ValidateShapeDefaultNames": false
-        },
-        "preset 2": {
-            "ValidateNoAnimation": false
-        }
     }
 }

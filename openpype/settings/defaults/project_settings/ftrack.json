@@ -1,10 +1,26 @@
 {
     "events": {
-        "sync_to_avalon": {
-            "statuses_name_change": [
-                "ready",
-                "not ready"
+        "clone_review_session": {
+            "enabled": true,
+            "role_list": [
+                "Pypeclub",
+                "Administrator",
+                "Project Manager"
             ]
+        },
+        "first_version_status": {
+            "enabled": true,
+            "status": ""
+        },
+        "next_task_update": {
+            "enabled": true,
+            "ignored_statuses": [
+                "Omitted"
+            ],
+            "mapping": {
+                "Not Ready": "Ready"
+            },
+            "name_sorting": false
         },
         "prepare_project": {
             "enabled": true,
@@ -14,37 +30,34 @@
                 "Project manager"
             ]
         },
-        "sync_hier_entity_attributes": {
+        "status_task_to_parent": {
             "enabled": true,
-            "interest_entity_types": [
+            "parent_object_types": [
                 "Shot",
                 "Asset Build"
             ],
-            "interest_attributes": [
-                "frameStart",
-                "frameEnd"
+            "parent_status_by_task_status": [
+                {
+                    "new_status": "In Progress",
+                    "task_statuses": [
+                        "in progress",
+                        "change requested",
+                        "retake",
+                        "pending review"
+                    ]
+                }
             ],
-            "action_enabled": true,
-            "role_list": [
-                "Pypeclub",
-                "Administrator",
-                "Project Manager"
-            ]
+            "parent_status_match_all_task_statuses": {
+                "Completed": [
+                    "Approved",
+                    "Omitted"
+                ]
+            }
         },
-        "clone_review_session": {
+        "status_task_to_version": {
+            "asset_types_filter": [],
             "enabled": true,
-            "role_list": [
-                "Pypeclub",
-                "Administrator",
-                "Project Manager"
-            ]
-        },
-        "thumbnail_updates": {
-            "enabled": true,
-            "levels": 1
-        },
-        "user_assignment": {
-            "enabled": true
+            "mapping": {}
         },
         "status_update": {
             "enabled": true,
@@ -62,53 +75,233 @@
                 ]
             }
         },
-        "status_task_to_parent": {
+        "status_version_to_task": {
+            "asset_types_to_skip": [],
             "enabled": true,
-            "parent_object_types": [
+            "mapping": {}
+        },
+        "sync_hier_entity_attributes": {
+            "action_enabled": true,
+            "enabled": true,
+            "interest_attributes": [
+                "frameStart",
+                "frameEnd"
+            ],
+            "interest_entity_types": [
                 "Shot",
                 "Asset Build"
             ],
-            "parent_status_match_all_task_statuses": {
-                "Completed": [
-                    "Approved",
-                    "Omitted"
-                ]
-            },
-            "parent_status_by_task_status": [
+            "role_list": [
+                "Pypeclub",
+                "Administrator",
+                "Project Manager"
+            ]
+        },
+        "sync_to_avalon": {
+            "statuses_name_change": [
+                "ready",
+                "not ready"
+            ]
+        },
+        "thumbnail_updates": {
+            "enabled": true,
+            "levels": 1
+        },
+        "user_assignment": {
+            "enabled": true
+        }
+    },
+    "publish": {
+        "CollectFtrackFamily": {
+            "enabled": true,
+            "profiles": [
                 {
-                    "new_status": "In Progress",
-                    "task_statuses": [
-                        "in progress",
-                        "change requested",
-                        "retake",
-                        "pending review"
-                    ]
+                    "add_ftrack_family": true,
+                    "advanced_filtering": [],
+                    "families": [],
+                    "hosts": [
+                        "standalonepublisher"
+                    ],
+                    "task_types": [],
+                    "tasks": []
+                },
+                {
+                    "add_ftrack_family": false,
+                    "advanced_filtering": [],
+                    "families": [
+                        "matchmove",
+                        "shot"
+                    ],
+                    "hosts": [
+                        "standalonepublisher"
+                    ],
+                    "task_types": [],
+                    "tasks": []
+                },
+                {
+                    "add_ftrack_family": false,
+                    "advanced_filtering": [
+                        {
+                            "add_ftrack_family": true,
+                            "families": [
+                                "clip",
+                                "review"
+                            ]
+                        }
+                    ],
+                    "families": [
+                        "plate"
+                    ],
+                    "hosts": [
+                        "standalonepublisher"
+                    ],
+                    "task_types": [],
+                    "tasks": []
+                },
+                {
+                    "add_ftrack_family": true,
+                    "advanced_filtering": [],
+                    "families": [
+                        "model",
+                        "setdress",
+                        "animation",
+                        "look",
+                        "rig",
+                        "camera"
+                    ],
+                    "hosts": [
+                        "maya"
+                    ],
+                    "task_types": [],
+                    "tasks": []
+                },
+                {
+                    "add_ftrack_family": false,
+                    "advanced_filtering": [],
+                    "families": [
+                        "renderPass"
+                    ],
+                    "hosts": [
+                        "tvpaint"
+                    ],
+                    "task_types": [],
+                    "tasks": []
+                },
+                {
+                    "add_ftrack_family": true,
+                    "advanced_filtering": [],
+                    "families": [],
+                    "hosts": [
+                        "tvpaint"
+                    ],
+                    "task_types": [],
+                    "tasks": []
+                },
+                {
+                    "add_ftrack_family": false,
+                    "advanced_filtering": [
+                        {
+                            "add_ftrack_family": true,
+                            "families": [
+                                "review"
+                            ]
+                        }
+                    ],
+                    "families": [
+                        "write",
+                        "render",
+                        "prerender"
+                    ],
+                    "hosts": [
+                        "nuke"
+                    ],
+                    "task_types": [],
+                    "tasks": []
+                },
+                {
+                    "add_ftrack_family": true,
+                    "advanced_filtering": [],
+                    "families": [
+                        "render",
+                        "workfile"
+                    ],
+                    "hosts": [
+                        "aftereffects"
+                    ],
+                    "task_types": [],
+                    "tasks": []
+                },
+                {
+                    "add_ftrack_family": true,
+                    "advanced_filtering": [],
+                    "families": [
+                        "plate",
+                        "take"
+                    ],
+                    "hosts": [
+                        "flame"
+                    ],
+                    "task_types": [],
+                    "tasks": []
+                },
+                {
+                    "add_ftrack_family": true,
+                    "advanced_filtering": [],
+                    "families": [
+                        "usd"
+                    ],
+                    "hosts": [
+                        "houdini"
+                    ],
+                    "task_types": [],
+                    "tasks": []
                 }
             ]
         },
-        "status_task_to_version": {
-            "enabled": true,
-            "mapping": {},
-            "asset_types_filter": []
+        "IntegrateFtrackInstance": {
+            "family_mapping": {
+                "animation": "cache",
+                "ass": "cache",
+                "assembly": "assembly",
+                "audio": "audio",
+                "camera": "cam",
+                "camerarig": "rig",
+                "image": "img",
+                "layout": "layout",
+                "look": "look",
+                "mayaScene": "scene",
+                "mayaascii": "scene",
+                "model": "geo",
+                "nukescript": "comp",
+                "plate": "img",
+                "pointcache": "cache",
+                "prerender": "render",
+                "redshiftproxy": "cache",
+                "reference": "reference",
+                "render": "render",
+                "render2d": "render",
+                "rendersetup": "rendersetup",
+                "review": "mov",
+                "rig": "rig",
+                "setdress": "setdress",
+                "unrealStaticMesh": "geo",
+                "usd": "usd",
+                "vrayproxy": "cache",
+                "workfile": "scene",
+                "write": "render",
+                "xgen": "xgen",
+                "yetiRig": "rig",
+                "yeticache": "cache"
+            }
         },
-        "status_version_to_task": {
+        "IntegrateFtrackNote": {
             "enabled": true,
-            "mapping": {},
-            "asset_types_to_skip": []
+            "note_labels": [],
+            "note_with_intent_template": "{intent}: {comment}"
         },
-        "first_version_status": {
-            "enabled": true,
-            "status": ""
-        },
-        "next_task_update": {
-            "enabled": true,
-            "mapping": {
-                "Not Ready": "Ready"
-            },
-            "ignored_statuses": [
-                "Omitted"
-            ],
-            "name_sorting": false
+        "ValidateFtrackAttributes": {
+            "enabled": false,
+            "ftrack_custom_attributes": {}
         }
     },
     "user_handlers": {
@@ -124,27 +317,18 @@
                 "In Progress": []
             }
         },
-        "create_update_attributes": {
-            "role_list": [
-                "Pypeclub",
-                "Administrator"
-            ]
-        },
-        "prepare_project": {
-            "enabled": true,
-            "role_list": [
-                "Pypeclub",
-                "Administrator",
-                "Project manager"
-            ],
-            "create_project_structure_checked": false
-        },
         "clean_hierarchical_attr": {
             "enabled": true,
             "role_list": [
                 "Pypeclub",
                 "Administrator",
                 "Project manager"
+            ]
+        },
+        "create_update_attributes": {
+            "role_list": [
+                "Pypeclub",
+                "Administrator"
             ]
         },
         "delete_asset_subset": {
@@ -171,18 +355,38 @@
                 "Administrator"
             ]
         },
-        "store_thubmnail_to_avalon": {
-            "enabled": true,
-            "role_list": [
-                "Pypeclub",
-                "Project Manager",
-                "Administrator"
-            ]
+        "fill_workfile_attribute": {
+            "custom_attribute_key": "",
+            "enabled": false,
+            "role_list": []
         },
         "job_killer": {
             "enabled": true,
             "role_list": [
                 "Pypeclub",
+                "Administrator"
+            ]
+        },
+        "prepare_project": {
+            "create_project_structure_checked": false,
+            "enabled": true,
+            "role_list": [
+                "Pypeclub",
+                "Administrator",
+                "Project manager"
+            ]
+        },
+        "seed_project": {
+            "enabled": true,
+            "role_list": [
+                "Pypeclub"
+            ]
+        },
+        "store_thubmnail_to_avalon": {
+            "enabled": true,
+            "role_list": [
+                "Pypeclub",
+                "Project Manager",
                 "Administrator"
             ]
         },
@@ -192,210 +396,6 @@
                 "Pypeclub",
                 "Administrator"
             ]
-        },
-        "fill_workfile_attribute": {
-            "enabled": false,
-            "custom_attribute_key": "",
-            "role_list": []
-        },
-        "seed_project": {
-            "enabled": true,
-            "role_list": [
-                "Pypeclub"
-            ]
-        }
-    },
-    "publish": {
-        "CollectFtrackFamily": {
-            "enabled": true,
-            "profiles": [
-                {
-                    "hosts": [
-                        "standalonepublisher"
-                    ],
-                    "families": [],
-                    "task_types": [],
-                    "tasks": [],
-                    "add_ftrack_family": true,
-                    "advanced_filtering": []
-                },
-                {
-                    "hosts": [
-                        "standalonepublisher"
-                    ],
-                    "families": [
-                        "matchmove",
-                        "shot"
-                    ],
-                    "task_types": [],
-                    "tasks": [],
-                    "add_ftrack_family": false,
-                    "advanced_filtering": []
-                },
-                {
-                    "hosts": [
-                        "standalonepublisher"
-                    ],
-                    "families": [
-                        "plate"
-                    ],
-                    "task_types": [],
-                    "tasks": [],
-                    "add_ftrack_family": false,
-                    "advanced_filtering": [
-                        {
-                            "families": [
-                                "clip",
-                                "review"
-                            ],
-                            "add_ftrack_family": true
-                        }
-                    ]
-                },
-                {
-                    "hosts": [
-                        "maya"
-                    ],
-                    "families": [
-                        "model",
-                        "setdress",
-                        "animation",
-                        "look",
-                        "rig",
-                        "camera"
-                    ],
-                    "task_types": [],
-                    "tasks": [],
-                    "add_ftrack_family": true,
-                    "advanced_filtering": []
-                },
-                {
-                    "hosts": [
-                        "tvpaint"
-                    ],
-                    "families": [
-                        "renderPass"
-                    ],
-                    "task_types": [],
-                    "tasks": [],
-                    "add_ftrack_family": false,
-                    "advanced_filtering": []
-                },
-                {
-                    "hosts": [
-                        "tvpaint"
-                    ],
-                    "families": [],
-                    "task_types": [],
-                    "tasks": [],
-                    "add_ftrack_family": true,
-                    "advanced_filtering": []
-                },
-                {
-                    "hosts": [
-                        "nuke"
-                    ],
-                    "families": [
-                        "write",
-                        "render",
-                        "prerender"
-                    ],
-                    "task_types": [],
-                    "tasks": [],
-                    "add_ftrack_family": false,
-                    "advanced_filtering": [
-                        {
-                            "families": [
-                                "review"
-                            ],
-                            "add_ftrack_family": true
-                        }
-                    ]
-                },
-                {
-                    "hosts": [
-                        "aftereffects"
-                    ],
-                    "families": [
-                        "render",
-                        "workfile"
-                    ],
-                    "task_types": [],
-                    "tasks": [],
-                    "add_ftrack_family": true,
-                    "advanced_filtering": []
-                },
-                {
-                    "hosts": [
-                        "flame"
-                    ],
-                    "families": [
-                        "plate",
-                        "take"
-                    ],
-                    "task_types": [],
-                    "tasks": [],
-                    "add_ftrack_family": true,
-                    "advanced_filtering": []
-                },
-                {
-                    "hosts": [
-                        "houdini"
-                    ],
-                    "families": [
-                        "usd"
-                    ],
-                    "task_types": [],
-                    "tasks": [],
-                    "add_ftrack_family": true,
-                    "advanced_filtering": []
-                }
-            ]
-        },
-        "IntegrateFtrackNote": {
-            "enabled": true,
-            "note_with_intent_template": "{intent}: {comment}",
-            "note_labels": []
-        },
-        "ValidateFtrackAttributes": {
-            "enabled": false,
-            "ftrack_custom_attributes": {}
-        },
-        "IntegrateFtrackInstance": {
-            "family_mapping": {
-                "camera": "cam",
-                "look": "look",
-                "mayaascii": "scene",
-                "model": "geo",
-                "rig": "rig",
-                "setdress": "setdress",
-                "pointcache": "cache",
-                "render": "render",
-                "prerender": "render",
-                "render2d": "render",
-                "nukescript": "comp",
-                "write": "render",
-                "review": "mov",
-                "plate": "img",
-                "audio": "audio",
-                "workfile": "scene",
-                "animation": "cache",
-                "image": "img",
-                "reference": "reference",
-                "ass": "cache",
-                "mayaScene": "scene",
-                "camerarig": "rig",
-                "yeticache": "cache",
-                "yetiRig": "rig",
-                "xgen": "xgen",
-                "rendersetup": "rendersetup",
-                "assembly": "assembly",
-                "layout": "layout",
-                "unrealStaticMesh": "geo",
-                "vrayproxy": "cache",
-                "redshiftproxy": "cache",
-                "usd": "usd"
-            }
         }
     }
 }
