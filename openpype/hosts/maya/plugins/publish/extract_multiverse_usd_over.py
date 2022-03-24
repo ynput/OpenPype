@@ -42,10 +42,6 @@ class ExtractMultiverseUsdOverride(openpype.api.Extractor):
     @property
     def default_options(self):
         """The default options for Multiverse USD extraction."""
-        start_frame = int(cmds.playbackOptions(query=True,
-                                               animationStartTime=True))
-        end_frame = int(cmds.playbackOptions(query=True,
-                                             animationEndTime=True))
 
         return {
             "writeAll": False,
