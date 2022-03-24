@@ -329,7 +329,7 @@ class IntegrateAssetNew(pyblish.api.InstancePlugin):
         return {
             "families": anatomy_data["family"],
             "tasks": task.get("name"),
-            "hosts": anatomy_data["host"],
+            "hosts": anatomy_data["app"],
             "task_types": task.get("type")
         }
 
