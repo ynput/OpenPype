@@ -212,7 +212,7 @@ class IntegrateSlackAPI(pyblish.api.InstancePlugin):
             self.log.warning("Error happened {}".format(error_str))
         except Exception as e:
             error_str = self._enrich_error(str(e), channel)
-            self.log.warning("Not SlackAPI error: {}".format(error_str))
+            self.log.warning("Not SlackAPI error", exc_info=True)
 
         return None, []
 
