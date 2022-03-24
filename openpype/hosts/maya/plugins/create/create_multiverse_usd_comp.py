@@ -4,7 +4,7 @@ from openpype.hosts.maya.api import plugin, lib
 class CreateMultiverseUsdComp(plugin.Creator):
     """Create Multiverse USD Composition"""
 
-    name = "usdOverrideMain"
+    name = "usdCompositionMain"
     label = "Multiverse USD Composition"
     family = "usdComposition"
     icon = "cubes"
@@ -17,14 +17,6 @@ class CreateMultiverseUsdComp(plugin.Creator):
         self.data["flattenContent"] = False
         self.data["writePendingOverrides"] = False
 
-        # The attributes below are about animated cache.
-        self.data["writeTimeRange"] = True
-        self.data["timeRangeNumTimeSamples"] = 0
-        self.data["timeRangeSamplesSpan"] = 0.0
-
+        # Add animation data
         animation_data = lib.collect_animation_data(True)
-
-        self.data["timeRangeStart"] = animation_data["frameStart"]
-        self.data["timeRangeEnd"] = animation_data["frameEnd"]
-        self.data["timeRangeIncrement"] = animation_data["step"]
-        self.data["timeRangeFramesPerSecond"] = animation_data["fps"]
+        self.data.update(animation_data)
