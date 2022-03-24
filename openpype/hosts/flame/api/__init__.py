@@ -29,7 +29,8 @@ from .lib import (
     get_frame_from_filename,
     get_padding_from_filename,
     maintained_object_duplication,
-    get_clip_segment
+    get_clip_segment,
+    get_batch_group_from_desktop
 )
 from .utils import (
     setup,
@@ -105,6 +106,7 @@ __all__ = [
     "get_padding_from_filename",
     "maintained_object_duplication",
     "get_clip_segment",
+    "get_batch_group_from_desktop",
 
     # pipeline
     "install",

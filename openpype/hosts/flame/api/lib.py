@@ -708,3 +708,12 @@ def get_clip_segment(flame_clip):
         raise ValueError("Clip `{}` has too many segments!".format(name))
 
     return segments[0]
+
+
+def get_batch_group_from_desktop(name):
+    project = get_current_project()
+    project_desktop = project.current_workspace.desktop
+
+    for bgroup in project_desktop.batch_groups:
+        if bgroup.name.get_value() == name:
+            return bgroup

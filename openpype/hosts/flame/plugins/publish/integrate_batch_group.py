@@ -43,13 +43,25 @@ class IntegrateBatchGroup(pyblish.api.InstancePlugin):
             self.log.debug(
                 "__ batch_data: {}".format(pformat(batch_data)))
 
-            # create batch with utils
-            opfapi.create_batch(
-                batchgroup_name,
-                frame_start,
-                frame_duration,
-                **batch_data
-            )
+            # check if the batch group already exists
+            bgroup = opfapi.get_batch_group_from_desktop(batchgroup_name)
+
+            if not bgroup:
+                self.log.info(
+                    "Creating new batch group: {}".format(batchgroup_name))
+                # create batch with utils
+                opfapi.create_batch(
+                    batchgroup_name,
+                    frame_start,
+                    frame_duration,
+                    **batch_data
+                )
+            else:
+                self.log.info(
+                    "Updating batch group: {}".format(batchgroup_name))
+                # update already created batch group
+                bgroup.start_frame = frame_start
+                bgroup.duration = frame_duration
 
     def _get_write_prefs(self, instance, task_data):
         anatomy_data = instance.data["anatomyData"]
