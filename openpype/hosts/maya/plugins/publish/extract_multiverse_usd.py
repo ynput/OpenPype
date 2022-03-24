@@ -159,13 +159,16 @@ class ExtractMultiverseUsd(openpype.api.Extractor):
             time_opts = None
             frame_start = instance.data['frameStart']
             frame_end = instance.data['frameEnd']
+            handle_start = instance.data['handleStart']
+            handle_end = instance.data['handleEnd']
             step = instance.data['step']
             fps = instance.data['fps']
             if frame_end != frame_start:
                 time_opts = multiverse.TimeOptions()
 
                 time_opts.writeTimeRange = True
-                time_opts.frameRange = (frame_start, frame_end)
+                time_opts.frameRange = (
+                    frame_start - handle_start, frame_end + handle_end)
                 time_opts.frameIncrement = step
                 time_opts.numTimeSamples = instance.data["numTimeSamples"]
                 time_opts.timeSamplesSpan = instance.data["timeSamplesSpan"]
