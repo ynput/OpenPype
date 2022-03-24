@@ -130,10 +130,13 @@ class OptionalPyblishPluginMixin(OpenPypePyblishPluginMixin):
     prepares method which will check if is active or not.
 
     ```
-    def process(self, instance):
-        # Skip the instance if is not active by data on the instance
-        if not self.is_active(instance.data):
-            return
+    class ValidateScene(
+        pyblish.api.InstancePlugin, OptionalPyblishPluginMixin
+    ):
+        def process(self, instance):
+            # Skip the instance if is not active by data on the instance
+            if not self.is_active(instance.data):
+                return
     ```
     """
 
