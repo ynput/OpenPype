@@ -21,7 +21,7 @@ def create_batch(name, frame_start, frame_duration, **kwargs):
 
     # Create batch group with name, start_frame value, duration value,
     # set of schematic reel names, set of shelf reel names
-    flame.batch.create_batch_group(
+    bgroup = flame.batch.create_batch_group(
         name,
         start_frame=frame_start,
         duration=frame_duration,
@@ -61,3 +61,5 @@ def create_batch(name, frame_start, frame_duration, **kwargs):
 
     # sort batch nodes
     flame.batch.organize()
+
+    return bgroup

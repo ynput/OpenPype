@@ -16,12 +16,6 @@ class IntegrateBatchGroup(pyblish.api.InstancePlugin):
     families = ["clip"]
 
     def process(self, instance):
-        frame_start = instance.data["frameStart"]
-        frame_end = instance.data["frameEnd"]
-        handle_start = instance.data["handleStart"]
-        handle_end = instance.data["handleEnd"]
-        frame_duration = (frame_end - frame_start) + 1
-        asset_name = instance.data["asset"]
         add_tasks = instance.data["flameAddTasks"]
 
         # iterate all tasks from settings
@@ -29,40 +23,59 @@ class IntegrateBatchGroup(pyblish.api.InstancePlugin):
             # exclude batch group
             if not task_data["create_batch_group"]:
                 continue
-            task_name = task_data["name"]
-            batchgroup_name = "{}_{}".format(asset_name, task_name)
-            write_pref_data = self._get_write_prefs(instance, task_data)
 
-            batch_data = {
-                "shematic_reels": [
-                    "OP_LoadedReel"
-                ],
-                "write_pref": write_pref_data,
-                "handleStart": handle_start,
-                "handleEnd": handle_end
-            }
-            self.log.debug(
-                "__ batch_data: {}".format(pformat(batch_data)))
+            # create or get already created batch group
+            bgroup = self._get_batch_group(instance, task_data)
 
-            # check if the batch group already exists
-            bgroup = opfapi.get_batch_group_from_desktop(batchgroup_name)
+            # load plate to batch group
+            self.log.info("Loading subset `{}` into batch `{}`".format(
+                instance.data["subset"], bgroup.name.get_value()
+            ))
 
-            if not bgroup:
-                self.log.info(
-                    "Creating new batch group: {}".format(batchgroup_name))
-                # create batch with utils
-                opfapi.create_batch(
-                    batchgroup_name,
-                    frame_start,
-                    frame_duration,
-                    **batch_data
-                )
-            else:
-                self.log.info(
-                    "Updating batch group: {}".format(batchgroup_name))
-                # update already created batch group
-                bgroup.start_frame = frame_start
-                bgroup.duration = frame_duration
+    def _get_batch_group(self, instance, task_data):
+        frame_start = instance.data["frameStart"]
+        frame_end = instance.data["frameEnd"]
+        handle_start = instance.data["handleStart"]
+        handle_end = instance.data["handleEnd"]
+        frame_duration = (frame_end - frame_start) + 1
+        asset_name = instance.data["asset"]
+
+        task_name = task_data["name"]
+        batchgroup_name = "{}_{}".format(asset_name, task_name)
+        write_pref_data = self._get_write_prefs(instance, task_data)
+
+        batch_data = {
+            "shematic_reels": [
+                "OP_LoadedReel"
+            ],
+            "write_pref": write_pref_data,
+            "handleStart": handle_start,
+            "handleEnd": handle_end
+        }
+        self.log.debug(
+            "__ batch_data: {}".format(pformat(batch_data)))
+
+        # check if the batch group already exists
+        bgroup = opfapi.get_batch_group_from_desktop(batchgroup_name)
+
+        if not bgroup:
+            self.log.info(
+                "Creating new batch group: {}".format(batchgroup_name))
+            # create batch with utils
+            bgroup = opfapi.create_batch(
+                batchgroup_name,
+                frame_start,
+                frame_duration,
+                **batch_data
+            )
+        else:
+            self.log.info(
+                "Updating batch group: {}".format(batchgroup_name))
+            # update already created batch group
+            bgroup.start_frame = frame_start
+            bgroup.duration = frame_duration
+
+        return bgroup
 
     def _get_anamoty_data_with_current_task(self, instance, task_data):
         anatomy_data = copy.deepcopy(instance.data["anatomyData"])
