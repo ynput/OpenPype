@@ -151,8 +151,9 @@ class OptionalPyblishPluginMixin(OpenPypePyblishPluginMixin):
         # Get active value from class as default value
         active = getattr(cls, "active", True)
         # Return boolean stored under 'active' key with label of the class name
+        label = cls.label or cls.__name__
         return [
-            BoolDef("active", default=active, label=cls.__name__)
+            BoolDef("active", default=active, label=label)
         ]
 
     def is_active(self, data):
