@@ -97,7 +97,13 @@ class IntegrateBatchGroup(pyblish.api.InstancePlugin):
             )
             if Loader:
                 # load to flame by representation context
-                op_pipeline.load.load_with_repre_context(Loader, repre_context)
+                try:
+                    op_pipeline.load.load_with_repre_context(
+                        Loader, repre_context)
+                except op_pipeline.load.IncompatibleLoaderError as msg:
+                    self.log.error(
+                        "Check allowed representations for Loader `{}` "
+                        "in settings > error: {}".format(Loader.__name__, msg))
             else:
                 self.log.warning(
                     "Something got wrong and there is not Loader found for "
