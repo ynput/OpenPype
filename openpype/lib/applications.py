@@ -1545,6 +1545,7 @@ def _prepare_last_workfile(data, workdir):
         workdir (str): Path to folder where workfiles should be stored.
     """
     import avalon.api
+    from openpype.pipeline import HOST_WORKFILE_EXTENSIONS
 
     log = data["log"]
 
@@ -1593,7 +1594,7 @@ def _prepare_last_workfile(data, workdir):
     # Last workfile path
     last_workfile_path = data.get("last_workfile_path") or ""
     if not last_workfile_path:
-        extensions = avalon.api.HOST_WORKFILE_EXTENSIONS.get(app.host_name)
+        extensions = HOST_WORKFILE_EXTENSIONS.get(app.host_name)
         if extensions:
             anatomy = data["anatomy"]
             project_settings = data["project_settings"]
