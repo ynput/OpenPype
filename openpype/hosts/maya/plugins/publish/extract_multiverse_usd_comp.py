@@ -29,7 +29,9 @@ class ExtractMultiverseUsdComposition(openpype.api.Extractor):
             "stripNamespaces": bool,
             "mergeTransformAndShape": bool,
             "flattenContent": bool,
-            "writePendingOverrides": bool
+            "writePendingOverrides": bool,
+            "numTimeSamples": int,
+            "timeSamplesSpan": float
         }
 
     @property
@@ -37,10 +39,12 @@ class ExtractMultiverseUsdComposition(openpype.api.Extractor):
         """The default options for Multiverse USD extraction."""
 
         return {
-            "stripNamespaces": False,
+            "stripNamespaces": True,
             "mergeTransformAndShape": False,
             "flattenContent": False,
-            "writePendingOverrides": False
+            "writePendingOverrides": False,
+            "numTimeSamples": 1,
+            "timeSamplesSpan": 0.0
         }
 
     def parse_overrides(self, instance, options):
@@ -72,7 +76,7 @@ class ExtractMultiverseUsdComposition(openpype.api.Extractor):
 
         # Define output file path
         staging_dir = self.staging_dir(instance)
-        file_name = "{}.usda".format(instance.name)
+        file_name = "{}.usd".format(instance.name)
         file_path = os.path.join(staging_dir, file_name)
         file_path = file_path.replace('\\', '/')
 
@@ -129,7 +133,7 @@ class ExtractMultiverseUsdComposition(openpype.api.Extractor):
             for key, value in options_items():
                 if key in options_discard_keys:
                     continue
-                setattr(asset_write_opts, key, value)
+                setattr(comp_write_opts, key, value)
 
             multiverse.WriteComposition(file_path, members, comp_write_opts)
 
