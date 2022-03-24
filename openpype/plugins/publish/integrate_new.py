@@ -466,15 +466,16 @@ class IntegrateAssetNew(pyblish.api.InstancePlugin):
             'name': version_number
         })
 
+        bulk_writes = []
         if existing_version is None:
             self.log.debug("Creating new version ...")
-            version_id = io.insert_one(version).inserted_id
+            version["_id"] = ObjectId()
+            bulk_writes.append(InsertOne(version))
         else:
             self.log.debug("Updating existing version ...")
             # Check if instance have set `append` mode which cause that
             # only replicated representations are set to archive
             append_repres = instance.data.get("append", False)
-            bulk_writes = []
 
             # Update version data
             version_id = existing_version['_id']
@@ -483,6 +484,12 @@ class IntegrateAssetNew(pyblish.api.InstancePlugin):
             }, {
                 '$set': version
             }))
+
+            # Instead of directly writing and querying we reproduce what
+            # the resulting version would look like so we can hold off making
+            # changes to the database to avoid the need for 'rollback'
+            version = copy.deepcopy(version)
+            version["_id"] = existing_version["_id"]
 
             # Find representations of existing version and archive them
             repres = instance.data.get("representations", [])
@@ -507,13 +514,12 @@ class IntegrateAssetNew(pyblish.api.InstancePlugin):
                 repre["type"] = "archived_representation"
                 bulk_writes.append(InsertOne(repre))
 
-            # bulk updates
-            if bulk_writes:
-                io._database[io.Session["AVALON_PROJECT"]].bulk_write(
-                    bulk_writes
-                )
-
-        version = io.find_one({"_id": version_id})
+        # bulk updates
+        # todo: Try to avoid writing already until after we've prepared
+        #       representations to allow easier rollback?
+        io._database[io.Session["AVALON_PROJECT"]].bulk_write(
+            bulk_writes
+        )
 
         self.log.info("Registered version: v{0:03d}".format(version["name"]))
 
