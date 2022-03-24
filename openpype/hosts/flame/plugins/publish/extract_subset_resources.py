@@ -211,7 +211,11 @@ class ExtractSubsetResources(openpype.api.Extractor):
                     "tags": repre_tags,
                     "data": {
                         "colorspace": color_out
-                    }
+                    },
+                    "load_to_batch_group": preset_config.get(
+                        "load_to_batch_group"),
+                    "batch_group_loader_name": preset_config.get(
+                        "batch_group_loader_name")
                 }
 
                 # collect all available content of export dir
