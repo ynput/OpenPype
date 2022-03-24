@@ -17,6 +17,8 @@ from openpype.lib import filter_profiles
 from openpype.style import get_objected_colors
 from openpype.resources import get_image_path
 
+log = Logger.get_logger(__name__)
+
 
 def center_window(window):
     """Move window to center of it's screen."""
@@ -111,12 +113,22 @@ def get_qta_icon_by_name_and_color(icon_name, icon_color):
         variants.append("{0}.{1}".format(key, icon_name))
 
     icon = None
+    used_variant = None
     for variant in variants:
         try:
             icon = qtawesome.icon(variant, color=icon_color)
+            used_variant = variant
             break
         except Exception:
             pass
+
+    if used_variant is None:
+        log.info("Didn't find icon \"{}\"".format(icon_name))
+
+    elif used_variant != icon_name:
+        log.info("Icon \"{}\" was not found \"{}\" is used instead".format(
+            icon_name, used_variant
+        ))
 
     SharedObjects.icons[full_icon_name] = icon
     return icon
