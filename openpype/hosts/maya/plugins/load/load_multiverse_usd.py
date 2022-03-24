@@ -1,6 +1,5 @@
 # -*- coding: utf-8 -*-
 import maya.cmds as cmds
-import maya.mel as mel
 
 from openpype.pipeline import (
     load,
@@ -44,7 +43,8 @@ class MultiverseUsdLoader(load.LoaderPlugin):
             with namespaced(namespace, new=False):
                 import multiverse
                 shape = multiverse.CreateUsdCompound(self.fname)
-                transform = mel.eval('firstParentOf "{}"'.format(shape))
+                transform = cmds.listRelatives(
+                    shape, parent=True, fullPath=True)[0]
 
         nodes = [transform, shape]
         self[:] = nodes
