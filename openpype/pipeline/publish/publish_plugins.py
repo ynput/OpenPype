@@ -111,7 +111,7 @@ class OpenPypePyblishPluginMixin:
         return attribute_values
 
     def get_attr_values_from_data(self, data):
-        """Get attribute values for attribute definitoins from data.
+        """Get attribute values for attribute definitions from data.
 
         Args:
             data(dict): Data from instance or context.
