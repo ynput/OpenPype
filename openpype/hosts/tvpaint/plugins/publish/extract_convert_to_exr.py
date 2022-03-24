@@ -85,8 +85,9 @@ class ExtractConvertToEXR(pyblish.api.InstancePlugin):
 
             if self.replace_pngs:
                 instance.data["representations"].remove(repre)
+
                 for filepath in src_filepaths:
-                    os.remove(filepath)
+                    instance.context.data["cleanupFullPaths"].append(filepath)
 
         instance.data["representations"].extend(new_repres)
         self.log.info(
