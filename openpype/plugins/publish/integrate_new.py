@@ -657,8 +657,9 @@ class IntegrateAssetNew(pyblish.api.InstancePlugin):
             dst_collection.indexes.clear()
             dst_collection.indexes.update(set(destination_indexes))
             dst_collection.padding = destination_padding
-            assert len(src_collection.indexes) == \
-                   len(dst_collection.indexes), "This is a bug"
+            assert (
+                len(src_collection.indexes) == len(dst_collection.indexes)
+            ), "This is a bug"
 
             # Multiple file transfers
             transfers = []
