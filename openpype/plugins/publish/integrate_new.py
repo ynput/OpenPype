@@ -275,7 +275,7 @@ class IntegrateAssetNew(pyblish.api.InstancePlugin):
     exclude_families = ["clip"]
     db_representation_context_keys = [
         "project", "asset", "task", "subset", "version", "representation",
-        "family", "hierarchy", "task", "username", "frame", "udim"
+        "family", "hierarchy", "task", "username", "frame"
     ]
     default_template_name = "publish"
 
@@ -681,14 +681,16 @@ class IntegrateAssetNew(pyblish.api.InstancePlugin):
             # Single file transfer
             transfers = [(src, dst)]
 
-        if repre.get("udim"):
-            repre_context["udim"] = repre.get("udim")  # store list
-
         for key in self.db_representation_context_keys:
             value = template_data.get(key)
             if not value:
                 continue
             repre_context[key] = template_data[key]
+
+        # Explicitly store the full list even though template data might
+        # have a different value
+        if repre.get("udim"):
+            repre_context["udim"] = repre.get("udim")  # store list
 
         # Define representation id
         repre_id = ObjectId()
