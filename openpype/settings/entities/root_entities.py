@@ -448,7 +448,7 @@ class RootEntity(BaseItemEntity):
 
             self.log.debug("Saving data to: {}\n{}".format(subpath, value))
             with open(output_path, "w") as file_stream:
-                json.dump(value, file_stream, indent=4)
+                json.dump(value, file_stream, sort_keys=True, indent=4)
 
         dynamic_values_item = self.collect_dynamic_schema_entities()
         dynamic_values_item.save_values()

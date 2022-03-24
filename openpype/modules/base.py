@@ -1346,7 +1346,7 @@ class JsonFilesSettingsDef(ModuleSettingsDef):
             os.makedirs(dirpath)
 
         with open(path, "w") as file_stream:
-            json.dump(data, file_stream, indent=4)
+            json.dump(data, file_stream, sort_keys=True, indent=4)
 
     def save_system_defaults(self, data):
         """Save default system settings values.
