@@ -12,7 +12,6 @@ from openpype.hosts.tvpaint.lib import (
     fill_reference_frames,
     composite_rendered_layers,
     rename_filepaths_by_frame_start,
-    composite_images
 )
 
 
