@@ -152,8 +152,8 @@ def get_asset_icon_name(asset_doc, has_children=True):
         return icon_name
 
     if has_children:
-        return "folder"
-    return "folder-o"
+        return "fa.folder"
+    return "fa.folder-o"
 
 
 def get_asset_icon_color(asset_doc):
