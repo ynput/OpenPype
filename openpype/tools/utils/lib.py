@@ -126,7 +126,7 @@ def get_qta_icon_by_name_and_color(icon_name, icon_color):
         log.info("Didn't find icon \"{}\"".format(icon_name))
 
     elif used_variant != icon_name:
-        log.info("Icon \"{}\" was not found \"{}\" is used instead".format(
+        log.debug("Icon \"{}\" was not found \"{}\" is used instead".format(
             icon_name, used_variant
         ))
 
