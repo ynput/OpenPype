@@ -28,6 +28,11 @@
             "enabled": true,
             "optional": true,
             "active": true
+        },
+        "ExtractConvertToEXR": {
+            "enabled": false,
+            "replace_pngs": true,
+            "exr_compression": "ZIP"
         }
     },
     "load": {
