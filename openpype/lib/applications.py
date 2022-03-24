@@ -1118,39 +1118,6 @@ class ApplicationLaunchContext:
         # Return process which is already terminated
         return process
 
-    def _add_python_version_paths(self):
-        """Add vendor packages specific for a Python version."""
-
-        # Skip adding if host name is not set
-        if not self.application.host_name:
-            return
-
-        # Add Python 2/3 modules
-        openpype_root = os.getenv("OPENPYPE_REPOS_ROOT")
-        python_vendor_dir = os.path.join(
-            openpype_root,
-            "openpype",
-            "vendor",
-            "python"
-        )
-        python_paths = []
-        if self.application.use_python_2:
-            python_paths.append(
-                os.path.join(python_vendor_dir, "python_2")
-            )
-        else:
-            python_paths.append(
-                os.path.join(python_vendor_dir, "python_3")
-            )
-
-        # Load PYTHONPATH from current launch context
-        python_path = self.env.get("PYTHONPATH")
-        if python_path:
-            python_paths.append(python_path)
-
-        # Set new PYTHONPATH to launch context environments
-        self.env["PYTHONPATH"] = os.pathsep.join(python_paths)
-
     def launch(self):
         """Collect data for new process and then create it.
 
@@ -1162,8 +1129,6 @@ class ApplicationLaunchContext:
         if self.process is not None:
             self.log.warning("Application was already launched.")
             return
-
-        self._add_python_version_paths()
 
         # Discover launch hooks
         self.discover_launch_hooks()
@@ -1354,6 +1319,41 @@ def _merge_env(env, current_env):
     return result
 
 
+def _add_python_version_paths(app, env, logger):
+    """Add vendor packages specific for a Python version."""
+
+    # Skip adding if host name is not set
+    if not app.host_name:
+        return
+
+    # Add Python 2/3 modules
+    openpype_root = os.getenv("OPENPYPE_REPOS_ROOT")
+    python_vendor_dir = os.path.join(
+        openpype_root,
+        "openpype",
+        "vendor",
+        "python"
+    )
+    if app.use_python_2:
+        pythonpath = os.path.join(python_vendor_dir, "python_2")
+    else:
+        pythonpath = os.path.join(python_vendor_dir, "python_3")
+
+    if not os.path.exists(pythonpath):
+        return
+
+    logger.debug("Adding Python version specific paths to PYTHONPATH")
+    python_paths = [pythonpath]
+
+    # Load PYTHONPATH from current launch context
+    python_path = env.get("PYTHONPATH")
+    if python_path:
+        python_paths.append(python_path)
+
+    # Set new PYTHONPATH to launch context environments
+    env["PYTHONPATH"] = os.pathsep.join(python_paths)
+
+
 def prepare_app_environments(data, env_group=None, implementation_envs=True):
     """Modify launch environments based on launched app and context.
 
@@ -1365,6 +1365,8 @@ def prepare_app_environments(data, env_group=None, implementation_envs=True):
 
     app = data["app"]
     log = data["log"]
+
+    _add_python_version_paths(app, data["env"], log)
 
     # `added_env_keys` has debug purpose
     added_env_keys = {app.group.name, app.name}
