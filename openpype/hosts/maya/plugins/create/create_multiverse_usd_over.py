@@ -21,15 +21,9 @@ class CreateMultiverseUsdOver(plugin.Creator):
         self.data["writeVariantsDefinition"] = True
         self.data["writeActiveState"] = True
         self.data["writeNamespaces"] = False
+        self.data["numTimeSamples"] = 1
+        self.data["timeSamplesSpan"] = 0.0
 
-        # The attributes below are about animated cache.
-        self.data["writeTimeRange"] = True
-        self.data["timeRangeNumTimeSamples"] = 0
-        self.data["timeRangeSamplesSpan"] = 0.0
-
+        # Add animation data
         animation_data = lib.collect_animation_data(True)
-
-        self.data["timeRangeStart"] = animation_data["frameStart"]
-        self.data["timeRangeEnd"] = animation_data["frameEnd"]
-        self.data["timeRangeIncrement"] = animation_data["step"]
-        self.data["timeRangeFramesPerSecond"] = animation_data["fps"]
+        self.data.update(animation_data)

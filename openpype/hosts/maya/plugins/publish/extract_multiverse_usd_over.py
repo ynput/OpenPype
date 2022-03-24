@@ -1,7 +1,7 @@
 import os
 
-import avalon.maya
 import openpype.api
+from openpype.hosts.maya.api.lib import maintained_selection
 
 from maya import cmds
 
@@ -35,13 +35,8 @@ class ExtractMultiverseUsdOverride(openpype.api.Extractor):
             "writeVariantsDefinition": bool,
             "writeActiveState": bool,
             "writeNamespaces": bool,
-            "writeTimeRange": bool,
-            "timeRangeStart": int,
-            "timeRangeEnd": int,
-            "timeRangeIncrement": int,
-            "timeRangeNumTimeSamples": int,
-            "timeRangeSamplesSpan": float,
-            "timeRangeFramesPerSecond": float
+            "numTimeSamples": int,
+            "timeSamplesSpan": float
         }
 
     @property
@@ -62,13 +57,8 @@ class ExtractMultiverseUsdOverride(openpype.api.Extractor):
             "writeVariantsDefinition": True,
             "writeActiveState": True,
             "writeNamespaces": False,
-            "writeTimeRange": True,
-            "timeRangeStart": start_frame,
-            "timeRangeEnd": end_frame,
-            "timeRangeIncrement": 1,
-            "timeRangeNumTimeSamples": 0,
-            "timeRangeSamplesSpan": 0.0,
-            "timeRangeFramesPerSecond": 24.0
+            "numTimeSamples": 1,
+            "timeSamplesSpan": 0.0
         }
 
     def process(self, instance):
@@ -79,7 +69,7 @@ class ExtractMultiverseUsdOverride(openpype.api.Extractor):
         staging_dir = self.staging_dir(instance)
         file_name = "{}.usda".format(instance.name)
         file_path = os.path.join(staging_dir, file_name)
-        file_path = file_path.replace('\\', '/')
+        file_path = file_path.replace("\\", "/")
 
         # Parse export options
         options = self.default_options
@@ -88,41 +78,53 @@ class ExtractMultiverseUsdOverride(openpype.api.Extractor):
         # Perform extraction
         self.log.info("Performing extraction ...")
 
-        with avalon.maya.maintained_selection():
+        with maintained_selection():
             members = instance.data("setMembers")
             members = cmds.ls(members,
                               dag=True,
                               shapes=True,
-                              type=("mvUsdCompoundShape"),
+                              type="mvUsdCompoundShape",
                               noIntermediate=True,
                               long=True)
-            self.log.info('Collected object {}'.format(members))
+            self.log.info("Collected object {}".format(members))
 
             # TODO: Deal with asset, composition, overide with options.
             import multiverse
 
             time_opts = None
-            if options["writeTimeRange"]:
+            frame_start = instance.data["frameStart"]
+            frame_end = instance.data["frameEnd"]
+            handle_start = instance.data["handleStart"]
+            handle_end = instance.data["handleEnd"]
+            step = instance.data["step"]
+            fps = instance.data["fps"]
+            if frame_end != frame_start:
                 time_opts = multiverse.TimeOptions()
 
                 time_opts.writeTimeRange = True
+                time_opts.frameRange = (
+                    frame_start - handle_start, frame_end + handle_end)
+                time_opts.frameIncrement = step
+                time_opts.numTimeSamples = instance.data["numTimeSamples"]
+                time_opts.timeSamplesSpan = instance.data["timeSamplesSpan"]
+                time_opts.framePerSecond = fps
 
-                time_range_start = options["timeRangeStart"]
-                time_range_end = options["timeRangeEnd"]
-                time_opts.frameRange = (time_range_start, time_range_end)
-
-                time_opts.frameIncrement = options["timeRangeIncrement"]
-                time_opts.numTimeSamples = options["timeRangeNumTimeSamples"]
-                time_opts.timeSamplesSpan = options["timeRangeSamplesSpan"]
-                time_opts.framePerSecond = options["timeRangeFramesPerSecond"]
-
-            over_write_opts = multiverse.OverridesWriteOptions()
+            over_write_opts = multiverse.OverridesWriteOptions(time_opts)
             options_items = getattr(options, "iteritems", options.items)
-            for (k, v) in options_items():
-                if k == "writeTimeRange" or k.startswith("timeRange"):
+            options_discard_keys = {
+                "numTimeSamples",
+                "timeSamplesSpan",
+                "frameStart",
+                "frameEnd",
+                "handleStart",
+                "handleEnd",
+                "step",
+                "fps"
+            }
+            for key, value in options_items():
+                if key in options_discard_keys:
                     continue
-                setattr(over_write_opts, k, v)
-            over_write_opts.timeOptions = time_opts
+                setattr(over_write_opts, key, value)
 
             for member in members:
                 multiverse.WriteOverrides(file_path, member, over_write_opts)
@@ -131,9 +133,9 @@ class ExtractMultiverseUsdOverride(openpype.api.Extractor):
             instance.data["representations"] = []
 
         representation = {
-            'name': 'usda',
-            'ext': 'usda',
-            'files': file_name,
+            "name": "usd",
+            "ext": "usd",
+            "files": file_name,
             "stagingDir": staging_dir
         }
         instance.data["representations"].append(representation)
