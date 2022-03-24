@@ -4,6 +4,7 @@ from pprint import pformat
 import pyblish
 from openpype.lib import get_workdir
 import openpype.hosts.flame.api as opfapi
+import openpype.pipeline as op_pipeline
 
 
 @pyblish.api.log
@@ -14,6 +15,9 @@ class IntegrateBatchGroup(pyblish.api.InstancePlugin):
     label = "Integrate Batch Groups"
     hosts = ["flame"]
     families = ["clip"]
+
+    # settings
+    default_loader = "LoadClip"
 
     def process(self, instance):
         add_tasks = instance.data["flameAddTasks"]
@@ -31,6 +35,77 @@ class IntegrateBatchGroup(pyblish.api.InstancePlugin):
             self.log.info("Loading subset `{}` into batch `{}`".format(
                 instance.data["subset"], bgroup.name.get_value()
             ))
+            self._load_clip_to_context(instance, bgroup)
+
+    def _load_clip_to_context(self, instance, bgroup):
+        # get all loaders for host
+        loaders = op_pipeline.discover_loader_plugins()
+
+        # get all published representations
+        published_representations = instance.data["published_representations"]
+
+        # get all loadable representations
+        representations = instance.data["representations"]
+
+        # get repre_id for the loadable representations
+        loadable_representations = [
+            {
+                "name": _repr["name"],
+                "loader": _repr.get("batch_group_loader_name"),
+                # match loader to the loadable representation
+                "_id": next(
+                    (
+                        id
+                        for id, repr in published_representations.items()
+                        if repr["representation"]["name"] == _repr["name"]
+                    ),
+                    None
+                )
+            }
+            for _repr in representations
+            if _repr.get("load_to_batch_group") is not None
+        ]
+
+        # get representation context from the repre_id
+        representation_ids = [
+            repre["_id"]
+            for repre in loadable_representations
+            if repre["_id"] is not None
+        ]
+        repre_contexts = op_pipeline.load.get_repres_contexts(
+            representation_ids)
+
+        # loop all returned repres from repre_context dict
+        for repre_id, repre_context in repre_contexts.items():
+            # get loader name by representation id
+            loader_name = next(
+                (
+                    repr["loader"]
+                    for repr in loadable_representations
+                    if repr["_id"] == repre_id
+                ),
+                self.default_loader
+            )
+            # get loader plugin
+            Loader = next(
+                (
+                    loader_plugin
+                    for loader_plugin in loaders
+                    if loader_plugin.__name__ == loader_name
+                ),
+                None
+            )
+            if Loader:
+                # load to flame by representation context
+                op_pipeline.load.load_with_repre_context(Loader, repre_context)
+            else:
+                self.log.warning(
+                    "Something got wrong and there is not Loader found for "
+                    "following data: {}".format(
+                        pformat(loadable_representations))
+                )
+
+
 
     def _get_batch_group(self, instance, task_data):
         frame_start = instance.data["frameStart"]
