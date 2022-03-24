@@ -140,8 +140,8 @@ class ExtractMultiverseUsdComposition(openpype.api.Extractor):
             instance.data["representations"] = []
 
         representation = {
-            'name': 'usda',
-            'ext': 'usda',
+            'name': 'usd',
+            'ext': 'usd',
             'files': file_name,
             "stagingDir": staging_dir
         }
