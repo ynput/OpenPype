@@ -1,4 +1,5 @@
 import os
+import six
 
 from maya import cmds
 
@@ -32,9 +33,9 @@ class ExtractMultiverseUsd(openpype.api.Extractor):
             "flattenParentXforms": bool,
             "writeSparseOverrides": bool,
             "useMetaPrimPath": bool,
-            "customRootPath": unicode,
-            "customAttributes": unicode,
-            "nodeTypesToIgnore": unicode,
+            "customRootPath": str,
+            "customAttributes": str,
+            "nodeTypesToIgnore": str,
             "writeMeshes": bool,
             "writeCurves": bool,
             "writeParticles": bool,
@@ -57,7 +58,7 @@ class ExtractMultiverseUsd(openpype.api.Extractor):
             "writeTransformMatrix": bool,
             "writeUsdAttributes": bool,
             "timeVaryingTopology": bool,
-            "customMaterialNamespace": unicode,
+            "customMaterialNamespace": str,
             "numTimeSamples": int,
             "timeSamplesSpan": float
         }
@@ -73,9 +74,9 @@ class ExtractMultiverseUsd(openpype.api.Extractor):
             "flattenParentXforms": False,
             "writeSparseOverrides": False,
             "useMetaPrimPath": False,
-            "customRootPath": u'',
-            "customAttributes": u'',
-            "nodeTypesToIgnore": u'',
+            "customRootPath": str(),
+            "customAttributes": str(),
+            "nodeTypesToIgnore": str(),
             "writeMeshes": True,
             "writeCurves": True,
             "writeParticles": True,
@@ -98,7 +99,7 @@ class ExtractMultiverseUsd(openpype.api.Extractor):
             "writeTransformMatrix": True,
             "writeUsdAttributes": False,
             "timeVaryingTopology": False,
-            "customMaterialNamespace": u'',
+            "customMaterialNamespace": str(),
             "numTimeSamples": 1,
             "timeSamplesSpan": 0.0
         }
@@ -112,6 +113,8 @@ class ExtractMultiverseUsd(openpype.api.Extractor):
 
             # Ensure the data is of correct type
             value = instance.data[key]
+            if isinstance(value, six.text_type):
+                value = str(value)
             if not isinstance(value, self.options[key]):
                 self.log.warning(
                     "Overridden attribute {key} was of "
