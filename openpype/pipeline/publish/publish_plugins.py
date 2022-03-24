@@ -1,3 +1,4 @@
+from openpype.lib import BoolDef
 from .lib import load_help_content_from_plugin
 
 
@@ -108,3 +109,60 @@ class OpenPypePyblishPluginMixin:
                     plugin_values[key]
                 )
         return attribute_values
+
+    def get_attr_values_from_data(self, data):
+        """Get attribute values for attribute definitoins from data.
+
+        Args:
+            data(dict): Data from instance or context.
+        """
+        return (
+            data
+            .get("publish_attributes", {})
+            .get(self.__class__.__name__, {})
+        )
+
+
+class OptionalPyblishPluginMixin(OpenPypePyblishPluginMixin):
+    """Prepare mixin for optional plugins.
+
+    Defined active attribute definition prepared for published and
+    prepares method which will check if is active or not.
+
+    ```
+    def process(self, instance):
+        # Skip the instance if is not active by data on the instance
+        if not self.is_active(instance.data):
+            return
+    ```
+    """
+
+    @classmethod
+    def get_attribute_defs(cls):
+        """Attribute definitions based on plugin's optional attribute."""
+
+        # Empty list if plugin is not optional
+        if not getattr(cls, "optional", None):
+            return []
+
+        # Get active value from class as default value
+        active = getattr(cls, "active", True)
+        # Return boolean stored under 'active' key with label of the class name
+        return [
+            BoolDef("active", default=active, label=cls.__name__)
+        ]
+
+    def is_active(self, data):
+        """Check if plugins is active for instance/context based on their data.
+
+        Args:
+            data(dict): Data from instance or context.
+        """
+        # Skip if is not optional and return True
+        if not getattr(self, "optional", None):
+            return True
+        attr_values = self.get_attr_values_from_data(data)
+        active = attr_values.get("active")
+        if active is None:
+            active = getattr(self, "active", True)
+        return active
