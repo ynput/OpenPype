@@ -16,6 +16,8 @@ class CreateMultiverseUsdComp(plugin.Creator):
         self.data["mergeTransformAndShape"] = False
         self.data["flattenContent"] = False
         self.data["writePendingOverrides"] = False
+        self.data["numTimeSamples"] = 1
+        self.data["timeSamplesSpan"] = 0.0
 
         # Add animation data
         animation_data = lib.collect_animation_data(True)
