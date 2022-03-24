@@ -229,7 +229,6 @@ class AssetWidget(QtWidgets.QWidget):
         data = {
             'project': project['name'],
             'asset': asset['name'],
-            'silo': asset.get("silo"),
             'parents': self.get_parents(asset),
             'task': task
         }

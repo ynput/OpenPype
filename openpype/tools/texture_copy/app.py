@@ -57,7 +57,6 @@ class TextureCopy:
                 "name": project_name,
                 "code": project['data']['code']
             },
-            "silo": asset.get('silo'),
             "asset": asset['name'],
             "family": 'texture',
             "subset": 'Main',
@@ -155,7 +154,6 @@ def texture_copy(asset, project, path):
     t.echo(">>> Initializing avalon session ...")
     os.environ["AVALON_PROJECT"] = project
     os.environ["AVALON_ASSET"] = asset
-    os.environ["AVALON_SILO"] = ""
     TextureCopy().process(asset, project, path)
 
 

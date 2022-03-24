@@ -13,7 +13,7 @@ import pyblish.api
 import openpype.api
 from openpype.lib import (
     get_ffmpeg_tool_path,
-    ffprobe_streams,
+    get_ffprobe_streams,
 
     path_to_subprocess_arg,
 
@@ -747,10 +747,14 @@ class ExtractReview(pyblish.api.InstancePlugin):
         collections = clique.assemble(files)[0]
         assert len(collections) == 1, "Multiple collections found."
         col = collections[0]
-        # do nothing if sequence is complete
-        if list(col.indexes)[0] == start_frame and \
-                list(col.indexes)[-1] == end_frame and \
-                col.is_contiguous():
+
+        # do nothing if no gap is found in input range
+        not_gap = True
+        for fr in range(start_frame, end_frame + 1):
+            if fr not in col.indexes:
+                not_gap = False
+
+        if not_gap:
             return []
 
         holes = col.holes()
@@ -1146,7 +1150,7 @@ class ExtractReview(pyblish.api.InstancePlugin):
         # NOTE Skipped using instance's resolution
         full_input_path_single_file = temp_data["full_input_path_single_file"]
         try:
-            streams = ffprobe_streams(
+            streams = get_ffprobe_streams(
                 full_input_path_single_file, self.log
             )
         except Exception as exc:
@@ -1188,8 +1192,8 @@ class ExtractReview(pyblish.api.InstancePlugin):
 
         # NOTE Setting only one of `width` or `heigth` is not allowed
         # - settings value can't have None but has value of 0
-        output_width = output_width or output_def.get("width") or None
-        output_height = output_height or output_def.get("height") or None
+        output_width = output_def.get("width") or output_width or None
+        output_height = output_def.get("height") or output_height or None
 
         # Overscal color
         overscan_color_value = "black"

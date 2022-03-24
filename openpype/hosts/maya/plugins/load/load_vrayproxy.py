@@ -7,10 +7,16 @@ loader will use them instead of native vray vrmesh format.
 """
 import os
 
+from bson.objectid import ObjectId
+
 import maya.cmds as cmds
 
-from avalon import api, io
+from avalon import io
 from openpype.api import get_project_settings
+from openpype.pipeline import (
+    load,
+    get_representation_path
+)
 from openpype.hosts.maya.api.lib import (
     maintained_selection,
     namespaced,
@@ -19,7 +25,7 @@ from openpype.hosts.maya.api.lib import (
 from openpype.hosts.maya.api.pipeline import containerise
 
 
-class VRayProxyLoader(api.Loader):
+class VRayProxyLoader(load.LoaderPlugin):
     """Load VRay Proxy with Alembic or VrayMesh."""
 
     families = ["vrayproxy", "model", "pointcache", "animation"]
@@ -100,7 +106,10 @@ class VRayProxyLoader(api.Loader):
         assert vraymeshes, "Cannot find VRayMesh in container"
 
         #  get all representations for this version
-        filename = self._get_abc(representation["parent"]) or api.get_representation_path(representation)  # noqa: E501
+        filename = (
+            self._get_abc(representation["parent"])
+            or get_representation_path(representation)
+        )
 
         for vray_mesh in vraymeshes:
             cmds.setAttr("{}.fileName".format(vray_mesh),
@@ -179,13 +188,13 @@ class VRayProxyLoader(api.Loader):
         abc_rep = io.find_one(
             {
                 "type": "representation",
-                "parent": io.ObjectId(version_id),
+                "parent": ObjectId(version_id),
                 "name": "abc"
             })
 
         if abc_rep:
             self.log.debug("Found, we'll link alembic to vray proxy.")
-            file_name = api.get_representation_path(abc_rep)
+            file_name = get_representation_path(abc_rep)
             self.log.debug("File: {}".format(self.fname))
             return file_name
 

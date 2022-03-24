@@ -2,14 +2,20 @@ import os
 import sys
 
 from Qt import QtWidgets
+from bson.objectid import ObjectId
 
 import pyblish.api
 import avalon.api
-from avalon import io, pipeline
+from avalon import io
 
 from openpype import lib
 from openpype.api import Logger
-from openpype.pipeline import LegacyCreator
+from openpype.pipeline import (
+    LegacyCreator,
+    register_loader_plugin_path,
+    deregister_loader_plugin_path,
+    AVALON_CONTAINER_ID,
+)
 import openpype.hosts.aftereffects
 from openpype.lib import register_event_callback
 
@@ -25,7 +31,6 @@ PLUGINS_DIR = os.path.join(HOST_DIR, "plugins")
 PUBLISH_PATH = os.path.join(PLUGINS_DIR, "publish")
 LOAD_PATH = os.path.join(PLUGINS_DIR, "load")
 CREATE_PATH = os.path.join(PLUGINS_DIR, "create")
-INVENTORY_PATH = os.path.join(PLUGINS_DIR, "inventory")
 
 
 def check_inventory():
@@ -38,7 +43,7 @@ def check_inventory():
         representation = container['representation']
         representation_doc = io.find_one(
             {
-                "_id": io.ObjectId(representation),
+                "_id": ObjectId(representation),
                 "type": "representation"
             },
             projection={"parent": True}
@@ -67,7 +72,7 @@ def install():
     pyblish.api.register_host("aftereffects")
     pyblish.api.register_plugin_path(PUBLISH_PATH)
 
-    avalon.api.register_plugin_path(avalon.api.Loader, LOAD_PATH)
+    register_loader_plugin_path(LOAD_PATH)
     avalon.api.register_plugin_path(LegacyCreator, CREATE_PATH)
     log.info(PUBLISH_PATH)
 
@@ -80,7 +85,7 @@ def install():
 
 def uninstall():
     pyblish.api.deregister_plugin_path(PUBLISH_PATH)
-    avalon.api.deregister_plugin_path(avalon.api.Loader, LOAD_PATH)
+    deregister_loader_plugin_path(LOAD_PATH)
     avalon.api.deregister_plugin_path(LegacyCreator, CREATE_PATH)
 
 
@@ -145,7 +150,7 @@ def containerise(name,
     """
     data = {
         "schema": "openpype:container-2.0",
-        "id": pipeline.AVALON_CONTAINER_ID,
+        "id": AVALON_CONTAINER_ID,
         "name": name,
         "namespace": namespace,
         "loader": str(loader),

@@ -3,10 +3,11 @@ import sys
 import re
 import contextlib
 
+from bson.objectid import ObjectId
 from Qt import QtGui
 
-import avalon.api
 from avalon import io
+from openpype.pipeline import switch_container
 from .pipeline import get_current_comp, comp_lock_and_undo_chunk
 
 self = sys.modules[__name__]
@@ -92,7 +93,7 @@ def switch_item(container,
     # Collect any of current asset, subset and representation if not provided
     # so we can use the original name from those.
     if any(not x for x in [asset_name, subset_name, representation_name]):
-        _id = io.ObjectId(container["representation"])
+        _id = ObjectId(container["representation"])
         representation = io.find_one({"type": "representation", "_id": _id})
         version, subset, asset, project = io.parenthood(representation)
 
@@ -142,7 +143,7 @@ def switch_item(container,
     assert representation, ("Could not find representation in the database "
                             "with the name '%s'" % representation_name)
 
-    avalon.api.switch(container, representation)
+    switch_container(container, representation)
 
     return representation
 

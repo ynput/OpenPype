@@ -48,7 +48,7 @@ class ValidateNodeIdsDeformedShape(pyblish.api.InstancePlugin):
 
         invalid = []
         for shape in shapes:
-            history_id = lib.get_id_from_history(shape)
+            history_id = lib.get_id_from_sibling(shape)
             if history_id:
                 current_id = lib.get_id(shape)
                 if current_id != history_id:
@@ -61,7 +61,7 @@ class ValidateNodeIdsDeformedShape(pyblish.api.InstancePlugin):
 
         for node in cls.get_invalid(instance):
             # Get the original id from history
-            history_id = lib.get_id_from_history(node)
+            history_id = lib.get_id_from_sibling(node)
             if not history_id:
                 cls.log.error("Could not find ID in history for '%s'", node)
                 continue

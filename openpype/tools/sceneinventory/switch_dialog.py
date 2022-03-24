@@ -2,8 +2,14 @@ import collections
 import logging
 from Qt import QtWidgets, QtCore
 import qtawesome
+from bson.objectid import ObjectId
 
-from avalon import io, api, pipeline
+from avalon import io, pipeline
+from openpype.pipeline import (
+    discover_loader_plugins,
+    switch_container,
+    get_repres_contexts,
+)
 
 from .widgets import (
     ButtonWithMenu,
@@ -141,7 +147,7 @@ class SwitchAssetDialog(QtWidgets.QDialog):
         repre_ids = set()
         content_loaders = set()
         for item in self._items:
-            repre_ids.add(io.ObjectId(item["representation"]))
+            repre_ids.add(ObjectId(item["representation"]))
             content_loaders.add(item["loader"])
 
         repres = list(io.find({
@@ -343,13 +349,13 @@ class SwitchAssetDialog(QtWidgets.QDialog):
     def _get_loaders(self, repre_ids):
         repre_contexts = None
         if repre_ids:
-            repre_contexts = pipeline.get_repres_contexts(repre_ids)
+            repre_contexts = get_repres_contexts(repre_ids)
 
         if not repre_contexts:
             return list()
 
         available_loaders = []
-        for loader_plugin in api.discover(api.Loader):
+        for loader_plugin in discover_loader_plugins():
             # Skip loaders without switch method
             if not hasattr(loader_plugin, "switch"):
                 continue
@@ -1301,7 +1307,7 @@ class SwitchAssetDialog(QtWidgets.QDialog):
             repre_docs_by_parent_id_by_name[parent_id][name] = repre_doc
 
         for container in self._items:
-            container_repre_id = io.ObjectId(container["representation"])
+            container_repre_id = ObjectId(container["representation"])
             container_repre = self.content_repres[container_repre_id]
             container_repre_name = container_repre["name"]
 
@@ -1352,7 +1358,7 @@ class SwitchAssetDialog(QtWidgets.QDialog):
                     repre_doc = repres_by_name[container_repre_name]
 
             try:
-                api.switch(container, repre_doc, loader)
+                switch_container(container, repre_doc, loader)
             except Exception:
                 msg = (
                     "Couldn't switch asset."

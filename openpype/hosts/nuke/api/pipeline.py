@@ -6,7 +6,6 @@ import nuke
 
 import pyblish.api
 import avalon.api
-from avalon import pipeline
 
 import openpype
 from openpype.api import (
@@ -15,7 +14,14 @@ from openpype.api import (
     get_current_project_settings
 )
 from openpype.lib import register_event_callback
-from openpype.pipeline import LegacyCreator
+from openpype.pipeline import (
+    LegacyCreator,
+    register_loader_plugin_path,
+    register_inventory_action_path,
+    deregister_loader_plugin_path,
+    deregister_inventory_action_path,
+    AVALON_CONTAINER_ID,
+)
 from openpype.tools.utils import host_tools
 
 from .command import viewer_update_and_undo_stop
@@ -99,9 +105,9 @@ def install():
 
     log.info("Registering Nuke plug-ins..")
     pyblish.api.register_plugin_path(PUBLISH_PATH)
-    avalon.api.register_plugin_path(avalon.api.Loader, LOAD_PATH)
+    register_loader_plugin_path(LOAD_PATH)
     avalon.api.register_plugin_path(LegacyCreator, CREATE_PATH)
-    avalon.api.register_plugin_path(avalon.api.InventoryAction, INVENTORY_PATH)
+    register_inventory_action_path(INVENTORY_PATH)
 
     # Register Avalon event for workfiles loading.
     register_event_callback("workio.open_file", check_inventory_versions)
@@ -125,8 +131,9 @@ def uninstall():
     log.info("Deregistering Nuke plug-ins..")
     pyblish.deregister_host("nuke")
     pyblish.api.deregister_plugin_path(PUBLISH_PATH)
-    avalon.api.deregister_plugin_path(avalon.api.Loader, LOAD_PATH)
+    deregister_loader_plugin_path(LOAD_PATH)
     avalon.api.deregister_plugin_path(LegacyCreator, CREATE_PATH)
+    deregister_inventory_action_path(INVENTORY_PATH)
 
     pyblish.api.deregister_callback(
         "instanceToggled", on_pyblish_instance_toggled)
@@ -326,7 +333,7 @@ def containerise(node,
     data = OrderedDict(
         [
             ("schema", "openpype:container-2.0"),
-            ("id", pipeline.AVALON_CONTAINER_ID),
+            ("id", AVALON_CONTAINER_ID),
             ("name", name),
             ("namespace", namespace),
             ("loader", str(loader)),

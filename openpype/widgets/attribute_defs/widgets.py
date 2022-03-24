@@ -2,7 +2,7 @@ import uuid
 
 from Qt import QtWidgets, QtCore
 
-from openpype.pipeline.lib import (
+from openpype.lib.attribute_definitions import (
     AbtractAttrDef,
     UnknownDef,
     NumberDef,

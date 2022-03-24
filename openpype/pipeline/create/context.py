@@ -6,7 +6,6 @@ import inspect
 from uuid import uuid4
 from contextlib import contextmanager
 
-from ..lib import UnknownDef
 from .creator_plugins import (
     BaseCreator,
     Creator,
@@ -89,6 +88,8 @@ class AttributeValues:
         origin_data(dict): Values loaded from host before conversion.
     """
     def __init__(self, attr_defs, values, origin_data=None):
+        from openpype.lib.attribute_definitions import UnknownDef
+
         if origin_data is None:
             origin_data = copy.deepcopy(values)
         self._origin_data = origin_data
