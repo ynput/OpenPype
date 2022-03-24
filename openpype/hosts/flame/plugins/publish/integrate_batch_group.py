@@ -65,6 +65,8 @@ class IntegrateBatchGroup(pyblish.api.InstancePlugin):
 
     def _get_write_prefs(self, instance, task_data):
         anatomy_data = instance.data["anatomyData"]
+        # update task data in anatomy data
+        anatomy_data.update(task_data)
 
         task_workfile_path = self._get_shot_task_dir_path(instance, task_data)
         self.log.debug("__ task_workfile_path: {}".format(task_workfile_path))
