@@ -16,7 +16,8 @@ from openpype.hosts.maya.api.pipeline import containerise
 class MultiverseUsdLoader(load.LoaderPlugin):
     """Load the USD by Multiverse"""
 
-    families = ["model", "usd", "usdComposition", "usdOverride"]
+    families = ["model", "usd", "usdComposition", "usdOverride",
+                "pointcache", "animation"]
     representations = ["usd", "usda", "usdc", "usdz", "abc"]
 
     label = "Read USD by Multiverse"
