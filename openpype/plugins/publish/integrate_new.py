@@ -419,7 +419,12 @@ class IntegrateAssetNew(pyblish.api.InstancePlugin):
         # Finalize the representations now the published files are integrated
         # Get 'files' info for representations and its attached resources
         self.log.debug("Retrieving Representation files information ...")
-        sites = self.compute_resource_sync_sites(instance)
+        sites = SiteSync.compute_resource_sync_sites(
+            system_settings=instance.context.data["system_settings"],
+            project_settings=instance.context.data["project_settings"]
+        )
+        log.debug("final sites:: {}".format(sites))
+
         anatomy = instance.context.data["anatomy"]
         representations = []
         for prepared in prepared_representations:
@@ -987,63 +992,65 @@ class IntegrateAssetNew(pyblish.api.InstancePlugin):
             "sites": sites
         }
 
-    # region sync sites
-    def compute_resource_sync_sites(self, instance):
+
+class SiteSync(object):
+    """Logic for Site Sync Module functionality"""
+
+    @classmethod
+    def compute_resource_sync_sites(cls,
+                                    system_settings,
+                                    project_settings):
         """Get available resource sync sites"""
-        # Sync server logic
-        # TODO: Clean up sync settings
-        local_site = 'studio'  # default
-        remote_site = None
-        always_accessible = []
-        sync_project_presets = None
 
-        system_sync_server_presets = (
-            instance.context.data["system_settings"]
-                                 ["modules"]
-                                 ["sync_server"])
+        def create_metadata(name, created=True):
+            """Create sync site metadata for site with `name`"""
+            metadata = {"name": name}
+            if created:
+                metadata["created_dt"] = datetime.now()
+            return metadata
+
+        default_sites = [create_metadata("studio")]
+
+        # If sync site module is disabled return default fallback site
+        system_sync_server_presets = system_settings["modules"]["sync_server"]
         log.debug("system_sett:: {}".format(system_sync_server_presets))
+        if not system_sync_server_presets["enabled"]:
+            return default_sites
 
-        if system_sync_server_presets["enabled"]:
-            sync_project_presets = (
-                instance.context.data["project_settings"]
-                                     ["global"]
-                                     ["sync_server"])
+        # If sync site module is disabled in current
+        # project return default fallback site
+        sync_project_presets = project_settings["global"]["sync_server"]
+        if not sync_project_presets["enabled"]:
+            return default_sites
 
-        if sync_project_presets and sync_project_presets["enabled"]:
-            local_site, remote_site = self._get_sites(sync_project_presets)
-            always_accessible = sync_project_presets["config"]. \
-                get("always_accessible_on", [])
+        local_site, remote_site = cls._get_sites(sync_project_presets)
 
-        already_attached_sites = {}
-        meta = {"name": local_site, "created_dt": datetime.now()}
-        sites = [meta]
-        already_attached_sites[meta["name"]] = meta["created_dt"]
+        # Attached sites metadata by site name
+        # That is the local site, remote site, the always accesible sites
+        # and their alternate sites (alias of sites with different protocol)
+        attached_sites = dict()
+        attached_sites[local_site] = create_metadata(local_site)
 
-        if sync_project_presets and sync_project_presets["enabled"]:
-            if remote_site and \
-                    remote_site not in already_attached_sites.keys():
-                # add remote
-                meta = {"name": remote_site.strip()}
-                sites.append(meta)
-                already_attached_sites[meta["name"]] = None
+        if remote_site and remote_site != local_site:
+            attached_sites[remote_site] = create_metadata(remote_site,
+                                                          created=False)
 
-            # add skeleton for site where it should be always synced to
-            for always_on_site in always_accessible:
-                if always_on_site not in already_attached_sites.keys():
-                    meta = {"name": always_on_site.strip()}
-                    sites.append(meta)
-                    already_attached_sites[meta["name"]] = None
+        # add skeleton for sites where it should be always synced to
+        always_accessible_sites = (
+            sync_project_presets["config"].get("always_accessible_on", [])
+        )
+        for site in always_accessible_sites:
+            site = site.strip()
+            if site not in attached_sites:
+                attached_sites[site] = create_metadata(site, created=False)
 
-            # add alternative sites
-            alt = self._add_alternative_sites(system_sync_server_presets,
-                                              already_attached_sites)
-            sites.extend(alt)
+        # add alternative sites
+        cls._add_alternative_sites(system_sync_server_presets, attached_sites)
 
-        log.debug("final sites:: {}".format(sites))
+        return list(attached_sites.values())
 
-        return sites
-
-    def _get_sites(self, sync_project_presets):
+    @staticmethod
+    def _get_sites(sync_project_presets):
         """Returns tuple (local_site, remote_site)"""
         local_site_id = openpype.api.get_local_site_id()
         local_site = sync_project_presets["config"]. \
@@ -1053,36 +1060,51 @@ class IntegrateAssetNew(pyblish.api.InstancePlugin):
             local_site = local_site_id
 
         remote_site = sync_project_presets["config"].get("remote_site")
+        if remote_site:
+            remote_site.strip()
 
         if remote_site == 'local':
             remote_site = local_site_id
 
         return local_site, remote_site
 
-    def _add_alternative_sites(self,
-                               system_sync_server_presets,
-                               already_attached_sites):
+    @staticmethod
+    def _add_alternative_sites(system_sync_server_presets,
+                               attached_sites):
         """Loop through all configured sites and add alternatives.
+
+        For all sites if an alternative site is detected that has an
+        accessible site then we can also register to that alternative site
+        with the same "created" state. So we match the existing data.
 
             See SyncServerModule.handle_alternate_site
         """
         conf_sites = system_sync_server_presets.get("sites", {})
 
-        alternative_sites = []
         for site_name, site_info in conf_sites.items():
-            alt_sites = set(site_info.get("alternative_sites", []))
-            already_attached_keys = list(already_attached_sites.keys())
-            for added_site in already_attached_keys:
-                if added_site in alt_sites:
-                    if site_name in already_attached_keys:
-                        continue
-                    meta = {"name": site_name}
-                    real_created = already_attached_sites[added_site]
-                    # alt site inherits state of 'created_dt'
-                    if real_created:
-                        meta["created_dt"] = real_created
-                    alternative_sites.append(meta)
-                    already_attached_sites[meta["name"]] = real_created
 
-        return alternative_sites
-    # endregion
+            # Skip if already defined
+            if site_name in attached_sites:
+                continue
+
+            # Get alternate sites (stripped names) for this site name
+            alt_sites = site_info.get("alternative_sites", [])
+            alt_sites = [site.strip() for site in alt_sites]
+            alt_sites = set(alt_sites)
+
+            # If no alternative sites we don't need to add
+            if not alt_sites:
+                continue
+
+            # Take a copy of data of the first alternate site that is already
+            # defined as an attached site to match the same state.
+            match_meta = next((attached_sites[site] for site in alt_sites
+                               if site in attached_sites), None)
+            if not match_meta:
+                continue
+
+            alt_site_meta = copy.deepcopy(match_meta)
+            alt_site_meta["name"] = site_name
+
+            # Note: We change mutable `attached_site` dict in-place
+            attached_sites[site_name] = alt_site_meta
