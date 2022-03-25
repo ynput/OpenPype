@@ -392,6 +392,7 @@ class ProcessSubmittedJobOnFarm(pyblish.api.InstancePlugin):
             list of instances
 
         """
+        self.log.info("!!!!! _create_instances_for_aov")
         task = os.environ["AVALON_TASK"]
         subset = instance_data["subset"]
         cameras = instance_data.get("cameras", [])
@@ -454,6 +455,7 @@ class ProcessSubmittedJobOnFarm(pyblish.api.InstancePlugin):
                         break
 
             if instance_data.get("multipartExr"):
+                self.log.info("!!!!! _create_instances_for_aov add multipartExr")
                 preview = True
 
             new_instance = copy(instance_data)
@@ -519,9 +521,10 @@ class ProcessSubmittedJobOnFarm(pyblish.api.InstancePlugin):
         """
         representations = []
         collections, remainders = clique.assemble(exp_files)
-
+        self.log.info("!!!!! _get_representations")
         # create representation for every collected sequento ce
         for collection in collections:
+            self.log.info("!!!!! collection")
             ext = collection.tail.lstrip(".")
             preview = False
             # if filtered aov name is found in filename, toggle it for
@@ -533,6 +536,7 @@ class ProcessSubmittedJobOnFarm(pyblish.api.InstancePlugin):
                             aov,
                             list(collection)[0]
                         ):
+                            self.log.info("!!!!! add preview")
                             preview = True
                             break
 
@@ -582,6 +586,7 @@ class ProcessSubmittedJobOnFarm(pyblish.api.InstancePlugin):
 
         # add reminders as representations
         for remainder in remainders:
+            self.log.info("!!!!! remainder")
             ext = remainder.split(".")[-1]
 
             staging = os.path.dirname(remainder)
@@ -602,7 +607,10 @@ class ProcessSubmittedJobOnFarm(pyblish.api.InstancePlugin):
                 "files": os.path.basename(remainder),
                 "stagingDir": os.path.dirname(remainder),
             }
-            if "render" in instance.get("families"):
+            is_render_type = set(["render"]).\
+                intersection(instance.get("families"))
+            if is_render_type:
+                self.log.info("!!!!! is_render_type")
                 rep.update({
                     "fps": instance.get("fps"),
                     "tags": ["review"]
