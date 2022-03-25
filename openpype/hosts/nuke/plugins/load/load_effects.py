@@ -333,8 +333,8 @@ class LoadEffects(load.LoaderPlugin):
                     for key, value in input.items()}
         elif isinstance(input, list):
             return [self.byteify(element) for element in input]
-        elif isinstance(input, unicode):
-            return input.encode('utf-8')
+        elif isinstance(input, str):
+            return str(input)
         else:
             return input
 
