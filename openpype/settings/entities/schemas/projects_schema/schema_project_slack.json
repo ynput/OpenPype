@@ -78,7 +78,7 @@
                                     {
                                         "type": "number",
                                         "key": "review_upload_limit",
-                                        "label": "Upload review of maximally size (MB)",
+                                        "label": "Upload review maximum file size (MB)",
                                         "decimal": 2,
                                         "default": 50,
                                         "minimum": 0,
