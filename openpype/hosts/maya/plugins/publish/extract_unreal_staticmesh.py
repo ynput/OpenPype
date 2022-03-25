@@ -22,8 +22,9 @@ class ExtractUnrealStaticMesh(openpype.api.Extractor):
     families = ["staticMesh"]
 
     def process(self, instance):
-        geo = instance.data.get("geometryMembers", [])
-        members = geo + instance.data.get("collisionMembers", [])
+        members = instance.data.get("geometryMembers", [])
+        if instance.data.get("collisionMembers"):
+            members = members + instance.data.get("collisionMembers")
 
         fbx_exporter = fbx.FBXExtractor(log=self.log)
 
