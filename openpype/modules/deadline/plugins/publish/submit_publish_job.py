@@ -8,6 +8,7 @@ from copy import copy, deepcopy
 import requests
 import clique
 import openpype.api
+from openpype.pipeline.farm.patterning import match_aov_pattern
 
 from avalon import api, io
 
@@ -446,21 +447,16 @@ class ProcessSubmittedJobOnFarm(pyblish.api.InstancePlugin):
             app = os.environ.get("AVALON_APP", "")
 
             preview = False
-            if app in self.aov_filter.keys():
-                for aov_pattern in self.aov_filter[app]:
-                    # Matching against the AOV pattern in the render files
-                    # In order to match the AOV name
-                    # we must compare against the render filename string 
-                    # We are grabbing the render filename string
-                    # from the collection that we have grabbed from exp_files 
-                    if isinstance(col, list):
-                        render_file_name = os.path.basename(col[0])
-                    else:
-                        render_file_name = os.path.basename(col)
-                    if re.match(aov_pattern, render_file_name):
-                        preview = True
-                        break
 
+            if isinstance(col, list):
+                render_file_name = os.path.basename(col[0])
+            else:
+                render_file_name = os.path.basename(col)
+
+            preview = match_aov_pattern(self, app, render_file_name)
+            
+            
+                           
             if instance_data.get("multipartExr"):
                 preview = True
 
@@ -532,18 +528,11 @@ class ProcessSubmittedJobOnFarm(pyblish.api.InstancePlugin):
         for collection in collections:
             ext = collection.tail.lstrip(".")
             preview = False
+            render_file_name = list(collection[0])
+            app = os.environ.get("AVALON_APP", "")
             # if filtered aov name is found in filename, toggle it for
             # preview video rendering
-            for app in self.aov_filter.keys():
-                if os.environ.get("AVALON_APP", "") == app:
-                    for aov in self.aov_filter[app]:
-                        if re.match(
-                            aov,
-                            list(collection)[0]
-                        ):
-                            preview = True
-                            break
-
+            preview = match_aov_pattern(self, app, render_file_name)                   
             # toggle preview on if multipart is on
             if instance.get("multipartExr", False):
                 preview = True
