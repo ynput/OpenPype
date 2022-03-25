@@ -46,8 +46,8 @@ class BlendModelLoader(plugin.AssetLoader):
                             property,
                             getattr(target, property),
                         )
-                    except:
-                        print(f"'{property}' is read-only")
+                    except Exception as inst:
+                        print(inst)
 
     def _store_drivers_in_an_empty(self, container):
         """Get all the drivers in the container's objects and copy them on an empty"""
@@ -93,7 +93,7 @@ class BlendModelLoader(plugin.AssetLoader):
                 new_driver = object.animation_data.drivers.new(data_path)
                 self._copy_driver(driver, new_driver)
 
-    bpy.data.objects.remove(empty)
+        bpy.data.objects.remove(empty)
 
     def _get_modifier_parameters(self, container):
         """Get all modifier parameters of the container's objects in a dict"""

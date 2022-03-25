@@ -49,10 +49,9 @@ def extract(file_to_open, filepath, collection_name):
 
                                         if modifier not in modifier_to_delete:
                                             modifier_to_delete.append(modifier)
-                                except:
-                                    print(
-                                        f" '{modifier_data_path}' could not be resolved"
-                                    )
+                                except Exception as inst:
+                                    print(inst)
+
                 for modifier in modifier_to_delete:
                     object.modifiers.remove(modifier)
         object.animation_data_clear()
