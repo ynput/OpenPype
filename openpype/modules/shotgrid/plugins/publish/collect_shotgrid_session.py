@@ -4,6 +4,7 @@ import shotgun_api3
 from shotgun_api3.shotgun import AuthenticationFault
 from openpype.lib import OpenPypeSettingsRegistry
 from openpype.api import get_project_settings, get_system_settings
+from openpype.modules.shotgrid.lib.settings import get_shotgrid_servers
 
 
 class CollectShotgridSession(pyblish.api.ContextPlugin):
@@ -112,15 +113,6 @@ def set_shotgrid_certificate(certificate):
 
 def get_shotgrid_settings(project):
     return get_project_settings(project).get("shotgrid", {})
-
-
-def get_shotgrid_servers():
-    return (
-        get_system_settings()
-        .get("modules", {})
-        .get("shotgrid", {})
-        .get("shotgrid_settings", {})
-    )
 
 
 def get_login():

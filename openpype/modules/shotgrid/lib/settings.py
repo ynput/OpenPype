@@ -1,4 +1,5 @@
 import os
+from functools import lru_cache
 from typing import Tuple, Dict, List, Any
 
 from pymongo import MongoClient
@@ -13,10 +14,12 @@ def get_project_list() -> List[str]:
     return db.list_collection_names()
 
 
+@lru_cache(maxsize=64)
 def get_shotgrid_project_settings(project: str) -> Dict[str, Any]:
     return get_project_settings(project).get(MODULE_NAME, {})
 
 
+@lru_cache(maxsize=64)
 def get_shotgrid_settings() -> Dict[str, Any]:
     return get_system_settings().get("modules", {}).get(MODULE_NAME, {})
 
