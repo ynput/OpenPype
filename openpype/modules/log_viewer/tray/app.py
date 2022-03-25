@@ -26,3 +26,12 @@ class LogsWindow(QtWidgets.QWidget):
         self.log_detail = log_detail
 
         self.setStyleSheet(style.load_stylesheet())
+
+        self._frist_show = True
+
+    def showEvent(self, event):
+        super(LogsWindow, self).showEvent(event)
+
+        if self._frist_show:
+            self._frist_show = False
+            self.logs_widget.refresh()

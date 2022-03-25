@@ -115,10 +115,8 @@ def discover_inventory_actions():
     filtered_actions = []
     for action in actions:
         if action is not InventoryAction:
-            print("DISCOVERED", action)
             filtered_actions.append(action)
-        else:
-            print("GOT SOURCE")
+
     return filtered_actions
 
 
