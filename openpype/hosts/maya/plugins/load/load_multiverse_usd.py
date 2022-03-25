@@ -47,6 +47,9 @@ class MultiverseUsdLoader(load.LoaderPlugin):
                 transform = cmds.listRelatives(
                     shape, parent=True, fullPath=True)[0]
 
+                # Lock the shape node so the user cannot delete it.
+                cmds.lockNode(shape, lock=True)
+
         nodes = [transform, shape]
         self[:] = nodes
 
